@@ -67,7 +67,30 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             Check("!기억 → 대답", heard.Count > before);
 
-            // 3) 지도 경계가 있는 방향 고르기
+            // 2.5) 물가: 거점 근처 바다(호수) 너머로 곧장 걷게 하면 물가에서 서야 한다(0.3.6은 해협 300m를 헤엄쳐 건넜다)
+            if (FindSea(home, out Vector3 shore, out Vector3 sea))
+            {
+                var walk = new WalkJob(claude.Ai, sea);
+                claude.Ai.StartJob(walk);
+                float swim = 0f, nearest = float.MaxValue;
+                bool blocked = false;
+                for (float w = 0f; w < 70f && claude != null; w += 0.5f)
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    if (claude == null) break;
+                    if (claude.IsSwimming()) swim += 0.5f;
+                    if (claude.Ai.WaterBlockedTime > 0f) blocked = true;
+                    nearest = Mathf.Min(nearest, Utils.DistanceXZ(shore, claude.transform.position));
+                    if (blocked && w > 10f) break;
+                }
+                walk.Stop = true;
+                if (claude != null) TestRunner.Log($"물가: 거점에서 {Utils.DistanceXZ(home, shore):0}m, {claude.MoveDebug}");
+                Check($"바다 앞에서 멈춤 (수영 {swim:0.0}초, 물가까지 최소 {nearest:0}m)", blocked && swim <= 3f && nearest < 20f);
+                yield return new WaitForSeconds(1f);
+            }
+            else TestRunner.Log("물가: 거점 300m 안에 바다 없음(건너뜀)");
+
+            // 3) 지도 경계가 있는 방향 고르기 (물 건너는 경계는 NextFrontier가 뺀다)
             string[] names = { "east", "north", "west", "south", "northeast", "northwest", "southeast", "southwest" };
             string dirName = null;
             int dx = 0, dy = 0;
@@ -84,13 +107,15 @@ namespace ValheimHelper
             Say($"!{Workers.Name1} 탐험 {Bearing.KoreanOf(dirName)}");
             yield return new WaitForSeconds(1f);
             Check("1호가 탐험 시작", claude.Ai.Current == WorkerAI.Mode.Work && claude.Ai.Job is ExploreJob);
-            float maxDist = 0f, t = 0f;
+            float maxDist = 0f, t = 0f, swimRun = 0f, maxSwimRun = 0f;
             Vector3 last = claude.transform.position;
             while ((t < 150f || (t < 300f && !Scout.Explored(first))) && claude != null && claude.Ai.Current == WorkerAI.Mode.Work)
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
                 if (claude == null) break;
+                swimRun = claude.IsSwimming() ? swimRun + 5f : 0f;
+                maxSwimRun = Mathf.Max(maxSwimRun, swimRun);
                 Vector3 p = claude.transform.position;
                 maxDist = Mathf.Max(maxDist, Utils.DistanceXZ(home, p));
                 Vector3 prev = last;
@@ -103,6 +128,7 @@ namespace ValheimHelper
                 }
             }
             Check($"150m 넘게 나감 (최대 {maxDist:0}m)", maxDist > 150f);
+            Check($"오래 헤엄치지 않음 (최대 연속 {maxSwimRun:0}초, 좁은 강만 건넘)", maxSwimRun <= 15f);
             bool rightWay = false;
             if (claude != null)
             {
@@ -164,6 +190,53 @@ namespace ValheimHelper
             foreach (var h in heard) if (h.Contains("{")) clean = false;
             Check("대사에 자리표시자 안 남음", clean);
             End(player, god, env, debugTime, debugValue, onHeard, heard);
+        }
+
+        /// <summary>시험용 일: 한 곳으로 곧장 걷기만 한다.</summary>
+        sealed class WalkJob : IWorkerJob
+        {
+            readonly WorkerAI m_ai;
+            readonly Vector3 m_to;
+            public bool Stop;
+            public WalkJob(WorkerAI ai, Vector3 to) { m_ai = ai; m_to = to; }
+            public string StepName => "TestWalk";
+            public string StateLine() => "시험 걷기";
+            public bool Update(float dt)
+            {
+                if (Stop) return false;
+                m_ai.MoveToPoint(dt, m_to, 2f, true);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// 거점에서 16방향으로 300m까지 보며 가장 가까운 넓은 물(3m보다 깊고 그 뒤 60m가 다 깊은 물)을 찾는다.
+        /// shore = 깊어지기 시작하는 곳, sea = 그 60m 안쪽(걷게 할 목표).
+        /// </summary>
+        static bool FindSea(Vector3 home, out Vector3 shore, out Vector3 sea)
+        {
+            shore = sea = home;
+            WorldGenerator wg = WorldGenerator.instance;
+            float wl = ZoneSystem.instance.m_waterLevel, best = float.MaxValue;
+            for (int i = 0; i < 16; i++)
+            {
+                float a = i * Mathf.PI / 8f;
+                var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                for (float r = 10f; r < 300f; r += 4f)
+                {
+                    Vector3 p = home + dir * r;
+                    if (wl - wg.GetHeight(p.x, p.z) <= 3f) continue;
+                    bool wide = true;
+                    for (float s = 0f; s <= 60f && wide; s += 4f)
+                    {
+                        Vector3 q = p + dir * s;
+                        wide = wl - wg.GetHeight(q.x, q.z) > (float)WaterRule.DeepDepth;
+                    }
+                    if (wide && r < best) { best = r; shore = p; sea = p + dir * 60f; }
+                    break; // 이 방향은 처음 만난 물로 정한다
+                }
+            }
+            return best < float.MaxValue;
         }
 
         static void Say(string text)

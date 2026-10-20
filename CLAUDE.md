@@ -62,3 +62,4 @@
 - 작업 방식(한도 대비): 언제 끊길지 알 수 없으므로 15분마다(사용자 확정) 빌드·테스트 통과 시마다 커밋·푸시하고 `docs/valheim/progress.txt`(진행 중/다음 할 일/단계 체크리스트)를 갱신. 새 세션은 progress.txt부터 읽고 이어감.
 - 자동 재개 예약은 하지 않음(사용자 거절). Jötunn 2.30.2 확인: CreatureManager·PrefabManager(기존 프리팹 복제로 NPC), PieceManager(깃발), NetworkManager.AddRPC, SynchronizationManager, LocalizationManager, MinimapManager(지도 그림·덮개), UndoManager(지형 편집 되돌리기 가능).
 - 참고 모드 조사(2026-10-20): Thrall(ego_ai) = 중단됨·싱글 전용·영어 전용·제작 불가·Valheim 0.218.20·라이선스 "All rights reserved"(소스 없음) → 코드 사용 불가, 아이디어만 참고. Offline Companions(ProfMags, 포크 Offline Companions Reborn) = 플레이어 모양 NPC 동료, 라이선스 미확인 → 필요 없음: NPC 몸은 게임의 플레이어 프리팹을 Jötunn으로 복제해 쓰고 Player 부품만 Humanoid+자체 AI로 교체(사용자 지적). 검색상 Valheim이 1.0을 넘김 → 참조 패키지 0.221.4는 확실히 구버전, 최신 DLL 필수.
+- 확정(2026-10-20): NPC는 좁은 강(깊은 물 24m 이하)만 헤엄쳐 건너고 늪 물·바다·긴 물은 안 건넘(0.3.7 WaterRule). 사용자가 PC로 다른 게임 중일 때 시험은 최소화 모드(`$env:VH_MIN='1'`)로 돌림.

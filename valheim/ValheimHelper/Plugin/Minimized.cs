@@ -17,6 +17,8 @@ namespace ValheimHelper
         static bool s_released;
         static float s_timer;
         static IntPtr s_window;
+        static int s_count;
+        static bool s_reported;
 
         public static void Update()
         {
@@ -29,7 +31,15 @@ namespace ValheimHelper
             if (s_timer > 0f) return;
             s_timer = 0.5f;
             IntPtr h = FindWindow();
-            if (h != IntPtr.Zero && !IsIconic(h)) ShowWindow(h, SwMinimize);
+            if (!s_reported && h != IntPtr.Zero)
+            {
+                s_reported = true; // 스크립트가 먼저 내렸으면 아래 "내림" 기록이 없으므로 창을 찾았는지는 따로 남긴다
+                Plugin.Log.LogInfo($"최소화 시험: 게임 창 찾음(이미 내려가 있음 {IsIconic(h)})");
+            }
+            if (h == IntPtr.Zero || IsIconic(h)) return;
+            ShowWindow(h, SwMinimize);
+            s_count++;
+            if (s_count <= 3) Plugin.Log.LogInfo($"최소화 시험: 게임 창을 내림({s_count}번째)");
         }
 
         /// <summary>첫 시험 시작: 이제부터 창을 억지로 내리지 않는다.</summary>
