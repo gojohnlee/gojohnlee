@@ -207,6 +207,7 @@ namespace ValheimHelper
             public WalkJob(WorkerAI ai, Vector3 to) { m_ai = ai; m_to = to; }
             public string StepName => "TestWalk";
             public string StateLine() => "시험 걷기";
+            public string Label => "시험 걷기";
             public void AvoidHere(Vector3 danger) { }
             public bool Update(float dt)
             {

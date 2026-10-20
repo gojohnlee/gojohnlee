@@ -140,6 +140,8 @@ namespace ValheimHelper
             Go(Step.Search);
         }
 
+        public string Label => ItemLabel(Item) + " " + Target;
+
         public string StateLine() => m_npc.Line(m_exploring ? "state.workExplore" : "state.work", new Dictionary<string, string>
         {
             ["item"] = ItemLabel(Item), ["n"] = Target.ToString(), ["done"] = Delivered.ToString(),

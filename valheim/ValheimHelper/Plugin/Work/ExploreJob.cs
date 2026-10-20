@@ -47,6 +47,8 @@ namespace ValheimHelper
             foreach (var ik in k.Summary(Senses.ZoneOf(npc.Home))) m_knewItems.Add(ik.Item);
         }
 
+        public string Label => m_npc.Line("state.explore", new Dictionary<string, string> { ["where"] = m_where });
+
         public string StateLine() => m_npc.Line("state.explore", new Dictionary<string, string> { ["where"] = m_where });
 
         /// <summary>Guard: 지금 목표 경계는 위험하다 → 둘러본 셈 치고 다음 경계로.</summary>

@@ -75,7 +75,10 @@ namespace ValheimHelper
         public const string Key = "vh_knowledge";
         /// <summary>싸워 보고 배운 적(8-2장). 지식처럼 두 NPC ZDO에 같이 저장한다.</summary>
         public const string KeyFoes = "vh_foes";
+        /// <summary>장소 기억(8-1장, 설계 A장). 위험한 일이 있었던 곳 100곳.</summary>
+        public const string KeyPlaces = "vh_places";
         static Knowledge s_k;
+        static PlaceBook s_places;
         static FoeBook s_foes;
         static string s_foesSaved = "";
         static ZDOMan s_for;
@@ -86,17 +89,20 @@ namespace ValheimHelper
             if (s_k == null || s_for != ZDOMan.instance)
             {
                 s_for = ZDOMan.instance;
-                string best = "", foes = "";
+                string best = "", foes = "", places = "";
                 foreach (var zdo in Workers.AllZdos()) // 월드 불러온 직후 한 번만
                 {
                     string t = zdo.GetString(Key, "");
                     if (t.Length > best.Length) best = t;
                     string f = zdo.GetString(KeyFoes, "");
                     if (f.Length > foes.Length) foes = f;
+                    string pl = zdo.GetString(KeyPlaces, "");
+                    if (pl.Length > places.Length) places = pl;
                 }
                 s_k = Knowledge.Load(best);
                 s_foes = FoeBook.Load(foes);
                 s_foesSaved = foes;
+                s_places = PlaceBook.Load(places);
             }
             return s_k;
         }
@@ -106,13 +112,18 @@ namespace ValheimHelper
             get { Get(); return s_foes; }
         }
 
+        public static PlaceBook Places
+        {
+            get { Get(); return s_places; }
+        }
+
         public static void Update(float dt)
         {
             if (s_k == null) return;
             s_saveTimer -= dt;
             if (s_saveTimer > 0f) return;
             s_saveTimer = 30f;
-            if (s_k.Dirty || s_foes.Save() != s_foesSaved) Save();
+            if (s_k.Dirty || s_places.Dirty || s_foes.Save() != s_foesSaved) Save();
         }
 
         public static void Save()
@@ -120,8 +131,10 @@ namespace ValheimHelper
             if (s_k == null) return;
             string text = s_k.Save();
             string foes = s_foes.Save();
-            foreach (var zdo in Workers.Zdos()) { zdo.Set(Key, text); zdo.Set(KeyFoes, foes); }
+            string places = s_places.Save();
+            foreach (var zdo in Workers.Zdos()) { zdo.Set(Key, text); zdo.Set(KeyFoes, foes); zdo.Set(KeyPlaces, places); }
             s_k.Dirty = false;
+            s_places.Dirty = false;
             s_foesSaved = foes;
         }
     }

@@ -228,6 +228,8 @@ namespace ValheimHelper
             Vector3 where = transform.position;
             Character killer = m_lastHit?.GetAttacker();
             string by = killer != null && killer != this ? Localization.instance.Localize(killer.m_name) : null;
+            string killerKind = killer != null && killer != this ? Utils.GetPrefabName(killer.gameObject) : m_lastHit?.m_hitType.ToString();
+            Ai.Guard?.CloseEncounter(true, killerKind); // 장소 기억: 여기서 죽었다
             ZDOID grave = CreateGrave();
             if (!grave.IsNone()) SetGraves(AddTry(Graves(), grave, 0));
             Ai.OnDied(); // 그 묘비를 회수하던 중이었으면 시도 횟수를 올린다

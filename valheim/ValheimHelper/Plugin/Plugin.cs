@@ -48,6 +48,7 @@ namespace ValheimHelper
                 Minimized.Update(); // 먼저: 다른 오류가 나도 창은 내려 둔다
                 Workers.Update();
                 Brain.Update(UnityEngine.Time.deltaTime);
+                Departures.Tick(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();
             }
             catch (Exception e)

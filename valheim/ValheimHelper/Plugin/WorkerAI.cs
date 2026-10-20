@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
@@ -14,6 +15,20 @@ namespace ValheimHelper
         string StateLine();
         /// <summary>Guard: 거기(danger)는 위험하다(도망쳤거나 두 번 물러남). 그곳의 목표는 버리고 다른 데로.</summary>
         void AvoidHere(Vector3 danger);
+        /// <summary>대기열·"~부터 하고 갈게요"에 쓰는 짧은 이름("나무 50").</summary>
+        string Label { get; }
+    }
+
+    /// <summary>
+    /// 대기열 한 칸 (설계 B-5): 멈춘 일을 이어서 하거나(Resume), 명령을 다시 판단해서 시작한다(Start).
+    /// Ready가 false면(아침까지 기다림 등) 건너뛰고 다음 칸.
+    /// </summary>
+    public sealed class QueuedWork
+    {
+        public string Label;
+        public IWorkerJob Resume;
+        public System.Action Start;
+        public System.Func<bool> Ready;
     }
 
     /// <summary>
@@ -49,6 +64,33 @@ namespace ValheimHelper
             // 90°면 돌면서 속도만 줄인다(플레이어처럼).
             m_moveMinAngle = 90f;
             m_smoothMovement = true;
+        }
+
+        /// <summary>대기열(설계 B-5, 사용자 확정): 급하지 않은 명령은 뒤에, 급한 명령에 밀린 일은 맨 앞에. [게임 시험 안 됨]</summary>
+        public readonly List<QueuedWork> Queue = new List<QueuedWork>();
+
+        /// <summary>급한 명령: 하던 일을 대기열 맨 앞에 넣고 비운다(새 일은 부르는 쪽이 StartJob).</summary>
+        public void Interrupt()
+        {
+            if (Current == Mode.Work && Job != null && !(Job is GraveJob))
+                Queue.Insert(0, new QueuedWork { Label = Job.Label, Resume = Job });
+            Job = null;
+        }
+
+        /// <summary>대기열에서 할 수 있는 첫 칸을 꺼내 시작한다. 시작했으면 true.</summary>
+        bool NextQueued()
+        {
+            if (Departures.AskedAt((WorkerNpc)m_character) >= 0) return false; // 질문하고 대답을 기다리는 중
+            for (int i = 0; i < Queue.Count; i++)
+            {
+                var q = Queue[i];
+                if (q.Ready != null && !q.Ready()) continue;
+                Queue.RemoveAt(i);
+                if (q.Resume != null) StartJob(q.Resume);
+                else q.Start?.Invoke();
+                return Current == Mode.Work;
+            }
+            return false;
         }
 
         public void StartJob(IWorkerJob job)
@@ -125,6 +167,8 @@ namespace ValheimHelper
             if (WaterAhead(pos, m_character.GetMoveDir()))
             {
                 StopMoving();
+                if (WaterBlockedTime < WaterGiveUp && WaterBlockedTime + dt >= WaterGiveUp)
+                    Brain.Places.AddFeature(Senses.ZoneOf(point), PlaceFeature.DeepWater, ZNet.instance.GetTimeSeconds()); // 장소 기억: 물에 막힘
                 WaterBlockedTime += dt;
                 return false;
             }
@@ -251,6 +295,7 @@ namespace ValheimHelper
             m_carveWalk = 0f;
             m_carveCount = 0;
             m_carveStart = m_carveSeen = Time.time;
+            Brain.Places.AddFeature(Senses.ZoneOf(pos), PlaceFeature.Pit, ZNet.instance.GetTimeSeconds()); // 장소 기억: 구덩이
             Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 구덩이에 갇힘(둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))}) → 경사로 깎기");
             return true;
         }
@@ -354,7 +399,8 @@ namespace ValheimHelper
                 case Mode.Work:
                     if (Job == null || !Job.Update(dt))
                     {
-                        GoHome(false);
+                        Job = null;
+                        if (!NextQueued()) GoHome(false);
                     }
                     break;
                 case Mode.Follow:
@@ -364,6 +410,10 @@ namespace ValheimHelper
                     Vector3 pos = target.GetPosition();
                     float d = Vector3.Distance(pos, transform.position);
                     if (d > 200f) { Lost(npc); break; } // 포탈 등으로 사라짐. 포탈 따라가기는 ⑤ 단계.
+                    // 같이 간 동료(3-2장)가 일을 마치고 쉬면 따라가기도 끝
+                    foreach (var lead in WorkerNpc.All)
+                        if (lead != npc && lead.GetZDOID() == m_follow && (lead.Ai.Current == Mode.Idle || lead.Ai.Current == Mode.Home)) { GoHome(false); break; }
+                    if (Current != Mode.Follow) break;
                     if (d < 3f) StopMoving();
                     else MoveToPoint(dt, pos, 2.5f, d > 8f);
                     break;
@@ -394,6 +444,7 @@ namespace ValheimHelper
                 }
                 default:
                     StopMoving();
+                    if (Queue.Count > 0 && NextQueued()) break; // 직접 명령 > 묘비 회수(구상서 11장 우선순위)
                     Chores(npc, dt);
                     break;
             }

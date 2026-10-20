@@ -42,6 +42,14 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 - 사용자 결정(F장, 확정): 제작법은 전부 앎. 일하는 중 새 명령은 "빨리·이거부터"면 바로(멈춘 일은 대기열 맨 앞), 아니면 "~부터 하고 갈게요" + 대기열.
 - 구현 순서(설계 다음): 1 장소 기억 → 2 출발 전 판단 → 3 대답 받기 → 4 스킬 성장 → 5 제작 계획 → 6 세트메뉴 → 7 자동 보충 → 8 Claude 연동 안전장치.
   클라우드에서 짠 게임 연결 코드는 "[게임 시험 안 됨]"으로 표시해 PC 세션이 먼저 시험.
+- 구현됨 (Core 테스트 234 통과, 플러그인 빌드 통과):
+  1 장소 기억 Core/Npc/PlaceBook.cs (+ Brain.Places, ZDO vh_places). 2·3 출발 전 판단·대답 Core/Npc/Departure.cs(Judge, Replies),
+  ChatParser 대답(그래도 가·같이 가자·딴 데로 가)·급함 낱말(Urgent), Dispatch.Answerer, 대사 depart.*/ask.*/note.*/answer.*/memory.
+  [게임 시험 안 됨] Plugin/Departures.cs(입력 모으기·질문 대기·3분 보류·조건 5초 재확인·!기억), Guard 마주침 기록(Tally/CloseEncounter/Resolve,
+  HitOf/TakenFor), WorkerNpc.OnDeath 죽은 곳 기록, WorkerAI 대기열(Queue/Interrupt/NextQueued, 질문 중엔 안 꺼냄)·물 막힘/구덩이 특이점·
+  동료 따라가기 끝(리더가 쉬면), IWorkerJob.Label, !탐험도 대기열 규칙. 시험 중엔 질문에 자동 "그래도 가"(Departures.TestAutoGo).
+  PC에서 먼저: 기존 시험 8종 회귀 + 출발 전 판단 시험(vh_departtest, 아직 없음 — TestAutoGo=false로 재고·밤·죽은 곳·위험 질문과 대답 확인).
+  [기본안] 미드 회복 50, 안 먹었으면 음식 체력 +50으로 셈, 하루 1800초(감쇠용), 동행은 대답한 사람이 따라오면 Guard가 힘을 합쳐 셈(앞장서기·20m 유지는 아직).
 
 0.3.8 진행 중 (2026-10-21, 사용자 관찰: "점프를 안 해. 돌 캘 때 맨땅을 파서 구덩이에서 못 나와. 돌은 땅 파기 최대한 자제,
   구리는 필연적으로 같은 상황 → 점프나 길 만들기 필요") — 사용자는 자는 중, 게임 시험은 세션이 알아서(허락 받음), 15분마다 백업.

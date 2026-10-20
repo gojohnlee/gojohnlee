@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -90,8 +91,10 @@ namespace ValheimHelper
                 m_saidFight = false;
                 // 물러나 기다리는 중이거나 도망 중이면 마저 한다(0.3.7: 적이 30m 경계를 넘나들 때마다 도망이 취소됐다 다시 시작됨)
                 if (m_state != State.Back && m_state != State.Flee) m_state = State.Calm;
+                if (m_state == State.Calm) CloseEncounter();
                 return;
             }
+            Tally(pos);
             bool mead = m_npc.CanDrinkHealthMead();
             Verdict v = Danger.Judge(m_npc.Personality, m_views, m_npc.GetHealth(), m_npc.GetMaxHealth(), myHit, taken, mead);
             LastVerdict = v;
@@ -125,6 +128,7 @@ namespace ValheimHelper
                     m_chased = 0;
                     {
                         m_backs++;
+                        Worse(Outcome.Back);
                         Plugin.Log.LogInfo($"{m_npc.NpcName} 물러남 {m_backs}번째: {foeName} 등 {m_foes.Count}, 비율 {LastRatio:0.00} ({LastDetail})");
                         if (m_backs > MaxBacks)
                         {
@@ -157,6 +161,7 @@ namespace ValheimHelper
         {
             Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00} ({LastDetail})");
             m_npc.Say("flee", Args(foeName));
+            Worse(Outcome.Fled);
             m_ai.AvoidHere(nearest.transform.position);
             m_backTo = AwayPoint(pos, BackDistance * 1.5f);
             m_target = null;
@@ -405,6 +410,87 @@ namespace ValheimHelper
         {
             if (a != null) foreach (var x in a) yield return x;
             if (b != null) foreach (var x in b) yield return x;
+        }
+
+        // ---- 장소 기억 (설계 A-5) [게임 시험 안 됨] ----
+
+        readonly Dictionary<string, GroupFoe> m_encounter = new Dictionary<string, GroupFoe>();
+        ZoneXY m_encounterZone;
+        Outcome m_encounterOutcome;
+        bool m_inEncounter;
+
+        /// <summary>마주침 동안 셈에 든 적: 종류마다 동시에 본 최대 수·가장 높은 레벨.</summary>
+        void Tally(Vector3 pos)
+        {
+            if (!m_inEncounter)
+            {
+                m_inEncounter = true;
+                m_encounter.Clear();
+                m_encounterZone = Senses.ZoneOf(pos);
+                m_encounterOutcome = Outcome.Won;
+            }
+            var counts = new Dictionary<string, int>();
+            foreach (var c in m_foes)
+            {
+                string kind = Utils.GetPrefabName(c.gameObject);
+                counts.TryGetValue(kind, out int n);
+                counts[kind] = n + 1;
+                if (!m_encounter.TryGetValue(kind, out var g)) m_encounter[kind] = g = new GroupFoe { Kind = kind };
+                g.Level = Mathf.Max(g.Level, c.GetLevel());
+                g.Boss |= c.IsBoss();
+            }
+            foreach (var kv in counts) m_encounter[kv.Key].Count = Mathf.Max(m_encounter[kv.Key].Count, kv.Value);
+        }
+
+        void Worse(Outcome o)
+        {
+            if (m_inEncounter && o > m_encounterOutcome) m_encounterOutcome = o;
+        }
+
+        /// <summary>마주침이 끝났다(경계가 Calm으로 돌아옴, 또는 죽음). died면 마주침이 없어도 죽은 곳을 적는다.</summary>
+        public void CloseEncounter(bool died = false, string killer = null)
+        {
+            if (!m_inEncounter && !died) return;
+            ZoneXY z = m_inEncounter ? m_encounterZone : Senses.ZoneOf(m_npc.transform.position);
+            Outcome o = died ? Outcome.Died : m_encounterOutcome;
+            var group = new List<GroupFoe>(m_encounter.Values);
+            Brain.Places.Record(z, group, o, ZNet.instance.GetTimeSeconds(), Resolve, killer);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 장소 기억 {z}: {o}, 무리 [" + string.Join(", ", group.ConvertAll(g => $"{g.Kind}×{g.Count}★{g.Level - 1}").ToArray()) + "]");
+            m_inEncounter = false;
+            m_encounter.Clear();
+        }
+
+        /// <summary>
+        /// 장소 기억의 적 한 종류(레벨 포함) → 판단용 수치. 배운 적이면 배운 값, 아니면 프리팹의 기본 체력과 몸집 짐작.
+        /// 체력은 바닐라처럼 기본 × 레벨(Character.SetupMaxHealth), 한 방은 별마다 ×1.5, 공격 간격 반영(FoeHitsPerSwing).
+        /// </summary>
+        public static Foe Resolve(GroupFoe g)
+        {
+            if (!Brain.Foes.TryGet(g.Kind, out float hp, out float dmg))
+            {
+                GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(g.Kind) : null;
+                Character c = prefab != null ? prefab.GetComponent<Character>() : null;
+                CapsuleCollider col = prefab != null ? prefab.GetComponent<CapsuleCollider>() : null;
+                hp = c != null ? c.m_health : 100f;
+                dmg = Danger.GuessDamage(col != null ? col.height : 1.8f, col != null ? col.radius : 0.4f, 1);
+            }
+            int level = Mathf.Max(1, g.Level);
+            return new Foe { Kind = g.Kind, Health = hp * level, Damage = dmg * (1f + (level - 1) * 0.5f) * FoeHitsPerSwing, Boss = g.Boss };
+        }
+
+        /// <summary>출발 전 판단용 내 한 방(가장 좋은 무기, 없으면 맨손; 플레이어는 빼고).</summary>
+        public static float HitOf(WorkerNpc npc)
+        {
+            ItemDrop.ItemData w = Gear.Best(npc.GetInventory().GetAllItems(), Gear.IsMelee, Gear.WeaponScore);
+            return (w != null ? Gear.WeaponScore(w) : 5f) * 0.9f;
+        }
+
+        /// <summary>출발 전 판단용: 적의 한 방이 내 갑옷을 거쳐 들어오는 피해(거점 기준 난이도 배율).</summary>
+        public static System.Func<float, float> TakenFor(WorkerNpc npc)
+        {
+            float armor = npc.GetBodyArmor();
+            float scale = Game.instance.GetDifficultyDamageScalePlayer(npc.Home) * Game.m_enemyDamageRate;
+            return d => HitData.DamageTypes.ApplyArmor(d * scale, armor);
         }
     }
 }

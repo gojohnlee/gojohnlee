@@ -37,6 +37,8 @@ namespace ValheimHelper
             npc.Say("graveGo", new Dictionary<string, string> { ["dir"] = dir, ["dist"] = dist });
         }
 
+        public string Label => m_npc.Line("state.grave");
+
         public string StateLine() => m_npc.Line("state.grave");
 
         /// <summary>Guard: 묘비 쪽이 위험하다 → 이번 시도는 실패로 치고 돌아간다(다음에 다시, 2번이면 포기).</summary>

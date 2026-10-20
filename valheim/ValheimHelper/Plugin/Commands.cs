@@ -33,10 +33,16 @@ namespace ValheimHelper
         {
             var npcs = WorkerNpc.All;
             if (npcs.Count == 0) return;
-            ChatResult r = Parser().Parse(text);
+            ChatResult r = Parser().Parse(text, Departures.Awaiting);
             switch (r.Route)
             {
+                case ChatRoute.Answer:
+                    Departures.Answer(who, Departures.ReplyOf(r.Answer), null);
+                    break;
                 case ChatRoute.Command:
+                    // 질문을 기다리는 중이면 "!그냥 가"·"!같이 가자"는 대답(설계 B-7)
+                    if (Departures.Awaiting && (r.Command.Kind == CommandKind.GoAnyway || r.Command.Kind == CommandKind.Escort)
+                        && Departures.Answer(who, r.Command.Kind == CommandKind.GoAnyway ? Reply.GoAnyway : Reply.Escort, r.Command.Target)) break;
                     Run(who, r.Command, npcs);
                     break;
                 case ChatRoute.Haiku:
@@ -57,7 +63,7 @@ namespace ValheimHelper
         {
             var infos = new List<NpcInfo>(npcs.Count);
             foreach (var n in npcs)
-                infos.Add(new NpcInfo { Name = n.NpcName, Personality = n.Personality, Busy = n.Ai.Current != WorkerAI.Mode.Idle });
+                infos.Add(new NpcInfo { Name = n.NpcName, Personality = n.Personality, Busy = n.Ai.Current != WorkerAI.Mode.Idle || n.Ai.Queue.Count > 0 });
             return infos;
         }
 
@@ -76,12 +82,14 @@ namespace ValheimHelper
                         break;
                     case CommandKind.Stop:
                     case CommandKind.ClearQueue:
+                        npc.Ai.Queue.Clear();
+                        Departures.Forget(npc);
                         npc.Ai.GoHome();
                         npc.Ai.HoldChores(); // 쉬라고 했으니 묘비 회수도 스스로 시작하지 않는다
                         npc.Say("stop");
                         break;
                     case CommandKind.Item:
-                        StartGather(npc, cmd);
+                        Departures.Gather(who, cmd, npc);
                         break;
                     case CommandKind.SetChest:
                         SetChest(who, cmd, npc);
@@ -90,7 +98,7 @@ namespace ValheimHelper
                         TellKnowledge(npc);
                         break;
                     case CommandKind.Memory:
-                        npc.Say("memoryEmpty"); // 위험한 장소 기억은 ③ 위험 감지와 같이
+                        Departures.TellMemory(npc);
                         break;
                     case CommandKind.Explore:
                         StartExplore(npc, cmd);
@@ -110,19 +118,6 @@ namespace ValheimHelper
             }
         }
 
-        static void StartGather(WorkerNpc npc, ChatCommand cmd)
-        {
-            // 캐거나 줍는 물건만(맨손·도끼·곡괭이, 게임 데이터에서 읽음). 가공·제작은 ⑥.
-            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(cmd.Item);
-            if (ways.Count == 0) { npc.Say("notYet"); return; }
-            var args = new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() };
-            if (!GatherJob.CanStart(npc, ways)) { npc.Say("noTool", args); return; }
-            if (npc.Ai.Current == WorkerAI.Mode.Work) npc.Say("dropJob", args);
-            npc.Ai.StartJob(new GatherJob(npc, cmd.Item, cmd.Amount, ways));
-            bool known = Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(npc.transform.position)).Count > 0;
-            npc.Say(known ? "gatherKnown" : "gatherStart", args);
-        }
-
         static void StartExplore(WorkerNpc npc, ChatCommand cmd)
         {
             int dx = 0, dy = 0, biome = 0;
@@ -132,7 +127,19 @@ namespace ValheimHelper
             else where = npc.Line("nearby");
             var args = new Dictionary<string, string> { ["where"] = where, ["biome"] = where };
             if (EnvMan.IsNight()) { npc.Say("nightNoExplore", args); return; }
-            if (npc.Ai.Current == WorkerAI.Mode.Work) npc.Say("dropJob", args);
+            // 일하는 중이면: 급하면 하던 일을 멈추고, 아니면 대기열(설계 B-5)
+            if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is GraveJob))
+            {
+                if (!cmd.Urgent)
+                {
+                    var c = cmd;
+                    npc.Ai.Queue.Add(new QueuedWork { Label = where, Start = () => StartExplore(npc, c) });
+                    npc.Say("depart.busy", new Dictionary<string, string> { ["job"] = npc.Ai.Job.Label });
+                    return;
+                }
+                npc.Ai.Interrupt();
+                npc.Say("dropJob", args);
+            }
             npc.Ai.StartJob(new ExploreJob(npc, dx, dy, biome, where));
             // 그 바이옴에 가 본 적이 없으면 어디인지 모른다고 말하고 가까운 경계부터
             bool knowBiome = biome == 0 || Brain.Get().KnowsBiome(biome);
