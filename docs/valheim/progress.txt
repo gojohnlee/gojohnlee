@@ -19,6 +19,8 @@
   sln에 넣지 않음(CI에 게임 DLL 없음). 빌드: dotnet build valheim/ValheimHelper/Plugin -c Release → valheim/dist/ValheimHelper.dll에 복사해 커밋(테스트 스크립트가 받음).
   FarZones.cs: 먼 구역 유지 패치 3곳(ZoneSystem.CreateLocalZones 후처리, ZNetScene.CreateDestroyObjects 대체, ZDOMan.ReleaseNearbyZDOS 호스트 몫 대체 + IsInPeerActiveArea).
   FarZoneTest.cs: 콘솔 명령 vh_fartest(멧돼지 추적 → 플레이어 약 1km 이동 → 60초 관찰 → 패치 끔 대조 → 귀환).
+  자동 시험: 스크립트가 플러그인 폴더에 autotest.txt를 만들면 월드 입장 10초 뒤 저절로 시험하고 끝나면 게임을 끈다(사용자는 월드 입장만).
+  이 클라우드 세션은 사용자 PC에 직접 접근 불가(사용자 질문함, 2026-10-20) → PC 일은 한 줄 명령 붙여넣기로.
   PC 테스트: irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
   알려진 한계: 호스트 영역 밖 StaticPhysics(떨어진 돌 등 정착)와 WearNTear(건물 지지력)는 바닐라대로 멈춤. 필요하면 나중에 패치.
 - 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx

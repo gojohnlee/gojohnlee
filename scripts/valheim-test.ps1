@@ -40,18 +40,20 @@ $plugin = Join-Path $game 'BepInEx\plugins\ValheimHelper'
 New-Item -ItemType Directory $plugin -Force | Out-Null
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
 Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll"
+Set-Content "$plugin\autotest.txt" 'vh_fartest'   # 월드에 들어가면 모드가 저절로 시험하고 게임을 끈다
 Remove-Item $tmp -Recurse -Force
 Write-Host 'Valheim Helper 설치됨'
 
 # 3) 게임 실행(F5 콘솔 켬) 후 종료될 때까지 대기
 Start-Process "steam://run/$AppId//-console/"
 Write-Host ''
-Write-Host '게임 실행 중... 아래 순서대로 해 주세요.'
-Write-Host '  1. 월드에 들어가기 (싱글 또는 서버 시작)'
-Write-Host '  2. F5 → vh_fartest 입력 → 엔터'
-Write-Host '  3. 약 2분 뒤 "시험 끝"이 나오면 게임 종료'
-Start-Sleep 20
-while (Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) { Start-Sleep 3 }
+Write-Host '게임 실행 중... 월드에 들어가기만 하세요(싱글 또는 서버 시작, 테스트용 월드 권장).'
+Write-Host '10초 뒤 시험이 저절로 시작되고, 약 2분 뒤 게임이 저절로 꺼집니다.'
+Write-Host '(수동으로 다시 하려면 F5 → vh_fartest)'
+function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) }
+$t = 0
+while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
+while (Test-Game) { Start-Sleep 3 }
 
 # 4) 결과 수집 → 클립보드
 $report = @('=== Valheim 테스트 결과 ===')

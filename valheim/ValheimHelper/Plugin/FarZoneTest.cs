@@ -11,10 +11,13 @@ namespace ValheimHelper
     /// 멧돼지가 계속 불러와져 있고(인스턴스), 호스트가 소유하고, 움직이는지(AI 동작) 본다.
     /// 그다음 대조 시험으로 패치를 끄고 10초 뒤 멧돼지가 사라지는지 본다.
     /// 결과는 콘솔, BepInEx 로그, 플러그인 폴더의 diag.txt에 남는다.
+    /// 플러그인 폴더에 autotest.txt가 있으면(테스트 스크립트가 만든다) 월드에 들어갔을 때 저절로 시험하고 게임을 끈다.
     /// </summary>
     static class FarZoneTest
     {
         static bool s_running;
+        static bool s_autoPending, s_auto;
+        static float s_autoWait;
         static readonly List<string> s_report = new List<string>();
 
         public static void Register()
@@ -24,6 +27,28 @@ namespace ValheimHelper
                 if (s_running) { args.Context.AddString("이미 시험 중입니다."); return; }
                 Plugin.Instance.StartCoroutine(Run(args.Context));
             });
+        }
+
+        public static void CheckAutoRun()
+        {
+            string flag = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "autotest.txt");
+            if (!File.Exists(flag)) return;
+            try { File.Delete(flag); } catch (IOException) { }
+            s_autoPending = true;
+            Plugin.Log.LogInfo("자동 시험 예약: 월드에 들어가면 vh_fartest를 실행합니다.");
+        }
+
+        /// <summary>자동 시험: 월드에 들어가 순간이동이 끝나고 10초 뒤 시작.</summary>
+        public static void UpdateAutoRun()
+        {
+            if (!s_autoPending) return;
+            Player player = Player.m_localPlayer;
+            if (player == null || player.IsTeleporting()) { s_autoWait = 0f; return; }
+            s_autoWait += Time.deltaTime;
+            if (s_autoWait < 10f) return;
+            s_autoPending = false;
+            s_auto = true;
+            Plugin.Instance.StartCoroutine(Run(Console.instance));
         }
 
         static void Log(Terminal t, string line)
@@ -126,12 +151,27 @@ namespace ValheimHelper
         static void Finish()
         {
             s_running = false;
+            if (s_auto)
+            {
+                s_auto = false;
+                Plugin.Instance.StartCoroutine(QuitSoon());
+            }
             try
             {
                 string dir = Path.GetDirectoryName(Plugin.Instance.Info.Location);
                 File.WriteAllLines(Path.Combine(dir, "diag.txt"), s_report.ToArray());
             }
             catch (System.Exception e) { Plugin.Log.LogWarning("diag.txt 쓰기 실패: " + e.Message); }
+        }
+
+        static IEnumerator QuitSoon()
+        {
+            for (int i = 10; i > 0; i--)
+            {
+                MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, $"[Valheim Helper] 시험 끝. {i}초 뒤 게임을 끕니다.");
+                yield return new WaitForSeconds(1f);
+            }
+            Application.Quit();
         }
 
         /// <summary>집에서 약 1km(없으면 0.7·1.5km) 떨어진 물 위가 아닌 땅.</summary>

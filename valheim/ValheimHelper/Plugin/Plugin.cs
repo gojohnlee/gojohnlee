@@ -18,7 +18,10 @@ namespace ValheimHelper
             Log = Logger;
             new Harmony(Guid).PatchAll();
             FarZoneTest.Register();
+            FarZoneTest.CheckAutoRun();
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }
+
+        void Update() => FarZoneTest.UpdateAutoRun();
     }
 }
