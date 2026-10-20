@@ -20,12 +20,29 @@ namespace ValheimHelper
             new Terminal.ConsoleCommand("vh_despawn", "[Valheim Helper] 일꾼 NPC를 모두 없앤다", args => args.Context.AddString($"NPC {DespawnAll()}명 없앰"));
         }
 
-        /// <summary>월드에 있는 NPC ZDO 전부(멀리 있어 안 불러온 것 포함). 호스트에서만 의미 있다.</summary>
+        static readonly HashSet<ZDOID> s_known = new HashSet<ZDOID>();
+
+        /// <summary>
+        /// 아는 NPC ZDO들(자주 부르는 곳용, 빠름). 월드를 불러올 때 한 번 찾고, 새로 만들 때 더한다. 없어진 것은 뺀다.
+        /// </summary>
+        public static List<ZDO> Zdos()
+        {
+            var list = new List<ZDO>();
+            if (ZDOMan.instance == null) return list;
+            s_known.RemoveWhere(id => ZDOMan.instance.GetZDO(id) == null);
+            foreach (var id in s_known) list.Add(ZDOMan.instance.GetZDO(id));
+            return list;
+        }
+
+        internal static void Know(ZDOID id) { if (!id.IsNone()) s_known.Add(id); }
+
+        /// <summary>월드에 있는 NPC ZDO 전부를 직접 찾는다(느림: 소환·삭제 같은 드문 일에만). 호스트에서만 의미 있다.</summary>
         public static List<ZDO> AllZdos()
         {
             var list = new List<ZDO>();
             int index = 0;
             while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(WorkerPrefab.Name, list, ref index)) { }
+            foreach (var z in list) s_known.Add(z.m_uid);
             return list;
         }
 
@@ -70,6 +87,7 @@ namespace ValheimHelper
                 zdo.Set(WorkerNpc.KeyHome, HomeSpot(center, rot, role));
                 zdo.Set(WorkerNpc.KeyGreet, true);
                 FarZones.Track(zdo.m_uid);
+                Know(zdo.m_uid);
                 created.Add(zdo);
             }
             return created;
@@ -129,13 +147,14 @@ namespace ValheimHelper
             if (s_scanFor != ZDOMan.instance)
             {
                 s_scanFor = ZDOMan.instance;
+                s_known.Clear();
                 s_scanList.Clear();
                 s_scanIndex = 0;
                 s_scanDone = false;
             }
             if (s_scanDone || !ZDOMan.instance.GetAllZDOsWithPrefabIterative(WorkerPrefab.Name, s_scanList, ref s_scanIndex)) return;
             s_scanDone = true;
-            foreach (var zdo in s_scanList) FarZones.Track(zdo.m_uid);
+            foreach (var zdo in s_scanList) { FarZones.Track(zdo.m_uid); Know(zdo.m_uid); }
             Plugin.Log.LogInfo($"저장된 NPC {s_scanList.Count}명 추적 시작");
             s_scanList.Clear();
         }

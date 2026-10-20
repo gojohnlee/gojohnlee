@@ -20,7 +20,7 @@ namespace ValheimHelper
         {
             static void Postfix()
             {
-                ZRoutedRpc.instance.Register<string>("VH_Chat", RPC_Chat);
+                ZRoutedRpc.instance.Register<string, ZDOID>("VH_Chat", RPC_Chat);
                 ZRoutedRpc.instance.Register<ZDOID, string, string>("VH_Say", RPC_Say);
             }
         }
@@ -32,22 +32,32 @@ namespace ValheimHelper
             {
                 if (type != Talker.Type.Normal && type != Talker.Type.Shout) return;
                 if (ZRoutedRpc.instance == null || Player.m_localPlayer == null || string.IsNullOrWhiteSpace(text)) return;
-                ZRoutedRpc.instance.InvokeRoutedRPC("VH_Chat", text);
+                ZRoutedRpc.instance.InvokeRoutedRPC("VH_Chat", text, HoveredContainer());
             }
         }
 
-        /// <summary>시험에서 호스트 자신이 채팅한 것처럼 보낸다(같은 RPC 경로).</summary>
-        public static void SendAsLocal(string text) => ZRoutedRpc.instance.InvokeRoutedRPC("VH_Chat", text);
+        /// <summary>말한 사람이 바라보고 있는 상자("!상자 나무"용). 없으면 None.</summary>
+        static ZDOID HoveredContainer()
+        {
+            GameObject hover = Player.m_localPlayer.GetHoverObject();
+            Container c = hover != null ? hover.GetComponentInParent<Container>() : null;
+            ZNetView view = c != null ? c.GetComponent<ZNetView>() : null;
+            return view != null && view.IsValid() ? view.GetZDO().m_uid : ZDOID.None;
+        }
 
-        static void RPC_Chat(long sender, string text)
+        /// <summary>시험에서 호스트 자신이 채팅한 것처럼 보낸다(같은 RPC 경로). hover = 바라보는 상자 대신.</summary>
+        public static void SendAsLocal(string text, ZDOID hover = default) =>
+            ZRoutedRpc.instance.InvokeRoutedRPC("VH_Chat", text, hover.IsNone() ? ZDOID.None : hover);
+
+        static void RPC_Chat(long sender, string text, ZDOID hover)
         {
             if (!ZNet.instance.IsServer()) return;
             try
             {
                 Speaker who;
                 ZNetPeer peer = ZNet.instance.GetPeer(sender);
-                if (peer != null) who = new Speaker(peer.m_playerName, peer.m_characterID);
-                else if (Player.m_localPlayer != null) who = new Speaker(Player.m_localPlayer.GetPlayerName(), Player.m_localPlayer.GetZDOID());
+                if (peer != null) who = new Speaker(peer.m_playerName, peer.m_characterID, hover);
+                else if (Player.m_localPlayer != null) who = new Speaker(Player.m_localPlayer.GetPlayerName(), Player.m_localPlayer.GetZDOID(), hover);
                 else return;
                 Commands.Handle(who, text);
             }
@@ -80,6 +90,8 @@ namespace ValheimHelper
     {
         public readonly string Name;
         public readonly ZDOID CharacterId;
-        public Speaker(string name, ZDOID id) { Name = name; CharacterId = id; }
+        /// <summary>말할 때 바라보던 상자.</summary>
+        public readonly ZDOID Hover;
+        public Speaker(string name, ZDOID id, ZDOID hover) { Name = name; CharacterId = id; Hover = hover; }
     }
 }

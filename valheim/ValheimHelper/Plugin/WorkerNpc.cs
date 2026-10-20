@@ -20,11 +20,71 @@ namespace ValheimHelper
 
         internal WorkerAI Ai;
 
+        public const string KeyInventory = "vh_inv";
+
         protected override void Awake()
         {
             base.Awake();
             Ai = GetComponent<WorkerAI>();
             All.Add(this);
+            if (m_nview.IsValid()) Workers.Know(m_nview.GetZDO().m_uid);
+            // 바닐라 몬스터는 소지품을 저장하지 않는다. 일꾼은 들고 있던 짐·도구를 ZDO에 저장해 둔다.
+            if (m_nview.IsValid() && m_nview.IsOwner())
+            {
+                byte[] data = m_nview.GetZDO().GetByteArray(KeyInventory);
+                if (data != null) m_inventory.Load(new ZPackage(data));
+            }
+            m_inventory.m_onChanged = (System.Action)System.Delegate.Combine(m_inventory.m_onChanged, new System.Action(SaveInventory));
+        }
+
+        void SaveInventory()
+        {
+            if (m_nview == null || !m_nview.IsValid() || !m_nview.IsOwner()) return;
+            var pkg = new ZPackage();
+            m_inventory.Save(pkg);
+            m_nview.GetZDO().Set(KeyInventory, pkg.GetArray());
+        }
+
+        /// <summary>운반 한도: 플레이어 기본값과 같은 300 (구상서 3장; 힘의 벨트는 ③에서).</summary>
+        public float MaxCarry => 300f;
+
+        /// <summary>그 종류의 도구 중 가장 좋은 것(도구 단계 → 해당 피해 순).</summary>
+        public static ItemDrop.ItemData BestTool(Inventory inv, ToolKind kind)
+        {
+            ItemDrop.ItemData best = null;
+            foreach (var it in inv.GetAllItems())
+            {
+                if (!IsTool(it, kind) || it.m_durability <= 0f && it.m_shared.m_useDurability) continue;
+                if (best == null || Score(it, kind) > Score(best, kind)) best = it;
+            }
+            return best;
+        }
+
+        public static bool IsTool(ItemDrop.ItemData it, ToolKind kind) =>
+            it.IsWeapon() && (kind == ToolKind.Axe ? it.m_shared.m_skillType == Skills.SkillType.Axes
+                            : kind == ToolKind.Pickaxe && it.m_shared.m_skillType == Skills.SkillType.Pickaxes);
+
+        static float Score(ItemDrop.ItemData it, ToolKind kind)
+        {
+            var d = it.GetDamage();
+            return it.m_shared.m_toolTier * 1000f + (kind == ToolKind.Axe ? d.m_chop : d.m_pickaxe);
+        }
+
+        /// <summary>도구를 손에 든다(이미 들고 있으면 그대로).</summary>
+        public bool HoldTool(ToolKind kind)
+        {
+            ItemDrop.ItemData cur = GetCurrentWeapon();
+            if (cur != null && IsTool(cur, kind) && !(cur.m_shared.m_useDurability && cur.m_durability <= 0f)) return true;
+            ItemDrop.ItemData best = BestTool(m_inventory, kind);
+            return best != null && EquipItem(best);
+        }
+
+        public int CountItem(string prefab)
+        {
+            int n = 0;
+            foreach (var it in m_inventory.GetAllItems())
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == prefab) n += it.m_stack;
+            return n;
         }
 
         // Humanoid.Start는 몬스터용 기본 장비를 준다. 장비는 상자에서 받으므로(4장) 하지 않는다.

@@ -30,6 +30,7 @@ namespace ValheimHelper
         {
             static void Prefix(ZNetScene __instance)
             {
+                ResourceCatalog.Reset(); // 새 월드: 자원 목록은 처음 쓸 때 다시 만든다
                 try
                 {
                     if (s_prefab == null) s_prefab = Build(__instance.m_prefabs.Find(p => p != null && p.name == "Player"));

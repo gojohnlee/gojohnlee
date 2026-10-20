@@ -19,7 +19,7 @@ namespace ValheimHelper
         static float s_autoWait;
         static Terminal s_terminal;
         static float s_startTime;
-        const float AutoTimeout = 300f;
+        const float AutoTimeout = 600f;
 
         static string PluginDir => Path.GetDirectoryName(Plugin.Instance.Info.Location);
 

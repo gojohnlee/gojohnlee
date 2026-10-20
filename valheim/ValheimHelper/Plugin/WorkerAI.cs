@@ -8,7 +8,11 @@ namespace ValheimHelper
     /// </summary>
     public class WorkerAI : BaseAI
     {
-        public enum Mode { Idle, Follow, Home }
+        public enum Mode { Idle, Follow, Home, Work }
+
+        /// <summary>Mode.Work일 때 하는 일.</summary>
+        public GatherJob Job { get; private set; }
+        float m_senseTimer;
 
         public Mode Current { get; private set; } = Mode.Idle;
         public string FollowName { get; private set; }
@@ -28,15 +32,30 @@ namespace ValheimHelper
             m_idleSoundChance = 0f;
         }
 
+        public void StartJob(GatherJob job)
+        {
+            Job = job;
+            Current = Mode.Work;
+        }
+
+        // GatherJob이 바닐라 BaseAI 이동·시선을 쓰게 열어 준다.
+        public bool MoveToPoint(float dt, Vector3 point, float dist, bool run) => MoveTo(dt, point, dist, run);
+        public void Face(Vector3 point) => LookAt(point);
+
         public void Follow(ZDOID target, string name)
         {
+            Job = null;
             m_follow = target;
             FollowName = name;
             Current = Mode.Follow;
         }
 
-        public void GoHome()
+        bool m_announceHome = true;
+
+        public void GoHome(bool announce = true)
         {
+            m_announceHome = announce;
+            Job = null;
             m_follow = ZDOID.None;
             Current = Mode.Home;
             m_stuckTimer = 0f;
@@ -46,8 +65,20 @@ namespace ValheimHelper
         {
             if (!base.UpdateAI(dt)) return false;
             var npc = (WorkerNpc)m_character;
+            m_senseTimer -= dt;
+            if (m_senseTimer <= 0f)
+            {
+                m_senseTimer = 2f;
+                Senses.Look(transform.position);
+            }
             switch (Current)
             {
+                case Mode.Work:
+                    if (Job == null || !Job.Update(dt))
+                    {
+                        GoHome(false);
+                    }
+                    break;
                 case Mode.Follow:
                 {
                     ZDO target = m_follow.IsNone() ? null : ZDOMan.instance.GetZDO(m_follow);
@@ -67,7 +98,7 @@ namespace ValheimHelper
                     {
                         StopMoving();
                         Current = Mode.Idle;
-                        npc.Say("home");
+                        if (m_announceHome) npc.Say("home");
                         break;
                     }
                     MoveTo(dt, home, 1.5f, d > 15f);

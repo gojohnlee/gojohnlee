@@ -42,7 +42,7 @@ public class SpeechTests
     [Fact]
     public void BothPersonalitiesHaveSameKeys()
     {
-        foreach (var key in new[] { "spawn", "escort", "stop", "home", "moveBase", "lost", "status", "notYet", "onlyBang", "state.idle", "state.follow", "state.home" })
+        foreach (var key in new[] { "spawn", "escort", "stop", "home", "moveBase", "lost", "status", "notYet", "onlyBang", "state.idle", "state.follow", "state.home", "state.work", "gatherStart", "gatherKnown", "gatherDone", "dropJob", "searching", "noTool", "toolTooWeak", "toolBroke", "notFound", "noChest", "chestFull", "chestBusy", "chestSet", "chestNone", "chestFar" })
         {
             Assert.True(Speech.Has(Personality.Scv, key), key);
             Assert.True(Speech.Has(Personality.Alarak, key), key);

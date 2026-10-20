@@ -7,9 +7,16 @@
   "진행 중" 항목부터 이어간다. 진행 중 항목은 git log로 마지막 커밋을 확인해서 다시 시작한다.
 
 진행 중
-- ② 단계 시작: 장비 상자(!상자 장비) → 도끼 장착 → 나무 찾기(본 것만 기억) → 베기·통나무 쪼개기 → 줍기 → 상자 넣기.
+- ② 단계 첫 조각 0.3.0 사용자 PC 시험 대기: 자동 시험 vh_npctest;vh_flagtest;vh_woodtest.
   0.2.0 결과: vh_npctest 12/12, vh_flagtest 8/8 PASS(piece_banner01 복제, 망치 목록·재료 나무 10, 깃발 A에 2명 등장, B로 15초 만에 이사).
-  ① 남은 작은 것(나중에): 알림 도배 방지 30초, 대사 파일 분리, 설정 이름 클라이언트 동기화(지금은 각자 설정값).
+  0.3.0: 나무 채집. Core/Work/Knowledge(구역별 본 자원·둘러봄, 텍스트 저장)·SearchPlan(거점 가까운 안 둘러본 밝혀진 구역).
+  Plugin/Work: ResourceCatalog(게임 프리팹에서 TreeBase/TreeLog/MineRock/MineRock5/Destructible → 도구·최소 단계·나오는 물건),
+  Senses(2초마다 40m 시야 → 지식, 구역 중심 12m면 둘러봄)·Brain(지식을 NPC ZDO vh_knowledge에 30초마다 저장),
+  Chests(!상자 지정: 말한 사람이 바라보는 상자 ZDOID를 VH_Chat에 같이 보냄, 깃발 20m 안만, 사용 중이면 기다림,
+  소유권 가져와 한 프레임에 읽고-고치고-저장), GatherJob(도구→찾기→다가가기→바닐라 StartAttack→안 닿으면 4번째부터 직접 피해
+  →줍기 ItemDrop.Pickup→귀환→상자 넣기, 시간 제한·건너뛰기). NPC 소지품 ZDO 저장(vh_inv). 도구 내구도는 직접 깎음
+  (바닐라 Attack은 플레이어 도구만 닳게 함). ② 지금은 도끼로 나오는 것만(곡괭이·돌·부싯돌은 다음 조각).
+  알려진 한계: 조사 붙이기(은/는) 안 함, NPC 스태미나 없음, 쓰러지는 나무에 NPC가 다칠 수 있음(③ 사망 처리 전).
 
 완료 기록
 - 2026-10-20: Core 프로젝트(valheim/ValheimHelper/Core, netstandard2.0) + Tests(xunit, net10.0) + CI(valheim-test.yml).

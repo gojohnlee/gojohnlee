@@ -77,6 +77,12 @@ namespace ValheimHelper
                         npc.Ai.GoHome();
                         npc.Say("stop");
                         break;
+                    case CommandKind.Item:
+                        StartGather(npc, cmd);
+                        break;
+                    case CommandKind.SetChest:
+                        SetChest(who, cmd, npc);
+                        return; // 한 번만 처리(장비 상자는 안에서 NPC별로)
                     case CommandKind.Status:
                         npc.Say("status", new Dictionary<string, string>
                         {
@@ -92,10 +98,51 @@ namespace ValheimHelper
             }
         }
 
+        static void StartGather(WorkerNpc npc, ChatCommand cmd)
+        {
+            ToolKind tool = ResourceCatalog.ToolFor(cmd.Item);
+            // ② 단계: 도끼로 나오는 것(나무 종류)만. 곡괭이는 다음 조각, 제작은 ⑥.
+            if (tool != ToolKind.Axe) { npc.Say("notYet"); return; }
+            var args = new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() };
+            if (npc.Ai.Current == WorkerAI.Mode.Work) npc.Say("dropJob", args);
+            npc.Ai.StartJob(new GatherJob(npc, cmd.Item, cmd.Amount, tool));
+            bool known = Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(npc.transform.position)).Count > 0;
+            npc.Say(known ? "gatherKnown" : "gatherStart", args);
+        }
+
+        /// <summary>!상자 &lt;종류&gt;: 말한 사람이 바라보는 상자를 지정한다. 거점 깃발 20m 안의 상자만.</summary>
+        static void SetChest(Speaker who, ChatCommand cmd, WorkerNpc speaker)
+        {
+            Container chest = Chests.FromId(who.Hover);
+            if (chest == null) { speaker.Say("chestNone"); return; }
+            if (Utils.DistanceXZ(chest.transform.position, speaker.Home) > Chests.BaseRange + 3f) { speaker.Say("chestFar"); return; }
+            ZDOID id = chest.GetComponent<ZNetView>().GetZDO().m_uid;
+            string label;
+            switch (cmd.Arg)
+            {
+                case "equipment":
+                    // 장비 상자는 각자: 이름을 말하면 그 NPC 것, 아니면 둘 다.
+                    foreach (var npc in WorkerNpc.All)
+                        if (cmd.Target == null || npc.NpcName == cmd.Target) Chests.Assign(Chests.KeyEquip((int)npc.Personality), id);
+                    label = cmd.Target != null ? cmd.Target + " 장비" : "장비";
+                    break;
+                case "food": Chests.Assign(Chests.KeyFood, id); label = "음식"; break;
+                case "seeds": Chests.Assign(Chests.KeySeeds, id); label = "씨앗"; break;
+                default: Chests.Assign(Chests.KeyItem(cmd.Item), id); label = GatherJob.ItemLabel(cmd.Item); break;
+            }
+            speaker.Say("chestSet", new Dictionary<string, string> { ["kind"] = label });
+        }
+
         static string State(WorkerNpc npc)
         {
             switch (npc.Ai.Current)
             {
+                case WorkerAI.Mode.Work:
+                    var job = npc.Ai.Job;
+                    return npc.Line("state.work", new Dictionary<string, string>
+                    {
+                        ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString(), ["done"] = job.Delivered.ToString(),
+                    });
                 case WorkerAI.Mode.Follow: return npc.Line("state.follow", new Dictionary<string, string> { ["player"] = npc.Ai.FollowName });
                 case WorkerAI.Mode.Home: return npc.Line("state.home");
                 default: return npc.Line("state.idle");
