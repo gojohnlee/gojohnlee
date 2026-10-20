@@ -39,6 +39,8 @@ namespace ValheimHelper
             bool god = player.InGodMode();
             player.SetGodMode(true);
             var spots = new List<Vector3>();
+            var rims = new float[Depths.Length]; // 파기 전 높이(되돌림 확인용; 원래 땅 WorldGenerator와는 곳에 따라 0.8m까지 다름)
+            var dug = new bool[Depths.Length];
             try
             {
                 GameObject pick = ObjectDB.instance.GetItemPrefab("PickaxeAntler");
@@ -84,6 +86,8 @@ namespace ValheimHelper
                     Vector3 spot = spots[i];
                     spot.y = TestTerrain.Height(spot);
                     float rim = spot.y;
+                    rims[i] = rim;
+                    dug[i] = true;
                     int n = 0;
                     var offsets = Narrow[i] ? new[] { Vector3.zero }
                         : new[] { Vector3.zero, Vector3.right * 1.2f, Vector3.left * 1.2f, Vector3.forward * 1.2f, Vector3.back * 1.2f };
@@ -153,8 +157,9 @@ namespace ValheimHelper
             foreach (var sp in spots) back += TestTerrain.Reset(sp, 9f);
             yield return new WaitForSeconds(0.5f);
             float worst = 0f;
-            foreach (var sp in spots) worst = Mathf.Max(worst, Mathf.Abs(TestTerrain.Height(sp) - WorldGenerator.instance.GetHeight(sp.x, sp.z)));
-            checks.Add($"시험 구덩이 되돌림(꼭짓점 {back}개, 원래 땅과 가장 큰 차 {worst:0.0}m)", back > 0 && worst < 0.5f);
+            for (int i = 0; i < spots.Count; i++)
+                if (dug[i]) worst = Mathf.Max(worst, Mathf.Abs(TestTerrain.Height(spots[i]) - rims[i]));
+            checks.Add($"시험 구덩이 되돌림(꼭짓점 {back}개, 파기 전과 가장 큰 차 {worst:0.0}m)", back > 0 && worst < 0.5f);
             Done(checks);
         }
 
