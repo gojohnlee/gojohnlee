@@ -4,14 +4,14 @@
 
 | 모드 | 경로 | 대상 버전 |
 |---|---|---|
-| Hello RimWorld (템플릿) | `rimworld/HelloRimWorld` | 1.6 |
+| Hello RimWorld (템플릿) | `rimworld/HelloRimWorld` | 1.7 |
 
 ### 빌드
 ```bash
-./scripts/setup-dotnet.sh   # .NET 8 SDK가 없을 때
+./scripts/setup-dotnet.sh   # .NET 10 SDK가 없을 때
 dotnet build rimworld/HelloRimWorld/Source/HelloRimWorld/HelloRimWorld.csproj -c Release
 ```
-결과 DLL은 `rimworld/HelloRimWorld/1.6/Assemblies/`에 생성됩니다.
+결과 DLL은 `rimworld/HelloRimWorld/1.7/Assemblies/`에 생성됩니다.
 push할 때마다 GitHub Actions가 빌드하고, 바로 넣을 수 있는 모드 폴더를 아티팩트로 올립니다.
 
 ### 설치 (PC)

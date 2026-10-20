@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AssemblyName>HelloRimWorld</AssemblyName>
     <RootNamespace>HelloRimWorld</RootNamespace>
-    <OutputPath>../../1.6/Assemblies/</OutputPath>
+    <OutputPath>../../1.7/Assemblies/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <DebugType>none</DebugType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 게임 DLL 참조용(컴파일 전용). 게임 버전에 맞춰 올리세요. -->
-    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4871" />
+    <!-- 게임 DLL 참조용(컴파일 전용). RimWorld 1.7은 .NET 10 기반. 버전 = 게임 빌드 번호(메인 메뉴 좌하단)에 맞추세요. -->
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.7.4982-unstable" />
     <!-- Harmony는 Harmony 모드가 런타임에 제공하므로 DLL을 복사하지 않음 -->
     <PackageReference Include="Lib.Harmony" Version="2.4.2" ExcludeAssets="runtime" />
   </ItemGroup>

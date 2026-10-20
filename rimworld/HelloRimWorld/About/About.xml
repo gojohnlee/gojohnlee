@@ -4,7 +4,7 @@
   <author>gojohnlee</author>
   <packageId>gojohnlee.hellorimworld</packageId>
   <supportedVersions>
-    <li>1.6</li>
+    <li>1.7</li>
   </supportedVersions>
   <description>첫 번째 림월드 모드 템플릿. 게임 로드가 끝나면 인사 메시지를 띄웁니다.</description>
   <modDependencies>
