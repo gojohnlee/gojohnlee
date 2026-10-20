@@ -40,7 +40,9 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
   최소화 시험: $env:VH_MIN='1' → autotest.txt "min" → 창 최소화(첫 시험 시작까지 계속 내림)·소리 끔·백그라운드 30fps.
   (사용자 요청: 시험 동안 로아를 함) ExploreTest에 물가 멈춤·긴 수영 없음 확인 추가.
   0.3.7 vh_exploretest PASS 15/15(최소화): 바다 앞 9m에서 멈춤(수영 0초), 북쪽 탐험 786m 5~7m/s, 연속 수영 0초.
-  다음: 기존 시험 4개(npc·flag·wood·stone) 회귀 확인 → ③ 단계.
+  회귀(최소화) PASS: npc 12/12, flag 8/8, wood 8/8(나무 56개 40초), stone 8/8(돌 12개 65초). 최소화 확인(스크립트가 먼저 내림).
+- ③ 시작(2026-10-20): Core Npc/Meals.cs(바닐라 음식 규칙, 테스트 7개). 다음: WorkerNpc 음식·갑옷(GetBodyArmor·ApplyArmorDamageMods),
+  출발 준비 Prep(장비 상자 → 무기·방패·갑옷·망토·벨트·체력 미드, 음식 상자 → 먹기, 음식 없으면 한 번 알림) → 사망(묘비·즉시 부활) → 위험 감지.
 - 0.3.5 PC 시험 PASS(2026-10-20): npc 12/12, flag 8/8, wood 15개 55초, stone 10개 40초, LogOutput.log 예외 0건.
   (기록) 줍기 NRE 수정 — ItemDrop.Pickup(Humanoid)의 소유권 대기(PickupUpdate)가 줍는 사람을 Player로 캐스팅해서
   NPC면 NullReferenceException(0.3.4 로그 5번). 이제 플레이어 자동 줍기와 같게: CanPickup이면 Humanoid.Pickup, 아니면 RequestOwn.
