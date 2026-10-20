@@ -8,7 +8,7 @@ namespace ValheimHelper.Core.Npc
 
     /// <summary>
     /// 상황별 대사 고르기. 원작 대사는 쓰지 않는다. 최근에 쓴 줄은 피한다 (10-1장).
-    /// 자리표시자: {player} {state} {hp} {max}.
+    /// 자리표시자: {player} {state} {hp} {max} …, 조사는 {item|는}처럼 쓴다(Josa).
     /// TODO: 대사가 늘면 코드 밖 텍스트 파일로 옮긴다 (12장).
     /// </summary>
     public sealed class Speech
@@ -34,7 +34,7 @@ namespace ValheimHelper.Core.Npc
                 ["gatherKnown"] = new[] { "{item}, 아는 데 있수다. 금방 다녀옵니다.", "{item} {n}? 거기 가면 있지. 갑니다요." },
                 ["gatherDone"] = new[] { "끝났수다. {item} {n}, 상자에 넣어 놨어요.", "{item} {n}개 상자에 넣었수다. 다음은요?" },
                 ["dropJob"] = new[] { "하던 건 접고 이거부터 합니다요." },
-                ["searching"] = new[] { "{item}요? 어디 있는지 모르는데... 찾아볼게요.", "{item}는 처음이라 좀 헤매겠수다." },
+                ["searching"] = new[] { "{item|요}? 어디 있는지 모르는데... 찾아볼게요.", "{item|는} 처음이라 좀 헤매겠수다." },
                 ["noTool"] = new[] { "연장이 없어요. 장비 상자에 하나 넣어 주쇼.", "맨손으로 하라고요? 연장 좀 주쇼." },
                 ["toolTooWeak"] = new[] { "이 연장으론 안 되는 놈이 있네. 더 좋은 거 있으면 주쇼." },
                 ["toolBroke"] = new[] { "아이고, 연장 나갔네. 예비 있으면 장비 상자에 넣어 주쇼." },
@@ -61,15 +61,15 @@ namespace ValheimHelper.Core.Npc
                 ["state.follow"] = new[] { "{player}의 뒤를 봐 주는 중" },
                 ["state.home"] = new[] { "돌아가는 중" },
                 ["state.work"] = new[] { "{item} 수집 중({done}/{n})" },
-                ["gatherStart"] = new[] { "{item} {n}이라. 쉬운 일이군.", "{item} {n}. 기다려라." },
-                ["gatherKnown"] = new[] { "{item}가 어디 있는지는 이미 안다. 곧 돌아오지." },
+                ["gatherStart"] = new[] { "{item} {n|이라}. 쉬운 일이군.", "{item} {n}. 기다려라." },
+                ["gatherKnown"] = new[] { "{item|이} 어디 있는지는 이미 안다. 곧 돌아오지." },
                 ["gatherDone"] = new[] { "끝났다. {item} {n}, 상자에 있다. 감사 인사는 필요 없다." },
                 ["dropJob"] = new[] { "하던 일은 버리지. 네 변덕에 맞춰 주마." },
                 ["searching"] = new[] { "{item} 따위 어디 있는지는 모르나, 곧 알게 되겠지." },
                 ["noTool"] = new[] { "연장도 없이 일을 시키나? 장비 상자에 넣어 둬라." },
                 ["toolTooWeak"] = new[] { "이 하찮은 연장으로는 안 되는 것이 있군. 더 나은 걸 가져와라." },
                 ["toolBroke"] = new[] { "연장이 부서졌다. 이런 조잡한 걸 줬으니 당연하지." },
-                ["notFound"] = new[] { "{item}는 이 근방에 없다. 어디 있는지 알면 말해라." },
+                ["notFound"] = new[] { "{item|은} 이 근방에 없다. 어디 있는지 알면 말해라." },
                 ["noChest"] = new[] { "넣을 상자가 없군. 깃발 곁에 하나 놓아라." },
                 ["chestFull"] = new[] { "상자가 가득 찼다. 나머지는 내가 들고 있지." },
                 ["chestBusy"] = new[] { "누가 상자를 붙잡고 있군. 나중에 넣겠다." },
@@ -102,7 +102,26 @@ namespace ValheimHelper.Core.Npc
             }
             _last[memo] = line;
             if (args != null)
-                foreach (var kv in args) line = line.Replace("{" + kv.Key + "}", kv.Value);
+                foreach (var kv in args)
+                {
+                    line = WithJosa(line, kv.Key, kv.Value);
+                    line = line.Replace("{" + kv.Key + "}", kv.Value);
+                }
+            return line;
+        }
+
+        /// <summary>"{key|는}" → 값 + 받침에 맞는 조사.</summary>
+        static string WithJosa(string line, string key, string value)
+        {
+            string open = "{" + key + "|";
+            int i;
+            while ((i = line.IndexOf(open, StringComparison.Ordinal)) >= 0)
+            {
+                int end = line.IndexOf('}', i);
+                if (end < 0) break;
+                string josa = line.Substring(i + open.Length, end - i - open.Length);
+                line = line.Substring(0, i) + value + Josa.For(value, josa) + line.Substring(end + 1);
+            }
             return line;
         }
     }

@@ -27,6 +27,19 @@ namespace ValheimHelper.Core.Work
         /// <summary>구역을 직접 둘러봤는지(다시 뒤지지 않는다, 구상서 8-2장).</summary>
         public bool Looked;
         public double SeenAt;
+        /// <summary>가 본 바이옴(게임 Heightmap.Biome 값). 0 = 모름.</summary>
+        public int Biome;
+    }
+
+    /// <summary>!지식 대답용: 물건 하나에 대해 아는 것.</summary>
+    public sealed class ItemKnowledge
+    {
+        public string Item;
+        /// <summary>있다고 기억하는 구역 수.</summary>
+        public int Zones;
+        public ZoneXY Nearest;
+        /// <summary>본 바이옴들(비트 합).</summary>
+        public int Biomes;
     }
 
     /// <summary>
@@ -84,6 +97,53 @@ namespace ValheimHelper.Core.Work
 
         public bool IsLooked(ZoneXY z) => _zones.TryGetValue(z, out var m) && m.Looked;
 
+        public int LookedCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var m in _zones.Values) if (m.Looked) n++;
+                return n;
+            }
+        }
+
+        /// <summary>그 구역에 가 봐서 바이옴을 안다.</summary>
+        public void SetBiome(ZoneXY z, int biome)
+        {
+            if (biome == 0) return;
+            var m = GetOrAdd(z);
+            if (m.Biome != biome) { m.Biome = biome; Dirty = true; }
+        }
+
+        public int BiomeOf(ZoneXY z) => _zones.TryGetValue(z, out var m) ? m.Biome : 0;
+
+        /// <summary>그 물건을 본 바이옴들(비트 합). "구리는 검은 숲".</summary>
+        public int BiomesOf(string item)
+        {
+            int mask = 0;
+            foreach (var m in _zones.Values)
+                if (m.Items.TryGetValue(item, out int n) && n > 0) mask |= m.Biome;
+            return mask;
+        }
+
+        /// <summary>아는 물건들: 구역 수 많은 순, from에서 가장 가까운 구역과 바이옴.</summary>
+        public List<ItemKnowledge> Summary(ZoneXY from)
+        {
+            var map = new Dictionary<string, ItemKnowledge>();
+            foreach (var m in _zones.Values)
+                foreach (var kv in m.Items)
+                {
+                    if (kv.Value <= 0) continue;
+                    if (!map.TryGetValue(kv.Key, out var ik)) map[kv.Key] = ik = new ItemKnowledge { Item = kv.Key, Nearest = m.Zone };
+                    else if (m.Zone.DistSq(from) < ik.Nearest.DistSq(from)) ik.Nearest = m.Zone;
+                    ik.Zones++;
+                    ik.Biomes |= m.Biome;
+                }
+            var list = new List<ItemKnowledge>(map.Values);
+            list.Sort((a, b) => a.Zones != b.Zones ? b.Zones.CompareTo(a.Zones) : string.CompareOrdinal(a.Item, b.Item));
+            return list;
+        }
+
         /// <summary>그 물건이 있다고 기억하는 구역들, from에서 가까운 순.</summary>
         public List<ZoneMemory> ZonesWith(string item, ZoneXY from)
         {
@@ -108,7 +168,7 @@ namespace ValheimHelper.Core.Work
             foreach (var m in _zones.Values)
             {
                 sb.Append(m.Zone.X).Append(',').Append(m.Zone.Y).Append(',').Append(m.Looked ? '1' : '0').Append(',')
-                  .Append(m.SeenAt.ToString("0", CultureInfo.InvariantCulture));
+                  .Append(m.SeenAt.ToString("0", CultureInfo.InvariantCulture)).Append(',').Append(m.Biome);
                 foreach (var kv in m.Items) sb.Append(';').Append(kv.Key).Append('=').Append(kv.Value);
                 sb.Append('\n');
             }
@@ -130,6 +190,7 @@ namespace ValheimHelper.Core.Work
                 var m = k.GetOrAdd(new ZoneXY(x, y));
                 m.Looked = head[2] == "1";
                 double.TryParse(head[3], NumberStyles.Float, CultureInfo.InvariantCulture, out m.SeenAt);
+                if (head.Length >= 5) int.TryParse(head[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out m.Biome); // 0.3.6부터
                 for (int i = 1; i < parts.Length; i++)
                 {
                     int eq = parts[i].LastIndexOf('=');

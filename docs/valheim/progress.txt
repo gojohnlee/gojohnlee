@@ -16,7 +16,9 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 4. 빌드: Git Bash에서 ./scripts/valheim-build.sh (빌드 + 게임 Mono에 없는 참조 검사 + valheim/dist 복사).
    Core 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx
 5. 게임 시험(손 안 댐): PowerShell에서
-   $env:VH_DLL="<저장소>\valheim\ValheimHelper\Plugin\bin\Release\ValheimHelper.dll"; powershell -ExecutionPolicy Bypass -File scripts\valheim-test.ps1
+   $env:VH_DLL="<저장소>\valheim\ValheimHelper\Plugin\bin\Release\ValheimHelper.dll"; $s=[IO.File]::ReadAllText("<저장소>\scripts\valheim-test.ps1",[Text.Encoding]::UTF8); & ([scriptblock]::Create($s))
+   (-File로 돌리면 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨려 구문 오류. ilspycmd 없으면 dotnet tool install -g ilspycmd.
+    이 PC에는 파이썬이 없다(python은 스토어 바로가기) → 파일 수정은 Edit 도구로. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    → 설치 → Steam으로 실행(인자 없음) → 인트로 건너뜀 → te4st41 자동 입장 → 시험 차례로 → 2초 뒤 자동 종료 → 결과 출력.
    시험 고르기: $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본), vh_fartest도 있음. 월드: $env:VH_WORLD.
    결과 파일: <게임>\BepInEx\plugins\ValheimHelper\diag.txt, 오류는 <게임>\BepInEx\LogOutput.log.
@@ -24,9 +26,12 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 6. dist DLL도 커밋한다(방식 A 한 줄 명령이 raw.githubusercontent의 valheim/dist를 받음).
 
 진행 중
-- 0.3.5 빌드됨(게임 시험 전): 줍기 NRE 수정 — ItemDrop.Pickup(Humanoid)의 소유권 대기(PickupUpdate)가 줍는 사람을 Player로 캐스팅해서
+- 0.3.6 작업 중: ② 남은 것. Core 완료(테스트 153): 조사 Josa("{item|는}"), 지식에 구역 바이옴·요약(Summary), ExplorePlan(지도 경계),
+  Compass(8방위), BiomeNames. 다음: 플러그인 — Senses가 바이옴 기록·NPC 주변 지도 밝히기(Minimap.Explore 비공개),
+  GatherJob 탐험 단계(찾기 15분 → 새 땅 30분, 밤이면 귀환), ExploreJob(!탐험 방향/바이옴), !지식·!기억 대답, 대사, 시험(vh_exploretest).
+- 0.3.5 PC 시험 PASS(2026-10-20): npc 12/12, flag 8/8, wood 15개 55초, stone 10개 40초, LogOutput.log 예외 0건.
+  (기록) 줍기 NRE 수정 — ItemDrop.Pickup(Humanoid)의 소유권 대기(PickupUpdate)가 줍는 사람을 Player로 캐스팅해서
   NPC면 NullReferenceException(0.3.4 로그 5번). 이제 플레이어 자동 줍기와 같게: CanPickup이면 Humanoid.Pickup, 아니면 RequestOwn.
-  첫 일: 시험 4개 돌려서 PASS와 LogOutput.log에 NullReferenceException이 없는지 확인.
 - [사용자와 같이] 거점 깃발이 작고 땅에 파묻혀 보임(piece_banner01은 벽걸이라 기준점이 위쪽인 듯). 기능은 PASS.
   후보: 서 있는 기둥(wood_pole2 등)+배너, piece_maypole. 사용자: "다음 번에 같이 작업".
 - 그대로 둠(사용자 결정): NPC가 플레이어를 밀침 — 소환한 해골도 똑같이 밀어서 바닐라 충돌로 봄.
