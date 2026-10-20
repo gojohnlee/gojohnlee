@@ -11,7 +11,7 @@ namespace ValheimHelper.Core.Npc
         {
             new[] { "은", "는" }, new[] { "이", "가" }, new[] { "을", "를" }, new[] { "과", "와" },
             new[] { "이요", "요" }, new[] { "이라", "라" }, new[] { "이나", "나" }, new[] { "이야", "야" },
-            new[] { "으로", "로" },
+            new[] { "으로", "로" }, new[] { "이랑", "랑" },
         };
 
         /// <summary>word 뒤에 붙일 조사. 모르는 조사면 그대로.</summary>

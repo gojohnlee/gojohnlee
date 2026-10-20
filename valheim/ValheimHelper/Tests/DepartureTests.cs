@@ -244,7 +244,7 @@ public class DepartureSpeechTests
         "memory", "depart.warn", "depart.hungry", "depart.far", "depart.trips", "depart.lowSkill", "depart.busy", "depart.together", "depart.outOfScope",
         "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "ask.night", "ask.stock", "note.stock", "note.night",
         "answer.grumble", "answer.escort", "answer.alternative", "answer.conditionMet", "answer.conditionMissing", "answer.morning",
-        "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone",
+        "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone", "craft.plan", "craft.inStock", "craft.missing", "craft.tooLong", "craft.unknown",
     };
 
     [Fact]
@@ -267,5 +267,15 @@ public class DepartureSpeechTests
             string k = "ask." + char.ToLowerInvariant(q.ToString()[0]) + q.ToString().Substring(1);
             Assert.True(Speech.Has(Personality.Scv, k), k);
         }
+    }
+}
+
+public class JosaRangTests
+{
+    [Fact]
+    public void Rang()
+    {
+        Assert.Equal("이랑", Josa.For("구리 광석", "이랑"));
+        Assert.Equal("랑", Josa.For("나무", "이랑"));
     }
 }

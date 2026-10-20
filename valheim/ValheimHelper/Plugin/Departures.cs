@@ -49,7 +49,7 @@ namespace ValheimHelper
         public static void Gather(Speaker who, ChatCommand cmd, WorkerNpc npc, bool fromQueue = false)
         {
             HashSet<ToolKind> ways = ResourceCatalog.WaysFor(cmd.Item);
-            if (ways.Count == 0) { npc.Say("notYet"); return; } // 가공·제작은 ⑥
+            if (ways.Count == 0) { Craft(npc, cmd); return; }
             s_pending.Remove(npc);
             DepartureInput input = Input(npc, cmd, ways, fromQueue);
             DepartureResult r = Departure.Judge(input);
@@ -206,6 +206,54 @@ namespace ValheimHelper
             if (env == null) return float.PositiveInfinity;
             if (EnvMan.IsNight()) return 0f;
             return Mathf.Max(0f, (0.75f - env.GetDayFraction()) * env.m_dayLengthSec);
+        }
+
+        // ---- 제작 계획 (설계 C, ⑥ 실행기 전까지는 계획만 말한다) ----
+
+        static void Craft(WorkerNpc npc, ChatCommand cmd)
+        {
+            RecipeBook book = Recipes.Book();
+            if (book.RecipesFor(cmd.Item).Count == 0 && book.ProcessesFor(cmd.Item).Count == 0) { npc.Say("notYet"); return; }
+            Vector3 home = npc.Home;
+            var stock = new Dictionary<string, int>();
+            foreach (var c in Chests.NearBase(home))
+                foreach (var it in c.GetInventory().GetAllItems())
+                {
+                    if (it.m_dropPrefab == null) continue;
+                    string key = Utils.GetPrefabName(it.m_dropPrefab);
+                    stock.TryGetValue(key, out int n);
+                    stock[key] = n + it.m_stack;
+                }
+            ZoneXY homeZone = Senses.ZoneOf(home);
+            var planner = new CraftPlanner(book, Recipes.At(home), (item, n) =>
+            {
+                var zones = Brain.Get().ZonesWith(item, homeZone);
+                if (zones.Count == 0) return float.NaN; // 어디 있는지 모름: 찾기 상한으로 셈
+                float dist = Utils.DistanceXZ(home, Senses.ZoneCenter(zones[0].Zone));
+                return dist * 2f / Departure.WalkSpeed + n * 4f;
+            });
+            Plan plan = planner.Expand(cmd.Item, cmd.Amount, stock);
+            var args = new Dictionary<string, string>
+            {
+                ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString(),
+            };
+            Plugin.Log.LogInfo($"{npc.NpcName} 제작 계획 {cmd.Item} {cmd.Amount}: 단계 {plan.Steps.Count}, {plan.Seconds:0}초, 모을 것 [" +
+                string.Join(", ", new List<string>(Keys(plan.Gathers)).ToArray()) + $"], 없는 설비 [{string.Join(", ", plan.MissingStations.ToArray())}], " +
+                $"범위 밖 [{string.Join(", ", plan.OutOfScope.ToArray())}], 모름 [{string.Join(", ", plan.Unknown.ToArray())}]");
+            if (plan.OutOfScope.Count > 0) { npc.Say("depart.outOfScope", args); return; }
+            if (plan.Steps.Count == 0 && !plan.Partial) { npc.Say("craft.inStock", args); return; }
+            if (plan.MissingStations.Count > 0) { args["station"] = Recipes.StationName(plan.MissingStations[0]); npc.Say("craft.missing", args); return; }
+            if (plan.Unknown.Count > 0) { args["what"] = GatherJob.ItemLabel(plan.Unknown[0]); npc.Say("craft.unknown", args); return; }
+            if (plan.TooLong) { npc.Say("craft.tooLong", args); return; }
+            var shortNames = new List<string>();
+            foreach (var s in plan.Short) shortNames.Add(GatherJob.ItemLabel(s));
+            args["short"] = shortNames.Count == 2 ? shortNames[0] + Josa.For(shortNames[0], "이랑") + " " + shortNames[1] : shortNames.Count == 1 ? shortNames[0] : args["item"];
+            npc.Say("craft.plan", args);
+        }
+
+        static IEnumerable<string> Keys(Dictionary<string, int> d)
+        {
+            foreach (var kv in d) yield return kv.Key + " " + kv.Value;
         }
 
         // ---- 대답 받기 (설계 B-7) ----
