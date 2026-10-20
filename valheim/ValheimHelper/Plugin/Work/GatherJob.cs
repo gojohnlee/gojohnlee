@@ -438,7 +438,7 @@ namespace ValheimHelper
                 return true;
             }
             if (Walk(dt, drop.transform.position, 1.2f) || Utils.DistanceXZ(drop.transform.position, m_npc.transform.position) < 1.6f)
-                drop.Pickup(m_npc);
+                Pick(drop);
             return true;
         }
 
@@ -454,8 +454,18 @@ namespace ValheimHelper
             for (int i = 0; i < n; i++)
             {
                 ItemDrop drop = s_pickBuf[i] != null ? s_pickBuf[i].GetComponentInParent<ItemDrop>() : null;
-                if (drop != null && Utils.GetPrefabName(drop.gameObject) == Item) drop.Pickup(m_npc);
+                if (drop != null && Utils.GetPrefabName(drop.gameObject) == Item) Pick(drop);
             }
+        }
+
+        /// <summary>
+        /// 플레이어 자동 줍기와 같은 순서: 내 것이면 줍고, 아니면 소유권을 요청하고 다음에 다시.
+        /// ItemDrop.Pickup(Humanoid)은 소유권을 기다리는 동안 줍는 사람을 Player로 가정해서 NPC면 오류가 났다(0.3.4).
+        /// </summary>
+        void Pick(ItemDrop drop)
+        {
+            if (drop.CanPickup()) m_npc.Pickup(drop.gameObject);
+            else drop.RequestOwn();
         }
 
         ItemDrop NearestDrop()

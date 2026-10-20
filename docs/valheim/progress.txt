@@ -1,17 +1,45 @@
 발헤임 일꾼 NPC — 진행 상황 (세션이 끊겨도 여기서 이어간다)
 
 작업 규칙
-- 한도로 언제든 끊길 수 있다. 15분마다(그 사이 빌드·테스트가 통과하면 그때도) 커밋·푸시하고
-  이 파일을 갱신한다.
-- 새 세션: valheim 브랜치로 바꾼 뒤 이 파일 → CLAUDE.md 발헤임 섹션 → 구상서 순서로 읽고
-  "진행 중" 항목부터 이어간다. 진행 중 항목은 git log로 마지막 커밋을 확인해서 다시 시작한다.
+- 한도로 언제든 끊길 수 있다. 15분마다(그 사이 빌드·테스트가 통과하면 그때도) 커밋·푸시하고 이 파일을 갱신한다.
+- 새 세션: 이 파일 → CLAUDE.md 발헤임 섹션 → 구상서(docs/valheim/concept-v1.txt) 순서로 읽고 "진행 중"부터 이어간다.
+
+======================================================================
+PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 세션 컨텍스트가 차서 사용자 PC의 Claude Code로 넘어감
+======================================================================
+이 세션은 사용자 PC(Windows, 게임 설치됨, 호스트)에서 돈다. 사용자 손을 빌리지 않고 직접 빌드·실행·확인한다.
+1. 저장소: git checkout valheim (발헤임 작업은 이 브랜치에만, 푸시도 valheim으로 — 사용자 승인).
+2. 도구 확인: git, dotnet(.NET SDK 10), ilspycmd(dotnet tool install -g ilspycmd). 없으면 사용자에게 설치를 부탁(winget).
+3. 게임 DLL: 비공개 저장소 필요 없음. 게임 폴더 C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed
+   (csproj가 자동으로 찾음. 다른 라이브러리면 dotnet build ... -p:ValheimRefs=<Managed 폴더>).
+   게임 코드 읽기: ilspycmd -p -o <임시폴더> "<Managed>\assembly_valheim.dll" (결과는 저장소에 올리지 않음).
+4. 빌드: Git Bash에서 ./scripts/valheim-build.sh (빌드 + 게임 Mono에 없는 참조 검사 + valheim/dist 복사).
+   Core 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx
+5. 게임 시험(손 안 댐): PowerShell에서
+   $env:VH_DLL="<저장소>\valheim\ValheimHelper\Plugin\bin\Release\ValheimHelper.dll"; powershell -ExecutionPolicy Bypass -File scripts\valheim-test.ps1
+   → 설치 → Steam으로 실행(인자 없음) → 인트로 건너뜀 → te4st41 자동 입장 → 시험 차례로 → 2초 뒤 자동 종료 → 결과 출력.
+   시험 고르기: $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본), vh_fartest도 있음. 월드: $env:VH_WORLD.
+   결과 파일: <게임>\BepInEx\plugins\ValheimHelper\diag.txt, 오류는 <게임>\BepInEx\LogOutput.log.
+   게임은 사용자 PC 화면에서 켜진다 — 사용자가 PC를 쓰고 있지 않을 때 돌린다(시작 전에 한 번 물어본다).
+6. dist DLL도 커밋한다(방식 A 한 줄 명령이 raw.githubusercontent의 valheim/dist를 받음).
 
 진행 중
-- [다음에 사용자와 같이] 거점 깃발이 게임에서 안 보임(다시 접속해도 안 보임). 기능(ZDO·NPC 등장·이사)은 시험 PASS.
-  사용자 확인(0.3.1): 깃발은 아주 작고 땅에 파묻혀 있음 → piece_banner01은 벽걸이라 기준점이 위쪽인 듯.
-  후보: 서 있는 기둥(wood_pole2 등) + 배너, 또는 piece_maypole. 사용자 요청: 지금은 손대지 말고 다음 번에 같이 작업.
-- 진행률(2026-10-20 기준 사용자에게 안내): 모드 코드 약 3,600줄(게임 안 시험 코드 700줄 포함) / 예상 1.3만~2만 줄 → 약 15%.
-  단계로는 ① 완료(깃발 겉모습 빼고), ② 대부분, ③~⑮ 미착수. PC 시험 7번 / 예상 40~70번.
+- 0.3.5 빌드됨(게임 시험 전): 줍기 NRE 수정 — ItemDrop.Pickup(Humanoid)의 소유권 대기(PickupUpdate)가 줍는 사람을 Player로 캐스팅해서
+  NPC면 NullReferenceException(0.3.4 로그 5번). 이제 플레이어 자동 줍기와 같게: CanPickup이면 Humanoid.Pickup, 아니면 RequestOwn.
+  첫 일: 시험 4개 돌려서 PASS와 LogOutput.log에 NullReferenceException이 없는지 확인.
+- [사용자와 같이] 거점 깃발이 작고 땅에 파묻혀 보임(piece_banner01은 벽걸이라 기준점이 위쪽인 듯). 기능은 PASS.
+  후보: 서 있는 기둥(wood_pole2 등)+배너, piece_maypole. 사용자: "다음 번에 같이 작업".
+- 그대로 둠(사용자 결정): NPC가 플레이어를 밀침 — 소환한 해골도 똑같이 밀어서 바닐라 충돌로 봄.
+- 다음 단계: ③ 장비·음식, 위험 감지(전투·후퇴·깊은 물), 사망·부활(묘비 + 거점 즉시 부활, 스킬 유지). 구상서 3, 4, 8, 9장.
+  ③ 들어가기 전 남은 ② 작은 것: !지식/!기억 명령, 가르쳐 주기(채팅·핑, Claude 연동과 같이), 새 땅 탐험(밝혀진 곳 밖), 조사(은/는).
+- 진행률(사용자 안내): 코드 약 3,900줄(시험 코드 포함) / 예상 1.3만~2만 → 약 15~20%. ① 완료(깃발 겉모습 빼고), ② 대부분, ③~⑮ 미착수.
+
+사용자 피드백 모음(지금까지)
+- 시험은 손이 안 가게(자동 입장·인트로 없음·경고창 없음·2초 종료·시작 3초). 줍는 속도 "아주 만족".
+- 이상 동작은 사용자가 화면으로 보고 알려 줌 → 고칠 때 원인을 게임 코드로 확인하고 대응.
+
+최근 시험 기록
+  0.3.4 결과: 4개 모두 PASS(npc 12/12, flag 8/8, wood 10개 30초, stone 11개 40초), 경고창·인트로 없이 자동 입장. 로그에 NRE 5번(위 0.3.5에서 수정).
 - ② 단계 0.3.4 사용자 PC 시험 대기(시험 4개 + 월드 자동 입장).
   0.3.3 결과: 4개 모두 PASS(npc 12/12, flag 8/8, wood 10개 25초, stone 16개 55초), 월드 자동 입장 동작. 사용자: 줍기 정상이나 느림.
   사용자 요청(방식 A 유지 = 한 줄 붙여넣기): 인트로 때문에 클릭 필요 → 자동 시험 때만 PlatformPrefs SkipIntroCinematic 가로채기,
@@ -70,20 +98,7 @@
   알려진 한계: NPC가 죽으면 바닐라 몬스터처럼 사라짐(③에서 묘비·부활), 세계 난이도 설정이 몬스터처럼 NPC에도 적용될 수 있음, PvP 켠 플레이어는 NPC를 때릴 수 있음.
 - 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx
 
-다음 세션 시작 순서 ("발헤임 구현 시작"이라고 하면)
-1. git fetch origin valheim && git checkout valheim  (발헤임 작업은 이 브랜치에만 푸시. 사용자 승인됨)
-2. ./scripts/valheim-refs.sh <스크래치 폴더>  → 공개 참조 DLL·Jötunn API 이름 목록 생성(함수 내용은 없음)
-3. (완료: 게임 1.0.20) add_repo(gojohnlee/valheim-refs) → git clone --depth 1 https://github.com/gojohnlee/valheim-refs /home/user/valheim-refs.
-   게임이 업데이트되면 아래 방법으로 DLL을 다시 받는다.
-   최신 게임 DLL을 비공개 저장소로 받기. 대화에 이렇게 안내:
-   ① GitHub에서 New repository → 이름 valheim-refs → Private 선택 → 만들기
-   ② "uploading an existing file" 눌러 아래 파일 올리기
-      C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll
-      (같은 폴더의 assembly_utils.dll, assembly_guiutils.dll도 함께)
-   ③ 올렸다고 말해 주면 add_repo(gojohnlee/valheim-refs)로 붙여서 실제 코드를 읽는다.
-   게임 버전(메인 메뉴 오른쪽 아래 숫자)도 같이 받는다.
-4. (완료) 보조 에이전트 vh-standard·vh-simple.
-5. 이 대화는 지워짐. 결정 사항은 전부 CLAUDE.md 발헤임 섹션과 docs/valheim/concept-v1.txt에 있다.
+클라우드 세션(예전 방식) 참고: 게임 DLL은 비공개 저장소 gojohnlee/valheim-refs를 add_repo → /home/user/valheim-refs에 clone.
 
 다음 할 일
 - [x] 최신 assembly_valheim.dll 받기(게임 1.0.20)

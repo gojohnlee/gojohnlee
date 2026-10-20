@@ -1,6 +1,8 @@
 # 발헤임 모드 자동 설치 + 실행 + 결과 수집 (Windows PowerShell)
 # 사용법 (PowerShell에 한 줄 붙여넣기):
 #   irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
+# PC의 Claude Code 세션: $env:VH_DLL='<빌드한 ValheimHelper.dll>'; powershell -ExecutionPolicy Bypass -File scripts\valheim-test.ps1
+#   (결과는 화면과 클립보드, 그리고 <게임>\BepInEx\plugins\ValheimHelper\diag.txt)
 $ErrorActionPreference = 'Stop'
 $Raw   = 'https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim'
 $AppId = 892970
@@ -39,7 +41,8 @@ if (-not (Test-Path (Join-Path $game 'BepInEx\core\BepInEx.dll'))) {
 $plugin = Join-Path $game 'BepInEx\plugins\ValheimHelper'
 New-Item -ItemType Directory $plugin -Force | Out-Null
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
-Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll"
+if ($env:VH_DLL) { Copy-Item $env:VH_DLL "$plugin\ValheimHelper.dll" -Force }   # PC 세션: 방금 빌드한 DLL
+else { Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll" }
 $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로)
 $World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
 Set-Content "$plugin\autotest.txt" "world=$World;$Test"   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다

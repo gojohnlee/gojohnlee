@@ -10,6 +10,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
+    <!-- 게임 DLL 위치: PC(Windows)면 설치된 게임 폴더, 클라우드면 비공개 저장소를 받아 둔 곳. -p:ValheimRefs=<폴더>로 바꿀 수 있다. -->
+    <ValheimRefs Condition="'$(ValheimRefs)' == '' and Exists('C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll')">C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed</ValheimRefs>
     <ValheimRefs Condition="'$(ValheimRefs)' == ''">/home/user/valheim-refs</ValheimRefs>
   </PropertyGroup>
   <ItemGroup>

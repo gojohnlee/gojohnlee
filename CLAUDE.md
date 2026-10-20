@@ -39,15 +39,15 @@
 # 발헤임 일꾼 NPC (2026-10-20, 구현 시작 — 상태는 docs/valheim/progress.txt)
 
 - 이 브랜치(`valheim`)에서만 작업한다. 림월드 기본 브랜치에는 안내 한 줄만 둔다.
-- 새 세션 시작: `docs/valheim/progress.txt`의 "다음 세션 시작 순서"대로 한다. 발헤임 작업은 세션 작업 브랜치와 별개로 `valheim` 브랜치에 푸시한다(사용자 승인, 2026-10-20). 이전 대화(구상 세션)는 지워짐.
+- 새 세션 시작: `docs/valheim/progress.txt`의 "PC 세션(방식 B) 시작 순서"대로 한다(2026-10-20부터 사용자 PC의 Claude Code에서 작업: 직접 빌드·게임 실행·결과 확인). 발헤임 작업은 세션 작업 브랜치와 별개로 `valheim` 브랜치에 푸시한다(사용자 승인, 2026-10-20). 이전 대화(구상 세션)는 지워짐.
 - 구상서: `docs/valheim/concept-v1.txt` ([확정]/[기본안]/[미확정] 표기). 사용자가 구상을 한 번에 정하길 원함.
 - 목표: 친구들과 같은 사설 서버에서 동시에 플레이. 게임 채팅 3단계(`!목재 50` 정해진 명령 → 모드, `!목재 50개 내놔` → Haiku, `야 목재 50개 가져와` → Sonnet) → NPC "Claude"가 실제로 걸어가 채집(바닐라 규칙) → 지정 상자 → 채팅·말풍선 알림. 상자에 바로 넣기는 치트라 거부됨.
 - 확정: 사용자 PC가 호스트(서버 켜지면 PC 항상 켜짐), 친구 모두 스팀 PC·모드 설치 동의, 명령은 게임 채팅(음성은 나중), 철(늪 지하묘지)까지 포함, 위험 감지는 NPC 스스로, 장비는 플레이어가 상자에 넣어 지급, 사망 = 묘비 + 거점 즉시 부활, 세계 설정 TeleportAll(포탈로 광석 이동) 켬.
 - 비용 0 원칙: 유료 API 없음. 위험 판단·이동·전투는 규칙 코드. 명령 해석은 3단계 확정(Opus 안 씀): 정해진 "!" 명령은 모드, 나머지 "!" 문장은 Haiku, "!" 없는 채팅은 Sonnet. 호스트 PC의 Claude Code(Pro 로그인, 최신 설치됨, 도구 끔, JSON 결과를 모드가 검증)로 부른다. 구상서 5-1장.
-- PC 시험 방식(사용자 확정, 2026-10-20): A = 한 줄 붙여넣기(`irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex`) → 결과 붙여넣기. 사용자 손이 가지 않게: 월드 자동 입장(te4st41), 인트로 건너뜀, Steam 실행 인자 경고 없음, 끝나면 2초 뒤 자동 종료, 자동 시험 시작 3초.
-- 게임 DLL: 비공개 저장소 gojohnlee/valheim-refs(게임 1.0.20) → add_repo 후 /home/user/valheim-refs에 clone, ilspycmd로 디컴파일해 읽는다(저장소에 올리지 않음).
+- PC 시험 방식: 2026-10-20 B로 전환(PC 세션이 scripts/valheim-test.ps1을 $env:VH_DLL과 함께 직접 실행). 예전 A = 한 줄 붙여넣기(`irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex`) → 결과 붙여넣기. 사용자 손이 가지 않게: 월드 자동 입장(te4st41), 인트로 건너뜀, Steam 실행 인자 경고 없음, 끝나면 2초 뒤 자동 종료, 자동 시험 시작 3초.
+- 게임 DLL: PC 세션은 설치된 게임의 valheim_Data\Managed를 바로 쓴다(csproj 자동). 클라우드 세션이면 비공개 저장소 gojohnlee/valheim-refs(게임 1.0.20) → add_repo 후 /home/user/valheim-refs에 clone. 어느 쪽이든 ilspycmd로 디컴파일해 읽는다(저장소에 올리지 않음).
 - (구) 빌드 참조: NuGet `ValheimGameLibs`(0.221.4, 이름만 있고 함수 내용은 비어 있음). 게임 파일은 저장소에 올리지 않는다. Steam 직접 다운로드는 이 환경 보안 검사에서 막힘. 저장소 전체 비공개 전환 금지(림월드 테스트 한 줄 명령이 raw.githubusercontent HEAD를 씀). 실제 게임 코드가 필요하면 별도 비공개 저장소로 사용자에게 assembly_valheim.dll을 받는다.
-- 핵심 기술 위험: NPC가 플레이어와 멀리 떨어지면 구역이 멈춤 → 호스트가 NPC 위치로 구역 생성·실행(ZoneSystem.CreateLocalZones, ZNetScene.InActiveArea 후보). 실제 코드 확인 전. 사용자 승인: NPC 주변 구역 유지 OK(호스트 RTX 4090, 7800X3D, 64GB).
+- 핵심 기술 위험: NPC가 플레이어와 멀리 떨어지면 구역이 멈춤 → 호스트가 NPC 위치로 구역 생성·실행(ZoneSystem.CreateLocalZones, ZNetScene.InActiveArea 후보). → 해결: 게임 1.0.20에서 시험 PASS(Plugin/FarZones.cs). 사용자 승인: NPC 주변 구역 유지 OK(호스트 RTX 4090, 7800X3D, 64GB).
 - 게임은 항상 최신 버전(참조 패키지가 뒤처질 수 있음 → 구현 때 비교). NPC 음식·습격 귀환도 확정. 남은 미답: 채팅 한국어 입력 상태(한·영 둘 다 지원으로 대비).
 - 확정: 핵심 재미는 "출발 전 판단과 반응"(장소 기억·장비·시간·재고를 따져 경고, 조건 제시, 도움 요청, 대안 제시, 동행). 기억 반응은 "거긴 트롤이 있어서 잘 못 캘 수도 있어요" 정도로 짧게. 사람·사건 기억은 뺌. 말투는 스타크래프트 SCV 같은 짧고 씩씩한 일꾼(원작 대사 복사 금지). 스킬 성장(확정: 10 시작, 최대 70, 죽어도 안 깎임). 구상서 3-1, 8-1, 10-1장.
 - 확정: 가공(제련소·숯가마)·제작(작업대·대장간) 필수. 목표 물건을 말하면 제작법 데이터로 재료를 펼쳐 채집→가공→제작(구상서 6-1). 오래 걸려도 묻지 않고 "뭐가 없어서 20분쯤 걸려요" 알리고 출발. 먹거리(줍기·굽기·가마솥·발효·멧돼지/네크 사냥)는 Claude 판단으로 포함(6-2). 건축은 안 시킴.
