@@ -1,0 +1,21 @@
+# gojohnlee 게임 모드
+
+## RimWorld
+
+| 모드 | 경로 | 대상 버전 |
+|---|---|---|
+| Hello RimWorld (템플릿) | `rimworld/HelloRimWorld` | 1.6 |
+
+### 빌드
+```bash
+./scripts/setup-dotnet.sh   # .NET 8 SDK가 없을 때
+dotnet build rimworld/HelloRimWorld/Source/HelloRimWorld/HelloRimWorld.csproj -c Release
+```
+결과 DLL은 `rimworld/HelloRimWorld/1.6/Assemblies/`에 생성됩니다.
+push할 때마다 GitHub Actions가 빌드하고, 바로 넣을 수 있는 모드 폴더를 아티팩트로 올립니다.
+
+### 설치 (PC)
+1. Actions 탭 → 최신 "RimWorld mod build" 실행 → `HelloRimWorld` 아티팩트 다운로드
+2. 압축을 풀어 `HelloRimWorld` 폴더를 `RimWorld/Mods/`에 넣기
+3. 게임에서 **Harmony** 모드를 먼저 켜고, 그 아래에 Hello RimWorld 활성화
+4. 게임을 시작하거나 불러오면 "Hello RimWorld 모드가 작동 중입니다!" 메시지가 뜨면 성공
