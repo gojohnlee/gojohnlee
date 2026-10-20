@@ -157,6 +157,7 @@ namespace ValheimHelper
             m_backTo = AwayPoint(pos, BackDistance * 1.5f);
             m_target = null;
             m_armed = false;
+            m_fleeTime = 0f;
             m_state = State.Flee;
         }
 
@@ -332,18 +333,26 @@ namespace ValheimHelper
             return true;
         }
 
+        float m_fleeTime;
+
+        /// <summary>
+        /// 도망은 목적지(60m)에 닿거나 40초가 지나거나 물에 막힐 때까지 한다. 적이 감지 거리(30m) 밖으로 잠깐 나갔다고 멈추면
+        /// 경계에서 멈췄다 도망쳤다를 되풀이한다(0.3.7 시험: 트롤 30m 언저리에서 맴돎).
+        /// </summary>
         bool UpdateFlee(float dt)
         {
-            if (Utils.DistanceXZ(m_backTo, m_npc.transform.position) < 3f || m_foes.Count == 0)
+            m_fleeTime += dt;
+            bool there = m_ai.MoveToPoint(dt, m_backTo, 2f, true) || Utils.DistanceXZ(m_backTo, m_npc.transform.position) < 3f;
+            if (there || m_fleeTime > 40f || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp)
             {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 도망 끝: {(there ? "도착" : m_fleeTime > 40f ? "40초" : "물에 막힘")}");
+                m_ai.StopMoving();
                 m_state = State.Calm;
                 return false;
             }
-            m_ai.MoveToPoint(dt, m_backTo, 2f, true);
             return true;
         }
 
-        /// <summary>온 길(거점 쪽)으로 물러날 곳. 적이 거점 쪽에 있으면 적 반대쪽.</summary>
         /// <summary>
         /// 물러날 곳: 거점이 멀고 적 반대쪽이면 거점 쪽(온 길)으로 dist만큼(거점이 더 가까우면 거점), 거점 근처이거나
         /// 거점 쪽에 적이 있으면 적 반대쪽으로. (0.3.7: 거점에 있는데 "거점으로 도망"이라 제자리에서 되풀이했다.)

@@ -79,6 +79,7 @@ namespace ValheimHelper
         /// <summary>깊은 물 앞에서 선 채로 지난 시간. 작업은 이게 WaterGiveUp초를 넘으면 그 목표를 버리고 다른 데를 고른다.</summary>
         public float WaterBlockedTime { get; private set; }
         public const float WaterGiveUp = 3f;
+        Vector3 m_moveTarget;
         Vector3 m_lastDry;
         bool m_hasDry;
         /// <summary>지금 앞의 물은 건너기로 했다(좁은 강, WaterRule). 물에서 나오면 풀린다.</summary>
@@ -96,6 +97,8 @@ namespace ValheimHelper
         public bool MoveToPoint(float dt, Vector3 point, float dist, bool run)
         {
             Vector3 pos = transform.position;
+            // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
+            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; }
             float d = Utils.DistanceXZ(point, pos);
             if (d <= dist) { StopMoving(); m_detourTime = 0f; WaterBlockedTime = 0f; return true; }
             if (!m_character.InLiquid()) { m_lastDry = pos; m_hasDry = true; if (Time.time > m_waterDecidedUntil) m_swimOk = false; }

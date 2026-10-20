@@ -83,6 +83,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
 
             // C) 체력 25% → 미드
+            claude.GetSEMan().RemoveAllStatusEffects(true); // A에서 마신 미드 대기시간을 지운다(시험)
             int meads = claude.CountItem("MeadHealthMinor");
             claude.SetHealth(claude.GetMaxHealth() * 0.25f);
             Character c = Spawn(gd, claude.transform.position + rot * new Vector3(0f, 0f, 7f), spawned);
@@ -114,7 +115,7 @@ namespace ValheimHelper
                 if ((int)(t * 2) % 10 == 0) TestRunner.Log($"[B {t:0}s] 경계 {claude.Ai.Guard?.StateName}/{claude.Ai.Guard?.LastVerdict} 비율 {claude.Ai.Guard?.LastRatio:0.00}, 1호 체력 {claude.GetHealth():0}, 트롤까지 {Vector3.Distance(b.transform.position, claude.transform.position):0}m");
             }
             checks.Add($"트롤 보고 도망 (판단 {claude.Ai.Guard?.LastVerdict})", fled);
-            checks.Add($"트롤에게서 멀어짐 ({start:0}m → 최대 {far:0}m)", far > start + 15f);
+            checks.Add($"트롤 감지 거리 밖으로 멀어짐 ({start:0}m → 최대 {far:0}m)", far > Guard.SenseRange);
             checks.Add($"살아 있음 (체력 {claude.GetHealth():0})", !claude.IsDead() && claude.GetHealth() > 0f && claude.Graves().Count == 0);
 
             bool clean = true;
