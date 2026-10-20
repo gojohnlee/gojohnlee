@@ -7,7 +7,7 @@
   "진행 중" 항목부터 이어간다. 진행 중 항목은 git log로 마지막 커밋을 확인해서 다시 시작한다.
 
 진행 중
-- 먼 구역 유지 시험(vh_fartest) 사용자 PC 결과 대기. 결과가 PASS면 ① 단계로, 아니면 FarZones.cs 수정.
+- ① 단계 시작: NPC 몸(플레이어 프리팹 복제 → Humanoid + 자체 AI), 콘솔 소환, 말풍선·채팅 알림.
 
 완료 기록
 - 2026-10-20: Core 프로젝트(valheim/ValheimHelper/Core, netstandard2.0) + Tests(xunit, net10.0) + CI(valheim-test.yml).
@@ -42,7 +42,8 @@
 
 다음 할 일
 - [x] 최신 assembly_valheim.dll 받기(게임 1.0.20)
-- [~] 먼 구역 유지 시험 코드 완료 → 사용자 PC 결과 대기
+- [x] 먼 구역 유지 시험 PASS (2026-10-20, 게임 1.0.20): 1004m 떨어진 멧돼지 60초 유지 12/12·호스트 소유·AI 이동 7m, 패치 끔 대조 10초 뒤 사라짐.
+      사용자 PC에는 BepInExPack 5.4.2202(BepInEx 5.4.22)가 이미 설치돼 있었음. 'Unable to start Unity log writer' 오류는 BepInEx 기본 메시지라 무시.
 - [x] 게임 무관 로직 프로젝트 + dotnet test 뼈대, 채팅 해석기
 - [ ] Core 다음 후보(게임 DLL 없이 가능): 알림 도배 방지(30초)·Sonnet 호출 제한(1분 6번), Claude Code 호출 결과 JSON 검증,
       장소 기억(100곳·위험도 감쇠), 위험 판단 규칙(8장 a~d), 대사 엔진(최근 줄 피하기)
