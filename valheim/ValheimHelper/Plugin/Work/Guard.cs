@@ -265,8 +265,7 @@ namespace ValheimHelper
         /// <summary>내 한 방(가장 좋은 무기, 없으면 맨손) + 20m 안 플레이어들의 한 방(같이 싸운다).</summary>
         float MyHit(Vector3 pos)
         {
-            ItemDrop.ItemData w = Gear.Best(m_npc.GetInventory().GetAllItems(), Gear.IsMelee, Gear.WeaponScore);
-            float hit = w != null ? Gear.WeaponScore(w) : 5f;
+            float hit = HitOf(m_npc) / 0.9f; // 아래에서 플레이어 몫과 같이 0.9를 곱한다
             foreach (var p in Player.GetAllPlayers())
             {
                 if (p == null || p.IsDead() || p.InGhostMode() || p.InDebugFlyMode() || Vector3.Distance(p.transform.position, pos) > AllyRange) continue; // 유령·날기 모드는 싸우지 않는다
@@ -482,7 +481,8 @@ namespace ValheimHelper
         public static float HitOf(WorkerNpc npc)
         {
             ItemDrop.ItemData w = Gear.Best(npc.GetInventory().GetAllItems(), Gear.IsMelee, Gear.WeaponScore);
-            return (w != null ? Gear.WeaponScore(w) : 5f) * 0.9f;
+            // 스킬 반영(3-1장): 평균 피해 계수(스킬 10이면 0.46, 70이면 0.82)
+            return (w != null ? Gear.WeaponScore(w) * npc.MeanSkillFactor(w.m_shared.m_skillType) : 5f * npc.MeanSkillFactor(Skills.SkillType.Unarmed));
         }
 
         /// <summary>출발 전 판단용: 적의 한 방이 내 갑옷을 거쳐 들어오는 피해(거점 기준 난이도 배율).</summary>

@@ -595,8 +595,10 @@ namespace ValheimHelper
                 m_skill = tool.m_shared.m_skillType,
                 m_hitCollider = hitCol,
             };
+            hit.m_damage.Modify(m_npc.GetRandomSkillFactor(tool.m_shared.m_skillType)); // 스킬 반영(바닐라 Attack과 같게)
             hit.SetAttacker(m_npc);
             d.Damage(hit);
+            m_npc.RaiseSkill(tool.m_shared.m_skillType);
             Plugin.Log.LogInfo($"{m_npc.NpcName}: 공격 판정이 안 닿아 직접 피해 {hit.m_damage.m_chop + hit.m_damage.m_pickaxe:0}");
         }
 

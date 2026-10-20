@@ -244,7 +244,7 @@ public class DepartureSpeechTests
         "memory", "depart.warn", "depart.hungry", "depart.far", "depart.trips", "depart.lowSkill", "depart.busy", "depart.together", "depart.outOfScope",
         "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "ask.night", "ask.stock", "note.stock", "note.night",
         "answer.grumble", "answer.escort", "answer.alternative", "answer.conditionMet", "answer.conditionMissing", "answer.morning",
-        "answer.go", "answer.hold", "answer.cancel", "answer.timeout",
+        "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone",
     };
 
     [Fact]

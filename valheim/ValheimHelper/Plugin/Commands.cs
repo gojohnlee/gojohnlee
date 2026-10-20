@@ -103,6 +103,9 @@ namespace ValheimHelper
                     case CommandKind.Explore:
                         StartExplore(npc, cmd);
                         break;
+                    case CommandKind.Skills:
+                        TellSkills(npc);
+                        break;
                     case CommandKind.Status:
                         npc.Say("status", new Dictionary<string, string>
                         {
@@ -116,6 +119,16 @@ namespace ValheimHelper
                         break;
                 }
             }
+        }
+
+        /// <summary>!스킬: 오른 스킬 높은 순(없으면 "다 10").</summary>
+        static void TellSkills(WorkerNpc npc)
+        {
+            var raised = npc.SkillLevels.Raised();
+            if (raised.Count == 0) { npc.Say("skillsNone"); return; }
+            var parts = new List<string>();
+            foreach (var kv in raised) parts.Add(WorkerNpc.SkillName((Skills.SkillType)kv.Key) + " " + (int)kv.Value);
+            npc.Say("skills", new Dictionary<string, string> { ["list"] = string.Join(", ", parts.ToArray()) });
         }
 
         static void StartExplore(WorkerNpc npc, ChatCommand cmd)

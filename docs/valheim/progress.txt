@@ -49,6 +49,10 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
   HitOf/TakenFor), WorkerNpc.OnDeath 죽은 곳 기록, WorkerAI 대기열(Queue/Interrupt/NextQueued, 질문 중엔 안 꺼냄)·물 막힘/구덩이 특이점·
   동료 따라가기 끝(리더가 쉬면), IWorkerJob.Label, !탐험도 대기열 규칙. 시험 중엔 질문에 자동 "그래도 가"(Departures.TestAutoGo).
   PC에서 먼저: 기존 시험 8종 회귀 + 출발 전 판단 시험(vh_departtest, 아직 없음 — TestAutoGo=false로 재고·밤·죽은 곳·위험 질문과 대답 확인).
+  4 스킬 성장 Core/Npc/SkillBook.cs(바닐라 Raise·요구치·RandomFactor, 10~70, 5마다 알림) [게임 시험 안 됨]: WorkerNpc.RaiseSkill/GetSkillFactor/
+  GetRandomSkillFactor 재정의(ZDO vh_skills, 증가폭은 플레이어 프리팹 Skills.m_skills), 직접 피해도 스킬 반영·상승, Guard 한 방에 평균 스킬 계수,
+  !스킬, 출발 전 판단의 스킬 낮음. 주의: 예전엔 NPC 피해 계수가 바닐라 몬스터 값(약 0.93)이라 스킬 100처럼 셌음 → 이제 스킬 10이면 0.46.
+  나무·돌 채집이 느려지고 싸움 판단이 조심스러워짐(fight·wood·stone 시험 시간·결과 다시 볼 것).
   [기본안] 미드 회복 50, 안 먹었으면 음식 체력 +50으로 셈, 하루 1800초(감쇠용), 동행은 대답한 사람이 따라오면 Guard가 힘을 합쳐 셈(앞장서기·20m 유지는 아직).
 
 0.3.8 진행 중 (2026-10-21, 사용자 관찰: "점프를 안 해. 돌 캘 때 맨땅을 파서 구덩이에서 못 나와. 돌은 땅 파기 최대한 자제,

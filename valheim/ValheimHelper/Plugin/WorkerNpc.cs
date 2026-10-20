@@ -431,6 +431,54 @@ namespace ValheimHelper
         public static readonly string[] LookHair = { "Hair2", "Hair1" };
         public static readonly string[] LookBeard = { "Beard5", "Beard2" };
 
+        // ---- 스킬 (구상서 3-1장) [게임 시험 안 됨] ----
+
+        public const string KeySkills = "vh_skills";
+        SkillBook m_skillBook;
+        static Dictionary<Skills.SkillType, float> s_skillSteps;
+
+        /// <summary>NPC마다 따로(ZDO vh_skills). 10에서 시작, 70까지, 죽어도 안 깎임.</summary>
+        public SkillBook SkillLevels
+        {
+            get
+            {
+                if (m_skillBook == null) m_skillBook = SkillBook.Load(m_nview != null && m_nview.IsValid() ? m_nview.GetZDO().GetString(KeySkills, "") : "");
+                return m_skillBook;
+            }
+        }
+
+        /// <summary>바닐라 스킬 증가폭(플레이어 프리팹의 Skills.m_skills, 일꾼 프리팹에선 Skills를 뺐다).</summary>
+        static float SkillStep(Skills.SkillType type)
+        {
+            if (s_skillSteps == null)
+            {
+                s_skillSteps = new Dictionary<Skills.SkillType, float>();
+                Skills defs = Game.instance != null && Game.instance.m_playerPrefab != null ? Game.instance.m_playerPrefab.GetComponent<Skills>() : null;
+                if (defs != null) foreach (var d in defs.m_skills) s_skillSteps[d.m_skill] = d.m_increseStep;
+            }
+            return s_skillSteps.TryGetValue(type, out float v) ? v : 1f;
+        }
+
+        public static string SkillName(Skills.SkillType type) => Localization.instance.Localize("$skill_" + type.ToString().ToLower());
+
+        /// <summary>바닐라 Attack이 맞힐 때마다 부른다(Character 기본은 길들인 것만). 플레이어처럼 상태 효과 배율도 반영.</summary>
+        public override void RaiseSkill(Skills.SkillType skill, float value = 1f)
+        {
+            if (skill == Skills.SkillType.None || !m_nview.IsValid() || !m_nview.IsOwner()) return;
+            float multiplier = 1f;
+            m_seman.ModifyRaiseSkill(skill, ref multiplier);
+            int said = SkillLevels.Raise((int)skill, SkillStep(skill), value * multiplier, Game.m_skillGainRate);
+            if (SkillLevels.Dirty) { m_nview.GetZDO().Set(KeySkills, SkillLevels.Save()); SkillLevels.Dirty = false; }
+            if (said > 0) Say("skillUp", new Dictionary<string, string> { ["skill"] = SkillName(skill), ["level"] = said.ToString() });
+        }
+
+        // 피해·채집 속도는 지금 스킬의 플레이어와 같게(바닐라 Skills.GetSkillFactor / GetRandomSkillFactor)
+        public override float GetSkillFactor(Skills.SkillType skill) => SkillLevels.Factor((int)skill);
+        public override float GetRandomSkillFactor(Skills.SkillType skill) => SkillLevels.RandomFactor((int)skill, UnityEngine.Random.value);
+
+        /// <summary>위험 판단용 평균 피해 계수.</summary>
+        public float MeanSkillFactor(Skills.SkillType skill) => SkillLevels.MeanFactor((int)skill);
+
         // ---- 말하기 ----
 
         static readonly Speech s_speech = new Speech();

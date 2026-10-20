@@ -109,6 +109,8 @@ namespace ValheimHelper
                 Fed = npc.Meals.Count > 0,
                 SecondsPerUnit = ways.Count == 1 && ways.Contains(ToolKind.None) ? 1.5f : 4f,
             };
+            if (ways.Contains(ToolKind.Axe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.WoodCutting);
+            else if (ways.Contains(ToolKind.Pickaxe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.Pickaxes);
             Container food = Chests.Assigned(Chests.KeyFood);
             input.FoodInChest = food != null && WorkerNpc.HasFood(food.GetInventory());
             input.HealthMeads = CountMeads(npc.GetInventory());
