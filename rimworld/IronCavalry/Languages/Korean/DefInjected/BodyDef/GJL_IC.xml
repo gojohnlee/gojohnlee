@@ -1,4 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
+  <!-- 경로 규칙(1.7 코드 확인): 부위 목록의 이름표 = customLabel(공백→_) 우선, 없으면 부위 defName -->
   <GJL_IC_IronCavalry.label>철기병</GJL_IC_IronCavalry.label>
+
+  <GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.left_sight_sensor.customLabel>왼쪽 시각 센서</GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.left_sight_sensor.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.right_sight_sensor.customLabel>오른쪽 시각 센서</GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.right_sight_sensor.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.left_hearing_sensor.customLabel>왼쪽 청각 센서</GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.left_hearing_sensor.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.right_hearing_sensor.customLabel>오른쪽 청각 센서</GJL_IC_IronCavalry.corePart.parts.MechanicalNeck.parts.MechanicalHead.parts.right_hearing_sensor.customLabel>
+
+  <GJL_IC_IronCavalry.corePart.parts.left_shoulder.customLabel>왼쪽 어깨</GJL_IC_IronCavalry.corePart.parts.left_shoulder.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.customLabel>왼팔</GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.customLabel>왼손</GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_pinky.customLabel>왼손 새끼손가락</GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_pinky.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_middle_finger.customLabel>왼손 가운뎃손가락</GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_middle_finger.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_index_finger.customLabel>왼손 집게손가락</GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_index_finger.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_thumb.customLabel>왼손 엄지</GJL_IC_IronCavalry.corePart.parts.left_shoulder.parts.left_arm.parts.left_hand.parts.left_thumb.customLabel>
+
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.customLabel>오른쪽 어깨</GJL_IC_IronCavalry.corePart.parts.right_shoulder.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.customLabel>오른팔</GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.lance.customLabel>철기병 창</GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.lance.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.customLabel>오른손</GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_pinky.customLabel>오른손 새끼손가락</GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_pinky.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_middle_finger.customLabel>오른손 가운뎃손가락</GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_middle_finger.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_index_finger.customLabel>오른손 집게손가락</GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_index_finger.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_thumb.customLabel>오른손 엄지</GJL_IC_IronCavalry.corePart.parts.right_shoulder.parts.right_arm.parts.right_hand.parts.right_thumb.customLabel>
+
+  <GJL_IC_IronCavalry.corePart.parts.front_left_leg.customLabel>왼쪽 앞다리</GJL_IC_IronCavalry.corePart.parts.front_left_leg.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.front_left_leg.parts.front_left_hoof.customLabel>왼쪽 철기병 앞발</GJL_IC_IronCavalry.corePart.parts.front_left_leg.parts.front_left_hoof.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.front_right_leg.customLabel>오른쪽 앞다리</GJL_IC_IronCavalry.corePart.parts.front_right_leg.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.front_right_leg.parts.front_right_hoof.customLabel>오른쪽 철기병 앞발</GJL_IC_IronCavalry.corePart.parts.front_right_leg.parts.front_right_hoof.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.rear_left_leg.customLabel>왼쪽 뒷다리</GJL_IC_IronCavalry.corePart.parts.rear_left_leg.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.rear_left_leg.parts.rear_left_hoof.customLabel>왼쪽 뒷발</GJL_IC_IronCavalry.corePart.parts.rear_left_leg.parts.rear_left_hoof.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.rear_right_leg.customLabel>오른쪽 뒷다리</GJL_IC_IronCavalry.corePart.parts.rear_right_leg.customLabel>
+  <GJL_IC_IronCavalry.corePart.parts.rear_right_leg.parts.rear_right_hoof.customLabel>오른쪽 뒷발</GJL_IC_IronCavalry.corePart.parts.rear_right_leg.parts.rear_right_hoof.customLabel>
 </LanguageData>

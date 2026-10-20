@@ -2,4 +2,11 @@
 <LanguageData>
   <GJL_IC_IronCavalry.label>철기병</GJL_IC_IronCavalry.label>
   <GJL_IC_IronCavalry.description>긴 창 하나를 중심으로 설계된 켄타우로스형 중량 돌격 메카노이드입니다. 빠르게 거리를 좁힌 뒤, 달려온 기세를 한 번의 창 찌르기에 실어 대상을 잠시 기절시킬 만큼 강하게 들이받습니다.</GJL_IC_IronCavalry.description>
+
+  <!-- 공격 이름(전투 기록 등). 경로 이름표 = 도구 원문 label(공백→_) -->
+  <GJL_IC_IronCavalry.tools.lance.label>철기병 창</GJL_IC_IronCavalry.tools.lance.label>
+  <GJL_IC_IronCavalry.tools.front_left_hoof.label>왼쪽 철기병 앞발</GJL_IC_IronCavalry.tools.front_left_hoof.label>
+  <GJL_IC_IronCavalry.tools.front_left_hoof.labelNoLocation>철기병 앞발</GJL_IC_IronCavalry.tools.front_left_hoof.labelNoLocation>
+  <GJL_IC_IronCavalry.tools.front_right_hoof.label>오른쪽 철기병 앞발</GJL_IC_IronCavalry.tools.front_right_hoof.label>
+  <GJL_IC_IronCavalry.tools.front_right_hoof.labelNoLocation>철기병 앞발</GJL_IC_IronCavalry.tools.front_right_hoof.labelNoLocation>
 </LanguageData>
