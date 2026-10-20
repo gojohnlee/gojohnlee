@@ -18,6 +18,8 @@ namespace ValheimHelper
         static bool s_auto;
         static float s_autoWait;
         static Terminal s_terminal;
+        static float s_startTime;
+        const float AutoTimeout = 300f;
 
         static string PluginDir => Path.GetDirectoryName(Plugin.Instance.Info.Location);
 
@@ -25,6 +27,7 @@ namespace ValheimHelper
         {
             if (Running) { t?.AddString("이미 시험 중입니다."); return false; }
             Running = true;
+            s_startTime = Time.time;
             s_terminal = t;
             s_report.Clear();
             s_report.Add($"=== {name} {System.DateTime.Now:yyyy-MM-dd HH:mm:ss} 게임 {Version.GetVersionString()} Unity {Application.unityVersion} 모드 {Plugin.Version} ===");
@@ -66,6 +69,13 @@ namespace ValheimHelper
 
         public static void UpdateAutoRun()
         {
+            // 자동 시험이 오류로 끝나지 않으면 5분 뒤 결과를 남기고 끈다(사용자가 지켜보지 않아도 되게).
+            if (s_auto && Running && Time.time - s_startTime > AutoTimeout)
+            {
+                Log($"FAIL: 시험이 {AutoTimeout:0}초 안에 끝나지 않음(오류는 BepInEx 로그 참고)");
+                Finish();
+                return;
+            }
             if (s_autoCommand == null) return;
             Player player = Player.m_localPlayer;
             if (player == null || player.IsTeleporting() || Console.instance == null) { s_autoWait = 0f; return; }
@@ -75,7 +85,13 @@ namespace ValheimHelper
             s_autoCommand = null;
             s_auto = true;
             Console.instance.TryRunCommand(cmd, silentFail: false, skipAllowedCheck: true);
-            if (!Running) s_auto = false; // 명령이 시험을 시작하지 않았다
+            if (!Running)
+            {
+                // 명령이 시험을 시작하지 못했다(등록 실패 등). 그래도 결과를 남기고 끈다.
+                Begin(null, cmd);
+                Log($"FAIL: 자동 시험 {cmd}가 시작되지 않음(오류는 BepInEx 로그 참고)");
+                Finish();
+            }
         }
 
         static IEnumerator QuitSoon()

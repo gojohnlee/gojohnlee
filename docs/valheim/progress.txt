@@ -7,7 +7,9 @@
   "진행 중" 항목부터 이어간다. 진행 중 항목은 git log로 마지막 커밋을 확인해서 다시 시작한다.
 
 진행 중
-- ① 단계 첫 조각(0.1.0) 사용자 PC 시험 대기: vh_npctest (스크립트 기본 시험).
+- ① 단계 첫 조각 0.1.1 사용자 PC 시험 대기: vh_npctest (스크립트 기본 시험).
+  0.1.0 결과: 플러그인 Awake에서 TypeLoadException(System.ValueTuple 4.0.2.0 없음, NpcTest의 튜플) → 시험 미실행·NPC 없음.
+  0.1.1: 튜플 제거, Awake 단계별 try/catch, 자동 시험 시작 실패·5분 초과 시 결과 남기고 종료, 참조 검사 빌드 스크립트.
   다음: 결과 반영 → 거점 깃발(Jötunn PieceManager 검토) → 소환을 깃발로 → 사망·부활은 ③.
 
 완료 기록
@@ -17,7 +19,8 @@
 - 2026-10-20: 게임 DLL 받음(비공개 gojohnlee/valheim-refs, 게임 1.0.20 (n-41)). 세션에서 add_repo → /home/user/valheim-refs로 clone.
   디컴파일: dotnet tool install -g ilspycmd; ilspycmd -p -o <스크래치>/vsrc /home/user/valheim-refs/assembly_valheim.dll (결과는 저장소에 올리지 않음)
 - 2026-10-20: 플러그인 프로젝트 valheim/ValheimHelper/Plugin (net462, BepInEx.Core 5.4.21 + UnityEngine.Modules 2022.3.62, 게임 DLL은 valheim-refs).
-  sln에 넣지 않음(CI에 게임 DLL 없음). 빌드: dotnet build valheim/ValheimHelper/Plugin -c Release → valheim/dist/ValheimHelper.dll에 복사해 커밋(테스트 스크립트가 받음).
+  sln에 넣지 않음(CI에 게임 DLL 없음). 빌드: ./scripts/valheim-build.sh (빌드 + 게임에 없는 어셈블리 참조 검사 + valheim/dist 복사) → dist DLL 커밋(테스트 스크립트가 받음).
+  주의: ValueTuple·System.Runtime 등 게임 Mono에 없는 참조 금지(스크립트가 막음). 게임 Unity 6000.0.75 → 참조 UnityEngine.Modules 6000.0.75.
   FarZones.cs: 먼 구역 유지 패치 3곳(ZoneSystem.CreateLocalZones 후처리, ZNetScene.CreateDestroyObjects 대체, ZDOMan.ReleaseNearbyZDOS 호스트 몫 대체 + IsInPeerActiveArea).
   FarZoneTest.cs: 콘솔 명령 vh_fartest(멧돼지 추적 → 플레이어 약 1km 이동 → 60초 관찰 → 패치 끔 대조 → 귀환).
   자동 시험: 스크립트가 플러그인 폴더에 autotest.txt를 만들면 월드 입장 10초 뒤 저절로 시험하고 끝나면 게임을 끈다(사용자는 월드 입장만).

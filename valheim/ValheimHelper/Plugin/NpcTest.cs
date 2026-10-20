@@ -24,8 +24,8 @@ namespace ValheimHelper
 
         static IEnumerator Run()
         {
-            var checks = new List<(string, bool)>();
-            void Check(string what, bool ok) { checks.Add((what, ok)); TestRunner.Log($"{(ok ? "OK  " : "FAIL")} {what}"); }
+            var checks = new Checks();
+            void Check(string what, bool ok) => checks.Add(what, ok);
 
             Player player = Player.m_localPlayer;
             if (player == null || !ZNet.instance.IsServer())
@@ -112,14 +112,25 @@ namespace ValheimHelper
 
         static int Count(string name) => s_heard.FindAll(h => h.StartsWith(name + ":")).Count;
 
-        static void End(Player player, bool god, List<(string what, bool ok)> checks)
+        // ValueTuple은 쓰지 않는다: 게임 런타임에 System.ValueTuple 어셈블리가 없어 플러그인 로드가 깨졌다(0.1.0).
+        sealed class Checks
+        {
+            public int Total, Passed;
+            public void Add(string what, bool ok)
+            {
+                Total++;
+                if (ok) Passed++;
+                TestRunner.Log($"{(ok ? "OK  " : "FAIL")} {what}");
+            }
+        }
+
+        static void End(Player player, bool god, Checks checks)
         {
             ChatNet.Heard -= OnHeard;
             player.SetGodMode(god);
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in s_heard) TestRunner.Log(h);
-            int ok = checks.FindAll(c => c.ok).Count;
-            TestRunner.Log($"판정: {(ok == checks.Count ? "PASS" : "FAIL")} ({ok}/{checks.Count})");
+            TestRunner.Log($"판정: {(checks.Passed == checks.Total ? "PASS" : "FAIL")} ({checks.Passed}/{checks.Total})");
             TestRunner.Finish();
         }
 
