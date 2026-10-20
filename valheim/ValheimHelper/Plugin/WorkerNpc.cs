@@ -359,7 +359,9 @@ namespace ValheimHelper
             }
             if (ZoneSystem.instance.GetSolidHeight(pos, out float h)) pos.y = Mathf.Max(pos.y, h + 0.2f);
             transform.position = pos;
+            m_body.position = pos; // 몸(Rigidbody)도 같이: 안 그러면 보간이 원래 자리로 되돌린다(0.3.7 시험: 40m 옮겼는데 그 자리에서 죽음)
             transform.rotation = rot;
+            m_body.rotation = rot;
             m_body.linearVelocity = Vector3.zero;
             return true;
         }

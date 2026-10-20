@@ -73,6 +73,7 @@ namespace ValheimHelper
             claude.TeleportTo(away + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(2f);
             Vector3 deathPos = claude.transform.position;
+            checks.Add($"40m 밖으로 옮겨짐 ({Utils.DistanceXZ(deathPos, home):0}m)", Utils.DistanceXZ(deathPos, home) > 30f);
 
             // 3) 죽인다
             var hit = new HitData { m_point = claude.GetCenterPoint(), m_dir = Vector3.forward };
