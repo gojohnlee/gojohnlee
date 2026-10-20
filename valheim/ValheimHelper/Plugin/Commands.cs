@@ -106,6 +106,24 @@ namespace ValheimHelper
                     case CommandKind.Skills:
                         TellSkills(npc);
                         break;
+                    case CommandKind.SetList:
+                        TellSets(npc);
+                        break;
+                    case CommandKind.SetMake:
+                        Departures.MakeSet(npc, cmd.Number, cmd.Amount);
+                        break;
+                    case CommandKind.Keep:
+                        Brain.Refill.Keep(cmd.Item, cmd.Amount);
+                        npc.Say("keepSet", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() });
+                        break;
+                    case CommandKind.KeepSet:
+                        Brain.Refill.KeepSet(cmd.Number, cmd.Amount);
+                        npc.Say("keepSet", new Dictionary<string, string> { ["item"] = "세트 " + cmd.Number + "번", ["n"] = cmd.Amount.ToString() });
+                        break;
+                    case CommandKind.KeepOff:
+                        Brain.Refill.Off(cmd.Item);
+                        npc.Say("keepOff", new Dictionary<string, string> { ["item"] = cmd.Item != null ? GatherJob.ItemLabel(cmd.Item) : "전부" });
+                        break;
                     case CommandKind.Status:
                         npc.Say("status", new Dictionary<string, string>
                         {
@@ -119,6 +137,20 @@ namespace ValheimHelper
                         break;
                 }
             }
+        }
+
+        /// <summary>!세트: 저장된 세트메뉴 목록.</summary>
+        static void TellSets(WorkerNpc npc)
+        {
+            var parts = new List<string>();
+            foreach (var s in Brain.Sets.All)
+            {
+                var names = new List<string>();
+                foreach (var it in s.Items) names.Add(GatherJob.ItemLabel(it));
+                parts.Add(s.Number + "번" + (s.Name != null ? "(" + s.Name + ")" : "") + " " + string.Join("·", names.ToArray()));
+            }
+            if (parts.Count == 0) { npc.Say("setEmpty"); return; }
+            npc.Say("setList", new Dictionary<string, string> { ["list"] = string.Join(", ", parts.ToArray()) });
         }
 
         /// <summary>!스킬: 오른 스킬 높은 순(없으면 "다 10").</summary>

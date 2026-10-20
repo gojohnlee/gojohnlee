@@ -214,6 +214,34 @@ namespace ValheimHelper
         {
             RecipeBook book = Recipes.Book();
             if (book.RecipesFor(cmd.Item).Count == 0 && book.ProcessesFor(cmd.Item).Count == 0) { npc.Say("notYet"); return; }
+            Plan plan = PlanFor(npc, new List<Ingredient> { new Ingredient(cmd.Item, cmd.Amount) });
+            var args = new Dictionary<string, string>
+            {
+                ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString(),
+            };
+            SayPlan(npc, plan, args);
+        }
+
+        /// <summary>!세트 n 수량: 세트 안의 물건마다 수량만큼(6-4). 범위 밖 물건은 빼고 계획.</summary>
+        public static void MakeSet(WorkerNpc npc, int number, int amount)
+        {
+            var targets = Brain.Sets.Targets(number, amount);
+            var args = new Dictionary<string, string> { ["no"] = number.ToString(), ["item"] = "세트 " + number + "번", ["n"] = amount.ToString() };
+            if (targets.Count == 0) { npc.Say("setNone", args); return; }
+            Plan plan = PlanFor(npc, targets);
+            if (plan.OutOfScope.Count > 0)
+            {
+                targets.RemoveAll(t => plan.OutOfScope.Contains(t.Item));
+                if (targets.Count == 0) { npc.Say("depart.outOfScope", args); return; }
+                plan = PlanFor(npc, targets);
+            }
+            args["minutes"] = Departure.Minutes5(plan.Seconds).ToString();
+            SayPlan(npc, plan, args);
+        }
+
+        static Plan PlanFor(WorkerNpc npc, List<Ingredient> targets)
+        {
+            RecipeBook book = Recipes.Book();
             Vector3 home = npc.Home;
             var stock = new Dictionary<string, int>();
             foreach (var c in Chests.NearBase(home))
@@ -232,14 +260,15 @@ namespace ValheimHelper
                 float dist = Utils.DistanceXZ(home, Senses.ZoneCenter(zones[0].Zone));
                 return dist * 2f / Departure.WalkSpeed + n * 4f;
             });
-            Plan plan = planner.Expand(cmd.Item, cmd.Amount, stock);
-            var args = new Dictionary<string, string>
-            {
-                ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString(),
-            };
-            Plugin.Log.LogInfo($"{npc.NpcName} 제작 계획 {cmd.Item} {cmd.Amount}: 단계 {plan.Steps.Count}, {plan.Seconds:0}초, 모을 것 [" +
+            Plan plan = planner.Expand(targets, stock);
+            Plugin.Log.LogInfo($"{npc.NpcName} 제작 계획 {targets[0].Item} {targets[0].Amount}(목표 {targets.Count}개): 단계 {plan.Steps.Count}, {plan.Seconds:0}초, 모을 것 [" +
                 string.Join(", ", new List<string>(Keys(plan.Gathers)).ToArray()) + $"], 없는 설비 [{string.Join(", ", plan.MissingStations.ToArray())}], " +
                 $"범위 밖 [{string.Join(", ", plan.OutOfScope.ToArray())}], 모름 [{string.Join(", ", plan.Unknown.ToArray())}]");
+            return plan;
+        }
+
+        static void SayPlan(WorkerNpc npc, Plan plan, Dictionary<string, string> args)
+        {
             if (plan.OutOfScope.Count > 0) { npc.Say("depart.outOfScope", args); return; }
             if (plan.Steps.Count == 0 && !plan.Partial) { npc.Say("craft.inStock", args); return; }
             if (plan.MissingStations.Count > 0) { args["station"] = Recipes.StationName(plan.MissingStations[0]); npc.Say("craft.missing", args); return; }
@@ -334,7 +363,9 @@ namespace ValheimHelper
         /// <summary>매 프레임: 3분 지난 질문은 보류, 조건 질문은 5초마다 상자를 다시 보고 채워졌으면 출발.</summary>
         public static void Tick(float dt)
         {
-            if (s_pending.Count == 0 || ZNet.instance == null) return;
+            if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
+            TickRefill(dt);
+            if (s_pending.Count == 0) return;
             double now = Now;
             foreach (var kv in new List<KeyValuePair<WorkerNpc, Pending>>(s_pending))
             {
@@ -361,6 +392,45 @@ namespace ValheimHelper
                     s_pending.Remove(npc);
                     npc.Say("answer.timeout");
                 }
+            }
+        }
+
+        // ---- 자동 보충 (구상서 11장) ----
+
+        static float s_refillTimer = (float)RefillBook.CheckEvery;
+        static readonly Dictionary<string, float> s_refillSkipUntil = new Dictionary<string, float>();
+
+        /// <summary>
+        /// 1분마다: 기준치 아래인 물건을 한가한 NPC 하나가 채우러 간다(직접 명령·묘비 회수가 없을 때만).
+        /// 자동 보충은 묻지 않는다 — 출발 전 판단이 질문을 낼 상황(위험·재고·밤 등)이면 그 물건은 10분 쉰다.
+        /// 채집으로 나는 물건만(만드는 물건은 ⑥ 실행기 다음).
+        /// </summary>
+        static void TickRefill(float dt)
+        {
+            s_refillTimer -= dt;
+            if (s_refillTimer > 0f) return;
+            s_refillTimer = (float)RefillBook.CheckEvery;
+            RefillBook refill = Brain.Refill;
+            if (refill.Count == 0 || WorkerNpc.All.Count == 0) return;
+            WorkerNpc npc = null;
+            foreach (var n in WorkerNpc.All)
+                if (n.Ai.Current == WorkerAI.Mode.Idle && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n) && !n.Ai.HasChores) { npc = n; break; }
+            if (npc == null) return;
+            Vector3 home = npc.Home;
+            foreach (Ingredient due in refill.Due(item => Stock(item, home), Brain.Sets))
+            {
+                if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
+                HashSet<ToolKind> ways = ResourceCatalog.WaysFor(due.Item);
+                if (ways.Count == 0) continue;
+                var cmd = new ChatCommand { Kind = CommandKind.Item, Item = due.Item, Amount = due.Amount };
+                DepartureInput input = Input(npc, cmd, ways, true);
+                input.Stock = 0; // 모자란 만큼만 시켰으니 재고 질문은 하지 않는다
+                DepartureResult r = Departure.Judge(input);
+                Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {due.Item} {due.Amount}: {r.Action} {r.Question} ({r.Reason})");
+                if (r.Action != DepartAction.Go && r.Action != DepartAction.GoTogether) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
+                Start(npc, cmd, ways, null);
+                npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(due.Item), ["n"] = due.Amount.ToString() });
+                return;
             }
         }
 

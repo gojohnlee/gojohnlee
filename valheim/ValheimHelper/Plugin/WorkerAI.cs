@@ -460,6 +460,9 @@ namespace ValheimHelper
 
         public void HoldChores() => m_choresHeld = true;
 
+        /// <summary>회수할 묘비가 있다(자동 보충보다 먼저, 구상서 11장).</summary>
+        public bool HasChores => !m_choresHeld && ((WorkerNpc)m_character).Graves().Count > 0;
+
         /// <summary>죽었다(WorkerNpc.OnDeath): 하던 일을 버린다. 묘비를 회수하다 죽었으면 그 묘비 시도 횟수를 올린다.</summary>
         public void OnDied()
         {
