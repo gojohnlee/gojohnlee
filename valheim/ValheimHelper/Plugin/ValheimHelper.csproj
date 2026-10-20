@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- BepInEx 플러그인. 게임 DLL은 저작권 때문에 저장소에 없다:
+       비공개 저장소 gojohnlee/valheim-refs를 /home/user/valheim-refs에 받아 두고 빌드한다
+       (다른 위치면 -p:ValheimRefs=<폴더>). CI는 Core 테스트만 돈다. -->
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <AssemblyName>ValheimHelper</AssemblyName>
+    <RootNamespace>ValheimHelper</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
+    <ValheimRefs Condition="'$(ValheimRefs)' == ''">/home/user/valheim-refs</ValheimRefs>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" PrivateAssets="all" IncludeAssets="compile" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="assembly_valheim"><HintPath>$(ValheimRefs)/assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(ValheimRefs)/assembly_utils.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>
