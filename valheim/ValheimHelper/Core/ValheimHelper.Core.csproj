@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 게임과 무관한 로직(명령 해석·계획·위험·지식·길 계산). 게임 DLL 없이 dotnet test로 검증한다.
+       BepInEx 플러그인(.NET Framework)에서 참조하므로 netstandard2.0. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <RootNamespace>ValheimHelper.Core</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

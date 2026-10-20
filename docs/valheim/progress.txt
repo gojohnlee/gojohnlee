@@ -7,7 +7,14 @@
   "진행 중" 항목부터 이어간다. 진행 중 항목은 git log로 마지막 커밋을 확인해서 다시 시작한다.
 
 진행 중
-- (없음) 구상 확정. 구현 시작 대기.
+- 사용자에게 최신 게임 DLL(비공개 저장소 gojohnlee/valheim-refs) 요청함(2026-10-20). 아직 없음 →
+  add_repo로 확인. 기다리는 동안 게임 무관 Core 로직을 쌓는다.
+
+완료 기록
+- 2026-10-20: Core 프로젝트(valheim/ValheimHelper/Core, netstandard2.0) + Tests(xunit, net10.0) + CI(valheim-test.yml).
+  채팅 3갈래 해석기 Chat/ChatParser.cs (구상서 5장 명령표 전부, 이름 부르기, 짧은 대답, 수다 거르기). 테스트 108개 통과.
+  보조 에이전트 vh-standard(Sonnet)·vh-simple(Haiku) 생성.
+- 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx
 
 다음 세션 시작 순서 ("발헤임 구현 시작"이라고 하면)
 1. git fetch origin valheim && git checkout valheim  (발헤임 작업은 이 브랜치에만 푸시. 사용자 승인됨)
@@ -19,13 +26,15 @@
       (같은 폴더의 assembly_utils.dll, assembly_guiutils.dll도 함께)
    ③ 올렸다고 말해 주면 add_repo(gojohnlee/valheim-refs)로 붙여서 실제 코드를 읽는다.
    게임 버전(메인 메뉴 오른쪽 아래 숫자)도 같이 받는다.
-4. Valheim용 보조 에이전트(.claude/agents, Sonnet·Haiku) 만들기 — rw-standard/rw-simple 참고.
+4. (완료) 보조 에이전트 vh-standard·vh-simple.
 5. 이 대화는 지워짐. 결정 사항은 전부 CLAUDE.md 발헤임 섹션과 docs/valheim/concept-v1.txt에 있다.
 
 다음 할 일
 - [ ] 최신 assembly_valheim.dll 받기(위 3번)
 - [ ] 먼 구역 유지 시험(약 200줄) → 사용자 PC 테스트
-- [ ] 게임 무관 로직 프로젝트 + dotnet test 뼈대(게임 DLL 없이 먼저 시작 가능)
+- [x] 게임 무관 로직 프로젝트 + dotnet test 뼈대, 채팅 해석기
+- [ ] Core 다음 후보(게임 DLL 없이 가능): 알림 도배 방지(30초)·Sonnet 호출 제한(1분 6번), Claude Code 호출 결과 JSON 검증,
+      장소 기억(100곳·위험도 감쇠), 위험 판단 규칙(8장 a~d), 대사 엔진(최근 줄 피하기)
 - [ ] 발헤임용 PC 테스트 스크립트(림월드 scripts/rimworld-test.ps1 참고: BepInEx·Jötunn·모드 설치 → 실행 → 로그 수집)
 
 구현 단계 (구상서 13장)
