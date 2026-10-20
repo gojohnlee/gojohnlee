@@ -199,7 +199,7 @@ namespace ValheimHelper
         }
 
         /// <summary>시험용 일: 한 곳으로 곧장 걷기만 한다.</summary>
-        sealed class WalkJob : IWorkerJob
+        internal sealed class WalkJob : IWorkerJob
         {
             readonly WorkerAI m_ai;
             readonly Vector3 m_to;

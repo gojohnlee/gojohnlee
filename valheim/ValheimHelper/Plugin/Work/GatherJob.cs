@@ -54,7 +54,8 @@ namespace ValheimHelper
         /// <summary>안 둘러본 밝혀진 구역을 거점에서 몇 구역까지 찾는지.</summary>
         const int KnownRing = 10;
         const float MoveStuckLimit = 20f;
-        const float ChopLimit = 60f;
+        /// <summary>한 대상에 쓰는 최대 시간(큰 광맥 포함). 진척이 30초 없으면 그보다 먼저 그만둔다(WorkIdleLimit).</summary>
+        const float ChopLimit = 10f * 60f;
         /// <summary>나무를 쓰러뜨린 뒤 통나무가 멈출 때까지 기다리는 시간.</summary>
         const float FallWait = 4f;
 
@@ -406,6 +407,9 @@ namespace ValheimHelper
             if (Walk(dt, m_targetPos, m_reach) || Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f)
             {
                 m_swings = m_swingsNoProgress = 0;
+                m_workIdle = m_closerTime = 0f;
+                m_lastDigs = m_ai.Digs;
+                m_saidDig = false;
                 m_lastRevision = zdo.DataRevision;
                 Go(Step.Work);
                 return true;
@@ -438,11 +442,27 @@ namespace ValheimHelper
                 return true;
             }
             if (!m_npc.HoldTool(m_targetInfo.Tool)) { Go(Step.Tool); return true; }
-            if (m_stepTime > ChopLimit) { Skip(); return true; }
+            // 진척(대상이 깎이거나 땅을 팜) 없이 30초면 다른 것으로. 큰 광맥은 오래 걸려도 계속 캔다.
+            m_workIdle += Time.deltaTime;
+            if (m_workIdle > WorkIdleLimit || m_stepTime > ChopLimit) { Skip(); return true; }
 
             Vector3 aim = m_targetPos + Vector3.up * 1f;
-            m_ai.Face(aim);
+            m_aimCol = null;
+            if (m_targetInfo.Tool == ToolKind.Pickaxe && !RockAim(view, out aim))
+            {
+                Skip(); // 땅속 조각만 남았는데 파서 꺼낼 물건이 아니다(돌): 남겨 둔다
+                return true;
+            }
             bool attacking = m_npc.InAttack();
+            // 땅속 광석을 파는데 두 번 휘둘러도 안 닿았다: 구덩이가 깊어져 손이 안 닿으니 3초까지 다가간다
+            if (!attacking && m_ai.DigAllowed && m_swingsNoProgress >= 2 && m_closerTime < 3f && Utils.DistanceXZ(aim, m_npc.transform.position) > 1.2f)
+            {
+                m_closerTime += Time.deltaTime;
+                m_ai.MoveToPoint(Time.deltaTime, aim, 1f, false);
+                m_wasAttacking = false;
+                return true;
+            }
+            m_ai.Face(aim);
             if (m_wasAttacking && !attacking)
             {
                 // 한 번 휘두름이 끝났다: 피해가 들어갔는지(대상 ZDO가 바뀌었는지) 보고, 도구를 닳게 한다
@@ -454,10 +474,12 @@ namespace ValheimHelper
                     tool.m_durability = Mathf.Max(0f, tool.m_durability - tool.m_shared.m_useDurabilityDrain);
                     if (tool.m_durability <= 0f) { m_npc.UnequipItem(tool); m_npc.Say("toolBroke", Args()); }
                 }
-                // 체력 저장 방식이 대상마다 달라서(MineRock5는 부위별) 체력 대신 ZDO 데이터 변경으로 본다.
-                if (zdo.DataRevision != m_lastRevision) m_swingsNoProgress = 0;
+                // 체력 저장 방식이 대상마다 달라서(MineRock5는 부위별) 체력 대신 ZDO 데이터 변경으로 본다. 땅을 팠으면 그것도 진척.
+                if (zdo.DataRevision != m_lastRevision) { m_swingsNoProgress = 0; m_workIdle = m_closerTime = 0f; }
+                else if (m_ai.Digs != m_lastDigs) { m_swingsNoProgress = 0; m_workIdle = m_closerTime = 0f; }
                 else m_swingsNoProgress++;
                 m_lastRevision = zdo.DataRevision;
+                m_lastDigs = m_ai.Digs;
                 if (m_swingsNoProgress >= 4)
                 {
                     // 바닐라 공격 판정이 닿지 않는다(구상서 12장): 같은 피해 값을 직접 준다.
@@ -470,21 +492,70 @@ namespace ValheimHelper
             return true;
         }
 
+        float m_workIdle, m_closerTime;
+        int m_lastDigs;
+        Collider m_aimCol;
+        bool m_saidDig;
+        const float WorkIdleLimit = 30f;
+        /// <summary>광석이 원래 땅보다 이만큼 넘게 깊이 묻혀 있으면 파지 않는다(m).</summary>
+        const float MaxDigDepth = 3f;
+
+        /// <summary>
+        /// 곡괭이로 칠 곳: 남은 조각 중 땅 위로 드러난 가장 가까운 조각(휘두름이 땅에 먼저 닿으면 바위가 안 깎인다).
+        /// 남은 게 다 땅속이면 파서 꺼낼 물건(광석, ResourceCatalog.WorthDigging)일 때만 가장 얕은 조각을 겨누고 땅 파기를 허락한다.
+        /// false면 이 대상은 그만둔다(땅속 돌, 너무 깊은 광석).
+        /// </summary>
+        bool RockAim(ZNetView view, out Vector3 aim)
+        {
+            aim = m_targetPos + Vector3.up;
+            Vector3 chest = m_npc.transform.position + Vector3.up;
+            Collider buried = null;
+            float buriedTop = float.MinValue, bestD = float.MaxValue;
+            foreach (var col in view.GetComponentsInChildren<Collider>())
+            {
+                if (col.isTrigger) continue;
+                Bounds b = col.bounds;
+                float ground = ZoneSystem.instance.GetGroundHeight(b.center, out float h) ? h : b.min.y;
+                if (b.max.y > ground + 0.3f)
+                {
+                    Vector3 p = b.ClosestPoint(chest);
+                    p.y = Mathf.Clamp(p.y, ground + 0.3f, b.max.y);
+                    float dd = (p - chest).sqrMagnitude;
+                    if (dd < bestD) { bestD = dd; aim = p; m_aimCol = col; }
+                }
+                else if (b.max.y > buriedTop) { buriedTop = b.max.y; buried = col; }
+            }
+            if (m_aimCol != null || buried == null) return true;
+            Vector3 c = buried.bounds.center;
+            float depth = WorldGenerator.instance.GetHeight(c.x, c.z) - buriedTop; // 원래 땅에서 얼마나 깊은지
+            if (!ResourceCatalog.WorthDigging(Item) || depth > MaxDigDepth)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 조각만 남음(깊이 {depth:0.0}m) → 파지 않고 남김");
+                return false;
+            }
+            if (!m_saidDig) { m_saidDig = true; Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 {Item} 파기(깊이 {depth:0.0}m)"); }
+            m_aimCol = buried;
+            aim = buried.bounds.ClosestPoint(chest);
+            m_ai.DigAllowedUntil = Time.time + 1.5f;
+            return true;
+        }
+
         void DirectHit(ZNetView target)
         {
             ItemDrop.ItemData tool = m_npc.GetCurrentWeapon();
             IDestructible d = target.GetComponent<IDestructible>();
             if (tool == null || d == null) return;
-            // 가장 가까운 충돌체를 맞힌 것으로 한다(MineRock5는 충돌체로 부위를 찾는다).
+            // 겨눈 조각, 없으면 가장 가까운 충돌체를 맞힌 것으로 한다(MineRock5는 충돌체로 부위를 찾는다).
             Vector3 me = m_npc.transform.position + Vector3.up;
-            Collider hitCol = null;
+            Collider hitCol = m_aimCol;
             float best = float.MaxValue;
-            foreach (var col in target.GetComponentsInChildren<Collider>())
-            {
-                if (col.isTrigger) continue;
-                float dd = (col.ClosestPoint(me) - me).sqrMagnitude;
-                if (dd < best) { best = dd; hitCol = col; }
-            }
+            if (hitCol == null)
+                foreach (var col in target.GetComponentsInChildren<Collider>())
+                {
+                    if (col.isTrigger) continue;
+                    float dd = (col.ClosestPoint(me) - me).sqrMagnitude;
+                    if (dd < best) { best = dd; hitCol = col; }
+                }
             Vector3 point = hitCol != null ? hitCol.ClosestPoint(me) : target.transform.position + Vector3.up;
             var hit = new HitData
             {
@@ -660,6 +731,7 @@ namespace ValheimHelper
         {
             float d = Utils.DistanceXZ(point, m_npc.transform.position);
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progressTimer = 0f; return false; }
+            if (m_ai.Carving) return false; // 구덩이에서 경사로를 깎는 중: 막힌 게 아니다
             m_progressTimer += dt;
             return m_progressTimer > MoveStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp;
         }

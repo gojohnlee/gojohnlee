@@ -100,7 +100,9 @@ namespace ValheimHelper
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; }
             float d = Utils.DistanceXZ(point, pos);
-            if (d <= dist) { StopMoving(); m_detourTime = 0f; WaterBlockedTime = 0f; return true; }
+            if (d <= dist) { StopMoving(); m_detourTime = 0f; WaterBlockedTime = 0f; m_carving = false; return true; }
+            if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
+            if (m_carving && UpdateCarve(dt, pos)) return false;
             if (!m_character.InLiquid()) { m_lastDry = pos; m_hasDry = true; if (Time.time > m_waterDecidedUntil) m_swimOk = false; }
             else if (m_character.IsSwimming() && !m_swimOk && m_hasDry)
             {
@@ -123,21 +125,171 @@ namespace ValheimHelper
                 return false;
             }
             WaterBlockedTime = 0f;
+            // 바위·통나무·구덩이 벽 같은 턱에 걸려 섰으면 뛴다(플레이어처럼)
+            m_ledgeTimer -= dt;
+            if (m_ledgeTimer <= 0f)
+            {
+                m_ledgeTimer = 0.25f;
+                if (Flat(m_character.GetVelocity()).magnitude < 1f && LedgeAhead(pos, m_character.GetMoveDir())) TryJump();
+            }
             m_sampleTimer += dt;
             if (m_sampleTimer >= 1.5f)
             {
                 if (Utils.DistanceXZ(m_samplePos, pos) < 0.75f && d > dist + 1f)
                 {
-                    Vector3 fwd = point - pos;
-                    fwd.y = 0f;
-                    Vector3 side = Vector3.Cross(Vector3.up, fwd.normalized) * (Random.value < 0.5f ? 1f : -1f);
-                    m_detourDir = (side + fwd.normalized * 0.3f).normalized;
-                    m_detourTime = 1.2f;
+                    // 막혔다: 두 번까지 뛰어 보고, 구덩이에 갇혔으면 경사로를 깎고, 아니면 옆으로 비켜 간다
+                    Vector3 fwd = Flat(point - pos).normalized;
+                    if (m_stuckJumps < 2 && TryJump()) m_stuckJumps++;
+                    else if (!StartCarve(pos, fwd))
+                    {
+                        m_stuckJumps = 0;
+                        Vector3 side = Vector3.Cross(Vector3.up, fwd) * (Random.value < 0.5f ? 1f : -1f);
+                        m_detourDir = (side + fwd * 0.3f).normalized;
+                        m_detourTime = 1.2f;
+                    }
                 }
+                else m_stuckJumps = 0;
                 m_sampleTimer = 0f;
                 m_samplePos = pos;
             }
             return false;
+        }
+
+        // ---- 점프·구덩이 (2026-10-21 사용자 관찰: 점프를 안 해서 돌 캐다 판 구덩이에서 못 나옴) ----
+
+        /// <summary>시험 기록: 뛴 횟수, 경사로를 깎은 곡괭이질 수.</summary>
+        public int Jumps { get; private set; }
+        public int CarveSwings { get; private set; }
+        /// <summary>시험용: 점프·경사로 깎기를 끄고 걷기만으로 나오는지 본다.</summary>
+        public static bool TestNoJump, TestNoCarve;
+
+        /// <summary>이때까지는 이 일꾼의 곡괭이질이 땅을 판다(광석 캐기·구덩이 탈출). 그 밖에는 안 판다(NpcPatches.NoDig).</summary>
+        public float DigAllowedUntil;
+        public bool DigAllowed => Time.time < DigAllowedUntil;
+        /// <summary>이 일꾼이 판 횟수(NpcPatches.NoDig가 센다). 채집은 이것도 진척으로 본다.</summary>
+        public int Digs;
+
+        float m_lastJump = -10f;
+        float m_ledgeTimer;
+        /// <summary>막혀서 뛴 횟수(진척이 있으면 0).</summary>
+        int m_stuckJumps;
+        static int s_solidMask;
+
+        static int SolidMask => s_solidMask != 0 ? s_solidMask
+            : (s_solidMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
+
+        /// <summary>바닐라 점프(일꾼은 몸 앞쪽으로 뛴다). 땅에 서 있을 때만, 0.8초에 한 번.</summary>
+        bool TryJump()
+        {
+            if (TestNoJump || Time.time - m_lastJump < 0.8f || !m_character.IsOnGround() || m_character.InAttack()) return false;
+            m_lastJump = Time.time;
+            m_character.Jump();
+            Jumps++;
+            return true;
+        }
+
+        /// <summary>앞 1m 안에 무릎 높이 턱(가파른 면)이 있고, 뛰면 닿는 높이(1.4m)는 비었는지.</summary>
+        bool LedgeAhead(Vector3 pos, Vector3 dir)
+        {
+            dir = Flat(dir);
+            if (dir.sqrMagnitude < 0.01f) return false;
+            dir.Normalize();
+            if (!Physics.Raycast(pos + Vector3.up * 0.4f, dir, out RaycastHit low, 1f, SolidMask, QueryTriggerInteraction.Ignore)) return false;
+            if (low.normal.y > 0.7f) return false; // 완만한 비탈은 걸어 오른다
+            return !Physics.Raycast(pos + Vector3.up * 1.4f, dir, 1.4f, SolidMask, QueryTriggerInteraction.Ignore);
+        }
+
+        bool m_carving;
+        /// <summary>구덩이에서 경사로를 깎는 중(제자리라도 막힌 게 아니다).</summary>
+        public bool Carving => m_carving;
+        float m_carveSeen;
+        Vector3 m_carveDir;
+        bool m_carveSwung;
+        float m_carveWalk;
+        int m_carveCount;
+        float m_carveStart;
+        float m_noCarveUntil;
+        const int CarveMax = 30;
+
+        /// <summary>8방향(0 = toward, 45°씩) 둘레 땅이 발보다 얼마나 높은지: 1.5·3·4.5m 중 가장 높은 값.</summary>
+        static double[] Rise8(Vector3 pos, Vector3 toward)
+        {
+            var rise = new double[8];
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 dir = Quaternion.Euler(0f, 45f * i, 0f) * toward;
+                float best = -99f;
+                for (int s = 1; s <= 3; s++)
+                    if (ZoneSystem.instance.GetGroundHeight(pos + dir * (1.5f * s), out float h)) best = Mathf.Max(best, h - pos.y);
+                rise[i] = best;
+            }
+            return rise;
+        }
+
+        /// <summary>
+        /// 구덩이에 갇혔으면(Climb.IsPit) 곡괭이로 가려는 쪽 가장 낮은 벽에 경사로를 깎기 시작한다.
+        /// 곡괭이가 없거나 구덩이가 아니면 false(그냥 언덕·절벽은 길 만들기라 시킬 때만, 구상서 6-5).
+        /// </summary>
+        bool StartCarve(Vector3 pos, Vector3 toward)
+        {
+            if (TestNoCarve || Time.time < m_noCarveUntil || toward.sqrMagnitude < 0.01f) return false;
+            if (WorkerNpc.BestTool(((WorkerNpc)m_character).GetInventory(), ToolKind.Pickaxe) == null) return false;
+            double[] rise = Rise8(pos, toward);
+            if (!Climb.IsPit(rise)) return false;
+            int k = Climb.CarveDir(rise);
+            m_carveDir = Quaternion.Euler(0f, 45f * k, 0f) * toward;
+            m_carving = true;
+            m_carveSwung = false;
+            m_carveWalk = 0f;
+            m_carveCount = 0;
+            m_carveStart = m_carveSeen = Time.time;
+            Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 구덩이에 갇힘(둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))}) → 경사로 깎기");
+            return true;
+        }
+
+        /// <summary>
+        /// 경사로 깎기 한 번: 벽 쪽(발 위 1m)으로 곡괭이질(바닐라: 맞은 곳보다 조금 아래로 땅이 깎임) → 1.2초 올라가 본다 →
+        /// 아직 구덩이면 다시. 다 나왔거나 30번이면 끝(끝나면 1분 동안은 다시 시작하지 않는다). true면 이번 프레임은 깎기가 맡았다.
+        /// </summary>
+        bool UpdateCarve(float dt, Vector3 pos)
+        {
+            var npc = (WorkerNpc)m_character;
+            m_carveSeen = Time.time;
+            if (m_carveWalk > 0f)
+            {
+                m_carveWalk -= dt;
+                MoveTowards(m_carveDir, false);
+                if (m_carveWalk > 0f) return true;
+                double[] rise = Rise8(pos, m_carveDir);
+                if (!Climb.IsPit(rise) || m_carveCount >= CarveMax)
+                {
+                    Plugin.Log.LogInfo($"{npc.NpcName}: 경사로 깎기 끝({(Climb.IsPit(rise) ? "못 나옴" : "나옴")}, 곡괭이질 {m_carveCount}번, {Time.time - m_carveStart:0}초)");
+                    m_carving = false;
+                    m_stuckJumps = 0;
+                    if (Climb.IsPit(rise)) m_noCarveUntil = Time.time + 60f;
+                    return false;
+                }
+                return true;
+            }
+            if (!npc.HoldTool(ToolKind.Pickaxe)) { m_carving = false; return false; }
+            StopMoving();
+            Vector3 aim = pos + m_carveDir * 1.2f + Vector3.up * 1f;
+            LookAt(aim);
+            bool attacking = npc.InAttack();
+            if (m_carveSwung && !attacking)
+            {
+                m_carveSwung = false;
+                m_carveCount++;
+                CarveSwings++;
+                m_carveWalk = 1.2f; // 깎인 데로 올라가 본다
+                return true;
+            }
+            if (!attacking && IsLookingAt(aim, 20f))
+            {
+                DigAllowedUntil = Time.time + 1.5f;
+                if (npc.StartAttack(null, false)) m_carveSwung = true;
+            }
+            return true;
         }
 
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
@@ -221,7 +373,7 @@ namespace ValheimHelper
                     }
                     MoveToPoint(dt, home, 1.5f, d > 15f);
                     // 길이 없거나 15초 동안 못 움직이면 거점으로 옮긴다 (임시: 길 막힘 처리는 ② 단계).
-                    m_stuckTimer = Vector3.Distance(m_lastPos, transform.position) < 0.5f * dt ? m_stuckTimer + dt : 0f;
+                    m_stuckTimer = Vector3.Distance(m_lastPos, transform.position) < 0.5f * dt && !m_carving ? m_stuckTimer + dt : 0f;
                     m_lastPos = transform.position;
                     if (m_stuckTimer > 15f)
                     {

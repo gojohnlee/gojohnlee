@@ -48,6 +48,18 @@ namespace ValheimHelper
 
         public static int Count { get { if (s_byHash == null) Build(); return s_byHash.Count; } }
 
+        /// <summary>
+        /// 땅을 파서라도 꺼낼 물건인지. 손으로 줍는 곳에서도 나오는 흔한 것(돌·부싯돌)은 땅속 조각을 남겨 두고(파지 않음),
+        /// 구리처럼 광맥에서만 나오는 것은 판다(2026-10-21 사용자: 돌 캘 땐 땅 파기 최대한 자제).
+        /// </summary>
+        public static bool WorthDigging(string item)
+        {
+            if (s_byHash == null) Build();
+            foreach (var r in s_byHash.Values)
+                if (r.Pickable && r.Produces.Contains(item)) return false;
+            return true;
+        }
+
         static void Build()
         {
             s_byHash = new Dictionary<int, ResourceInfo>();

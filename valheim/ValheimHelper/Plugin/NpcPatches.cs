@@ -39,5 +39,26 @@ namespace ValheimHelper
 
             static bool CountsArmor(Character c) => c.IsPlayer() || c is WorkerNpc;
         }
+
+        /// <summary>
+        /// 일꾼의 곡괭이질은 허락된 때(광석이 땅속에 남았을 때·구덩이에서 경사로를 깎을 때, WorkerAI.DigAllowed)만 땅을 판다
+        /// (2026-10-21 사용자: 돌 캘 때 맨땅을 파서 구덩이에 갇힘 → 땅 파기는 최대한 자제).
+        /// 바닐라 Attack.DoMeleeAttack은 휘두름이 바위보다 땅에 먼저 닿으면 땅만 파고 그 휘두름을 끝낸다 — 여기서는 파는 것만 막는다.
+        /// </summary>
+        [HarmonyPatch(typeof(Attack), nameof(Attack.SpawnOnHitTerrain))]
+        internal static class NoDig
+        {
+            /// <summary>시험 기록: 일꾼이 판 횟수, 막은 횟수.</summary>
+            public static int Dug, Blocked;
+
+            static bool Prefix(Character character, ref UnityEngine.GameObject __result)
+            {
+                if (!(character is WorkerNpc w)) return true;
+                if (w.Ai != null && w.Ai.DigAllowed) { Dug++; w.Ai.Digs++; return true; }
+                Blocked++;
+                __result = null;
+                return false;
+            }
+        }
     }
 }
