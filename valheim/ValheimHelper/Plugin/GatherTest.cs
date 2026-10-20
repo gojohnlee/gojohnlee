@@ -18,7 +18,7 @@ namespace ValheimHelper
             TestRunner.Register("vh_stonetest", "돌 채집 시험", () => Run("PickaxeAntler", "Stone", "돌"));
         }
 
-        sealed class Checks
+        internal sealed class Checks
         {
             public int Total, Passed;
             public void Add(string what, bool ok)
@@ -105,13 +105,13 @@ namespace ValheimHelper
             End(player, god, checks, onHeard, heard);
         }
 
-        static void Say(string text, Container chest)
+        internal static void Say(string text, Container chest)
         {
             TestRunner.Log($"> {text}");
             ChatNet.SendAsLocal(text, chest != null ? chest.GetComponent<ZNetView>().GetZDO().m_uid : ZDOID.None);
         }
 
-        static int Count(Container c, string prefab)
+        internal static int Count(Container c, string prefab)
         {
             int n = 0;
             foreach (var it in c.GetInventory().GetAllItems())
@@ -119,13 +119,13 @@ namespace ValheimHelper
             return n;
         }
 
-        static Vector3 Ground(Vector3 p)
+        internal static Vector3 Ground(Vector3 p)
         {
             if (ZoneSystem.instance.GetGroundHeight(p, out float h)) p.y = h; // 지형(바위 위에 상자를 놓지 않게)
             return p;
         }
 
-        static Container ChestAt(Vector3 pos)
+        internal static Container ChestAt(Vector3 pos)
         {
             foreach (var zdo in Senses.Nearby(pos, 1.5f))
             {

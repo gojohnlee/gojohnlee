@@ -58,6 +58,37 @@ namespace ValheimHelper
             return list;
         }
 
+        /// <summary>그 물건을 넣을 상자: 그 물건으로 지정된 상자 → 이미 같은 게 있는 상자 → 빈자리 있는 상자(장비·음식·씨앗 상자 제외).</summary>
+        public static Container ForItem(string prefab, Vector3 home)
+        {
+            Container assigned = Assigned(KeyItem(prefab));
+            if (assigned != null) return assigned;
+            GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
+            if (go == null) return null;
+            ItemDrop.ItemData sample = go.GetComponent<ItemDrop>().m_itemData;
+            Container fallback = null;
+            foreach (var c in NearBase(home))
+            {
+                if (IsSpecial(c)) continue;
+                if (!c.GetInventory().CanAddItem(sample, 1)) continue;
+                if (c.GetInventory().HaveItem(sample.m_shared.m_name)) return c;
+                if (fallback == null) fallback = c;
+            }
+            return fallback;
+        }
+
+        /// <summary>장비·음식·씨앗 상자로 지정된 상자인지(자원은 넣지 않는다).</summary>
+        public static bool IsSpecial(Container c)
+        {
+            ZDOID id = c.GetComponent<ZNetView>().GetZDO().m_uid;
+            foreach (var key in new[] { KeyEquip(0), KeyEquip(1), KeyFood, KeySeeds })
+            {
+                Container a = Assigned(key);
+                if (a != null && a.GetComponent<ZNetView>().GetZDO().m_uid == id) return true;
+            }
+            return false;
+        }
+
         static readonly Func<Container, bool> LoadContainer =
             AccessTools.MethodDelegate<Func<Container, bool>>(AccessTools.Method(typeof(Container), "Load"));
 

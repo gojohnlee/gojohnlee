@@ -11,7 +11,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class GatherJob : IWorkerJob
     {
-        enum Step { Tool, GoChest, Search, GoZone, Approach, Work, Collect, Return, Deposit }
+        enum Step { Prep, Tool, GoChest, Search, GoZone, Approach, Work, Collect, Return, Deposit }
 
         public readonly string Item;
         public readonly int Target;
@@ -24,7 +24,8 @@ namespace ValheimHelper
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
 
-        Step m_step = Step.Tool;
+        Step m_step = Step.Prep;
+        Prep m_prep;
         float m_stepTime;
         float m_searchTime;
         Container m_chest;
@@ -101,6 +102,7 @@ namespace ValheimHelper
             m_bestDist = float.MaxValue;
             m_progressTimer = 0f;
             if (s == Step.Deposit) m_chest = null; // 넣을 상자는 그때그때 고른다
+            if (s == Step.Prep) m_prep = null;
         }
 
         bool Fail(string key)
@@ -140,6 +142,7 @@ namespace ValheimHelper
             }
             switch (m_step)
             {
+                case Step.Prep: return UpdatePrep(dt);
                 case Step.Tool: return UpdateTool();
                 case Step.GoChest: return UpdateGoChest(dt);
                 case Step.Search: return UpdateSearch(dt);
@@ -153,7 +156,16 @@ namespace ValheimHelper
             return false;
         }
 
-        // ---- 도구 ----
+        // ---- 준비·도구 ----
+
+        /// <summary>출발 준비(장비 상자·음식 상자, Prep). 처음과 짐을 넣고 다시 나갈 때마다.</summary>
+        bool UpdatePrep(float dt)
+        {
+            if (m_prep == null) m_prep = new Prep(m_npc);
+            if (m_prep.Update(dt)) return true;
+            Go(Step.Tool);
+            return true;
+        }
 
         bool UpdateTool()
         {
@@ -559,7 +571,7 @@ namespace ValheimHelper
             if (Carried() == 0)
             {
                 if (m_giveUp != null) return Fail(m_giveUp);
-                Go(Step.Search);
+                Go(Step.Prep);
                 return true;
             }
             if (m_chest == null) m_chest = DepositChest();
@@ -595,38 +607,11 @@ namespace ValheimHelper
             }
             if (Carried() > 0) return Fail("chestFull");
             if (m_giveUp != null) return Fail(m_giveUp);
-            Go(Step.Search);
+            Go(Step.Prep); // 다시 나가기 전에 먹고 장비 확인
             return true;
         }
 
-        Container DepositChest()
-        {
-            Container assigned = Chests.Assigned(Chests.KeyItem(Item));
-            if (assigned != null) return assigned;
-            GameObject prefab = ObjectDB.instance.GetItemPrefab(Item);
-            ItemDrop.ItemData sample = prefab.GetComponent<ItemDrop>().m_itemData;
-            Container fallback = null;
-            foreach (var c in Chests.NearBase(m_npc.Home))
-            {
-                // 장비·음식·씨앗 상자로 지정된 곳에는 넣지 않는다
-                if (IsSpecial(c)) continue;
-                if (!c.GetInventory().CanAddItem(sample, 1)) continue;
-                if (c.GetInventory().HaveItem(sample.m_shared.m_name)) return c; // 이미 같은 게 있는 상자 먼저
-                if (fallback == null) fallback = c;
-            }
-            return fallback;
-        }
-
-        static bool IsSpecial(Container c)
-        {
-            ZDOID id = c.GetComponent<ZNetView>().GetZDO().m_uid;
-            foreach (var key in new[] { Chests.KeyEquip(0), Chests.KeyEquip(1), Chests.KeyFood, Chests.KeySeeds })
-            {
-                Container a = Chests.Assigned(key);
-                if (a != null && a.GetComponent<ZNetView>().GetZDO().m_uid == id) return true;
-            }
-            return false;
-        }
+        Container DepositChest() => Chests.ForItem(Item, m_npc.Home);
 
         // ---- 공통 ----
 

@@ -18,6 +18,9 @@ namespace ValheimHelper
         static GameObject s_prefab;
         static GameObject s_container;
 
+        /// <summary>플레이어 묘비 프리팹(Player.m_tombstone). NPC가 죽으면 이걸 놓는다(구상서 9장).</summary>
+        public static GameObject Tombstone { get; private set; }
+
         /// <summary>복제본에서 지운 부품 이름과 남은 부품 이름 (시험 보고용).</summary>
         public static readonly List<string> Removed = new List<string>();
         public static readonly List<string> Kept = new List<string>();
@@ -52,6 +55,8 @@ namespace ValheimHelper
             CopyFields(src, npc, typeof(Humanoid));
             npc.m_name = "VH_Worker";
             npc.m_faction = Character.Faction.Players;
+            npc.m_deathAnimation = false; // 죽으면 바로 OnDeath(묘비·부활, WorkerNpc)
+            Tombstone = src.m_tombstone; // 죽을 때 쓰는 플레이어 묘비 프리팹
 
             Removed.Clear();
             Kept.Clear();

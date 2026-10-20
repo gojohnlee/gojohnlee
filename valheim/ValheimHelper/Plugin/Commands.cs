@@ -77,6 +77,7 @@ namespace ValheimHelper
                     case CommandKind.Stop:
                     case CommandKind.ClearQueue:
                         npc.Ai.GoHome();
+                        npc.Ai.HoldChores(); // 쉬라고 했으니 묘비 회수도 스스로 시작하지 않는다
                         npc.Say("stop");
                         break;
                     case CommandKind.Item:

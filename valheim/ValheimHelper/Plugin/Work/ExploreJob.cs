@@ -29,8 +29,9 @@ namespace ValheimHelper
         float m_time;
         float m_bestDist, m_progressTimer;
         bool m_saidBiome;
+        Prep m_prep;
 
-        public string StepName => m_walking ? "Walk" : "Pick";
+        public string StepName => m_prep != null ? "Prep" : m_walking ? "Walk" : "Pick";
 
         /// <param name="where">알림에 쓸 말("동쪽", "늪", "가까운 데").</param>
         public ExploreJob(WorkerNpc npc, int dirX, int dirY, int biome, string where)
@@ -41,6 +42,7 @@ namespace ValheimHelper
             m_dirY = dirY;
             m_biome = biome;
             m_where = where;
+            m_prep = new Prep(npc);
             Knowledge k = Brain.Get();
             foreach (var ik in k.Summary(Senses.ZoneOf(npc.Home))) m_knewItems.Add(ik.Item);
         }
@@ -53,6 +55,7 @@ namespace ValheimHelper
             m_visited.Add(Senses.ZoneOf(m_npc.transform.position));
             if (m_time > Limit) return Done("exploreDone");
             if (EnvMan.IsNight()) return Done("nightBack");
+            if (m_prep != null) { if (m_prep.Update(dt)) return true; m_prep = null; } // 출발 준비(장비·음식)
             if (m_biome != 0 && !m_saidBiome && (Scout.BiomeAt(m_npc.transform.position) & m_biome) != 0)
             {
                 // 그 바이옴에 들어섰다. 계속 그 바이옴 쪽을 둘러본다(NextFrontier가 그 옆 경계를 먼저 고른다).

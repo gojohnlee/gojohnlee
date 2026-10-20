@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Work;
 
@@ -51,6 +52,7 @@ namespace ValheimHelper
         public void StartJob(IWorkerJob job)
         {
             Job = job;
+            m_choresHeld = false;
             Current = Mode.Work;
         }
 
@@ -146,6 +148,7 @@ namespace ValheimHelper
             Job = null;
             m_follow = target;
             FollowName = name;
+            m_choresHeld = false;
             Current = Mode.Follow;
         }
 
@@ -164,6 +167,7 @@ namespace ValheimHelper
         {
             if (!base.UpdateAI(dt)) return false;
             var npc = (WorkerNpc)m_character;
+            npc.UpdateFood(dt);
             m_senseTimer -= dt;
             if (m_senseTimer <= 0f)
             {
@@ -214,11 +218,62 @@ namespace ValheimHelper
                 }
                 default:
                     StopMoving();
+                    Chores(npc, dt);
                     break;
             }
             return true;
         }
 
+        // ---- 죽은 뒤 (구상서 9장) ----
+
+        /// <summary>!멈춰로 쉬라고 했다: 다음 명령이나 다음 죽음 전까지 묘비 회수를 스스로 시작하지 않는다.</summary>
+        bool m_choresHeld;
+        float m_choreTimer = 3f;
+        bool m_saidGraveNight;
+
+        public void HoldChores() => m_choresHeld = true;
+
+        /// <summary>죽었다(WorkerNpc.OnDeath): 하던 일을 버린다. 묘비를 회수하다 죽었으면 그 묘비 시도 횟수를 올린다.</summary>
+        public void OnDied()
+        {
+            var npc = (WorkerNpc)m_character;
+            if (Job is GraveJob g) npc.SetGraves(WorkerNpc.AddTry(npc.Graves(), g.Grave, 1));
+            Job = null;
+            m_follow = ZDOID.None;
+            Current = Mode.Idle;
+            StopMoving();
+            m_choresHeld = false;
+            m_choreTimer = 3f;
+            m_saidGraveNight = false;
+        }
+
+        /// <summary>한가할 때 할 일: 남은 묘비 회수(밤이면 아침까지, 2번 실패한 묘비는 위치만 알리고 포기).</summary>
+        void Chores(WorkerNpc npc, float dt)
+        {
+            if (m_choresHeld) return;
+            m_choreTimer -= dt;
+            if (m_choreTimer > 0f) return;
+            m_choreTimer = 5f;
+            var graves = npc.Graves();
+            if (graves.Count == 0) return;
+            foreach (var g in graves.ToArray())
+            {
+                ZDO zdo = ZDOMan.instance.GetZDO(g.Id);
+                if (zdo == null) { npc.ForgetGrave(g.Id); continue; } // 누가 챙겼거나 사라짐
+                if (g.Tries < GraveJob.MaxTries) continue;
+                npc.ForgetGrave(g.Id);
+                Scout.FromHome(npc.Home, zdo.GetPosition(), out string dir, out string dist);
+                npc.Say("graveFail", new Dictionary<string, string> { ["dir"] = dir, ["dist"] = dist });
+            }
+            graves = npc.Graves();
+            if (graves.Count == 0) return;
+            if (EnvMan.IsNight())
+            {
+                if (!m_saidGraveNight) { m_saidGraveNight = true; npc.Say("graveNight"); }
+                return;
+            }
+            StartJob(new GraveJob(npc, graves[0].Id));
+        }
         void Lost(WorkerNpc npc)
         {
             npc.Say("lost");
