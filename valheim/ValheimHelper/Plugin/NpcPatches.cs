@@ -51,10 +51,15 @@ namespace ValheimHelper
             /// <summary>시험 기록: 일꾼이 판 횟수, 막은 횟수.</summary>
             public static int Dug, Blocked;
 
-            static bool Prefix(Character character, ref UnityEngine.GameObject __result)
+            /// <summary>원래 땅보다 이만큼 넘게 깊이는 파지 않는다(m). 그보다 깊은 광석 조각은 남긴다(GatherJob.RockAim).</summary>
+            public const float MaxDepth = 3f;
+
+            static bool Prefix(UnityEngine.Vector3 hitPoint, Character character, ref UnityEngine.GameObject __result)
             {
                 if (!(character is WorkerNpc w)) return true;
-                if (w.Ai != null && w.Ai.DigAllowed) { Dug++; w.Ai.Digs++; return true; }
+                // 경사로 깎기는 깊이 제한 없음(구덩이에서 나오려고 위로 깎는 것)
+                bool tooDeep = w.Ai != null && !w.Ai.Carving && WorldGenerator.instance != null && hitPoint.y < WorldGenerator.instance.GetHeight(hitPoint.x, hitPoint.z) - MaxDepth;
+                if (w.Ai != null && w.Ai.DigAllowed && !tooDeep) { Dug++; w.Ai.Digs++; return true; }
                 Blocked++;
                 __result = null;
                 return false;

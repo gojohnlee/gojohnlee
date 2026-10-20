@@ -71,6 +71,10 @@ namespace ValheimHelper
         /// <summary>시험 기록용: 마지막 길찾기가 길을 찾았는지.</summary>
         public bool PathFound => FoundPath();
 
+        /// <summary>시험 기록용: 걷기 판단 상태.</summary>
+        public string MoveState => $"깎기 {m_carving}(곡괭이질 {m_carveCount}, 걷기 {m_carveWalk:0.0}), 막혀서 뜀 {m_stuckJumps}, 비켜 가기 {m_detourTime:0.0}, " +
+            $"물 막힘 {WaterBlockedTime:0.0}, 길 {FoundPath()}, 경계 {m_guard?.StateName}, 공격 중 {m_character.InAttack()}";
+
         float m_sampleTimer;
         Vector3 m_samplePos;
         float m_detourTime;

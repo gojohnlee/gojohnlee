@@ -112,10 +112,17 @@ namespace ValheimHelper
                     {
                         WorkerAI.TestNoJump = ph < 1;
                         WorkerAI.TestNoCarve = ph < 2;
+                        float logTimer = 0f;
                         for (float t = 0f; t < PhaseTimes[ph] && outBy == null; t += Time.deltaTime, total += Time.deltaTime)
                         {
                             Vector3 pos = claude.transform.position;
                             if (Utils.DistanceXZ(spot, pos) > 3.5f && pos.y > rim - 0.5f) outBy = Phases[ph];
+                            logTimer -= Time.deltaTime;
+                            if (logTimer <= 0f)
+                            {
+                                logTimer = 2f;
+                                Plugin.Log.LogInfo($"  [{Phases[ph]} {t:0}s] 가운데에서 {Utils.DistanceXZ(spot, pos):0.0}m, 위 {pos.y - rim:0.0}m, 속도 {claude.GetVelocity().magnitude:0.0}, {claude.MoveDebug} / {claude.Ai.MoveState}");
+                            }
                             yield return null;
                         }
                     }

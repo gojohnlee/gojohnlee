@@ -88,6 +88,12 @@ namespace ValheimHelper
             Vector3 depositPos = home + rot * new Vector3(0f, 0f, 12f);
             if (spawnDeposit)
             {
+                // 건축물 4m 안의 바위는 일꾼이 안 고른다(Buildings) → 지난 시험들이 남긴 상자·깃발에서 떨어진 곳에 놓는다
+                foreach (var off in new[] { new Vector3(0f, 0f, 12f), new Vector3(0f, 0f, 18f), new Vector3(8f, 0f, 14f), new Vector3(-8f, 0f, 14f), new Vector3(0f, 0f, 24f) })
+                {
+                    depositPos = home + rot * off;
+                    if (!Buildings.Near(depositPos, 6f)) break;
+                }
                 GameObject dep = DepositFor(item);
                 checks.Add($"{word} 광맥 프리팹 {(dep != null ? dep.name : "없음")}", dep != null);
                 if (dep == null) { End(player, god, checks, onHeard, heard); yield break; }
@@ -106,6 +112,14 @@ namespace ValheimHelper
                 Object.Instantiate(dep, depositPos, rot);
                 TestRunner.Log($"광맥 놓음 {dep.name} (지난 구덩이 꼭짓점 {undone}개 되돌림)");
                 yield return new WaitForSeconds(1f);
+                // 일꾼이 그 광맥을 고를 수 있는지(0.3.8 첫 구리 시험: 12m 앞 광맥을 두고 580m 밖으로 감)
+                ResourceInfo info = ResourceCatalog.Get(hash);
+                int seen = Senses.Nearby(depositPos, 3f).FindAll(z => z.GetPrefab() == hash).Count;
+                var near = new List<string>();
+                foreach (var z in Senses.Nearby(depositPos, 4f))
+                    if (Buildings.IsPiece(z.GetPrefab())) near.Add($"{ZNetScene.instance.GetPrefab(z.GetPrefab())?.name} {Utils.DistanceXZ(z.GetPosition(), depositPos):0.0}m");
+                TestRunner.Log($"광맥 ZDO {seen}개, 목록 정보: 도구 {info?.Tool} 단계 {info?.MinToolTier} (곡괭이 단계 {tool.GetComponent<ItemDrop>().m_itemData.m_shared.m_toolTier}), " +
+                               $"나오는 것 [{(info != null ? string.Join(",", info.Produces) : "")}], 4m 안 건축물 [{string.Join(", ", near)}]");
             }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             Say($"!{Workers.Name1} {word} 10", null);

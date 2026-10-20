@@ -497,8 +497,6 @@ namespace ValheimHelper
         Collider m_aimCol;
         bool m_saidDig;
         const float WorkIdleLimit = 30f;
-        /// <summary>광석이 원래 땅보다 이만큼 넘게 깊이 묻혀 있으면 파지 않는다(m).</summary>
-        const float MaxDigDepth = 3f;
 
         /// <summary>
         /// 곡괭이로 칠 곳: 남은 조각 중 땅 위로 드러난 가장 가까운 조각(휘두름이 땅에 먼저 닿으면 바위가 안 깎인다).
@@ -525,10 +523,14 @@ namespace ValheimHelper
                 }
                 else if (b.max.y > buriedTop) { buriedTop = b.max.y; buried = col; }
             }
+            // 광석(파서라도 꺼낼 것)은 바닐라처럼 휘두름이 땅에 먼저 닿으면 판다(낮게 깔린 광맥은 땅에 먼저 닿기 쉽다,
+            // 0.3.8 첫 구리 시험: 막은 흙 파기 84번). 원래 땅에서 3m보다 깊이는 안 판다(NpcPatches.NoDig).
+            bool dig = ResourceCatalog.WorthDigging(Item);
+            if (dig) m_ai.DigAllowedUntil = Time.time + 1.5f;
             if (m_aimCol != null || buried == null) return true;
             Vector3 c = buried.bounds.center;
             float depth = WorldGenerator.instance.GetHeight(c.x, c.z) - buriedTop; // 원래 땅에서 얼마나 깊은지
-            if (!ResourceCatalog.WorthDigging(Item) || depth > MaxDigDepth)
+            if (!dig || depth > NpcPatches.NoDig.MaxDepth)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 조각만 남음(깊이 {depth:0.0}m) → 파지 않고 남김");
                 return false;
@@ -536,9 +538,12 @@ namespace ValheimHelper
             if (!m_saidDig) { m_saidDig = true; Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 {Item} 파기(깊이 {depth:0.0}m)"); }
             m_aimCol = buried;
             aim = buried.bounds.ClosestPoint(chest);
-            m_ai.DigAllowedUntil = Time.time + 1.5f;
             return true;
         }
+
+        /// <summary>충돌체에서 p에 가장 가까운 점. 오목한 메시 충돌체는 바닐라 ClosestPoint가 안 돼서(경고) 상자 경계로.</summary>
+        static Vector3 Closest(Collider c, Vector3 p) =>
+            c is MeshCollider m && !m.convex ? c.bounds.ClosestPoint(p) : c.ClosestPoint(p);
 
         void DirectHit(ZNetView target)
         {
@@ -553,10 +558,10 @@ namespace ValheimHelper
                 foreach (var col in target.GetComponentsInChildren<Collider>())
                 {
                     if (col.isTrigger) continue;
-                    float dd = (col.ClosestPoint(me) - me).sqrMagnitude;
+                    float dd = (Closest(col, me) - me).sqrMagnitude;
                     if (dd < best) { best = dd; hitCol = col; }
                 }
-            Vector3 point = hitCol != null ? hitCol.ClosestPoint(me) : target.transform.position + Vector3.up;
+            Vector3 point = hitCol != null ? Closest(hitCol, me) : target.transform.position + Vector3.up;
             var hit = new HitData
             {
                 m_damage = tool.GetDamage(),
