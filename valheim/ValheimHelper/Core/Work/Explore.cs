@@ -42,7 +42,11 @@ namespace ValheimHelper.Core.Work
                             if (prefer != null && prefer(n)) preferred = true;
                         }
                     if (!frontier) continue;
-                    double score = Math.Sqrt(z.DistSq(home)) + Math.Sqrt(z.DistSq(from));
+                    // 방향이 없으면 거점 가까운 경계부터 넓힌다. 방향이 있으면 그쪽으로 더 나아간 경계(지금 있는 곳 근처)를 고른다:
+                    // 거점 거리를 쓰면 띠 모양으로 밝혀진 땅의 양옆을 왔다 갔다 했다(0.3.6 시험).
+                    double score = dirLen > 0
+                        ? Math.Sqrt(z.DistSq(from)) - (dx * dirX + dy * dirY) / dirLen
+                        : Math.Sqrt(z.DistSq(home)) + Math.Sqrt(z.DistSq(from));
                     if (bestPreferred && !preferred) continue;
                     if ((preferred && !bestPreferred) || score < bestScore)
                     {

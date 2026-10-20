@@ -37,6 +37,8 @@ namespace ValheimHelper.Core.Work
         public string Item;
         /// <summary>있다고 기억하는 구역 수.</summary>
         public int Zones;
+        /// <summary>본 자원 수 합(나무 그루 수 등).</summary>
+        public int Total;
         public ZoneXY Nearest;
         /// <summary>본 바이옴들(비트 합).</summary>
         public int Biomes;
@@ -133,7 +135,7 @@ namespace ValheimHelper.Core.Work
             return mask;
         }
 
-        /// <summary>아는 물건들: 구역 수 많은 순, from에서 가장 가까운 구역과 바이옴.</summary>
+        /// <summary>아는 물건들: 구역 수 많은 순(같으면 본 수 많은 순), from에서 가장 가까운 구역과 바이옴.</summary>
         public List<ItemKnowledge> Summary(ZoneXY from)
         {
             var map = new Dictionary<string, ItemKnowledge>();
@@ -144,10 +146,11 @@ namespace ValheimHelper.Core.Work
                     if (!map.TryGetValue(kv.Key, out var ik)) map[kv.Key] = ik = new ItemKnowledge { Item = kv.Key, Nearest = m.Zone };
                     else if (m.Zone.DistSq(from) < ik.Nearest.DistSq(from)) ik.Nearest = m.Zone;
                     ik.Zones++;
+                    ik.Total += kv.Value;
                     ik.Biomes |= m.Biome;
                 }
             var list = new List<ItemKnowledge>(map.Values);
-            list.Sort((a, b) => a.Zones != b.Zones ? b.Zones.CompareTo(a.Zones) : string.CompareOrdinal(a.Item, b.Item));
+            list.Sort((a, b) => a.Zones != b.Zones ? b.Zones.CompareTo(a.Zones) : a.Total != b.Total ? b.Total.CompareTo(a.Total) : string.CompareOrdinal(a.Item, b.Item));
             return list;
         }
 

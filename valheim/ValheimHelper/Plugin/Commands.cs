@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
+using UnityEngine;
 
 namespace ValheimHelper
 {
@@ -143,17 +144,29 @@ namespace ValheimHelper
             Knowledge k = Brain.Get();
             var list = k.Summary(Senses.ZoneOf(npc.Home));
             if (list.Count == 0) { npc.Say("knowledgeEmpty"); return; }
+            // 짧게(0.3.6 시험: 나무 한 그루가 나무·수지·씨앗을 다 내서 다 같은 말이 반복됐다):
+            // 바이옴이 다 같으면 앞에 한 번만, 거점 근처(100m 안)면 방향을 안 붙인다.
+            int shown = System.Math.Min(5, list.Count), common = list[0].Biomes;
+            for (int i = 1; i < shown; i++) if (list[i].Biomes != common) common = -1;
             var parts = new List<string>();
-            for (int i = 0; i < list.Count && i < 5; i++)
+            for (int i = 0; i < shown; i++)
             {
                 ItemKnowledge ik = list[i];
-                Scout.FromHome(npc.Home, Senses.ZoneCenter(ik.Nearest), out string dir, out string dist);
-                string biomes = BiomeNames.Of(ik.Biomes);
-                parts.Add($"{GatherJob.ItemLabel(ik.Item)} {ik.Zones}곳({(biomes.Length > 0 ? biomes + ", " : "")}가까운 데 {dir} {dist}m)");
+                Vector3 near = Senses.ZoneCenter(ik.Nearest);
+                string text = $"{GatherJob.ItemLabel(ik.Item)} {ik.Zones}곳";
+                var extra = new List<string>();
+                if (common == -1 && ik.Biomes != 0) extra.Add(BiomeNames.Of(ik.Biomes));
+                if (Utils.DistanceXZ(npc.Home, near) >= 100f)
+                {
+                    Scout.FromHome(npc.Home, near, out string dir, out string dist);
+                    extra.Add($"가까운 데 {dir} {dist}m");
+                }
+                parts.Add(extra.Count > 0 ? text + "(" + string.Join(", ", extra) + ")" : text);
             }
+            string prefix = common > 0 ? BiomeNames.Of(common) + " — " : "";
             npc.Say("knowledge", new Dictionary<string, string>
             {
-                ["list"] = string.Join(", ", parts),
+                ["list"] = prefix + string.Join(", ", parts),
                 ["more"] = list.Count > 5 ? npc.Line("knowledgeMore", new Dictionary<string, string> { ["n"] = (list.Count - 5).ToString() }) : "",
                 ["looked"] = k.LookedCount.ToString(),
             });

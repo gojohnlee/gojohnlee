@@ -62,6 +62,15 @@ public class ExploreTests
     }
 
     [Fact]
+    public void DirectionPushesForwardNotSideways()
+    {
+        // 동쪽으로 띠처럼 밝혀진 땅(x 0..5, y -1..1), NPC는 동쪽 끝 근처: 옆(위·아래)보다 앞(x=6)을 고른다
+        bool strip(ZoneXY z) => z.X >= -1 && z.X <= 5 && System.Math.Abs(z.Y) <= 1;
+        ExplorePlan.Next(new ZoneXY(0, 0), new ZoneXY(5, 0), 20, new Knowledge(), strip, AllLand, 1, 0, null, out var z);
+        Assert.Equal(6, z.X);
+    }
+
+    [Fact]
     public void SkipsWaterAndLooked()
     {
         var k = new Knowledge();

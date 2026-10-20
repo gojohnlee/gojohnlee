@@ -119,6 +119,8 @@ namespace ValheimHelper
             return true;
         }
 
+        public bool Exploring => m_exploring;
+
         public string StateLine() => m_npc.Line(m_exploring ? "state.workExplore" : "state.work", new Dictionary<string, string>
         {
             ["item"] = ItemLabel(Item), ["n"] = Target.ToString(), ["done"] = Delivered.ToString(),

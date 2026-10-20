@@ -19,7 +19,9 @@ namespace ValheimHelper
         readonly int m_biome;
         readonly string m_where;
         readonly HashSet<string> m_knewItems = new HashSet<string>();
-        readonly int m_lookedBefore;
+        /// <summary>지나간 구역들(보고에 쓴다).</summary>
+        readonly HashSet<ZoneXY> m_visited = new HashSet<ZoneXY>();
+        public int Visited => m_visited.Count;
 
         ZoneXY m_goal;
         Vector3 m_goalPos;
@@ -41,7 +43,6 @@ namespace ValheimHelper
             m_where = where;
             Knowledge k = Brain.Get();
             foreach (var ik in k.Summary(Senses.ZoneOf(npc.Home))) m_knewItems.Add(ik.Item);
-            m_lookedBefore = k.LookedCount;
         }
 
         public string StateLine() => m_npc.Line("state.explore", new Dictionary<string, string> { ["where"] = m_where });
@@ -49,6 +50,7 @@ namespace ValheimHelper
         public bool Update(float dt)
         {
             m_time += dt;
+            m_visited.Add(Senses.ZoneOf(m_npc.transform.position));
             if (m_time > Limit) return Done("exploreDone");
             if (EnvMan.IsNight()) return Done("nightBack");
             if (m_biome != 0 && !m_saidBiome && (Scout.BiomeAt(m_npc.transform.position) & m_biome) != 0)
@@ -93,7 +95,7 @@ namespace ValheimHelper
             var args = new Dictionary<string, string>
             {
                 ["where"] = m_where,
-                ["zones"] = Mathf.Max(0, k.LookedCount - m_lookedBefore).ToString(),
+                ["zones"] = m_visited.Count.ToString(),
                 ["new"] = fresh.Count > 0 ? m_npc.Line("exploreNew", new Dictionary<string, string> { ["items"] = string.Join(", ", fresh) }) : "",
             };
             if (key != "exploreDone") m_npc.Say(key, args);
