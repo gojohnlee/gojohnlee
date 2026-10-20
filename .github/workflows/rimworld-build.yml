@@ -8,11 +8,21 @@ on:
   workflow_dispatch:
 
 jobs:
+  find-mods:
+    runs-on: ubuntu-latest
+    outputs:
+      mods: ${{ steps.list.outputs.mods }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: echo "mods=$(ls -d rimworld/*/ | xargs -n1 basename | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: find-mods
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mod: [HelloRimWorld]
+        mod: ${{ fromJson(needs.find-mods.outputs.mods) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
