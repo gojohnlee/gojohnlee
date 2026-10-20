@@ -49,7 +49,7 @@ Write-Host 'Valheim Helper 설치됨'
 Start-Process "steam://run/$AppId//-console/"
 Write-Host ''
 Write-Host '게임 실행 중... 월드에 들어가기만 하세요(싱글 또는 서버 시작, 테스트용 월드 권장).'
-Write-Host "10초 뒤 시험($Test)이 저절로 시작되고, 1~2분 뒤 게임이 저절로 꺼집니다."
+Write-Host "3초 뒤 시험($Test)이 저절로 시작되고, 1~2분 뒤 게임이 저절로 꺼집니다."
 Write-Host "(수동으로 다시 하려면 F5 → $Test. 6분이 지나도 안 꺼지면 직접 꺼 주세요)"
 function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) }
 $t = 0

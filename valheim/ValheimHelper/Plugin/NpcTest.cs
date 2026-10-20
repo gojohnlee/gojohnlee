@@ -69,21 +69,33 @@ namespace ValheimHelper
             Check("1호만 따라가기 시작", claude.Ai.Current == WorkerAI.Mode.Follow && alarak.Ai.Current == WorkerAI.Mode.Idle);
             if (FindGround(player.transform.position, 25f, out Vector3 spot))
             {
-                player.TeleportTo(spot, player.transform.rotation, false);
-                TestRunner.Log($"플레이어 이동 {Vector3.Distance(claude.transform.position, spot):0}m 앞으로");
+                // 0.1.1 시험은 순간이동이 끝나기 전에 거리를 재서 따라오기·집 복귀를 잘못 통과시켰다.
+                // 이제 플레이어가 실제로 도착한 뒤 재고, NPC가 실제로 움직였는지도 본다.
+                Vector3 claudeStart = claude.transform.position;
+                bool started = player.TeleportTo(spot, player.transform.rotation, false);
+                float t = 0f;
+                while (t < 15f && (player.IsTeleporting() || Vector3.Distance(player.transform.position, spot) > 3f))
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    t += 0.5f;
+                }
+                bool arrived = Vector3.Distance(player.transform.position, spot) <= 3f;
+                Check($"플레이어 이동 (시작 {started}, {t:0.0}초, NPC와 {Vector3.Distance(claude.transform.position, player.transform.position):0}m)", arrived);
                 float best = float.MaxValue;
-                for (float t = 0f; t < 20f; t += 1f)
+                for (float w = 0f; arrived && w < 20f; w += 1f)
                 {
                     yield return new WaitForSeconds(1f);
                     best = Mathf.Min(best, Vector3.Distance(claude.transform.position, player.transform.position));
                     if (best < 5f) break;
                 }
-                Check($"1호가 따라옴 (가장 가까이 {best:0.0}m)", best < 5f);
+                float claudeMoved = Vector3.Distance(claudeStart, claude.transform.position);
+                Check($"1호가 따라옴 (가장 가까이 {best:0.0}m, 이동 {claudeMoved:0}m)", best < 5f && claudeMoved > 10f);
                 Check($"2호는 제자리 (움직임 {Vector3.Distance(alarakStart, alarak.transform.position):0.0}m)", Vector3.Distance(alarakStart, alarak.transform.position) < 3f);
             }
             else Check("따라가기 시험할 땅 찾기", false);
 
-            // 4) 멈춰 → 집으로
+            // 4) 멈춰 → 집으로 (집에서 멀리 있었는지도 확인)
+            float fromHome = Utils.DistanceXZ(claude.Home, claude.transform.position);
             Say("!멈춰");
             float waited = 0f;
             while (waited < 30f && (claude.Ai.Current != WorkerAI.Mode.Idle || alarak.Ai.Current != WorkerAI.Mode.Idle))
@@ -92,7 +104,7 @@ namespace ValheimHelper
                 waited += 1f;
             }
             float homeDist = Utils.DistanceXZ(claude.Home, claude.transform.position);
-            Check($"!멈춰 → 집 도착 ({waited:0}초, 집까지 {homeDist:0.0}m)", claude.Ai.Current == WorkerAI.Mode.Idle && homeDist < 3f);
+            Check($"!멈춰 → 집 도착 (집에서 {fromHome:0}m → {homeDist:0.0}m, {waited:0}초)", fromHome > 10f && claude.Ai.Current == WorkerAI.Mode.Idle && homeDist < 3f);
 
             // 5) 아직 못 하는 명령, 형식 틀린 ! 문장
             int before = s_heard.Count;

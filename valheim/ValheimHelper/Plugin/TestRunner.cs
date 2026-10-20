@@ -7,7 +7,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 게임 안 시험 공통: 보고 모으기(콘솔·BepInEx 로그·플러그인 폴더 diag.txt), 자동 실행.
-    /// 플러그인 폴더에 autotest.txt(내용: 콘솔 명령 한 줄)가 있으면 월드에 들어가고 10초 뒤 그 명령을 실행하고,
+    /// 플러그인 폴더에 autotest.txt(내용: 콘솔 명령 한 줄)가 있으면 월드에 들어가고 3초 뒤 그 명령을 실행하고,
     /// 시험이 끝나면 게임을 끈다. 테스트 스크립트(scripts/valheim-test.ps1)가 이 파일을 만든다.
     /// </summary>
     static class TestRunner
@@ -80,7 +80,7 @@ namespace ValheimHelper
             Player player = Player.m_localPlayer;
             if (player == null || player.IsTeleporting() || Console.instance == null) { s_autoWait = 0f; return; }
             s_autoWait += Time.deltaTime;
-            if (s_autoWait < 10f) return;
+            if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
             string cmd = s_autoCommand;
             s_autoCommand = null;
             s_auto = true;
