@@ -213,6 +213,8 @@ namespace ValheimHelper
 
         /// <summary>회수할 묘비들: "userID/id/시도횟수;…".</summary>
         public const string KeyGraves = "vh_graves";
+        /// <summary>이번 실행에서 죽은 횟수(시험용).</summary>
+        public int Deaths { get; private set; }
         static readonly AccessTools.FieldRef<Character, bool> DeadField = AccessTools.FieldRefAccess<Character, bool>("m_isDead");
 
         /// <summary>
@@ -222,6 +224,7 @@ namespace ValheimHelper
         public override void OnDeath()
         {
             if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+            Deaths++;
             Vector3 where = transform.position;
             Character killer = m_lastHit?.GetAttacker();
             string by = killer != null && killer != this ? Localization.instance.Localize(killer.m_name) : null;

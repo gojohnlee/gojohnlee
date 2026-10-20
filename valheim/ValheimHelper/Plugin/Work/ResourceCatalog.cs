@@ -17,6 +17,8 @@ namespace ValheimHelper
         public float Priority;
         /// <summary>도구 없이 손으로 줍는 것(Pickable).</summary>
         public bool Pickable;
+        /// <summary>서 있는 나무: 쓰러뜨리면 통나무가 넘어지며 굴러 사람을 친다(바닐라 TreeLog 충돌 피해).</summary>
+        public bool Falls;
     }
 
     /// <summary>
@@ -77,7 +79,7 @@ namespace ValheimHelper
             var tree = p.GetComponent<TreeBase>();
             if (tree != null)
             {
-                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = tree.m_minToolTier, Priority = 10f };
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = tree.m_minToolTier, Priority = 10f, Falls = tree.m_logPrefab != null };
                 AddDrops(r, tree.m_dropWhenDestroyed);
                 AddFrom(r, Describe(tree.m_logPrefab, depth + 1));
                 return r;

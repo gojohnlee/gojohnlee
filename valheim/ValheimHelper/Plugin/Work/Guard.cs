@@ -45,6 +45,8 @@ namespace ValheimHelper
         public Character Target => m_target;
         public float LastRatio { get; private set; }
         public Verdict LastVerdict { get; private set; }
+        /// <summary>시험 기록용: 마지막 판단에 쓴 수치.</summary>
+        public string LastDetail { get; private set; } = "";
 
         /// <summary>새 일을 받으면 물러난 횟수를 다시 센다.</summary>
         public void Reset()
@@ -77,22 +79,24 @@ namespace ValheimHelper
         void Judge()
         {
             Vector3 pos = m_npc.transform.position;
-            FindFoes(pos);
-            if (m_foes.Count == 0)
-            {
-                if (m_state == State.Fight) EndFight();
-                m_saidFight = false;
-                if (m_state != State.Back) m_state = State.Calm; // 물러난 뒤 기다리는 중이면 마저 기다린다
-                return;
-            }
             float myHit = MyHit(pos);
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
             System.Func<float, float> taken = d => HitData.DamageTypes.ApplyArmor(d * scale, armor);
+            FindFoes(pos, myHit, taken);
+            if (m_foes.Count == 0)
+            {
+                if (m_state == State.Fight) EndFight();
+                m_saidFight = false;
+                // 물러나 기다리는 중이거나 도망 중이면 마저 한다(0.3.7: 적이 30m 경계를 넘나들 때마다 도망이 취소됐다 다시 시작됨)
+                if (m_state != State.Back && m_state != State.Flee) m_state = State.Calm;
+                return;
+            }
             bool mead = m_npc.CanDrinkHealthMead();
             Verdict v = Danger.Judge(m_npc.Personality, m_views, m_npc.GetHealth(), m_npc.GetMaxHealth(), myHit, taken, mead);
             LastVerdict = v;
             LastRatio = Danger.Ratio(m_views, m_npc.GetHealth(), myHit, taken);
+            LastDetail = $"내 한 방 {myHit:0.0}, 갑옷 {armor:0}, 배율 {scale:0.00}, 체력 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 적 [" + string.Join("; ", m_views.ConvertAll(f => $"{f.Kind} {f.Health:0}/{f.Damage:0.0}→{taken(f.Damage):0.0} {f.Distance:0}m{(Brain.Foes.Knows(f.Kind) ? "" : " 짐작")}").ToArray()) + "]";
             Character nearest = Nearest(pos);
             string foeName = Localization.instance.Localize(nearest.m_name);
             switch (v)
@@ -121,7 +125,7 @@ namespace ValheimHelper
                     m_chased = 0;
                     {
                         m_backs++;
-                        Plugin.Log.LogInfo($"{m_npc.NpcName} 물러남 {m_backs}번째: {foeName} 등 {m_foes.Count}, 비율 {LastRatio:0.00}");
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 물러남 {m_backs}번째: {foeName} 등 {m_foes.Count}, 비율 {LastRatio:0.00} ({LastDetail})");
                         if (m_backs > MaxBacks)
                         {
                             m_npc.Say("dangerSkip", Args(foeName));
@@ -151,7 +155,7 @@ namespace ValheimHelper
 
         void StartFlee(Vector3 pos, Character nearest, string foeName)
         {
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00}");
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00} ({LastDetail})");
             m_npc.Say("flee", Args(foeName));
             m_ai.AvoidHere(nearest.transform.position);
             m_backTo = AwayPoint(pos, BackDistance * 1.5f);
@@ -171,15 +175,27 @@ namespace ValheimHelper
 
         static Dictionary<string, string> Args(string foe) => new Dictionary<string, string> { ["foe"] = foe };
 
-        void FindFoes(Vector3 pos)
+        /// <summary>
+        /// 셈에 넣을 적: 30m 안의 적대 생물 중 나·동행을 노리거나 15m 안에 왔거나, 보스이거나, 혼자서도 못 이길 만큼 센 것(8장 a: 보이면 피함).
+        /// 아직 나를 모르는 먼 잔챙이는 넣지 않는다(0.3.7: 거점 둘레를 어슬렁거리는 멧돼지·회색난쟁이 때문에 탐험을 못 함).
+        /// </summary>
+        void FindFoes(Vector3 pos, float myHit, System.Func<float, float> taken)
         {
             m_foes.Clear();
             m_views.Clear();
+            var one = new List<Foe>(1);
             foreach (Character c in Character.GetAllCharacters())
             {
                 if (!IsFoe(c) || Ignored(c) || Vector3.Distance(c.transform.position, pos) > SenseRange) continue;
+                Foe view = View(c, pos);
+                if (!c.IsBoss() && !Aggressive(c) && view.Distance > EngageRange)
+                {
+                    one.Clear();
+                    one.Add(view);
+                    if (Danger.Ratio(one, m_npc.GetMaxHealth(), myHit, taken) <= Danger.AvoidRatio) continue;
+                }
                 m_foes.Add(c);
-                m_views.Add(View(c, pos));
+                m_views.Add(view);
             }
         }
 
@@ -227,22 +243,15 @@ namespace ValheimHelper
             return best;
         }
 
-        /// <summary>적 하나의 판단용 수치: 아는 적은 배운 값(별 레벨 반영), 처음 보는 적은 겉모습 짐작.</summary>
+        /// <summary>적 하나의 판단용 수치: 체력은 보이는 값(체력바), 한 방은 아는 적이면 배운 값(별 레벨 반영), 처음 보는 적이면 몸집 짐작.</summary>
         Foe View(Character c, Vector3 pos)
         {
             string kind = Utils.GetPrefabName(c.gameObject);
             int level = c.GetLevel();
-            float health, damage;
-            if (Brain.Foes.TryGet(kind, out float baseHp, out float baseDmg))
-            {
-                health = c.GetHealth();
-                damage = baseDmg * (1f + Mathf.Max(0, level - 1) * 0.5f);
-            }
-            else
-            {
-                Danger.Guess(c.GetHeight(), c.GetRadius(), level, out health, out damage);
-                health *= c.GetHealthPercentage();
-            }
+            float health = c.GetHealth();
+            float damage = Brain.Foes.TryGet(kind, out _, out float baseDmg)
+                ? baseDmg * (1f + Mathf.Max(0, level - 1) * 0.5f)
+                : Danger.GuessDamage(c.GetHeight(), c.GetRadius(), level);
             // 판단식은 "내가 한 번 칠 때 맞는 피해"로 센다. 바닐라 몬스터는 공격 사이 쉬는 시간이 있어 대략 내가 두 번 칠 때 한 번 친다.
             damage *= FoeHitsPerSwing;
             return new Foe { Kind = kind, Health = health, Damage = damage, Boss = c.IsBoss(), Distance = Vector3.Distance(c.transform.position, pos) };

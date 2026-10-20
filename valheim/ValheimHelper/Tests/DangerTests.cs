@@ -61,14 +61,10 @@ public class DangerTests
     [Fact]
     public void GuessGrowsWithSizeAndStars()
     {
-        Danger.Guess(1.8f, 0.4f, 1, out float h1, out float d1);
-        Assert.Equal(60f, h1, 1);
-        Assert.Equal(12f, d1, 1);
-        Danger.Guess(1.8f, 0.4f, 3, out float h3, out float d3);
-        Assert.Equal(180f, h3, 1);
-        Assert.Equal(24f, d3, 1);
-        Danger.Guess(5f, 1.2f, 1, out float ht, out _);
-        Assert.True(ht > 250f);
+        Assert.Equal(10f, Danger.GuessDamage(1.8f, 0.4f, 1), 1);
+        Assert.Equal(20f, Danger.GuessDamage(1.8f, 0.4f, 3), 1); // 별 2개: ×2
+        Assert.True(Danger.GuessDamage(5f, 1.2f, 1) > 40f);     // 트롤만 한 몸집
+        Assert.Equal(5f, Danger.GuessDamage(0.3f, 0.1f, 1), 1);  // 아주 작아도 0.5배까지만
     }
 
     [Fact]

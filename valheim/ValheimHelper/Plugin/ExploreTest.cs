@@ -54,6 +54,12 @@ namespace ValheimHelper
             WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
             Check("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, env, debugTime, debugValue, onHeard, heard); yield break; }
+            // 실제 쓰임처럼 기본 장비·음식을 준다(③부터 맨손·굶은 NPC는 센 몬스터를 보면 피한다)
+            foreach (var n in new[] { "AxeFlint", "ArmorLeatherChest", "ArmorLeatherLegs" }) claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+            Prep.WearBest(claude);
+            var food = new Inventory("vh_test_food", null, 4, 2);
+            foreach (var n in new[] { "CookedMeat", "Honey", "Blueberries" }) food.AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+            claude.EatFrom(food);
             yield return new WaitForSeconds(3f); // 시야가 한 번 돌아 지식·바이옴이 차게
             TestRunner.Log($"지식: {Brain.Get().Count}구역, 여기 바이옴 {BiomeNames.Of(Brain.Get().BiomeOf(Senses.ZoneOf(claude.transform.position)))}");
 

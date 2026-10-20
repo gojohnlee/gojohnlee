@@ -81,15 +81,16 @@ namespace ValheimHelper.Core.Npc
         }
 
         /// <summary>
-        /// 처음 보는 적의 짐작(8-2장: 겉모습으로만). 사람 크기(키 1.8m, 반지름 0.4m) = 체력 60·한 방 12로 보고
-        /// 부피의 제곱근만큼 키우고, 별 하나마다 체력 ×2·피해 ×1.5(바닐라 레벨 규칙). 싸워 보면 실제 값을 배운다(FoeBook).
+        /// 처음 보는 적의 한 방 짐작(8-2장: 겉모습으로만). 체력은 플레이어처럼 체력바로 보이니 게임 값을 쓰고, 피해만 짐작한다:
+        /// 사람 크기(키 1.8m, 반지름 0.4m) = 한 방 10으로 보고 부피의 제곱근만큼(0.5~6배), 별 하나마다 ×1.5(바닐라 레벨 규칙).
+        /// 싸워 보면 실제 값을 배운다(FoeBook). (0.3.7: 체력까지 몸집으로 짐작했더니 멧돼지를 체력 229로 보고 도망쳤다.)
         /// </summary>
-        public static void Guess(float height, float radius, int level, out float health, out float damage)
+        public static float GuessDamage(float height, float radius, int level)
         {
-            double size = Math.Sqrt(Math.Max(0.05, height * radius * radius) / (1.8 * 0.4 * 0.4));
+            double size = Math.Sqrt(Math.Max(0.01, height * radius * radius) / (1.8 * 0.4 * 0.4));
+            size = Math.Min(6.0, Math.Max(0.5, size));
             int stars = Math.Max(0, level - 1);
-            health = (float)(60.0 * size * (1 + stars));
-            damage = (float)(12.0 * size * (1 + 0.5 * stars));
+            return (float)(10.0 * size * (1 + 0.5 * stars));
         }
     }
 

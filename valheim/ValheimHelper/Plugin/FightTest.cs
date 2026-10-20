@@ -74,7 +74,7 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(0.5f);
                 t += 0.5f;
                 if (claude.Ai.Guard != null && claude.Ai.Guard.StateName == "Fight") fought = true;
-                if ((int)(t * 2) % 10 == 0) TestRunner.Log($"[A {t:0}s] 경계 {claude.Ai.Guard?.StateName}/{claude.Ai.Guard?.LastVerdict} 비율 {claude.Ai.Guard?.LastRatio:0.00}, 1호 체력 {claude.GetHealth():0}, 적 체력 {(a ? a.GetHealth() : 0):0}, 거리 {(a ? Vector3.Distance(a.transform.position, claude.transform.position) : 0):0.0}m");
+                if ((int)(t * 2) % 10 == 0) TestRunner.Log($"[A {t:0}s] 경계 {claude.Ai.Guard?.StateName}/{claude.Ai.Guard?.LastVerdict} 비율 {claude.Ai.Guard?.LastRatio:0.00} ({claude.Ai.Guard?.LastDetail}), 1호 체력 {claude.GetHealth():0}, 적 체력 {(a ? a.GetHealth() : 0):0}, 거리 {(a ? Vector3.Distance(a.transform.position, claude.transform.position) : 0):0.0}m");
             }
             checks.Add($"회색난쟁이와 싸움 (판단 {claude.Ai.Guard?.LastVerdict})", fought);
             checks.Add($"회색난쟁이 잡음 ({t:0}초)", a == null || a.IsDead());

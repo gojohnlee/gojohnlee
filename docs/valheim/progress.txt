@@ -20,46 +20,56 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
    (-File로 돌리면 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨려 구문 오류. ilspycmd 없으면 dotnet tool install -g ilspycmd.
     이 PC에는 파이썬이 없다(python은 스토어 바로가기) → 파일 수정은 Edit 도구로. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    → 설치 → Steam으로 실행(인자 없음) → 인트로 건너뜀 → te4st41 자동 입장 → 시험 차례로 → 2초 뒤 자동 종료 → 결과 출력.
-   시험 고르기: $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본), vh_fartest·vh_exploretest도 있음. 월드: $env:VH_WORLD.
+   시험 고르기: $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본), 그 밖에 vh_preptest·vh_deathtest·vh_fighttest·vh_exploretest·vh_fartest. 월드: $env:VH_WORLD.
    사용자가 PC로 다른 게임을 하는 중이면 $env:VH_MIN='1'(창 최소화·소리 끔, 사용자 요청 2026-10-20). 켤 때 1~2초 화면이 넘어갈 수 있다.
    결과 파일: <게임>\BepInEx\plugins\ValheimHelper\diag.txt, 오류는 <게임>\BepInEx\LogOutput.log.
    게임은 사용자 PC 화면에서 켜진다 — 사용자가 PC를 쓰고 있지 않을 때 돌린다(시작 전에 한 번 물어본다).
 6. dist DLL도 커밋한다(방식 A 한 줄 명령이 raw.githubusercontent의 valheim/dist를 받음).
 
-진행 중
+진행 중 (2026-10-21 백업 시점: 태그 valheim-0.3.7, 게임 내 시험 8종 전부 PASS)
+- 지금 상태: ①② 완료, ③ 핵심 완료(장비·음식·갑옷·사망·묘비 회수·위험 감지·싸움). 시험(최소화): npc 12/12, flag 8/8,
+  wood 9/9(2번), stone 9/9, prep 18/18, death 17/17, fight 11/11, explore 15/15. Core 테스트 180. 코드 약 7,900줄(시험 포함).
+- 다음(③ 남은 것, 구상서 8-1·8장·3-1·4장):
+  1) 장소 기억 100곳(만난 적·결과·위험도 감쇠, 죽은 곳 오래 남김) + !기억 대답 + 출발 전 판단과 반응(8-1: 경고·조건·도움 요청·대안).
+  2) 습격 귀환(거점 습격이면 돌아와 같이 싸움), 근처 플레이어가 싸우면 같이 싸움, 위급하면 "도와줘요!!" + 지도 핑.
+  3) 스킬 성장(3-1: 10 시작·70 상한·죽어도 유지, 5마다 알림), 스태미나, 거점 작업대·대장간에서 수리(4장), 저항 미드·상태 효과 대응.
+  4) 남은 ② 작은 것: 가르쳐 주기(채팅·핑, Claude 연동과 같이).
+- 알려진 한계: NPC 스태미나 없음(무한), NPC가 때린 피해도 몬스터처럼 난이도 배율을 받음(RPC_Damage: 공격자가 플레이어가 아니면),
+  방패 막기 안 함, 적 저항(약점) 안 셈, 물 건너 아는 곳은 직선으로만 판단(호수 돌아가기 없음).
+
+0.3.7에서 한 것 (2026-10-20~21)
+- 느린 걸음 = 수영(m_swimSpeed 2): 동쪽 해협(깊이 18m, 300m)을 헤엄쳐 건넘. 그 바다의 WorldGenerator 바이옴은 "초원" → 물 길이로 판단.
+  고침: 길찾기 HumanoidAvoidWater(Humanoid는 물 위도 길로 침), MoveToPoint 물가 판단(2.5m 앞이 1.2m보다 깊으면 32m 내다봐
+  좁은 강만 헤엄, 아니면 멈춤 WaterBlockedTime → 작업이 3초 뒤 다른 목표; 목표가 바뀌면 다시 셈), 빠지면 마지막 마른 땅으로,
+  탐험·찾기·아는 곳 고를 때 물 건너편 제외(Core WaterRule, ExplorePlan/SearchPlan reachable).
+  [확정 2026-10-20] 좁은 강(깊은 물 24m 이하)은 헤엄, 늪·바다 바이옴의 깊은 물과 긴 물은 안 건넘.
+- 최소화 시험: $env:VH_MIN='1' → 창 최소화(스크립트가 먼저 내리고 모드가 첫 시험까지 지킴)·소리 끔·백그라운드 30fps. 로아 중 문제없음(사용자).
+- ③-1 출발 준비(Work/Prep.cs·Gear.cs): 장비 상자에서 가장 좋은 무기·방패·투구·갑옷·바지·망토·벨트·체력 미드 3, 헌 장비 돌려놓기,
+  음식 상자에서 3종(Core Meals: 바닐라 규칙, 최대 체력 25→71), GatherJob 처음·짐 넣은 뒤마다, ExploreJob 처음. 음식 없으면 한 번 알림.
+  갑옷: 바닐라 RPC_Damage는 플레이어만 갑옷 계산 → NpcPatches.ArmorCounts(트랜스파일러, IsPlayer 한 곳) + GetBodyArmor 등. 둔기 20 → 13.
+- ③-2 사망: WorkerNpc.OnDeath 재정의 → 플레이어 묘비(세계 죽음 규칙)·음식/상태효과 잃음·거점 즉시 부활(m_isDead 되돌림), 지도 죽음 핀
+  (Scout.DeathPin 리플렉션: AddPin 마지막 인자가 Splatform 형식), ZDO vh_graves(시도 횟수), 한가하면 GraveJob(Prep → 묘비 → 꺼내 입기 →
+  거점 → 들고 다닐 것 말고는 상자에), 밤엔 아침까지, 2번 실패하면 위치 알리고 포기, !멈춰면 회수도 쉼.
+  순간이동은 transform과 m_body 위치를 같이 바꿔야 함(안 그러면 원래 자리로 돌아감).
+- ③-3 위험 감지(Core Npc/Danger.cs + Work/Guard.cs, 0.5초마다): "잃을 체력 ÷ 체력"(약한 적부터 잡는 동안 살아 있는 적 모두에게 맞음,
+  갑옷·난이도 반영, 몬스터는 내가 두 번 칠 때 한 번[기본안 0.5]). 순서: 체력 낮으면 미드 → 보스·최대 체력으로도 2배 넘으면 도망(그곳 버림) →
+  미드 없으면 물러남 → 60%(알라라크 80%) 이하 싸움, 넘으면 40m 물러나 30초 뒤 재시도(쫓아오면 다시, 3번이면 도망; 2번 물러나면 그곳 버림).
+  셈에 넣는 적: 나·동행을 노림/15m 안/보스/혼자서도 못 이길 만큼 셈(먼 잔챙이 제외). 사슴 같은 AnimalsVeg 제외(사냥은 ⑧).
+  처음 보는 적: 체력은 보이는 값, 한 방은 몸집 짐작(사람 크기 10), 싸워 보면(맞거나 때리면) 실제 값을 배움(Brain.Foes, ZDO vh_foes).
+  알림은 같은 것 30초 안에 반복 안 함(전투·음식·묘비 알림). 15m 안의 적은 못 알아챘어도 먼저 침. 닿지 않는 적은 20초 뒤 1분 무시.
+- 나무를 쓰러뜨린 뒤 4초 물러나 기다렸다 줍기(구르는 통나무에 깔려 죽음, 체력 25). 시험 코드 예외는 바로 FAIL(TestRunner.Safe).
+
+이전 기록
 - 0.3.6 PC 시험(2026-10-20): npc·flag·wood·stone PASS, vh_exploretest PASS 13/13.
   들어간 것: 조사 Josa("{item|는}"), 지식에 구역 바이옴·Summary, ExplorePlan(지도 경계, 방향 주면 앞으로 밀고 나감), Bearing(8방위),
   BiomeNames, Scout(지도 읽기·밝히기 Minimap.Explore 비공개, 경계 고르기), GatherJob 새 땅 단계(찾기 15분 → 새 땅 30분, 밤이면
   귀환, 모은 것 넣고 그만), ExploreJob(!탐험 방향/바이옴), !지식(짧게)·!기억(③ 전까지 빈 대답). Core 테스트 154.
-- 0.3.7(2026-10-20): 느린 걸음 원인 = 수영(m_swimSpeed 2). 진단 기록으로 확정: 동쪽 해협(깊이 최대 18m, 300m)을 헤엄쳐 건넘.
-  그 바다 지점의 WorldGenerator 바이옴은 "초원" → 바이옴이 아니라 물 길이로 판단해야 함.
-  고침: 길찾기 HumanoidAvoidWater(Humanoid는 물 위도 길로 침, Pathfinding.BuildTile), MoveToPoint 물가 판단
-  (2.5m 앞이 1.2m보다 깊으면 32m 내다봐 좁은 강만 헤엄, 아니면 멈춤 WaterBlockedTime → 작업이 3초 뒤 다른 목표),
-  모르고 빠지면 마지막 마른 땅으로, 탐험·찾기·아는 곳 고를 때 물 건너편 제외(Core WaterRule, ExplorePlan/SearchPlan reachable).
-  [확정 2026-10-20] 좁은 강(깊은 물 24m 이하)은 헤엄, 늪·바다 바이옴의 깊은 물과 긴 물은 안 건넘. 최소화 시험 중 로아 문제없음(사용자).
-  최소화 시험: $env:VH_MIN='1' → autotest.txt "min" → 창 최소화(첫 시험 시작까지 계속 내림)·소리 끔·백그라운드 30fps.
-  (사용자 요청: 시험 동안 로아를 함) ExploreTest에 물가 멈춤·긴 수영 없음 확인 추가.
-  0.3.7 vh_exploretest PASS 15/15(최소화): 바다 앞 9m에서 멈춤(수영 0초), 북쪽 탐험 786m 5~7m/s, 연속 수영 0초.
-  회귀(최소화) PASS: npc 12/12, flag 8/8, wood 8/8(나무 56개 40초), stone 8/8(돌 12개 65초). 최소화 확인(스크립트가 먼저 내림).
-- ③ 시작(2026-10-20): Core Npc/Meals.cs(바닐라 음식 규칙, 테스트 7개).
-  ③-1 출발 준비 PASS(vh_preptest 18/18): Work/Prep.cs·Gear.cs — 장비 상자에서 가장 좋은 무기·방패·투구·갑옷·바지·망토·벨트·체력 미드 3,
-  헌 장비 돌려놓기, 음식 상자에서 3종(최대 체력 25→71), GatherJob 처음·짐 넣은 뒤마다, ExploreJob 처음. 음식 없으면 한 번 알림.
-  갑옷: 바닐라 RPC_Damage는 플레이어만 갑옷 계산 → NpcPatches.ArmorCounts(트랜스파일러, IsPlayer 한 곳) + GetBodyArmor·ApplyArmorDamageMods·DamageArmorDurability.
-  ③-2 사망 PASS(vh_deathtest 17/17): WorkerNpc.OnDeath 재정의 → 플레이어 묘비(세계 죽음 규칙)·음식/상태효과 잃음·거점 즉시 부활(m_isDead 되돌림),
-  지도 죽음 핀(Scout.DeathPin, 리플렉션: AddPin 마지막 인자가 Splatform 형식), 묘비 목록 ZDO vh_graves(시도 횟수), 한가하면 GraveJob
-  (Prep → 묘비 → 꺼내 입기 → 거점 → 들고 다닐 것 말고는 상자에), 밤엔 아침까지, 2번 실패하면 위치 알리고 포기, !멈춰면 회수도 쉼.
-  NPC 순간이동은 transform과 m_body 위치를 같이 바꿔야 함(안 그러면 원래 자리로 돌아감 — 0.3.7 시험에서 발견).
-  다음: ③-3 위험 감지(8장: 전투력·위협도, 회피·싸움·후퇴, 체력 미드, 습격 귀환, 장소 기억 100곳).
-  알려진 한계: NPC 스태미나 없음(무한), 스킬 성장(3-1) 아직, NPC 공격도 몬스터처럼 난이도 배율을 받음(RPC_Damage: 공격자가 플레이어가 아니면).
 - 0.3.5 PC 시험 PASS(2026-10-20): npc 12/12, flag 8/8, wood 15개 55초, stone 10개 40초, LogOutput.log 예외 0건.
   (기록) 줍기 NRE 수정 — ItemDrop.Pickup(Humanoid)의 소유권 대기(PickupUpdate)가 줍는 사람을 Player로 캐스팅해서
   NPC면 NullReferenceException(0.3.4 로그 5번). 이제 플레이어 자동 줍기와 같게: CanPickup이면 Humanoid.Pickup, 아니면 RequestOwn.
 - [사용자와 같이] 거점 깃발이 작고 땅에 파묻혀 보임(piece_banner01은 벽걸이라 기준점이 위쪽인 듯). 기능은 PASS.
   후보: 서 있는 기둥(wood_pole2 등)+배너, piece_maypole. 사용자: "다음 번에 같이 작업".
 - 그대로 둠(사용자 결정): NPC가 플레이어를 밀침 — 소환한 해골도 똑같이 밀어서 바닐라 충돌로 봄.
-- 다음 단계: ③ 장비·음식, 위험 감지(전투·후퇴·깊은 물), 사망·부활(묘비 + 거점 즉시 부활, 스킬 유지). 구상서 3, 4, 8, 9장.
-  ③ 들어가기 전 남은 ② 작은 것: !지식/!기억 명령, 가르쳐 주기(채팅·핑, Claude 연동과 같이), 새 땅 탐험(밝혀진 곳 밖), 조사(은/는).
-- 진행률(사용자 안내): 코드 약 3,900줄(시험 코드 포함) / 예상 1.3만~2만 → 약 15~20%. ① 완료(깃발 겉모습 빼고), ② 대부분, ③~⑮ 미착수.
 
 사용자 피드백 모음(지금까지)
 - 시험은 손이 안 가게(자동 입장·인트로 없음·경고창 없음·2초 종료·시작 3초). 줍는 속도 "아주 만족".
@@ -138,8 +148,8 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 
 구현 단계 (구상서 13장)
 - [x] ① 거점 깃발, NPC 2명 소환, 채팅 명령, 알림 (0.2.0, 게임 내 PASS)
-- [ ] ② 나무·돌·부싯돌, 상자 넣기, 지식 기록과 찾아다니기
-- [ ] ③ 장비·음식, 위험 감지, 사망·부활
+- [x] ② 나무·돌·부싯돌, 상자 넣기, 지식 기록과 찾아다니기, 새 땅 탐험 (0.3.6~0.3.7, 게임 내 PASS)
+- [~] ③ 장비·음식, 위험 감지, 사망·부활 — 핵심 PASS(0.3.7). 남음: 장소 기억·출발 전 반응, 습격 귀환, 스킬, 수리
 - [ ] ④ 구리·주석
 - [ ] ⑤ 포탈 이용, 먼 구역 유지 완성
 - [ ] ⑥ 가공·제작(목표 물건 만들기)

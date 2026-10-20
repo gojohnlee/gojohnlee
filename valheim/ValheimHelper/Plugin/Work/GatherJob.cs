@@ -55,6 +55,8 @@ namespace ValheimHelper
         const int KnownRing = 10;
         const float MoveStuckLimit = 20f;
         const float ChopLimit = 60f;
+        /// <summary>나무를 쓰러뜨린 뒤 통나무가 멈출 때까지 기다리는 시간.</summary>
+        const float FallWait = 4f;
 
         public GatherJob(WorkerNpc npc, string item, int target, HashSet<ToolKind> ways)
         {
@@ -511,6 +513,17 @@ namespace ValheimHelper
         {
             // 떨어지기를 기다린다: 줍는 것(Pickable)은 바로 생기고, 베고 캔 것은 통나무·바위가 부서지며 흩어진다.
             float wait = m_targetInfo != null && m_targetInfo.Pickable ? 0.3f : 1.2f;
+            if (m_targetInfo != null && m_targetInfo.Falls && m_stepTime < FallWait)
+            {
+                // 서 있는 나무를 쓰러뜨렸다: 통나무가 넘어지며 구르는 동안 뒤로 물러나 기다린다
+                // (0.3.7: 바로 주우러 가다 구르는 통나무에 깔려 죽음, 체력 25)
+                Vector3 me = m_npc.transform.position, back = me - m_targetPos;
+                back.y = 0f;
+                if (back.sqrMagnitude < 0.01f) back = -m_npc.transform.forward;
+                if (m_stepTime < 1.5f) m_ai.MoveToPoint(dt, me + back.normalized * 3f, 0.5f, true);
+                else m_ai.StopMoving();
+                return true;
+            }
             if (m_stepTime < wait) { m_ai.StopMoving(); return true; }
             if (Full()) { Go(Step.Return); return true; }
             ItemDrop drop = NearestDrop();

@@ -26,7 +26,7 @@ namespace ValheimHelper
             s_tests[name] = run;
             new Terminal.ConsoleCommand(name, "[Valheim Helper] " + description, args =>
             {
-                if (Begin(args.Context, name)) Plugin.Instance.StartCoroutine(run());
+                if (Begin(args.Context, name)) Plugin.Instance.StartCoroutine(Safe(run()));
             });
         }
         static bool s_auto;
@@ -113,13 +113,37 @@ namespace ValheimHelper
             string cmd = s_autoQueue.Dequeue();
             if (s_tests.TryGetValue(cmd, out var run) && Begin(null, cmd))
             {
-                Plugin.Instance.StartCoroutine(run());
+                Plugin.Instance.StartCoroutine(Safe(run()));
                 return;
             }
             // 모르는 시험이거나 등록에 실패했다. 그래도 결과를 남긴다.
             Begin(null, cmd);
             Log($"FAIL: 자동 시험 {cmd}가 시작되지 않음(오류는 BepInEx 로그 참고)");
             Finish();
+        }
+
+        /// <summary>
+        /// 시험 코드에서 예외가 나면 FAIL로 적고 바로 끝낸다(0.3.7: NullReferenceException으로 멈춘 시험이 10분 시간 제한까지 기다림).
+        /// </summary>
+        static IEnumerator Safe(IEnumerator inner)
+        {
+            while (true)
+            {
+                object current;
+                try
+                {
+                    if (!inner.MoveNext()) yield break;
+                    current = inner.Current;
+                }
+                catch (System.Exception e)
+                {
+                    Log($"FAIL: 시험 코드 오류 {e.GetType().Name}: {e.Message}");
+                    Plugin.Log.LogError(e);
+                    if (Running) Finish();
+                    yield break;
+                }
+                yield return current;
+            }
         }
 
         static IEnumerator QuitSoon()

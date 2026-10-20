@@ -100,8 +100,9 @@ namespace ValheimHelper
             }
             checks.Add($"{word} 상자에 {word} {count}개 ({t:0}초)", count >= 10);
             checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
+            checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
             ItemDrop.ItemData held = claude ? claude.GetCurrentWeapon() : null;
-            TestRunner.Log($"1호 손: {(held != null ? held.m_dropPrefab.name + $" 내구도 {held.m_durability:0}/{held.GetMaxDurability():0}" : "빈손")}");
+            TestRunner.Log($"1호 손: {(held != null && held.m_dropPrefab != null ? held.m_dropPrefab.name + $" 내구도 {held.m_durability:0}/{held.GetMaxDurability():0}" : "빈손")}, 죽은 횟수(남은 묘비) {(claude ? claude.Graves().Count : -1)}");
             End(player, god, checks, onHeard, heard);
         }
 
