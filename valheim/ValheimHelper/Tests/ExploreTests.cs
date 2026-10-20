@@ -90,10 +90,10 @@ public class ExploreTests
     [Fact]
     public void CompassWords()
     {
-        Assert.Equal("북쪽", Compass.Of(0, 5));
-        Assert.Equal("남동쪽", Compass.Of(3, -3));
-        Assert.Equal("서쪽", Compass.Of(-4, 0.5));
-        Assert.True(Compass.Vector("northeast", out int dx, out int dy));
+        Assert.Equal("북쪽", Bearing.Of(0, 5));
+        Assert.Equal("남동쪽", Bearing.Of(3, -3));
+        Assert.Equal("서쪽", Bearing.Of(-4, 0.5));
+        Assert.True(Bearing.Vector("northeast", out int dx, out int dy));
         Assert.Equal(1, dx);
         Assert.Equal(1, dy);
     }

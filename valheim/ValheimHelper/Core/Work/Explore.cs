@@ -57,7 +57,7 @@ namespace ValheimHelper.Core.Work
     }
 
     /// <summary>방위: 채팅의 방향 이름 ↔ 구역 방향, 거리 말하기용 8방위 (북 = +Y).</summary>
-    public static class Compass
+    public static class Bearing
     {
         static readonly string[] Names = { "east", "northeast", "north", "northwest", "west", "southwest", "south", "southeast" };
         static readonly string[] Korean = { "동쪽", "북동쪽", "북쪽", "북서쪽", "서쪽", "남서쪽", "남쪽", "남동쪽" };

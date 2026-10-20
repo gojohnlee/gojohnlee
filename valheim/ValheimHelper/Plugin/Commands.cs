@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -83,6 +84,15 @@ namespace ValheimHelper
                     case CommandKind.SetChest:
                         SetChest(who, cmd, npc);
                         return; // 한 번만 처리(장비 상자는 안에서 NPC별로)
+                    case CommandKind.Knowledge:
+                        TellKnowledge(npc);
+                        break;
+                    case CommandKind.Memory:
+                        npc.Say("memoryEmpty"); // 위험한 장소 기억은 ③ 위험 감지와 같이
+                        break;
+                    case CommandKind.Explore:
+                        StartExplore(npc, cmd);
+                        break;
                     case CommandKind.Status:
                         npc.Say("status", new Dictionary<string, string>
                         {
@@ -109,6 +119,44 @@ namespace ValheimHelper
             npc.Ai.StartJob(new GatherJob(npc, cmd.Item, cmd.Amount, ways));
             bool known = Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(npc.transform.position)).Count > 0;
             npc.Say(known ? "gatherKnown" : "gatherStart", args);
+        }
+
+        static void StartExplore(WorkerNpc npc, ChatCommand cmd)
+        {
+            int dx = 0, dy = 0, biome = 0;
+            string where;
+            if (cmd.Arg != null && Bearing.Vector(cmd.Arg, out dx, out dy)) where = Bearing.KoreanOf(cmd.Arg);
+            else if (cmd.Biome != null && (biome = BiomeNames.FromGame(cmd.Biome)) != 0) where = BiomeNames.Of(biome);
+            else where = npc.Line("nearby");
+            var args = new Dictionary<string, string> { ["where"] = where, ["biome"] = where };
+            if (EnvMan.IsNight()) { npc.Say("nightNoExplore", args); return; }
+            if (npc.Ai.Current == WorkerAI.Mode.Work) npc.Say("dropJob", args);
+            npc.Ai.StartJob(new ExploreJob(npc, dx, dy, biome, where));
+            // 그 바이옴에 가 본 적이 없으면 어디인지 모른다고 말하고 가까운 경계부터
+            bool knowBiome = biome == 0 || Brain.Get().KnowsBiome(biome);
+            npc.Say(knowBiome ? "exploreGo" : "exploreBiomeUnknown", args);
+        }
+
+        /// <summary>!지식: 아는 자원(구역 수 많은 순 5개)과 바이옴, 거점에서 가장 가까운 곳.</summary>
+        static void TellKnowledge(WorkerNpc npc)
+        {
+            Knowledge k = Brain.Get();
+            var list = k.Summary(Senses.ZoneOf(npc.Home));
+            if (list.Count == 0) { npc.Say("knowledgeEmpty"); return; }
+            var parts = new List<string>();
+            for (int i = 0; i < list.Count && i < 5; i++)
+            {
+                ItemKnowledge ik = list[i];
+                Scout.FromHome(npc.Home, Senses.ZoneCenter(ik.Nearest), out string dir, out string dist);
+                string biomes = BiomeNames.Of(ik.Biomes);
+                parts.Add($"{GatherJob.ItemLabel(ik.Item)} {ik.Zones}곳({(biomes.Length > 0 ? biomes + ", " : "")}가까운 데 {dir} {dist}m)");
+            }
+            npc.Say("knowledge", new Dictionary<string, string>
+            {
+                ["list"] = string.Join(", ", parts),
+                ["more"] = list.Count > 5 ? npc.Line("knowledgeMore", new Dictionary<string, string> { ["n"] = (list.Count - 5).ToString() }) : "",
+                ["looked"] = k.LookedCount.ToString(),
+            });
         }
 
         /// <summary>!상자 &lt;종류&gt;: 말한 사람이 바라보는 상자를 지정한다. 거점 깃발 20m 안의 상자만.</summary>
@@ -138,12 +186,7 @@ namespace ValheimHelper
         {
             switch (npc.Ai.Current)
             {
-                case WorkerAI.Mode.Work:
-                    var job = npc.Ai.Job;
-                    return npc.Line("state.work", new Dictionary<string, string>
-                    {
-                        ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString(), ["done"] = job.Delivered.ToString(),
-                    });
+                case WorkerAI.Mode.Work: return npc.Ai.Job.StateLine();
                 case WorkerAI.Mode.Follow: return npc.Line("state.follow", new Dictionary<string, string> { ["player"] = npc.Ai.FollowName });
                 case WorkerAI.Mode.Home: return npc.Line("state.home");
                 default: return npc.Line("state.idle");

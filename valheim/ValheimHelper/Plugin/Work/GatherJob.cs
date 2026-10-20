@@ -9,7 +9,7 @@ namespace ValheimHelper
     /// 다가가기 → 손으로 줍기 또는 바닐라 공격으로 베기·캐기 → 떨어진 것 줍기 → 짐이 차거나 다 모으면 거점 상자에 넣기 → 남았으면 다시.
     /// 단계마다 시간 제한이 있고, 막히면 다른 대상·다른 곳으로 넘어간다. 얻는 방법(맨손·도끼·곡괭이)은 게임 데이터에서 읽는다.
     /// </summary>
-    public sealed class GatherJob
+    public sealed class GatherJob : IWorkerJob
     {
         enum Step { Tool, GoChest, Search, GoZone, Approach, Work, Collect, Return, Deposit }
 
@@ -38,12 +38,20 @@ namespace ValheimHelper
         bool m_wasAttacking;
         float m_bestDist;
         float m_progressTimer;
-        bool m_saidTooWeak, m_saidSearching;
+        bool m_saidTooWeak, m_saidSearching, m_saidExplore, m_saidFound;
         float m_scanTimer;
         GameObject m_itemPrefab;
+        /// <summary>아는 곳(밝혀진 곳)을 다 둘러봐서 새 땅으로 나갔다.</summary>
+        bool m_exploring;
+        float m_exploreTime;
+        /// <summary>그만둘 이유. 들고 있는 게 있으면 상자에 넣고 나서 말하고 끝낸다.</summary>
+        string m_giveUp;
 
         // 시간 제한 (구상서 6장 막힘 처리, 8-2장 헛수고 상한)
         const float SearchLimit = 15f * 60f;
+        const float ExploreLimit = 30f * 60f;
+        /// <summary>안 둘러본 밝혀진 구역을 거점에서 몇 구역까지 찾는지.</summary>
+        const int KnownRing = 10;
         const float MoveStuckLimit = 20f;
         const float ChopLimit = 60f;
 
@@ -102,7 +110,20 @@ namespace ValheimHelper
             return false;
         }
 
-        /// <returns>false면 작업 끝(성공이든 실패든). 알림은 여기서 한다.</returns>
+        /// <summary>그만둔다. 모은 게 있으면 먼저 상자에 넣는다.</summary>
+        bool GiveUp(string key)
+        {
+            if (Carried() == 0) return Fail(key);
+            m_giveUp = key;
+            Go(Step.Return);
+            return true;
+        }
+
+        public string StateLine() => m_npc.Line(m_exploring ? "state.workExplore" : "state.work", new Dictionary<string, string>
+        {
+            ["item"] = ItemLabel(Item), ["n"] = Target.ToString(), ["done"] = Delivered.ToString(),
+        });
+
         float m_autoPickTimer;
 
         public bool Update(float dt)
@@ -181,8 +202,7 @@ namespace ValheimHelper
             if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
             if (FindInSight(out ZDO zdo))
             {
-                Aim(zdo);
-                Go(Step.Approach);
+                Found(zdo);
                 return true;
             }
             if (m_sawTooHard && !m_saidTooWeak)
@@ -202,47 +222,81 @@ namespace ValheimHelper
                 GoZone();
                 return true;
             }
-            if (m_searchTime > SearchLimit) return Fail("notFound");
-            if (SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, 5, k, Explored, out m_goalZone))
+            // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
+            if (!m_exploring && m_searchTime <= SearchLimit
+                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, out m_goalZone))
             {
                 if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
                 GoZone();
                 return true;
             }
-            return Fail("notFound");
+            // 2) 다 둘러봤거나 15분이 지났다: 새 땅(지도 경계)으로 30분까지. 밤에는 모르는 땅에 가지 않는다.
+            if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
+            if (EnvMan.IsNight()) return GiveUp(m_exploring ? "nightBack" : "nightNoExplore");
+            int biomes = k.BiomesOf(Item); // 그 물건이 나던 바이옴 쪽 경계부터
+            if (Scout.NextFrontier(m_npc, 0, 0, biomes, out m_goalZone))
+            {
+                if (!m_exploring)
+                {
+                    m_exploring = true;
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 아는 곳에 없음 → 새 땅 탐험");
+                    if (!m_saidExplore) { m_saidExplore = true; m_npc.Say("exploreStart", Args()); }
+                }
+                GoZone();
+                return true;
+            }
+            return GiveUp("notFound");
         }
 
         void GoZone()
         {
-            Vector3 c = Senses.ZoneCenter(m_goalZone);
-            c.y = ZoneSystem.instance.GetSolidHeight(c, out float h) ? h : WorldGenerator.instance.GetHeight(c.x, c.z);
-            m_goalPos = c;
+            m_goalPos = Scout.GroundPos(m_goalZone);
             Go(Step.GoZone);
         }
 
-        static bool Explored(ZoneXY z)
+        /// <summary>보이는 대상으로 간다. 새 땅에서 처음 찾았으면 어디인지 알린다.</summary>
+        void Found(ZDO zdo)
         {
-            Minimap map = Minimap.instance;
-            if (map == null) return true;
-            return MinimapExplored(map, Senses.ZoneCenter(z));
+            if (m_exploring && !m_saidFound)
+            {
+                m_saidFound = true;
+                Scout.FromHome(m_npc.Home, zdo.GetPosition(), out string dir, out string dist);
+                var args = Args();
+                args["dir"] = dir;
+                args["dist"] = dist;
+                m_npc.Say("exploreFound", args);
+            }
+            m_exploring = false; // 찾았으니 다음엔 다시 아는 곳부터
+            Aim(zdo);
+            Go(Step.Approach);
         }
-
-        static readonly System.Func<Minimap, Vector3, bool> MinimapExplored =
-            HarmonyLib.AccessTools.MethodDelegate<System.Func<Minimap, Vector3, bool>>(HarmonyLib.AccessTools.Method(typeof(Minimap), "IsExplored"));
 
         bool UpdateGoZone(float dt)
         {
-            m_searchTime += dt;
-            if (m_searchTime > SearchLimit) return Fail("notFound");
+            if (m_exploring)
+            {
+                m_exploreTime += dt;
+                if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
+                if (EnvMan.IsNight()) return GiveUp("nightBack");
+            }
+            else
+            {
+                m_searchTime += dt;
+                if (m_searchTime > SearchLimit) { Go(Step.Search); return true; } // 새 땅으로
+            }
             // 가는 길에 보이면 바로 그쪽으로
             m_scanTimer -= dt;
             if (m_scanTimer <= 0f && FindInSight(out ZDO zdo))
             {
-                Aim(zdo);
-                Go(Step.Approach);
+                Found(zdo);
                 return true;
             }
-            if (m_scanTimer <= 0f) m_scanTimer = 1f;
+            if (m_scanTimer <= 0f)
+            {
+                m_scanTimer = 1f;
+                // 새 땅으로 가는 길에 목표 구역이 밝혀졌다: 경계가 밀려났으니 다음 경계로(둘러봄 표시는 안 한다)
+                if (m_exploring && Scout.Explored(m_goalZone)) { Go(Step.Search); return true; }
+            }
             bool arrived = Walk(dt, m_goalPos, 6f);
             if (arrived || Stuck(dt, m_goalPos))
             {
@@ -500,7 +554,12 @@ namespace ValheimHelper
 
         bool UpdateDeposit(float dt)
         {
-            if (Carried() == 0) { Go(Step.Search); return true; }
+            if (Carried() == 0)
+            {
+                if (m_giveUp != null) return Fail(m_giveUp);
+                Go(Step.Search);
+                return true;
+            }
             if (m_chest == null) m_chest = DepositChest();
             if (m_chest == null) return Fail("noChest");
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
@@ -533,6 +592,7 @@ namespace ValheimHelper
                 return false;
             }
             if (Carried() > 0) return Fail("chestFull");
+            if (m_giveUp != null) return Fail(m_giveUp);
             Go(Step.Search);
             return true;
         }

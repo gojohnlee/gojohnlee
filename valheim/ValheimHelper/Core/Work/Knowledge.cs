@@ -117,6 +117,13 @@ namespace ValheimHelper.Core.Work
 
         public int BiomeOf(ZoneXY z) => _zones.TryGetValue(z, out var m) ? m.Biome : 0;
 
+        /// <summary>그 바이옴(비트 합 중 하나라도)에 가 본 적이 있는지.</summary>
+        public bool KnowsBiome(int biome)
+        {
+            foreach (var m in _zones.Values) if ((m.Biome & biome) != 0) return true;
+            return false;
+        }
+
         /// <summary>그 물건을 본 바이옴들(비트 합). "구리는 검은 숲".</summary>
         public int BiomesOf(string item)
         {

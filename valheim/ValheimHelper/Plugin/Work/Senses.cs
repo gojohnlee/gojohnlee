@@ -5,7 +5,7 @@ using ValheimHelper.Core.Work;
 namespace ValheimHelper
 {
     /// <summary>
-    /// NPC 시야 (구상서 8-2장): 2초마다 주변 40m에서 보이는 자원을 지식에 적는다.
+    /// NPC 시야 (구상서 8-2장): 2초마다 주변 40m에서 보이는 자원을 지식에 적고, 지금 구역의 바이옴을 적고, 지도를 밝힌다.
     /// 구역 중심 가까이(12m) 가면 그 구역은 "둘러봄"이 된다. 지식은 두 NPC가 같이 쓰고 NPC ZDO에 저장한다.
     /// </summary>
     public static class Senses
@@ -56,6 +56,8 @@ namespace ValheimHelper
             }
             var full = new List<ZoneXY>();
             ZoneXY here = ZoneOf(pos);
+            Brain.Get().SetBiome(here, Scout.BiomeAt(pos)); // 가 본 곳의 바이옴("구리는 검은 숲")
+            Scout.Reveal(pos);
             Vector3 c = ZoneCenter(here);
             if (Utils.DistanceXZ(c, pos) < LookedRange)
             {

@@ -2,6 +2,16 @@ using UnityEngine;
 
 namespace ValheimHelper
 {
+    /// <summary>WorkerAI가 Mode.Work에서 돌리는 일.</summary>
+    public interface IWorkerJob
+    {
+        /// <returns>false면 작업 끝(성공이든 실패든). 알림은 작업이 한다.</returns>
+        bool Update(float dt);
+        string StepName { get; }
+        /// <summary>!상태에 넣을 말("나무 모으는 중(3/10)").</summary>
+        string StateLine();
+    }
+
     /// <summary>
     /// 일꾼 NPC 행동. 지금(① 단계)은 대기·따라가기·집에 가기만 한다.
     /// 이동·길찾기는 바닐라 BaseAI.MoveTo를 쓴다 (구상서 12장).
@@ -10,8 +20,8 @@ namespace ValheimHelper
     {
         public enum Mode { Idle, Follow, Home, Work }
 
-        /// <summary>Mode.Work일 때 하는 일.</summary>
-        public GatherJob Job { get; private set; }
+        /// <summary>Mode.Work일 때 하는 일(채집 GatherJob, 탐험 ExploreJob).</summary>
+        public IWorkerJob Job { get; private set; }
         float m_senseTimer;
 
         public Mode Current { get; private set; } = Mode.Idle;
@@ -36,7 +46,7 @@ namespace ValheimHelper
             m_smoothMovement = true;
         }
 
-        public void StartJob(GatherJob job)
+        public void StartJob(IWorkerJob job)
         {
             Job = job;
             Current = Mode.Work;
