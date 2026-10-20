@@ -8,7 +8,7 @@ namespace ValheimHelper
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "gojohnlee.valheimhelper";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -23,7 +23,7 @@ namespace ValheimHelper
             Step("vh_fartest", FarZoneTest.Register);
             Step("vh_npctest", NpcTest.Register);
             Step("vh_flagtest", FlagTest.Register);
-            Step("vh_woodtest", WoodTest.Register);
+            Step("vh_woodtest·vh_stonetest", GatherTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }

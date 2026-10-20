@@ -13,8 +13,10 @@ namespace ValheimHelper
         public int MinToolTier;
         /// <summary>쓰러뜨리면(쪼개면) 결국 나오는 물건 프리팹 이름들.</summary>
         public readonly HashSet<string> Produces = new HashSet<string>();
-        /// <summary>이미 쓰러진 것(통나무·그루터기): 서 있는 나무보다 먼저 처리한다.</summary>
-        public bool Felled;
+        /// <summary>고를 때 가산점(m): 쓰러진 통나무 30 > 큰 나무·바위 10 > 줍는 것 5 > 어린 나무·그루터기·작은 돌 0.</summary>
+        public float Priority;
+        /// <summary>도구 없이 손으로 줍는 것(Pickable).</summary>
+        public bool Pickable;
     }
 
     /// <summary>
@@ -32,12 +34,14 @@ namespace ValheimHelper
         }
 
         /// <summary>그 물건을 얻는 데 쓰는 도구(목록에서 처음 나오는 것). 캐는 물건이 아니면 None.</summary>
-        public static ToolKind ToolFor(string item)
+        /// <summary>그 물건을 얻는 방법들(맨손 줍기 = None, 도끼, 곡괭이). 비어 있으면 캐거나 줍는 물건이 아니다.</summary>
+        public static HashSet<ToolKind> WaysFor(string item)
         {
             if (s_byHash == null) Build();
+            var ways = new HashSet<ToolKind>();
             foreach (var r in s_byHash.Values)
-                if (r.Produces.Contains(item)) return r.Tool;
-            return ToolKind.None;
+                if (r.Produces.Contains(item)) ways.Add(r.Tool);
+            return ways;
         }
 
         public static int Count { get { if (s_byHash == null) Build(); return s_byHash.Count; } }
@@ -46,11 +50,20 @@ namespace ValheimHelper
         {
             s_byHash = new Dictionary<int, ResourceInfo>();
             if (ZNetScene.instance == null) return;
+            // 그루터기는 Destructible이라 어린 나무와 구별이 안 된다 → 나무의 m_stubPrefab으로 알아낸다.
+            var stubs = new HashSet<string>();
+            foreach (var p in ZNetScene.instance.m_prefabs)
+            {
+                var tree = p != null ? p.GetComponent<TreeBase>() : null;
+                if (tree != null && tree.m_stubPrefab != null) stubs.Add(tree.m_stubPrefab.name);
+            }
             foreach (var p in ZNetScene.instance.m_prefabs)
             {
                 if (p == null) continue;
                 var info = Describe(p, 0);
-                if (info != null && info.Produces.Count > 0) s_byHash[p.name.GetStableHashCode()] = info;
+                if (info == null || info.Produces.Count == 0) continue;
+                if (stubs.Contains(p.name)) info.Priority = 0f;
+                s_byHash[p.name.GetStableHashCode()] = info;
             }
             Plugin.Log.LogInfo($"자원 목록: {s_byHash.Count}종");
         }
@@ -64,7 +77,7 @@ namespace ValheimHelper
             var tree = p.GetComponent<TreeBase>();
             if (tree != null)
             {
-                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = tree.m_minToolTier };
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = tree.m_minToolTier, Priority = 10f };
                 AddDrops(r, tree.m_dropWhenDestroyed);
                 AddFrom(r, Describe(tree.m_logPrefab, depth + 1));
                 return r;
@@ -72,7 +85,7 @@ namespace ValheimHelper
             var log = p.GetComponent<TreeLog>();
             if (log != null)
             {
-                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = log.m_minToolTier, Felled = true };
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = log.m_minToolTier, Priority = 30f };
                 AddDrops(r, log.m_dropWhenDestroyed);
                 AddFrom(r, Describe(log.m_subLogPrefab, depth + 1));
                 return r;
@@ -80,14 +93,14 @@ namespace ValheimHelper
             var rock = p.GetComponent<MineRock>();
             if (rock != null)
             {
-                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Pickaxe, MinToolTier = rock.m_minToolTier };
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Pickaxe, MinToolTier = rock.m_minToolTier, Priority = 10f };
                 AddDrops(r, rock.m_dropItems);
                 return r;
             }
             var rock5 = p.GetComponent<MineRock5>();
             if (rock5 != null)
             {
-                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Pickaxe, MinToolTier = rock5.m_minToolTier };
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Pickaxe, MinToolTier = rock5.m_minToolTier, Priority = 10f };
                 AddDrops(r, rock5.m_dropItems);
                 return r;
             }
@@ -95,10 +108,18 @@ namespace ValheimHelper
             if (des != null)
             {
                 bool tree2 = (des.m_destructibleType & DestructibleType.Tree) != 0;
-                var r = new ResourceInfo { Prefab = p.name, Tool = tree2 ? ToolKind.Axe : ToolKind.Pickaxe, MinToolTier = des.m_minToolTier, Felled = tree2 };
+                var r = new ResourceInfo { Prefab = p.name, Tool = tree2 ? ToolKind.Axe : ToolKind.Pickaxe, MinToolTier = des.m_minToolTier };
                 var drop = p.GetComponent<DropOnDestroyed>();
                 if (drop != null) AddDrops(r, drop.m_dropWhenDestroyed);
                 AddFrom(r, Describe(des.m_spawnWhenDestroyed, depth + 1));
+                return r;
+            }
+            var pick = p.GetComponent<Pickable>();
+            if (pick != null && pick.m_itemPrefab != null)
+            {
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.None, Pickable = true, Priority = 5f };
+                if (pick.m_itemPrefab.GetComponent<ItemDrop>() != null) r.Produces.Add(pick.m_itemPrefab.name);
+                AddDrops(r, pick.m_extraDrops);
                 return r;
             }
             return null;

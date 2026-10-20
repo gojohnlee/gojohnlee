@@ -109,10 +109,10 @@ namespace ValheimHelper
 
             // 5) 아직 못 하는 명령, 형식 틀린 ! 문장
             int before = s_heard.Count;
-            Say("!나무 50");
+            Say("!밭 10"); // 아직 못 하는 일(⑨)
             Say("!나무 좀 많이 가져와");
             yield return new WaitForSeconds(1f);
-            Check("!나무 50 / 형식 틀린 ! 문장 → 대답 2개", s_heard.Count - before == 2);
+            Check("!밭 10 / 형식 틀린 ! 문장 → 대답 2개", s_heard.Count - before == 2);
 
             End(player, god, checks);
         }

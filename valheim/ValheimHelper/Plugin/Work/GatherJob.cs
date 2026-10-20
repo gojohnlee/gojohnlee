@@ -6,18 +6,21 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 채집 작업 (구상서 6장, 8-2장): 도구 챙기기 → 찾기(보이는 것 → 기억하는 곳 → 안 둘러본 밝혀진 곳) →
-    /// 다가가기 → 바닐라 공격으로 베기 → 떨어진 것 줍기 → 짐이 차거나 다 모으면 거점 상자에 넣기 → 남았으면 다시.
-    /// 단계마다 시간 제한이 있고, 막히면 다른 대상·다른 곳으로 넘어간다. 지금(② 단계)은 도끼로 나오는 것(나무 종류)만.
+    /// 다가가기 → 손으로 줍기 또는 바닐라 공격으로 베기·캐기 → 떨어진 것 줍기 → 짐이 차거나 다 모으면 거점 상자에 넣기 → 남았으면 다시.
+    /// 단계마다 시간 제한이 있고, 막히면 다른 대상·다른 곳으로 넘어간다. 얻는 방법(맨손·도끼·곡괭이)은 게임 데이터에서 읽는다.
     /// </summary>
     public sealed class GatherJob
     {
-        enum Step { Tool, GoChest, Search, GoZone, Approach, Chop, Collect, Return, Deposit }
+        enum Step { Tool, GoChest, Search, GoZone, Approach, Work, Collect, Return, Deposit }
 
         public readonly string Item;
         public readonly int Target;
         public int Delivered { get; private set; }
         public string StepName => m_step.ToString();
-        readonly ToolKind m_tool;
+        readonly HashSet<ToolKind> m_ways;
+        ResourceInfo m_targetInfo;
+        uint m_lastRevision;
+        bool m_sawTooHard;
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
 
@@ -32,7 +35,6 @@ namespace ValheimHelper
         Vector3 m_goalPos;
         readonly HashSet<ZDOID> m_skip = new HashSet<ZDOID>();
         int m_swings, m_swingsNoProgress;
-        float m_lastHealth;
         bool m_wasAttacking;
         float m_bestDist;
         float m_progressTimer;
@@ -45,13 +47,27 @@ namespace ValheimHelper
         const float MoveStuckLimit = 20f;
         const float ChopLimit = 60f;
 
-        public GatherJob(WorkerNpc npc, string item, int target, ToolKind tool)
+        public GatherJob(WorkerNpc npc, string item, int target, HashSet<ToolKind> ways)
         {
             m_npc = npc;
             m_ai = npc.Ai;
             Item = item;
             Target = target;
-            m_tool = tool;
+            m_ways = ways;
+        }
+
+        /// <summary>지금 그 방법을 쓸 수 있는지(맨손은 항상, 도구는 들고 있을 때).</summary>
+        bool Usable(ToolKind kind) => kind == ToolKind.None || WorkerNpc.BestTool(m_npc.GetInventory(), kind) != null;
+
+        /// <summary>시작 전 확인용: NPC나 거점 상자에 쓸 수 있는 방법이 하나라도 있는지.</summary>
+        public static bool CanStart(WorkerNpc npc, HashSet<ToolKind> ways)
+        {
+            foreach (var w in ways)
+            {
+                if (w == ToolKind.None || WorkerNpc.BestTool(npc.GetInventory(), w) != null) return true;
+                if (FindToolChest(npc, w) != null) return true;
+            }
+            return false;
         }
 
         public static string ItemLabel(string prefab)
@@ -95,7 +111,7 @@ namespace ValheimHelper
                 case Step.Search: return UpdateSearch(dt);
                 case Step.GoZone: return UpdateGoZone(dt);
                 case Step.Approach: return UpdateApproach(dt);
-                case Step.Chop: return UpdateChop();
+                case Step.Work: return UpdateWork();
                 case Step.Collect: return UpdateCollect(dt);
                 case Step.Return: return UpdateReturn(dt);
                 case Step.Deposit: return UpdateDeposit(dt);
@@ -107,19 +123,24 @@ namespace ValheimHelper
 
         bool UpdateTool()
         {
-            if (m_npc.HoldTool(m_tool)) { Go(Step.Search); return true; }
-            m_chest = FindToolChest();
-            if (m_chest == null) return Fail("noTool");
-            Go(Step.GoChest);
-            return true;
+            // 필요한데 없는 도구가 상자에 있으면 가지러 간다(한 번에 다 챙긴다).
+            foreach (var w in m_ways)
+            {
+                if (Usable(w)) continue;
+                m_chest = FindToolChest(m_npc, w);
+                if (m_chest != null) { Go(Step.GoChest); return true; }
+            }
+            foreach (var w in m_ways) if (Usable(w)) { Go(Step.Search); return true; }
+            return Fail("noTool");
         }
 
-        Container FindToolChest()
+        static Container FindToolChest(WorkerNpc npc, ToolKind kind)
         {
-            Container assigned = Chests.Assigned(Chests.KeyEquip((int)m_npc.Personality));
-            if (assigned != null && WorkerNpc.BestTool(assigned.GetInventory(), m_tool) != null) return assigned;
-            foreach (var c in Chests.NearBase(m_npc.Home))
-                if (WorkerNpc.BestTool(c.GetInventory(), m_tool) != null) return c;
+            if (kind == ToolKind.None) return null;
+            Container assigned = Chests.Assigned(Chests.KeyEquip((int)npc.Personality));
+            if (assigned != null && WorkerNpc.BestTool(assigned.GetInventory(), kind) != null) return assigned;
+            foreach (var c in Chests.NearBase(npc.Home))
+                if (WorkerNpc.BestTool(c.GetInventory(), kind) != null) return c;
             return null;
         }
 
@@ -130,12 +151,15 @@ namespace ValheimHelper
             if (m_stepTime > 30f) return Fail("noTool");
             bool took = Chests.TryEdit(m_chest, inv =>
             {
-                ItemDrop.ItemData best = WorkerNpc.BestTool(inv, m_tool);
-                if (best != null) m_npc.GetInventory().MoveItemToThis(inv, best);
+                foreach (var w in m_ways)
+                {
+                    if (w == ToolKind.None || Usable(w)) continue;
+                    ItemDrop.ItemData best = WorkerNpc.BestTool(inv, w);
+                    if (best != null) m_npc.GetInventory().MoveItemToThis(inv, best);
+                }
             });
             if (!took) return true; // 누가 열고 있다: 기다린다
-            if (!m_npc.HoldTool(m_tool)) return Fail("noTool");
-            Go(Step.Search);
+            Go(Step.Tool); // 다른 상자에 다른 도구가 있으면 또 간다
             return true;
         }
 
@@ -149,6 +173,12 @@ namespace ValheimHelper
                 Aim(zdo);
                 Go(Step.Approach);
                 return true;
+            }
+            if (m_sawTooHard && !m_saidTooWeak)
+            {
+                // 해 보고 배운다(8-2장): 보이는 건 있는데 지금 연장으론 안 된다. 한 번만 말한다.
+                m_saidTooWeak = true;
+                m_npc.Say("toolTooWeak", Args());
             }
             Knowledge k = Brain.Get();
             Vector3 pos = m_npc.transform.position;
@@ -211,27 +241,28 @@ namespace ValheimHelper
             return true;
         }
 
-        /// <summary>시야 안에서 그 물건이 나오는 것 중 다룰 수 있는 것. 쓰러진 것(통나무) 먼저, 그다음 가까운 것.</summary>
+        /// <summary>
+        /// 시야 안에서 그 물건이 나오는 것 중 지금 다룰 수 있는 것.
+        /// 가까운 순이되 가산점: 쓰러진 통나무 30m > 큰 나무·바위 10m > 줍는 것 5m > 어린 나무·그루터기·작은 돌 0.
+        /// </summary>
         bool FindInSight(out ZDO best)
         {
             best = null;
             float bestScore = float.MaxValue;
-            ItemDrop.ItemData tool = m_npc.GetCurrentWeapon();
-            int tier = tool != null ? tool.m_shared.m_toolTier : 0;
             Vector3 pos = m_npc.transform.position;
             foreach (var zdo in Senses.Nearby(pos, Senses.SightRange))
             {
                 if (m_skip.Contains(zdo.m_uid)) continue;
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
-                if (info == null || info.Tool != m_tool || !info.Produces.Contains(Item)) continue;
-                if (info.MinToolTier > tier && info.MinToolTier > 0)
+                if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
+                if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
+                if (info.Tool != ToolKind.None)
                 {
-                    // 해 보고 배운다(8-2장): 지금은 목록으로 알지만, 한 번만 말한다.
-                    if (!m_saidTooWeak) { m_saidTooWeak = true; m_npc.Say("toolTooWeak", Args()); }
-                    continue;
+                    ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
+                    if (tool == null) continue;
+                    if (info.MinToolTier > 0 && info.MinToolTier > tool.m_shared.m_toolTier) { m_sawTooHard = true; continue; }
                 }
-                float d = Utils.DistanceXZ(zdo.GetPosition(), pos);
-                float score = d - (info.Felled ? 25f : 0f);
+                float score = Utils.DistanceXZ(zdo.GetPosition(), pos) - info.Priority;
                 if (score < bestScore) { bestScore = score; best = zdo; }
             }
             return best != null;
@@ -241,7 +272,8 @@ namespace ValheimHelper
         {
             m_targetId = zdo.m_uid;
             m_targetPos = zdo.GetPosition();
-            m_reach = 1.7f;
+            m_targetInfo = ResourceCatalog.Get(zdo.GetPrefab());
+            m_reach = m_targetInfo != null && m_targetInfo.Pickable ? 1.3f : 1.7f;
             ZNetView view = ZNetScene.instance.FindInstance(zdo);
             if (view != null)
             {
@@ -260,15 +292,15 @@ namespace ValheimHelper
             if (Walk(dt, m_targetPos, m_reach) || Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f)
             {
                 m_swings = m_swingsNoProgress = 0;
-                m_lastHealth = Health(zdo);
-                Go(Step.Chop);
+                m_lastRevision = zdo.DataRevision;
+                Go(Step.Work);
                 return true;
             }
             if (Stuck(dt, m_targetPos) || m_stepTime > 40f) Skip();
             return true;
         }
 
-        bool UpdateChop()
+        bool UpdateWork()
         {
             ZDO zdo = ZDOMan.instance.GetZDO(m_targetId);
             ZNetView view = zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
@@ -278,7 +310,20 @@ namespace ValheimHelper
                 Go(Step.Collect);
                 return true;
             }
-            if (!m_npc.HoldTool(m_tool)) { Go(Step.Tool); return true; }
+            if (m_targetInfo == null) { Skip(); return true; }
+            if (m_targetInfo.Pickable)
+            {
+                // 손으로 줍기: 바닐라 Interact(스킬만 플레이어 전용). 떨어진 것은 Collect가 줍는다.
+                Pickable pick = view.GetComponent<Pickable>();
+                if (pick == null || !pick.CanBePicked()) { Skip(); return true; }
+                if (m_stepTime > 0.3f)
+                {
+                    pick.Interact(m_npc, false, false);
+                    Go(Step.Collect);
+                }
+                return true;
+            }
+            if (!m_npc.HoldTool(m_targetInfo.Tool)) { Go(Step.Tool); return true; }
             if (m_stepTime > ChopLimit) { Skip(); return true; }
 
             Vector3 aim = m_targetPos + Vector3.up * 1f;
@@ -286,7 +331,7 @@ namespace ValheimHelper
             bool attacking = m_npc.InAttack();
             if (m_wasAttacking && !attacking)
             {
-                // 한 번 휘두름이 끝났다: 피해가 들어갔는지 보고, 도구를 닳게 한다
+                // 한 번 휘두름이 끝났다: 피해가 들어갔는지(대상 ZDO가 바뀌었는지) 보고, 도구를 닳게 한다
                 // (바닐라 Attack은 플레이어 도구만 닳게 해서 직접 한다. 구상서 4장: 내구도는 바닐라처럼).
                 m_swings++;
                 ItemDrop.ItemData tool = m_npc.GetCurrentWeapon();
@@ -295,10 +340,10 @@ namespace ValheimHelper
                     tool.m_durability = Mathf.Max(0f, tool.m_durability - tool.m_shared.m_useDurabilityDrain);
                     if (tool.m_durability <= 0f) { m_npc.UnequipItem(tool); m_npc.Say("toolBroke", Args()); }
                 }
-                float h = Health(zdo);
-                if (h < m_lastHealth - 0.01f) m_swingsNoProgress = 0;
+                // 체력 저장 방식이 대상마다 달라서(MineRock5는 부위별) 체력 대신 ZDO 데이터 변경으로 본다.
+                if (zdo.DataRevision != m_lastRevision) m_swingsNoProgress = 0;
                 else m_swingsNoProgress++;
-                m_lastHealth = h;
+                m_lastRevision = zdo.DataRevision;
                 if (m_swingsNoProgress >= 4)
                 {
                     // 바닐라 공격 판정이 닿지 않는다(구상서 12장): 같은 피해 값을 직접 준다.
@@ -316,20 +361,30 @@ namespace ValheimHelper
             ItemDrop.ItemData tool = m_npc.GetCurrentWeapon();
             IDestructible d = target.GetComponent<IDestructible>();
             if (tool == null || d == null) return;
+            // 가장 가까운 충돌체를 맞힌 것으로 한다(MineRock5는 충돌체로 부위를 찾는다).
+            Vector3 me = m_npc.transform.position + Vector3.up;
+            Collider hitCol = null;
+            float best = float.MaxValue;
+            foreach (var col in target.GetComponentsInChildren<Collider>())
+            {
+                if (col.isTrigger) continue;
+                float dd = (col.ClosestPoint(me) - me).sqrMagnitude;
+                if (dd < best) { best = dd; hitCol = col; }
+            }
+            Vector3 point = hitCol != null ? hitCol.ClosestPoint(me) : target.transform.position + Vector3.up;
             var hit = new HitData
             {
                 m_damage = tool.GetDamage(),
                 m_toolTier = (short)tool.m_shared.m_toolTier,
-                m_point = target.transform.position + Vector3.up,
-                m_dir = (target.transform.position - m_npc.transform.position).normalized,
+                m_point = point,
+                m_dir = (point - me).normalized,
                 m_skill = tool.m_shared.m_skillType,
+                m_hitCollider = hitCol,
             };
             hit.SetAttacker(m_npc);
             d.Damage(hit);
             Plugin.Log.LogInfo($"{m_npc.NpcName}: 공격 판정이 안 닿아 직접 피해 {hit.m_damage.m_chop + hit.m_damage.m_pickaxe:0}");
         }
-
-        static float Health(ZDO zdo) => zdo.GetFloat(ZDOVars.s_health, float.MaxValue);
 
         void Skip()
         {

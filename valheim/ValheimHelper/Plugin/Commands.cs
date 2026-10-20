@@ -100,12 +100,13 @@ namespace ValheimHelper
 
         static void StartGather(WorkerNpc npc, ChatCommand cmd)
         {
-            ToolKind tool = ResourceCatalog.ToolFor(cmd.Item);
-            // ② 단계: 도끼로 나오는 것(나무 종류)만. 곡괭이는 다음 조각, 제작은 ⑥.
-            if (tool != ToolKind.Axe) { npc.Say("notYet"); return; }
+            // 캐거나 줍는 물건만(맨손·도끼·곡괭이, 게임 데이터에서 읽음). 가공·제작은 ⑥.
+            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(cmd.Item);
+            if (ways.Count == 0) { npc.Say("notYet"); return; }
             var args = new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() };
+            if (!GatherJob.CanStart(npc, ways)) { npc.Say("noTool", args); return; }
             if (npc.Ai.Current == WorkerAI.Mode.Work) npc.Say("dropJob", args);
-            npc.Ai.StartJob(new GatherJob(npc, cmd.Item, cmd.Amount, tool));
+            npc.Ai.StartJob(new GatherJob(npc, cmd.Item, cmd.Amount, ways));
             bool known = Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(npc.transform.position)).Count > 0;
             npc.Say(known ? "gatherKnown" : "gatherStart", args);
         }
