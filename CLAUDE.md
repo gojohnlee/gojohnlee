@@ -10,4 +10,5 @@
 - 새 세션은 기본 브랜치에서 시작하고 이전 대화 내용은 기억하지 못함 → 중요한 결정·상태는 이 파일에 기록한다.
 - 새 모드: `./scripts/new-rimworld-mod.sh <Name> "<설명>"` (CI는 `rimworld/*` 폴더를 자동 감지해 각각 빌드).
 - 사용자는 md 파일을 직접 읽지 않음 → 안내·체크리스트는 항상 대화에 바로 쓴다.
+- 사용자는 경로만 적힌 파일을 열 수 없음 → 기획서 등 결과물 파일은 대화에 파일로 직접 보내고, GitHub 링크(https://github.com/gojohnlee/gojohnlee/blob/HEAD/<경로>)도 함께 준다.
 - PC 테스트는 자동화 스크립트 한 줄로: `irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/HEAD/scripts/rimworld-test.ps1 | iex` (설치→실행→diag.txt/로그 수집→클립보드).
