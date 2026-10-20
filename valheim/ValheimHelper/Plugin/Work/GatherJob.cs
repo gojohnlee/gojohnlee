@@ -408,6 +408,7 @@ namespace ValheimHelper
             {
                 m_swings = m_swingsNoProgress = 0;
                 m_workIdle = m_closerTime = 0f;
+                m_dropCheck = 5f;
                 m_lastDigs = m_ai.Digs;
                 m_lastBlocked = m_ai.BlockedDigs;
                 m_saidDig = false;
@@ -457,6 +458,15 @@ namespace ValheimHelper
                 return true;
             }
             bool attacking = m_npc.InAttack();
+            // 큰 광맥은 다 캐기 전에 조각마다 떨어진 것이 둘레에 쌓인다(발밑 2m만 저절로 줍는다): 5초마다 보고 주우러 간다
+            // (0.3.8 구리 시험: 다 캘 때까지 안 주워 곡괭이가 먼저 부러짐). 주운 뒤 같은 광맥을 다시 고른다.
+            m_dropCheck -= Time.deltaTime;
+            if (!attacking && m_dropCheck <= 0f && m_targetInfo.Tool == ToolKind.Pickaxe)
+            {
+                m_dropCheck = 5f;
+                ItemDrop near = NearestDrop();
+                if (near != null && Utils.DistanceXZ(near.transform.position, m_npc.transform.position) > 2f) { Go(Step.Collect); return true; }
+            }
             // 땅속 광석을 파는데 두 번 휘둘러도 안 닿았다: 구덩이가 깊어져 손이 안 닿으니 3초까지 다가간다
             if (!attacking && m_ai.DigAllowed && m_swingsNoProgress >= 2 && m_closerTime < 3f && Utils.DistanceXZ(aim, m_npc.transform.position) > 1.2f)
             {
@@ -503,7 +513,7 @@ namespace ValheimHelper
             return true;
         }
 
-        float m_workIdle, m_closerTime;
+        float m_workIdle, m_closerTime, m_dropCheck;
         int m_lastDigs, m_lastBlocked;
         Collider m_aimCol;
         bool m_saidDig;
