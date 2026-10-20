@@ -40,6 +40,10 @@ namespace ValheimHelper.Core.Chat
         SetList,
         /// <summary>!세트 &lt;번호&gt; &lt;수량&gt;.</summary>
         SetMake,
+        /// <summary>세트 저장(Claude가 말에서 뽑음, 6-4장). Number 0이면 다음 빈 번호.</summary>
+        SetSave,
+        /// <summary>세트 고치기(Claude가 말에서 뽑음).</summary>
+        SetEdit,
         /// <summary>!밭 &lt;반경&gt;. Number = 반경(m).</summary>
         Farm,
         /// <summary>!평탄화 &lt;반경&gt;. Number = 반경(m).</summary>
