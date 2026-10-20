@@ -14,11 +14,16 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
-    <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" PrivateAssets="all" IncludeAssets="compile" />
+    <PackageReference Include="UnityEngine.Modules" Version="6000.0.85" PrivateAssets="all" IncludeAssets="compile" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- 게임 무관 로직은 같은 DLL에 넣는다(배포 파일 하나). -->
+    <Compile Include="../Core/**/*.cs" Exclude="../Core/obj/**;../Core/bin/**" LinkBase="Core" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="assembly_valheim"><HintPath>$(ValheimRefs)/assembly_valheim.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="assembly_utils"><HintPath>$(ValheimRefs)/assembly_utils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_guiutils"><HintPath>$(ValheimRefs)/assembly_guiutils.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>

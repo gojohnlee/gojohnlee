@@ -7,7 +7,8 @@
   "진행 중" 항목부터 이어간다. 진행 중 항목은 git log로 마지막 커밋을 확인해서 다시 시작한다.
 
 진행 중
-- ① 단계 시작: NPC 몸(플레이어 프리팹 복제 → Humanoid + 자체 AI), 콘솔 소환, 말풍선·채팅 알림.
+- ① 단계 첫 조각(0.1.0) 사용자 PC 시험 대기: vh_npctest (스크립트 기본 시험).
+  다음: 결과 반영 → 거점 깃발(Jötunn PieceManager 검토) → 소환을 깃발로 → 사망·부활은 ③.
 
 완료 기록
 - 2026-10-20: Core 프로젝트(valheim/ValheimHelper/Core, netstandard2.0) + Tests(xunit, net10.0) + CI(valheim-test.yml).
@@ -23,6 +24,14 @@
   이 클라우드 세션은 사용자 PC에 직접 접근 불가(사용자 질문함, 2026-10-20) → PC 일은 한 줄 명령 붙여넣기로.
   PC 테스트: irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
   알려진 한계: 호스트 영역 밖 StaticPhysics(떨어진 돌 등 정착)와 WearNTear(건물 지지력)는 바닐라대로 멈춤. 필요하면 나중에 패치.
+- 2026-10-20: ① 첫 조각 0.1.0. 게임은 Unity 6 → 참조 UnityEngine.Modules 6000.0.85로 바꿈.
+  WorkerPrefab(Player 프리팹 복제, Player·PlayerController·Talker·Skills 제거, Character/Humanoid 필드 복사 → WorkerNpc, + WorkerAI),
+  WorkerNpc(ZDO vh_name/vh_role/vh_home, 외형, TeleportTo, Say), WorkerAI(대기·따라가기·집에 가기, 15초 막히면 거점으로),
+  ChatNet(모든 접속자가 자기 채팅을 VH_Chat RPC로 호스트에 보냄 — 바닐라 일반 채팅은 15m 한정이라서. NPC 말은 VH_Say로 채팅창+말풍선),
+  Commands(① 단계: !같이 가자·!멈춰·!상태, 나머지 명령은 "아직 못 해요", 형식 틀린 !는 "! 명령으로"), Workers(설정 이름, vh_spawn/vh_despawn, 저장된 NPC 추적),
+  Items(물건 이름 → 프리팹), TestRunner(autotest.txt 자동 시험 공통), NpcTest(vh_npctest).
+  Core: Npc/Speech(대사·최근 줄 피하기), Npc/Dispatch(받을 NPC 고르기). 테스트 120개.
+  알려진 한계: NPC가 죽으면 바닐라 몬스터처럼 사라짐(③에서 묘비·부활), 세계 난이도 설정이 몬스터처럼 NPC에도 적용될 수 있음, PvP 켠 플레이어는 NPC를 때릴 수 있음.
 - 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx
 
 다음 세션 시작 순서 ("발헤임 구현 시작"이라고 하면)
