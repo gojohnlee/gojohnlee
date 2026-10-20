@@ -15,6 +15,20 @@ namespace ValheimHelper
         public static bool Running { get; private set; }
         static readonly List<string> s_report = new List<string>();
         static readonly Queue<string> s_autoQueue = new Queue<string>();
+        static readonly Dictionary<string, System.Func<IEnumerator>> s_tests = new Dictionary<string, System.Func<IEnumerator>>();
+
+        /// <summary>
+        /// 시험 등록: 콘솔 명령(F5, 콘솔을 켰을 때)으로도, 자동 시험으로도 돈다. 자동 시험은 콘솔을 거치지 않으므로
+        /// 게임을 -console 없이 켜도 된다(Steam이 실행 인자 경고를 띄우지 않게).
+        /// </summary>
+        public static void Register(string name, string description, System.Func<IEnumerator> run)
+        {
+            s_tests[name] = run;
+            new Terminal.ConsoleCommand(name, "[Valheim Helper] " + description, args =>
+            {
+                if (Begin(args.Context, name)) Plugin.Instance.StartCoroutine(run());
+            });
+        }
         static bool s_auto;
         static float s_autoWait;
         static Terminal s_terminal;
@@ -91,23 +105,24 @@ namespace ValheimHelper
             }
             if (s_autoQueue.Count == 0) return;
             Player player = Player.m_localPlayer;
-            if (player == null || player.IsTeleporting() || Console.instance == null) { s_autoWait = 0f; return; }
+            if (player == null || player.IsTeleporting()) { s_autoWait = 0f; return; }
             s_autoWait += Time.deltaTime;
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
             string cmd = s_autoQueue.Dequeue();
-            Console.instance.TryRunCommand(cmd, silentFail: false, skipAllowedCheck: true);
-            if (!Running)
+            if (s_tests.TryGetValue(cmd, out var run) && Begin(null, cmd))
             {
-                // 명령이 시험을 시작하지 못했다(등록 실패 등). 그래도 결과를 남긴다.
-                Begin(null, cmd);
-                Log($"FAIL: 자동 시험 {cmd}가 시작되지 않음(오류는 BepInEx 로그 참고)");
-                Finish();
+                Plugin.Instance.StartCoroutine(run());
+                return;
             }
+            // 모르는 시험이거나 등록에 실패했다. 그래도 결과를 남긴다.
+            Begin(null, cmd);
+            Log($"FAIL: 자동 시험 {cmd}가 시작되지 않음(오류는 BepInEx 로그 참고)");
+            Finish();
         }
 
         static IEnumerator QuitSoon()
         {
-            for (int i = 10; i > 0; i--)
+            for (int i = 2; i > 0; i--) // 사용자 요청: 10초 → 2초
             {
                 MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, $"[Valheim Helper] 시험 끝. {i}초 뒤 게임을 끕니다.");
                 yield return new WaitForSeconds(1f);

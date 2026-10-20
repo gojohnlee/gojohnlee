@@ -13,10 +13,7 @@ namespace ValheimHelper
     {
         public static void Register()
         {
-            new Terminal.ConsoleCommand("vh_flagtest", "[Valheim Helper] 거점 깃발 시험", args =>
-            {
-                if (TestRunner.Begin(args.Context, "vh_flagtest")) Plugin.Instance.StartCoroutine(Run());
-            });
+            TestRunner.Register("vh_flagtest", "거점 깃발 시험", Run);
         }
 
         sealed class Checks

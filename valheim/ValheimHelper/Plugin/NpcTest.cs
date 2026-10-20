@@ -13,10 +13,7 @@ namespace ValheimHelper
     {
         public static void Register()
         {
-            new Terminal.ConsoleCommand("vh_npctest", "[Valheim Helper] 일꾼 NPC 시험", args =>
-            {
-                if (TestRunner.Begin(args.Context, "vh_npctest")) Plugin.Instance.StartCoroutine(Run());
-            });
+            TestRunner.Register("vh_npctest", "일꾼 NPC 시험", Run);
         }
 
         static readonly List<string> s_heard = new List<string>();

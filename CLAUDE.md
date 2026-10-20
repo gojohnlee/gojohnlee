@@ -44,6 +44,7 @@
 - 목표: 친구들과 같은 사설 서버에서 동시에 플레이. 게임 채팅 3단계(`!목재 50` 정해진 명령 → 모드, `!목재 50개 내놔` → Haiku, `야 목재 50개 가져와` → Sonnet) → NPC "Claude"가 실제로 걸어가 채집(바닐라 규칙) → 지정 상자 → 채팅·말풍선 알림. 상자에 바로 넣기는 치트라 거부됨.
 - 확정: 사용자 PC가 호스트(서버 켜지면 PC 항상 켜짐), 친구 모두 스팀 PC·모드 설치 동의, 명령은 게임 채팅(음성은 나중), 철(늪 지하묘지)까지 포함, 위험 감지는 NPC 스스로, 장비는 플레이어가 상자에 넣어 지급, 사망 = 묘비 + 거점 즉시 부활, 세계 설정 TeleportAll(포탈로 광석 이동) 켬.
 - 비용 0 원칙: 유료 API 없음. 위험 판단·이동·전투는 규칙 코드. 명령 해석은 3단계 확정(Opus 안 씀): 정해진 "!" 명령은 모드, 나머지 "!" 문장은 Haiku, "!" 없는 채팅은 Sonnet. 호스트 PC의 Claude Code(Pro 로그인, 최신 설치됨, 도구 끔, JSON 결과를 모드가 검증)로 부른다. 구상서 5-1장.
+- PC 시험 방식(사용자 확정, 2026-10-20): A = 한 줄 붙여넣기(`irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex`) → 결과 붙여넣기. 사용자 손이 가지 않게: 월드 자동 입장(te4st41), 인트로 건너뜀, Steam 실행 인자 경고 없음, 끝나면 2초 뒤 자동 종료, 자동 시험 시작 3초.
 - 게임 DLL: 비공개 저장소 gojohnlee/valheim-refs(게임 1.0.20) → add_repo 후 /home/user/valheim-refs에 clone, ilspycmd로 디컴파일해 읽는다(저장소에 올리지 않음).
 - (구) 빌드 참조: NuGet `ValheimGameLibs`(0.221.4, 이름만 있고 함수 내용은 비어 있음). 게임 파일은 저장소에 올리지 않는다. Steam 직접 다운로드는 이 환경 보안 검사에서 막힘. 저장소 전체 비공개 전환 금지(림월드 테스트 한 줄 명령이 raw.githubusercontent HEAD를 씀). 실제 게임 코드가 필요하면 별도 비공개 저장소로 사용자에게 assembly_valheim.dll을 받는다.
 - 핵심 기술 위험: NPC가 플레이어와 멀리 떨어지면 구역이 멈춤 → 호스트가 NPC 위치로 구역 생성·실행(ZoneSystem.CreateLocalZones, ZNetScene.InActiveArea 후보). 실제 코드 확인 전. 사용자 승인: NPC 주변 구역 유지 OK(호스트 RTX 4090, 7800X3D, 64GB).

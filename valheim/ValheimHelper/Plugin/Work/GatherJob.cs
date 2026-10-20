@@ -103,9 +103,18 @@ namespace ValheimHelper
         }
 
         /// <returns>false면 작업 끝(성공이든 실패든). 알림은 여기서 한다.</returns>
+        float m_autoPickTimer;
+
         public bool Update(float dt)
         {
             m_stepTime += dt;
+            // 플레이어의 자동 줍기처럼 발밑(2m) 물건은 걸어가지 않고 바로 줍는다(0.3.3: 줍는 게 느림).
+            m_autoPickTimer -= dt;
+            if (m_autoPickTimer <= 0f)
+            {
+                m_autoPickTimer = 0.25f;
+                AutoPickup();
+            }
             switch (m_step)
             {
                 case Step.Tool: return UpdateTool();
@@ -337,7 +346,7 @@ namespace ValheimHelper
                 // 손으로 줍기: 바닐라 Interact(스킬만 플레이어 전용). 떨어진 것은 Collect가 줍는다.
                 Pickable pick = view.GetComponent<Pickable>();
                 if (pick == null || !pick.CanBePicked()) { Skip(); return true; }
-                if (m_stepTime > 0.3f)
+                if (m_stepTime > 0.1f)
                 {
                     pick.Interact(m_npc, false, false);
                     Go(Step.Collect);
@@ -418,7 +427,9 @@ namespace ValheimHelper
 
         bool UpdateCollect(float dt)
         {
-            if (m_stepTime < 1.5f) { m_ai.StopMoving(); return true; } // 떨어지기를 기다린다
+            // 떨어지기를 기다린다: 줍는 것(Pickable)은 바로 생기고, 베고 캔 것은 통나무·바위가 부서지며 흩어진다.
+            float wait = m_targetInfo != null && m_targetInfo.Pickable ? 0.3f : 1.2f;
+            if (m_stepTime < wait) { m_ai.StopMoving(); return true; }
             if (Full()) { Go(Step.Return); return true; }
             ItemDrop drop = NearestDrop();
             if (drop == null || m_stepTime > 30f)
@@ -429,6 +440,22 @@ namespace ValheimHelper
             if (Walk(dt, drop.transform.position, 1.2f) || Utils.DistanceXZ(drop.transform.position, m_npc.transform.position) < 1.6f)
                 drop.Pickup(m_npc);
             return true;
+        }
+
+        static readonly Collider[] s_pickBuf = new Collider[32];
+        static int s_itemMask;
+
+        /// <summary>플레이어 자동 줍기와 같은 방식(물건 층 충돌체를 2m 안에서 찾음). 가볍다.</summary>
+        void AutoPickup()
+        {
+            if (Full()) return;
+            if (s_itemMask == 0) s_itemMask = LayerMask.GetMask("item");
+            int n = Physics.OverlapSphereNonAlloc(m_npc.transform.position + Vector3.up, 2f, s_pickBuf, s_itemMask);
+            for (int i = 0; i < n; i++)
+            {
+                ItemDrop drop = s_pickBuf[i] != null ? s_pickBuf[i].GetComponentInParent<ItemDrop>() : null;
+                if (drop != null && Utils.GetPrefabName(drop.gameObject) == Item) drop.Pickup(m_npc);
+            }
         }
 
         ItemDrop NearestDrop()

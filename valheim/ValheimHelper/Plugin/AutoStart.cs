@@ -25,6 +25,18 @@ namespace ValheimHelper
             }
         }
 
+        // 자동 시험 때만 시작 인트로를 건너뛴다(사용자 설정은 건드리지 않음). 바닐라 설정 이름 그대로 가로챈다.
+        [HarmonyPatch(typeof(PlatformPrefs), nameof(PlatformPrefs.GetBool))]
+        static class SkipIntro
+        {
+            static bool Prefix(string name, ref bool __result)
+            {
+                if (name != "SkipIntroCinematic" || string.IsNullOrEmpty(World)) return true;
+                __result = true;
+                return false;
+            }
+        }
+
         static readonly AccessTools.FieldRef<FejdStartup, World> WorldField = AccessTools.FieldRefAccess<FejdStartup, World>("m_world");
         static readonly System.Func<FejdStartup, string, World> FindWorld =
             AccessTools.MethodDelegate<System.Func<FejdStartup, string, World>>(AccessTools.Method(typeof(FejdStartup), "FindWorld"));

@@ -46,13 +46,14 @@ Set-Content "$plugin\autotest.txt" "world=$World;$Test"   # 모드가 월드에 
 Remove-Item $tmp -Recurse -Force
 Write-Host 'Valheim Helper 설치됨'
 
-# 3) 게임 실행(F5 콘솔 켬) 후 종료될 때까지 대기
-Start-Process "steam://run/$AppId//-console/"
+# 3) 게임 실행 후 종료될 때까지 대기
+# 실행 인자(-console)를 붙이면 Steam이 "사용자 지정 인수" 경고창을 띄운다 → 인자 없이 실행(시험은 콘솔 없이 돈다).
+Start-Process "steam://rungameid/$AppId"
 Write-Host ''
 Write-Host "게임 실행 중... 시험 월드($World)로 저절로 들어갑니다. 손대지 않아도 됩니다."
 Write-Host '(그 월드가 없으면 직접 테스트용 월드에 들어가 주세요)'
 Write-Host "3초 뒤 시험($Test)이 저절로 시작되고, 시험이 끝나면(최대 15분) 게임이 저절로 꺼집니다."
-Write-Host "(수동으로 다시 하려면 F5 → $Test. 20분이 지나도 안 꺼지면 직접 꺼 주세요)"
+Write-Host "(20분이 지나도 안 꺼지면 직접 꺼 주세요)"
 function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) }
 $t = 0
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음

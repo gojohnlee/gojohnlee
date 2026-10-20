@@ -15,10 +15,7 @@ namespace ValheimHelper
     {
         public static void Register()
         {
-            new Terminal.ConsoleCommand("vh_fartest", "[Valheim Helper] 먼 구역 유지 시험", args =>
-            {
-                if (TestRunner.Begin(args.Context, "vh_fartest")) Plugin.Instance.StartCoroutine(Run());
-            });
+            TestRunner.Register("vh_fartest", "먼 구역 유지 시험", Run);
         }
 
         static void Log(Terminal t, string line) => TestRunner.Log(line);

@@ -14,14 +14,8 @@ namespace ValheimHelper
     {
         public static void Register()
         {
-            new Terminal.ConsoleCommand("vh_woodtest", "[Valheim Helper] 나무 채집 시험", args =>
-            {
-                if (TestRunner.Begin(args.Context, "vh_woodtest")) Plugin.Instance.StartCoroutine(Run("AxeFlint", "Wood", "나무"));
-            });
-            new Terminal.ConsoleCommand("vh_stonetest", "[Valheim Helper] 돌 채집 시험", args =>
-            {
-                if (TestRunner.Begin(args.Context, "vh_stonetest")) Plugin.Instance.StartCoroutine(Run("PickaxeAntler", "Stone", "돌"));
-            });
+            TestRunner.Register("vh_woodtest", "나무 채집 시험", () => Run("AxeFlint", "Wood", "나무"));
+            TestRunner.Register("vh_stonetest", "돌 채집 시험", () => Run("PickaxeAntler", "Stone", "돌"));
         }
 
         sealed class Checks
