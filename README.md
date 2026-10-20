@@ -26,4 +26,4 @@ push할 때마다 GitHub Actions가 빌드하고, 바로 넣을 수 있는 모�
 ```
 `rimworld/MyMod/`가 만들어지고, CI가 자동으로 함께 빌드합니다.
 
-PC에서 확인할 항목: [docs/HOME_CHECKLIST.md](docs/HOME_CHECKLIST.md)
+PC 자동 테스트 (PowerShell): `irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/ccr-e7be70c2-61zhas/scripts/rimworld-test.ps1 | iex`

@@ -6,3 +6,4 @@ obj/
 # 빌드 결과물은 CI 아티팩트로 배포
 rimworld/*/1.*/Assemblies/*.dll
 rimworld/*/1.*/Assemblies/*.pdb
+rimworld/*/diag.txt

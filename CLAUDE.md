@@ -7,4 +7,5 @@
 - 사용자에게 요청할 것이 있으면 **항상 답변 맨 끝에 1. 2. 3. 4. 번호 목록**으로 정리.
 - 답변은 한국어로.
 - 새 모드: `./scripts/new-rimworld-mod.sh <Name> "<설명>"` (CI는 `rimworld/*` 폴더를 자동 감지해 각각 빌드).
-- 사용자가 PC에서 확인할 항목은 `docs/HOME_CHECKLIST.md`에 모아둔다.
+- 사용자는 md 파일을 직접 읽지 않음 → 안내·체크리스트는 항상 대화에 바로 쓴다.
+- PC 테스트는 자동화 스크립트 한 줄로: `irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/ccr-e7be70c2-61zhas/scripts/rimworld-test.ps1 | iex` (설치→실행→diag.txt/로그 수집→클립보드).

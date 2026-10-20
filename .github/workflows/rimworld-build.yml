@@ -38,3 +38,28 @@ jobs:
         with:
           name: ${{ matrix.mod }}
           path: dist/
+
+  # PC 설치 스크립트가 받아가는 고정 링크:
+  # https://github.com/<owner>/<repo>/releases/download/rimworld-latest/rimworld-mods.zip
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Zip all mods
+        run: cd artifacts && zip -qr ../rimworld-mods.zip .
+      - name: Update rimworld-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete rimworld-latest --yes --cleanup-tag || true
+          gh release create rimworld-latest rimworld-mods.zip \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "RimWorld mods (latest build)" \
+            --notes "자동 빌드: ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}"
