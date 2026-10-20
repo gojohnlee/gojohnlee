@@ -1,4 +1,4 @@
-﻿# RimWorld 모드 자동 설치 + 실행 + 결과 수집 (Windows PowerShell)
+# RimWorld 모드 자동 설치 + 실행 + 결과 수집 (Windows PowerShell)
 # 사용법 (PowerShell에 한 줄 붙여넣기):
 #   irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/ccr-e7be70c2-61zhas/scripts/rimworld-test.ps1 | iex
 $ErrorActionPreference = 'Stop'
