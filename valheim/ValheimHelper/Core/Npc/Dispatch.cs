@@ -10,6 +10,8 @@ namespace ValheimHelper.Core.Npc
         public Personality Personality;
         /// <summary>일을 하는 중(따라가기 포함)이면 true.</summary>
         public bool Busy;
+        /// <summary>질문하고 대답을 기다리기 시작한 시각. 안 기다리면 -1.</summary>
+        public double AskedAt = -1;
     }
 
     /// <summary>명령을 받을 NPC 고르기 (구상서 3-2장).</summary>
@@ -45,6 +47,26 @@ namespace ValheimHelper.Core.Npc
             }
             if (best >= 0) result.Add(best);
             return result;
+        }
+
+        /// <summary>
+        /// 대답을 받을 NPC(설계 B-7): 3분 안에 질문한 NPC 중 이름 부른 쪽, 이름이 없으면 마지막에 질문한 쪽. 없으면 -1.
+        /// </summary>
+        public static int Answerer(IReadOnlyList<NpcInfo> npcs, string target, double now)
+        {
+            int best = -1;
+            for (int i = 0; i < npcs.Count; i++)
+            {
+                var n = npcs[i];
+                if (n.AskedAt < 0 || now - n.AskedAt > Replies.Timeout) continue;
+                if (target != null)
+                {
+                    if (string.Equals(n.Name, target, StringComparison.OrdinalIgnoreCase)) return i;
+                    continue;
+                }
+                if (best < 0 || n.AskedAt > npcs[best].AskedAt) best = i;
+            }
+            return best;
         }
 
         // 지금은 전투 위주 명령이 없다. 사냥·던전이 생기면 여기에 더한다.

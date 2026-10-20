@@ -46,7 +46,14 @@ namespace ValheimHelper.Core.Chat
                     target = name;
                     tokens = tokens.Skip(1).ToArray();
                 }
+                bool urgent = false;
+                if (tokens.Length > 1)
+                {
+                    var rest = tokens.Where(x => !Urgent.Contains(Lower(x).TrimEnd('!', '！'))).ToArray();
+                    if (rest.Length > 0 && rest.Length < tokens.Length) { urgent = true; tokens = rest; }
+                }
                 var cmd = ParseCommand(tokens);
+                if (cmd != null) cmd.Urgent = urgent;
                 if (cmd == null) return new ChatResult { Route = ChatRoute.Haiku, Text = text, Target = target };
                 if (cmd.Kind != CommandKind.SetChest || cmd.Target == null) cmd.Target = target;
                 return new ChatResult { Route = ChatRoute.Command, Command = cmd };
@@ -236,11 +243,32 @@ namespace ValheimHelper.Core.Chat
             "no", "n", "nope", "nah",
         };
 
+        static readonly HashSet<string> GoAnyway = new HashSet<string>
+        {
+            "그래도 가", "그래도가", "그냥 가", "그냥가", "그래도 가봐", "그냥 가봐", "go anyway",
+        };
+
+        static readonly HashSet<string> Together = new HashSet<string> { "같이 가자", "같이가자", "같이 가", "같이가", "together" };
+
+        static readonly HashSet<string> Elsewhere = new HashSet<string>
+        {
+            "딴 데로 가", "딴데로 가", "딴데로가", "딴 데", "딴데", "다른 데", "다른데", "다른 데로 가", "다른데로 가", "다른데로가", "딴 데 가", "elsewhere",
+        };
+
+        /// <summary>"!" 명령 안의 급함 낱말(설계 B-5): 빼고 해석하고 Urgent로 표시.</summary>
+        static readonly HashSet<string> Urgent = new HashSet<string>
+        {
+            "빨리", "먼저", "급해", "급함", "당장", "지금", "바로", "이거부터", "이것부터", "이거먼저", "urgent", "now", "first",
+        };
+
         static bool TryAnswer(string text, out AnswerKind answer)
         {
             string s = Lower(text).TrimEnd('!', '.', '~', '?', ' ', '！');
             if (Yes.Contains(s)) { answer = AnswerKind.Yes; return true; }
             if (No.Contains(s)) { answer = AnswerKind.No; return true; }
+            if (GoAnyway.Contains(s)) { answer = AnswerKind.GoAnyway; return true; }
+            if (Together.Contains(s)) { answer = AnswerKind.Escort; return true; }
+            if (Elsewhere.Contains(s)) { answer = AnswerKind.Elsewhere; return true; }
             answer = default;
             return false;
         }

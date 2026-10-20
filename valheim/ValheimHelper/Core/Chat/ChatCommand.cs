@@ -47,7 +47,8 @@ namespace ValheimHelper.Core.Chat
         Path,
     }
 
-    public enum AnswerKind { Yes, No }
+    /// <summary>질문 뒤 짧은 대답 (8-1장, 설계 B-7).</summary>
+    public enum AnswerKind { Yes, No, GoAnyway, Escort, Elsewhere }
 
     /// <summary>해석된 정해진 명령.</summary>
     public sealed class ChatCommand
@@ -67,6 +68,8 @@ namespace ValheimHelper.Core.Chat
         public string Biome;
         /// <summary>수량·반경이 상한을 넘어 줄였는지. 알림에 쓴다.</summary>
         public bool Clamped;
+        /// <summary>"빨리·먼저·이거부터" — 하던 일을 멈추고 이것부터(설계 B-5).</summary>
+        public bool Urgent;
     }
 
     public sealed class ChatResult
