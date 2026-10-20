@@ -85,3 +85,18 @@ public class DangerTests
         Assert.True(b2.Knows("Greydwarf"));
     }
 }
+
+public class DangerOrderTests
+{
+    static Foe F(float hp, float dmg) => new Foe { Kind = "x", Health = hp, Damage = dmg };
+
+    [Fact]
+    public void WoundedDrinksBeforeFleeing()
+    {
+        // 체력 18/70: 지금 체력으로는 비율이 크지만, 미드가 있으면 마시는 게 먼저
+        var two = new[] { F(40, 7), F(40, 7) };
+        Assert.Equal(Verdict.Drink, Danger.Judge(Personality.Scv, two, 18, 70, 13, d => d, true));
+        // 미드가 없으면 물러남(가득한 체력으로는 이길 만한 상대라 도망까지는 아님)
+        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Scv, two, 18, 70, 13, d => d, false));
+    }
+}

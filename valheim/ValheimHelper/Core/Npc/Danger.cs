@@ -63,15 +63,21 @@ namespace ValheimHelper.Core.Npc
         public static float Ratio(IList<Foe> foes, float myHealth, float myHit, Func<float, float> taken) =>
             ExpectedLoss(foes, myHit, taken) / Math.Max(myHealth, 1f);
 
+        /// <summary>
+        /// 순서: 체력이 낮으면 미드부터(마시는 건 바로 끝난다) → 보스, 또는 체력이 가득해도 이길 수 없는 적(최대 체력 기준 2배)은 도망 →
+        /// 체력이 낮은데 미드도 없으면 물러남 → 지금 체력으로 잃을 비율이 기준 이하면 싸움, 넘으면 물러남.
+        /// (0.3.7 시험: 체력 25%에서 회색난쟁이를 보고 미드 대신 도망부터 쳤다 — 도망 기준을 지금 체력으로 재서.)
+        /// </summary>
         public static Verdict Judge(Personality p, IList<Foe> foes, float health, float maxHealth, float myHit, Func<float, float> taken, bool haveMead)
         {
             if (foes.Count == 0) return Verdict.Calm;
-            foreach (var f in foes) if (f.Boss) return Verdict.Flee;
-            float ratio = Ratio(foes, health, myHit, taken);
             bool alarak = p == Personality.Alarak;
-            if (ratio > AvoidRatio) return Verdict.Flee;
-            if (health <= maxHealth * (alarak ? LowHealthAlarak : LowHealthScv)) return haveMead ? Verdict.Drink : Verdict.Back;
-            return ratio <= (alarak ? FightAlarak : FightScv) ? Verdict.Fight : Verdict.Back;
+            bool low = health <= maxHealth * (alarak ? LowHealthAlarak : LowHealthScv);
+            if (low && haveMead) return Verdict.Drink;
+            foreach (var f in foes) if (f.Boss) return Verdict.Flee;
+            if (Ratio(foes, maxHealth, myHit, taken) > AvoidRatio) return Verdict.Flee;
+            if (low) return Verdict.Back;
+            return Ratio(foes, health, myHit, taken) <= (alarak ? FightAlarak : FightScv) ? Verdict.Fight : Verdict.Back;
         }
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class Guard
     {
-        public const float SenseRange = 30f, CloseRange = 8f, AllyRange = 20f;
+        public const float SenseRange = 30f, CloseRange = 8f, AllyRange = 20f, EngageRange = 15f;
         const float JudgeEvery = 0.5f, BackDistance = 40f, BackWait = 30f;
         public const int MaxBacks = 2;
         /// <summary>[기본안] 내가 한 번 휘두를 때 적이 치는 횟수(바닐라 몬스터의 공격 간격 반영, 시험으로 조정).</summary>
@@ -98,20 +98,27 @@ namespace ValheimHelper
             switch (v)
             {
                 case Verdict.Flee:
-                    if (m_state != State.Flee)
-                    {
-                        Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00}");
-                        m_npc.Say("flee", Args(foeName));
-                        m_ai.AvoidHere(nearest.transform.position);
-                        m_backTo = AwayPoint(pos, BackDistance * 1.5f);
-                        m_state = State.Flee;
-                    }
+                    if (m_state != State.Flee) StartFlee(pos, nearest, foeName);
+                    else if (Chased(10f)) m_backTo = AwayPoint(pos, BackDistance * 1.5f); // 쫓아온다: 더 간다
                     break;
                 case Verdict.Drink:
                     if (m_npc.DrinkHealthMead()) m_npc.Say("drink");
+                    m_judgeTimer = 0f; // 마셨으니 바로 다시 판단(싸울지 물러날지)
                     break;
                 case Verdict.Back:
-                    if (m_state != State.Back)
+                    if (m_state == State.Back)
+                    {
+                        // 물러났는데 쫓아온다: 다시 물러나고, 세 번째면 도망(그곳은 버린다)
+                        if (!Chased(10f)) break;
+                        if (++m_chased >= 3) { StartFlee(pos, nearest, foeName); break; }
+                        m_backTo = AwayPoint(pos, BackDistance);
+                        m_backTimer = BackWait;
+                        m_backWalking = true;
+                        m_backWalkTime = 0f;
+                        break;
+                    }
+                    if (m_state == State.Flee) break;
+                    m_chased = 0;
                     {
                         m_backs++;
                         Plugin.Log.LogInfo($"{m_npc.NpcName} 물러남 {m_backs}번째: {foeName} 등 {m_foes.Count}, 비율 {LastRatio:0.00}");
@@ -138,6 +145,27 @@ namespace ValheimHelper
                     m_state = State.Fight;
                     break;
             }
+        }
+
+        int m_chased;
+
+        void StartFlee(Vector3 pos, Character nearest, string foeName)
+        {
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00}");
+            m_npc.Say("flee", Args(foeName));
+            m_ai.AvoidHere(nearest.transform.position);
+            m_backTo = AwayPoint(pos, BackDistance * 1.5f);
+            m_target = null;
+            m_armed = false;
+            m_state = State.Flee;
+        }
+
+        /// <summary>싸울 생각인 적이 dist 안까지 따라왔다.</summary>
+        bool Chased(float dist)
+        {
+            foreach (var c in m_foes)
+                if (Aggressive(c) && Vector3.Distance(c.transform.position, m_npc.transform.position) < dist) return true;
+            return false;
         }
 
         static Dictionary<string, string> Args(string foe) => new Dictionary<string, string> { ["foe"] = foe };
@@ -183,9 +211,9 @@ namespace ValheimHelper
             float bestD = float.MaxValue;
             foreach (var c in m_foes)
             {
-                if (!Aggressive(c)) continue;
-                float d = Vector3.Distance(c.transform.position, pos);
-                if (d < bestD) { bestD = d; best = c; }
+                float dc = Vector3.Distance(c.transform.position, pos);
+                if (!Aggressive(c) && dc > EngageRange) continue; // 가까운 적은 못 알아챘어도 먼저 친다(0.3.7: 8.1m에서 서로 쳐다만 봄)
+                if (dc < bestD) { bestD = dc; best = c; }
             }
             return best;
         }
@@ -226,7 +254,7 @@ namespace ValheimHelper
             float hit = w != null ? Gear.WeaponScore(w) : 5f;
             foreach (var p in Player.GetAllPlayers())
             {
-                if (p == null || p.IsDead() || Vector3.Distance(p.transform.position, pos) > AllyRange) continue;
+                if (p == null || p.IsDead() || p.InGhostMode() || p.InDebugFlyMode() || Vector3.Distance(p.transform.position, pos) > AllyRange) continue; // 유령·날기 모드는 싸우지 않는다
                 ItemDrop.ItemData pw = p.GetCurrentWeapon();
                 hit += pw != null ? Gear.WeaponScore(pw) : 5f;
             }
@@ -316,16 +344,22 @@ namespace ValheimHelper
         }
 
         /// <summary>온 길(거점 쪽)으로 물러날 곳. 적이 거점 쪽에 있으면 적 반대쪽.</summary>
+        /// <summary>
+        /// 물러날 곳: 거점이 멀고 적 반대쪽이면 거점 쪽(온 길)으로 dist만큼(거점이 더 가까우면 거점), 거점 근처이거나
+        /// 거점 쪽에 적이 있으면 적 반대쪽으로. (0.3.7: 거점에 있는데 "거점으로 도망"이라 제자리에서 되풀이했다.)
+        /// </summary>
         Vector3 AwayPoint(Vector3 pos, float dist)
         {
             Vector3 toHome = m_npc.Home - pos;
             toHome.y = 0f;
             Vector3 fromFoes = Vector3.zero;
             foreach (var c in m_foes) { Vector3 v = pos - c.transform.position; v.y = 0f; fromFoes += v.normalized; }
-            Vector3 dir = toHome.sqrMagnitude > 1f ? toHome.normalized : fromFoes.normalized;
-            if (fromFoes.sqrMagnitude > 0.01f && Vector3.Dot(dir, fromFoes.normalized) < -0.3f) dir = fromFoes.normalized;
-            if (toHome.magnitude < dist && toHome.sqrMagnitude > 1f && Vector3.Dot(toHome.normalized, fromFoes.normalized) > -0.3f) return m_npc.Home;
-            return pos + dir * dist;
+            if (fromFoes.sqrMagnitude < 0.01f) fromFoes = -m_npc.transform.forward;
+            fromFoes.Normalize();
+            bool homeFar = toHome.magnitude > 10f;
+            if (homeFar && Vector3.Dot(toHome.normalized, fromFoes) > -0.3f)
+                return toHome.magnitude < dist ? m_npc.Home : pos + toHome.normalized * dist;
+            return pos + fromFoes * dist;
         }
 
         /// <summary>싸워 본 적: 게임 데이터의 실제 기본 체력·가장 센 한 방을 배운다(두 NPC가 같이 쓴다).</summary>
