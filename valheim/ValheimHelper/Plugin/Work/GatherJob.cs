@@ -88,6 +88,8 @@ namespace ValheimHelper
             if (m_step != s) Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: {m_step} → {s}");
             m_step = s;
             m_stepTime = 0f;
+            // 이전 단계의 걷기 방향이 남으면 계속 걸어간다(0.3.2: 돌을 줍고 한참 갔다가 돌아옴).
+            m_ai.StopMoving();
             m_bestDist = float.MaxValue;
             m_progressTimer = 0f;
             if (s == Step.Deposit) m_chest = null; // 넣을 상자는 그때그때 고른다
@@ -416,7 +418,7 @@ namespace ValheimHelper
 
         bool UpdateCollect(float dt)
         {
-            if (m_stepTime < 1.5f) return true; // 떨어지기를 기다린다
+            if (m_stepTime < 1.5f) { m_ai.StopMoving(); return true; } // 떨어지기를 기다린다
             if (Full()) { Go(Step.Return); return true; }
             ItemDrop drop = NearestDrop();
             if (drop == null || m_stepTime > 30f)

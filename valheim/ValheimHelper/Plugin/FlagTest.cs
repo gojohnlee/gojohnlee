@@ -67,13 +67,14 @@ namespace ValheimHelper
 
             // 깃발 A
             Vector3 a = player.transform.position + player.transform.forward * 4f;
-            if (ZoneSystem.instance.GetSolidHeight(a, out float ha)) a.y = ha;
+            if (ZoneSystem.instance.GetGroundHeight(a, out float ha)) a.y = ha; // 지형(바위·나무 위 말고)
             player.PlacePiece(piece, a, player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
             ZDO flagA = Nearest(a);
             checks.Add("깃발 A 세워짐·활성", flagA != null && flagA.GetBool(BaseFlag.KeyActive));
             var zdos = Workers.AllZdos();
-            checks.Add($"깃발 A에 NPC 나타남 ({zdos.Count}명)", zdos.Count == 2 && zdos.TrueForAll(z => Vector3.Distance(z.GetPosition(), a) < 5f));
+            // 수평 거리로 본다(0.3.2: 높이 차이로 3D 거리가 커서 거짓 실패)
+            checks.Add($"깃발 A에 NPC 나타남 ({zdos.Count}명)", zdos.Count == 2 && zdos.TrueForAll(z => Utils.DistanceXZ(z.GetPosition(), a) < 5f));
             checks.Add("NPC 인스턴스 2명", WorkerNpc.All.Count == 2);
 
             // 깃발 B (15m 떨어진 곳)
@@ -88,10 +89,10 @@ namespace ValheimHelper
             {
                 yield return new WaitForSeconds(1f);
                 waited += 1f;
-                allHome = WorkerNpc.All.Count == 2 && WorkerNpc.All.TrueForAll(n => Utils.DistanceXZ(n.Home, n.transform.position) < 2.5f && Vector3.Distance(n.Home, b) < 4f);
+                allHome = WorkerNpc.All.Count == 2 && WorkerNpc.All.TrueForAll(n => Utils.DistanceXZ(n.Home, n.transform.position) < 2.5f && Utils.DistanceXZ(n.Home, b) < 4f);
             }
             checks.Add($"둘 다 깃발 B로 이사 ({waited:0}초)", allHome);
-            foreach (var n in WorkerNpc.All) TestRunner.Log($"{n.NpcName}: 깃발 B에서 {Vector3.Distance(n.transform.position, b):0.0}m, 상태 {n.Ai.Current}");
+            foreach (var n in WorkerNpc.All) TestRunner.Log($"{n.NpcName}: 깃발 B에서 수평 {Utils.DistanceXZ(n.transform.position, b):0.0}m·높이차 {n.transform.position.y - b.y:0.0}m, 상태 {n.Ai.Current}");
 
             End(player, god, checks);
         }
@@ -103,7 +104,7 @@ namespace ValheimHelper
             {
                 float ang = k * Mathf.PI / 4f;
                 Vector3 p = from + new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * dist;
-                if (!ZoneSystem.instance.GetSolidHeight(p, out float h) || h < water + 1f || Mathf.Abs(h - from.y) > 5f) continue;
+                if (!ZoneSystem.instance.GetGroundHeight(p, out float h) || h < water + 1f || Mathf.Abs(h - from.y) > 5f) continue;
                 p.y = h;
                 spot = p;
                 return true;

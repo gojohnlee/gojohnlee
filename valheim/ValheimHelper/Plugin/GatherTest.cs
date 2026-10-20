@@ -127,7 +127,7 @@ namespace ValheimHelper
 
         static Vector3 Ground(Vector3 p)
         {
-            if (ZoneSystem.instance.GetSolidHeight(p, out float h)) p.y = h;
+            if (ZoneSystem.instance.GetGroundHeight(p, out float h)) p.y = h; // 지형(바위 위에 상자를 놓지 않게)
             return p;
         }
 

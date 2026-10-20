@@ -57,8 +57,13 @@ namespace ValheimHelper
         }
 
         /// <summary>거점 둘레의 각자 자리: 1호는 왼쪽 앞, 2호는 오른쪽 앞.</summary>
-        public static Vector3 HomeSpot(Vector3 center, Quaternion rot, int role) =>
-            center + rot * new Vector3(role == 0 ? -1.5f : 1.5f, 0f, 2f);
+        public static Vector3 HomeSpot(Vector3 center, Quaternion rot, int role)
+        {
+            Vector3 p = center + rot * new Vector3(role == 0 ? -1.5f : 1.5f, 0f, 2f);
+            // 높이는 지형 기준(깃발이 바위 위에 있어도 NPC 집은 땅): 구역이 안 불러와졌으면 깃발 높이 그대로.
+            if (ZoneSystem.instance.GetGroundHeight(p, out float h)) p.y = h;
+            return p;
+        }
 
         /// <summary>
         /// 없는 역할의 NPC를 거점 둘레에 만든다. 인스턴스가 아니라 ZDO로 만들어서, 호스트에게서 먼 곳(구역이 안 불러와진 곳)이어도

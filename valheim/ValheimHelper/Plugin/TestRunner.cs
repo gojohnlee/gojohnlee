@@ -65,8 +65,12 @@ namespace ValheimHelper
                 File.Delete(flag);
             }
             catch (IOException) { }
-            foreach (var c in text.Split(';', '\n', '\r'))
-                if (c.Trim().Length > 0) s_autoQueue.Enqueue(c.Trim());
+            foreach (var raw in text.Split(';', '\n', '\r'))
+            {
+                string c = raw.Trim();
+                if (c.StartsWith("world=")) AutoStart.World = c.Substring(6).Trim(); // 메인 메뉴에서 이 월드로 자동 입장
+                else if (c.Length > 0) s_autoQueue.Enqueue(c);
+            }
             if (s_autoQueue.Count == 0) return;
             s_auto = true;
             Plugin.Log.LogInfo($"자동 시험 예약: 월드에 들어가면 {string.Join(", ", s_autoQueue.ToArray())}를 차례로 실행합니다.");

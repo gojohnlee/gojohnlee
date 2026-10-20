@@ -41,14 +41,16 @@ New-Item -ItemType Directory $plugin -Force | Out-Null
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
 Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll"
 $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로)
-Set-Content "$plugin\autotest.txt" $Test   # 월드에 들어가면 모드가 저절로 시험하고 게임을 끈다
+$World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
+Set-Content "$plugin\autotest.txt" "world=$World;$Test"   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
 Remove-Item $tmp -Recurse -Force
 Write-Host 'Valheim Helper 설치됨'
 
 # 3) 게임 실행(F5 콘솔 켬) 후 종료될 때까지 대기
 Start-Process "steam://run/$AppId//-console/"
 Write-Host ''
-Write-Host '게임 실행 중... 월드에 들어가기만 하세요(싱글 또는 서버 시작, 테스트용 월드 권장).'
+Write-Host "게임 실행 중... 시험 월드($World)로 저절로 들어갑니다. 손대지 않아도 됩니다."
+Write-Host '(그 월드가 없으면 직접 테스트용 월드에 들어가 주세요)'
 Write-Host "3초 뒤 시험($Test)이 저절로 시작되고, 시험이 끝나면(최대 15분) 게임이 저절로 꺼집니다."
 Write-Host "(수동으로 다시 하려면 F5 → $Test. 20분이 지나도 안 꺼지면 직접 꺼 주세요)"
 function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) }

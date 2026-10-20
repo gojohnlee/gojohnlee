@@ -12,7 +12,13 @@
   후보: 서 있는 기둥(wood_pole2 등) + 배너, 또는 piece_maypole. 사용자 요청: 지금은 손대지 말고 다음 번에 같이 작업.
 - 진행률(2026-10-20 기준 사용자에게 안내): 모드 코드 약 3,600줄(게임 안 시험 코드 700줄 포함) / 예상 1.3만~2만 줄 → 약 15%.
   단계로는 ① 완료(깃발 겉모습 빼고), ② 대부분, ③~⑮ 미착수. PC 시험 7번 / 예상 40~70번.
-- ② 단계 0.3.2 사용자 PC 시험 대기: vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest.
+- ② 단계 0.3.3 사용자 PC 시험 대기: vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest, 월드 자동 입장(te4st41).
+  0.3.2 결과: npctest 12/12, woodtest PASS(12개 45초, 직접 피해 대체 2번), stonetest PASS(11개 50초), 상자 멀쩡,
+  flagtest 7/8(깃발 A에 NPC 나타남 — 3D 거리로 재서 높이차 때문에 실패, 이사 후 수평 근처인데 3D 7~8m).
+  사용자 관찰: 땅의 돌을 줍고(E) 한참 걸어갔다가 돌아와 주움(처음 2번) → 단계 바뀔 때 이전 걷기 방향이 남아서.
+  0.3.3: GatherJob.Go()에서 StopMoving, 줍기 대기 중 정지, 집 높이는 지형(GetGroundHeight), 시험은 수평 거리·지형 높이로 놓기,
+  AutoStart.cs(autotest.txt의 world=이름 → 메인 메뉴에서 시작→마지막 캐릭터→그 월드, 서버 안 엶; 스크립트 기본 te4st41, $env:VH_WORLD로 변경).
+  사용자 질문(2번째): "네가 직접 테스트 못 하나, 설치할 게 있으면 하겠다" → PC에서 Claude Code 세션을 여는 방법 안내(아래 답변).
   0.3.1 결과: woodtest PASS(11개 45초), stonetest PASS(10개 55초), flagtest PASS, npctest 11/12(2호가 7m 밀림 — 사용자가 해골 소환).
   사용자 관찰: ① 바위 위 상자를 NPC가 때려 부숨 ② 걷다 서다 반복 ③ 해골을 3초쯤 밀면서 감 ④ 깃발 작고 묻힘(다음에 같이).
   0.3.2: WearNTear.Damage 패치로 일꾼 공격은 건축물에 피해 없음, 건축물 4m 안의 나무·바위는 고르지 않음(Buildings.cs),
