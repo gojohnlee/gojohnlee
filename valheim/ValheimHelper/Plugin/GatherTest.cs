@@ -16,6 +16,7 @@ namespace ValheimHelper
         {
             TestRunner.Register("vh_woodtest", "나무 채집 시험", () => Run("AxeFlint", "Wood", "나무"));
             TestRunner.Register("vh_stonetest", "돌 채집 시험", () => Run("PickaxeAntler", "Stone", "돌"));
+            TestRunner.Register("vh_coppertest", "구리 채집 시험(광맥을 거점 12m 앞에 놓음, 땅속 광석 파기·구덩이 탈출)", () => Run("PickaxeAntler", "CopperOre", "구리", true));
         }
 
         internal sealed class Checks
@@ -29,7 +30,7 @@ namespace ValheimHelper
             }
         }
 
-        static IEnumerator Run(string toolPrefab, string item, string word)
+        static IEnumerator Run(string toolPrefab, string item, string word, bool spawnDeposit = false)
         {
             var checks = new Checks();
             Player player = Player.m_localPlayer;
@@ -83,6 +84,30 @@ namespace ValheimHelper
             checks.Add($"장비·{word} 상자 지정됨", Chests.Assigned(Chests.KeyEquip(0)) == eq && Chests.Assigned(Chests.KeyItem(item)) == res);
 
             // 3) 10개
+            // 광맥(구리 등)은 시험 월드 근처에 없을 수 있어 거점 12m 앞에 놓는다. 지난 시험의 광맥·구덩이는 먼저 치운다.
+            Vector3 depositPos = home + rot * new Vector3(0f, 0f, 12f);
+            if (spawnDeposit)
+            {
+                GameObject dep = DepositFor(item);
+                checks.Add($"{word} 광맥 프리팹 {(dep != null ? dep.name : "없음")}", dep != null);
+                if (dep == null) { End(player, god, checks, onHeard, heard); yield break; }
+                int hash = dep.name.GetStableHashCode();
+                foreach (var zdo in Senses.Nearby(depositPos, 20f))
+                {
+                    if (zdo.GetPrefab() != hash) continue;
+                    ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                    if (v == null) continue;
+                    v.ClaimOwnership();
+                    ZNetScene.instance.Destroy(v.gameObject);
+                }
+                int undone = TestTerrain.Reset(depositPos, 10f);
+                yield return new WaitForSeconds(0.5f);
+                depositPos = Ground(depositPos);
+                Object.Instantiate(dep, depositPos, rot);
+                TestRunner.Log($"광맥 놓음 {dep.name} (지난 구덩이 꼭짓점 {undone}개 되돌림)");
+                yield return new WaitForSeconds(1f);
+            }
+            int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             Say($"!{Workers.Name1} {word} 10", null);
             int count = 0;
             float t = 0f;
@@ -103,7 +128,49 @@ namespace ValheimHelper
             checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
             ItemDrop.ItemData held = claude ? claude.GetCurrentWeapon() : null;
             TestRunner.Log($"1호 손: {(held != null && held.m_dropPrefab != null ? held.m_dropPrefab.name + $" 내구도 {held.m_durability:0}/{held.GetMaxDurability():0}" : "빈손")}, 죽은 횟수(남은 묘비) {(claude ? claude.Graves().Count : -1)}");
+            // 땅 파기(2026-10-21 사용자: 돌 캘 땐 땅 파기 자제, 구리는 파더라도 구덩이에서 나와야 함)
+            int dug = NpcPatches.NoDig.Dug - dug0;
+            TestRunner.Log($"땅 파기: 판 {dug}번, 막음 {NpcPatches.NoDig.Blocked - blocked0}번, 점프 {(claude ? claude.Ai.Jumps : -1)}번, 경사로 곡괭이질 {(claude ? claude.Ai.CarveSwings : -1)}번");
+            if (!ResourceCatalog.WorthDigging(item)) checks.Add($"{word}{Core.Npc.Josa.For(word, "은")} 땅을 파지 않음(판 횟수 {dug})", dug == 0);
+            checks.Add($"길이 막혀 순간이동하지 않음({WorkerAI.StuckTeleports - tp0}번)", WorkerAI.StuckTeleports == tp0);
+            if (spawnDeposit)
+            {
+                Vector3 p = claude ? claude.transform.position : depositPos;
+                TestRunner.Log($"광맥 둘레 가장 깊은 곳 {Deepest(depositPos, 4f):0.0}m, 1호 위치 집에서 {(claude ? Utils.DistanceXZ(claude.Home, p) : -1):0}m, {(claude ? claude.MoveDebug : "")}");
+                int back = TestTerrain.Reset(depositPos, 10f); // 다음 시험을 위해 구덩이 되돌림
+                TestRunner.Log($"구덩이 되돌림: 꼭짓점 {back}개");
+            }
             End(player, god, checks, onHeard, heard);
+        }
+
+        /// <summary>그 물건이 나오는 광맥 프리팹(MineRock5 → MineRock 순, 이름에 frac 없는 것 먼저).</summary>
+        static GameObject DepositFor(string item)
+        {
+            GameObject best = null;
+            int bestScore = -1;
+            foreach (var p in ZNetScene.instance.m_prefabs)
+            {
+                if (p == null) continue;
+                DropTable drops = p.GetComponent<MineRock5>()?.m_dropItems ?? p.GetComponent<MineRock>()?.m_dropItems;
+                if (drops?.m_drops == null || !drops.m_drops.Exists(d => d.m_item != null && d.m_item.name == item)) continue;
+                int score = (p.GetComponent<MineRock5>() != null ? 2 : 0) + (p.name.Contains("frac") ? 0 : 1);
+                TestRunner.Log($"  {item} 광맥 후보: {p.name} (점수 {score})");
+                if (score > bestScore) { bestScore = score; best = p; }
+            }
+            return best;
+        }
+
+        /// <summary>둘레 r(m) 안에서 원래 땅보다 가장 깊이 파인 정도.</summary>
+        static float Deepest(Vector3 c, float r)
+        {
+            float worst = 0f;
+            for (float x = -r; x <= r; x += 1f)
+                for (float z = -r; z <= r; z += 1f)
+                {
+                    Vector3 p = c + new Vector3(x, 0f, z);
+                    worst = Mathf.Max(worst, WorldGenerator.instance.GetHeight(p.x, p.z) - TestTerrain.Height(p));
+                }
+            return worst;
         }
 
         internal static void Say(string text, Container chest)

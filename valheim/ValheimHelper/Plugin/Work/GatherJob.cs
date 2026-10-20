@@ -659,6 +659,7 @@ namespace ValheimHelper
             if (Stuck(dt, home))
             {
                 m_npc.TeleportTo(home, m_npc.transform.rotation, false); // 막힌 길 처리는 길 만들기(⑨)에서
+                WorkerAI.StuckTeleports++;
                 Go(Step.Deposit);
             }
             return true;
@@ -676,7 +677,7 @@ namespace ValheimHelper
             if (m_chest == null) return Fail("noChest");
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
             {
-                if (m_stepTime > 30f) m_npc.TeleportTo(m_chest.transform.position + m_chest.transform.forward * 1.5f, m_npc.transform.rotation, false);
+                if (m_stepTime > 30f) { m_npc.TeleportTo(m_chest.transform.position + m_chest.transform.forward * 1.5f, m_npc.transform.rotation, false); WorkerAI.StuckTeleports++; }
                 return true;
             }
             int moved = 0;

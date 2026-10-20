@@ -162,6 +162,8 @@ namespace ValheimHelper
         public int CarveSwings { get; private set; }
         /// <summary>시험용: 점프·경사로 깎기를 끄고 걷기만으로 나오는지 본다.</summary>
         public static bool TestNoJump, TestNoCarve;
+        /// <summary>시험 기록: 길이 막혀 거점·상자로 순간이동한 횟수(임시 대책, 0이어야 좋다).</summary>
+        public static int StuckTeleports;
 
         /// <summary>이때까지는 이 일꾼의 곡괭이질이 땅을 판다(광석 캐기·구덩이 탈출). 그 밖에는 안 판다(NpcPatches.NoDig).</summary>
         public float DigAllowedUntil;
@@ -379,6 +381,7 @@ namespace ValheimHelper
                     {
                         Plugin.Log.LogInfo($"{npc.NpcName}: 집에 가는 길이 막혀서 거점으로 옮김");
                         m_character.TeleportTo(home, transform.rotation, false);
+                        StuckTeleports++;
                         m_stuckTimer = 0f;
                     }
                     break;
