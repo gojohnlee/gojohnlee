@@ -44,5 +44,5 @@
 - 확정: 사용자 PC가 호스트(서버 켜지면 PC 항상 켜짐), 친구 모두 스팀 PC·모드 설치 동의, 명령은 게임 채팅(음성은 나중), 철(늪 지하묘지)까지 포함, 위험 감지는 NPC 스스로, 장비는 플레이어가 상자에 넣어 지급, 사망 = 묘비 + 거점 부활, 세계 설정 TeleportAll(포탈로 광석 이동) 켬.
 - 비용 0 원칙: 게임 중 Claude API 호출 없음. 명령 해석·위험 판단·자동 보충은 규칙 코드.
 - 빌드 참조: NuGet `ValheimGameLibs`(0.221.4, 이름만 있고 함수 내용은 비어 있음). 게임 파일은 저장소에 올리지 않는다. Steam 직접 다운로드는 이 환경 보안 검사에서 막힘. 저장소 전체 비공개 전환 금지(림월드 테스트 한 줄 명령이 raw.githubusercontent HEAD를 씀). 실제 게임 코드가 필요하면 별도 비공개 저장소로 사용자에게 assembly_valheim.dll을 받는다.
-- 핵심 기술 위험: NPC가 플레이어와 멀리 떨어지면 구역이 멈춤 → 호스트가 NPC 위치로 구역 생성·실행(ZoneSystem.CreateLocalZones, ZNetScene.InActiveArea 후보). 실제 코드 확인 전.
+- 핵심 기술 위험: NPC가 플레이어와 멀리 떨어지면 구역이 멈춤 → 호스트가 NPC 위치로 구역 생성·실행(ZoneSystem.CreateLocalZones, ZNetScene.InActiveArea 후보). 실제 코드 확인 전. 사용자 승인: NPC 주변 구역 유지 OK(호스트 RTX 4090, 7800X3D, 64GB).
 - 미답: 사용자 게임 버전, 구상서 [기본안] 중 바꿀 것.
