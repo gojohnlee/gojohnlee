@@ -36,6 +36,36 @@ namespace ValheimHelper
             return wg.GetHeight(c.x, c.z) > ZoneSystem.instance.m_waterLevel + 1f && wg.GetBiome(c) != Heightmap.Biome.Ocean;
         }
 
+        // ---- 물 (WaterRule: 좁은 강만 헤엄, 늪·바다·긴 물은 안 건넘) ----
+
+        /// <summary>물 깊이(물 높이 - 땅 높이). 지형이 불러와져 있으면 실제 땅(파고 메운 것 포함), 아니면 월드 생성 높이.</summary>
+        public static float WaterDepth(Vector3 p)
+        {
+            float ground = ZoneSystem.instance.GetGroundHeight(p, out float h) ? h : WorldGenerator.instance.GetHeight(p.x, p.z);
+            return ZoneSystem.instance.m_waterLevel - ground;
+        }
+
+        static double LiveDepth(double x, double z) => WaterDepth(new Vector3((float)x, 0f, (float)z));
+        static double BaseDepth(double x, double z) => ZoneSystem.instance.m_waterLevel - WorldGenerator.instance.GetHeight((float)x, (float)z);
+
+        static bool NoSwim(double x, double z)
+        {
+            Heightmap.Biome b = WorldGenerator.instance.GetBiome((float)x, (float)z);
+            return b == Heightmap.Biome.Swamp || b == Heightmap.Biome.Ocean;
+        }
+
+        /// <summary>걷다가 앞을 볼 때(지금 지형으로 2m 간격).</summary>
+        public static bool CanWalk(Vector3 from, Vector3 to) =>
+            WorldGenerator.instance != null && WaterRule.CanCross(from.x, from.z, to.x, to.z, LiveDepth, NoSwim, 2.0);
+
+        /// <summary>목표 고를 때: 지금 자리에서 그 구역 중심까지 곧장 걸어 닿는지(월드 생성 높이로 4m 간격, 먼 곳은 안 불러와져 있다).</summary>
+        public static bool Reachable(Vector3 from, ZoneXY z)
+        {
+            if (WorldGenerator.instance == null) return true;
+            Vector3 c = Senses.ZoneCenter(z);
+            return WaterRule.CanCross(from.x, from.z, c.x, c.z, BaseDepth, NoSwim, 4.0);
+        }
+
         /// <summary>NPC 주변을 지도에 밝힌다(플레이어처럼, 2초마다 Senses가 부른다).</summary>
         public static void Reveal(Vector3 pos)
         {
@@ -49,8 +79,9 @@ namespace ValheimHelper
             Knowledge k = Brain.Get();
             System.Func<ZoneXY, bool> prefer = null;
             if (preferBiome != 0) prefer = n => (k.BiomeOf(n) & preferBiome) != 0;
-            return ExplorePlan.Next(Senses.ZoneOf(npc.Home), Senses.ZoneOf(npc.transform.position), MaxRing, k,
-                Explored, Land, dirX, dirY, prefer, out zone);
+            Vector3 from = npc.transform.position;
+            return ExplorePlan.Next(Senses.ZoneOf(npc.Home), Senses.ZoneOf(from), MaxRing, k,
+                Explored, Land, dirX, dirY, prefer, z => Reachable(from, z), out zone);
         }
 
         /// <summary>구역 중심의 땅 위 위치.</summary>

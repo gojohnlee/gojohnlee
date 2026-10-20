@@ -95,7 +95,7 @@ namespace ValheimHelper
                 maxDist = Mathf.Max(maxDist, Utils.DistanceXZ(home, p));
                 Vector3 prev = last;
                 last = p;
-                if ((int)t % 15 == 0)
+                if (t <= 60f || (int)t % 15 == 0) // 처음 1분은 5초마다(먼 곳에서 느려지는 순간을 잡으려고)
                 {
                     var job = claude.Ai.Job as ExploreJob;
                     Scout.FromHome(home, p, out string bd, out string dist);

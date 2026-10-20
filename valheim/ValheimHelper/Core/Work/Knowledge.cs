@@ -217,26 +217,22 @@ namespace ValheimHelper.Core.Work
     {
         /// <param name="explored">지도에서 밝혀진 구역인지(공유 지도의 밝혀진 곳만 다닌다).</param>
         /// <returns>다음 구역. 더 없으면 false.</returns>
-        public static bool Next(ZoneXY home, ZoneXY from, int maxRing, Knowledge k, Func<ZoneXY, bool> explored, out ZoneXY next)
+        public static bool Next(ZoneXY home, ZoneXY from, int maxRing, Knowledge k, Func<ZoneXY, bool> explored, out ZoneXY next) =>
+            Next(home, from, maxRing, k, explored, null, out next);
+
+        /// <param name="reachable">지금 자리에서 걸어서 닿는지(ExplorePlan.Next와 같게 좋은 후보부터 몇 개까지만). null이면 안 본다.</param>
+        public static bool Next(ZoneXY home, ZoneXY from, int maxRing, Knowledge k, Func<ZoneXY, bool> explored,
+            Func<ZoneXY, bool> reachable, out ZoneXY next)
         {
-            next = default;
-            bool found = false;
-            int bestRing = int.MaxValue, bestDist = int.MaxValue;
+            var cands = new List<KeyValuePair<double, ZoneXY>>();
             for (int dy = -maxRing; dy <= maxRing; dy++)
                 for (int dx = -maxRing; dx <= maxRing; dx++)
                 {
                     var z = new ZoneXY(home.X + dx, home.Y + dy);
                     if (k.IsLooked(z) || !explored(z)) continue;
-                    int ring = z.Ring(home), dist = z.DistSq(from);
-                    if (ring < bestRing || (ring == bestRing && dist < bestDist))
-                    {
-                        bestRing = ring;
-                        bestDist = dist;
-                        next = z;
-                        found = true;
-                    }
+                    cands.Add(new KeyValuePair<double, ZoneXY>(z.Ring(home) * 1e7 + z.DistSq(from), z)); // 거점 가까운 고리 → 지금 자리 가까운 순
                 }
-            return found;
+            return ExplorePlan.Pick(cands, reachable, out next);
         }
     }
 }

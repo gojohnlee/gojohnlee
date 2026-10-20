@@ -42,6 +42,7 @@ namespace ValheimHelper
             if (Running) { t?.AddString("이미 시험 중입니다."); return false; }
             Running = true;
             s_startTime = Time.time;
+            Minimized.Release();
             s_terminal = t;
             if (!s_auto) s_report.Clear(); // 자동 시험 여러 개는 한 보고에 이어 쓴다
             s_report.Add($"=== {name} {System.DateTime.Now:yyyy-MM-dd HH:mm:ss} 게임 {Version.GetVersionString()} Unity {Application.unityVersion} 모드 {Plugin.Version} ===");
@@ -83,6 +84,7 @@ namespace ValheimHelper
             {
                 string c = raw.Trim();
                 if (c.StartsWith("world=")) AutoStart.World = c.Substring(6).Trim(); // 메인 메뉴에서 이 월드로 자동 입장
+                else if (c == "min") Minimized.On = true; // 창 최소화·소리 끔(시험 동안 다른 게임)
                 else if (c.Length > 0) s_autoQueue.Enqueue(c);
             }
             if (s_autoQueue.Count == 0) return;

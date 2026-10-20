@@ -219,14 +219,14 @@ namespace ValheimHelper
             if (Utils.DistanceXZ(Senses.ZoneCenter(here), pos) < 20f) k.Forget(here, Item); // 여기 와서 봤는데 없다
             foreach (var m in k.ZonesWith(Item, here))
             {
-                if (m.Zone.Equals(here)) continue;
+                if (m.Zone.Equals(here) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너 아는 곳은 못 간다
                 m_goalZone = m.Zone;
                 GoZone();
                 return true;
             }
             // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
             if (!m_exploring && m_searchTime <= SearchLimit
-                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, out m_goalZone))
+                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => Scout.Reachable(pos, z), out m_goalZone))
             {
                 if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
                 GoZone();
@@ -643,13 +643,13 @@ namespace ValheimHelper
         bool Walk(float dt, Vector3 point, float dist) =>
             m_ai.MoveToPoint(dt, point, dist, Utils.DistanceXZ(point, m_npc.transform.position) > 10f);
 
-        /// <summary>MoveStuckLimit초 동안 목표에 1m도 가까워지지 않으면 막힌 것.</summary>
+        /// <summary>MoveStuckLimit초 동안 목표에 1m도 가까워지지 않거나 깊은 물 앞에서 섰으면 막힌 것.</summary>
         bool Stuck(float dt, Vector3 point)
         {
             float d = Utils.DistanceXZ(point, m_npc.transform.position);
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progressTimer = 0f; return false; }
             m_progressTimer += dt;
-            return m_progressTimer > MoveStuckLimit;
+            return m_progressTimer > MoveStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp;
         }
     }
 }

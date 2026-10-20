@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace ValheimHelper.Core.Work
 {
@@ -14,11 +15,18 @@ namespace ValheimHelper.Core.Work
         /// <param name="prefer">먼저 갈 경계: 이웃한 밝혀진 구역이 이 조건이면(그 바이옴 쪽). 없으면 null.</param>
         /// <returns>다음 경계 구역. 더 없으면 false. 가 봤거나 못 가는 구역(지식의 "둘러봄")은 건너뛴다.</returns>
         public static bool Next(ZoneXY home, ZoneXY from, int maxRing, Knowledge k,
-            Func<ZoneXY, bool> explored, Func<ZoneXY, bool> land, int dirX, int dirY, Func<ZoneXY, bool> prefer, out ZoneXY next)
+            Func<ZoneXY, bool> explored, Func<ZoneXY, bool> land, int dirX, int dirY, Func<ZoneXY, bool> prefer, out ZoneXY next) =>
+            Next(home, from, maxRing, k, explored, land, dirX, dirY, prefer, null, out next);
+
+        /// <summary>최대 몇 후보까지 갈 수 있는지(물 건너기) 재 보는지. 그 안에 없으면 그쪽엔 걸어서 갈 땅이 없다고 본다.</summary>
+        public const int MaxReachChecks = 64;
+
+        /// <param name="reachable">지금 자리에서 걸어서 닿는지(비싼 검사라 좋은 후보부터 차례로 MaxReachChecks개까지만). null이면 안 본다.</param>
+        public static bool Next(ZoneXY home, ZoneXY from, int maxRing, Knowledge k,
+            Func<ZoneXY, bool> explored, Func<ZoneXY, bool> land, int dirX, int dirY, Func<ZoneXY, bool> prefer,
+            Func<ZoneXY, bool> reachable, out ZoneXY next)
         {
-            next = default;
-            bool found = false, bestPreferred = false;
-            double bestScore = double.MaxValue;
+            var cands = new List<KeyValuePair<double, ZoneXY>>();
             double dirLen = Math.Sqrt(dirX * dirX + dirY * dirY);
             for (int dy = -maxRing; dy <= maxRing; dy++)
                 for (int dx = -maxRing; dx <= maxRing; dx++)
@@ -47,16 +55,31 @@ namespace ValheimHelper.Core.Work
                     double score = dirLen > 0
                         ? Math.Sqrt(z.DistSq(from)) - (dx * dirX + dy * dirY) / dirLen
                         : Math.Sqrt(z.DistSq(home)) + Math.Sqrt(z.DistSq(from));
-                    if (bestPreferred && !preferred) continue;
-                    if ((preferred && !bestPreferred) || score < bestScore)
-                    {
-                        bestScore = score;
-                        bestPreferred = preferred;
-                        next = z;
-                        found = true;
-                    }
+                    if (preferred) score -= 1e6; // 그 바이옴 쪽 경계가 먼저
+                    cands.Add(new KeyValuePair<double, ZoneXY>(score, z));
                 }
-            return found;
+            return Pick(cands, reachable, out next);
+        }
+
+        /// <summary>점수 낮은 후보부터 닿는 것 하나(같은 점수는 넣은 순서대로).</summary>
+        internal static bool Pick(List<KeyValuePair<double, ZoneXY>> cands, Func<ZoneXY, bool> reachable, out ZoneXY next)
+        {
+            next = default;
+            var order = new int[cands.Count];
+            for (int i = 0; i < order.Length; i++) order[i] = i;
+            Array.Sort(order, (a, b) => { int c = cands[a].Key.CompareTo(cands[b].Key); return c != 0 ? c : a.CompareTo(b); });
+            int checks = 0;
+            foreach (int i in order)
+            {
+                if (reachable != null)
+                {
+                    if (++checks > MaxReachChecks) return false;
+                    if (!reachable(cands[i].Value)) continue;
+                }
+                next = cands[i].Value;
+                return true;
+            }
+            return false;
         }
     }
 

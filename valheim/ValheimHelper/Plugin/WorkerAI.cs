@@ -1,4 +1,5 @@
 using UnityEngine;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -36,7 +37,8 @@ namespace ValheimHelper
         {
             m_viewRange = 40f;
             m_hearRange = 30f;
-            m_pathAgentType = Pathfinding.AgentType.Humanoid;
+            // Humanoid는 물 위도 길로 친다(0.3.6에서 해협을 헤엄쳐 건넘). 물을 뺀 길만 찾고, 좁은 강은 MoveToPoint가 따로 판단한다.
+            m_pathAgentType = Pathfinding.AgentType.HumanoidAvoidWater;
             m_canBeAlerted = false;
             m_avoidWater = true;
             m_idleSoundChance = 0f;
@@ -62,30 +64,50 @@ namespace ValheimHelper
         float m_detourTime;
         Vector3 m_detourDir;
 
+        /// <summary>깊은 물 앞에서 선 채로 지난 시간. 작업은 이게 WaterGiveUp초를 넘으면 그 목표를 버리고 다른 데를 고른다.</summary>
+        public float WaterBlockedTime { get; private set; }
+        public const float WaterGiveUp = 3f;
+        Vector3 m_lastDry;
+        bool m_hasDry;
+        /// <summary>지금 앞의 물은 건너기로 했다(좁은 강, WaterRule). 물에서 나오면 풀린다.</summary>
+        bool m_swimOk;
+        /// <summary>물가에서 내린 판단(건넘/못 건넘)을 이때까지 다시 재지 않는다(앞 32m를 재는 건 비싸다).</summary>
+        float m_waterDecidedUntil;
+
         /// <summary>
-        /// 걷기: 바닐라 길찾기(BaseAI.MoveTo)를 쓰되
+        /// 걷기: 바닐라 길찾기(BaseAI.MoveTo, 물 뺀 길)를 쓰되
         /// - 길을 못 찾으면(처음 가는 곳은 길 지도를 만드는 중일 때가 많다) 서 있지 말고 곧장 걸어간다.
         /// - 1.5초 동안 거의 못 움직였으면(앞을 막은 생물·장애물) 1.2초 옆으로 비켜 간다.
+        /// - 앞이 깊은 물이면 좁은 강만 헤엄쳐 건너고, 늪·바다·긴 물이면 멈춘다(WaterBlockedTime). 모르고 빠졌으면 마른 땅으로 돌아간다.
         /// 도착하면 true.
         /// </summary>
         public bool MoveToPoint(float dt, Vector3 point, float dist, bool run)
         {
             Vector3 pos = transform.position;
             float d = Utils.DistanceXZ(point, pos);
-            if (d <= dist) { StopMoving(); m_detourTime = 0f; return true; }
+            if (d <= dist) { StopMoving(); m_detourTime = 0f; WaterBlockedTime = 0f; return true; }
+            if (!m_character.InLiquid()) { m_lastDry = pos; m_hasDry = true; if (Time.time > m_waterDecidedUntil) m_swimOk = false; }
+            else if (m_character.IsSwimming() && !m_swimOk && m_hasDry)
+            {
+                MoveTowards(Flat(m_lastDry - pos), true);
+                return false;
+            }
             if (m_detourTime > 0f)
             {
                 m_detourTime -= dt;
-                MoveTowards(m_detourDir, run);
+                if (!WaterAhead(pos, m_detourDir)) MoveTowards(m_detourDir, run);
+                else m_detourTime = 0f;
                 return false;
             }
             bool done = MoveTo(dt, point, dist, run);
-            if (done || !FoundPath())
+            if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+            if (WaterAhead(pos, m_character.GetMoveDir()))
             {
-                Vector3 dir = point - pos;
-                dir.y = 0f;
-                MoveTowards(dir, run);
+                StopMoving();
+                WaterBlockedTime += dt;
+                return false;
             }
+            WaterBlockedTime = 0f;
             m_sampleTimer += dt;
             if (m_sampleTimer >= 1.5f)
             {
@@ -101,6 +123,22 @@ namespace ValheimHelper
                 m_samplePos = pos;
             }
             return false;
+        }
+
+        static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+
+        /// <summary>그 방향 2.5m 앞이 깊은 물이고 건너면 안 되는 물인지. 건널 물(좁은 강)이면 m_swimOk를 켠다.</summary>
+        bool WaterAhead(Vector3 pos, Vector3 dir)
+        {
+            dir = Flat(dir);
+            if (m_swimOk || dir.sqrMagnitude < 0.01f) return false;
+            if (Time.time < m_waterDecidedUntil) return true; // 방금 못 건넌다고 봤다
+            dir.Normalize();
+            if (Scout.WaterDepth(pos + dir * 2.5f) <= (float)WaterRule.DeepDepth) return false;
+            // 물가: 앞으로 MaxSwim보다 조금 더 내다봐서 그 안에 땅이 나오면(좁은 강) 건넌다
+            m_swimOk = Scout.CanWalk(pos, pos + dir * ((float)WaterRule.MaxSwim + 8f));
+            m_waterDecidedUntil = Time.time + (m_swimOk ? 3f : 0.5f);
+            return !m_swimOk;
         }
 
         public void Follow(ZDOID target, string name)

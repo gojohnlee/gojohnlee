@@ -3,6 +3,7 @@
 #   irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
 # PC의 Claude Code 세션: $env:VH_DLL='<빌드한 ValheimHelper.dll>'; powershell -ExecutionPolicy Bypass -File scripts\valheim-test.ps1
 #   (결과는 화면과 클립보드, 그리고 <게임>\BepInEx\plugins\ValheimHelper\diag.txt)
+# 다른 게임을 하면서 시험: 앞에 $env:VH_MIN='1'; 을 붙이면 발헤임 창을 최소화하고 소리를 끈다.
 $ErrorActionPreference = 'Stop'
 $Raw   = 'https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim'
 $AppId = 892970
@@ -45,7 +46,8 @@ if ($env:VH_DLL) { Copy-Item $env:VH_DLL "$plugin\ValheimHelper.dll" -Force }   
 else { Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll" }
 $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로)
 $World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
-Set-Content "$plugin\autotest.txt" "world=$World;$Test"   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
+$Min = $env:VH_MIN -eq '1'   # 최소화 시험: 창 최소화·소리 끔·백그라운드 30fps (시험 동안 다른 게임을 할 때 $env:VH_MIN='1')
+Set-Content "$plugin\autotest.txt" ("world=$World;" + $(if ($Min) { 'min;' } else { '' }) + $Test)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
 Remove-Item $tmp -Recurse -Force
 Write-Host 'Valheim Helper 설치됨'
 
@@ -59,6 +61,19 @@ Write-Host "3초 뒤 시험($Test)이 저절로 시작되고, 시험이 끝나�
 Write-Host "(20분이 지나도 안 꺼지면 직접 꺼 주세요)"
 function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) }
 $t = 0
+if ($Min) {
+    # 모드가 올라오기 전(유니티 시작 화면)에도 창을 바로 내린다. 그 뒤는 모드가 첫 시험 전까지 내려 둔다.
+    Add-Type -Namespace VH -Name Win -MemberDefinition @'
+[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr h, int cmd);
+[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
+'@
+    $seen = 0
+    while ($t -lt 180 -and $seen -lt 20) {
+        $p = Get-Process | Where-Object { $_.ProcessName -like 'valheim*' -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+        if ($p) { $seen++; if (-not [VH.Win]::IsIconic($p.MainWindowHandle)) { [void][VH.Win]::ShowWindowAsync($p.MainWindowHandle, 6) } }
+        Start-Sleep -Milliseconds 250; $t += 0.25
+    }
+}
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
 while (Test-Game) { Start-Sleep 3 }
 

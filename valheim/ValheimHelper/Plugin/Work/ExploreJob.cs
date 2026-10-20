@@ -75,7 +75,7 @@ namespace ValheimHelper
             bool arrived = m_ai.MoveToPoint(dt, m_goalPos, 6f, true);
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progressTimer = 0f; }
             else m_progressTimer += dt;
-            if (arrived || m_progressTimer > StuckLimit)
+            if (arrived || m_progressTimer > StuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp) // 깊은 물에 막히면 바로 다음 경계로
             {
                 Brain.Get().MarkLooked(m_goal); // 갔거나 못 가는 곳: 다시 고르지 않는다
                 m_ai.StopMoving();

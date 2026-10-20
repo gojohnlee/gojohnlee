@@ -8,7 +8,7 @@ namespace ValheimHelper
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "gojohnlee.valheimhelper";
-        public const string Version = "0.3.6";
+        public const string Version = "0.3.7";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -41,6 +41,7 @@ namespace ValheimHelper
         {
             try
             {
+                Minimized.Update(); // 먼저: 다른 오류가 나도 창은 내려 둔다
                 Workers.Update();
                 Brain.Update(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();

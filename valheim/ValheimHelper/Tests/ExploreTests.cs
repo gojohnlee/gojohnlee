@@ -133,3 +133,61 @@ public class ExploreTests
         Assert.Equal(3, Knowledge.Load("5,0,1,10;Wood=3\n").Get(new ZoneXY(5, 0)).Items["Wood"]);
     }
 }
+
+public class WaterRuleTests
+{
+    // x가 [a, b) 안이면 깊이 3m(깊은 물), 밖은 땅
+    static System.Func<double, double, double> River(double a, double b) => (x, z) => x >= a && x < b ? 3 : -2;
+    static bool Never(double x, double z) => false;
+
+    [Fact]
+    public void DryLandIsFine() => Assert.True(WaterRule.CanCross(0, 0, 100, 0, (x, z) => -1, Never, 2));
+
+    [Fact]
+    public void ShallowWaterIsWalked() => Assert.True(WaterRule.CanCross(0, 0, 100, 0, (x, z) => 0.8, Never, 2));
+
+    [Fact]
+    public void NarrowRiverIsSwum() => Assert.True(WaterRule.CanCross(0, 0, 100, 0, River(40, 60), Never, 2));
+
+    [Fact]
+    public void WideWaterIsNot() => Assert.False(WaterRule.CanCross(0, 0, 100, 0, River(40, 80), Never, 2));
+
+    [Fact]
+    public void TwoNarrowRiversAreFine() =>
+        Assert.True(WaterRule.CanCross(0, 0, 100, 0, (x, z) => (x >= 10 && x < 30) || (x >= 50 && x < 70) ? 3 : -2, Never, 2));
+
+    [Fact]
+    public void SwampWaterIsNot() => Assert.False(WaterRule.CanCross(0, 0, 100, 0, River(40, 44), (x, z) => x > 30, 2));
+
+    [Fact]
+    public void SwampLandIsWalked() => Assert.True(WaterRule.CanCross(0, 0, 100, 0, (x, z) => -1, (x, z) => true, 2));
+
+    [Fact]
+    public void LookAheadIntoOpenSea()
+    {
+        // 앞 2m부터 끝까지 물(바다 쪽을 32m 내다봄) → 안 건넘
+        Assert.False(WaterRule.CanCross(0, 0, 32, 0, River(2, 1000), Never, 2));
+    }
+
+    [Fact]
+    public void ExploreSkipsUnreachableFrontier()
+    {
+        // 동쪽 경계(x 2 이상)는 바다 건너라 못 간다: NPC가 동쪽 끝에 있어도 다른 쪽 경계로
+        bool Explored1(ZoneXY z) => System.Math.Abs(z.X) <= 1 && System.Math.Abs(z.Y) <= 1;
+        Assert.True(ExplorePlan.Next(new ZoneXY(0, 0), new ZoneXY(1, 0), 10, new Knowledge(), Explored1, z => true, 0, 0, null,
+            z => z.X < 2, out var next));
+        Assert.True(next.X < 2);
+        // 동쪽만 보는데 다 못 가면 없음
+        Assert.False(ExplorePlan.Next(new ZoneXY(0, 0), new ZoneXY(1, 0), 10, new Knowledge(), Explored1, z => true, 1, 0, null,
+            z => false, out _));
+    }
+
+    [Fact]
+    public void SearchSkipsUnreachableZone()
+    {
+        var home = new ZoneXY(0, 0);
+        Assert.True(SearchPlan.Next(home, home, 2, new Knowledge(), z => true, z => z.X < 0, out var next));
+        Assert.True(next.X < 0);
+        Assert.Equal(1, next.Ring(home));
+    }
+}

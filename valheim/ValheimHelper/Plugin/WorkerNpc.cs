@@ -49,7 +49,17 @@ namespace ValheimHelper
         public float MaxCarry => 300f;
 
         /// <summary>시험 기록용: 이동 입력 크기, 달리기 입력, 실제 속도 값.</summary>
-        public string MoveDebug => $"입력 {m_moveDir.magnitude:0.00}, 달리기 입력 {m_run}, 속도값 {m_speed}/{m_runSpeed}";
+        public string MoveDebug
+        {
+            get
+            {
+                Vector3 p = transform.position;
+                bool hit = ZoneSystem.instance.GetGroundHeight(p, out float ground);
+                float gen = WorldGenerator.instance != null ? WorldGenerator.instance.GetHeight(p.x, p.z) : 0f;
+                return $"입력 {m_moveDir.magnitude:0.00}, 달리기 입력 {m_run}, 수영 {IsSwimming()}, 땅닿음 {IsOnGround()}, " +
+                       $"높이 {p.y:0.0}/땅 {(hit ? ground.ToString("0.0") : "없음")}/원래땅 {gen:0.0}/물 {GetLiquidLevel():0.0}, 구역 {ZoneSystem.instance.IsZoneLoaded(p)}";
+            }
+        }
 
         /// <summary>그 종류의 도구 중 가장 좋은 것(도구 단계 → 해당 피해 순).</summary>
         public static ItemDrop.ItemData BestTool(Inventory inv, ToolKind kind)
