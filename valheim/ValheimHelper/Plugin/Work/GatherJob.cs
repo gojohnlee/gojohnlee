@@ -443,6 +443,8 @@ namespace ValheimHelper
                 return true;
             }
             if (!m_npc.HoldTool(m_targetInfo.Tool)) { Go(Step.Tool); return true; }
+            // 큰 광맥은 다 캐기 전에 목표만큼 모일 수 있다(0.3.8 구리 시험: 10개 시켰는데 18개를 들고 계속 캠)
+            if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
             // 진척(대상이 깎이거나 땅을 팜) 없이 30초면 다른 것으로. 큰 광맥은 오래 걸려도 계속 캔다.
             m_workIdle += Time.deltaTime;
             if (m_workIdle > WorkIdleLimit || m_stepTime > ChopLimit) { Skip(); return true; }
@@ -532,10 +534,10 @@ namespace ValheimHelper
                 }
                 else if (b.max.y > buriedTop) { buriedTop = b.max.y; buried = col; }
             }
-            // 광석(파서라도 꺼낼 것)은 바닐라처럼 휘두름이 땅에 먼저 닿으면 판다(낮게 깔린 광맥은 땅에 먼저 닿기 쉽다,
-            // 0.3.8 첫 구리 시험: 막은 흙 파기 84번). 원래 땅에서 3m보다 깊이는 안 판다(NpcPatches.NoDig).
+            // 드러난 조각이 있으면 광석이라도 땅을 파지 않는다: 휘두름이 땅에 먼저 닿으면 겨눈 조각에 맞은 것으로 한다(UpdateWork).
+            // 다 땅속이면 광석(파서라도 꺼낼 것)만 바닐라처럼 파 내려간다. 원래 땅에서 3m보다 깊이는 안 판다(NpcPatches.NoDig).
+            // (0.3.8 구리 시험: 드러난 조각이 있어도 파게 했더니 52번 파서 3.8m 구덩이)
             bool dig = ResourceCatalog.WorthDigging(Item);
-            if (dig) m_ai.DigAllowedUntil = Time.time + 1.5f;
             if (m_aimCol != null || buried == null) return true;
             Vector3 c = buried.bounds.center;
             float depth = WorldGenerator.instance.GetHeight(c.x, c.z) - buriedTop; // 원래 땅에서 얼마나 깊은지
@@ -546,6 +548,7 @@ namespace ValheimHelper
             }
             if (!m_saidDig) { m_saidDig = true; Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 {Item} 파기(깊이 {depth:0.0}m)"); }
             m_aimCol = buried;
+            m_ai.DigAllowedUntil = Time.time + 1.5f;
             aim = buried.bounds.ClosestPoint(chest);
             return true;
         }

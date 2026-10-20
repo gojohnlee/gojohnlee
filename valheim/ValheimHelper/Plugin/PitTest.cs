@@ -15,11 +15,13 @@ namespace ValheimHelper
     {
         public static void Register() => TestRunner.Register("vh_pittest", "구덩이 탈출 시험(점프·경사로)", Run);
 
-        static readonly float[] Depths = { 1.0f, 1.8f, 2.8f, 2.0f, 3.2f, 5.0f };
-        static readonly bool[] Narrow = { false, false, false, true, true, true };
+        static readonly float[] Depths = { 1.0f, 1.8f, 2.8f, 2.0f, 3.2f, 5.0f, 3.2f };
+        static readonly bool[] Narrow = { false, false, false, true, true, true, true };
+        /// <summary>점프를 끄고 경사로 깎기만으로 나오게 하는 구덩이(깎기 시험).</summary>
+        static readonly bool[] CarveOnly = { false, false, false, false, false, false, true };
         static readonly Vector3[] Dirs =
         {
-            Vector3.right, Vector3.left, Vector3.back, new Vector3(0.7f, 0f, -0.7f), new Vector3(-0.7f, 0f, -0.7f), Vector3.back * 1.6f,
+            Vector3.right, Vector3.left, Vector3.back, new Vector3(0.7f, 0f, -0.7f), new Vector3(-0.7f, 0f, -0.7f), Vector3.back * 1.6f, Vector3.left * 1.6f,
         };
         static readonly string[] Phases = { "걷기만", "점프", "경사로" };
         static readonly float[] PhaseTimes = { 5f, 10f, 75f };
@@ -101,7 +103,8 @@ namespace ValheimHelper
                     string kind = Narrow[i] ? "좁은" : "넓은";
                     TestRunner.Log($"구덩이 {i + 1}({kind}): 흙 파기 {n}번, 깊이 {depth:0.0}m (목표 {Depths[i]:0.0}), 1m 밖 {rim - TestTerrain.Height(spot + Vector3.right):0.0}m·2m 밖 {rim - TestTerrain.Height(spot + Vector3.right * 2f):0.0}m 깊이");
 
-                    claude.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
+                    // 바닥에 내려놓는다(구덩이 위에서 떨어뜨리면 좁은 구덩이 벽에 끼었다가 튕겨 나감, 0.3.8)
+                    claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
                     yield return new WaitForSeconds(1.5f);
                     int j0 = claude.Ai.Jumps, c0 = claude.Ai.CarveSwings, d0 = NpcPatches.NoDig.Dug;
                     var walk = new ExploreTest.WalkJob(claude.Ai, home);
@@ -110,7 +113,8 @@ namespace ValheimHelper
                     float total = 0f;
                     for (int ph = 0; ph < Phases.Length && outBy == null; ph++)
                     {
-                        WorkerAI.TestNoJump = ph < 1;
+                        if (CarveOnly[i] && ph == 1) continue; // 점프 없이 바로 경사로
+                        WorkerAI.TestNoJump = ph < 1 || CarveOnly[i];
                         WorkerAI.TestNoCarve = ph < 2;
                         float logTimer = 0f;
                         for (float t = 0f; t < PhaseTimes[ph] && outBy == null; t += Time.deltaTime, total += Time.deltaTime)
@@ -131,6 +135,7 @@ namespace ValheimHelper
                     TestRunner.Log($"구덩이 {i + 1}({kind} {depth:0.0}m): {(outBy != null ? outBy + "(으)로 나옴" : "못 나옴")} {total:0.0}초, " +
                                    $"점프 {claude.Ai.Jumps - j0}번, 경사로 곡괭이질 {claude.Ai.CarveSwings - c0}번, 흙 파기 {NpcPatches.NoDig.Dug - d0}번, 지금 {claude.MoveDebug}");
                     if (i == 0) checks.Add($"얕은 구덩이({depth:0.0}m)는 점프까지로 나옴", outBy == Phases[0] || outBy == Phases[1]);
+                    else if (CarveOnly[i]) checks.Add($"점프 없이 경사로를 깎아 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy == Phases[2] && claude.Ai.CarveSwings > c0);
                     else checks.Add($"{kind} 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy != null);
                     yield return new WaitForSeconds(1f);
                     claude.Ai.GoHome(false);
