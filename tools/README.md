@@ -11,3 +11,5 @@ dotnet run --project tools/attrdump -c Release -- <dll> Verse.BodyPartRecord Ver
 ```
 
 바닐라 XML Def 조회는 `scripts/vanilla-defs.py`.
+
+발헤임: `./scripts/valheim-refs.sh <출력 폴더>`가 공개 참조 DLL(ValheimGameLibs)과 Jötunn을 받아 같은 apidump로 이름 목록을 만든다.

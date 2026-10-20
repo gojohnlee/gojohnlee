@@ -9,10 +9,24 @@
 진행 중
 - (없음) 구상 확정. 구현 시작 대기.
 
+다음 세션 시작 순서 ("발헤임 구현 시작"이라고 하면)
+1. git fetch origin valheim && git checkout valheim  (발헤임 작업은 이 브랜치에만 푸시. 사용자 승인됨)
+2. ./scripts/valheim-refs.sh <스크래치 폴더>  → 공개 참조 DLL·Jötunn API 이름 목록 생성(함수 내용은 없음)
+3. 사용자에게 최신 게임 DLL을 비공개 저장소로 받기. 대화에 이렇게 안내:
+   ① GitHub에서 New repository → 이름 valheim-refs → Private 선택 → 만들기
+   ② "uploading an existing file" 눌러 아래 파일 올리기
+      C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll
+      (같은 폴더의 assembly_utils.dll, assembly_guiutils.dll도 함께)
+   ③ 올렸다고 말해 주면 add_repo(gojohnlee/valheim-refs)로 붙여서 실제 코드를 읽는다.
+   게임 버전(메인 메뉴 오른쪽 아래 숫자)도 같이 받는다.
+4. Valheim용 보조 에이전트(.claude/agents, Sonnet·Haiku) 만들기 — rw-standard/rw-simple 참고.
+5. 이 대화는 지워짐. 결정 사항은 전부 CLAUDE.md 발헤임 섹션과 docs/valheim/concept-v1.txt에 있다.
+
 다음 할 일
-- [ ] 사용자에게 최신 assembly_valheim.dll 받기(비공개 저장소 안내)
+- [ ] 최신 assembly_valheim.dll 받기(위 3번)
 - [ ] 먼 구역 유지 시험(약 200줄) → 사용자 PC 테스트
-- [ ] 게임 무관 로직 프로젝트 + dotnet test 뼈대
+- [ ] 게임 무관 로직 프로젝트 + dotnet test 뼈대(게임 DLL 없이 먼저 시작 가능)
+- [ ] 발헤임용 PC 테스트 스크립트(림월드 scripts/rimworld-test.ps1 참고: BepInEx·Jötunn·모드 설치 → 실행 → 로그 수집)
 
 구현 단계 (구상서 13장)
 - [ ] ① 거점 깃발, NPC 2명 소환, 채팅 명령, 알림
