@@ -59,6 +59,7 @@
 - 확정: 아는 곳에 자원이 없으면 새 땅을 스스로 탐험(규칙, 토큰 0, 지도 밝히기·핀, 상한: 안 둘러본 밝혀진 곳 15분(둘러본 곳은 건너뜀, 다 봤으면 바로 새 땅)+새 땅 30분, 지나가며 본 자원은 모두 기억, "!탐험"). 지도 공유 모드는 지원되는 것 사용, 안 되면 직접 구현. 1호 말투는 "시가 꼬나문 베테랑 SCV"(투박·능청 존댓말).
 - 규모 추정: C# 1.3만~2만 줄(철기병의 약 20배), 사용자 PC 테스트 40~70번. 순서: 먼 구역 유지 시험(약 200줄) → ①~③(4~5천 줄) 첫 결과물. 구현 때 Valheim용 보조 에이전트(Sonnet·Haiku)를 만들어 분량 있는 코드·대사를 넘긴다. 구상서 16장.
 - 버그 최소화 원칙: 게임 무관 로직(명령 해석·계획·위험·지식·길 계산)은 분리해 dotnet test로 검증, 게임 내부는 최신 DLL 실제 코드를 읽고 맞춤(추측 금지), 행동마다 시간 제한·대체 동작, 단계마다 코드 리뷰. 코드 작성 자체는 작업 10~20시간(한도 감안 3~7일) 추정.
+- 노력 수준(사용자 결정 2026-10-21): 메인 세션은 보통(.claude/settings.json effortLevel medium). 게임 시험 FAIL·로그 예외·사용자가 본 이상 동작처럼 원인 찾기가 필요한 버그는 `vh-debug` 에이전트(엑스트라 하이)에 증상(시험 이름·diag·로그 발췌)을 붙여 넘기고, 결과는 메인이 diff 검토 후 커밋. 몇 줄짜리 명백한 수정은 메인이 직접.
 - 작업 방식(한도 대비): 언제 끊길지 알 수 없으므로 15분마다(사용자 확정) 빌드·테스트 통과 시마다 커밋·푸시하고 `docs/valheim/progress.txt`(진행 중/다음 할 일/단계 체크리스트)를 갱신. 새 세션은 progress.txt부터 읽고 이어감.
 - 자동 재개 예약은 하지 않음(사용자 거절). Jötunn 2.30.2 확인: CreatureManager·PrefabManager(기존 프리팹 복제로 NPC), PieceManager(깃발), NetworkManager.AddRPC, SynchronizationManager, LocalizationManager, MinimapManager(지도 그림·덮개), UndoManager(지형 편집 되돌리기 가능).
 - 참고 모드 조사(2026-10-20): Thrall(ego_ai) = 중단됨·싱글 전용·영어 전용·제작 불가·Valheim 0.218.20·라이선스 "All rights reserved"(소스 없음) → 코드 사용 불가, 아이디어만 참고. Offline Companions(ProfMags, 포크 Offline Companions Reborn) = 플레이어 모양 NPC 동료, 라이선스 미확인 → 필요 없음: NPC 몸은 게임의 플레이어 프리팹을 Jötunn으로 복제해 쓰고 Player 부품만 Humanoid+자체 AI로 교체(사용자 지적). 검색상 Valheim이 1.0을 넘김 → 참조 패키지 0.221.4는 확실히 구버전, 최신 DLL 필수.

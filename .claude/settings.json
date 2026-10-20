@@ -1,4 +1,5 @@
 {
+  "effortLevel": "medium",
   "hooks": {
     "SessionStart": [
       {
