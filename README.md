@@ -5,6 +5,7 @@
 | 모드 | 경로 | 대상 버전 |
 |---|---|---|
 | Hello RimWorld (템플릿) | `rimworld/HelloRimWorld` | 1.7 |
+| 철기병 (Iron Cavalry) | `rimworld/IronCavalry` | 1.7 |
 
 ### 빌드
 ```bash

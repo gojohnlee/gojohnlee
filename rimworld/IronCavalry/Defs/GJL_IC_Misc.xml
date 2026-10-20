@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <JobDef>
+    <defName>GJL_IC_Charge</defName>
+    <driverClass>IronCavalry.JobDriver_IronCavalryCharge</driverClass>
+    <reportString>charging TargetA.</reportString>
+    <alwaysShowWeapon>true</alwaysShowWeapon>
+    <casualInterruptible>false</casualInterruptible>
+    <collideWithPawns>true</collideWithPawns>
+  </JobDef>
+
+  <!-- 돌격·후퇴 중에만 붙는 가속. 코드가 지우지만, 만약을 위해 400틱 뒤 저절로 사라진다 -->
+  <HediffDef>
+    <defName>GJL_IC_ChargeSpeed</defName>
+    <hediffClass>HediffWithComps</hediffClass>
+    <label>charging</label>
+    <description>Running at full charge speed.</description>
+    <isBad>false</isBad>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>1.5</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>400</disappearsAfterTicks>
+        <showRemainingTime>false</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <!-- SelectionMisc 분류는 Architect 분류(바닐라 C = 취소 지정)와 충돌 검사 대상이 아니다 -->
+  <KeyBindingDef>
+    <defName>GJL_IC_ChargeKey</defName>
+    <label>iron cavalry: charge</label>
+    <category>SelectionMisc</category>
+    <defaultKeyCodeA>C</defaultKeyCodeA>
+  </KeyBindingDef>
+
+</Defs>

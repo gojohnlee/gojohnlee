@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Iron Cavalry</name>
+  <author>gojohnlee</author>
+  <packageId>gojohnlee.ironcavalry</packageId>
+  <supportedVersions>
+    <li>1.7</li>
+  </supportedVersions>
+  <description>4단계(울트라 메카테크) 중기병 근접 메카 "철기병"을 추가합니다.
+
+- 돌격: 단축키 C로 대상을 지정하면 먼 대상에게도 다가가 돌격합니다. 달린 거리만큼 첫 창 공격이 강해지고(최대 2.5배), 명중하면 짧게 기절시킵니다.
+- 자동 돌격: 근접 전투 중 조건이 맞으면 스스로 돌격하고, 이득일 때만 잠깐 물러났다가 다시 돌격합니다.
+- 큰 메카노이드 습격에 적으로도 등장합니다.
+
+필요: Biotech, Harmony</description>
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+      <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+    </li>
+    <li>
+      <packageId>Ludeon.RimWorld.Biotech</packageId>
+      <displayName>Biotech</displayName>
+    </li>
+  </modDependencies>
+  <loadAfter>
+    <li>brrainz.harmony</li>
+    <li>Ludeon.RimWorld.Biotech</li>
+  </loadAfter>
+</ModMetaData>
