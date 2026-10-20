@@ -7,7 +7,7 @@ namespace ValheimHelper
     /// <summary>
     /// 구덩이 탈출 시험(2026-10-21 사용자 관찰: 점프를 안 해서 돌 캐다 판 구덩이에서 못 나옴).
     /// 깃발 → 1호 제자리 점프 높이 → 바닐라 곡괭이 흙 파기(digg_v3)로 거점 둘레에 구덩이 5개
-    /// (넓은 것 1.0·1.8·2.8m = 둘레 5곳을 파 내려감, 좁은 것 2.0·3.2m = 한 곳만 파 내려간 광맥 구덩이처럼) →
+    /// (넓은 것 1.0·1.8·2.8m = 둘레 5곳을 파 내려감, 좁은 것 2.0·3.2·5.0m = 한 곳만 파 내려간 광맥 구덩이처럼, 5m는 점프로 못 나와 경사로) →
     /// 1호를 구덩이에 넣고 거점으로 걷게 함: 걷기만 5초 → 점프 10초 → 경사로 깎기 75초 순서로 허락하며 언제 나오는지 잰다.
     /// 시험 앞뒤로 그 둘레 지형을 원래대로 되돌린다(TestTerrain).
     /// </summary>
@@ -15,11 +15,11 @@ namespace ValheimHelper
     {
         public static void Register() => TestRunner.Register("vh_pittest", "구덩이 탈출 시험(점프·경사로)", Run);
 
-        static readonly float[] Depths = { 1.0f, 1.8f, 2.8f, 2.0f, 3.2f };
-        static readonly bool[] Narrow = { false, false, false, true, true };
+        static readonly float[] Depths = { 1.0f, 1.8f, 2.8f, 2.0f, 3.2f, 5.0f };
+        static readonly bool[] Narrow = { false, false, false, true, true, true };
         static readonly Vector3[] Dirs =
         {
-            Vector3.right, Vector3.left, Vector3.back, new Vector3(0.7f, 0f, -0.7f), new Vector3(-0.7f, 0f, -0.7f),
+            Vector3.right, Vector3.left, Vector3.back, new Vector3(0.7f, 0f, -0.7f), new Vector3(-0.7f, 0f, -0.7f), Vector3.back * 1.6f,
         };
         static readonly string[] Phases = { "걷기만", "점프", "경사로" };
         static readonly float[] PhaseTimes = { 5f, 10f, 75f };

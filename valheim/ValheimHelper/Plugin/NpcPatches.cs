@@ -61,6 +61,7 @@ namespace ValheimHelper
                 bool tooDeep = w.Ai != null && !w.Ai.Carving && WorldGenerator.instance != null && hitPoint.y < WorldGenerator.instance.GetHeight(hitPoint.x, hitPoint.z) - MaxDepth;
                 if (w.Ai != null && w.Ai.DigAllowed && !tooDeep) { Dug++; w.Ai.Digs++; return true; }
                 Blocked++;
+                if (w.Ai != null) w.Ai.BlockedDigs++;
                 __result = null;
                 return false;
             }

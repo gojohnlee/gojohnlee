@@ -75,7 +75,8 @@ namespace ValheimHelper
             Container eq = ChestAt(eqPos), res = ChestAt(resPos);
             checks.Add("상자 2개 놓임", eq != null && res != null);
             if (eq == null || res == null) { End(player, god, checks, onHeard, heard); yield break; }
-            bool put = Chests.TryEdit(eq, inv => inv.AddItem(tool, 1));
+            // 광맥은 오래 캐서 곡괭이가 부러질 수 있다(바닐라 내구도) → 예비 하나 더
+            bool put = Chests.TryEdit(eq, inv => { inv.AddItem(tool, 1); if (spawnDeposit) inv.AddItem(tool, 1); });
             checks.Add($"장비 상자에 {toolPrefab}", put && eq.GetInventory().HaveItem(toolToken));
 
             Say("!상자 장비", eq);
@@ -146,6 +147,13 @@ namespace ValheimHelper
             int dug = NpcPatches.NoDig.Dug - dug0;
             TestRunner.Log($"땅 파기: 판 {dug}번, 막음 {NpcPatches.NoDig.Blocked - blocked0}번, 점프 {(claude ? claude.Ai.Jumps : -1)}번, 경사로 곡괭이질 {(claude ? claude.Ai.CarveSwings : -1)}번");
             if (!ResourceCatalog.WorthDigging(item)) checks.Add($"{word}{Core.Npc.Josa.For(word, "은")} 땅을 파지 않음(판 횟수 {dug})", dug == 0);
+            if (spawnDeposit && claude != null)
+            {
+                // 판 구덩이에서 나와 거점으로 돌아오는지(일이 끝나면 집으로 간다)
+                float w = 0f;
+                for (; w < 60f && Utils.DistanceXZ(claude.Home, claude.transform.position) > 5f; w += 1f) yield return new WaitForSeconds(1f);
+                checks.Add($"구덩이에서 나와 거점으로 돌아옴({w:0}초, 집에서 {Utils.DistanceXZ(claude.Home, claude.transform.position):0}m)", Utils.DistanceXZ(claude.Home, claude.transform.position) <= 5f);
+            }
             checks.Add($"길이 막혀 순간이동하지 않음({WorkerAI.StuckTeleports - tp0}번)", WorkerAI.StuckTeleports == tp0);
             if (spawnDeposit)
             {

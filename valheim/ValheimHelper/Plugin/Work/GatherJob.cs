@@ -194,7 +194,7 @@ namespace ValheimHelper
                 if (m_chest != null) { Go(Step.GoChest); return true; }
             }
             foreach (var w in m_ways) if (Usable(w)) { Go(Step.Search); return true; }
-            return Fail("noTool");
+            return GiveUp("noTool"); // 연장이 부러졌으면 모은 것부터 상자에 넣는다
         }
 
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)
@@ -409,6 +409,7 @@ namespace ValheimHelper
                 m_swings = m_swingsNoProgress = 0;
                 m_workIdle = m_closerTime = 0f;
                 m_lastDigs = m_ai.Digs;
+                m_lastBlocked = m_ai.BlockedDigs;
                 m_saidDig = false;
                 m_lastRevision = zdo.DataRevision;
                 Go(Step.Work);
@@ -475,11 +476,19 @@ namespace ValheimHelper
                     if (tool.m_durability <= 0f) { m_npc.UnequipItem(tool); m_npc.Say("toolBroke", Args()); }
                 }
                 // 체력 저장 방식이 대상마다 달라서(MineRock5는 부위별) 체력 대신 ZDO 데이터 변경으로 본다. 땅을 팠으면 그것도 진척.
-                if (zdo.DataRevision != m_lastRevision) { m_swingsNoProgress = 0; m_workIdle = m_closerTime = 0f; }
-                else if (m_ai.Digs != m_lastDigs) { m_swingsNoProgress = 0; m_workIdle = m_closerTime = 0f; }
+                bool progress = zdo.DataRevision != m_lastRevision || m_ai.Digs != m_lastDigs;
+                if (!progress && m_ai.BlockedDigs != m_lastBlocked && m_aimCol != null)
+                {
+                    // 휘두름이 바위보다 땅에 먼저 닿았는데 땅은 안 파기로 했다(돌, 3m보다 깊음): 바닐라는 이 휘두름을 버린다.
+                    // 겨눈 조각은 닿는 곳에 있으니 거기 맞은 것으로 한다(0.3.8 구리 시험: 휘두름 37번이 이렇게 헛돌아 곡괭이가 먼저 부러짐).
+                    DirectHit(view);
+                    progress = true;
+                }
+                if (progress) { m_swingsNoProgress = 0; m_workIdle = m_closerTime = 0f; }
                 else m_swingsNoProgress++;
                 m_lastRevision = zdo.DataRevision;
                 m_lastDigs = m_ai.Digs;
+                m_lastBlocked = m_ai.BlockedDigs;
                 if (m_swingsNoProgress >= 4)
                 {
                     // 바닐라 공격 판정이 닿지 않는다(구상서 12장): 같은 피해 값을 직접 준다.
@@ -493,7 +502,7 @@ namespace ValheimHelper
         }
 
         float m_workIdle, m_closerTime;
-        int m_lastDigs;
+        int m_lastDigs, m_lastBlocked;
         Collider m_aimCol;
         bool m_saidDig;
         const float WorkIdleLimit = 30f;

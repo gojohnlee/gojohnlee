@@ -174,6 +174,8 @@ namespace ValheimHelper
         public bool DigAllowed => Time.time < DigAllowedUntil;
         /// <summary>이 일꾼이 판 횟수(NpcPatches.NoDig가 센다). 채집은 이것도 진척으로 본다.</summary>
         public int Digs;
+        /// <summary>땅에 먼저 닿았는데 파기를 막은 횟수(그 휘두름은 바위에 안 들어감).</summary>
+        public int BlockedDigs;
 
         float m_lastJump = -10f;
         float m_ledgeTimer;
