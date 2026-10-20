@@ -105,6 +105,7 @@ namespace ValheimHelper
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
             checks.Add($"{word} 상자에 {word} {count}개 ({t:0}초)", count >= 10);
+            checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
             ItemDrop.ItemData held = claude ? claude.GetCurrentWeapon() : null;
             TestRunner.Log($"1호 손: {(held != null ? held.m_dropPrefab.name + $" 내구도 {held.m_durability:0}/{held.GetMaxDurability():0}" : "빈손")}");
             End(player, god, checks, onHeard, heard);

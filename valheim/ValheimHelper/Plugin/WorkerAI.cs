@@ -30,6 +30,10 @@ namespace ValheimHelper
             m_canBeAlerted = false;
             m_avoidWater = true;
             m_idleSoundChance = 0f;
+            // 몬스터 기본값(10°)이면 방향이 조금만 틀어져도 멈춰 서서 돈다 → 걷다 서다를 반복했다(0.3.1 사용자 관찰).
+            // 90°면 돌면서 속도만 줄인다(플레이어처럼).
+            m_moveMinAngle = 90f;
+            m_smoothMovement = true;
         }
 
         public void StartJob(GatherJob job)
@@ -38,9 +42,53 @@ namespace ValheimHelper
             Current = Mode.Work;
         }
 
-        // GatherJob이 바닐라 BaseAI 이동·시선을 쓰게 열어 준다.
-        public bool MoveToPoint(float dt, Vector3 point, float dist, bool run) => MoveTo(dt, point, dist, run);
         public void Face(Vector3 point) => LookAt(point);
+
+        float m_sampleTimer;
+        Vector3 m_samplePos;
+        float m_detourTime;
+        Vector3 m_detourDir;
+
+        /// <summary>
+        /// 걷기: 바닐라 길찾기(BaseAI.MoveTo)를 쓰되
+        /// - 길을 못 찾으면(처음 가는 곳은 길 지도를 만드는 중일 때가 많다) 서 있지 말고 곧장 걸어간다.
+        /// - 1.5초 동안 거의 못 움직였으면(앞을 막은 생물·장애물) 1.2초 옆으로 비켜 간다.
+        /// 도착하면 true.
+        /// </summary>
+        public bool MoveToPoint(float dt, Vector3 point, float dist, bool run)
+        {
+            Vector3 pos = transform.position;
+            float d = Utils.DistanceXZ(point, pos);
+            if (d <= dist) { StopMoving(); m_detourTime = 0f; return true; }
+            if (m_detourTime > 0f)
+            {
+                m_detourTime -= dt;
+                MoveTowards(m_detourDir, run);
+                return false;
+            }
+            bool done = MoveTo(dt, point, dist, run);
+            if (done || !FoundPath())
+            {
+                Vector3 dir = point - pos;
+                dir.y = 0f;
+                MoveTowards(dir, run);
+            }
+            m_sampleTimer += dt;
+            if (m_sampleTimer >= 1.5f)
+            {
+                if (Utils.DistanceXZ(m_samplePos, pos) < 0.75f && d > dist + 1f)
+                {
+                    Vector3 fwd = point - pos;
+                    fwd.y = 0f;
+                    Vector3 side = Vector3.Cross(Vector3.up, fwd.normalized) * (Random.value < 0.5f ? 1f : -1f);
+                    m_detourDir = (side + fwd.normalized * 0.3f).normalized;
+                    m_detourTime = 1.2f;
+                }
+                m_sampleTimer = 0f;
+                m_samplePos = pos;
+            }
+            return false;
+        }
 
         public void Follow(ZDOID target, string name)
         {
@@ -87,7 +135,7 @@ namespace ValheimHelper
                     float d = Vector3.Distance(pos, transform.position);
                     if (d > 200f) { Lost(npc); break; } // 포탈 등으로 사라짐. 포탈 따라가기는 ⑤ 단계.
                     if (d < 3f) StopMoving();
-                    else MoveTo(dt, pos, 2.5f, d > 8f);
+                    else MoveToPoint(dt, pos, 2.5f, d > 8f);
                     break;
                 }
                 case Mode.Home:
@@ -101,7 +149,7 @@ namespace ValheimHelper
                         if (m_announceHome) npc.Say("home");
                         break;
                     }
-                    MoveTo(dt, home, 1.5f, d > 15f);
+                    MoveToPoint(dt, home, 1.5f, d > 15f);
                     // 길이 없거나 15초 동안 못 움직이면 거점으로 옮긴다 (임시: 길 막힘 처리는 ② 단계).
                     m_stuckTimer = Vector3.Distance(m_lastPos, transform.position) < 0.5f * dt ? m_stuckTimer + dt : 0f;
                     m_lastPos = transform.position;

@@ -91,7 +91,8 @@ namespace ValheimHelper
                 }
                 float claudeMoved = Vector3.Distance(claudeStart, claude.transform.position);
                 Check($"1호가 따라옴 (가장 가까이 {best:0.0}m, 이동 {claudeMoved:0}m)", best < 5f && claudeMoved > 10f);
-                Check($"2호는 제자리 (움직임 {Vector3.Distance(alarakStart, alarak.transform.position):0.0}m)", Vector3.Distance(alarakStart, alarak.transform.position) < 3f);
+                // 위치 대신 상태로 본다: 근처 생물에 밀리면 움직일 수 있다(0.3.1에서 해골에 밀려 7m).
+                Check($"2호는 명령 안 받음 (상태 {alarak.Ai.Current}, 움직임 {Vector3.Distance(alarakStart, alarak.transform.position):0.0}m)", alarak.Ai.Current == WorkerAI.Mode.Idle);
             }
             else Check("따라가기 시험할 땅 찾기", false);
 

@@ -250,22 +250,41 @@ namespace ValheimHelper
             best = null;
             float bestScore = float.MaxValue;
             Vector3 pos = m_npc.transform.position;
-            foreach (var zdo in Senses.Nearby(pos, Senses.SightRange))
+            var nearby = Senses.Nearby(pos, Senses.SightRange + 4f);
+            var pieces = new List<Vector3>();
+            foreach (var zdo in nearby)
+                if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
+            foreach (var zdo in nearby)
             {
                 if (m_skip.Contains(zdo.m_uid)) continue;
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
+                // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
+                if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f)) { m_skip.Add(zdo.m_uid); continue; }
                 if (info.Tool != ToolKind.None)
                 {
                     ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
                     if (tool == null) continue;
                     if (info.MinToolTier > 0 && info.MinToolTier > tool.m_shared.m_toolTier) { m_sawTooHard = true; continue; }
                 }
-                float score = Utils.DistanceXZ(zdo.GetPosition(), pos) - info.Priority;
+                float dist = Utils.DistanceXZ(zdo.GetPosition(), pos);
+                if (dist > Senses.SightRange) continue;
+                float score = dist - info.Priority;
                 if (score < bestScore) { bestScore = score; best = zdo; }
             }
             return best != null;
+        }
+
+        static bool NearAny(Vector3 p, List<Vector3> points, float range)
+        {
+            float r2 = range * range;
+            foreach (var q in points)
+            {
+                float dx = p.x - q.x, dz = p.z - q.z;
+                if (dx * dx + dz * dz < r2) return true;
+            }
+            return false;
         }
 
         void Aim(ZDO zdo)
@@ -519,14 +538,9 @@ namespace ValheimHelper
             return inv.GetTotalWeight() >= m_npc.MaxCarry || m_itemPrefab == null || !inv.CanAddItem(m_itemPrefab, 1);
         }
 
-        /// <summary>BaseAI 길찾기로 걷는다. 도착하면 true.</summary>
-        bool Walk(float dt, Vector3 point, float dist)
-        {
-            float d = Utils.DistanceXZ(point, m_npc.transform.position);
-            if (d <= dist) { m_ai.StopMoving(); return true; }
-            m_ai.MoveToPoint(dt, point, dist, d > 10f);
-            return false;
-        }
+        /// <summary>걷는다(WorkerAI.MoveToPoint: 길찾기 + 길 없으면 곧장 + 막히면 비켜 가기). 도착하면 true.</summary>
+        bool Walk(float dt, Vector3 point, float dist) =>
+            m_ai.MoveToPoint(dt, point, dist, Utils.DistanceXZ(point, m_npc.transform.position) > 10f);
 
         /// <summary>MoveStuckLimit초 동안 목표에 1m도 가까워지지 않으면 막힌 것.</summary>
         bool Stuck(float dt, Vector3 point)

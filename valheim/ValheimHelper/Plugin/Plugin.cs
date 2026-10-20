@@ -8,7 +8,7 @@ namespace ValheimHelper
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "gojohnlee.valheimhelper";
-        public const string Version = "0.3.1";
+        public const string Version = "0.3.2";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
