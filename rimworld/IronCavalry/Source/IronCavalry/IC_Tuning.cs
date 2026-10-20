@@ -13,7 +13,7 @@ namespace IronCavalry
         public const float TeleportStep = 1.5f;   // 한 번에 이보다 크게 움직이면 접근량 계산 제외
 
         // 속도 (GJL_IC_ChargeSpeed 헤디프의 MoveSpeed 배율과 같아야 함)
-        public const float ChargeSpeedFactor = 1.5f;
+        public const float ChargeSpeedFactor = 2.1f;
 
         // 시간(틱)
         public const int CooldownTicks = 900;

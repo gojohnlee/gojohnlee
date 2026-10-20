@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
   <GJL_IC_Charge>돌격</GJL_IC_Charge>
-  <GJL_IC_ChargeDesc>대상을 지정해 돌격합니다. 멀리 있으면 먼저 다가가고, 9칸 안에 들어오면 속도를 1.5배로 올려 돌격합니다.\n\n달린 거리(3~8칸)만큼 첫 창 공격이 1.5~2.5배로 강해지고, 명중하면 대상을 1.5~3초 기절시킵니다. 재사용 대기 15초.</GJL_IC_ChargeDesc>
+  <GJL_IC_ChargeDesc>대상을 지정해 돌격합니다. 멀리 있으면 먼저 다가가고, 9칸 안에 들어오면 속도를 2.1배로 올려 돌격합니다.\n\n달린 거리(3~8칸)만큼 첫 창 공격이 1.5~2.5배로 강해지고, 명중하면 대상을 1.5~3초 기절시킵니다. 재사용 대기 15초.</GJL_IC_ChargeDesc>
   <GJL_IC_AutoCharge>자동 돌격</GJL_IC_AutoCharge>
   <GJL_IC_AutoChargeDesc>근접 전투 중 조건이 맞으면 스스로 돌격합니다. 대상에게 붙어 있을 때는 이득일 때만 잠깐 물러났다가 다시 돌격합니다.</GJL_IC_AutoChargeDesc>
   <GJL_IC_OnCooldown>재사용 대기 중 ({0}초)</GJL_IC_OnCooldown>
