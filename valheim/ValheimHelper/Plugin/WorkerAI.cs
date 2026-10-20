@@ -54,6 +54,9 @@ namespace ValheimHelper
 
         public void Face(Vector3 point) => LookAt(point);
 
+        /// <summary>시험 기록용: 마지막 길찾기가 길을 찾았는지.</summary>
+        public bool PathFound => FoundPath();
+
         float m_sampleTimer;
         Vector3 m_samplePos;
         float m_detourTime;

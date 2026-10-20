@@ -26,9 +26,13 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 6. dist DLL도 커밋한다(방식 A 한 줄 명령이 raw.githubusercontent의 valheim/dist를 받음).
 
 진행 중
-- 0.3.6 작업 중: ② 남은 것. Core 완료(테스트 153): 조사 Josa("{item|는}"), 지식에 구역 바이옴·요약(Summary), ExplorePlan(지도 경계),
-  Compass(8방위), BiomeNames. 다음: 플러그인 — Senses가 바이옴 기록·NPC 주변 지도 밝히기(Minimap.Explore 비공개),
-  GatherJob 탐험 단계(찾기 15분 → 새 땅 30분, 밤이면 귀환), ExploreJob(!탐험 방향/바이옴), !지식·!기억 대답, 대사, 시험(vh_exploretest).
+- 0.3.6 PC 시험(2026-10-20): npc·flag·wood·stone PASS, vh_exploretest PASS 13/13.
+  들어간 것: 조사 Josa("{item|는}"), 지식에 구역 바이옴·Summary, ExplorePlan(지도 경계, 방향 주면 앞으로 밀고 나감), Bearing(8방위),
+  BiomeNames, Scout(지도 읽기·밝히기 Minimap.Explore 비공개, 경계 고르기), GatherJob 새 땅 단계(찾기 15분 → 새 땅 30분, 밤이면
+  귀환, 모은 것 넣고 그만), ExploreJob(!탐험 방향/바이옴), !지식(짧게)·!기억(③ 전까지 빈 대답). Core 테스트 154.
+- 조사 중: 먼 길에서 NPC가 2.0m/s로 걷는다(달림 False, 이동 입력 1.00·달리기 입력 True, m_speed 4/m_runSpeed 7).
+  처음 30초는 5~6m/s로 달림. 후보: Character.CheckRun이 false(웅크림·과적·회피·활·막기) + 속도 2 = m_crouchSpeed?, 물 저항,
+  상태 효과(젖음 등 m_seman). 다음: WorkerNpc에서 IsEncumbered/IsCrouching/IsBlocking/InDodge/상태효과 목록을 기록해 가린다.
 - 0.3.5 PC 시험 PASS(2026-10-20): npc 12/12, flag 8/8, wood 15개 55초, stone 10개 40초, LogOutput.log 예외 0건.
   (기록) 줍기 NRE 수정 — ItemDrop.Pickup(Humanoid)의 소유권 대기(PickupUpdate)가 줍는 사람을 Player로 캐스팅해서
   NPC면 NullReferenceException(0.3.4 로그 5번). 이제 플레이어 자동 줍기와 같게: CanPickup이면 Humanoid.Pickup, 아니면 RequestOwn.

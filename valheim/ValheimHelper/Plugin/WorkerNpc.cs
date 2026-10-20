@@ -48,6 +48,9 @@ namespace ValheimHelper
         /// <summary>운반 한도: 플레이어 기본값과 같은 300 (구상서 3장; 힘의 벨트는 ③에서).</summary>
         public float MaxCarry => 300f;
 
+        /// <summary>시험 기록용: 이동 입력 크기, 달리기 입력, 실제 속도 값.</summary>
+        public string MoveDebug => $"입력 {m_moveDir.magnitude:0.00}, 달리기 입력 {m_run}, 속도값 {m_speed}/{m_runSpeed}";
+
         /// <summary>그 종류의 도구 중 가장 좋은 것(도구 단계 → 해당 피해 순).</summary>
         public static ItemDrop.ItemData BestTool(Inventory inv, ToolKind kind)
         {

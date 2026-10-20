@@ -7,7 +7,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 탐험 시험(② 단계 마무리): 깃발 → "!지식", "!기억" 대답 → 지도 경계가 있는 방향으로 "!Claude 탐험 &lt;방향&gt;" →
-    /// 150초 동안 NPC가 그 방향으로 150m 넘게 가는지, 처음 고른 경계 구역이 지도에 밝혀지는지 → "!멈춰"로 그만두고 집에 오는지.
+    /// NPC가 그 방향으로 150m 넘게 가고 처음 고른 경계 구역이 지도에 밝혀지는지(150초, 경계가 멀면 닿을 때까지 최대 300초) → "!멈춰"로 그만두고 집에 오는지.
     /// 밤이면 탐험을 안 하므로 시험 동안만 낮으로 고정한다. 대사에 "{"가 남지 않았는지(조사 처리)도 본다.
     /// </summary>
     static class ExploreTest
@@ -85,18 +85,21 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             Check("1호가 탐험 시작", claude.Ai.Current == WorkerAI.Mode.Work && claude.Ai.Job is ExploreJob);
             float maxDist = 0f, t = 0f;
-            while (t < 150f && claude != null && claude.Ai.Current == WorkerAI.Mode.Work)
+            Vector3 last = claude.transform.position;
+            while ((t < 150f || (t < 300f && !Scout.Explored(first))) && claude != null && claude.Ai.Current == WorkerAI.Mode.Work)
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
                 if (claude == null) break;
                 Vector3 p = claude.transform.position;
                 maxDist = Mathf.Max(maxDist, Utils.DistanceXZ(home, p));
+                Vector3 prev = last;
+                last = p;
                 if ((int)t % 15 == 0)
                 {
                     var job = claude.Ai.Job as ExploreJob;
                     Scout.FromHome(home, p, out string bd, out string dist);
-                    TestRunner.Log($"[{t:0}s] 거점에서 {bd} {dist}m, 상태 {claude.Ai.Current}/{job?.StepName}, 지나간 구역 {job?.Visited}, 체력 {claude.GetHealth():0}");
+                    TestRunner.Log($"[{t:0}s] 거점에서 {bd} {dist}m, 속도 {Utils.DistanceXZ(prev, p) / 5f:0.0}m/s, 달림 {claude.IsRunning()}, {BiomeNames.Of(Scout.BiomeAt(p))}, {claude.MoveDebug}, 길 {claude.Ai.PathFound}, 상태 {claude.Ai.Current}/{job?.StepName}, 지나간 구역 {job?.Visited}");
                 }
             }
             Check($"150m 넘게 나감 (최대 {maxDist:0}m)", maxDist > 150f);
@@ -116,7 +119,8 @@ namespace ValheimHelper
             Check("!멈춰 → 탐험 그만", claude != null && claude.Ai.Current != WorkerAI.Mode.Work);
             float wait = 0f;
             // 걸어서 온다(400m면 1분 넘게 걸린다). 길이 막히면 WorkerAI가 15초 뒤 거점으로 옮긴다.
-            while (wait < 180f && claude != null && claude.Ai.Current == WorkerAI.Mode.Home)
+            float homeLimit = claude != null ? Mathf.Max(60f, Utils.DistanceXZ(claude.Home, claude.transform.position) / 2.5f) : 0f;
+            while (wait < homeLimit && claude != null && claude.Ai.Current == WorkerAI.Mode.Home)
             {
                 yield return new WaitForSeconds(2f);
                 wait += 2f;
@@ -132,9 +136,11 @@ namespace ValheimHelper
                     var z = new ZoneXY(hz.X + x, hz.Y + y);
                     if (Scout.Explored(z)) k.MarkLooked(z);
                 }
+            // 앞 시험의 탐험에서 봤을 수 있으니 그 물건의 기억은 지운다(시험 월드)
             string item = null;
-            foreach (var c in new[] { "Thistle", "Dandelion", "Blueberries", "Raspberry", "Mushroom", "Flint" })
-                if (ResourceCatalog.WaysFor(c).Contains(ToolKind.None) && k.ZonesWith(c, hz).Count == 0) { item = c; break; }
+            foreach (var c in new[] { "Thistle", "Dandelion", "Mushroom", "Raspberry", "Flint" })
+                if (ResourceCatalog.WaysFor(c).Contains(ToolKind.None)) { item = c; break; }
+            if (item != null) foreach (var m in k.ZonesWith(item, hz)) k.Forget(m.Zone, item);
             Check($"모르는 맨손 채집물 ({item ?? "없음"})", item != null);
             if (item != null && claude != null)
             {
