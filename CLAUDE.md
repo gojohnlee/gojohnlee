@@ -6,7 +6,7 @@
 - 빌드: `./scripts/setup-dotnet.sh` 후 `dotnet build ... -c Release` (dot.net 설치 스크립트는 네트워크 정책상 막힘 → apt 사용).
 - 사용자에게 요청할 것이 있으면 **항상 답변 맨 끝에 1. 2. 3. 4. 번호 목록**으로 정리.
 - 답변은 한국어로.
-- 현재 프로젝트: **철기병 모드** (메카 관리 모드는 제외). 기획서 `docs/ironcavalry/spec-v3.txt`, 외형 참고 이미지 `docs/ironcavalry/reference.png`. 사용자가 구현 지시하기 전에는 모드를 만들지 않는다(기획 단계).
+- 현재 프로젝트: **철기병 모드** (메카 관리 모드는 제외). 기획서 `docs/ironcavalry/spec-v2.txt`, 외형 참고 이미지 `docs/ironcavalry/reference.png`. 사용자가 구현 지시하기 전에는 모드를 만들지 않는다(기획 단계).
 - 새 세션은 기본 브랜치에서 시작하고 이전 대화 내용은 기억하지 못함 → 중요한 결정·상태는 이 파일에 기록한다.
 - 새 모드: `./scripts/new-rimworld-mod.sh <Name> "<설명>"` (CI는 `rimworld/*` 폴더를 자동 감지해 각각 빌드).
 - 사용자는 md 파일을 직접 읽지 않음 → 안내·체크리스트는 항상 대화에 바로 쓴다.
