@@ -50,6 +50,10 @@ namespace ValheimHelper
             it.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable && it.m_shared.m_food <= 0f
             && it.m_shared.m_consumeStatusEffect is SE_Stats s && (s.m_healthUpFront > 0f || s.m_healthOverTime > 0f);
 
+        /// <summary>마실 체력 미드(가장 많이 채우는 것). 없으면 null.</summary>
+        public static ItemDrop.ItemData FindHealthMead(Inventory inv) =>
+            Best(inv.GetAllItems(), IsHealthMead, it => it.m_shared.m_consumeStatusEffect is SE_Stats s ? s.m_healthUpFront + s.m_healthOverTime : 0f);
+
         public static bool IsFood(ItemDrop.ItemData it) =>
             it.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable && (it.m_shared.m_food > 0f || it.m_shared.m_foodStamina > 0f);
 

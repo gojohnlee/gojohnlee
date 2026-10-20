@@ -168,6 +168,47 @@ namespace ValheimHelper
             return eaten;
         }
 
+        // ---- 싸움 (구상서 8장, Guard) ----
+
+        readonly Dictionary<Character, float> m_hitBy = new Dictionary<Character, float>();
+
+        protected override void OnDamaged(HitData hit)
+        {
+            base.OnDamaged(hit);
+            Character attacker = hit.GetAttacker();
+            if (attacker == null || attacker == this) return;
+            if (m_hitBy.Count > 40) { var old = new List<Character>(); foreach (var kv in m_hitBy) if (kv.Key == null || Time.time - kv.Value > 60f) old.Add(kv.Key); foreach (var o in old) m_hitBy.Remove(o); }
+            m_hitBy[attacker] = Time.time;
+            Guard.Learn(attacker); // 맞아 봤으니 그 적을 안다
+        }
+
+        /// <summary>그 적에게 최근 seconds초 안에 맞았는지.</summary>
+        public bool HitBy(Character c, float seconds) => c != null && m_hitBy.TryGetValue(c, out float t) && Time.time - t < seconds;
+
+        /// <summary>지금 마실 수 있는 체력 미드가 있는지(가졌고, 같은 미드 효과가 아직 없음).</summary>
+        public bool CanDrinkHealthMead()
+        {
+            ItemDrop.ItemData mead = Gear.FindHealthMead(m_inventory);
+            if (mead == null) return false;
+            StatusEffect se = mead.m_shared.m_consumeStatusEffect;
+            return !m_seman.HaveStatusEffect(se.NameHash()) && (string.IsNullOrEmpty(se.m_category) || !m_seman.HaveStatusEffectCategory(se.m_category));
+        }
+
+        /// <summary>
+        /// 체력 미드를 마신다(Player.ConsumeItem처럼 상태 효과를 붙이고 하나 줄인다). 같은 종류의 미드 효과가 아직 있으면
+        /// 바닐라처럼 못 마신다(미드 대기시간). 마셨으면 true.
+        /// </summary>
+        public bool DrinkHealthMead()
+        {
+            if (!CanDrinkHealthMead()) return false;
+            ItemDrop.ItemData mead = Gear.FindHealthMead(m_inventory);
+            StatusEffect se = mead.m_shared.m_consumeStatusEffect;
+            m_seman.AddStatusEffect(se, true);
+            m_inventory.RemoveOneItem(mead);
+            Plugin.Log.LogInfo($"{NpcName} 미드 마심: {mead.m_shared.m_name}, 체력 {GetHealth():0}/{GetMaxHealth():0}");
+            return true;
+        }
+
         // ---- 죽음 (구상서 9장: 묘비 + 거점 즉시 부활, 스킬은 안 깎임) ----
 
         /// <summary>회수할 묘비들: "userID/id/시도횟수;…".</summary>
@@ -389,7 +430,19 @@ namespace ValheimHelper
 
         static readonly Speech s_speech = new Speech();
 
-        public void Say(string key, IDictionary<string, string> args = null) => SayText(s_speech.Say(Personality, key, args));
+        /// <summary>스스로 하는 알림(명령에 대한 대답이 아닌 것): 같은 알림은 30초 안에 되풀이하지 않는다(구상서 10장 도배 방지).</summary>
+        static readonly HashSet<string> Throttled = new HashSet<string> { "fightStart", "backOff", "flee", "dangerSkip", "drink", "noFood", "graveRetry" };
+        readonly Dictionary<string, float> m_lastSaid = new Dictionary<string, float>();
+
+        public void Say(string key, IDictionary<string, string> args = null)
+        {
+            if (Throttled.Contains(key))
+            {
+                if (m_lastSaid.TryGetValue(key, out float t) && Time.time - t < 30f) return;
+                m_lastSaid[key] = Time.time;
+            }
+            SayText(s_speech.Say(Personality, key, args));
+        }
 
         public string Line(string key, IDictionary<string, string> args = null) => s_speech.Say(Personality, key, args);
 

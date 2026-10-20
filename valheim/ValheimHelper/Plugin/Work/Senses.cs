@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
@@ -72,7 +73,11 @@ namespace ValheimHelper
     public static class Brain
     {
         public const string Key = "vh_knowledge";
+        /// <summary>싸워 보고 배운 적(8-2장). 지식처럼 두 NPC ZDO에 같이 저장한다.</summary>
+        public const string KeyFoes = "vh_foes";
         static Knowledge s_k;
+        static FoeBook s_foes;
+        static string s_foesSaved = "";
         static ZDOMan s_for;
         static float s_saveTimer;
 
@@ -81,32 +86,43 @@ namespace ValheimHelper
             if (s_k == null || s_for != ZDOMan.instance)
             {
                 s_for = ZDOMan.instance;
-                string best = "";
+                string best = "", foes = "";
                 foreach (var zdo in Workers.AllZdos()) // 월드 불러온 직후 한 번만
                 {
                     string t = zdo.GetString(Key, "");
                     if (t.Length > best.Length) best = t;
+                    string f = zdo.GetString(KeyFoes, "");
+                    if (f.Length > foes.Length) foes = f;
                 }
                 s_k = Knowledge.Load(best);
+                s_foes = FoeBook.Load(foes);
+                s_foesSaved = foes;
             }
             return s_k;
         }
 
+        public static FoeBook Foes
+        {
+            get { Get(); return s_foes; }
+        }
+
         public static void Update(float dt)
         {
-            if (s_k == null || !s_k.Dirty) return;
+            if (s_k == null) return;
             s_saveTimer -= dt;
             if (s_saveTimer > 0f) return;
             s_saveTimer = 30f;
-            Save();
+            if (s_k.Dirty || s_foes.Save() != s_foesSaved) Save();
         }
 
         public static void Save()
         {
             if (s_k == null) return;
             string text = s_k.Save();
-            foreach (var zdo in Workers.Zdos()) zdo.Set(Key, text);
+            string foes = s_foes.Save();
+            foreach (var zdo in Workers.Zdos()) { zdo.Set(Key, text); zdo.Set(KeyFoes, foes); }
             s_k.Dirty = false;
+            s_foesSaved = foes;
         }
     }
 }

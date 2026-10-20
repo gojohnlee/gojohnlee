@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Work;
 
@@ -95,14 +96,18 @@ namespace ValheimHelper
         }
 
         /// <param name="preferBiome">이 바이옴(비트 합)으로 가 본 구역 옆의 경계 먼저. 0이면 없음.</param>
-        public static bool NextFrontier(WorkerNpc npc, int dirX, int dirY, int preferBiome, out ZoneXY zone)
+        public static bool NextFrontier(WorkerNpc npc, int dirX, int dirY, int preferBiome, out ZoneXY zone) =>
+            NextFrontier(npc, dirX, dirY, preferBiome, null, out zone);
+
+        /// <param name="avoid">위험해서 버린 구역(Guard). null이면 없음.</param>
+        public static bool NextFrontier(WorkerNpc npc, int dirX, int dirY, int preferBiome, ICollection<ZoneXY> avoid, out ZoneXY zone)
         {
             Knowledge k = Brain.Get();
             System.Func<ZoneXY, bool> prefer = null;
             if (preferBiome != 0) prefer = n => (k.BiomeOf(n) & preferBiome) != 0;
             Vector3 from = npc.transform.position;
             return ExplorePlan.Next(Senses.ZoneOf(npc.Home), Senses.ZoneOf(from), MaxRing, k,
-                Explored, Land, dirX, dirY, prefer, z => Reachable(from, z), out zone);
+                Explored, Land, dirX, dirY, prefer, z => (avoid == null || !avoid.Contains(z)) && Reachable(from, z), out zone);
         }
 
         /// <summary>구역 중심의 땅 위 위치.</summary>

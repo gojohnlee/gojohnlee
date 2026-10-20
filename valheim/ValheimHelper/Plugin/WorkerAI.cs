@@ -12,6 +12,8 @@ namespace ValheimHelper
         string StepName { get; }
         /// <summary>!상태에 넣을 말("나무 모으는 중(3/10)").</summary>
         string StateLine();
+        /// <summary>Guard: 거기(danger)는 위험하다(도망쳤거나 두 번 물러남). 그곳의 목표는 버리고 다른 데로.</summary>
+        void AvoidHere(Vector3 danger);
     }
 
     /// <summary>
@@ -52,11 +54,19 @@ namespace ValheimHelper
         public void StartJob(IWorkerJob job)
         {
             Job = job;
+            m_guard?.Reset();
             m_choresHeld = false;
             Current = Mode.Work;
         }
 
         public void Face(Vector3 point) => LookAt(point);
+
+        Guard m_guard;
+        /// <summary>위험 감지·싸움(구상서 8장). 시험·!상태용.</summary>
+        public Guard Guard => m_guard;
+
+        /// <summary>Guard: 거기는 위험하다 → 하던 일이 그곳을 버린다.</summary>
+        public void AvoidHere(Vector3 danger) => Job?.AvoidHere(danger);
 
         /// <summary>시험 기록용: 마지막 길찾기가 길을 찾았는지.</summary>
         public bool PathFound => FoundPath();
@@ -174,6 +184,8 @@ namespace ValheimHelper
                 m_senseTimer = 2f;
                 Senses.Look(transform.position);
             }
+            if (m_guard == null) m_guard = new Guard(npc, this);
+            if (m_guard.Update(dt)) return true; // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다
             switch (Current)
             {
                 case Mode.Work:

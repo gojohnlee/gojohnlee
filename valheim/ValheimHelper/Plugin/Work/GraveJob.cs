@@ -39,6 +39,10 @@ namespace ValheimHelper
 
         public string StateLine() => m_npc.Line("state.grave");
 
+        /// <summary>Guard: 묘비 쪽이 위험하다 → 이번 시도는 실패로 치고 돌아간다(다음에 다시, 2번이면 포기).</summary>
+        public void AvoidHere(Vector3 danger) => m_abort = true;
+        bool m_abort;
+
         Vector3 GravePos()
         {
             ZDO zdo = ZDOMan.instance.GetZDO(Grave);
@@ -60,7 +64,7 @@ namespace ValheimHelper
         {
             m_time += dt;
             m_stepTime += dt;
-            if (m_time > TotalLimit) return Failed();
+            if (m_time > TotalLimit || m_abort) return Failed();
             switch (m_step)
             {
                 case Step.Prep:

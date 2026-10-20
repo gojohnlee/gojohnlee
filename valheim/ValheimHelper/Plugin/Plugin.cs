@@ -27,6 +27,7 @@ namespace ValheimHelper
             Step("vh_exploretest", ExploreTest.Register);
             Step("vh_preptest", PrepTest.Register);
             Step("vh_deathtest", DeathTest.Register);
+            Step("vh_fighttest", FightTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }

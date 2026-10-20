@@ -49,6 +49,14 @@ namespace ValheimHelper
 
         public string StateLine() => m_npc.Line("state.explore", new Dictionary<string, string> { ["where"] = m_where });
 
+        /// <summary>Guard: 지금 목표 경계는 위험하다 → 둘러본 셈 치고 다음 경계로.</summary>
+        public void AvoidHere(Vector3 danger)
+        {
+            Brain.Get().MarkLooked(Senses.ZoneOf(danger));
+            if (m_walking) Brain.Get().MarkLooked(m_goal);
+            m_walking = false;
+        }
+
         public bool Update(float dt)
         {
             m_time += dt;

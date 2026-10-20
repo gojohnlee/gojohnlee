@@ -123,6 +123,20 @@ namespace ValheimHelper
 
         public bool Exploring => m_exploring;
 
+        /// <summary>위험해서 버린 구역(Guard: 도망쳤거나 두 번 물러남). 이 일 동안은 그 구역의 대상·구역을 고르지 않는다.</summary>
+        readonly HashSet<ZoneXY> m_avoid = new HashSet<ZoneXY>();
+
+        bool Avoided(Vector3 p) => m_avoid.Count > 0 && m_avoid.Contains(Senses.ZoneOf(p));
+
+        /// <summary>Guard: 거기는 위험하다. 그 구역(과 지금 목표)을 버리고 다른 데를 찾는다. 들고 있는 건 그대로.</summary>
+        public void AvoidHere(Vector3 danger)
+        {
+            m_avoid.Add(Senses.ZoneOf(danger));
+            if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
+            if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
+            Go(Step.Search);
+        }
+
         public string StateLine() => m_npc.Line(m_exploring ? "state.workExplore" : "state.work", new Dictionary<string, string>
         {
             ["item"] = ItemLabel(Item), ["n"] = Target.ToString(), ["done"] = Delivered.ToString(),
@@ -231,14 +245,14 @@ namespace ValheimHelper
             if (Utils.DistanceXZ(Senses.ZoneCenter(here), pos) < 20f) k.Forget(here, Item); // 여기 와서 봤는데 없다
             foreach (var m in k.ZonesWith(Item, here))
             {
-                if (m.Zone.Equals(here) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너 아는 곳은 못 간다
+                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너·위험한 곳은 안 간다
                 m_goalZone = m.Zone;
                 GoZone();
                 return true;
             }
             // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
             if (!m_exploring && m_searchTime <= SearchLimit
-                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => Scout.Reachable(pos, z), out m_goalZone))
+                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !m_avoid.Contains(z) && Scout.Reachable(pos, z), out m_goalZone))
             {
                 if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
                 GoZone();
@@ -248,7 +262,7 @@ namespace ValheimHelper
             if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
             if (EnvMan.IsNight()) return GiveUp(m_exploring ? "nightBack" : "nightNoExplore");
             int biomes = k.BiomesOf(Item); // 그 물건이 나던 바이옴 쪽 경계부터
-            if (Scout.NextFrontier(m_npc, 0, 0, biomes, out m_goalZone))
+            if (Scout.NextFrontier(m_npc, 0, 0, biomes, m_avoid, out m_goalZone))
             {
                 if (!m_exploring)
                 {
@@ -335,7 +349,7 @@ namespace ValheimHelper
                 if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
             foreach (var zdo in nearby)
             {
-                if (m_skip.Contains(zdo.m_uid)) continue;
+                if (m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition())) continue;
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
