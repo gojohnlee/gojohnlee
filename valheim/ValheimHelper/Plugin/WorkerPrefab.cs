@@ -42,14 +42,7 @@ namespace ValheimHelper
         static GameObject Build(GameObject player)
         {
             if (player == null) { Plugin.Log.LogError("Player 프리팹을 못 찾음"); return null; }
-            if (s_container == null)
-            {
-                // 꺼진 부모 밑에 두면 복제본의 Awake가 돌지 않는다.
-                s_container = new GameObject("VH_Prefabs");
-                s_container.SetActive(false);
-                UnityEngine.Object.DontDestroyOnLoad(s_container);
-            }
-            GameObject go = UnityEngine.Object.Instantiate(player, s_container.transform, false);
+            GameObject go = UnityEngine.Object.Instantiate(player, Container(), false);
             go.name = Name;
 
             Player src = go.GetComponent<Player>();
@@ -85,6 +78,18 @@ namespace ValheimHelper
             foreach (var c in go.GetComponents<Component>()) Kept.Add(c.GetType().Name);
             Plugin.Log.LogInfo($"NPC 프리팹 {Name}: 지움 [{string.Join(", ", Removed)}], 남음 [{string.Join(", ", Kept)}]");
             return go;
+        }
+
+        /// <summary>복제 프리팹을 두는 꺼진 부모. 꺼진 부모 밑에 두면 복제본의 Awake가 돌지 않는다.</summary>
+        internal static Transform Container()
+        {
+            if (s_container == null)
+            {
+                s_container = new GameObject("VH_Prefabs");
+                s_container.SetActive(false);
+                UnityEngine.Object.DontDestroyOnLoad(s_container);
+            }
+            return s_container.transform;
         }
 
         /// <summary>declaring에 선언된 인스턴스 필드를 그대로 옮긴다(readonly 제외). 자식 Transform 참조도 복제본 안을 가리킨다.</summary>

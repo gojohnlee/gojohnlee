@@ -40,7 +40,7 @@ $plugin = Join-Path $game 'BepInEx\plugins\ValheimHelper'
 New-Item -ItemType Directory $plugin -Force | Out-Null
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
 Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll"
-$Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest' }   # 다른 시험: $env:VH_TEST='vh_fartest'
+$Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로)
 Set-Content "$plugin\autotest.txt" $Test   # 월드에 들어가면 모드가 저절로 시험하고 게임을 끈다
 Remove-Item $tmp -Recurse -Force
 Write-Host 'Valheim Helper 설치됨'

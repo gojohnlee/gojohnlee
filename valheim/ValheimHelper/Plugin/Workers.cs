@@ -29,27 +29,76 @@ namespace ValheimHelper
             return list;
         }
 
-        /// <summary>없는 NPC만 플레이어 옆에 부른다. 거점은 지금은 각자 소환된 자리(깃발은 다음 단계).</summary>
-        public static string Spawn(out List<WorkerNpc> spawned)
+        /// <summary>콘솔 vh_spawn: 없는 NPC만 플레이어 옆에 부른다(거점도 거기).</summary>
+        public static string Spawn(out List<ZDO> spawned)
         {
-            spawned = new List<WorkerNpc>();
+            spawned = new List<ZDO>();
             Player player = Player.m_localPlayer;
             if (player == null || !ZNet.instance.IsServer()) return "월드 호스트(싱글 또는 서버 시작)에서만 부를 수 있어요.";
+            spawned = SpawnMissing(player.transform.position, player.transform.rotation);
+            return spawned.Count == 0 ? "두 명 다 이미 있어요." : $"NPC {spawned.Count}명 부름";
+        }
+
+        /// <summary>거점 둘레의 각자 자리: 1호는 왼쪽 앞, 2호는 오른쪽 앞.</summary>
+        public static Vector3 HomeSpot(Vector3 center, Quaternion rot, int role) =>
+            center + rot * new Vector3(role == 0 ? -1.5f : 1.5f, 0f, 2f);
+
+        /// <summary>
+        /// 없는 역할의 NPC를 거점 둘레에 만든다. 인스턴스가 아니라 ZDO로 만들어서, 호스트에게서 먼 곳(구역이 안 불러와진 곳)이어도
+        /// 추적(FarZones)이 구역을 만든 뒤 게임이 알아서 불러온다. 인사는 처음 나타날 때 한다(WorkerNpc.Start).
+        /// </summary>
+        public static List<ZDO> SpawnMissing(Vector3 center, Quaternion rot)
+        {
+            var created = new List<ZDO>();
             var existing = new HashSet<int>();
             foreach (var zdo in AllZdos()) existing.Add(zdo.GetInt(WorkerNpc.KeyRole));
-            Vector3 home = player.transform.position;
+            GameObject prefab = ZNetScene.instance.GetPrefab(WorkerPrefab.Name);
+            ZNetView view = prefab.GetComponent<ZNetView>();
+            int hash = WorkerPrefab.Name.GetStableHashCode();
             for (int role = 0; role < 2; role++)
             {
                 if (existing.Contains(role)) continue;
-                Vector3 pos = home + player.transform.right * (role == 0 ? -2f : 2f) + player.transform.forward * 2f;
-                GameObject go = Object.Instantiate(ZNetScene.instance.GetPrefab(WorkerPrefab.Name), pos, player.transform.rotation);
-                var npc = go.GetComponent<WorkerNpc>();
-                npc.Init(role == 0 ? Name1 : Name2, (Personality)role, pos);
-                FarZones.Track(npc.GetZDOID());
-                spawned.Add(npc);
+                Vector3 pos = HomeSpot(center, rot, role) + Vector3.up * 0.5f;
+                ZDO zdo = ZDOMan.instance.CreateNewZDO(pos, hash);
+                zdo.Persistent = true;
+                zdo.Type = view.m_type;
+                zdo.Distant = view.m_distant;
+                zdo.SetPrefab(hash);
+                zdo.SetRotation(rot);
+                zdo.Set(WorkerNpc.KeyName, role == 0 ? Name1 : Name2);
+                zdo.Set(WorkerNpc.KeyRole, role);
+                zdo.Set(WorkerNpc.KeyHome, HomeSpot(center, rot, role));
+                zdo.Set(WorkerNpc.KeyGreet, true);
+                FarZones.Track(zdo.m_uid);
+                created.Add(zdo);
             }
-            foreach (var npc in spawned) npc.Say("spawn");
-            return spawned.Count == 0 ? "두 명 다 이미 있어요." : $"NPC {spawned.Count}명 부름";
+            return created;
+        }
+
+        /// <summary>새 거점: 집을 옮기고(한가하면 바로 이사), 없는 NPC는 거기에 만든다.</summary>
+        public static void OnBaseMoved(Vector3 center, Quaternion rot)
+        {
+            foreach (var zdo in AllZdos())
+            {
+                int role = zdo.GetInt(WorkerNpc.KeyRole);
+                zdo.Set(WorkerNpc.KeyHome, HomeSpot(center, rot, role));
+                ZNetView view = ZNetScene.instance.FindInstance(zdo);
+                WorkerNpc npc = view != null ? view.GetComponent<WorkerNpc>() : null;
+                if (npc != null && npc.Ai.Current == WorkerAI.Mode.Idle)
+                {
+                    npc.Say("moveBase");
+                    npc.Ai.GoHome();
+                }
+            }
+            int n = SpawnMissing(center, rot).Count;
+            Plugin.Log.LogInfo($"거점 이동 {center}, 새 NPC {n}명");
+        }
+
+        /// <summary>ZDO의 NPC 인스턴스(불러와져 있으면).</summary>
+        public static WorkerNpc Find(ZDO zdo)
+        {
+            ZNetView view = zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
+            return view != null ? view.GetComponent<WorkerNpc>() : null;
         }
 
         public static int DespawnAll()

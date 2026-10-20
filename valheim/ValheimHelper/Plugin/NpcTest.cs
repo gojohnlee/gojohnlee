@@ -49,9 +49,10 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             TestRunner.Log($"이전 NPC {removed}명 지움. {Workers.Spawn(out var spawned)}");
             yield return new WaitForSeconds(3f);
-            Check("NPC 2명 소환", spawned.Count == 2 && WorkerNpc.All.Count == 2);
-            if (spawned.Count != 2) { End(player, god, checks); yield break; }
-            WorkerNpc claude = spawned[0], alarak = spawned[1];
+            WorkerNpc claude = spawned.Count == 2 ? Workers.Find(spawned[0]) : null;
+            WorkerNpc alarak = spawned.Count == 2 ? Workers.Find(spawned[1]) : null;
+            Check("NPC 2명 소환", claude != null && alarak != null && WorkerNpc.All.Count == 2);
+            if (claude == null || alarak == null) { End(player, god, checks); yield break; }
             Check($"이름 {claude.GetHoverName()}, {alarak.GetHoverName()}", claude.GetHoverName() == Workers.Name1 && alarak.GetHoverName() == Workers.Name2);
             Check($"체력 {claude.GetHealth():0}/{claude.GetMaxHealth():0}", claude.GetHealth() > 0f);
             Check("호스트 소유", claude.IsOwner() && alarak.IsOwner());

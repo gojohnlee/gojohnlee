@@ -7,13 +7,13 @@
   "진행 중" 항목부터 이어간다. 진행 중 항목은 git log로 마지막 커밋을 확인해서 다시 시작한다.
 
 진행 중
-- ① 단계 첫 조각 0.1.2 사용자 PC 시험 대기: vh_npctest (스크립트 기본 시험).
-  0.1.1 결과: PASS 11/11(소환·이름·체력 100·호스트 소유·대답·말투 정상, 외형 아이템 Hair1/2·Beard2/5 존재, Unity 6000.0.75f1).
-  단 따라오기·집 복귀는 시험 오류로 거짓 통과(순간이동 끝나기 전에 거리 측정) → 0.1.2에서 도착 확인·NPC 실제 이동량 확인으로 고침.
-  사용자 요청: 자동 시험은 월드 입장 3초 뒤 시작(10초 → 3초).
-  0.1.0 결과: 플러그인 Awake에서 TypeLoadException(System.ValueTuple 4.0.2.0 없음, NpcTest의 튜플) → 시험 미실행·NPC 없음.
-  0.1.1: 튜플 제거, Awake 단계별 try/catch, 자동 시험 시작 실패·5분 초과 시 결과 남기고 종료, 참조 검사 빌드 스크립트.
-  다음: 결과 반영 → 거점 깃발(Jötunn PieceManager 검토) → 소환을 깃발로 → 사망·부활은 ③.
+- ① 단계 둘째 조각 0.2.0 사용자 PC 시험 대기: 자동 시험 vh_npctest;vh_flagtest (스크립트 기본).
+  0.1.2 결과: vh_npctest PASS 12/12 (실제로 18m 따라옴, !멈춰 18m → 1.8m 6초). 재시작 후 저장된 NPC 2명 추적 확인.
+  0.2.0: 거점 깃발(BaseFlag.cs: piece_banner01 → wood_pole2 → wood_pole 순으로 복제, 망치 Misc, 나무 10, 작업대 불필요,
+  세우면 IPlaced → VH_BaseSet RPC → 호스트가 활성 깃발 지정·옛 깃발 비활성·NPC 집 옮김·없는 NPC는 ZDO로 생성).
+  NPC 생성을 인스턴스 대신 ZDO로 바꿈(먼 곳도 FarZones가 구역을 만든 뒤 불러옴), 인사는 처음 나타날 때(vh_greet).
+  자동 시험: autotest.txt에 ;로 여러 시험, 한 diag.txt에 이어 씀.
+  다음: 결과 반영 → ① 남은 것(알림 도배 방지 30초, 대사 파일 분리) → ② 나무·돌·부싯돌 채집.
 
 완료 기록
 - 2026-10-20: Core 프로젝트(valheim/ValheimHelper/Core, netstandard2.0) + Tests(xunit, net10.0) + CI(valheim-test.yml).

@@ -15,6 +15,8 @@ namespace ValheimHelper
         public const string KeyName = "vh_name";
         public const string KeyRole = "vh_role";
         public const string KeyHome = "vh_home";
+        /// <summary>처음 나타날 때 인사할지(새로 만든 NPC).</summary>
+        public const string KeyGreet = "vh_greet";
 
         internal WorkerAI Ai;
 
@@ -28,7 +30,13 @@ namespace ValheimHelper
         // Humanoid.Start는 몬스터용 기본 장비를 준다. 장비는 상자에서 받으므로(4장) 하지 않는다.
         protected override void Start()
         {
-            if (m_nview.IsValid() && m_nview.IsOwner()) ApplyLook();
+            if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+            ApplyLook();
+            if (m_nview.GetZDO().GetBool(KeyGreet))
+            {
+                m_nview.GetZDO().Set(KeyGreet, false);
+                Say("spawn");
+            }
         }
 
         protected override void OnDestroy()
@@ -57,16 +65,6 @@ namespace ValheimHelper
             transform.rotation = rot;
             m_body.linearVelocity = Vector3.zero;
             return true;
-        }
-
-        /// <summary>새로 만든 NPC에 이름·성향·거점을 적는다. 소유자(호스트)만.</summary>
-        public void Init(string name, Personality p, Vector3 home)
-        {
-            ZDO zdo = m_nview.GetZDO();
-            zdo.Set(KeyName, name);
-            zdo.Set(KeyRole, (int)p);
-            zdo.Set(KeyHome, home);
-            ApplyLook();
         }
 
         /// <summary>
