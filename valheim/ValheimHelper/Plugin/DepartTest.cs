@@ -159,6 +159,7 @@ namespace ValheimHelper
                 checks.Add($"알라라크 재고 질문 ({Asked(w.Alarak)})", Departures.AskedAt(w.Alarak) >= 0);
                 if (Features.SaveWork)
                 {
+                    w.Claude.Ai.Queue.Add(WorkSaves.ToQueued(w.Claude, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "구리 주괴 2", Item = "CopperBar", Amount = 2 }));
                     string sigC = Sig(WorkSaves.Snapshot(w.Claude));
                     string pendA = WorkState.SavePending(Departures.Snapshot(w.Alarak));
                     WorkSaves.SaveNow(w.Claude);
