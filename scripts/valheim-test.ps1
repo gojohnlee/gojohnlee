@@ -3,7 +3,7 @@
 #   irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
 # PC의 Claude Code 세션: $env:VH_DLL='<빌드한 ValheimHelper.dll>'; powershell -ExecutionPolicy Bypass -File scripts\valheim-test.ps1
 #   (화면과 클립보드에는 짧은 요약만, 전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt)
-# 다른 게임을 하면서 시험: 앞에 $env:VH_MIN='1'; 을 붙이면 발헤임 창을 최소화하고 소리를 끈다.
+# 발헤임 창은 기본으로 최소화·소리 끔. 게임 화면을 보려면 앞에 $env:VH_MIN='0'; 을 붙인다.
 $ErrorActionPreference = 'Stop'
 $Raw   = 'https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim'
 $AppId = 892970
@@ -46,10 +46,18 @@ if ($env:VH_DLL) { Copy-Item $env:VH_DLL "$plugin\ValheimHelper.dll" -Force }   
 else { Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll" }
 $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로)
 $World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
-$Min = $env:VH_MIN -eq '1'   # 최소화 시험: 창 최소화·소리 끔·백그라운드 30fps (시험 동안 다른 게임을 할 때 $env:VH_MIN='1')
+$Min = $env:VH_MIN -ne '0'   # 최소화 시험(기본, 2026-10-21 사용자): 창 최소화·소리 끔·백그라운드 30fps. 게임 창을 보려면 $env:VH_MIN='0'
 Set-Content "$plugin\autotest.txt" ("world=$World;" + $(if ($Min) { 'min;' } else { '' }) + $Test)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
 Remove-Item $tmp -Recurse -Force
 Write-Host 'Valheim Helper 설치됨'
+
+# BepInEx 콘솔(검은 창)이 게임과 같이 뜨지 않게 끈다(로그는 LogOutput.log에 그대로 남는다). 설정 파일은 첫 실행 뒤에 생긴다.
+$cfg = Join-Path $game 'BepInEx\config\BepInEx.cfg'
+if (Test-Path $cfg) {
+    $c = [IO.File]::ReadAllText($cfg)
+    $c2 = $c -replace '(\[Logging\.Console\][^\[]*?Enabled\s*=\s*)true'   # [^\[]: 다음 섹션(디스크 로그 등)으로 넘어가지 않게, '${1}false'
+    if ($c2 -ne $c) { [IO.File]::WriteAllText($cfg, $c2); Write-Host 'BepInEx 콘솔 창 끔' }
+}
 
 # 3) 게임 실행 후 종료될 때까지 대기
 # 실행 인자(-console)를 붙이면 Steam이 "사용자 지정 인수" 경고창을 띄운다 → 인자 없이 실행(시험은 콘솔 없이 돈다).
