@@ -52,6 +52,9 @@ namespace ValheimHelper
                 if (w.Claude == null || w.Alarak == null || w.Chest == null) yield break;
                 string n1 = w.Claude.NpcName, n2 = w.Alarak.NpcName;
                 ZoneXY hz = Senses.ZoneOf(w.Home);
+                // 시험 월드의 같은 자리에 지난 시험(나무·구리 등)이 남긴 상자가 있어 재고가 시험이 넣은 것과 달라진다
+                // (2026-10-21: 나무 150·구리 10 → 재고 질문이 먼저 잡힘). 거점 상자에서 이 시험의 물건을 비우고 시작한다.
+                TestRunner.Log($"거점 상자 {Chests.NearBase(w.Home).Count}개에서 지난 시험의 나무·구리 {TestKit.ClearBaseStock(w, "Wood", "CopperOre")}개 비움");
 
                 // 1) 재고 질문 → "응" → 출발
                 TestKit.PutInChest(w.Chest, "Wood", 20);
@@ -66,12 +69,14 @@ namespace ValheimHelper
                 var far = new ZoneXY(hz.X + 3, hz.Y);
                 Brain.Get().Saw(new Dictionary<ZoneXY, Dictionary<string, int>> { [far] = new Dictionary<string, int> { ["CopperOre"] = 5 } },
                     new List<ZoneXY> { far }, ZNet.instance.GetTimeSeconds());
+                OnlyFar(far, hz);
                 string knowFar = Brain.Get().Save();
                 var copper = new ChatCommand { Kind = CommandKind.Item, Item = "CopperOre", Amount = 10 };
 
                 // 2) 곧 밤 질문 → "응" → 대기열(아침 조건) → 아직 낮이어도 안 꺼냄 → 아침에 출발
                 w.Env.m_debugTime = 0.74f;
                 yield return new WaitForSeconds(0.5f);
+                OnlyFar(far, hz); // 기다리는 동안 NPC가 둘러보며 거점 근처 구리를 다시 배웠을 수 있다(명령은 같은 프레임에 처리됨)
                 Log("곧 밤", Departures.JudgeFor(w.Claude, copper));
                 yield return Say($"!{n1} 구리 10", 1f);
                 checks.Add($"곧 밤 질문 ({Asked(w.Claude)})", Departures.AskedAt(w.Claude) >= 0);
@@ -220,6 +225,17 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
         }
 
+        /// <summary>
+        /// 구리는 먼 곳만 아는 것으로. 지난 구리 시험이 거점 앞 12~24m에 놓은 광맥이 시험 월드에 남아 있으면 NPC가 2초마다 둘러보며
+        /// 거점 구역의 구리를 배우고, 판단은 가장 가까운 곳(14m)을 골라 밤·죽은 곳·위험 상황이 안 생긴다(2026-10-21).
+        /// 판단·명령 직전(같은 프레임)에 부른다.
+        /// </summary>
+        static void OnlyFar(ZoneXY far, ZoneXY hz)
+        {
+            foreach (var m in Brain.Get().ZonesWith("CopperOre", hz))
+                if (!m.Zone.Equals(far)) Brain.Get().Forget(m.Zone, "CopperOre");
+        }
+
         static string Asked(WorkerNpc npc) => Departures.AskedAt(npc) >= 0 ? "기다림" : "안 물음";
 
         static string LastSaid(TestKit.World w, string name)
@@ -230,7 +246,7 @@ namespace ValheimHelper
         }
 
         static void Log(string what, DepartureResult r) =>
-            TestRunner.Log(r == null ? $"{what}: 판단 없음" : $"{what}: {r.Action} {r.Question} ({r.Reason})");
+            TestRunner.Log(r == null ? $"{what}: 판단 없음" : $"{what}: {r.Action} {r.Question} ({r.Reason}) 곳 {(r.Place != null ? r.Place.Zone + " " + r.Place.Distance.ToString("0") + "m" : "없음")}, 재고 {(r.Args.TryGetValue("stock", out string s) ? s : "?")}, {r.Seconds:0}초, 하루 {EnvMan.instance.GetDayFraction():0.000}");
 
         static string Labels(List<QueuedWork> q)
         {

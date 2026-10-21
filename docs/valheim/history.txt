@@ -280,3 +280,7 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
   손님 흉내 = ZNet.m_isServer를 한 프레임 안에서만 끄고 모드 Update 경로). TestKit.Flat: 중첩 코루틴 예외가 TestRunner.Safe에 잡히게.
   구역 내려감 흉내 TestKit.Unload = ZNetScene.RemoveObjects 순서(ResetZDO → Destroy → m_instances.Remove, ZDO는 남김).
 - 같이 고친 것: Brain.Update는 호스트만(손님 게임에서 지식이 있으면 30초마다 NPC ZDO에 썼을 것).
+- 루프 회차 2(2026-10-21): vh_departtest 13/21 → 24/24. 원인은 시험 월드 잔여물: 거점 20m 안 옛 시험 상자 10개(나무 150, ChestAt이 옛 상자를 잡아 구리 10)
+  → 재고 질문이 우선 잡힘, 옛 구리 시험 광맥을 NPC가 보고 거점 구역에 구리 있다고 배움 → 곧 밤·죽은 곳·위험 판단이 먼 곳(9,3)을 안 고름.
+  고침: TestKit.ClearBaseStock, DepartTest가 시작 때 나무·구리 비우고 OnlyFar로 먼 곳 말고 구리 지식 지움. 모드 코드는 그대로.
+  주의: 시험 월드에 상자·광맥이 쌓임 → 다른 시험이 흔들리면 잔여물부터 의심.

@@ -145,6 +145,19 @@ namespace ValheimHelper
             Chests.TryEdit(c, inv => inv.RemoveItem(name, inv.CountItems(name)));
         }
 
+        /// <summary>거점 상자 전부(지난 시험이 남긴 것 포함)에서 그 물건들을 비운다. 비운 개수.</summary>
+        public static int ClearBaseStock(World w, params string[] prefabs)
+        {
+            int n = 0;
+            foreach (var c in Chests.NearBase(w.Home))
+                foreach (var p in prefabs)
+                {
+                    int had = GatherTest.Count(c, p);
+                    if (had > 0) { TakeFromChest(c, p); n += had - GatherTest.Count(c, p); }
+                }
+            return n;
+        }
+
         static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances =
             AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
 

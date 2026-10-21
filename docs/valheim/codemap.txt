@@ -64,3 +64,5 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 지도: Minimap.m_explored·m_exploredOthers(BitArray, 비공개), IsExplored(Vector3)는 한 점만 봄(Scout.Explored = 구역 중심).
 - 생성된 구역: ZoneSystem.IsZoneGenerated(Vector2s)는 비공개(m_generatedZones). ZDOMan.FindSectorObjects(Vector2s, SimulationDistance, List<ZDO>, List<ZDO> distant=null),
   SimulationDistance(0,0)이면 그 구역만. ZoneSystem.c_ZoneSize = 64.
+- ZRoutedRpc.InvokeRoutedRPC(메서드, 인자)는 서버 peer로 보내는데, 호스트면 GetServerPeerID() = 자기 id → 그 자리에서 HandleRoutedRPC(같은 프레임).
+  → 호스트 시험의 ChatNet.SendAsLocal 명령은 부르는 즉시 처리된다.
