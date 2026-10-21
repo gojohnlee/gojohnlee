@@ -294,6 +294,7 @@ namespace ValheimHelper
         void GoZone()
         {
             m_goalPos = Scout.GroundPos(m_goalZone);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {m_goalZone.X},{m_goalZone.Y}로({Utils.DistanceXZ(m_goalPos, m_npc.transform.position):0}m, 탐험 {m_exploring})");
             Go(Step.GoZone);
         }
 
@@ -343,6 +344,7 @@ namespace ValheimHelper
             bool arrived = Walk(dt, m_goalPos, 6f);
             if (arrived || Stuck(dt, m_goalPos))
             {
+                if (!arrived) LogStuck("구역 가기", m_goalPos);
                 Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
                 Go(Step.Search);
             }
@@ -428,9 +430,14 @@ namespace ValheimHelper
                 Go(Step.Work);
                 return true;
             }
-            if (Stuck(dt, m_targetPos) || m_stepTime > 40f) Skip();
+            if (Stuck(dt, m_targetPos) || m_stepTime > 40f) { LogStuck("다가가기", m_targetPos); Skip(); }
             return true;
         }
+
+        /// <summary>진단: 걷다 막힌 자리(앞에 걸린 것·발밑·걷기 상태).</summary>
+        void LogStuck(string what, Vector3 goal) =>
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: {what} 막힘({m_stepTime:0}초, 남은 {Utils.DistanceXZ(goal, m_npc.transform.position):0.0}m, 집에서 {Utils.DistanceXZ(m_npc.Home, m_npc.transform.position):0.0}m) " +
+                               $"{m_ai.BlockerAhead(goal)} / {m_ai.MoveState} / {m_npc.MoveDebug}");
 
         bool UpdateWork()
         {
@@ -461,7 +468,13 @@ namespace ValheimHelper
             if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
             // 진척(대상이 깎이거나 땅을 팜) 없이 30초면 다른 것으로. 큰 광맥은 오래 걸려도 계속 캔다.
             m_workIdle += Time.deltaTime;
-            if (m_workIdle > WorkIdleLimit || m_stepTime > ChopLimit) { Skip(); return true; }
+            if (m_workIdle > WorkIdleLimit || m_stepTime > ChopLimit)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: 캐기 진척 없음({m_stepTime:0}초, 휘두름 {m_swings}·헛 {m_swingsNoProgress}, 공격 중 {m_npc.InAttack()}, " +
+                                   $"대상까지 {Utils.DistanceXZ(m_targetPos, m_npc.transform.position):0.0}m) → 건너뜀 / {m_ai.MoveState} / {m_npc.MoveDebug}");
+                Skip();
+                return true;
+            }
 
             Vector3 aim = m_targetPos + Vector3.up * 1f;
             m_aimCol = null;
@@ -523,7 +536,7 @@ namespace ValheimHelper
                 }
                 // 직접 피해 뒤에 잰다: 그 피해를 다음 휘두름이 바닐라 진척으로 잘못 보지 않게
                 m_lastHealth = HealthMark(zdo, view);
-                if (m_swingsNoProgress >= 8) { Skip(); return true; }
+                if (m_swingsNoProgress >= 8) { Plugin.Log.LogInfo($"{m_npc.NpcName}: 휘두름 8번 헛침 → 건너뜀 / {m_npc.MoveDebug}"); Skip(); return true; }
             }
             m_wasAttacking = attacking;
             if (!attacking && m_ai.IsLookingAt(aim, 25f)) m_npc.StartAttack(null, false);

@@ -321,7 +321,11 @@ namespace ValheimHelper
                 Vector3 p = transform.position;
                 bool hit = ZoneSystem.instance.GetGroundHeight(p, out float ground);
                 float gen = WorldGenerator.instance != null ? WorldGenerator.instance.GetHeight(p.x, p.z) : 0f;
-                return $"입력 {m_moveDir.magnitude:0.00}, 달리기 입력 {m_run}, 수영 {IsSwimming()}, 땅닿음 {IsOnGround()}, " +
+                Collider under = GetLastGroundCollider();
+                Vector3 v = GetVelocity();
+                v.y = 0f;
+                return $"입력 {m_moveDir.magnitude:0.00}, 달리기 입력 {m_run}, 수영 {IsSwimming()}, 땅닿음 {IsOnGround()}, 속도 {v.magnitude:0.0}, " +
+                       $"발밑 {(under != null ? $"{under.name}({LayerMask.LayerToName(under.gameObject.layer)}, 위 {under.transform.root.name})" : "없음")}, " +
                        $"높이 {p.y:0.0}/땅 {(hit ? ground.ToString("0.0") : "없음")}/원래땅 {gen:0.0}/물 {GetLiquidLevel():0.0}, 구역 {ZoneSystem.instance.IsZoneLoaded(p)}";
             }
         }

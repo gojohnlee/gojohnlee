@@ -146,6 +146,7 @@ namespace ValheimHelper
                 {
                     var job = claude ? claude.Ai.Job : null;
                     TestRunner.Log($"[{t:0}s] 상자 {word} {count}, 들고 있는 {word} {(claude ? claude.CountItem(item) : -1)}, 상태 {(claude ? claude.Ai.Current.ToString() : "없음")}/{job?.StepName}, 집에서 {(claude ? Utils.DistanceXZ(claude.Home, claude.transform.position) : -1):0}m, 지식 {Brain.Get().Count}구역");
+                    if (claude) Plugin.Log.LogInfo($"  [{t:0}s] 광맥에서 {Utils.DistanceXZ(depositPos, claude.transform.position):0.0}m, {claude.Ai.MoveState} / {claude.MoveDebug}");
                 }
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
