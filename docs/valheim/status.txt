@@ -1,7 +1,7 @@
-갱신: 2026-10-21 20:12  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 1 진행 중
+갱신: 2026-10-21 20:49  (무인 루프, scripts/vh-loop.ps1)
+지금: 한 회차 끝(시험 실행)
 회차: 1, 계정: 1번, 한도: 없음
 할 일: ★ 지금 할 일 = 집 PC 시험(묶음 1 끝남): docs/valheim/batch1.txt 3장 순서대로 —
-마지막 시험: 10-21 20:10 요약: 3/4 PASS | FAIL vh_flagtest: 깃발 A에 NPC 나타남 (2명)
-Claude가 한 일: (진행 중)
+마지막 시험: 10-21 20:40 요약: 1/2 PASS | FAIL vh_pittest: 점프 없이 경사로를 깎아 구덩이 7(3.2m)에서 나옴
+Claude가 한 일: LOOP: DONE 회귀 13종 실행(9종 통과, prep 재시험 통과), flag·pit 시험 고침, depart·copper·pit7 실패는 다음 회차로
 멈추려면 이 폴더에 loop-stop.txt를 만든다(내용 아무거나).
