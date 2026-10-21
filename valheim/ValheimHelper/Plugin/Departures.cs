@@ -248,7 +248,7 @@ namespace ValheimHelper
             return Mathf.Max(0f, (0.75f - env.GetDayFraction()) * env.m_dayLengthSec);
         }
 
-        // ---- 제작 계획 (설계 C, ⑥ 실행기 전까지는 계획만 말한다) ----
+        // ---- 제작 계획 (설계 C, 계획을 말한 뒤 PlanJob으로 실행) ----
 
         static void Craft(WorkerNpc npc, ChatCommand cmd)
         {
