@@ -3,7 +3,6 @@
 # 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
 # 두 계정 모두 한도(또는 쉼)면 풀리는 시각까지 기다리고,
 # 자리 비움(입력 없음 10분)이면 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
-# 시험 게임이 켜져 있으면 회차 시작·최대 절전 전에 시험이 끝나 꺼질 때까지 기다린다(사용자 발헤임은 안 건드리고 절전도 안 함).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
 param([switch]$Once)   # -Once: 한 회차만(처음 지켜보는 시험용)
@@ -21,8 +20,7 @@ $Accounts = @(
 )
 $RoundTimeoutMin = 240
 $BackupMin = 15
-$GameDir = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim'
-$Diag = Join-Path $GameDir 'BepInEx\plugins\ValheimHelper\diag.txt'
+$Diag = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimHelper\diag.txt'
 $Utf8 = New-Object Text.UTF8Encoding($false)
 
 $mutex = New-Object Threading.Mutex($false, 'Global\VhLoop')
@@ -140,34 +138,11 @@ function Limit-Until($tail) {
     $t.AddMinutes(2)
 }
 
-# 시험 게임(모드 autotest로 켜진 발헤임: 이번 실행의 LogOutput.log에 "자동 시험 예약")이 켜져 있으면 시험이 끝나 저절로 꺼질 때까지 기다린다.
-# 40분 넘게 안 꺼지면 창 닫기(정상 종료) → 2분 안에 안 꺼지면 강제 종료. 사용자가 켠 발헤임(호스트 등)은 건드리지 않는다.
-# 돌려줌: 'none' 게임 없음 / 'user' 사용자 게임 / 'waited' 시험 게임이 꺼짐(시간이 흘렀음)
-function Stop-TestGame {
-    $p = Get-Process valheim -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$GameDir\*" } | Select-Object -First 1
-    if (-not $p) { return 'none' }
-    $log = Join-Path $GameDir 'BepInEx\LogOutput.log'   # 게임이 켜질 때마다 새로 씀. 게임이 쓰는 중이라 쓰기 공유로 연다
-    $txt = try { $fs = [IO.File]::Open($log, 'Open', 'Read', 'ReadWrite, Delete'); try { (New-Object IO.StreamReader($fs, $Utf8)).ReadToEnd() } finally { $fs.Close() } } catch { '' }
-    if (-not $txt.Contains('자동 시험 예약')) { return 'user' }
-    Log '시험 게임이 켜져 있음 → 시험이 끝나 저절로 꺼질 때까지 기다림'
-    if (-not $p.WaitForExit(40 * 60000)) {
-        Log '시험 게임이 40분째 안 꺼짐 → 창 닫기'
-        [void]$p.CloseMainWindow()
-        if (-not $p.WaitForExit(120000)) { Stop-Process -Id $p.Id -Force; Log '시험 게임 강제 종료' }
-    }
-    Log '시험 게임 꺼짐'
-    'waited'
-}
-
 function Wait-Until($t) {
     # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 자리 비움(입력 없음 10분)이면 최대 절전(사용자가 쓰는 중이면 그냥 기다림)
     $bk = $false; $noHib = $false
     while ((Get-Date) -lt $t) {
         if (-not $noHib -and ($t - (Get-Date)).TotalMinutes -gt 10 -and [VH.Power]::IdleMs() -gt 600000) {
-            # 최대 절전 전에 시험 게임은 끝낸다. 사용자 발헤임(호스트일 수 있음)이 켜져 있으면 절전하지 않는다.
-            $g = Stop-TestGame
-            if ($g -eq 'user') { Log '사용자 발헤임이 켜져 있음 → 최대 절전 안 하고 켠 채로 기다림'; $noHib = $true; continue }
-            if ($g -eq 'waited') { continue }   # 기다리는 동안 시간이 흘렀으니 조건부터 다시
             if (-not $bk) { Backup-Wip; $bk = $true }
             $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c exit'
             $set = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
@@ -204,7 +179,6 @@ while ($true) {
         Save-State; Wait-Until $t; continue
     }
     if ($free -notcontains $st.acct) { $st.acct = $free[0] }
-    if ((Stop-TestGame) -eq 'waited') { continue }   # 한도 등으로 끊긴 회차가 남긴 시험 게임: 꺼진 뒤 pull·멈춤 파일·계정부터 다시
     $acct = $Accounts[$st.acct]
     $st.round++
     Write-Status "회차 $($st.round) 진행 중" '(진행 중)'
