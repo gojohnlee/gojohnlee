@@ -39,6 +39,7 @@ namespace ValheimHelper
             Step("vh_skilltest", SkillTest.Register);
             Step("vh_refilltest", RefillTest.Register);
             Step("vh_raidtest", RaidTest.Register);
+            Step("vh_helptest", HelpTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }
