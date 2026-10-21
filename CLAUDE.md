@@ -4,7 +4,7 @@
 - 사용자는 md·txt 파일을 직접 읽지 않음 → 안내·체크리스트는 대화에 바로 쓴다. 결과물 파일은 대화에 파일로 보내고 GitHub 링크(https://github.com/gojohnlee/gojohnlee/blob/valheim/<경로>)도 준다.
 - 사용자 목표: 버그 없고 매끄럽게, 토큰은 최소로. 사용자는 기본적으로 개입하지 않음 → 스스로 진행하고, 새 게임플레이 결정이 필요할 때만 묻는다.
 - 새 세션은 이전 대화를 기억하지 못함 → 중요한 상태는 docs/valheim/progress.txt, 결정은 docs/valheim/decisions.txt 끝에 기록.
-- 림월드(철기병) 작업과 파일은 기본 브랜치에만 있다(그쪽 CLAUDE.md). 이 브랜치에는 발헤임만 둔다.
+- 이 브랜치가 저장소 기본 브랜치(2026-10-21). 림월드(철기병 등) 작업과 파일은 `rimworld` 브랜치에만 있다(그쪽 CLAUDE.md). 이 브랜치에는 발헤임만 둔다.
 
 # 발헤임 일꾼 NPC
 
@@ -14,7 +14,7 @@
   무인 루프 설계는 loop-plan.txt. PC 세션 시작 순서·게임 시험 방법은 progress.txt 맨 위.
 - 게임 DLL: PC 세션은 설치된 게임의 valheim_Data\Managed(csproj 자동). 클라우드 세션은 비공개 저장소 gojohnlee/valheim-refs → add_repo 후 /home/user/valheim-refs에 clone.
   ilspycmd로 디컴파일해 읽는다. 확인한 게임 사실은 codemap.txt "확인된 게임 사실"에 적고 다시 디컴파일하지 않는다.
-- 게임 파일·디컴파일 결과는 저장소에 올리지 않는다. 저장소 전체 비공개 전환 금지(기본 브랜치의 림월드 테스트 한 줄 명령이 raw.githubusercontent HEAD를 씀).
+- 게임 파일·디컴파일 결과는 저장소에 올리지 않는다. 저장소 전체 비공개 전환 금지(발헤임 dll을 raw.githubusercontent 주소로 받기 때문).
 - 비용 0 원칙: 유료 API 없음. 위험 판단·이동·전투는 규칙 코드, 명령 해석은 모드 → Haiku → Sonnet 3단계(호스트 PC의 Claude Code). 자세한 건 decisions.txt.
 - 버그 최소화: 게임 무관 로직은 Core로 분리해 dotnet test, 게임 내부는 최신 DLL 실제 코드를 읽고 맞춤(추측 금지), 행동마다 시간 제한·대체 동작, 단계마다 코드 리뷰.
 - 노력 수준: 메인 세션은 보통. 게임 시험 FAIL·로그 예외·이상 동작처럼 원인 찾기가 필요한 버그는 `vh-debug`(엑스트라 하이)에 증상(시험 이름·diag·로그 발췌)을 붙여 넘기고,
