@@ -18,7 +18,7 @@ namespace ValheimHelper
     {
         public const float BaseRange = 20f;
 
-        /// <summary>태그 공급자(I-2): 그 상자(ZDO)의 이름이 가리키는 것. null = 태그 없음 = 거점 상자 전부. 기본은 ChestTag 이름 읽기.</summary>
+        /// <summary>태그 공급자(I-2): 그 상자(ZDO)의 이름이 가리키는 것. null = 태그 없음 = 거점 상자 전부. 기본은 상자 이름 읽기.</summary>
         public static Func<ZDO, ChestTags> TagProvider = ChestTagReader.Read;
 
         /// <summary>그 역할에 쓸 거점 근처 ZDO들(이름 규칙은 Core ChestNames: 역할 상자가 있으면 그것만, 손대지 않는 상자는 항상 뺌).</summary>
