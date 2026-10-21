@@ -146,6 +146,21 @@ namespace ValheimHelper
         static int s_scanIndex;
         static bool s_scanDone;
 
+        static float s_nextReclaim;
+
+        /// <summary>
+        /// 호스트가 1초마다 NPC ZDO 주인이 자기가 아니면 되찾는다. 바닐라 2초 정리는 "주인이 근처면 그대로"라
+        /// 친구가 NPC 근처에서 주인이 되면 안 돌려주기 때문(risks.txt 5).
+        /// </summary>
+        static void Reclaim()
+        {
+            if (Time.time < s_nextReclaim) return;
+            s_nextReclaim = Time.time + 1f;
+            long me = ZDOMan.GetSessionID();
+            foreach (var zdo in Zdos())
+                if (zdo.HasOwner() && zdo.GetOwner() != me) zdo.SetOwner(me);
+        }
+
         public static void Update()
         {
             if (ZNet.instance == null || !ZNet.instance.IsServer() || ZDOMan.instance == null) return;
@@ -157,7 +172,8 @@ namespace ValheimHelper
                 s_scanIndex = 0;
                 s_scanDone = false;
             }
-            if (s_scanDone || !ZDOMan.instance.GetAllZDOsWithPrefabIterative(WorkerPrefab.Name, s_scanList, ref s_scanIndex)) return;
+            if (s_scanDone) { Reclaim(); return; }
+            if (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(WorkerPrefab.Name, s_scanList, ref s_scanIndex)) return;
             s_scanDone = true;
             foreach (var zdo in s_scanList) { FarZones.Track(zdo.m_uid); Know(zdo.m_uid); }
             Plugin.Log.LogInfo($"저장된 NPC {s_scanList.Count}명 추적 시작");

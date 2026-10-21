@@ -302,3 +302,5 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 - 채집 시험(GatherTest): 지난 시험 상자 치움, 거점 상자 전부 셈, 물가면 300m 안 마른 초원으로 옮김(stonetest: 장비 상자가 물 3.1m 아래라 못 감).
 - woodtest FAIL(vh-debug): 바위 밑에 낀 통나무를 2분 침. 깨어 있는 통나무는 ZSyncTransform이 DataRevision을 계속 올려 진척으로 오판
   → 진척은 체력 기록(HealthMark)으로, 직접 피해가 들면 계속. 결과 stone·wood·prep·bag·flag·peer·depart PASS, coppertest FAIL(10/11, 귀환 막힘, 수정 전 DLL도 같음).
+
+[루프 회차 11, 2026-10-22] NPC 주인 강제 되찾기: Workers.Reclaim — 호스트가 1초마다 NPC ZDO 주인이 자기가 아니면 SetOwner(자기). vh_peertest 14/14 PASS(31초), Core 284.
