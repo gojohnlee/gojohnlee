@@ -53,13 +53,22 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
             Plugin.Log.LogInfo($"자동 입장: 월드 {World}");
             f.OnStartGame();
-            yield return new WaitForSeconds(1.5f);
-            f.OnCharacterStart(); // 마지막에 쓴 캐릭터
-            yield return new WaitForSeconds(1.5f);
-            World w = FindWorld(f, World);
+            // 캐릭터 목록이 늦게 읽히면 OnCharacterStart가 아무것도 안 하고 월드 목록이 비어 FindWorld가 예외(2026-10-21 루프 회차 8,
+            // 게임이 메뉴에서 멈춰 시험 스크립트가 끝없이 기다림) → 1.5초마다 다시, 30초 넘으면 게임을 끈다(무인 시험이 안 멈추게).
+            World w = null;
+            bool listed = false;
+            for (int i = 0; i < 20 && !listed; i++)
+            {
+                yield return new WaitForSeconds(1.5f);
+                f.OnCharacterStart(); // 마지막에 쓴 캐릭터
+                yield return new WaitForSeconds(1.5f);
+                try { w = FindWorld(f, World); listed = true; }
+                catch (System.Exception e) { Plugin.Log.LogInfo($"자동 입장: 월드 목록 아직 없음({e.GetType().Name}), 다시"); }
+            }
             if (w == null)
             {
-                Plugin.Log.LogWarning($"자동 입장: 월드 {World}를 못 찾음. 직접 골라 주세요.");
+                Plugin.Log.LogWarning($"자동 입장: 월드 {World}를 못 찾음{(listed ? "" : "(목록 못 읽음)")}. 직접 골라 주세요.");
+                if (!listed) Application.Quit();
                 yield break;
             }
             WorldField(f) = w;

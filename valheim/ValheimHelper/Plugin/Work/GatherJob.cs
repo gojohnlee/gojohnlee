@@ -723,6 +723,7 @@ namespace ValheimHelper
             if (Walk(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Deposit); return true; }
             if (Stuck(dt, home))
             {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: 귀환 막힘(집에서 {Utils.DistanceXZ(home, m_npc.transform.position):0.0}m) {m_ai.BlockerAhead(home)} / {m_ai.MoveState}");
                 m_npc.TeleportTo(home, m_npc.transform.rotation, false); // 막힌 길 처리는 길 만들기(⑨)에서
                 WorkerAI.StuckTeleports++;
                 Go(Step.Deposit);

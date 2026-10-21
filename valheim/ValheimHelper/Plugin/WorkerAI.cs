@@ -119,6 +119,15 @@ namespace ValheimHelper
         public string MoveState => $"깎기 {m_carving}(곡괭이질 {m_carveCount}, 걷기 {m_carveWalk:0.0}), 막혀서 뜀 {m_stuckJumps}, 비켜 가기 {m_detourTime:0.0}, " +
             $"물 막힘 {WaterBlockedTime:0.0}, 길 {FoundPath()}, 경계 {m_guard?.StateName}, 공격 중 {m_character.InAttack()}";
 
+        /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
+        public string BlockerAhead(Vector3 point)
+        {
+            Vector3 pos = transform.position, dir = Flat(point - pos).normalized;
+            string Hit(float h) => Physics.Raycast(pos + Vector3.up * h, dir, out RaycastHit hit, 3f, SolidMask, QueryTriggerInteraction.Ignore)
+                ? $"{hit.collider.name}({LayerMask.LayerToName(hit.collider.gameObject.layer)}, {hit.distance:0.0}m, 위 {hit.collider.transform.root.name})" : "없음";
+            return $"앞 발 {Hit(0.4f)} / 가슴 {Hit(1.4f)}, 땅 {pos.y - ZoneSystem.instance.GetGroundHeight(pos):0.0}m, 앞 1m 땅 {ZoneSystem.instance.GetGroundHeight(pos + dir) - pos.y:0.0}m";
+        }
+
         float m_sampleTimer;
         Vector3 m_samplePos;
         float m_detourTime;
