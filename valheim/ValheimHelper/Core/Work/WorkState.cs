@@ -34,6 +34,11 @@ namespace ValheimHelper.Core.Work
         /// <summary>고른 장소 구역(채집 목표). 기록용 — 이어 할 때 일이 다시 고른다.</summary>
         public ZoneXY Zone;
         public ReadyWhen Ready;
+        /// <summary>
+        /// Morning일 때: 이 게임 시각(초) 전에는 꺼내지 않는다 = 대답한 뒤 다음 아침 시작. "곧 밤이에요. 아침에 갈까요?"는 아직 낮일 때 묻는데,
+        /// "밤이 아님"만 보면 바로 꺼내 같은 질문을 되풀이한다. 게임 시각은 월드와 같이 저장되므로 다시 불러와도 맞다.
+        /// </summary>
+        public double NotBefore;
         /// <summary>탐험 명령: 방향("east" 등)·게임 바이옴 이름. 없으면 null.</summary>
         public string Arg, Biome;
         /// <summary>탐험 이어 하기: 방향 벡터, 바이옴 번호, 알림 말("동쪽").</summary>
@@ -88,6 +93,7 @@ namespace ValheimHelper.Core.Work
                 if (w.Urgent) f.Add("u=1");
                 if (w.HasZone) f.Add("z=" + w.Zone.X.ToString(Inv) + "|" + w.Zone.Y.ToString(Inv));
                 if (w.Ready != ReadyWhen.Always) f.Add("w=" + (int)w.Ready);
+                if (w.NotBefore != 0) f.Add("nb=" + w.NotBefore.ToString("R", Inv));
                 if (w.Arg != null) f.Add("a=" + Esc(w.Arg));
                 if (w.Biome != null) f.Add("b=" + Esc(w.Biome));
                 if (w.DirX != 0 || w.DirY != 0) f.Add("d=" + w.DirX.ToString(Inv) + "|" + w.DirY.ToString(Inv));
@@ -116,6 +122,7 @@ namespace ValheimHelper.Core.Work
                 w.Urgent = f.TryGetValue("u", out v) && v == "1";
                 if (f.TryGetValue("z", out v) && TryPair(v, out int zx, out int zy)) { w.HasZone = true; w.Zone = new ZoneXY(zx, zy); }
                 if (f.TryGetValue("w", out v) && TryInt(v, out int r) && Enum.IsDefined(typeof(ReadyWhen), r)) w.Ready = (ReadyWhen)r;
+                if (f.TryGetValue("nb", out v) && double.TryParse(v, NumberStyles.Float, Inv, out double nb)) w.NotBefore = nb;
                 if (f.TryGetValue("a", out v)) w.Arg = v;
                 if (f.TryGetValue("b", out v)) w.Biome = v;
                 if (f.TryGetValue("d", out v) && TryPair(v, out int dx, out int dy)) { w.DirX = dx; w.DirY = dy; }
@@ -171,6 +178,20 @@ namespace ValheimHelper.Core.Work
             if (string.IsNullOrEmpty(p.Item) || p.Amount <= 0) return null;
             return p;
         }
+
+        /// <summary>
+        /// 다음 아침 시작(게임 초): 바닐라 EnvMan.SkipToMorning과 같은 셈 — 하루 길이의 0.15가 아침 시작, 자정 넘어 새벽이면 그날 아침.
+        /// </summary>
+        public static double NextMorning(double now, double dayLength)
+        {
+            if (dayLength <= 0) return now;
+            int day = (int)((now - dayLength * 0.15) / dayLength);
+            return (day + 1) * dayLength + dayLength * 0.15;
+        }
+
+        /// <summary>대기열 칸을 지금 꺼낼 수 있나(night = 지금 밤인지).</summary>
+        public static bool IsReady(WorkItem w, double now, bool night) =>
+            w.Ready != ReadyWhen.Morning || (now >= w.NotBefore && !night);
 
         /// <summary>불러온 질문이 이미 3분(Replies.Timeout)을 넘었는지 — 넘었으면 보류 처리.</summary>
         public static bool Expired(PendingData p, double now) => p != null && now - p.AskedAt > Replies.Timeout;

@@ -24,7 +24,7 @@ namespace ValheimHelper
         public static QueuedWork ToQueued(WorkerNpc npc, WorkItem w)
         {
             var q = new QueuedWork { Label = w.Label, Work = w };
-            if (w.Ready == ReadyWhen.Morning) q.Ready = () => !EnvMan.IsNight();
+            if (w.Ready == ReadyWhen.Morning) q.Ready = () => WorkState.IsReady(w, ZNet.instance.GetTimeSeconds(), EnvMan.IsNight());
             if (w.Kind == WorkKind.Gather)
             {
                 if (w.Resume)
@@ -51,6 +51,8 @@ namespace ValheimHelper
         {
             Kind = WorkKind.Gather, Label = label, Item = cmd.Item, Amount = cmd.Amount, Speaker = who.Name,
             Target = cmd.Target, Urgent = cmd.Urgent, Ready = ready,
+            NotBefore = ready == ReadyWhen.Morning && EnvMan.instance != null
+                ? WorkState.NextMorning(ZNet.instance.GetTimeSeconds(), EnvMan.instance.m_dayLengthSec) : 0,
         };
 
         static readonly AccessTools.FieldRef<GatherJob, ZoneXY> GoalZone = AccessTools.FieldRefAccess<GatherJob, ZoneXY>("m_goalZone");

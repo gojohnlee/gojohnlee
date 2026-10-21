@@ -11,7 +11,7 @@ public class WorkStateTests
         var items = new List<WorkItem>
         {
             new WorkItem { Kind = WorkKind.Gather, Resume = true, Label = "나무 50", Item = "Wood", Amount = 37, HasZone = true, Zone = new ZoneXY(-3, 12) },
-            new WorkItem { Kind = WorkKind.Gather, Label = "구리 광석 20", Item = "CopperOre", Amount = 20, Speaker = "lee;=,|%", Target = "Alarak", Urgent = true, Ready = ReadyWhen.Morning },
+            new WorkItem { Kind = WorkKind.Gather, Label = "구리 광석 20", Item = "CopperOre", Amount = 20, Speaker = "lee;=,|%", Target = "Alarak", Urgent = true, Ready = ReadyWhen.Morning, NotBefore = 3780.5 },
             new WorkItem { Kind = WorkKind.Explore, Label = "동쪽", Arg = "east" },
             new WorkItem { Kind = WorkKind.Explore, Resume = true, Label = "늪 탐험 중", DirX = 1, DirY = -1, BiomeId = 2, Where = "늪", Biome = "Swamp" },
         };
@@ -30,6 +30,7 @@ public class WorkStateTests
         Assert.False(back[1].Resume);
         Assert.False(back[1].HasZone);
         Assert.Equal(ReadyWhen.Morning, back[1].Ready);
+        Assert.Equal(3780.5, back[1].NotBefore);
         Assert.Equal("구리 광석 20", back[1].Label);
         Assert.Equal(WorkKind.Explore, back[2].Kind);
         Assert.Equal("east", back[2].Arg);
@@ -109,6 +110,24 @@ public class WorkStateTests
         Assert.False(WorkState.Expired(p, 100 + Replies.Timeout));
         Assert.True(WorkState.Expired(p, 100 + Replies.Timeout + 0.01));
         Assert.False(WorkState.Expired(null, 1e9));
+    }
+
+    [Fact]
+    public void MorningWaitsForNextMorning()
+    {
+        const double len = 1200;
+        // 하루 0.74(곧 밤)에 "응" → 다음 날 0.15
+        Assert.Equal(len + 180, WorkState.NextMorning(0.74 * len, len), 6);
+        // 자정 넘은 새벽(다음 날 0.05)에 물으면 그날 아침
+        Assert.Equal(len + 180, WorkState.NextMorning(len + 0.05 * len, len), 6);
+        // 아침 시작 바로 뒤면 다음 날
+        Assert.Equal(2 * len + 180, WorkState.NextMorning(len + 0.2 * len, len), 6);
+        var w = new WorkItem { Ready = ReadyWhen.Morning, NotBefore = len + 180 };
+        Assert.False(WorkState.IsReady(w, 0.74 * len, false)); // 아직 낮이어도 아침 전이면 안 꺼냄(질문 되풀이 방지)
+        Assert.False(WorkState.IsReady(w, len + 100, true));
+        Assert.False(WorkState.IsReady(w, len + 200, true)); // 시각은 지났어도 아직 어두우면
+        Assert.True(WorkState.IsReady(w, len + 300, false));
+        Assert.True(WorkState.IsReady(new WorkItem(), 0, true)); // 조건 없음
     }
 
     [Fact]
