@@ -1,11 +1,14 @@
 외부 모드 (저장소에는 메모만, 파일은 올리지 않음)
 ======================================================================
 
-ChestTag — 상자 이름표(태그) 모드. 상자 역할(장비·음식/미드·재료)을 이 태그로 가린다(decisions.txt 2026-10-21, I 항목).
-- 출처: Nexus Mods, Valheim 모드 번호 4388. 받은 파일 이름 "ChestTag 1.0.0 Nexus 4388 1.0.1 2026-10-11T22-45Z"
-  (모드 버전 1.0.1로 보임, DLL 파일 버전 정보는 0.0.0.0이라 확인 불가). 사용자가 2026-10-22에 받아 설치.
-- 설치 위치: <게임>\BepInEx\plugins\ChestTag\ (ChestTag.dll, fonts\ 글꼴 2개 + OFL 라이선스)
-- ChestTag.dll SHA-256: 11f7fd5201fefb2879471a7db9a1e0a7dd40f414baa682e812027f2d8be97b43
-- 저장소에 안 올리는 이유: 저장소가 공개이고 DLL의 재배포 허락을 확인하지 못함(글꼴만 OFL). 코드를 가져오지 않는다.
-- 우리 모드는 ChestTag의 태그를 읽기만 한다. 저장 방식(상자 ZDO 키 등)은 설치된 DLL을 ilspycmd로 임시 폴더에 풀어 확인(저장소에 올리지 않음).
-- 새 PC·재설치 때: Nexus에서 같은 버전을 받아 위 위치에 넣는다. 없으면 우리 모드는 "태그 없음 = 거점 상자 전부"로 동작해야 한다.
+CustomChestName — 상자 이름 바꾸기 모드. 이름으로 상자 역할(장비·음식/미드·재료·손대지 않음)을 가린다(I 항목, vh-loop-prompt.txt 1-2).
+- 사용자 결정 2026-10-22: ChestTag(Nexus 4388) 대신 이것(이름만 있는 모드라서). ChestTag는 게임 plugins에서 뺐음(원본은 사용자 Downloads에).
+- 출처: Thunderstore 패키지 GemHunter1-CustomChestName-1.1.2 (manifest website_url: https://www.nexusmods.com/valheim/mods/1781).
+  manifest 의존성 denikson-BepInExPack_Valheim-5.4.2350. README 변경 기록 "v1.1.2 updated for Valheim 1.0.7" (우리 기준 게임 1.0.20 → 시험으로 확인).
+- 쓰는 법: 망치 같은 도구를 들었다가 허리에 차고(무기 숨기기, 기본 R) 상자에서 Shift+E. 이름 최대 32자.
+  서버에 모드가 없어도 됨, 이름을 보거나 바꾸려면 그 사람에게 모드가 있어야 함.
+- 설치 위치: <게임>\BepInEx\plugins\CustomChestName\ (ValheimChestName.dll, manifest.json)
+- ValheimChestName.dll SHA-256: afc05c2d65fdcc58c3d33d84cd4a69d9ffe44e0a5d0faa8be7ea80ae96c0efb7
+- 저장소에 안 올리는 이유: 저장소가 공개이고 패키지에 라이선스 파일이 없어 재배포 허락을 확인하지 못함. 코드를 가져오지 않는다.
+- 우리 모드는 이름을 읽기만 한다. 저장 위치(상자 ZDO 키 등)는 설치된 DLL을 ilspycmd로 임시 폴더에 풀어 확인(저장소에 올리지 않음).
+- 새 PC·재설치 때: Thunderstore에서 같은 버전을 받아 위 위치에 넣는다. 없으면 우리 모드는 "이름 없음 = 거점 상자 전부"로 동작해야 한다.
