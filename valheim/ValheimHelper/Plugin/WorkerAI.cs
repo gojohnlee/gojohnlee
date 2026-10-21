@@ -49,6 +49,7 @@ namespace ValheimHelper
         public string FollowName { get; private set; }
 
         ZDOID m_follow = ZDOID.None;
+        float m_farSayAt;
         float m_stuckTimer;
         Vector3 m_lastPos;
 
@@ -421,6 +422,7 @@ namespace ValheimHelper
                     Vector3 pos = target.GetPosition();
                     float d = Vector3.Distance(pos, transform.position);
                     if (d > 200f) { Lost(npc); break; } // 포탈 등으로 사라짐. 포탈 따라가기는 ⑤ 단계.
+                    if (d > 20f && Time.time >= m_farSayAt) { m_farSayAt = Time.time + 30f; npc.Say("escort.far"); } // 동행자와 20m 유지(구상서 8-1)
                     // 같이 간 동료(3-2장)가 일을 마치고 쉬면 따라가기도 끝
                     foreach (var lead in WorkerNpc.All)
                         if (lead != npc && lead.GetZDOID() == m_follow && (lead.Ai.Current == Mode.Idle || lead.Ai.Current == Mode.Home)) { GoHome(false); break; }
