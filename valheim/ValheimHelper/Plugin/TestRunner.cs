@@ -33,6 +33,8 @@ namespace ValheimHelper
         static float s_autoWait;
         static Terminal s_terminal;
         static float s_startTime;
+        static float s_startReal;
+        static int s_startFrame;
         const float AutoTimeout = 600f;
 
         static string PluginDir => Path.GetDirectoryName(Plugin.Instance.Info.Location);
@@ -42,6 +44,8 @@ namespace ValheimHelper
             if (Running) { t?.AddString("이미 시험 중입니다."); return false; }
             Running = true;
             s_startTime = Time.time;
+            s_startReal = Time.realtimeSinceStartup;
+            s_startFrame = Time.frameCount;
             Minimized.Release();
             s_terminal = t;
             if (!s_auto) s_report.Clear(); // 자동 시험 여러 개는 한 보고에 이어 쓴다
@@ -60,6 +64,8 @@ namespace ValheimHelper
         {
             Running = false;
             s_report.Add($"시간: {Time.time - s_startTime:0}초"); // 시험 스크립트 요약에 시험별로 보인다(평소보다 오래 걸린 것 알아채기)
+            float real = Mathf.Max(0.001f, Time.realtimeSinceStartup - s_startReal);
+            s_report.Add($"프레임: 평균 {(Time.frameCount - s_startFrame) / real:0} FPS (실시간 {real:0}초)"); // 시험 틀 바꾸기: 동시 시험 때 느려짐을 보기 위함
             var lines = new List<string>(s_report.Count + 1) { Summary(s_report) };
             lines.AddRange(s_report);
             try { File.WriteAllLines(Path.Combine(PluginDir, "diag.txt"), lines.ToArray()); }
