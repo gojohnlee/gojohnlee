@@ -1,0 +1,58 @@
+발헤임 일꾼 NPC — 코드 지도 (어느 기능이 어느 파일에 있나). 파일을 통째로 읽기 전에 여기서 찾고, 그 부분만 grep으로 읽는다.
+위치: valheim/ValheimHelper/  Core = 게임 무관 판단·계산(netstandard2.0, xunit 테스트 Tests/), Plugin = 게임 연결(BepInEx, net462).
+줄 수는 2026-10-21 기준.
+
+----------------------------------------------------------------------
+기능 → 파일
+----------------------------------------------------------------------
+채팅 명령 해석        Core/Chat/ChatParser.cs(309) ChatCommand.cs(명령 종류) ItemAliases.cs(물건 별칭) Places.cs(방향·바이옴)
+채팅 주고받기          Plugin/ChatNet.cs(VH_Chat→호스트, VH_Say 말풍선) Items.cs(번역 이름→프리팹)
+명령 나누기·실행        Plugin/Commands.cs(262) + Core/Npc/Dispatch.cs(받을 NPC, 대답 받을 NPC)
+출발 전 판단·질문·대답  Core/Npc/Departure.cs(Judge, Replies) + Plugin/Departures.cs(462: 입력 모으기, 질문 대기, 제작 계획 말하기, 자동 보충, !기억)
+대사                  Core/Npc/Speech.cs(키별 대사, SCV/알라라크) Josa.cs(조사)
+NPC 몸                Plugin/WorkerNpc.cs(504: 외형, 말하기, 음식, 미드, 사망·묘비, 스킬 재정의) WorkerPrefab.cs(Player 복제)
+NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 걷기 MoveToPoint, 점프, 구덩이 경사로, 물 판단, 대기열 Queue)
+위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook)
+장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
+지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도)
+채집                  Plugin/Work/GatherJob.cs(771: 도구→찾기→다가가기→캐기→줍기→귀환→상자) ResourceCatalog.cs(무엇을 무엇으로 캐나)
+탐험 작업              Plugin/Work/ExploreJob.cs
+출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
+묘비 회수              Plugin/Work/GraveJob.cs
+상자                  Plugin/Work/Chests.cs(!상자 지정, 거점 20m)
+스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
+제작 계획              Core/Work/CraftPlan.cs(426: RecipeBook·Facilities·CraftPlanner·시뮬레이션) + Plugin/Work/Recipes.cs(게임 데이터→RecipeBook, 거점 설비)
+세트메뉴·자동 보충      Core/Work/SetMenus.cs Refill.cs  저장: Brain.Sets/Refill(vh_sets, vh_refill)
+Claude 답 검사         Core/Chat/ClaudeReply.cs(RateLimiter, ClaudeReply.Parse, MiniJson) — 실제 호출은 아직 없음
+물·구덩이 판단         Core/Work/Water.cs(WaterRule) Climb.cs(IsPit, CarveDir)
+거점 깃발·소환          Plugin/BaseFlag.cs Workers.cs(설정 이름, 소환·추적, AllZdos)
+먼 구역 유지           Plugin/FarZones.cs(패치 3곳)
+바닐라 규칙 잇기 패치   Plugin/NpcPatches.cs(갑옷 계산, 땅 파기 막기 NoDig) Buildings.cs(건축물 피해 없음)
+플러그인 시작          Plugin/Plugin.cs(Update: Workers, Brain, Departures.Tick, TestRunner)
+
+게임 안 시험           Plugin/TestRunner.cs(공통·자동 실행·diag.txt) AutoStart.cs(월드 자동 입장) Minimized.cs TestTerrain.cs(판 땅 되돌림)
+                      NpcTest FlagTest GatherTest(wood·stone·copper) PrepTest DeathTest FightTest ExploreTest PitTest FarZoneTest
+PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh
+
+ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills
+
+----------------------------------------------------------------------
+확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
+----------------------------------------------------------------------
+- 몬스터 최대 체력 = 기본 × 레벨(Character.SetupMaxHealth). 별 하나 = 레벨 +1.
+- 밤 = 하루 비율 0.25 이하 또는 0.75 이상(EnvMan.CalculateNight). EnvMan.m_dayLengthSec(코드 기본 1200, 프리팹 값은 미확인), GetDayFraction().
+- 스킬: Skills.Skill.Raise — 쌓인 값 += m_increseStep × factor × Game.m_skillGainRate, 요구치 floor(레벨+1)^1.5 × 0.5 + 0.5.
+  GetSkillFactor = 레벨/100, GetRandomSkillFactor = lerp(0.4,1,계수) ±0.15. Character 기본: GetSkillFactor 0, RaiseSkill은 길들인 것만,
+  GetRandomSkillFactor = sqrt(0.75~1) × ZDO 값 → NPC는 재정의함. 맞힐 때 Attack이 m_character.RaiseSkill 부름. 이름 "$skill_"+종류 소문자.
+- 제작: ObjectDB.m_recipes(Recipe: m_item, m_amount, m_enabled, m_craftingStation, m_minStationLevel, m_resources[m_resItem, m_amount],
+  m_requireOnlyOneIngredient). CraftingStation.FindClosestStationInRange(name, pos, range), GetLevel()(확장 포함).
+- 가공: Smelter(m_conversion[m_from,m_to], m_fuelItem, m_fuelPerProduct 기본 4, m_secPerProduct, m_maxOre, m_maxFuel, m_name),
+  Fermenter(m_conversion[m_from,m_to,m_producedItems], m_fermentationDuration), CookingStation(m_conversion[m_from,m_to,m_cookTime], m_slots, m_fuelItem).
+  CharacterDrop.m_drops[m_prefab]. ZNetScene.m_prefabs, ObjectDB.m_items.
+- Inventory.CountItems(이름), GetEmptySlots(). HitData.DamageTypes.Modify(배율), ApplyArmor.
+- 바닐라 RPC_Damage는 플레이어만 갑옷 계산(→ NpcPatches.ArmorCounts). 바닐라 Attack은 플레이어 도구만 닳게 함(→ 직접 깎음).
+- ItemDrop.Pickup(Humanoid)의 소유권 대기는 줍는 쪽을 Player로 캐스팅 → NPC면 NRE(→ CanPickup이면 Humanoid.Pickup).
+- 곡괭이 휘두름이 바위보다 땅에 먼저 닿으면 땅만 판다(Attack.SpawnOnHitTerrain → NoDig 패치).
+- 순간이동은 transform과 m_body 위치를 같이 바꿔야 한다. Humanoid 길찾기는 물 위도 길로 침(→ HumanoidAvoidWater).
+- Minimap.AddPin 마지막 인자가 Splatform 형식(리플렉션으로 부름), Minimap.Explore는 비공개.
+- 점프: m_jumpForce 8, 앞 2, 제자리 1.49m. 플레이어 충돌체 반지름 0.49 높이 1.85.

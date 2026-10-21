@@ -1,0 +1,221 @@
+발헤임 일꾼 NPC — 지난 기록 보관 (2026-10-21까지의 progress.txt 원문)
+평소엔 읽지 않는다. 예전 결정·시험 결과·원인 분석이 필요할 때만 grep으로 찾아 읽는다.
+
+발헤임 일꾼 NPC — 진행 상황 (세션이 끊겨도 여기서 이어간다)
+
+작업 규칙
+- 한도로 언제든 끊길 수 있다. 15분마다(그 사이 빌드·테스트가 통과하면 그때도) 커밋·푸시하고 이 파일을 갱신한다.
+- 새 세션: 이 파일 → CLAUDE.md 발헤임 섹션 → 구상서(docs/valheim/concept-v1.txt) 순서로 읽고 "진행 중"부터 이어간다.
+
+======================================================================
+PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 세션 컨텍스트가 차서 사용자 PC의 Claude Code로 넘어감
+======================================================================
+이 세션은 사용자 PC(Windows, 게임 설치됨, 호스트)에서 돈다. 사용자 손을 빌리지 않고 직접 빌드·실행·확인한다.
+1. 저장소: git checkout valheim (발헤임 작업은 이 브랜치에만, 푸시도 valheim으로 — 사용자 승인).
+2. 도구 확인: git, dotnet(.NET SDK 10), ilspycmd(dotnet tool install -g ilspycmd). 없으면 사용자에게 설치를 부탁(winget).
+3. 게임 DLL: 비공개 저장소 필요 없음. 게임 폴더 C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed
+   (csproj가 자동으로 찾음. 다른 라이브러리면 dotnet build ... -p:ValheimRefs=<Managed 폴더>).
+   게임 코드 읽기: ilspycmd -p -o <임시폴더> "<Managed>\assembly_valheim.dll" (결과는 저장소에 올리지 않음).
+4. 빌드: Git Bash에서 ./scripts/valheim-build.sh (빌드 + 게임 Mono에 없는 참조 검사 + valheim/dist 복사).
+   Core 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx
+5. 게임 시험(손 안 댐): PowerShell에서
+   $env:VH_DLL="<저장소>\valheim\ValheimHelper\Plugin\bin\Release\ValheimHelper.dll"; $s=[IO.File]::ReadAllText("<저장소>\scripts\valheim-test.ps1",[Text.Encoding]::UTF8); & ([scriptblock]::Create($s))
+   (-File로 돌리면 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨려 구문 오류. ilspycmd 없으면 dotnet tool install -g ilspycmd.
+    이 PC에는 파이썬이 없다(python은 스토어 바로가기) → 파일 수정은 Edit 도구로. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
+   → 설치 → Steam으로 실행(인자 없음) → 인트로 건너뜀 → te4st41 자동 입장 → 시험 차례로 → 2초 뒤 자동 종료 → 결과 출력.
+   시험 고르기: $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본), 그 밖에 vh_preptest·vh_deathtest·vh_fighttest·vh_exploretest·vh_fartest. 월드: $env:VH_WORLD.
+   사용자가 PC로 다른 게임을 하는 중이면 $env:VH_MIN='1'(창 최소화·소리 끔, 사용자 요청 2026-10-20). 켤 때 1~2초 화면이 넘어갈 수 있다.
+   결과 파일: <게임>\BepInEx\plugins\ValheimHelper\diag.txt, 오류는 <게임>\BepInEx\LogOutput.log.
+   게임은 사용자 PC 화면에서 켜진다 — 사용자가 PC를 쓰고 있지 않을 때 돌린다(시작 전에 한 번 물어본다).
+6. dist DLL도 커밋한다(방식 A 한 줄 명령이 raw.githubusercontent의 valheim/dist를 받음).
+
+진행 중 (2026-10-21 백업 시점: 태그 valheim-0.3.7, 게임 내 시험 8종 전부 PASS)
+- 지금 상태: ①② 완료, ③ 핵심 완료(장비·음식·갑옷·사망·묘비 회수·위험 감지·싸움). 시험(최소화): npc 12/12, flag 8/8,
+  wood 9/9(2번), stone 9/9, prep 18/18, death 17/17, fight 11/11, explore 15/15. Core 테스트 180. 코드 약 7,900줄(시험 포함).
+- 다음(③ 남은 것, 구상서 8-1·8장·3-1·4장):
+  1) 장소 기억 100곳(만난 적·결과·위험도 감쇠, 죽은 곳 오래 남김) + !기억 대답 + 출발 전 판단과 반응(8-1: 경고·조건·도움 요청·대안).
+  2) 습격 귀환(거점 습격이면 돌아와 같이 싸움), 근처 플레이어가 싸우면 같이 싸움, 위급하면 "도와줘요!!" + 지도 핑.
+  3) 스킬 성장(3-1: 10 시작·70 상한·죽어도 유지, 5마다 알림), 스태미나, 거점 작업대·대장간에서 수리(4장), 저항 미드·상태 효과 대응.
+  4) 남은 ② 작은 것: 가르쳐 주기(채팅·핑, Claude 연동과 같이).
+- 알려진 한계: NPC 스태미나 없음(무한), NPC가 때린 피해도 몬스터처럼 난이도 배율을 받음(RPC_Damage: 공격자가 플레이어가 아니면),
+  방패 막기 안 함, 적 저항(약점) 안 셈, 물 건너 아는 곳은 직선으로만 판단(호수 돌아가기 없음).
+
+클라우드 세션 설계 (2026-10-21, 사용자는 외출 중 — PC 없음): 게임 없이 짤 수 있는 것부터 클라우드에서.
+- 설계 완료: docs/valheim/design-depart-craft.txt (A 장소 기억 100곳, B 출발 전 판단과 대답, C 제작 계획 DAG·시간 시뮬레이션). 구현 전.
+- 사용자 결정(F장, 확정): 제작법은 전부 앎. 일하는 중 새 명령은 "빨리·이거부터"면 바로(멈춘 일은 대기열 맨 앞), 아니면 "~부터 하고 갈게요" + 대기열.
+- 구현 순서(설계 다음): 1 장소 기억 → 2 출발 전 판단 → 3 대답 받기 → 4 스킬 성장 → 5 제작 계획 → 6 세트메뉴 → 7 자동 보충 → 8 Claude 연동 안전장치. — 1~8 Core 완료(2026-10-21).
+  클라우드에서 짠 게임 연결 코드는 "[게임 시험 안 됨]"으로 표시해 PC 세션이 먼저 시험.
+- 구현됨 (Core 테스트 234 통과, 플러그인 빌드 통과):
+  1 장소 기억 Core/Npc/PlaceBook.cs (+ Brain.Places, ZDO vh_places). 2·3 출발 전 판단·대답 Core/Npc/Departure.cs(Judge, Replies),
+  ChatParser 대답(그래도 가·같이 가자·딴 데로 가)·급함 낱말(Urgent), Dispatch.Answerer, 대사 depart.*/ask.*/note.*/answer.*/memory.
+  [게임 시험 안 됨] Plugin/Departures.cs(입력 모으기·질문 대기·3분 보류·조건 5초 재확인·!기억), Guard 마주침 기록(Tally/CloseEncounter/Resolve,
+  HitOf/TakenFor), WorkerNpc.OnDeath 죽은 곳 기록, WorkerAI 대기열(Queue/Interrupt/NextQueued, 질문 중엔 안 꺼냄)·물 막힘/구덩이 특이점·
+  동료 따라가기 끝(리더가 쉬면), IWorkerJob.Label, !탐험도 대기열 규칙. 시험 중엔 질문에 자동 "그래도 가"(Departures.TestAutoGo).
+  PC에서 먼저: 기존 시험 8종 회귀 + 출발 전 판단 시험(vh_departtest, 아직 없음 — TestAutoGo=false로 재고·밤·죽은 곳·위험 질문과 대답 확인).
+  4 스킬 성장 Core/Npc/SkillBook.cs(바닐라 Raise·요구치·RandomFactor, 10~70, 5마다 알림) [게임 시험 안 됨]: WorkerNpc.RaiseSkill/GetSkillFactor/
+  GetRandomSkillFactor 재정의(ZDO vh_skills, 증가폭은 플레이어 프리팹 Skills.m_skills), 직접 피해도 스킬 반영·상승, Guard 한 방에 평균 스킬 계수,
+  !스킬, 출발 전 판단의 스킬 낮음. 주의: 예전엔 NPC 피해 계수가 바닐라 몬스터 값(약 0.93)이라 스킬 100처럼 셌음 → 이제 스킬 10이면 0.46.
+  나무·돌 채집이 느려지고 싸움 판단이 조심스러워짐(fight·wood·stone 시험 시간·결과 다시 볼 것).
+  5 제작 계획 Core/Work/CraftPlan.cs(RecipeBook·Facilities·CraftPlanner: 재고 예약, 설비 우선, 묶음 올림·남는 것 재사용, 설비 없음은 할 수 있는 데까지,
+  범위 밖·모름·순환, 용량 쪼개기·여러 대, 일꾼 1명 시뮬레이션(싣기 > 꺼내기 > 남은 길 긴 것), 2시간 거절). [게임 시험 안 됨] Plugin/Work/Recipes.cs
+  (ObjectDB 제작법·Smelter/Fermenter/CookingStation 변환·드롭표 → RecipeBook, 거점 30m 설비), !구리주괴 20 → 계획만 말함(craft.* 대사; 실행은 ⑥).
+  6 세트메뉴 Core/Work/SetMenus.cs(10개·이름·만든 사람·고치기·Targets) + 7 자동 보충 Core/Work/Refill.cs(물건·세트 기준치, 10% 여유, Due).
+  [게임 시험 안 됨] Brain에 vh_sets·vh_refill, !세트(목록)·!세트 n 수량(계획만, 범위 밖 빼고), !채워 물건 수량·!채워 세트 n 수량·!채워 끔,
+  1분마다 한가한 NPC가 채집으로 나는 물건을 채우러 감(묘비 회수 먼저, 질문이 필요한 상황이면 묻지 않고 그 물건 10분 쉼).
+  세트 저장은 말(Claude 해석, 8)이나 "지금 먹은 거"(플레이어 쪽 RPC 필요)로 — 아직 들어오는 길 없음.
+  8 Claude 연동 안전장치 Core/Chat/ClaudeReply.cs: RateLimiter(Sonnet 1분 6번), ClaudeReply.Parse(JSON 앞뒤 설명 허용, chatter면 침묵,
+  허용 작업만 item/keep/keepoff/explore/escort/stop/status/memory/knowledge/skills/setmake/setsave/setedit, 모르는 물건·NPC·수량 버림,
+  수량 상한 999, 작업 5개, 답장 150자·줄바꿈·<> 제거), MiniJson(게임 Mono에 System.Text.Json 없음). CommandKind.SetSave/SetEdit 추가.
+  남은 것(PC 세션): 실제 claude CLI 호출(별도 프로세스·30초 제한·도구 끔·모델 haiku/sonnet 별칭 — 옵션 이름은 설치된 버전으로 확인, 구상서 5-1 [미확정]),
+  보낼 정보(작업 목록·재고 요약·제작법·NPC 상태·말투·기억) 지시문, 결과 ClaudeTask → Commands 실행(SetSave/SetEdit 처리 포함), "생각 중…" 말풍선.
+  [기본안] 미드 회복 50, 안 먹었으면 음식 체력 +50으로 셈, 하루 1800초(감쇠용), 동행은 대답한 사람이 따라오면 Guard가 힘을 합쳐 셈(앞장서기·20m 유지는 아직).
+
+0.3.8 진행 중 (2026-10-21, 사용자 관찰: "점프를 안 해. 돌 캘 때 맨땅을 파서 구덩이에서 못 나와. 돌은 땅 파기 최대한 자제,
+  구리는 필연적으로 같은 상황 → 점프나 길 만들기 필요") — 사용자는 자는 중, 게임 시험은 세션이 알아서(허락 받음), 15분마다 백업.
+- 점프(WorkerAI): 앞 1m에 무릎 높이 가파른 턱 + 1.4m 높이는 비었고 속도 < 1m/s면 뜀, 1.5초 못 가면 두 번까지 뛰어 보고 그다음 비켜 가기.
+  바닐라 Character.Jump(일꾼은 몸 앞쪽으로). 측정: 점프 힘 8·앞 2, 제자리 점프 1.49m, 충돌체 반지름 0.49/높이 1.85.
+- 구덩이 탈출(Core Work/Climb: 8방향 중 6곳 이상 벽 1m 초과면 구덩이, 앞쪽 반원 중 가장 낮은 벽): 두 번 뛰어도 갇혔고 곡괭이가 있으면
+  벽(앞 1.2m, 발 위 1m)에 곡괭이질 → 1.2초 올라가 봄 → 반복(30번까지, 실패하면 1분 쉼). 그냥 언덕·절벽은 안 깎음(길 만들기는 시킬 때만).
+- 땅 파기 막기(NpcPatches.NoDig: Attack.SpawnOnHitTerrain): 일꾼은 WorkerAI.DigAllowed일 때만(광석 땅속 조각·경사로 깎기). 바닐라 곡괭이는
+  휘두름이 바위보다 땅에 먼저 닿으면 땅만 파고 끝남 → 흙 파기(digg_v3)는 맞은 곳보다 0.5m 아래로(반지름 1.5).
+- 겨누기(GatherJob.RockAim): 남은 조각 중 땅 위로 드러난 가장 가까운 조각. 다 땅속이면 손으로 줍는 곳에서도 나오는 물건(돌·부싯돌,
+  ResourceCatalog.WorthDigging)은 남겨 두고, 광석은 원래 땅에서 3m까지 파 내려감(판 것도 진척, 두 번 안 닿으면 3초 다가감).
+  한 대상 시간 제한: 진척 없이 30초 또는 전체 10분(광맥).
+- 시험: vh_pittest(구덩이 5개: 넓은 1.0·1.8·2.8m, 좁은 2.0·3.2m; 걷기만 5초→점프 10초→경사로 75초; 앞뒤로 지형 되돌림 TestTerrain),
+  vh_coppertest(거점 12m 앞에 구리 광맥을 놓고 !구리 10), 돌·구리 시험에 땅 판 횟수·막힘 순간이동(WorkerAI.StuckTeleports) 검사.
+  첫 vh_pittest(넓은 구덩이 3개만): 1.4m 걷기로 1초, 2.3m 점프 1번, 3.4m 점프 3번으로 나옴. 그 시험이 남긴 구덩이 3개는 다음 vh_pittest가 되돌림.
+- 시험 결과(2026-10-21 01:00): vh_pittest 10/11 — 구덩이 7개 모두 탈출(좁은 5.3m는 경사로 곡괭이질 9번 46초, 점프 끈 3.3m는 2번 15초).
+  FAIL 1개는 되돌림 확인 방식(원래 땅 WorldGenerator와 비교, 0.8m) → 파기 전 높이(rim)와 비교로 바꿈(시험 전).
+  vh_stonetest PASS(땅 판 0번). vh_coppertest FAIL: 광맥(rock4_copper_frac, 조각 약 120개·조각당 3번)을 캐며 곡괭이 2개가 다 닳음.
+  원인과 고친 것(아래 마지막 수정은 게임 시험 전): 목표만큼 들면 광맥 중간에도 귀환, 광석도 드러난 조각이 있으면 안 파고(다 묻혔을 때만 3m까지),
+  땅에 먼저 닿아 막힌 휘두름은 겨눈 조각에 맞은 것으로, 연장이 부러지면 모은 것부터 상자에, [시험 안 됨] 일하는 중 5초마다 둘레(14m) 드롭 주우러 감.
+- 다음 할 일: vh_coppertest·vh_pittest·vh_stonetest·vh_woodtest 다시 돌려 PASS 확인 → 태그 valheim-0.3.8.
+  알려진 것: 시험의 Workers.DespawnAll이 Brain 로드 전이면 지식이 비워짐(지식 117 → 6구역, 시험 환경 문제).
+
+0.3.7에서 한 것 (2026-10-20~21)
+- 느린 걸음 = 수영(m_swimSpeed 2): 동쪽 해협(깊이 18m, 300m)을 헤엄쳐 건넘. 그 바다의 WorldGenerator 바이옴은 "초원" → 물 길이로 판단.
+  고침: 길찾기 HumanoidAvoidWater(Humanoid는 물 위도 길로 침), MoveToPoint 물가 판단(2.5m 앞이 1.2m보다 깊으면 32m 내다봐
+  좁은 강만 헤엄, 아니면 멈춤 WaterBlockedTime → 작업이 3초 뒤 다른 목표; 목표가 바뀌면 다시 셈), 빠지면 마지막 마른 땅으로,
+  탐험·찾기·아는 곳 고를 때 물 건너편 제외(Core WaterRule, ExplorePlan/SearchPlan reachable).
+  [확정 2026-10-20] 좁은 강(깊은 물 24m 이하)은 헤엄, 늪·바다 바이옴의 깊은 물과 긴 물은 안 건넘.
+- 최소화 시험: $env:VH_MIN='1' → 창 최소화(스크립트가 먼저 내리고 모드가 첫 시험까지 지킴)·소리 끔·백그라운드 30fps. 로아 중 문제없음(사용자).
+- ③-1 출발 준비(Work/Prep.cs·Gear.cs): 장비 상자에서 가장 좋은 무기·방패·투구·갑옷·바지·망토·벨트·체력 미드 3, 헌 장비 돌려놓기,
+  음식 상자에서 3종(Core Meals: 바닐라 규칙, 최대 체력 25→71), GatherJob 처음·짐 넣은 뒤마다, ExploreJob 처음. 음식 없으면 한 번 알림.
+  갑옷: 바닐라 RPC_Damage는 플레이어만 갑옷 계산 → NpcPatches.ArmorCounts(트랜스파일러, IsPlayer 한 곳) + GetBodyArmor 등. 둔기 20 → 13.
+- ③-2 사망: WorkerNpc.OnDeath 재정의 → 플레이어 묘비(세계 죽음 규칙)·음식/상태효과 잃음·거점 즉시 부활(m_isDead 되돌림), 지도 죽음 핀
+  (Scout.DeathPin 리플렉션: AddPin 마지막 인자가 Splatform 형식), ZDO vh_graves(시도 횟수), 한가하면 GraveJob(Prep → 묘비 → 꺼내 입기 →
+  거점 → 들고 다닐 것 말고는 상자에), 밤엔 아침까지, 2번 실패하면 위치 알리고 포기, !멈춰면 회수도 쉼.
+  순간이동은 transform과 m_body 위치를 같이 바꿔야 함(안 그러면 원래 자리로 돌아감).
+- ③-3 위험 감지(Core Npc/Danger.cs + Work/Guard.cs, 0.5초마다): "잃을 체력 ÷ 체력"(약한 적부터 잡는 동안 살아 있는 적 모두에게 맞음,
+  갑옷·난이도 반영, 몬스터는 내가 두 번 칠 때 한 번[기본안 0.5]). 순서: 체력 낮으면 미드 → 보스·최대 체력으로도 2배 넘으면 도망(그곳 버림) →
+  미드 없으면 물러남 → 60%(알라라크 80%) 이하 싸움, 넘으면 40m 물러나 30초 뒤 재시도(쫓아오면 다시, 3번이면 도망; 2번 물러나면 그곳 버림).
+  셈에 넣는 적: 나·동행을 노림/15m 안/보스/혼자서도 못 이길 만큼 셈(먼 잔챙이 제외). 사슴 같은 AnimalsVeg 제외(사냥은 ⑧).
+  처음 보는 적: 체력은 보이는 값, 한 방은 몸집 짐작(사람 크기 10), 싸워 보면(맞거나 때리면) 실제 값을 배움(Brain.Foes, ZDO vh_foes).
+  알림은 같은 것 30초 안에 반복 안 함(전투·음식·묘비 알림). 15m 안의 적은 못 알아챘어도 먼저 침. 닿지 않는 적은 20초 뒤 1분 무시.
+- 나무를 쓰러뜨린 뒤 4초 물러나 기다렸다 줍기(구르는 통나무에 깔려 죽음, 체력 25). 시험 코드 예외는 바로 FAIL(TestRunner.Safe).
+
+이전 기록
+- 0.3.6 PC 시험(2026-10-20): npc·flag·wood·stone PASS, vh_exploretest PASS 13/13.
+  들어간 것: 조사 Josa("{item|는}"), 지식에 구역 바이옴·Summary, ExplorePlan(지도 경계, 방향 주면 앞으로 밀고 나감), Bearing(8방위),
+  BiomeNames, Scout(지도 읽기·밝히기 Minimap.Explore 비공개, 경계 고르기), GatherJob 새 땅 단계(찾기 15분 → 새 땅 30분, 밤이면
+  귀환, 모은 것 넣고 그만), ExploreJob(!탐험 방향/바이옴), !지식(짧게)·!기억(③ 전까지 빈 대답). Core 테스트 154.
+- 0.3.5 PC 시험 PASS(2026-10-20): npc 12/12, flag 8/8, wood 15개 55초, stone 10개 40초, LogOutput.log 예외 0건.
+  (기록) 줍기 NRE 수정 — ItemDrop.Pickup(Humanoid)의 소유권 대기(PickupUpdate)가 줍는 사람을 Player로 캐스팅해서
+  NPC면 NullReferenceException(0.3.4 로그 5번). 이제 플레이어 자동 줍기와 같게: CanPickup이면 Humanoid.Pickup, 아니면 RequestOwn.
+- [사용자와 같이] 거점 깃발이 작고 땅에 파묻혀 보임(piece_banner01은 벽걸이라 기준점이 위쪽인 듯). 기능은 PASS.
+  후보: 서 있는 기둥(wood_pole2 등)+배너, piece_maypole. 사용자: "다음 번에 같이 작업".
+- 그대로 둠(사용자 결정): NPC가 플레이어를 밀침 — 소환한 해골도 똑같이 밀어서 바닐라 충돌로 봄.
+
+사용자 피드백 모음(지금까지)
+- [결정 2026-10-21] 시험 대기 줄이기: ① 고정 대기(정해진 초) 대신 조건이 끝나면 바로 다음으로 넘어감,
+  ② 일꾼 2명(SCV·알라라크)이 같은 월드의 떨어진 곳에서 서로 다른 시험을 동시에 함(지금은 SCV만 일하고 알라라크는 놂).
+  서로 방해 안 하게 시험 장소를 충분히 떼고 결과는 시험별로 따로 기록. 게임 속도 올리기는 안 함.
+  [추가] 2명에 묶이지 않음: 시험할 때만 시험용 일꾼을 시험 수만큼(최대 8명) 불러 시험마다 한 명씩 맡김(실제 게임은 2명 그대로).
+  사용자 PC: RTX 4090, Ryzen 7800X3D, 램 64GB → 처음부터 8명으로. 발헤임은 CPU 한 코어 위주라 부하는 일꾼 수보다
+  동시에 켜 둔 시험 장소(먼 구역) 수에서 생김 → 프레임·시험 시간을 diag에 기록해 두고 문제 있으면 줄임.
+- 시험은 손이 안 가게(자동 입장·인트로 없음·경고창 없음·2초 종료·시작 3초). 줍는 속도 "아주 만족".
+- 이상 동작은 사용자가 화면으로 보고 알려 줌 → 고칠 때 원인을 게임 코드로 확인하고 대응.
+
+최근 시험 기록
+  0.3.4 결과: 4개 모두 PASS(npc 12/12, flag 8/8, wood 10개 30초, stone 11개 40초), 경고창·인트로 없이 자동 입장. 로그에 NRE 5번(위 0.3.5에서 수정).
+- ② 단계 0.3.4 사용자 PC 시험 대기(시험 4개 + 월드 자동 입장).
+  0.3.3 결과: 4개 모두 PASS(npc 12/12, flag 8/8, wood 10개 25초, stone 16개 55초), 월드 자동 입장 동작. 사용자: 줍기 정상이나 느림.
+  사용자 요청(방식 A 유지 = 한 줄 붙여넣기): 인트로 때문에 클릭 필요 → 자동 시험 때만 PlatformPrefs SkipIntroCinematic 가로채기,
+  Steam "사용자 지정 인수" 경고창 → 스크립트가 -console 없이 steam://rungameid로 실행, 시험은 콘솔 대신 TestRunner.Register로 직접 실행,
+  종료 대기 10초 → 2초. 줍기 빠르게: 0.25초마다 2m 안 물건 자동 줍기(플레이어와 같은 item 층 OverlapSphere), 줍기 대기 0.3초(베기 1.2초).
+  0.3.2 결과: npctest 12/12, woodtest PASS(12개 45초, 직접 피해 대체 2번), stonetest PASS(11개 50초), 상자 멀쩡,
+  flagtest 7/8(깃발 A에 NPC 나타남 — 3D 거리로 재서 높이차 때문에 실패, 이사 후 수평 근처인데 3D 7~8m).
+  사용자 관찰: 땅의 돌을 줍고(E) 한참 걸어갔다가 돌아와 주움(처음 2번) → 단계 바뀔 때 이전 걷기 방향이 남아서.
+  0.3.3: GatherJob.Go()에서 StopMoving, 줍기 대기 중 정지, 집 높이는 지형(GetGroundHeight), 시험은 수평 거리·지형 높이로 놓기,
+  AutoStart.cs(autotest.txt의 world=이름 → 메인 메뉴에서 시작→마지막 캐릭터→그 월드, 서버 안 엶; 스크립트 기본 te4st41, $env:VH_WORLD로 변경).
+  사용자 질문(2번째): "네가 직접 테스트 못 하나, 설치할 게 있으면 하겠다" → PC에서 Claude Code 세션을 여는 방법 안내(아래 답변).
+  0.3.1 결과: woodtest PASS(11개 45초), stonetest PASS(10개 55초), flagtest PASS, npctest 11/12(2호가 7m 밀림 — 사용자가 해골 소환).
+  사용자 관찰: ① 바위 위 상자를 NPC가 때려 부숨 ② 걷다 서다 반복 ③ 해골을 3초쯤 밀면서 감 ④ 깃발 작고 묻힘(다음에 같이).
+  0.3.2: WearNTear.Damage 패치로 일꾼 공격은 건축물에 피해 없음, 건축물 4m 안의 나무·바위는 고르지 않음(Buildings.cs),
+  BaseAI m_moveMinAngle 10 → 90(10°만 틀어져도 멈춰 서서 돌던 것), WorkerAI.MoveToPoint(길 못 찾으면 곧장 걷기,
+  1.5초 동안 0.75m 못 가면 1.2초 옆으로 비켜 가기 — 따라가기·귀환·채집 모두), npctest 2호 확인을 상태로.
+  알려진 한계: 길 없을 때 곧장 걷다가 물에 들어갈 수 있음(③ 위험 감지에서), 적과 싸우지 않음(③).
+  0.3.0 결과: vh_woodtest PASS(나무 10개 35초, 도끼 내구도 96/100), vh_flagtest PASS, vh_npctest는 시험이 낡아 1개 FAIL(!나무 50이 이제 실제 작업).
+  사용자 관찰: 큰 나무 한 번 치고 어린 나무를 침 → 어린 나무·그루터기를 "쓰러진 것"으로 우선한 탓.
+  0.3.1: 우선순위 통나무 30 > 큰 나무·바위 10 > 줍기 5 > 어린 나무·그루터기 0(그루터기는 TreeBase.m_stubPrefab으로 구별),
+  "연장 약함"은 벨 게 없을 때만 1번, 채집 일반화(맨손 Pickable.Interact·도끼·곡괭이, 방법은 게임 데이터 WaysFor),
+  진행 판정은 대상 ZDO DataRevision 변화(MineRock5 부위별 체력 대응), 직접 피해 때 가장 가까운 충돌체 지정,
+  시작 전 도구 확인(없으면 "연장 없어요"만). vh_stonetest(PickaxeAntler + 돌 10) 추가, WoodTest → GatherTest.
+  0.2.0 결과: vh_npctest 12/12, vh_flagtest 8/8 PASS(piece_banner01 복제, 망치 목록·재료 나무 10, 깃발 A에 2명 등장, B로 15초 만에 이사).
+  0.3.0: 나무 채집. Core/Work/Knowledge(구역별 본 자원·둘러봄, 텍스트 저장)·SearchPlan(거점 가까운 안 둘러본 밝혀진 구역).
+  Plugin/Work: ResourceCatalog(게임 프리팹에서 TreeBase/TreeLog/MineRock/MineRock5/Destructible → 도구·최소 단계·나오는 물건),
+  Senses(2초마다 40m 시야 → 지식, 구역 중심 12m면 둘러봄)·Brain(지식을 NPC ZDO vh_knowledge에 30초마다 저장),
+  Chests(!상자 지정: 말한 사람이 바라보는 상자 ZDOID를 VH_Chat에 같이 보냄, 깃발 20m 안만, 사용 중이면 기다림,
+  소유권 가져와 한 프레임에 읽고-고치고-저장), GatherJob(도구→찾기→다가가기→바닐라 StartAttack→안 닿으면 4번째부터 직접 피해
+  →줍기 ItemDrop.Pickup→귀환→상자 넣기, 시간 제한·건너뛰기). NPC 소지품 ZDO 저장(vh_inv). 도구 내구도는 직접 깎음
+  (바닐라 Attack은 플레이어 도구만 닳게 함). ② 지금은 도끼로 나오는 것만(곡괭이·돌·부싯돌은 다음 조각).
+  알려진 한계: 조사 붙이기(은/는) 안 함, NPC 스태미나 없음, 쓰러지는 나무에 NPC가 다칠 수 있음(③ 사망 처리 전).
+
+완료 기록
+- 2026-10-20: Core 프로젝트(valheim/ValheimHelper/Core, netstandard2.0) + Tests(xunit, net10.0) + CI(valheim-test.yml).
+  채팅 3갈래 해석기 Chat/ChatParser.cs (구상서 5장 명령표 전부, 이름 부르기, 짧은 대답, 수다 거르기). 테스트 108개 통과.
+  보조 에이전트 vh-standard(Sonnet)·vh-simple(Haiku) 생성.
+- 2026-10-20: 게임 DLL 받음(비공개 gojohnlee/valheim-refs, 게임 1.0.20 (n-41)). 세션에서 add_repo → /home/user/valheim-refs로 clone.
+  디컴파일: dotnet tool install -g ilspycmd; ilspycmd -p -o <스크래치>/vsrc /home/user/valheim-refs/assembly_valheim.dll (결과는 저장소에 올리지 않음)
+- 2026-10-20: 플러그인 프로젝트 valheim/ValheimHelper/Plugin (net462, BepInEx.Core 5.4.21 + UnityEngine.Modules 2022.3.62, 게임 DLL은 valheim-refs).
+  sln에 넣지 않음(CI에 게임 DLL 없음). 빌드: ./scripts/valheim-build.sh (빌드 + 게임에 없는 어셈블리 참조 검사 + valheim/dist 복사) → dist DLL 커밋(테스트 스크립트가 받음).
+  주의: ValueTuple·System.Runtime 등 게임 Mono에 없는 참조 금지(스크립트가 막음). 게임 Unity 6000.0.75 → 참조 UnityEngine.Modules 6000.0.75.
+  FarZones.cs: 먼 구역 유지 패치 3곳(ZoneSystem.CreateLocalZones 후처리, ZNetScene.CreateDestroyObjects 대체, ZDOMan.ReleaseNearbyZDOS 호스트 몫 대체 + IsInPeerActiveArea).
+  FarZoneTest.cs: 콘솔 명령 vh_fartest(멧돼지 추적 → 플레이어 약 1km 이동 → 60초 관찰 → 패치 끔 대조 → 귀환).
+  자동 시험: 스크립트가 플러그인 폴더에 autotest.txt를 만들면 월드 입장 10초 뒤 저절로 시험하고 끝나면 게임을 끈다(사용자는 월드 입장만).
+  이 클라우드 세션은 사용자 PC에 직접 접근 불가(사용자 질문함, 2026-10-20) → PC 일은 한 줄 명령 붙여넣기로.
+  PC 테스트: irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
+  알려진 한계: 호스트 영역 밖 StaticPhysics(떨어진 돌 등 정착)와 WearNTear(건물 지지력)는 바닐라대로 멈춤. 필요하면 나중에 패치.
+- 2026-10-20: ① 첫 조각 0.1.0. 게임은 Unity 6 → 참조 UnityEngine.Modules 6000.0.85로 바꿈.
+  WorkerPrefab(Player 프리팹 복제, Player·PlayerController·Talker·Skills 제거, Character/Humanoid 필드 복사 → WorkerNpc, + WorkerAI),
+  WorkerNpc(ZDO vh_name/vh_role/vh_home, 외형, TeleportTo, Say), WorkerAI(대기·따라가기·집에 가기, 15초 막히면 거점으로),
+  ChatNet(모든 접속자가 자기 채팅을 VH_Chat RPC로 호스트에 보냄 — 바닐라 일반 채팅은 15m 한정이라서. NPC 말은 VH_Say로 채팅창+말풍선),
+  Commands(① 단계: !같이 가자·!멈춰·!상태, 나머지 명령은 "아직 못 해요", 형식 틀린 !는 "! 명령으로"), Workers(설정 이름, vh_spawn/vh_despawn, 저장된 NPC 추적),
+  Items(물건 이름 → 프리팹), TestRunner(autotest.txt 자동 시험 공통), NpcTest(vh_npctest).
+  Core: Npc/Speech(대사·최근 줄 피하기), Npc/Dispatch(받을 NPC 고르기). 테스트 120개.
+  알려진 한계: NPC가 죽으면 바닐라 몬스터처럼 사라짐(③에서 묘비·부활), 세계 난이도 설정이 몬스터처럼 NPC에도 적용될 수 있음, PvP 켠 플레이어는 NPC를 때릴 수 있음.
+- 테스트: dotnet test valheim/ValheimHelper/ValheimHelper.slnx
+
+클라우드 세션(예전 방식) 참고: 게임 DLL은 비공개 저장소 gojohnlee/valheim-refs를 add_repo → /home/user/valheim-refs에 clone.
+
+다음 할 일
+- [x] 최신 assembly_valheim.dll 받기(게임 1.0.20)
+- [x] 먼 구역 유지 시험 PASS (2026-10-20, 게임 1.0.20): 1004m 떨어진 멧돼지 60초 유지 12/12·호스트 소유·AI 이동 7m, 패치 끔 대조 10초 뒤 사라짐.
+      사용자 PC에는 BepInExPack 5.4.2202(BepInEx 5.4.22)가 이미 설치돼 있었음. 'Unable to start Unity log writer' 오류는 BepInEx 기본 메시지라 무시.
+- [x] 게임 무관 로직 프로젝트 + dotnet test 뼈대, 채팅 해석기
+- [ ] Core 다음 후보(게임 DLL 없이 가능): 알림 도배 방지(30초)·Sonnet 호출 제한(1분 6번), Claude Code 호출 결과 JSON 검증,
+      장소 기억(100곳·위험도 감쇠), 위험 판단 규칙(8장 a~d), 대사 엔진(최근 줄 피하기)
+- [x] 발헤임용 PC 테스트 스크립트 scripts/valheim-test.ps1 (BepInEx 없으면 설치, Jötunn은 아직 안 씀)
+
+구현 단계 (구상서 13장)
+- [x] ① 거점 깃발, NPC 2명 소환, 채팅 명령, 알림 (0.2.0, 게임 내 PASS)
+- [x] ② 나무·돌·부싯돌, 상자 넣기, 지식 기록과 찾아다니기, 새 땅 탐험 (0.3.6~0.3.7, 게임 내 PASS)
+- [~] ③ 장비·음식, 위험 감지, 사망·부활 — 핵심 PASS(0.3.7). 남음: 장소 기억·출발 전 반응, 습격 귀환, 스킬, 수리
+- [ ] ④ 구리·주석
+- [ ] ⑤ 포탈 이용, 먼 구역 유지 완성
+- [ ] ⑥ 가공·제작(목표 물건 만들기)
+- [ ] ⑦ 철(지하묘지)
+- [ ] ⑧ 먹거리, 세트메뉴
+- [ ] ⑨ 농사, 평탄화, 길 만들기
+- [ ] ⑩ 자동 보충
+- [ ] ⑪ 산 ⑫ 평원 ⑬ 안개땅 ⑭ 애쉬랜드 ⑮ 딥노스
