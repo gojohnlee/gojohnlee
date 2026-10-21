@@ -5,7 +5,7 @@
     <label>shield guard</label>
     <description>A basic combat mech carrying a large directional shield and a weak compact gun. Its regenerating barrier intercepts incoming ground projectiles across a 2.5-cell-wide front, protecting allies behind it. Overload damages the chassis. Flanking attacks, melee and explosions bypass the shield; EMP disables it.</description>
     <statBases>
-      <MoveSpeed>3.2</MoveSpeed>
+      <MoveSpeed>3.8</MoveSpeed>
       <BandwidthCost>1</BandwidthCost>
       <MarketValue>900</MarketValue>
     </statBases>
