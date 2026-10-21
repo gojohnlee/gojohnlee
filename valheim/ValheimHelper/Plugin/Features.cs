@@ -8,7 +8,7 @@ namespace ValheimHelper
     /// </summary>
     public static class Features
     {
-        static ConfigEntry<bool> s_saveWork, s_knowExplored, s_claudeChat;
+        static ConfigEntry<bool> s_saveWork, s_knowExplored, s_claudeChat, s_runPlans;
         static bool? s_knowExploredOverride;
 
         public static void Init(ConfigFile cfg)
@@ -16,10 +16,12 @@ namespace ValheimHelper
             s_saveWork = cfg.Bind("Features", "SaveWork", true, "대기열·질문 대기·하던 일을 NPC ZDO에 저장하고 NPC가 생길 때 불러옴");
             s_knowExplored = cfg.Bind("Features", "KnowExplored", true, "지도에 밝혀진 구역의 자원은 가 보지 않아도 앎");
             s_claudeChat = cfg.Bind("Features", "ClaudeChat", true, "! 없는 채팅·형식이 다른 ! 문장을 호스트 PC의 claude 명령줄로 해석");
+            s_runPlans = cfg.Bind("Features", "RunPlans", true, "제작 명령(!구리주괴 20, !세트)을 계획만 말하지 않고 실제로 실행(PlanJob)");
         }
 
         public static bool SaveWork => s_saveWork?.Value ?? true;
         public static bool ClaudeChat => s_claudeChat?.Value ?? true;
+        public static bool RunPlans => s_runPlans?.Value ?? true;
         public static bool KnowExplored => s_knowExploredOverride ?? s_knowExplored?.Value ?? true;
 
         /// <summary>시험용: null이면 설정값으로 돌아감.</summary>

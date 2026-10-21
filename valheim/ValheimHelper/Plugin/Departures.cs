@@ -260,6 +260,20 @@ namespace ValheimHelper
                 ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString(),
             };
             SayPlan(npc, plan, args);
+            StartPlan(npc, plan, args["item"]);
+        }
+
+        /// <summary>계획이 끝까지 할 수 있는 것이면 실제로 시작(6번 실행기). 일하는 중이면 시작하지 않음(대기열은 데이터 없는 PlanJob을 못 저장).</summary>
+        static void StartPlan(WorkerNpc npc, Plan plan, string label)
+        {
+            if (!Features.RunPlans || plan.Steps.Count == 0 || plan.Partial || plan.TooLong) return;
+            var mode = npc.Ai.Current;
+            if (mode != WorkerAI.Mode.Idle && mode != WorkerAI.Mode.Home)
+            {
+                Plugin.Log.LogInfo($"{npc.NpcName} 계획 {label}: 지금 {mode}라 시작 안 함");
+                return;
+            }
+            npc.Ai.StartJob(new PlanJob(npc, plan, label));
         }
 
         /// <summary>!세트 n 수량: 세트 안의 물건마다 수량만큼(6-4). 범위 밖 물건은 빼고 계획.</summary>
@@ -277,6 +291,7 @@ namespace ValheimHelper
             }
             args["minutes"] = Departure.Minutes5(plan.Seconds).ToString();
             SayPlan(npc, plan, args);
+            StartPlan(npc, plan, args["item"]);
         }
 
         static Plan PlanFor(WorkerNpc npc, List<Ingredient> targets)
