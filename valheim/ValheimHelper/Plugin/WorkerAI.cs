@@ -50,6 +50,7 @@ namespace ValheimHelper
 
         ZDOID m_follow = ZDOID.None;
         float m_farSayAt;
+        float m_raidCheckAt;
         float m_stuckTimer;
         Vector3 m_lastPos;
 
@@ -405,6 +406,18 @@ namespace ValheimHelper
                 Senses.Look(transform.position);
             }
             if (m_guard == null) m_guard = new Guard(npc, this);
+            if (Current == Mode.Work && Time.time >= m_raidCheckAt)
+            {
+                m_raidCheckAt = Time.time + 5f;
+                var ev = RandEventSystem.instance != null ? RandEventSystem.instance.GetCurrentRandomEvent() : null;
+                // 습격 구역(m_eventRange)에서 일하는 중이면 거점으로 귀환. 이미 거점 근처(30m)면 그대로 둔다.
+                if (ev != null && Utils.DistanceXZ(transform.position, ev.m_pos) < ev.m_eventRange && Utils.DistanceXZ(transform.position, npc.Home) > 30f)
+                {
+                    npc.Say("raid");
+                    GoHome(false);
+                    return true;
+                }
+            }
             if (m_guard.Update(dt)) return true; // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다
             switch (Current)
             {
