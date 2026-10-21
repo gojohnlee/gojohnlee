@@ -200,3 +200,4 @@ while ($true) {
 }
 Log '루프 끝'
 [void][VH.Power]::SetThreadExecutionState($Release)
+$mutex.ReleaseMutex()   # -NoExit 창이 열려 있어도 다음 루프가 시작되게
