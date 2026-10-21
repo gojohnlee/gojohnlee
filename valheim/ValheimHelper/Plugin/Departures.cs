@@ -154,7 +154,7 @@ namespace ValheimHelper
             };
             if (ways.Contains(ToolKind.Axe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.WoodCutting);
             else if (ways.Contains(ToolKind.Pickaxe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.Pickaxes);
-            input.FoodInChest = Chests.First(home, WorkerNpc.HasFood) != null;
+            input.FoodInChest = Chests.Any(home, WorkerNpc.HasFood);
             input.HealthMeads = CountMeads(npc.GetInventory()) + Chests.CountAll(home, CountMeads);
             input.Stock = Stock(cmd.Item, home);
             GameObject prefab = ObjectDB.instance.GetItemPrefab(cmd.Item);

@@ -39,7 +39,12 @@ namespace ValheimHelper
         {
             m_time += dt;
             if (m_time > Limit) return CraftResult.Failed;
-            if (m_store != null) return m_store.Update(dt) ? CraftResult.Working : CraftResult.Done;
+            if (m_store != null)
+            {
+                if (m_store.Update(dt)) return CraftResult.Working;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 꺼낸 것 정리 끝: 짐에 남은 {m_step.Item} {InBag()}"); // vh_crafttest 간헐 FAIL 진단(회차 35)
+                return CraftResult.Done;
+            }
             Vector3 home = m_npc.Home;
             if (m_smelter == null)
             {
@@ -70,6 +75,7 @@ namespace ValheimHelper
                 if (Chests.InUse(c)) { m_busy += Time.deltaTime; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
             CraftStep.Take(chests, m_step.Item, ore);
             if (fuel > 0) CraftStep.Take(chests, fuelPrefab, fuel);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 설비 넣기 {m_step.Item} {ore}, 연료 {fuel}");
             for (int i = 0; i < ore; i++) nview.InvokeRPC("RPC_AddOre", m_step.Item, false);
             for (int i = 0; i < fuel; i++) nview.InvokeRPC("RPC_AddFuel");
             return CraftResult.Done;
@@ -88,8 +94,15 @@ namespace ValheimHelper
             }
             if (any) return CraftResult.Working;
             if (zdo.GetInt(ZDOVars.s_spawnAmount) > 0 || zdo.GetInt(ZDOVars.s_queued) > 0) return CraftResult.Working; // 아직 도는 중·내보내는 중
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 설비 꺼냄 {m_step.Item}: 짐에 {InBag()}");
             m_store = new Unload(m_npc);
             return CraftResult.Working;
+        }
+
+        int InBag()
+        {
+            string name = CraftStep.SharedName(m_step.Item);
+            return name == null ? 0 : m_npc.GetInventory().CountItems(name);
         }
 
         List<ItemDrop> Drops()

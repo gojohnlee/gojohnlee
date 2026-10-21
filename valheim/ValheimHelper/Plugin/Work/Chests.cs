@@ -52,12 +52,45 @@ namespace ValheimHelper
             return fallback;
         }
 
+        /// <summary>
+        /// 읽기 전용: 거점 상자 인벤토리 전부. 거점 구역이 안 불러와져 인스턴스가 없는 상자는 ZDO(s_items)에서 읽는다
+        /// (호스트·NPC가 둘 다 거점에서 멀 때 재고가 0으로 보이던 것, 손님 코드 검사 B). 고치기는 TryEdit(인스턴스)로만.
+        /// </summary>
+        static IEnumerable<Inventory> ReadAll(Vector3 home)
+        {
+            foreach (var zdo in Senses.Nearby(home, BaseRange))
+            {
+                ZNetView view = ZNetScene.instance.FindInstance(zdo);
+                if (view != null)
+                {
+                    Container c = view.GetComponent<Container>();
+                    if (c != null && view.GetComponent<Piece>() != null && view.GetComponent<WearNTear>() != null) yield return c.GetInventory();
+                    continue;
+                }
+                GameObject prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
+                if (prefab == null || prefab.GetComponent<Piece>() == null || prefab.GetComponent<WearNTear>() == null) continue;
+                Container proto = prefab.GetComponent<Container>();
+                if (proto == null) continue;
+                var inv = new Inventory(proto.m_name, null, proto.m_width, proto.m_height);
+                byte[] data = zdo.GetByteArray(ZDOVars.s_items);
+                if (data != null) inv.Load(new ZPackage(data)); // 위치 검사 없이 넣으므로 크기는 상관없음
+                yield return inv;
+            }
+        }
+
         /// <summary>거점 상자 전부에서 그 이름의 물건 수.</summary>
         public static int CountAll(Vector3 home, Func<Inventory, int> count)
         {
             int n = 0;
-            foreach (var c in NearBase(home)) n += count(c.GetInventory());
+            foreach (var inv in ReadAll(home)) n += count(inv);
             return n;
+        }
+
+        /// <summary>거점 상자 중 조건에 맞는 게 있나(안 불러와진 상자 포함).</summary>
+        public static bool Any(Vector3 home, Func<Inventory, bool> match)
+        {
+            foreach (var inv in ReadAll(home)) if (match(inv)) return true;
+            return false;
         }
 
         /// <summary>조건에 맞는 첫 거점 상자(가까운 순), 없으면 null.</summary>
