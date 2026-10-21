@@ -57,3 +57,6 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 순간이동은 transform과 m_body 위치를 같이 바꿔야 한다. Humanoid 길찾기는 물 위도 길로 침(→ HumanoidAvoidWater).
 - Minimap.AddPin 마지막 인자가 Splatform 형식(리플렉션으로 부름), Minimap.Explore는 비공개.
 - 점프: m_jumpForce 8, 앞 2, 제자리 1.49m. 플레이어 충돌체 반지름 0.49 높이 1.85.
+- 소유권: 서버만 2초마다 정리(ZDOMan.Update → IsServer일 때 ReleaseZDOS → 호스트·접속자마다 ReleaseNearbyZDOS). 주인이 있는 물체는
+  주인의 활동 영역 밖일 때만 남이 가져감(IsInPeerActiveArea, 주인 peer가 없으면 밖). FarZones 패치로 NPC 주변도 호스트 영역.
+- 지도: Minimap.m_explored·m_exploredOthers(BitArray, 비공개), IsExplored(Vector3)는 한 점만 봄(Scout.Explored = 구역 중심).
