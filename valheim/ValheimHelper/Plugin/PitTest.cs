@@ -39,6 +39,7 @@ namespace ValheimHelper
             bool god = player.InGodMode();
             player.SetGodMode(true);
             var spots = new List<Vector3>();
+            Vector3? startPos = null; // 마른 땅으로 옮겼으면 끝나고 돌아갈 자리
             var rims = new float[Depths.Length]; // 파기 전 높이(되돌림 확인용; 원래 땅 WorldGenerator와는 곳에 따라 0.8m까지 다름)
             var dug = new bool[Depths.Length];
             try
@@ -54,8 +55,19 @@ namespace ValheimHelper
                 // 1) 깃발과 NPC
                 Workers.DespawnAll();
                 yield return new WaitForSeconds(1f);
-                Vector3 home = GatherTest.Ground(player.transform.position + player.transform.forward * 4f);
                 Quaternion rot = player.transform.rotation;
+                // 구덩이 바닥이 물 높이 아래면 물이 차 헤엄으로 바뀐다(묶음 1 회귀에서 물가에서 돌아 3개 FAIL) → 마른 땅으로 옮긴다
+                if (FindDryHome(player.transform.position, rot, out Vector3 dry) && Utils.DistanceXZ(dry, player.transform.position) > 1f)
+                {
+                    startPos = player.transform.position;
+                    player.TeleportTo(dry + Vector3.up, rot, true);
+                    float wait = 0f;
+                    yield return new WaitForSeconds(1f);
+                    while (player.IsTeleporting() && wait < 40f) { wait += 0.5f; yield return new WaitForSeconds(0.5f); }
+                    yield return new WaitForSeconds(2f);
+                    TestRunner.Log($"마른 땅으로 옮김: {Utils.DistanceXZ(dry, startPos.Value):0}m, 높이 {dry.y:0.0} (물 {ZoneSystem.instance.m_waterLevel:0.0})");
+                }
+                Vector3 home = GatherTest.Ground(player.transform.position + player.transform.forward * 4f);
                 for (int i = 0; i < Depths.Length; i++) spots.Add(home + rot * Dirs[i] * 12f);
                 int undone = 0;
                 foreach (var sp in spots) undone += TestTerrain.Reset(sp, 9f); // 지난 시험의 구덩이
@@ -160,7 +172,42 @@ namespace ValheimHelper
             for (int i = 0; i < spots.Count; i++)
                 if (dug[i]) worst = Mathf.Max(worst, Mathf.Abs(TestTerrain.Height(spots[i]) - rims[i]));
             checks.Add($"시험 구덩이 되돌림(꼭짓점 {back}개, 파기 전과 가장 큰 차 {worst:0.0}m)", back > 0 && worst < 0.5f);
+            if (startPos.HasValue)
+            {
+                player.TeleportTo(startPos.Value, player.transform.rotation, true);
+                float wait = 0f;
+                yield return new WaitForSeconds(1f);
+                while (player.IsTeleporting() && wait < 40f) { wait += 0.5f; yield return new WaitForSeconds(0.5f); }
+            }
             Done(checks);
+        }
+
+        /// <summary>
+        /// 플레이어 둘레 300m 안 초원에서 깃발·구덩이 자리 모두가 (구덩이 깊이 + 2m)보다 물 위에 있고 평평한 곳.
+        /// WorldGenerator 높이라 불러오지 않은 곳도 본다(실제 땅과 0.8m까지 다름 → 2m 여유).
+        /// </summary>
+        static bool FindDryHome(Vector3 from, Quaternion rot, out Vector3 home)
+        {
+            WorldGenerator wg = WorldGenerator.instance;
+            float wl = ZoneSystem.instance.m_waterLevel;
+            for (float r = 0f; r <= 300f; r += 10f)
+                for (int d = 0; d < (r == 0f ? 1 : 16); d++)
+                {
+                    float a = d * Mathf.PI / 8f;
+                    Vector3 p = from + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    Vector3 h = p + rot * Vector3.forward * 4f; // 깃발 자리(아래 home과 같게)
+                    float hh = wg.GetHeight(h.x, h.z);
+                    bool ok = wg.GetBiome(h) == Heightmap.Biome.Meadows && hh > wl + 2f;
+                    for (int i = 0; i < Depths.Length && ok; i++)
+                    {
+                        Vector3 s = h + rot * Dirs[i] * 12f;
+                        float sh = wg.GetHeight(s.x, s.z);
+                        ok = sh > wl + Depths[i] + 2f && Mathf.Abs(sh - hh) < 3f;
+                    }
+                    if (ok) { home = new Vector3(p.x, wg.GetHeight(p.x, p.z), p.z); return true; }
+                }
+            home = from;
+            return false;
         }
 
         static void Done(GatherTest.Checks checks)
