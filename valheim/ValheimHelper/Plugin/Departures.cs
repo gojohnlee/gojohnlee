@@ -118,6 +118,19 @@ namespace ValheimHelper
             else npc.Say(input.Places.Count > 0 ? "gatherKnown" : "gatherStart", args);
         }
 
+        /// <summary>시험용: 지금 그 명령을 받으면 어떻게 판단할지(말하거나 움직이지 않음).</summary>
+        internal static DepartureResult JudgeFor(WorkerNpc npc, ChatCommand cmd)
+        {
+            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(cmd.Item);
+            return ways.Count == 0 ? null : Departure.Judge(Input(npc, cmd, ways, false));
+        }
+
+        /// <summary>시험용: 기다리는 질문을 seconds만큼 오래전에 물은 것으로(3분 보류 시험).</summary>
+        internal static void AgeQuestion(WorkerNpc npc, double seconds)
+        {
+            if (s_pending.TryGetValue(npc, out var p)) p.AskedAt -= seconds;
+        }
+
         static void Start(WorkerNpc npc, ChatCommand cmd, HashSet<ToolKind> ways, PlaceOption avoid)
         {
             var job = new GatherJob(npc, cmd.Item, cmd.Amount, ways);

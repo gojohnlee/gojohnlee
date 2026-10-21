@@ -44,7 +44,7 @@ New-Item -ItemType Directory $plugin -Force | Out-Null
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
 if ($env:VH_DLL) { Copy-Item $env:VH_DLL "$plugin\ValheimHelper.dll" -Force }   # PC 세션: 방금 빌드한 DLL
 else { Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll" }
-$Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로)
+$Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로). 묶음 1 새 시험: vh_departtest·vh_peertest
 $World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
 $Min = $env:VH_MIN -ne '0'   # 최소화 시험(기본, 2026-10-21 사용자): 창 최소화·소리 끔·백그라운드 30fps. 게임 창을 보려면 $env:VH_MIN='0'
 Set-Content "$plugin\autotest.txt" ("world=$World;" + $(if ($Min) { 'min;' } else { '' }) + $Test)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다

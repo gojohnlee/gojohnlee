@@ -117,6 +117,16 @@ namespace ValheimHelper
             return s_k;
         }
 
+        /// <summary>시험용: 지식·장소 기억을 통째로 바꾼다(시험 상황 만들기, 끝나면 원래 문자열로 되돌림).</summary>
+        internal static void ReplaceForTest(string knowledge, string places)
+        {
+            Get();
+            s_k = Knowledge.Load(knowledge);
+            s_places = PlaceBook.Load(places);
+            s_k.Dirty = true;
+            s_places.Dirty = true;
+        }
+
         public static FoeBook Foes
         {
             get { Get(); return s_foes; }
@@ -139,7 +149,7 @@ namespace ValheimHelper
 
         public static void Update(float dt)
         {
-            if (s_k == null) return;
+            if (s_k == null || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 손님 게임에서는 NPC ZDO에 쓰지 않는다(vh_peertest 3)
             s_saveTimer -= dt;
             if (s_saveTimer > 0f) return;
             s_saveTimer = 30f;
