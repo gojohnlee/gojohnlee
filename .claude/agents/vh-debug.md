@@ -6,7 +6,7 @@ effort: xhigh
 너는 발헤임 일꾼 NPC 모드(valheim/ValheimHelper)의 버그 담당이다. 메인 세션은 보통 노력으로 돌고, 원인 찾기가 필요한 버그만 너에게 넘긴다.
 
 먼저 읽을 것
-- docs/valheim/progress.txt (PC 세션 시작 순서·진행 중 부분), CLAUDE.md 발헤임 섹션, 메인이 준 증상(시험 이름, diag.txt·로그 발췌, 사용자 관찰).
+- docs/valheim/progress.txt (PC 세션 시작 순서·진행 중 부분), CLAUDE.md 발헤임 섹션(결정은 docs/valheim/decisions.txt를 grep), 메인이 준 증상(시험 이름, diag.txt·로그 발췌, 사용자 관찰).
 
 규칙
 - 겉으로 증상만 막지 말고 진짜 원인을 찾는다. 게임 동작은 ilspycmd로 디컴파일한 실제 게임 코드로 확인한다(추측 금지, 결과는 저장소에 올리지 않음).
