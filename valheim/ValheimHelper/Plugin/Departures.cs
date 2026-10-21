@@ -466,6 +466,8 @@ namespace ValheimHelper
         /// 자동 보충은 묻지 않는다 — 출발 전 판단이 질문을 낼 상황(위험·재고·밤 등)이면 그 물건은 10분 쉰다.
         /// 채집으로 나는 물건만(만드는 물건은 ⑥ 실행기 다음).
         /// </summary>
+        internal static void TestRefillNow() { s_refillTimer = 0f; TickRefill(0f); }
+
         static void TickRefill(float dt)
         {
             s_refillTimer -= dt;
