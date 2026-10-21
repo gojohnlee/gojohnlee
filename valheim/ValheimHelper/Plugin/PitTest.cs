@@ -15,7 +15,7 @@ namespace ValheimHelper
     {
         public static void Register() => TestRunner.Register("vh_pittest", "구덩이 탈출 시험(점프·경사로)", Run);
 
-        static readonly float[] Depths = { 1.0f, 1.8f, 2.8f, 2.0f, 3.2f, 5.0f, 3.2f };
+        static readonly float[] Depths = { 1.0f, 1.8f, 2.8f, 2.0f, 3.2f, 5.0f, 4.2f }; // 7은 3.2m면 원뿔 벽이 얕아 깎지 않고 걸어 나올 때가 있음(루프 회차 4)
         static readonly bool[] Narrow = { false, false, false, true, true, true, true };
         /// <summary>점프를 끄고 경사로 깎기만으로 나오게 하는 구덩이(깎기 시험).</summary>
         static readonly bool[] CarveOnly = { false, false, false, false, false, false, true };
@@ -57,7 +57,9 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(1f);
                 Quaternion rot = player.transform.rotation;
                 // 구덩이 바닥이 물 높이 아래면 물이 차 헤엄으로 바뀐다(묶음 1 회귀에서 물가에서 돌아 3개 FAIL) → 마른 땅으로 옮긴다
-                if (FindDryHome(player.transform.position, rot, out Vector3 dry) && Utils.DistanceXZ(dry, player.transform.position) > 1f)
+                bool found = FindDryHome(player.transform.position, rot, 0.8f, out Vector3 dry) || FindDryHome(player.transform.position, rot, 99f, out dry);
+                if (!found) TestRunner.Log("마른 땅 못 찾음(300m 안) → 제자리에서");
+                if (found && Utils.DistanceXZ(dry, player.transform.position) > 1f)
                 {
                     startPos = player.transform.position;
                     player.TeleportTo(dry + Vector3.up, rot, true);
@@ -119,6 +121,10 @@ namespace ValheimHelper
                     string kind = Narrow[i] ? "좁은" : "넓은";
                     TestRunner.Log($"구덩이 {i + 1}({kind}): 흙 파기 {n}번, 깊이 {depth:0.0}m (목표 {Depths[i]:0.0}), 1m 밖 {rim - TestTerrain.Height(spot + Vector3.right):0.0}m·2m 밖 {rim - TestTerrain.Height(spot + Vector3.right * 2f):0.0}m 깊이");
 
+                    // 근처 몬스터 치우고 체력 채움(루프 회차 4: 130m 옮긴 자리에 트롤이 와 구덩이 7에서 도망만 하다 끝남)
+                    int cleared = ClearMonsters(spot, 80f);
+                    if (cleared > 0) TestRunner.Log($"구덩이 {i + 1}: 근처 몬스터 {cleared}마리 치움");
+                    claude.SetHealth(claude.GetMaxHealth());
                     // 바닥에 내려놓는다(구덩이 위에서 떨어뜨리면 좁은 구덩이 벽에 끼었다가 튕겨 나감, 0.3.8)
                     claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
                     yield return new WaitForSeconds(1.5f);
@@ -136,7 +142,10 @@ namespace ValheimHelper
                         for (float t = 0f; t < PhaseTimes[ph] && outBy == null; t += Time.deltaTime, total += Time.deltaTime)
                         {
                             Vector3 pos = claude.transform.position;
-                            if (Utils.DistanceXZ(spot, pos) > 3.5f && pos.y > rim - 0.5f) outBy = Phases[ph];
+                            // 5m 밖이면 높이와 상관없이 나온 것(흙 파기 반지름 1.5 + 넓은 구덩이 1.2 → 구덩이는 3m 안쪽).
+                            // 비탈이면 깃발이 구덩이 둘레보다 낮아 높이 조건만으로는 깃발에 돌아가도 못 나온 걸로 봄(루프 회차 4, 구덩이 4: 둘레보다 2.4m 낮음)
+                            float dist = Utils.DistanceXZ(spot, pos);
+                            if (dist > 5f || (dist > 3.5f && pos.y > rim - 0.5f)) outBy = Phases[ph];
                             logTimer -= Time.deltaTime;
                             if (logTimer <= 0f)
                             {
@@ -186,7 +195,7 @@ namespace ValheimHelper
         /// 플레이어 둘레 300m 안 초원에서 깃발·구덩이 자리 모두가 (구덩이 깊이 + 2m)보다 물 위에 있고 평평한 곳.
         /// WorldGenerator 높이라 불러오지 않은 곳도 본다(실제 땅과 0.8m까지 다름 → 2m 여유).
         /// </summary>
-        static bool FindDryHome(Vector3 from, Quaternion rot, out Vector3 home)
+        static bool FindDryHome(Vector3 from, Quaternion rot, float flat, out Vector3 home)
         {
             WorldGenerator wg = WorldGenerator.instance;
             float wl = ZoneSystem.instance.m_waterLevel;
@@ -203,11 +212,33 @@ namespace ValheimHelper
                         Vector3 s = h + rot * Dirs[i] * 12f;
                         float sh = wg.GetHeight(s.x, s.z);
                         ok = sh > wl + Depths[i] + 2f && Mathf.Abs(sh - hh) < 3f;
+                        // 구덩이 둘레 3m가 평평해야 한다(비탈이면 좁은 구덩이 한쪽이 얕아 깎지 않고 걸어 나옴 — 루프 회차 4, 구덩이 7)
+                        for (int k = 0; k < 8 && ok && Narrow[i]; k++)
+                        {
+                            float b = k * Mathf.PI / 4f;
+                            ok = Mathf.Abs(wg.GetHeight(s.x + Mathf.Cos(b) * 3f, s.z + Mathf.Sin(b) * 3f) - sh) < flat;
+                        }
                     }
                     if (ok) { home = new Vector3(p.x, wg.GetHeight(p.x, p.z), p.z); return true; }
                 }
             home = from;
             return false;
+        }
+
+        static int ClearMonsters(Vector3 at, float radius)
+        {
+            int n = 0;
+            foreach (Character c in new List<Character>(Character.GetAllCharacters()))
+            {
+                if (c == null || c is Player || c.IsTamed() || c.GetComponent<MonsterAI>() == null || c.GetComponent<WorkerNpc>() != null) continue;
+                if (Utils.DistanceXZ(c.transform.position, at) > radius) continue;
+                ZNetView nv = c.GetComponent<ZNetView>();
+                if (nv == null || !nv.IsValid()) continue;
+                nv.ClaimOwnership();
+                ZNetScene.instance.Destroy(c.gameObject);
+                n++;
+            }
+            return n;
         }
 
         static void Done(GatherTest.Checks checks)
