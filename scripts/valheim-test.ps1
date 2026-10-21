@@ -55,7 +55,8 @@ Write-Host 'Valheim Helper 설치됨'
 $cfg = Join-Path $game 'BepInEx\config\BepInEx.cfg'
 if (Test-Path $cfg) {
     $c = [IO.File]::ReadAllText($cfg)
-    $c2 = $c -replace '(\[Logging\.Console\][^\[]*?Enabled\s*=\s*)true'   # [^\[]: 다음 섹션(디스크 로그 등)으로 넘어가지 않게, '${1}false'
+    # [^\[]: 다음 섹션(디스크 로그 등)의 Enabled로 넘어가지 않게
+    $c2 = $c -replace '(\[Logging\.Console\][^\[]*?Enabled\s*=\s*)true', '${1}false'
     if ($c2 -ne $c) { [IO.File]::WriteAllText($cfg, $c2); Write-Host 'BepInEx 콘솔 창 끔' }
 }
 
