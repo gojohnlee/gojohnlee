@@ -50,9 +50,10 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
        깨우기 타이머 허용은 이미 켜져 있음, 자동 최대 절전은 꺼져 있음(루프가 직접 건다). powercfg /waketimers는 관리자 필요.
        남음: 부재 시 LED 끄기(메인보드 ASRock X670E Steel Legend → OpenRGB 설치 사용자에게 물음).
        모니터는 사용자가 나갈 때 직접 끔(자동 끄기 안 함).
-  0-c) [스크립트 만듦 2026-10-21, 등록·첫 실행 전] scripts/vh-loop.ps1 + vh-loop-prompt.txt(회차 지시문, 마지막 줄 LOOP: DONE/FAIL/NEED_USER/ALLDONE).
-       PC 세션의 자동 모드가 "권한 끈 에이전트 만들기"로 막아서 BOM 저장·작업 스케줄러 등록·첫 실행은 사용자가 직접 PowerShell에서 한다.
-       절전에서 깨면 잠금 화면(암호 없음, Enter 필요) — 루프 프로세스는 잠긴 채로 계속 돎. 잠금 화면에서 게임 시험이 되는지는 첫 절전 회차에서 확인.
+  0-c) [완료 2026-10-21, 21:01부터 작업 스케줄러 "VH loop"로 무인 실행 중] scripts/vh-loop.ps1 + vh-loop-prompt.txt(회차 지시문, 마지막 줄 LOOP: DONE/FAIL/NEED_USER/ALLDONE)
+       + vh-loop-install.ps1(BOM 저장·작업 등록, 로그인 때 숨김 시작). 기록 %USERPROFILE%\vh-loop\loop.log·round-N.txt, 상태 docs/valheim/status.txt.
+       다시 켜기 Start-ScheduledTask "VH loop", 멈추기 docs/valheim/loop-stop.txt. 대화형 PC 세션의 자동 모드는 루프 커밋·등록을 막음 → 루프 스크립트 변경 커밋은 사용자가 직접.
+       절전에서 깰 때 잠금 화면 끔(powercfg CONSOLELOCK 0, 사용자). 첫 회차(-Once) 20:13~20:49 정상.
        무인 루프 만들기(loop-plan.txt) — 사용자 결정 2026-10-21: 시험 틀 바꾸기 뒤가 아니라 0-a·0-b 바로 다음.
        이유: 묶음 1 시험·상자 변경·시험 틀 바꾸기(4시간 안쪽)를 루프가 돌리는 걸 사용자가 집에서 실시간으로 지켜볼 수 있음. 늦게 만들면 못 봄.
        그래서 아래 묶음 1 시험부터는 루프가 진행(첫 회차는 사용자 앞에서). 시험이 아직 불안정하니 멈춤 조건(같은 FAIL 2번·진척 없음 3회차)을 꼭 넣는다.
