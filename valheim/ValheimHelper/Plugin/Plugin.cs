@@ -36,6 +36,7 @@ namespace ValheimHelper
             Step("vh_crafttest", CraftTest.Register);
             Step("vh_claudetest", ClaudeTest.Register);
             Step("vh_nametest", NameTest.Register);
+            Step("vh_skilltest", SkillTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }
