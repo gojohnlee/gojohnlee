@@ -129,17 +129,21 @@ function Limit-Until($tail) {
 }
 
 function Wait-Until($t) {
-    $left = ($t - (Get-Date)).TotalMinutes
-    if ($left -gt 10 -and [VH.Power]::IdleMs() -gt 600000) {   # 자리 비움일 때만 최대 절전(사용자가 쓰는 중이면 그냥 기다림)
-        Backup-Wip
-        $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c exit'
-        $set = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-        Register-ScheduledTask -TaskName 'VH loop wake' -Action $act -Trigger (New-ScheduledTaskTrigger -Once -At $t) -Settings $set -Force | Out-Null
-        Log "최대 절전, $($t.ToString('MM-dd HH:mm')) 깨우기 예약"
-        [void][VH.Power]::SetThreadExecutionState($Release)
-        & shutdown /h
+    # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 자리 비움(입력 없음 10분)이면 최대 절전(사용자가 쓰는 중이면 그냥 기다림)
+    $bk = $false
+    while ((Get-Date) -lt $t) {
+        if (($t - (Get-Date)).TotalMinutes -gt 10 -and [VH.Power]::IdleMs() -gt 600000) {
+            if (-not $bk) { Backup-Wip; $bk = $true }
+            $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c exit'
+            $set = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+            Register-ScheduledTask -TaskName 'VH loop wake' -Action $act -Trigger (New-ScheduledTaskTrigger -Once -At $t) -Settings $set -Force | Out-Null
+            Log "최대 절전, $($t.ToString('MM-dd HH:mm')) 깨우기 예약"
+            [void][VH.Power]::SetThreadExecutionState($Release)
+            & shutdown /h
+            Start-Sleep 120   # 절전 들어가는 동안 다시 걸지 않게
+        }
+        Start-Sleep 30
     }
-    while ((Get-Date) -lt $t) { Start-Sleep 30 }
     [void][VH.Power]::SetThreadExecutionState($Awake)
     Log '기다림 끝'
 }

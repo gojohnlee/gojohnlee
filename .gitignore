@@ -3,3 +3,4 @@ obj/
 *.user
 .vs/
 .idea/
+.claude/settings.local.json
