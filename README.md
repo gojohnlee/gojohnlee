@@ -1,5 +1,7 @@
 # gojohnlee 게임 모드
 
+이 브랜치(`rimworld`)는 림월드 모드 전용입니다. 발헤임 모드는 기본 브랜치 `valheim`에 있습니다.
+
 ## RimWorld
 
 | 모드 | 경로 | 대상 버전 |
@@ -27,4 +29,4 @@ push할 때마다 GitHub Actions가 빌드하고, 바로 넣을 수 있는 모�
 ```
 `rimworld/MyMod/`가 만들어지고, CI가 자동으로 함께 빌드합니다.
 
-PC 자동 테스트 (PowerShell): `irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/HEAD/scripts/rimworld-test.ps1 | iex`
+PC 자동 테스트 (PowerShell): `irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/rimworld/scripts/rimworld-test.ps1 | iex`
