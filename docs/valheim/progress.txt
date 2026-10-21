@@ -28,6 +28,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 ======================================================================
 지금 (2026-10-21)
 ======================================================================
+- [루프 회차 18] vh_claudetest 신설·PASS 5/5(34초): "Claude 나무 스무 개 베어 와" → 실제 claude 호출 → "알겠수다! 나무 스무 개 베어 오겠수다"+작업 실행, 수다도 정상. 4번 Claude 호출 끝. 알려진 사소한 점: "생각 중" 말풍선이 부른 NPC가 아니라 첫 NPC(npcs[0])가 말함. 다음은 1(시험 틀 바꾸기 동시 본체)·5.
 - [루프 회차 17] 4번 Claude 호출 연결: Core ClaudePrompt(지시문: 형식·허용 작업·NPC 상태·상자 재고, 테스트 Core 308) + Plugin ClaudeChat(RateLimiter Sonnet 6/분·한 번에 하나+한 줄 대기·"생각 중"·ClaudeReply.Parse·실패 시 onlyBang)
   + Commands.RunClaudeTask(setsave/setedit 직접, 나머지 Run) + Features.ClaudeChat 스위치(기본 켬). [게임 시험 안 됨] 남음: 채팅→Claude 실시험(vh 시험 신설: 호출 실패 대체·수다 무시·작업 실행), 지시문 다듬기(말투·성격).
 - [루프 회차 16] 4번 Claude 호출 첫 조각: Core ClaudeCall(인자·출력 해석·Windows 인용, 테스트) + Plugin ClaudeCli(별도 스레드 프로세스·표준입력·30초 끊기) — 아직 어디서도 안 부름, 게임 시험 안 함. claude 2.1.304 실호출 확인(haiku 4초, --tools "" --setting-sources "" --output-format json의 result 필드). 고침: 회차 14의 TestSpots가 ValueTuple을 써서 valheim-build.sh 참조 검사가 실패하던 것(SpotXZ 구조체로). 남음: 지시문(작업 목록·상자 재고·말투), 채팅 흐름 연결(RateLimiter·ClaudeReply.Parse·"생각 중…"), 시험. 시험 틀 바꾸기 동시 본체는 위험도 커서 뒤로 미룸(risks 10).
@@ -105,7 +106,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    프레임·시험 시간을 diag에 기록.
 2. 회귀: 시험 8종 + vh_pittest·vh_coppertest + vh_bagtest(ChatGPT 3건은 preptest·bagtest·flagtest 안에 있음). PASS면 태그 valheim-0.3.8.
 2-1. 손님 코드 검사(risks.txt "혼자 하는 멀티 시험" B, 친구 접속은 완성판에서만 — 사용자 결정). vh_peertest·!상자 ZDO 기준은 묶음 1에서 짰음.
-4. Claude 실제 호출(구상서 5-1): 별도 프로세스·30초 제한·도구 끔·haiku/sonnet 별칭(옵션 이름은 설치된 claude 버전으로 확인),
+4. [완료 회차 18, vh_claudetest PASS] Claude 실제 호출(구상서 5-1): 별도 프로세스·30초 제한·도구 끔·haiku/sonnet 별칭(옵션 이름은 설치된 claude 버전으로 확인),
    보낼 정보 지시문, ClaudeTask → Commands 실행(SetSave/SetEdit 포함), "생각 중…" 말풍선.
 5. ③ 남은 것: 습격 귀환, 근처 플레이어와 같이 싸움, "도와줘요!!"+핑, 수리(작업대·대장간), 저항 미드, 동행 앞장서기·20m 유지.
 4-1. 밝혀진 곳은 안다(사용자 결정 2026-10-21): 지도에 밝혀진 구역(지도 공유로 합쳐진 것)의 자원은 가 보지 않아도 지식에 넣는다
