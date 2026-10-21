@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 26] 6번 넷째 조각: Plugin/Work/MachineStep(Load: 거점 상자 재료·연료를 Smelter에 RPC_AddOre·AddFuel로 넣음, Unload: RPC_EmptyProcessed 후 완성품 줍기→짐 정리로 상자에). Smelter만(Fermenter·화덕은 Failed→Blocked). PlanJob이 호출. 빌드·Core 312 PASS, 어디서도 안 부름·[게임 시험 안 됨]. 남음: Wait 중 자동 보충, 명령(!구리주괴)에서 PlanJob 시작, 상태 저장, vh 시험(제련소에 실제로 넣고 꺼내기). 다음 6 이어서 또는 1.
 - [루프 회차 25] 6번 셋째 조각: Plugin/Work/PlanJob(IWorkerJob, PlanRunner를 돌림: Gather→GatherJob·Craft→CraftStep, Load·Unload·Hunt·Farm은 Failed→Blocked, 끝나면 로그). 빌드·Core 312 PASS, 어디서도 안 부름·[게임 시험 안 됨]. 남음: Load/Unload(설비 넣기·꺼내기), Wait 중 자동 보충, 명령(!구리주괴)에서 PlanJob 시작, 상태 저장, vh 시험. 다음 6 이어서 또는 1.
 ======================================================================
 - [루프 회차 24] 6번 둘째 조각: Plugin/Work/CraftStep(Craft 단계 하나: 제작대까지 걸어가 거점 상자 재료를 한 프레임에 빼고 결과를 상자에 넣음, 모자라면 Failed·30초 상자 사용 중이면 Failed·120초 제한). 빌드·Core 312 PASS, 아직 어디서도 안 부름·[게임 시험 안 됨]. 남음: Gather→GatherJob, Load/Unload(설비 넣기·꺼내기), PlanRunner를 WorkerAI에 붙이기(Craft 호출·Wait 중 자동 보충), 상태 저장, vh 시험. 다음 6 이어서 또는 1.

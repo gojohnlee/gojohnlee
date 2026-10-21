@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 제작 계획을 실제로 돌리는 일(⑥ 실행기 셋째 조각): PlanRunner가 고른 단계를 하나씩 한다.
-    /// Gather → GatherJob(목표만큼 거점 상자에 넣으면 끝), Craft → CraftStep. Load·Unload·Hunt·Farm은 아직 없어서 Failed(그에 기댄 단계는 Blocked).
+    /// Gather → GatherJob(목표만큼 거점 상자에 넣으면 끝), Craft → CraftStep. Load·Unload → MachineStep(Smelter만), Hunt·Farm은 아직 없어서 Failed(그에 기댄 단계는 Blocked).
     /// Wait만 남으면 가만히 시계를 기다린다(다른 일 하기는 다음 조각). 실패가 있으면 끝에 한 번 알린다.
     /// </summary>
     public sealed class PlanJob : IWorkerJob
@@ -18,6 +18,7 @@ namespace ValheimHelper
         PlanStep m_step;
         GatherJob m_gather;
         CraftStep m_craft;
+        MachineStep m_machine;
 
         public PlanJob(WorkerNpc npc, Plan plan, string goalLabel)
         {
@@ -53,6 +54,12 @@ namespace ValheimHelper
                     running = r == CraftResult.Working;
                     ok = r == CraftResult.Done;
                     break;
+                case StepKind.Load:
+                case StepKind.Unload:
+                    CraftResult mr = m_machine.Update(dt);
+                    running = mr == CraftResult.Working;
+                    ok = mr == CraftResult.Done;
+                    break;
             }
             if (running) return true;
             if (ok) m_runner.Complete(m_step.Id);
@@ -61,7 +68,7 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 계획 단계 {m_step.Id} {m_step.Kind} {m_step.Item} 실패");
                 m_runner.Fail(m_step.Id);
             }
-            m_step = null; m_gather = null; m_craft = null;
+            m_step = null; m_gather = null; m_craft = null; m_machine = null;
             return true;
         }
 
@@ -82,7 +89,12 @@ namespace ValheimHelper
                     case StepKind.Craft:
                         m_craft = new CraftStep(m_npc, s);
                         break;
-                    default: // Load·Unload·Hunt·Farm: 아직 없음
+                    case StepKind.Load:
+                    case StepKind.Unload:
+                        if (MachineStep.Supported(s.Station)) { m_machine = new MachineStep(m_npc, s); break; }
+                        m_runner.Fail(s.Id);
+                        continue;
+                    default: // Hunt·Farm: 아직 없음
                         m_runner.Fail(s.Id);
                         continue;
                 }

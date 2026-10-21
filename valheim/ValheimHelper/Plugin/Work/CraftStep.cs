@@ -64,19 +64,19 @@ namespace ValheimHelper
             return need;
         }
 
-        static string SharedName(string prefab)
+        internal static string SharedName(string prefab)
         {
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
             return go != null ? go.GetComponent<ItemDrop>().m_itemData.m_shared.m_name : null;
         }
 
-        static int Have(Vector3 home, string prefab)
+        internal static int Have(Vector3 home, string prefab)
         {
             string name = SharedName(prefab);
             return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name));
         }
 
-        static void Take(List<Container> chests, string prefab, int amount)
+        internal static void Take(List<Container> chests, string prefab, int amount)
         {
             string name = SharedName(prefab);
             foreach (var c in chests)
