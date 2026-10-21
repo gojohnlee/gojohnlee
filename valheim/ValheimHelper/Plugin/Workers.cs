@@ -124,11 +124,20 @@ namespace ValheimHelper
             return view != null ? view.GetComponent<WorkerNpc>() : null;
         }
 
-        public static int DespawnAll()
+        public static int DespawnAll() => DespawnNear(null, 0f);
+
+        /// <summary>center 둘레 radius(수평) 안의 일꾼만 없앤다(동시 시험: 자기 자리 일꾼만 정리). center가 null이면 전부.</summary>
+        public static int DespawnNear(Vector3? center, float radius)
         {
             int n = 0;
             foreach (var zdo in AllZdos())
             {
+                if (center.HasValue)
+                {
+                    Vector3 d = zdo.GetPosition() - center.Value;
+                    d.y = 0f;
+                    if (d.magnitude > radius) continue;
+                }
                 FarZones.Untrack(zdo.m_uid);
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view != null) ZNetScene.instance.Destroy(view.gameObject);

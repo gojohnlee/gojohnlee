@@ -47,7 +47,7 @@ namespace ValheimHelper
         /// 낮 고정, 신 모드, NPC를 지우고 깃발을 세워 둘을 부르고, 거점 3m에 상자 하나(지정 안 함). 지식·장소 기억은 비워 둔다
         /// (끝나면 End가 원래대로). 실패하면 null(이유는 로그).
         /// </summary>
-        public static IEnumerator Setup(World w)
+        public static IEnumerator Setup(World w, Vector3? around = null)
         {
             w.Player = Player.m_localPlayer;
             w.God = w.Player.InGodMode();
@@ -62,9 +62,10 @@ namespace ValheimHelper
             w.Knowledge0 = Brain.Get().Save();
             w.Places0 = Brain.Places.Save();
 
-            Workers.DespawnAll();
+            // around가 있으면 그 자리 둘레(동시 시험용)만 정리하고 거기에 세운다. 없으면 예전처럼 전부 정리·플레이어 앞.
+            if (around.HasValue) Workers.DespawnNear(around, 60f); else Workers.DespawnAll();
             yield return new WaitForSeconds(1f);
-            Vector3 home = w.Player.transform.position + w.Player.transform.forward * 4f;
+            Vector3 home = (around ?? w.Player.transform.position) + w.Player.transform.forward * 4f;
             if (ZoneSystem.instance.GetGroundHeight(home, out float gh)) home.y = gh;
             w.Home = home;
             w.Player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, w.Player.transform.rotation, doAttack: false);
