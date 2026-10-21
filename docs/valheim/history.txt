@@ -262,3 +262,21 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
   확인 조건: 장비·음식·자원 상자를 지정한 뒤, 기존 상자가 새 거점 범위(20m)를 벗어나되 계속 로드되는 거리로 이사.
   기대: 범위 밖 옛 상자를 이용하지 않고 새 거점의 유효 상자만 사용.
   기존 vh_flagtest 8/8은 상자 지정 없이 15m 이사만 확인하므로 지정 상자를 포함한 범위 밖 이사 조건을 추가할 것.
+
+----------------------------------------------------------------------
+묶음 1 (2026-10-21 클라우드 세션, batch1.txt) — 전부 [게임 시험 안 됨]
+----------------------------------------------------------------------
+- 작업 1 !상자 ZDO 기준: Chests.BaseChestZdo(ZDO 프리팹에 Container·Piece·WearNTear)로 판정, 위치는 ZDO. FromId는 그대로(DeathTest·GraveJob).
+- 작업 2 작업 상태 저장: Core WorkState(WorkItem·PendingData, ; , = 구분·%xx 이스케이프), QueuedWork.Work, WorkSaves(호스트 1초마다,
+  하던 일은 큰 단계만 = 채집 물건·남은 수량, 탐험 방향·바이옴; 불러오기 전엔 안 씀), Departures.Snapshot/Restore(구역·대사 인자·명령·물은 시각).
+  말한 사람은 이름만 — Dispatch.Answerer는 물은 시각·이름으로 고르고 Gather·Answer는 캐릭터 ZDOID를 안 씀(확인함).
+  설계와 달라진 것: "아침" 조건은 "밤 아님"이 아니라 "다음 아침 시작(SkipToMorning과 같은 셈) 이후 + 밤 아님"(WorkItem.NotBefore).
+  곧 밤(아직 낮)에 "응"하면 바로 꺼내 같은 질문을 되풀이했을 것.
+- 작업 3 밝혀진 곳은 안다: Core ExploredSweep(가까운 순, 확인 400·넣기 12개/0.5초, 넣은 구역은 다시 안 봄) + MapSense(구역 ZDO → Saw(전부)·
+  MarkLooked·SetBiome, 확인 점 = 중심+네 모서리 안쪽, ZoneSystem.IsZoneGenerated 비공개). 반경은 10구역(채집 KnownRing과 같게):
+  탐험 상한 40까지 넣으면 지식 문자열이 수백 KB가 될 수 있음. 둘러봄 표시로 채집의 밝혀진 곳 찾기는 안 밝혀진 곳에만 남음.
+  "처음이라 좀 걸려요"는 아는 곳이 없을 때만이라 따로 안 고침. ExploreTest는 시험 동안 스위치 끔.
+- 작업 4 새 시험: vh_departtest(질문 5종·무응답·대기열/끼어듦·저장 왕복·밝혀진 곳 끔/켬), vh_peertest(소유권 뺏기 4상황·가짜 친구 채팅·
+  손님 흉내 = ZNet.m_isServer를 한 프레임 안에서만 끄고 모드 Update 경로). TestKit.Flat: 중첩 코루틴 예외가 TestRunner.Safe에 잡히게.
+  구역 내려감 흉내 TestKit.Unload = ZNetScene.RemoveObjects 순서(ResetZDO → Destroy → m_instances.Remove, ZDO는 남김).
+- 같이 고친 것: Brain.Update는 호스트만(손님 게임에서 지식이 있으면 30초마다 NPC ZDO에 썼을 것).

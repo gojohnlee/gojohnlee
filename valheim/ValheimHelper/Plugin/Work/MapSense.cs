@@ -17,7 +17,13 @@ namespace ValheimHelper
         const int CheckPerStep = 400, AbsorbPerStep = 12;
         const float Every = 0.5f;
 
-        static readonly ExploredSweep s_sweep = new ExploredSweep(Scout.MaxRing);
+        /// <summary>
+        /// 거점에서 몇 구역까지(10 = 약 640m, 채집의 밝혀진 곳 찾기 범위 GatherJob.KnownRing과 같게). 탐험 상한(40)까지 넣으면
+        /// 지식 문자열(두 NPC ZDO에 같이 저장)이 수백 KB가 될 수 있어 줄였다. 그 밖은 지금처럼 가 보고 안다.
+        /// </summary>
+        const int Ring = 10;
+
+        static readonly ExploredSweep s_sweep = new ExploredSweep(Ring);
         static readonly List<ZDO> s_temp = new List<ZDO>();
         static readonly float[][] s_points = ExploredSweep.SamplePoints(ZoneSystem.c_ZoneSize);
         static float s_timer;

@@ -10,7 +10,7 @@ namespace ValheimHelper.Core.Work
     /// </summary>
     public sealed class ExploredSweep
     {
-        /// <summary>거점에서 몇 구역(64m)까지 보는지 — 탐험 상한(Scout.MaxRing)과 같게.</summary>
+        /// <summary>거점에서 몇 구역(64m)까지 보는지.</summary>
         public readonly int Ring;
         readonly HashSet<ZoneXY> _done = new HashSet<ZoneXY>();
         readonly List<ZoneXY> _order = new List<ZoneXY>();

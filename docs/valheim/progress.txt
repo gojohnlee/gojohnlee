@@ -37,10 +37,16 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   시험 중엔 질문에 자동 "그래도 가"(Departures.TestAutoGo).
 - ChatGPT 검토 3건(가방 만재 장비 교체·다른 짐 반복·이사 뒤 옛 상자) 코드 수정, [게임 시험 안 됨]: 회귀 때 vh_preptest·vh_bagtest·vh_flagtest로 확인. 자세한 건 history.txt "ChatGPT".
 - 동작이 바뀐 것: 스킬 반영으로 처음엔 NPC 피해 계수 0.46(예전엔 약 0.93) → 채집 느려지고 싸움 판단 조심스러움. fight·wood·stone 시험 다시 볼 것.
+- 묶음 1 끝(클라우드 2026-10-21, 전부 [게임 시험 안 됨], 커밋 a56e67f~): !상자 ZDO 기준, 작업 상태 저장(vh_queue·vh_pending),
+  밝혀진 곳은 안다(거점 10구역 안), 새 시험 vh_departtest·vh_peertest. 기능 스위치 BepInEx [Features] ChestByZdo·SaveWork·KnowExplored(기본 켬).
+  Core 테스트 284. 묶음 중 고친 것: "아침에 갈까요? 응" 대기열이 아직 낮이면 바로 꺼내 질문을 되풀이하던 것(→ 다음 아침까지), 손님 게임에서 Brain.Update가 NPC ZDO에 쓰던 것.
 
 다음 (순서대로)
-★ 지금 할 일 = 묶음 1(클라우드 세션, 게임 없이): docs/valheim/batch1.txt 그대로. 끝나면 집 PC 세션이 batch1.txt 3장대로 한 번에 시험.
-  묶음 1 = !상자 ZDO 기준·작업 상태 저장·밝혀진 곳은 안다·새 시험(vh_departtest·vh_peertest). 기준 DLL = 커밋 774545f의 dist DLL(태그는 클라우드에서 푸시가 막힘).
+★ 지금 할 일 = 집 PC 시험(묶음 1 끝남): docs/valheim/batch1.txt 3장 순서대로 —
+  1) 빌드 → 새 DLL로 예전 방식 회귀(시험 8종 + vh_pittest·vh_coppertest·vh_bagtest) + vh_departtest + vh_peertest, 순차.
+  2) FAIL이면 그 시험만 기준 DLL(커밋 774545f의 dist DLL)로 다시 → 0.3.8 탓인지 묶음 1 탓인지 가름. 묶음 1 탓이면 그 기능 스위치를 끄고 나머지 확인 후 vh-debug.
+  3) 다 PASS면 태그 valheim-0.3.8 → 아래 1(시험 틀 바꾸기) → 0(무인 루프).
+  vh_departtest는 시험 중 게임 시각을 다음 아침으로 넘긴다(잠자기처럼). 두 새 시험 모두 지식·장소 기억을 시험 뒤 원래대로 되돌린다.
   아래 0~6은 묶음 1 뒤의 순서(무인 루프 0은 시험 틀 바꾸기 1 뒤로 미룸 — 불안정한 시험으로 무인 루프가 헛돌지 않게).
 0. 무인 자동 루프 만들기(PC 세션에서 사용자와 같이, 처음 실행은 지켜보는 앞에서). 결정·구성 전부 loop-plan.txt.
    요약: 회차마다 새 세션으로 "다음" 한 항목, 계정 2개 번갈아, 둘 다 한도면 최대 절전+깨우기 예약, 부재 모드(모니터·LED 끔),
@@ -50,9 +56,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    자기 일꾼만 정리, 지식 판정은 자기 근처만, 자리는 시험 월드에서 코드가 평평한 숲 자리를 골라 고정. 순차 실행 스위치 유지.
    프레임·시험 시간을 diag에 기록.
 2. 회귀: 시험 8종 + vh_pittest·vh_coppertest + vh_bagtest(ChatGPT 3건은 preptest·bagtest·flagtest 안에 있음). PASS면 태그 valheim-0.3.8.
-2-1. 혼자 하는 멀티 시험 vh_peertest + 손님 코드 검사(risks.txt "혼자 하는 멀티 시험" A·B, 친구 접속은 완성판에서만 — 사용자 결정).
-     먼저 Chests.FromId(!상자)를 ZDO 기준으로.
-3. 출발 전 판단 시험 vh_departtest 새로(TestAutoGo=false: 재고·밤·죽은 곳·위험 질문과 대답, 대기열, 급한 명령).
+2-1. 손님 코드 검사(risks.txt "혼자 하는 멀티 시험" B, 친구 접속은 완성판에서만 — 사용자 결정). vh_peertest·!상자 ZDO 기준은 묶음 1에서 짰음.
 4. Claude 실제 호출(구상서 5-1): 별도 프로세스·30초 제한·도구 끔·haiku/sonnet 별칭(옵션 이름은 설치된 claude 버전으로 확인),
    보낼 정보 지시문, ClaudeTask → Commands 실행(SetSave/SetEdit 포함), "생각 중…" 말풍선.
 5. ③ 남은 것: 습격 귀환, 근처 플레이어와 같이 싸움, "도와줘요!!"+핑, 수리(작업대·대장간), 저항 미드, 동행 앞장서기·20m 유지.
