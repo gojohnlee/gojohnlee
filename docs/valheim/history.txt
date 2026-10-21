@@ -219,3 +219,10 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 - [ ] ⑨ 농사, 평탄화, 길 만들기
 - [ ] ⑩ 자동 보충
 - [ ] ⑪ 산 ⑫ 평원 ⑬ 안개땅 ⑭ 애쉬랜드 ⑮ 딥노스
+
+2026-10-21 (클라우드) ChatGPT 검토 3건 코드 수정 — 게임 시험 전
+- 01 Prep.TakeGear: 새 장비를 못 가져와도 계획(plan)대로 keep을 만들어 헌 갑옷을 반납하던 문제 → 실제로 가진 것으로 다시 계획.
+  가방이 차면 같은 칸 헌 장비를 먼저 상자에 넣고 새 것을 받음(MakeRoom, 상자도 차면 그대로). vh_preptest 5단계 추가.
+- 02 GatherJob: 다른 짐으로 차면 Full→Return→Deposit(0개)→Prep 무한 반복 → 나갈 때마다 Unload(GraveJob 짐 넣기를 Work/Unload.cs로 뺌),
+  빈손 귀환이면 bagFull로 끝. 가방이 차서 상자의 도구를 못 받는 Tool↔GoChest 무한 왕복도 같이 막음. 새 시험 vh_bagtest.
+- 03 Chests.Assigned: 거점 23m 밖 지정 상자는 안 씀. 이사 때 멀어진 장비·음식·씨앗 상자는 chestOld 대사. vh_flagtest에 상자 2개 추가.

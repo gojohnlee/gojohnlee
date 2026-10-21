@@ -7,6 +7,7 @@ namespace ValheimHelper
     /// 콘솔 명령 vh_flagtest: 거점 깃발 시험.
     /// 망치 목록 확인 → NPC를 지운 뒤 깃발 A를 실제 건축 경로(Player.PlacePiece)로 세움 → 둘이 A에 나타나는지 →
     /// 15m 떨어진 곳에 깃발 B → 거점이 B로 옮겨 가고 둘이 걸어가는지, A는 "쓰지 않음"이 되는지.
+    /// 이사 전에 상자 2개를 지정해 둔다(ChatGPT-03): B에서 먼 음식 상자는 안 쓰고 알리는지, B 근처 장비 상자는 그대로 쓰는지.
     /// 깃발과 NPC는 시험 뒤에도 남긴다(직접 볼 수 있게).
     /// </summary>
     static class FlagTest
@@ -76,6 +77,30 @@ namespace ValheimHelper
 
             // 깃발 B (15m 떨어진 곳)
             if (!NpcTestGround(a, 15f, out Vector3 b)) { checks.Add("깃발 B 자리 찾기", false); End(player, god, checks); yield break; }
+
+            // 상자 2개 지정: 음식 상자는 A 근처·B에서 먼 곳(B 반대쪽 14m), 장비 상자는 B 3m 앞(A에서도 12m)
+            var heard = new System.Collections.Generic.List<string>();
+            System.Action<string, string> onHeard = (n, t) => heard.Add(n + ": " + t);
+            ChatNet.Heard += onHeard;
+            Piece chestPiece = ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>();
+            Vector3 far = default, near = GatherTest.Ground(b + (a - b).normalized * 3f);
+            bool farOk = false;
+            for (int k = 0; k < 8 && !farOk; k++)
+            {
+                float ang = k * Mathf.PI / 4f;
+                far = GatherTest.Ground(a + new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * 14f);
+                farOk = Utils.DistanceXZ(far, b) > 26f && far.y > ZoneSystem.instance.m_waterLevel + 1f && Mathf.Abs(far.y - a.y) < 5f;
+            }
+            player.PlacePiece(chestPiece, far, player.transform.rotation, doAttack: false);
+            player.PlacePiece(chestPiece, near, player.transform.rotation, doAttack: false);
+            yield return new WaitForSeconds(1f);
+            Container food = GatherTest.ChestAt(far), equip = GatherTest.ChestAt(near);
+            checks.Add($"상자 2개 놓임 (먼 상자 B에서 {Utils.DistanceXZ(far, b):0}m)", farOk && food != null && equip != null);
+            GatherTest.Say("!상자 음식", food);
+            GatherTest.Say("!상자 장비", equip);
+            yield return new WaitForSeconds(0.5f);
+            checks.Add("음식·장비 상자 지정됨", food != null && equip != null && Chests.Assigned(Chests.KeyFood) == food && Chests.Assigned(Chests.KeyEquip(0)) == equip);
+
             player.PlacePiece(piece, b, player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(1f);
             ZDO flagB = Nearest(b);
@@ -90,6 +115,11 @@ namespace ValheimHelper
             }
             checks.Add($"둘 다 깃발 B로 이사 ({waited:0}초)", allHome);
             foreach (var n in WorkerNpc.All) TestRunner.Log($"{n.NpcName}: 깃발 B에서 수평 {Utils.DistanceXZ(n.transform.position, b):0.0}m·높이차 {n.transform.position.y - b.y:0.0}m, 상태 {n.Ai.Current}");
+            checks.Add("이사 뒤 먼 음식 상자는 안 씀(불러와져 있어도)", food != null && GatherTest.ChestAt(far) == food && Chests.Assigned(Chests.KeyFood) == null);
+            checks.Add("이사 뒤 가까운 장비 상자는 그대로 씀", equip != null && Chests.Assigned(Chests.KeyEquip(0)) == equip);
+            checks.Add("먼 상자를 다시 지정하라고 알림", heard.Exists(h => h.Contains("상자는 너무 멀")));
+            ChatNet.Heard -= onHeard;
+            foreach (var h in heard) TestRunner.Log(h);
 
             End(player, god, checks);
         }

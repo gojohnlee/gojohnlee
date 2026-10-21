@@ -22,7 +22,7 @@ namespace ValheimHelper
         Step m_step = Step.Prep;
         Prep m_prep;
         float m_time, m_stepTime, m_bestDist = float.MaxValue, m_progress;
-        Container m_chest;
+        Unload m_unload;
 
         public string StepName => "Grave" + m_step;
 
@@ -58,7 +58,7 @@ namespace ValheimHelper
             m_stepTime = 0f;
             m_bestDist = float.MaxValue;
             m_progress = 0f;
-            m_chest = null;
+            if (s == Step.Store) m_unload = new Unload(m_npc);
             m_ai.StopMoving();
         }
 
@@ -76,7 +76,7 @@ namespace ValheimHelper
                 case Step.Go: return UpdateGo(dt);
                 case Step.Loot: return UpdateLoot();
                 case Step.Home: return UpdateHome(dt);
-                case Step.Store: return UpdateStore(dt);
+                case Step.Store: return m_unload.Update(dt); // 들고 다닐 것 말고는 상자에 넣는다
             }
             return false;
         }
@@ -126,51 +126,6 @@ namespace ValheimHelper
             if (m_ai.MoveToPoint(dt, home, 2.5f, true) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Store); return true; }
             if (m_stepTime > 180f) { m_npc.TeleportTo(home, m_npc.transform.rotation, false); Go(Step.Store); }
             return true;
-        }
-
-        /// <summary>들고 다닐 것(Prep.Kept) 말고는 상자에 넣는다. 상자마다 걸어가서 한 번에.</summary>
-        bool UpdateStore(float dt)
-        {
-            if (m_stepTime > 90f) return false;
-            if (m_chest == null)
-            {
-                ItemDrop.ItemData next = NextToStore();
-                if (next == null) return false; // 다 넣었다
-                m_chest = Prep.IsGear(next) ? Chests.Assigned(Chests.KeyEquip((int)m_npc.Personality)) : Chests.ForItem(next.m_dropPrefab.name, m_npc.Home);
-                if (m_chest == null) { m_skip.Add(next); return true; }
-            }
-            Vector3 at = m_chest.transform.position;
-            if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, false); return true; }
-            Container chest = m_chest;
-            bool equipChest = chest == Chests.Assigned(Chests.KeyEquip((int)m_npc.Personality));
-            HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
-            Inventory mine = m_npc.GetInventory();
-            bool done = Chests.TryEdit(chest, inv =>
-            {
-                foreach (var it in new List<ItemDrop.ItemData>(mine.GetAllItems()))
-                {
-                    if (keep.Contains(it) || m_skip.Contains(it) || it.m_dropPrefab == null) continue;
-                    bool fits = Prep.IsGear(it) ? equipChest : Chests.ForItem(it.m_dropPrefab.name, m_npc.Home) == chest;
-                    if (!fits || !inv.CanAddItem(it)) continue;
-                    if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
-                    inv.MoveItemToThis(mine, it);
-                }
-            });
-            if (!done && m_stepTime < 60f) return true;
-            // 이 상자에 못 넣은 건 건너뛴다(자리가 없거나 지정 상자가 없음)
-            foreach (var it in mine.GetAllItems()) if (!keep.Contains(it) && it.m_dropPrefab != null && (Prep.IsGear(it) ? equipChest : Chests.ForItem(it.m_dropPrefab.name, m_npc.Home) == chest)) m_skip.Add(it);
-            m_chest = null;
-            return true;
-        }
-
-        readonly HashSet<ItemDrop.ItemData> m_skip = new HashSet<ItemDrop.ItemData>();
-
-        ItemDrop.ItemData NextToStore()
-        {
-            HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
-            foreach (var it in m_npc.GetInventory().GetAllItems())
-                if (!keep.Contains(it) && !m_skip.Contains(it) && it.m_dropPrefab != null) return it;
-            return null;
         }
 
         /// <summary>못 닿았다: 시도 1번으로 친다. 남은 시도가 있으면 다음에(한가할 때) 다시 간다.</summary>

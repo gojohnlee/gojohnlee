@@ -114,7 +114,10 @@ namespace ValheimHelper
                 }
             }
             int n = SpawnMissing(center, rot).Count;
-            Plugin.Log.LogInfo($"거점 이동 {center}, 새 NPC {n}명");
+            List<string> far = Chests.FarKinds(); // 멀어진 옛 상자는 안 쓴다 → 다시 지정하라고 한 번 알린다
+            if (far.Count > 0 && WorkerNpc.All.Count > 0)
+                WorkerNpc.All[0].Say("chestOld", new Dictionary<string, string> { ["kind"] = string.Join("·", far.ToArray()) });
+            Plugin.Log.LogInfo($"거점 이동 {center}, 새 NPC {n}명, 멀어진 지정 상자: {string.Join(",", far.ToArray())}");
         }
 
         /// <summary>ZDO의 NPC 인스턴스(불러와져 있으면).</summary>

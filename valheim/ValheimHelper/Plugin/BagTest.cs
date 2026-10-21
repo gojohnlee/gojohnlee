@@ -1,0 +1,119 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace ValheimHelper
+{
+    /// <summary>
+    /// 다른 짐 시험(ChatGPT-02): 1호 가방을 나무로 운반 한도까지 채우고 뿔 곡괭이를 쥐여 준 뒤 "!Claude 돌 3".
+    /// 1) 나무 상자가 꽉 참 → 짐을 못 넣으니 준비·귀환을 되풀이하지 않고 "넣을 데가 없어요"라고 알리고 끝내는지.
+    /// 2) 나무 상자를 비움 → 나무를 상자에 넣고(짐 정리) 돌을 모아 오는지. 물건 총량이 그대로인지.
+    /// </summary>
+    static class BagTest
+    {
+        public static void Register() => TestRunner.Register("vh_bagtest", "다른 짐으로 가방이 찬 채 채집 시험", Run);
+
+        static IEnumerator Run()
+        {
+            var checks = new GatherTest.Checks();
+            Player player = Player.m_localPlayer;
+            if (player == null || !ZNet.instance.IsServer())
+            {
+                TestRunner.Log("FAIL: 월드에 들어간 뒤(싱글 또는 서버 시작) 실행해야 합니다.");
+                TestRunner.Finish();
+                yield break;
+            }
+            bool god = player.InGodMode();
+            player.SetGodMode(true);
+            var heard = new List<string>();
+            System.Action<string, string> onHeard = (n, t) => heard.Add(n + ": " + t);
+            ChatNet.Heard += onHeard;
+
+            GameObject wood = ObjectDB.instance.GetItemPrefab("Wood"), pick = ObjectDB.instance.GetItemPrefab("PickaxeAntler");
+            GameObject chestPrefab = ZNetScene.instance.GetPrefab("piece_chest_wood");
+            checks.Add("프리팹 있음", wood != null && pick != null && chestPrefab != null && BaseFlag.Prefab != null);
+            if (wood == null || pick == null || chestPrefab == null || BaseFlag.Prefab == null) { End(player, god, checks, onHeard, heard); yield break; }
+
+            // 깃발, NPC, 상자 2개(나무·돌)
+            Workers.DespawnAll();
+            yield return new WaitForSeconds(1f);
+            Vector3 home = GatherTest.Ground(player.transform.position + player.transform.forward * 4f);
+            Quaternion rot = player.transform.rotation;
+            player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
+            yield return new WaitForSeconds(3f);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
+            if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
+            Piece chestPiece = chestPrefab.GetComponent<Piece>();
+            Vector3 woodPos = GatherTest.Ground(home + rot * new Vector3(-4f, 0f, -1f));
+            Vector3 stonePos = GatherTest.Ground(home + rot * new Vector3(4f, 0f, -1f));
+            player.PlacePiece(chestPiece, woodPos, rot, doAttack: false);
+            player.PlacePiece(chestPiece, stonePos, rot, doAttack: false);
+            yield return new WaitForSeconds(1f);
+            Container woodChest = GatherTest.ChestAt(woodPos), stoneChest = GatherTest.ChestAt(stonePos);
+            checks.Add("상자 2개 놓임", woodChest != null && stoneChest != null);
+            if (woodChest == null || stoneChest == null) { End(player, god, checks, onHeard, heard); yield break; }
+            GatherTest.Say("!상자 나무", woodChest);
+            GatherTest.Say("!상자 돌", stoneChest);
+            yield return new WaitForSeconds(0.5f);
+
+            // 가방: 곡괭이 + 나무를 운반 한도까지(무게로 참, 칸은 나무 상자에 다 들어갈 만큼만)
+            Inventory mine = claude.GetInventory();
+            mine.AddItem(pick, 1);
+            int stack = wood.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize;
+            for (int i = 0; i < 9 && mine.GetTotalWeight() < claude.MaxCarry; i++) mine.AddItem(wood, stack);
+            int carried = claude.CountItem("Wood");
+            checks.Add($"가방이 나무로 참 (나무 {carried}, 무게 {mine.GetTotalWeight():0}/{claude.MaxCarry:0})", mine.GetTotalWeight() >= claude.MaxCarry);
+
+            // 1) 나무 상자가 꽉 참 → 알리고 끝낸다
+            Chests.TryEdit(woodChest, inv => { while (inv.GetEmptySlots() > 0) inv.AddItem(wood, stack); });
+            int inChest = GatherTest.Count(woodChest, "Wood");
+            GatherTest.Say($"!{Workers.Name1} 돌 3", null);
+            float t = 0f;
+            yield return new WaitForSeconds(1f);
+            while (t < 90f && claude != null && claude.Ai.Current == WorkerAI.Mode.Work)
+            {
+                yield return new WaitForSeconds(1f);
+                t += 1f;
+            }
+            if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
+            string bagFull = claude.Line("bagFull");
+            checks.Add($"넣을 데가 없으면 알리고 끝냄 ({t:0}초)", claude.Ai.Current != WorkerAI.Mode.Work && heard.Exists(h => h.EndsWith(bagFull)));
+            checks.Add($"나무 그대로 (들고 {claude.CountItem("Wood")}/{carried}, 상자 {GatherTest.Count(woodChest, "Wood")}/{inChest})",
+                claude.CountItem("Wood") == carried && GatherTest.Count(woodChest, "Wood") == inChest);
+            GatherTest.Say("!멈춰", null);
+            yield return new WaitForSeconds(1f);
+
+            // 2) 나무 상자를 비운다 → 나무를 넣고 돌을 모아 온다
+            Chests.TryEdit(woodChest, inv => inv.RemoveAll());
+            GatherTest.Say($"!{Workers.Name1} 돌 3", null);
+            t = 0f;
+            int stones = 0;
+            while (t < 240f)
+            {
+                yield return new WaitForSeconds(5f);
+                t += 5f;
+                stones = GatherTest.Count(stoneChest, "Stone");
+                if ((int)t % 15 == 0) TestRunner.Log($"[{t:0}s] 상자 돌 {stones}, 들고 있는 나무 {(claude ? claude.CountItem("Wood") : -1)}, 상태 {(claude ? claude.Ai.Current + "/" + claude.Ai.Job?.StepName : "없음")}");
+                if (stones >= 3 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
+            }
+            checks.Add($"나무를 나무 상자에 넣음 (상자 {GatherTest.Count(woodChest, "Wood")}/{carried}, 들고 {(claude ? claude.CountItem("Wood") : -1)})",
+                claude != null && claude.CountItem("Wood") == 0 && GatherTest.Count(woodChest, "Wood") == carried);
+            checks.Add($"돌 상자에 돌 {stones}개 ({t:0}초)", stones >= 3);
+            checks.Add("곡괭이는 들고 있음", claude != null && claude.CountItem("PickaxeAntler") == 1);
+            GatherTest.Say("!멈춰", null);
+            yield return new WaitForSeconds(0.5f);
+            End(player, god, checks, onHeard, heard);
+        }
+
+        static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)
+        {
+            ChatNet.Heard -= onHeard;
+            player.SetGodMode(god);
+            TestRunner.Log("--- NPC 대사 ---");
+            foreach (var h in heard) TestRunner.Log(h);
+            TestRunner.Log($"판정: {(checks.Passed == checks.Total ? "PASS" : "FAIL")} ({checks.Passed}/{checks.Total})");
+            TestRunner.Finish();
+        }
+    }
+}

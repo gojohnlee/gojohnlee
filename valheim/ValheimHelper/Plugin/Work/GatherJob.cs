@@ -5,13 +5,13 @@ using ValheimHelper.Core.Work;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 채집 작업 (구상서 6장, 8-2장): 도구 챙기기 → 찾기(보이는 것 → 기억하는 곳 → 안 둘러본 밝혀진 곳) →
+    /// 채집 작업 (구상서 6장, 8-2장): 짐 정리(Unload) → 출발 준비(Prep) → 도구 챙기기 → 찾기(보이는 것 → 기억하는 곳 → 안 둘러본 밝혀진 곳) →
     /// 다가가기 → 손으로 줍기 또는 바닐라 공격으로 베기·캐기 → 떨어진 것 줍기 → 짐이 차거나 다 모으면 거점 상자에 넣기 → 남았으면 다시.
     /// 단계마다 시간 제한이 있고, 막히면 다른 대상·다른 곳으로 넘어간다. 얻는 방법(맨손·도끼·곡괭이)은 게임 데이터에서 읽는다.
     /// </summary>
     public sealed class GatherJob : IWorkerJob
     {
-        enum Step { Prep, Tool, GoChest, Search, GoZone, Approach, Work, Collect, Return, Deposit }
+        enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, Approach, Work, Collect, Return, Deposit }
 
         public readonly string Item;
         public readonly int Target;
@@ -24,8 +24,9 @@ namespace ValheimHelper
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
 
-        Step m_step = Step.Prep;
+        Step m_step = Step.Unload;
         Prep m_prep;
+        Unload m_unload;
         float m_stepTime;
         float m_searchTime;
         Container m_chest;
@@ -106,6 +107,7 @@ namespace ValheimHelper
             m_progressTimer = 0f;
             if (s == Step.Deposit) m_chest = null; // 넣을 상자는 그때그때 고른다
             if (s == Step.Prep) m_prep = null;
+            if (s == Step.Unload) m_unload = null;
         }
 
         bool Fail(string key)
@@ -135,7 +137,7 @@ namespace ValheimHelper
         public void AvoidHere(Vector3 danger)
         {
             m_avoid.Add(Senses.ZoneOf(danger));
-            if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
+            if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Unload || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
             if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
             Go(Step.Search);
         }
@@ -171,6 +173,7 @@ namespace ValheimHelper
                 case Step.Collect: return UpdateCollect(dt);
                 case Step.Return: return UpdateReturn(dt);
                 case Step.Deposit: return UpdateDeposit(dt);
+                case Step.Unload: return UpdateUnload(dt);
             }
             return false;
         }
@@ -189,13 +192,22 @@ namespace ValheimHelper
         bool UpdateTool()
         {
             // 필요한데 없는 도구가 상자에 있으면 가지러 간다(한 번에 다 챙긴다).
+            bool room = m_npc.GetInventory().GetEmptySlots() > 0, noRoom = false;
             foreach (var w in m_ways)
             {
                 if (Usable(w)) continue;
                 m_chest = FindToolChest(m_npc, w);
-                if (m_chest != null) { Go(Step.GoChest); return true; }
+                if (m_chest == null) continue;
+                if (room) { Go(Step.GoChest); return true; }
+                noRoom = true;
             }
             foreach (var w in m_ways) if (Usable(w)) { Go(Step.Search); return true; }
+            if (noRoom)
+            {
+                // 가방이 차서 도구를 못 받는다(그대로 두면 상자↔도구를 끝없이 오감): 모은 게 있으면 넣고 다시 나온다
+                if (Carried() > 0) { Go(Step.Return); return true; }
+                return Fail("bagFull");
+            }
             return GiveUp("noTool"); // 연장이 부러졌으면 모은 것부터 상자에 넣는다
         }
 
@@ -701,7 +713,10 @@ namespace ValheimHelper
             if (Carried() == 0)
             {
                 if (m_giveUp != null) return Fail(m_giveUp);
-                Go(Step.Prep);
+                // 빈손으로 왔다 = 나가자마자 가방이 찼다(다른 짐). 나갈 때 짐 정리를 이미 했으니 또 나가 봐야 같다
+                // (ChatGPT-02: 준비·귀환만 되풀이).
+                if (Full()) return Fail("bagFull");
+                Go(Step.Unload);
                 return true;
             }
             if (m_chest == null) m_chest = DepositChest();
@@ -737,7 +752,16 @@ namespace ValheimHelper
             }
             if (Carried() > 0) return Fail("chestFull");
             if (m_giveUp != null) return Fail(m_giveUp);
-            Go(Step.Prep); // 다시 나가기 전에 먹고 장비 확인
+            Go(Step.Unload); // 다시 나가기 전에 짐 정리, 먹고 장비 확인
+            return true;
+        }
+
+        /// <summary>나가기 전 짐 정리: 들고 다닐 것·모으는 물건 말고 다른 짐은 상자에 넣는다(다른 짐으로 가방이 차서 못 모으는 일 방지).</summary>
+        bool UpdateUnload(float dt)
+        {
+            if (m_unload == null) m_unload = new Unload(m_npc, Item);
+            if (m_unload.Update(dt)) return true;
+            Go(Step.Prep);
             return true;
         }
 

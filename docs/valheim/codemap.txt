@@ -15,11 +15,12 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook)
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
 지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도)
-채집                  Plugin/Work/GatherJob.cs(771: 도구→찾기→다가가기→캐기→줍기→귀환→상자) ResourceCatalog.cs(무엇을 무엇으로 캐나)
+채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
 탐험 작업              Plugin/Work/ExploreJob.cs
-출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
+출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기, 가방 차면 헌 장비와 맞바꿈 MakeRoom) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
 묘비 회수              Plugin/Work/GraveJob.cs
-상자                  Plugin/Work/Chests.cs(!상자 지정, 거점 20m)
+짐 정리               Plugin/Work/Unload.cs(들고 다닐 것 말고 상자에 넣기: 묘비 회수 뒤, 채집 나갈 때마다)
+상자                  Plugin/Work/Chests.cs(!상자 지정, 거점 20m — 이사로 멀어진 지정 상자는 안 씀, FarKinds 알림)
 스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
 제작 계획              Core/Work/CraftPlan.cs(426: RecipeBook·Facilities·CraftPlanner·시뮬레이션) + Plugin/Work/Recipes.cs(게임 데이터→RecipeBook, 거점 설비)
 세트메뉴·자동 보충      Core/Work/SetMenus.cs Refill.cs  저장: Brain.Sets/Refill(vh_sets, vh_refill)
@@ -31,7 +32,7 @@ Claude 답 검사         Core/Chat/ClaudeReply.cs(RateLimiter, ClaudeReply.Pars
 플러그인 시작          Plugin/Plugin.cs(Update: Workers, Brain, Departures.Tick, TestRunner)
 
 게임 안 시험           Plugin/TestRunner.cs(공통·자동 실행·diag.txt) AutoStart.cs(월드 자동 입장) Minimized.cs TestTerrain.cs(판 땅 되돌림)
-                      NpcTest FlagTest GatherTest(wood·stone·copper) PrepTest DeathTest FightTest ExploreTest PitTest FarZoneTest
+                      NpcTest FlagTest GatherTest(wood·stone·copper) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest
 PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh
 
 ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills

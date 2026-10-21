@@ -140,11 +140,14 @@ namespace ValheimHelper
             var taken = new List<string>();
             foreach (var it in plan)
             {
-                if (!chest.ContainsItem(it) || !mine.CanAddItem(it)) continue;
+                if (!chest.ContainsItem(it)) continue;
+                if (!mine.CanAddItem(it) && !MakeRoom(mine, chest, it, plan)) continue; // 못 바꾸면 헌 것을 그대로 입고 간다
                 mine.MoveItemToThis(chest, it);
+                if (chest.ContainsItem(it)) continue;
                 taken.Add(it.m_shared.m_name);
             }
-            // 입을 것은 입고(무기는 싸울 때 든다), 밀려난 헌 장비는 돌려놓는다
+            // 실제로 가진 것 기준으로(ChatGPT-01: 새 갑옷을 못 가져왔는데 헌 갑옷만 벗고 감) 입고, 밀려난 헌 장비는 돌려놓는다
+            plan = Plan(mine, null);
             WearPlan(m_npc, plan);
             var keep = new HashSet<ItemDrop.ItemData>(plan);
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Axe));
@@ -171,6 +174,32 @@ namespace ValheimHelper
                 taken.Add($"{it.m_shared.m_name} x{n}");
             }
             Plugin.Log.LogInfo($"{m_npc.NpcName} 장비 챙김: {string.Join(", ", taken.ToArray())}, 방어력 {m_npc.GetBodyArmor():0}");
+        }
+
+        /// <summary>
+        /// 가방이 차서 새 장비를 못 받을 때: 같은 칸의 헌 장비(계획에 없는 것, 들고 다닐 연장 제외)를 먼저 상자에 넣어 자리를 만든다.
+        /// 상자에도 자리가 없으면 false(아무것도 안 옮김).
+        /// </summary>
+        bool MakeRoom(Inventory mine, Inventory chest, ItemDrop.ItemData it, List<ItemDrop.ItemData> plan)
+        {
+            ItemDrop.ItemData axe = WorkerNpc.BestTool(mine, ToolKind.Axe), pick = WorkerNpc.BestTool(mine, ToolKind.Pickaxe);
+            foreach (var old in new List<ItemDrop.ItemData>(mine.GetAllItems()))
+            {
+                if (plan.Contains(old) || old == axe || old == pick || !SameSlot(old, it) || !chest.CanAddItem(old)) continue;
+                bool wearing = m_npc.IsWearing(old);
+                if (wearing) m_npc.UnequipItem(old, false);
+                chest.MoveItemToThis(mine, old);
+                if (mine.CanAddItem(it)) return true;
+                mine.MoveItemToThis(chest, old); // 그래도 자리가 안 났으면 되돌린다
+                if (wearing) m_npc.Wear(new[] { old });
+            }
+            return false;
+        }
+
+        static bool SameSlot(ItemDrop.ItemData a, ItemDrop.ItemData b)
+        {
+            if (Gear.IsMelee(a) || Gear.IsMelee(b)) return Gear.IsMelee(a) && Gear.IsMelee(b);
+            return a.m_shared.m_itemType == b.m_shared.m_itemType && IsGear(a);
         }
     }
 }

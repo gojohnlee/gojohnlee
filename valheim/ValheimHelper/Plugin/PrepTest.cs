@@ -8,7 +8,8 @@ namespace ValheimHelper
     /// 출발 준비 시험(③ 첫 조각): 깃발 → 장비 상자(가죽 갑옷·투구·바지, 사슴 망토, 나무 방패, 몽둥이, 부싯돌 도끼, 체력 미드 5)
     /// + 음식 상자(익힌 고기·꿀·산딸기·블루베리) → 1호에게 누더기 갑옷을 입혀 두고 "!Claude 나무 5" →
     /// 준비가 끝나면: 더 좋은 갑옷으로 갈아입고 누더기는 상자에 돌려놓았는지, 가장 센 근접 무기·미드 3개를 챙겼는지,
-    /// 음식 3종을 먹어 최대 체력이 올랐는지, 갑옷이 실제 피해를 줄이는지 → 두 번째 일은 갈 데가 없어 바로 나가는지.
+    /// 음식 3종을 먹어 최대 체력이 올랐는지, 갑옷이 실제 피해를 줄이는지 → 두 번째 일은 갈 데가 없어 바로 나가는지 →
+    /// 가방을 미드로 꽉 채우고 상자에 청동 갑옷(ChatGPT-01): 상자에 자리가 없으면 가죽 갑옷을 그대로 입고, 자리가 있으면 맞바꿔 입는지.
     /// </summary>
     static class PrepTest
     {
@@ -40,7 +41,7 @@ namespace ValheimHelper
 
             GameObject chestPrefab = ZNetScene.instance.GetPrefab("piece_chest_wood");
             var missing = new List<string>();
-            foreach (var n in new List<string>(GearItems) { "MeadHealthMinor", "ArmorRagsChest" }) if (ObjectDB.instance.GetItemPrefab(n) == null) missing.Add(n);
+            foreach (var n in new List<string>(GearItems) { "MeadHealthMinor", "ArmorRagsChest", "ArmorBronzeChest", "Stone" }) if (ObjectDB.instance.GetItemPrefab(n) == null) missing.Add(n);
             foreach (var n in FoodItems) if (ObjectDB.instance.GetItemPrefab(n) == null) missing.Add(n);
             checks.Add($"프리팹 있음{(missing.Count > 0 ? " (없음: " + string.Join(", ", missing.ToArray()) + ")" : "")}", missing.Count == 0 && chestPrefab != null);
             if (missing.Count > 0 || chestPrefab == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }
@@ -87,7 +88,7 @@ namespace ValheimHelper
             GatherTest.Say($"!{Workers.Name1} 나무 5", null);
             yield return new WaitForSeconds(0.5f); // 명령이 일이 될 때까지
             float t = 0f;
-            while (t < 60f && claude != null && claude.Ai.Job != null && claude.Ai.Job.StepName == "Prep")
+            while (t < 60f && claude != null && claude.Ai.Job != null && (claude.Ai.Job.StepName == "Prep" || claude.Ai.Job.StepName == "Unload"))
             {
                 yield return new WaitForSeconds(0.5f);
                 t += 0.5f;
@@ -131,7 +132,7 @@ namespace ValheimHelper
             GatherTest.Say($"!{Workers.Name1} 나무 5", null);
             yield return new WaitForSeconds(0.25f);
             t = 0f;
-            while (t < 30f && claude != null && claude.Ai.Job != null && claude.Ai.Job.StepName == "Prep")
+            while (t < 30f && claude != null && claude.Ai.Job != null && (claude.Ai.Job.StepName == "Prep" || claude.Ai.Job.StepName == "Unload"))
             {
                 yield return new WaitForSeconds(0.25f);
                 t += 0.25f;
@@ -139,6 +140,40 @@ namespace ValheimHelper
             checks.Add($"두 번째는 바로 나감 ({t:0.0}초)", t <= 1f);
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(0.5f);
+
+            // 5) 가방이 꽉 찼을 때 더 좋은 갑옷(ChatGPT-01). 채우는 건 체력 미드(들고 다니는 것이라 짐 정리에 안 빠진다).
+            GameObject mead = ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), stone = ObjectDB.instance.GetItemPrefab("Stone");
+            for (int i = 0; i < 64 && mine.GetEmptySlots() > 0; i++) mine.AddItem(mead, 10);
+            int meads = claude.CountItem("MeadHealthMinor");
+            Chests.TryEdit(eq, inv =>
+            {
+                inv.AddItem(ObjectDB.instance.GetItemPrefab("ArmorBronzeChest"), 1);
+                for (int i = 0; i < 64 && inv.GetEmptySlots() > 0; i++) inv.AddItem(stone, 50);
+            });
+            checks.Add($"가방·장비 상자 꽉 참 (미드 {meads})", mine.GetEmptySlots() == 0 && eq.GetInventory().GetEmptySlots() == 0);
+            for (int round = 0; round < 2; round++)
+            {
+                // 첫 번째: 상자에 헌 갑옷을 넣을 자리가 없다 → 그대로. 두 번째: 상자의 돌을 치워 자리를 만든다 → 맞바꾼다.
+                if (round == 1) Chests.TryEdit(eq, inv => inv.RemoveItem(stone.GetComponent<ItemDrop>().m_itemData.m_shared.m_name, GatherTest.Count(eq, "Stone")));
+                GatherTest.Say($"!{Workers.Name1} 나무 5", null);
+                yield return new WaitForSeconds(0.5f);
+                t = 0f;
+                while (t < 60f && claude != null && claude.Ai.Job != null && (claude.Ai.Job.StepName == "Prep" || claude.Ai.Job.StepName == "Unload"))
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    t += 0.5f;
+                }
+                GatherTest.Say("!멈춰", null);
+                yield return new WaitForSeconds(0.5f);
+                if (claude == null) break;
+                string want = round == 0 ? "ArmorLeatherChest" : "ArmorBronzeChest", other = round == 0 ? "ArmorBronzeChest" : "ArmorLeatherChest";
+                ItemDrop.ItemData chestArmor = mine.GetEquippedItems().Find(i => i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Chest);
+                string wornName = chestArmor?.m_dropPrefab != null ? chestArmor.m_dropPrefab.name : "없음";
+                checks.Add($"{(round == 0 ? "상자에 자리 없음: 헌 갑옷 그대로" : "상자에 자리 있음: 맞바꿔 입음")} (입은 것 {wornName}, 상자에 {other} {GatherTest.Count(eq, other)})",
+                    wornName == want && GatherTest.Count(eq, other) == 1 && claude.CountItem(other) == 0);
+                checks.Add($"물건 그대로 (갑옷 들고+상자 {claude.CountItem(want) + GatherTest.Count(eq, want)}, 미드 {claude.CountItem("MeadHealthMinor")}/{meads})",
+                    claude.CountItem(want) + GatherTest.Count(eq, want) == 1 && claude.CountItem("MeadHealthMinor") == meads);
+            }
             End(player, god, env, debugTime, debugValue, checks, onHeard, heard);
         }
 

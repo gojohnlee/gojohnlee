@@ -230,7 +230,7 @@ namespace ValheimHelper
         {
             Container chest = Chests.FromId(who.Hover);
             if (chest == null) { speaker.Say("chestNone"); return; }
-            if (Utils.DistanceXZ(chest.transform.position, speaker.Home) > Chests.BaseRange + 3f) { speaker.Say("chestFar"); return; }
+            if (!Chests.InRange(chest.transform.position, speaker.Home)) { speaker.Say("chestFar"); return; }
             ZDOID id = chest.GetComponent<ZNetView>().GetZDO().m_uid;
             string label;
             switch (cmd.Arg)

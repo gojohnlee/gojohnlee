@@ -18,7 +18,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    $env:VH_DLL="<저장소>\valheim\ValheimHelper\Plugin\bin\Release\ValheimHelper.dll"; $s=[IO.File]::ReadAllText("<저장소>\scripts\valheim-test.ps1",[Text.Encoding]::UTF8); & ([scriptblock]::Create($s))
    (-File은 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨림. 이 PC엔 파이썬 없음 → 수정은 Edit 도구. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    설치 → Steam 실행 → 인트로 건너뜀 → te4st41 자동 입장 → 시험 → 2초 뒤 종료 → 결과 출력.
-   시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_deathtest·vh_fighttest·vh_exploretest·
+   시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_bagtest·vh_deathtest·vh_fighttest·vh_exploretest·
    vh_pittest·vh_coppertest·vh_fartest. 월드 $env:VH_WORLD. 사용자가 다른 게임 중이면 $env:VH_MIN='1'(최소화·소리 끔).
    결과: <게임>\BepInEx\plugins\ValheimHelper\diag.txt, 오류: <게임>\BepInEx\LogOutput.log. 결과는 PASS/FAIL 줄과 FAIL 근처만 읽는다.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
@@ -34,6 +34,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   장소 기억(PlaceBook, !기억), 출발 전 판단·질문·대답·대기열(Departure/Departures, 급함 낱말), 스킬 성장(SkillBook, !스킬),
   제작 계획(CraftPlan/Recipes, !구리주괴 20은 계획만 말함), 세트메뉴(!세트), 자동 보충(!채워, 1분마다), Claude 답 검사·호출 제한(ClaudeReply).
   시험 중엔 질문에 자동 "그래도 가"(Departures.TestAutoGo).
+- ChatGPT 검토 3건 코드 수정(2026-10-21 클라우드, [게임 시험 안 됨]): 아래 [ChatGPT] 항목. 시험 조건은 vh_preptest(5단계)·vh_bagtest(새로)·vh_flagtest에 넣음.
 - 동작이 바뀐 것: 스킬 반영으로 처음엔 NPC 피해 계수 0.46(예전엔 약 0.93) → 채집 느려지고 싸움 판단 조심스러움. fight·wood·stone 시험 다시 볼 것.
 
 다음 (순서대로)
@@ -42,7 +43,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    멈춤 파일), 사용 한도면 기다렸다 이어 감. 권한을 어떻게 줄지는 사용자에게 묻고, 처음 한 번은 사용자가 지켜보는 앞에서 돌린다.
 1. 시험 방식 바꾸기(사용자 결정 2026-10-21): 고정 대기 대신 조건 끝나면 바로 다음, 시험용 일꾼을 시험 수만큼(최대 8명) 불러 떨어진 곳에서
    동시에(실제 게임은 2명). 프레임·시험 시간을 diag에 기록.
-2. 회귀: 시험 8종 + vh_pittest·vh_coppertest. PASS면 태그 valheim-0.3.8.
+2. 회귀: 시험 8종 + vh_pittest·vh_coppertest + vh_bagtest(ChatGPT 3건은 preptest·bagtest·flagtest 안에 있음). PASS면 태그 valheim-0.3.8.
 3. 출발 전 판단 시험 vh_departtest 새로(TestAutoGo=false: 재고·밤·죽은 곳·위험 질문과 대답, 대기열, 급한 명령).
 4. Claude 실제 호출(구상서 5-1): 별도 프로세스·30초 제한·도구 끔·haiku/sonnet 별칭(옵션 이름은 설치된 claude 버전으로 확인),
    보낼 정보 지시문, ClaudeTask → Commands 실행(SetSave/SetEdit 포함), "생각 중…" 말풍선.
@@ -54,21 +55,28 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   아래 문제 경로는 현재 valheim 코드(a3c783ba1f9b53847ffb3b2c2e0ed0e5144888cd)에도 남아 있음.
   상태: 코드 정적 검토만 수행. 아래 특수 상황은 게임 재현·수정·검증 전이며, 기존 PASS가 이 상황의 통과를 뜻하지 않음.
   기존 작업 순서는 유지하고, 권고사항 내부 우선순위는 아래 순서.
-- [ ] [ChatGPT-01] 가방 만재 시 장비 교체 실패와 기존 장비 반납
+- [~] [ChatGPT-01] 가방 만재 시 장비 교체 실패와 기존 장비 반납 — 코드 수정(게임 시험 전)
+  수정: TakeGear가 실제로 가진 것 기준(Plan(mine,null))으로 입고·보관. 가방이 차면 같은 칸 헌 장비를 먼저 상자에 넣어 맞바꿈(MakeRoom),
+  상자에도 자리가 없으면 헌 것 유지. 시험: vh_preptest 5단계(가방을 미드로 꽉 채움, 상자 꽉 참 → 그대로 / 상자 자리 → 맞바꿈, 총량 확인).
   근거: Plugin/Work/Prep.cs TakeGear(136~158행). Plan은 상자의 새 장비를 선택하지만 CanAddItem 실패 시 가져오지 못함.
   그 뒤에도 같은 plan으로 keep을 만들어 기존 장비를 반납 대상으로 처리하므로, 상자에 반납 공간이 있으면 기존 갑옷만 벗고 출발할 수 있음.
   권고: 실제로 확보한 장비 기준으로 착용·보관 목록을 확정하고, 대체품 확보 실패 시 기존 장비 유지.
   확인 조건: NPC 가방은 가득, 기존 갑옷 착용, 장비 상자에는 더 좋은 갑옷과 반납 여유 공간.
   기대: 교체 성공 시 새 갑옷 착용, 실패 시 기존 갑옷 유지. 물건 총량 보존.
   기존 vh_preptest 18/18은 가방에 여유가 있는 교체를 확인하므로 만재 조건을 추가할 것.
-- [ ] [ChatGPT-02] 다른 짐으로 운반 한도가 찬 상태에서 채집 준비·귀환 반복
+- [~] [ChatGPT-02] 다른 짐으로 운반 한도가 찬 상태에서 채집 준비·귀환 반복 — 코드 수정(게임 시험 전)
+  수정: 채집은 나갈 때마다 짐 정리(Unload: 들고 다닐 것·모으는 물건 말고는 상자에, GraveJob과 같은 코드)부터. 그래도 차서 빈손으로
+  돌아오면 "bagFull" 알리고 끝. 같은 갈래인 가방이 차서 도구를 못 받는 상자↔도구 무한 왕복도 막음(모은 게 있으면 넣고 다시, 없으면 끝).
+  시험: vh_bagtest(나무로 무게 한도 채움 + 곡괭이, "!Claude 돌 3": 나무 상자 꽉 참 → 알리고 끝 / 비움 → 나무 넣고 돌 3개).
   근거: Plugin/Work/GatherJob.cs UpdateSearch / UpdateDeposit / Full.
   목표 물건은 0개인데 다른 짐으로 무게·공간 한도가 차면 Full → Return → Deposit(Carried == 0) → Prep → Search가 반복됨.
   권고: 다른 짐을 안전하게 보관하거나, 보관 불가 사유를 알리고 작업을 종료하는 경로 마련. 진척 없이 재시도하는 반복도 제한.
   확인 조건: 나무 등 다른 짐으로 한도를 채운 뒤 돌 등 새로운 자원 작업 시작(필요한 도구는 사용 가능하게).
   기대: 짐 정리 후 진행하거나 명확한 실패 알림 후 종료하며, 같은 준비·귀환을 무기한 반복하지 않음.
   기존 vh_woodtest·vh_stonetest 각 9/9는 새 NPC의 소량 채집이므로 다른 짐 만재 조건을 추가할 것.
-- [ ] [ChatGPT-03] 거점 이동 후 이전 지정 상자의 거리 재검사
+- [~] [ChatGPT-03] 거점 이동 후 이전 지정 상자의 거리 재검사 — 코드 수정(게임 시험 전)
+  수정: Chests.Assigned가 그 NPC 거점 23m(지정 때와 같은 기준) 밖 상자는 안 씀(지정은 남김, 다시 가까워지면 씀). 이사 때 멀어진
+  장비·음식·씨앗 상자는 "chestOld"로 다시 지정하라고 알림(자원 상자는 조용히 새 거점 근처 상자 사용). 시험: vh_flagtest(먼 음식 상자·가까운 장비 상자).
   근거: Plugin/Workers.cs OnBaseMoved(101~118행), Plugin/Work/Chests.cs Assigned(27~36행).
   이사 시 Home만 바뀌고 상자 지정은 유지되며, Assigned는 새 거점과의 거리를 확인하지 않음.
   이전 상자가 로드돼 있으면 새 거점 범위 밖이어도 준비·적재에 계속 사용될 수 있음.
