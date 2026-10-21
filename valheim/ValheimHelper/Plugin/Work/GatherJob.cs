@@ -19,7 +19,8 @@ namespace ValheimHelper
         public string StepName => m_step.ToString();
         readonly HashSet<ToolKind> m_ways;
         ResourceInfo m_targetInfo;
-        uint m_lastRevision;
+        /// <summary>지난 휘두름 끝의 대상 체력 기록(HealthMark). null이면 다음 프레임에 잰다.</summary>
+        string m_lastHealth;
         bool m_sawTooHard;
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
@@ -423,7 +424,7 @@ namespace ValheimHelper
                 m_lastDigs = m_ai.Digs;
                 m_lastBlocked = m_ai.BlockedDigs;
                 m_saidDig = false;
-                m_lastRevision = zdo.DataRevision;
+                m_lastHealth = null; // 캐기 첫 프레임에 잰다(HealthMark는 인스턴스가 필요)
                 Go(Step.Work);
                 return true;
             }
@@ -455,6 +456,7 @@ namespace ValheimHelper
                 return true;
             }
             if (!m_npc.HoldTool(m_targetInfo.Tool)) { Go(Step.Tool); return true; }
+            if (m_lastHealth == null) m_lastHealth = HealthMark(zdo, view);
             // 큰 광맥은 다 캐기 전에 목표만큼 모일 수 있다(0.3.8 구리 시험: 10개 시켰는데 18개를 들고 계속 캠)
             if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
             // 진척(대상이 깎이거나 땅을 팜) 없이 30초면 다른 것으로. 큰 광맥은 오래 걸려도 계속 캔다.
@@ -498,8 +500,9 @@ namespace ValheimHelper
                     tool.m_durability = Mathf.Max(0f, tool.m_durability - tool.m_shared.m_useDurabilityDrain);
                     if (tool.m_durability <= 0f) { m_npc.UnequipItem(tool); m_npc.Say("toolBroke", Args()); }
                 }
-                // 체력 저장 방식이 대상마다 달라서(MineRock5는 부위별) 체력 대신 ZDO 데이터 변경으로 본다. 땅을 팠으면 그것도 진척.
-                bool progress = zdo.DataRevision != m_lastRevision || m_ai.Digs != m_lastDigs;
+                // 대상 체력이 줄었으면(HealthMark) 진척. 땅을 팠으면 그것도 진척.
+                string mark = HealthMark(zdo, view);
+                bool progress = mark != m_lastHealth || m_ai.Digs != m_lastDigs;
                 if (!progress && m_ai.BlockedDigs != m_lastBlocked && m_aimCol != null)
                 {
                     // 휘두름이 바위보다 땅에 먼저 닿았는데 땅은 안 파기로 했다(돌, 3m보다 깊음): 바닐라는 이 휘두름을 버린다.
@@ -509,14 +512,17 @@ namespace ValheimHelper
                 }
                 if (progress) { m_swingsNoProgress = 0; m_workIdle = m_closerTime = 0f; }
                 else m_swingsNoProgress++;
-                m_lastRevision = zdo.DataRevision;
                 m_lastDigs = m_ai.Digs;
                 m_lastBlocked = m_ai.BlockedDigs;
                 if (m_swingsNoProgress >= 4)
                 {
-                    // 바닐라 공격 판정이 닿지 않는다(구상서 12장): 같은 피해 값을 직접 준다.
+                    // 바닐라 공격 판정이 닿지 않는다(구상서 12장: 4번째부터 같은 피해 값을 직접 준다. 예: 바위 밑에 낀 통나무 — 휘두름이 바위에 먼저 닿음).
+                    // 직접 피해가 들면 진척이니 건너뛰지 않고 다음 휘두름에도 직접 준다. 못 들면(너무 단단함) 8번째에 건너뛴다.
                     DirectHit(view);
+                    if (HealthMark(zdo, view) != mark) { m_swingsNoProgress = 4; m_workIdle = 0f; }
                 }
+                // 직접 피해 뒤에 잰다: 그 피해를 다음 휘두름이 바닐라 진척으로 잘못 보지 않게
+                m_lastHealth = HealthMark(zdo, view);
                 if (m_swingsNoProgress >= 8) { Skip(); return true; }
             }
             m_wasAttacking = attacking;
@@ -577,6 +583,25 @@ namespace ValheimHelper
         /// <summary>충돌체에서 p에 가장 가까운 점. 오목한 메시 충돌체는 바닐라 ClosestPoint가 안 돼서(경고) 상자 경계로.</summary>
         static Vector3 Closest(Collider c, Vector3 p) =>
             c is MeshCollider m && !m.convex ? c.bounds.ClosestPoint(p) : c.ClosestPoint(p);
+
+        /// <summary>
+        /// 대상 체력 기록(휘두름 진척 판단용). ZDO DataRevision은 안 된다: 깨어 있는 통나무는 ZSyncTransform이 위치·속도를
+        /// 계속 써서 휘두를 때마다 오른다(루프 woodtest: 바위 밑에 끼어 떠는 통나무를 2분 동안 "깎인다"고 봄, 체력 35.6 그대로).
+        /// 바닐라 저장 키: TreeBase·TreeLog·Destructible = float s_health, MineRock5 = string s_health(부위별), MineRock = float "Health"+부위.
+        /// </summary>
+        static string HealthMark(ZDO zdo, ZNetView view)
+        {
+            string mark = zdo.GetFloat(ZDOVars.s_health, -1f).ToString("R") + "|" + zdo.GetString(ZDOVars.s_health);
+            MineRock rock = view.GetComponent<MineRock>();
+            if (rock != null)
+            {
+                int areas = (rock.m_areaRoot != null ? rock.m_areaRoot : rock.gameObject).GetComponentsInChildren<Collider>().Length;
+                float sum = 0f;
+                for (int i = 0; i < areas; i++) sum += zdo.GetFloat("Health" + i, rock.GetHealth());
+                mark += "|" + sum.ToString("R");
+            }
+            return mark;
+        }
 
         void DirectHit(ZNetView target)
         {

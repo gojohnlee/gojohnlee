@@ -68,3 +68,11 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   SimulationDistance(0,0)이면 그 구역만. ZoneSystem.c_ZoneSize = 64.
 - ZRoutedRpc.InvokeRoutedRPC(메서드, 인자)는 서버 peer로 보내는데, 호스트면 GetServerPeerID() = 자기 id → 그 자리에서 HandleRoutedRPC(같은 프레임).
   → 호스트 시험의 ChatNet.SendAsLocal 명령은 부르는 즉시 처리된다.
+- ZDO.DataRevision은 주인이 위치·속도를 써도 오른다(ZSyncTransform.OwnerSync → ZDO.SetPosition·Set(s_velHash)). 깨어 있는 통나무(TreeLog, Rigidbody)는
+  맞지 않아도 계속 오름 → 깎였는지는 체력 키로 본다: TreeBase·TreeLog·Destructible = float s_health, MineRock5 = string s_health(부위별 base64),
+  MineRock = float "Health"+부위(부위 = m_areaRoot 또는 자신의 자식 충돌체). (GatherJob.HealthMark)
+- 바닐라 근접 공격(Attack.DoMeleeAttack)은 광선마다 가장 가까운 것 하나만 맞힌다(m_hitThroughWalls 아니면 break) → 앞에 바위가 있으면 뒤의 통나무는 안 맞는다.
+  MineRock5.DamageArea는 도구 단계·피해 확인 전에 "hit mine rock 부위"를 로그에 쓴다(도끼로 바위를 쳐도 찍힘).
+- 통나무 ImpactEffect: OnCollisionEnter에서 상대가 Character면 Dot(-상대속도 방향, 통나무 그 점 속도) ≥ m_minVelocity일 때 피해("Rel vel" 로그),
+  종류는 프리팹 값(통나무 = HitType.Tree). 바위(MineRock5) 등 다른 IDestructible도 친다. TreeLog.RPC_Damage는 hit.m_pushForce×2로 통나무를 민다.
+- ZNetView.InvokeRPC는 주인이 자기면 그 자리에서 처리된다(ZRoutedRpc.InvokeRoutedRPC: target == 자기 id → HandleRoutedRPC) → 직접 피해는 같은 프레임에 체력에 반영.

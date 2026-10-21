@@ -296,3 +296,9 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 - 2회 FAIL: 구덩이 7(3.2m 원뿔, 2m 밖 1.5m) 깎지 않고 걸어 나옴 → 깊이 4.2m, 마른 땅 찾기에서 좁은 구덩이 둘레 3m 높이차 0.8m 안 우선(없으면 마른 땅만).
 - 3회 FAIL: 130m 옮긴 자리에 트롤·회색 난쟁이 → 일꾼 도망만(도망 중엔 깎기 안 함). 구덩이마다 80m 안 몬스터 치우고 체력 채움.
 - 4회 PASS 11/11 (113초, 구덩이 7 곡괭이질 3번 17.5초).
+
+[루프 회차 5~7, 2026-10-21] 상자 지정 없애기 + 시험 고침
+- 상자 지정 없앰(Chests.Assigned·KeyEquip·FarKinds·BaseChestZdo 제거, 거점 상자 전부: Chests.First/CountAll/ForItem). !상자는 "지정 안 함" 대답만.
+- 채집 시험(GatherTest): 지난 시험 상자 치움, 거점 상자 전부 셈, 물가면 300m 안 마른 초원으로 옮김(stonetest: 장비 상자가 물 3.1m 아래라 못 감).
+- woodtest FAIL(vh-debug): 바위 밑에 낀 통나무를 2분 침. 깨어 있는 통나무는 ZSyncTransform이 DataRevision을 계속 올려 진척으로 오판
+  → 진척은 체력 기록(HealthMark)으로, 직접 피해가 들면 계속. 결과 stone·wood·prep·bag·flag·peer·depart PASS, coppertest FAIL(10/11, 귀환 막힘, 수정 전 DLL도 같음).
