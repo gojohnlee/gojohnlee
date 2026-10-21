@@ -27,7 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
-$n
+- [루프 회차 41] B 마무리: 대기열·하던 일·질문 대기는 이미 데이터로 저장됨(WorkItem→ZDO vh_queue·vh_pending; Wait 중 끼운 보충은 PlanJob 안 일시 상태라 저장 불필요, PlanJob.Goal로 복귀) 확인. crafttest에 개수 보존 칸 2개 추가(활 재료 전부 소모·활 1개, 광석+주괴≤4) 10/10 PASS. Core 331 PASS. 다음: 3) 손님(멀티) 코드 검사.
 - [루프 회차 40] B 일 끼워넣기 1조각: Wait만 남고 90초 이상 남으면 PlanJob이 짧은 자동 보충(20개, Departures.NextRefillJob)을 끼우고 끝나면 계획으로 복귀(저장 안 함). Unload에 DIAG 로그 추가. Core 331 PASS, crafttest 8/8·departtest 24/24 PASS. 이 끼움을 실제로 타는 시험은 아직 없음. 다음: B의 나머지(대기열·질문 대기 저장 데이터화, 상자 넣기/꺼내기 개수 시험).
 - [루프 회차 38] I-2 상자 이름 읽기 완료(사용자가 ChestTag→CustomChestName로 바꿈): Core ChestNames(부분 문자열·대소문자 무시, 개인·보물·private·personal=손대지 않음 우선)+ChestTagReader(ZDO 문자열 "ChestName")를 Chests.TagProvider 기본값으로. Core 331 PASS, preptest·crafttest·departtest PASS. departtest는 시험 월드에 남은 체력 미드 때문에 FAIL이던 것을 시험 시작 청소에 미드 추가로 고침(코드 문제 아님). 이름 붙은 상자 게임 시험은 아직 안 함(Core 시험만; CustomChestName은 설치돼 있음 → 다음에 시험 가능). ★ 간헐 FAIL: vh_preptest가 2번 중 1번 "상자에 못 닿아 건너뜀"(7/22)·1번 "갑옷 피해 계산" FAIL, 재실행 PASS(원인 못 찾음, 변경 무관). 다음: B 일 끼워넣기·되돌아오기(Wait 중 자동 보충).
 - [루프 회차 37] I-1 상자 역할 Chests 한 곳 완료(ChestRole·TagProvider, 동작 그대로, 시험 PASS; bagtest "넣을 데가 없으면" 기준 빌드에서도 FAIL=기존 불안정). 다음: I-2 ChestTag 이름 읽기(ChestTag.dll 이름 저장 위치 ilspy 확인).
