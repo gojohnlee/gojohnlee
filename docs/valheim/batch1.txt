@@ -14,7 +14,7 @@
 ======================================================================
 1. 공통 규칙 (집에서 원인을 쉽게 가르기 위한 것 — 꼭 지킴)
 ======================================================================
-- 기준 DLL = 태그 valheim-0.3.8-base의 valheim/dist/ValheimHelper.dll(이 묶음 전 코드). 집에서 FAIL이면 그 시험만 기준 DLL로 다시 돌려 가른다.
+- 기준 DLL = 커밋 774545f의 valheim/dist/ValheimHelper.dll(이 묶음 전 코드): git show 774545f:valheim/dist/ValheimHelper.dll > <임시폴더>/baseline.dll. 집에서 FAIL이면 그 시험만 기준 DLL로 다시 돌려 가른다.
 - 손대지 않는 곳(0.3.8 수정이 아직 게임 시험 전): Work/GatherJob.cs, WorkerAI.cs의 이동·점프·구덩이·물 부분, NpcPatches.cs,
   Core/Work/Climb.cs·Water.cs, 기존 시험 파일(*Test.cs). 예외: ExploreTest가 시험 동안 작업 3 스위치를 끄는 몇 줄.
   WorkerAI.cs는 대기열 부분(QueuedWork·Queue·Interrupt·NextQueued, 26~90행 근처)만.
@@ -71,7 +71,7 @@
 3. 집 PC 세션이 할 것 (이 묶음 끝난 뒤, progress "다음"에 옮겨 적음)
 ======================================================================
 1. 빌드 → 새 DLL로 예전 방식 회귀(시험 8종 + pittest·coppertest·bagtest) + vh_departtest + vh_peertest. 순차 실행.
-2. FAIL이면 그 시험만 기준 DLL(태그 valheim-0.3.8-base)로 다시 → 0.3.8 탓인지 묶음 1 탓인지 가름. 묶음 1 탓이면 그 기능 스위치를
+2. FAIL이면 그 시험만 기준 DLL(커밋 774545f, 위 1장)로 다시 → 0.3.8 탓인지 묶음 1 탓인지 가름. 묶음 1 탓이면 그 기능 스위치를
    끄고 나머지 확인 후 vh-debug로.
 3. 다 PASS면 태그 valheim-0.3.8 → 시험 틀 바꾸기(progress "다음 1": 조건 대기, 1km 동시 2명 → 8명) → 무인 루프(loop-plan.txt).
 4. 그 뒤 묶음 2: Claude 실제 호출, ⑥ 제작 실행기.
