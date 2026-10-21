@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<LanguageData>
+  <GJL_SG_ShieldGuard.label>방패병</GJL_SG_ShieldGuard.label>
+  <GJL_SG_ShieldGuard.description>대방패와 저위력 소형 총을 장착한 기초 전투 메카노이드. 폭 2.5칸의 전방 실드가 지나가는 직사 투사체를 차단해 뒤쪽 아군을 보호한다. 실드 120, 피격 후 5초가 지나면 초당 12 회복. 남은 실드보다 큰 피해는 초과분이 본체로 전달된다. 측후면 공격, 근접 공격과 이미 발생한 폭발에는 취약하며 EMP에 맞으면 실드가 10초간 정지한다.</GJL_SG_ShieldGuard.description>
+  <GJL_SG_CompactGun.label>방패병 소형 총</GJL_SG_CompactGun.label>
+  <GJL_SG_CompactGun.description>대방패 뒤에서 사용할 수 있는 저위력 단발 총.</GJL_SG_CompactGun.description>
+  <GJL_SG_Bullet.label>소형 총 탄환</GJL_SG_Bullet.label>
+</LanguageData>

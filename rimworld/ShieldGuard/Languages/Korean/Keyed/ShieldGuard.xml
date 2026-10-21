@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<LanguageData>
+  <GJL_SG_Energy>실드: {0} / {1}</GJL_SG_Energy>
+  <GJL_SG_EMP>EMP: 실드 비활성</GJL_SG_EMP>
+  <GJL_SG_Toggle>방패 작동</GJL_SG_Toggle>
+  <GJL_SG_ToggleDesc>전방 투사체 차단 방벽을 켜거나 끕니다.</GJL_SG_ToggleDesc>
+  <GJL_SG_Lock>방패 방향 고정</GJL_SG_Lock>
+  <GJL_SG_LockDesc>이동하거나 사격해도 현재 방패 방향을 유지합니다. 해제하면 몸 방향을 따릅니다.</GJL_SG_LockDesc>
+  <GJL_SG_Rotate>방패 회전</GJL_SG_Rotate>
+  <GJL_SG_RotateDesc>방패를 시계 방향으로 90도 돌리고 고정합니다. 선택 시 청록색 선이 차단 폭을 표시합니다.</GJL_SG_RotateDesc>
+</LanguageData>

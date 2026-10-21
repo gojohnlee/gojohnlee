@@ -1,0 +1,164 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Defs>
+  <ThingDef ParentName="LightMechanoid">
+    <defName>GJL_SG_ShieldGuard</defName>
+    <label>shield guard</label>
+    <description>A basic combat mech carrying a large directional shield and a weak compact gun. Its regenerating barrier intercepts incoming ground projectiles across a 2.5-cell-wide front, protecting allies behind it. Overload damages the chassis. Flanking attacks, melee and explosions bypass the shield; EMP disables it.</description>
+    <statBases>
+      <MoveSpeed>3.2</MoveSpeed>
+      <BandwidthCost>1</BandwidthCost>
+      <MarketValue>900</MarketValue>
+    </statBases>
+    <race>
+      <lifeStageAges>
+        <li>
+          <def>MechanoidFullyFormed</def>
+          <minAge>0</minAge>
+          <soundWounded>Pawn_Mech_Militor_Wounded</soundWounded>
+          <soundDeath>Pawn_Mech_Militor_Death</soundDeath>
+          <soundCall>Pawn_Mech_Militor_Call</soundCall>
+        </li>
+        <li>
+          <def>MechanoidFullyFormed</def>
+          <minAge>100</minAge>
+          <soundWounded>Pawn_Mech_Militor_Wounded</soundWounded>
+          <soundDeath>Pawn_Mech_Militor_Death</soundDeath>
+          <soundCall>Pawn_Mech_Militor_Call</soundCall>
+        </li>
+      </lifeStageAges>
+      <baseHealthScale>1.2</baseHealthScale>
+    </race>
+    <comps>
+      <li Class="ShieldGuard.CompProperties_ShieldGuard" />
+    </comps>
+  </ThingDef>
+  <PawnKindDef ParentName="LightMechanoidKind">
+    <defName>GJL_SG_ShieldGuard</defName>
+    <label>shield guard</label>
+    <race>GJL_SG_ShieldGuard</race>
+    <combatPower>65</combatPower>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Pawn/Mechanoid/Militor</texPath>
+          <maskPath>Things/Pawn/Mechanoid/AllegianceOverlays/Mech_Slugger</maskPath>
+          <shaderType>CutoutWithOverlay</shaderType>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>1.25</drawSize>
+          <shadowData>
+            <volume>(0.3, 0.4, 0.3)</volume>
+            <offset>(0,0,-0.25)</offset>
+          </shadowData>
+        </bodyGraphicData>
+      </li>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Pawn/Mechanoid/MilitorAncient</texPath>
+          <maskPath>Things/Pawn/Mechanoid/AllegianceOverlays/Mech_Slugger</maskPath>
+          <shaderType>CutoutWithOverlay</shaderType>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>1.25</drawSize>
+          <shadowData>
+            <volume>(0.3, 0.4, 0.3)</volume>
+            <offset>(0,0,-0.25)</offset>
+          </shadowData>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+    <weaponTags>
+      <li>GJL_SG_CompactGun</li>
+    </weaponTags>
+    <allowInMechClusters>false</allowInMechClusters>
+  </PawnKindDef>
+  <ThingDef ParentName="LightMechanoidGunRanged">
+    <defName>GJL_SG_CompactGun</defName>
+    <label>shield guard compact gun</label>
+    <description>A low-powered single-shot weapon built for use behind a tower shield.</description>
+    <techLevel>Spacer</techLevel>
+    <graphicData>
+      <texPath>Things/Item/Equipment/WeaponRanged/MiniShotgun</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <statBases>
+      <MarketValue>1000</MarketValue>
+      <Mass>1.5</Mass>
+      <AccuracyTouch>0.80</AccuracyTouch>
+      <AccuracyShort>0.87</AccuracyShort>
+      <AccuracyMedium>0.7</AccuracyMedium>
+      <AccuracyLong>0.55</AccuracyLong>
+      <RangedWeapon_Cooldown>2.0</RangedWeapon_Cooldown>
+    </statBases>
+    <weaponTags>
+      <li>GJL_SG_CompactGun</li>
+    </weaponTags>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>GJL_SG_Bullet</defaultProjectile>
+        <warmupTime>1.0</warmupTime>
+        <range>15.9</range>
+        <burstShotCount>1</burstShotCount>
+        <ticksBetweenBurstShots>10</ticksBetweenBurstShots>
+        <soundCast>Shot_Shotgun</soundCast>
+        <soundCastTail>GunTail_Heavy</soundCastTail>
+        <muzzleFlashScale>3</muzzleFlashScale>
+      </li>
+    </verbs>
+  </ThingDef>
+  <ThingDef ParentName="BaseBullet">
+    <defName>GJL_SG_Bullet</defName>
+    <label>compact gun bullet</label>
+    <graphicData>
+      <texPath>Things/Projectile/Bullet_MiniShotgun</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <projectile>
+      <damageDef>Bullet</damageDef>
+      <damageAmountBase>5</damageAmountBase>
+      <stoppingPower>0.5</stoppingPower>
+      <armorPenetrationBase>0.06</armorPenetrationBase>
+      <speed>55</speed>
+    </projectile>
+  </ThingDef>
+  <RecipeDef ParentName="LightMechanoidRecipe">
+    <defName>GJL_SG_GestateShieldGuard</defName>
+    <label>gestate shield guard</label>
+    <description>Gestate a basic shield guard mechanoid.</description>
+    <products>
+      <GJL_SG_ShieldGuard>1</GJL_SG_ShieldGuard>
+    </products>
+    <descriptionHyperlinks>
+      <ThingDef>GJL_SG_ShieldGuard</ThingDef>
+    </descriptionHyperlinks>
+    <recipeUsers>
+      <li>MechGestator</li>
+    </recipeUsers>
+    <ingredients Inherit="False">
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Steel</li>
+          </thingDefs>
+        </filter>
+        <count>80</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>ComponentIndustrial</li>
+          </thingDefs>
+        </filter>
+        <count>2</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>SubcoreBasic</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+    </ingredients>
+  </RecipeDef>
+</Defs>

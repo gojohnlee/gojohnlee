@@ -11,6 +11,8 @@
 
 # 작업 규칙
 
+- 2026-10-21 추가: `rimworld/ShieldGuard` = 방패병(1티어, Biotech/Harmony, 1.7.4984). 전방 폭 2.5칸 투사체 차단, 실드 120, 피격 후 5초 대기/초당 12 회복, 초과 피해 본체 적용, EMP 10초 정지. 방향 고정/90도 회전 명령. 밀리터 몸체 + 코드로 그린 대형 방패. 별도 모드이며 철기병 파일은 변경하지 않음. `tests/ShieldGuard`의 13개 기하/피해 검사와 빌드 통과, 설치된 1.7.4984 API 및 XML 참조 확인. 실제 전투/렌더링/저장 로드 플레이 검증은 아직 필요. 세부 안내는 모드 README 참고.
+
 - 사용자는 **RimWorld 1.7** 사용. 1.7은 .NET 10 기반(`net10.0`), 1.6 이하(`net472`)와 다름.
   - 참조 패키지: `Krafs.Rimworld.Ref` 1.7.x(현재 unstable 빌드만 있음). 게임 빌드 번호에 맞출 것.
   - 모드 폴더 구조: `rimworld/<ModName>/1.7/Assemblies/`, `About/About.xml`의 supportedVersions는 1.7.

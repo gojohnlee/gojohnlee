@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<LanguageData>
+  <GJL_SG_Energy>Shield: {0} / {1}</GJL_SG_Energy>
+  <GJL_SG_EMP>EMP: shield disabled</GJL_SG_EMP>
+  <GJL_SG_Toggle>Shield</GJL_SG_Toggle>
+  <GJL_SG_ToggleDesc>Enable or disable the directional barrier.</GJL_SG_ToggleDesc>
+  <GJL_SG_Lock>Lock shield direction</GJL_SG_Lock>
+  <GJL_SG_LockDesc>Keep the current shield direction while the mech moves or fires. Unlock to follow body rotation.</GJL_SG_LockDesc>
+  <GJL_SG_Rotate>Rotate shield</GJL_SG_Rotate>
+  <GJL_SG_RotateDesc>Turn the shield 90 degrees clockwise and lock its direction. The cyan line shown when selected is its blocking width.</GJL_SG_RotateDesc>
+</LanguageData>
