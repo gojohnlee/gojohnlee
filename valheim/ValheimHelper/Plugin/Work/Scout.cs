@@ -22,6 +22,13 @@ namespace ValheimHelper
             HarmonyLib.AccessTools.MethodDelegate<System.Action<Minimap, Vector3, float>>(
                 HarmonyLib.AccessTools.Method(typeof(Minimap), "Explore", new[] { typeof(Vector3), typeof(float) }));
 
+        /// <summary>지도에서 그 한 점이 밝혀졌나(지도 없으면 false). 구역 여러 점 확인은 MapSense.Explored.</summary>
+        public static bool ExploredAt(Vector3 p)
+        {
+            Minimap map = Minimap.instance;
+            return map != null && MinimapExplored(map, p);
+        }
+
         public static bool Explored(ZoneXY z)
         {
             Minimap map = Minimap.instance;

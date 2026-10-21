@@ -26,6 +26,7 @@ namespace ValheimHelper
         static IEnumerator Run()
         {
             s_total = s_passed = 0;
+            Features.OverrideKnowExplored(false); // 밝혀진 곳은 안다(묶음 1 작업 3)는 끄고 예전 그대로 — 회귀를 깨끗하게
             Player player = Player.m_localPlayer;
             if (player == null || !ZNet.instance.IsServer())
             {
@@ -256,6 +257,7 @@ namespace ValheimHelper
         static void End(Player player, bool god, EnvMan env, bool debugTime, float debugValue, System.Action<string, string> onHeard, List<string> heard)
         {
             ChatNet.Heard -= onHeard;
+            Features.OverrideKnowExplored(null);
             player.SetGodMode(god);
             env.m_debugTimeOfDay = debugTime;
             env.m_debugTime = debugValue;

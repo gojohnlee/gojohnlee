@@ -52,6 +52,7 @@ namespace ValheimHelper
                 Brain.Update(UnityEngine.Time.deltaTime);
                 Departures.Tick(UnityEngine.Time.deltaTime);
                 WorkSaves.Tick(UnityEngine.Time.deltaTime);
+                MapSense.Tick(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();
             }
             catch (Exception e)
