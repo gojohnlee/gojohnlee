@@ -224,8 +224,9 @@ namespace ValheimHelper
         bool UpdateGoChest(float dt)
         {
             if (m_chest == null) { Go(Step.Tool); return true; }
-            if (!Walk(dt, m_chest.transform.position, 1.8f)) return m_stepTime < 60f || Fail("noTool");
-            if (m_stepTime > 30f) return Fail("noTool");
+            // Prep처럼 2.5m 안이면 닿은 것(옆 상자·깃발에 막혀 1.8m까지 못 가던 것, coppertest). 못 닿으면 모은 것부터 넣는다.
+            if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
+                return m_stepTime < 60f || GiveUp("noTool");
             bool took = Chests.TryEdit(m_chest, inv =>
             {
                 foreach (var w in m_ways)
@@ -235,7 +236,7 @@ namespace ValheimHelper
                     if (best != null) m_npc.GetInventory().MoveItemToThis(inv, best);
                 }
             });
-            if (!took) return true; // 누가 열고 있다: 기다린다
+            if (!took) return m_stepTime < 90f || GiveUp("noTool"); // 누가 열고 있다: 기다린다
             Go(Step.Tool); // 다른 상자에 다른 도구가 있으면 또 간다
             return true;
         }

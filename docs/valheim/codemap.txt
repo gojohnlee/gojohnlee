@@ -42,6 +42,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
 ----------------------------------------------------------------------
+- AnimalAI(사슴 등)는 공격 코드 없이 Flee만. 사슴 진영은 AnimalsVeg가 아님(게임 시험에서 BaseAI.IsEnemy 통과) → Guard.IsFoe가 AnimalAI 제외.
 - 몬스터 최대 체력 = 기본 × 레벨(Character.SetupMaxHealth). 별 하나 = 레벨 +1.
 - 밤 = 하루 비율 0.25 이하 또는 0.75 이상(EnvMan.CalculateNight). EnvMan.m_dayLengthSec(코드 기본 1200, 프리팹 값은 미확인), GetDayFraction().
 - 스킬: Skills.Skill.Raise — 쌓인 값 += m_increseStep × factor × Game.m_skillGainRate, 요구치 floor(레벨+1)^1.5 × 0.5 + 0.5.
