@@ -7,6 +7,8 @@
 ----------------------------------------------------------------------
 채팅 명령 해석        Core/Chat/ChatParser.cs(309) ChatCommand.cs(명령 종류) ItemAliases.cs(물건 별칭) Places.cs(방향·바이옴)
 채팅 주고받기          Plugin/ChatNet.cs(VH_Chat→호스트, VH_Say 말풍선) Items.cs(번역 이름→프리팹)
+작업 상태 저장          Core/Work/WorkState.cs(WorkItem·PendingData 저장 형식) + Plugin/WorkSaves.cs(1초마다 ZDO에, NPC 생기면 불러옴)
+기능 스위치             Plugin/Features.cs(BepInEx [Features] ChestByZdo·SaveWork·KnowExplored)
 명령 나누기·실행        Plugin/Commands.cs(262) + Core/Npc/Dispatch.cs(받을 NPC, 대답 받을 NPC)
 출발 전 판단·질문·대답  Core/Npc/Departure.cs(Judge, Replies) + Plugin/Departures.cs(462: 입력 모으기, 질문 대기, 제작 계획 말하기, 자동 보충, !기억)
 대사                  Core/Npc/Speech.cs(키별 대사, SCV/알라라크) Josa.cs(조사)
@@ -35,7 +37,7 @@ Claude 답 검사         Core/Chat/ClaudeReply.cs(RateLimiter, ClaudeReply.Pars
                       NpcTest FlagTest GatherTest(wood·stone·copper) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest
 PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh
 
-ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills
+ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기)
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)

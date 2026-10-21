@@ -163,7 +163,7 @@ namespace ValheimHelper
             npc.Say("skills", new Dictionary<string, string> { ["list"] = string.Join(", ", parts.ToArray()) });
         }
 
-        static void StartExplore(WorkerNpc npc, ChatCommand cmd)
+        internal static void StartExplore(WorkerNpc npc, ChatCommand cmd)
         {
             int dx = 0, dy = 0, biome = 0;
             string where;
@@ -177,8 +177,7 @@ namespace ValheimHelper
             {
                 if (!cmd.Urgent)
                 {
-                    var c = cmd;
-                    npc.Ai.Queue.Add(new QueuedWork { Label = where, Start = () => StartExplore(npc, c) });
+                    npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, new WorkItem { Kind = WorkKind.Explore, Label = where, Arg = cmd.Arg, Biome = cmd.Biome, Target = cmd.Target }));
                     npc.Say("depart.busy", new Dictionary<string, string> { ["job"] = npc.Ai.Job.Label });
                     return;
                 }

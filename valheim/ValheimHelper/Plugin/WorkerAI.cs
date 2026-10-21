@@ -29,6 +29,8 @@ namespace ValheimHelper
         public IWorkerJob Resume;
         public System.Action Start;
         public System.Func<bool> Ready;
+        /// <summary>저장용 데이터(WorkSaves → ZDO vh_queue). null이면 저장하지 않는 칸.</summary>
+        public WorkItem Work;
     }
 
     /// <summary>
@@ -73,7 +75,7 @@ namespace ValheimHelper
         public void Interrupt()
         {
             if (Current == Mode.Work && Job != null && !(Job is GraveJob))
-                Queue.Insert(0, new QueuedWork { Label = Job.Label, Resume = Job });
+                Queue.Insert(0, new QueuedWork { Label = Job.Label, Resume = Job, Work = WorkSaves.FromJob(Job) });
             Job = null;
         }
 

@@ -41,6 +41,36 @@ namespace ValheimHelper
 
         public static void Forget(WorkerNpc npc) => s_pending.Remove(npc);
 
+        /// <summary>저장용(WorkSaves → ZDO vh_pending). 기다리는 질문이 없으면 null.</summary>
+        public static PendingData Snapshot(WorkerNpc npc)
+        {
+            if (!s_pending.TryGetValue(npc, out var p)) return null;
+            DepartureResult r = p.Result;
+            var d = new PendingData
+            {
+                Question = r.Question, Condition = r.Condition, AskedAt = p.AskedAt, Speaker = p.Who.Name,
+                Item = p.Cmd.Item, Amount = p.Cmd.Amount, Urgent = p.Cmd.Urgent, Target = p.Cmd.Target,
+            };
+            if (r.Place != null) { d.HasPlace = true; d.Place = r.Place.Zone; }
+            if (r.Alternative != null) { d.HasAlternative = true; d.Alternative = r.Alternative.Zone; }
+            foreach (var kv in r.Args) d.Args[kv.Key] = kv.Value;
+            return d;
+        }
+
+        /// <summary>
+        /// 불러온 질문 대기를 되살린다. 장소는 구역만(대답 처리에 구역만 쓴다). 3분이 넘었으면 다음 Tick이 보류 처리.
+        /// 말한 사람은 이름만(대답 받을 NPC는 Dispatch.Answerer가 물은 시각·이름으로 고르므로 캐릭터 ZDOID가 필요 없다).
+        /// </summary>
+        public static void Restore(WorkerNpc npc, PendingData d)
+        {
+            var r = new DepartureResult { Action = DepartAction.Ask, Question = d.Question, Condition = d.Condition };
+            if (d.HasPlace) r.Place = new PlaceOption { Zone = d.Place };
+            if (d.HasAlternative) r.Alternative = new PlaceOption { Zone = d.Alternative };
+            foreach (var kv in d.Args) r.Args[kv.Key] = kv.Value;
+            var cmd = new ChatCommand { Kind = CommandKind.Item, Item = d.Item, Amount = d.Amount, Urgent = d.Urgent, Target = d.Target };
+            s_pending[npc] = new Pending { Result = r, Cmd = cmd, Who = new Speaker(d.Speaker ?? "", ZDOID.None, ZDOID.None), AskedAt = d.AskedAt };
+        }
+
         static double Now => ZNet.instance.GetTimeSeconds();
 
         // ---- 명령 받기 ----
@@ -61,7 +91,7 @@ namespace ValheimHelper
                     npc.Say(r.Key, args);
                     return;
                 case DepartAction.Queue:
-                    npc.Ai.Queue.Add(new QueuedWork { Label = args["item"] + " " + cmd.Amount, Start = () => Gather(who, cmd, npc, true) });
+                    npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, WorkSaves.GatherItem(who, cmd, args["item"] + " " + cmd.Amount, ReadyWhen.Always)));
                     npc.Say(r.Key, args);
                     return;
                 case DepartAction.Ask:
@@ -338,7 +368,7 @@ namespace ValheimHelper
                 case ReplyAction.WaitMorning:
                     s_pending.Remove(npc);
                     ChatCommand cmd = p.Cmd;
-                    npc.Ai.Queue.Add(new QueuedWork { Label = args["item"] + " " + cmd.Amount, Start = () => Gather(who, cmd, npc, true), Ready = () => !EnvMan.IsNight() });
+                    npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, WorkSaves.GatherItem(p.Who, cmd, args["item"] + " " + cmd.Amount, ReadyWhen.Morning)));
                     npc.Say("answer.morning", args);
                     break;
                 case ReplyAction.Hold:
