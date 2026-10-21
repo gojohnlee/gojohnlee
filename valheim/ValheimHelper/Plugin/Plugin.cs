@@ -20,6 +20,7 @@ namespace ValheimHelper
             // 한 단계가 실패해도 나머지는 올라오게 한다(0.1.0은 시험 명령 등록 오류로 자동 시험까지 멈췄다).
             Step("Harmony 패치", () => new Harmony(Guid).PatchAll());
             Step("NPC 설정·명령", () => Workers.Init(Config));
+            Step("기능 스위치", () => Features.Init(Config));
             Step("vh_fartest", FarZoneTest.Register);
             Step("vh_npctest", NpcTest.Register);
             Step("vh_flagtest", FlagTest.Register);

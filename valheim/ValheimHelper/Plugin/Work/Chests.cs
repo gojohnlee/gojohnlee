@@ -72,6 +72,18 @@ namespace ValheimHelper
             return go != null ? go.GetComponentInParent<Container>() : null;
         }
 
+        /// <summary>
+        /// 건축물 상자 ZDO(수레·배 제외, NearBase와 같은 기준)면 그 ZDO, 아니면 null. 인스턴스가 없어도 프리팹으로 판정한다(!상자 멀티).
+        /// </summary>
+        public static ZDO BaseChestZdo(ZDOID id)
+        {
+            if (id.IsNone() || ZDOMan.instance == null || ZNetScene.instance == null) return null;
+            ZDO zdo = ZDOMan.instance.GetZDO(id);
+            GameObject prefab = zdo != null ? ZNetScene.instance.GetPrefab(zdo.GetPrefab()) : null;
+            if (prefab == null) return null;
+            return prefab.GetComponent<Container>() != null && prefab.GetComponent<Piece>() != null && prefab.GetComponent<WearNTear>() != null ? zdo : null;
+        }
+
         /// <summary>거점 근처 상자들(건축물인 것만: 수레·배 제외), 가까운 순.</summary>
         public static List<Container> NearBase(Vector3 home)
         {

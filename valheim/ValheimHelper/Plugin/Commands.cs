@@ -228,10 +228,22 @@ namespace ValheimHelper
         /// <summary>!상자 &lt;종류&gt;: 말한 사람이 바라보는 상자를 지정한다. 거점 깃발 20m 안의 상자만.</summary>
         static void SetChest(Speaker who, ChatCommand cmd, WorkerNpc speaker)
         {
-            Container chest = Chests.FromId(who.Hover);
-            if (chest == null) { speaker.Say("chestNone"); return; }
-            if (!Chests.InRange(chest.transform.position, speaker.Home)) { speaker.Say("chestFar"); return; }
-            ZDOID id = chest.GetComponent<ZNetView>().GetZDO().m_uid;
+            ZDOID id;
+            if (Features.ChestByZdo)
+            {
+                // 호스트에 상자 인스턴스가 없어도(친구가 먼 거점에서) ZDO 위치·프리팹으로 판정한다.
+                ZDO zdo = Chests.BaseChestZdo(who.Hover);
+                if (zdo == null) { speaker.Say("chestNone"); return; }
+                if (!Chests.InRange(zdo.GetPosition(), speaker.Home)) { speaker.Say("chestFar"); return; }
+                id = zdo.m_uid;
+            }
+            else
+            {
+                Container chest = Chests.FromId(who.Hover);
+                if (chest == null) { speaker.Say("chestNone"); return; }
+                if (!Chests.InRange(chest.transform.position, speaker.Home)) { speaker.Say("chestFar"); return; }
+                id = chest.GetComponent<ZNetView>().GetZDO().m_uid;
+            }
             string label;
             switch (cmd.Arg)
             {
