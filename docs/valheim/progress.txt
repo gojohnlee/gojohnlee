@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 28] 6번 시험: vh_crafttest 새로(제작대 앞 활 제작 + 제련소 구리 주괴 2개 = PlanJob 실제 실행) PASS 8/8(119초). 고침: "!구리주괴/주석주괴/청동주괴/철주괴" 별칭(게임 한글 이름이 "구리"라 광석과 겹쳐 채집으로 잘못 감), Core 315 PASS. 남음: Wait 중 자동 보충·다른 일 하기, 작업 상태 저장(5-1), 계획 말투("계획만 세워 뒀수다"는 이제 실행하니 바꿀 것). 다음 5-1 또는 6 이어서.
 - [루프 회차 27] 6번 다섯째 조각: Departures.Craft·MakeSet이 계획을 말한 뒤 끝까지 가능한 계획(설비 있음·범위 안·너무 길지 않음)이면 PlanJob 시작(Idle·Home일 때만, 일하는 중이면 시작 안 함·로그). Features.RunPlans 스위치(기본 켬). 빌드·Core 312 PASS, [게임 시험 안 됨]. 남음: Wait 중 자동 보충, 상태 저장, vh 시험(!구리주괴로 실제 제련소 넣고 꺼내기 — 기존 departtest가 계획만 보는 가정이면 같이 확인). 다음 6 이어서(vh 시험) 또는 1.
 - [루프 회차 26] 6번 넷째 조각: Plugin/Work/MachineStep(Load: 거점 상자 재료·연료를 Smelter에 RPC_AddOre·AddFuel로 넣음, Unload: RPC_EmptyProcessed 후 완성품 줍기→짐 정리로 상자에). Smelter만(Fermenter·화덕은 Failed→Blocked). PlanJob이 호출. 빌드·Core 312 PASS, 어디서도 안 부름·[게임 시험 안 됨]. 남음: Wait 중 자동 보충, 명령(!구리주괴)에서 PlanJob 시작, 상태 저장, vh 시험(제련소에 실제로 넣고 꺼내기). 다음 6 이어서 또는 1.
 - [루프 회차 25] 6번 셋째 조각: Plugin/Work/PlanJob(IWorkerJob, PlanRunner를 돌림: Gather→GatherJob·Craft→CraftStep, Load·Unload·Hunt·Farm은 Failed→Blocked, 끝나면 로그). 빌드·Core 312 PASS, 어디서도 안 부름·[게임 시험 안 됨]. 남음: Load/Unload(설비 넣기·꺼내기), Wait 중 자동 보충, 명령(!구리주괴)에서 PlanJob 시작, 상태 저장, vh 시험. 다음 6 이어서 또는 1.

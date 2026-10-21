@@ -19,6 +19,8 @@ namespace ValheimHelper.Core.Chat
             ["구리"] = "CopperOre", ["구리 광석"] = "CopperOre", ["copper"] = "CopperOre", ["copper ore"] = "CopperOre",
             ["주석"] = "TinOre", ["주석 광석"] = "TinOre", ["tin"] = "TinOre", ["tin ore"] = "TinOre",
             ["철"] = "IronScrap", ["고철"] = "IronScrap", ["iron"] = "IronScrap", ["scrap iron"] = "IronScrap",
+            ["구리주괴"] = "Copper", ["구리 주괴"] = "Copper", ["copper bar"] = "Copper", ["주석주괴"] = "Tin", ["주석 주괴"] = "Tin", ["tin bar"] = "Tin",
+            ["청동"] = "Bronze", ["청동주괴"] = "Bronze", ["청동 주괴"] = "Bronze", ["bronze"] = "Bronze", ["철주괴"] = "Iron", ["철 주괴"] = "Iron", ["iron bar"] = "Iron",
         };
 
         /// <returns>프리팹 이름, 별칭이 아니면 null.</returns>
