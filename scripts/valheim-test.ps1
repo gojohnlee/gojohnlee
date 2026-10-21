@@ -26,6 +26,13 @@ function Find-Valheim {
 
 $game = Find-Valheim
 Write-Host "Valheim: $game"
+# 지난 시험에서 멈춘 게임이 남아 있으면 새 게임이 안 뜨고 아래 대기가 끝나지 않는다(2026-10-21 루프 회차 9).
+# Steam을 관리자로 켜 두면 게임도 관리자라 여기서 못 끈다 → 바로 알리고 멈춘다.
+$old = @(Get-Process | Where-Object { $_.ProcessName -like 'valheim*' })
+if ($old) {
+    try { $old | Stop-Process -Force -ErrorAction Stop; Start-Sleep 5; Write-Host '남아 있던 게임을 껐습니다.' }
+    catch { throw "남아 있던 게임(PID $($old.Id -join ','))을 끌 수 없습니다(액세스 거부 = Steam이 관리자 실행). 작업 관리자에서 끄고 Steam을 일반 권한으로 다시 켜 주세요." }
+}
 $tmp = Join-Path $env:TEMP "valheim-test-$(Get-Random)"
 New-Item -ItemType Directory $tmp | Out-Null
 
@@ -84,7 +91,9 @@ if ($Min) {
     }
 }
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
-while (Test-Game) { Start-Sleep 3 }
+$t = 0
+while ((Test-Game) -and $t -lt 1500) { Start-Sleep 3; $t += 3 }   # 25분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
+if (Test-Game) { Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Stop-Process -Force -ErrorAction SilentlyContinue }
 
 # 4) 결과 → 짧은 요약만 화면·클립보드에(토큰 아끼기, 2026-10-21). 자세한 건 diag.txt·LogOutput.log를 FAIL일 때만 연다.
 #    요약: diag 첫 줄, 시험별 판정·시간, FAIL 줄, 모드 로드 줄, 로그 오류 줄 수와 종류별 첫 8개.
