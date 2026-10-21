@@ -28,6 +28,8 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 ======================================================================
 지금 (2026-10-21)
 ======================================================================
+- [루프 회차 17] 4번 Claude 호출 연결: Core ClaudePrompt(지시문: 형식·허용 작업·NPC 상태·상자 재고, 테스트 Core 308) + Plugin ClaudeChat(RateLimiter Sonnet 6/분·한 번에 하나+한 줄 대기·"생각 중"·ClaudeReply.Parse·실패 시 onlyBang)
+  + Commands.RunClaudeTask(setsave/setedit 직접, 나머지 Run) + Features.ClaudeChat 스위치(기본 켬). [게임 시험 안 됨] 남음: 채팅→Claude 실시험(vh 시험 신설: 호출 실패 대체·수다 무시·작업 실행), 지시문 다듬기(말투·성격).
 - [루프 회차 16] 4번 Claude 호출 첫 조각: Core ClaudeCall(인자·출력 해석·Windows 인용, 테스트) + Plugin ClaudeCli(별도 스레드 프로세스·표준입력·30초 끊기) — 아직 어디서도 안 부름, 게임 시험 안 함. claude 2.1.304 실호출 확인(haiku 4초, --tools "" --setting-sources "" --output-format json의 result 필드). 고침: 회차 14의 TestSpots가 ValueTuple을 써서 valheim-build.sh 참조 검사가 실패하던 것(SpotXZ 구조체로). 남음: 지시문(작업 목록·상자 재고·말투), 채팅 흐름 연결(RateLimiter·ClaudeReply.Parse·"생각 중…"), 시험. 시험 틀 바꾸기 동시 본체는 위험도 커서 뒤로 미룸(risks 10).
 - [루프 회차 15] Workers.DespawnNear(자리 둘레 일꾼만 정리)·TestKit.Setup(w, around) 인자 추가(기본 동작 그대로, 게임 시험 안 함). 남은 것: 지식 격리(Brain 전체 교체)·TestRunner 동시 보고.
 - [루프 회차 14] 시험 틀 바꾸기 3조각: Core SpotSearch.Find + 테스트(Core 293). 남음: 동시 시험 본체(플러그인) — 시험마다 World를 자리별로 따로(TestKit.Setup이 플레이어 앞에 깃발·상자를 세우고 Workers.DespawnAll·Brain 전체 지식 교체를 하므로 자리 인자·자기 일꾼만 정리·지식 격리가 먼저 필요, risks.txt 10). 먼 구역은 FarZones가 유지. 2명부터.

@@ -53,6 +53,7 @@ namespace ValheimHelper
                 Workers.Update();
                 Brain.Update(UnityEngine.Time.deltaTime);
                 Departures.Tick(UnityEngine.Time.deltaTime);
+                ClaudeChat.Tick();
                 WorkSaves.Tick(UnityEngine.Time.deltaTime);
                 MapSense.Tick(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();

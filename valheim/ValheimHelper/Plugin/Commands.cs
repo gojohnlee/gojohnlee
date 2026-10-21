@@ -46,11 +46,42 @@ namespace ValheimHelper
                     Run(who, r.Command, npcs);
                     break;
                 case ChatRoute.Haiku:
-                    // Claude 연동(5-1장)은 아직 없다.
-                    Pick(CommandKind.Item, r.Target, npcs)?.Say("onlyBang");
+                case ChatRoute.Sonnet:
+                    ClaudeChat.Ask(who, r);
                     break;
-                // Sonnet(그냥 채팅)·짧은 대답은 아직 처리하지 않는다. 수다일 수 있으니 조용히 넘긴다.
             }
+        }
+
+        /// <summary>Claude를 못 쓰거나 실패했을 때: 정해진 ! 명령만 된다고 말한다(! 문장일 때만, 수다는 조용히).</summary>
+        internal static void OnlyBang(string target)
+        {
+            var npcs = WorkerNpc.All;
+            if (npcs.Count > 0) Pick(CommandKind.Item, target, npcs)?.Say("onlyBang");
+        }
+
+        internal static string StateOf(WorkerNpc npc) => State(npc);
+
+        /// <summary>검사를 통과한 Claude 작업 하나를 실행. 세트 저장·고치기는 여기서 직접, 나머지는 !명령과 같은 길.</summary>
+        internal static void RunClaudeTask(Speaker who, ClaudeTask t, List<WorkerNpc> npcs)
+        {
+            var cmd = t.Command;
+            if (cmd.Kind == CommandKind.SetSave || cmd.Kind == CommandKind.SetEdit)
+            {
+                var npc = Pick(cmd.Kind, cmd.Target, npcs);
+                if (npc == null) return;
+                if (cmd.Kind == CommandKind.SetSave)
+                {
+                    int no = Brain.Sets.Save(cmd.Number, t.Items, t.Name, who.Name);
+                    npc.Say(no > 0 ? "setSaved" : "notYet", new Dictionary<string, string> { ["no"] = no.ToString() });
+                }
+                else
+                {
+                    bool ok = Brain.Sets.Edit(cmd.Number, t.Remove, t.Items);
+                    npc.Say(ok ? "setSaved" : "setNone", new Dictionary<string, string> { ["no"] = cmd.Number.ToString(), ["item"] = "세트 " + cmd.Number + "번", ["n"] = "0" });
+                }
+                return;
+            }
+            Run(who, cmd, npcs);
         }
 
         static WorkerNpc Pick(CommandKind kind, string target, List<WorkerNpc> npcs)
