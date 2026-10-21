@@ -59,6 +59,7 @@ namespace ValheimHelper
         public static void Finish()
         {
             Running = false;
+            s_report.Add($"시간: {Time.time - s_startTime:0}초"); // 시험 스크립트 요약에 시험별로 보인다(평소보다 오래 걸린 것 알아채기)
             var lines = new List<string>(s_report.Count + 1) { Summary(s_report) };
             lines.AddRange(s_report);
             try { File.WriteAllLines(Path.Combine(PluginDir, "diag.txt"), lines.ToArray()); }

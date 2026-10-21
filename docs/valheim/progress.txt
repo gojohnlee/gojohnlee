@@ -20,7 +20,8 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    설치 → Steam 실행 → 인트로 건너뜀 → te4st41 자동 입장 → 시험 → 2초 뒤 종료 → 결과 출력.
    시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_bagtest·vh_deathtest·vh_fighttest·vh_exploretest·
    vh_pittest·vh_coppertest·vh_fartest. 월드 $env:VH_WORLD. 사용자가 다른 게임 중이면 $env:VH_MIN='1'(최소화·소리 끔).
-   결과: <게임>\BepInEx\plugins\ValheimHelper\diag.txt, 오류: <게임>\BepInEx\LogOutput.log. 결과는 PASS/FAIL 줄과 FAIL 근처만 읽는다.
+   결과: 스크립트는 짧은 요약만 출력(diag 첫 줄, 시험별 판정·시간, FAIL 줄, 로그 오류 종류 8개 — 2026-10-21 토큰 절약).
+   전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
 6. dist DLL도 커밋(방식 A 한 줄 명령이 valheim/dist를 받음).
 
@@ -41,6 +42,8 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 0. [사용자 결정 2026-10-21] 단계마다 새 세션으로 자동 진행하고 싶어 함(PC를 켜 두고 나갈 수 있게). 클라우드 세션에서는 안전장치가 막아
    못 만듦 → PC 세션이 사용자와 같이 만든다: 회차마다 새 세션으로 "다음" 한 항목만 하고 끝, 멈춤 조건(사용자 결정 필요·3회차 진척 없음·
    멈춤 파일), 사용 한도면 기다렸다 이어 감. 권한을 어떻게 줄지는 사용자에게 묻고, 처음 한 번은 사용자가 지켜보는 앞에서 돌린다.
+   [사용자 결정 2026-10-21] Claude 토큰은 코딩에 쓴다: 시험 루프는 AI 없는 PowerShell(빌드→시험→판정, 다 PASS면 Claude 안 부름),
+   FAIL일 때만 claude를 새 세션으로 불러 요약만 넘김. 딥시크 등 다른 AI는 안 씀(요약은 코드로 거르면 됨, 요금·코드 외부 전송).
 1. 시험 방식 바꾸기(사용자 결정 2026-10-21): 고정 대기 대신 조건 끝나면 바로 다음, 시험용 일꾼을 시험 수만큼(최대 8명) 불러 떨어진 곳에서
    동시에(실제 게임은 2명). 프레임·시험 시간을 diag에 기록.
 2. 회귀: 시험 8종 + vh_pittest·vh_coppertest + vh_bagtest(ChatGPT 3건은 preptest·bagtest·flagtest 안에 있음). PASS면 태그 valheim-0.3.8.

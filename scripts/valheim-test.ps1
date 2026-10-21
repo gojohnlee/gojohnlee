@@ -2,7 +2,7 @@
 # 사용법 (PowerShell에 한 줄 붙여넣기):
 #   irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
 # PC의 Claude Code 세션: $env:VH_DLL='<빌드한 ValheimHelper.dll>'; powershell -ExecutionPolicy Bypass -File scripts\valheim-test.ps1
-#   (결과는 화면과 클립보드, 그리고 <게임>\BepInEx\plugins\ValheimHelper\diag.txt)
+#   (화면과 클립보드에는 짧은 요약만, 전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt)
 # 다른 게임을 하면서 시험: 앞에 $env:VH_MIN='1'; 을 붙이면 발헤임 창을 최소화하고 소리를 끈다.
 $ErrorActionPreference = 'Stop'
 $Raw   = 'https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim'
@@ -77,19 +77,40 @@ if ($Min) {
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
 while (Test-Game) { Start-Sleep 3 }
 
-# 4) 결과 수집 → 클립보드
-$report = @('=== Valheim 테스트 결과 ===')
+# 4) 결과 → 짧은 요약만 화면·클립보드에(토큰 아끼기, 2026-10-21). 자세한 건 diag.txt·LogOutput.log를 FAIL일 때만 연다.
+#    요약: diag 첫 줄, 시험별 판정·시간, FAIL 줄, 모드 로드 줄, 로그 오류 줄 수와 종류별 첫 8개.
 $diag = Join-Path $plugin 'diag.txt'
-$report += '--- diag ---'
-if (Test-Path $diag) { $report += Get-Content $diag -Encoding UTF8 }
-else { $report += '(diag.txt 없음: vh_fartest를 실행하지 않았거나 모드가 로드되지 않았음)' }
 $log = Join-Path $game 'BepInEx\LogOutput.log'
-$report += '--- BepInEx 로그 (오류·이 모드) ---'
+$report = @('=== Valheim 테스트 결과 ===')
+if (Test-Path $diag) {
+    $lines = @(Get-Content $diag -Encoding UTF8)
+    $report += $lines[0]
+    $name = $null; $verdict = ''; $time = ''; $fails = @()
+    foreach ($l in ($lines | Select-Object -Skip 1)) {
+        if ($l.StartsWith('=== ')) {
+            if ($name) { $report += "  $name $verdict $time" }
+            $name = ($l.Substring(4) -split ' ')[0]; $verdict = '(판정 없음)'; $time = ''
+        }
+        elseif ($l.StartsWith('판정: ')) { $verdict = $l.Substring(4) }
+        elseif ($l.StartsWith('시간: ')) { $time = '(' + $l.Substring(4) + ')' }
+        elseif ($l.StartsWith('FAIL')) { $fails += "  [$name] $l" }
+    }
+    if ($name) { $report += "  $name $verdict $time" }
+    if ($fails.Count -gt 0) { $report += @($fails | Select-Object -First 30) }
+} else { $report += '(diag.txt 없음: 시험이 안 돌았거나 모드가 로드되지 않았음)' }
 if (Test-Path $log) {
-    $report += Get-Content $log -Encoding UTF8 |
-        Where-Object { $_ -match 'Error|Exception|Valheim Helper|ValheimHelper|Valheim version|BepInEx \d' } |
-        Select-Object -First 150
+    $all = @(Get-Content $log -Encoding UTF8)
+    $loaded = $all | Where-Object { $_ -match 'Valheim Helper .* 로드됨' } | Select-Object -Last 1
+    if ($loaded) { $report += $loaded.Trim() } else { $report += '모드 로드 줄 없음(BepInEx가 모드를 못 올렸을 수 있음)' }
+    $errs = @($all | Where-Object { $_ -match 'Error|Exception' })
+    $kinds = @($errs | ForEach-Object { $_.Trim() } | Select-Object -Unique)
+    $report += "로그 오류 $($errs.Count)줄(종류 $($kinds.Count))"
+    foreach ($e in ($kinds | Select-Object -First 8)) {
+        if ($e.Length -gt 200) { $e = $e.Substring(0, 200) + '...' }
+        $report += "  $e"
+    }
 } else { $report += '(LogOutput.log 없음: BepInEx가 로드되지 않았음)' }
+$report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
 $text = $report -join "`r`n"
 Set-Clipboard $text
 Write-Host $text
