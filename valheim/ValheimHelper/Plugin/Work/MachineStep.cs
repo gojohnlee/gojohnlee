@@ -70,7 +70,7 @@ namespace ValheimHelper
             if (CraftStep.Have(home, m_step.Item) < ore) return CraftResult.Failed;
             string fuelPrefab = fuel > 0 ? Utils.GetPrefabName(m_smelter.m_fuelItem.gameObject) : null;
             if (fuel > 0 && CraftStep.Have(home, fuelPrefab) < fuel) return CraftResult.Failed;
-            var chests = Chests.NearBase(home);
+            var chests = Chests.NearBase(home, ChestRole.Mats);
             foreach (var c in chests)
                 if (Chests.InUse(c)) { m_busy += Time.deltaTime; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
             CraftStep.Take(chests, m_step.Item, ore);

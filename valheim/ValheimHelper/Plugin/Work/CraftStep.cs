@@ -45,7 +45,7 @@ namespace ValheimHelper
             var need = Needs();
             foreach (var kv in need)
                 if (Have(home, kv.Key) < kv.Value) return CraftResult.Failed;
-            var chests = Chests.NearBase(home);
+            var chests = Chests.NearBase(home, ChestRole.Mats);
             foreach (var c in chests)
                 if (Chests.InUse(c)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
             foreach (var kv in need) Take(chests, kv.Key, kv.Value);
@@ -73,7 +73,7 @@ namespace ValheimHelper
         internal static int Have(Vector3 home, string prefab)
         {
             string name = SharedName(prefab);
-            return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name));
+            return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name), ChestRole.Mats);
         }
 
         internal static void Take(List<Container> chests, string prefab, int amount)
@@ -101,7 +101,7 @@ namespace ValheimHelper
             int max = Mathf.Max(1, proto.m_shared.m_maxStackSize);
             while (amount > 0)
             {
-                Container chest = Chests.ForItem(prefab, home);
+                Container chest = Chests.ForItem(prefab, home, ChestRole.Mats);
                 if (chest == null) return false;
                 int stack = Mathf.Min(amount, max);
                 bool added = false;

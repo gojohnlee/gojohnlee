@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 37] I-1 상자 역할 Chests 한 곳 완료(ChestRole·TagProvider, 동작 그대로, 시험 PASS; bagtest "넣을 데가 없으면" 기준 빌드에서도 FAIL=기존 불안정). 다음: I-2 ChestTag 이름 읽기(ChestTag.dll 이름 저장 위치 ilspy 확인).
 - [루프 회차 36] 노트 맞춤만(코드 변경 없음): decisions 결정 묶음·구현 단계 표·codemap 정리, 사용자 순서를 "다음" 맨 앞에. 다음: I-1 상자 역할 고르기를 Chests 한 곳으로.
 - [루프 회차 35] 2-1 손님 코드 검사 1차: 새 코드(PlanJob·CraftStep·MachineStep·Reclaim·Claude)는 NPC 주인(호스트)만 돌고 상자는 TryEdit(소유권)·설비는 RPC라 문제없음.
   고친 것: 거점 재고 세기(Chests.CountAll·새 Chests.Any — 출발 판단·제작 계획)가 거점 구역이 안 불러와진 상자를 0으로 보던 것 → 인스턴스 없으면 ZDO s_items를 읽음.

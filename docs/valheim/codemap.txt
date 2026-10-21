@@ -22,7 +22,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기, 가방 차면 헌 장비와 맞바꿈 MakeRoom) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
 묘비 회수              Plugin/Work/GraveJob.cs
 짐 정리               Plugin/Work/Unload.cs(들고 다닐 것 말고 상자에 넣기: 묘비 회수 뒤, 채집 나갈 때마다)
-상자                  Plugin/Work/Chests.cs(지정 없음: 거점 20m 안 상자 전부 NearBase·First·CountAll, 넣기 ForItem = 같은 물건 → 빈자리. !상자는 "다 씀" 대답만)
+상자                  Plugin/Work/Chests.cs(I-1: ChestRole Any/Gear/Food/Mats 인자·TagProvider(ZDO,역할) 자리, null=태그 없음=전부. RoleFor(물건)=Unload 역할. 지정 없음: 거점 20m 안 상자 전부 NearBase·First·CountAll, 넣기 ForItem = 같은 물건 → 빈자리. !상자는 "다 씀" 대답만)
 스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
 제작 계획              Core/Work/CraftPlan.cs(426: RecipeBook·Facilities·CraftPlanner·시뮬레이션) + Plugin/Work/Recipes.cs(게임 데이터→RecipeBook, 거점 설비)
 제작 실행기             Core/Work/PlanRunner.cs(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait) + Plugin/Work/PlanJob.cs(PlanRunner를 돌리는 일: Gather→GatherJob, Craft→CraftStep, Load/Unload→MachineStep) CraftStep.cs(제작대 앞 제작) MachineStep.cs(Smelter에 넣기·꺼내기)

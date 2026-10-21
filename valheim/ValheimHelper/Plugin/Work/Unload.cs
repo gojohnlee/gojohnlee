@@ -61,7 +61,7 @@ namespace ValheimHelper
             return true;
         }
 
-        Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home);
+        Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home, Chests.RoleFor(it));
 
         bool Storable(ItemDrop.ItemData it, HashSet<ItemDrop.ItemData> keep) =>
             it.m_dropPrefab != null && !keep.Contains(it) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except;

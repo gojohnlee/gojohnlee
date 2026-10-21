@@ -215,7 +215,7 @@ namespace ValheimHelper
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)
         {
             if (kind == ToolKind.None) return null;
-            return Chests.First(npc.Home, inv => WorkerNpc.BestTool(inv, kind) != null);
+            return Chests.First(npc.Home, inv => WorkerNpc.BestTool(inv, kind) != null, ChestRole.Gear);
         }
 
         bool UpdateGoChest(float dt)
@@ -801,7 +801,7 @@ namespace ValheimHelper
             return true;
         }
 
-        Container DepositChest() => Chests.ForItem(Item, m_npc.Home);
+        Container DepositChest() => Chests.ForItem(Item, m_npc.Home, ChestRole.Mats);
 
         // ---- 공통 ----
 

@@ -308,3 +308,6 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 [루프 회차 35, 2026-10-22] 2-1 손님 코드 검사 1차(risks.txt B): 새 코드는 NPC 주인만 돎(BaseAI.UpdateAI), 상자 고치기는 TryEdit, 설비는 RPC → 문제없음.
   고침: Chests.CountAll·Any가 인스턴스 없는 거점 상자는 ZDO s_items를 Inventory.Load로 읽음(Container.Load 확인: GetByteArray(s_items), Inventory.Load는 위치 검사 없이 넣음).
   시험: departtest+crafttest 조합에서 crafttest 간헐 FAIL 2번(주괴가 상자에 없음, 계획은 완료) — 같은 조합 기준 빌드 4번·이 빌드 3번 PASS. ZDO 경로는 시험 중 0번 쓰임.
+
+[루프 회차 37, 2026-10-22] I-1 상자 역할 한 곳: Chests에 ChestRole(Any/Gear/Food/Mats)·TagProvider·RoleFor. NearBase/ForItem/First/CountAll/Any가 역할 인자(기본 Any). 호출: Prep 장비=Gear·음식=Food, GatherJob 도구=Gear·넣기=Mats, Unload=RoleFor(물건), CraftStep/MachineStep/PlanFor/Stock=Mats, 음식·미드 재고=Food. 태그 공급자 null이라 동작 그대로.
+  Core 315 PASS, preptest 22/22·crafttest 8/8·departtest 24/24 두 번 PASS. 간헐: departtest가 첫 두 번 서로 다른 칸에서 FAIL(기준 빌드도 bagtest "넣을 데가 없으면" FAIL 재현 → 기존 불안정, 상자 변경 무관).

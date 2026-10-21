@@ -154,8 +154,8 @@ namespace ValheimHelper
             };
             if (ways.Contains(ToolKind.Axe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.WoodCutting);
             else if (ways.Contains(ToolKind.Pickaxe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.Pickaxes);
-            input.FoodInChest = Chests.Any(home, WorkerNpc.HasFood);
-            input.HealthMeads = CountMeads(npc.GetInventory()) + Chests.CountAll(home, CountMeads);
+            input.FoodInChest = Chests.Any(home, WorkerNpc.HasFood, ChestRole.Food);
+            input.HealthMeads = CountMeads(npc.GetInventory()) + Chests.CountAll(home, CountMeads, ChestRole.Food);
             input.Stock = Stock(cmd.Item, home);
             GameObject prefab = ObjectDB.instance.GetItemPrefab(cmd.Item);
             int stack = prefab != null ? prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize : 50;
@@ -235,7 +235,7 @@ namespace ValheimHelper
             if (go == null) return 0;
             string name = go.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
             int n = 0;
-            foreach (var c in Chests.NearBase(home)) n += c.GetInventory().CountItems(name);
+            foreach (var c in Chests.NearBase(home, ChestRole.Mats)) n += c.GetInventory().CountItems(name);
             return n;
         }
 
@@ -306,7 +306,7 @@ namespace ValheimHelper
             RecipeBook book = Recipes.Book();
             Vector3 home = npc.Home;
             var stock = new Dictionary<string, int>();
-            foreach (var c in Chests.NearBase(home))
+            foreach (var c in Chests.NearBase(home, ChestRole.Mats))
                 foreach (var it in c.GetInventory().GetAllItems())
                 {
                     if (it.m_dropPrefab == null) continue;
@@ -418,7 +418,7 @@ namespace ValheimHelper
         static bool ConditionMet(WorkerNpc npc)
         {
             if (CountMeads(npc.GetInventory()) > 0) return true;
-            return Chests.CountAll(npc.Home, CountMeads) > 0;
+            return Chests.CountAll(npc.Home, CountMeads, ChestRole.Food) > 0;
         }
 
         /// <summary>매 프레임: 3분 지난 질문은 보류, 조건 질문은 5초마다 상자를 다시 보고 채워졌으면 출발.</summary>

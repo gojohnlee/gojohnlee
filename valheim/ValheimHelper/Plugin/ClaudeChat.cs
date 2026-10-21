@@ -34,7 +34,7 @@ namespace ValheimHelper
             var lines = new List<string>();
             foreach (var n in npcs) lines.Add(n.NpcName + ": " + Commands.StateOf(n));
             var stock = new Dictionary<string, int>();
-            foreach (var c in Chests.NearBase(npcs[0].Home))
+            foreach (var c in Chests.NearBase(npcs[0].Home, ChestRole.Mats))
                 foreach (var it in c.GetInventory().GetAllItems())
                     if (it.m_dropPrefab != null)
                     {

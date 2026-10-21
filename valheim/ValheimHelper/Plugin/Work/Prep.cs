@@ -69,8 +69,9 @@ namespace ValheimHelper
                 WearPlan(m_npc, Plan(m_npc.GetInventory(), null)); // 이미 가진 건 걸어가지 않고 바로 입는다
             }
             // 거점 상자 전부(가까운 순)를 한 번씩: 더 좋은 장비·모자란 미드 → 먹을 음식
-            List<Container> chests = Chests.NearBase(m_npc.Home);
-            foreach (var c in chests)
+            List<Container> gearChests = Chests.NearBase(m_npc.Home, ChestRole.Gear);
+            List<Container> chests = Chests.NearBase(m_npc.Home, ChestRole.Food);
+            foreach (var c in gearChests)
                 if (m_gearDone.Add(c) && NeedsGear(c.GetInventory())) { m_chest = c; m_forFood = false; return true; }
             foreach (var c in chests)
                 if (m_foodDone.Add(c) && m_npc.CanEatFrom(c.GetInventory())) { m_chest = c; m_forFood = true; return true; }
