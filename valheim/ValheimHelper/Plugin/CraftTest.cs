@@ -68,6 +68,16 @@ namespace ValheimHelper
             checks.Add($"활이 거점 상자에 생김 ({TestKit.Waited:0}초, {w.Claude.Ai.Current})", TestKit.Ok);
             yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
+            // 개수 보존: 넣은 재료는 정확히 다 쓰였고(복사 없음) 활은 1개뿐(공중 분해·복사 없음)
+            string left = "";
+            bool conserved = Stock(w, "Bow") == 1;
+            foreach (var req in bow.m_resources)
+            {
+                int c = Stock(w, Utils.GetPrefabName(req.m_resItem.gameObject));
+                left += $" {Utils.GetPrefabName(req.m_resItem.gameObject)}={c}";
+                if (c != 0) conserved = false;
+            }
+            checks.Add($"제작 뒤 개수 보존 (활 {Stock(w, "Bow")},{left})", conserved);
             yield return Stop();
 
             // 2) 제련 — 구리 광석 4·석탄 20, 제련소
@@ -84,6 +94,9 @@ namespace ValheimHelper
             checks.Add($"구리 주괴 2개가 상자에 ({TestKit.Waited:0}초, 광석 {Stock(w, "CopperOre")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
             yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
+            // 광석 4개에서 주괴가 늘어나지 않음(상자 광석 + 주괴 ≤ 4, 복사 없음)
+            int ore = Stock(w, "CopperOre"), bars = Stock(w, "Copper");
+            checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 4)", ore + bars <= 4 && bars <= 4);
         }
 
         static IEnumerator Say(string text, float wait)
