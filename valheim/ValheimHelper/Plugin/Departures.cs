@@ -477,22 +477,36 @@ namespace ValheimHelper
             foreach (var n in WorkerNpc.All)
                 if (n.Ai.Current == WorkerAI.Mode.Idle && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n) && !n.Ai.HasChores) { npc = n; break; }
             if (npc == null) return;
+            GatherJob job = NextRefillJob(npc, 0);
+            if (job == null) return;
+            npc.Ai.StartJob(job);
+            npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString() });
+        }
+
+        /// <summary>
+        /// 기준치 아래인 물건 중 갈 만한 첫 채집 일(없으면 null). 시작은 부르는 쪽 몫.
+        /// maxAmount가 0보다 크면 한 번에 그만큼만(Wait 중 짧게 다녀오기).
+        /// </summary>
+        internal static GatherJob NextRefillJob(WorkerNpc npc, int maxAmount)
+        {
+            RefillBook refill = Brain.Refill;
+            if (refill.Count == 0) return null;
             Vector3 home = npc.Home;
             foreach (Ingredient due in refill.Due(item => Stock(item, home), Brain.Sets))
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
                 HashSet<ToolKind> ways = ResourceCatalog.WaysFor(due.Item);
                 if (ways.Count == 0) continue;
-                var cmd = new ChatCommand { Kind = CommandKind.Item, Item = due.Item, Amount = due.Amount };
+                int amount = maxAmount > 0 ? System.Math.Min(due.Amount, maxAmount) : due.Amount;
+                var cmd = new ChatCommand { Kind = CommandKind.Item, Item = due.Item, Amount = amount };
                 DepartureInput input = Input(npc, cmd, ways, true);
                 input.Stock = 0; // 모자란 만큼만 시켰으니 재고 질문은 하지 않는다
                 DepartureResult r = Departure.Judge(input);
-                Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {due.Item} {due.Amount}: {r.Action} {r.Question} ({r.Reason})");
+                Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {due.Item} {amount}: {r.Action} {r.Question} ({r.Reason})");
                 if (r.Action != DepartAction.Go && r.Action != DepartAction.GoTogether) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
-                Start(npc, cmd, ways, null);
-                npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(due.Item), ["n"] = due.Amount.ToString() });
-                return;
+                return new GatherJob(npc, due.Item, amount, ways);
             }
+            return null;
         }
 
         // ---- !기억 ----

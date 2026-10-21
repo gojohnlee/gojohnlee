@@ -19,6 +19,12 @@ namespace ValheimHelper
         GatherJob m_gather;
         CraftStep m_craft;
         MachineStep m_machine;
+        /// <summary>Wait만 남았을 때 끼워 넣는 짧은 자동 보충(저장하지 않음 — 보충은 기준치에서 다시 정해진다).</summary>
+        GatherJob m_filler;
+        float m_nextFillAt;
+        /// <summary>끼워 넣기는 Wait가 이만큼(초) 남았을 때만, 한 번에 이만큼(개)만 — 끝나면 곧바로 계획으로 돌아온다.</summary>
+        const float FillMinWait = 90f, FillRetry = 60f;
+        const int FillAmount = 20;
 
         public PlanJob(WorkerNpc npc, Plan plan, string goalLabel)
         {
@@ -34,12 +40,21 @@ namespace ValheimHelper
         public string Label => m_goal;
         public string StateLine() => m_goal + " 만드는 중(" + m_runner.Count(StepState.Done) + "/" + m_runner.Plan.Steps.Count + ")";
 
-        public void AvoidHere(Vector3 danger) { if (m_gather != null) m_gather.AvoidHere(danger); }
+        public void AvoidHere(Vector3 danger) { m_gather?.AvoidHere(danger); m_filler?.AvoidHere(danger); }
 
         public bool Update(float dt)
         {
             m_now += dt;
-            if (m_step == null && !Pick()) return !m_runner.Over || Finish();
+            if (m_filler != null)
+            {
+                bool more = m_filler.Update(dt) && m_filler.Delivered < m_filler.Target;
+                if (more) return true;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} Wait 중 보충 끝: {m_filler.Item} {m_filler.Delivered}/{m_filler.Target}");
+                m_filler = null;
+                m_nextFillAt = m_now + FillRetry;
+                return true;
+            }
+            if (m_step == null && !Pick()) return !m_runner.Over ? TryFill() : Finish();
             if (m_step == null) return true;
 
             bool running = true;
@@ -104,6 +119,17 @@ namespace ValheimHelper
                 m_runner.Begin(s.Id, m_now);
                 return true;
             }
+        }
+
+        /// <summary>Wait만 도는 중이고 오래 남았으면 자동 보충 한 번을 끼운다. 항상 true(계속 기다림).</summary>
+        bool TryFill()
+        {
+            if (m_now < m_nextFillAt || !m_runner.OnlyWaiting(m_now)) return true;
+            m_nextFillAt = m_now + FillRetry;
+            if (m_runner.NextWaitEnds(m_now) < FillMinWait) return true;
+            m_filler = Departures.NextRefillJob(m_npc, FillAmount);
+            if (m_filler != null) Plugin.Log.LogInfo($"{m_npc.NpcName} Wait 중 보충 시작: {m_filler.Item} {m_filler.Target}");
+            return true;
         }
 
         bool Finish()

@@ -32,13 +32,13 @@ namespace ValheimHelper
         public bool Update(float dt)
         {
             m_time += dt;
-            if (m_time > Limit) return false;
+            if (m_time > Limit) { Plugin.Log.LogInfo($"DIAG Unload 시간 초과 {m_time:0.0}"); return false; }
             if (m_chest == null)
             {
                 ItemDrop.ItemData next = NextToStore();
-                if (next == null) return false; // 다 넣었다
+                if (next == null) { Plugin.Log.LogInfo($"DIAG Unload 다 넣음/없음 ({m_time:0.0}초) 짐 [{BagDump()}] 지킴 {Prep.Kept(m_npc).Count} skip {m_skip.Count}"); return false; } // 다 넣었다
                 m_chest = ChestFor(next);
-                if (m_chest == null) { m_skip.Add(next); return true; }
+                if (m_chest == null) { Plugin.Log.LogInfo($"DIAG Unload 넣을 상자 없음 {next.m_dropPrefab.name} (역할 {Chests.RoleFor(next)}, 상자 {Chests.NearBase(m_npc.Home, Chests.RoleFor(next)).Count})"); m_skip.Add(next); return true; }
             }
             var at = m_chest.transform.position;
             if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, false); return true; }
@@ -56,9 +56,17 @@ namespace ValheimHelper
             });
             if (!done && m_time < BusyLimit) return true; // 누가 열고 있다
             // 이 상자에 못 넣은 건 건너뛴다(자리가 없음)
-            foreach (var it in mine.GetAllItems()) if (Storable(it, keep) && ChestFor(it) == chest) m_skip.Add(it);
+            foreach (var it in mine.GetAllItems()) if (Storable(it, keep) && ChestFor(it) == chest) { m_skip.Add(it); Plugin.Log.LogInfo($"DIAG Unload 못 넣고 건너뜀 {it.m_dropPrefab.name}x{it.m_stack} (편집 {(done ? "됨" : "못 함")}, 상자 빈칸 {chest.GetInventory().GetEmptySlots()})"); }
             m_chest = null;
             return true;
+        }
+
+        string BagDump()
+        {
+            var parts = new List<string>();
+            foreach (var it in m_npc.GetInventory().GetAllItems())
+                parts.Add((it.m_dropPrefab != null ? it.m_dropPrefab.name : "null-prefab:" + it.m_shared.m_name) + "x" + it.m_stack);
+            return string.Join(", ", parts);
         }
 
         Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home, Chests.RoleFor(it));
