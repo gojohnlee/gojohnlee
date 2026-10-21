@@ -59,7 +59,9 @@ namespace ValheimHelper
         public static void Finish()
         {
             Running = false;
-            try { File.WriteAllLines(Path.Combine(PluginDir, "diag.txt"), s_report.ToArray()); }
+            var lines = new List<string>(s_report.Count + 1) { Summary(s_report) };
+            lines.AddRange(s_report);
+            try { File.WriteAllLines(Path.Combine(PluginDir, "diag.txt"), lines.ToArray()); }
             catch (IOException e) { Plugin.Log.LogWarning("diag.txt 쓰기 실패: " + e.Message); }
             if (s_auto && s_autoQueue.Count == 0)
             {
@@ -67,6 +69,49 @@ namespace ValheimHelper
                 Plugin.Instance.StartCoroutine(QuitSoon());
             }
             s_autoWait = 0f; // 다음 자동 시험은 3초 뒤
+        }
+
+        /// <summary>
+        /// diag.txt 첫 줄 요약(토큰 아끼기, 2026-10-21): 이 줄만 읽고 다 PASS면 끝, FAIL이 있으면 그 시험 부분만 읽는다.
+        /// 예: "요약: 3/4 PASS | FAIL vh_stonetest: 돌 10개 이상 상자에".
+        /// </summary>
+        static string Summary(List<string> report)
+        {
+            int tests = 0, passed = 0;
+            string name = null;
+            bool verdict = false, failed = false;
+            string firstFail = null;
+            var fails = new List<string>();
+            void Close()
+            {
+                if (name == null) return;
+                tests++;
+                if (verdict && !failed) passed++;
+                else fails.Add(name + (firstFail != null ? ": " + firstFail : verdict ? "" : ": 판정 없음"));
+            }
+            foreach (var line in report)
+            {
+                if (line.StartsWith("=== "))
+                {
+                    Close();
+                    string rest = line.Substring(4);
+                    int sp = rest.IndexOf(' ');
+                    name = sp > 0 ? rest.Substring(0, sp) : rest;
+                    verdict = failed = false;
+                    firstFail = null;
+                    continue;
+                }
+                bool passLine = line.StartsWith("판정: PASS") || line == "PASS" || line.StartsWith("PASS");
+                bool failLine = line.StartsWith("판정: FAIL") || line.StartsWith("FAIL");
+                if (passLine) verdict = true;
+                if (failLine)
+                {
+                    verdict = failed = true;
+                    if (firstFail == null && !line.StartsWith("판정")) firstFail = line.Substring(4).Trim(' ', ':');
+                }
+            }
+            Close();
+            return $"요약: {passed}/{tests} PASS" + (fails.Count > 0 ? " | FAIL " + string.Join(" | FAIL ", fails.ToArray()) : "");
         }
 
         public static void CheckAutoRun()
