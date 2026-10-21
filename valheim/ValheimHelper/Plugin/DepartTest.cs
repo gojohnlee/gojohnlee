@@ -54,7 +54,7 @@ namespace ValheimHelper
                 ZoneXY hz = Senses.ZoneOf(w.Home);
                 // 시험 월드의 같은 자리에 지난 시험(나무·구리 등)이 남긴 상자가 있어 재고가 시험이 넣은 것과 달라진다
                 // (2026-10-21: 나무 150·구리 10 → 재고 질문이 먼저 잡힘). 거점 상자에서 이 시험의 물건을 비우고 시작한다.
-                TestRunner.Log($"거점 상자 {Chests.NearBase(w.Home).Count}개에서 지난 시험의 나무·구리 {TestKit.ClearBaseStock(w, "Wood", "CopperOre")}개 비움");
+                TestRunner.Log($"거점 상자 {Chests.NearBase(w.Home).Count}개에서 지난 시험의 나무·구리 {TestKit.ClearBaseStock(w, "Wood", "CopperOre", "MeadHealthMinor", "MeadHealthMedium", "HealthUpgrade_Bonemass")}개 비움");
 
                 // 1) 재고 질문 → "응" → 출발
                 TestKit.PutInChest(w.Chest, "Wood", 20);

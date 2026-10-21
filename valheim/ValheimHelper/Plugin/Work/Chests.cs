@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using HarmonyLib;
+using ValheimHelper.Core.Work;
 using UnityEngine;
 
 namespace ValheimHelper
@@ -17,10 +18,23 @@ namespace ValheimHelper
     {
         public const float BaseRange = 20f;
 
-        /// <summary>태그 공급자 자리(I-2 ChestTag): 그 상자(ZDO)를 그 역할에 쓸 수 있나. null = 태그 없음 = 거점 상자 전부(지금 동작).</summary>
-        public static Func<ZDO, ChestRole, bool> TagProvider;
+        /// <summary>태그 공급자(I-2): 그 상자(ZDO)의 이름이 가리키는 것. null = 태그 없음 = 거점 상자 전부. 기본은 ChestTag 이름 읽기.</summary>
+        public static Func<ZDO, ChestTags> TagProvider = ChestTagReader.Read;
 
-        static bool Allows(ZDO zdo, ChestRole role) => role == ChestRole.Any || TagProvider == null || TagProvider(zdo, role);
+        /// <summary>그 역할에 쓸 거점 근처 ZDO들(이름 규칙은 Core ChestNames: 역할 상자가 있으면 그것만, 손대지 않는 상자는 항상 뺌).</summary>
+        static List<ZDO> Candidates(Vector3 home, ChestRole role)
+        {
+            List<ZDO> all = Senses.Nearby(home, BaseRange);
+            var provider = TagProvider;
+            if (provider == null) return all;
+            var tags = new ChestTags[all.Count];
+            for (int i = 0; i < tags.Length; i++) tags[i] = provider(all[i]);
+            ChestTags want = role == ChestRole.Gear ? ChestTags.Gear : role == ChestRole.Food ? ChestTags.Food : role == ChestRole.Mats ? ChestTags.Mats : ChestTags.None;
+            bool[] ok = ChestNames.Select(tags, want);
+            var list = new List<ZDO>();
+            for (int i = 0; i < ok.Length; i++) if (ok[i]) list.Add(all[i]);
+            return list;
+        }
 
         /// <summary>물건 종류에 맞는 상자 역할: 먹는 것 → 음식, 무기·방패·갑옷·도구 → 장비, 나머지 → 재료.</summary>
         public static ChestRole RoleFor(ItemDrop.ItemData it)
@@ -48,9 +62,8 @@ namespace ValheimHelper
         public static List<Container> NearBase(Vector3 home, ChestRole role = ChestRole.Any)
         {
             var list = new List<Container>();
-            foreach (var zdo in Senses.Nearby(home, BaseRange))
+            foreach (var zdo in Candidates(home, role))
             {
-                if (!Allows(zdo, role)) continue;
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view == null) continue;
                 Container c = view.GetComponent<Container>();
@@ -82,9 +95,8 @@ namespace ValheimHelper
         /// </summary>
         static IEnumerable<Inventory> ReadAll(Vector3 home, ChestRole role)
         {
-            foreach (var zdo in Senses.Nearby(home, BaseRange))
+            foreach (var zdo in Candidates(home, role))
             {
-                if (!Allows(zdo, role)) continue;
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view != null)
                 {
