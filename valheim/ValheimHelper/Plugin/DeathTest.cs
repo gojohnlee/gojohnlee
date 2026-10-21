@@ -8,7 +8,7 @@ namespace ValheimHelper
     /// 사망 시험(③): 깃발 → 장비 상자(예비 누더기 갑옷)·자원 상자 → 1호에게 가죽 갑옷·바지, 부싯돌 도끼, 나무 7개를 들려
     /// 거점에서 40m 떨어진 곳으로 옮기고 죽인다 → 사라지지 않고 같은 NPC가 거점에서 체력 가득으로 일어나는지,
     /// 죽은 자리에 묘비가 생기고 짐이 거기 있는지 → 몇 초 뒤 스스로 예비 장비를 차고 묘비에 가서 되찾아 입고,
-    /// 나무는 자원 상자에, 예비 누더기는 장비 상자에 돌려놓는지(최대 3분).
+    /// 나무와 예비 누더기를 거점 상자에 돌려놓는지(최대 3분, 상자는 지정하지 않음).
     /// </summary>
     static class DeathTest
     {
@@ -49,6 +49,7 @@ namespace ValheimHelper
             WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }
+            if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다
             Piece chestPiece = chestPrefab.GetComponent<Piece>();
             Vector3 eqPos = GatherTest.Ground(home + rot * new Vector3(-3f, 0f, 2f));
             Vector3 resPos = GatherTest.Ground(home + rot * new Vector3(3f, 0f, 2f));
@@ -59,9 +60,7 @@ namespace ValheimHelper
             checks.Add("상자 2개 놓임", eq != null && res != null && eq != res);
             if (eq == null || res == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }
             Chests.TryEdit(eq, inv => inv.AddItem(ObjectDB.instance.GetItemPrefab("ArmorRagsChest"), 1));
-            GatherTest.Say("!상자 장비", eq);
-            GatherTest.Say("!상자 나무", res);
-            yield return new WaitForSeconds(0.5f);
+            int wood0 = GatherTest.CountBase(home, "Wood"), rags0 = GatherTest.CountBase(home, "ArmorRagsChest"); // 지난 시험이 남긴 것
 
             // 2) 짐을 들려 40m 밖으로
             Inventory mine = claude.GetInventory();
@@ -117,8 +116,9 @@ namespace ValheimHelper
             var worn = new List<string>();
             foreach (var it in mine.GetEquippedItems()) worn.Add(it.m_dropPrefab != null ? it.m_dropPrefab.name : "?");
             checks.Add($"되찾은 가죽 갑옷을 입음 ({string.Join(", ", worn.ToArray())})", worn.Contains("ArmorLeatherChest") && worn.Contains("ArmorLeatherLegs"));
-            checks.Add($"나무는 자원 상자에 ({GatherTest.Count(res, "Wood")})", GatherTest.Count(res, "Wood") == 7);
-            checks.Add($"예비 누더기는 장비 상자로 ({GatherTest.Count(eq, "ArmorRagsChest")})", GatherTest.Count(eq, "ArmorRagsChest") == 1);
+            int wood = GatherTest.CountBase(home, "Wood") - wood0, rags = GatherTest.CountBase(home, "ArmorRagsChest") - rags0;
+            checks.Add($"나무는 거점 상자에 ({wood})", wood == 7);
+            checks.Add($"예비 누더기는 거점 상자로 ({rags})", rags == 0 && claude.CountItem("ArmorRagsChest") == 0);
             checks.Add($"도끼는 들고 있음", claude.CountItem("AxeFlint") == 1);
             End(player, god, env, debugTime, debugValue, checks, onHeard, heard);
         }

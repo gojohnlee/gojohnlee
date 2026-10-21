@@ -56,6 +56,7 @@ namespace ValheimHelper
             WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }
+            if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다
             Piece chestPiece = chestPrefab.GetComponent<Piece>();
             Vector3 eqPos = GatherTest.Ground(home + rot * new Vector3(-4f, 0f, -1f));
             Vector3 foodPos = GatherTest.Ground(home + rot * new Vector3(4f, 0f, -1f));
@@ -71,10 +72,6 @@ namespace ValheimHelper
                 inv.AddItem(ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), 5);
             });
             Chests.TryEdit(food, inv => { foreach (var n in FoodItems) inv.AddItem(ObjectDB.instance.GetItemPrefab(n), 3); });
-            GatherTest.Say("!상자 장비", eq);
-            GatherTest.Say("!상자 음식", food);
-            yield return new WaitForSeconds(0.5f);
-            checks.Add("장비·음식 상자 지정됨", Chests.Assigned(Chests.KeyEquip(0)) == eq && Chests.Assigned(Chests.KeyFood) == food);
 
             // 누더기 갑옷을 입혀 둔다(더 좋은 걸로 갈아입고 돌려놓는지 보려고)
             Inventory mine = claude.GetInventory();

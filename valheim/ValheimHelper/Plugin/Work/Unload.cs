@@ -55,14 +55,13 @@ namespace ValheimHelper
                 }
             });
             if (!done && m_time < BusyLimit) return true; // 누가 열고 있다
-            // 이 상자에 못 넣은 건 건너뛴다(자리가 없거나 지정 상자가 없음)
+            // 이 상자에 못 넣은 건 건너뛴다(자리가 없음)
             foreach (var it in mine.GetAllItems()) if (Storable(it, keep) && ChestFor(it) == chest) m_skip.Add(it);
             m_chest = null;
             return true;
         }
 
-        Container ChestFor(ItemDrop.ItemData it) =>
-            Prep.IsGear(it) ? Chests.Assigned(Chests.KeyEquip((int)m_npc.Personality)) : Chests.ForItem(it.m_dropPrefab.name, m_npc.Home);
+        Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home);
 
         bool Storable(ItemDrop.ItemData it, HashSet<ItemDrop.ItemData> keep) =>
             it.m_dropPrefab != null && !keep.Contains(it) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except;

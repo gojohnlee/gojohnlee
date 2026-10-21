@@ -8,17 +8,15 @@ namespace ValheimHelper
     /// </summary>
     public static class Features
     {
-        static ConfigEntry<bool> s_chestByZdo, s_saveWork, s_knowExplored;
+        static ConfigEntry<bool> s_saveWork, s_knowExplored;
         static bool? s_knowExploredOverride;
 
         public static void Init(ConfigFile cfg)
         {
-            s_chestByZdo = cfg.Bind("Features", "ChestByZdo", true, "!상자 지정을 상자 ZDO로 판정(호스트에 상자가 안 불러와져 있어도 됨). 끄면 예전처럼 불러온 상자만");
             s_saveWork = cfg.Bind("Features", "SaveWork", true, "대기열·질문 대기·하던 일을 NPC ZDO에 저장하고 NPC가 생길 때 불러옴");
             s_knowExplored = cfg.Bind("Features", "KnowExplored", true, "지도에 밝혀진 구역의 자원은 가 보지 않아도 앎");
         }
 
-        public static bool ChestByZdo => s_chestByZdo?.Value ?? true;
         public static bool SaveWork => s_saveWork?.Value ?? true;
         public static bool KnowExplored => s_knowExploredOverride ?? s_knowExplored?.Value ?? true;
 

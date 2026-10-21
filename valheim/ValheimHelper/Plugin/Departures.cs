@@ -154,11 +154,8 @@ namespace ValheimHelper
             };
             if (ways.Contains(ToolKind.Axe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.WoodCutting);
             else if (ways.Contains(ToolKind.Pickaxe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.Pickaxes);
-            Container food = Chests.Assigned(Chests.KeyFood);
-            input.FoodInChest = food != null && WorkerNpc.HasFood(food.GetInventory());
-            input.HealthMeads = CountMeads(npc.GetInventory());
-            Container equip = Chests.Assigned(Chests.KeyEquip((int)npc.Personality));
-            if (equip != null) input.HealthMeads += CountMeads(equip.GetInventory());
+            input.FoodInChest = Chests.First(home, WorkerNpc.HasFood) != null;
+            input.HealthMeads = CountMeads(npc.GetInventory()) + Chests.CountAll(home, CountMeads);
             input.Stock = Stock(cmd.Item, home);
             GameObject prefab = ObjectDB.instance.GetItemPrefab(cmd.Item);
             int stack = prefab != null ? prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize : 50;
@@ -399,8 +396,7 @@ namespace ValheimHelper
         static bool ConditionMet(WorkerNpc npc)
         {
             if (CountMeads(npc.GetInventory()) > 0) return true;
-            Container equip = Chests.Assigned(Chests.KeyEquip((int)npc.Personality));
-            return equip != null && CountMeads(equip.GetInventory()) > 0;
+            return Chests.CountAll(npc.Home, CountMeads) > 0;
         }
 
         /// <summary>매 프레임: 3분 지난 질문은 보류, 조건 질문은 5초마다 상자를 다시 보고 채워졌으면 출발.</summary>

@@ -214,11 +214,7 @@ namespace ValheimHelper
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)
         {
             if (kind == ToolKind.None) return null;
-            Container assigned = Chests.Assigned(Chests.KeyEquip((int)npc.Personality));
-            if (assigned != null && WorkerNpc.BestTool(assigned.GetInventory(), kind) != null) return assigned;
-            foreach (var c in Chests.NearBase(npc.Home))
-                if (WorkerNpc.BestTool(c.GetInventory(), kind) != null) return c;
-            return null;
+            return Chests.First(npc.Home, inv => WorkerNpc.BestTool(inv, kind) != null);
         }
 
         bool UpdateGoChest(float dt)

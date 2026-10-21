@@ -5,10 +5,10 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 출발 준비 (구상서 3장, 4장). 작업을 시작할 때와 거점에 짐을 넣을 때마다 한다.
-    /// - 장비 상자(그 NPC 것)에 지금보다 좋은 무기·방패·투구·갑옷·바지·망토·벨트가 있거나 체력 미드가 모자라면
+    /// - 거점 상자(깃발 20m 안 전부, 가까운 순)에 지금보다 좋은 무기·방패·투구·갑옷·바지·망토·벨트가 있거나 체력 미드가 모자라면
     ///   가서 챙겨 입고, 밀려난 헌 장비는 상자에 돌려놓는다(도끼·곡괭이는 가장 좋은 것 하나씩 들고 다닌다).
-    /// - 음식 상자에 지금 먹을 수 있는 음식이 있으면 가서 먹는다(최대 3종, 바닐라 규칙).
-    ///   먹은 것도 없고 음식 상자도 비었으면 한 번 알리고 그냥 간다.
+    /// - 거점 상자에 지금 먹을 수 있는 음식이 있으면 가서 먹는다(최대 3종, 바닐라 규칙).
+    ///   먹은 것도 없고 거점 상자에 음식도 없으면 한 번 알리고 그냥 간다.
     /// 갈 일이 없으면 바로 끝난다. 상자에 못 닿거나 누가 계속 열고 있으면 건너뛴다.
     /// </summary>
     public sealed class Prep
@@ -18,7 +18,8 @@ namespace ValheimHelper
 
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
-        bool m_checkedEquip, m_checkedFood;
+        bool m_wore;
+        readonly HashSet<Container> m_gearDone = new HashSet<Container>(), m_foodDone = new HashSet<Container>();
         Container m_chest;
         bool m_forFood;
         float m_time;
@@ -62,20 +63,18 @@ namespace ValheimHelper
         bool Next()
         {
             m_time = 0f;
-            if (!m_checkedEquip)
+            if (!m_wore)
             {
-                m_checkedEquip = true;
+                m_wore = true;
                 WearPlan(m_npc, Plan(m_npc.GetInventory(), null)); // 이미 가진 건 걸어가지 않고 바로 입는다
-                Container c = Chests.Assigned(Chests.KeyEquip((int)m_npc.Personality));
-                if (c != null && NeedsGear(c.GetInventory())) { m_chest = c; m_forFood = false; return true; }
             }
-            if (!m_checkedFood)
-            {
-                m_checkedFood = true;
-                Container f = Chests.Assigned(Chests.KeyFood);
-                if (f != null && m_npc.CanEatFrom(f.GetInventory())) { m_chest = f; m_forFood = true; return true; }
-                if (m_npc.Meals.Count == 0 && (f == null || !WorkerNpc.HasFood(f.GetInventory()))) m_npc.SayNoFoodOnce();
-            }
+            // 거점 상자 전부(가까운 순)를 한 번씩: 더 좋은 장비·모자란 미드 → 먹을 음식
+            List<Container> chests = Chests.NearBase(m_npc.Home);
+            foreach (var c in chests)
+                if (m_gearDone.Add(c) && NeedsGear(c.GetInventory())) { m_chest = c; m_forFood = false; return true; }
+            foreach (var c in chests)
+                if (m_foodDone.Add(c) && m_npc.CanEatFrom(c.GetInventory())) { m_chest = c; m_forFood = true; return true; }
+            if (m_npc.Meals.Count == 0 && !chests.Exists(c => WorkerNpc.HasFood(c.GetInventory()))) m_npc.SayNoFoodOnce();
             return false;
         }
 

@@ -11,7 +11,7 @@ namespace ValheimHelper
     /// vh_peertest (묶음 1 작업 4, risks.txt "혼자 하는 멀티 시험" A): 게임 하나로 멀티 흉내.
     /// 1) 소유권 뺏기: 상자 쓰는 중(일 시작 직후)·일하는 중·싸우는 중·질문 대기 중마다 NPC ZDO를 없는 uid로 SetOwner →
     ///    그동안 NPC ZDO를 안 씀, 예외 0, 상자 잠금 풀림, 호스트가 되찾고(바닐라 2초 정리) 하던 일을 이어 감, 물건 총량 같음.
-    /// 2) 남의 채팅: 가짜 이름·없는 캐릭터 ZDOID로 Commands.Handle — 명령·대답·!같이 가자·!상자(상자 인스턴스 없음)가 예외 없이.
+    /// 2) 남의 채팅: 가짜 이름·없는 캐릭터 ZDOID로 Commands.Handle — 명령·대답·!같이 가자·!상자가 예외 없이, 인스턴스 없는 상자는 거점 상자에서 빠짐.
     /// 3) 손님 흉내: ZNet가 서버가 아닌 것처럼 하고 모드 Update 경로를 돌려 ZDO를 하나도 안 쓰는지.
     /// </summary>
     static class PeerTest
@@ -127,13 +127,13 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
             checks.Add($"없는 사람 따라가기 → 예외 없이 그만둠 ({w.Claude.Ai.Current})", !threw && w.Claude.Ai.Current != WorkerAI.Mode.Follow);
 
-            // !상자: 바라보는 상자의 인스턴스가 호스트에 없을 때(같은 프레임에 내림)
+            // !상자(이제 지정 없음, 대답만)·거점 상자 찾기: 상자 인스턴스가 호스트에 없을 때(같은 프레임에 내림)
             ZDOID chestId = w.Chest.GetComponent<ZNetView>().GetZDO().m_uid;
             Vector3 chestPos = w.Chest.transform.position;
             TestKit.Unload(w.Chest.GetComponent<ZNetView>());
             threw = !Handle(new Speaker("가짜친구", new ZDOID(FakeUid, 77), chestId), "!상자 음식");
-            bool assigned = Workers.Zdos().TrueForAll(z => z.GetZDOID(Chests.KeyFood) == chestId);
-            checks.Add($"상자 인스턴스 없이 !상자 → 지정됨 (스위치 {(Features.ChestByZdo ? "켬" : "끔")})", !threw && (assigned || !Features.ChestByZdo));
+            bool listed = Chests.NearBase(w.Home).Exists(c => c != null && c.GetComponent<ZNetView>().GetZDO() != null && c.GetComponent<ZNetView>().GetZDO().m_uid == chestId);
+            checks.Add("상자 인스턴스 없이 !상자 → 예외 없음, 내린 상자는 거점 상자에서 빠짐", !threw && !listed);
             yield return TestKit.WaitFor(() => GatherTest.ChestAt(chestPos) != null, 3f);
             w.Chest = GatherTest.ChestAt(chestPos);
             checks.Add($"내린 상자 다시 생김 ({TestKit.Waited:0.0}초)", w.Chest != null);

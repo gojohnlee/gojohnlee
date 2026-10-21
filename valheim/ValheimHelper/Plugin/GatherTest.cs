@@ -5,8 +5,8 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 채집 시험(② 단계). 깃발 → 상자 2개(장비·자원) → 장비 상자에 도구 → "!상자 장비", "!상자 &lt;자원&gt;"
-    /// (바라보는 상자 대신 시험이 지정) → "!Claude &lt;자원&gt; 10" → 자원 상자에 10개 이상 들어오는지(최대 6분).
+    /// 채집 시험(② 단계). 깃발 → 상자 2개 → 한 상자에 도구(상자는 지정하지 않음)
+    /// → "!Claude &lt;자원&gt; 10" → 거점 상자들에 10개 이상 더 들어오는지(최대 6분).
     /// vh_woodtest: 부싯돌 도끼 + 나무. vh_stonetest: 뿔 곡괭이 + 돌(줍기·캐기 둘 다 가능).
     /// 깃발·상자·NPC는 시험 뒤에도 남긴다.
     /// </summary>
@@ -57,6 +57,21 @@ namespace ValheimHelper
             // 1) 깃발과 NPC
             Workers.DespawnAll();
             yield return new WaitForSeconds(1f);
+            // 물가에서 돌면 상자가 물속에 놓여 일꾼이 못 간다(루프 회차 5 stonetest: 장비 상자 물 3.1m 아래) → 마른 초원으로 옮긴다
+            if (!DrySite(player.transform.position, player.transform.rotation, real: true))
+            {
+                Vector3 dry = FindDrySite(player.transform.position, player.transform.rotation);
+                if (dry != player.transform.position)
+                {
+                    player.TeleportTo(dry + Vector3.up, player.transform.rotation, true);
+                    float wait = 0f;
+                    yield return new WaitForSeconds(1f);
+                    while (player.IsTeleporting() && wait < 40f) { wait += 0.5f; yield return new WaitForSeconds(0.5f); }
+                    yield return new WaitForSeconds(2f);
+                    TestRunner.Log($"물가라 마른 땅으로 옮김: 높이 {dry.y:0.0} (물 {ZoneSystem.instance.m_waterLevel:0.0})");
+                }
+                else TestRunner.Log("마른 땅 못 찾음(300m 안) → 제자리에서");
+            }
             Vector3 home = Ground(player.transform.position + player.transform.forward * 4f);
             Quaternion rot = player.transform.rotation;
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
@@ -66,6 +81,7 @@ namespace ValheimHelper
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
 
             // 2) 상자 2개
+            if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다
             Piece chestPiece = chestPrefab.GetComponent<Piece>();
             Vector3 eqPos = Ground(home + rot * new Vector3(-4f, 0f, -1f));
             Vector3 resPos = Ground(home + rot * new Vector3(4f, 0f, -1f));
@@ -78,11 +94,6 @@ namespace ValheimHelper
             // 광맥은 오래 캐서 곡괭이가 부러질 수 있다(바닐라 내구도) → 예비 하나 더
             bool put = Chests.TryEdit(eq, inv => { inv.AddItem(tool, 1); if (spawnDeposit) inv.AddItem(tool, 1); });
             checks.Add($"장비 상자에 {toolPrefab}", put && eq.GetInventory().HaveItem(toolToken));
-
-            Say("!상자 장비", eq);
-            Say($"!상자 {word}", res);
-            yield return new WaitForSeconds(0.5f);
-            checks.Add($"장비·{word} 상자 지정됨", Chests.Assigned(Chests.KeyEquip(0)) == eq && Chests.Assigned(Chests.KeyItem(item)) == res);
 
             // 3) 10개
             // 광맥(구리 등)은 시험 월드 근처에 없을 수 있어 거점 12m 앞에 놓는다. 지난 시험의 광맥·구덩이는 먼저 치운다.
@@ -124,13 +135,13 @@ namespace ValheimHelper
             }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             Say($"!{Workers.Name1} {word} 10", null);
-            int count = 0;
+            int count = 0, count0 = CountBase(home, item); // 지난 시험이 거점 상자에 남긴 것은 뺀다
             float t = 0f;
             while (t < 360f)
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
-                count = Count(res, item);
+                count = CountBase(home, item) - count0;
                 if ((int)t % 15 == 0)
                 {
                     var job = claude ? claude.Ai.Job : null;
@@ -138,7 +149,7 @@ namespace ValheimHelper
                 }
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
-            checks.Add($"{word} 상자에 {word} {count}개 ({t:0}초)", count >= 10);
+            checks.Add($"거점 상자에 {word} {count}개 더 ({t:0}초)", count >= 10);
             checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
             checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
             ItemDrop.ItemData held = claude ? claude.GetCurrentWeapon() : null;
@@ -207,6 +218,66 @@ namespace ValheimHelper
             foreach (var it in c.GetInventory().GetAllItems())
                 if (it.m_dropPrefab != null && it.m_dropPrefab.name == prefab) n += it.m_stack;
             return n;
+        }
+
+        /// <summary>
+        /// 거점 둘레의 지난 시험 상자를 없앤다(시험 월드만). 상자를 지정하지 않으니 남은 상자의 장비·음식·빈자리가 시험을 흔든다. 없앤 개수.
+        /// </summary>
+        internal static int ClearOldChests(Vector3 home)
+        {
+            int n = 0;
+            foreach (var c in Chests.NearBase(home))
+            {
+                ZNetView nv = c.GetComponent<ZNetView>();
+                if (nv == null || !nv.IsValid()) continue;
+                nv.ClaimOwnership();
+                ZNetScene.instance.Destroy(c.gameObject);
+                n++;
+            }
+            if (n > 0) TestRunner.Log($"지난 시험 상자 {n}개 치움");
+            return n;
+        }
+
+        /// <summary>거점 상자 전부(깃발 20m 안)에 든 그 물건 수. 상자는 지정하지 않으니 어느 상자에 들어갔는지는 안 본다.</summary>
+        internal static int CountBase(Vector3 home, string prefab)
+        {
+            int n = 0;
+            foreach (var c in Chests.NearBase(home)) n += Count(c, prefab);
+            return n;
+        }
+
+        static readonly Vector3[] SiteSpots = { Vector3.zero, new Vector3(-4f, 0f, -1f), new Vector3(4f, 0f, -1f), new Vector3(0f, 0f, 12f) }; // 깃발·상자 2개·광맥(깃발 기준)
+
+        /// <summary>
+        /// 플레이어가 p에 서면 깃발·상자·광맥 자리가 모두 물 위 마른 땅인지. real이면 불러온 실제 땅, 아니면 WorldGenerator 높이(실제와 0.8m까지 다름 → 2m 여유)에 초원만.
+        /// </summary>
+        static bool DrySite(Vector3 p, Quaternion rot, bool real)
+        {
+            float wl = ZoneSystem.instance.m_waterLevel;
+            Vector3 flag = p + rot * Vector3.forward * 4f;
+            if (!real && WorldGenerator.instance.GetBiome(flag) != Heightmap.Biome.Meadows) return false;
+            foreach (var o in SiteSpots)
+            {
+                Vector3 s = flag + rot * o;
+                float h;
+                if (real) { if (!ZoneSystem.instance.GetGroundHeight(s, out h)) return false; }
+                else h = WorldGenerator.instance.GetHeight(s.x, s.z);
+                if (h < wl + (real ? 1f : 2f)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>플레이어 둘레 300m 안에서 DrySite인 가장 가까운 자리(땅 높이 포함), 없으면 from 그대로.</summary>
+        static Vector3 FindDrySite(Vector3 from, Quaternion rot)
+        {
+            for (float r = 10f; r <= 300f; r += 10f)
+                for (int d = 0; d < 16; d++)
+                {
+                    float a = d * Mathf.PI / 8f;
+                    Vector3 p = from + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    if (DrySite(p, rot, real: false)) return new Vector3(p.x, WorldGenerator.instance.GetHeight(p.x, p.z), p.z);
+                }
+            return from;
         }
 
         internal static Vector3 Ground(Vector3 p)
