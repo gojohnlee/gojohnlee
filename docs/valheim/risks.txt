@@ -63,3 +63,13 @@ C. 단계마다 1번(③ 끝·⑥ 끝): 같은 PC에서 Steam 무료 도구 "Val
 - 하던 일: 큰 단계만 저장(채집이면 물건·남은 수량·목표 구역). 세부 상태(다가가는 중 등)는 처음부터 다시 해도 되게.
 - ⑥ 실행기: 단계 DAG와 끝난 단계 표시를 저장. 설비 Wait는 설비 ZDO가 시간을 가지므로 다시 읽어 이어감.
 - 시험: vh_departtest 끝에 "저장 → NPC 다시 불러오기 → 대기열·질문 그대로" 확인.
+
+----------------------------------------------------------------------
+손님(멀티) 코드 규칙 — 이후 기능이 따를 것 (루프 회차 42 코드 검사 결과, 2026-10-22)
+----------------------------------------------------------------------
+검사: Plugin의 모든 Harmony 패치·Plugin.Update 정적 틱·WorkerNpc/WorkerAI·채팅 경로. 고칠 곳 없음(회차 35 수정 포함 전부 규칙을 지킴).
+1. 정적 틱(Plugin.Update에서 부르는 것)은 ZNet.instance.IsServer()가 아니면 ZDO·상자·인벤토리에 쓰지 않는다(Workers·Departures·Brain·WorkSaves·MapSense·FarZones 이미 지킴). 새 틱도 맨 앞에 같은 확인.
+2. NPC에 쓰는 코드는 m_nview.IsOwner()일 때만(WorkerAI.UpdateAI는 바닐라 BaseAI가 주인 아니면 false). 상자는 TryEdit(소유권), 설비는 RPC. 소유권을 직접 SetOwner 하는 건 Workers.Reclaim(호스트)뿐.
+3. 채팅은 손님이 VH_Chat RPC로 보내고 호스트(RPC_Chat, IsServer 확인)만 Commands.Handle. 말한 사람은 sender peer로 찾고 Player.m_localPlayer는 호스트 자신(peer 없음)일 때만 쓴다. 새 명령도 Commands.Handle 안에서만.
+4. 손님 PC에서 도는 패치는 전부 읽기·막기뿐(WearNTear.Damage는 일꾼 공격 막기, RPC_Damage 갑옷 계산, NoDig는 WorkerNpc일 때만 — Attack은 주인 게임에서만 돈다). 새 패치가 지형·ZDO를 바꾸면 안 됨.
+5. Player.m_localPlayer·Minimap·Chat은 전용 서버에서 null일 수 있으니 null 확인 후 쓴다. 화면 표시(말풍선 VH_Say)는 Everybody로 보내 각자 그린다.
