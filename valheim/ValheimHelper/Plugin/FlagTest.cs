@@ -67,12 +67,15 @@ namespace ValheimHelper
             Vector3 a = player.transform.position + player.transform.forward * 4f;
             if (ZoneSystem.instance.GetGroundHeight(a, out float ha)) a.y = ha; // 지형(바위·나무 위 말고)
             player.PlacePiece(piece, a, player.transform.rotation, doAttack: false);
-            yield return new WaitForSeconds(3f);
+            // 나타나자마자 자리를 본다(3초 기다리면 근처 적을 보고 물러나 5m 밖일 수 있음 — 0.3.8 루프 시험 FAIL)
+            var zdos = Workers.AllZdos();
+            for (float t = 0f; t < 3f && zdos.Count < 2; t += 0.25f) { yield return new WaitForSeconds(0.25f); zdos = Workers.AllZdos(); }
+            // 수평 거리로 본다(0.3.2: 높이 차이로 3D 거리가 커서 거짓 실패)
+            string dists = string.Join(", ", zdos.ConvertAll(z => Utils.DistanceXZ(z.GetPosition(), a).ToString("0.0") + "m"));
+            checks.Add($"깃발 A에 NPC 나타남 ({zdos.Count}명 {dists})", zdos.Count == 2 && zdos.TrueForAll(z => Utils.DistanceXZ(z.GetPosition(), a) < 5f));
+            yield return new WaitForSeconds(1f);
             ZDO flagA = Nearest(a);
             checks.Add("깃발 A 세워짐·활성", flagA != null && flagA.GetBool(BaseFlag.KeyActive));
-            var zdos = Workers.AllZdos();
-            // 수평 거리로 본다(0.3.2: 높이 차이로 3D 거리가 커서 거짓 실패)
-            checks.Add($"깃발 A에 NPC 나타남 ({zdos.Count}명)", zdos.Count == 2 && zdos.TrueForAll(z => Utils.DistanceXZ(z.GetPosition(), a) < 5f));
             checks.Add("NPC 인스턴스 2명", WorkerNpc.All.Count == 2);
 
             // 깃발 B (15m 떨어진 곳)

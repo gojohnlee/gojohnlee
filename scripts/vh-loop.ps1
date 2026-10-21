@@ -1,4 +1,4 @@
-# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 숨김으로 실행한다.
+﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 숨김으로 실행한다.
 # 회차: pull → 멈춤 파일 확인 → 계정 고르기 → claude -p 새 세션(scripts/vh-loop-prompt.txt) → 결과 판정 → status.txt 푸시.
 # 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림). 두 계정 모두 한도면 풀리는 시각까지 기다리고,
 # 자리 비움(입력 없음 10분)이면 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
