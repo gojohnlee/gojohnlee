@@ -14,10 +14,17 @@ public class WorkStateTests
             new WorkItem { Kind = WorkKind.Gather, Label = "구리 광석 20", Item = "CopperOre", Amount = 20, Speaker = "lee;=,|%", Target = "Alarak", Urgent = true, Ready = ReadyWhen.Morning, NotBefore = 3780.5 },
             new WorkItem { Kind = WorkKind.Explore, Label = "동쪽", Arg = "east" },
             new WorkItem { Kind = WorkKind.Explore, Resume = true, Label = "늪 탐험 중", DirX = 1, DirY = -1, BiomeId = 2, Where = "늪", Biome = "Swamp" },
+            new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "세트 2번", SetNo = 2, Amount = 3 },
+            new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "구리 주괴", Item = "CopperBar", Amount = 20 },
         };
         string text = WorkState.SaveQueue(items);
         var back = WorkState.LoadQueue(text);
-        Assert.Equal(4, back.Count);
+        Assert.Equal(6, back.Count);
+        Assert.Equal(WorkKind.Make, back[4].Kind);
+        Assert.Equal(2, back[4].SetNo);
+        Assert.Equal(3, back[4].Amount);
+        Assert.Equal("CopperBar", back[5].Item);
+        Assert.Equal(0, back[5].SetNo);
         Assert.True(back[0].Resume);
         Assert.Equal("Wood", back[0].Item);
         Assert.Equal(37, back[0].Amount);

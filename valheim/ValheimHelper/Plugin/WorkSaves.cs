@@ -36,6 +36,8 @@ namespace ValheimHelper
                 else
                     q.Start = () => Departures.Gather(new Speaker(w.Speaker ?? "", ZDOID.None, ZDOID.None), CommandOf(w), npc, true);
             }
+            else if (w.Kind == WorkKind.Make)
+                q.Start = () => Departures.ResumeMake(npc, w);
             else
             {
                 if (w.Resume) q.Start = () => npc.Ai.StartJob(new ExploreJob(npc, w.DirX, w.DirY, w.BiomeId, w.Where ?? ""));
@@ -72,6 +74,7 @@ namespace ValheimHelper
                 if (GoalPos(g) != Vector3.zero) { w.HasZone = true; w.Zone = GoalZone(g); }
                 return w;
             }
+            if (job is PlanJob p && p.Goal != null) return p.Goal;
             if (job is ExploreJob e)
                 return new WorkItem
                 {

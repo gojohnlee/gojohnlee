@@ -250,6 +250,13 @@ namespace ValheimHelper
 
         // ---- 제작 계획 (설계 C, 계획을 말한 뒤 PlanJob으로 실행) ----
 
+        /// <summary>저장에서 불러온 제작 칸을 다시 시작(계획을 현재 재고로 새로 세움).</summary>
+        public static void ResumeMake(WorkerNpc npc, WorkItem w)
+        {
+            if (w.SetNo > 0) MakeSet(npc, w.SetNo, w.Amount);
+            else Craft(npc, new ChatCommand { Kind = CommandKind.Item, Item = w.Item, Amount = w.Amount });
+        }
+
         static void Craft(WorkerNpc npc, ChatCommand cmd)
         {
             RecipeBook book = Recipes.Book();
@@ -260,11 +267,11 @@ namespace ValheimHelper
                 ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString(),
             };
             SayPlan(npc, plan, args);
-            StartPlan(npc, plan, args["item"]);
+            StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], Item = cmd.Item, Amount = cmd.Amount });
         }
 
         /// <summary>계획이 끝까지 할 수 있는 것이면 실제로 시작(6번 실행기). 일하는 중이면 시작하지 않음(대기열은 데이터 없는 PlanJob을 못 저장).</summary>
-        static void StartPlan(WorkerNpc npc, Plan plan, string label)
+        static void StartPlan(WorkerNpc npc, Plan plan, string label, WorkItem goal)
         {
             if (!Features.RunPlans || plan.Steps.Count == 0 || plan.Partial || plan.TooLong) return;
             var mode = npc.Ai.Current;
@@ -273,7 +280,7 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"{npc.NpcName} 계획 {label}: 지금 {mode}라 시작 안 함");
                 return;
             }
-            npc.Ai.StartJob(new PlanJob(npc, plan, label));
+            npc.Ai.StartJob(new PlanJob(npc, plan, label) { Goal = goal });
         }
 
         /// <summary>!세트 n 수량: 세트 안의 물건마다 수량만큼(6-4). 범위 밖 물건은 빼고 계획.</summary>
@@ -291,7 +298,7 @@ namespace ValheimHelper
             }
             args["minutes"] = Departure.Minutes5(plan.Seconds).ToString();
             SayPlan(npc, plan, args);
-            StartPlan(npc, plan, args["item"]);
+            StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], SetNo = number, Amount = amount });
         }
 
         static Plan PlanFor(WorkerNpc npc, List<Ingredient> targets)

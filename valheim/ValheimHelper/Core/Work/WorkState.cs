@@ -6,7 +6,7 @@ using ValheimHelper.Core.Npc;
 
 namespace ValheimHelper.Core.Work
 {
-    public enum WorkKind { Gather, Explore }
+    public enum WorkKind { Gather, Explore, Make }
 
     /// <summary>대기열 칸을 꺼낼 수 있는 조건.</summary>
     public enum ReadyWhen { Always, Morning }
@@ -44,6 +44,8 @@ namespace ValheimHelper.Core.Work
         /// <summary>탐험 이어 하기: 방향 벡터, 바이옴 번호, 알림 말("동쪽").</summary>
         public int DirX, DirY, BiomeId;
         public string Where;
+        /// <summary>제작(Make): 세트 번호(0이면 Item 한 가지를 Amount개). 이어 할 때 계획을 현재 재고로 다시 세운다.</summary>
+        public int SetNo;
     }
 
     /// <summary>질문하고 대답을 기다리는 상태(Departures 질문 대기).</summary>
@@ -99,6 +101,7 @@ namespace ValheimHelper.Core.Work
                 if (w.DirX != 0 || w.DirY != 0) f.Add("d=" + w.DirX.ToString(Inv) + "|" + w.DirY.ToString(Inv));
                 if (w.BiomeId != 0) f.Add("bi=" + w.BiomeId.ToString(Inv));
                 if (w.Where != null) f.Add("wh=" + Esc(w.Where));
+                if (w.SetNo != 0) f.Add("sn=" + w.SetNo.ToString(Inv));
                 parts.Add(string.Join(",", f.ToArray()));
             }
             return string.Join(";", parts.ToArray());
@@ -128,7 +131,9 @@ namespace ValheimHelper.Core.Work
                 if (f.TryGetValue("d", out v) && TryPair(v, out int dx, out int dy)) { w.DirX = dx; w.DirY = dy; }
                 if (f.TryGetValue("bi", out v)) TryInt(v, out w.BiomeId);
                 if (f.TryGetValue("wh", out v)) w.Where = v;
+                if (f.TryGetValue("sn", out v)) TryInt(v, out w.SetNo);
                 if (w.Kind == WorkKind.Gather && (string.IsNullOrEmpty(w.Item) || w.Amount <= 0)) continue; // 깨진 칸
+                if (w.Kind == WorkKind.Make && (w.Amount <= 0 || (w.SetNo <= 0 && string.IsNullOrEmpty(w.Item)))) continue; // 깨진 칸
                 list.Add(w);
             }
             return list;

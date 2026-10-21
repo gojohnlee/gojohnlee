@@ -27,6 +27,8 @@ namespace ValheimHelper
             m_goal = goalLabel;
         }
 
+        /// <summary>작업 상태 저장용: 이 계획을 세운 목표(제작 물건 또는 세트). 이어 할 때 계획을 다시 세운다.</summary>
+        public WorkItem Goal;
         public PlanRunner Runner => m_runner;
         public string StepName => m_step != null ? m_step.Kind.ToString() : "Wait";
         public string Label => m_goal;
