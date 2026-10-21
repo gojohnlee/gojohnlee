@@ -488,7 +488,7 @@ namespace ValheimHelper
         static readonly Speech s_speech = new Speech();
 
         /// <summary>스스로 하는 알림(명령에 대한 대답이 아닌 것): 같은 알림은 30초 안에 되풀이하지 않는다(구상서 10장 도배 방지).</summary>
-        static readonly HashSet<string> Throttled = new HashSet<string> { "fightStart", "backOff", "flee", "dangerSkip", "drink", "noFood", "graveRetry" };
+        static readonly HashSet<string> Throttled = new HashSet<string> { "fightStart", "backOff", "flee", "help", "dangerSkip", "drink", "noFood", "graveRetry" };
         readonly Dictionary<string, float> m_lastSaid = new Dictionary<string, float>();
 
         public void Say(string key, IDictionary<string, string> args = null)

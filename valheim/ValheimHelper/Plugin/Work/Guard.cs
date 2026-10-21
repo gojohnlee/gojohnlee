@@ -15,7 +15,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class Guard
     {
-        public const float SenseRange = 30f, CloseRange = 8f, AllyRange = 20f, EngageRange = 15f;
+        public const float SenseRange = 30f, CloseRange = 8f, AllyRange = 20f, HelpRange = 60f, EngageRange = 15f;
         const float JudgeEvery = 0.5f, BackDistance = 40f, BackWait = 30f;
         public const int MaxBacks = 2;
         /// <summary>[기본안] 내가 한 번 휘두를 때 적이 치는 횟수(바닐라 몬스터의 공격 간격 반영, 시험으로 조정).</summary>
@@ -136,7 +136,7 @@ namespace ValheimHelper
                             m_ai.AvoidHere(nearest.transform.position);
                             m_backs = 0;
                         }
-                        else m_npc.Say("backOff", Args(foeName));
+                        else if (!CallHelp(pos, foeName)) m_npc.Say("backOff", Args(foeName));
                         m_backTo = AwayPoint(pos, BackDistance);
                         m_backTimer = BackWait;
                         m_backWalking = true;
@@ -157,10 +157,27 @@ namespace ValheimHelper
 
         int m_chased;
 
+        float m_helpAt = -999f;
+
+        /// <summary>위급한데 근처(HelpRange)에 플레이어가 있으면 "도와줘요!!"+지도 핑(구상서 8-1). 60초에 한 번. 불렀으면 true.</summary>
+        bool CallHelp(Vector3 pos, string foeName)
+        {
+            if (Time.time - m_helpAt < 60f) return false;
+            bool near = false;
+            foreach (var p in Player.GetAllPlayers())
+                if (p != null && !p.IsDead() && !p.InGhostMode() && Vector3.Distance(p.transform.position, pos) <= HelpRange) { near = true; break; }
+            if (!near) return false;
+            m_helpAt = Time.time;
+            m_npc.Say("help", Args(foeName));
+            try { if (Chat.instance != null) Chat.instance.SendPing(pos); }
+            catch (System.Exception e) { Plugin.Log.LogWarning("핑 실패: " + e.Message); }
+            return true;
+        }
+
         void StartFlee(Vector3 pos, Character nearest, string foeName)
         {
             Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00} ({LastDetail})");
-            m_npc.Say("flee", Args(foeName));
+            if (!CallHelp(pos, foeName)) m_npc.Say("flee", Args(foeName));
             Worse(Outcome.Fled);
             m_ai.AvoidHere(nearest.transform.position);
             m_backTo = AwayPoint(pos, BackDistance * 1.5f);
