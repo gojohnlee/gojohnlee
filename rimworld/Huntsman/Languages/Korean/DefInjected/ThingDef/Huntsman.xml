@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<LanguageData>
+  <GJL_HM_Huntsman.label>사냥꾼</GJL_HM_Huntsman.label>
+  <GJL_HM_Huntsman.description>긴 총열과 광학 조준경을 장착한 2단계 저격 메카노이드. 작업 모드에서 사냥 지정된 동물을 추적해 사냥하고, 보관할 곳이 있으면 시체를 운반한다. 원거리에서는 강하지만 가벼운 장갑과 느린 단발 사격 때문에 근접전에는 취약하다.</GJL_HM_Huntsman.description>
+  <GJL_HM_Rifle.label>사냥꾼 정밀소총</GJL_HM_Rifle.label>
+  <GJL_HM_Rifle.description>긴 총열과 광학 조준경을 갖춘 메카노이드 전용 볼트액션 저격총.</GJL_HM_Rifle.description>
+  <GJL_HM_Bullet.label>사냥꾼 소총탄</GJL_HM_Bullet.label>
+</LanguageData>

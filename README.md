@@ -9,6 +9,7 @@
 | Hello RimWorld (템플릿) | `rimworld/HelloRimWorld` | 1.7 |
 | 철기병 (Iron Cavalry) | `rimworld/IronCavalry` | 1.7 |
 | 방패병 (Shield Guard) | `rimworld/ShieldGuard` | 1.7.4984 |
+| 사냥꾼 (Huntsman) | `rimworld/Huntsman` | 1.7.4985 |
 
 ### 빌드
 ```bash

@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ModMetaData>
+  <name>Huntsman</name>
+  <author>gojohnlee</author>
+  <packageId>gojohnlee.huntsman</packageId>
+  <supportedVersions>
+    <li>1.7</li>
+  </supportedVersions>
+  <description>2티어 저격·사냥 메카 사냥꾼. 표준 메카 기술 / 대역폭 2 / 사거리 25 / 피해 25. 작업 모드에서 사냥 지정 동물을 사냥하고 시체를 보관 구역으로 운반합니다. RimWorld 1.7.4985, Biotech 필요.</description>
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+      <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+    </li>
+    <li>
+      <packageId>Ludeon.RimWorld.Biotech</packageId>
+      <displayName>Biotech</displayName>
+    </li>
+  </modDependencies>
+  <loadAfter>
+    <li>brrainz.harmony</li>
+    <li>Ludeon.RimWorld.Biotech</li>
+  </loadAfter>
+</ModMetaData>

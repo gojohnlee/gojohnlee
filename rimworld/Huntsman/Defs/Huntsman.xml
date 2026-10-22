@@ -1,0 +1,227 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Defs>
+  <ThingDef ParentName="BaseMechanoidWalker">
+    <defName>GJL_HM_Huntsman</defName>
+    <label>huntsman</label>
+    <description>A tier-two precision mechanoid with a long scoped rifle. In work mode it hunts animals designated by its controller and brings their corpses to available storage. Its light armor and slow bolt-action rifle make it vulnerable at close range.</description>
+    <tools>
+      <li>
+        <label>left fist</label>
+        <labelNoLocation>fist</labelNoLocation>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>6</power>
+        <cooldownTime>2</cooldownTime>
+        <linkedBodyPartsGroup>LeftHand</linkedBodyPartsGroup>
+        <alwaysTreatAsWeapon>true</alwaysTreatAsWeapon>
+      </li>
+      <li>
+        <label>right fist</label>
+        <labelNoLocation>fist</labelNoLocation>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>6</power>
+        <cooldownTime>2</cooldownTime>
+        <linkedBodyPartsGroup>RightHand</linkedBodyPartsGroup>
+        <alwaysTreatAsWeapon>true</alwaysTreatAsWeapon>
+      </li>
+      <li>
+        <label>head</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>6</power>
+        <cooldownTime>2</cooldownTime>
+        <linkedBodyPartsGroup>HeadAttackTool</linkedBodyPartsGroup>
+        <ensureLinkedBodyPartsGroupAlwaysUsable>true</ensureLinkedBodyPartsGroupAlwaysUsable>
+        <chanceFactor>0.2</chanceFactor>
+      </li>
+    </tools>
+    <race>
+      <body>Lancer</body>
+      <baseHealthScale>0.85</baseHealthScale>
+      <detritusLeavings>
+        <li>
+          <def>ChunkMechanoidSlag</def>
+          <texOverrideIndex>11</texOverrideIndex>
+          <spawnChance>0.1</spawnChance>
+        </li>
+        <li>
+          <def>ChunkMechanoidSlag</def>
+          <texOverrideIndex>12</texOverrideIndex>
+          <spawnChance>0.1</spawnChance>
+        </li>
+      </detritusLeavings>
+      <mechEnabledWorkTypes>
+        <li>Hunting</li>
+      </mechEnabledWorkTypes>
+      <mechWorkTypePriorities>
+        <Hunting>1</Hunting>
+      </mechWorkTypePriorities>
+    </race>
+    <statBases>
+      <BandwidthCost MayRequire="Ludeon.RimWorld.Biotech">2</BandwidthCost>
+      <MoveSpeed>3.8</MoveSpeed>
+      <ArmorRating_Sharp>0.3</ArmorRating_Sharp>
+      <ArmorRating_Blunt>0.15</ArmorRating_Blunt>
+      <MarketValue>1400</MarketValue>
+    </statBases>
+  </ThingDef>
+  <PawnKindDef ParentName="BaseMechanoidKind">
+    <defName>GJL_HM_Huntsman</defName>
+    <label>huntsman</label>
+    <race>GJL_HM_Huntsman</race>
+    <combatPower>130</combatPower>
+    <lifeStages>
+      <li MayRequire="Ludeon.RimWorld.Biotech">
+        <bodyGraphicData>
+          <texPath>Things/Pawn/Mechanoid/LancerClean</texPath>
+          <maskPath>Things/Pawn/Mechanoid/AllegianceOverlays/Mech_Lancer</maskPath>
+          <shaderType>CutoutWithOverlay</shaderType>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>1.5</drawSize>
+          <shadowData>
+            <volume>(0.4, 0.8, 0.4)</volume>
+          </shadowData>
+          <color>(0.38, 0.43, 0.46)</color>
+        </bodyGraphicData>
+      </li>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Pawn/Mechanoid/Lancer</texPath>
+          <maskPath>Things/Pawn/Mechanoid/AllegianceOverlays/Mech_Lancer</maskPath>
+          <shaderType>CutoutWithOverlay</shaderType>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>1.5</drawSize>
+          <shadowData>
+            <volume>(0.4, 0.8, 0.4)</volume>
+          </shadowData>
+          <color>(0.38, 0.43, 0.46)</color>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+    <weaponMoney>9999~9999</weaponMoney>
+    <weaponTags>
+      <li>GJL_HM_Rifle</li>
+    </weaponTags>
+    <techHediffsChance>1</techHediffsChance>
+    <techHediffsMoney>9999~9999</techHediffsMoney>
+    <allowInMechClusters>false</allowInMechClusters>
+  </PawnKindDef>
+  <ThingDef ParentName="LightMechanoidGunRanged">
+    <defName>GJL_HM_Rifle</defName>
+    <label>huntsman precision rifle</label>
+    <description>An integrated bolt-action rifle with a long barrel and optical sight.</description>
+    <techLevel>Spacer</techLevel>
+    <graphicData>
+      <texPath>Things/Item/Equipment/WeaponRanged/SniperRifle</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.35</drawSize>
+    </graphicData>
+    <statBases>
+      <MarketValue>1000</MarketValue>
+      <Mass>1.5</Mass>
+      <AccuracyTouch>0.5</AccuracyTouch>
+      <AccuracyShort>0.7</AccuracyShort>
+      <AccuracyMedium>0.88</AccuracyMedium>
+      <AccuracyLong>0.9</AccuracyLong>
+      <RangedWeapon_Cooldown>2</RangedWeapon_Cooldown>
+    </statBases>
+    <weaponTags>
+      <li>GJL_HM_Rifle</li>
+    </weaponTags>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>GJL_HM_Bullet</defaultProjectile>
+        <warmupTime>3</warmupTime>
+        <range>25</range>
+        <burstShotCount>1</burstShotCount>
+        <ticksBetweenBurstShots>10</ticksBetweenBurstShots>
+        <soundCast>Shot_SniperRifle</soundCast>
+        <soundCastTail>GunTail_Heavy</soundCastTail>
+        <muzzleFlashScale>6</muzzleFlashScale>
+      </li>
+    </verbs>
+  </ThingDef>
+  <ThingDef ParentName="BaseBullet">
+    <defName>GJL_HM_Bullet</defName>
+    <label>huntsman rifle bullet</label>
+    <graphicData>
+      <texPath>Things/Projectile/Bullet_Big</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <projectile>
+      <damageDef>Bullet</damageDef>
+      <damageAmountBase>25</damageAmountBase>
+      <stoppingPower>1.5</stoppingPower>
+      <speed>100</speed>
+      <armorPenetrationBase>0.25</armorPenetrationBase>
+    </projectile>
+  </ThingDef>
+  <RecipeDef ParentName="MediumMechanoidRecipe">
+    <defName>GJL_HM_GestateHuntsman</defName>
+    <label>gestate huntsman</label>
+    <description>Gestate a tier-two sniper and hunting mechanoid.</description>
+    <ingredients Inherit="False">
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Steel</li>
+          </thingDefs>
+        </filter>
+        <count>100</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Plasteel</li>
+          </thingDefs>
+        </filter>
+        <count>50</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>ComponentIndustrial</li>
+          </thingDefs>
+        </filter>
+        <count>4</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>SubcoreRegular</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+    </ingredients>
+    <products>
+      <GJL_HM_Huntsman>1</GJL_HM_Huntsman>
+    </products>
+    <descriptionHyperlinks>
+      <ThingDef>GJL_HM_Huntsman</ThingDef>
+    </descriptionHyperlinks>
+    <recipeUsers>
+      <li>LargeMechGestator</li>
+    </recipeUsers>
+  </RecipeDef>
+  <WorkGiverDef>
+    <defName>GJL_HM_Hunt</defName>
+    <label>hunt with huntsman</label>
+    <giverClass>Huntsman.WorkGiver_HuntsmanHunt</giverClass>
+    <workType>Hunting</workType>
+    <verb>hunt</verb>
+    <gerund>hunting</gerund>
+    <tagToGive>Fieldwork</tagToGive>
+    <priorityInType>110</priorityInType>
+    <requiredCapacities>
+      <li>Manipulation</li>
+    </requiredCapacities>
+    <canBeDoneByMechs>true</canBeDoneByMechs>
+  </WorkGiverDef>
+</Defs>
