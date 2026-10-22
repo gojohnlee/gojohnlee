@@ -63,6 +63,14 @@ namespace ValheimHelper
             return list;
         }
 
+        /// <summary>그 물건이 skip(예: 밭 작물 프리팹)이 아닌 캐는·줍는 것에서도 나오는지.</summary>
+        public static bool AnySourceBut(string item, System.Func<string, bool> skip)
+        {
+            if (s_byHash == null) Build();
+            foreach (var r in s_byHash.Values) if (r.Produces.Contains(item) && !skip(r.Prefab)) return true;
+            return false;
+        }
+
         /// <summary>캐거나 줍는 방법이 하나라도 있는가(사냥만 되는 물건은 false).</summary>
         public static bool Gatherable(string item)
         {

@@ -575,6 +575,8 @@ namespace ValheimHelper
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
+                // 갈린 땅(밭)의 작물은 줍지 않는다: 사람이 기르는 것 — 밭일(FarmJob)만 거둔다.
+                if (info.Pickable && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
                 // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
                 if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f)) { m_skip.Add(zdo.m_uid); continue; }
                 if (info.Tool != ToolKind.None)
@@ -606,7 +608,7 @@ namespace ValheimHelper
                 if (info == null || !info.Produces.Contains(Item)) continue;
                 if (++n > 6) break;
                 string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
-                    : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀"
+                    : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && Farmland(zdo.GetPosition()) ? "밭 작물"
                     : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) ? "건축물 4m 안"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
@@ -614,6 +616,14 @@ namespace ValheimHelper
                 sb.Append($"[{info.Prefab} {Utils.DistanceXZ(zdo.GetPosition(), pos):0}m {why}]");
             }
             return n == 0 ? "목록에 있는 대상 없음" : sb.ToString();
+        }
+
+        /// <summary>갈린 땅이거나 적어 둔 밭(!밭) 안인지.</summary>
+        static bool Farmland(Vector3 p)
+        {
+            if (Brain.Farms.At(p.x, p.z) != null) return true;
+            Heightmap hm = Heightmap.FindHeightmap(p);
+            return hm != null && hm.IsCultivated(p);
         }
 
         static bool NearAny(Vector3 p, List<Vector3> points, float range)

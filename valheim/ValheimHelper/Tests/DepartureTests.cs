@@ -288,7 +288,7 @@ public class DepartureSpeechTests
         "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "depart.noResist", "ask.night", "ask.stock", "note.stock", "note.night",
         "craftChestFull", "answer.grumble", "answer.escort", "answer.alternative", "answer.conditionMet", "answer.conditionMissing", "answer.morning",
         "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone", "craft.plan", "craft.inStock", "craft.missing", "craft.tooLong", "craft.unknown", "setList", "setEmpty", "setNone", "keepSet", "keepOff", "refillGo",
-        "farmSet", "farmMoved", "farmFull", "farmNoGrow", "farmWhere", "farmNoTool", "farmNoSeed", "farmGo", "farmDone", "farmNoRoom", "state.farm", "farmHarvest",
+        "farmSet", "farmMoved", "farmFull", "farmNoGrow", "farmWhere", "farmNoTool", "farmNoSeed", "farmGo", "farmDone", "farmNoRoom", "state.farm", "farmHarvest", "farmPlantFor", "farmHarvestFor", "farmNoField", "farmNoSeedFor",
     };
 
     [Fact]

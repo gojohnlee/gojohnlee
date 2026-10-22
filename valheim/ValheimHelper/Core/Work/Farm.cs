@@ -13,6 +13,7 @@ namespace ValheimHelper.Core.Work
         public string Seed;         // 심을 때 드는 물건(CarrotSeeds)
         public int SeedCost = 1;
         public string Produce;      // 거두면 나오는 물건(Carrot)
+        public string Grown;        // 다 자란 Pickable 프리팹(Pickable_Carrot)
         public int Yield = 1;
         public int Biomes;          // Heightmap.Biome 비트
         public bool TolerateCold, TolerateHeat;

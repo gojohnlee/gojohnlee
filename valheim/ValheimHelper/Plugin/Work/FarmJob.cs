@@ -56,7 +56,16 @@ namespace ValheimHelper
         /// "!밭"·대기열·이어 하기: 그 밭의 다 자란 것을 거두고 상자(+짐)의 씨앗을 Farm.Fill만큼 심는 일.
         /// 자리 수는 그 바이옴에서 자라는 작물 중 가장 넓은 간격으로 센다(실제 간격은 그보다 좁거나 같아 자리가 모자라지 않음).
         /// </summary>
-        public static FarmJob ForField(WorkerNpc npc, FarmField field)
+        public static FarmJob ForField(WorkerNpc npc, FarmField field) => new FarmJob(npc, field, PlanFor(npc, field, null), true);
+
+        /// <summary>"!당근 10"(출발 판단 농사 연결): 거두기 + 그 물건이 나오는 작물을 Farm.Plan으로(씨앗 유지 포함).</summary>
+        public static FarmJob ForWant(WorkerNpc npc, FarmField field, string item, int amount, out FarmPlan plan)
+        {
+            plan = PlanFor(npc, field, new List<Ingredient> { new Ingredient(item, amount) });
+            return new FarmJob(npc, field, plan, true);
+        }
+
+        static FarmPlan PlanFor(WorkerNpc npc, FarmField field, List<Ingredient> want)
         {
             int biome = Scout.BiomeAt(new Vector3(field.X, 0f, field.Z));
             float spacing = 0f;
@@ -64,13 +73,13 @@ namespace ValheimHelper
             int slots = spacing > 0f ? Farm.Spots(field.X, field.Z, field.Radius, spacing).Count : 0;
             var chests = Chests.NearBase(npc.Home, ChestRole.Mats);
             Inventory mine = npc.GetInventory();
-            FarmPlan plan = Farm.Fill(Crops.All, biome, slots, item =>
+            System.Func<string, int> stock = item =>
             {
                 int n = Count(mine, item);
                 foreach (var c in chests) n += Count(c.GetInventory(), item);
                 return n;
-            });
-            return new FarmJob(npc, field, plan, true);
+            };
+            return want == null ? Farm.Fill(Crops.All, biome, slots, stock) : Farm.Plan(Crops.All, biome, slots, stock, want);
         }
 
         /// <summary>저장(WorkSaves)·대기열 칸: 밭 자리만 적고 이어 할 때 ForField로 계획을 다시 세운다.</summary>

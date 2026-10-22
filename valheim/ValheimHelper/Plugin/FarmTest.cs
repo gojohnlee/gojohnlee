@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
@@ -140,6 +141,25 @@ namespace ValheimHelper
             bool restarted = w.Claude.Ai.Job is FarmJob;
             yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 120f);
             checks.Add($"저장 칸에서 밭일 다시 시작·끝 ({restarted}, {TestKit.Waited:0}초, 짐 경작기 {Bag(w, Crops.Cultivator)})", restarted && TestKit.Ok && Bag(w, Crops.Cultivator) == 0);
+
+            // 출발 판단 농사 연결(4c): "!당근 3" → 들에는 없는 것이라 밭에 당근 3 심기(씨앗 3 → 0). 밭이 없으면 밭일 안 함.
+            Clean(field);
+            TestKit.ClearBaseStock(w, Seed, Produce);
+            TestKit.PutInChest(w.Chest, Seed, 3);
+            var who = new Speaker("시험", ZDOID.None, ZDOID.None);
+            var carrotCmd = new ChatCommand { Kind = CommandKind.Item, Item = Produce, Amount = 3 };
+            Departures.Gather(who, carrotCmd, w.Claude);
+            var wantJob = w.Claude.Ai.Job as FarmJob;
+            checks.Add($"!당근 3 → 밭일 ({(w.Claude.Ai.Job != null ? w.Claude.Ai.Job.GetType().Name : "없음")}, 들에서 나는 곳 [{string.Join(",", ResourceCatalog.SourcesOf(Produce).ToArray())}])",
+                wantJob != null);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 240f);
+            carrots = PlantsOf(field, "sapling_carrot");
+            seedLeft = Stock(w, Seed) + Bag(w, Seed);
+            checks.Add($"!당근 3 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft}, 경작기 상자 {Stock(w, Crops.Cultivator)})",
+                TestKit.Ok && carrots == 3 && seedLeft == 0 && Stock(w, Crops.Cultivator) == 1);
+            Brain.Farms.Remove(field.X, field.Z);
+            Departures.Gather(who, carrotCmd, w.Claude);
+            checks.Add($"밭 없으면 !당근은 밭일·채집 안 함 ({(w.Claude.Ai.Job != null ? w.Claude.Ai.Job.GetType().Name : "없음")})", w.Claude.Ai.Job == null);
 
             TestKit.ClearBaseStock(w, Crops.Cultivator, Seed, Produce);
         }

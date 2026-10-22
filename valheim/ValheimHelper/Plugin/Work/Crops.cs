@@ -39,6 +39,17 @@ namespace ValheimHelper
         /// <summary>작물을 거두면 나오는 물건(Carrot 등)인지 — 밭에서 다 자란 Pickable·떨군 것 고르기.</summary>
         public static bool IsProduce(string prefab) => All.Exists(c => c.Produce == prefab);
 
+        /// <summary>그 물건이 나오는 작물 중 가장 많이 나오는 것(없으면 null).</summary>
+        public static Crop ForProduce(string item)
+        {
+            Crop best = null;
+            foreach (var c in All) if (c.Produce == item && (best == null || c.Yield > best.Yield)) best = c;
+            return best;
+        }
+
+        /// <summary>밭에서 다 자란 작물 프리팹(Pickable_Carrot)인지 — 들에서 나는 것과 가르기.</summary>
+        public static bool IsGrown(string prefab) => All.Exists(c => c.Grown == prefab);
+
         /// <summary>그 바이옴에서 자라는 작물이 하나라도 있는지.</summary>
         public static bool AnyGrows(int biome) => All.Exists(c => Farm.CanGrow(c, biome));
 
@@ -86,6 +97,7 @@ namespace ValheimHelper
                 Seed = req.m_resItem.gameObject.name,
                 SeedCost = Mathf.Max(1, req.m_amount),
                 Produce = grown.m_itemPrefab.name,
+                Grown = grown.gameObject.name,
                 Yield = Mathf.Max(1, grown.m_amount),
                 Biomes = (int)plant.m_biome,
                 TolerateCold = plant.m_tolerateCold,

@@ -273,15 +273,16 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 그 밭일 시작. 다른 일꾼이 같은 밭일 중이면 맡지 않는다(같은 자리에 두 번 심지 않게). 일하는 중이면 탐험처럼: 급하면 멈추고, 아니면 대기열.
+        /// 그 밭일(job, 없으면 ForField) 시작. 다른 일꾼이 같은 밭일 중이면 맡지 않는다(같은 자리에 두 번 심지 않게). 일하는 중이면 탐험처럼: 급하면 멈추고,
+        /// 아니면 대기열(밭 자리만 — 꺼낼 때 ForField). 지금 시작했으면 true.
         /// </summary>
-        internal static void StartFarm(WorkerNpc npc, FarmField field, bool urgent)
+        internal static bool StartFarm(WorkerNpc npc, FarmField field, bool urgent, FarmJob job = null)
         {
             foreach (var other in WorkerNpc.All)
                 if (other != null && other.Ai != null && other.Ai.Job is FarmJob f && f.Field.Contains(field.X, field.Z))
                 {
                     if (other != npc) npc.Say("farmAlready", new Dictionary<string, string> { ["npc"] = other.NpcName });
-                    return;
+                    return false;
                 }
             if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is GraveJob))
             {
@@ -290,12 +291,13 @@ namespace ValheimHelper
                     var w = new WorkItem { Kind = WorkKind.Farm, Label = npc.Line("job.farm"), Amount = field.Radius, FarmX = field.X, FarmZ = field.Z };
                     npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, w));
                     npc.Say("depart.busy", new Dictionary<string, string> { ["job"] = npc.Ai.Job.Label });
-                    return;
+                    return false;
                 }
                 npc.Ai.Interrupt();
                 npc.Say("dropJob");
             }
-            npc.Ai.StartJob(FarmJob.ForField(npc, field));
+            npc.Ai.StartJob(job ?? FarmJob.ForField(npc, field));
+            return true;
         }
 
         /// <summary>!상자: 상자는 지정하지 않는다(거점 상자 전부를 씀) → 그렇다고 알려 준다.</summary>

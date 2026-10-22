@@ -78,6 +78,7 @@ namespace ValheimHelper
         /// <summary>!물건 수량: 판단하고 결과대로. fromQueue면 대기열에서 꺼낸 것(하던 일 없음).</summary>
         public static void Gather(Speaker who, ChatCommand cmd, WorkerNpc npc, bool fromQueue = false)
         {
+            if (Farming(npc, cmd)) return;
             HashSet<ToolKind> ways = ResourceCatalog.WaysFor(cmd.Item);
             if (ways.Count == 0) { Craft(npc, cmd); return; }
             s_pending.Remove(npc);
@@ -116,6 +117,27 @@ namespace ValheimHelper
             }
             if (r.Key != null) npc.Say(r.Key, args);
             else npc.Say(input.Places.Count > 0 ? "gatherKnown" : "gatherStart", args);
+        }
+
+        /// <summary>
+        /// 농사로만 나는 물건(당근 — 들에는 없음)이면 밭에 심는다(구상서 6-3 "당근이 없어요. 밭에 심어 둘게요. 1시간쯤"): 그 작물이 자라는 첫 밭에서
+        /// 다 자란 것을 거두고 Farm.Plan만큼 심는 밭일(씨앗 유지 포함). 들에서도 나는 것(보리·씨앗)은 false → 채집. 밭이 없거나 씨앗·거둘 것이 없으면 말만 한다.
+        /// </summary>
+        static bool Farming(WorkerNpc npc, ChatCommand cmd)
+        {
+            Crop crop = Crops.ForProduce(cmd.Item);
+            if (crop == null || ResourceCatalog.AnySourceBut(cmd.Item, Crops.IsGrown)) return false;
+            var args = new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() };
+            FarmField field = null;
+            foreach (var f in Brain.Farms.Fields)
+                if (Farm.CanGrow(crop, Scout.BiomeAt(new Vector3(f.X, 0f, f.Z)))) { field = f; break; }
+            if (field == null) { npc.Say("farmNoField", args); return true; }
+            FarmJob job = FarmJob.ForWant(npc, field, cmd.Item, cmd.Amount, out FarmPlan plan);
+            if (plan.Plant.Count == 0 && FarmJob.Ripe(field).Count == 0) { npc.Say("farmNoSeedFor", args); return true; }
+            args["minutes"] = Departure.Minutes5((float)Farm.GrowSeconds(Crops.All, plan)).ToString();
+            Plugin.Log.LogInfo($"{npc.NpcName} 농사로 {cmd.Item} {cmd.Amount}: 밭 ({field.X:0},{field.Z:0}) 심기 [{string.Join(", ", plan.Plant.ConvertAll(p => p.Item + " " + p.Amount).ToArray())}], 모자람 {plan.Missing.Count}");
+            if (Commands.StartFarm(npc, field, cmd.Urgent, job)) npc.Say(plan.Plant.Count > 0 ? "farmPlantFor" : "farmHarvestFor", args);
+            return true;
         }
 
         /// <summary>시험용: 지금 그 명령을 받으면 어떻게 판단할지(말하거나 움직이지 않음).</summary>
