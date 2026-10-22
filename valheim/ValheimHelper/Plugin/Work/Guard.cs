@@ -395,7 +395,7 @@ namespace ValheimHelper
                 m_judgeTimer = 0f; // 다음 적을 바로 고른다
                 return true;
             }
-            if (!m_armed) { m_armed = true; m_fightIdle = 0f; m_npc.HoldWeapon(); } // 없으면 맨손으로
+            if (!m_armed || m_npc.HoldingBow()) { m_armed = true; m_fightIdle = 0f; m_npc.StopDraw(); m_npc.HoldWeapon(); } // 없으면 맨손으로. 활은 사냥에만
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
             float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
             Vector3 tp = m_target.transform.position;

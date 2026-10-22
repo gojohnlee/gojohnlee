@@ -33,6 +33,24 @@ namespace ValheimHelper
             return d.m_damage + d.m_blunt + d.m_slash + d.m_pierce + d.m_fire + d.m_frost + d.m_lightning + d.m_poison + d.m_spirit;
         }
 
+        /// <summary>활(당겨 쏘는 것, 화살을 씀). 활은 사냥에만 쓴다(구상서 6-2) → 싸울 무기 고르기(IsMelee)에는 안 들어간다.</summary>
+        public static bool IsBow(ItemDrop.ItemData it) =>
+            it != null && it.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Bow && it.m_shared.m_attack.m_bowDraw
+            && !string.IsNullOrEmpty(it.m_shared.m_ammoType);
+
+        /// <summary>그 활에 맞는 화살.</summary>
+        public static bool IsArrowFor(ItemDrop.ItemData arrow, ItemDrop.ItemData bow) =>
+            arrow != null && bow != null && arrow.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Ammo && arrow.m_shared.m_ammoType == bow.m_shared.m_ammoType;
+
+        public static ItemDrop.ItemData BestBow(IEnumerable<ItemDrop.ItemData> items) => Best(items, IsBow, WeaponScore);
+
+        public static int CountArrows(Inventory inv, ItemDrop.ItemData bow)
+        {
+            int n = 0;
+            if (bow != null) foreach (var it in inv.GetAllItems()) if (IsArrowFor(it, bow)) n += it.m_stack;
+            return n;
+        }
+
         public static bool IsShield(ItemDrop.ItemData it) => it.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Shield;
 
         /// <summary>몸에 입는 칸(투구·갑옷·바지·망토·벨트). 망토·벨트도 방어구 칸으로 친다.</summary>

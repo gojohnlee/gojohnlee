@@ -141,6 +141,7 @@ namespace ValheimHelper
             if (gear)
                 foreach (var it in Plan(mine, chest))
                     if (chest.ContainsItem(it)) return true;
+            if (gear && NeedsBow(mine, chest)) return true;
             if (!meads) return false;
             if (CountMeads(mine) < MeadsToCarry && CountMeads(chest) > 0) return true;
             foreach (var k in Resist.Kinds)
@@ -166,8 +167,46 @@ namespace ValheimHelper
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Axe));
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Pickaxe));
             foreach (var it in mine.GetAllItems()) if (Gear.IsHealthMead(it) || Gear.ResistOf(it) != null) keep.Add(it);
+            ItemDrop.ItemData bow = Gear.BestBow(mine.GetAllItems());
+            keep.Add(bow);
+            foreach (var it in mine.GetAllItems()) if (Gear.IsArrowFor(it, bow)) keep.Add(it);
             keep.Remove(null);
             return keep;
+        }
+
+        /// <summary>
+        /// 사냥용 활(⑧, 사슴·토끼): 상자에 더 좋은 활이 있거나, 활이 있는데 화살이 몫(Archery.ArrowsToCarry)보다 적고 상자에 맞는 화살이 있다.
+        /// 활은 싸움에 안 쓰고 사냥에만 쓴다(구상서 6-2).
+        /// </summary>
+        static bool NeedsBow(Inventory mine, Inventory chest)
+        {
+            ItemDrop.ItemData have = Gear.BestBow(mine.GetAllItems()), there = Gear.BestBow(chest.GetAllItems());
+            if (there != null && (have == null || Gear.WeaponScore(there) > Gear.WeaponScore(have))) return true;
+            ItemDrop.ItemData bow = have ?? there;
+            return bow != null && Gear.CountArrows(mine, bow) < Archery.ArrowsToCarry && Gear.CountArrows(chest, bow) > 0;
+        }
+
+        void TakeBow(Inventory mine, Inventory chest, List<string> taken)
+        {
+            ItemDrop.ItemData have = Gear.BestBow(mine.GetAllItems()), there = Gear.BestBow(chest.GetAllItems());
+            if (there != null && (have == null || Gear.WeaponScore(there) > Gear.WeaponScore(have)) && mine.CanAddItem(there))
+            {
+                mine.MoveItemToThis(chest, there);
+                if (!chest.ContainsItem(there))
+                {
+                    taken.Add(there.m_shared.m_name);
+                    if (have != null && chest.CanAddItem(have)) // 헌 활과 맞지 않게 된 화살은 돌려놓는다
+                    {
+                        if (m_npc.IsWearing(have)) m_npc.UnequipItem(have, false);
+                        chest.MoveItemToThis(mine, have);
+                        foreach (var a in new List<ItemDrop.ItemData>(mine.GetAllItems()))
+                            if (Gear.IsArrowFor(a, have) && !Gear.IsArrowFor(a, there) && chest.CanAddItem(a)) chest.MoveItemToThis(mine, a);
+                    }
+                }
+            }
+            ItemDrop.ItemData bow = Gear.BestBow(mine.GetAllItems());
+            if (bow != null)
+                TakeMeads(mine, chest, Archery.ArrowsToCarry - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken);
         }
 
         /// <summary>
@@ -226,6 +265,7 @@ namespace ValheimHelper
                 if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
                 chest.MoveItemToThis(mine, it);
             }
+            if (takeGear) TakeBow(mine, chest, taken);
             if (takeMeads)
             {
                 // 체력 미드

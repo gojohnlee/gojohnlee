@@ -342,3 +342,9 @@ Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pic
 - 한계: 못 닿는 더미가 남은 묘지는 다 캔 것으로 안 보여 일마다 한 번 들렀다 나옴(같은 일 안에서는 다음 묘지로 넘어감).
 
 [루프 회차 65] ⑧ 먹거리 2조각 굽기: Core Process.Attended·PlanStep.AttendSeconds(기다리기 0초) + CraftPlanTests 1개(Core 373). Plugin Recipes가 CookingStation을 Attended로, MachineStep.Cook·Burning·Feed(불 지피기 → 빈 칸만큼 올림 → RPC_RemoveDoneItem으로 하나씩 꺼내 줍기 → Unload). vh_cooktest 신설: 첫 판은 시험이 화로를 세운 뒤 연료 0으로 바꿔 불 영역이 남아(바닐라 EffectArea는 Awake 등록·OnDestroy 해제) 지피기 칸만 FAIL → 화로를 처음부터 꺼진 채 세우게 고쳐 PASS 10/10(48초). crafttest 23/23 회귀 PASS.
+
+[루프 회차 66] ⑧ 활 사냥: Core Archery(Aim)+ArcheryTests 5개(Core 378). Plugin Prey(AnimalAI·NeedsBow·canShoot), Gear(IsBow·IsArrowFor·BestBow·CountArrows), WorkerNpc(ShootingBow·HoldBow·DrawBow·ReleaseBow·StopDraw·HandsDiag, HoldWeapon은 근접 무기 없으면 활을 내려놓음),
+  Prep(NeedsBow·TakeBow, Kept에 활+화살), GatherJob(UpdateShoot·ArrowFlight, needBow, MissLimit 10, 안 나감 3번 → m_bowFailed, Collect 사냥 LootWait 15초, NearestDrop 대상 기준), Guard(활 들고 있으면 근접 무기로), ResourceCatalog(Loot·SourcesOf), Speech needBow 두 성격, BowTest.
+  시험 경과: 1차 FAIL — 가죽 캐는 곳 barrell(Pickaxe) → 사냥 모드 안 켜짐(Loot로 고침). 2차 — 둘째 명령이 Alarak에게 감(시험이 일 받은 쪽을 보게), 33발 빗나감처럼 보였으나 진단 결과 남은 사슴(체력 그대로, 안 움직임)에 쏨(시험 시작 때 150m 안 사슴 치움, MissLimit).
+  3차 — 사슴을 2발에 잡았는데 떨굼을 못 주움(NearestDrop 일꾼 기준 14m → 대상 기준, LootWait). 4차 PASS. hunttest→bowtest 순서 한 번: Claude가 5발을 "쏨"으로 셌는데 화살이 안 줄고 안 나감(배고픔, 체력 25, 원인 못 찾음) → 안 나감 3번이면 그 일 동안 활 안 씀(DIAG 활 안 나감 줄에 손·당김·비틀 기록).
+  같은 묶음의 hunttest 1번이 멧돼지 둘을 150초 못 잡음(활 무관, 회차 63 간헐). 마지막 묶음 hunt·bow 두 번씩 4/4 PASS, prep 22·wood 10·craft 23·fight 11 PASS.

@@ -99,13 +99,80 @@ namespace ValheimHelper
             ItemDrop.ItemData shield = Gear.Best(items, Gear.IsShield, Gear.ShieldScore);
             ItemDrop.ItemData weapon = Gear.Best(items, it => Gear.IsMelee(it) && (shield == null || !it.IsTwoHanded()), Gear.WeaponScore)
                                        ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
-            if (weapon == null) return false;
+            if (weapon == null)
+            {
+                if (HoldingBow()) { StopDraw(); UnequipItem(GetCurrentWeapon(), false); } // 활은 사냥에만: 싸울 땐 맨손이 낫다
+                return false;
+            }
             if (weapon.IsTwoHanded()) shield = null;
             Wear(new[] { weapon, shield });
             return GetCurrentWeapon() == weapon;
         }
 
         public bool IsWearing(ItemDrop.ItemData it) => IsItemEquiped(it);
+
+        // ---- 활 (⑧ 사냥: 사슴·토끼처럼 도망만 하는 짐승) ----
+
+        /// <summary>쏠 활(가장 좋은 것, 맞는 화살이 있을 때만). 없으면 null.</summary>
+        public ItemDrop.ItemData ShootingBow()
+        {
+            ItemDrop.ItemData bow = Gear.BestBow(m_inventory.GetAllItems());
+            return bow != null && Gear.CountArrows(m_inventory, bow) > 0 ? bow : null;
+        }
+
+        /// <summary>활을 든다(이미 들었으면 그대로). 쏠 활이 없으면 false.</summary>
+        public bool HoldBow()
+        {
+            ItemDrop.ItemData bow = ShootingBow();
+            if (bow == null) return false;
+            if (!IsItemEquiped(bow)) EquipItem(bow);
+            return GetCurrentWeapon() == bow;
+        }
+
+        public bool HoldingBow() => Gear.IsBow(GetCurrentWeapon());
+
+        /// <summary>진단용: 오른손·왼손에 든 것, 당긴 시간.</summary>
+        public string HandsDiag() => $"{m_rightItem?.m_shared.m_name}/{m_leftItem?.m_shared.m_name} 당김 {m_attackDrawTime:0.0}";
+
+        /// <summary>
+        /// 활을 당긴다(바닐라 Player.UpdateAttackBowDraw와 같은 방식, 기력 소모는 뺌 — 바닐라는 당기기를 플레이어만 한다).
+        /// 당긴 정도(0~1)를 돌려준다. 화살이 없으면 -1.
+        /// </summary>
+        public float DrawBow(float dt)
+        {
+            ItemDrop.ItemData bow = GetCurrentWeapon();
+            if (!Gear.IsBow(bow)) return -1f;
+            if (m_attackDrawTime <= 0f)
+            {
+                if (InAttack() || !bow.m_shared.m_attack.StartDraw(this, bow)) return -1f;
+                m_attackDrawTime = 0f;
+            }
+            m_attackDrawTime += dt;
+            string anim = bow.m_shared.m_attack.m_drawAnimationState;
+            if (!string.IsNullOrEmpty(anim))
+            {
+                m_zanim.SetBool(anim, true);
+                m_zanim.SetFloat("drawpercent", GetAttackDrawPercentage());
+            }
+            return GetAttackDrawPercentage();
+        }
+
+        /// <summary>당긴 활을 놓는다(쏨). 쐈으면 true. 쏘든 못 쏘든 당김은 풀린다.</summary>
+        public bool ReleaseBow()
+        {
+            ItemDrop.ItemData bow = GetCurrentWeapon();
+            bool shot = Gear.IsBow(bow) && m_attackDrawTime > 0f && StartAttack(null, false);
+            StopDraw();
+            return shot;
+        }
+
+        public void StopDraw()
+        {
+            ItemDrop.ItemData bow = GetCurrentWeapon();
+            if (bow != null && !string.IsNullOrEmpty(bow.m_shared.m_attack.m_drawAnimationState))
+                m_zanim.SetBool(bow.m_shared.m_attack.m_drawAnimationState, false);
+            m_attackDrawTime = 0f;
+        }
 
         // ---- 음식 (구상서 3장: 음식 상자에서 최대 3종, 바닐라 수치·지속시간) ----
 

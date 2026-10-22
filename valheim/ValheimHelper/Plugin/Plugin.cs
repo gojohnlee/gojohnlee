@@ -49,6 +49,7 @@ namespace ValheimHelper
             Step("vh_crypttest", CryptTest.Register);
             Step("vh_hunttest", HuntTest.Register);
             Step("vh_cooktest", CookTest.Register);
+            Step("vh_bowtest", BowTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }

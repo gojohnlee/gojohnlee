@@ -18,7 +18,8 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
 지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도) MapSense.cs(밝혀진 곳은 안다)
 채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
-사냥(⑧)               Plugin/Work/Prey.cs(CharacterDrop+MonsterAI에서 물건→사냥감 프리팹, ResourceCatalog.WaysFor가 ToolKind.Hunt로 돌려줌) + GatherJob Step.Hunt(FindPrey·UpdateHunt, m_hunt) + Guard.SafePrey(한 마리 판단) 시험 Plugin/HuntTest.cs(vh_hunttest)
+사냥(⑧)               Plugin/Work/Prey.cs(CharacterDrop+MonsterAI·AnimalAI에서 물건→사냥감 프리팹, AnimalAI = 활로만 NeedsBow, ResourceCatalog.WaysFor가 ToolKind.Hunt로 돌려줌, 전리품 통 ResourceInfo.Loot은 사냥감 있으면 뺌) + GatherJob Step.Hunt(FindPrey·UpdateHunt, m_hunt) + Guard.SafePrey(한 마리 판단) 시험 Plugin/HuntTest.cs(vh_hunttest)
+활 사냥(⑧)            GatherJob.UpdateShoot·ArrowFlight + WorkerNpc.ShootingBow·HoldBow·DrawBow·ReleaseBow·StopDraw(바닐라 당기기는 Player만) + Gear.IsBow·IsArrowFor·BestBow·CountArrows + Prep.NeedsBow·TakeBow(활+화살 40, Kept) + Core/Npc/Archery.cs(Aim 앞질러·낙차) 시험 Plugin/BowTest.cs(vh_bowtest)
 굽기(⑧)               Plugin/Work/MachineStep.cs Cook·Burning·Feed(조리대: 불 지피기·올리기·곁에서 꺼내기) + Core Process.Attended·PlanStep.AttendSeconds 시험 Plugin/CookTest.cs(vh_cooktest)
 탐험 작업              Plugin/Work/ExploreJob.cs
 출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기, 가방 차면 헌 장비와 맞바꿈 MakeRoom) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
@@ -41,7 +42,7 @@ Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) Cla
 플러그인 시작          Plugin/Plugin.cs(Update: Workers, Brain, Departures.Tick, TestRunner)
 
 게임 안 시험           Plugin/TestRunner.cs(공통·자동 실행·diag.txt) AutoStart.cs(월드 자동 입장) Minimized.cs TestTerrain.cs(판 땅 되돌림)
-                      NpcTest FlagTest GatherTest(wood·stone·copper·tin) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest DepartTest PeerTest ClaudeTest CraftTest NameTest(상자 이름→역할) SkillTest(스킬 성장·저장) RefillTest(!채워 자동 보충) RaidTest(습격 귀환) HelpTest(도와줘요 대사) TeamTest(같이 싸움: 곁 플레이어 무기가 한 방에 반영)  SetTest(세트 10번 제작 계획 실행) PortalTest StuckTest(깃발 강제 복귀: 발 묶어 끼임 흉내) ResistTest(저항 미드 챙김·중독 시 마심)
+                      NpcTest FlagTest GatherTest(wood·stone·copper·tin) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest DepartTest PeerTest ClaudeTest CraftTest NameTest(상자 이름→역할) SkillTest(스킬 성장·저장) RefillTest(!채워 자동 보충) RaidTest(습격 귀환) HelpTest(도와줘요 대사) TeamTest(같이 싸움: 곁 플레이어 무기가 한 방에 반영)  SetTest(세트 10번 제작 계획 실행) PortalTest StuckTest(깃발 강제 복귀: 발 묶어 끼임 흉내) ResistTest(저항 미드 챙김·중독 시 마심) BowTest(활 사냥: 활 없으면 needBow, 사슴 → 가죽)
                       시험 상자: GatherTest.ClearOldChests(거점 둘레 지난 시험 상자 치움)·CountBase(거점 상자 전부 합계)
 PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh
 
@@ -95,3 +96,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 보스 진행 잠금 풀기: Plugin/Unlocks.cs(Have(ItemDrop) = 호스트가 주운 적 있음 IsMaterialKnown 또는 그 물건 떨구는 보스 월드 키, BossKey). 지하묘지 열쇠 문 열기 = GatherJob.UpdateOpenDoor(GoCrypt 안).
 - 포탈(⑤): Core/Work/PortalRoute.cs(PortalLink, Choose: 걷기 vs 포탈), Plugin/Portals.cs(Linked/TryChoose: ZDO "portal_wood"의 GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal)로 짝 출구 = 짝 위치+짝 rot*forward*1+up1, 바닐라 TeleportWorld.Teleport와 같음). 던전 문 Teleport 출구 = 문 위치+forward-up(문 쪽 targetPoint), 거리 TeleportTo(distantTeleport:false). GatherJob.WalkVia/PortalOr: GoZone·Return 걸음에서 포탈이 더 빠르면 입구까지 걷고 TeleportTo(출구).
 - 지하묘지 채집(⑦ 2조각): Work/GatherJob.cs Step.GoCrypt·UpdateGoCrypt·UpdateInside·LeaveCrypt(UpdateReturn이 안이면 부름)·m_cryptsDone. FindInSight(range, inside 구분), Senses.Observe는 안 물체 제외. 시험 vh_crypttest 끝 칸 "!철 3".
+- 활(Attack m_bowDraw): 당기기는 Player.UpdateAttackBowDraw만(m_attackDrawTime += dt, StartDraw = 화살 확인·장착) → Humanoid는 당김 0%로 쏘면 피해·속도 최소. GetAttackDrawPercentage = 당긴 시간 ÷ lerp(m_drawDurationMin, ×0.2, 스킬).
+  쏠 때 방향 = GetAimDir = GetLookDir(m_eye.forward, SetLookDir 즉시), BaseAI.GetTargetCreature가 있으면 그쪽으로 꺾음(BaseAI 기본 null). 속력 = 활 m_projectileVel + 화살 값(당김 곡선), 화살 Projectile.m_gravity(나무 화살 5, 활+나무 화살 속력 35).
+  화살은 발사 순간(OnAttackTrigger → UseAmmo)에 하나 줄고 생김(weapon.m_lastProjectile). 주인이 NPC면 BaseAI.IsEnemy인 것만 맞음(Players ↔ 사슴 = 적). 사슴 체력 10.
+- 짐승 떨굼은 쓰러진 몸(Ragdoll)이 m_ttl 뒤 사라질 때 생긴다(CharacterDrop → Ragdoll.SpawnLoot). barrell(부수는 통)은 DropOnDestroyed에 사슴 가죽 등 여러 물건.

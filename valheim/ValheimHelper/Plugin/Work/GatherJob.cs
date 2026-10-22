@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
@@ -84,7 +85,9 @@ namespace ValheimHelper
         bool m_huntArmed;
         /// <summary>이 일 동안 안 잡을 사냥감과 그 시각(Time.time까지): 위험해 보이거나 못 닿은 것.</summary>
         readonly Dictionary<Character, float> m_huntSkip = new Dictionary<Character, float>();
-        const float PreySight = 60f, HuntLimit = 120f, HuntHurt = 0.4f;
+        const float PreySight = 60f, HuntLimit = 120f, HuntHurt = 0.4f, LootWait = 15f;
+        /// <summary>활로 이만큼 쏘았는데 체력이 그대로면(안 맞거나 피해가 안 드는 것) 그 짐승은 그만둔다.</summary>
+        const int MissLimit = 10;
 
         /// <summary>지금 그 방법을 쓸 수 있는지(맨손·사냥은 항상, 도구는 들고 있을 때).</summary>
         bool Usable(ToolKind kind) => kind == ToolKind.None || kind == ToolKind.Hunt || WorkerNpc.BestTool(m_npc.GetInventory(), kind) != null;
@@ -116,6 +119,7 @@ namespace ValheimHelper
         void Go(Step s)
         {
             if (m_step != s) Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: {m_step} → {s}");
+            if (m_step == Step.Hunt && s != Step.Hunt) m_npc.StopDraw();
             m_step = s;
             m_stepTime = 0f;
             // 이전 단계의 걷기 방향이 남으면 계속 걸어간다(0.3.2: 돌을 줍고 한참 갔다가 돌아옴).
@@ -302,6 +306,8 @@ namespace ValheimHelper
             if (m_hunt)
             {
                 if (FindPrey()) { Go(Step.Hunt); return true; }
+                // 사슴 가죽처럼 활로만 잡는 것뿐인데 쏠 활·화살이 없다(장비 상자에 넣어 주면 Prep이 챙긴다)
+                if (!Prey.Any(Item, false) && (m_bowFailed || m_npc.ShootingBow() == null)) return GiveUp("needBow");
             }
             else if (FindInSight(out ZDO zdo))
             {
@@ -915,9 +921,10 @@ namespace ValheimHelper
             Vector3 me = m_npc.transform.position;
             Character best = null;
             float bestD = PreySight;
+            bool canShoot = !m_bowFailed && m_npc.ShootingBow() != null;
             foreach (Character c in Character.GetAllCharacters())
             {
-                if (c == null || c.IsDead() || c.IsTamed() || c is WorkerNpc || !Prey.Is(Item, c)) continue;
+                if (c == null || c.IsDead() || c.IsTamed() || c is WorkerNpc || !Prey.Is(Item, c, canShoot)) continue;
                 if (m_huntSkip.TryGetValue(c, out float until) && Time.time < until) continue;
                 Vector3 p = c.transform.position;
                 float d = Utils.DistanceXZ(p, me);
@@ -928,6 +935,7 @@ namespace ValheimHelper
             }
             m_prey = best;
             m_huntArmed = false;
+            m_preyShots = 0;
             if (best != null) Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {Utils.GetPrefabName(best.gameObject)} {bestD:0}m 앞");
             return best != null;
         }
@@ -959,7 +967,8 @@ namespace ValheimHelper
                 Go(Step.Search);
                 return true;
             }
-            if (!m_huntArmed) { m_huntArmed = true; m_npc.HoldWeapon(); } // 없으면 맨손으로
+            if (Prey.NeedsBow(m_prey)) return UpdateShoot(dt);
+            if (!m_huntArmed || m_npc.HoldingBow()) { m_huntArmed = true; m_npc.HoldWeapon(); } // 없으면 맨손으로
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
             float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
             float d = Utils.DistanceXZ(m_preyPos, m_npc.transform.position) - m_prey.GetRadius();
@@ -971,6 +980,129 @@ namespace ValheimHelper
                 if (!m_npc.InAttack() && m_ai.IsLookingAt(m_preyPos, 25f)) m_npc.StartAttack(m_prey, false);
             }
             return true;
+        }
+
+        int m_shots, m_preyShots;
+        static int s_shotMask;
+
+        /// <summary>
+        /// 활 사냥(사슴·토끼, 도망만 함): 30m 안에서 가리는 것이 없으면 서서 활을 끝까지 당겨, 갈 곳을 앞질러(Archery.Aim) 쏜다.
+        /// 멀거나 가리면 다가간다(당기는 동안은 못 뛴다 → 당김을 풀고). 화살이 떨어지면 그 짐승은 그만두고 근접 무기를 든다.
+        /// </summary>
+        bool UpdateShoot(float dt)
+        {
+            if (!m_npc.HoldingBow() && !m_npc.HoldBow())
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 화살이 없어 그만둠(쏜 화살 {m_shots})");
+                m_npc.StopDraw();
+                m_huntSkip[m_prey] = float.MaxValue;
+                m_prey = null;
+                m_npc.HoldWeapon();
+                Go(Step.Search);
+                return true;
+            }
+            Vector3 eye = m_npc.GetEyePoint(), center = m_prey.GetCenterPoint();
+            float d = Utils.DistanceXZ(m_preyPos, m_npc.transform.position);
+            if (s_shotMask == 0) s_shotMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle");
+            bool clear = d <= Archery.ShootRange && !Physics.Linecast(eye, center, s_shotMask);
+            if (!clear)
+            {
+                m_npc.StopDraw();
+                m_ai.MoveToPoint(dt, m_preyPos, d <= Archery.ShootRange ? 4f : Archery.Approach, true); // 가리면 더 다가간다
+                return true;
+            }
+            m_ai.StopMoving();
+            Vector3 aim = center;
+            ItemDrop.ItemData bow = m_npc.GetCurrentWeapon();
+            if (ArrowFlight(bow, out float speed, out float gravity))
+            {
+                Vector3 rel = center - eye, v = m_prey.GetVelocity();
+                if (Archery.Aim(rel.x, rel.y, rel.z, v.x, v.y, v.z, speed, gravity, out float ax, out float ay, out float az))
+                    aim = eye + new Vector3(ax, ay, az);
+            }
+            m_ai.Face(aim);
+            if (m_diagShot && bow.m_lastProjectile != null && bow.m_lastProjectile != m_diagPrev)
+            {
+                // 화살은 공격 애니메이션의 발사 순간에 생긴다
+                m_diagShot = false;
+                m_diagArrow = bow.m_lastProjectile;
+                m_diagTracking = true;
+                Plugin.Log.LogInfo($"DIAG 활: 눈 {eye} 겨눔 {aim} 보는 쪽 {m_npc.GetLookDir()} 몸 앞 {m_npc.transform.forward} 화살 {m_diagArrow.transform.position} 속력 {speed:0} 중력 {gravity:0.0} 사슴 속도 {m_prey.GetVelocity()}");
+            }
+            if (m_diagArrow != null) m_diagLast = m_diagArrow.transform.position;
+            else if (m_diagTracking)
+            {
+                m_diagTracking = false;
+                Plugin.Log.LogInfo($"DIAG 화살 사라짐: 마지막 {m_diagLast} 사슴 {center} 체력 {m_prey.GetHealth():0.0}/{m_prey.GetMaxHealth():0}");
+            }
+            if (m_releaseCheck && Time.time - m_releaseAt > 2f)
+            {
+                // 놓았는데 화살이 안 나갔다(공격 애니메이션의 발사 순간이 안 옴): 세 번 잇달면 이 일 동안 활을 안 쓴다
+                m_releaseCheck = false;
+                int now = Gear.CountArrows(m_npc.GetInventory(), bow);
+                if (now >= m_releaseArrows)
+                {
+                    m_dryShots++;
+                    Plugin.Log.LogInfo($"DIAG 활 안 나감 {m_dryShots}번째: 비틀 {m_npc.IsStaggering()} 공격 중 {m_npc.InAttack()} 손 {m_npc.HandsDiag()} 땅 {m_npc.IsOnGround()} 화살 {now}");
+                    if (m_dryShots >= 3)
+                    {
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 활이 안 나가 이 일 동안 활은 안 씀");
+                        m_bowFailed = true;
+                        m_npc.StopDraw();
+                        m_npc.HoldWeapon();
+                        m_prey = null;
+                        Go(Step.Search);
+                        return true;
+                    }
+                }
+                else m_dryShots = 0;
+            }
+            if (m_npc.InAttack()) return true;
+            float draw = m_npc.DrawBow(dt);
+            if (draw >= 1f && m_ai.IsLookingAt(aim, 10f) && m_npc.ReleaseBow())
+            {
+                m_shots++;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 활 쏨 {m_shots}번째, {d:0}m, 화살 {Gear.CountArrows(m_npc.GetInventory(), bow)}개 남음");
+                if (m_shots <= 3) { m_diagShot = true; m_diagPrev = bow.m_lastProjectile; }
+                m_releaseCheck = true;
+                m_releaseAt = Time.time;
+                m_releaseArrows = Gear.CountArrows(m_npc.GetInventory(), bow);
+                if (++m_preyShots >= MissLimit && m_prey.GetHealth() >= m_prey.GetMaxHealth())
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {m_preyShots}발 쏘았는데 체력 그대로 → 그 짐승은 그만둠");
+                    m_huntSkip[m_prey] = float.MaxValue;
+                    m_prey = null;
+                    Go(Step.Search);
+                }
+            }
+            return true;
+        }
+
+        bool m_diagShot, m_diagTracking, m_releaseCheck, m_bowFailed;
+        float m_releaseAt;
+        int m_releaseArrows, m_dryShots;
+        Vector3 m_diagLast;
+        GameObject m_diagArrow, m_diagPrev;
+
+        /// <summary>끝까지 당겼을 때 화살 속력과 중력(바닐라 Attack.ProjectileAttackTriggered: 활 값 + 화살 값, 화살의 Projectile.m_gravity).</summary>
+        bool ArrowFlight(ItemDrop.ItemData bow, out float speed, out float gravity)
+        {
+            speed = 0f;
+            gravity = 0f;
+            if (bow == null) return false;
+            ItemDrop.ItemData ammo = m_npc.GetAmmoItem();
+            if (!Gear.IsArrowFor(ammo, bow)) ammo = m_npc.GetInventory().GetAmmoItem(bow.m_shared.m_ammoType);
+            Attack a = bow.m_shared.m_attack;
+            speed = a.m_projectileVel;
+            GameObject proj = a.m_attackProjectile;
+            if (ammo != null)
+            {
+                speed += ammo.m_shared.m_attack.m_projectileVel;
+                if (ammo.m_shared.m_attack.m_attackProjectile != null) proj = ammo.m_shared.m_attack.m_attackProjectile;
+            }
+            Projectile p = proj != null ? proj.GetComponent<Projectile>() : null;
+            if (p != null) gravity = p.m_gravity;
+            return speed > 0f;
         }
 
         // ---- 줍기 ----
@@ -993,6 +1125,12 @@ namespace ValheimHelper
             if (m_stepTime < wait) { m_ai.StopMoving(); return true; }
             if (Full()) { Go(Step.Return); return true; }
             ItemDrop drop = NearestDrop();
+            if (drop == null && m_hunt && m_stepTime < LootWait)
+            {
+                // 사냥감의 떨굼은 쓰러진 몸(Ragdoll)이 사라질 때 나온다 → 그 자리로 가서 기다린다(활로 잡으면 멀다)
+                Walk(dt, m_targetPos, 1.5f);
+                return true;
+            }
             if (drop == null || m_stepTime > 30f)
             {
                 Go(Step.Search); // 쓰러진 통나무가 있으면 Search가 먼저 고른다
@@ -1032,7 +1170,7 @@ namespace ValheimHelper
         ItemDrop NearestDrop()
         {
             ItemDrop best = null;
-            float bestD = 14f;
+            float bestD = float.MaxValue; // 대상 14m 안(Nearby)에서 일꾼에게 가장 가까운 것 — 일꾼 기준 14m면 활로 잡은 먼 사냥감 것을 못 찾음
             foreach (var zdo in Senses.Nearby(m_targetPos, 14f))
             {
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);

@@ -73,3 +73,12 @@ C. 단계마다 1번(③ 끝·⑥ 끝): 같은 PC에서 Steam 무료 도구 "Val
 3. 채팅은 손님이 VH_Chat RPC로 보내고 호스트(RPC_Chat, IsServer 확인)만 Commands.Handle. 말한 사람은 sender peer로 찾고 Player.m_localPlayer는 호스트 자신(peer 없음)일 때만 쓴다. 새 명령도 Commands.Handle 안에서만.
 4. 손님 PC에서 도는 패치는 전부 읽기·막기뿐(WearNTear.Damage는 일꾼 공격 막기, RPC_Damage 갑옷 계산, NoDig는 WorkerNpc일 때만 — Attack은 주인 게임에서만 돈다). 새 패치가 지형·ZDO를 바꾸면 안 됨.
 5. Player.m_localPlayer·Minimap·Chat은 전용 서버에서 null일 수 있으니 null 확인 후 쓴다. 화면 표시(말풍선 VH_Say)는 Everybody로 보내 각자 그린다.
+
+======================================================================
+간헐 목록 (사용자 결정 2026-10-22: 한 회차에 원인을 못 찾은 간헐 FAIL은 증거와 함께 여기, PASS로 치지 않음)
+======================================================================
+- [회차 66] vh_hunttest "고기 2개 이상이 상자에 (0개, 150초)"·"멧돼지 죽음 0/2": 묶음 첫 시험이나 bowtest 뒤에서 2/5번. 로그: 사냥 시작 0초 → 두 일꾼이 멧돼지와 싸움 대사 →
+  150초 동안 물러남·도망·잡음 줄 없음 → 시험 끝 정리(멧돼지 지움) 뒤에야 "장소 기억 Won". 체력 69(줄지 않음). 활 무관(활 없는 일꾼, 근접 경로). 회차 63의 "이어 돌리면 간헐"과 같은 것으로 보임.
+  다음에 볼 것: 싸움 중 몇 초마다 일꾼·멧돼지 거리·StartAttack 결과·맞힘 수(Guard.UpdateFight)를 남겨, 닿지 못하는지(멧돼지가 물·바위 위)·때리는데 안 맞는지 가르기.
+- [회차 66] 활이 안 나감: hunttest→bowtest 묶음에서 Claude(배고픔, 체력 25)가 5번 "쏨"(StartAttack true)인데 화살이 안 줄고 안 생김(OnAttackTrigger가 안 옴).
+  같은 코드로 Alarak은 4번 다 나감. 대체 동작: 3번 잇달면 그 일 동안 활 안 씀(GatherJob m_bowFailed). DIAG "활 안 나감" 줄에 손·당김·비틀·땅 기록 — 다시 나오면 그 줄부터.

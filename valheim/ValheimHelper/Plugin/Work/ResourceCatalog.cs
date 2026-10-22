@@ -20,6 +20,8 @@ namespace ValheimHelper
         public bool Pickable;
         /// <summary>서 있는 나무: 쓰러뜨리면 통나무가 넘어지며 굴러 사람을 친다(바닐라 TreeLog 충돌 피해).</summary>
         public bool Falls;
+        /// <summary>여러 물건 중 무작위로 떨구는 통·궤짝(barrell 등, 부수는 것에 물건 3종 이상). 사냥감이 있는 물건은 이걸 얻는 법으로 안 친다(사슴 가죽).</summary>
+        public bool Loot;
     }
 
     /// <summary>
@@ -45,10 +47,20 @@ namespace ValheimHelper
             if (s_byHash == null) Build();
             var ways = new HashSet<ToolKind>();
             if (s_smelted.Contains(item)) return ways;
+            bool prey = Prey.Any(item);
             foreach (var r in s_byHash.Values)
-                if (r.Produces.Contains(item)) ways.Add(r.Tool);
-            if (ways.Count == 0 && Prey.Any(item)) ways.Add(ToolKind.Hunt);
+                if (r.Produces.Contains(item) && !(prey && r.Loot)) ways.Add(r.Tool);
+            if (ways.Count == 0 && prey) ways.Add(ToolKind.Hunt);
             return ways;
+        }
+
+        /// <summary>그 물건이 나오는 캐는·줍는 것의 프리팹 이름(진단용).</summary>
+        public static List<string> SourcesOf(string item)
+        {
+            if (s_byHash == null) Build();
+            var list = new List<string>();
+            foreach (var r in s_byHash.Values) if (r.Produces.Contains(item)) list.Add($"{r.Prefab}({r.Tool})");
+            return list;
         }
 
         /// <summary>캐거나 줍는 방법이 하나라도 있는가(사냥만 되는 물건은 false).</summary>
@@ -142,6 +154,7 @@ namespace ValheimHelper
                 var r = new ResourceInfo { Prefab = p.name, Tool = tree2 ? ToolKind.Axe : ToolKind.Pickaxe, MinToolTier = des.m_minToolTier };
                 var drop = p.GetComponent<DropOnDestroyed>();
                 if (drop != null) AddDrops(r, drop.m_dropWhenDestroyed);
+                r.Loot = !tree2 && drop?.m_dropWhenDestroyed?.m_drops != null && drop.m_dropWhenDestroyed.m_drops.Count >= 3;
                 AddFrom(r, Describe(des.m_spawnWhenDestroyed, depth + 1));
                 return r;
             }
