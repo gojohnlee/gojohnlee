@@ -44,6 +44,7 @@ namespace ValheimHelper
             Step("vh_settest", SetTest.Register);
             Step("vh_portaltest", PortalTest.Register);
             Step("vh_stucktest", StuckTest.Register);
+            Step("vh_hoptest", HopTest.Register);
             Step("vh_resisttest", ResistTest.Register);
             Step("vh_repairtest", RepairTest.Register);
             Step("vh_crypttest", CryptTest.Register);

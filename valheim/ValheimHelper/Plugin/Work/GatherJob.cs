@@ -44,6 +44,8 @@ namespace ValheimHelper
         StuckBook m_book = new StuckBook();
         public string StuckSave => m_book.Save();
         public void LoadStuck(string text) => m_book = StuckBook.Load(text);
+        /// <summary>시험용: 이번 일에서 막혀 뺀 목적지 수.</summary>
+        public int StuckExcluded => m_book.ExcludedCount;
         int m_swings, m_swingsNoProgress;
         bool m_wasAttacking;
         float m_bestDist;
@@ -550,13 +552,17 @@ namespace ValheimHelper
             bool arrived = WalkVia(dt, m_goalPos, 6f);
             if (arrived || Stuck(dt, PortalOr(m_goalPos)))
             {
-                if (!arrived) { LogStuck("구역 가기", m_goalPos); m_tried.Add(m_goalZone); } // 못 간 곳을 또 고르면 같은 자리에서 되풀이한다
-                Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
                 if (!arrived)
                 {
+                    LogStuck("구역 가기", m_goalPos);
                     Vector3 c = Senses.ZoneCenter(m_goalZone); // ZoneExcluded와 같은 자리로 센다
-                    if (WalkFailed(c, out bool keep)) return keep;
+                    // 탐험(새 땅 경계)은 순간이동 안 함(사용자 결정 2026-10-23). 옮겼으면 그 구역으로 마저 걷는다.
+                    bool done = WalkFailed(c, !m_exploring, out bool keep, out bool moved);
+                    if (moved) return true;
+                    m_tried.Add(m_goalZone); // 못 간 곳을 또 고르면 같은 자리에서 되풀이한다
+                    if (done) { Brain.Get().MarkLooked(m_goalZone); return keep; }
                 }
+                Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
                 Go(Step.Search);
                 if (!arrived) RescueIfStuckAgain();
             }
@@ -685,7 +691,7 @@ namespace ValheimHelper
             if (Stuck(dt, m_targetPos) || m_stepTime > 40f)
             {
                 LogStuck("다가가기", m_targetPos);
-                if (WalkFailed(m_targetPos, out bool keep)) return keep;
+                if (WalkFailed(m_targetPos, true, out bool keep, out _)) return keep;
                 Skip();
                 RescueIfStuckAgain();
             }
@@ -730,19 +736,103 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 목적지로 걷다 막혔다(비켜 가기·점프 뒤): 목적지별 실패를 센다(StuckBook). 목표 쪽 순간이동(2)은 아직 없어 첫 실패에 뺀다(부른 쪽이 Skip·구역 표시).
-        /// 뺀 곳이 많아 대안이 없으면 "갈 수가 없어요" 하고 그만둔다(든 게 있으면 넣고) → true, keep = 일을 이어 가는지(Update 반환값).
+        /// 목적지로 걷다 막혔다(비켜 가기·점프 뒤): 목적지별 실패를 센다(StuckBook). 첫 실패이고 순간이동이 되는 걷기(hopKind)·자리면
+        /// 목표 쪽으로 옮겨 마저 걷는다(moved, 같은 단계 그대로). 그 밖엔 부른 쪽이 Skip·구역 표시(false).
+        /// 뺀 곳이 많아 대안이 없으면 "갈 수가 없어요" 하고 그만둔다(든 게 있으면 넣고). true = 처리함(옮겼거나 그만둠), keep = 일을 이어 가는지(Update 반환값).
         /// </summary>
-        bool WalkFailed(Vector3 dest, out bool keep)
+        bool WalkFailed(Vector3 dest, bool hopKind, out bool keep, out bool moved)
         {
             keep = true;
-            StuckNext next = m_book.WalkFailed(dest.x, dest.z, false);
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 막힘 기록 ({dest.x:0},{dest.z:0}) {m_book.Fails(dest.x, dest.z)}번 → {next}, 뺀 곳 {m_book.ExcludedCount}");
+            moved = false;
+            string why = hopKind ? HopBlocked() : "이 걷기는 안 함";
+            StuckNext next = m_book.WalkFailed(dest.x, dest.z, why == null);
+            if (next == StuckNext.Hop)
+            {
+                if (HopToward(dest, out why))
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 막힘 기록 ({dest.x:0},{dest.z:0}) 1번 → 목표 쪽 순간이동 {why}");
+                    m_bestDist = float.MaxValue;
+                    m_progressTimer = 0f;
+                    m_stepTime = 0f;
+                    m_portal = null; // 옮긴 자리에서 길(포탈)을 다시 본다
+                    m_portalChecked = false;
+                    moved = true;
+                    return true;
+                }
+                next = m_book.HopFailed(dest.x, dest.z);
+            }
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 막힘 기록 ({dest.x:0},{dest.z:0}) {m_book.Fails(dest.x, dest.z)}번 → {next}, 뺀 곳 {m_book.ExcludedCount}{(why != null ? $" (순간이동 안 함: {why})" : "")}");
             if (next != StuckNext.GiveUp) return false;
             Skip();
             Unreachable++;
             keep = GiveUp("cantReach");
             return true;
+        }
+
+        /// <summary>시험용: 막힘 복구로 목표 쪽 순간이동한 횟수.</summary>
+        public static int Hops;
+        /// <summary>시험용: 거점 근처 시험에서 2)를 실제로 돌려 보려고 플레이어 64m 판정을 끈다. 평소 false.</summary>
+        public static bool TestIgnorePlayers;
+
+        /// <summary>목표 쪽 순간이동을 못 하는 까닭(되면 null): 사냥·지하묘지·동행·실내는 안 함(사용자 결정 2026-10-23), 떠날 자리가 플레이어 64m 안(근처)이면 안 함.</summary>
+        string HopBlocked()
+        {
+            if (m_hunt) return "사냥";
+            if (m_npc.InInterior()) return "지하묘지·실내"; // 묘지 가기(GoCrypt)는 자기 막힘 처리라 여기 안 옴
+            if (m_ai.EscortName != null) return "동행";
+            if (!FarFromPlayers(m_npc.transform.position)) return "플레이어 근처";
+            return null;
+        }
+
+        /// <summary>가장 가까운 플레이어(호스트 + 접속한 사람들의 기준 위치)에서 StuckHop.NearPlayer m 밖인가.</summary>
+        static bool FarFromPlayers(Vector3 p)
+        {
+            if (TestIgnorePlayers) return true;
+            var players = new List<StuckHop.XZ>();
+            if (Player.m_localPlayer != null) players.Add(new StuckHop.XZ(Player.m_localPlayer.transform.position.x, Player.m_localPlayer.transform.position.z));
+            if (ZNet.instance != null)
+                foreach (var peer in ZNet.instance.GetPeers())
+                    if (peer != null && peer.m_refPos != Vector3.zero) players.Add(new StuckHop.XZ(peer.m_refPos.x, peer.m_refPos.z));
+            return StuckHop.FarFromPlayers(p.x, p.z, players);
+        }
+
+        static int s_bodyMask;
+
+        /// <summary>
+        /// 목표 둘레(StuckHop.Candidates)에서 내릴 자리를 찾아 옮긴다(짐·체력·장비는 그대로 — TeleportTo는 자리만 바꿈).
+        /// 자리 조건: 구역 불러와짐, 플레이어 64m 밖, 단단한 땅(지형, 기울기 StuckHop.MinNormalY 이상, 물·액체 위 아님), 몸 자리에 바위·건물 없음,
+        /// 위험 판단 통과(Guard.SafeAt). 못 찾으면 false와 까닭(why). 소유자만 옮긴다.
+        /// </summary>
+        bool HopToward(Vector3 dest, out string why)
+        {
+            ZNetView nv = m_npc.GetComponent<ZNetView>();
+            if (nv == null || !nv.IsOwner()) { why = "소유자 아님"; return false; }
+            if (s_bodyMask == 0) s_bodyMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece");
+            Vector3 from = m_npc.transform.position;
+            int tried = 0;
+            string last = "후보 없음";
+            foreach (var c in StuckHop.Candidates(from.x, from.z, dest.x, dest.z))
+            {
+                tried++;
+                var p = new Vector3((float)c.X, dest.y, (float)c.Z);
+                if (!ZoneSystem.instance.IsZoneLoaded(p)) { last = "구역 안 불러와짐"; continue; }
+                if (!FarFromPlayers(p)) { last = "플레이어 근처"; continue; }
+                if (!ZoneSystem.instance.GetSolidHeight(p, out float h, out Vector3 normal, out GameObject go) || go == null) { last = "땅 없음"; continue; }
+                if (go.GetComponentInParent<Heightmap>() == null) { last = "지형 아님(" + go.name + ")"; continue; }
+                if (normal.y < StuckHop.MinNormalY) { last = $"가파름({normal.y:0.00})"; continue; }
+                p.y = h;
+                if (h < ZoneSystem.instance.m_waterLevel + 0.3f || Floating.GetLiquidLevel(p) > h + 0.1f) { last = "물"; continue; }
+                if (Physics.CheckCapsule(p + Vector3.up * 0.6f, p + Vector3.up * 1.6f, 0.45f, s_bodyMask, QueryTriggerInteraction.Ignore)) { last = "몸 자리 막힘"; continue; }
+                if (m_ai.Guard != null && !m_ai.Guard.SafeAt(p)) { last = "위험"; continue; }
+                m_ai.StopMoving();
+                if (!m_npc.TeleportTo(p + Vector3.up * 0.2f, m_npc.transform.rotation, false)) { last = "옮기기 실패"; continue; }
+                Hops++;
+                WorkerAI.StuckTeleports++;
+                why = $"{Utils.DistanceXZ(from, p):0.0}m → 목표에서 {Utils.DistanceXZ(dest, p):0.0}m (후보 {tried}번째)";
+                return true;
+            }
+            why = $"자리 없음(후보 {tried}개, 마지막: {last})";
+            return false;
         }
 
         /// <summary>시험용: 대안 없이 막혀 그만둔 횟수.</summary>

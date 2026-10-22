@@ -1,0 +1,130 @@
+using System.Collections;
+using UnityEngine;
+
+namespace ValheimHelper
+{
+    /// <summary>
+    /// vh_hoptest (막힘 복구 2) 목표 쪽 순간이동, 사용자 결정 2026-10-23): 채집 일로 나무에 가다 막히면 첫 실패에 목표 둘레 단단한 땅으로 옮기고
+    /// (짐·체력 그대로), 옮긴 뒤에도 또 막히면 그 목적지를 빼는지(같은 목적지로 순간이동을 되풀이하지 않음). 먼 곳(플레이어 64m 밖)만 하는 일이라
+    /// 시험 동안 플레이어 판정을 끈다(GatherJob.TestIgnorePlayers). 끼임은 vh_stucktest처럼 걷기·점프 힘을 0으로 묶어 흉내 낸다.
+    /// </summary>
+    static class HopTest
+    {
+        public static void Register() => TestRunner.Register("vh_hoptest", "막힘 복구: 목표 쪽 순간이동 시험", () => TestKit.Flat(Run()));
+
+        static IEnumerator Run()
+        {
+            var checks = new GatherTest.Checks();
+            if (Player.m_localPlayer == null || !ZNet.instance.IsServer())
+            {
+                TestRunner.Log("FAIL: 월드에 들어간 뒤(싱글 또는 서버 시작) 실행해야 합니다.");
+                TestRunner.Finish();
+                yield break;
+            }
+            var w = new TestKit.World();
+            var saved = new float[5];
+            Character held = null;
+            try { yield return Body(w, checks, saved, c => held = c); }
+            finally
+            {
+                GatherJob.TestIgnorePlayers = false;
+                if (held != null) Speeds(held, saved, false);
+                TestKit.Restore(w);
+            }
+            TestKit.End(w, checks);
+        }
+
+        static void Speeds(Character c, float[] saved, bool freeze)
+        {
+            if (freeze) { saved[0] = c.m_speed; saved[1] = c.m_walkSpeed; saved[2] = c.m_runSpeed; saved[3] = c.m_swimSpeed; saved[4] = c.m_jumpForce; }
+            c.m_speed = freeze ? 0f : saved[0];
+            c.m_walkSpeed = freeze ? 0f : saved[1];
+            c.m_runSpeed = freeze ? 0f : saved[2];
+            c.m_swimSpeed = freeze ? 0f : saved[3];
+            c.m_jumpForce = freeze ? 0f : saved[4];
+        }
+
+        static int Carried(Humanoid c)
+        {
+            int n = 0;
+            foreach (var it in c.GetInventory().GetAllItems()) n += it.m_stack;
+            return n;
+        }
+
+        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, float[] saved, System.Action<Character> hold)
+        {
+            yield return TestKit.Setup(w);
+            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
+            if (w.Claude == null || w.Chest == null) yield break;
+            var ai = w.Claude.Ai;
+
+            TestKit.ClearBaseStock(w, "Wood");
+            GatherTest.Say($"!{Workers.Name1} 나무 30", null);
+            yield return TestKit.WaitFor(() => ai.Job is GatherJob g && (g.StepName == "Search" || g.StepName == "Approach" || g.StepName == "GoZone"), 60f);
+            checks.Add("일 시작함", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+
+            // 거점에서 40m 떨어진 곳으로 옮기고 발을 묶는다. 근처 판정은 끈다(먼 곳 흉내).
+            GatherJob.TestIgnorePlayers = true;
+            Quaternion rot = w.Player.transform.rotation;
+            Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
+            w.Claude.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
+            yield return new WaitForSeconds(1f);
+            Speeds(w.Claude, saved, true);
+            hold(w.Claude);
+            float hp0 = w.Claude.GetHealth();
+            int carried0 = Carried(w.Claude);
+            int hops0 = GatherJob.Hops, rescues0 = GatherJob.Rescues;
+            Vector3 before = w.Claude.transform.position;
+
+            // 묶인 채로도 닿는 나무는 베어 줍는다 → 짐·체력은 순간이동 직전 프레임 값과 바로 뒤 값을 비교한다(회차 92 첫 시험: 묶은 뒤 4 → 9는 줍기 몫)
+            int carriedBefore = carried0;
+            float hpBefore = hp0;
+            yield return TestKit.WaitFor(() =>
+            {
+                if (GatherJob.Hops > hops0) return true;
+                carriedBefore = Carried(w.Claude);
+                hpBefore = w.Claude.GetHealth();
+                return false;
+            }, 150f);
+            bool hopped = GatherJob.Hops > hops0;
+            int carriedAfter = Carried(w.Claude);
+            float hpAfter = w.Claude.GetHealth();
+            checks.Add($"막히자 목표 쪽으로 순간이동 ({GatherJob.Hops - hops0}번)", hopped);
+            if (!hopped) yield break;
+            checks.Add($"짐 그대로 (순간이동 직전 {carriedBefore} → 직후 {carriedAfter})", carriedAfter == carriedBefore);
+            checks.Add($"체력 그대로 (직전 {hpBefore:0.0} → 직후 {hpAfter:0.0})", Mathf.Abs(hpAfter - hpBefore) < 1f);
+            yield return new WaitForSeconds(1f);
+            Vector3 p = w.Claude.transform.position;
+            checks.Add($"자리를 옮김 ({Utils.DistanceXZ(before, p):0.0}m)", Utils.DistanceXZ(before, p) > 1f);
+            bool ground = ZoneSystem.instance.GetSolidHeight(p, out float h);
+            checks.Add($"단단한 땅 위 (높이 {p.y:0.0}/땅 {h:0.0}, 물 {Floating.GetLiquidLevel(p):0.0})", ground && Mathf.Abs(p.y - h) < 1.5f && Floating.GetLiquidLevel(p) < h + 0.1f);
+            checks.Add("깃발 강제 복귀 아님", GatherJob.Rescues == rescues0);
+
+            // 발은 계속 묶여 있다(옮긴 자리에서 닿으면 그냥 벤다): 90초 동안 같은 목적지가 2번 넘게 막히지 않음 = 같은 곳으로 걷기·순간이동 되풀이 없음.
+            // 2번째 막히면 뺀다는 순서는 dotnet StuckBookTests.HopFirstThenExclude.
+            int hops1 = GatherJob.Hops;
+            string book = "";
+            int worst = 0;
+            for (float t = 0f; t < 90f; t += 1f)
+            {
+                yield return new WaitForSeconds(1f);
+                if (!(ai.Job is GatherJob g)) break;
+                book = g.StuckSave;
+                foreach (var part in book.Split(';'))
+                {
+                    var f = part.Split('|');
+                    if (f.Length == 3 && int.TryParse(f[2], out int n)) worst = Mathf.Max(worst, n);
+                }
+            }
+            TestRunner.Log($"  90초 묶인 채: 순간이동 {GatherJob.Hops - hops1}번 더, 뺀 곳 {(ai.Job is GatherJob gj ? gj.StuckExcluded : -1)}, 기록 {book}");
+            checks.Add($"같은 목적지 되풀이 없음 (한 곳 최대 {worst}번)", worst <= 2);
+
+            Speeds(w.Claude, saved, false);
+            hold(null);
+            GatherJob.TestIgnorePlayers = false;
+            yield return new WaitForSeconds(3f);
+            checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);
+        }
+    }
+}

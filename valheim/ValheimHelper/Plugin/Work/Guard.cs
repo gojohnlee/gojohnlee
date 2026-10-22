@@ -312,6 +312,27 @@ namespace ValheimHelper
                 d => HitData.DamageTypes.ApplyArmor(d * scale, armor), false) == Verdict.Fight;
         }
 
+        /// <summary>
+        /// 막힘 복구 순간이동(StuckHop)의 내릴 자리가 안전한가: 그 자리 SenseRange 안 적 전부(자거나 모르는 것 포함, 안 보고 내리니 넉넉히)를
+        /// 지금 체력으로 셌을 때 싸우는 쪽(Fight)이거나 적이 없으면 true. 미드는 셈에 넣지 않는다.
+        /// </summary>
+        public bool SafeAt(Vector3 at)
+        {
+            var views = new List<Foe>();
+            foreach (Character c in Character.GetAllCharacters())
+            {
+                if (c == null || c == m_npc || c.IsDead() || c.IsPlayer() || c is WorkerNpc || c.IsTamed()) continue;
+                if (c.GetFaction() == Character.Faction.AnimalsVeg || c.GetBaseAI() is AnimalAI || !BaseAI.IsEnemy(m_npc, c)) continue;
+                if (Vector3.Distance(c.transform.position, at) > SenseRange) continue;
+                views.Add(View(c, at));
+            }
+            if (views.Count == 0) return true;
+            float armor = m_npc.GetBodyArmor();
+            float scale = Game.instance.GetDifficultyDamageScalePlayer(at) * Game.m_enemyDamageRate;
+            return Danger.Judge(m_npc.Personality, views, m_npc.GetHealth(), m_npc.GetMaxHealth(), MyHit(at),
+                d => HitData.DamageTypes.ApplyArmor(d * scale, armor), false) == Verdict.Fight;
+        }
+
         /// <summary>나·동행을 노리거나, 경계 중이거나, 가까이 왔거나, 방금 나를 때렸다.</summary>
         bool Aggressive(Character c)
         {

@@ -38,14 +38,14 @@ NPC 주인 되찾기         Workers.Reclaim(1초마다 NPC ZDO 주인을 호스
 세트메뉴·자동 보충      Core/Work/SetMenus.cs Refill.cs  저장: Brain.Sets/Refill(vh_sets, vh_refill)
 Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) ClaudePrompt.cs(지시문) ClaudeReply.cs(RateLimiter, Parse, MiniJson) + Plugin/ClaudeCli.cs(별도 스레드 프로세스, 30초 끊기) ClaudeChat.cs(채팅→Claude, 생각 중, 실패 시 대체)
 물·구덩이 판단         Core/Work/Water.cs(WaterRule) Climb.cs(IsPit, CarveDir)
-막힘 복구              Core/Work/StuckBook.cs(목적지별 실패·뺌·대안 없음·귀환 상한, 작업 저장 WorkItem.Stuck) → GatherJob.WalkFailed·Return, WorkerAI Mode.Home·TeleportHome·RestHere(사용자 결정 2026-10-23)
+막힘 복구              Core/Work/StuckBook.cs(목적지별 실패·뺌·대안 없음·귀환 상한, 작업 저장 WorkItem.Stuck)·StuckHop.cs(2) 목표 쪽 순간이동 자리 후보·플레이어 64m) → GatherJob.WalkFailed·HopToward·HopBlocked·Return, Guard.SafeAt(내릴 자리 위험), WorkerAI Mode.Home·TeleportHome·RestHere(사용자 결정 2026-10-23)
 거점 깃발·소환          Plugin/BaseFlag.cs Workers.cs(설정 이름, 소환·추적, AllZdos)
 먼 구역 유지           Plugin/FarZones.cs(패치 3곳)
 바닐라 규칙 잇기 패치   Plugin/NpcPatches.cs(갑옷 계산, 땅 파기 막기 NoDig) Buildings.cs(건축물 피해 없음)
 플러그인 시작          Plugin/Plugin.cs(Update: Workers, Brain, Departures.Tick, TestRunner)
 
 게임 안 시험           Plugin/TestRunner.cs(공통·자동 실행·diag.txt) AutoStart.cs(월드 자동 입장·시험 캐릭터 vhtest 만들기·고르기) Minimized.cs TestTerrain.cs(판 땅 되돌림) · TestKit.cs(Setup 끝 CheckStart = 시작 조건·환경 불량 EnvBadException, Snapshot·상태 흐름 링 버퍼·NoteFail)·Cleanup(End 끝 정리 → 남으면 TestRunner.Halt로 남은 자동 시험 환경 불량)
-                      NpcTest FlagTest GatherTest(wood·stone·copper·tin) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest DepartTest PeerTest ClaudeTest CraftTest NameTest(상자 이름→역할) SkillTest(스킬 성장·저장) RefillTest(!채워 자동 보충: 나무 채집·구리 주괴 제작·세트) RaidTest(습격 귀환) HelpTest(도와줘요 대사) TeamTest(같이 싸움: 곁 플레이어 무기가 한 방에 반영)  SetTest(세트 10번 제작 계획 실행) PortalTest StuckTest(깃발 강제 복귀: 발 묶어 끼임 흉내) ResistTest(저항 미드 챙김·중독 시 마심) BowTest(활 사냥: 활 없으면 needBow, 사슴 → 가죽) BaseTest(vh_basetest 기반 대표: 이어 하기·끼어들기·같은 상자·제련소 동시·수량) RestartTest(vh_restart1 일 중간 저장·바로 종료 → VH_RESET=0으로 vh_restart2 다시 켜서 이어 하기, 상태는 플러그인 폴더 restart-state.txt)
+                      NpcTest FlagTest GatherTest(wood·stone·copper·tin) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest DepartTest PeerTest ClaudeTest CraftTest NameTest(상자 이름→역할) SkillTest(스킬 성장·저장) RefillTest(!채워 자동 보충: 나무 채집·구리 주괴 제작·세트) RaidTest(습격 귀환) HelpTest(도와줘요 대사) TeamTest(같이 싸움: 곁 플레이어 무기가 한 방에 반영)  SetTest(세트 10번 제작 계획 실행) PortalTest StuckTest(깃발 강제 복귀: 발 묶어 끼임 흉내, 근처라 순간이동 안 함) HopTest(vh_hoptest 막힘 복구 2) 목표 쪽 순간이동: 플레이어 판정 끄고 발 묶음 → 옮김·짐·체력·되풀이 없음) ResistTest(저항 미드 챙김·중독 시 마심) BowTest(활 사냥: 활 없으면 needBow, 사슴 → 가죽) BaseTest(vh_basetest 기반 대표: 이어 하기·끼어들기·같은 상자·제련소 동시·수량) RestartTest(vh_restart1 일 중간 저장·바로 종료 → VH_RESET=0으로 vh_restart2 다시 켜서 이어 하기, 상태는 플러그인 폴더 restart-state.txt)
                       시험 상자: GatherTest.ClearOldChests(거점 둘레 지난 시험 상자 치움)·CountBase(거점 상자 전부 합계)
 PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh (VH_CHAR 시험 캐릭터·VH_RESET=0이면 월드 원본 되돌리기 안 함, 원본 %USERPROFILE%/vh-test-base, VH_SOLO=1 시험마다 따로 되돌려 단독 실행)
 
@@ -57,7 +57,7 @@ PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-b
   한 실행은 25분이면 꺼지므로 묶음 4~7개로 나눔(회차 90 꼴: B1 기본+copper·tin, B2 prep·bag·death·fight·explore·pit, B3 far·depart→craft(E001 조건)·peer, B4 name·skill·refill·raid·help·team·claude, B5 set·portal·stuck·resist·repair, B6 crypt·hunt·cook·bow, B7 farm·base·escort·silver).
 - 시험이 Errors.txt 항목과 겹치면 그 항목 "다음 확인"도 같이 본다.
 기본 묶음(공통)          vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest
-WorkerAI 걷기·물·구덩이   기본 묶음 + vh_pittest;vh_stucktest;vh_fartest(먼 구역) · Core Water/Climb·StuckBook은 dotnet test + vh_pittest
+WorkerAI 걷기·물·구덩이   기본 묶음 + vh_pittest;vh_stucktest;vh_hoptest;vh_fartest(먼 구역) · Core Water/Climb·StuckBook은 dotnet test + vh_pittest
 WorkerNpc(몸·음식·사망)   기본 묶음 + vh_deathtest;vh_preptest · 땅 물건 줍기 PickDrop → + vh_basetest;vh_crafttest · 활 → vh_bowtest
 Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 작업 저장 WorkSaves·WorkState  vh_basetest + vh_restart1 → vh_restart2

@@ -66,7 +66,7 @@ namespace ValheimHelper
             Speeds(w.Claude, saved, true);
             hold(w.Claude);
             float hp0 = w.Claude.GetHealth();
-            int rescues0 = GatherJob.Rescues;
+            int rescues0 = GatherJob.Rescues, hops0 = GatherJob.Hops;
             float d0 = Utils.DistanceXZ(w.Claude.transform.position, w.Home);
             checks.Add($"거점에서 떨어져 발이 묶임 ({d0:0}m)", d0 > 30f);
 
@@ -81,6 +81,7 @@ namespace ValheimHelper
             Speeds(w.Claude, saved, false);
             hold(null);
             checks.Add($"깃발로 강제 복귀함 ({waited:0}초 안)", rescued);
+            checks.Add($"플레이어 근처라 목표 쪽 순간이동 안 함 ({GatherJob.Hops - hops0}번)", GatherJob.Hops == hops0);
             if (!rescued) yield break;
             checks.Add($"거점에 있음 ({d1:0.0}m)", d1 < 5f);
             // 음식이 떨어지면 최대 체력이 줄어 그만큼 줄 수 있다(회차 72: 71 → 69, 최대도 69) → 최대보다 낮아졌을 때만 다친 것
