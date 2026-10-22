@@ -874,7 +874,7 @@ namespace ValheimHelper
         /// <summary>진단: 걷다 막힌 자리(앞에 걸린 것·발밑·걷기 상태).</summary>
         void LogStuck(string what, Vector3 goal) =>
             Plugin.Log.LogInfo($"{m_npc.NpcName}: {what} 막힘({m_stepTime:0}초, 남은 {Utils.DistanceXZ(goal, m_npc.transform.position):0.0}m, 집에서 {Utils.DistanceXZ(m_npc.Home, m_npc.transform.position):0.0}m) " +
-                               $"{m_ai.BlockerAhead(goal)} / {m_ai.MoveState} / {m_npc.MoveDebug}");
+                               $"{m_ai.BlockerAhead(goal)} / {m_ai.MoveState} / {m_npc.MoveDebug} / 목표 {m_targetInfo?.Prefab}({goal.x:0.0},{goal.y:0.0},{goal.z:0.0}) {m_ai.PathDiag(goal)}");
 
         bool UpdateWork()
         {
@@ -1559,6 +1559,7 @@ namespace ValheimHelper
             float d = Utils.DistanceXZ(point, m_npc.transform.position);
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progressTimer = 0f; return false; }
             if (m_ai.Carving) return false; // 구덩이에서 경사로를 깎는 중: 막힌 게 아니다
+            if (m_ai.OnInteriorPath) { m_progressTimer = 0f; return false; } // 지하묘지 안 길을 따라 도는 중(목표에서 잠시 멀어질 수 있음)
             m_progressTimer += dt;
             return m_progressTimer > MoveStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp;
         }

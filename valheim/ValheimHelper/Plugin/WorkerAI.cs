@@ -159,6 +159,19 @@ namespace ValheimHelper
         public string MoveState => $"깎기 {m_carving}(곡괭이질 {m_carveCount}, 걷기 {m_carveWalk:0.0}), 막혀서 뜀 {m_stuckJumps}, 비켜 가기 {m_detourTime:0.0}, " +
             $"물 막힘 {WaterBlockedTime:0.0}, 길 {FoundPath()}, 경계 {m_guard?.StateName}, 공격 중 {m_character.InAttack()}";
 
+        static readonly List<Vector3> s_diagPath = new List<Vector3>();
+        /// <summary>진단(막힘 기록용): 여기서 그 점까지 바닐라 길찾기 — 완전/부분(끝이 목표에서 몇 m)/없음.</summary>
+        public string PathDiag(Vector3 to)
+        {
+            if (Pathfinding.instance == null) return "길찾기 없음";
+            Vector3 from = transform.position;
+            if (!Pathfinding.instance.GetPath(from, to, s_diagPath, m_pathAgentType)) return "길 없음";
+            if (s_diagPath.Count == 0) return "길 빈 것";
+            Vector3 end = s_diagPath[s_diagPath.Count - 1];
+            bool full = Pathfinding.instance.GetPath(from, to, null, m_pathAgentType, requireFullPath: true);
+            return $"길 {(full ? "완전" : "부분")}(모퉁이 {s_diagPath.Count}, 끝이 목표에서 {Utils.DistanceXZ(end, to):0.0}m·높이 {end.y - to.y:0.0})";
+        }
+
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
         public string BlockerAhead(Vector3 point)
         {
@@ -204,8 +217,51 @@ namespace ValheimHelper
         /// <summary>물가에서 내린 판단(건넘/못 건넘)을 이때까지 다시 재지 않는다(앞 32m를 재는 건 비싸다).</summary>
         float m_waterDecidedUntil;
 
+        List<Vector3> m_inPath;
+        int m_inIdx;
+        static readonly Vector3 NoGoal = new Vector3(1e9f, 0f, 1e9f);
+        Vector3 m_inGoal = NoGoal;
+        float m_inPlanAt = -100f, m_inBest, m_inProgressAt;
+
+        void ForgetInteriorPath() { m_inPath = null; m_inGoal = NoGoal; }
+
+        /// <summary>지하묘지 안 길(InteriorNav)을 따라 걷는 중이고 최근 3초 안에 다음 점에 다가갔다(막힘 판단이 길을 도는 걸음을 막힘으로 안 보게).</summary>
+        public bool OnInteriorPath => m_inPath != null && Time.time - m_inProgressAt < 3f;
+
+        /// <summary>
+        /// 지하묘지 안 걷기: InteriorNav 칸 길을 점마다 따라간다(바닐라 길 지도는 안에서 조각나 길이 늘 "부분"). 다음 점이 턱 위면 뛴다.
+        /// 목표가 2m 넘게 바뀌었거나 3초 동안 다음 점에 못 다가가면 지금 자리에서 다시 찾는다(3초에 한 번까지). 길이 없으면 false(바닐라 걷기로).
+        /// </summary>
+        bool InteriorWalk(Vector3 pos, Vector3 point, float dist, bool run)
+        {
+            bool newGoal = Utils.DistanceXZ(point, m_inGoal) > 2f;
+            bool stalled = m_inPath != null && Time.time - m_inProgressAt > 3f;
+            bool retry = m_inPath == null; // 못 찾았던 같은 목표: 3초마다 다시
+            if (newGoal ? Time.time - m_inPlanAt > 0.5f : (stalled || retry) && Time.time - m_inPlanAt > 3f)
+            {
+                m_inGoal = point;
+                m_inPlanAt = Time.time;
+                m_inPath = InteriorNav.Plan(pos, point, dist, out string why);
+                m_inIdx = m_inPath != null && m_inPath.Count > 1 ? 1 : 0; // 첫 점은 지금 자리
+                m_inBest = float.MaxValue;
+                if (!stalled) m_inProgressAt = Time.time; // 멈춰서 다시 찾은 길은 실제로 다가가야 진척(막힘 판단이 계속 미뤄지지 않게)
+                Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 묘지 안 길 {(m_inPath != null ? "찾음" : "못 찾음")}{(stalled ? "(멈춰서 다시)" : "")} — {why}, 목표까지 {Utils.DistanceXZ(point, pos):0.0}m");
+            }
+            if (m_inPath == null) return false;
+            while (m_inIdx < m_inPath.Count - 1 && Utils.DistanceXZ(m_inPath[m_inIdx], pos) < 0.5f) { m_inIdx++; m_inBest = float.MaxValue; m_inProgressAt = Time.time; }
+            Vector3 wp = m_inPath[m_inIdx];
+            float dw = Utils.DistanceXZ(wp, pos);
+            if (m_inBest == float.MaxValue) m_inBest = dw; // 새 점: 지금 거리가 기준
+            else if (dw < m_inBest - 0.3f) { m_inBest = dw; m_inProgressAt = Time.time; }
+            bool last = m_inIdx == m_inPath.Count - 1 && dw < 0.5f;
+            MoveTowards(Flat(last ? point - pos : wp - pos), run);
+            if (wp.y - pos.y > (float)StepGrid.StepUp && dw < 1.4f) TryJump(); // 턱 위 점: 뛰어 오른다
+            return true;
+        }
+
         /// <summary>
         /// 걷기: 바닐라 길찾기(BaseAI.MoveTo, 물 뺀 길)를 쓰되
+        /// - 지하묘지 안은 InteriorNav 칸 길(InteriorWalk).
         /// - 길을 못 찾으면(처음 가는 곳은 길 지도를 만드는 중일 때가 많다) 서 있지 말고 곧장 걸어간다.
         /// - 1.5초 동안 거의 못 움직였으면(앞을 막은 생물·장애물) 1.2초 옆으로 비켜 간다.
         /// - 앞이 깊은 물이면 좁은 강만 헤엄쳐 건너고, 늪·바다·긴 물이면 멈춘다(WaterBlockedTime). 모르고 빠졌으면 마른 땅으로 돌아간다.
@@ -217,7 +273,7 @@ namespace ValheimHelper
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
             float d = Utils.DistanceXZ(point, pos);
-            if (d <= dist) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; return true; }
+            if (d <= dist) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; ForgetInteriorPath(); return true; }
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) return false;
             if (RescueIfTrapped(dt, pos)) return false;
@@ -234,8 +290,13 @@ namespace ValheimHelper
                 else m_detourTime = 0f;
                 return false;
             }
-            bool done = MoveTo(dt, point, dist, run);
-            if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+            bool inside = Character.InInterior(pos);
+            if (!inside) ForgetInteriorPath();
+            if (!inside || !InteriorWalk(pos, point, dist, run))
+            {
+                bool done = MoveTo(dt, point, dist, run);
+                if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+            }
             if (WaterAhead(pos, m_character.GetMoveDir()))
             {
                 StopMoving();
@@ -536,6 +597,9 @@ namespace ValheimHelper
         /// <summary>시험용: 깃발 순간이동도 안 돼 그 자리에서 쉰 횟수.</summary>
         public static int HomeFails;
 
+        /// <summary>집에 가는데 지하묘지 안에 있었던 시간, 나가는 Teleport를 마지막으로 쓴 때.</summary>
+        float m_homeInside, m_exitUsedAt = -10f;
+
         public override bool UpdateAI(float dt)
         {
             if (!base.UpdateAI(dt)) return false;
@@ -590,6 +654,29 @@ namespace ValheimHelper
                 }
                 case Mode.Home:
                 {
+                    if (npc.InInterior())
+                    {
+                        // 지하묘지 안에서 집으로(안에서 일을 그만둠 등): 집 쪽으로 걸으면 묘지 벽에 막힌다 → 나가는 Teleport로 나간다
+                        // (GatherJob.LeaveCrypt와 같게, 나가는 길이 없거나 2분 넘으면 깃발로).
+                        m_homeInside += dt;
+                        Teleport exit = Dungeons.Exit(transform.position);
+                        if (exit == null || m_homeInside > 120f)
+                        {
+                            Plugin.Log.LogInfo($"{npc.NpcName}: 지하묘지 나가는 길 없음/시간 초과 → 깃발로");
+                            m_homeInside = 0f;
+                            if (!TeleportHome()) RestHere(npc);
+                            break;
+                        }
+                        Vector3 ep = exit.transform.position;
+                        if ((MoveToPoint(dt, ep, 1.5f, false) || Vector3.Distance(ep, transform.position) < 2.5f) && Time.time - m_exitUsedAt > 3f)
+                        {
+                            m_exitUsedAt = Time.time;
+                            StopMoving();
+                            Dungeons.Use(npc, exit);
+                        }
+                        break;
+                    }
+                    m_homeInside = 0f;
                     Vector3 home = npc.Home;
                     float d = Utils.DistanceXZ(home, transform.position);
                     if (d < 2f)

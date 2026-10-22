@@ -515,7 +515,11 @@ namespace ValheimHelper
                 m_nview.InvokeRPC("RPC_TeleportTo", pos, rot, distantTeleport);
                 return true;
             }
-            if (ZoneSystem.instance.GetSolidHeight(pos, out float h)) pos.y = Mathf.Max(pos.y, h + 0.2f);
+            // 땅 밑에 묻히지 않게 단단한 면 위로 올린다. GetSolidHeight는 1000m 위에서 내려 쏴 가장 위 면을 주는데,
+            // 지하묘지 안(y>3000)은 위가 막힌 방이라 그게 묘지 지붕이다(도착점보다 6.5m 위에 서서 지붕 위를 걸었다, vh_crypttest 2026-10-23).
+            // 안에서는 바닐라 Player.UpdateTeleport처럼 도착점 1m 위에서 아래로 바닥을 찾는다(ZoneSystem.FindFloor).
+            bool floor = Character.InInterior(pos) ? ZoneSystem.instance.FindFloor(pos, out float h) : ZoneSystem.instance.GetSolidHeight(pos, out h);
+            if (floor) pos.y = Mathf.Max(pos.y, h + 0.2f);
             transform.position = pos;
             m_body.position = pos; // 몸(Rigidbody)도 같이: 안 그러면 보간이 원래 자리로 되돌린다(0.3.7 시험: 40m 옮겼는데 그 자리에서 죽음)
             transform.rotation = rot;
