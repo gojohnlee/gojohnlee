@@ -351,3 +351,5 @@ Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pic
 - [루프 회차 67, 2026-10-22] 시험 환경 분리 1조각(전용 캐릭터 vhtest + 월드 원본 되돌리기). 처음 원본은 회차 66 끝의 te4st41을 그대로 뜸(지난 실행 잔여물 포함 — 더 깨끗한 원본이 필요하면
   %USERPROFILE%/vh-test-base를 지우고 깨끗한 월드로 한 번 돌리면 다시 뜸). 새 캐릭터라 FAIL 났던 것: flagtest "지을 수 있는 것으로 앎"(재료 모름 → AddKnownItem),
   departtest "밝혀진 구역을 앎"(지도 밝힘은 캐릭터마다 → Minimap.Explore(거점, 230m)). 게임 자동 백업 vhtest_backup_auto-*.fch도 되돌릴 때 지움.
+
+[루프 회차 69 2026-10-22] TestKit 시작·종료 통제 1조각: CheckStart(시작 정리·조건, 환경 불량), 상태 한 줄(Snapshot)·3초 링 버퍼·FAIL 순간 상태, Flat 예외 때 Dispose로 finally 실행, Summary가 "판정: 환경 불량"을 실패로 셈. hunttest 9/9·skilltest 8/8 단독 PASS, Core 378.

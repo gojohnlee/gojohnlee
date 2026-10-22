@@ -90,6 +90,122 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             w.Chest = GatherTest.ChestAt(spot);
             Brain.ReplaceForTest("", "");
+            if (w.Chest != null) yield return CheckStart(w, !around.HasValue);
+        }
+
+        /// <summary>시작 조건이 안 맞음 — TestRunner.Safe가 "판정: 환경 불량"으로 적고 본시험은 안 한다(PASS 아님).</summary>
+        public sealed class EnvBadException : System.Exception
+        {
+            public EnvBadException(string why) : base(why) { }
+        }
+
+        static World s_cur;
+        static float s_t0;
+        static readonly Queue<string> s_flow = new Queue<string>();
+        const int FlowMax = 40;
+        const float StartRadius = 60f;
+
+        /// <summary>
+        /// 시작 조건(사용자 결정 2026-10-22 시험 환경): 둘레 생물(적·동료 해골 등)은 먼저 치우고, 그래도 남거나 플레이어·일꾼·상자가
+        /// 시험 시작 상태가 아니면 EnvBadException. 맞으면 시작 상태를 적고 상태 흐름 기록을 시작한다.
+        /// </summary>
+        static IEnumerator CheckStart(World w, bool clear)
+        {
+            if (clear)
+            {
+                int n = ClearCreatures(w.Home);
+                if (n > 0)
+                {
+                    TestRunner.Log($"시작 정리: 거점 {StartRadius:0}m 안 생물 {n}마리 치움");
+                    yield return new WaitForSeconds(0.5f);
+                }
+            }
+            var bad = new List<string>();
+            if (w.Player == null || w.Player.IsDead()) bad.Add("플레이어 없음·죽음");
+            else if (!w.Player.InGodMode()) bad.Add("플레이어 무적 아님");
+            int left = Creatures(w.Home).Count;
+            if (left > 0) bad.Add($"거점 {StartRadius:0}m 안 생물 {left}");
+            foreach (var npc in new[] { w.Claude, w.Alarak })
+            {
+                if (npc == null || npc.IsDead()) { bad.Add("일꾼 없음·죽음"); continue; }
+                if (npc.Ai.Job != null) bad.Add($"{npc.NpcName} 일 중({npc.Ai.Job.Label})");
+                if (npc.Ai.Queue.Count > 0) bad.Add($"{npc.NpcName} 대기열 {npc.Ai.Queue.Count}");
+            }
+            if (Items(w.Chest.GetInventory()) > 0) bad.Add("새 상자가 비어 있지 않음");
+            s_cur = w;
+            s_t0 = Time.time;
+            s_flow.Clear();
+            TestRunner.Log("시작 상태: " + Snapshot(w));
+            if (bad.Count > 0)
+            {
+                s_cur = null;
+                throw new EnvBadException(string.Join(", ", bad.ToArray()));
+            }
+            Plugin.Instance.StartCoroutine(Track(w));
+        }
+
+        /// <summary>거점 둘레의 플레이어·일꾼이 아닌 생물(적·짐승·동료 해골).</summary>
+        static List<Character> Creatures(Vector3 home)
+        {
+            var list = new List<Character>();
+            foreach (Character c in Character.GetAllCharacters())
+                if (c != null && !c.IsDead() && !(c is Player) && !(c is WorkerNpc)
+                    && Vector3.Distance(c.transform.position, home) < StartRadius) list.Add(c);
+            return list;
+        }
+
+        static int ClearCreatures(Vector3 home)
+        {
+            int n = 0;
+            foreach (var c in Creatures(home))
+            {
+                var view = c.GetComponent<ZNetView>();
+                if (view == null || !view.IsValid()) continue;
+                view.ClaimOwnership();
+                ZNetScene.instance.Destroy(c.gameObject);
+                n++;
+            }
+            return n;
+        }
+
+        static int Items(Inventory inv)
+        {
+            int n = 0;
+            if (inv != null) foreach (var it in inv.GetAllItems()) n += it.m_stack;
+            return n;
+        }
+
+        /// <summary>한 줄 상태: 일꾼(체력·거점까지·일/단계·짐·대기열)·상자(개수·사용 중)·둘레 생물.</summary>
+        public static string Snapshot(World w)
+        {
+            string N(WorkerNpc n) => n == null ? "-" :
+                $"{n.NpcName} hp{n.GetHealth():0}/{n.GetMaxHealth():0} {Vector3.Distance(n.transform.position, w.Home):0}m " +
+                $"{(n.Ai.Job == null ? "Idle" : n.Ai.Job.GetType().Name + "/" + n.Ai.Job.StepName)} 짐{Items(n.GetInventory())} 대기{n.Ai.Queue.Count}";
+            string chest = w.Chest == null ? "-" : $"{Items(w.Chest.GetInventory())}{(w.Chest.IsInUse() ? " 사용중" : "")}";
+            return $"[{Time.time - s_t0:0}s] {N(w.Claude)} | {N(w.Alarak)} | 상자 {chest} | 생물 {Creatures(w.Home).Count}";
+        }
+
+        /// <summary>시험 동안 3초마다 상태를 링 버퍼에(FAIL이면 End가 diag에 쏟음).</summary>
+        static IEnumerator Track(World w)
+        {
+            while (s_cur == w && TestRunner.Running)
+            {
+                try
+                {
+                    s_flow.Enqueue(Snapshot(w));
+                    while (s_flow.Count > FlowMax) s_flow.Dequeue();
+                }
+                catch (System.Exception e) { s_flow.Enqueue("기록 오류: " + e.Message); }
+                yield return new WaitForSeconds(3f);
+            }
+        }
+
+        /// <summary>검사 하나가 FAIL인 순간의 상태(Checks.Add가 부름).</summary>
+        public static void NoteFail()
+        {
+            if (s_cur == null) return;
+            try { TestRunner.Log("  상태(FAIL 순간): " + Snapshot(s_cur)); }
+            catch (System.Exception e) { TestRunner.Log("  상태 기록 오류: " + e.Message); }
         }
 
         /// <summary>
@@ -103,7 +219,15 @@ namespace ValheimHelper
             while (stack.Count > 0)
             {
                 IEnumerator top = stack.Peek();
-                if (!top.MoveNext()) { stack.Pop(); continue; }
+                bool moved;
+                try { moved = top.MoveNext(); }
+                catch
+                {
+                    // 바깥 코루틴들의 finally(Restore·정리)가 돌게 닫고 다시 던진다(TestRunner.Safe가 FAIL·환경 불량으로 적음).
+                    while (stack.Count > 0) (stack.Pop() as System.IDisposable)?.Dispose();
+                    throw;
+                }
+                if (!moved) { stack.Pop(); continue; }
                 if (top.Current is IEnumerator inner) { stack.Push(inner); continue; }
                 yield return top.Current;
             }
@@ -112,6 +236,7 @@ namespace ValheimHelper
         /// <summary>시험이 바꾼 것을 되돌린다(예외로 끝나도 finally에서 부름, 여러 번 불러도 됨).</summary>
         public static void Restore(World w)
         {
+            if (s_cur == w) s_cur = null; // 상태 흐름 기록 멈춤(링 버퍼는 End가 쏟을 때까지 남김)
             if (w.OnHeard != null) { ChatNet.Heard -= w.OnHeard; w.OnHeard = null; }
             if (w.Player != null) w.Player.SetGodMode(w.God);
             if (w.Env != null)
@@ -129,10 +254,20 @@ namespace ValheimHelper
 
         public static void End(World w, GatherTest.Checks checks)
         {
-            Restore(w);
             bool clean = true;
             foreach (var h in w.Heard) if (h.Contains("{")) clean = false;
             checks.Add("대사에 자리표시자 안 남음", clean);
+            if (w.Claude != null)
+            {
+                try { TestRunner.Log("끝 상태: " + Snapshot(w)); }
+                catch (System.Exception e) { TestRunner.Log("끝 상태 기록 오류: " + e.Message); }
+            }
+            if (checks.Passed != checks.Total && s_flow.Count > 0)
+            {
+                TestRunner.Log("--- 상태 흐름(3초마다, 최근 " + s_flow.Count + "개) ---");
+                foreach (var f in s_flow) TestRunner.Log(f);
+            }
+            Restore(w);
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in w.Heard) TestRunner.Log(h);
             TestRunner.Log($"판정: {(checks.Passed == checks.Total ? "PASS" : "FAIL")} ({checks.Passed}/{checks.Total})");

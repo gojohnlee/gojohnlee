@@ -28,6 +28,7 @@ namespace ValheimHelper
                 Total++;
                 if (ok) Passed++;
                 TestRunner.Log($"{(ok ? "OK  " : "FAIL")} {what}");
+                if (!ok) TestKit.NoteFail();
             }
         }
 

@@ -111,6 +111,11 @@ namespace ValheimHelper
                 bool passLine = line.StartsWith("판정: PASS") || line == "PASS" || line.StartsWith("PASS");
                 bool failLine = line.StartsWith("판정: FAIL") || line.StartsWith("FAIL");
                 if (passLine) verdict = true;
+                if (line.StartsWith("판정: 환경 불량"))
+                {
+                    verdict = failed = true;
+                    if (firstFail == null) firstFail = line.Substring(4);
+                }
                 if (failLine)
                 {
                     verdict = failed = true;
@@ -187,6 +192,12 @@ namespace ValheimHelper
                 {
                     if (!inner.MoveNext()) yield break;
                     current = inner.Current;
+                }
+                catch (TestKit.EnvBadException e)
+                {
+                    Log($"판정: 환경 불량 ({e.Message}) — 본시험 안 함");
+                    if (Running) Finish();
+                    yield break;
                 }
                 catch (System.Exception e)
                 {
