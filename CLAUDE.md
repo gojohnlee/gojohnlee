@@ -11,7 +11,7 @@
 - 이 브랜치에서만 작업하고 푸시도 `valheim`으로(사용자 승인, 세션 작업 브랜치와 별개).
 - 새 세션 시작: docs/valheim/UserRequest.txt에 UserReply.txt 답("요청:")이 없는 요청이 있으면 그 답부터 써서 푸시(형식은 scripts/vh-loop-prompt.txt 0번).
   그다음 docs/valheim/progress.txt(지금·다음)와 Errors.txt(미해결 문제) → 코드는 codemap.txt에서 찾아 그 부분만 읽는다. 파일은 통째로 읽지 말고 grep.
-  기획 결정은 decisions.txt, 구상서 concept-v1.txt·설계서 design-depart-craft.txt는 그 장만, 지난 기록 history.txt와 해결된 문제 Errors-resolved.txt는 필요할 때만 grep.
+  기획 결정은 decisions.txt, 구상서 concept-v1.txt·설계서 design-depart-craft.txt는 그 장만, 지난 기록 history.md와 해결된 문제 Errors-resolved.txt는 필요할 때만 grep.
   무인 루프 설계는 loop-plan.txt. PC 세션 시작 순서·게임 시험 방법은 progress.txt 맨 위.
 - 게임 DLL: PC 세션은 설치된 게임의 valheim_Data\Managed(csproj 자동). 클라우드 세션은 비공개 저장소 gojohnlee/valheim-refs → add_repo 후 /home/user/valheim-refs에 clone.
   ilspycmd로 디컴파일해 읽는다. 확인한 게임 사실은 codemap.txt "확인된 게임 사실"에 적고 다시 디컴파일하지 않는다.
@@ -21,5 +21,6 @@
 - 노력 수준: 메인 세션은 보통. 게임 시험 FAIL·로그 예외·이상 동작처럼 원인 찾기가 필요한 버그는 `vh-debug`(엑스트라 하이)에 증상(시험 이름·diag·로그 발췌)을 붙여 넘기고,
   결과는 메인이 diff 검토 후 커밋. 분량 있는 정형 작업은 `vh-standard`/`vh-simple`. 몇 줄짜리 명백한 수정은 메인이 직접.
 - 커밋: 빌드·테스트 통과 때마다 커밋·푸시하고 progress.txt의 "지금"과 "다음"만 고친다. dist DLL도 커밋.
-  기록: 끝낸 일은 history.txt 맨 위 "회차 기록"에 `bash scripts/vh-history-add.sh`로 넣는다(history.txt는 읽거나 열지 않음, 맨 위가 최근).
+  기록: 끝낸 일은 history.md 맨 위 "회차 기록"에 `bash scripts/vh-history-add.sh`로 넣는다(history.md는 읽거나 열지 않음, 맨 위가 최근,
+  사용자가 GitHub에서 읽으니 쉬운 말로 제목·요약·자세히 — 꼴은 그 스크립트 머리 주석).
   progress "지금"에는 같은 요약 한 줄을 맨 위에 넣고 최근 3개만 둔다(넘친 맨 아래 것은 지움 — history에 이미 있음).

@@ -11,4 +11,4 @@
 [10-22 18:48 클라우드 세션] 요청: 사용자 결정(10-22): 미해결 문제는 Errors.txt 한 곳에(해결은 Errors-resolved.txt로)
 끝냄(루프를 19:40까지 쉬게 하고 클라우드 세션이 함, 회차 72 결과 반영): Errors.txt 미해결 12건(조사 중 2: E001 주괴 없음[막음 의심]·E012 먼 광맥 갇힘, 관찰 중 10),
 Errors-resolved.txt 해결 7줄(회차 72가 고친 4건 포함). risks.txt 간헐 목록·progress 3)·회차 기록의 간헐 FAIL을 모음. 규칙은 회차 지시문 1·3번, CLAUDE.md, 답 지시문, decisions.txt에 반영.
-같이 한 정리(사용자 요청): progress "지금"은 최근 3개만, history.txt는 최근 → 과거(새 기록은 bash scripts/vh-history-add.sh로 맨 위에), 끝난 요청·답은 history.txt "끝난 요청과 답"으로, 회차 지시문의 끝난 순서 설명은 줄임.
+같이 한 정리(사용자 요청): progress "지금"은 최근 3개만, history.md는 최근 → 과거(새 기록은 bash scripts/vh-history-add.sh로 맨 위에), 끝난 요청·답은 history.md "끝난 요청과 답"으로, 회차 지시문의 끝난 순서 설명은 줄임.

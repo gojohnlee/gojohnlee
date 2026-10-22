@@ -2,10 +2,10 @@
 
 읽는 순서(토큰 아끼기, 2026-10-21 사용자 결정)
 - 새 세션: 이 파일 → 필요한 코드만 codemap.txt로 찾아 읽기. 구상서(concept-v1.txt)·설계서(design-depart-craft.txt)는 그 장만. 결정은 decisions.txt(grep).
-- 지난 기록(시험 결과·원인 분석·예전 결정 전체)은 history.txt — 평소엔 읽지 않고 필요할 때 grep.
+- 지난 기록(시험 결과·원인 분석·예전 결정 전체)은 history.md — 평소엔 읽지 않고 필요할 때 grep.
 - 파일은 통째로 읽지 말고 grep으로 찾은 부분만. 게임 코드 확인 결과는 codemap.txt "확인된 게임 사실"에 적어 두고 다시 디컴파일하지 않는다.
-- 15분마다(빌드·테스트 통과 때마다) 커밋·푸시하고 이 파일의 "지금"과 "다음"만 고친다. 끝낸 일 기록은 history.txt 맨 위 "회차 기록"에
-  bash scripts/vh-history-add.sh로 넣고(history.txt는 읽지 않음), "지금"에는 같은 요약을 맨 위에 넣고 최근 3개만 둔다(넘친 것은 지움 — history에 이미 있음).
+- 15분마다(빌드·테스트 통과 때마다) 커밋·푸시하고 이 파일의 "지금"과 "다음"만 고친다. 끝낸 일 기록은 history.md 맨 위 "회차 기록"에
+  bash scripts/vh-history-add.sh로 넣고(history.md는 읽지 않음), "지금"에는 같은 요약을 맨 위에 넣고 최근 3개만 둔다(넘친 것은 지움 — history에 이미 있음).
 
 ======================================================================
 PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
@@ -27,10 +27,10 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 6. dist DLL도 커밋(방식 A 한 줄 명령이 valheim/dist를 받음).
 
 ======================================================================
-지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.txt 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [클라우드 세션 2026-10-22, 사용자 요청] 기록 정리: 미해결 문제는 Errors.txt(해결은 Errors-resolved.txt), "지금"은 최근 3개만, history.md(최근 → 과거, 사람이 읽기 좋게), 끝난 요청·답은 history.md로, 회차 지시문 줄임. 다음: 4) 기반 대표 시험.
 - [루프 회차 72] "지금 먼저" 3) 간헐 FAIL 재확인: 시작 제단(건축 금지·보스석) 탓 coppertest 막힘·pittest 구덩이 안 파짐 → TestKit.LeaveNoBuild(묶음 전에 제단 밖으로). 비켜 가기 점점 길게·달림, 싸움 3번 빗나가면 직접 피해(바위 위 적에 죽던 것), stucktest 체력 칸. depart·craft·hunt·prep·copper·pit·stuck·fight·wood PASS, copper 1/3 간헐(risks). Core 378. 다음: 3) 남은 것 preptest·departtest 재고 질문은 이번 묶음 PASS → 4) 기반 대표 시험.
 - [루프 회차 71] "지금 먼저" 2) 끝: 옛 시험(npc·flag·bag·death·explore·fight·gather(wood·stone·copper·tin)·pit·prep)도 깃발 세우기 전 TestKit.OldClear(둘레 생물 치움)·OldCheck(남으면 환경 불량), 끝은 TestRunner.Finish가 OldEnd(생물·땅의 물건 치움, 남으면 남은 시험 중단). fartest만 안 함(멧돼지 일부러 둠). npc·flag·wood·stone 4/4 PASS(wood 뒤 물건 53개 치움), Core 378. 다음: "지금 먼저" 3) 간헐 FAIL 재확인.
-- [루프 회차 70] "지금 먼저" 2) TestKit 2조각: End가 끝 정리(거점 60m 생물·땅의 물건 치움, 동시 시험 around는 안 함) → 0.5초 뒤 남으면 TestRunner.Halt → 남은 자동 시험은 본시험 없이 "판정: 환경 불량(앞 시험 끝 정리 실패)". hunttest→skilltest 연속 PASS(hunttest 뒤 물건 55개 치움). Core 378. 남음: 옛 시험(GatherTest·PitTest 등 TestKit.Setup 안 쓰는 것)에 같은 시작 확인·끝 정리.
 
 다음 (순서대로)
 ★ 지금 먼저(사용자 결정 2026-10-22 시험 시점·시험 환경, decisions.txt) — 순서대로, 끝나면 ⑧로 돌아감:
@@ -59,7 +59,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 알려진 한계: NPC 스태미나 없음, NPC 피해도 몬스터 난이도 배율을 받음, 방패 막기 안 함, 적 약점 안 셈, 물 건너 아는 곳은 직선 판단,
 시험의 Workers.DespawnAll이 Brain 로드 전이면 지식이 비워짐(시험 환경 문제).
 
-결정 모음(자세한 건 decisions.txt·history.txt)
+결정 모음(자세한 건 decisions.txt·history.md)
 - 노력: 메인 보통, 원인 찾기 버그는 vh-debug(엑스트라 하이).
 - 일하는 중 새 명령: "빨리·이거부터"면 바로(멈춘 일은 대기열 맨 앞), 아니면 "~부터 하고 갈게요" + 대기열. 제작법은 전부 앎.
 - 좁은 강(깊은 물 24m 이하)만 헤엄. 깃발이 작고 묻혀 보이는 건 "다음에 같이". NPC가 플레이어를 미는 건 그대로 둠.
