@@ -108,6 +108,13 @@ namespace ValheimHelper
                 switch (cmd.Kind)
                 {
                     case CommandKind.Escort:
+                        // 일하는 중이면 일을 버리지 않고 그 일에 동행을 붙인다(구상서 8-1), 쉬는 중이면 따라가기
+                        if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null)
+                        {
+                            npc.Ai.EscortBy(who.CharacterId, who.Name);
+                            npc.Say("answer.escort");
+                            break;
+                        }
                         npc.Ai.Follow(who.CharacterId, who.Name);
                         npc.Say("escort");
                         break;
@@ -307,7 +314,9 @@ namespace ValheimHelper
         {
             switch (npc.Ai.Current)
             {
-                case WorkerAI.Mode.Work: return npc.Ai.Job.StateLine();
+                case WorkerAI.Mode.Work:
+                    string line = npc.Ai.Job.StateLine();
+                    return npc.Ai.EscortName != null ? line + " (" + npc.Ai.EscortName + " 동행)" : line;
                 case WorkerAI.Mode.Follow: return npc.Line("state.follow", new Dictionary<string, string> { ["player"] = npc.Ai.FollowName });
                 case WorkerAI.Mode.Home: return npc.Line("state.home");
                 default: return npc.Line("state.idle");

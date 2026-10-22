@@ -107,6 +107,15 @@ namespace ValheimHelper
             yield return new WaitForSeconds(4f);
             moved = Utils.DistanceXZ(start, npc.transform.position);
             checks.Add($"이어 가며 움직임 ({moved:0.0}m)", moved > 2f);
+
+            // 일하는 중 "!같이 가자": 따라가기로 일을 버리지 않고 지금 일에 동행을 다시 붙임(쉬는 중 따라가기는 vh_npctest)
+            IWorkerJob job = ai.Job;
+            GatherTest.Say($"!{npc.NpcName} 같이 가자", null);
+            yield return new WaitForSeconds(1f);
+            string state = Commands.StateOf(npc);
+            checks.Add($"일하는 중 \"!같이 가자\" → 같은 일 + 동행 ({ai.Current}, {ai.EscortName ?? "동행 없음"}, {ai.EscortPhase})",
+                ai.Current == WorkerAI.Mode.Work && ai.Job == job && ai.EscortName == player.GetPlayerName());
+            checks.Add($"!상태에 동행 이름 ({state})", state.Contains(player.GetPlayerName()));
         }
     }
 }
