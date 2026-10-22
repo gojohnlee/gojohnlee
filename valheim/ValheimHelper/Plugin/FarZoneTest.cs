@@ -37,6 +37,9 @@ namespace ValheimHelper
             Quaternion rot = player.transform.rotation;
             bool god = player.InGodMode();
             player.SetGodMode(true);
+            // 앞 시험의 일꾼이 남아 있으면 소환한 멧돼지를 바로 잡아 버린다(회차 91: stucktest 뒤 "멧돼지 데이터 없음" FAIL)
+            Workers.DespawnAll();
+            yield return new WaitForSeconds(1f);
 
             GameObject prefab = ZNetScene.instance.GetPrefab("Boar");
             Character boar = Object.Instantiate(prefab, home + player.transform.forward * 4f + Vector3.up, Quaternion.identity).GetComponent<Character>();

@@ -670,7 +670,7 @@ namespace ValheimHelper
             ZDO zdo = ZDOMan.instance.GetZDO(m_targetId);
             if (zdo == null) { Go(Step.Collect); return true; }
             m_targetPos = zdo.GetPosition();
-            if (Walk(dt, m_targetPos, m_reach) || Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f)
+            if (Walk(dt, m_targetPos, m_reach) || Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f || TouchingRock(zdo))
             {
                 m_swings = m_swingsNoProgress = 0;
                 m_workIdle = m_closerTime = 0f;
@@ -690,6 +690,36 @@ namespace ValheimHelper
                 RescueIfStuckAgain();
             }
             return true;
+        }
+
+        static readonly Collider[] s_touchBuf = new Collider[32];
+        static int s_touchMask;
+        /// <summary>몸(가운데)에서 이 거리 안에 바위 충돌체가 있으면 닿은 것(몸 반지름 약 0.5m + 곡괭이가 넉넉히 닿는 0.5m).</summary>
+        const float TouchRadius = 1f;
+
+        /// <summary>
+        /// 곡괭이 대상(바위·광맥)의 남은 충돌체에 몸이 닿았는지. 닿았으면 다가가기 도착이다(E017).
+        /// 큰 광맥(MineRock5)은 부위마다 충돌체(조각)이고 깬 조각은 꺼진다(MineRock5.UpdateMesh SetActive(false)) — 조각이 뿌리(ZDO 위치)에서
+        /// 9m 넘게 퍼져 있어 뿌리까지 거리(m_reach, 3.5m 안)로만 재면 바깥 조각에 닿은 채 뿌리 쪽으로 밀기만 하다 막힘으로 버린다.
+        /// 캐기(UpdateWork·RockAim)는 남은 조각 중 가까운 것을 친다.
+        /// </summary>
+        bool TouchingRock(ZDO zdo)
+        {
+            if (m_targetInfo == null || m_targetInfo.Tool != ToolKind.Pickaxe) return false;
+            ZNetView view = ZNetScene.instance.FindInstance(zdo);
+            if (view == null) return false;
+            if (s_touchMask == 0) s_touchMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece");
+            Vector3 p = m_npc.transform.position;
+            int n = Physics.OverlapCapsuleNonAlloc(p + Vector3.up * 0.4f, p + Vector3.up * 1.6f, TouchRadius, s_touchBuf, s_touchMask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < n; i++)
+            {
+                Collider c = s_touchBuf[i];
+                if (c == null || !c.transform.IsChildOf(view.transform)) continue;
+                if (Utils.DistanceXZ(m_targetPos, p) > m_reach + 0.3f)
+                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 조각 {c.name}에 닿음(뿌리에서 {Utils.DistanceXZ(m_targetPos, p):0.0}m, {m_stepTime:0}초) → 캐기");
+                return true;
+            }
+            return false;
         }
 
         /// <summary>그 구역(가운데 자리)으로 걷다 막혀 뺐다.</summary>

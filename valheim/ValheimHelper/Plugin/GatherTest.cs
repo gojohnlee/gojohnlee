@@ -125,7 +125,7 @@ namespace ValheimHelper
                 int undone = TestTerrain.Reset(depositPos, 10f);
                 yield return new WaitForSeconds(0.5f);
                 depositPos = Ground(depositPos);
-                Object.Instantiate(dep, depositPos, rot);
+                GameObject firstDep = Object.Instantiate(dep, depositPos, rot);
                 // 한 광맥이 10개를 못 주면(주석 MineRock_Tin은 3~4개) 모자라는 만큼 둘레에 더 놓는다 — 안 그러면 일꾼이 나머지를 찾아 먼 구역으로 떠난다(0.3.8 첫 주석 시험)
                 int deposits = Mathf.Max(1, Mathf.CeilToInt(10f / Mathf.Max(1, MinYield(dep))));
                 int placed = 1;
@@ -148,6 +148,7 @@ namespace ValheimHelper
                 TestRunner.Log($"광맥 ZDO {seen}개, 목록 정보: 도구 {info?.Tool} 단계 {info?.MinToolTier} (곡괭이 단계 {tool.GetComponent<ItemDrop>().m_itemData.m_shared.m_toolTier}), " +
                                $"나오는 것 [{(info != null ? string.Join(",", info.Produces) : "")}], 4m 안 건축물 [{string.Join(", ", near)}]");
                 TestRunner.Log($"  광맥 구조: {DescribeDeposit(dep, 0)}");
+                TestRunner.Log($"  광맥 조각 퍼짐: {RockSpread(firstDep, Workers.HomeSpot(home, rot, 0), eqPos, resPos)}");
             }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             Say($"!{Workers.Name1} {word} 10", null);
@@ -213,6 +214,45 @@ namespace ValheimHelper
                 n++;
             }
             return n;
+        }
+
+        /// <summary>
+        /// 진단(E017): 놓은 광맥의 조각(켜진 충돌체) 수·땅 위 수, 뿌리에서 조각 상자 경계가 가장 먼 거리(XZ), 1호 집·상자에서 가장 가까운 조각 상자(XZ, 실제 면보다 가깝게 나옴),
+        /// 1호 집에서 뿌리 쪽으로 쏜 광선(발 0.4m·가슴 1.4m)이 처음 맞는 조각까지(실제 면).
+        /// </summary>
+        static string RockSpread(GameObject rock, Vector3 npcHome, Vector3 eq, Vector3 res)
+        {
+            if (rock == null) return "없음";
+            Vector3 root = rock.transform.position;
+            int n = 0, up = 0;
+            float far = 0f, dHome = float.MaxValue, dEq = float.MaxValue, dRes = float.MaxValue;
+            foreach (var c in rock.GetComponentsInChildren<Collider>())
+            {
+                if (c.isTrigger) continue;
+                n++;
+                Bounds b = c.bounds;
+                if (ZoneSystem.instance.GetGroundHeight(b.center, out float g) && b.max.y > g + 0.3f) up++;
+                foreach (var corner in new[] { new Vector3(b.min.x, 0f, b.min.z), new Vector3(b.min.x, 0f, b.max.z), new Vector3(b.max.x, 0f, b.min.z), new Vector3(b.max.x, 0f, b.max.z) })
+                    far = Mathf.Max(far, Utils.DistanceXZ(corner, root));
+                float Xz(Vector3 p) { Vector3 q = b.ClosestPoint(new Vector3(p.x, b.center.y, p.z)); return Utils.DistanceXZ(q, p); }
+                dHome = Mathf.Min(dHome, Xz(npcHome));
+                dEq = Mathf.Min(dEq, Xz(eq));
+                dRes = Mathf.Min(dRes, Xz(res));
+            }
+            Vector3 dir = root - npcHome;
+            dir.y = 0f;
+            float toRoot = dir.magnitude;
+            dir.Normalize();
+            string Ray(float h)
+            {
+                var hits = Physics.RaycastAll(npcHome + Vector3.up * h, dir, toRoot, ~0, QueryTriggerInteraction.Ignore);
+                float best = float.MaxValue;
+                foreach (var hit in hits)
+                    if (hit.collider.transform.IsChildOf(rock.transform)) best = Mathf.Min(best, hit.distance);
+                return best == float.MaxValue ? "안 맞음" : best.ToString("0.0") + "m";
+            }
+            return $"조각 {n}개(땅 위 {up}), 뿌리에서 가장 먼 조각 경계 {far:0.0}m, 1호 집에서 뿌리 {toRoot:0.0}m, 가장 가까운 조각 경계까지 1호 집 {dHome:0.0}m·장비 상자 {dEq:0.0}m·재료 상자 {dRes:0.0}m, " +
+                   $"1호 집→뿌리 광선 첫 조각 발 {Ray(0.4f)}·가슴 {Ray(1.4f)}";
         }
 
         /// <summary>진단: 광맥 프리팹이 부서지면 무엇이 몇 개 나오는지(Destructible → 조각 → ...).</summary>
