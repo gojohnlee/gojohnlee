@@ -87,6 +87,8 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 상자 저장: Container.Load = ZDO GetByteArray(ZDOVars.s_items) → m_inventory.Load(ZPackage). Inventory.Load는 AddItem(skipValidPositionCheck=true)라 크기와 무관 → 인스턴스 없이 new Inventory(..)로 읽을 수 있음.
 ----------------------------------------------------------------------
 - AnimalAI(사슴 등)는 공격 코드 없이 Flee만. 사슴 진영은 AnimalsVeg가 아님(게임 시험에서 BaseAI.IsEnemy 통과) → Guard.IsFoe가 AnimalAI 제외.
+- BaseAI.enabled = false면 OnDisable이 BaseAI.Instances에서 빼 MonoUpdaters가 UpdateAI를 안 부름 → 그 자리에 서서 아무것도 안 함(시험에서 적 멈추기, EscortTest).
+- Player.TeleportTo: 쿨다운(m_teleportCooldown < 2초)이거나 순간이동 중이면 아무것도 안 하고 false → 시험에서 잇달아 옮길 땐 true가 될 때까지 다시.
 - 몬스터 최대 체력 = 기본 × 레벨(Character.SetupMaxHealth). 별 하나 = 레벨 +1.
 - 밤 = 하루 비율 0.25 이하 또는 0.75 이상(EnvMan.CalculateNight). EnvMan.m_dayLengthSec(코드 기본 1200, 프리팹 값은 미확인), GetDayFraction().
 - 스킬: Skills.Skill.Raise — 쌓인 값 += m_increseStep × factor × Game.m_skillGainRate, 요구치 floor(레벨+1)^1.5 × 0.5 + 0.5.
