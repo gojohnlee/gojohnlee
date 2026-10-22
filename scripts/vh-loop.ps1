@@ -100,7 +100,18 @@ function Backup-Wip {
 }
 
 function Write-Status($now, $last) {
-    $todo = Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8 | Where-Object { $_ -match '^★ 지금 (순서|할 일)' } | Select-Object -First 1
+    # 할 일: progress "★ 지금 …" 머리줄 아래 들여 쓴 줄들에서 [끝]이 아닌 첫 번호 항목, 없으면 머리줄(머리줄 이름이 바뀌어도 비지 않게)
+    $p = @(Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8)
+    $todo = ''
+    for ($i = 0; $i -lt $p.Count; $i++) {
+        if ($p[$i] -notmatch '^★ 지금') { continue }
+        for ($j = $i + 1; $j -lt $p.Count -and $p[$j] -match '^\s+\S'; $j++) {
+            if ($p[$j] -match '^\s+\d+\)' -and $p[$j] -notmatch '^\s+\d+\)\s*\[끝') { $todo = $p[$j]; break }
+        }
+        if (-not $todo) { $todo = $p[$i] }
+        break
+    }
+    $todo = "$todo".Trim(); if ($todo.Length -gt 120) { $todo = $todo.Substring(0, 120) + '…' }
     $test = if (Test-Path $Diag) { "$((Get-Item $Diag).LastWriteTime.ToString('MM-dd HH:mm')) $(Get-Content $Diag -Encoding UTF8 -TotalCount 1)" } else { '(없음)' }
     $lim = @(0, 1 | ForEach-Object { if ($st.until[$_] -and [datetime]$st.until[$_] -gt (Get-Date)) { "$($Accounts[$_].Name) $(([datetime]$st.until[$_]).ToString('MM-dd HH:mm'))까지" } })
     $text = @(
