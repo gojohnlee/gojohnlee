@@ -4,7 +4,7 @@
 
 1. docs/valheim/UserRequest.txt(구분선 아래만)와 docs/valheim/UserReply.txt를 읽는다. 요청 나누기·이름·형식은 scripts/vh-loop-prompt.txt 0번과 같다(그 0번만 읽는다).
 2. UserReply.txt에 "요청: <이름>"도 "받음: <이름>"도 없는 요청에만 답한다. 그런 요청이 없으면 아무것도 고치지 않는다.
-   - 질문: 문서(docs/valheim/progress.txt "지금"·"다음", decisions.txt·history.txt·codemap.txt는 grep)와 코드(grep, 필요한 부분만)로 답할 수 있으면 다 답한다
+   - 질문: 문서(docs/valheim/progress.txt "지금"·"다음", Errors.txt, decisions.txt·history.txt·codemap.txt는 grep)와 코드(grep, 필요한 부분만)로 답할 수 있으면 다 답한다
      → "[MM-dd HH:mm 회차 N 중 답] 요청: <이름>" 다음 줄부터 답.
    - 일·결정·코드 수정·게임 시험이 있어야 하는 것: 여기서 하지 않는다. "[MM-dd HH:mm 회차 N 중 답] 받음: <이름>" 다음 줄부터
      생각(할 만한지·위험·더 나은 안)과 "다음 회차가 맨 먼저 함"(지금 회차가 하는 일은 docs/valheim/status.txt "지금"·"할 일"로 한 줄)을 적는다.

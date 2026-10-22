@@ -4,7 +4,8 @@
 - 새 세션: 이 파일 → 필요한 코드만 codemap.txt로 찾아 읽기. 구상서(concept-v1.txt)·설계서(design-depart-craft.txt)는 그 장만. 결정은 decisions.txt(grep).
 - 지난 기록(시험 결과·원인 분석·예전 결정 전체)은 history.txt — 평소엔 읽지 않고 필요할 때 grep.
 - 파일은 통째로 읽지 말고 grep으로 찾은 부분만. 게임 코드 확인 결과는 codemap.txt "확인된 게임 사실"에 적어 두고 다시 디컴파일하지 않는다.
-- 15분마다(빌드·테스트 통과 때마다) 커밋·푸시하고 이 파일의 "지금"과 "다음"만 고친다. 끝난 일의 자세한 내용은 history.txt 끝에 붙인다.
+- 15분마다(빌드·테스트 통과 때마다) 커밋·푸시하고 이 파일의 "지금"과 "다음"만 고친다. 끝낸 일 기록은 history.txt 맨 위 "회차 기록"에
+  bash scripts/vh-history-add.sh로 넣고(history.txt는 읽지 않음), "지금"에는 같은 요약을 맨 위에 넣고 최근 3개만 둔다(넘친 것은 지움 — history에 이미 있음).
 
 ======================================================================
 PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
@@ -26,86 +27,10 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 6. dist DLL도 커밋(방식 A 한 줄 명령이 valheim/dist를 받음).
 
 ======================================================================
-지금 (2026-10-21)
+지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.txt 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
 - [루프 회차 72] "지금 먼저" 3) 간헐 FAIL 재확인: 시작 제단(건축 금지·보스석) 탓 coppertest 막힘·pittest 구덩이 안 파짐 → TestKit.LeaveNoBuild(묶음 전에 제단 밖으로). 비켜 가기 점점 길게·달림, 싸움 3번 빗나가면 직접 피해(바위 위 적에 죽던 것), stucktest 체력 칸. depart·craft·hunt·prep·copper·pit·stuck·fight·wood PASS, copper 1/3 간헐(risks). Core 378. 다음: 3) 남은 것 preptest·departtest 재고 질문은 이번 묶음 PASS → 4) 기반 대표 시험.
 - [루프 회차 71] "지금 먼저" 2) 끝: 옛 시험(npc·flag·bag·death·explore·fight·gather(wood·stone·copper·tin)·pit·prep)도 깃발 세우기 전 TestKit.OldClear(둘레 생물 치움)·OldCheck(남으면 환경 불량), 끝은 TestRunner.Finish가 OldEnd(생물·땅의 물건 치움, 남으면 남은 시험 중단). fartest만 안 함(멧돼지 일부러 둠). npc·flag·wood·stone 4/4 PASS(wood 뒤 물건 53개 치움), Core 378. 다음: "지금 먼저" 3) 간헐 FAIL 재확인.
 - [루프 회차 70] "지금 먼저" 2) TestKit 2조각: End가 끝 정리(거점 60m 생물·땅의 물건 치움, 동시 시험 around는 안 함) → 0.5초 뒤 남으면 TestRunner.Halt → 남은 자동 시험은 본시험 없이 "판정: 환경 불량(앞 시험 끝 정리 실패)". hunttest→skilltest 연속 PASS(hunttest 뒤 물건 55개 치움). Core 378. 남음: 옛 시험(GatherTest·PitTest 등 TestKit.Setup 안 쓰는 것)에 같은 시작 확인·끝 정리.
-- [루프 회차 69] "지금 먼저" 2) TestKit 1조각: TestKit.Setup 끝에 시작 조건 확인(거점 60m 생물 먼저 치움 → 남은 생물·플레이어 무적·일꾼 일/대기열·새 상자 빈지) → 안 맞으면 EnvBadException → "판정: 환경 불량"(PASS 아님, 요약에 보임). Flat이 예외 때 바깥 코루틴 finally(Restore) 돌림. 시작·FAIL 순간·끝 상태 한 줄 + 3초마다 상태 흐름 링 버퍼(40개, FAIL이면 diag에 쏟음). hunttest·skilltest 단독 PASS. 남음: 옛 시험(GatherTest·PitTest 등 TestKit.Setup 안 쓰는 것)에 같은 확인·정리, 시험이 만든 개체·드롭 정리, 정리 실패면 다음 시험 중단.
-- [루프 회차 68] 시험 환경 분리 끝: valheim-test.ps1 VH_SOLO=1 = 시험마다 따로(앞 게임 꺼질 때까지 기다림 → 원본 되돌리기 → 게임 새로 → 결과 합침, diag-<시험>.txt로 남김). npctest·flagtest 단독 PASS. 다음: "지금 먼저" 2) 시작·종료 통제(TestKit).
-- [루프 회차 67] 시험 환경 분리 1조각: 전용 시험 캐릭터 vhtest(AutoStart가 없으면 바닐라 새 캐릭터 순서로 로컬에 만들고(발키리 연출 없음) 골라 입장, 못 고르면 사용자 캐릭터로 시험 안 하고 게임 끔, 메뉴 "마지막 캐릭터"는 사용자 것으로 되돌림) + valheim-test.ps1 원본 되돌리기(실행마다 한 번, 게임 꺼진 뒤, 월드 이름 te4st41·캐릭터 vhtest*일 때만: 월드 폴더를 %USERPROFILE%/vh-test-base 원본으로(첫 실행 때 지금 월드를 뜸), 시험 캐릭터·자동 백업은 지워 새로; VH_RESET=0이면 안 함). 새 캐릭터 탓 시험 고침 2개: flagtest(재료를 알려 줌)·departtest(거점 둘레 230m 지도 밝힘). 새 캐릭터로 npc·flag·wood·stone·prep·craft·depart·crypt·bow PASS, Core 378. 사용자 캐릭터 파일 안 건드림 확인. 다음: 단독 시험 실행 방식 → 2) TestKit 시작·종료 통제.
-- [루프 회차 66] 8) ⑧ 먹거리 3조각 활 사냥(끝, ⑧ [x]): 사슴·토끼(AnimalAI, 날짐승 뺌)를 Prey가 "활로만 잡는 것"으로 앎(NeedsBow, Is(item,c,canShoot)). Prep이 장비 상자에서 가장 좋은 활 + 맞는 화살 40개를 챙기고 Kept가 지님(활은 싸움에 안 씀: Guard·HoldWeapon이 활을 내려놓음). GatherJob.UpdateShoot: 30m 안·가림 없으면 서서 끝까지 당겨(WorkerNpc.DrawBow — 바닐라는 당기기를 플레이어만 함) Core Archery.Aim(앞질러·낙차, 게임 값 속력 35·중력 5)으로 쏨, 10발에 체력 그대로면 그 짐승 포기, 놓아도 화살이 3번 안 나가면 그 일 동안 활 안 씀(DIAG 활 안 나감 — 회차 66에 Claude가 한 번 겪음, 원인 못 찾음). 활 없고 활 사냥감뿐이면 needBow 대사 후 그만. 고침 2개: ① 무작위 전리품 통(barrell)이 가죽을 줘서 사냥 모드가 안 켜지던 것(ResourceInfo.Loot, 사냥감 있으면 방법에서 뺌), ② 떨굼 찾기가 일꾼 기준 14m라 멀리 잡은 것의 떨굼을 못 줍던 것(대상 기준, 사냥은 15초 그 자리에서 기다림). vh_bowtest 신설 PASS 12/12(2번, 한 발에 잡음), hunttest 3/4 PASS(1번은 멧돼지 150초 못 잡음 = 회차 63의 간헐, 활 무관), prep·wood·craft·fight PASS, Core 378. 다음: ⑨ 농사 조각 나누기.
-- [루프 회차 65] 8) ⑧ 먹거리 2조각 굽기(끝): Core Process.Attended(조리대는 곁에서 지킴 → 기다리기 0초, 싣기 단계에 굽는 시간 AttendSeconds, 칸은 동시에 익음)+테스트. MachineStep이 CookingStation 지원: Load가 불 확인(꺼졌으면 거점 상자 연료로 화로·화덕을 한 번 지핌, 꺼 둔 불은 안 켬, 10초 안 붙으면 실패) → 빈 칸만큼 올림 → 곁에서 기다려 익은(탄) 것을 바닐라 RPC_RemoveDoneItem으로 하나씩 꺼내 줍고 → 짐 정리로 상자. Unload는 남은 것만. vh_cooktest 신설 PASS 10/10(48초, 꺼진 화로 지피기 포함), crafttest 23/23 PASS, Core 373. 다음: ⑧ 3조각 활 사냥.
-- [루프 회차 63] 클라우드 세션의 늪 열쇠 문 열기 게임 시험: 합친 빌드로 vh_crypttest PASS 24/24(243초)·hunttest PASS 9/9, Core 372. 로그의 TerrainComp NullReference는 바닐라(기존).
-- [클라우드 세션 2026-10-22, 사용자 직접 요청] 늪 열쇠를 얻으면 일꾼도 지하묘지 문을 엶: Core Crypts.Choose(열린 곳 중 더미 남은 곳 먼저 → 없으면 열 수 있는 닫힌 곳, 다 캔 곳 뺌)+MinedOut, Plugin/Unlocks(호스트가 주운 적 있음 또는 그 물건 떨구는 보스 월드 키), Dungeons(남은 더미 ZDO 세기·CanOpen·Open = 바닐라 RPC UseDoor), GatherJob.UpdateOpenDoor(문 앞 3m에서 열기, 세 번 안 되면 포기, "cryptOpen" 대사), 출발 전 다 캤으면 depart.cryptsEmpty. Go가 m_gateUsedAt를 지움(다음 묘지 입구 앞에서 서 있던 것). vh_crypttest 칸 바꿈(열쇠 없음 → 주움 → 보스 월드 키, 일꾼이 직접 문 열고 "!철 3", 남은 더미 셈) — ★ 클라우드라 게임 시험 못 함. 빌드·참조 검사 통과, Core 372(루프 회차 63과 합친 뒤). 다음 보스(위시본 = 산 은)도 같은 방식(decisions.txt).
-- [루프 회차 63] 8) ⑧ 사냥 1조각(끝): 사냥만 되는 물건(예 RawMeat)은 ResourceCatalog.WaysFor가 ToolKind.Hunt로 돌려 주고(Prey: CharacterDrop+MonsterAI, 보스·길들인 것 뺌), GatherJob이 사냥 모드로 돈다 — Search/GoZone에서 60m 안 사냥감을 찾으면(Guard.SafePrey = 그 한 마리만 놓고 Danger 판단이 Fight) Step.Hunt가 쫓아가 치고, 죽으면 Collect로 줍고 Return/Deposit은 채집과 같음(2분 못 잡으면 포기, 체력 40% 아래면 huntHurt 대사 후 그만). 계획의 Hunt 단계도 같은 GatherJob. 사슴·토끼(AnimalAI)는 활이 필요해 Prey에서 뺌(다음 조각). vh_hunttest 신설 PASS 9/9(127초: 멧돼지 둘 → 고기 2개 상자), wood·craft PASS, fight·depart는 단독 PASS(이어 돌리면 간헐 FAIL, 멧돼지/체력 6 잔여 영향). Core 365. 다음: ⑧ 2조각 굽기(CookingStation 넣기·꺼내기, 타기 전에 뺌) → 3조각 사슴 활 사냥.
-- [루프 회차 62] 8) ⑦ 철 4조각(끝): "!철주괴 N" = 고철을 용광로(blastfurnace)에서 제련. 고침 2개: ① ResourceCatalog.WaysFor가 연료 제련 산출물(s_smelted, 예 Iron)은 채집 방법 없음으로 돌려 채집으로 새지 않게(Iron이 어딘가에서 떨어져 "!철주괴"가 채집으로 가던 것), ② CraftPlanner.PickProcess가 입력이 거점 재고에 있는 가공을 먼저(고철·철 광석 둘 다 철 주괴가 되는데 철 광석을 모으러 가던 것). crafttest에 용광로 칸 추가 PASS 23/23(198초), crypttest 19/19, Core 365. 다음: ⑦ 5(⑤ 던전 문 마무리, 구현 단계 ⑤·⑦ [x] 표시) → ⑧ 사냥·요리·발효.
-- [루프 회차 62] 8) ⑦ 철 3조각(끝): 지하묘지 안 위험 — Guard.AwayPoint가 안(y>3000)이면 나가는 Teleport 쪽으로 물러나·도망, GatherJob.AvoidHere가 안이면 그 묘지를 끝내고 Return(나가는 Teleport)으로. 밤에는 지하묘지로 걸어가기 시작 안 함(TryStartCrypt). 장소 기억은 안과 입구가 xz 같아 입구 구역에 그대로 쌓임(코드 변경 없음). 출발 전: 고철인데 아는 곳도 열린 묘지도 없으면 거절 depart.noCrypt("문 하나만 열어 주세요", Core DepartureInput.NoCrypt). crypttest 19/19(거절 칸 2개 추가)·fighttest 11/11·departtest 25/25(간헐 1번 재고 질문 FAIL은 재실행 PASS), Core 364. 안에서 실제 적과 싸워 나가는 시험은 안 함. 다음: ⑦ 4(철 주괴 제련 = 고철 → 제작 계획 Smelter) → 5(⑤ 던전 문 마무리).
-- [루프 회차 61] 8) ⑦ 철 2조각(끝): "!철 N" = GatherJob이 바깥에서 고철이 안 보이면 열린 지하묘지를 골라(Step.GoCrypt: 걸어가 입구 Teleport 사용, 6분 제한) 안(90m 시야, FindInSight range·inside 구분)에서 진흙 더미를 캐고, 다 캐거나 짐 차거나 15분이면 Return이 나가는 Teleport로 나와(없거나 2분 넘으면 깃발) 거점 상자에 넣음. 빈손으로 나오면 집 안 가고 다음 묘지·찾기. Senses.Observe는 안(y>3000) 물체를 바깥 구역 지식에 안 넣음. vh_crypttest에 "!철 3" 칸 추가 PASS 17/17(223초 고철 3개 상자), woodtest·departtest PASS, coppertest 간헐 1번 FAIL(길이 막혀 순간이동, 기존 간헐)·재실행 PASS 11/11. Core 364. 다음: ⑦ 3조각(안 위험·밤 규칙·장소 기억·열린 지하묘지 없을 때 출발 전 대답) → 4(철 주괴 제련) → 5.
-- [루프 회차 60] 사용자 결정 구덩이 순간이동(끝): 도망 중 구덩이에 6초·헤엄만 20초 3m 안이면 깃발로(Core Climb.TrapRescue, WorkerAI.RescueIfTrapped, Guard.CancelFlee). pittest에 도망 구덩이 칸 추가 PASS(6.2초). Core 364. ★ 시험 환경: pittest 구덩이 파기가 몇 자리에서 흙 파기 60~300번에도 0m(효과 없음) → 그 칸은 0m 구덩이로 의미 없는 OK·구덩이 7은 FAIL. 이번 변경 무관(회차마다 실패 자리가 바뀜), 원인은 나중에 vh-debug.
-- [루프 회차 60] 사용자 결정 저항 미드(끝): 1) 마시기는 싸우기 직전만(Guard가 싸울 대상 정할 때, 그 적 공격 물건의 독·냉기·불, 모르면 바이옴), 중독·적 보임 마시기 뺌, 위험 판단은 배운 적의 속성 몫을 저항/미드 있으면 반. 2) 출발: 저항 미드 없으면 묻지 않고 투덜(depart.noResist) 후 출발. 3) 상자 꽉 차면 만든 것을 상자 앞 땅에+"상자 하나만 더"(5분에 한 번, CraftStep.LeaveAtChest·MachineStep.LeaveSkipped). TestKit.Setup이 지난 시험 상자를 치움(사용 중 표시 남은 상자 때문에 crafttest 재고가 틀어짐). resisttest 14/14·crafttest 20/20(꽉 찬 상자 칸 추가)·departtest 25/25, Core 361. 다음: 사용자 요청 구덩이 순간이동 → ⑦ 2조각.
-- [루프 회차 60] 8) ⑦ 철 1조각: Plugin/Dungeons.cs(늪 지하묘지 찾기 = LocationProxy ZDO의 위치 해시가 SunkenCrypt*, 입구 열쇠 문 sunken_crypt_gate state≠0 = 열림, 입구/나가는 Teleport, ArrivePoint·Use = 바닐라 TeleportTo) + Core Crypts.Choose(열린 곳 중 가장 가까운 곳, 피할 곳·3000m 넘으면 뺌)+테스트. vh_crypttest 신설 PASS 14/14(거점 110m 앞에 SunkenCrypt4를 TestSpawnLocation으로 세움 — 월드 저장은 다시 켤 때까지 꺼짐, 닫힌 문 안 고름·열면 고름, 일꾼 안(y≈5030) 들어갔다 나옴, 안 진흙 더미 mudpile2 12개를 ResourceCatalog가 고철로 앎). Core 360. 다음: ⑦ 2조각.
-- [루프 회차 59] 7) E 장비 수리(끝): Plugin/Work/Repair.cs(바닐라 InventoryGui.CanRepair와 같은 규칙: 레시피 수리대·제작대 이름이 같은 거점 30m 안 설비, 레벨≥최소, 지붕 70%·불) + Core RepairRule(반 넘게 닳거나 부러진 것만). Prep이 장비 입기 전에 설비로 걸어가 짐의 것을 다 고침(무료), Unload는 거점에서 고칠 수 있는 닳은 장비를 상자에 안 넣고 지님(부러진 도구가 상자에 그대로 남던 것). vh_repairtest 신설 PASS 10/10(제작대 10m, 2초), preptest 22/22·woodtest 10/10 PASS, Core 355. 다음: 8) ⑦ 철 조각 나누기.
-- [루프 회차 58] 7) D 저항 미드 3조각(끝): 출발 전 판단 — 빠듯한 곳이 늪(독)·산(냉기)·애쉬랜드(불)인데 그 저항 미드가 짐·음식/미드 상자에 없고 장비로도 못 막으면 "독 저항 미드 하나만 주시면 갈게요"(조건 resist:Poison, 상자에 넣으면 5초 안에 출발). 같이 고침: Prep이 미드를 장비 상자에서만 챙겨 이름 붙은 "미드 상자"의 미드를 못 꺼내던 것(음식·미드 상자에서도 챙김, 미드 상자에선 장비 안 꺼냄). departtest 26/26(늪 칸 추가)·preptest 22/22·resisttest 12/12, Core 349. 다음: E 장비 수리(NPC 도구·갑옷, 작업대).
-- [루프 회차 57] 7) D 저항 미드 2조각: 발효기(Fermenter) 넣기·꺼내기(MachineStep, 지붕 없으면 안 넣음, 다 익은 걸 보면 Wait 끝), 몫 넘는 미드는 상자로, 상자 꽉 차면 만든 것을 짐/땅에(사라지던 것). crafttest 16/16(발효 칸 추가)·preptest 22/22·bagtest·resisttest PASS, Core 346. 간헐 1번(따른 뒤 줍기 못 함, DIAG 넣음). 다음: D 3조각 출발 조건 "독 저항 미드 주면 갈게요" → E 장비 수리.
-- [루프 회차 56] 7) D 저항 미드 1조각: Core Resist(바이옴→독·냉기·불, 마실지)+테스트, Gear.ResistOf(SE_Stats.m_mods), Prep이 종류마다 2개 챙김·Kept, Guard가 중독되거나 그 바이옴에서 적이 보이면 마심("resist" 대사). vh_resisttest 신설 PASS 12/12, preptest·fighttest PASS, Core 346. 다음: D 2조각 발효기(Fermenter)로 저항 미드 만들기(MachineStep) → D 3조각 출발 조건 "독 저항 미드 주면 갈게요" → E 장비 수리.
-- [루프 회차 55] 사용자 요청 깃발 강제 복귀: GatherJob.RescueIfStuckAgain(막혀 목표를 바꿨는데 같은 자리 8m 안에서 또 막히면 거점으로 순간이동, 짐·체력 그대로, 들고 있으면 넣기·아니면 다음 목표). vh_stucktest 신설 PASS 9/9, copper·pit·wood·stone PASS, Core 337. 다음: 아래 "다음"의 7) D 저항 미드.
-- [루프 회차 55] 사용자 요청 주석: vh_tintest 신설·PASS 12/12(주석 광맥은 3~4개라 둘레에 더 놓음). GatherJob m_tried(와서 봤는데 없는 구역·못 간 구역은 그 일 동안 다시 안 고름), 진단 로그(SightDiag·몸 둘레 충돌체). coppertest PASS. Speech "stuck" 대사만 넣음(아직 안 씀). 다음: 사용자 요청 깃발 강제 복귀.
-- [루프 회차 51] 6) ⑤ 포탈 3조각: vh_portaltest 신설·PASS 9/9(포탈 한 쌍 ZDO 짝 → Portals.Linked가 출구를 바닐라식(짝 앞 1m·위 1m)으로 읽음, 먼 목적지는 포탈·가까운 곳은 걸음, 일꾼 TeleportTo로 500m 건너감, 10초). 먼 쪽은 구역이 안 불러와져 ZDO만 만듦. 남음: 던전 문·y≈5000 처리(⑦ 철 때 같이 — 지하묘지 입구 문 Teleport 읽기). 다음: 7) D 저항 미드.
-- [루프 회차 50] 요청(통신 시험 2건)은 회차 40까지 답함. 6) ⑤ 포탈 2조각: GatherJob.WalkVia — 구역 가기·귀환 걸음이 포탈이 더 빠르면(PortalRoute) 입구까지 걸어가 TeleportTo(출구), 못 가면 걸어서. 포탈 없으면 동작 그대로(woodtest PASS 46초; 앞서 2번 FAIL은 Prep/GoChest에서 집 앞 2분 정지로 포탈 코드 밖, 기준 빌드도 한 번 느렸음 → 간헐). 포탈 실시험 없음(시험 월드에 포탈 두 개 세워야 함). Core 337 PASS. 다음: ⑤ 던전 문·y≈5000 순간이동 처리 + vh_portaltest 신설(포탈 한 쌍 세워 멀리 가기).
-- [루프 회차 49] 4) ④ 주석은 [보류: 주석 광맥이 늪 지형이라 시험 틀 비용 대비 이득 작음, 구리와 같은 채집 코드]. 5) J 이동 한계는 [보류: 도망 중 깎기는 추격 중 서서 곡괭이질이라 일부러 안 함(점프는 MoveToPoint가 함), 물 찬 구덩이·통나무 충돌은 드물고 시험 틀 어려움 — 시험에서 다시 나오면 vh-debug]. 6) ⑤ 포탈 1조각: Core PortalRoute(걷기 vs 포탈 비용, 입구 150m 안·60m 넘게 절약해야 탐) + 테스트, Plugin Portals(ZDO portal_wood·ConnectionType.Portal 짝 출구 읽기), 아직 안 부름. Core 337 PASS, 빌드 통과. 다음: ⑤ 이동에 연결(Go 단계가 포탈 입구로 걸어가 순간이동), 던전 문·y≈5000 처리.
-- [루프 회차 48] 4) 시험 전 코드 게임 시험 1조각: vh_settest 신설·PASS 7/7(세트 10번 활·곤봉 저장 → "!세트 10 1" → 상자에 각 1개·재료 전부 소모, 8초). 남음(4): ④ 주석(주석 광맥은 늪 지형이라 시험 틀 어려움, 못 하면 [보류]).
-- [루프 회차 47] 4) 시험 전 코드 게임 시험 1조각: vh_teamtest 신설·PASS 6/6(20m 안 무기 든 플레이어가 있으면 위험 판단의 "내 한 방"이 커짐, 11초). 남음(4): ④ 주석, ⑧ 세트 계획.
-- [루프 회차 46] 4) 시험 전 코드 게임 시험 1조각: vh_helptest 신설·PASS 7/7(트롤 앞에서 물러남/도망 때 플레이어 60m 안이면 "도와줘요" 대사, 7초; 지도 핑은 확인 못 함). Core 331 PASS. 남음(4): 같이 싸움, ④ 주석, ⑧ 세트 계획.
-- [루프 회차 45] 4) 시험 전 코드 게임 시험 1조각: vh_raidtest 신설·PASS 9/9(60m 밖에서 일하다 습격 걸림 → 일 접고 귀환 모드·대사·거점 복귀, 20초). Core 331 PASS. 남음(4): 도와줘요·같이 싸움, ④ 주석, ⑧ 세트 계획.
-- [루프 회차 44] 4) 시험 전 코드 게임 시험 1조각: vh_refilltest 신설·PASS 8/8(!채워 나무 20 → 한가한 일꾼이 채집해 채움 → 채워진 뒤 다시 안 나감, 132초). 남음(4): 습격 귀환·도와줘요·같이 싸움, ④ 주석, ⑧ 세트 계획.
-- [루프 회차 41] 4) 시험 전 코드 게임 시험 1조각: vh_skilltest 신설·PASS 8/8(도끼 스킬 오름·70 상한·피해 계수·다른 일꾼 영향 없음·ZDO 저장 왕복). 남음(4): 습격 귀환·도와줘요·같이 싸움(동행 멀어짐), ④ 주석, ⑧ 세트 계획, ⑩ 채집 보충(!채워). 장소 기억·출발 전 판단은 departtest가 이미 덮음.
-- [루프 회차 43] 4) 시험 전 코드 게임 시험 1조각: vh_nametest 신설·PASS 9/9(상자 이름 my_gear·음식상자·개인_백산수 → 역할 선택·넣을 상자·재고 세기에서 개인 상자 제외, CustomChestName 없이 ZDO에 직접 씀). Core 331 PASS. 남음(4): ③ 장소 기억·출발 전 판단·스킬·습격 귀환·도와줘요·같이 싸움, ④ 주석, ⑧ 세트 계획, ⑩ 채집 보충(!채워).
-- [루프 회차 42] 3) 손님 코드 검사 끝: 패치·정적 틱·WorkerNpc/AI·채팅 경로 전부 규칙 지킴(고칠 곳 없음), 규칙 5개를 risks.txt 끝에 적음. 코드 변경 없음. 다음: 4) 시험 전 코드 게임 시험(③ 장소 기억·출발 전 판단·스킬·습격 귀환·도와줘요·같이 싸움, ④ 주석, ⑧ 세트 계획, ⑩ 채집 보충).
-- [루프 회차 41] B 마무리: 대기열·하던 일·질문 대기는 이미 데이터로 저장됨(WorkItem→ZDO vh_queue·vh_pending; Wait 중 끼운 보충은 PlanJob 안 일시 상태라 저장 불필요, PlanJob.Goal로 복귀) 확인. crafttest에 개수 보존 칸 2개 추가(활 재료 전부 소모·활 1개, 광석+주괴≤4) 10/10 PASS. Core 331 PASS. 다음: 3) 손님(멀티) 코드 검사.
-- [루프 회차 40] B 일 끼워넣기 1조각: Wait만 남고 90초 이상 남으면 PlanJob이 짧은 자동 보충(20개, Departures.NextRefillJob)을 끼우고 끝나면 계획으로 복귀(저장 안 함). Unload에 DIAG 로그 추가. Core 331 PASS, crafttest 8/8·departtest 24/24 PASS. 이 끼움을 실제로 타는 시험은 아직 없음. 다음: B의 나머지(대기열·질문 대기 저장 데이터화, 상자 넣기/꺼내기 개수 시험).
-- [루프 회차 38] I-2 상자 이름 읽기 완료(사용자가 ChestTag→CustomChestName로 바꿈): Core ChestNames(부분 문자열·대소문자 무시, 개인·보물·private·personal=손대지 않음 우선)+ChestTagReader(ZDO 문자열 "ChestName")를 Chests.TagProvider 기본값으로. Core 331 PASS, preptest·crafttest·departtest PASS. departtest는 시험 월드에 남은 체력 미드 때문에 FAIL이던 것을 시험 시작 청소에 미드 추가로 고침(코드 문제 아님). 이름 붙은 상자 게임 시험은 아직 안 함(Core 시험만; CustomChestName은 설치돼 있음 → 다음에 시험 가능). ★ 간헐 FAIL: vh_preptest가 2번 중 1번 "상자에 못 닿아 건너뜀"(7/22)·1번 "갑옷 피해 계산" FAIL, 재실행 PASS(원인 못 찾음, 변경 무관). 다음: B 일 끼워넣기·되돌아오기(Wait 중 자동 보충).
-- [루프 회차 37] I-1 상자 역할 Chests 한 곳 완료(ChestRole·TagProvider, 동작 그대로, 시험 PASS; bagtest "넣을 데가 없으면" 기준 빌드에서도 FAIL=기존 불안정). 다음: I-2 ChestTag 이름 읽기(ChestTag.dll 이름 저장 위치 ilspy 확인).
-- [루프 회차 36] 노트 맞춤만(코드 변경 없음): decisions 결정 묶음·구현 단계 표·codemap 정리, 사용자 순서를 "다음" 맨 앞에. 다음: I-1 상자 역할 고르기를 Chests 한 곳으로.
-- [루프 회차 35] 2-1 손님 코드 검사 1차: 새 코드(PlanJob·CraftStep·MachineStep·Reclaim·Claude)는 NPC 주인(호스트)만 돌고 상자는 TryEdit(소유권)·설비는 RPC라 문제없음.
-  고친 것: 거점 재고 세기(Chests.CountAll·새 Chests.Any — 출발 판단·제작 계획)가 거점 구역이 안 불러와진 상자를 0으로 보던 것 → 인스턴스 없으면 ZDO s_items를 읽음.
-  MachineStep 넣기·꺼냄·정리 끝 로그 추가. 빌드·Core 315 PASS, departtest+crafttest 3번 PASS.
-  ★ 간헐 FAIL(원인 못 찾음): departtest 뒤 crafttest "구리 주괴 2개가 상자에"가 2번 FAIL(계획은 완료 3인데 상자에 주괴 없음, 기준 빌드는 4번 PASS·이 빌드도 3번 PASS).
-  다시 나오면 LogOutput "설비 꺼냄/꺼낸 것 정리 끝" 줄로 주괴가 짐에 들어왔는지부터 봄. 다음: 구현 단계 첫 [~]인 ③(수리·저항 미드) 조각 나누기.
-- [루프 회차 34] 코드 변경 없음: 남은 "다음" 1번(시험 틀 동시 N명)은 위험 대비 이득이 작아 보류(decisions.txt 회차 34 [기본안]). 6번은 Wait 중 자동 보충(큰 설계)만 남아 보류. 루프가 할 일 없음.
-- [루프 회차 33] 코드 변경 없음(판단만): Hunt·Farm 단계는 설계서상 ⑧ 사냥·⑨ 농사 단계의 일이라 6번(제작 실행기)에서는 제외 → 6번은 Wait 중 자동 보충(큰 설계, 보류)만 남기고 사실상 끝. 프레임·시험 시간 diag 기록(1번 끝 줄)은 이미 TestRunner.Finish에 있음. 남은 "다음"은 1번(시험 틀: 시험용 일꾼 동시 N명·1km 고정 자리)뿐 — 모든 시험 코드를 건드리는 큰 일이라 다음 회차는 먼저 시험 하나(vh_woodtest)만 "일꾼 N명 동시" 틀로 옮겨 보고 PASS면 넓힌다.
-- [루프 회차 32] 코드 변경 없음(분석만): "Wait 중 자동 보충"은 PlanJob이 Wait만 남았을 때(PlanRunner.OnlyWaiting) 자기를 멈추고 보충 채집을 끼웠다가 Wait 끝에 되돌아오는 중첩 일이 필요 → 일꾼이 일 하나만 갖는 현 구조(Ai.Job)에서 큰 설계. 사용자 결정 없이 하지 않고 뒤로 미룸. 남은 "다음": 1(시험 틀, 위험 큼)·6 나머지(Hunt·Farm 단계). 다음 회차는 Hunt/Farm 단계 필요 여부부터 판단.
-- [루프 회차 31] 5-1 저장 왕복 게임 시험: departtest 7)에 Make(구리 주괴 2) 칸 추가 → 24/24 PASS(저장·불러옴에서 Make 그대로). 남음: Wait 중 자동 보충·다른 일 하기. 다음 6 이어서 또는 1.
-- [루프 회차 30] 5-1 조각: 제작 계획(PlanJob)도 저장 — WorkKind.Make(물건 또는 세트 번호+수량), PlanJob.Goal, 불러오면 Departures.ResumeMake가 현재 재고로 계획을 다시 세워 시작. 빌드·Core 315 PASS(왕복 시험에 Make 추가), [게임 시험 안 됨]. 남음: 5-1 저장 왕복의 게임 시험(departtest 끝에 Make 포함), Wait 중 자동 보충·다른 일 하기. 다음 1(시험 틀) 또는 6 이어서.
-- [루프 회차 29] 계획 말투를 실행 전제로 바꿈("바로 시작하겠수다", Speech craft.plan 두 성격), Core 315 PASS, 빌드 통과. 남음: Wait 중 자동 보충·다른 일 하기, 작업 상태 저장(5-1). 다음 5-1 또는 6 이어서.
-- [루프 회차 28] 6번 시험: vh_crafttest 새로(제작대 앞 활 제작 + 제련소 구리 주괴 2개 = PlanJob 실제 실행) PASS 8/8(119초). 고침: "!구리주괴/주석주괴/청동주괴/철주괴" 별칭(게임 한글 이름이 "구리"라 광석과 겹쳐 채집으로 잘못 감), Core 315 PASS. 남음: Wait 중 자동 보충·다른 일 하기, 작업 상태 저장(5-1), 계획 말투("계획만 세워 뒀수다"는 이제 실행하니 바꿀 것). 다음 5-1 또는 6 이어서.
-- [루프 회차 27] 6번 다섯째 조각: Departures.Craft·MakeSet이 계획을 말한 뒤 끝까지 가능한 계획(설비 있음·범위 안·너무 길지 않음)이면 PlanJob 시작(Idle·Home일 때만, 일하는 중이면 시작 안 함·로그). Features.RunPlans 스위치(기본 켬). 빌드·Core 312 PASS, [게임 시험 안 됨]. 남음: Wait 중 자동 보충, 상태 저장, vh 시험(!구리주괴로 실제 제련소 넣고 꺼내기 — 기존 departtest가 계획만 보는 가정이면 같이 확인). 다음 6 이어서(vh 시험) 또는 1.
-- [루프 회차 26] 6번 넷째 조각: Plugin/Work/MachineStep(Load: 거점 상자 재료·연료를 Smelter에 RPC_AddOre·AddFuel로 넣음, Unload: RPC_EmptyProcessed 후 완성품 줍기→짐 정리로 상자에). Smelter만(Fermenter·화덕은 Failed→Blocked). PlanJob이 호출. 빌드·Core 312 PASS, 어디서도 안 부름·[게임 시험 안 됨]. 남음: Wait 중 자동 보충, 명령(!구리주괴)에서 PlanJob 시작, 상태 저장, vh 시험(제련소에 실제로 넣고 꺼내기). 다음 6 이어서 또는 1.
-- [루프 회차 25] 6번 셋째 조각: Plugin/Work/PlanJob(IWorkerJob, PlanRunner를 돌림: Gather→GatherJob·Craft→CraftStep, Load·Unload·Hunt·Farm은 Failed→Blocked, 끝나면 로그). 빌드·Core 312 PASS, 어디서도 안 부름·[게임 시험 안 됨]. 남음: Load/Unload(설비 넣기·꺼내기), Wait 중 자동 보충, 명령(!구리주괴)에서 PlanJob 시작, 상태 저장, vh 시험. 다음 6 이어서 또는 1.
-======================================================================
-- [루프 회차 24] 6번 둘째 조각: Plugin/Work/CraftStep(Craft 단계 하나: 제작대까지 걸어가 거점 상자 재료를 한 프레임에 빼고 결과를 상자에 넣음, 모자라면 Failed·30초 상자 사용 중이면 Failed·120초 제한). 빌드·Core 312 PASS, 아직 어디서도 안 부름·[게임 시험 안 됨]. 남음: Gather→GatherJob, Load/Unload(설비 넣기·꺼내기), PlanRunner를 WorkerAI에 붙이기(Craft 호출·Wait 중 자동 보충), 상태 저장, vh 시험. 다음 6 이어서 또는 1.
-- [루프 회차 23] 6번 첫 조각: Core PlanRunner(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait는 시계로 끝남·기다리며 다른 일) + 테스트, Core 312 PASS. 플러그인 연결 안 함. 남음: 단계별 실제 동작(Gather→GatherJob, Load/Unload→상자·설비 상호작용, Craft→제작), 상태 저장, 시험. 다음 6 이어서 또는 1.
-- [루프 회차 22] 5번 정리만(코드 변경 없음): 남은 항목을 구현됨·기본안으로 안 함·뒤로 미룸으로 가름. 다음 1(시험 틀 바꾸기 동시 본체, 위험 큼) 또는 6(제작 실행기).
-- [루프 회차 21] 5번 "도와줘요!!"+핑: Guard.CallHelp — 물러남·도망 때 60m 안에 플레이어가 있으면 "help" 말하고 Chat.SendPing(60초에 한 번, 없으면 기존 backOff/flee). Core 308 PASS, [게임 시험 안 됨]. 5번 남은 것: 같이 싸움, 수리, 저항 미드, 앞장서기.
-- [루프 회차 20] 5번 습격 귀환: 일하는 중 RandEvent 구역(m_eventRange) 안이고 거점에서 30m 넘으면 "raid" 말하고 GoHome(5초마다 확인, WorkerAI) — 귀환 뒤 일 자동 재개 없음, Core 308 PASS, [게임 시험 안 됨]. 5번 남은 것: 같이 싸움, 도와줘요+핑, 수리, 저항 미드, 앞장서기.
-- [루프 회차 19] 5번 첫 조각: 동행 중 동행자가 20m 넘게 멀어지면 "어디 가요?!"(escort.far, 30초마다) — Speech 두 성격+WorkerAI Follow, Core 308 PASS, [게임 시험 안 됨]. 시험 틀 바꾸기 동시 본체(1번)는 위험 커서 계속 미룸. 5번 남은 것: 습격 귀환, 같이 싸움, 도와줘요+핑, 수리, 저항 미드, 앞장서기.
-- [루프 회차 18] vh_claudetest 신설·PASS 5/5(34초): "Claude 나무 스무 개 베어 와" → 실제 claude 호출 → "알겠수다! 나무 스무 개 베어 오겠수다"+작업 실행, 수다도 정상. 4번 Claude 호출 끝. 알려진 사소한 점: "생각 중" 말풍선이 부른 NPC가 아니라 첫 NPC(npcs[0])가 말함. 다음은 1(시험 틀 바꾸기 동시 본체)·5.
-- [루프 회차 17] 4번 Claude 호출 연결: Core ClaudePrompt(지시문: 형식·허용 작업·NPC 상태·상자 재고, 테스트 Core 308) + Plugin ClaudeChat(RateLimiter Sonnet 6/분·한 번에 하나+한 줄 대기·"생각 중"·ClaudeReply.Parse·실패 시 onlyBang)
-  + Commands.RunClaudeTask(setsave/setedit 직접, 나머지 Run) + Features.ClaudeChat 스위치(기본 켬). [게임 시험 안 됨] 남음: 채팅→Claude 실시험(vh 시험 신설: 호출 실패 대체·수다 무시·작업 실행), 지시문 다듬기(말투·성격).
-- [루프 회차 16] 4번 Claude 호출 첫 조각: Core ClaudeCall(인자·출력 해석·Windows 인용, 테스트) + Plugin ClaudeCli(별도 스레드 프로세스·표준입력·30초 끊기) — 아직 어디서도 안 부름, 게임 시험 안 함. claude 2.1.304 실호출 확인(haiku 4초, --tools "" --setting-sources "" --output-format json의 result 필드). 고침: 회차 14의 TestSpots가 ValueTuple을 써서 valheim-build.sh 참조 검사가 실패하던 것(SpotXZ 구조체로). 남음: 지시문(작업 목록·상자 재고·말투), 채팅 흐름 연결(RateLimiter·ClaudeReply.Parse·"생각 중…"), 시험. 시험 틀 바꾸기 동시 본체는 위험도 커서 뒤로 미룸(risks 10).
-- [루프 회차 15] Workers.DespawnNear(자리 둘레 일꾼만 정리)·TestKit.Setup(w, around) 인자 추가(기본 동작 그대로, 게임 시험 안 함). 남은 것: 지식 격리(Brain 전체 교체)·TestRunner 동시 보고.
-- [루프 회차 14] 시험 틀 바꾸기 3조각: Core SpotSearch.Find + 테스트(Core 293). 남음: 동시 시험 본체(플러그인) — 시험마다 World를 자리별로 따로(TestKit.Setup이 플레이어 앞에 깃발·상자를 세우고 Workers.DespawnAll·Brain 전체 지식 교체를 하므로 자리 인자·자기 일꾼만 정리·지식 격리가 먼저 필요, risks.txt 10). 먼 구역은 FarZones가 유지. 2명부터.
-- 마지막 게임 시험 통과: 태그 valheim-0.3.7(시험 8종 PASS). 진행률 약 30%. 모드 코드 약 8,300줄 + 시험 약 3,900줄. Core 테스트 272.
-- 0.3.8 작업 중(사용자 관찰 "점프 안 함·구덩이에 갇힘"): 점프·구덩이 탈출(경사로 깎기)·땅 파기 막기·드러난 조각 겨누기 완료.
-  묶음 1 회귀 13종 모두 PASS(루프 회차 1~4, 2026-10-21: pittest 11/11·coppertest 12/12·departtest 24/24 포함). 태그 valheim-0.3.8 붙임.
-- 클라우드 세션(2026-10-21)에서 짠 것 — 전부 [게임 시험 안 됨], 설계 design-depart-craft.txt:
-  장소 기억(PlaceBook, !기억), 출발 전 판단·질문·대답·대기열(Departure/Departures, 급함 낱말), 스킬 성장(SkillBook, !스킬),
-  제작 계획(CraftPlan/Recipes, !구리주괴 20은 계획만 말함), 세트메뉴(!세트), 자동 보충(!채워, 1분마다), Claude 답 검사·호출 제한(ClaudeReply).
-  시험 중엔 질문에 자동 "그래도 가"(Departures.TestAutoGo).
-- ChatGPT 검토 3건(가방 만재 장비 교체·다른 짐 반복·이사 뒤 옛 상자) 코드 수정, [게임 시험 안 됨]: 회귀 때 vh_preptest·vh_bagtest·vh_flagtest로 확인. 자세한 건 history.txt "ChatGPT".
-- 동작이 바뀐 것: 스킬 반영으로 처음엔 NPC 피해 계수 0.46(예전엔 약 0.93) → 채집 느려지고 싸움 판단 조심스러움. fight·wood·stone 시험 다시 볼 것.
-- 묶음 1 끝(클라우드 2026-10-21, 전부 [게임 시험 안 됨], 커밋 a56e67f~): !상자 ZDO 기준, 작업 상태 저장(vh_queue·vh_pending),
-  밝혀진 곳은 안다(거점 10구역 안), 새 시험 vh_departtest·vh_peertest. 기능 스위치 BepInEx [Features] ChestByZdo·SaveWork·KnowExplored(기본 켬).
-  Core 테스트 284. 묶음 중 고친 것: "아침에 갈까요? 응" 대기열이 아직 낮이면 바로 꺼내 질문을 되풀이하던 것(→ 다음 아침까지), 손님 게임에서 Brain.Update가 NPC ZDO에 쓰던 것.
 
 다음 (순서대로)
 ★ 지금 먼저(사용자 결정 2026-10-22 시험 시점·시험 환경, decisions.txt) — 순서대로, 끝나면 ⑧로 돌아감:
@@ -118,80 +43,18 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   2) [끝, 회차 69·70·71 — 새 시험은 Setup·End, 옛 시험은 OldClear·OldCheck·OldEnd(fartest 뺌)] 시작·종료 통제(TestKit): 시작 조건 확인(플레이어 위치·무적·장비, 아군 소환수·적, 일꾼 체력·짐·일·대기열, 상자 잠금·재고, 설비) → 안 맞으면 본시험 안 하고 "환경 불량"
      (예: 구덩이가 안 파였는데 탈출 PASS 금지). 기본 시험은 플레이어·해골 도움 없이, 협력 시험만 일부러 넣음. 끝에 시험이 만든 개체·드롭 정리·바꾼 설정 복원, 정리 실패면 다음 시험 중단.
      기록: 시작·FAIL 순간·끝 상태 + 몇 초마다 상태 흐름(수량·소유권·사용 중 표시)을 링 버퍼에 두고 FAIL 때 diag에 쏟음.
-  3) [끝, 회차 72 — 원인: 시작 제단·비켜 가기·바위 위 적, copper 간헐 하나는 risks] 기존 간헐 FAIL 재확인(재실행 PASS로 안 닫음, 동료 해골이 실제로 끼었는지부터): hunttest(멧돼지/체력 6 잔여), crafttest(departtest 뒤 "구리 주괴 2개"),
-     preptest(상자 못 닿음·갑옷 피해), departtest(재고 질문), coppertest(막혀 순간이동), pittest(구덩이 안 파짐 → 2)의 환경 불량으로).
+  3) [끝, 회차 72 — 원인: 시작 제단(건축 금지·보스석)·비켜 가기·바위 위 적] 기존 간헐 FAIL 재확인. 남은 것은 docs/valheim/Errors.txt:
+     막음은 관련 기능 확장 전에 먼저, 조사 중은 관련 시험을 돌릴 때 "다음 확인"부터, 관찰 중은 그 시험을 돌릴 때만. 재실행 PASS로 닫지 않는다.
   4) 기반 대표 시험: vh_basetest(일 중간 취소·전환, NPC 지웠다 ZDO에서 다시 불러 이어 하기 = 빠른 복원 시험, 두 일꾼 같은 상자·설비 동시, 수량 보존)
      + 실제 재시작 시험(시험 실행 두 번: 1번째에 일 중간 저장·게임 종료, 2번째에 켜서 이어 하는지·수량·저장 손상 없음). NPC 재생성은 재시작을 대신하지 않음.
   5) 시험 고르기 표(코드 영역 → 관련 시험)를 codemap.txt에. 평소엔 바꾼 영역 관련 시험만, 바이옴 완료마다 전체 회귀 + 실제 재시작 시험.
-  막는 문제(관련 기능 확장을 멈추고 먼저 해결): 물건 복제·소실, 저장 손상, 작업 복원 실패. 그 밖(이동 지연 등)은 한 회차에 못 풀면 증거와 함께 risks.txt "간헐 목록"에 적고 진행.
+  막는 문제(관련 기능 확장을 멈추고 먼저 해결): 물건 복제·소실, 저장 손상, 작업 복원 실패. 그 밖(이동 지연 등)은 한 회차에 못 풀면 Errors.txt에 적고 진행.
 ★ 그다음 순서: 8) ⑧ 먹거리 끝(회차 66: 사냥·굽기·활 사냥) → 위 "지금 먼저"가 끝나면 ⑨ 농사(평탄화 없이): 구상서 ⑨ 장을 grep해 빌드·시험이 통과하는 조각으로 나눠 여기 적고 첫 조각부터.
 ★ 사용자 순서(2026-10-22, 아래 옛 목록보다 먼저, 전문은 decisions.txt "노트 맞춤 2026-10-22"): 1) I-1 상자 역할 고르기 Chests 한 곳 → I-2 ChestTag 이름 읽기 → 2) B 일 끼워넣기·Wait 중 보충 → 3) 손님 코드 검사 → 4) 시험 전 코드 게임 시험 → 5) J 이동 한계 → 6) ⑤ 포탈 → 7) D·E → 8) ⑦⑧⑨⑩ → 9) C·⑪⑫⑬⑭⑮ → 10) F 길. 안 하는 것: A·G·K·건축물 수리.
-★ 집 PC 세션 순서(사용자 결정 2026-10-21): 시험 전에 먼저 0-a, 0-b를 사용자와 같이 한다.
-  0-a) [완료 2026-10-21] 계정 2개: 1번 = 기본(%USERPROFILE%\.claude, CLAUDE_CONFIG_DIR 없음), 2번 = CLAUDE_CONFIG_DIR=%USERPROFILE%\.claude-acct2.
-       둘 다 claude -p 호출 확인(서로 다른 계정). 한도 오류 문구·종료 코드는 아직 못 봄 → 루프 스크립트가 처음 만날 때 출력 그대로 로그에 남겨 확인.
-  0-b) [절전 완료 2026-10-21] 최대 절전 + 깨우기 예약 PASS: Register-ScheduledTask -WakeToRun(관리자 불필요) + shutdown /h, 3분 뒤 예약 → 2분 45초에 깨어남
-       (Power-Troubleshooter 이벤트에 그 작업이 원인). 30초 예약은 못 깨움(램 64GB 절전 쓰기가 더 걸림) → 루프는 최소 3분 앞 예약.
-       깨우기 타이머 허용은 이미 켜져 있음, 자동 최대 절전은 꺼져 있음(루프가 직접 건다). powercfg /waketimers는 관리자 필요.
-       남음: 부재 시 LED 끄기(메인보드 ASRock X670E Steel Legend → OpenRGB 설치 사용자에게 물음).
-       모니터는 사용자가 나갈 때 직접 끔(자동 끄기 안 함).
-  0-c) [완료 2026-10-21, 21:01부터 작업 스케줄러 "VH loop"로 무인 실행 중] scripts/vh-loop.ps1 + vh-loop-prompt.txt(회차 지시문, 마지막 줄 LOOP: DONE/FAIL/NEED_USER/ALLDONE)
-       + vh-loop-install.ps1(BOM 저장·작업 등록, 로그인 때 숨김 시작). 기록 %USERPROFILE%\vh-loop\loop.log·round-N.txt, 상태 docs/valheim/status.txt.
-       다시 켜기 Start-ScheduledTask "VH loop", 멈추기 docs/valheim/loop-stop.txt. 대화형 PC 세션의 자동 모드는 루프 커밋·등록을 막음 → 루프 스크립트 변경 커밋은 사용자가 직접.
-       절전에서 깰 때 잠금 화면 끔(powercfg CONSOLELOCK 0, 사용자). 첫 회차(-Once) 20:13~20:49 정상.
-       무인 루프 만들기(loop-plan.txt) — 사용자 결정 2026-10-21: 시험 틀 바꾸기 뒤가 아니라 0-a·0-b 바로 다음.
-       이유: 묶음 1 시험·상자 변경·시험 틀 바꾸기(4시간 안쪽)를 루프가 돌리는 걸 사용자가 집에서 실시간으로 지켜볼 수 있음. 늦게 만들면 못 봄.
-       그래서 아래 묶음 1 시험부터는 루프가 진행(첫 회차는 사용자 앞에서). 시험이 아직 불안정하니 멈춤 조건(같은 FAIL 2번·진척 없음 3회차)을 꼭 넣는다.
-  그다음 시험(루프가 진행):
-[완료 루프 회차 1~11, 태그 valheim-0.3.8] 집 PC 시험(묶음 1): batch1.txt 3장 —
-  1) 빌드 → 새 DLL로 예전 방식 회귀(시험 8종 + vh_pittest·vh_coppertest·vh_bagtest) + vh_departtest + vh_peertest, 순차.
-     [루프 회차 1, 2026-10-21 20:14~] 13종 중 PASS: npc·flag·wood·stone·death·fight·explore·bag·peer, 재시험으로 prep 23/23(첫 회 해골에 죽음, 우연).
-     고친 시험: flagtest(NPC 나타나자마자 자리 확인), pittest(물가면 300m 안 마른 초원으로 옮김 → 물 차는 FAIL 사라짐).
-     남은 FAIL(다음 회차가 할 일, 순서대로):
-     a) [고침, 루프 회차 2] vh_departtest 24/24 PASS: 시험 월드에 남은 옛 상자 재고(나무 150·구리 10)·거점 앞 구리 광맥 탓(시험 문제). 시험 시작 때 거점 상자 비우고 먼 곳 말고 구리 지식 지움.
-     b) [고침, 루프 회차 3] vh_coppertest 12/12 PASS: 곡괭이 부러진 뒤 장비 상자 1.8m까지 못 가 멈추던 것(GoChest 2.5m·못 닿으면 모은 것부터 넣음), 사슴(AnimalAI)에서 도망치던 것.
-     c) [고침, 루프 회차 4] vh_pittest 11/11 PASS: 시험 문제 3개(비탈 깃발이 구덩이 둘레보다 낮아 나온 걸 못 알아봄, 구덩이 7 얕은 원뿔, 옮긴 자리에 트롤).
-        시험 중 본 실제 한계(나중에): 도망(Flee) 중엔 구덩이에서 깎기·점프 안 함, 물 찬 구덩이에서 헤엄만 하고 못 나옴.
-     [완료, 루프 회차 11] NPC 주인 강제 되찾기(Workers.Reclaim, 1초마다). → 다음은 1(시험 틀 바꾸기).
-     → [완료, 루프 회차 5~7] 태그 valheim-0.3.8, 상자 지정 없애기(커밋 b31d2a6), woodtest 작업 멈춤 고침(진척을 DataRevision 대신 체력으로).
-     ★ 다음 회차: vh_coppertest를 2번 더 돌려 본다. 회차 8: 귀환 막힘 진단 로그 넣음(LogOutput "귀환 막힘" 줄 = 앞 발·가슴 높이에 걸린 것·땅 높이·MoveState)
-       → 다시 돌리니 PASS 11/11(132초), 간헐적. FAIL(10/11, 거점 9m 앞 20초 막혀 순간이동)이 또 나오면 그 줄로 원인 찾아 고침. 2번 다 PASS면 넘어감
-       → 아래 3)의 "NPC 주인 강제 되찾기" → 1(시험 틀 바꾸기).
-       회차 8에 고친 것: 자동 입장이 캐릭터 목록 늦게 읽히면 FindWorld 예외로 메뉴에서 멈추던 것(→ 1.5초마다 다시, 30초 넘으면 게임 끔).
-       그때 멈춘 게임(PID 30412)은 이 세션에서 강제 종료가 "액세스 거부"로 안 됨 → 다음 회차 시험 전에 valheim.exe가 남아 있는지 볼 것.
-       회차 9: 아직 남아 있음(메인 메뉴, 강제 종료·창 닫기 모두 안 됨). steam.exe·valheim.exe 경로도 못 읽음 → Steam이 관리자 권한으로 켜진 듯.
-       시험 스크립트가 시작 때 남은 게임을 끄고, 못 끄면 바로 오류로 멈추게 함(예전엔 끝없이 기다림). 끝 대기도 25분 제한.
-       → 사용자가 작업 관리자에서 끄고 Steam을 일반 권한으로 다시 켜야 시험 가능. 그 뒤 coppertest 2번.
-       [회차 10, 2026-10-22] 남은 게임은 없었고 coppertest 2번 연속 PASS 11/11(168초·217초, 진단 로그 켠 DLL). ★ coppertest 확인 끝 → 다음은 "NPC 주인 강제 되찾기" → 1(시험 틀 바꾸기).
-       진단 로그(귀환 막힘·구역 가기/다가가기 막힘·캐기 진척 없음)는 그대로 둠.
-     [지움 2026-10-22 사용자 결정] 통나무 충돌 피해 의심은 고치지 않음(사용자도 죽을 때가 있음).
-     Work는 겨누는 자리를 다가가기 때 한 번만 정하고, 직접 피해에 거리 확인 없음.
-  2) FAIL이면 그 시험만 기준 DLL(커밋 774545f의 dist DLL)로 다시 → 0.3.8 탓인지 묶음 1 탓인지 가름. 묶음 1 탓이면 그 기능 스위치를 끄고 나머지 확인 후 vh-debug.
-  3) [상자 지정 없애기 완료] 다 PASS면 태그 valheim-0.3.8 → 상자 지정 없애기(decisions.txt 2026-10-21 "상자는 지정하지 않는다": Chests.Assigned 대신 거점 상자 전부,
-     !상자·FarKinds·chestOld 제거, Prep·Unload·GatherJob·Departures와 시험의 상자 지정 부분 고침) → 아래 1(시험 틀 바꾸기). (0 무인 루프는 위 0-c에서 이미 만듦)
-     vh_peertest의 "!상자" 확인은 그때 빼고 "인스턴스 없는 상자에 넣기/꺼내기"로 바꿈.
-     같은 때(회귀 통과 뒤) NPC 주인 강제 되찾기(사용자 승인 2026-10-21): 호스트가 몇 초마다 NPC ZDO 주인이 자기가 아니면 SetOwner(자기).
-     이유: 친구가 접속한 채 NPC 근처에서 주인이 되면 바닐라 2초 정리는 "주인이 근처면 그대로"라 안 돌려줌 → 친구가 떠날 때까지 NPC 멈춤(risks.txt 5).
-  새 시험에서 흔들릴 수 있는 곳(FAIL이면 코드보다 시험부터 의심): departtest "위험 조건 상황 만들기"(적 수로 비율을 맞춤 — 못 만들면 FAIL),
-  peertest "싸우는 중"(10초 안에 싸움 시작해야 함)·"3초 안에 되찾음"(바닐라 2초 정리 주기)·"물건 같음"(일하는 중 줍기와 겹칠 수 있음).
-  vh_departtest는 시험 중 게임 시각을 다음 아침으로 넘긴다(잠자기처럼). 두 새 시험 모두 지식·장소 기억을 시험 뒤 원래대로 되돌린다.
-  [ChatGPT 반영, 사용자 재확정 2026-10-21] 무인 루프(아래 0)는 위 0-c에서 먼저 만든다. 이후 루프로 묶음 1 시험·상자 변경을 진행하고, 시험 틀 바꾸기(아래 1)로 넘어간다. 아래 0은 0-c와 같은 작업이며, 시험 틀 변경 뒤로 미루지 않는다.
-0. 무인 자동 루프 만들기(PC 세션에서 사용자와 같이, 처음 실행은 지켜보는 앞에서). 결정·구성 전부 loop-plan.txt.
-   요약: 회차마다 새 세션으로 "다음" 한 항목, 계정 2개 번갈아, 둘 다 한도면 최대 절전+깨우기 예약, 부재 모드(모니터·LED 끔),
-   15분 백업은 스크립트가 valheim-wip에, 진행은 status.txt(GitHub으로 봄), 모든 권한.
 1. [보류: 위험 대비 이득 작음, 회차 34] 시험 방식 바꾸기(사용자 결정 2026-10-21): 고정 대기 대신 조건 끝나면 바로 다음, 시험용 일꾼을 시험 수만큼(최대 8명) 불러
    1km 간격 고정 자리에서 동시에(2명부터 시작, 문제없으면 8명). 같이 쓰는 것 막기: 동시 시험은 낮 고정(밤·사망 시험은 따로 혼자),
    자기 일꾼만 정리, 지식 판정은 자기 근처만, 자리는 시험 월드에서 코드가 평평한 숲 자리를 골라 고정. 순차 실행 스위치 유지.
    프레임·시험 시간을 diag에 기록.
-2. [완료 회차 1~10] 회귀: 시험 8종 + vh_pittest·vh_coppertest + vh_bagtest(ChatGPT 3건은 preptest·bagtest·flagtest 안에 있음). PASS면 태그 valheim-0.3.8.
-2-1. [완료 회차 42, 규칙은 risks.txt 끝, 새 코드마다 다시 확인] 손님 코드 검사(risks.txt "혼자 하는 멀티 시험" B, 친구 접속은 완성판에서만 — 사용자 결정). vh_peertest·!상자 ZDO 기준은 묶음 1에서 짰음.
-4. [완료 회차 18, vh_claudetest PASS] Claude 실제 호출(구상서 5-1): 별도 프로세스·30초 제한·도구 끔·haiku/sonnet 별칭(옵션 이름은 설치된 claude 버전으로 확인),
-   보낼 정보 지시문, ClaudeTask → Commands 실행(SetSave/SetEdit 포함), "생각 중…" 말풍선.
-5. [완료 회차 19~22] ③ 남은 것 정리: 습격 귀환·도와줘요+핑·20m 유지 구현, 같이 싸움은 Guard.MyHit/Aggressive에 이미 있음, 앞장서기 안 함[기본안], 저항 미드는 ⑥ 실행기 뒤, 수리는 별도 단계(decisions.txt 회차 22).
-4-1. [완료 묶음 1] 밝혀진 곳은 안다(사용자 결정 2026-10-21): 지도에 밝혀진 구역(지도 공유로 합쳐진 것)의 자원은 가 보지 않아도 지식에 넣는다
-     (그 구역 ZDO를 읽어 Knowledge에, 월드 불러올 때 + 새로 밝혀질 때). 안 밝혀진 곳은 지금처럼 탐험. 적·도구 배우기는 그대로.
-     "밝혀진 곳 찾기 15분" 단계와 "처음이라 좀 걸려요"는 안 밝혀진 곳에만. Explore·Departure 시험 고칠 것.
-5-1. [완료 회차 30~31] 작업 상태 저장(사용자 결정 2026-10-21, ⑥ 전에): 대기열·질문 대기·하던 일을 데이터로 ZDO에(risks.txt "작업 상태 저장 설계").
-6. [완료 회차 23~33, Wait 중 자동 보충은 보류] ⑥ 제작 실행기(CraftPlan 단계를 실제로: 싣기·기다리며 다른 일·꺼내기·제작) → 자동 보충의 만드는 물건도.
 
 알려진 한계: NPC 스태미나 없음, NPC 피해도 몬스터 난이도 배율을 받음, 방패 막기 안 함, 적 약점 안 셈, 물 건너 아는 곳은 직선 판단,
 시험의 Workers.DespawnAll이 Brain 로드 전이면 지식이 비워짐(시험 환경 문제).
