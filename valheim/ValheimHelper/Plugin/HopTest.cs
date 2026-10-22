@@ -125,6 +125,60 @@ namespace ValheimHelper
             GatherJob.TestIgnorePlayers = false;
             yield return new WaitForSeconds(3f);
             checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);
+            if (ai.Job is GatherJob) yield return CantReach(w, checks, saved, hold);
+        }
+
+        static int Wood(Humanoid c)
+        {
+            int n = 0;
+            foreach (var it in c.GetInventory().GetAllItems())
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Wood") n += it.m_stack;
+            return n;
+        }
+
+        /// <summary>
+        /// 막힘 복구 4)·귀환 상한(조각 다): 이미 세 곳을 뺀 일(작업 저장 꼴로 넣음)이 근처(순간이동 안 함)에서 또 막히면 네 곳째를 빼고
+        /// "갈 수가 없어요"로 그만두고, 든 나무를 넣으러 가다 귀환 걷기가 StuckBook.HomeWalkTries번 막히면 깃발로 순간이동해 넣는지. 나무 개수 보존.
+        /// </summary>
+        static IEnumerator CantReach(TestKit.World w, GatherTest.Checks checks, float[] saved, System.Action<Character> hold)
+        {
+            var ai = w.Claude.Ai;
+            Quaternion rot = w.Player.transform.rotation;
+            Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
+            w.Claude.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
+            yield return new WaitForSeconds(1f);
+            if (!(ai.Job is GatherJob g)) { checks.Add("가) 일이 남아 있음", false); yield break; }
+            if (Wood(w.Claude) == 0) w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("Wood"), 3);
+            g.LoadStuck("1000|1000|2;1001|1000|2;1002|1000|2");
+            Speeds(w.Claude, saved, true);
+            hold(w.Claude);
+            int unreach0 = GatherJob.Unreachable, rescues0 = GatherJob.Rescues, hops0 = GatherJob.Hops;
+            int heard0 = w.Heard.Count;
+            int total = Wood(w.Claude) + GatherTest.CountBase(w.Home, "Wood");
+            yield return TestKit.WaitFor(() =>
+            {
+                if (GatherJob.Unreachable > unreach0) return true;
+                total = Wood(w.Claude) + GatherTest.CountBase(w.Home, "Wood"); // 묶인 채로 닿는 나무는 벨 수 있다 → 그만두기 직전 값
+                return false;
+            }, 150f);
+            checks.Add($"뺀 곳 4곳째에 그만둠 (대안 없음 {GatherJob.Unreachable - unreach0}번)", GatherJob.Unreachable > unreach0);
+            checks.Add($"근처라 목표 쪽 순간이동 안 함 ({GatherJob.Hops - hops0}번)", GatherJob.Hops == hops0);
+            if (GatherJob.Unreachable == unreach0) yield break;
+            checks.Add($"든 나무를 넣으러 감 ({ai.Job?.StepName})", ai.Job is GatherJob gr && gr.StepName == "Return");
+
+            // 발은 계속 묶임: 귀환 걷기가 상한만큼 막히면 깃발로 순간이동
+            yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Claude.transform.position, w.Home) < 5f, 120f);
+            checks.Add($"귀환 막힘 상한 → 깃발로 순간이동 ({Utils.DistanceXZ(w.Claude.transform.position, w.Home):0.0}m)", TestKit.Ok);
+            checks.Add("깃발 강제 복귀(다시 막힘)와 따로", GatherJob.Rescues == rescues0);
+            Speeds(w.Claude, saved, false);
+            hold(null);
+            yield return TestKit.WaitFor(() => !(ai.Job is GatherJob), 60f);
+            checks.Add($"넣고 일을 끝냄 ({ai.Current}/{ai.Job?.StepName})", TestKit.Ok);
+            bool said = false;
+            for (int i = heard0; i < w.Heard.Count; i++) said |= w.Heard[i].Contains("갈 수가 없") || w.Heard[i].Contains("못 가겠");
+            checks.Add("\"갈 수가 없어요\" 말함", said);
+            int after = Wood(w.Claude) + GatherTest.CountBase(w.Home, "Wood");
+            checks.Add($"나무 개수 그대로 (짐 {Wood(w.Claude)}, 그만둘 때 합 {total} → 지금 합 {after})", after == total && Wood(w.Claude) == 0);
         }
     }
 }
