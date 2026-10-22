@@ -8,7 +8,7 @@
 # 자리 비움(입력 없음 10분)이면 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
 # 쉬기: docs/valheim/loop-pause.txt에 다시 시작할 시각("yyyy-MM-dd HH:mm")을 쓴다(아래 Get-PauseUntil).
-# 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 UserReply.txt). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
+# 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 history.md 맨 위, 가져간 요청은 지움). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
 # pull로 이 스크립트가 바뀌면 이번 회차 뒤 새 스크립트로 저절로 다시 켜진다(scripts/vh-loop-restart.ps1, PC에 사람이 없어도). 고칠 때 UTF-8 BOM을 지킨다.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
 param([switch]$Once)   # -Once: 한 회차만(처음 지켜보는 시험용)
@@ -295,7 +295,7 @@ function Write-Status($now, $last) {
         "할 일: $todo",
         "마지막 시험: $test",
         "Claude가 한 일: $last",
-        "요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
+        "요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
     ) + @(if ($StaleNote) { $StaleNote }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
     [IO.File]::WriteAllText($f, "$text`n", $Utf8)
@@ -340,9 +340,9 @@ function Run-Claude($acct, $outFile) {
 }
 
 # 15분 백업 때마다: 회차가 시작한 뒤 UserRequest.txt가 바뀌었으면(사용자가 GitHub에서 새로 씀) 회차 끝을 기다리지 않고
-# 답 전용 claude를 짧게 따로 돌려 UserReply.txt에 먼저 답한다(사용자 결정 2026-10-22). 회차의 작업 트리·게임은 안 건드린다:
-# 따로 작업 트리($ReplyDir, origin/valheim의 분리된 HEAD)에서 UserReply.txt만 커밋해 valheim에 푸시.
-# 회차도 같은 파일 끝에 덧붙이므로 .gitattributes가 UserReply.txt를 merge=union으로 둔다(합칠 때 양쪽 줄을 다 남김).
+# 답 전용 claude를 짧게 따로 돌려 history.md 맨 위에 먼저 답한다(사용자 결정 2026-10-22). 회차의 작업 트리·게임은 안 건드린다:
+# 따로 작업 트리($ReplyDir, origin/valheim의 분리된 HEAD)에서 history.md·UserRequest.txt만 커밋해 valheim에 푸시.
+# 회차도 history.md 맨 위에 넣으므로 .gitattributes가 history.md를 merge=union으로 둔다(합칠 때 양쪽 줄을 다 남김).
 function Reply-Requests($acct) {
     G fetch -q origin valheim | Out-Null
     $req = G rev-parse 'origin/valheim:docs/valheim/UserRequest.txt' | Select-Object -Last 1
@@ -424,7 +424,7 @@ function Wait-UserRequest($why, $last) {
     $f = 'origin/valheim:docs/valheim/UserRequest.txt'
     $h0 = G rev-parse $f | Select-Object -Last 1
     Log "멈춤: $why → UserRequest.txt가 바뀔 때까지 기다림"
-    Write-Status "답 기다림: $why — UserRequest.txt에 쓰면 5분 안에 이어 감(물은 것은 UserReply.txt)" $last
+    Write-Status "답 기다림: $why — UserRequest.txt에 쓰면 5분 안에 이어 감(물은 것은 history.md 맨 위)" $last
     while ($true) {
         Start-Sleep 300
         Prepare-Git

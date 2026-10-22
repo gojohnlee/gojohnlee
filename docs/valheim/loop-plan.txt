@@ -20,10 +20,10 @@
    한도·절전·계정)를 회차마다 갱신해 푸시(스크립트가 씀, 토큰 0: 할 일=progress "다음", 결과=diag 첫 줄, Claude가 한 일=claude -p 마지막 한 줄). 루프는 시작·푸시 전에 pull해서 사용자가 GitHub에서 고친 것과 안 부딪히게.
    [사용자 결정 2026-10-21] 만드는 때: 집 PC 세션에서 계정 2개·최대 절전 설정 바로 다음(시험 틀 바꾸기 전). 처음 회차들은 사용자가 집에서 지켜봄.
    시험이 아직 불안정하므로 멈춤 조건 추가: 같은 시험이 같은 이유로 2회차 연속 FAIL이면 멈추고 status.txt에 적음.
-   [사용자 결정 2026-10-22] 요청 답부터: 회차는 0번에서 일하기 전에 UserReply.txt에 답("받음:" = 받고 할 일, "요청:" = 끝)을 먼저 푸시.
-   15분 WIP 백업 때마다 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리
-   (%USERPROFILE%\vh-loop\reply, origin/valheim 분리 HEAD)에서 돌려 UserReply.txt만 커밋·푸시(질문은 답, 일은 "받음:"으로 다음 회차에 넘김).
-   UserReply.txt는 .gitattributes merge=union(회차·답 세션이 같이 덧붙여도 안 부딪힘). 답 세션이 두 번 실패하면 그 내용은 다음 회차 0번에 맡김.
+   [사용자 결정 2026-10-22] 요청 답부터: 회차는 0번에서 일하기 전에 history.md 맨 위에 답("### 요청 · 날짜 · 이름")을 쓰고 그 요청을 UserRequest.txt에서 지워 먼저 푸시
+   (답 파일 UserReply.txt는 없앰). 15분 WIP 백업 때마다 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리
+   (%USERPROFILE%\vh-loop\reply, origin/valheim 분리 HEAD)에서 돌려 history.md·UserRequest.txt만 커밋·푸시(질문은 답하고 지움, 일은 "[받음 시각]"을 붙여 다음 회차에 넘김).
+   history.md는 .gitattributes merge=union(회차·답 세션이 같이 맨 위에 넣어도 안 부딪힘). 답 세션이 두 번 실패하면 그 내용은 다음 회차 0번에 맡김.
    회차 54 사고(배경 vh-debug를 둔 채 턴이 끝나 10분 뒤 끊김) → claude에 CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 + 지시문에 서브에이전트는 기다려 받기.
    vh-loop.ps1은 시작 때 읽혀 돌므로 고치면 다시 켜야 반영 → 사용자가 PC에 못 옴(2026-10-22) → 저절로 다시 켜기(scripts/vh-loop-restart.ps1):
    루프가 pull로 바뀐 걸 보면(또는 옛 루프가 띄운 회차 claude가 VH_LOOP_HASH로 보고) 대기 작업 "VH loop restart" + %USERPROFILE%\vh-loop\stop·restart 파일 →
