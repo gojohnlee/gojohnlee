@@ -18,9 +18,6 @@
    결정이면 decisions.txt에 [사용자 결정 날짜]로 적어 반영하고, 지난 NEED_USER의 답이면 그걸로 이어 간다. 요청 일을 끝낸 회차는 bash scripts/vh-history-note.sh "<이름 앞부분>"으로
    같은 항목에 "**끝** · MM-dd HH:mm 회차 N" + "- " 목록(한 일·남은 것·못 한 이유)을 붙이고, 그 회차 기록 요약에도 "요청 <이름> 끝".
    회차 도중에 새로 온 요청은 루프 스크립트가 15분 백업 때 답 전용 세션으로 먼저 답한다.
-   한 번만(옮기기, 2026-10-22): 옛 docs/valheim/UserReply.txt가 아직 있으면 머리말 아래 답을 전부 history.md "끝난 요청과 답" 접힌 칸 맨 위에 "[답]<br>" 꼴(줄 끝 <br>)로 옮긴다
-     (history.md는 읽지 말고 grep -n으로 그 칸 줄을 찾아 바로 밑에). "받음:"만 있고 "요청:"이 없는 요청은 아직 안 끝난 것 → progress "다음" 맨 앞에 없으면 넣는다.
-     그다음 git rm docs/valheim/UserReply.txt, .gitattributes의 UserReply.txt 줄 지움, 이 "한 번만" 덩어리를 이 지시문에서 지운다.
    NEED_USER로 끝낼 때는 물을 것을 history.md 맨 위에 "### 질문 · MM-dd HH:mm · <짧게>" + "- " 목록으로도 적는다(끝 줄 "답은 UserRequest.txt에 써 주세요").
    사용자가 답하면 그 답을 가져가는 회차가 vh-history-note.sh "<질문 이름>"으로 "**답 받음** · 시각 회차 N"을 같은 항목에 붙인다.
 1. CLAUDE.md 규칙대로 docs/valheim/progress.txt "지금"·"다음"과 docs/valheim/Errors.txt(미해결 문제, 작은 파일)를 읽는다. 작업 트리에 지난 회차가 끝내지 못한 변경이 남아 있을 수 있다(git status로 보고 이어 간다).
