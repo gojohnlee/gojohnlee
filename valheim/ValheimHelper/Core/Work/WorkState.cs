@@ -48,6 +48,8 @@ namespace ValheimHelper.Core.Work
         public int SetNo;
         /// <summary>농사(Farm): 밭 중심. 반경은 Amount.</summary>
         public float FarmX, FarmZ;
+        /// <summary>막힘 복구(StuckBook.Save): 이번 일 동안 막힌 목적지·귀환 막힘. 불러와도 같은 곳을 되풀이하지 않게.</summary>
+        public string Stuck;
     }
 
     /// <summary>질문하고 대답을 기다리는 상태(Departures 질문 대기).</summary>
@@ -104,6 +106,7 @@ namespace ValheimHelper.Core.Work
                 if (w.BiomeId != 0) f.Add("bi=" + w.BiomeId.ToString(Inv));
                 if (w.Where != null) f.Add("wh=" + Esc(w.Where));
                 if (w.SetNo != 0) f.Add("sn=" + w.SetNo.ToString(Inv));
+                if (!string.IsNullOrEmpty(w.Stuck)) f.Add("sb=" + Esc(w.Stuck));
                 if (w.Kind == WorkKind.Farm) f.Add("f=" + w.FarmX.ToString("0.0", Inv) + "|" + w.FarmZ.ToString("0.0", Inv));
                 parts.Add(string.Join(",", f.ToArray()));
             }
@@ -135,6 +138,7 @@ namespace ValheimHelper.Core.Work
                 if (f.TryGetValue("bi", out v)) TryInt(v, out w.BiomeId);
                 if (f.TryGetValue("wh", out v)) w.Where = v;
                 if (f.TryGetValue("sn", out v)) TryInt(v, out w.SetNo);
+                if (f.TryGetValue("sb", out v)) w.Stuck = v;
                 bool farmAt = f.TryGetValue("f", out v) && TryFloatPair(v, out w.FarmX, out w.FarmZ);
                 if (w.Kind == WorkKind.Gather && (string.IsNullOrEmpty(w.Item) || w.Amount <= 0)) continue; // 깨진 칸
                 if (w.Kind == WorkKind.Make && (w.Amount <= 0 || (w.SetNo <= 0 && string.IsNullOrEmpty(w.Item)))) continue; // 깨진 칸

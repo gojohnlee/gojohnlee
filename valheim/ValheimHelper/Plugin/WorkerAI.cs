@@ -497,7 +497,44 @@ namespace ValheimHelper
             m_follow = ZDOID.None;
             Current = Mode.Home;
             m_stuckTimer = 0f;
+            m_homeBook.HomeReached();
         }
+
+        /// <summary>집 가기(Mode.Home)의 귀환 막힘 횟수(StuckBook 귀환 칸만 씀). GoHome마다 새로.</summary>
+        readonly StuckBook m_homeBook = new StuckBook();
+
+        /// <summary>
+        /// 막힘 복구 마지막 단계(사용자 결정 2026-10-23): 깃발로 순간이동. 소유자면 옮긴 뒤 깃발 StuckBook.HomeArrived m 안인지까지 보고,
+        /// 아니면 false(순간이동 실패 — 부른 쪽이 RestHere). 소유자가 아니면 RPC만 보내고 true.
+        /// </summary>
+        public bool TeleportHome()
+        {
+            var npc = (WorkerNpc)m_character;
+            Vector3 home = npc.Home;
+            StopMoving();
+            m_carving = false;
+            bool sent = npc.TeleportTo(home, transform.rotation, false);
+            StuckTeleports++;
+            if (!sent) return false;
+            ZNetView nv = npc.GetComponent<ZNetView>();
+            return nv == null || !nv.IsOwner() || Utils.DistanceXZ(home, transform.position) <= (float)StuckBook.HomeArrived;
+        }
+
+        /// <summary>깃발 순간이동마저 안 됨(드묾): 하던 일은 버리고 그 자리에서 쉰다 + "집에 못 가요". 다시 걷기를 되풀이하지 않는다(다음 명령 대기).</summary>
+        public void RestHere(WorkerNpc npc)
+        {
+            Plugin.Log.LogInfo($"{npc.NpcName}: 깃발로 순간이동도 안 됨(집에서 {Utils.DistanceXZ(npc.Home, transform.position):0.0}m) → 그 자리에서 쉼");
+            StopMoving();
+            Job = null;
+            m_escort = null;
+            m_follow = ZDOID.None;
+            Current = Mode.Idle;
+            HomeFails++;
+            npc.Say("homeFail");
+        }
+
+        /// <summary>시험용: 깃발 순간이동도 안 돼 그 자리에서 쉰 횟수.</summary>
+        public static int HomeFails;
 
         public override bool UpdateAI(float dt)
         {
@@ -558,20 +595,26 @@ namespace ValheimHelper
                     if (d < 2f)
                     {
                         StopMoving();
+                        m_homeBook.HomeReached();
                         Current = Mode.Idle;
                         if (m_announceHome) npc.Say("home");
                         break;
                     }
                     MoveToPoint(dt, home, 1.5f, d > 15f);
-                    // 길이 없거나 15초 동안 못 움직이면 거점으로 옮긴다 (임시: 길 막힘 처리는 ② 단계).
+                    // 막힘 복구(사용자 결정 2026-10-23): 15초 동안 못 움직이면 막힘 1번(비켜 가기·점프는 걷기가 계속 함).
+                    // StuckBook.HomeWalkTries번째면 더 걷지 않고 깃발로 순간이동, 그것도 안 되면 그 자리에서 쉰다("집에 못 가요").
                     m_stuckTimer = Vector3.Distance(m_lastPos, transform.position) < 0.5f * dt && !m_carving ? m_stuckTimer + dt : 0f;
                     m_lastPos = transform.position;
                     if (m_stuckTimer > 15f)
                     {
-                        Plugin.Log.LogInfo($"{npc.NpcName}: 집에 가는 길이 막혀서 거점으로 옮김");
-                        m_character.TeleportTo(home, transform.rotation, false);
-                        StuckTeleports++;
                         m_stuckTimer = 0f;
+                        if (!m_homeBook.HomeWalkFailed())
+                        {
+                            Plugin.Log.LogInfo($"{npc.NpcName}: 집에 가는 길이 막힘 {m_homeBook.HomeStuck}번째(집에서 {d:0.0}m) → 더 걸어 봄 / {MoveState}");
+                            break;
+                        }
+                        Plugin.Log.LogInfo($"{npc.NpcName}: 집에 가는 길이 {m_homeBook.HomeStuck}번 막혀서 깃발로 순간이동");
+                        if (!TeleportHome()) { RestHere(npc); break; }
                     }
                     break;
                 }

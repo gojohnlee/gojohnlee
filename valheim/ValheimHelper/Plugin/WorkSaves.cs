@@ -31,7 +31,10 @@ namespace ValheimHelper
                     q.Start = () =>
                     {
                         HashSet<ToolKind> ways = ResourceCatalog.WaysFor(w.Item);
-                        if (ways.Count > 0) npc.Ai.StartJob(new GatherJob(npc, w.Item, w.Amount, ways));
+                        if (ways.Count == 0) return;
+                        var job = new GatherJob(npc, w.Item, w.Amount, ways);
+                        job.LoadStuck(w.Stuck); // 막힌 목적지는 불러와도 다시 안 감(사용자 결정 2026-10-23)
+                        npc.Ai.StartJob(job);
                     };
                 else
                     q.Start = () => Departures.Gather(new Speaker(w.Speaker ?? "", ZDOID.None, ZDOID.None), CommandOf(w), npc, true);
@@ -78,7 +81,7 @@ namespace ValheimHelper
             if (job is GatherJob g)
             {
                 int left = Mathf.Max(1, g.Target - g.Delivered);
-                var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = g.Item, Amount = left, Label = GatherJob.ItemLabel(g.Item) + " " + left };
+                var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = g.Item, Amount = left, Label = GatherJob.ItemLabel(g.Item) + " " + left, Stuck = g.StuckSave };
                 if (GoalPos(g) != Vector3.zero) { w.HasZone = true; w.Zone = GoalZone(g); }
                 return w;
             }

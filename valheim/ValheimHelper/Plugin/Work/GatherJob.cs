@@ -40,6 +40,10 @@ namespace ValheimHelper
         PortalLink? m_portal;
         bool m_portalChecked;
         readonly HashSet<ZDOID> m_skip = new HashSet<ZDOID>();
+        /// <summary>막힘 복구(사용자 결정 2026-10-23, Core StuckBook): 이번 일 동안 막힌 목적지·귀환 막힘. 작업 저장(WorkItem.Stuck)에 들어가 불러와도 이어진다.</summary>
+        StuckBook m_book = new StuckBook();
+        public string StuckSave => m_book.Save();
+        public void LoadStuck(string text) => m_book = StuckBook.Load(text);
         int m_swings, m_swingsNoProgress;
         bool m_wasAttacking;
         float m_bestDist;
@@ -332,14 +336,14 @@ namespace ValheimHelper
             }
             foreach (var m in k.ZonesWith(Item, here))
             {
-                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || m_tried.Contains(m.Zone) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너·위험한 곳·이미 가 본 곳은 안 간다
+                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || m_tried.Contains(m.Zone) || ZoneExcluded(m.Zone) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너·위험한 곳·이미 가 본 곳은 안 간다
                 m_goalZone = m.Zone;
                 GoZone();
                 return true;
             }
             // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
             if (!m_exploring && m_searchTime <= SearchLimit
-                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !m_avoid.Contains(z) && !m_tried.Contains(z) && Scout.Reachable(pos, z), out m_goalZone))
+                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !m_avoid.Contains(z) && !m_tried.Contains(z) && !ZoneExcluded(z) && Scout.Reachable(pos, z), out m_goalZone))
             {
                 if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
                 GoZone();
@@ -548,6 +552,11 @@ namespace ValheimHelper
             {
                 if (!arrived) { LogStuck("구역 가기", m_goalPos); m_tried.Add(m_goalZone); } // 못 간 곳을 또 고르면 같은 자리에서 되풀이한다
                 Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
+                if (!arrived)
+                {
+                    Vector3 c = Senses.ZoneCenter(m_goalZone); // ZoneExcluded와 같은 자리로 센다
+                    if (WalkFailed(c, out bool keep)) return keep;
+                }
                 Go(Step.Search);
                 if (!arrived) RescueIfStuckAgain();
             }
@@ -571,7 +580,7 @@ namespace ValheimHelper
             foreach (var zdo in nearby)
             {
                 if (Character.InInterior(zdo.GetPosition()) != inside) continue; // 바깥에서 지하묘지 안 물체를, 안에서 바깥 물체를 고르지 않는다
-                if (m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition())) continue;
+                if (m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition()) || m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z)) continue;
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
@@ -673,9 +682,41 @@ namespace ValheimHelper
                 Go(Step.Work);
                 return true;
             }
-            if (Stuck(dt, m_targetPos) || m_stepTime > 40f) { LogStuck("다가가기", m_targetPos); Skip(); RescueIfStuckAgain(); }
+            if (Stuck(dt, m_targetPos) || m_stepTime > 40f)
+            {
+                LogStuck("다가가기", m_targetPos);
+                if (WalkFailed(m_targetPos, out bool keep)) return keep;
+                Skip();
+                RescueIfStuckAgain();
+            }
             return true;
         }
+
+        /// <summary>그 구역(가운데 자리)으로 걷다 막혀 뺐다.</summary>
+        bool ZoneExcluded(ZoneXY z)
+        {
+            Vector3 c = Senses.ZoneCenter(z);
+            return m_book.Excluded(c.x, c.z);
+        }
+
+        /// <summary>
+        /// 목적지로 걷다 막혔다(비켜 가기·점프 뒤): 목적지별 실패를 센다(StuckBook). 목표 쪽 순간이동(2)은 아직 없어 첫 실패에 뺀다(부른 쪽이 Skip·구역 표시).
+        /// 뺀 곳이 많아 대안이 없으면 "갈 수가 없어요" 하고 그만둔다(든 게 있으면 넣고) → true, keep = 일을 이어 가는지(Update 반환값).
+        /// </summary>
+        bool WalkFailed(Vector3 dest, out bool keep)
+        {
+            keep = true;
+            StuckNext next = m_book.WalkFailed(dest.x, dest.z, false);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 막힘 기록 ({dest.x:0},{dest.z:0}) {m_book.Fails(dest.x, dest.z)}번 → {next}, 뺀 곳 {m_book.ExcludedCount}");
+            if (next != StuckNext.GiveUp) return false;
+            Skip();
+            Unreachable++;
+            keep = GiveUp("cantReach");
+            return true;
+        }
+
+        /// <summary>시험용: 대안 없이 막혀 그만둔 횟수.</summary>
+        public static int Unreachable;
 
         /// <summary>
         /// 깃발로 강제 복귀(사용자 결정 2026-10-22): 막혀서 목표·구역을 버렸는데(다른 길·다른 목표 = 재탐색) 다음 막힘도 같은 자리(8m 안)면
@@ -692,8 +733,7 @@ namespace ValheimHelper
             m_stuckAt = null;
             m_stuckCount = 0;
             m_targetId = ZDOID.None;
-            m_npc.TeleportTo(m_npc.Home, m_npc.transform.rotation, false);
-            WorkerAI.StuckTeleports++;
+            if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return; } // 깃발 순간이동도 안 됨: 그 자리에서 쉼
             Rescues++;
             m_npc.Say("stuck", Args());
             Go(Carried() > 0 ? Step.Deposit : Step.Search);
@@ -1204,12 +1244,16 @@ namespace ValheimHelper
                 return true;
             }
             Vector3 home = m_npc.Home;
-            if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Deposit); return true; }
+            if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { m_book.HomeReached(); Go(Step.Deposit); return true; }
             if (Stuck(dt, PortalOr(home)))
             {
-                Plugin.Log.LogInfo($"{m_npc.NpcName}: 귀환 막힘(집에서 {Utils.DistanceXZ(home, m_npc.transform.position):0.0}m) {m_ai.BlockerAhead(home)} / {m_ai.MoveState}");
-                m_npc.TeleportTo(home, m_npc.transform.rotation, false); // 막힌 길 처리는 길 만들기(⑨)에서
-                WorkerAI.StuckTeleports++;
+                // 막힘 복구(사용자 결정 2026-10-23): 귀환 걷기는 StuckBook.HomeWalkTries번까지(비켜 가기·점프는 걷기가 계속 함), 넘으면 깃발로 순간이동.
+                // 순간이동마저 안 되면 그 자리에서 쉰다("집에 못 가요") — 다시 걷기 되풀이 금지.
+                bool limit = m_book.HomeWalkFailed();
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: 귀환 막힘 {m_book.HomeStuck}번째(집에서 {Utils.DistanceXZ(home, m_npc.transform.position):0.0}m) {(limit ? "→ 깃발로 순간이동" : "→ 더 걸어 봄")} {m_ai.BlockerAhead(home)} / {m_ai.MoveState}");
+                if (!limit) { m_bestDist = float.MaxValue; m_progressTimer = 0f; return true; }
+                if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return true; }
+                m_book.HomeReached();
                 Go(Step.Deposit);
             }
             return true;
