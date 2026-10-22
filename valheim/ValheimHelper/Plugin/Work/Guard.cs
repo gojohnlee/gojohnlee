@@ -166,7 +166,7 @@ namespace ValheimHelper
                     if (m_state == State.Back && m_backTimer > 0f && !Aggressive(nearest)) break; // 물러나 기다리는 중: 쫓아오지 않으면 그대로
                     Character t = FightTarget(pos);
                     if (t == null) break;
-                    if (t != m_target) DrinkResist(pos, t);
+                    if (t != m_target) { DrinkResist(pos, t); m_missStreak = 0; m_diagSwings = 0; }
                     if (!m_saidFight) { m_saidFight = true; m_npc.Say("fightStart", Args(Localization.instance.Localize(t.m_name))); }
                     m_target = t;
                     m_state = State.Fight;
@@ -383,6 +383,8 @@ namespace ValheimHelper
 
         bool m_armed;
         float m_fightIdle;
+        float m_diagTimer;
+        int m_diagSwings;
         readonly Dictionary<Character, float> m_ignore = new Dictionary<Character, float>();
         const float FightIdleLimit = 20f;
 
@@ -407,7 +409,25 @@ namespace ValheimHelper
             {
                 m_ai.StopMoving();
                 m_ai.Face(m_target.GetCenterPoint());
-                if (!m_npc.InAttack() && m_ai.IsLookingAt(tp, 25f) && m_npc.StartAttack(m_target, false)) { m_fightIdle = 0f; Learn(m_target); }
+                if (!m_npc.InAttack() && m_ai.IsLookingAt(tp, 25f) && m_npc.StartAttack(m_target, false))
+                {
+                    m_fightIdle = 0f;
+                    m_diagSwings++;
+                    Learn(m_target);
+                    // 앞 휘두름이 안 맞았나(적 체력 그대로). 적이 바위 위·턱 위에 있으면 수평 휘두름이 계속 빗나간다
+                    // (회차 72 coppertest: 회색 난쟁이가 2.4m 높은 광맥 위, 7번 휘둘러 0번 맞고 일꾼만 죽음) → 3번 잇달아 빗나가면 직접 피해.
+                    float hp = m_target.GetHealth();
+                    m_missStreak = m_diagSwings > 1 && hp >= m_lastFoeHealth ? m_missStreak + 1 : 0;
+                    m_lastFoeHealth = hp;
+                    if (m_missStreak >= 3 && Mathf.Abs(tp.y - m_npc.transform.position.y) < 3f) DirectHit(weapon);
+                }
+            }
+            // 간헐 목록(회차 66 hunttest): 싸움이 오래 안 끝나면 닿지 못하는지·때리는데 안 맞는지 가른다
+            m_diagTimer += dt;
+            if (m_diagTimer > 5f)
+            {
+                m_diagTimer = 0f;
+                Plugin.Log.LogInfo($"DIAG 싸움 {m_npc.NpcName}→{m_target.m_name}: 거리 {d:0.0}/{range:0.0} 휘두름 {m_diagSwings} 적 체력 {m_target.GetHealth():0}/{m_target.GetMaxHealth():0} 공격 중 {m_npc.InAttack()} 봄 {m_ai.IsLookingAt(tp, 25f)} 높이차 {tp.y - m_npc.transform.position.y:0.0} 물 {m_target.InWater()} 쉼 {m_fightIdle:0}");
             }
             // 닿지 않는 곳(절벽 위·물 건너)의 적: 20초 동안 서로 못 때리면 1분 동안 무시한다
             if (m_fightIdle > FightIdleLimit)
@@ -419,10 +439,37 @@ namespace ValheimHelper
             return true;
         }
 
+        int m_missStreak;
+        float m_lastFoeHealth;
+
+        /// <summary>바닐라 Attack 판정이 못 닿을 때 무기 피해를 직접 준다(GatherJob.DirectHit와 같은 방식, 스킬 반영).</summary>
+        void DirectHit(ItemDrop.ItemData weapon)
+        {
+            if (weapon == null) return;
+            Vector3 me = m_npc.GetCenterPoint();
+            Vector3 point = m_target.GetCenterPoint();
+            var hit = new HitData
+            {
+                m_damage = weapon.GetDamage(),
+                m_point = point,
+                m_dir = (point - me).normalized,
+                m_skill = weapon.m_shared.m_skillType,
+                m_pushForce = weapon.m_shared.m_attackForce,
+            };
+            hit.m_damage.Modify(m_npc.GetRandomSkillFactor(weapon.m_shared.m_skillType));
+            hit.SetAttacker(m_npc);
+            m_target.Damage(hit);
+            m_npc.RaiseSkill(weapon.m_shared.m_skillType);
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_target.m_name}에 휘두름이 {m_missStreak}번 빗나가 직접 피해 {hit.GetTotalDamage():0}");
+        }
+
         void EndFight()
         {
+            m_missStreak = 0;
+            m_lastFoeHealth = 0f;
             m_target = null;
             m_armed = false;
+            m_diagSwings = 0;
             m_state = State.Calm;
         }
 

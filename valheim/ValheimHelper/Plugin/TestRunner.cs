@@ -160,6 +160,8 @@ namespace ValheimHelper
             Plugin.Log.LogInfo($"자동 시험 예약: 월드에 들어가면 {string.Join(", ", s_autoQueue.ToArray())}를 차례로 실행합니다.");
         }
 
+        static bool s_leftNoBuild;
+
         public static void UpdateAutoRun()
         {
             if (!s_auto) return;
@@ -178,6 +180,7 @@ namespace ValheimHelper
             if (player == null || player.IsTeleporting()) { s_autoWait = 0f; return; }
             s_autoWait += Time.deltaTime;
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
+            if (!s_leftNoBuild) { s_leftNoBuild = true; if (TestKit.LeaveNoBuild(player)) { s_autoWait = -3f; return; } } // 시작 제단 밖으로 한 번
             string cmd = s_autoQueue.Dequeue();
             if (s_halt != null && Begin(null, cmd))
             {

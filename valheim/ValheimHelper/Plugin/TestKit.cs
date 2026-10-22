@@ -11,6 +11,52 @@ namespace ValheimHelper
     /// </summary>
     static class TestKit
     {
+        /// <summary>p 또는 둘레 r m(16곳)·r/2 m(8곳)가 건축 금지 구역(시작 제단 등, Location.m_noBuild)인지. 바닐라는 그 안의 흙 파기를 막는다.</summary>
+        public static bool NearNoBuild(Vector3 p, float r)
+        {
+            if (Location.IsInsideNoBuildLocation(p)) return true;
+            for (int k = 0; k < 16; k++)
+            {
+                Vector3 dir = new Vector3(Mathf.Cos(k * Mathf.PI / 8f), 0f, Mathf.Sin(k * Mathf.PI / 8f));
+                if (Location.IsInsideNoBuildLocation(p + dir * r) || (k % 2 == 0 && Location.IsInsideNoBuildLocation(p + dir * r * 0.5f))) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 자동 시험 묶음 첫 시험 전에 한 번(TestRunner): 시험 캐릭터가 월드 시작 제단(건축 금지)에서 시작하면 제단 밖 마른 초원 평지로 옮긴다.
+        /// 회차 72: 새 시험 캐릭터(회차 67)가 제단에서 시작해 거점이 보스석 사이에 놓이고(coppertest 귀환이 BossStone에 막힘) 구덩이가 안 파짐(pittest).
+        /// 옮겼으면 true(텔레포트가 끝날 때까지 기다린다).
+        /// </summary>
+        public static bool LeaveNoBuild(Player player)
+        {
+            Vector3 from = player.transform.position;
+            if (!NearNoBuild(from, 45f)) return false;
+            WorldGenerator wg = WorldGenerator.instance;
+            float wl = ZoneSystem.instance.m_waterLevel;
+            for (float r = 60f; r <= 400f; r += 20f)
+                for (int d = 0; d < 16; d++)
+                {
+                    float a = d * Mathf.PI / 8f;
+                    Vector3 p = from + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    float h = wg.GetHeight(p.x, p.z);
+                    if (wg.GetBiome(p) != Heightmap.Biome.Meadows || h < wl + 3f) continue;
+                    bool ok = true;
+                    for (int k = 0; k < 8 && ok; k++)
+                    {
+                        float b = k * Mathf.PI / 4f;
+                        float hk = wg.GetHeight(p.x + Mathf.Cos(b) * 15f, p.z + Mathf.Sin(b) * 15f);
+                        ok = hk > wl + 3f && Mathf.Abs(hk - h) < 2f;
+                    }
+                    if (!ok || NearNoBuild(p, 45f)) continue;
+                    player.TeleportTo(new Vector3(p.x, h + 1f, p.z), player.transform.rotation, true);
+                    Plugin.Log.LogInfo($"시험 캐릭터가 건축 금지 구역(시작 제단 등) 옆 → {r:0}m 떨어진 초원 평지로 옮김");
+                    return true;
+                }
+            Plugin.Log.LogInfo("건축 금지 구역 밖 평지를 400m 안에서 못 찾음 → 제자리에서 시험");
+            return false;
+        }
+
         public sealed class World
         {
             public Player Player;

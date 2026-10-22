@@ -83,7 +83,8 @@ namespace ValheimHelper
             checks.Add($"깃발로 강제 복귀함 ({waited:0}초 안)", rescued);
             if (!rescued) yield break;
             checks.Add($"거점에 있음 ({d1:0.0}m)", d1 < 5f);
-            checks.Add($"체력 그대로 ({hp0:0} → {w.Claude.GetHealth():0})", Mathf.Abs(w.Claude.GetHealth() - hp0) < 1f);
+            // 음식이 떨어지면 최대 체력이 줄어 그만큼 줄 수 있다(회차 72: 71 → 69, 최대도 69) → 최대보다 낮아졌을 때만 다친 것
+            checks.Add($"체력 그대로 ({hp0:0} → {w.Claude.GetHealth():0}/{w.Claude.GetMaxHealth():0})", Mathf.Abs(w.Claude.GetHealth() - hp0) < 1f || w.Claude.GetHealth() >= w.Claude.GetMaxHealth() - 0.5f);
             checks.Add("막힘 대사를 함", w.Heard.Exists(h => h.Contains("막") || h.Contains("꼼짝")));
             yield return new WaitForSeconds(3f);
             checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);

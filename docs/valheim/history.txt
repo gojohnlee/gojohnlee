@@ -357,3 +357,12 @@ Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pic
 [루프 회차 70 2026-10-22] TestKit 끝 정리: End → Cleanup(ClearCreatures + 땅의 ItemDrop, Senses.Nearby 60m) → VerifyCleanup 0.5초 뒤 남으면 TestRunner.Halt(s_halt) → UpdateAutoRun이 남은 시험을 "판정: 환경 불량"으로 적고 넘김. World.Shared(around) 시험은 정리 안 함. 연속 hunttest→skilltest PASS, hunttest 뒤 물건 55개.
 
 [루프 회차 71 2026-10-22] 지금 먼저 2) 옛 시험 시작 확인·끝 정리: TestKit.OldClear/OldCheck/OldEnd(Cleanup을 Vector3 home 받게), 9개 옛 시험 파일에 깃발 앞 두 줄, TestRunner.Finish 첫 줄 OldEnd. 시작 정리는 생물만 확인(옛 시험은 일꾼·상자를 시험 안에서 만듦). EnvBad면 신 모드만 되돌림(대사 구독은 남음, 드묾). npc·flag·wood·stone PASS.
+
+[루프 회차 72 2026-10-22] 지금 먼저 3) 간헐 FAIL 재확인. 묶음 depart→craft→hunt→prep→copper→pit: 4/6 → 원인 셋 고침.
+- 시작 제단: 새 시험 캐릭터(회차 67)는 월드 시작 제단에서 시작 → 거점이 보스석(BossStone_*) 사이(coppertest 귀환 막힘), 건축 금지 구역이라 바닐라가 흙 파기를 막아
+  pittest 구덩이 1~6 깊이 0인데 "걸어 나옴" PASS. 고침: TestKit.LeaveNoBuild(묶음 첫 시험 전 한 번, 제단 밖 60~400m 초원 평지로) + TestKit.NearNoBuild,
+  PitTest 자리 고르기에 금지 구역 뺌, 안 파진 구덩이는 "구덩이 N 파짐" FAIL(탈출 칸 안 함), 도망 구덩이는 평평한 자리·5m·넣기 전에 점프 끔.
+- 비켜 가기(WorkerAI.MoveToPoint): 같은 목표로 또 막히면 같은 쪽으로 1.2·2.4·3.6·4.8초(넷 뒤 반대쪽), 비켜 갈 땐 달림, 한 번 비켜 간 뒤엔 점프 건너뜀. DIAG 비켜 가기 줄.
+- 싸움(Guard): 적이 바위 위(2.4m)라 휘두름 7번 0번 맞고 일꾼이 회색 난쟁이에 죽음 → 3번 잇달아 빗나가면(적 체력 그대로, 높이차 3m 안) 무기 피해를 직접(DirectHit). DIAG 싸움 줄(5초마다).
+- stucktest 체력 칸: 음식이 떨어져 최대 체력이 준 것(71→69/69)은 다친 게 아님.
+결과(고친 뒤 묶음): depart 25/25·craft 23/23·hunt 9/9·prep 22/22·copper 11/11·pit 14/14 PASS, 뒤 묶음 copper 3번 중 2 PASS(1번 간헐 목록)·stuck PASS·fight·wood PASS.

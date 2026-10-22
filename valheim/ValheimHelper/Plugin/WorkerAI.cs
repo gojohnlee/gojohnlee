@@ -152,6 +152,8 @@ namespace ValheimHelper
         Vector3 m_samplePos;
         float m_detourTime;
         Vector3 m_detourDir;
+        int m_detourCount;
+        float m_detourSide = 1f;
 
         /// <summary>깊은 물 앞에서 선 채로 지난 시간. 작업은 이게 WaterGiveUp초를 넘으면 그 목표를 버리고 다른 데를 고른다.</summary>
         public float WaterBlockedTime { get; private set; }
@@ -175,9 +177,9 @@ namespace ValheimHelper
         {
             Vector3 pos = transform.position;
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
-            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; }
+            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
             float d = Utils.DistanceXZ(point, pos);
-            if (d <= dist) { StopMoving(); m_detourTime = 0f; WaterBlockedTime = 0f; m_carving = false; return true; }
+            if (d <= dist) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; return true; }
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) return false;
             if (RescueIfTrapped(dt, pos)) return false;
@@ -190,7 +192,7 @@ namespace ValheimHelper
             if (m_detourTime > 0f)
             {
                 m_detourTime -= dt;
-                if (!WaterAhead(pos, m_detourDir)) MoveTowards(m_detourDir, run);
+                if (!WaterAhead(pos, m_detourDir)) MoveTowards(m_detourDir, true); // 걷기(1.6m/s)로는 큰 바위를 못 돌아감 → 달림
                 else m_detourTime = 0f;
                 return false;
             }
@@ -219,13 +221,19 @@ namespace ValheimHelper
                 {
                     // 막혔다: 두 번까지 뛰어 보고, 구덩이에 갇혔으면 경사로를 깎고, 아니면 옆으로 비켜 간다
                     Vector3 fwd = Flat(point - pos).normalized;
-                    if (m_stuckJumps < 2 && TryJump()) m_stuckJumps++;
+                    if (m_stuckJumps < 2 && m_detourCount == 0 && TryJump()) m_stuckJumps++; // 이미 비켜 가 봤으면 점프는 건너뜀
                     else if (!StartCarve(pos, fwd))
                     {
                         m_stuckJumps = 0;
-                        Vector3 side = Vector3.Cross(Vector3.up, fwd) * (Random.value < 0.5f ? 1f : -1f);
+                        // 같은 목표로 또 막히면 같은 쪽으로 점점 길게 비켜 간다(큰 바위는 1.2초로 못 돌아감, 회차 72 coppertest).
+                        // 네 번 해도 안 되면 반대쪽부터 다시.
+                        if (m_detourCount >= 4) { m_detourSide = -m_detourSide; m_detourCount = 0; }
+                        else if (m_detourCount == 0) m_detourSide = Random.value < 0.5f ? 1f : -1f;
+                        m_detourCount++;
+                        Vector3 side = Vector3.Cross(Vector3.up, fwd) * m_detourSide;
                         m_detourDir = (side + fwd * 0.3f).normalized;
-                        m_detourTime = 1.2f;
+                        m_detourTime = 1.2f * m_detourCount;
+                        if (m_detourCount >= 2) Plugin.Log.LogInfo($"DIAG 비켜 가기 {m_detourCount}번째: 쪽 {m_detourSide:0} {m_detourTime:0.0}초, 목표까지 {d:0.0}m, 앞 {BlockerAhead(point)}");
                     }
                 }
                 else m_stuckJumps = 0;

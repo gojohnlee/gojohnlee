@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 72] "지금 먼저" 3) 간헐 FAIL 재확인: 시작 제단(건축 금지·보스석) 탓 coppertest 막힘·pittest 구덩이 안 파짐 → TestKit.LeaveNoBuild(묶음 전에 제단 밖으로). 비켜 가기 점점 길게·달림, 싸움 3번 빗나가면 직접 피해(바위 위 적에 죽던 것), stucktest 체력 칸. depart·craft·hunt·prep·copper·pit·stuck·fight·wood PASS, copper 1/3 간헐(risks). Core 378. 다음: 3) 남은 것 preptest·departtest 재고 질문은 이번 묶음 PASS → 4) 기반 대표 시험.
 - [루프 회차 71] "지금 먼저" 2) 끝: 옛 시험(npc·flag·bag·death·explore·fight·gather(wood·stone·copper·tin)·pit·prep)도 깃발 세우기 전 TestKit.OldClear(둘레 생물 치움)·OldCheck(남으면 환경 불량), 끝은 TestRunner.Finish가 OldEnd(생물·땅의 물건 치움, 남으면 남은 시험 중단). fartest만 안 함(멧돼지 일부러 둠). npc·flag·wood·stone 4/4 PASS(wood 뒤 물건 53개 치움), Core 378. 다음: "지금 먼저" 3) 간헐 FAIL 재확인.
 - [루프 회차 70] "지금 먼저" 2) TestKit 2조각: End가 끝 정리(거점 60m 생물·땅의 물건 치움, 동시 시험 around는 안 함) → 0.5초 뒤 남으면 TestRunner.Halt → 남은 자동 시험은 본시험 없이 "판정: 환경 불량(앞 시험 끝 정리 실패)". hunttest→skilltest 연속 PASS(hunttest 뒤 물건 55개 치움). Core 378. 남음: 옛 시험(GatherTest·PitTest 등 TestKit.Setup 안 쓰는 것)에 같은 시작 확인·끝 정리.
 - [루프 회차 69] "지금 먼저" 2) TestKit 1조각: TestKit.Setup 끝에 시작 조건 확인(거점 60m 생물 먼저 치움 → 남은 생물·플레이어 무적·일꾼 일/대기열·새 상자 빈지) → 안 맞으면 EnvBadException → "판정: 환경 불량"(PASS 아님, 요약에 보임). Flat이 예외 때 바깥 코루틴 finally(Restore) 돌림. 시작·FAIL 순간·끝 상태 한 줄 + 3초마다 상태 흐름 링 버퍼(40개, FAIL이면 diag에 쏟음). hunttest·skilltest 단독 PASS. 남음: 옛 시험(GatherTest·PitTest 등 TestKit.Setup 안 쓰는 것)에 같은 확인·정리, 시험이 만든 개체·드롭 정리, 정리 실패면 다음 시험 중단.
@@ -117,7 +118,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   2) [끝, 회차 69·70·71 — 새 시험은 Setup·End, 옛 시험은 OldClear·OldCheck·OldEnd(fartest 뺌)] 시작·종료 통제(TestKit): 시작 조건 확인(플레이어 위치·무적·장비, 아군 소환수·적, 일꾼 체력·짐·일·대기열, 상자 잠금·재고, 설비) → 안 맞으면 본시험 안 하고 "환경 불량"
      (예: 구덩이가 안 파였는데 탈출 PASS 금지). 기본 시험은 플레이어·해골 도움 없이, 협력 시험만 일부러 넣음. 끝에 시험이 만든 개체·드롭 정리·바꾼 설정 복원, 정리 실패면 다음 시험 중단.
      기록: 시작·FAIL 순간·끝 상태 + 몇 초마다 상태 흐름(수량·소유권·사용 중 표시)을 링 버퍼에 두고 FAIL 때 diag에 쏟음.
-  3) 기존 간헐 FAIL 재확인(재실행 PASS로 안 닫음, 동료 해골이 실제로 끼었는지부터): hunttest(멧돼지/체력 6 잔여), crafttest(departtest 뒤 "구리 주괴 2개"),
+  3) [끝, 회차 72 — 원인: 시작 제단·비켜 가기·바위 위 적, copper 간헐 하나는 risks] 기존 간헐 FAIL 재확인(재실행 PASS로 안 닫음, 동료 해골이 실제로 끼었는지부터): hunttest(멧돼지/체력 6 잔여), crafttest(departtest 뒤 "구리 주괴 2개"),
      preptest(상자 못 닿음·갑옷 피해), departtest(재고 질문), coppertest(막혀 순간이동), pittest(구덩이 안 파짐 → 2)의 환경 불량으로).
   4) 기반 대표 시험: vh_basetest(일 중간 취소·전환, NPC 지웠다 ZDO에서 다시 불러 이어 하기 = 빠른 복원 시험, 두 일꾼 같은 상자·설비 동시, 수량 보존)
      + 실제 재시작 시험(시험 실행 두 번: 1번째에 일 중간 저장·게임 종료, 2번째에 켜서 이어 하는지·수량·저장 손상 없음). NPC 재생성은 재시작을 대신하지 않음.

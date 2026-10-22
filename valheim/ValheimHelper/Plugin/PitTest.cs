@@ -122,6 +122,8 @@ namespace ValheimHelper
                     float depth = rim - TestTerrain.Height(spot);
                     string kind = Narrow[i] ? "좁은" : "넓은";
                     TestRunner.Log($"구덩이 {i + 1}({kind}): 흙 파기 {n}번, 깊이 {depth:0.0}m (목표 {Depths[i]:0.0}), 1m 밖 {rim - TestTerrain.Height(spot + Vector3.right):0.0}m·2m 밖 {rim - TestTerrain.Height(spot + Vector3.right * 2f):0.0}m 깊이");
+                    // 안 파진 구덩이에서 "나옴"을 PASS로 치지 않는다(사용자 결정 2026-10-22 시험 환경)
+                    if (depth < Depths[i] * 0.5f) { checks.Add($"구덩이 {i + 1} 파짐({depth:0.0}m, 목표 {Depths[i]:0.0})", false); continue; }
 
                     // 근처 몬스터 치우고 체력 채움(루프 회차 4: 130m 옮긴 자리에 트롤이 와 구덩이 7에서 도망만 하다 끝남)
                     int cleared = ClearMonsters(spot, 80f);
@@ -209,12 +211,12 @@ namespace ValheimHelper
                     Vector3 p = from + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
                     Vector3 h = p + rot * Vector3.forward * 4f; // 깃발 자리(아래 home과 같게)
                     float hh = wg.GetHeight(h.x, h.z);
-                    bool ok = wg.GetBiome(h) == Heightmap.Biome.Meadows && hh > wl + 2f;
+                    bool ok = wg.GetBiome(h) == Heightmap.Biome.Meadows && hh > wl + 2f && !TestKit.NearNoBuild(h, 20f); // 건축 금지 구역은 흙 파기가 막힘(회차 72: 시작 제단 옆에서 구덩이 1~6 깊이 0)
                     for (int i = 0; i < Depths.Length && ok; i++)
                     {
                         Vector3 s = h + rot * Dirs[i] * 12f;
                         float sh = wg.GetHeight(s.x, s.z);
-                        ok = sh > wl + Depths[i] + 2f && Mathf.Abs(sh - hh) < 3f;
+                        ok = sh > wl + Depths[i] + 2f && Mathf.Abs(sh - hh) < 3f && !TestKit.NearNoBuild(s, 3f);
                         // 구덩이 둘레 3m가 평평해야 한다(비탈이면 좁은 구덩이 한쪽이 얕아 깎지 않고 걸어 나옴 — 루프 회차 4, 구덩이 7)
                         for (int k = 0; k < 8 && ok && Narrow[i]; k++)
                         {
@@ -228,6 +230,18 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>p 둘레 r m 여덟 곳의 땅 높이가 p와 flat m 안으로 같은지(지금 땅 기준).</summary>
+        static bool FlatAround(Vector3 p, float r, float flat)
+        {
+            float h = TestTerrain.Height(p);
+            for (int k = 0; k < 8; k++)
+            {
+                float b = k * Mathf.PI / 4f;
+                if (Mathf.Abs(TestTerrain.Height(p + new Vector3(Mathf.Cos(b), 0f, Mathf.Sin(b)) * r) - h) > flat) return false;
+            }
+            return true;
+        }
+
         /// <summary>
         /// 도망 중 구덩이(사용자 결정 2026-10-22): 위 구덩이와 겹치지 않는 자리(거점 20m)에 좁고 깊은(4m) 구덩이를 따로 파고 바닥에 넣은 뒤,
         /// 점프·깎기를 끈 채 도망을 시키면 6초쯤 못 벗어난 뒤 깃발로 순간이동하는지(짐 그대로, 도망 그만둠). 끝나면 그 자리 지형을 되돌린다.
@@ -238,13 +252,18 @@ namespace ValheimHelper
             Vector3 spot = Vector3.zero;
             float depth = 0f;
             var tried = new List<Vector3>();
-            foreach (float ang in new[] { 20f, 110f, 200f, 290f })
+            // 둘레 3m가 평평한 자리 먼저(회차 72: 비탈 자리라 한쪽이 얕아 도망이 0초 만에 걸어 나옴) — 없으면 예전 네 자리
+            var angles = new List<float>();
+            for (float ang = 20f; ang < 360f; ang += 45f)
+                if (FlatAround(home + Quaternion.Euler(0f, ang, 0f) * rot * Vector3.forward * 20f, 3f, 0.5f)) angles.Add(ang);
+            if (angles.Count == 0) angles.AddRange(new[] { 20f, 110f, 200f, 290f });
+            foreach (float ang in angles)
             {
                 Vector3 p0 = home + Quaternion.Euler(0f, ang, 0f) * rot * Vector3.forward * 20f;
                 p0.y = TestTerrain.Height(p0);
                 float rim = p0.y;
                 tried.Add(p0);
-                for (int round = 0; round < 40 && TestTerrain.Height(p0) > rim - 4f; round++)
+                for (int round = 0; round < 60 && TestTerrain.Height(p0) > rim - 5f; round++) // 4m는 한쪽이 완만하면 걸어 나옴(회차 72) → 5m
                 {
                     Vector3 p = p0;
                     p.y = TestTerrain.Height(p0);
@@ -254,17 +273,18 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(0.5f);
                 depth = rim - TestTerrain.Height(p0);
                 TestRunner.Log($"도망 구덩이 자리 {ang:0}°: 깊이 {depth:0.0}m");
-                if (depth >= 3f) { spot = p0; break; }
+                if (depth >= 4.5f) { spot = p0; break; }
             }
             checks.Add($"도망 시험 구덩이 팜 ({depth:0.0}m)", spot != Vector3.zero);
             if (spot != Vector3.zero)
             {
                 ClearMonsters(spot, 80f);
                 claude.SetHealth(claude.GetMaxHealth());
+                // 넣기 전에 점프·깎기를 끈다(회차 72: 넣고 기다리는 1.5초 동안 귀가하며 뛰어 나와 시험 전에 이미 둘레 위)
+                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = true;
                 claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
                 yield return new WaitForSeconds(1.5f);
                 int bag0 = claude.GetInventory().GetAllItems().Count, r0 = WorkerAI.TrapRescues;
-                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = true;
                 claude.Ai.Guard.TestFlee(spot + rot * Vector3.forward * 40f);
                 float t = 0f, logAt = 0f;
                 float rim = spot.y;
