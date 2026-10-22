@@ -46,6 +46,7 @@ namespace ValheimHelper
             Step("vh_stucktest", StuckTest.Register);
             Step("vh_resisttest", ResistTest.Register);
             Step("vh_repairtest", RepairTest.Register);
+            Step("vh_crypttest", CryptTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }

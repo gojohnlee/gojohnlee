@@ -19,7 +19,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    (-File은 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨림. 이 PC엔 파이썬 없음 → 수정은 Edit 도구. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    설치 → Steam 실행 → 인트로 건너뜀 → te4st41 자동 입장 → 시험 → 2초 뒤 종료 → 결과 출력.
    시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_bagtest·vh_deathtest·vh_fighttest·vh_exploretest·
-   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_tintest·vh_stucktest·vh_resisttest·vh_repairtest. 월드 $env:VH_WORLD. 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
+   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_tintest·vh_stucktest·vh_resisttest·vh_repairtest·vh_crypttest. 월드 $env:VH_WORLD. 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
    결과: 스크립트는 짧은 요약만 출력(diag 첫 줄, 시험별 판정·시간, FAIL 줄, 로그 오류 종류 8개 — 2026-10-21 토큰 절약).
    전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 60] 8) ⑦ 철 1조각: Plugin/Dungeons.cs(늪 지하묘지 찾기 = LocationProxy ZDO의 위치 해시가 SunkenCrypt*, 입구 열쇠 문 sunken_crypt_gate state≠0 = 열림, 입구/나가는 Teleport, ArrivePoint·Use = 바닐라 TeleportTo) + Core Crypts.Choose(열린 곳 중 가장 가까운 곳, 피할 곳·3000m 넘으면 뺌)+테스트. vh_crypttest 신설 PASS 14/14(거점 110m 앞에 SunkenCrypt4를 TestSpawnLocation으로 세움 — 월드 저장은 다시 켤 때까지 꺼짐, 닫힌 문 안 고름·열면 고름, 일꾼 안(y≈5030) 들어갔다 나옴, 안 진흙 더미 mudpile2 12개를 ResourceCatalog가 고철로 앎). Core 360. 다음: ⑦ 2조각.
 - [루프 회차 59] 7) E 장비 수리(끝): Plugin/Work/Repair.cs(바닐라 InventoryGui.CanRepair와 같은 규칙: 레시피 수리대·제작대 이름이 같은 거점 30m 안 설비, 레벨≥최소, 지붕 70%·불) + Core RepairRule(반 넘게 닳거나 부러진 것만). Prep이 장비 입기 전에 설비로 걸어가 짐의 것을 다 고침(무료), Unload는 거점에서 고칠 수 있는 닳은 장비를 상자에 안 넣고 지님(부러진 도구가 상자에 그대로 남던 것). vh_repairtest 신설 PASS 10/10(제작대 10m, 2초), preptest 22/22·woodtest 10/10 PASS, Core 355. 다음: 8) ⑦ 철 조각 나누기.
 - [루프 회차 58] 7) D 저항 미드 3조각(끝): 출발 전 판단 — 빠듯한 곳이 늪(독)·산(냉기)·애쉬랜드(불)인데 그 저항 미드가 짐·음식/미드 상자에 없고 장비로도 못 막으면 "독 저항 미드 하나만 주시면 갈게요"(조건 resist:Poison, 상자에 넣으면 5초 안에 출발). 같이 고침: Prep이 미드를 장비 상자에서만 챙겨 이름 붙은 "미드 상자"의 미드를 못 꺼내던 것(음식·미드 상자에서도 챙김, 미드 상자에선 장비 안 꺼냄). departtest 26/26(늪 칸 추가)·preptest 22/22·resisttest 12/12, Core 349. 다음: E 장비 수리(NPC 도구·갑옷, 작업대).
 - [루프 회차 57] 7) D 저항 미드 2조각: 발효기(Fermenter) 넣기·꺼내기(MachineStep, 지붕 없으면 안 넣음, 다 익은 걸 보면 Wait 끝), 몫 넘는 미드는 상자로, 상자 꽉 차면 만든 것을 짐/땅에(사라지던 것). crafttest 16/16(발효 칸 추가)·preptest 22/22·bagtest·resisttest PASS, Core 346. 간헐 1번(따른 뒤 줍기 못 함, DIAG 넣음). 다음: D 3조각 출발 조건 "독 저항 미드 주면 갈게요" → E 장비 수리.
@@ -91,7 +92,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   Core 테스트 284. 묶음 중 고친 것: "아침에 갈까요? 응" 대기열이 아직 낮이면 바로 꺼내 질문을 되풀이하던 것(→ 다음 아침까지), 손님 게임에서 Brain.Update가 NPC ZDO에 쓰던 것.
 
 다음 (순서대로)
-★ 지금 순서: 7) D 저항 미드·E 장비 수리 끝(회차 56~59) → 8) ⑦ 철(구현 단계 ⑦을 조각으로 나눠 여기 적고 첫 조각부터).
+★ 지금 순서: 8) ⑦ 철 조각(회차 60에 나눔): [x]1 지하묘지 찾기·드나들기(Dungeons, vh_crypttest) → 2 !철 일: 열린 지하묘지까지 걸어가(포탈 WalkVia) 입구 Teleport로 들어가 안에서 mudpile2 캐고(부서지면 mudpile2_frac, 곡괭이 단계는 그때 확인) 줍기, 짐 차거나 다 캐면 나가는 Teleport → 귀환·상자 (vh_crypttest 넓혀 고철이 거점 상자에 들어오는지) → 3 안 위험: 후퇴·도망은 나가는 Teleport로, 밤 규칙(늪 바깥 이동은 낮만), 장소 기억은 입구 구역에(design-depart-craft 12줄), 열린 지하묘지 없으면 출발 전 대답 → 4 "철 주괴"는 고철 제련(제작 계획 Smelter) → 5 ⑤의 던전 문 처리 마무리(구현 단계 ⑤ [x]). 그다음 ⑧ 사냥·요리·발효.
 ★ 사용자 순서(2026-10-22, 아래 옛 목록보다 먼저, 전문은 decisions.txt "노트 맞춤 2026-10-22"): 1) I-1 상자 역할 고르기 Chests 한 곳 → I-2 ChestTag 이름 읽기 → 2) B 일 끼워넣기·Wait 중 보충 → 3) 손님 코드 검사 → 4) 시험 전 코드 게임 시험 → 5) J 이동 한계 → 6) ⑤ 포탈 → 7) D·E → 8) ⑦⑧⑨⑩ → 9) C·⑪⑫⑬⑭⑮ → 10) F 길. 안 하는 것: A·G·K·건축물 수리.
 ★ 집 PC 세션 순서(사용자 결정 2026-10-21): 시험 전에 먼저 0-a, 0-b를 사용자와 같이 한다.
   0-a) [완료 2026-10-21] 계정 2개: 1번 = 기본(%USERPROFILE%\.claude, CLAUDE_CONFIG_DIR 없음), 2번 = CLAUDE_CONFIG_DIR=%USERPROFILE%\.claude-acct2.
@@ -176,7 +177,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 - [~] ④ 구리·주석 (0.3.8)
 - [~] ⑤ 포탈 이용 — 계산·ZDO 읽기·구역 가기/귀환 연결 완료, vh_portaltest PASS(읽기·선택·순간이동; 걷다가 타는 전체 흐름은 시험 안 함). 남음: 던전 문·y≈5000(⑦과 함께)
 - [~] ⑥ 가공·제작 — 실행기(PlanRunner·PlanJob·CraftStep·MachineStep) 구현, vh_crafttest PASS(활·구리 주괴). 남음: Wait 중 자동 보충(일 구조 B)
-- [ ] ⑦ 철(지하묘지)
+- [~] ⑦ 철(지하묘지) — 1조각 찾기·드나들기(Dungeons, vh_crypttest) 끝, 남은 조각은 "다음" 맨 위
 - [~] ⑧ 먹거리·세트메뉴 — 세트 계획 실행 vh_settest PASS, 사냥·요리·발효 남음
 - [ ] ⑨ 농사 (평탄화·길 만들기는 보류, 사용자 결정 2026-10-21)
 - [~] ⑩ 자동 보충 — 채집 물건만(시험 전)

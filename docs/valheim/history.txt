@@ -325,3 +325,9 @@ Prep: 미드를 Food 상자에서도 챙김(m_takeGear/m_takeMeads). departtest 
 ObjectDB.GetRecipe(이름), recipe.m_repairStation/m_craftingStation 이름 == 지금 설비 이름(또는 item.m_worldLevel < Game.m_worldLevel이면 아무 설비 — 안 따름),
 Min(GetLevel,4) ≥ m_minStationLevel, CheckUsable(지붕 Cover 70%·underRoof, m_haveFire = EffectArea.IsPointPlus025InsideBurningArea). 무료, 효과 m_repairItemDoneEffects.
 vh_repairtest: 첫판은 제작대 4m라 0초(걷기 안 탐) → 10m로 옮겨 2초 PASS. Log "Claude 수리(작업대): AxeFlint 0→100, ArmorRagsChest 40→200".
+[루프 회차 60, 2026-10-22] ⑦ 철 1조각: 게임 1.0.20 — Teleport.Interact: TeleportTo(m_targetPoint.pos + forward − up, 짝 rot, distantTeleport:false), Character.InInterior = y > 3000.
+Door: ZDO s_state 0 = 닫힘, ±1 = 열림, 열쇠 문(m_keyItem)은 열리면 못 닫음. Location 안 = (구역 중심 x,z, 위치 y + 5000). LocationProxy ZDO s_location(위치 이름 해시)·s_seed.
+ZoneSystem.TestSpawnLocation(name,pos,disableSave)는 m_didZoneTest로 저장을 끔, m_locationInstances에 안 넣음. GetLocation(name)은 m_prefab이 유효한 것만 → SunkenCrypt1은 "Missing location"(꺼짐), SunkenCrypt4 씀.
+위치 이름: Crypt2·3·4·HalfBurried_ForestCrypt = 검은숲(무덤), SunkenCrypt1~4 = 늪. 안 물체(SunkenCrypt4 하나): mudpile2(Destructible 체력 1, RandomSpawn, 부서지면 mudpile2_frac) 12~16개,
+Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pickable_SunkenCryptRandom, 버섯, DG_SunkenCrypt(던전 생성기). 정리할 때 세운 ZDO 100개쯤.
+일꾼은 도착점에서 6.5m 떨어진 y≈도착점+6에 섬(계단 위로 내려앉는 듯, 떨어지지 않음).
