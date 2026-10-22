@@ -85,7 +85,6 @@ namespace ValheimHelper
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
             System.Func<float, float> taken = d => HitData.DamageTypes.ApplyArmor(d * scale, armor);
             FindFoes(pos, myHit, taken);
-            DrinkResist(pos);
             if (m_foes.Count == 0)
             {
                 if (m_state == State.Fight) EndFight();
@@ -149,6 +148,7 @@ namespace ValheimHelper
                     if (m_state == State.Back && m_backTimer > 0f && !Aggressive(nearest)) break; // 물러나 기다리는 중: 쫓아오지 않으면 그대로
                     Character t = FightTarget(pos);
                     if (t == null) break;
+                    if (t != m_target) DrinkResist(pos, t);
                     if (!m_saidFight) { m_saidFight = true; m_npc.Say("fightStart", Args(Localization.instance.Localize(t.m_name))); }
                     m_target = t;
                     m_state = State.Fight;
@@ -199,16 +199,60 @@ namespace ValheimHelper
         static Dictionary<string, string> Args(string foe) => new Dictionary<string, string> { ["foe"] = foe };
 
         /// <summary>
-        /// 셈에 넣을 적: 30m 안의 적대 생물 중 나·동행을 노리거나 15m 안에 왔거나, 보스이거나, 혼자서도 못 이길 만큼 센 것(8장 a: 보이면 피함).
-        /// 아직 나를 모르는 먼 잔챙이는 넣지 않는다(0.3.7: 거점 둘레를 어슬렁거리는 멧돼지·회색난쟁이 때문에 탐험을 못 함).
+        /// 저항 미드(사용자 결정 2026-10-22): 싸우기 직전, 그 적이 주는 속성 피해(독·냉기·불)의 저항이 아직 없고 미드가 있으면 마신다.
+        /// 적 피해 종류를 게임 데이터로 모르면 바이옴 기준.
         /// </summary>
-        /// <summary>저항 미드(결정 D): 중독됐거나 그 바이옴에서 적이 보이면, 그 저항이 아직 없고 미드가 있으면 마신다.</summary>
-        void DrinkResist(Vector3 pos)
+        void DrinkResist(Vector3 pos, Character foe)
         {
-            string kind = Resist.ToDrink(((Heightmap.Biome)Scout.BiomeAt(pos)).ToString(), m_foes.Count > 0, m_npc.Poisoned, m_npc.Resists, m_npc.HasResistMead);
+            string kind = Resist.ToDrink(FoeElements(foe), ((Heightmap.Biome)Scout.BiomeAt(pos)).ToString(), m_npc.Resists, m_npc.HasResistMead);
             if (kind != null && m_npc.DrinkResistMead(kind)) m_npc.Say("resist");
         }
 
+        static readonly Dictionary<string, Dictionary<string, float>> s_elements = new Dictionary<string, Dictionary<string, float>>();
+
+        /// <summary>
+        /// 적이 주는 속성 피해 종류와 그 한 방 크기: Humanoid의 공격 물건(m_defaultItems·m_randomWeapon·m_randomSets)의 m_damages 독·냉기·불(가장 큰 값).
+        /// 공격 물건이 하나도 없으면(모름) null. 프리팹 이름별로 한 번만 센다.
+        /// </summary>
+        static Dictionary<string, float> FoeElementDamage(Character foe)
+        {
+            if (foe == null) return null;
+            string key = Utils.GetPrefabName(foe.gameObject);
+            if (s_elements.TryGetValue(key, out var cached)) return cached;
+            Dictionary<string, float> kinds = null;
+            if (foe is Humanoid h)
+            {
+                var items = new List<GameObject>();
+                if (h.m_defaultItems != null) items.AddRange(h.m_defaultItems);
+                if (h.m_randomWeapon != null) items.AddRange(h.m_randomWeapon);
+                if (h.m_randomSets != null) foreach (var set in h.m_randomSets) if (set?.m_items != null) items.AddRange(set.m_items);
+                foreach (var go in items)
+                {
+                    var drop = go != null ? go.GetComponent<ItemDrop>() : null;
+                    if (drop == null) continue;
+                    var shared = drop.m_itemData.m_shared;
+                    if (shared.m_itemType == ItemDrop.ItemData.ItemType.Shield || shared.m_itemType == ItemDrop.ItemData.ItemType.Chest
+                        || shared.m_itemType == ItemDrop.ItemData.ItemType.Legs || shared.m_itemType == ItemDrop.ItemData.ItemType.Helmet
+                        || shared.m_itemType == ItemDrop.ItemData.ItemType.Shoulder || shared.m_itemType == ItemDrop.ItemData.ItemType.Utility) continue;
+                    if (kinds == null) kinds = new Dictionary<string, float>();
+                    var d = shared.m_damages;
+                    void Add(string k, float v) { if (v > 0f) kinds[k] = Mathf.Max(v, kinds.TryGetValue(k, out float o) ? o : 0f); }
+                    Add("Poison", d.m_poison);
+                    Add("Frost", d.m_frost);
+                    Add("Fire", d.m_fire);
+                }
+            }
+            s_elements[key] = kinds;
+            Plugin.Log.LogInfo($"적 속성 피해 {key}: {(kinds == null ? "모름(바이옴 기준)" : kinds.Count == 0 ? "없음" : string.Join(",", System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(kinds, p => p.Key + " " + p.Value.ToString("0"))))) }");
+            return kinds;
+        }
+
+        static IEnumerable<string> FoeElements(Character foe) => FoeElementDamage(foe)?.Keys;
+
+        /// <summary>
+        /// 셈에 넣을 적: 30m 안의 적대 생물 중 나·동행을 노리거나 15m 안에 왔거나, 보스이거나, 혼자서도 못 이길 만큼 센 것(8장 a: 보이면 피함).
+        /// 아직 나를 모르는 먼 잔챙이는 넣지 않는다(0.3.7: 거점 둘레를 어슬렁거리는 멧돼지·회색난쟁이 때문에 탐험을 못 함).
+        /// </summary>
         void FindFoes(Vector3 pos, float myHit, System.Func<float, float> taken)
         {
             m_foes.Clear();
@@ -283,6 +327,11 @@ namespace ValheimHelper
             float damage = Brain.Foes.TryGet(kind, out _, out float baseDmg)
                 ? baseDmg * (1f + Mathf.Max(0, level - 1) * 0.5f)
                 : Danger.GuessDamage(c.GetHeight(), c.GetRadius(), level);
+            // 저항 미드(사용자 결정 2026-10-22): 그 속성 저항이 있거나 미드를 들고 있으면(싸우기 직전에 마심) 속성 몫을 반(Resistant)으로 센다. 배운 적만.
+            if (Brain.Foes.Knows(kind) && FoeElementDamage(c) is Dictionary<string, float> el)
+                foreach (var e in el)
+                    if (m_npc.Resists(e.Key) || m_npc.HasResistMead(e.Key))
+                        damage = Mathf.Max(0f, damage - e.Value * 0.5f * (1f + Mathf.Max(0, level - 1) * 0.5f));
             // 판단식은 "내가 한 번 칠 때 맞는 피해"로 센다. 바닐라 몬스터는 공격 사이 쉬는 시간이 있어 대략 내가 두 번 칠 때 한 번 친다.
             damage *= FoeHitsPerSwing;
             return new Foe { Kind = kind, Health = health, Damage = damage, Boss = c.IsBoss(), Distance = Vector3.Distance(c.transform.position, pos) };

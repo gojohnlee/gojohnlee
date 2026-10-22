@@ -35,14 +35,20 @@ namespace ValheimHelper.Core.Npc
         }
 
         /// <summary>
-        /// 지금 어떤 저항 미드를 마실지. 이미 그 저항이 있으면 안 마신다(미드 효과가 아직 있거나 장비로 막음).
-        /// 중독 중이면 바이옴과 상관없이 독 저항, 아니면 적이 보일 때 바이옴의 것. 마실 게 없으면 null.
+        /// 싸우기 직전에 마실 저항 미드(사용자 결정 2026-10-22: 걸린 뒤엔 늦고, 아무 때나 마시지 않는다).
+        /// foeKinds = 그 적이 주는 속성 피해(게임 데이터, "Poison"·"Frost"·"Fire"), null이면 모름 → 지금 바이옴 기준(ForBiome).
+        /// 그 저항이 이미 있거나(미드 효과·장비) 미드가 없으면 그 종류는 건너뛴다. 마실 게 없으면 null.
         /// </summary>
-        public static string ToDrink(string biome, bool foesInView, bool poisoned, System.Func<string, bool> resisted, System.Func<string, bool> have)
+        public static string ToDrink(System.Collections.Generic.IEnumerable<string> foeKinds, string biome, System.Func<string, bool> resisted, System.Func<string, bool> have)
         {
-            string need = poisoned ? "Poison" : foesInView ? ForBiome(biome) : null;
-            if (need == null || resisted(need) || !have(need)) return null;
-            return need;
+            if (foeKinds == null)
+            {
+                string b = ForBiome(biome);
+                foeKinds = b != null ? new[] { b } : new string[0];
+            }
+            foreach (string k in foeKinds)
+                if (k != null && !resisted(k) && have(k)) return k;
+            return null;
         }
     }
 }

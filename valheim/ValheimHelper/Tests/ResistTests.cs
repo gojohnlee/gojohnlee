@@ -16,26 +16,31 @@ public class ResistTests
     public void BiomeNeeds(string biome, string kind) => Assert.Equal(kind, Resist.ForBiome(biome));
 
     [Fact]
-    public void DrinksForBiomeOnlyWhenFoesInView()
+    public void DrinksWhatTheFoeDeals()
     {
-        Assert.Equal("Poison", Resist.ToDrink("Swamp", true, false, No, Yes));
-        Assert.Null(Resist.ToDrink("Swamp", false, false, No, Yes));
-        Assert.Null(Resist.ToDrink("Meadows", true, false, No, Yes));
+        Assert.Equal("Poison", Resist.ToDrink(new[] { "Poison" }, "Meadows", No, Yes));
+        Assert.Equal("Fire", Resist.ToDrink(new[] { "Fire" }, "Swamp", No, Yes));
     }
 
     [Fact]
-    public void PoisonedDrinksPoisonAnywhere()
+    public void FoeWithoutElementNeedsNothingEvenInSwamp()
     {
-        Assert.Equal("Poison", Resist.ToDrink("Meadows", false, true, No, Yes));
-        Assert.Equal("Poison", Resist.ToDrink("Mountain", true, true, No, Yes));
+        Assert.Null(Resist.ToDrink(new string[0], "Swamp", No, Yes));
+    }
+
+    [Fact]
+    public void UnknownFoeFallsBackToBiome()
+    {
+        Assert.Equal("Poison", Resist.ToDrink(null, "Swamp", No, Yes));
+        Assert.Null(Resist.ToDrink(null, "Meadows", No, Yes));
     }
 
     [Fact]
     public void SkipsWhenResistedOrMissing()
     {
-        Assert.Null(Resist.ToDrink("Swamp", true, false, Yes, Yes));
-        Assert.Null(Resist.ToDrink("Swamp", true, false, No, No));
-        Assert.Null(Resist.ToDrink("Mountain", true, false, k => k == "Frost", Yes));
-        Assert.Equal("Frost", Resist.ToDrink("Mountain", true, false, k => k == "Poison", Yes));
+        Assert.Null(Resist.ToDrink(new[] { "Poison" }, "Swamp", Yes, Yes));
+        Assert.Null(Resist.ToDrink(new[] { "Poison" }, "Swamp", No, No));
+        Assert.Null(Resist.ToDrink(null, "Mountain", k => k == "Frost", Yes));
+        Assert.Equal("Fire", Resist.ToDrink(new[] { "Frost", "Fire" }, "Mountain", k => k == "Frost", Yes));
     }
 }
