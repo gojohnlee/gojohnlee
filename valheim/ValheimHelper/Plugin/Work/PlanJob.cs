@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 제작 계획을 실제로 돌리는 일(⑥ 실행기 셋째 조각): PlanRunner가 고른 단계를 하나씩 한다.
-    /// Gather → GatherJob(목표만큼 거점 상자에 넣으면 끝), Craft → CraftStep. Load·Unload → MachineStep(Smelter·Fermenter), Hunt·Farm은 아직 없어서 Failed(그에 기댄 단계는 Blocked).
+    /// Gather → GatherJob(목표만큼 거점 상자에 넣으면 끝), Craft → CraftStep. Load·Unload → MachineStep(Smelter·Fermenter), Hunt는 GatherJob 사냥 모드(⑧), Farm은 아직 없어서 Failed(그에 기댄 단계는 Blocked).
     /// Wait만 남으면 가만히 시계를 기다린다(다른 일 하기는 다음 조각). 실패가 있으면 끝에 한 번 알린다.
     /// </summary>
     public sealed class PlanJob : IWorkerJob
@@ -63,6 +63,7 @@ namespace ValheimHelper
             switch (m_step.Kind)
             {
                 case StepKind.Gather:
+                case StepKind.Hunt:
                     running = m_gather.Update(dt);
                     ok = m_gather.Delivered >= m_gather.Target;
                     if (ok) running = false;
@@ -100,6 +101,7 @@ namespace ValheimHelper
                 switch (s.Kind)
                 {
                     case StepKind.Gather:
+                    case StepKind.Hunt:
                         HashSet<ToolKind> ways = ResourceCatalog.WaysFor(s.Item);
                         if (ways.Count == 0 || s.Amount <= 0) { m_runner.Fail(s.Id); continue; }
                         m_gather = new GatherJob(m_npc, s.Item, s.Amount, ways);
@@ -112,7 +114,7 @@ namespace ValheimHelper
                         if (MachineStep.Supported(s.Station)) { m_machine = new MachineStep(m_npc, s); break; }
                         m_runner.Fail(s.Id);
                         continue;
-                    default: // Hunt·Farm: 아직 없음
+                    default: // Farm: 아직 없음
                         m_runner.Fail(s.Id);
                         continue;
                 }

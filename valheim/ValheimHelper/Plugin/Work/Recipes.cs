@@ -91,7 +91,7 @@ namespace ValheimHelper
             foreach (GameObject item in ObjectDB.instance.m_items)
             {
                 if (item == null) continue;
-                if (ResourceCatalog.WaysFor(item.name).Count > 0) b.SetSource(item.name, SourceKind.Gather); // 캐거나 줍기가 사냥보다 먼저
+                if (ResourceCatalog.Gatherable(item.name)) b.SetSource(item.name, SourceKind.Gather); // 캐거나 줍기가 사냥보다 먼저
             }
             s_book = b;
             Plugin.Log.LogInfo($"제작 계획: 제작법·가공표·출처 준비됨");

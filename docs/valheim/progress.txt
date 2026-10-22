@@ -28,6 +28,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 ======================================================================
 지금 (2026-10-21)
 - [클라우드 세션 2026-10-22, 사용자 직접 요청] 늪 열쇠를 얻으면 일꾼도 지하묘지 문을 엶: Core Crypts.Choose(열린 곳 중 더미 남은 곳 먼저 → 없으면 열 수 있는 닫힌 곳, 다 캔 곳 뺌)+MinedOut, Plugin/Unlocks(호스트가 주운 적 있음 또는 그 물건 떨구는 보스 월드 키), Dungeons(남은 더미 ZDO 세기·CanOpen·Open = 바닐라 RPC UseDoor), GatherJob.UpdateOpenDoor(문 앞 3m에서 열기, 세 번 안 되면 포기, "cryptOpen" 대사), 출발 전 다 캤으면 depart.cryptsEmpty. Go가 m_gateUsedAt를 지움(다음 묘지 입구 앞에서 서 있던 것). vh_crypttest 칸 바꿈(열쇠 없음 → 주움 → 보스 월드 키, 일꾼이 직접 문 열고 "!철 3", 남은 더미 셈) — ★ 클라우드라 게임 시험 못 함. 빌드·참조 검사 통과, Core 372(루프 회차 63과 합친 뒤). 다음 보스(위시본 = 산 은)도 같은 방식(decisions.txt).
+- [루프 회차 63] 8) ⑧ 사냥 1조각(끝): 사냥만 되는 물건(예 RawMeat)은 ResourceCatalog.WaysFor가 ToolKind.Hunt로 돌려 주고(Prey: CharacterDrop+MonsterAI, 보스·길들인 것 뺌), GatherJob이 사냥 모드로 돈다 — Search/GoZone에서 60m 안 사냥감을 찾으면(Guard.SafePrey = 그 한 마리만 놓고 Danger 판단이 Fight) Step.Hunt가 쫓아가 치고, 죽으면 Collect로 줍고 Return/Deposit은 채집과 같음(2분 못 잡으면 포기, 체력 40% 아래면 huntHurt 대사 후 그만). 계획의 Hunt 단계도 같은 GatherJob. 사슴·토끼(AnimalAI)는 활이 필요해 Prey에서 뺌(다음 조각). vh_hunttest 신설 PASS 9/9(127초: 멧돼지 둘 → 고기 2개 상자), wood·craft PASS, fight·depart는 단독 PASS(이어 돌리면 간헐 FAIL, 멧돼지/체력 6 잔여 영향). Core 365. 다음: ⑧ 2조각 굽기(CookingStation 넣기·꺼내기, 타기 전에 뺌) → 3조각 사슴 활 사냥.
 - [루프 회차 62] 8) ⑦ 철 4조각(끝): "!철주괴 N" = 고철을 용광로(blastfurnace)에서 제련. 고침 2개: ① ResourceCatalog.WaysFor가 연료 제련 산출물(s_smelted, 예 Iron)은 채집 방법 없음으로 돌려 채집으로 새지 않게(Iron이 어딘가에서 떨어져 "!철주괴"가 채집으로 가던 것), ② CraftPlanner.PickProcess가 입력이 거점 재고에 있는 가공을 먼저(고철·철 광석 둘 다 철 주괴가 되는데 철 광석을 모으러 가던 것). crafttest에 용광로 칸 추가 PASS 23/23(198초), crypttest 19/19, Core 365. 다음: ⑦ 5(⑤ 던전 문 마무리, 구현 단계 ⑤·⑦ [x] 표시) → ⑧ 사냥·요리·발효.
 - [루프 회차 62] 8) ⑦ 철 3조각(끝): 지하묘지 안 위험 — Guard.AwayPoint가 안(y>3000)이면 나가는 Teleport 쪽으로 물러나·도망, GatherJob.AvoidHere가 안이면 그 묘지를 끝내고 Return(나가는 Teleport)으로. 밤에는 지하묘지로 걸어가기 시작 안 함(TryStartCrypt). 장소 기억은 안과 입구가 xz 같아 입구 구역에 그대로 쌓임(코드 변경 없음). 출발 전: 고철인데 아는 곳도 열린 묘지도 없으면 거절 depart.noCrypt("문 하나만 열어 주세요", Core DepartureInput.NoCrypt). crypttest 19/19(거절 칸 2개 추가)·fighttest 11/11·departtest 25/25(간헐 1번 재고 질문 FAIL은 재실행 PASS), Core 364. 안에서 실제 적과 싸워 나가는 시험은 안 함. 다음: ⑦ 4(철 주괴 제련 = 고철 → 제작 계획 Smelter) → 5(⑤ 던전 문 마무리).
 - [루프 회차 61] 8) ⑦ 철 2조각(끝): "!철 N" = GatherJob이 바깥에서 고철이 안 보이면 열린 지하묘지를 골라(Step.GoCrypt: 걸어가 입구 Teleport 사용, 6분 제한) 안(90m 시야, FindInSight range·inside 구분)에서 진흙 더미를 캐고, 다 캐거나 짐 차거나 15분이면 Return이 나가는 Teleport로 나와(없거나 2분 넘으면 깃발) 거점 상자에 넣음. 빈손으로 나오면 집 안 가고 다음 묘지·찾기. Senses.Observe는 안(y>3000) 물체를 바깥 구역 지식에 안 넣음. vh_crypttest에 "!철 3" 칸 추가 PASS 17/17(223초 고철 3개 상자), woodtest·departtest PASS, coppertest 간헐 1번 FAIL(길이 막혀 순간이동, 기존 간헐)·재실행 PASS 11/11. Core 364. 다음: ⑦ 3조각(안 위험·밤 규칙·장소 기억·열린 지하묘지 없을 때 출발 전 대답) → 4(철 주괴 제련) → 5.
@@ -99,7 +100,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 다음 (순서대로)
 ★ 먼저: vh_crypttest 게임 시험(클라우드 세션 2026-10-22의 늪 열쇠 문 열기 — 열쇠 칸·일꾼이 문 열기·남은 더미 셈, 게임에서 한 번도 안 돌림). FAIL이면 vh-debug.
-★ 지금 순서: 8) ⑦ 철 조각(회차 60에 나눔): [x]1 지하묘지 찾기·드나들기(Dungeons, vh_crypttest) → [x]2 !철 일(GatherJob GoCrypt·UpdateInside·LeaveCrypt, crypttest PASS) → [x]3 안 위험: 후퇴·도망은 나가는 Teleport로, 밤 규칙(늪 바깥 이동은 낮만), 장소 기억은 입구 구역에(design-depart-craft 12줄), 열린 지하묘지 없으면 출발 전 대답 → [x]4 철 주괴 제련 → 5 ⑤의 던전 문 처리 마무리(구현 단계 ⑤ [x]). 그다음 ⑧ 사냥·요리·발효.
+★ 지금 순서: 8) ⑧ 먹거리 조각: [x]1 사냥(GatherJob 사냥 모드, vh_hunttest) → 2 굽기(조리대 CookingStation을 MachineStep에: 날고기 올리고 타기 전에 뺌) → 3 사슴·토끼 활 사냥(장비 상자에 활+화살일 때) → 그다음 ⑨ 농사.
 ★ 사용자 순서(2026-10-22, 아래 옛 목록보다 먼저, 전문은 decisions.txt "노트 맞춤 2026-10-22"): 1) I-1 상자 역할 고르기 Chests 한 곳 → I-2 ChestTag 이름 읽기 → 2) B 일 끼워넣기·Wait 중 보충 → 3) 손님 코드 검사 → 4) 시험 전 코드 게임 시험 → 5) J 이동 한계 → 6) ⑤ 포탈 → 7) D·E → 8) ⑦⑧⑨⑩ → 9) C·⑪⑫⑬⑭⑮ → 10) F 길. 안 하는 것: A·G·K·건축물 수리.
 ★ 집 PC 세션 순서(사용자 결정 2026-10-21): 시험 전에 먼저 0-a, 0-b를 사용자와 같이 한다.
   0-a) [완료 2026-10-21] 계정 2개: 1번 = 기본(%USERPROFILE%\.claude, CLAUDE_CONFIG_DIR 없음), 2번 = CLAUDE_CONFIG_DIR=%USERPROFILE%\.claude-acct2.
@@ -182,10 +183,10 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 - [x] ② 나무·돌·부싯돌, 상자, 지식, 새 땅 탐험
 - [x] ③ 장비·음식·위험·사망·장소 기억·출발 전 판단·스킬·습격 귀환·도움 요청·같이 싸움 시험 PASS(회차 41~47), 저항 미드(회차 56~58)·장비 수리(회차 59, vh_repairtest) 끝.
 - [~] ④ 구리·주석 (0.3.8)
-- [~] ⑤ 포탈 이용 — 계산·ZDO 읽기·구역 가기/귀환 연결 완료, vh_portaltest PASS(읽기·선택·순간이동; 걷다가 타는 전체 흐름은 시험 안 함). 남음: 던전 문·y≈5000(⑦과 함께)
-- [~] ⑥ 가공·제작 — 실행기(PlanRunner·PlanJob·CraftStep·MachineStep) 구현, vh_crafttest PASS(활·구리 주괴). 남음: Wait 중 자동 보충(일 구조 B)
-- [~] ⑦ 철(지하묘지) — 1조각 찾기·드나들기(Dungeons, vh_crypttest) 끝, 남은 조각은 "다음" 맨 위
-- [~] ⑧ 먹거리·세트메뉴 — 세트 계획 실행 vh_settest PASS, 사냥·요리·발효 남음
+- [x] ⑤ 포탈 이용 — 계산·ZDO 읽기·구역 가기/귀환·던전 문(지하묘지 Teleport, Dungeons) 완료, vh_portaltest·vh_crypttest PASS
+- [x] ⑥ 가공·제작 — 실행기(PlanRunner·PlanJob·CraftStep·MachineStep), Wait 중 자동 보충 완료, vh_crafttest PASS
+- [x] ⑦ 철(지하묘지) — 찾기·드나들기·!철 일·안 위험·철 주괴 제련 완료(vh_crypttest 19/19, crafttest 용광로 칸)
+- [~] ⑧ 먹거리·세트메뉴 — 세트 계획 vh_settest, 사냥(멧돼지류, vh_hunttest) PASS. 남음: 굽기(CookingStation), 사슴 활 사냥
 - [ ] ⑨ 농사 (평탄화·길 만들기는 보류, 사용자 결정 2026-10-21)
 - [~] ⑩ 자동 보충 — 채집 물건만(시험 전)
 - [ ] ⑪ 산 ⑫ 평원 ⑬ 안개땅 → ⑭ 애쉬랜드 ⑮ 딥노스 (⑭⑮는 ⑬ 뒤에 진행, 보류 해제 2026-10-22)

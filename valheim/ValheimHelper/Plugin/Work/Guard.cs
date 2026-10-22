@@ -301,6 +301,17 @@ namespace ValheimHelper
             return ai == null || !ai.IsSleeping();
         }
 
+        /// <summary>사냥감으로 삼아도 되나(⑧): 그 한 마리만 놓고 보면 싸우는 쪽으로 판단될 때(체력 낮으면 안 됨).</summary>
+        public bool SafePrey(Character c)
+        {
+            Vector3 pos = m_npc.transform.position;
+            float armor = m_npc.GetBodyArmor();
+            float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
+            var one = new List<Foe>(1) { View(c, pos) };
+            return Danger.Judge(m_npc.Personality, one, m_npc.GetHealth(), m_npc.GetMaxHealth(), MyHit(pos),
+                d => HitData.DamageTypes.ApplyArmor(d * scale, armor), false) == Verdict.Fight;
+        }
+
         /// <summary>나·동행을 노리거나, 경계 중이거나, 가까이 왔거나, 방금 나를 때렸다.</summary>
         bool Aggressive(Character c)
         {

@@ -150,7 +150,7 @@ namespace ValheimHelper
                 CurrentJob = !fromQueue && npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is GraveJob) ? npc.Ai.Job.Label : null,
                 Tool = GatherJob.CanStart(npc, ways) ? ToolState.Ok : ToolState.None,
                 Fed = npc.Meals.Count > 0,
-                SecondsPerUnit = ways.Count == 1 && ways.Contains(ToolKind.None) ? 1.5f : 4f,
+                SecondsPerUnit = ways.Contains(ToolKind.Hunt) ? 40f : ways.Count == 1 && ways.Contains(ToolKind.None) ? 1.5f : 4f,
             };
             if (ways.Contains(ToolKind.Axe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.WoodCutting);
             else if (ways.Contains(ToolKind.Pickaxe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.Pickaxes);

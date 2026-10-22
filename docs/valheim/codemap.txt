@@ -18,6 +18,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
 지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도) MapSense.cs(밝혀진 곳은 안다)
 채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
+사냥(⑧)               Plugin/Work/Prey.cs(CharacterDrop+MonsterAI에서 물건→사냥감 프리팹, ResourceCatalog.WaysFor가 ToolKind.Hunt로 돌려줌) + GatherJob Step.Hunt(FindPrey·UpdateHunt, m_hunt) + Guard.SafePrey(한 마리 판단) 시험 Plugin/HuntTest.cs(vh_hunttest)
 탐험 작업              Plugin/Work/ExploreJob.cs
 출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기, 가방 차면 헌 장비와 맞바꿈 MakeRoom) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
 장비 수리             Plugin/Work/Repair.cs(바닐라 CanRepair 규칙: 레시피 수리대·제작대 이름·레벨·지붕/불, StationFor·Next·At) + Core/Npc/RepairRule.cs(반 넘게 닳으면). Prep이 입기 전에 들름, Unload는 고칠 수 있는 닳은 장비를 지님. 시험 RepairTest.cs(vh_repairtest)

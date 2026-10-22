@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace ValheimHelper
 {
-    public enum ToolKind { None, Axe, Pickaxe }
+    /// <summary>Hunt: 캐거나 줍는 게 아니라 사냥감이 떨어뜨리는 물건(⑧). 도구 대신 무기로 잡는다.</summary>
+    public enum ToolKind { None, Axe, Pickaxe, Hunt }
 
     /// <summary>캘 수 있는 것 하나(나무, 통나무, 그루터기, 바위 …)의 바닐라 정보.</summary>
     public sealed class ResourceInfo
@@ -46,7 +47,15 @@ namespace ValheimHelper
             if (s_smelted.Contains(item)) return ways;
             foreach (var r in s_byHash.Values)
                 if (r.Produces.Contains(item)) ways.Add(r.Tool);
+            if (ways.Count == 0 && Prey.Any(item)) ways.Add(ToolKind.Hunt);
             return ways;
+        }
+
+        /// <summary>캐거나 줍는 방법이 하나라도 있는가(사냥만 되는 물건은 false).</summary>
+        public static bool Gatherable(string item)
+        {
+            foreach (var w in WaysFor(item)) if (w != ToolKind.Hunt) return true;
+            return false;
         }
 
         public static int Count { get { if (s_byHash == null) Build(); return s_byHash.Count; } }
@@ -91,7 +100,7 @@ namespace ValheimHelper
         }
 
         /// <summary>월드가 바뀌면(ZNetScene 새로 생김) 다시 만든다.</summary>
-        public static void Reset() => s_byHash = null;
+        public static void Reset() { s_byHash = null; Prey.Reset(); }
 
         static ResourceInfo Describe(GameObject p, int depth)
         {

@@ -11,7 +11,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class GatherJob : IWorkerJob
     {
-        enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, GoCrypt, Approach, Work, Collect, Return, Deposit }
+        enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, GoCrypt, Approach, Work, Hunt, Collect, Return, Deposit }
 
         public readonly string Item;
         public readonly int Target;
@@ -74,17 +74,27 @@ namespace ValheimHelper
             Item = item;
             Target = target;
             m_ways = ways;
+            m_hunt = ways.Contains(ToolKind.Hunt);
         }
 
-        /// <summary>지금 그 방법을 쓸 수 있는지(맨손은 항상, 도구는 들고 있을 때).</summary>
-        bool Usable(ToolKind kind) => kind == ToolKind.None || WorkerNpc.BestTool(m_npc.GetInventory(), kind) != null;
+        /// <summary>사냥(⑧): 캐거나 줍는 게 아니라 사냥감을 찾아 잡고 떨어진 것을 줍는다. 나머지(짐 정리·준비·탐색·귀환·넣기)는 채집과 같다.</summary>
+        readonly bool m_hunt;
+        Character m_prey;
+        Vector3 m_preyPos;
+        bool m_huntArmed;
+        /// <summary>이 일 동안 안 잡을 사냥감과 그 시각(Time.time까지): 위험해 보이거나 못 닿은 것.</summary>
+        readonly Dictionary<Character, float> m_huntSkip = new Dictionary<Character, float>();
+        const float PreySight = 60f, HuntLimit = 120f, HuntHurt = 0.4f;
+
+        /// <summary>지금 그 방법을 쓸 수 있는지(맨손·사냥은 항상, 도구는 들고 있을 때).</summary>
+        bool Usable(ToolKind kind) => kind == ToolKind.None || kind == ToolKind.Hunt || WorkerNpc.BestTool(m_npc.GetInventory(), kind) != null;
 
         /// <summary>시작 전 확인용: NPC나 거점 상자에 쓸 수 있는 방법이 하나라도 있는지.</summary>
         public static bool CanStart(WorkerNpc npc, HashSet<ToolKind> ways)
         {
             foreach (var w in ways)
             {
-                if (w == ToolKind.None || WorkerNpc.BestTool(npc.GetInventory(), w) != null) return true;
+                if (w == ToolKind.None || w == ToolKind.Hunt || WorkerNpc.BestTool(npc.GetInventory(), w) != null) return true;
                 if (FindToolChest(npc, w) != null) return true;
             }
             return false;
@@ -171,6 +181,8 @@ namespace ValheimHelper
             m_avoid.Add(Senses.ZoneOf(danger));
             if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Unload || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
             if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
+            if (m_prey != null) m_huntSkip[m_prey] = float.MaxValue;
+            m_prey = null;
             Go(Step.Search);
         }
 
@@ -213,6 +225,7 @@ namespace ValheimHelper
                 case Step.GoCrypt: return UpdateGoCrypt(dt);
                 case Step.Approach: return UpdateApproach(dt);
                 case Step.Work: return UpdateWork();
+                case Step.Hunt: return UpdateHunt(dt);
                 case Step.Collect: return UpdateCollect(dt);
                 case Step.Return: return UpdateReturn(dt);
                 case Step.Deposit: return UpdateDeposit(dt);
@@ -256,7 +269,7 @@ namespace ValheimHelper
 
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)
         {
-            if (kind == ToolKind.None) return null;
+            if (kind == ToolKind.None || kind == ToolKind.Hunt) return null;
             return Chests.First(npc.Home, inv => WorkerNpc.BestTool(inv, kind) != null, ChestRole.Gear);
         }
 
@@ -270,7 +283,7 @@ namespace ValheimHelper
             {
                 foreach (var w in m_ways)
                 {
-                    if (w == ToolKind.None || Usable(w)) continue;
+                    if (Usable(w)) continue;
                     ItemDrop.ItemData best = WorkerNpc.BestTool(inv, w);
                     if (best != null) m_npc.GetInventory().MoveItemToThis(inv, best);
                 }
@@ -286,7 +299,11 @@ namespace ValheimHelper
         {
             if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
             if (m_npc.InInterior()) return UpdateInside();
-            if (FindInSight(out ZDO zdo))
+            if (m_hunt)
+            {
+                if (FindPrey()) { Go(Step.Hunt); return true; }
+            }
+            else if (FindInSight(out ZDO zdo))
             {
                 Found(zdo);
                 return true;
@@ -508,7 +525,8 @@ namespace ValheimHelper
             }
             // 가는 길에 보이면 바로 그쪽으로
             m_scanTimer -= dt;
-            if (m_scanTimer <= 0f && FindInSight(out ZDO zdo))
+            if (m_scanTimer <= 0f && m_hunt && FindPrey()) { Go(Step.Hunt); return true; }
+            if (m_scanTimer <= 0f && !m_hunt && FindInSight(out ZDO zdo))
             {
                 Found(zdo);
                 return true;
@@ -887,6 +905,72 @@ namespace ValheimHelper
             if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
             m_targetId = ZDOID.None;
             Go(Step.Search);
+        }
+
+        // ---- 사냥 (⑧) ----
+
+        /// <summary>60m 안에서 그 물건을 떨어뜨리는 사냥감 중 가장 가까운 것(혼자 상대해도 되는 것만). 찾으면 m_prey에 둔다.</summary>
+        bool FindPrey()
+        {
+            Vector3 me = m_npc.transform.position;
+            Character best = null;
+            float bestD = PreySight;
+            foreach (Character c in Character.GetAllCharacters())
+            {
+                if (c == null || c.IsDead() || c.IsTamed() || c is WorkerNpc || !Prey.Is(Item, c)) continue;
+                if (m_huntSkip.TryGetValue(c, out float until) && Time.time < until) continue;
+                Vector3 p = c.transform.position;
+                float d = Utils.DistanceXZ(p, me);
+                if (d >= bestD || Mathf.Abs(p.y - me.y) > 15f || Avoided(p)) continue;
+                if (!m_ai.Guard.SafePrey(c)) { m_huntSkip[c] = Time.time + 120f; continue; }
+                best = c;
+                bestD = d;
+            }
+            m_prey = best;
+            m_huntArmed = false;
+            if (best != null) Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {Utils.GetPrefabName(best.gameObject)} {bestD:0}m 앞");
+            return best != null;
+        }
+
+        /// <summary>쫓아가 친다(Guard.UpdateFight와 같은 방식). 죽으면 떨어진 것을 줍고, 2분 안에 못 잡거나 체력이 40% 아래면 그만둔다.</summary>
+        bool UpdateHunt(float dt)
+        {
+            if (m_prey != null && !m_prey.IsDead()) m_preyPos = m_prey.transform.position;
+            if (m_prey == null || m_prey.IsDead())
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 잡음({m_stepTime:0}초)");
+                m_prey = null;
+                m_targetPos = m_preyPos;
+                m_targetInfo = null;
+                Go(Step.Collect);
+                return true;
+            }
+            if (m_npc.GetHealth() < m_npc.GetMaxHealth() * HuntHurt)
+            {
+                m_huntSkip[m_prey] = float.MaxValue;
+                m_prey = null;
+                return GiveUp("huntHurt");
+            }
+            if (m_stepTime > HuntLimit)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {HuntLimit:0}초 안에 못 잡아 포기");
+                m_huntSkip[m_prey] = float.MaxValue;
+                m_prey = null;
+                Go(Step.Search);
+                return true;
+            }
+            if (!m_huntArmed) { m_huntArmed = true; m_npc.HoldWeapon(); } // 없으면 맨손으로
+            ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
+            float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
+            float d = Utils.DistanceXZ(m_preyPos, m_npc.transform.position) - m_prey.GetRadius();
+            if (d > range * 0.9f) m_ai.MoveToPoint(dt, m_preyPos, range * 0.8f + m_prey.GetRadius(), true);
+            else
+            {
+                m_ai.StopMoving();
+                m_ai.Face(m_prey.GetCenterPoint());
+                if (!m_npc.InAttack() && m_ai.IsLookingAt(m_preyPos, 25f)) m_npc.StartAttack(m_prey, false);
+            }
+            return true;
         }
 
         // ---- 줍기 ----
