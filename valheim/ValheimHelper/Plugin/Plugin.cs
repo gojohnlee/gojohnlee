@@ -51,6 +51,7 @@ namespace ValheimHelper
             Step("vh_cooktest", CookTest.Register);
             Step("vh_bowtest", BowTest.Register);
             Step("vh_basetest", BaseTest.Register);
+            Step("vh_restart1·2", RestartTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }

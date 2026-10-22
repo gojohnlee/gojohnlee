@@ -46,7 +46,7 @@ namespace ValheimHelper
             if (s_halt == null) s_halt = why;
         }
 
-        static string PluginDir => Path.GetDirectoryName(Plugin.Instance.Info.Location);
+        internal static string PluginDir => Path.GetDirectoryName(Plugin.Instance.Info.Location);
 
         public static bool Begin(Terminal t, string name)
         {
