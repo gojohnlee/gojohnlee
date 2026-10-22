@@ -43,6 +43,24 @@ namespace ValheimHelper
 
         /// <summary>시험·!상태용.</summary>
         public string StateName => m_state.ToString();
+        public bool Fleeing => m_state == State.Flee;
+
+        /// <summary>도망을 그만둔다(갇혀서 깃발로 순간이동했을 때).</summary>
+        /// <summary>시험용: 적 없이 to로 도망을 시작한다(적이 없어도 도망은 끝까지 감).</summary>
+        internal void TestFlee(Vector3 to)
+        {
+            m_backTo = to;
+            m_target = null;
+            m_fleeTime = 0f;
+            m_state = State.Flee;
+        }
+
+        public void CancelFlee()
+        {
+            if (m_state != State.Flee) return;
+            m_state = State.Calm;
+            m_target = null;
+        }
         public Character Target => m_target;
         public float LastRatio { get; private set; }
         public Verdict LastVerdict { get; private set; }

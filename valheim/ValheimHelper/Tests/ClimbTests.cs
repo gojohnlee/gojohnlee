@@ -33,4 +33,25 @@ public class ClimbTests
         // 거의 같으면 가려는 쪽
         Assert.Equal(0, Climb.CarveDir(new[] { 2.0, 1.98, 2.0, 2.0, 2.0, 2.0, 2.0, 1.97 }));
     }
+
+    [Fact]
+    public void FleeingInPitLongEnoughIsRescued()
+    {
+        Assert.Equal("fleePit", Climb.TrapRescue(true, true, false, Climb.FleeTrapSeconds));
+        Assert.Null(Climb.TrapRescue(true, true, false, Climb.FleeTrapSeconds - 1));
+    }
+
+    [Fact]
+    public void WalkingInPitIsLeftToJumpAndCarve()
+    {
+        Assert.Null(Climb.TrapRescue(false, true, false, 100));
+        Assert.Null(Climb.TrapRescue(true, false, false, 100));
+    }
+
+    [Fact]
+    public void SwimmingInPlaceIsRescued()
+    {
+        Assert.Equal("water", Climb.TrapRescue(false, false, true, Climb.SwimTrapSeconds));
+        Assert.Null(Climb.TrapRescue(false, false, true, Climb.SwimTrapSeconds - 1));
+    }
 }

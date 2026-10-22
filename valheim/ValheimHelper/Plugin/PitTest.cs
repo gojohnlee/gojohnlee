@@ -167,6 +167,7 @@ namespace ValheimHelper
                     yield return new WaitForSeconds(1f);
                 }
                 TestRunner.Log($"일꾼 흙 파기: 판 {NpcPatches.NoDig.Dug}번, 막음 {NpcPatches.NoDig.Blocked}번");
+                yield return FleeTrap(checks, claude, home, rot, dig);
             }
             finally
             {
@@ -224,6 +225,63 @@ namespace ValheimHelper
             home = from;
             return false;
         }
+
+        /// <summary>
+        /// 도망 중 구덩이(사용자 결정 2026-10-22): 위 구덩이와 겹치지 않는 자리(거점 20m)에 좁고 깊은(4m) 구덩이를 따로 파고 바닥에 넣은 뒤,
+        /// 점프·깎기를 끈 채 도망을 시키면 6초쯤 못 벗어난 뒤 깃발로 순간이동하는지(짐 그대로, 도망 그만둠). 끝나면 그 자리 지형을 되돌린다.
+        /// (넓은 구덩이는 비탈이라 걸어 나옴 — 회차 60 첫 시도.) 걷기(일)로는 이 구조가 안 붙는 것은 위 구덩이 칸들이 본다.
+        /// </summary>
+        static IEnumerator FleeTrap(GatherTest.Checks checks, WorkerNpc claude, Vector3 home, Quaternion rot, GameObject dig)
+        {
+            Vector3 spot = Vector3.zero;
+            float depth = 0f;
+            var tried = new List<Vector3>();
+            foreach (float ang in new[] { 20f, 110f, 200f, 290f })
+            {
+                Vector3 p0 = home + Quaternion.Euler(0f, ang, 0f) * rot * Vector3.forward * 20f;
+                p0.y = TestTerrain.Height(p0);
+                float rim = p0.y;
+                tried.Add(p0);
+                for (int round = 0; round < 40 && TestTerrain.Height(p0) > rim - 4f; round++)
+                {
+                    Vector3 p = p0;
+                    p.y = TestTerrain.Height(p0);
+                    Attack.SpawnOnHitTerrain(p, dig, null, 0f, null, null);
+                    yield return new WaitForSeconds(0.15f);
+                }
+                yield return new WaitForSeconds(0.5f);
+                depth = rim - TestTerrain.Height(p0);
+                TestRunner.Log($"도망 구덩이 자리 {ang:0}°: 깊이 {depth:0.0}m");
+                if (depth >= 3f) { spot = p0; break; }
+            }
+            checks.Add($"도망 시험 구덩이 팜 ({depth:0.0}m)", spot != Vector3.zero);
+            if (spot != Vector3.zero)
+            {
+                ClearMonsters(spot, 80f);
+                claude.SetHealth(claude.GetMaxHealth());
+                claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
+                yield return new WaitForSeconds(1.5f);
+                int bag0 = claude.GetInventory().GetAllItems().Count, r0 = WorkerAI.TrapRescues;
+                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = true;
+                claude.Ai.Guard.TestFlee(spot + rot * Vector3.forward * 40f);
+                float t = 0f, logAt = 0f;
+                float rim = spot.y;
+                while (t < 20f && WorkerAI.TrapRescues == r0)
+                {
+                    if (t >= logAt) { logAt += 2f; Vector3 p = claude.transform.position; TestRunner.Log($"  도망 구덩이 {t:0}초: 가운데에서 {Utils.DistanceXZ(p, spot):0.0}m, 둘레보다 {p.y - rim:0.0}m, 경계 {claude.Ai.Guard.StateName}"); }
+                    t += Time.deltaTime;
+                    yield return null;
+                }
+                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = false;
+                float toHome = Utils.DistanceXZ(claude.transform.position, claude.Home);
+                checks.Add($"도망 중 구덩이({depth:0.0}m)에 갇힘 → 깃발로 순간이동 ({t:0.0}초, 깃발과 {toHome:0.0}m)", WorkerAI.TrapRescues > r0 && toHome < 6f);
+                checks.Add($"도망은 그만두고 짐 그대로 (경계 {claude.Ai.Guard.StateName}, 짐 {claude.GetInventory().GetAllItems().Count}/{bag0})",
+                    !claude.Ai.Guard.Fleeing && claude.GetInventory().GetAllItems().Count == bag0);
+                yield return new WaitForSeconds(1f);
+            }
+            foreach (var p in tried) TestTerrain.Reset(p, 9f);
+        }
+
 
         static int ClearMonsters(Vector3 at, float radius)
         {

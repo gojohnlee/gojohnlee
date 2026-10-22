@@ -180,6 +180,7 @@ namespace ValheimHelper
             if (d <= dist) { StopMoving(); m_detourTime = 0f; WaterBlockedTime = 0f; m_carving = false; return true; }
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) return false;
+            if (RescueIfTrapped(dt, pos)) return false;
             if (!m_character.InLiquid()) { m_lastDry = pos; m_hasDry = true; if (Time.time > m_waterDecidedUntil) m_swimOk = false; }
             else if (m_character.IsSwimming() && !m_swimOk && m_hasDry)
             {
@@ -376,6 +377,44 @@ namespace ValheimHelper
             return true;
         }
 
+
+        Vector3 m_trapAnchor;
+        float m_trapStill, m_trapCheck;
+        /// <summary>시험용: 갇혀서(도망 중 구덩이·물 찬 구덩이) 깃발로 순간이동한 횟수.</summary>
+        public static int TrapRescues;
+
+        /// <summary>
+        /// 갇힘 구조(사용자 결정 2026-10-22, Core Climb.TrapRescue): 도망 중 구덩이에 갇혀 6초, 또는 헤엄만 치며 20초 동안 3m 안을 못 벗어나면
+        /// 깃발로 순간이동한다(체력·짐·장비 그대로, 도망은 그만둠). 그냥 걷다 빠진 구덩이는 점프·경사로 깎기가 맡는다. true면 옮겼다.
+        /// </summary>
+        bool RescueIfTrapped(float dt, Vector3 pos)
+        {
+            if (Utils.DistanceXZ(pos, m_trapAnchor) > (float)Climb.TrapRadius) { m_trapAnchor = pos; m_trapStill = 0f; return false; }
+            m_trapStill += dt;
+            if (m_trapStill < Mathf.Min((float)Climb.FleeTrapSeconds, (float)Climb.SwimTrapSeconds)) return false;
+            m_trapCheck -= dt;
+            if (m_trapCheck > 0f) return false;
+            m_trapCheck = 0.5f;
+            bool fleeing = m_guard != null && m_guard.Fleeing;
+            bool swimming = m_character.IsSwimming();
+            Vector3 toward = Flat(m_moveTarget - pos);
+            if (toward.sqrMagnitude < 0.01f) toward = Flat(transform.forward);
+            bool pit = fleeing && !swimming && Climb.IsPit(Rise8(pos, toward));
+            string why = Climb.TrapRescue(fleeing, pit, swimming, m_trapStill);
+            if (why == null) return false;
+            var npc = (WorkerNpc)m_character;
+            Plugin.Log.LogInfo($"{npc.NpcName}: {(why == "water" ? "물 찬 구덩이에서 헤엄만 함" : "도망 중 구덩이에 갇힘")} {m_trapStill:0}초 → 깃발로 순간이동");
+            m_guard?.CancelFlee();
+            m_carving = false;
+            StopMoving();
+            npc.TeleportTo(npc.Home, transform.rotation, false);
+            m_trapAnchor = npc.Home;
+            m_trapStill = 0f;
+            StuckTeleports++;
+            TrapRescues++;
+            npc.Say("stuck");
+            return true;
+        }
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
 
         /// <summary>그 방향 2.5m 앞이 깊은 물이고 건너면 안 되는 물인지. 건널 물(좁은 강)이면 m_swimOk를 켠다.</summary>

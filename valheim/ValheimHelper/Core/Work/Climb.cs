@@ -31,5 +31,23 @@ namespace ValheimHelper.Core.Work
                 if (rise[i] < rise[best] - 0.05) best = i;
             return best;
         }
+
+        /// <summary>도망 중 구덩이에 갇혀 이만큼(초) 3m 안을 못 벗어나면 깃발로 순간이동(사용자 결정 2026-10-22: 도망을 못 가니까).</summary>
+        public const double FleeTrapSeconds = 6;
+        /// <summary>헤엄치며 이만큼(초) 3m 안을 못 벗어나면(물 찬 구덩이에서 헤엄만 함) 깃발로 순간이동(사용자 결정 2026-10-22).</summary>
+        public const double SwimTrapSeconds = 20;
+        /// <summary>이 거리(m) 안에서만 맴돌면 못 움직인 것으로 센다.</summary>
+        public const double TrapRadius = 3;
+
+        /// <summary>
+        /// 갇혀서 깃발로 순간이동할지: "water" = 물 찬 구덩이(헤엄만), "fleePit" = 도망 중 구덩이, null = 아님.
+        /// still = 3m 안에 머문 시간. 그냥 걷다가 구덩이에 빠진 건 점프·경사로 깎기가 맡는다(여기 안 옴).
+        /// </summary>
+        public static string TrapRescue(bool fleeing, bool pit, bool swimming, double still)
+        {
+            if (swimming && still >= SwimTrapSeconds) return "water";
+            if (fleeing && pit && still >= FleeTrapSeconds) return "fleePit";
+            return null;
+        }
     }
 }
