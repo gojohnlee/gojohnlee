@@ -1,4 +1,5 @@
-﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 숨김으로 실행한다.
+﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 보이는 창(화면 오른쪽 절반)으로 실행하고,
+# claude가 하는 일(고친 코드·명령·결과)을 그 창에 바로 보여 준다(사용자 요청 2026-10-22). 창을 닫으면 루프도 끝난다.
 # 회차: pull → 멈춤 파일 확인 → 계정 고르기 → claude -p 새 세션(scripts/vh-loop-prompt.txt) → 결과 판정 → status.txt 푸시.
 # 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
 # 백업 때 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리에서 돌려 먼저 답한다.
@@ -43,11 +44,176 @@ Add-Type -Namespace VH -Name Power -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref LII p);
 public static uint IdleMs() { LII l = new LII(); l.cbSize = 8; GetLastInputInfo(ref l); return (uint)Environment.TickCount - l.dwTime; }
 '@
+# 창에 보이기(사용자 요청 2026-10-22): claude를 stream-json으로 돌려 한 줄씩 사람이 읽게 찍는다(고친 코드·명령·결과).
+# 줄은 큐에 넣고 따로 스레드가 찍는다 → 창이 멈춰도(선택 모드 등) claude 출력 읽기는 안 막힌다. 마지막 결과 글은 Feed.Final.
+Add-Type -ReferencedAssemblies System.Web.Extensions -TypeDefinition @'
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using System.Web.Script.Serialization;
+namespace VH {
+public static class Show {
+    static readonly BlockingCollection<KeyValuePair<ConsoleColor, string>> Q = new BlockingCollection<KeyValuePair<ConsoleColor, string>>();
+    [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
+    [DllImport("kernel32.dll")] static extern bool GetConsoleMode(IntPtr h, out uint m);
+    [DllImport("kernel32.dll")] static extern bool SetConsoleMode(IntPtr h, uint m);
+    [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
+    [DllImport("user32.dll")] static extern bool MoveWindow(IntPtr h, int x, int y, int w, int ht, bool r);
+    [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; }
+    [DllImport("user32.dll")] static extern bool SystemParametersInfo(uint a, uint b, ref RECT r, uint f);
+    public static void Init(bool place) {
+        uint m; IntPtr h = GetStdHandle(-10);
+        if (GetConsoleMode(h, out m)) SetConsoleMode(h, (m & ~0x40u) | 0x80u);   // 빠른 편집 끔: 창을 눌러도 출력이 안 멈춤
+        RECT a = new RECT(); IntPtr w = GetConsoleWindow();
+        if (place && w != IntPtr.Zero && SystemParametersInfo(0x30, 0, ref a, 0)) MoveWindow(w, (a.L + a.R) / 2, a.T, (a.R - a.L) / 2, a.B - a.T, true);   // 화면 오른쪽 절반
+        Thread t = new Thread(Run); t.IsBackground = true; t.Start();
+    }
+    public static void Put(string s, ConsoleColor c) { Q.Add(new KeyValuePair<ConsoleColor, string>(c, s)); }
+    static void Run() {
+        foreach (KeyValuePair<ConsoleColor, string> kv in Q.GetConsumingEnumerable()) {
+            try { Console.ForegroundColor = kv.Key; Console.WriteLine(kv.Value); Console.ResetColor(); } catch { }
+        }
+    }
+}
+public class Feed {
+    public readonly StringBuilder Final = new StringBuilder();
+    public readonly StringBuilder Err = new StringBuilder();
+    readonly string tag, root;
+    readonly Dictionary<string, string> tools = new Dictionary<string, string>();
+    readonly JavaScriptSerializer js = new JavaScriptSerializer();
+    readonly Thread o, e;
+    string lastText = "";
+    bool gotResult;
+    public Feed(Process p, string tag, string root) {
+        this.tag = tag; this.root = root.Replace('/', '\\').TrimEnd('\\') + "\\";
+        js.MaxJsonLength = int.MaxValue;
+        o = new Thread(() => { string l; while ((l = p.StandardOutput.ReadLine()) != null) { try { Line(l); } catch (Exception x) { Put(ConsoleColor.DarkGray, "(표시 못 함: " + x.Message + ")"); } } });
+        e = new Thread(() => { string l; while ((l = p.StandardError.ReadLine()) != null) { lock (Err) Err.AppendLine(l); Put(ConsoleColor.Red, l); } });
+        o.IsBackground = true; e.IsBackground = true; o.Start(); e.Start();
+    }
+    // 끝난 뒤 남은 출력까지 읽는다(claude가 남긴 자식이 파이프를 쥐고 있어도 30초까지만). 결과 줄이 없으면(강제 종료 등) 마지막 글로.
+    public void Join() { o.Join(30000); e.Join(30000); lock (Final) { if (!gotResult) Final.Append(lastText); } }
+
+    void Put(ConsoleColor c, string s) { Show.Put(tag + s, c); }
+    void Head(ConsoleColor c, string s) { Put(c, DateTime.Now.ToString("HH:mm:ss") + " " + s); }
+    // 여러 줄 글: max줄까지(tail이면 끝 쪽 max줄), 한 줄은 200자까지
+    void Block(ConsoleColor c, string pre, string text, int max, bool tail) {
+        string[] ls = text.Replace("\r", "").Replace("\t", "    ").TrimEnd('\n').Split('\n');
+        if (ls.Length == 1 && ls[0].Trim() == "") return;
+        int from = tail && ls.Length > max ? ls.Length - max : 0, to = Math.Min(ls.Length, from + max);
+        if (from > 0) Put(ConsoleColor.DarkGray, "         " + pre + "… (앞 " + from + "줄)");
+        for (int i = from; i < to; i++) Put(c, "         " + pre + (ls[i].Length > 200 ? ls[i].Substring(0, 200) + "…" : ls[i]));
+        if (to < ls.Length) Put(ConsoleColor.DarkGray, "         " + pre + "… (+" + (ls.Length - to) + "줄)");
+    }
+    string Rel(string p) { p = p.Replace('/', '\\'); return p.StartsWith(root, StringComparison.OrdinalIgnoreCase) ? p.Substring(root.Length) : p; }
+    static string Cut(string s, int n) { s = s.Replace("\r", "").Replace('\n', ' '); return s.Length > n ? s.Substring(0, n) + "…" : s; }
+    static object V(object o, string k) { Dictionary<string, object> d = o as Dictionary<string, object>; object v; return d != null && d.TryGetValue(k, out v) ? v : null; }
+    static string S(object o, string k) { object v = V(o, k); return v == null ? "" : Convert.ToString(v, CultureInfo.InvariantCulture); }
+    static object[] A(object o, string k) { return V(o, k) as object[] ?? new object[0]; }
+    static string Content(object b) {
+        object c = V(b, "content");
+        if (c is string) return (string)c;
+        StringBuilder sb = new StringBuilder();
+        foreach (object x in c as object[] ?? new object[0]) if (S(x, "type") == "text") sb.AppendLine(S(x, "text"));
+        return sb.ToString();
+    }
+
+    void Line(string l) {
+        if (l.Trim() == "") return;
+        Dictionary<string, object> d = null;
+        if (l.StartsWith("{")) { try { d = js.DeserializeObject(l) as Dictionary<string, object>; } catch { } }
+        if (d == null) { lock (Final) Final.AppendLine(l); Put(ConsoleColor.Gray, l); return; }
+        string ind = S(d, "parent_tool_use_id") != "" ? "  | " : "";   // 서브에이전트가 한 일
+        switch (S(d, "type")) {
+            case "system":
+                if (S(d, "subtype") == "init") Head(ConsoleColor.DarkCyan, "claude 시작 (" + S(d, "model") + ")");
+                break;
+            case "assistant":
+                foreach (object b in A(V(d, "message"), "content")) {
+                    string t = S(b, "type");
+                    if (t == "text" && S(b, "text").Trim() != "") {
+                        if (ind == "") lastText = S(b, "text");
+                        Head(ConsoleColor.White, ind + "·"); Block(ConsoleColor.White, ind, S(b, "text"), 30, false);
+                    }
+                    else if (t == "tool_use") Tool(ind, S(b, "id"), S(b, "name"), V(b, "input"));
+                }
+                break;
+            case "user":
+                foreach (object b in A(V(d, "message"), "content")) if (S(b, "type") == "tool_result") Result(ind, b);
+                break;
+            case "result":
+                lock (Final) { gotResult = true; Final.Insert(0, S(d, "result") + "\n"); }
+                double ms; double.TryParse(S(d, "duration_ms"), NumberStyles.Any, CultureInfo.InvariantCulture, out ms);
+                Head(ConsoleColor.Magenta, "claude 끝: " + Math.Round(ms / 60000) + "분, " + S(d, "num_turns") + "턴" + (S(d, "is_error") == "True" ? ", 오류" : ""));
+                break;
+        }
+    }
+
+    void Tool(string ind, string id, string name, object inp) {
+        if (id != "") tools[id] = name;
+        switch (name) {
+            case "Edit":
+                Head(ConsoleColor.Cyan, ind + "[수정] " + Rel(S(inp, "file_path")) + (S(inp, "replace_all") == "True" ? " (모두 바꿈)" : ""));
+                Block(ConsoleColor.Red, ind + "- ", S(inp, "old_string"), 12, false);
+                Block(ConsoleColor.Green, ind + "+ ", S(inp, "new_string"), 40, false);
+                break;
+            case "MultiEdit":
+                Head(ConsoleColor.Cyan, ind + "[수정] " + Rel(S(inp, "file_path")));
+                foreach (object x in A(inp, "edits")) { Block(ConsoleColor.Red, ind + "- ", S(x, "old_string"), 8, false); Block(ConsoleColor.Green, ind + "+ ", S(x, "new_string"), 20, false); }
+                break;
+            case "Write":
+                Head(ConsoleColor.Cyan, ind + "[새로 씀] " + Rel(S(inp, "file_path")) + " (" + S(inp, "content").Split('\n').Length + "줄)");
+                Block(ConsoleColor.Green, ind + "+ ", S(inp, "content"), 40, false);
+                break;
+            case "Bash": case "PowerShell":
+                Head(ConsoleColor.Yellow, ind + "[명령] " + Cut(S(inp, "description"), 100));
+                Block(ConsoleColor.Yellow, ind + "> ", S(inp, "command"), 8, false);
+                break;
+            case "Read":
+                Head(ConsoleColor.DarkGray, ind + "[읽기] " + Rel(S(inp, "file_path")) + (S(inp, "offset") != "" ? " " + S(inp, "offset") + "줄부터" : ""));
+                break;
+            case "Grep": case "Glob":
+                Head(ConsoleColor.DarkGray, ind + "[찾기] " + Cut(S(inp, "pattern"), 100) + " " + Rel(S(inp, "path")) + S(inp, "glob"));
+                break;
+            case "Agent": case "Task":
+                Head(ConsoleColor.Magenta, ind + "[에이전트 " + S(inp, "subagent_type") + "] " + Cut(S(inp, "description"), 100));
+                break;
+            case "TodoWrite":
+                Head(ConsoleColor.DarkCyan, ind + "[할 일]");
+                foreach (object x in A(inp, "todos")) {
+                    string s = S(x, "status");
+                    Put(ConsoleColor.DarkCyan, "         " + ind + (s == "completed" ? "[x] " : s == "in_progress" ? "[>] " : "[ ] ") + Cut(S(x, "content"), 120));
+                }
+                break;
+            default:
+                Head(ConsoleColor.DarkGray, ind + "[" + name + "] " + Cut(js.Serialize(inp), 160));
+                break;
+        }
+    }
+
+    void Result(string ind, object b) {
+        string name; tools.TryGetValue(S(b, "tool_use_id"), out name);
+        string text = Content(b);
+        if (S(b, "is_error") == "True") Block(ConsoleColor.Red, ind + "! ", text, 6, false);
+        else if (name == "Bash" || name == "PowerShell") Block(ConsoleColor.DarkGray, ind + "| ", text, 8, true);
+        else if (name == "Agent" || name == "Task") Block(ConsoleColor.DarkMagenta, ind + "| ", text, 10, false);
+    }
+}
+}
+'@
+[VH.Show]::Init(-not $Once)   # -Once는 사용자가 연 창에서 돌리므로 창을 옮기지 않음
+$Host.UI.RawUI.WindowTitle = 'VH loop'
+
 $Awake = [uint32]2147483649   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED: 도는 동안 저절로 잠들지 않게
 $Release = [uint32]2147483648
 [void][VH.Power]::SetThreadExecutionState($Awake)
 
-function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::AppendAllText($LogFile, "$l`r`n", $Utf8); Write-Host $l }
+function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::AppendAllText($LogFile, "$l`r`n", $Utf8); [VH.Show]::Put("── $l", 'Gray') }
 function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
@@ -131,10 +297,10 @@ function Write-Status($now, $last) {
     if ($LASTEXITCODE -ne 0) { G pull -q --rebase --autostash origin valheim | Out-Null; G push -q origin valheim | Out-Null }
 }
 
-function Start-Claude($acct, $workDir, $prompt) {
+function Start-Claude($acct, $workDir, $prompt, $tag) {
     $psi = New-Object Diagnostics.ProcessStartInfo
     $psi.FileName = $Claude
-    $psi.Arguments = "-p `"Read $prompt and follow it exactly.`" --dangerously-skip-permissions"
+    $psi.Arguments = "-p `"Read $prompt and follow it exactly.`" --dangerously-skip-permissions --output-format stream-json --verbose"
     $psi.WorkingDirectory = $workDir
     $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
     $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
@@ -144,18 +310,19 @@ function Start-Claude($acct, $workDir, $prompt) {
     $psi.EnvironmentVariables['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'
     $psi.EnvironmentVariables['VH_LOOP_HASH'] = $SelfHash   # 회차 claude가 vh-loop-restart.ps1로 옛 루프인지 본다
     $p = [Diagnostics.Process]::Start($psi)
-    @{ P = $p; So = $p.StandardOutput.ReadToEndAsync(); Se = $p.StandardError.ReadToEndAsync(); Start = Get-Date }
+    @{ P = $p; F = New-Object VH.Feed($p, $tag, $workDir); Start = Get-Date }
 }
 
 function End-Claude($c, $outFile) {
     $c.P.WaitForExit()
-    $text = "$($c.So.Result)`n$($c.Se.Result)"
+    $c.F.Join()
+    $text = "$($c.F.Final)`n$($c.F.Err)"
     [IO.File]::WriteAllText($outFile, $text, $Utf8)
     @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes }
 }
 
 function Run-Claude($acct, $outFile) {
-    $c = Start-Claude $acct $Repo 'scripts/vh-loop-prompt.txt'
+    $c = Start-Claude $acct $Repo 'scripts/vh-loop-prompt.txt' ''
     $bk = Get-Date
     while (-not $c.P.WaitForExit(60000)) {
         if (((Get-Date) - $bk).TotalMinutes -ge $BackupMin) { Backup-Wip; Reply-Requests $acct; $bk = Get-Date }
@@ -179,7 +346,7 @@ function Reply-Requests($acct) {
     & git -C $ReplyDir checkout -q -f --detach origin/valheim 2>&1 | Out-Null
     & git -C $ReplyDir clean -q -fd 2>&1 | Out-Null
     Log 'UserRequest.txt 바뀜(회차 도중) → 답 전용 claude'
-    $c = Start-Claude $acct $ReplyDir 'scripts/vh-reply-prompt.txt'
+    $c = Start-Claude $acct $ReplyDir 'scripts/vh-reply-prompt.txt' '[답] '
     if (-not $c.P.WaitForExit($ReplyTimeoutMin * 60000)) { Log '답 전용 claude 시간 초과 → 끔'; & taskkill /T /F /PID $c.P.Id | Out-Null }
     $r = End-Claude $c (Join-Path $Dir "reply-$($st.round).txt")
     $last = @($r.Text -split "`r?`n" | Where-Object { $_ -match '^\s*REPLY:' }) | Select-Object -Last 1
@@ -292,6 +459,7 @@ while ($true) {
     $st.reqSeen = G rev-parse 'HEAD:docs/valheim/UserRequest.txt' | Select-Object -Last 1   # 이 회차가 0번에서 읽을 요청(이후 바뀌면 백업 때 따로 답)
     $st.replyFails = 0
     Log "회차 $($st.round) 시작 ($($acct.Name) 계정)"
+    $Host.UI.RawUI.WindowTitle = "VH loop - 회차 $($st.round)"
     $r = Run-Claude $acct (Join-Path $Dir "round-$($st.round).txt")
     $lines = @($r.Text -split "`r?`n" | Where-Object { $_.Trim() })
     $last = $lines | Where-Object { $_ -match '^\s*LOOP:' } | Select-Object -Last 1
