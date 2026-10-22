@@ -1,5 +1,9 @@
 이번 세션은 발헤임 무인 루프(scripts/vh-loop.ps1)의 한 회차다. 사용자는 자리에 없고 대화창도 없다. 묻지 말고 스스로 진행한다.
 
+맨 먼저 한 번: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-loop-restart.ps1
+   (이 회차를 띄운 루프가 옛 vh-loop.ps1이면 이번 회차가 끝난 뒤 새것으로 저절로 다시 켜지게 예약, 아니면 "loop is up to date". 사용자는 PC에 못 옴.)
+   결과 한 줄만 보고 하던 대로 간다. 오류면 UserReply.txt 이번 회차 덩어리에 그 줄을 적는다.
+
 0. 사용자 요청 먼저: docs/valheim/UserRequest.txt(사용자가 밖에서 GitHub으로 씀, 구분선 아래만 요청)와 docs/valheim/UserReply.txt를 읽는다.
    요청 = 빈 줄로 나뉜 덩어리, 이름 = 그 첫 줄(길면 앞 40자쯤). 빈 줄 없이 붙여 쓰거나 나중에 덧붙인 줄이 다른 요청이면 그것도 따로 요청(그 줄이 이름).
    UserReply.txt에 "요청: <이름>"이 아직 없는 요청이 있으면 이번 회차는 그것부터 한다("다음"·1-1 순서보다 우선, 크면 첫 조각만 하고 남은 건 "다음" 맨 앞에).

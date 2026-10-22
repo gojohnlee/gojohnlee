@@ -6,6 +6,7 @@
 # 자리 비움(입력 없음 10분)이면 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
 # 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 UserReply.txt). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
+# pull로 이 스크립트가 바뀌면 이번 회차 뒤 새 스크립트로 저절로 다시 켜진다(scripts/vh-loop-restart.ps1, PC에 사람이 없어도). 고칠 때 UTF-8 BOM을 지킨다.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
 param([switch]$Once)   # -Once: 한 회차만(처음 지켜보는 시험용)
 $ErrorActionPreference = 'Continue'
@@ -24,13 +25,16 @@ $RoundTimeoutMin = 240
 $BackupMin = 15
 $ReplyTimeoutMin = 15
 $ReplyDir = Join-Path $Dir 'reply'   # 답 전용 작업 트리(회차가 쓰는 저장소 작업 트리와 따로)
-$SelfHash = (Get-FileHash $PSCommandPath).Hash   # pull로 이 스크립트가 바뀌면 status.txt에 "다시 켜야 반영" 알림
+$SelfHash = (Get-FileHash $PSCommandPath).Hash   # 지금 도는 스크립트(바뀌면 다시 켜기, claude에는 VH_LOOP_HASH로 넘김)
+$StaleNote = ''   # 다시 켜기를 못 하면 status.txt에 이유
 $Diag = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimHelper\diag.txt'
 $Utf8 = New-Object Text.UTF8Encoding($false)
 
 $mutex = New-Object Threading.Mutex($false, 'Global\VhLoop')
 try { $own = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $own = $true }   # 강제로 끝난 루프가 남긴 것은 넘겨받음
 if (-not $own) { exit }   # 이미 돌고 있음
+$mark = Join-Path $Dir 'restart'
+if (Test-Path $mark) { Remove-Item $mark, (Join-Path $Dir 'stop') -Force -ErrorAction SilentlyContinue }   # 다시 켜기로 켜짐: 옛 루프를 멈추려던 stop 파일을 치움
 
 Add-Type -Namespace VH -Name Power -MemberDefinition @'
 [DllImport("kernel32.dll")] public static extern uint SetThreadExecutionState(uint f);
@@ -95,7 +99,7 @@ function Write-Status($now, $last) {
         "마지막 시험: $test",
         "Claude가 한 일: $last",
         "요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
-    ) + @(if ((Get-FileHash $PSCommandPath).Hash -ne $SelfHash) { '루프 스크립트(vh-loop.ps1)가 고쳐짐 → PC에서 루프를 다시 켜야 반영된다.' }) -join "`n"
+    ) + @(if ($StaleNote) { $StaleNote }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
     [IO.File]::WriteAllText($f, "$text`n", $Utf8)
     G add docs/valheim/status.txt | Out-Null
@@ -115,6 +119,7 @@ function Start-Claude($acct, $workDir, $prompt) {
     if ($acct.Config) { $psi.EnvironmentVariables['CLAUDE_CONFIG_DIR'] = $acct.Config } else { $psi.EnvironmentVariables.Remove('CLAUDE_CONFIG_DIR') }
     # 배경 서브에이전트가 남은 채 턴이 끝나도 10분 뒤 끊지 않고 끝까지 기다린다(회차 54가 그렇게 끊겨 LOOP 줄 없이 끝남). 회차 시간 제한은 그대로.
     $psi.EnvironmentVariables['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'
+    $psi.EnvironmentVariables['VH_LOOP_HASH'] = $SelfHash   # 회차 claude가 vh-loop-restart.ps1로 옛 루프인지 본다
     $p = [Diagnostics.Process]::Start($psi)
     @{ P = $p; So = $p.StandardOutput.ReadToEndAsync(); Se = $p.StandardError.ReadToEndAsync(); Start = Get-Date }
 }
@@ -234,8 +239,15 @@ $st = Load-State
 Log "루프 시작$(if ($Once) { ' (한 회차만)' })"
 while ($true) {
     Prepare-Git
+    if (-not $Once -and (Get-FileHash $PSCommandPath).Hash -ne $SelfHash) {
+        # pull로 이 스크립트가 바뀜: 문법·BOM 검사 후 다시 켜기 예약(stop 파일을 만들어 바로 아래에서 끝나고, 대기 작업이 새 스크립트로 켬)
+        $out = (& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'vh-loop-restart.ps1') -Now 2>&1 | Out-String).Trim()
+        Log "루프 스크립트 바뀜 → $out"
+        if ($LASTEXITCODE) { $StaleNote = "루프 스크립트가 바뀌었지만 옛것으로 도는 중: $out" }
+        $SelfHash = (Get-FileHash $PSCommandPath).Hash   # 못 했으면 같은 것으로 다시 시도하지 않음
+    }
     if (Test-StopFile) {
-        Log '멈춤 파일 → 끝'; Write-Status '멈춤: 멈춤 파일이 있음' '-'; break
+        Log '멈춤 파일 → 끝'; Write-Status $(if (Test-Path $mark) { '다시 켜는 중: 새 루프 스크립트로(1~2분)' } else { '멈춤: 멈춤 파일이 있음' }) '-'; break
     }
     $free = @(0, 1 | Where-Object { -not $st.until[$_] -or [datetime]$st.until[$_] -le (Get-Date) })
     if ($free.Count -eq 0) {
