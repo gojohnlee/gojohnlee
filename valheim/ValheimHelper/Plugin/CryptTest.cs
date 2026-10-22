@@ -140,6 +140,27 @@ namespace ValheimHelper
             float toGate = Utils.DistanceXZ(w.Claude.transform.position, gate.transform.position);
             checks.Add($"밖으로 나옴 (입구와 {toGate:0.0}m, {TestKit.Waited:0.0}초)", TestKit.Ok && toGate < 15f);
             yield return new WaitForSeconds(2f);
+
+            // ⑦ 철 2조각: "!철 3" → 걸어가 입구로 들어가 진흙 더미를 캐고 나와 거점 상자에 넣는다(고철 한 번에 얼마 나오는지는 바닐라 데이터)
+            TestKit.ClearBaseStock(w, "IronScrap");
+            w.Claude.TeleportTo(w.Home, w.Claude.transform.rotation, false);
+            yield return new WaitForSeconds(1.5f);
+            int stockBefore = GatherTest.CountBase(w.Home, "IronScrap");
+            GatherTest.Say($"!{w.Claude.NpcName} 철 3", null);
+            bool wasInside = false;
+            float t = 0f;
+            while (t < 480f && GatherTest.CountBase(w.Home, "IronScrap") - stockBefore < 3)
+            {
+                yield return new WaitForSeconds(1f);
+                t += 1f;
+                if (w.Claude.InInterior()) wasInside = true;
+            }
+            int got = GatherTest.CountBase(w.Home, "IronScrap") - stockBefore;
+            TestRunner.Log($"철 일: {t:0}초, 상자에 고철 {got}개, 단계 {(w.Claude.Ai.Job is GatherJob g ? g.StepName : "-")}");
+            checks.Add("일꾼이 지하묘지 안으로 들어감", wasInside);
+            checks.Add($"고철이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
+            yield return new WaitForSeconds(3f);
+            checks.Add("일꾼이 안에 남지 않음", !w.Claude.InInterior());
         }
     }
 }

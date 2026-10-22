@@ -45,6 +45,7 @@ namespace ValheimHelper
             var seen = new Dictionary<ZoneXY, Dictionary<string, int>>();
             foreach (var zdo in Nearby(pos, SightRange))
             {
+                if (Character.InInterior(zdo.GetPosition())) continue; // 지하묘지 안(y+5000)은 그 구역 바깥 지식이 아니다
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null) continue;
                 ZoneXY zone = ZoneOf(zdo.GetPosition());

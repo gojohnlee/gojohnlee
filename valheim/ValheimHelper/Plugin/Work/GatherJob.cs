@@ -11,7 +11,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class GatherJob : IWorkerJob
     {
-        enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, Approach, Work, Collect, Return, Deposit }
+        enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, GoCrypt, Approach, Work, Collect, Return, Deposit }
 
         public readonly string Item;
         public readonly int Target;
@@ -58,6 +58,10 @@ namespace ValheimHelper
         /// <summary>안 둘러본 밝혀진 구역을 거점에서 몇 구역까지 찾는지.</summary>
         const int KnownRing = 10;
         const float MoveStuckLimit = 20f;
+        /// <summary>지하묘지(⑦ 철): 입구까지 가는 최대 시간, 안에서 머무는 최대 시간, 안에서 보는 거리.</summary>
+        const float CryptGoLimit = 6f * 60f;
+        const float CryptStayLimit = 15f * 60f;
+        const float CryptSight = 90f;
         /// <summary>한 대상에 쓰는 최대 시간(큰 광맥 포함). 진척이 30초 없으면 그보다 먼저 그만둔다(WorkIdleLimit).</summary>
         const float ChopLimit = 10f * 60f;
         /// <summary>나무를 쓰러뜨린 뒤 통나무가 멈출 때까지 기다리는 시간.</summary>
@@ -145,6 +149,12 @@ namespace ValheimHelper
         /// </summary>
         readonly HashSet<ZoneXY> m_tried = new HashSet<ZoneXY>();
 
+        /// <summary>이 일 동안 이미 다녀왔거나 못 간 지하묘지 자리.</summary>
+        readonly List<Vector3> m_cryptsDone = new List<Vector3>();
+        Dungeons.Crypt m_crypt;
+        float m_insideTime;
+        float m_gateUsedAt = -10f;
+
         /// <summary>Guard: 거기는 위험하다. 그 구역(과 지금 목표)을 버리고 다른 데를 찾는다. 들고 있는 건 그대로.</summary>
         public void AvoidHere(Vector3 danger)
         {
@@ -166,6 +176,16 @@ namespace ValheimHelper
         public bool Update(float dt)
         {
             m_stepTime += dt;
+            if (m_npc.InInterior())
+            {
+                m_insideTime += dt;
+                if (m_insideTime > CryptStayLimit && m_step != Step.Return)
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 안 {CryptStayLimit / 60f:0}분 넘음 → 나감");
+                    m_cryptsDone.Add(m_crypt.Pos);
+                    Go(Step.Return);
+                }
+            }
             // 플레이어의 자동 줍기처럼 발밑(2m) 물건은 걸어가지 않고 바로 줍는다(0.3.3: 줍는 게 느림).
             m_autoPickTimer -= dt;
             if (m_autoPickTimer <= 0f)
@@ -180,6 +200,7 @@ namespace ValheimHelper
                 case Step.GoChest: return UpdateGoChest(dt);
                 case Step.Search: return UpdateSearch(dt);
                 case Step.GoZone: return UpdateGoZone(dt);
+                case Step.GoCrypt: return UpdateGoCrypt(dt);
                 case Step.Approach: return UpdateApproach(dt);
                 case Step.Work: return UpdateWork();
                 case Step.Collect: return UpdateCollect(dt);
@@ -254,6 +275,7 @@ namespace ValheimHelper
         bool UpdateSearch(float dt)
         {
             if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
+            if (m_npc.InInterior()) return UpdateInside();
             if (FindInSight(out ZDO zdo))
             {
                 Found(zdo);
@@ -265,6 +287,7 @@ namespace ValheimHelper
                 m_saidTooWeak = true;
                 m_npc.Say("toolTooWeak", Args());
             }
+            if (Item == Dungeons.ScrapItem && TryStartCrypt()) return true;
             Knowledge k = Brain.Get();
             Vector3 pos = m_npc.transform.position;
             ZoneXY here = Senses.ZoneOf(pos);
@@ -305,6 +328,93 @@ namespace ValheimHelper
                 return true;
             }
             return GiveUp("notFound");
+        }
+
+        // ---- 지하묘지 (⑦ 철: 고철은 늪 지하묘지의 진흙 더미에서만 나온다) ----
+
+        /// <summary>열린 지하묘지가 있으면 거기로 간다(바깥 걷기 → 입구 Teleport).</summary>
+        bool TryStartCrypt()
+        {
+            if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, m_cryptsDone)) return false;
+            m_crypt = c;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 {c.Name}로({Utils.DistanceXZ(c.Pos, m_npc.transform.position):0}m)");
+            Go(Step.GoCrypt);
+            return true;
+        }
+
+        bool UpdateGoCrypt(float dt)
+        {
+            if (m_npc.InInterior())
+            {
+                m_insideTime = 0f;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 들어감(y {m_npc.transform.position.y:0})");
+                Go(Step.Search);
+                return true;
+            }
+            if (m_stepTime > CryptGoLimit) return AbandonCrypt("시간 초과");
+            Vector3 pos = m_npc.transform.position;
+            Teleport gate = Dungeons.Entrance(m_crypt.Pos);
+            if (gate == null)
+            {
+                // 입구 구역이 아직 안 불러와졌다: 가까이 가서 기다린다
+                if (!WalkVia(dt, m_crypt.Pos, 15f) && Stuck(dt, PortalOr(m_crypt.Pos))) return AbandonCrypt("입구 가기 막힘");
+                return true;
+            }
+            Vector3 gp = gate.transform.position;
+            if (Walk(dt, gp, 1.5f) || Utils.DistanceXZ(gp, pos) < 2.5f)
+            {
+                if (m_stepTime - m_gateUsedAt > 3f)
+                {
+                    m_gateUsedAt = m_stepTime;
+                    m_ai.StopMoving();
+                    if (!Dungeons.Use(m_npc, gate)) return AbandonCrypt("입구 Teleport 실패");
+                }
+            }
+            else if (Stuck(dt, gp)) return AbandonCrypt("입구 앞 막힘");
+            return true;
+        }
+
+        bool AbandonCrypt(string why)
+        {
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 포기({why})");
+            LogStuck("지하묘지", m_crypt.Pos);
+            m_cryptsDone.Add(m_crypt.Pos);
+            Go(Step.Search);
+            RescueIfStuckAgain();
+            return true;
+        }
+
+        /// <summary>안에서 찾기: 90m 안의 진흙 더미 중 가까운 것. 없으면 이 지하묘지는 다 캔 것 → 나간다.</summary>
+        bool UpdateInside()
+        {
+            if (FindInSight(out ZDO zdo, CryptSight)) { Found(zdo); return true; }
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지에 더 없음 / {SightDiag(m_npc.transform.position)}");
+            m_cryptsDone.Add(m_crypt.Pos);
+            Go(Step.Return);
+            return true;
+        }
+
+        /// <summary>안에서 나가는 Teleport까지 걸어가 쓴다. 나가는 길이 없거나 2분 넘으면 깃발로.</summary>
+        void LeaveCrypt(float dt)
+        {
+            Teleport exit = Dungeons.Exit(m_npc.transform.position);
+            if (exit == null || m_stepTime > 120f)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 나가는 길 없음/시간 초과 → 깃발로");
+                m_npc.TeleportTo(m_npc.Home, m_npc.transform.rotation, false);
+                WorkerAI.StuckTeleports++;
+                return;
+            }
+            Vector3 ep = exit.transform.position;
+            if (Walk(dt, ep, 1.5f) || Vector3.Distance(ep, m_npc.transform.position) < 2.5f)
+            {
+                if (m_stepTime - m_gateUsedAt > 3f)
+                {
+                    m_gateUsedAt = m_stepTime;
+                    m_ai.StopMoving();
+                    Dungeons.Use(m_npc, exit);
+                }
+            }
         }
 
         void GoZone()
@@ -372,17 +482,19 @@ namespace ValheimHelper
         /// 시야 안에서 그 물건이 나오는 것 중 지금 다룰 수 있는 것.
         /// 가까운 순이되 가산점: 쓰러진 통나무 30m > 큰 나무·바위 10m > 줍는 것 5m > 어린 나무·그루터기·작은 돌 0.
         /// </summary>
-        bool FindInSight(out ZDO best)
+        bool FindInSight(out ZDO best, float range = Senses.SightRange)
         {
             best = null;
+            bool inside = m_npc.InInterior();
             float bestScore = float.MaxValue;
             Vector3 pos = m_npc.transform.position;
-            var nearby = Senses.Nearby(pos, Senses.SightRange + 4f);
+            var nearby = Senses.Nearby(pos, range + 4f);
             var pieces = new List<Vector3>();
             foreach (var zdo in nearby)
                 if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
             foreach (var zdo in nearby)
             {
+                if (Character.InInterior(zdo.GetPosition()) != inside) continue; // 바깥에서 지하묘지 안 물체를, 안에서 바깥 물체를 고르지 않는다
                 if (m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition())) continue;
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
@@ -396,7 +508,7 @@ namespace ValheimHelper
                     if (info.MinToolTier > 0 && info.MinToolTier > tool.m_shared.m_toolTier) { m_sawTooHard = true; continue; }
                 }
                 float dist = Utils.DistanceXZ(zdo.GetPosition(), pos);
-                if (dist > Senses.SightRange) continue;
+                if (dist > range) continue;
                 float score = dist - info.Priority;
                 if (score < bestScore) { bestScore = score; best = zdo; }
             }
@@ -801,6 +913,16 @@ namespace ValheimHelper
 
         bool UpdateReturn(float dt)
         {
+            if (m_npc.InInterior())
+            {
+                LeaveCrypt(dt);
+                return true;
+            }
+            if (Carried() == 0 && m_giveUp == null && m_cryptsDone.Count > 0 && Item == Dungeons.ScrapItem)
+            {
+                Go(Step.Search); // 빈손으로 지하묘지에서 나옴: 집까지 안 가고 다음 묘지·찾기
+                return true;
+            }
             Vector3 home = m_npc.Home;
             if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Deposit); return true; }
             if (Stuck(dt, PortalOr(home)))

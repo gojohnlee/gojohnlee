@@ -13,6 +13,8 @@ namespace ValheimHelper
     public static class Dungeons
     {
         public const string ProxyPrefab = "LocationProxy";
+        /// <summary>지하묘지 진흙 더미에서 나오는 물건(고철).</summary>
+        public const string ScrapItem = "IronScrap";
         const float DoorRange = 30f;
 
         public struct Crypt
