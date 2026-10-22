@@ -1,7 +1,7 @@
-갱신: 2026-10-22 14:47  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 64 진행 중
+갱신: 2026-10-22 15:11  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 64, 계정: 1번, 한도: 2번 10-22 16:42까지
-할 일: ★ 지금 순서: 8) ⑦ 철 조각(회차 60에 나눔): [x]1 지하묘지 찾기·드나들기(Dungeons, vh_crypttest) → [x]2 !철 일(GatherJob GoCrypt·UpdateInside·LeaveCrypt, crypttest PASS) → [x]3 안 위험: 후퇴·도망은 나가는 Teleport로, 밤 규칙(늪 바깥 이동은 낮만), 장소 기억은 입구 구역에(design-depart-craft 12줄), 열린 지하묘지 없으면 출발 전 대답 → [x]4 철 주괴 제련 → 5 ⑤의 던전 문 처리 마무리(구현 단계 ⑤ [x]). 그다음 ⑧ 사냥·요리·발효.
-마지막 시험: 10-22 14:46 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+할 일: ★ 지금 순서: 8) ⑧ 먹거리 조각: [x]1 사냥(GatherJob 사냥 모드, vh_hunttest) → 2 굽기(조리대 CookingStation을 MachineStep에: 날고기 올리고 타기 전에 뺌) → 3 사슴·토끼 활 사냥(장비 상자에 활+화살일 때) → 그다음 ⑨ 농사.
+마지막 시험: 10-22 15:10 요약: 2/2 PASS
+Claude가 한 일: LOOP: DONE ⑧ 사냥 1조각(GatherJob 사냥 모드, vh_hunttest 9/9) 푸시, ⑤⑥⑦ 완료 표시
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
