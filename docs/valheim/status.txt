@@ -1,7 +1,7 @@
-갱신: 2026-10-22 15:11  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 65 진행 중
+갱신: 2026-10-22 15:26  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 65, 계정: 1번, 한도: 2번 10-22 16:42까지
-할 일: ★ 지금 순서: 8) ⑧ 먹거리 조각: [x]1 사냥(GatherJob 사냥 모드, vh_hunttest) → 2 굽기(조리대 CookingStation을 MachineStep에: 날고기 올리고 타기 전에 뺌) → 3 사슴·토끼 활 사냥(장비 상자에 활+화살일 때) → 그다음 ⑨ 농사.
-마지막 시험: 10-22 15:10 요약: 2/2 PASS
-Claude가 한 일: (진행 중)
+할 일: ★ 지금 순서: 8) ⑧ 먹거리 조각: [x]1 사냥(GatherJob 사냥 모드, vh_hunttest) → [x]2 굽기(조리대 CookingStation을 MachineStep에: 날고기 올리고 타기 전에 뺌) → 3 사슴·토끼 활 사냥(장비 상자에 활+화살일 때) → 그다음 ⑨ 농사.
+마지막 시험: 10-22 15:25 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE ⑧ 굽기: 조리대 불 지피고 고기를 올려 타기 전에 꺼냄, vh_cooktest 10/10·crafttest 23/23 PASS
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
