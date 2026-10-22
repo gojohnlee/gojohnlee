@@ -99,8 +99,29 @@ namespace ValheimHelper
             int ore = Stock(w, "CopperOre"), bars = Stock(w, "Copper");
             checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 4)", ore + bars <= 4 && bars <= 4);
             yield return Stop();
+            yield return Blast(w, checks, made, right);
             yield return Ferment(w, checks, made, right);
             yield return FullChest(w, checks);
+        }
+
+        /// <summary>3) 용광로: 고철 4·석탄 20 → "!철주괴 2" → 용광로(blastfurnace)에 넣고 기다렸다 꺼내 상자에 철 주괴 2(⑦ 철 4조각).</summary>
+        static IEnumerator Blast(TestKit.World w, GatherTest.Checks checks, System.Collections.Generic.List<GameObject> made, Vector3 right)
+        {
+            string n1 = w.Claude.NpcName;
+            TestKit.ClearBaseStock(w, "IronScrap", "Iron", "Coal");
+            TestKit.PutInChest(w.Chest, "IronScrap", 4);
+            TestKit.PutInChest(w.Chest, "Coal", 20);
+            if (ZNetScene.instance.GetPrefab("blastfurnace") == null) { checks.Add("용광로 프리팹 있음", false); yield break; }
+            Place(made, "blastfurnace", w.Home - right * 10f);
+            yield return new WaitForSeconds(1f);
+            yield return Say($"!{n1} 철주괴 2", 1f);
+            checks.Add($"용광로 계획 시작 ({w.Claude.Ai.Current}, {w.Claude.Ai.Job?.GetType().Name})", w.Claude.Ai.Job is PlanJob);
+            yield return TestKit.WaitFor(() => Stock(w, "Iron") >= 2, 240f);
+            checks.Add($"철 주괴 2개가 상자에 ({TestKit.Waited:0}초, 고철 {Stock(w, "IronScrap")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
+            int scrap = Stock(w, "IronScrap"), bars = Stock(w, "Iron");
+            checks.Add($"제련 뒤 개수 보존 (고철 {scrap} + 주괴 {bars} ≤ 4)", scrap + bars <= 4);
+            yield return Stop();
         }
 
         /// <summary>

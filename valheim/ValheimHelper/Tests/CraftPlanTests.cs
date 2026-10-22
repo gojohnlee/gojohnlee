@@ -75,6 +75,19 @@ public class CraftPlanTests
     }
 
     [Fact]
+    public void PicksProcessWhoseInputIsInStock()
+    {
+        var b = new RecipeBook();
+        b.SetSource("IronOre", SourceKind.Gather);
+        b.SetSource("IronScrap", SourceKind.Gather);
+        b.Add(new Process { Station = "smelter", Input = "IronOre", Output = "Iron", SecondsPerProduct = 30, Capacity = 10 });
+        b.Add(new Process { Station = "smelter", Input = "IronScrap", Output = "Iron", SecondsPerProduct = 30, Capacity = 10 });
+        var plan = new CraftPlanner(b, Base()).Expand("Iron", 2, Stock(("IronScrap", 4)));
+        Assert.Empty(plan.Gathers);
+        Assert.Equal(2, plan.UsedStock["IronScrap"]);
+    }
+
+    [Fact]
     public void FullStockMeansNothingToDo()
     {
         var plan = new CraftPlanner(Book(), Base()).Expand("Copper", 5, Stock(("Copper", 9)));

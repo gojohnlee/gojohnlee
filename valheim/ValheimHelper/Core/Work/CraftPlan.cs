@@ -233,11 +233,17 @@ namespace ValheimHelper.Core.Work
             foreach (var i in r.Inputs) yield return i;
         }
 
+        /// <summary>쓸 수 있는 설비의 가공 중 입력이 거점 재고에 있는 것을 먼저(철: 고철·철 광석 둘 다 철 주괴가 되는데 고철만 있을 수 있음), 없으면 먼저 것.</summary>
         Process PickProcess(string item)
         {
+            Process first = null;
             foreach (var p in _book.ProcessesFor(item))
-                if (_fac.ProcessorCount(p.Station) > 0) return p;
-            return null;
+            {
+                if (_fac.ProcessorCount(p.Station) <= 0) continue;
+                if (first == null) first = p;
+                if (_available.TryGetValue(p.Input, out int have) && have >= p.InputAmount) return p;
+            }
+            return first;
         }
 
         /// <summary>그 물건의 제작법: 설비가 되는 것 중 재료 종류가 적은 것(같으면 먼저 것). usableOnly가 아니면 아무거나.</summary>

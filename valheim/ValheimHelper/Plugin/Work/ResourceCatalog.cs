@@ -28,6 +28,8 @@ namespace ValheimHelper
     public static class ResourceCatalog
     {
         static Dictionary<int, ResourceInfo> s_byHash;
+        /// <summary>연료로 제련해 얻는 주괴(구리·주석·철 …). 철 주괴(Iron)는 어딘가에서 떨어지기도 하지만 NPC는 제련 계획으로 만든다.</summary>
+        static readonly HashSet<string> s_smelted = new HashSet<string>();
 
         public static ResourceInfo Get(int prefabHash)
         {
@@ -41,6 +43,7 @@ namespace ValheimHelper
         {
             if (s_byHash == null) Build();
             var ways = new HashSet<ToolKind>();
+            if (s_smelted.Contains(item)) return ways;
             foreach (var r in s_byHash.Values)
                 if (r.Produces.Contains(item)) ways.Add(r.Tool);
             return ways;
@@ -63,6 +66,7 @@ namespace ValheimHelper
         static void Build()
         {
             s_byHash = new Dictionary<int, ResourceInfo>();
+            s_smelted.Clear();
             if (ZNetScene.instance == null) return;
             // 그루터기는 Destructible이라 어린 나무와 구별이 안 된다 → 나무의 m_stubPrefab으로 알아낸다.
             var stubs = new HashSet<string>();
@@ -70,6 +74,10 @@ namespace ValheimHelper
             {
                 var tree = p != null ? p.GetComponent<TreeBase>() : null;
                 if (tree != null && tree.m_stubPrefab != null) stubs.Add(tree.m_stubPrefab.name);
+                var sm = p != null ? p.GetComponent<Smelter>() : null;
+                if (sm != null && sm.m_fuelItem != null)
+                    foreach (var c in sm.m_conversion)
+                        if (c.m_to != null) s_smelted.Add(Utils.GetPrefabName(c.m_to.gameObject));
             }
             foreach (var p in ZNetScene.instance.m_prefabs)
             {
