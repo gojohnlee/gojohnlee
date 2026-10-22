@@ -144,3 +144,5 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   덩굴 새싹(VineAsh_sapling·VineGreen_sapling)은 m_attachDistance>0(조각에 붙여야 자람) → 밭 작물에서 뺌. 갈고 10초 뒤 Plant 상태 Healthy·IsCultivated True 확인(vh_farmtest).
 - 은(⑪, 회차 90 시험 diag): 은 출처 silvervein(Destructible+Beacon m_range 50, 깨지면 silvervein_frac MineRock5, 윗면 뿌리+2.03m)·rock3_silver(Beacon 없음, → rock3_silver_frac), 모두 곡괭이 단계 2. 찾는 물건 Wishbone(장착 효과 SE_Finder: 1초마다 Beacon.FindClosestBeaconInRange, 거리 XZ) = 본매스(defeated_bonemass) 전리품.
 - 거두기(Pickable): Interact(Humanoid)는 Player 아니어도 됨(스킬·통계만 건너뜀) → RPC_Pick(주인만, m_picked면 무시): m_amount(Game.ScaleDrops)+m_extraDrops를 떨굼, 효과에 Player.m_localPlayer 씀(호스트 있음). m_respawnTimeMinutes 0인 작물은 거둔 뒤 사라짐.
+- 잠자기(사용자 질문 2026-10-23): Game.EverybodyIsTryingToSleep = ZNet.GetAllCharacterZDOS(호스트 자기 캐릭터 + 접속한 peer의 m_characterID ZDO만)가 전부 s_inBed면 아침으로.
+  일꾼(WorkerNpc : Humanoid, peer 아님)은 목록에 안 들어감 → 플레이어만 누우면 밤이 넘어감. 모드는 m_characterID·s_inBed를 안 건드림(바꾸지 말 것).
