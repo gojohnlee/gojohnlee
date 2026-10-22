@@ -1,7 +1,7 @@
 갱신: 2026-10-22 20:22  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
-회차: 78, 계정: 2번, 한도: 1번 10-22 21:42까지
+지금: 회차 79 진행 중
+회차: 79, 계정: 2번, 한도: 1번 10-22 21:42까지
 할 일: 3) FarmJob: 장비 상자에서 경작기 챙김(없으면 "경작기가 없어요" 거절) → 자리마다 갈기 조각 Instantiate(TerrainOp.Awake가 칠함) → 새싹 Instantiate(Piece.SetCr…
 마지막 시험: 10-22 20:21 요약: 1/1 PASS
-Claude가 한 일: LOOP: DONE ⑨ 농사 둘째 조각 — Crops.cs 작물 목록(16개)·"!밭 N" 밭 적기, dotnet 394·vh_npctest 14/14 PASS
+Claude가 한 일: (진행 중)
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
