@@ -54,7 +54,31 @@ else { Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin
 $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로). 묶음 1 새 시험: vh_departtest·vh_peertest
 $World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
 $Min = $env:VH_MIN -ne '0'   # 최소화 시험(기본, 2026-10-21 사용자): 창 최소화·소리 끔·백그라운드 30fps. 게임 창을 보려면 $env:VH_MIN='0'
-Set-Content "$plugin\autotest.txt" ("world=$World;" + $(if ($Min) { 'min;' } else { '' }) + $Test)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
+$Char = if ($env:VH_CHAR) { $env:VH_CHAR.ToLower() } else { 'vhtest' }   # 시험 전용 캐릭터(사용자 결정 2026-10-22, 없으면 모드가 만듦). 사용자 캐릭터는 안 씀
+
+# 시험 월드·캐릭터 원본 되돌리기(사용자 결정 2026-10-22): 실행마다 한 번, 게임이 완전히 꺼진 뒤, 시험 전용 경로일 때만.
+# 월드 원본은 %USERPROFILE%\vh-test-base(첫 실행 때 지금 월드를 떠 둠). 캐릭터는 지워서 모드가 새로 만들게(= 깨끗한 원본).
+# 끄기: $env:VH_RESET='0'(실제 재시작 시험의 2번째 실행은 1번째가 저장한 월드·캐릭터를 그대로 불러와야 함).
+if ($env:VH_RESET -ne '0') {
+    $save = Join-Path $env:USERPROFILE 'AppData\LocalLow\IronGate\Valheim'
+    $okWorlds = @('te4st41') + @(($env:VH_TEST_WORLDS -split ';') | Where-Object { $_ })   # 시험 월드로 확인된 이름만
+    if ($okWorlds -notcontains $World -or $Char -notmatch '^vhtest') { throw "원본 되돌리기 중단: 시험 전용 월드·캐릭터가 아님(월드 $World, 캐릭터 $Char). 되돌리지 않으려면 VH_RESET=0" }
+    if (Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) { throw '원본 되돌리기 중단: 게임이 아직 켜져 있음' }
+    $wdir = Join-Path $save "worlds_local\$World"
+    $base = Join-Path $env:USERPROFILE "vh-test-base\worlds_local\$World"
+    if (-not (Test-Path $base)) {
+        if (-not (Test-Path (Join-Path $wdir '*.ok'))) { throw "원본 되돌리기 중단: 원본도 없고 월드 $wdir 도 온전하지 않음" }
+        New-Item -ItemType Directory (Split-Path $base) -Force | Out-Null
+        Copy-Item $wdir $base -Recurse
+        Write-Host "시험 월드 원본을 떠 둠: $base"
+    }
+    if (Test-Path $wdir) { Remove-Item $wdir -Recurse -Force }
+    Copy-Item $base $wdir -Recurse
+    Get-ChildItem (Join-Path $save 'characters_local') -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -like "$Char.fch*" -or $_.Name -like "${Char}_backup*.fch" } | Remove-Item -Force   # 게임 자동 백업도
+    Write-Host "시험 월드 $World 원본으로 되돌림, 시험 캐릭터 $Char 새로"
+}
+Set-Content "$plugin\autotest.txt" ("world=$World;char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $Test)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
 Remove-Item $tmp -Recurse -Force
 Write-Host 'Valheim Helper 설치됨'
 

@@ -56,7 +56,9 @@ namespace ValheimHelper
             checks.Add($"깃발 프리팹 ({BaseFlag.SourceUsed} 복제)", piece != null);
             if (piece == null) { End(player, god, checks); yield break; }
             checks.Add("망치 목록에 있음", BaseFlag.InHammer());
-            checks.Add("플레이어가 지을 수 있는 것으로 앎", player.HaveRequirements(piece, Player.RequirementMode.IsKnown));
+            // 시험 캐릭터는 새 캐릭터라 재료를 주운 적이 없다 → 재료를 주워 본 플레이어처럼 알려 준다(바닐라: 재료를 알면 망치 목록에 뜸).
+            foreach (var r in piece.m_resources) player.AddKnownItem(r.m_resItem.m_itemData);
+            checks.Add("플레이어가 지을 수 있는 것으로 앎",player.HaveRequirements(piece, Player.RequirementMode.IsKnown));
             TestRunner.Log($"재료: {string.Join(", ", System.Array.ConvertAll(piece.m_resources, r => r.m_resItem.name + " x" + r.m_amount))}");
 
             int removed = Workers.DespawnAll();

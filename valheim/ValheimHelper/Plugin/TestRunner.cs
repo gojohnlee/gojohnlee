@@ -136,6 +136,7 @@ namespace ValheimHelper
             {
                 string c = raw.Trim();
                 if (c.StartsWith("world=")) AutoStart.World = c.Substring(6).Trim(); // 메인 메뉴에서 이 월드로 자동 입장
+                else if (c.StartsWith("char=")) AutoStart.Character = c.Substring(5).Trim().ToLowerInvariant(); // 시험 전용 캐릭터
                 else if (c == "min") Minimized.On = true; // 창 최소화·소리 끔(시험 동안 다른 게임)
                 else if (c.Length > 0) s_autoQueue.Enqueue(c);
             }

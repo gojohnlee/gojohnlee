@@ -348,3 +348,6 @@ Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pic
   시험 경과: 1차 FAIL — 가죽 캐는 곳 barrell(Pickaxe) → 사냥 모드 안 켜짐(Loot로 고침). 2차 — 둘째 명령이 Alarak에게 감(시험이 일 받은 쪽을 보게), 33발 빗나감처럼 보였으나 진단 결과 남은 사슴(체력 그대로, 안 움직임)에 쏨(시험 시작 때 150m 안 사슴 치움, MissLimit).
   3차 — 사슴을 2발에 잡았는데 떨굼을 못 주움(NearestDrop 일꾼 기준 14m → 대상 기준, LootWait). 4차 PASS. hunttest→bowtest 순서 한 번: Claude가 5발을 "쏨"으로 셌는데 화살이 안 줄고 안 나감(배고픔, 체력 25, 원인 못 찾음) → 안 나감 3번이면 그 일 동안 활 안 씀(DIAG 활 안 나감 줄에 손·당김·비틀 기록).
   같은 묶음의 hunttest 1번이 멧돼지 둘을 150초 못 잡음(활 무관, 회차 63 간헐). 마지막 묶음 hunt·bow 두 번씩 4/4 PASS, prep 22·wood 10·craft 23·fight 11 PASS.
+- [루프 회차 67, 2026-10-22] 시험 환경 분리 1조각(전용 캐릭터 vhtest + 월드 원본 되돌리기). 처음 원본은 회차 66 끝의 te4st41을 그대로 뜸(지난 실행 잔여물 포함 — 더 깨끗한 원본이 필요하면
+  %USERPROFILE%/vh-test-base를 지우고 깨끗한 월드로 한 번 돌리면 다시 뜸). 새 캐릭터라 FAIL 났던 것: flagtest "지을 수 있는 것으로 앎"(재료 모름 → AddKnownItem),
+  departtest "밝혀진 구역을 앎"(지도 밝힘은 캐릭터마다 → Minimap.Explore(거점, 230m)). 게임 자동 백업 vhtest_backup_auto-*.fch도 되돌릴 때 지움.

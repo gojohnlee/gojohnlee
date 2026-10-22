@@ -19,7 +19,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    (-File은 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨림. 이 PC엔 파이썬 없음 → 수정은 Edit 도구. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    설치 → Steam 실행 → 인트로 건너뜀 → te4st41 자동 입장 → 시험 → 2초 뒤 종료 → 결과 출력.
    시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_bagtest·vh_deathtest·vh_fighttest·vh_exploretest·
-   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_tintest·vh_stucktest·vh_resisttest·vh_repairtest·vh_crypttest·vh_hunttest·vh_cooktest. 월드 $env:VH_WORLD. 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
+   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_tintest·vh_stucktest·vh_resisttest·vh_repairtest·vh_crypttest·vh_hunttest·vh_cooktest. 월드 $env:VH_WORLD. 시험 캐릭터는 전용 vhtest(없으면 모드가 만듦), 실행마다 시험 월드를 원본(%USERPROFILE%/vh-test-base, 첫 실행 때 뜸)으로 되돌림 — 끄기 $env:VH_RESET="0"(재시작 시험 2번째 실행). 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
    결과: 스크립트는 짧은 요약만 출력(diag 첫 줄, 시험별 판정·시간, FAIL 줄, 로그 오류 종류 8개 — 2026-10-21 토큰 절약).
    전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 67] 시험 환경 분리 1조각: 전용 시험 캐릭터 vhtest(AutoStart가 없으면 바닐라 새 캐릭터 순서로 로컬에 만들고(발키리 연출 없음) 골라 입장, 못 고르면 사용자 캐릭터로 시험 안 하고 게임 끔, 메뉴 "마지막 캐릭터"는 사용자 것으로 되돌림) + valheim-test.ps1 원본 되돌리기(실행마다 한 번, 게임 꺼진 뒤, 월드 이름 te4st41·캐릭터 vhtest*일 때만: 월드 폴더를 %USERPROFILE%/vh-test-base 원본으로(첫 실행 때 지금 월드를 뜸), 시험 캐릭터·자동 백업은 지워 새로; VH_RESET=0이면 안 함). 새 캐릭터 탓 시험 고침 2개: flagtest(재료를 알려 줌)·departtest(거점 둘레 230m 지도 밝힘). 새 캐릭터로 npc·flag·wood·stone·prep·craft·depart·crypt·bow PASS, Core 378. 사용자 캐릭터 파일 안 건드림 확인. 다음: 단독 시험 실행 방식 → 2) TestKit 시작·종료 통제.
 - [루프 회차 66] 8) ⑧ 먹거리 3조각 활 사냥(끝, ⑧ [x]): 사슴·토끼(AnimalAI, 날짐승 뺌)를 Prey가 "활로만 잡는 것"으로 앎(NeedsBow, Is(item,c,canShoot)). Prep이 장비 상자에서 가장 좋은 활 + 맞는 화살 40개를 챙기고 Kept가 지님(활은 싸움에 안 씀: Guard·HoldWeapon이 활을 내려놓음). GatherJob.UpdateShoot: 30m 안·가림 없으면 서서 끝까지 당겨(WorkerNpc.DrawBow — 바닐라는 당기기를 플레이어만 함) Core Archery.Aim(앞질러·낙차, 게임 값 속력 35·중력 5)으로 쏨, 10발에 체력 그대로면 그 짐승 포기, 놓아도 화살이 3번 안 나가면 그 일 동안 활 안 씀(DIAG 활 안 나감 — 회차 66에 Claude가 한 번 겪음, 원인 못 찾음). 활 없고 활 사냥감뿐이면 needBow 대사 후 그만. 고침 2개: ① 무작위 전리품 통(barrell)이 가죽을 줘서 사냥 모드가 안 켜지던 것(ResourceInfo.Loot, 사냥감 있으면 방법에서 뺌), ② 떨굼 찾기가 일꾼 기준 14m라 멀리 잡은 것의 떨굼을 못 줍던 것(대상 기준, 사냥은 15초 그 자리에서 기다림). vh_bowtest 신설 PASS 12/12(2번, 한 발에 잡음), hunttest 3/4 PASS(1번은 멧돼지 150초 못 잡음 = 회차 63의 간헐, 활 무관), prep·wood·craft·fight PASS, Core 378. 다음: ⑨ 농사 조각 나누기.
 - [루프 회차 65] 8) ⑧ 먹거리 2조각 굽기(끝): Core Process.Attended(조리대는 곁에서 지킴 → 기다리기 0초, 싣기 단계에 굽는 시간 AttendSeconds, 칸은 동시에 익음)+테스트. MachineStep이 CookingStation 지원: Load가 불 확인(꺼졌으면 거점 상자 연료로 화로·화덕을 한 번 지핌, 꺼 둔 불은 안 켬, 10초 안 붙으면 실패) → 빈 칸만큼 올림 → 곁에서 기다려 익은(탄) 것을 바닐라 RPC_RemoveDoneItem으로 하나씩 꺼내 줍고 → 짐 정리로 상자. Unload는 남은 것만. vh_cooktest 신설 PASS 10/10(48초, 꺼진 화로 지피기 포함), crafttest 23/23 PASS, Core 373. 다음: ⑧ 3조각 활 사냥.
 - [루프 회차 63] 클라우드 세션의 늪 열쇠 문 열기 게임 시험: 합친 빌드로 vh_crypttest PASS 24/24(243초)·hunttest PASS 9/9, Core 372. 로그의 TerrainComp NullReference는 바닐라(기존).
@@ -103,7 +104,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 다음 (순서대로)
 ★ 지금 먼저(사용자 결정 2026-10-22 시험 시점·시험 환경, decisions.txt) — 순서대로, 끝나면 ⑧로 돌아감:
-  1) 시험 환경 분리: 전용 캐릭터(AutoStart가 "마지막 캐릭터" 대신 이름 고정 시험 캐릭터, 없으면 만듦 — 사용자 캐릭터의 장비·음식·동료 해골·진행이 안 섞이게)
+  1) [거의 끝, 회차 67 — 남음: b의 "깨끗한 단독 시험" 실행 방식(시험 하나씩 따로 되돌려 실행, 예 VH_SOLO=1)] 시험 환경 분리: 전용 캐릭터(AutoStart가 "마지막 캐릭터" 대신 이름 고정 시험 캐릭터, 없으면 만듦 — 사용자 캐릭터의 장비·음식·동료 해골·진행이 안 섞이게)
      + 시험 월드 원본: valheim-test.ps1이 실행마다 te4st41 월드(·시험 캐릭터) 파일을 깨끗한 원본 복사본으로 되돌리고 시작(지난 실행이 남긴 해골·적·상자 없음).
      사용자 플레이 세이브는 시험에 안 씀. 원본 되돌리기 예외·조건(사용자 결정 2026-10-22):
      a) 끌 수 있어야 함(예 VH_RESET=0) — 실제 재시작 시험의 2번째 실행은 1번째가 저장한 월드·캐릭터를 그대로 불러옴(되돌리면 복원 시험이 안 됨).

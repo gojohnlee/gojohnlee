@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 
@@ -6,12 +7,13 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 자동 시험용 월드 자동 입장: autotest.txt에 "world=이름"이 있으면 메인 메뉴에서
-    /// 시작 → 마지막 캐릭터 → 그 월드(서버 공개 안 함)를 사람이 누르는 것과 같은 순서로 누른다.
+    /// 시작 → 시험 캐릭터("char=", 없으면 마지막 캐릭터) → 그 월드(서버 공개 안 함)를 사람이 누르는 것과 같은 순서로 누른다.
     /// 그 월드가 없으면 아무것도 하지 않는다(사람이 고르면 된다). 게임을 켤 때 한 번만.
     /// </summary>
     static class AutoStart
     {
         public static string World;
+        public static string Character; // "char=이름": 시험 전용 캐릭터(없으면 만듦). 비면 마지막 캐릭터
         static bool s_done;
 
         [HarmonyPatch(typeof(FejdStartup), "Start")]
@@ -53,17 +55,33 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
             Plugin.Log.LogInfo($"자동 입장: 월드 {World}");
             f.OnStartGame();
+            // 시험 전용 캐릭터(사용자 결정 2026-10-22): 사용자 캐릭터의 장비·음식·동료 해골·진행이 시험에 안 섞이게.
+            // 못 고르면 사용자 캐릭터로 시험하지 않고 게임을 끈다. 메뉴의 "마지막 캐릭터"는 사용자 것으로 되돌려 둔다.
+            string userProfile = PlatformPrefs.GetString("profile");
+            bool useTestChar = !string.IsNullOrEmpty(Character);
             // 캐릭터 목록이 늦게 읽히면 OnCharacterStart가 아무것도 안 하고 월드 목록이 비어 FindWorld가 예외(2026-10-21 루프 회차 8,
             // 게임이 메뉴에서 멈춰 시험 스크립트가 끝없이 기다림) → 1.5초마다 다시, 30초 넘으면 게임을 끈다(무인 시험이 안 멈추게).
             World w = null;
-            bool listed = false;
+            bool listed = false, charOk = !useTestChar;
             for (int i = 0; i < 20 && !listed; i++)
             {
                 yield return new WaitForSeconds(1.5f);
-                f.OnCharacterStart(); // 마지막에 쓴 캐릭터
+                if (useTestChar)
+                {
+                    charOk = SelectTestCharacter(f);
+                    if (!charOk) continue;
+                }
+                f.OnCharacterStart(); // 시험 캐릭터, 없으면 마지막에 쓴 캐릭터
+                if (useTestChar) PlatformPrefs.SetString("profile", userProfile);
                 yield return new WaitForSeconds(1.5f);
                 try { w = FindWorld(f, World); listed = true; }
                 catch (System.Exception e) { Plugin.Log.LogInfo($"자동 입장: 월드 목록 아직 없음({e.GetType().Name}), 다시"); }
+            }
+            if (!charOk)
+            {
+                Plugin.Log.LogWarning($"자동 입장: 시험 캐릭터 {Character}를 못 고름 → 사용자 캐릭터로 시험하지 않고 게임을 끕니다.");
+                Application.Quit();
+                yield break;
             }
             if (w == null)
             {
@@ -76,6 +94,47 @@ namespace ValheimHelper
             object toggle = AccessTools.Field(typeof(FejdStartup), "m_openServerToggle").GetValue(f);
             toggle?.GetType().GetProperty("isOn")?.SetValue(toggle, false);
             f.OnWorldStart();
+        }
+
+        static readonly System.Action<FejdStartup, string> SetSelectedProfile =
+            AccessTools.MethodDelegate<System.Action<FejdStartup, string>>(AccessTools.Method(typeof(FejdStartup), "SetSelectedProfile"));
+        static readonly System.Action<FejdStartup, PlayerProfile> SetupCharacterPreview =
+            AccessTools.MethodDelegate<System.Action<FejdStartup, PlayerProfile>>(AccessTools.Method(typeof(FejdStartup), "SetupCharacterPreview"));
+        static readonly AccessTools.FieldRef<FejdStartup, List<PlayerProfile>> ProfilesField =
+            AccessTools.FieldRefAccess<FejdStartup, List<PlayerProfile>>("m_profiles");
+        static readonly AccessTools.FieldRef<FejdStartup, int> ProfileIndexField = AccessTools.FieldRefAccess<FejdStartup, int>("m_profileIndex");
+
+        /// <summary>시험 캐릭터가 없으면 바닐라 새 캐릭터 만들기(OnNewCharacterDone)와 같은 순서로 로컬에 만들고, 골라졌는지 확인한다.</summary>
+        static bool SelectTestCharacter(FejdStartup f)
+        {
+            try
+            {
+                if (!PlayerProfile.HaveProfile(Character))
+                {
+                    SetupCharacterPreview(f, null); // 빈 플레이어 인스턴스
+                    Player p = f.GetPreviewPlayer();
+                    if (p == null) { Plugin.Log.LogWarning("자동 입장: 시험 캐릭터 미리보기 없음, 다시"); return false; }
+                    var profile = new PlayerProfile(Character, FileHelpers.FileSource.Local);
+                    p.GiveDefaultItems();
+                    profile.SetName(Character);
+                    profile.m_firstSpawn = false; // 발키리 등장 연출 없이 바로 서게
+                    profile.SavePlayerData(p);
+                    if (!profile.Save()) { Plugin.Log.LogWarning("자동 입장: 시험 캐릭터 저장 실패"); return false; }
+                    Plugin.Log.LogInfo($"자동 입장: 시험 캐릭터 {Character} 새로 만듦");
+                }
+                ProfilesField(f) = null; // 목록 다시 읽기
+                SetSelectedProfile(f, Character);
+                var list = ProfilesField(f);
+                int i = ProfileIndexField(f);
+                bool ok = list != null && i >= 0 && i < list.Count && list[i].GetFilename() == Character;
+                if (!ok) Plugin.Log.LogInfo($"자동 입장: 시험 캐릭터 {Character}가 목록에 아직 없음, 다시");
+                return ok;
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogWarning($"자동 입장: 시험 캐릭터 고르기 실패: {e}");
+                return false;
+            }
         }
     }
 }

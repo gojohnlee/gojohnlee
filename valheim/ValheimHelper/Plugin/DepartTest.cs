@@ -208,6 +208,8 @@ namespace ValheimHelper
                 TestKit.TakeFromChest(w.Chest, "Wood");
 
                 // 8) 밝혀진 곳은 안다(작업 3): 스위치 끔 → 먼 밝혀진 구역 모름, 켬 → 앎
+                // 지도 밝힘은 캐릭터마다 따로라 새 시험 캐릭터는 거점 둘레도 안 밝혀져 있다 → 바닐라 밝히기(걸어다닐 때와 같음)로 둘레 230m를 밝힌다.
+                HarmonyLib.AccessTools.Method(typeof(Minimap), "Explore", new[] { typeof(Vector3), typeof(float) })?.Invoke(Minimap.instance, new object[] { w.Home, 230f });
                 var cands = new List<ZoneXY>();
                 for (int dx = -3; dx <= 3; dx++)
                     for (int dy = -3; dy <= 3; dy++)
