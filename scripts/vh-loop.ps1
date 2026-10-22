@@ -266,16 +266,19 @@ function Backup-Wip {
 }
 
 function Write-Status($now, $last) {
-    # 할 일: progress "★ 지금 …" 머리줄 아래 들여 쓴 줄들에서 [끝]이 아닌 첫 번호 항목, 없으면 머리줄(머리줄 이름이 바뀌어도 비지 않게)
+    # 할 일: progress "★ 지금 …" 머리줄 아래 들여 쓴 줄들에서 [끝]이 아닌 첫 번호 항목.
+    # 번호 항목이 전부 [끝]이면 다음 "★ 지금" 머리줄로, 번호 항목이 없는 머리줄은 그 줄 자체가 할 일.
     $p = @(Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8)
     $todo = ''
-    for ($i = 0; $i -lt $p.Count; $i++) {
+    for ($i = 0; $i -lt $p.Count -and -not $todo; $i++) {
         if ($p[$i] -notmatch '^★ 지금') { continue }
+        $items = 0
         for ($j = $i + 1; $j -lt $p.Count -and $p[$j] -match '^\s+\S'; $j++) {
-            if ($p[$j] -match '^\s+\d+\)' -and $p[$j] -notmatch '^\s+\d+\)\s*\[끝') { $todo = $p[$j]; break }
+            if ($p[$j] -notmatch '^\s+\d+\)') { continue }
+            $items++
+            if ($p[$j] -notmatch '^\s+\d+\)\s*\[끝') { $todo = $p[$j]; break }
         }
-        if (-not $todo) { $todo = $p[$i] }
-        break
+        if (-not $todo -and $items -eq 0) { $todo = $p[$i] }
     }
     $todo = "$todo".Trim(); if ($todo.Length -gt 120) { $todo = $todo.Substring(0, 120) + '…' }
     $test = if (Test-Path $Diag) { "$((Get-Item $Diag).LastWriteTime.ToString('MM-dd HH:mm')) $(Get-Content $Diag -Encoding UTF8 -TotalCount 1)" } else { '(없음)' }
