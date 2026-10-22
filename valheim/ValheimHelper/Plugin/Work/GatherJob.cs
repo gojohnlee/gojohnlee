@@ -158,6 +158,13 @@ namespace ValheimHelper
         /// <summary>Guard: 거기는 위험하다. 그 구역(과 지금 목표)을 버리고 다른 데를 찾는다. 들고 있는 건 그대로.</summary>
         public void AvoidHere(Vector3 danger)
         {
+            if (m_npc.InInterior())
+            {
+                // 지하묘지 안 위험(Guard 물러남·도망): 이 묘지는 그만, 나가는 Teleport로 나간다. 안과 입구는 xz가 같아 장소 기억은 입구 구역에 쌓인다.
+                m_cryptsDone.Add(m_crypt.Pos);
+                if (m_step != Step.Return) Go(Step.Return);
+                return;
+            }
             m_avoid.Add(Senses.ZoneOf(danger));
             if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Unload || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
             if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
@@ -335,6 +342,7 @@ namespace ValheimHelper
         /// <summary>열린 지하묘지가 있으면 거기로 간다(바깥 걷기 → 입구 Teleport).</summary>
         bool TryStartCrypt()
         {
+            if (EnvMan.IsNight()) return false; // 밤에 늪 바깥을 걷지 않는다(들어가는 건 낮에만)
             if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, m_cryptsDone)) return false;
             m_crypt = c;
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 {c.Name}로({Utils.DistanceXZ(c.Pos, m_npc.transform.position):0}m)");

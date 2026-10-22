@@ -93,12 +93,17 @@ namespace ValheimHelper
             if (mine.Door == null) yield break;
             bool chosen = Dungeons.TryChoose(w.Home, out var pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f;
             checks.Add("닫힌 지하묘지는 안 고름", !chosen);
+            var scrapCmd = new ValheimHelper.Core.Chat.ChatCommand { Kind = ValheimHelper.Core.Chat.CommandKind.Item, Item = Dungeons.ScrapItem, Amount = 3 };
+            var closedJudge = Departures.JudgeFor(w.Claude, scrapCmd);
+            checks.Add($"문 닫힌 묘지뿐이면 철은 출발 전에 거절 ({closedJudge?.Key})", closedJudge != null && closedJudge.Key == "depart.noCrypt");
 
             ZNetView doorView = ZNetScene.instance.FindInstance(mine.Door);
             if (doorView != null) doorView.ClaimOwnership();
             mine.Door.Set(ZDOVars.s_state, 1);
             chosen = Dungeons.TryChoose(w.Home, out pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f && pick.Open;
             checks.Add("문을 열면 고름", chosen);
+            var openJudge = Departures.JudgeFor(w.Claude, scrapCmd);
+            checks.Add($"문을 열면 철은 거절 안 함 ({openJudge?.Key})", openJudge != null && openJudge.Key != "depart.noCrypt");
 
             Teleport gate = Dungeons.Entrance(mine.Pos);
             checks.Add($"입구 Teleport 찾음 ({(gate != null ? Utils.DistanceXZ(gate.transform.position, mine.Pos).ToString("0") + "m" : "없음")})", gate != null);

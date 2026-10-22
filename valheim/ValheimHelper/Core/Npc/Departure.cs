@@ -39,6 +39,8 @@ namespace ValheimHelper.Core.Npc
         public ToolState Tool;
         /// <summary>범위 밖 재료(배·보스 전리품 등).</summary>
         public bool OutOfScope;
+        /// <summary>고철(철)인데 아는 곳도 없고 문이 열린 지하묘지도 없다.</summary>
+        public bool NoCrypt;
         public bool Fed;
         public bool FoodInChest = true;
         public int HealthMeads;
@@ -154,6 +156,7 @@ namespace ValheimHelper.Core.Npc
 
             // 1) 막힘
             if (i.OutOfScope) return Refuse(r, "depart.outOfScope", "범위 밖");
+            if (i.NoCrypt) return Refuse(r, "depart.noCrypt", "열린 지하묘지 없음");
             if (i.Tool == ToolState.None) return Refuse(r, "noTool", "연장 없음");
             if (i.Tool == ToolState.Weak) return Refuse(r, "toolTooWeak", "연장 약함");
 

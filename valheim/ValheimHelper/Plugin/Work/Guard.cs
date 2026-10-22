@@ -465,6 +465,12 @@ namespace ValheimHelper
         /// </summary>
         Vector3 AwayPoint(Vector3 pos, float dist)
         {
+            if (Character.InInterior(pos))
+            {
+                // 지하묘지 안: 거점 쪽/적 반대쪽이 아니라 나가는 Teleport 쪽으로(안은 y+5000이라 거점 방향이 뜻 없음)
+                Teleport exit = Dungeons.Exit(pos);
+                if (exit != null) return exit.transform.position;
+            }
             Vector3 toHome = m_npc.Home - pos;
             toHome.y = 0f;
             Vector3 fromFoes = Vector3.zero;
