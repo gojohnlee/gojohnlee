@@ -135,8 +135,7 @@ namespace ValheimHelper
             foreach (ItemDrop drop in drops)
             {
                 any = true;
-                if (drop.CanPickup()) m_npc.Pickup(drop.gameObject);
-                else drop.RequestOwn();
+                m_npc.PickDrop(drop);
             }
             if (any && m_time >= m_nextDiag)
             {
@@ -194,8 +193,7 @@ namespace ValheimHelper
             foreach (ItemDrop drop in Drops())
             {
                 any = true;
-                if (drop.CanPickup()) m_npc.Pickup(drop.gameObject);
-                else drop.RequestOwn();
+                m_npc.PickDrop(drop);
             }
             if (any) return CraftResult.Working;
             if (zdo.GetInt(ZDOVars.s_spawnAmount) > 0 || zdo.GetInt(ZDOVars.s_queued) > 0) return CraftResult.Working; // 아직 도는 중·내보내는 중
@@ -254,8 +252,7 @@ namespace ValheimHelper
             foreach (ItemDrop drop in Drops())
             {
                 any = true;
-                if (drop.CanPickup()) m_npc.Pickup(drop.gameObject);
-                else drop.RequestOwn();
+                m_npc.PickDrop(drop);
             }
             if (CookSlotsOf(zdo, m_cook, true) > 0) { nview.InvokeRPC("RPC_RemoveDoneItem", m_npc.transform.position, 1); return CraftResult.Working; }
             if (any) return CraftResult.Working;
@@ -348,7 +345,7 @@ namespace ValheimHelper
             foreach (Collider col in Physics.OverlapSphere(p, 4f, LayerMask.GetMask("item")))
             {
                 ItemDrop d = col.GetComponentInParent<ItemDrop>();
-                if (d != null && !list.Contains(d) && (Utils.GetPrefabName(d.gameObject) == want || Utils.GetPrefabName(d.gameObject) == burnt)) list.Add(d);
+                if (d != null && !list.Contains(d) && d.TryGetComponent(out ZNetView v) && v.IsValid() && (Utils.GetPrefabName(d.gameObject) == want || Utils.GetPrefabName(d.gameObject) == burnt)) list.Add(d);
             }
             return list;
         }

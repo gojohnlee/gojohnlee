@@ -1,6 +1,7 @@
 해결된 문제 (평소엔 읽지 않는다. 새 FAIL·예외가 나면 시험 이름·FAIL 문구로 grep → 발생 순서·시작 상태까지 대조한 뒤에만 Errors.txt로 다시 연다)
 한 줄 형식: ID | 시험명 | FAIL 문구 | 원인 | 수정(회차·커밋) | 검증(원래 조건에서). 최근 → 과거. 2026-10-22 이전 것은 Errors.txt 전 기록에서 옮김(ID 없음).
 ======================================================================
+E013 | vh_basetest | 제련 개수 보존 (상자 주괴 6, 광석 4 넣음 → 합 4) | 두 일꾼이 같은 프레임에 같은 땅 물건을 주움: 바닐라 CanPickup이 이미 지워진(ZDO 없는) 물건에 true, GameObject는 프레임 끝에 사라짐 → 복제 | WorkerNpc.PickDrop(ZDO 유효할 때만 줍기), MachineStep·GatherJob 줍기 모두 이것으로(회차 74) | 고치기 전 FAIL → 같은 시험 22/22 PASS, craft 23/23·wood 10/10
 - | vh_coppertest | 귀환 막혀 순간이동 | 시험 캐릭터(회차 67)가 월드 시작 제단에서 시작 → 거점이 보스석 사이 | TestKit.LeaveNoBuild: 묶음 첫 시험 전에 제단 밖 초원 평지로(회차 72, eccd6bd) | 같은 묶음 copper 11/11 PASS
 - | vh_pittest | 구덩이 1~6 깊이 0인데 "걸어 나옴" PASS | 시작 제단 건축 금지 구역에서 바닐라가 흙 파기를 막음 | LeaveNoBuild + 자리 고르기에서 금지 구역 뺌 + "구덩이 N 파짐" 검사(회차 72, eccd6bd) | pit 14/14 PASS
 - | 싸움(Guard) | 바위 위(2.4m) 적에 휘두름 7번 0번 맞고 일꾼 죽음 | 높이차로 근접 공격이 안 닿음 | 3번 잇달아 빗나가면 직접 피해 DirectHit(회차 72, eccd6bd) | fight PASS

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
 
@@ -6,11 +7,11 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_basetest (기반 대표 시험, "지금 먼저" 4): 일 중간 저장·다시 불러 이어 하기(빠른 복원 — 실제 재시작 시험을 대신하지 않음),
-    /// 급한 일 끼어들기 뒤 하던 일로 복귀, 두 일꾼이 같은 상자에 동시에 넣기, 수량 보존(받은 만큼 상자에, 짐·사용 중 표시 안 남음).
+    /// 급한 일 끼어들기 뒤 하던 일로 복귀, 두 일꾼이 같은 상자에 동시에 넣기·같은 제련소 동시에 쓰기, 수량 보존(받은 만큼 상자에, 짐·사용 중 표시 안 남음).
     /// </summary>
     static class BaseTest
     {
-        public static void Register() => TestRunner.Register("vh_basetest", "기반 대표 시험(이어 하기·끼어들기·같은 상자 동시)", () => TestKit.Flat(Run()));
+        public static void Register() => TestRunner.Register("vh_basetest", "기반 대표 시험(이어 하기·끼어들기·같은 상자·제련소 동시)", () => TestKit.Flat(Run()));
 
         static IEnumerator Run()
         {
@@ -22,8 +23,13 @@ namespace ValheimHelper
                 yield break;
             }
             var w = new TestKit.World();
-            try { yield return Body(w, checks); }
-            finally { TestKit.Restore(w); }
+            var made = new List<GameObject>();
+            try { yield return Body(w, checks, made); }
+            finally
+            {
+                foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
+                TestKit.Restore(w);
+            }
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             TestKit.End(w, checks);
@@ -36,7 +42,7 @@ namespace ValheimHelper
 
         static bool Idle(WorkerNpc npc) => npc != null && npc.Ai.Job == null && npc.Ai.Queue.Count == 0;
 
-        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
+        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC 2명·상자", w.Claude != null && w.Alarak != null && w.Chest != null);
@@ -101,6 +107,53 @@ namespace ValheimHelper
                 wood2 >= 20 && Carried(w.Claude, "Wood") == 0 && Carried(w.Alarak, "Wood") == 0);
             checks.Add("상자 사용 중 표시 안 남음", !w.Chest.IsInUse());
             TestKit.ClearBaseStock(w, "Wood", "Stone");
+            yield return Smelt(w, checks, made);
+        }
+
+        /// <summary>
+        /// 4) 두 일꾼이 같은 제련소를 동시에: 광석 4·석탄 20, 둘에게 "!구리주괴 2"씩 → 한 제련소에 둘 다 넣고 꺼냄.
+        /// 먼저 꺼내는 쪽이 남의 몫까지 가져가도 된다(합만 봄). 개수 보존 = 상자+두 짐+제련소 둘레 땅+제련소 안(대기 광석·내보낼 것).
+        /// </summary>
+        static IEnumerator Smelt(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
+        {
+            GameObject sp = ZNetScene.instance.GetPrefab("smelter");
+            if (sp == null) { checks.Add("제련소 프리팹 있음", false); yield break; }
+            TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
+            TestKit.PutInChest(w.Chest, "CopperOre", 4);
+            TestKit.PutInChest(w.Chest, "Coal", 20);
+            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+            var sm = Object.Instantiate(sp, GatherTest.Ground(w.Home - right * 7f), Quaternion.identity);
+            made.Add(sm);
+            ZDO z = sm.GetComponent<ZNetView>().GetZDO();
+            yield return new WaitForSeconds(1f);
+            GatherTest.Say($"!{w.Claude.NpcName} 구리주괴 2", null);
+            GatherTest.Say($"!{w.Alarak.NpcName} 구리주괴 2", null);
+            yield return new WaitForSeconds(1f);
+            checks.Add($"둘 다 제련 계획 시작 ({w.Claude.Ai.Job?.GetType().Name}·{w.Alarak.Ai.Job?.GetType().Name})",
+                w.Claude.Ai.Job is PlanJob && w.Alarak.Ai.Job is PlanJob);
+            yield return TestKit.WaitFor(() => Idle(w.Claude) && Idle(w.Alarak), 360f);
+            checks.Add($"둘 다 끝 ({TestKit.Waited:0}초, {w.Claude.Ai.Current}·{w.Alarak.Ai.Current})", TestKit.Ok);
+            int bars = Base(w, "Copper"), ore = Base(w, "CopperOre");
+            int bag = Carried(w.Claude, "Copper") + Carried(w.Alarak, "Copper") + Carried(w.Claude, "CopperOre") + Carried(w.Alarak, "CopperOre");
+            int ground = OnGround(sm.transform.position, "Copper") + OnGround(sm.transform.position, "CopperOre");
+            int inside = z.GetInt(ZDOVars.s_queued) + z.GetInt(ZDOVars.s_spawnAmount);
+            checks.Add($"같은 제련소 동시: 주괴 {bars} ≥ 4 (광석 남음 {ore})", bars >= 4);
+            checks.Add($"제련 개수 보존 (상자 주괴 {bars}+광석 {ore}, 짐 {bag}, 땅 {ground}, 제련소 안 {inside} → 합 4)",
+                bars + ore + bag + ground + inside == 4);
+            checks.Add("상자 사용 중 표시 안 남음", !w.Chest.IsInUse());
+            TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
+        }
+
+        static int OnGround(Vector3 at, string prefab)
+        {
+            int n = 0;
+            var seen = new HashSet<ItemDrop>();
+            foreach (Collider col in Physics.OverlapSphere(at, 6f, LayerMask.GetMask("item")))
+            {
+                ItemDrop d = col.GetComponentInParent<ItemDrop>();
+                if (d != null && seen.Add(d) && Utils.GetPrefabName(d.gameObject) == prefab) n += d.m_itemData.m_stack;
+            }
+            return n;
         }
     }
 }

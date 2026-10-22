@@ -1157,15 +1157,8 @@ namespace ValheimHelper
             }
         }
 
-        /// <summary>
-        /// 플레이어 자동 줍기와 같은 순서: 내 것이면 줍고, 아니면 소유권을 요청하고 다음에 다시.
-        /// ItemDrop.Pickup(Humanoid)은 소유권을 기다리는 동안 줍는 사람을 Player로 가정해서 NPC면 오류가 났다(0.3.4).
-        /// </summary>
-        void Pick(ItemDrop drop)
-        {
-            if (drop.CanPickup()) m_npc.Pickup(drop.gameObject);
-            else drop.RequestOwn();
-        }
+        /// <summary>내 것이면 줍고 아니면 소유권 요청(WorkerNpc.PickDrop — 지워진 물건 또 줍기·NPC 오류 막음).</summary>
+        void Pick(ItemDrop drop) => m_npc.PickDrop(drop);
 
         ItemDrop NearestDrop()
         {

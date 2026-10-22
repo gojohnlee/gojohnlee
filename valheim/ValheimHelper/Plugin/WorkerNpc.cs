@@ -21,6 +21,20 @@ namespace ValheimHelper
 
         internal WorkerAI Ai;
 
+        /// <summary>
+        /// 땅의 물건 줍기(플레이어 자동 줍기와 같은 순서): 내 것이면 줍고, 아니면 소유권을 요청하고 다음에 다시.
+        /// 바닐라 CanPickup은 이미 지워진(ZDO 없는) 물건에 true를 돌려주고 GameObject는 프레임 끝에야 사라진다
+        /// → 같은 프레임에 다른 일꾼이 주운 것을 또 주워 복제됐다(회차 74 vh_basetest 제련소 동시: 광석 4 → 주괴 6). 그래서 ZDO부터 본다.
+        /// ItemDrop.Pickup(Humanoid)은 소유권 대기 중 줍는 쪽을 Player로 가정해 NPC면 오류(0.3.4) → Humanoid.Pickup을 쓴다.
+        /// </summary>
+        public bool PickDrop(ItemDrop drop)
+        {
+            if (drop == null || !drop.TryGetComponent(out ZNetView v) || !v.IsValid()) return false;
+            if (drop.CanPickup()) return Pickup(drop.gameObject);
+            drop.RequestOwn();
+            return false;
+        }
+
         public const string KeyInventory = "vh_inv";
 
         protected override void Awake()
