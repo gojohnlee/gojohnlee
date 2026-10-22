@@ -88,7 +88,7 @@ function Backup-Wip {
 }
 
 function Write-Status($now, $last) {
-    $todo = Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8 | Where-Object { $_ -match '^★ 지금 할 일' } | Select-Object -First 1
+    $todo = Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8 | Where-Object { $_ -match '^★ 지금 (순서|할 일)' } | Select-Object -First 1
     $test = if (Test-Path $Diag) { "$((Get-Item $Diag).LastWriteTime.ToString('MM-dd HH:mm')) $(Get-Content $Diag -Encoding UTF8 -TotalCount 1)" } else { '(없음)' }
     $lim = @(0, 1 | ForEach-Object { if ($st.until[$_] -and [datetime]$st.until[$_] -gt (Get-Date)) { "$($Accounts[$_].Name) $(([datetime]$st.until[$_]).ToString('MM-dd HH:mm'))까지" } })
     $text = @(

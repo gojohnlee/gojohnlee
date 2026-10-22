@@ -106,7 +106,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
        이유: 묶음 1 시험·상자 변경·시험 틀 바꾸기(4시간 안쪽)를 루프가 돌리는 걸 사용자가 집에서 실시간으로 지켜볼 수 있음. 늦게 만들면 못 봄.
        그래서 아래 묶음 1 시험부터는 루프가 진행(첫 회차는 사용자 앞에서). 시험이 아직 불안정하니 멈춤 조건(같은 FAIL 2번·진척 없음 3회차)을 꼭 넣는다.
   그다음 시험(루프가 진행):
-★ 지금 할 일 = 집 PC 시험(묶음 1 끝남): docs/valheim/batch1.txt 3장 순서대로 —
+[완료 루프 회차 1~11, 태그 valheim-0.3.8] 집 PC 시험(묶음 1): batch1.txt 3장 —
   1) 빌드 → 새 DLL로 예전 방식 회귀(시험 8종 + vh_pittest·vh_coppertest·vh_bagtest) + vh_departtest + vh_peertest, 순차.
      [루프 회차 1, 2026-10-21 20:14~] 13종 중 PASS: npc·flag·wood·stone·death·fight·explore·bag·peer, 재시험으로 prep 23/23(첫 회 해골에 죽음, 우연).
      고친 시험: flagtest(NPC 나타나자마자 자리 확인), pittest(물가면 300m 안 마른 초원으로 옮김 → 물 차는 FAIL 사라짐).
