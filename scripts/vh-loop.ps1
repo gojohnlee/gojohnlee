@@ -1,6 +1,7 @@
 ﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 숨김으로 실행한다.
 # 회차: pull → 멈춤 파일 확인 → 계정 고르기 → claude -p 새 세션(scripts/vh-loop-prompt.txt) → 결과 판정 → status.txt 푸시.
 # 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
+# 백업 때 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리에서 돌려 먼저 답한다.
 # 두 계정 모두 한도(또는 쉼)면 풀리는 시각까지 기다리고,
 # 자리 비움(입력 없음 10분)이면 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
@@ -21,6 +22,9 @@ $Accounts = @(
 )
 $RoundTimeoutMin = 240
 $BackupMin = 15
+$ReplyTimeoutMin = 15
+$ReplyDir = Join-Path $Dir 'reply'   # 답 전용 작업 트리(회차가 쓰는 저장소 작업 트리와 따로)
+$SelfHash = (Get-FileHash $PSCommandPath).Hash   # pull로 이 스크립트가 바뀌면 status.txt에 "다시 켜야 반영" 알림
 $Diag = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimHelper\diag.txt'
 $Utf8 = New-Object Text.UTF8Encoding($false)
 
@@ -42,7 +46,7 @@ function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::Ap
 function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
-    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0 }
+    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0 }
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
     }
@@ -90,8 +94,8 @@ function Write-Status($now, $last) {
         "할 일: $todo",
         "마지막 시험: $test",
         "Claude가 한 일: $last",
-        "요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
-    ) -join "`n"
+        "요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
+    ) + @(if ((Get-FileHash $PSCommandPath).Hash -ne $SelfHash) { '루프 스크립트(vh-loop.ps1)가 고쳐짐 → PC에서 루프를 다시 켜야 반영된다.' }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
     [IO.File]::WriteAllText($f, "$text`n", $Utf8)
     G add docs/valheim/status.txt | Out-Null
@@ -100,26 +104,65 @@ function Write-Status($now, $last) {
     if ($LASTEXITCODE -ne 0) { G pull -q --rebase --autostash origin valheim | Out-Null; G push -q origin valheim | Out-Null }
 }
 
-function Run-Claude($acct, $outFile) {
+function Start-Claude($acct, $workDir, $prompt) {
     $psi = New-Object Diagnostics.ProcessStartInfo
     $psi.FileName = $Claude
-    $psi.Arguments = '-p "Read scripts/vh-loop-prompt.txt and follow it exactly." --dangerously-skip-permissions'
-    $psi.WorkingDirectory = $Repo
+    $psi.Arguments = "-p `"Read $prompt and follow it exactly.`" --dangerously-skip-permissions"
+    $psi.WorkingDirectory = $workDir
     $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
     $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
     $psi.StandardOutputEncoding = $Utf8; $psi.StandardErrorEncoding = $Utf8
     if ($acct.Config) { $psi.EnvironmentVariables['CLAUDE_CONFIG_DIR'] = $acct.Config } else { $psi.EnvironmentVariables.Remove('CLAUDE_CONFIG_DIR') }
+    # 배경 서브에이전트가 남은 채 턴이 끝나도 10분 뒤 끊지 않고 끝까지 기다린다(회차 54가 그렇게 끊겨 LOOP 줄 없이 끝남). 회차 시간 제한은 그대로.
+    $psi.EnvironmentVariables['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'
     $p = [Diagnostics.Process]::Start($psi)
-    $so = $p.StandardOutput.ReadToEndAsync(); $se = $p.StandardError.ReadToEndAsync()
-    $start = Get-Date; $bk = Get-Date
-    while (-not $p.WaitForExit(60000)) {
-        if (((Get-Date) - $bk).TotalMinutes -ge $BackupMin) { Backup-Wip; $bk = Get-Date }
-        if (((Get-Date) - $start).TotalMinutes -ge $RoundTimeoutMin) { Log '회차 시간 초과 → claude 끔'; & taskkill /T /F /PID $p.Id | Out-Null; break }
-    }
-    $p.WaitForExit()
-    $text = "$($so.Result)`n$($se.Result)"
+    @{ P = $p; So = $p.StandardOutput.ReadToEndAsync(); Se = $p.StandardError.ReadToEndAsync(); Start = Get-Date }
+}
+
+function End-Claude($c, $outFile) {
+    $c.P.WaitForExit()
+    $text = "$($c.So.Result)`n$($c.Se.Result)"
     [IO.File]::WriteAllText($outFile, $text, $Utf8)
-    @{ Code = $p.ExitCode; Text = $text; Min = ((Get-Date) - $start).TotalMinutes }
+    @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes }
+}
+
+function Run-Claude($acct, $outFile) {
+    $c = Start-Claude $acct $Repo 'scripts/vh-loop-prompt.txt'
+    $bk = Get-Date
+    while (-not $c.P.WaitForExit(60000)) {
+        if (((Get-Date) - $bk).TotalMinutes -ge $BackupMin) { Backup-Wip; Reply-Requests $acct; $bk = Get-Date }
+        if (((Get-Date) - $c.Start).TotalMinutes -ge $RoundTimeoutMin) { Log '회차 시간 초과 → claude 끔'; & taskkill /T /F /PID $c.P.Id | Out-Null; break }
+    }
+    End-Claude $c $outFile
+}
+
+# 15분 백업 때마다: 회차가 시작한 뒤 UserRequest.txt가 바뀌었으면(사용자가 GitHub에서 새로 씀) 회차 끝을 기다리지 않고
+# 답 전용 claude를 짧게 따로 돌려 UserReply.txt에 먼저 답한다(사용자 결정 2026-10-22). 회차의 작업 트리·게임은 안 건드린다:
+# 따로 작업 트리($ReplyDir, origin/valheim의 분리된 HEAD)에서 UserReply.txt만 커밋해 valheim에 푸시.
+# 회차도 같은 파일 끝에 덧붙이므로 .gitattributes가 UserReply.txt를 merge=union으로 둔다(합칠 때 양쪽 줄을 다 남김).
+function Reply-Requests($acct) {
+    G fetch -q origin valheim | Out-Null
+    $req = G rev-parse 'origin/valheim:docs/valheim/UserRequest.txt' | Select-Object -Last 1
+    if ($req -eq $st.reqSeen) { return }
+    if (-not (Test-Path (Join-Path $ReplyDir '.git'))) {
+        if (Test-Path $ReplyDir) { Remove-Item $ReplyDir -Recurse -Force }
+        G worktree prune | Out-Null; G worktree add -q --detach $ReplyDir origin/valheim | Out-Null
+    }
+    & git -C $ReplyDir checkout -q -f --detach origin/valheim 2>&1 | Out-Null
+    & git -C $ReplyDir clean -q -fd 2>&1 | Out-Null
+    Log 'UserRequest.txt 바뀜(회차 도중) → 답 전용 claude'
+    $c = Start-Claude $acct $ReplyDir 'scripts/vh-reply-prompt.txt'
+    if (-not $c.P.WaitForExit($ReplyTimeoutMin * 60000)) { Log '답 전용 claude 시간 초과 → 끔'; & taskkill /T /F /PID $c.P.Id | Out-Null }
+    $r = End-Claude $c (Join-Path $Dir "reply-$($st.round).txt")
+    $last = @($r.Text -split "`r?`n" | Where-Object { $_ -match '^\s*REPLY:' }) | Select-Object -Last 1
+    if ($last) { Log $last.Trim(); $st.replyFails = 0; $st.reqSeen = $req }
+    else {
+        # 한도·오류: 다음 백업 때 한 번 더, 두 번째도 안 되면 이 내용은 회차 끝(다음 회차 0번)에 맡긴다
+        $st.replyFails++
+        Log "답 전용 claude 실패(종료 코드 $($r.Code), $($st.replyFails)번째)"
+        if ($st.replyFails -ge 2) { $st.replyFails = 0; $st.reqSeen = $req }
+    }
+    Save-State
 }
 
 # 실제 한도 문구(2026-10-21): "You've hit your session limit · resets 12:30am (Asia/Seoul)". 주간 한도는 "resets Oct 24, 9pm"처럼
@@ -205,6 +248,8 @@ while ($true) {
     $st.round++
     Write-Status "회차 $($st.round) 진행 중" '(진행 중)'
     $before = G rev-parse origin/valheim | Select-Object -Last 1
+    $st.reqSeen = G rev-parse 'HEAD:docs/valheim/UserRequest.txt' | Select-Object -Last 1   # 이 회차가 0번에서 읽을 요청(이후 바뀌면 백업 때 따로 답)
+    $st.replyFails = 0
     Log "회차 $($st.round) 시작 ($($acct.Name) 계정)"
     $r = Run-Claude $acct (Join-Path $Dir "round-$($st.round).txt")
     $lines = @($r.Text -split "`r?`n" | Where-Object { $_.Trim() })

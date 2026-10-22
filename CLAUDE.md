@@ -9,7 +9,8 @@
 # 발헤임 일꾼 NPC
 
 - 이 브랜치에서만 작업하고 푸시도 `valheim`으로(사용자 승인, 세션 작업 브랜치와 별개).
-- 새 세션 시작: docs/valheim/progress.txt(지금·다음) → 코드는 codemap.txt에서 찾아 그 부분만 읽는다. 파일은 통째로 읽지 말고 grep.
+- 새 세션 시작: docs/valheim/UserRequest.txt에 UserReply.txt 답("요청:")이 없는 요청이 있으면 그 답부터 써서 푸시(형식은 scripts/vh-loop-prompt.txt 0번).
+  그다음 docs/valheim/progress.txt(지금·다음) → 코드는 codemap.txt에서 찾아 그 부분만 읽는다. 파일은 통째로 읽지 말고 grep.
   기획 결정은 decisions.txt, 구상서 concept-v1.txt·설계서 design-depart-craft.txt는 그 장만, 지난 기록 history.txt는 필요할 때만 grep.
   무인 루프 설계는 loop-plan.txt. PC 세션 시작 순서·게임 시험 방법은 progress.txt 맨 위.
 - 게임 DLL: PC 세션은 설치된 게임의 valheim_Data\Managed(csproj 자동). 클라우드 세션은 비공개 저장소 gojohnlee/valheim-refs → add_repo 후 /home/user/valheim-refs에 clone.
