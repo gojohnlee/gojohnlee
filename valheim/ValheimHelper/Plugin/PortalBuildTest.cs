@@ -213,6 +213,72 @@ namespace ValheimHelper
             bool found = PortalBuilder.FindSpot(wardAt, out Vector3 spot, out _, out string ws);
             float dist = Utils.DistanceXZ(spot, wardAt);
             checks.Add($"남의 와드 안 피함 ({ws}, 와드에서 {dist:0.0}m, 반경 {radius:0})", found ? dist >= radius + 3f : ws.Contains("남의 와드"));
+
+            // 8) 일에 연결(R2 나): 먼 일터 두 번째 출발 → 거점 쪽 놓고 한 몫 들고 감 → 도착해 일터 쪽 놓음(짝) / 못 놓고 귀환하면 상자로 / 거점 쪽만 있으면 한 몫만
+            yield return PortalJobPart(w, checks, cost, rot);
+        }
+
+        static IEnumerator PortalJobPart(TestKit.World w, GatherTest.Checks checks, List<PortalCost> cost, Quaternion rot)
+        {
+            ClearMine();
+            var items = cost.ConvertAll(c => c.Item).ToArray();
+            TestKit.ClearBaseStock(w, items);
+            Inventory inv = w.Claude.GetInventory();
+            foreach (var k in cost) inv.RemoveItem(CraftStep.SharedName(k.Item), inv.CountItems(CraftStep.SharedName(k.Item)));
+            int Carried(string item) => inv.CountItems(CraftStep.SharedName(item));
+            bool ChestEmpty() { foreach (var k in cost) if (GatherTest.Count(w.Chest, k.Item) != 0) return false; return true; }
+            ZoneXY far = Senses.ZoneOf(w.Home + rot * new Vector3(0f, 0f, 400f));
+            string tag = WorkerPortal.Tag(far.ToString());
+            var ways = new HashSet<ToolKind>();
+
+            // 재료 없음 → 안 놓음, 짐 그대로
+            Brain.Get().Visit(far);
+            var job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job.TestPortalDepart(far);
+            checks.Add("재료 없으면 안 놓고 안 들고 감", PortalBuilder.Mine().Count == 0 && job.PortalCarryTag == null && Carried(cost[0].Item) == 0);
+
+            // 두 번째 출발 → 거점 쪽 + 한 몫
+            Fill(w.Chest, cost, 2);
+            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job.TestPortalDepart(far);
+            yield return new WaitForSeconds(1f);
+            checks.Add($"떠날 때 거점 쪽 놓음 ({PortalBuilder.MineWithTag(tag)}개)", PortalBuilder.MineWithTag(tag) == 1 && job.PortalCarryTag == tag);
+            checks.Add("한 몫 들고 감·상자 비음", PortalBuilder.Carrying(inv) && ChestEmpty());
+            job.TestPortalDepart(far);
+            checks.Add("두 번 불러도 더 안 놓음", PortalBuilder.MineWithTag(tag) == 1);
+
+            // 도착(시험은 35m 밖 자리로 옮겨 놓음) → 일터 쪽, 짝 이어짐, 방문 2
+            w.Claude.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 35f)), rot, false);
+            yield return new WaitForSeconds(1f);
+            job.TestPortalArrive(far);
+            job.TestPortalArrive(far);
+            yield return new WaitForSeconds(1f);
+            var pair = PortalBuilder.Mine().FindAll(z => z.GetString(ZDOVars.s_tag) == tag);
+            bool linked = pair.Count == 2 && pair[0].GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal) == pair[1].m_uid;
+            checks.Add($"도착해 일터 쪽 놓음·짝 이어짐 ({pair.Count}개)", linked && job.PortalCarryTag == null);
+            checks.Add("들고 간 몫 다 씀", Carried(cost[0].Item) == 0);
+            checks.Add($"먼 일터 방문 셈 한 일에 한 번 ({Brain.Get().VisitsOf(far)})", Brain.Get().VisitsOf(far) == 2);
+
+            // 못 놓고 귀환 → 한 몫 상자로
+            ClearMine();
+            Fill(w.Chest, cost, 2);
+            w.Claude.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 2f), rot, false);
+            yield return new WaitForSeconds(1f);
+            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job.TestPortalDepart(far);
+            job.TestPortalHome();
+            yield return new WaitForSeconds(1f);
+            bool back = true;
+            foreach (var kv in WorkerPortal.Need(cost, 1)) if (GatherTest.Count(w.Chest, kv.Key) != kv.Value || Carried(kv.Key) != 0) back = false;
+            checks.Add("못 놓은 몫 귀환 때 상자로", back && job.PortalCarryTag == null && PortalBuilder.MineWithTag(tag) == 1);
+
+            // 거점 쪽만 있음 → 다음 출발에 한 몫만 들고 감
+            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job.TestPortalDepart(far);
+            checks.Add("거점 쪽만 있으면 한 몫만 들고 감", job.PortalCarryTag == tag && PortalBuilder.Carrying(inv) && ChestEmpty() && PortalBuilder.MineWithTag(tag) == 1);
+            job.TestPortalHome();
+            checks.Add("다시 상자로", !PortalBuilder.Carrying(inv) && !ChestEmpty());
+            ClearMine();
         }
     }
 }

@@ -51,6 +51,10 @@ namespace ValheimHelper
         float m_bestDist;
         float m_progressTimer;
         bool m_saidTooWeak, m_saidSearching, m_saidExplore, m_saidFound;
+        /// <summary>일꾼 포탈(R2 나): 한 몫을 들고 가는 이름표, 이번 일에서 와 본 먼 구역, 재료 모자람을 말했나.</summary>
+        string m_portalTag;
+        readonly HashSet<ZoneXY> m_visited = new HashSet<ZoneXY>();
+        bool m_saidPortalNeed;
         float m_scanTimer;
         GameObject m_itemPrefab;
         /// <summary>아는 곳(밝혀진 곳)을 다 둘러봐서 새 땅으로 나갔다.</summary>
@@ -340,6 +344,7 @@ namespace ValheimHelper
             {
                 if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || m_tried.Contains(m.Zone) || ZoneExcluded(m.Zone) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너·위험한 곳·이미 가 본 곳은 안 간다
                 m_goalZone = m.Zone;
+                PortalDepart();
                 GoZone();
                 return true;
             }
@@ -518,6 +523,7 @@ namespace ValheimHelper
                 m_npc.Say("exploreFound", args);
             }
             m_exploring = false; // 찾았으니 다음엔 다시 아는 곳부터
+            ArrivedAt(Senses.ZoneOf(zdo.GetPosition()));
             Aim(zdo);
             Go(Step.Approach);
         }
@@ -552,6 +558,7 @@ namespace ValheimHelper
             bool arrived = WalkVia(dt, m_goalPos, 6f);
             if (arrived || Stuck(dt, PortalOr(m_goalPos)))
             {
+                if (arrived) ArrivedAt(m_goalZone);
                 if (!arrived)
                 {
                     LogStuck("구역 가기", m_goalPos);
@@ -1349,6 +1356,56 @@ namespace ValheimHelper
             return best;
         }
 
+        // ---- 일꾼 포탈(R2 나, [기본안]: 거점에서 300m 넘는 일터에 두 번째 갈 때) ----
+
+        /// <summary>시험용(vh_portalbuildtest 8): 떠날 때·도착·귀환의 일꾼 포탈 처리만 따로 부른다.</summary>
+        internal void TestPortalDepart(ZoneXY z) { m_goalZone = z; PortalDepart(); }
+        internal void TestPortalArrive(ZoneXY z) => ArrivedAt(z);
+        internal void TestPortalHome() => PortalHome();
+        internal string PortalCarryTag => m_portalTag;
+
+        /// <summary>먼 아는 구역으로 떠날 때(거점 근처에서만 — 상자·깃발 구역이 불러와져 있음): 거점 쪽 포탈을 놓고 한 몫을 들고 간다.</summary>
+        void PortalDepart()
+        {
+            Vector3 home = m_npc.Home;
+            if (m_portalTag != null || m_exploring || Utils.DistanceXZ(home, m_npc.transform.position) > 30f) return;
+            Vector3 site = Senses.ZoneCenter(m_goalZone);
+            string tag = WorkerPortal.Tag(m_goalZone.ToString());
+            bool linked = Portals.TryChoose(home, site, out _);
+            Inventory inv = m_npc.GetInventory();
+            var act = WorkerPortal.OnDepart(Utils.DistanceXZ(home, site), Brain.Get().VisitsOf(m_goalZone), linked,
+                PortalBuilder.MineWithTag(tag), PortalBuilder.Carrying(inv), PortalBuilder.Pairs());
+            if (act == Departing.None) return;
+            if (PortalBuilder.StartPair(tag, home, inv, act == Departing.PlaceBaseAndCarry, out var missing, out string why)) { m_portalTag = tag; return; }
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 포탈 안 놓음 — {why}");
+            if (missing.Count > 0 && !m_saidPortalNeed)
+            {
+                m_saidPortalNeed = true;
+                var parts = new List<string>();
+                foreach (var kv in missing) parts.Add($"{ItemLabel(kv.Key)} {kv.Value}개");
+                var args = Args();
+                args["need"] = string.Join(", ", parts);
+                m_npc.Say("portal.need", args); // 수르틀링 핵 등은 구하러 가지 않고 말만(사용자 결정 2026-10-23)
+            }
+        }
+
+        /// <summary>일하러 구역에 왔다: 먼 곳이면 방문을 센다(한 일에 한 번). 그 구역 몫을 들고 왔으면 일터 쪽 포탈을 놓는다.</summary>
+        void ArrivedAt(ZoneXY z)
+        {
+            if (Utils.DistanceXZ(m_npc.Home, Senses.ZoneCenter(z)) > WorkerPortal.FarFromBase && m_visited.Add(z)) Brain.Get().Visit(z);
+            if (m_portalTag == null || m_portalTag != WorkerPortal.Tag(z.ToString())) return;
+            if (PortalBuilder.PlaceCarried(m_portalTag, m_npc.transform.position, m_npc.GetInventory(), out string why)) m_portalTag = null;
+            else Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 일터 쪽 포탈 못 놓음 — {why}");
+        }
+
+        /// <summary>거점에 왔다: 못 놓고 들고 온 한 몫은 상자에 돌려놓고, 오래 안 쓴 일꾼 포탈은 철거한다.</summary>
+        void PortalHome()
+        {
+            if (m_portalTag != null && PortalBuilder.ReturnCarried(m_npc.Home, m_npc.GetInventory())) m_portalTag = null;
+            if (!PortalBuilder.Carrying(m_npc.GetInventory())) m_portalTag = null; // 짐 정리 등으로 이미 내려놨다
+            foreach (var t in PortalBuilder.RemoveIdle(m_npc.Home)) Plugin.Log.LogInfo($"{m_npc.NpcName}: 오래 안 쓴 포탈 {t} 철거");
+        }
+
         // ---- 돌아가서 넣기 ----
 
         bool UpdateReturn(float dt)
@@ -1364,7 +1421,7 @@ namespace ValheimHelper
                 return true;
             }
             Vector3 home = m_npc.Home;
-            if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { m_book.HomeReached(); Go(Step.Deposit); return true; }
+            if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { m_book.HomeReached(); PortalHome(); Go(Step.Deposit); return true; }
             if (Stuck(dt, PortalOr(home)))
             {
                 // 막힘 복구(사용자 결정 2026-10-23): 귀환 걷기는 StuckBook.HomeWalkTries번까지(비켜 가기·점프는 걷기가 계속 함), 넘으면 깃발로 순간이동.
@@ -1374,6 +1431,7 @@ namespace ValheimHelper
                 if (!limit) { m_bestDist = float.MaxValue; m_progressTimer = 0f; return true; }
                 if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return true; }
                 m_book.HomeReached();
+                PortalHome();
                 Go(Step.Deposit);
             }
             return true;
@@ -1477,6 +1535,7 @@ namespace ValheimHelper
                 {
                     m_npc.TeleportTo(new Vector3(p.ExitX, p.ExitY, p.ExitZ), m_npc.transform.rotation, false);
                     Plugin.Log.LogInfo($"{m_npc.NpcName} 포탈 탐");
+                    PortalBuilder.MarkUsedNear(gate);
                     m_portal = null;
                     m_ai.StopMoving();
                     m_bestDist = float.MaxValue;

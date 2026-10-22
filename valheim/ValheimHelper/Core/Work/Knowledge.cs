@@ -29,6 +29,8 @@ namespace ValheimHelper.Core.Work
         public double SeenAt;
         /// <summary>가 본 바이옴(게임 Heightmap.Biome 값). 0 = 모름.</summary>
         public int Biome;
+        /// <summary>일하러 와 본 횟수(일꾼 포탈 "두 번째 갈 때" 판단, R2).</summary>
+        public int Visits;
     }
 
     /// <summary>!지식 대답용: 물건 하나에 대해 아는 것.</summary>
@@ -98,6 +100,11 @@ namespace ValheimHelper.Core.Work
         }
 
         public bool IsLooked(ZoneXY z) => _zones.TryGetValue(z, out var m) && m.Looked;
+
+        /// <summary>일하러 그 구역에 왔다(한 일에서 한 번만 부른다).</summary>
+        public void Visit(ZoneXY z) { GetOrAdd(z).Visits++; Dirty = true; }
+
+        public int VisitsOf(ZoneXY z) => _zones.TryGetValue(z, out var m) ? m.Visits : 0;
 
         public int LookedCount
         {
@@ -170,7 +177,7 @@ namespace ValheimHelper.Core.Work
             if (_zones.TryGetValue(z, out var m) && m.Items.Remove(item)) Dirty = true;
         }
 
-        // ---- 저장: "x,y,looked,seenAt;item=n;item=n" 줄들 ----
+        // ---- 저장: "x,y,looked,seenAt,biome,visits;item=n;item=n" 줄들 ----
 
         public string Save()
         {
@@ -178,7 +185,7 @@ namespace ValheimHelper.Core.Work
             foreach (var m in _zones.Values)
             {
                 sb.Append(m.Zone.X).Append(',').Append(m.Zone.Y).Append(',').Append(m.Looked ? '1' : '0').Append(',')
-                  .Append(m.SeenAt.ToString("0", CultureInfo.InvariantCulture)).Append(',').Append(m.Biome);
+                  .Append(m.SeenAt.ToString("0", CultureInfo.InvariantCulture)).Append(',').Append(m.Biome).Append(',').Append(m.Visits);
                 foreach (var kv in m.Items) sb.Append(';').Append(kv.Key).Append('=').Append(kv.Value);
                 sb.Append('\n');
             }
@@ -201,6 +208,7 @@ namespace ValheimHelper.Core.Work
                 m.Looked = head[2] == "1";
                 double.TryParse(head[3], NumberStyles.Float, CultureInfo.InvariantCulture, out m.SeenAt);
                 if (head.Length >= 5) int.TryParse(head[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out m.Biome); // 0.3.6부터
+                if (head.Length >= 6) int.TryParse(head[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out m.Visits); // 회차 95부터
                 for (int i = 1; i < parts.Length; i++)
                 {
                     int eq = parts[i].LastIndexOf('=');

@@ -60,6 +60,19 @@ public class KnowledgeTests
     }
 
     [Fact]
+    public void VisitsSaveAndOldFormatLoads()
+    {
+        var k = new Knowledge();
+        k.Visit(new ZoneXY(5, -2));
+        k.Visit(new ZoneXY(5, -2));
+        Assert.Equal(2, Knowledge.Load(k.Save()).VisitsOf(new ZoneXY(5, -2)));
+        Assert.Equal(0, k.VisitsOf(new ZoneXY(0, 0)));
+        var old = Knowledge.Load("5,-2,1,10,4;Wood=3\n"); // 회차 95 전 꼴(방문 칸 없음)
+        Assert.Equal(0, old.VisitsOf(new ZoneXY(5, -2)));
+        Assert.Equal(4, old.BiomeOf(new ZoneXY(5, -2)));
+    }
+
+    [Fact]
     public void LoadIgnoresGarbage() => Assert.Equal(0, Knowledge.Load("garbage\n;;\n1,2").Count);
 }
 

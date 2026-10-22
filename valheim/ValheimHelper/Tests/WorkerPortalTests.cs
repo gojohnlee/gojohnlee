@@ -64,4 +64,17 @@ public class WorkerPortalTests
         Assert.Equal(3, miss["SurtlingCore"]);
         Assert.Empty(WorkerPortal.Missing(Cost, k => 999, 2));
     }
+
+    [Fact]
+    public void OnDepartPlacesOnSecondFarTripAndCarriesForLoneBase()
+    {
+        Assert.Equal(Departing.PlaceBaseAndCarry, WorkerPortal.OnDepart(400, 1, false, 0, false, 0));
+        Assert.Equal(Departing.None, WorkerPortal.OnDepart(400, 0, false, 0, false, 0)); // 첫 번째
+        Assert.Equal(Departing.None, WorkerPortal.OnDepart(250, 3, false, 0, false, 0)); // 가까움
+        Assert.Equal(Departing.None, WorkerPortal.OnDepart(400, 1, true, 0, false, 0)); // 이어진 포탈 있음
+        Assert.Equal(Departing.None, WorkerPortal.OnDepart(400, 1, false, 0, false, 3)); // 3쌍 한도
+        Assert.Equal(Departing.Carry, WorkerPortal.OnDepart(400, 1, false, 1, false, 1)); // 거점 쪽만 있음
+        Assert.Equal(Departing.None, WorkerPortal.OnDepart(400, 1, false, 1, true, 1)); // 이미 들고 있음
+        Assert.Equal(Departing.None, WorkerPortal.OnDepart(400, 5, false, 2, false, 1)); // 짝 다 있음
+    }
 }

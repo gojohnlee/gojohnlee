@@ -145,24 +145,155 @@ namespace ValheimHelper
             foreach (var c in chests) if (Chests.InUse(c)) { why = "상자 사용 중"; return false; }
             foreach (var kv in WorkerPortal.Need(cost, 2)) CraftStep.Take(chests, kv.Key, kv.Value);
 
-            long today = EnvMan.instance != null ? EnvMan.instance.GetDay() : 0;
+            long today = Today();
             var spots = new[] { a, b };
             var rots = new[] { ra, rb };
             for (int i = 0; i < 2; i++)
             {
-                GameObject go = Object.Instantiate(prefab.gameObject, spots[i], rots[i]);
-                ZDO zdo = go.GetComponent<ZNetView>()?.GetZDO();
-                if (zdo == null) continue;
-                zdo.Set(ZDOVars.s_tag, tag);
-                zdo.Set(ZDOVars.s_tagauthor, "");
-                zdo.Set(MarkKey, true);
-                zdo.Set(UsedDayKey, today);
-                placed.Add(zdo);
+                ZDO zdo = Spawn(prefab, spots[i], rots[i], tag, today);
+                if (zdo != null) placed.Add(zdo);
             }
             Game.instance?.ConnectPortals();
             why = $"{tag}: 거점 쪽 {wa}, 일터 쪽 {wb}";
             Plugin.Log.LogInfo($"일꾼 포탈 놓음 {why}");
             return placed.Count == 2;
+        }
+
+        static ZDO Spawn(Piece prefab, Vector3 at, Quaternion rot, string tag, long today)
+        {
+            GameObject go = Object.Instantiate(prefab.gameObject, at, rot);
+            ZDO zdo = go.GetComponent<ZNetView>()?.GetZDO();
+            if (zdo == null) return null;
+            zdo.Set(ZDOVars.s_tag, tag);
+            zdo.Set(ZDOVars.s_tagauthor, "");
+            zdo.Set(MarkKey, true);
+            zdo.Set(UsedDayKey, today);
+            return zdo;
+        }
+
+        static long Today() => EnvMan.instance != null ? EnvMan.instance.GetDay() : 0;
+
+        public static int MineWithTag(string tag) => Mine().FindAll(z => z.GetString(ZDOVars.s_tag) == tag).Count;
+
+        /// <summary>포탈 한 몫(재료 전부)을 들고 있나.</summary>
+        public static bool Carrying(Inventory inv)
+        {
+            var cost = Cost();
+            if (cost.Count == 0) return false;
+            foreach (var kv in WorkerPortal.Need(cost, 1))
+            {
+                string name = CraftStep.SharedName(kv.Key);
+                if (name == null || inv.CountItems(name) < kv.Value) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 먼 일터로 떠날 때(R2 나): placeBase면 거점 쪽 포탈을 깃발 둘레에 놓고(재료 한 몫), 한 몫은 일꾼 짐에 넣는다(일터에 가서 PlaceCarried).
+        /// 재료는 거점 재료 상자에서 — 필요한 몫이 다 있을 때만 뺀다(missing). 짐에 못 들어가면 아무것도 안 바뀜.
+        /// </summary>
+        public static bool StartPair(string tag, Vector3 home, Inventory carry, bool placeBase, out Dictionary<string, int> missing, out string why)
+        {
+            missing = new Dictionary<string, int>();
+            if (ZNet.instance == null || !ZNet.instance.IsServer()) { why = "호스트 아님"; return false; }
+            Piece prefab = Prefab();
+            if (prefab == null) { why = "포탈 프리팹 없음"; return false; }
+            int shares = placeBase ? 2 : 1;
+            Vector3 a = home; Quaternion ra = Quaternion.identity; string wa = "";
+            if (placeBase)
+            {
+                if (!WorkerPortal.CanAddPair(Pairs())) { why = $"한도 {WorkerPortal.MaxPairs}쌍"; return false; }
+                if (MineWithTag(tag) > 0) { why = "이미 있는 이름표 " + tag; return false; }
+                if (!FindSpot(home, out a, out ra, out wa)) { why = "거점 쪽 " + wa; return false; }
+            }
+            var cost = Cost();
+            var chests = Chests.NearBase(home, ChestRole.Mats);
+            foreach (var kv in WorkerPortal.Missing(cost, k => Have(chests, k), shares)) missing[kv.Key] = kv.Value;
+            if (missing.Count > 0) { why = "재료 모자람"; return false; }
+            foreach (var c in chests) if (Chests.InUse(c)) { why = "상자 사용 중"; return false; }
+            var one = WorkerPortal.Need(cost, 1);
+            if (!FitsIn(carry, one)) { why = "짐 자리 모자람"; return false; }
+            if (placeBase && Spawn(prefab, a, ra, tag, Today()) == null) { why = "놓기 실패"; return false; } // 재료 빼기 전에 — 실패해도 재료 그대로
+            foreach (var kv in WorkerPortal.Need(cost, shares)) CraftStep.Take(chests, kv.Key, kv.Value);
+            foreach (var kv in one) AddTo(carry, kv.Key, kv.Value);
+            why = placeBase ? $"{tag}: 거점 쪽 {wa}, 한 몫 들고 감" : $"{tag}: 한 몫 들고 감(거점 쪽은 이미 있음)";
+            Plugin.Log.LogInfo($"일꾼 포탈 {why}");
+            return true;
+        }
+
+        /// <summary>들고 간 한 몫으로 일터 쪽 포탈을 near 둘레에 놓는다(거점 쪽 하나만 있을 때). 놓으면 짝이 이어진다.</summary>
+        public static bool PlaceCarried(string tag, Vector3 near, Inventory carry, out string why)
+        {
+            Piece prefab = Prefab();
+            if (prefab == null) { why = "포탈 프리팹 없음"; return false; }
+            var mine = Mine().FindAll(z => z.GetString(ZDOVars.s_tag) == tag);
+            if (mine.Count != 1) { why = $"그 이름표 포탈 {mine.Count}개"; return false; }
+            if (!Carrying(carry)) { why = "재료 안 들고 있음"; return false; }
+            if (!FindSpot(near, out Vector3 b, out Quaternion rb, out string wb)) { why = "일터 쪽 " + wb; return false; }
+            if (Utils.DistanceXZ(mine[0].GetPosition(), b) < 5f) { why = "두 자리가 너무 가까움"; return false; }
+            foreach (var kv in WorkerPortal.Need(Cost(), 1)) carry.RemoveItem(CraftStep.SharedName(kv.Key), kv.Value);
+            if (Spawn(prefab, b, rb, tag, Today()) == null) { why = "놓기 실패"; return false; }
+            Game.instance?.ConnectPortals();
+            why = $"{tag}: 일터 쪽 {wb}";
+            Plugin.Log.LogInfo($"일꾼 포탈 놓음 {why}");
+            return true;
+        }
+
+        /// <summary>거점에 와서 아직 들고 있는 한 몫을 재료 상자에 돌려놓는다(다 들어갈 때만). 돌려놨으면 true.</summary>
+        public static bool ReturnCarried(Vector3 home, Inventory carry)
+        {
+            if (!Carrying(carry)) return false;
+            var one = WorkerPortal.Need(Cost(), 1);
+            var chests = Chests.NearBase(home, ChestRole.Mats);
+            foreach (var c in chests) if (Chests.InUse(c)) return false;
+            if (!Fits(chests, one)) return false;
+            foreach (var kv in one)
+            {
+                carry.RemoveItem(CraftStep.SharedName(kv.Key), kv.Value);
+                int left = CraftStep.Put(home, kv.Key, kv.Value);
+                if (left > 0) { AddTo(carry, kv.Key, left); Plugin.Log.LogWarning($"일꾼 포탈 한 몫 돌려놓기: {kv.Key} {left}개 못 넣어 다시 짐에"); }
+            }
+            Plugin.Log.LogInfo("일꾼 포탈: 못 놓은 한 몫을 상자에 돌려놓음");
+            return true;
+        }
+
+        /// <summary>gate(포탈 입구) 3m 안의 일꾼 포탈을 오늘 썼다고 적는다.</summary>
+        public static void MarkUsedNear(Vector3 gate)
+        {
+            foreach (var z in Mine()) if (Utils.DistanceXZ(z.GetPosition(), gate) < 3f) MarkUsed(z);
+        }
+
+        static bool FitsIn(Inventory inv, Dictionary<string, int> items)
+        {
+            int empty = inv.GetEmptySlots();
+            foreach (var kv in items)
+            {
+                GameObject go = ObjectDB.instance.GetItemPrefab(kv.Key);
+                if (go == null) return false;
+                var shared = go.GetComponent<ItemDrop>().m_itemData.m_shared;
+                int max = Mathf.Max(1, shared.m_maxStackSize);
+                int left = kv.Value;
+                foreach (var it in inv.GetAllItems()) if (it.m_shared.m_name == shared.m_name) left -= Mathf.Max(0, max - it.m_stack);
+                if (left > 0) empty -= (left + max - 1) / max;
+            }
+            return empty >= 0;
+        }
+
+        static void AddTo(Inventory inv, string prefab, int amount)
+        {
+            GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
+            if (go == null) return;
+            ItemDrop.ItemData proto = go.GetComponent<ItemDrop>().m_itemData;
+            int max = Mathf.Max(1, proto.m_shared.m_maxStackSize);
+            while (amount > 0)
+            {
+                ItemDrop.ItemData d = proto.Clone();
+                d.m_stack = Mathf.Min(amount, max);
+                d.m_dropPrefab = go;
+                int stack = d.m_stack;
+                if (!inv.AddItem(d)) { amount -= stack - d.m_stack; Plugin.Log.LogWarning($"일꾼 포탈 짐 넣기: {prefab} {amount}개 못 넣음"); return; }
+                amount -= stack;
+            }
         }
 
         /// <summary>그 일꾼 포탈을 오늘 썼다고 적는다(오래 안 씀 판단용).</summary>
