@@ -109,9 +109,7 @@ namespace ValheimHelper
 
         public static List<ZDO> AllFlags()
         {
-            var list = new List<ZDO>();
-            int index = 0;
-            while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(Name, list, ref index)) { }
+            var list = ZdoScan.All(Name);
             return list;
         }
     }

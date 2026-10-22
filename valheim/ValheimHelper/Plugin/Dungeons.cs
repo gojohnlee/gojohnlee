@@ -58,9 +58,7 @@ namespace ValheimHelper
             if (ZDOMan.instance == null || ZNet.instance == null || !ZNet.instance.IsServer() || ZoneSystem.instance == null) return result;
             var names = CryptNames();
             if (names.Count == 0) return result;
-            var list = new List<ZDO>();
-            int index = 0;
-            while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(ProxyPrefab, list, ref index)) { }
+            var list = ZdoScan.All(ProxyPrefab);
             foreach (var zdo in list)
             {
                 if (!names.TryGetValue(zdo.GetInt(ZDOVars.s_location), out string name)) continue;

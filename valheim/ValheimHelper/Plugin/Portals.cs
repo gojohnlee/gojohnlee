@@ -18,9 +18,7 @@ namespace ValheimHelper
         {
             var result = new List<PortalLink>();
             if (ZDOMan.instance == null || ZNet.instance == null || !ZNet.instance.IsServer()) return result;
-            var list = new List<ZDO>();
-            int index = 0;
-            while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(PrefabName, list, ref index)) { }
+            var list = ZdoScan.All(PrefabName);
             foreach (var zdo in list)
             {
                 ZDOID otherId = zdo.GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal);

@@ -135,6 +135,12 @@ namespace ValheimHelper
                 foreach (var z in placed)
                     if (Mathf.Abs(l.X - z.GetPosition().x) < 0.3f && Mathf.Abs(l.Z - z.GetPosition().z) < 0.3f) inLinked++;
             checks.Add($"Portals.Linked에 둘 다 ({inLinked})", inLinked == 2);
+            if (inLinked != 2)
+            {
+                var all = ZdoScan.All(Portals.PrefabName);
+                foreach (var z in all)
+                    TestRunner.Log($"  DIAG 포탈 {z.m_uid} {z.GetPosition():F1} tag={z.GetString(ZDOVars.s_tag)} 내것={z.GetBool(PortalBuilder.MarkKey)} 짝={z.GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal)} 물체={ZNetScene.instance.FindInstance(z) != null}");
+            }
             bool safe = true;
             foreach (var z in placed)
             {

@@ -289,6 +289,17 @@ namespace ValheimHelper
         {
             yield return new WaitForSeconds(0.5f); // 없앤 것은 프레임 끝에 사라짐
             int c = Creatures(home).Count, d = Drops(home).Count;
+            if (c > 0)
+            {
+                // 그 사이 저절로 생긴 짐승일 수 있음(회차 96: portaltest 끝 0.5초 뒤 1마리) → 이름 남기고 한 번 더 치움
+                var names = new List<string>();
+                foreach (var cr in Creatures(home)) names.Add($"{Utils.GetPrefabName(cr.gameObject)} {Vector3.Distance(cr.transform.position, home):0}m");
+                TestRunner.Log($"끝 정리 뒤 생물 {c} ({string.Join(", ", names.ToArray())}) → 다시 치움");
+                ClearCreatures(home);
+                yield return new WaitForSeconds(0.5f);
+                c = Creatures(home).Count;
+                d = Drops(home).Count;
+            }
             if (c + d > 0) TestRunner.Halt($"앞 시험 끝 정리 실패(거점 {StartRadius:0}m 안 생물 {c}·물건 {d} 남음)");
         }
 

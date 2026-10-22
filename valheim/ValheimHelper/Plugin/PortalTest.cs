@@ -8,7 +8,7 @@ namespace ValheimHelper
     /// <summary>
     /// vh_portaltest (⑤ 포탈): 포탈 한 쌍(입구 가까이, 출구 500m 밖)을 세워 ZDO 짝을 잇고,
     /// Portals.Linked가 짝 출구를 바닐라와 같게 읽는지, 출구 쪽 목적지에는 포탈을 고르고 가까운 곳에는 걷는지,
-    /// 일꾼이 TeleportTo(출구)로 실제 건너가는지 본다.
+    /// 일꾼이 TeleportTo(출구)로 실제 건너가는지(구리 광석을 든 채로, R2 다) 본다.
     /// </summary>
     static class PortalTest
     {
@@ -86,9 +86,18 @@ namespace ValheimHelper
             checks.Add("먼 목적지는 포탈을 고름", Portals.TryChoose(npcPos, dest, out PortalLink chosen) && Mathf.Abs(chosen.X - gatePos.x) < 0.5f);
             checks.Add("가까운 목적지는 걸음", !Portals.TryChoose(npcPos, npcPos + rot * new Vector3(0f, 0f, 30f), out _));
 
+            // R2 다) 바닐라 포탈은 광석·금속을 막지만(Player.IsTeleportable) 일꾼은 TeleportTo라 든 채로 건너야 함
+            var inv = w.Claude.GetInventory();
+            GameObject orePrefab = ObjectDB.instance.GetItemPrefab("CopperOre");
+            string oreName = orePrefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            inv.AddItem(orePrefab, 5);
+            int oreBefore = inv.CountItems(oreName);
             Vector3 before = w.Claude.transform.position;
             w.Claude.TeleportTo(exit, w.Claude.transform.rotation, false);
             yield return new WaitForSeconds(3f);
+            int oreAfter = inv.CountItems(oreName);
+            checks.Add($"구리 광석 들고 건넘 (전 {oreBefore}, 뒤 {oreAfter})", oreBefore >= 5 && oreAfter == oreBefore);
+            inv.RemoveItem(oreName, oreAfter);
             float moved = Vector3.Distance(before, w.Claude.transform.position);
             float toExit = Utils.DistanceXZ(exit, w.Claude.transform.position);
             checks.Add($"일꾼이 출구로 건너감 (이동 {moved:0}m, 출구와 {toExit:0.0}m)", moved > 400f && toExit < 6f);

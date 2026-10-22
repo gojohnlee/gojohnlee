@@ -39,9 +39,7 @@ namespace ValheimHelper
         /// <summary>월드에 있는 NPC ZDO 전부를 직접 찾는다(느림: 소환·삭제 같은 드문 일에만). 호스트에서만 의미 있다.</summary>
         public static List<ZDO> AllZdos()
         {
-            var list = new List<ZDO>();
-            int index = 0;
-            while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(WorkerPrefab.Name, list, ref index)) { }
+            var list = ZdoScan.All(WorkerPrefab.Name);
             foreach (var z in list) s_known.Add(z.m_uid);
             return list;
         }

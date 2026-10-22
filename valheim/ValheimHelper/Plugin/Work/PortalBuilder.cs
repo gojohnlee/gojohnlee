@@ -39,9 +39,7 @@ namespace ValheimHelper
         {
             var result = new List<ZDO>();
             if (ZDOMan.instance == null) return result;
-            var list = new List<ZDO>();
-            int index = 0;
-            while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(Portals.PrefabName, list, ref index)) { }
+            var list = ZdoScan.All(Portals.PrefabName);
             foreach (var z in list) if (z.GetBool(MarkKey)) result.Add(z);
             return result;
         }
