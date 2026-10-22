@@ -1,7 +1,7 @@
-갱신: 2026-10-22 13:52  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 61 진행 중
+갱신: 2026-10-22 14:11  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 61, 계정: 1번, 한도: 2번 10-22 16:42까지
-할 일: ★ 지금 순서: 8) ⑦ 철 조각(회차 60에 나눔): [x]1 지하묘지 찾기·드나들기(Dungeons, vh_crypttest) → 2 !철 일: 열린 지하묘지까지 걸어가(포탈 WalkVia) 입구 Teleport로 들어가 안에서 mudpile2 캐고(부서지면 mudpile2_frac, 곡괭이 단계는 그때 확인) 줍기, 짐 차거나 다 캐면 나가는 Teleport → 귀환·상자 (vh_crypttest 넓혀 고철이 거점 상자에 들어오는지) → 3 안 위험: 후퇴·도망은 나가는 Teleport로, 밤 규칙(늪 바깥 이동은 낮만), 장소 기억은 입구 구역에(design-depart-craft 12줄), 열린 지하묘지 없으면 출발 전 대답 → 4 "철 주괴"는 고철 제련(제작 계획 Smelter) → 5 ⑤의 던전 문 처리 마무리(구현 단계 ⑤ [x]). 그다음 ⑧ 사냥·요리·발효.
-마지막 시험: 10-22 13:49 요약: 0/1 PASS | FAIL vh_pittest: 점프 없이 경사로를 깎아 구덩이 7(0.0m)에서 나옴
-Claude가 한 일: (진행 중)
+할 일: ★ 지금 순서: 8) ⑦ 철 조각(회차 60에 나눔): [x]1 지하묘지 찾기·드나들기(Dungeons, vh_crypttest) → [x]2 !철 일(GatherJob GoCrypt·UpdateInside·LeaveCrypt, crypttest PASS) → 3 안 위험: 후퇴·도망은 나가는 Teleport로, 밤 규칙(늪 바깥 이동은 낮만), 장소 기억은 입구 구역에(design-depart-craft 12줄), 열린 지하묘지 없으면 출발 전 대답 → 4 "철 주괴"는 고철 제련(제작 계획 Smelter) → 5 ⑤의 던전 문 처리 마무리(구현 단계 ⑤ [x]). 그다음 ⑧ 사냥·요리·발효.
+마지막 시험: 10-22 14:10 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE ⑦ 철 2조각 — !철이 지하묘지 들어가 고철 캐 상자에 넣음, crypttest 17/17
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 UserReply.txt, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
