@@ -31,7 +31,7 @@ namespace ValheimHelper
             try { yield return Body(w, checks, f => field = f); }
             finally
             {
-                if (field != null) Clean(field);
+                if (field != null) { Clean(field); Brain.Farms.Remove(field.X, field.Z); }
                 TestKit.Restore(w);
             }
             GatherTest.Say("!멈춰", null);
@@ -111,6 +111,36 @@ namespace ValheimHelper
             int got = Stock(w, Produce) - produce0;
             checks.Add($"거둔 당근 상자에 ({got}/{expect}, 짐 {Bag(w, Produce)}, 땅 {OnGround(field, Produce)}, 남은 것 {FarmJob.Ripe(field).Count})",
                 got == expect && Bag(w, Produce) == 0 && FarmJob.Ripe(field).Count == 0);
+
+            // 명령 연결(4b): 밭 장부에 적고 StartFarm(!밭이 부르는 것) → 상자 씨앗으로 Farm.Fill(당근 씨앗 6 → 당근 6, 씨앗이 다 떨어지면 당근으로 당근 씨앗 심기)
+            Clean(field);
+            TestKit.ClearBaseStock(w, Seed, Produce);
+            TestKit.PutInChest(w.Chest, Seed, 6);
+            TestKit.PutInChest(w.Chest, Produce, 4);
+            Brain.Farms.Set(field.X, field.Z, field.Radius);
+            FarmField booked = Brain.Farms.At(field.X, field.Z);
+            Commands.StartFarm(w.Claude, booked, false);
+            var cmdJob = w.Claude.Ai.Job as FarmJob;
+            Commands.StartFarm(w.Alarak, booked, false); // 같은 밭은 다른 일꾼이 안 맡음
+            checks.Add($"!밭 → 밭일 시작, 같은 밭은 한 명만 ({(cmdJob != null ? cmdJob.StepName : "없음")}, 알라라크 {(w.Alarak.Ai.Job != null ? w.Alarak.Ai.Job.GetType().Name : "없음")})",
+                cmdJob != null && !(w.Alarak.Ai.Job is FarmJob));
+            // 저장 칸: 하던 밭일 → WorkItem(Farm) → 글 → 다시 읽기
+            WorkItem saved = WorkSaves.FromJob(cmdJob);
+            var back = WorkState.LoadQueue(WorkState.SaveQueue(new List<WorkItem> { saved }));
+            checks.Add($"밭일 저장 칸 ({(back.Count > 0 ? back[0].Kind + " r" + back[0].Amount + " (" + back[0].FarmX.ToString("0.0") + "," + back[0].FarmZ.ToString("0.0") + ")" : "없음")})",
+                back.Count == 1 && back[0].Kind == WorkKind.Farm && back[0].Amount == field.Radius && Mathf.Abs(back[0].FarmX - field.X) < 0.1f && Mathf.Abs(back[0].FarmZ - field.Z) < 0.1f);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 240f);
+            int carrots = PlantsOf(field, "sapling_carrot"), seedCarrots = PlantsOf(field, "sapling_seedcarrot");
+            int seedLeft = Stock(w, Seed) + Bag(w, Seed), produceLeft = Stock(w, Produce) + Bag(w, Produce);
+            checks.Add($"!밭 심기 ({TestKit.Waited:0}초, 당근 {carrots}·당근 씨앗 {seedCarrots}, 남은 씨앗 {seedLeft}·당근 {produceLeft}, 경작기 상자 {Stock(w, Crops.Cultivator)})",
+                TestKit.Ok && carrots == 6 && seedCarrots > 0 && seedLeft + carrots == 6 && produceLeft + seedCarrots == 4 && Stock(w, Crops.Cultivator) == 1);
+            // 대기열·재시작 칸에서 다시 시작(거둘 것·씨앗 없음 → 갔다 와서 끝)
+            QueuedWork q = WorkSaves.ToQueued(w.Claude, back[0]);
+            q.Start();
+            bool restarted = w.Claude.Ai.Job is FarmJob;
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 120f);
+            checks.Add($"저장 칸에서 밭일 다시 시작·끝 ({restarted}, {TestKit.Waited:0}초, 짐 경작기 {Bag(w, Crops.Cultivator)})", restarted && TestKit.Ok && Bag(w, Crops.Cultivator) == 0);
+
             TestKit.ClearBaseStock(w, Crops.Cultivator, Seed, Produce);
         }
 
@@ -120,6 +150,13 @@ namespace ValheimHelper
             foreach (var p in Object.FindObjectsByType<Plant>(FindObjectsSortMode.None))
                 if (p != null && f.Contains(p.transform.position.x, p.transform.position.z)) list.Add(p);
             return list;
+        }
+
+        static int PlantsOf(FarmField f, string sapling)
+        {
+            int n = 0;
+            foreach (var p in Plants(f)) if (Utils.GetPrefabName(p.gameObject) == sapling) n++;
+            return n;
         }
 
         static int Grown(FarmField f)

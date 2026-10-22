@@ -258,7 +258,7 @@ namespace ValheimHelper
             });
         }
 
-        /// <summary>!밭 N: 말한 사람이 선 곳을 중심으로 반경 N m 밭을 적어 둔다(⑨, 여러 곳). 심기·거두기는 FarmJob(다음 조각).</summary>
+        /// <summary>!밭 N: 말한 사람이 선 곳을 중심으로 반경 N m 밭을 적어 두고(⑨, 여러 곳) 바로 그 밭일(거두기·심기, FarmJob.ForField)을 시작한다.</summary>
         static void SetFarm(Speaker who, ChatCommand cmd, WorkerNpc npc)
         {
             var zdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(who.CharacterId) : null;
@@ -268,6 +268,34 @@ namespace ValheimHelper
             if (Crops.All.Count > 0 && !Crops.AnyGrows(Scout.BiomeAt(p))) { npc.Say("farmNoGrow", args); return; }
             var r = Brain.Farms.Set(p.x, p.z, cmd.Number);
             npc.Say(r == FarmSetResult.Full ? "farmFull" : r == FarmSetResult.Moved ? "farmMoved" : "farmSet", args);
+            FarmField field = r == FarmSetResult.Full ? null : Brain.Farms.At(p.x, p.z);
+            if (field != null) StartFarm(npc, field, cmd.Urgent);
+        }
+
+        /// <summary>
+        /// 그 밭일 시작. 다른 일꾼이 같은 밭일 중이면 맡지 않는다(같은 자리에 두 번 심지 않게). 일하는 중이면 탐험처럼: 급하면 멈추고, 아니면 대기열.
+        /// </summary>
+        internal static void StartFarm(WorkerNpc npc, FarmField field, bool urgent)
+        {
+            foreach (var other in WorkerNpc.All)
+                if (other != null && other.Ai != null && other.Ai.Job is FarmJob f && f.Field.Contains(field.X, field.Z))
+                {
+                    if (other != npc) npc.Say("farmAlready", new Dictionary<string, string> { ["npc"] = other.NpcName });
+                    return;
+                }
+            if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is GraveJob))
+            {
+                if (!urgent)
+                {
+                    var w = new WorkItem { Kind = WorkKind.Farm, Label = npc.Line("job.farm"), Amount = field.Radius, FarmX = field.X, FarmZ = field.Z };
+                    npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, w));
+                    npc.Say("depart.busy", new Dictionary<string, string> { ["job"] = npc.Ai.Job.Label });
+                    return;
+                }
+                npc.Ai.Interrupt();
+                npc.Say("dropJob");
+            }
+            npc.Ai.StartJob(FarmJob.ForField(npc, field));
         }
 
         /// <summary>!상자: 상자는 지정하지 않는다(거점 상자 전부를 씀) → 그렇다고 알려 준다.</summary>

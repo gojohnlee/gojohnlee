@@ -185,4 +185,27 @@ public class FarmTests
         Assert.Equal(15, c.Fields[1].Radius);
         Assert.Empty(FarmBook.Load("x;1,2;3,4,-1;").Fields);
     }
+
+    [Fact]
+    public void FillPlantsStockedSeedsAndKeepsSeeds()
+    {
+        // 씨앗만큼(자리 3/4까지), 씨앗용 작물은 채우지 않음
+        var a = Farm.Fill(All, Meadows, 20, Stock(("CarrotSeeds", 6)));
+        Assert.Equal(6, a.Count("sapling_carrot"));
+        Assert.Equal(0, a.Count("sapling_seedcarrot"));
+        var b = Farm.Fill(All, Meadows, 20, Stock(("CarrotSeeds", 30), ("Carrot", 5)));
+        Assert.Equal(15, b.Count("sapling_carrot"));
+        Assert.Equal(0, b.Count("sapling_seedcarrot"));
+        // 씨앗을 다 쓰면 남긴 자리에 당근 씨앗 심기(10개 되게 3개씩 → 4)
+        var c = Farm.Fill(All, Meadows, 20, Stock(("CarrotSeeds", 12), ("Carrot", 4)));
+        Assert.Equal(12, c.Count("sapling_carrot"));
+        Assert.Equal(4, c.Count("sapling_seedcarrot"));
+        // 평원: 돌아가며, 보리는 재고의 반까지
+        var d = Farm.Fill(All, Plains, 40, Stock(("CarrotSeeds", 4), ("Barley", 9)));
+        Assert.Equal(4, d.Count("sapling_carrot"));
+        Assert.Equal(4, d.Count("sapling_barley"));
+        // 씨앗 없음·안 자라는 바이옴
+        Assert.Empty(Farm.Fill(All, Meadows, 20, Stock()).Plant);
+        Assert.Empty(Farm.Fill(All, Farm.Mountain, 20, Stock(("CarrotSeeds", 6))).Plant);
+    }
 }

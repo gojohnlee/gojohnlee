@@ -10,7 +10,8 @@ namespace ValheimHelper
     /// 자리 거르기는 바닐라 Plant 자라기 판정과 같게: 물 아래·바이옴·지붕(위 광선)·m_growRadius 안 충돌체, 그리고 건축 금지 구역.
     /// 거두기(harvest): 밭에 도착하면 심기 전에 다 자란 작물(Pickable, 작물 Produce)마다 걸어가 Interact(바닐라 RPC_Pick이 떨굼) → 떨군 것을 줍는다.
     /// 심을 것이 없으면(거두기만) 경작기·씨앗을 챙기지 않는다.
-    /// 다 심으면(또는 자리·시간이 다 되면) 거점에 돌아와 경작기·남은 씨앗·거둔 것을 상자에 넣는다(Unload). 씨앗 유지·명령 연결은 다음 조각.
+    /// 다 심으면(또는 자리·시간이 다 되면) 거점에 돌아와 경작기·남은 씨앗·거둔 것을 상자에 넣는다(Unload).
+    /// "!밭"은 ForField(거두기 + Farm.Fill 심기·씨앗 유지), 대기열·재시작 저장은 ToWork(WorkKind.Farm).
     /// </summary>
     public sealed class FarmJob : IWorkerJob
     {
@@ -51,7 +52,34 @@ namespace ValheimHelper
                     if (p.Amount > 0 && Crops.BySapling(p.Item) != null) m_todo.Add(new Ingredient(p.Item, p.Amount));
         }
 
-        public string Label => m_npc.Line("state.farm", Args());
+        /// <summary>
+        /// "!밭"·대기열·이어 하기: 그 밭의 다 자란 것을 거두고 상자(+짐)의 씨앗을 Farm.Fill만큼 심는 일.
+        /// 자리 수는 그 바이옴에서 자라는 작물 중 가장 넓은 간격으로 센다(실제 간격은 그보다 좁거나 같아 자리가 모자라지 않음).
+        /// </summary>
+        public static FarmJob ForField(WorkerNpc npc, FarmField field)
+        {
+            int biome = Scout.BiomeAt(new Vector3(field.X, 0f, field.Z));
+            float spacing = 0f;
+            foreach (var c in Crops.All) if (Farm.CanGrow(c, biome)) spacing = Mathf.Max(spacing, Farm.Spacing(c.GrowRadius));
+            int slots = spacing > 0f ? Farm.Spots(field.X, field.Z, field.Radius, spacing).Count : 0;
+            var chests = Chests.NearBase(npc.Home, ChestRole.Mats);
+            Inventory mine = npc.GetInventory();
+            FarmPlan plan = Farm.Fill(Crops.All, biome, slots, item =>
+            {
+                int n = Count(mine, item);
+                foreach (var c in chests) n += Count(c.GetInventory(), item);
+                return n;
+            });
+            return new FarmJob(npc, field, plan, true);
+        }
+
+        /// <summary>저장(WorkSaves)·대기열 칸: 밭 자리만 적고 이어 할 때 ForField로 계획을 다시 세운다.</summary>
+        public WorkItem ToWork() => new WorkItem
+        {
+            Kind = WorkKind.Farm, Resume = true, Label = m_npc.Line("job.farm"), Amount = Field.Radius, FarmX = Field.X, FarmZ = Field.Z,
+        };
+
+        public string Label => m_npc.Line("job.farm");
         public string StateLine() => m_npc.Line("state.farm", Args());
         Dictionary<string, string> Args() => new Dictionary<string, string> { ["n"] = Planted.ToString(), ["total"] = m_total.ToString() };
 

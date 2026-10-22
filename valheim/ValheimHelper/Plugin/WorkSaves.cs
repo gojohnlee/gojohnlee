@@ -38,6 +38,14 @@ namespace ValheimHelper
             }
             else if (w.Kind == WorkKind.Make)
                 q.Start = () => Departures.ResumeMake(npc, w);
+            else if (w.Kind == WorkKind.Farm)
+                q.Start = () =>
+                {
+                    // 그 사이 밭을 지웠으면 안 한다. 계획은 지금 재고로 다시(FarmJob.ForField).
+                    FarmField f = Brain.Farms.At(w.FarmX, w.FarmZ);
+                    if (f != null) Commands.StartFarm(npc, f, false);
+                    else Plugin.Log.LogInfo($"{npc.NpcName} 밭일 칸 건너뜀: ({w.FarmX:0},{w.FarmZ:0})에 밭이 없음");
+                };
             else
             {
                 if (w.Resume) q.Start = () => npc.Ai.StartJob(new ExploreJob(npc, w.DirX, w.DirY, w.BiomeId, w.Where ?? ""));
@@ -75,6 +83,7 @@ namespace ValheimHelper
                 return w;
             }
             if (job is PlanJob p && p.Goal != null) return p.Goal;
+            if (job is FarmJob fj) return fj.ToWork();
             if (job is ExploreJob e)
                 return new WorkItem
                 {

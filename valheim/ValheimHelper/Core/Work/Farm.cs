@@ -152,6 +152,52 @@ namespace ValheimHelper.Core.Work
             return plan;
         }
 
+        /// <summary>
+        /// "!밭"처럼 무엇을 심을지 정하지 않았을 때(구상서 6-3 "씨앗이 있고 그 밭의 바이옴에서 자라는 것"): 먹거리 작물을 씨앗 있는 만큼 돌아가며 한 칸씩.
+        /// [기본안] 씨앗용 작물(거두면 다른 작물의 씨앗이 나옴 — 당근 씨앗 심기)은 채우지 않고 씨앗 유지(Plan 2단계)로만 심는다.
+        /// 씨앗과 수확물이 같은 작물(보리)은 먹을 몫을 남기려 재고의 반까지만. 자리 1/4은 씨앗 유지 몫으로 남긴다.
+        /// </summary>
+        public static FarmPlan Fill(IList<Crop> crops, int biome, int slots, Func<string, int> stock)
+        {
+            var food = new List<Crop>();
+            if (crops != null)
+                foreach (var c in crops)
+                {
+                    if (c == null || !CanGrow(c, biome) || c.Seed == null || c.Produce == null) continue;
+                    bool seedCrop = false;
+                    // 당근↔당근 씨앗처럼 서로의 씨앗이면 많이 나오는 쪽(씨앗 3개)이 씨앗용
+                    foreach (var d in crops)
+                        if (d != null && d != c && d.Seed == c.Produce && (d.Produce != c.Seed || c.Yield > d.Yield)) seedCrop = true;
+                    if (!seedCrop && !food.Exists(f => f.Produce == c.Produce)) food.Add(c);
+                }
+            var left = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var c in food)
+                if (!left.ContainsKey(c.Seed))
+                {
+                    int s = Math.Max(0, stock?.Invoke(c.Seed) ?? 0);
+                    left[c.Seed] = c.Seed == c.Produce ? s / 2 : s;
+                }
+            var count = new int[food.Count];
+            int fill = slots - slots / 4;
+            for (bool any = true; fill > 0 && any;)
+            {
+                any = false;
+                for (int i = 0; i < food.Count && fill > 0; i++)
+                {
+                    int cost = Math.Max(1, food[i].SeedCost);
+                    if (left[food[i].Seed] < cost) continue;
+                    left[food[i].Seed] -= cost;
+                    count[i]++;
+                    fill--;
+                    any = true;
+                }
+            }
+            var want = new List<Ingredient>();
+            for (int i = 0; i < food.Count; i++)
+                if (count[i] > 0) want.Add(new Ingredient(food[i].Produce, count[i] * Math.Max(1, food[i].Yield)));
+            return Plan(crops, biome, slots, stock, want);
+        }
+
         /// <summary>다 자랄 때까지 넉넉히(가장 늦은 작물의 m_growTimeMax) 초. 심을 것이 없으면 0.</summary>
         public static double GrowSeconds(IList<Crop> crops, FarmPlan plan)
         {
@@ -203,6 +249,9 @@ namespace ValheimHelper.Core.Work
             Dirty = true;
             return FarmSetResult.Added;
         }
+
+        /// <summary>(x,z)를 품은 첫 밭(Set이 옮기는 것과 같은 것). 없으면 null.</summary>
+        public FarmField At(float x, float z) => _fields.Find(f => f.Contains(x, z));
 
         /// <summary>(x,z)를 품은 밭 하나를 지운다. 지웠으면 true.</summary>
         public bool Remove(float x, float z)

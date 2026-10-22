@@ -16,10 +16,15 @@ public class WorkStateTests
             new WorkItem { Kind = WorkKind.Explore, Resume = true, Label = "늪 탐험 중", DirX = 1, DirY = -1, BiomeId = 2, Where = "늪", Biome = "Swamp" },
             new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "세트 2번", SetNo = 2, Amount = 3 },
             new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "구리 주괴", Item = "CopperBar", Amount = 20 },
+            new WorkItem { Kind = WorkKind.Farm, Resume = true, Label = "밭일", Amount = 12, FarmX = -120.5f, FarmZ = 33.25f },
         };
         string text = WorkState.SaveQueue(items);
         var back = WorkState.LoadQueue(text);
-        Assert.Equal(6, back.Count);
+        Assert.Equal(7, back.Count);
+        Assert.Equal(WorkKind.Farm, back[6].Kind);
+        Assert.Equal(12, back[6].Amount);
+        Assert.Equal(-120.5f, back[6].FarmX, 1);
+        Assert.Equal(33.25f, back[6].FarmZ, 0);
         Assert.Equal(WorkKind.Make, back[4].Kind);
         Assert.Equal(2, back[4].SetNo);
         Assert.Equal(3, back[4].Amount);
@@ -57,7 +62,7 @@ public class WorkStateTests
         Assert.Empty(WorkState.LoadQueue(""));
         Assert.Empty(WorkState.LoadQueue(null));
         // 종류 모름·물건 없는 채집·수량 0은 버리고 나머지는 읽는다
-        var back = WorkState.LoadQueue("k=9,l=x;k=0,l=y;k=0,i=Wood,n=0;garbage;k=0,i=Stone,n=5,zz=1,z=bad");
+        var back = WorkState.LoadQueue("k=9,l=x;k=0,l=y;k=0,i=Wood,n=0;garbage;k=0,i=Stone,n=5,zz=1,z=bad;k=3,n=5;k=3,f=1|2;k=3,n=5,f=x|2");
         Assert.Single(back);
         Assert.Equal("Stone", back[0].Item);
         Assert.False(back[0].HasZone);
