@@ -363,6 +363,7 @@ namespace ValheimHelper
                 if (!arrived) { LogStuck("구역 가기", m_goalPos); m_tried.Add(m_goalZone); } // 못 간 곳을 또 고르면 같은 자리에서 되풀이한다
                 Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
                 Go(Step.Search);
+                if (!arrived) RescueIfStuckAgain();
             }
             return true;
         }
@@ -471,9 +472,36 @@ namespace ValheimHelper
                 Go(Step.Work);
                 return true;
             }
-            if (Stuck(dt, m_targetPos) || m_stepTime > 40f) { LogStuck("다가가기", m_targetPos); Skip(); }
+            if (Stuck(dt, m_targetPos) || m_stepTime > 40f) { LogStuck("다가가기", m_targetPos); Skip(); RescueIfStuckAgain(); }
             return true;
         }
+
+        /// <summary>
+        /// 깃발로 강제 복귀(사용자 결정 2026-10-22): 막혀서 목표·구역을 버렸는데(다른 길·다른 목표 = 재탐색) 다음 막힘도 같은 자리(8m 안)면
+        /// 탈출 실패로 보고 거점으로 순간이동한다. 체력·짐·장비·스킬은 그대로, 목표·이동만 비우고(버린 목표·구역은 이 일 동안 다시 안 고름)
+        /// 들고 있으면 넣고 아니면 다음 목표로. 습격 도망·전투는 일(GatherJob) 밖이라 여기 안 옴.
+        /// </summary>
+        void RescueIfStuckAgain()
+        {
+            Vector3 pos = m_npc.transform.position;
+            if (m_stuckAt.HasValue && Utils.DistanceXZ(m_stuckAt.Value, pos) < 8f) m_stuckCount++;
+            else { m_stuckAt = pos; m_stuckCount = 1; }
+            if (m_stuckCount < 2) return;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 같은 자리에서 {m_stuckCount}번 막힘 → 깃발로 강제 복귀");
+            m_stuckAt = null;
+            m_stuckCount = 0;
+            m_targetId = ZDOID.None;
+            m_npc.TeleportTo(m_npc.Home, m_npc.transform.rotation, false);
+            WorkerAI.StuckTeleports++;
+            Rescues++;
+            m_npc.Say("stuck", Args());
+            Go(Carried() > 0 ? Step.Deposit : Step.Search);
+        }
+
+        Vector3? m_stuckAt;
+        int m_stuckCount;
+        /// <summary>시험용: 깃발로 강제 복귀한 횟수.</summary>
+        public static int Rescues;
 
         /// <summary>진단: 걷다 막힌 자리(앞에 걸린 것·발밑·걷기 상태).</summary>
         void LogStuck(string what, Vector3 goal) =>

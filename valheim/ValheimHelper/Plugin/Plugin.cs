@@ -43,6 +43,7 @@ namespace ValheimHelper
             Step("vh_teamtest", TeamTest.Register);
             Step("vh_settest", SetTest.Register);
             Step("vh_portaltest", PortalTest.Register);
+            Step("vh_stucktest", StuckTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }
