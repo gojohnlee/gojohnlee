@@ -8,13 +8,15 @@ namespace ValheimHelper
     /// 밭에 심기(⑨, 구상서 6-3, 평탄화 없음): 상자에서 경작기와 계획(FarmPlan)만큼 씨앗을 짐에 챙겨 밭으로 가서
     /// 심을 자리(Farm.Spots 뱀 꼴)마다 걸어가 갈기 조각을 놓고(TerrainOp.Awake가 칠함) 새싹을 세운다(씨앗은 그때 짐에서 뺌 — 바닐라 PlacePiece처럼).
     /// 자리 거르기는 바닐라 Plant 자라기 판정과 같게: 물 아래·바이옴·지붕(위 광선)·m_growRadius 안 충돌체, 그리고 건축 금지 구역.
-    /// 다 심으면(또는 자리·시간이 다 되면) 거점에 돌아와 경작기·남은 씨앗을 상자에 넣는다(Unload). 거두기·씨앗 유지·명령 연결은 다음 조각.
+    /// 거두기(harvest): 밭에 도착하면 심기 전에 다 자란 작물(Pickable, 작물 Produce)마다 걸어가 Interact(바닐라 RPC_Pick이 떨굼) → 떨군 것을 줍는다.
+    /// 심을 것이 없으면(거두기만) 경작기·씨앗을 챙기지 않는다.
+    /// 다 심으면(또는 자리·시간이 다 되면) 거점에 돌아와 경작기·남은 씨앗·거둔 것을 상자에 넣는다(Unload). 씨앗 유지·명령 연결은 다음 조각.
     /// </summary>
     public sealed class FarmJob : IWorkerJob
     {
-        const float TotalLimit = 15f * 60f, BusyLimit = 30f, GoStuckLimit = 30f, SpotLimit = 15f, HomeLimit = 180f;
+        const float TotalLimit = 15f * 60f, BusyLimit = 30f, GoStuckLimit = 30f, SpotLimit = 15f, HomeLimit = 180f, PickWait = 4f;
 
-        enum Step { Fetch, Go, Plant, Home, Store }
+        enum Step { Fetch, Go, Harvest, Plant, Home, Store }
 
         public readonly FarmField Field;
         readonly WorkerNpc m_npc;
@@ -26,16 +28,24 @@ namespace ValheimHelper
         List<SpotXZ> m_spots;
         int m_spot, m_total;
         Unload m_unload;
-        bool m_abort, m_toldDone;
+        bool m_abort, m_toldDone, m_toldHarvest;
+        readonly bool m_harvest;
+        List<Pickable> m_ripe;
+        Vector3 m_pickAt;
+        float m_pickTime = -1f;
+        readonly Dictionary<string, int> m_got = new Dictionary<string, int>();
 
         public int Planted { get; private set; }
+        /// <summary>거둔 작물 수(Interact 한 수).</summary>
+        public int Harvested { get; private set; }
         public string StepName => "Farm" + m_step;
 
-        public FarmJob(WorkerNpc npc, FarmField field, FarmPlan plan)
+        public FarmJob(WorkerNpc npc, FarmField field, FarmPlan plan, bool harvest = false)
         {
             m_npc = npc;
             m_ai = npc.Ai;
             Field = field;
+            m_harvest = harvest;
             if (plan != null)
                 foreach (var p in plan.Plant)
                     if (p.Amount > 0 && Crops.BySapling(p.Item) != null) m_todo.Add(new Ingredient(p.Item, p.Amount));
@@ -70,6 +80,7 @@ namespace ValheimHelper
             {
                 case Step.Fetch: return UpdateFetch();
                 case Step.Go: return UpdateGo(dt);
+                case Step.Harvest: return UpdateHarvest(dt);
                 case Step.Plant: return UpdatePlant(dt);
                 case Step.Home: return UpdateHome(dt);
                 case Step.Store:
@@ -84,6 +95,7 @@ namespace ValheimHelper
 
         bool UpdateFetch()
         {
+            if (m_todo.Count == 0 && m_harvest) { Go(Step.Go); return true; } // 거두기만: 챙길 것 없음
             Inventory mine = m_npc.GetInventory();
             if (FindTool(mine) == null)
             {
@@ -112,7 +124,12 @@ namespace ValheimHelper
                 m_total += t.Amount;
                 if (t.Amount > 0) taken.Add(GatherJob.ItemLabel(crop.Produce) + " " + t.Amount);
             }
-            if (m_total == 0) { m_npc.Say("farmNoSeed"); Go(Step.Store); return true; } // 경작기는 도로 넣는다
+            if (m_total == 0)
+            {
+                m_npc.Say("farmNoSeed");
+                Go(m_harvest ? Step.Go : Step.Store); // 경작기는 도로 넣는다(거두기는 그대로 간다)
+                return true;
+            }
             m_npc.Say("farmGo", new Dictionary<string, string> { ["list"] = string.Join(", ", taken.ToArray()) });
             Go(Step.Go);
             return true;
@@ -174,6 +191,13 @@ namespace ValheimHelper
                 foreach (var t in m_todo) spacing = Mathf.Max(spacing, Farm.Spacing(Crops.BySapling(t.Item).GrowRadius));
                 m_spots = Farm.Spots(Field.X, Field.Z, Field.Radius, spacing);
                 m_spot = 0;
+                if (m_harvest)
+                {
+                    m_ripe = Ripe(Field);
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 밭 도착: 다 자란 것 {m_ripe.Count}");
+                    Go(Step.Harvest);
+                    return true;
+                }
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 밭 도착: 자리 {m_spots.Count}곳, 간격 {spacing:0.00}m");
                 Go(Step.Plant);
                 return true;
@@ -187,6 +211,96 @@ namespace ValheimHelper
                 Go(Step.Home);
             }
             return true;
+        }
+
+        // ── 거두기 ──
+
+        /// <summary>밭 안의 다 자란 작물(아직 안 거둔 Pickable, 작물 Produce).</summary>
+        public static List<Pickable> Ripe(FarmField f)
+        {
+            var list = new List<Pickable>();
+            foreach (var p in Object.FindObjectsByType<Pickable>(FindObjectsSortMode.None))
+            {
+                if (p == null || p.m_itemPrefab == null || p.GetPicked() || !Crops.IsProduce(p.m_itemPrefab.name)) continue;
+                Vector3 at = p.transform.position;
+                if (f.Contains(at.x, at.z)) list.Add(p);
+            }
+            return list;
+        }
+
+        bool UpdateHarvest(float dt)
+        {
+            if (m_pickTime >= 0f) return Collect(dt);
+            m_ripe.RemoveAll(x => x == null || x.GetPicked());
+            if (m_ripe.Count == 0)
+            {
+                TellHarvest();
+                if (m_todo.Exists(x => x.Amount > 0)) Go(Step.Plant);
+                else Go(Step.Home);
+                return true;
+            }
+            Vector3 me = m_npc.transform.position;
+            m_ripe.Sort((a, b) => Utils.DistanceXZ(a.transform.position, me).CompareTo(Utils.DistanceXZ(b.transform.position, me)));
+            Pickable p = m_ripe[0];
+            Vector3 at = p.transform.position;
+            if (!m_ai.MoveToPoint(dt, at, 1.2f, false) && Utils.DistanceXZ(at, me) > 1.5f)
+            {
+                if (m_stepTime > SpotLimit)
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 거두기 건너뜀: 못 닿음 {at}");
+                    m_ripe.Remove(p);
+                    m_stepTime = 0f;
+                }
+                return true;
+            }
+            m_ai.StopMoving();
+            m_ai.Face(at);
+            p.Interact(m_npc, false, false); // 주인이면 RPC_Pick이 바로 떨군다
+            m_ripe.Remove(p);
+            Harvested++;
+            m_pickAt = at;
+            m_pickTime = 0f;
+            return true;
+        }
+
+        /// <summary>떨군 것(위로 튀었다 내려옴)을 줍는다. 다 주웠거나 PickWait가 지나면 다음 작물로(못 주운 건 땅에 남음 — 로그).</summary>
+        bool Collect(float dt)
+        {
+            m_pickTime += dt;
+            if (m_pickTime < 0.6f) return true;
+            int left = 0;
+            foreach (Collider col in Physics.OverlapSphere(m_pickAt, 3f, LayerMask.GetMask("item")))
+            {
+                ItemDrop d = col.GetComponentInParent<ItemDrop>();
+                if (d == null || !d.TryGetComponent(out ZNetView v) || !v.IsValid()) continue;
+                string name = Utils.GetPrefabName(d.gameObject);
+                if (!Crops.IsProduce(name) && !Crops.All.Exists(c => c.Seed == name)) continue;
+                int n = d.m_itemData.m_stack;
+                if (m_npc.PickDrop(d))
+                {
+                    m_got.TryGetValue(name, out int had);
+                    m_got[name] = had + n;
+                }
+                else left++;
+            }
+            if (left == 0 && m_pickTime > 1.2f || m_pickTime > PickWait)
+            {
+                if (left > 0) Plugin.Log.LogInfo($"{m_npc.NpcName} 거둔 것 {left}개 못 주움(짐 빈칸 {m_npc.GetInventory().GetEmptySlots()})");
+                m_pickTime = -1f;
+                m_stepTime = 0f;
+                if (left > 0 && m_npc.GetInventory().GetEmptySlots() == 0) { m_ripe.Clear(); } // 짐이 꽉 참 → 거두기 그만
+            }
+            return true;
+        }
+
+        void TellHarvest()
+        {
+            if (m_toldHarvest || m_got.Count == 0) return;
+            m_toldHarvest = true;
+            var parts = new List<string>();
+            foreach (var kv in m_got) parts.Add(GatherJob.ItemLabel(kv.Key) + " " + kv.Value);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 거둠 {Harvested}곳: {string.Join(", ", parts.ToArray())}");
+            m_npc.Say("farmHarvest", new Dictionary<string, string> { ["list"] = string.Join(", ", parts.ToArray()) });
         }
 
         // ── 심기 ──
@@ -264,6 +378,7 @@ namespace ValheimHelper
 
         void TellDone()
         {
+            TellHarvest();
             if (m_toldDone || m_total == 0) return;
             m_toldDone = true;
             int left = m_total - Planted;

@@ -9,6 +9,7 @@ namespace ValheimHelper
     /// vh_farmtest (⑨ 심기, FarmJob): 경작기 없이 시키면 거절 → 상자에 경작기 1·당근 씨앗 6을 넣고 거점 옆 반경 3m 밭에
     /// 당근 4(Farm.Plan으로 계산)를 시키면 갈고 새싹 4개를 심고, 씨앗 2·경작기를 상자에 도로 넣는지(씨앗 수 보존).
     /// 끝에 그 새싹들의 자라는 시간을 1초로 줄여 4개가 다 자라는지(= 갈기·자리·바이옴이 바닐라 판정을 통과) 본다.
+    /// 이어서 거두기만 시켜(FarmJob harvest) 다 자란 당근을 다 거둬 떨굴 양만큼 상자에 넣는지 본다.
     /// </summary>
     static class FarmTest
     {
@@ -96,6 +97,20 @@ namespace ValheimHelper
             var status = new List<string>();
             foreach (var p in Plants(field)) status.Add(p.GetStatus().ToString());
             checks.Add($"다 자람 ({TestKit.Waited:0}초, 당근 {Grown(field)}/{plants.Count}, 남은 새싹 상태 {string.Join(",", status.ToArray())})", TestKit.Ok);
+
+            // 거두기: 심을 것 없이 거두기만 → 다 자란 것마다 Interact·떨군 것 줍기 → 돌아와 상자에(수량 = 떨굴 양 합)
+            List<Pickable> ripe = FarmJob.Ripe(field);
+            int expect = 0;
+            foreach (var p in ripe) expect += p.m_dontScale ? p.m_amount : Mathf.Max(p.m_minAmountScaled, Game.instance.ScaleDrops(p.m_itemPrefab, p.m_amount));
+            int produce0 = Stock(w, Produce) + Bag(w, Produce);
+            var harvest = new FarmJob(w.Claude, field, null, true);
+            w.Claude.Ai.StartJob(harvest);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 150f);
+            checks.Add($"거두기 끝남·돌아옴 ({TestKit.Waited:0}초, 거둠 {harvest.Harvested}/{ripe.Count}, {harvest.StepName}, 거점까지 {Utils.DistanceXZ(w.Home, w.Claude.transform.position):0}m)",
+                TestKit.Ok && harvest.Harvested == ripe.Count && ripe.Count > 0);
+            int got = Stock(w, Produce) - produce0;
+            checks.Add($"거둔 당근 상자에 ({got}/{expect}, 짐 {Bag(w, Produce)}, 땅 {OnGround(field, Produce)}, 남은 것 {FarmJob.Ripe(field).Count})",
+                got == expect && Bag(w, Produce) == 0 && FarmJob.Ripe(field).Count == 0);
             TestKit.ClearBaseStock(w, Crops.Cultivator, Seed, Produce);
         }
 
@@ -123,6 +138,15 @@ namespace ValheimHelper
             foreach (var p in Object.FindObjectsByType<Pickable>(FindObjectsSortMode.None))
                 if (p != null && p.m_itemPrefab != null && p.m_itemPrefab.name == Produce && big.Contains(p.transform.position.x, p.transform.position.z))
                     ZNetScene.instance.Destroy(p.gameObject);
+        }
+
+        static int OnGround(FarmField f, string prefab)
+        {
+            var big = new FarmField(f.X, f.Z, f.Radius + 3);
+            int n = 0;
+            foreach (var d in Object.FindObjectsByType<ItemDrop>(FindObjectsSortMode.None))
+                if (d != null && Utils.GetPrefabName(d.gameObject) == prefab && big.Contains(d.transform.position.x, d.transform.position.z)) n += d.m_itemData.m_stack;
+            return n;
         }
 
         static int Stock(TestKit.World w, string prefab)

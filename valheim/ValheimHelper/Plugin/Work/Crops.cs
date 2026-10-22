@@ -36,6 +36,9 @@ namespace ValheimHelper
 
         public static Crop BySapling(string sapling) => All.Find(c => c.Sapling == sapling);
 
+        /// <summary>작물을 거두면 나오는 물건(Carrot 등)인지 — 밭에서 다 자란 Pickable·떨군 것 고르기.</summary>
+        public static bool IsProduce(string prefab) => All.Exists(c => c.Produce == prefab);
+
         /// <summary>그 바이옴에서 자라는 작물이 하나라도 있는지.</summary>
         public static bool AnyGrows(int biome) => All.Exists(c => Farm.CanGrow(c, biome));
 
