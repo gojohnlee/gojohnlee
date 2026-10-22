@@ -44,7 +44,7 @@ Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) Cla
 게임 안 시험           Plugin/TestRunner.cs(공통·자동 실행·diag.txt) AutoStart.cs(월드 자동 입장·시험 캐릭터 vhtest 만들기·고르기) Minimized.cs TestTerrain.cs(판 땅 되돌림)
                       NpcTest FlagTest GatherTest(wood·stone·copper·tin) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest DepartTest PeerTest ClaudeTest CraftTest NameTest(상자 이름→역할) SkillTest(스킬 성장·저장) RefillTest(!채워 자동 보충) RaidTest(습격 귀환) HelpTest(도와줘요 대사) TeamTest(같이 싸움: 곁 플레이어 무기가 한 방에 반영)  SetTest(세트 10번 제작 계획 실행) PortalTest StuckTest(깃발 강제 복귀: 발 묶어 끼임 흉내) ResistTest(저항 미드 챙김·중독 시 마심) BowTest(활 사냥: 활 없으면 needBow, 사슴 → 가죽)
                       시험 상자: GatherTest.ClearOldChests(거점 둘레 지난 시험 상자 치움)·CountBase(거점 상자 전부 합계)
-PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh (VH_CHAR 시험 캐릭터·VH_RESET=0이면 월드 원본 되돌리기 안 함, 원본 %USERPROFILE%/vh-test-base)
+PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh (VH_CHAR 시험 캐릭터·VH_RESET=0이면 월드 원본 되돌리기 안 함, 원본 %USERPROFILE%/vh-test-base, VH_SOLO=1 시험마다 따로 되돌려 단독 실행)
 
 ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기)
 

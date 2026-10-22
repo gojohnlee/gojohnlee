@@ -55,6 +55,17 @@ $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woo
 $World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
 $Min = $env:VH_MIN -ne '0'   # 최소화 시험(기본, 2026-10-21 사용자): 창 최소화·소리 끔·백그라운드 30fps. 게임 창을 보려면 $env:VH_MIN='0'
 $Char = if ($env:VH_CHAR) { $env:VH_CHAR.ToLower() } else { 'vhtest' }   # 시험 전용 캐릭터(사용자 결정 2026-10-22, 없으면 모드가 만듦). 사용자 캐릭터는 안 씀
+# 깨끗한 단독 시험(사용자 결정 2026-10-22): $env:VH_SOLO='1'이면 시험마다 따로 원본을 되돌리고 게임을 새로 켠다.
+# 기본은 연속 묶음(실행마다 한 번 되돌리고 A→B→B를 한 게임에서 이어 돌림 — 앞 시험이 뒤 시험을 망치는지 보는 용도).
+$Solo = $env:VH_SOLO -eq '1'
+if ($Solo -and $env:VH_RESET -eq '0') { throw '단독 시험은 원본 되돌리기가 필요함(VH_SOLO=1과 VH_RESET=0은 같이 못 씀)' }
+$runs = if ($Solo) { @($Test -split ';' | Where-Object { $_ }) } else { @($Test) }
+Remove-Item $tmp -Recurse -Force
+$reports = @()
+foreach ($Run in $runs) {
+$w = 0   # 앞 실행의 게임 프로세스가 완전히 끝날 때까지(되돌리기 조건)
+while ((Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) -and $w -lt 60) { Start-Sleep 2; $w += 2 }
+Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
 
 # 시험 월드·캐릭터 원본 되돌리기(사용자 결정 2026-10-22): 실행마다 한 번, 게임이 완전히 꺼진 뒤, 시험 전용 경로일 때만.
 # 월드 원본은 %USERPROFILE%\vh-test-base(첫 실행 때 지금 월드를 떠 둠). 캐릭터는 지워서 모드가 새로 만들게(= 깨끗한 원본).
@@ -78,8 +89,7 @@ if ($env:VH_RESET -ne '0') {
         Where-Object { $_.Name -like "$Char.fch*" -or $_.Name -like "${Char}_backup*.fch" } | Remove-Item -Force   # 게임 자동 백업도
     Write-Host "시험 월드 $World 원본으로 되돌림, 시험 캐릭터 $Char 새로"
 }
-Set-Content "$plugin\autotest.txt" ("world=$World;char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $Test)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
-Remove-Item $tmp -Recurse -Force
+Set-Content "$plugin\autotest.txt" ("world=$World;char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $Run)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
 Write-Host 'Valheim Helper 설치됨'
 
 # BepInEx 콘솔(검은 창)이 게임과 같이 뜨지 않게 끈다(로그는 LogOutput.log에 그대로 남는다). 설정 파일은 첫 실행 뒤에 생긴다.
@@ -97,7 +107,7 @@ Start-Process "steam://rungameid/$AppId"
 Write-Host ''
 Write-Host "게임 실행 중... 시험 월드($World)로 저절로 들어갑니다. 손대지 않아도 됩니다."
 Write-Host '(그 월드가 없으면 직접 테스트용 월드에 들어가 주세요)'
-Write-Host "3초 뒤 시험($Test)이 저절로 시작되고, 시험이 끝나면(최대 15분) 게임이 저절로 꺼집니다."
+Write-Host "3초 뒤 시험($Run)이 저절로 시작되고, 시험이 끝나면(최대 15분) 게임이 저절로 꺼집니다."
 Write-Host "(20분이 지나도 안 꺼지면 직접 꺼 주세요)"
 function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) }
 $t = 0
@@ -123,7 +133,7 @@ if (Test-Game) { Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } 
 #    요약: diag 첫 줄, 시험별 판정·시간, FAIL 줄, 모드 로드 줄, 로그 오류 줄 수와 종류별 첫 8개.
 $diag = Join-Path $plugin 'diag.txt'
 $log = Join-Path $game 'BepInEx\LogOutput.log'
-$report = @('=== Valheim 테스트 결과 ===')
+$report = @("=== Valheim 테스트 결과 ===$(if ($Solo) { " (단독: $Run)" })")
 if (Test-Path $diag) {
     $lines = @(Get-Content $diag -Encoding UTF8)
     $report += $lines[0]
@@ -153,7 +163,10 @@ if (Test-Path $log) {
     }
 } else { $report += '(LogOutput.log 없음: BepInEx가 로드되지 않았음)' }
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
-$text = $report -join "`r`n"
+if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }
+$reports += ($report -join "`r`n")
+}   # foreach $Run
+$text = $reports -join "`r`n`r`n"
 Set-Clipboard $text
 Write-Host $text
 Write-Host ''
