@@ -103,7 +103,11 @@ if (Test-Path $cfg) {
 
 # 3) 게임 실행 후 종료될 때까지 대기
 # 실행 인자(-console)를 붙이면 Steam이 "사용자 지정 인수" 경고창을 띄운다 → 인자 없이 실행(시험은 콘솔 없이 돈다).
-Start-Process "steam://rungameid/$AppId"
+# steam://rungameid로 켜면 Steam이 "게임을 시작하는 중" 창을 잠깐 띄운다(2026-10-22 사용자) → Steam이 켜져 있으면 valheim.exe를 직접 켠다.
+# 게임 폴더의 steam_appid.txt 덕에 Steam을 거쳐 다시 켜지지 않고, BepInEx(winhttp.dll)도 그대로 올라온다. Steam이 꺼져 있으면 예전처럼 Steam으로.
+if ((Get-Process steam -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $game 'steam_appid.txt'))) {
+    Start-Process (Join-Path $game 'valheim.exe') -WorkingDirectory $game
+} else { Start-Process "steam://rungameid/$AppId" }
 Write-Host ''
 Write-Host "게임 실행 중... 시험 월드($World)로 저절로 들어갑니다. 손대지 않아도 됩니다."
 Write-Host '(그 월드가 없으면 직접 테스트용 월드에 들어가 주세요)'
