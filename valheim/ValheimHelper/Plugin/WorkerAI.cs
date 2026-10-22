@@ -127,7 +127,25 @@ namespace ValheimHelper
             Vector3 pos = transform.position, dir = Flat(point - pos).normalized;
             string Hit(float h) => Physics.Raycast(pos + Vector3.up * h, dir, out RaycastHit hit, 3f, SolidMask, QueryTriggerInteraction.Ignore)
                 ? $"{hit.collider.name}({LayerMask.LayerToName(hit.collider.gameObject.layer)}, {hit.distance:0.0}m, 위 {hit.collider.transform.root.name})" : "없음";
-            return $"앞 발 {Hit(0.4f)} / 가슴 {Hit(1.4f)}, 땅 {pos.y - ZoneSystem.instance.GetGroundHeight(pos):0.0}m, 앞 1m 땅 {ZoneSystem.instance.GetGroundHeight(pos + dir) - pos.y:0.0}m";
+            return $"앞 발 {Hit(0.4f)} / 가슴 {Hit(1.4f)}, 땅 {pos.y - ZoneSystem.instance.GetGroundHeight(pos):0.0}m, 앞 1m 땅 {ZoneSystem.instance.GetGroundHeight(pos + dir) - pos.y:0.0}m, 둘레 {Around()}";
+        }
+
+        /// <summary>진단: 몸 둘레 1.3m 안 단단한 충돌체(이름·종류·루트와의 거리·몸 기준 높이 범위).</summary>
+        string Around()
+        {
+            Vector3 pos = transform.position;
+            var cols = Physics.OverlapSphere(pos + Vector3.up * 0.9f, 1.3f, SolidMask, QueryTriggerInteraction.Ignore);
+            var sb = new System.Text.StringBuilder();
+            int n = 0;
+            foreach (var c in cols)
+            {
+                if (c.transform.root == transform.root) continue;
+                if (++n > 6) break;
+                Bounds b = c.bounds;
+                string kind = c is MeshCollider m ? (m.convex ? "메시(볼록)" : "메시") : c.GetType().Name.Replace("Collider", "");
+                sb.Append($"[{c.name}:{kind} 루트 {c.transform.root.name} {Utils.DistanceXZ(c.transform.root.position, pos):0.0}m 높이 {b.min.y - pos.y:0.0}~{b.max.y - pos.y:0.0} 크기 {b.size.x:0.0}x{b.size.z:0.0}]");
+            }
+            return n == 0 ? "없음" : sb.ToString();
         }
 
         float m_sampleTimer;

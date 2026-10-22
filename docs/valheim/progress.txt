@@ -19,7 +19,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    (-File은 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨림. 이 PC엔 파이썬 없음 → 수정은 Edit 도구. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    설치 → Steam 실행 → 인트로 건너뜀 → te4st41 자동 입장 → 시험 → 2초 뒤 종료 → 결과 출력.
    시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_bagtest·vh_deathtest·vh_fighttest·vh_exploretest·
-   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest. 월드 $env:VH_WORLD. 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
+   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_tintest. 월드 $env:VH_WORLD. 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
    결과: 스크립트는 짧은 요약만 출력(diag 첫 줄, 시험별 판정·시간, FAIL 줄, 로그 오류 종류 8개 — 2026-10-21 토큰 절약).
    전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 55] 사용자 요청 주석: vh_tintest 신설·PASS 12/12(주석 광맥은 3~4개라 둘레에 더 놓음). GatherJob m_tried(와서 봤는데 없는 구역·못 간 구역은 그 일 동안 다시 안 고름), 진단 로그(SightDiag·몸 둘레 충돌체). coppertest PASS. Speech "stuck" 대사만 넣음(아직 안 씀). 다음: 사용자 요청 깃발 강제 복귀.
 - [루프 회차 51] 6) ⑤ 포탈 3조각: vh_portaltest 신설·PASS 9/9(포탈 한 쌍 ZDO 짝 → Portals.Linked가 출구를 바닐라식(짝 앞 1m·위 1m)으로 읽음, 먼 목적지는 포탈·가까운 곳은 걸음, 일꾼 TeleportTo로 500m 건너감, 10초). 먼 쪽은 구역이 안 불러와져 ZDO만 만듦. 남음: 던전 문·y≈5000 처리(⑦ 철 때 같이 — 지하묘지 입구 문 Teleport 읽기). 다음: 7) D 저항 미드.
 - [루프 회차 50] 요청(통신 시험 2건)은 회차 40까지 답함. 6) ⑤ 포탈 2조각: GatherJob.WalkVia — 구역 가기·귀환 걸음이 포탈이 더 빠르면(PortalRoute) 입구까지 걸어가 TeleportTo(출구), 못 가면 걸어서. 포탈 없으면 동작 그대로(woodtest PASS 46초; 앞서 2번 FAIL은 Prep/GoChest에서 집 앞 2분 정지로 포탈 코드 밖, 기준 빌드도 한 번 느렸음 → 간헐). 포탈 실시험 없음(시험 월드에 포탈 두 개 세워야 함). Core 337 PASS. 다음: ⑤ 던전 문·y≈5000 순간이동 처리 + vh_portaltest 신설(포탈 한 쌍 세워 멀리 가기).
 - [루프 회차 49] 4) ④ 주석은 [보류: 주석 광맥이 늪 지형이라 시험 틀 비용 대비 이득 작음, 구리와 같은 채집 코드]. 5) J 이동 한계는 [보류: 도망 중 깎기는 추격 중 서서 곡괭이질이라 일부러 안 함(점프는 MoveToPoint가 함), 물 찬 구덩이·통나무 충돌은 드물고 시험 틀 어려움 — 시험에서 다시 나오면 vh-debug]. 6) ⑤ 포탈 1조각: Core PortalRoute(걷기 vs 포탈 비용, 입구 150m 안·60m 넘게 절약해야 탐) + 테스트, Plugin Portals(ZDO portal_wood·ConnectionType.Portal 짝 출구 읽기), 아직 안 부름. Core 337 PASS, 빌드 통과. 다음: ⑤ 이동에 연결(Go 단계가 포탈 입구로 걸어가 순간이동), 던전 문·y≈5000 처리.

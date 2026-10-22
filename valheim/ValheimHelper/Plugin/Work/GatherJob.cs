@@ -138,6 +138,13 @@ namespace ValheimHelper
 
         bool Avoided(Vector3 p) => m_avoid.Count > 0 && m_avoid.Contains(Senses.ZoneOf(p));
 
+        /// <summary>
+        /// 이 일 동안 이미 가 봤거나(와서 봤는데 쓸 게 없었다) 못 간(길이 막힘) 구역. 지식(Brain)은 시야 안의 목록 대상을 다 세므로(FindInSight가 안 고르는
+        /// 건축물 옆 통·건너뛴 대상 포함) 지웠다가도 다시 채워진다 → 구역을 또 고르면 두 구역을 오가거나(0.3.8 주석 시험 2차) 막힌 자리에서
+        /// 같은 구역을 되풀이한다(1차: 나무 옆 38m에서 5분). 위험 구역(m_avoid)과 달리 그 구역 안의 대상은 보이면 여전히 고른다.
+        /// </summary>
+        readonly HashSet<ZoneXY> m_tried = new HashSet<ZoneXY>();
+
         /// <summary>Guard: 거기는 위험하다. 그 구역(과 지금 목표)을 버리고 다른 데를 찾는다. 들고 있는 건 그대로.</summary>
         public void AvoidHere(Vector3 danger)
         {
@@ -261,17 +268,22 @@ namespace ValheimHelper
             Knowledge k = Brain.Get();
             Vector3 pos = m_npc.transform.position;
             ZoneXY here = Senses.ZoneOf(pos);
-            if (Utils.DistanceXZ(Senses.ZoneCenter(here), pos) < 20f) k.Forget(here, Item); // 여기 와서 봤는데 없다
+            if (Utils.DistanceXZ(Senses.ZoneCenter(here), pos) < 20f)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {here.X},{here.Y}에 와서 봤는데 쓸 게 없음 / {SightDiag(pos)}");
+                k.Forget(here, Item); // 여기 와서 봤는데 없다
+                m_tried.Add(here);
+            }
             foreach (var m in k.ZonesWith(Item, here))
             {
-                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너·위험한 곳은 안 간다
+                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || m_tried.Contains(m.Zone) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너·위험한 곳·이미 가 본 곳은 안 간다
                 m_goalZone = m.Zone;
                 GoZone();
                 return true;
             }
             // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
             if (!m_exploring && m_searchTime <= SearchLimit
-                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !m_avoid.Contains(z) && Scout.Reachable(pos, z), out m_goalZone))
+                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !m_avoid.Contains(z) && !m_tried.Contains(z) && Scout.Reachable(pos, z), out m_goalZone))
             {
                 if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
                 GoZone();
@@ -348,7 +360,7 @@ namespace ValheimHelper
             bool arrived = WalkVia(dt, m_goalPos, 6f);
             if (arrived || Stuck(dt, PortalOr(m_goalPos)))
             {
-                if (!arrived) LogStuck("구역 가기", m_goalPos);
+                if (!arrived) { LogStuck("구역 가기", m_goalPos); m_tried.Add(m_goalZone); } // 못 간 곳을 또 고르면 같은 자리에서 되풀이한다
                 Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
                 Go(Step.Search);
             }
@@ -388,6 +400,31 @@ namespace ValheimHelper
                 if (score < bestScore) { bestScore = score; best = zdo; }
             }
             return best != null;
+        }
+
+        /// <summary>진단: 시야(44m) 안에서 그 물건이 나온다고 목록에 있는 것들과 FindInSight가 고르지 않은 까닭(앞 6개).</summary>
+        string SightDiag(Vector3 pos)
+        {
+            var nearby = Senses.Nearby(pos, Senses.SightRange + 4f);
+            var pieces = new List<Vector3>();
+            foreach (var zdo in nearby)
+                if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
+            var sb = new System.Text.StringBuilder();
+            int n = 0;
+            foreach (var zdo in nearby)
+            {
+                ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
+                if (info == null || !info.Produces.Contains(Item)) continue;
+                if (++n > 6) break;
+                string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
+                    : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀"
+                    : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) ? "건축물 4m 안"
+                    : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
+                    : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
+                    : Utils.DistanceXZ(zdo.GetPosition(), pos) > Senses.SightRange ? "시야 밖" : "고를 수 있음";
+                sb.Append($"[{info.Prefab} {Utils.DistanceXZ(zdo.GetPosition(), pos):0}m {why}]");
+            }
+            return n == 0 ? "목록에 있는 대상 없음" : sb.ToString();
         }
 
         static bool NearAny(Vector3 p, List<Vector3> points, float range)
@@ -763,7 +800,12 @@ namespace ValheimHelper
             if (m_chest == null) return Fail("noChest");
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
             {
-                if (m_stepTime > 30f) { m_npc.TeleportTo(m_chest.transform.position + m_chest.transform.forward * 1.5f, m_npc.transform.rotation, false); WorkerAI.StuckTeleports++; }
+                if (m_stepTime > 30f)
+                {
+                    LogStuck("넣기", m_chest.transform.position);
+                    m_npc.TeleportTo(m_chest.transform.position + m_chest.transform.forward * 1.5f, m_npc.transform.rotation, false);
+                    WorkerAI.StuckTeleports++;
+                }
                 return true;
             }
             int moved = 0;

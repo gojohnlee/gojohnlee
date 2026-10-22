@@ -17,6 +17,7 @@ namespace ValheimHelper
             TestRunner.Register("vh_woodtest", "나무 채집 시험", () => Run("AxeFlint", "Wood", "나무"));
             TestRunner.Register("vh_stonetest", "돌 채집 시험", () => Run("PickaxeAntler", "Stone", "돌"));
             TestRunner.Register("vh_coppertest", "구리 채집 시험(광맥을 거점 12m 앞에 놓음, 땅속 광석 파기·구덩이 탈출)", () => Run("PickaxeAntler", "CopperOre", "구리", true));
+            TestRunner.Register("vh_tintest", "주석 채집 시험(광맥을 거점 12m 앞에 놓음, 구리와 같은 경로)", () => Run("PickaxeAntler", "TinOre", "주석", true));
         }
 
         internal sealed class Checks
@@ -122,16 +123,28 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(0.5f);
                 depositPos = Ground(depositPos);
                 Object.Instantiate(dep, depositPos, rot);
-                TestRunner.Log($"광맥 놓음 {dep.name} (지난 구덩이 꼭짓점 {undone}개 되돌림)");
+                // 한 광맥이 10개를 못 주면(주석 MineRock_Tin은 3~4개) 모자라는 만큼 둘레에 더 놓는다 — 안 그러면 일꾼이 나머지를 찾아 먼 구역으로 떠난다(0.3.8 첫 주석 시험)
+                int deposits = Mathf.Max(1, Mathf.CeilToInt(10f / Mathf.Max(1, MinYield(dep))));
+                int placed = 1;
+                foreach (var off in new[] { new Vector3(6f, 0f, 0f), new Vector3(-6f, 0f, 0f), new Vector3(0f, 0f, 6f), new Vector3(0f, 0f, -6f), new Vector3(6f, 0f, 6f), new Vector3(-6f, 0f, 6f) })
+                {
+                    if (placed >= deposits) break;
+                    Vector3 p = depositPos + rot * off;
+                    if (Buildings.Near(p, 5f)) continue;
+                    Object.Instantiate(dep, Ground(p), rot);
+                    placed++;
+                }
+                TestRunner.Log($"광맥 놓음 {dep.name} {placed}개 (지난 구덩이 꼭짓점 {undone}개 되돌림)");
                 yield return new WaitForSeconds(1f);
                 // 일꾼이 그 광맥을 고를 수 있는지(0.3.8 첫 구리 시험: 12m 앞 광맥을 두고 580m 밖으로 감)
                 ResourceInfo info = ResourceCatalog.Get(hash);
-                int seen = Senses.Nearby(depositPos, 3f).FindAll(z => z.GetPrefab() == hash).Count;
+                int seen = Senses.Nearby(depositPos, 12f).FindAll(z => z.GetPrefab() == hash).Count;
                 var near = new List<string>();
                 foreach (var z in Senses.Nearby(depositPos, 4f))
                     if (Buildings.IsPiece(z.GetPrefab())) near.Add($"{ZNetScene.instance.GetPrefab(z.GetPrefab())?.name} {Utils.DistanceXZ(z.GetPosition(), depositPos):0.0}m");
                 TestRunner.Log($"광맥 ZDO {seen}개, 목록 정보: 도구 {info?.Tool} 단계 {info?.MinToolTier} (곡괭이 단계 {tool.GetComponent<ItemDrop>().m_itemData.m_shared.m_toolTier}), " +
                                $"나오는 것 [{(info != null ? string.Join(",", info.Produces) : "")}], 4m 안 건축물 [{string.Join(", ", near)}]");
+                TestRunner.Log($"  광맥 구조: {DescribeDeposit(dep, 0)}");
             }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             Say($"!{Workers.Name1} {word} 10", null);
@@ -146,7 +159,7 @@ namespace ValheimHelper
                 {
                     var job = claude ? claude.Ai.Job : null;
                     TestRunner.Log($"[{t:0}s] 상자 {word} {count}, 들고 있는 {word} {(claude ? claude.CountItem(item) : -1)}, 상태 {(claude ? claude.Ai.Current.ToString() : "없음")}/{job?.StepName}, 집에서 {(claude ? Utils.DistanceXZ(claude.Home, claude.transform.position) : -1):0}m, 지식 {Brain.Get().Count}구역");
-                    if (claude) Plugin.Log.LogInfo($"  [{t:0}s] 광맥에서 {Utils.DistanceXZ(depositPos, claude.transform.position):0.0}m, {claude.Ai.MoveState} / {claude.MoveDebug}");
+                    if (claude) Plugin.Log.LogInfo($"  [{t:0}s] 광맥에서 {Utils.DistanceXZ(depositPos, claude.transform.position):0.0}m, 땅에 {item} {GroundCount(depositPos, item)}개, {claude.Ai.MoveState} / {claude.MoveDebug}");
                 }
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
@@ -177,6 +190,52 @@ namespace ValheimHelper
             End(player, god, checks, onHeard, heard);
         }
 
+        /// <summary>진단: 광맥 프리팹이 부서지면 무엇이 몇 개 나오는지(Destructible → 조각 → ...).</summary>
+        static string DescribeDeposit(GameObject p, int depth)
+        {
+            if (p == null || depth > 4) return "없음";
+            var sb = new System.Text.StringBuilder(p.name + "{");
+            var des = p.GetComponent<Destructible>();
+            if (des != null) sb.Append($"Destructible 체력 {des.m_health} 단계 {des.m_minToolTier}, 부서지면 {DescribeDeposit(des.m_spawnWhenDestroyed, depth + 1)}");
+            var rock5 = p.GetComponent<MineRock5>();
+            if (rock5 != null) sb.Append($"MineRock5 체력 {rock5.m_health}");
+            var rock = p.GetComponent<MineRock>();
+            if (rock != null) sb.Append($"MineRock 체력 {rock.m_health}");
+            var drop = p.GetComponent<DropOnDestroyed>();
+            if (drop != null)
+            {
+                var t = drop.m_dropWhenDestroyed;
+                sb.Append($", 떨굼 {t.m_dropMin}~{t.m_dropMax}번(각각 {t.m_oneOfEach}, 확률 {t.m_dropChance}) [");
+                foreach (var d in t.m_drops) sb.Append($"{(d.m_item != null ? d.m_item.name : "?")} {d.m_stackMin}~{d.m_stackMax} 가중 {d.m_weight} ");
+                sb.Append("]");
+            }
+            return sb.Append("}").ToString();
+        }
+
+        /// <summary>광맥 하나가 부서지며 최소 몇 개를 주는지(Destructible + DropOnDestroyed). 모르면 10(= 하나로 충분).</summary>
+        static int MinYield(GameObject p)
+        {
+            var drop = p.GetComponent<Destructible>() != null ? p.GetComponent<DropOnDestroyed>() : null;
+            var t = drop?.m_dropWhenDestroyed;
+            if (t == null || t.m_drops.Count == 0 || t.m_dropChance < 1f) return 10;
+            int minStack = int.MaxValue;
+            foreach (var d in t.m_drops) minStack = Mathf.Min(minStack, d.m_stackMin);
+            return Mathf.Max(1, t.m_dropMin * minStack);
+        }
+
+        /// <summary>진단: 광맥 둘레 땅에 떨어진 그 물건 수.</summary>
+        static int GroundCount(Vector3 center, string item)
+        {
+            int n = 0;
+            foreach (var zdo in Senses.Nearby(center, 30f))
+            {
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                ItemDrop d = v != null ? v.GetComponent<ItemDrop>() : null;
+                if (d != null && Utils.GetPrefabName(d.gameObject) == item) n += d.m_itemData.m_stack;
+            }
+            return n;
+        }
+
         /// <summary>그 물건이 나오는 광맥 프리팹(MineRock5 → MineRock 순, 이름에 frac 없는 것 먼저).</summary>
         static GameObject DepositFor(string item)
         {
@@ -190,6 +249,19 @@ namespace ValheimHelper
                 int score = (p.GetComponent<MineRock5>() != null ? 2 : 0) + (p.name.Contains("frac") ? 0 : 1);
                 TestRunner.Log($"  {item} 광맥 후보: {p.name} (점수 {score})");
                 if (score > bestScore) { bestScore = score; best = p; }
+            }
+            if (best == null)
+            {
+                // 주석 등은 MineRock이 아니라 Destructible(부서지면 광맥 조각) → 목록이 곡괭이로 얻는다고 아는 프리팹, 이름에 frac·scrap 없는 것 먼저
+                foreach (var p in ZNetScene.instance.m_prefabs)
+                {
+                    if (p == null) continue;
+                    ResourceInfo ri = ResourceCatalog.Get(p.name.GetStableHashCode());
+                    if (ri == null || ri.Tool != ToolKind.Pickaxe || ri.Pickable || !ri.Produces.Contains(item)) continue;
+                    int score = (p.name.Contains("frac") || p.name.Contains("scrap") ? 0 : 100) - ri.Produces.Count; // 통·솥처럼 여러 가지가 나오는 것보다 그것만 나오는 광맥
+                    TestRunner.Log($"  {item} 광맥 후보(목록): {p.name} (점수 {score})");
+                    if (score > bestScore) { bestScore = score; best = p; }
+                }
             }
             return best;
         }
