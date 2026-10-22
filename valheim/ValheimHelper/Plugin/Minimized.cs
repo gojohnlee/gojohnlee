@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using HarmonyLib;
 using UnityEngine;
 
 namespace ValheimHelper
@@ -13,7 +14,13 @@ namespace ValheimHelper
     /// </summary>
     static class Minimized
     {
-        public static bool On;
+        /// <summary>켜는 순간(모드가 올라올 때 autotest.txt "min") 첫 Update를 기다리지 않고 소리부터 끈다.</summary>
+        public static bool On
+        {
+            get => s_on;
+            set { s_on = value; if (value) AudioListener.volume = 0f; }
+        }
+        static bool s_on;
         static bool s_released;
         static float s_timer;
         static IntPtr s_window;
@@ -44,6 +51,26 @@ namespace ValheimHelper
 
         /// <summary>첫 시험 시작: 이제부터 창을 억지로 내리지 않는다.</summary>
         public static void Release() => s_released = true;
+
+        // 바닐라가 소리를 1로 되돌리는 자리(AudioMan.Start, 연출 끝·장면 바뀜). 그 뒤 화면을 불러오느라 프레임이 2초쯤 멈추면
+        // 다음 Update까지 소리가 났다(2026-10-22 사용자: 최소화돼도 켤 때 2초 소리) → 되돌린 바로 그 자리에서 다시 끈다.
+        [HarmonyPatch(typeof(AudioMan), "Start")]
+        static class AudioManStart
+        {
+            static void Postfix() { if (On) AudioListener.volume = 0f; }
+        }
+
+        [HarmonyPatch(typeof(CinematicsManager), "OnDestroy")]
+        static class CinematicsOnDestroy
+        {
+            static void Postfix() { if (On) AudioListener.volume = 0f; }
+        }
+
+        [HarmonyPatch(typeof(CinematicsManager), nameof(CinematicsManager.Stop))]
+        static class CinematicsStop
+        {
+            static void Postfix() { if (On) AudioListener.volume = 0f; }
+        }
 
         /// <summary>이 프로세스의 Unity 창.</summary>
         static IntPtr FindWindow()
