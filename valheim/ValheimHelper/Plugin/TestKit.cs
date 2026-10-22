@@ -64,6 +64,7 @@ namespace ValheimHelper
             public EnvMan Env;
             public bool DebugTime;
             public float DebugValue;
+            public string DebugEnv;
             public Vector3 Home;
             public WorkerNpc Claude, Alarak;
             public Container Chest;
@@ -105,6 +106,9 @@ namespace ValheimHelper
             w.DebugValue = w.Env.m_debugTime;
             w.Env.m_debugTimeOfDay = true;
             w.Env.m_debugTime = 0.5f;
+            // 날씨도 맑음으로 고정: 비·바람이면 화로가 젖어 조리대가 안 굽는다(E014, 바닐라 Fireplace.CheckWet) — 시험마다 날씨가 달라 흔들리지 않게
+            w.DebugEnv = w.Env.m_debugEnv;
+            w.Env.m_debugEnv = "Clear";
             w.OnHeard = (n, t) => w.Heard.Add(n + ": " + t);
             ChatNet.Heard += w.OnHeard;
             w.Knowledge0 = Brain.Get().Save();
@@ -363,6 +367,7 @@ namespace ValheimHelper
             {
                 w.Env.m_debugTimeOfDay = w.DebugTime;
                 w.Env.m_debugTime = w.DebugValue;
+                w.Env.m_debugEnv = w.DebugEnv ?? "";
             }
             if (w.Knowledge0 != null)
             {

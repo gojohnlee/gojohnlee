@@ -282,6 +282,8 @@ namespace ValheimHelper
                     if (fp == null || !fp.TryGetComponent(out ZNetView fv) || !fv.IsValid()) continue;
                     Plugin.Log.LogInfo($"DIAG 불 없음: {fp.name} 켬 {fv.GetZDO().GetInt(ZDOVars.s_state, 1)} 연료 {fv.GetZDO().GetFloat(ZDOVars.s_fuel):0.0} 탐 {fp.IsBurning()}"
                         + $" 날씨 {EnvMan.instance?.GetCurrentEnvironment()?.m_name} 젖음 {EnvMan.IsWet()} 바람 {EnvMan.instance?.GetWindIntensity():0.00}");
+                    // 바닐라: 비(지붕 없음)·센 바람(덮개 70% 미만)이면 화로가 젖어 약한 불만 남아 굽지 못한다(Fireplace.CheckWet) → 까닭을 말한다
+                    if (fp.IsBurning() && (EnvMan.IsWet() || (EnvMan.instance != null && EnvMan.instance.GetWindIntensity() >= 0.8f))) m_npc.Say("cookWet");
                     break;
                 }
                 wait = CraftResult.Failed;

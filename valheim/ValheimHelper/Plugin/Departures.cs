@@ -319,8 +319,24 @@ namespace ValheimHelper
         {
             EnvMan env = EnvMan.instance;
             if (env == null) return float.PositiveInfinity;
-            if (EnvMan.IsNight()) return 0f;
-            return Mathf.Max(0f, (0.75f - env.GetDayFraction()) * env.m_dayLengthSec);
+            float f = DayFraction(env);
+            if (f <= 0.25f || f >= 0.75f) return 0f;
+            return Mathf.Max(0f, (0.75f - f) * env.m_dayLengthSec);
+        }
+
+        /// <summary>
+        /// 지금 하루 비율(바닐라 EnvMan.RescaleDayFraction과 같은 꼴). GetDayFraction은 매 틱 1%씩 따라가는 부드러운 값이라 잠자기 등으로
+        /// 시각이 뛰면 몇 초 동안 옛 저녁 값을 준다(회차 90 departtest: 아침에 꺼낸 일을 "다녀오면 깜깜" 하고 다시 물음) → 서버 시각에서 바로 센다.
+        /// 시험의 시각 고정(m_debugTimeOfDay)은 그 값(m_debugTime)을 바로 쓴다.
+        /// </summary>
+        static float DayFraction(EnvMan env)
+        {
+            if (env.m_debugTimeOfDay) return env.m_debugTime; // GetDayFraction은 다음 FixedUpdate에야 바뀐다(프레임이 빠르면 한 프레임 늦음)
+            if (ZNet.instance == null || env.m_dayLengthSec <= 0) return env.GetDayFraction();
+            double len = env.m_dayLengthSec;
+            float raw = (float)(ZNet.instance.GetTimeSeconds() % len / len);
+            if (raw >= 0.15f && raw <= 0.85f) return 0.25f + (raw - 0.15f) / 0.7f * 0.5f;
+            return raw < 0.5f ? raw / 0.15f * 0.25f : 0.75f + (raw - 0.85f) / 0.15f * 0.25f;
         }
 
         // ---- 제작 계획 (설계 C, 계획을 말한 뒤 PlanJob으로 실행) ----
