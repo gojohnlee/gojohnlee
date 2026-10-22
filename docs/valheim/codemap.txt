@@ -21,7 +21,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 사냥(⑧)               Plugin/Work/Prey.cs(CharacterDrop+MonsterAI·AnimalAI에서 물건→사냥감 프리팹, AnimalAI = 활로만 NeedsBow, ResourceCatalog.WaysFor가 ToolKind.Hunt로 돌려줌, 전리품 통 ResourceInfo.Loot은 사냥감 있으면 뺌) + GatherJob Step.Hunt(FindPrey·UpdateHunt, m_hunt) + Guard.SafePrey(한 마리 판단) 시험 Plugin/HuntTest.cs(vh_hunttest)
 활 사냥(⑧)            GatherJob.UpdateShoot·ArrowFlight + WorkerNpc.ShootingBow·HoldBow·DrawBow·ReleaseBow·StopDraw(바닐라 당기기는 Player만) + Gear.IsBow·IsArrowFor·BestBow·CountArrows + Prep.NeedsBow·TakeBow(활+화살 40, Kept) + Core/Npc/Archery.cs(Aim 앞질러·낙차) 시험 Plugin/BowTest.cs(vh_bowtest)
 굽기(⑧)               Plugin/Work/MachineStep.cs Cook·Burning·Feed(조리대: 불 지피기·올리기·곁에서 꺼내기) + Core Process.Attended·PlanStep.AttendSeconds 시험 Plugin/CookTest.cs(vh_cooktest)
-농사(⑨)               Core/Work/Farm.cs(Crop 작물 값·ClampRadius·Spots 심을 자리·CanGrow·Plan 무엇을 몇 개+씨앗 유지·GrowSeconds, FarmBook 밭 목록 vh_farms) · Plugin/Work/Crops.cs(경작기 m_buildPieces → 작물 목록·갈기 조각) · Commands.SetFarm(!밭) · Brain.Farms · Tests/FarmTests · 다음: FarmJob
+농사(⑨)               Core/Work/Farm.cs(Crop 작물 값·ClampRadius·Spots 심을 자리·CanGrow·Plan 무엇을 몇 개+씨앗 유지·GrowSeconds, FarmBook 밭 목록 vh_farms) · Plugin/Work/Crops.cs(경작기 m_buildPieces → 작물 목록·갈기 조각) · Plugin/Work/FarmJob.cs(챙기기 경작기·씨앗 → 밭 → 자리마다 갈기+새싹 → 돌아와 Unload, 아직 명령 연결 없음) · Commands.SetFarm(!밭) · Brain.Farms · Tests/FarmTests · 시험 Plugin/FarmTest.cs(vh_farmtest) · 다음: 거두기·씨앗 유지·Departure 연결
 탐험 작업              Plugin/Work/ExploreJob.cs
 출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기, 가방 차면 헌 장비와 맞바꿈 MakeRoom) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
 장비 수리             Plugin/Work/Repair.cs(바닐라 CanRepair 규칙: 레시피 수리대·제작대 이름·레벨·지붕/불, StationFor·Next·At) + Core/Npc/RepairRule.cs(반 넘게 닳으면). Prep이 입기 전에 들름, Unload는 고칠 수 있는 닳은 장비를 지님. 시험 RepairTest.cs(vh_repairtest)
@@ -69,7 +69,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 제작 CraftPlan·PlanRunner·PlanJob·CraftStep  dotnet test + vh_crafttest;vh_settest
 설비 MachineStep(제련·발효·조리)  vh_crafttest;vh_basetest · 조리대 → vh_cooktest
 세트·자동 보충 SetMenus·Refill  vh_settest;vh_refilltest
-농사 Farm(Core)           dotnet test (Plugin 생기면 vh_farmtest)
+농사 Farm(Core)·Crops·FarmJob  dotnet test;vh_farmtest · !밭 명령 → vh_npctest
 스킬 SkillBook            vh_skilltest
 포탈·던전 Portals·Dungeons·Unlocks  vh_portaltest;vh_crypttest
 패치 NpcPatches·Buildings  vh_preptest(갑옷);vh_stonetest;vh_coppertest(NoDig);vh_fighttest
@@ -135,4 +135,6 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   자라는 시간 = lerp(m_growTime, m_growTimeMax, ZDO s_seed 씨 값) 초, 심은 시각 ZDO s_plantTime(ZNet Ticks, Awake에서 주인이 씀) → 넘으면 주인이 Grow(m_grownPrefabs 하나 Instantiate, 자기 ZNetView 지움). 건강 아니면 m_destroyIfCantGrow면 지워짐.
   심기 = Player.PlacePiece: Instantiate(조각) + Piece.SetCreator + IPlaced.OnPlaced(씨앗은 호출 쪽이 뺌). 놓기 조건: Piece.m_cultivatedGroundOnly(경작지)·m_onlyInBiome.
   갈기 = 조각의 TerrainOp.Awake가 둘레 Heightmap마다 TerrainComp.ApplyOperation(RPC_ApplyOperation, 설정은 프리팹 해시) 후 자기 지움. PaintType.Cultivate. 프리팹 값(m_growRadius·조각 이름 cultivate_v2 등)은 디컴파일로 안 보임 → 런타임에 읽는다.
+- 갈기 조각 cultivate_v2는 ZNetScene 프리팹 목록에 없다(GetPrefab null) → 경작기 m_buildPieces의 GameObject를 그대로 Instantiate(Crops.CultivatePrefab). 확인 회차 79.
+  덩굴 새싹(VineAsh_sapling·VineGreen_sapling)은 m_attachDistance>0(조각에 붙여야 자람) → 밭 작물에서 뺌. 갈고 10초 뒤 Plant 상태 Healthy·IsCultivated True 확인(vh_farmtest).
 - 거두기(Pickable): Interact(Humanoid)는 Player 아니어도 됨(스킬·통계만 건너뜀) → RPC_Pick(주인만, m_picked면 무시): m_amount(Game.ScaleDrops)+m_extraDrops를 떨굼, 효과에 Player.m_localPlayer 씀(호스트 있음). m_respawnTimeMinutes 0인 작물은 거둔 뒤 사라짐.
