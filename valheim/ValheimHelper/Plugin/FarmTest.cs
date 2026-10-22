@@ -33,6 +33,7 @@ namespace ValheimHelper
             finally
             {
                 if (field != null) { Clean(field); Brain.Farms.Remove(field.X, field.Z); }
+                Brain.Refill.Off();
                 TestKit.Restore(w);
             }
             GatherTest.Say("!멈춰", null);
@@ -169,6 +170,26 @@ namespace ValheimHelper
             carrots = PlantsOf(field, "sapling_carrot");
             seedLeft = Stock(w, Seed) + Bag(w, Seed);
             checks.Add($"!당근수프 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft})", TestKit.Ok && carrots == 3 && seedLeft == 0);
+
+            // 밭 재료 자동 보충(⑩ 5b): "!채워 당근 5" → 밭에 자라는 당근 3은 셈에 넣고 모자란 2만 심기(씨앗 2 → 0), 한 명만, 다 심은 뒤엔 다시 안 나감
+            TestKit.PutInChest(w.Chest, Seed, 2);
+            Brain.Refill.Keep(Produce, 5);
+            Departures.TestRefillNow();
+            yield return new WaitForSeconds(1f);
+            WorkerNpc farmer = w.Claude.Ai.Job is FarmJob ? w.Claude : w.Alarak.Ai.Job is FarmJob ? w.Alarak : null;
+            Departures.TestRefillNow();
+            yield return new WaitForSeconds(1f);
+            checks.Add($"!채워 당근 → 한 명만 밭일 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})",
+                farmer != null && !(w.Claude.Ai.Job is FarmJob && w.Alarak.Ai.Job is FarmJob));
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null, 240f);
+            carrots = PlantsOf(field, "sapling_carrot");
+            seedLeft = Stock(w, Seed) + Bag(w, Seed) + (w.Alarak.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(Seed).GetComponent<ItemDrop>().m_itemData.m_shared.m_name));
+            checks.Add($"!채워 당근 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft})", TestKit.Ok && carrots == 5 && seedLeft == 0);
+            TestKit.PutInChest(w.Chest, Seed, 2);
+            Departures.TestRefillNow();
+            yield return new WaitForSeconds(1f);
+            checks.Add($"자라는 중이면 다시 안 심음 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", !(w.Claude.Ai.Job is FarmJob) && !(w.Alarak.Ai.Job is FarmJob));
+            Brain.Refill.Off();
             Brain.Farms.Remove(field.X, field.Z);
             Departures.Gather(who, carrotCmd, w.Claude);
             checks.Add($"밭 없으면 !당근은 밭일·채집 안 함 ({(w.Claude.Ai.Job != null ? w.Claude.Ai.Job.GetType().Name : "없음")})", w.Claude.Ai.Job == null);

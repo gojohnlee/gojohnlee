@@ -265,6 +265,22 @@ namespace ValheimHelper
             return list;
         }
 
+        /// <summary>밭에서 그 물건이 곧 나올 수: 자라는 새싹(Plant) × 수확량 + 다 자란 것(자동 보충이 같은 걸 거듭 심지 않게, 재시작 뒤에도).</summary>
+        public static int Coming(FarmField f, string produce)
+        {
+            int n = 0;
+            foreach (var p in Object.FindObjectsByType<Plant>(FindObjectsSortMode.None))
+            {
+                if (p == null) continue;
+                Crop c = Crops.BySapling(Utils.GetPrefabName(p.gameObject));
+                Vector3 at = p.transform.position;
+                if (c != null && c.Produce == produce && f.Contains(at.x, at.z)) n += Mathf.Max(1, c.Yield);
+            }
+            foreach (var p in Ripe(f))
+                if (p.m_itemPrefab.name == produce) n += Mathf.Max(1, p.m_amount);
+            return n;
+        }
+
         bool UpdateHarvest(float dt)
         {
             if (m_pickTime >= 0f) return Collect(dt);

@@ -126,11 +126,9 @@ namespace ValheimHelper
         static bool Farming(WorkerNpc npc, ChatCommand cmd, Dictionary<string, string> forCraft = null)
         {
             Crop crop = Crops.ForProduce(cmd.Item);
-            if (crop == null || ResourceCatalog.AnySourceBut(cmd.Item, Crops.IsGrown)) return false;
+            if (crop == null || !FarmOnly(cmd.Item)) return false;
             var args = new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() };
-            FarmField field = null;
-            foreach (var f in Brain.Farms.Fields)
-                if (Farm.CanGrow(crop, Scout.BiomeAt(new Vector3(f.X, 0f, f.Z)))) { field = f; break; }
+            FarmField field = FieldFor(crop);
             if (field == null) { npc.Say("farmNoField", args); return true; }
             FarmJob job = FarmJob.ForWant(npc, field, cmd.Item, cmd.Amount, out FarmPlan plan);
             if (plan.Plant.Count == 0 && FarmJob.Ripe(field).Count == 0) { npc.Say("farmNoSeedFor", args); return true; }
@@ -146,6 +144,17 @@ namespace ValheimHelper
             else npc.Say(plan.Plant.Count > 0 ? "farmPlantFor" : "farmHarvestFor", args);
             return true;
         }
+
+        /// <summary>그 작물이 자라는 첫 밭(없으면 null).</summary>
+        static FarmField FieldFor(Crop crop)
+        {
+            foreach (var f in Brain.Farms.Fields)
+                if (Farm.CanGrow(crop, Scout.BiomeAt(new Vector3(f.X, 0f, f.Z)))) return f;
+            return null;
+        }
+
+        /// <summary>밭에서만 나는 물건(당근 — 들에는 없음)인지.</summary>
+        static bool FarmOnly(string item) => Crops.ForProduce(item) != null && !ResourceCatalog.AnySourceBut(item, Crops.IsGrown);
 
         /// <summary>
         /// 제작 계획 재료가 밭에서만 나는 것이면(당근 수프의 당근, ⑨ 4d) 계획은 시작하지 않고 첫 농사 재료의 모자란 만큼 밭에 심는다
@@ -592,7 +601,7 @@ namespace ValheimHelper
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
                 HashSet<ToolKind> ways = ResourceCatalog.WaysFor(due.Item);
-                if (ways.Count == 0 || RefillBusy(due.Item)) continue;
+                if (ways.Count == 0 || RefillBusy(due.Item) || FarmOnly(due.Item)) continue; // 밭 물건은 StartRefillMake → RefillFarm
                 int amount = maxAmount > 0 ? System.Math.Min(due.Amount, maxAmount) : due.Amount;
                 var cmd = new ChatCommand { Kind = CommandKind.Item, Item = due.Item, Amount = amount };
                 DepartureInput input = Input(npc, cmd, ways, true);
@@ -617,11 +626,25 @@ namespace ValheimHelper
             foreach (Ingredient due in Brain.Refill.Due(item => RefillStock(item, home), Brain.Sets))
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
-                if (ResourceCatalog.WaysFor(due.Item).Count > 0 || RefillBusy(due.Item)) continue;
+                if (RefillBusy(due.Item)) continue;
+                if (FarmOnly(due.Item))
+                {
+                    if (RefillFarm(npc, due.Item, due.Amount)) return true;
+                    continue;
+                }
+                if (ResourceCatalog.WaysFor(due.Item).Count > 0) continue;
                 if (book.RecipesFor(due.Item).Count == 0 && book.ProcessesFor(due.Item).Count == 0) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
                 Plan plan = PlanFor(npc, new List<Ingredient> { due });
                 bool farm = plan.Steps.Exists(s => s.Kind == StepKind.Farm);
                 Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 만들기 {due.Item} {due.Amount}: 단계 {plan.Steps.Count}, {plan.Seconds:0}초, 부분 {plan.Partial}, 김 {plan.TooLong}, 밭 {farm}");
+                if (farm && plan.OutOfScope.Count == 0 && plan.Unknown.Count == 0)
+                {
+                    // 밭 재료가 낀 계획(당근 수프): 그 재료를 먼저 밭에 심는다. 다 자라 상자에 들어오면 다음 확인 때 계획이 끝까지 된다.
+                    PlanStep f = plan.Steps.Find(s => s.Kind == StepKind.Farm);
+                    if (!RefillBusy(f.Item) && RefillFarm(npc, f.Item, f.Amount)) return true;
+                    s_refillSkipUntil[due.Item] = Time.time + 600f;
+                    continue;
+                }
                 if (plan.Steps.Count == 0 || plan.Partial || plan.TooLong || farm) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
                 string label = GatherJob.ItemLabel(due.Item);
                 npc.Ai.StartJob(new PlanJob(npc, plan, label) { Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = due.Item, Amount = due.Amount } });
@@ -629,6 +652,37 @@ namespace ValheimHelper
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// ⑩ 밭 물건 자동 보충(5b): 그 작물이 자라는 첫 밭에서 다 자란 것을 거두고 모자란 만큼(밭에서 자라는 중인 것은 빼고, FarmJob.Coming) 심는다.
+        /// 밭이 없거나·씨앗도 거둘 것도 없거나·이미 자라는 중이면 그 물건은 10분 쉰다(말 없음). 시작했으면 true.
+        /// </summary>
+        static bool RefillFarm(WorkerNpc npc, string item, int amount)
+        {
+            Crop crop = Crops.ForProduce(item);
+            FarmField field = crop != null ? FieldFor(crop) : null;
+            bool taken = false;
+            if (field != null)
+                foreach (var n in WorkerNpc.All)
+                    if (n.Ai.Job is FarmJob fj && fj.Field.Contains(field.X, field.Z)) taken = true;
+            if (taken) return false; // 누가 그 밭일 중: 쉬게 하지 않고 다음 확인 때 다시 셈
+            int coming = field != null ? FarmJob.Coming(field, item) : 0, ripe = field != null ? FarmJob.Ripe(field).Count : 0;
+            int need = amount - coming;
+            FarmJob job = null;
+            FarmPlan plan = null;
+            if (field != null && !taken && (need > 0 || ripe > 0)) job = FarmJob.ForWant(npc, field, item, System.Math.Max(0, need), out plan);
+            bool go = job != null && (plan.Plant.Count > 0 || ripe > 0);
+            Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 밭 {item} {amount}: 밭 {(field != null ? $"({field.X:0},{field.Z:0})" : "없음")}, 맡음 {taken}, 자라는 중 {coming}, 다 자람 {ripe}, 심기 {(plan != null ? plan.Plant.Count : 0)} → {(go ? "감" : "쉼")}");
+            if (!go || !Commands.StartFarm(npc, field, false, job)) { s_refillSkipUntil[item] = Time.time + 600f; return false; }
+            var args = new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(item), ["n"] = amount.ToString() };
+            if (plan.Plant.Count > 0)
+            {
+                args["minutes"] = Departure.Minutes5((float)Farm.GrowSeconds(Crops.All, plan)).ToString();
+                npc.Say("refillFarm", args);
+            }
+            else npc.Say("farmHarvestFor", args);
+            return true;
         }
 
         // ---- !기억 ----
