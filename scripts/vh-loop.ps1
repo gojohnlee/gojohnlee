@@ -5,6 +5,7 @@
 # 두 계정 모두 한도(또는 쉼)면 풀리는 시각까지 기다리고,
 # 자리 비움(입력 없음 10분)이면 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
+# 쉬기: docs/valheim/loop-pause.txt에 다시 시작할 시각("yyyy-MM-dd HH:mm")을 쓴다(아래 Get-PauseUntil).
 # 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 UserReply.txt). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
 # pull로 이 스크립트가 바뀌면 이번 회차 뒤 새 스크립트로 저절로 다시 켜진다(scripts/vh-loop-restart.ps1, PC에 사람이 없어도). 고칠 때 UTF-8 BOM을 지킨다.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
@@ -70,6 +71,17 @@ function Prepare-Git {
         $out = G pull -q --rebase --autostash origin valheim
         if ($LASTEXITCODE -ne 0) { G rebase --abort | Out-Null; Log "pull 못 함: $out" }
     }
+}
+
+# 쉬기: 저장소에 docs/valheim/loop-pause.txt(첫 줄 "yyyy-MM-dd HH:mm", 이 PC 시각)를 두면 그 시각까지 새 회차를 시작하지 않는다.
+# 돌고 있는 회차는 끝까지 하고, 기다리는 동안은 Wait-Until(자리 비움이면 최대 절전 + 깨우기 예약). 지난 시각이면 없는 것과 같다.
+function Get-PauseUntil {
+    $p = Join-Path $Repo 'docs\valheim\loop-pause.txt'
+    if (-not (Test-Path $p)) { return $null }
+    $line = [IO.File]::ReadAllLines($p, $Utf8) | Where-Object { $_.Trim() } | Select-Object -First 1
+    $t = [datetime]::MinValue
+    if ($line -and [datetime]::TryParseExact($line.Trim(), 'yyyy-MM-dd HH:mm', [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$t) -and $t -gt (Get-Date)) { return $t }
+    return $null
 }
 
 function Test-StopFile { (Test-Path (Join-Path $Repo 'docs\valheim\loop-stop.txt')) -or (Test-Path (Join-Path $Dir 'stop')) }
@@ -248,6 +260,12 @@ while ($true) {
     }
     if (Test-StopFile) {
         Log '멈춤 파일 → 끝'; Write-Status $(if (Test-Path $mark) { '다시 켜는 중: 새 루프 스크립트로(1~2분)' } else { '멈춤: 멈춤 파일이 있음' }) '-'; break
+    }
+    $pause = Get-PauseUntil
+    if ($pause) {
+        Log "쉼 파일 → $($pause.ToString('MM-dd HH:mm'))까지 새 회차 안 함"
+        Write-Status "쉼: loop-pause.txt — $($pause.ToString('MM-dd HH:mm'))에 다시" '-'
+        Save-State; Wait-Until $pause; continue
     }
     $free = @(0, 1 | Where-Object { -not $st.until[$_] -or [datetime]$st.until[$_] -le (Get-Date) })
     if ($free.Count -eq 0) {
