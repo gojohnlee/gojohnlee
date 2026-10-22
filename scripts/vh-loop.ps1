@@ -1,5 +1,6 @@
-﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 보이는 창(화면 오른쪽 절반)으로 실행하고,
-# claude가 하는 일(고친 코드·명령·결과)을 그 창에 바로 보여 준다(사용자 요청 2026-10-22). 창을 닫으면 루프도 끝난다.
+﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 conhost 창으로 실행한다.
+# claude가 하는 일(고친 코드·명령·결과)을 그 창에 찍는다. 창은 $ShowWindow가 $false면 켜자마자 숨긴다(사용자 요청 2026-10-22 저녁:
+# 보이게 했다가 다시 숨김, 다시 보려면 $true). 보이는 창을 닫으면 루프도 끝난다.
 # 회차: pull → 멈춤 파일 확인 → 계정 고르기 → claude -p 새 세션(scripts/vh-loop-prompt.txt) → 결과 판정 → status.txt 푸시.
 # 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
 # 백업 때 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리에서 돌려 먼저 답한다.
@@ -23,6 +24,7 @@ $Accounts = @(
     @{ Name = '1번'; Config = $null },
     @{ Name = '2번'; Config = (Join-Path $env:USERPROFILE '.claude-acct2') }
 )
+$ShowWindow = $false   # 루프 창 보이기(오른쪽 절반). $false = 숨김
 $RoundTimeoutMin = 240
 $BackupMin = 15
 $ReplyTimeoutMin = 15
@@ -64,6 +66,8 @@ public static class Show {
     [DllImport("kernel32.dll")] static extern bool SetConsoleMode(IntPtr h, uint m);
     [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
     [DllImport("user32.dll")] static extern bool MoveWindow(IntPtr h, int x, int y, int w, int ht, bool r);
+    [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int c);
+    public static void Hide() { IntPtr w = GetConsoleWindow(); if (w != IntPtr.Zero) ShowWindow(w, 0); }
     [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; }
     [DllImport("user32.dll")] static extern bool SystemParametersInfo(uint a, uint b, ref RECT r, uint f);
     public static void Init(bool place) {
@@ -207,6 +211,7 @@ public class Feed {
 }
 '@
 [VH.Show]::Init(-not $Once)   # -Once는 사용자가 연 창에서 돌리므로 창을 옮기지 않음
+if (-not $ShowWindow -and -not $Once) { [VH.Show]::Hide() }   # 숨김: 작업 스케줄러가 연 창만(-Once는 사용자 창)
 $Host.UI.RawUI.WindowTitle = 'VH loop'
 
 $Awake = [uint32]2147483649   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED: 도는 동안 저절로 잠들지 않게
