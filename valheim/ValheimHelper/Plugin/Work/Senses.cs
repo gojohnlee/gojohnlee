@@ -80,10 +80,13 @@ namespace ValheimHelper
         public const string KeyPlaces = "vh_places";
         /// <summary>세트메뉴(6-4장)·자동 보충 기준(11장). 모두 같이 쓴다.</summary>
         public const string KeySets = "vh_sets", KeyRefill = "vh_refill";
+        /// <summary>"!밭"으로 정한 밭들(⑨).</summary>
+        public const string KeyFarms = "vh_farms";
         static Knowledge s_k;
         static PlaceBook s_places;
         static SetMenuBook s_sets;
         static RefillBook s_refill;
+        static FarmBook s_farms;
         static FoeBook s_foes;
         static string s_foesSaved = "";
         static ZDOMan s_for;
@@ -94,7 +97,7 @@ namespace ValheimHelper
             if (s_k == null || s_for != ZDOMan.instance)
             {
                 s_for = ZDOMan.instance;
-                string best = "", foes = "", places = "", sets = "", refill = "";
+                string best = "", foes = "", places = "", sets = "", refill = "", farms = "";
                 foreach (var zdo in Workers.AllZdos()) // 월드 불러온 직후 한 번만
                 {
                     string t = zdo.GetString(Key, "");
@@ -107,6 +110,8 @@ namespace ValheimHelper
                     if (se.Length > sets.Length) sets = se;
                     string re = zdo.GetString(KeyRefill, "");
                     if (re.Length > refill.Length) refill = re;
+                    string fa = zdo.GetString(KeyFarms, "");
+                    if (fa.Length > farms.Length) farms = fa;
                 }
                 s_k = Knowledge.Load(best);
                 s_foes = FoeBook.Load(foes);
@@ -114,6 +119,7 @@ namespace ValheimHelper
                 s_places = PlaceBook.Load(places);
                 s_sets = SetMenuBook.Load(sets);
                 s_refill = RefillBook.Load(refill);
+                s_farms = FarmBook.Load(farms);
             }
             return s_k;
         }
@@ -148,13 +154,18 @@ namespace ValheimHelper
             get { Get(); return s_refill; }
         }
 
+        public static FarmBook Farms
+        {
+            get { Get(); return s_farms; }
+        }
+
         public static void Update(float dt)
         {
             if (s_k == null || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 손님 게임에서는 NPC ZDO에 쓰지 않는다(vh_peertest 3)
             s_saveTimer -= dt;
             if (s_saveTimer > 0f) return;
             s_saveTimer = 30f;
-            if (s_k.Dirty || s_places.Dirty || s_sets.Dirty || s_refill.Dirty || s_foes.Save() != s_foesSaved) Save();
+            if (s_k.Dirty || s_places.Dirty || s_sets.Dirty || s_refill.Dirty || s_farms.Dirty || s_foes.Save() != s_foesSaved) Save();
         }
 
         public static void Save()
@@ -163,15 +174,16 @@ namespace ValheimHelper
             string text = s_k.Save();
             string foes = s_foes.Save();
             string places = s_places.Save();
-            string sets = s_sets.Save(), refill = s_refill.Save();
+            string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save();
             foreach (var zdo in Workers.Zdos())
             {
-                zdo.Set(Key, text); zdo.Set(KeyFoes, foes); zdo.Set(KeyPlaces, places); zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill);
+                zdo.Set(Key, text); zdo.Set(KeyFoes, foes); zdo.Set(KeyPlaces, places); zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms);
             }
             s_k.Dirty = false;
             s_places.Dirty = false;
             s_sets.Dirty = false;
             s_refill.Dirty = false;
+            s_farms.Dirty = false;
             s_foesSaved = foes;
         }
     }

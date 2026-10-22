@@ -164,3 +164,78 @@ namespace ValheimHelper.Core.Work
         }
     }
 }
+
+namespace ValheimHelper.Core.Work
+{
+    public sealed class FarmField
+    {
+        public float X, Z;
+        public int Radius;
+        public FarmField(float x, float z, int radius) { X = x; Z = z; Radius = radius; }
+        public bool Contains(float x, float z) => (X - x) * (X - x) + (Z - z) * (Z - z) <= (float)Radius * Radius;
+    }
+
+    public enum FarmSetResult { Added, Moved, Full }
+
+    /// <summary>
+    /// "!밭 N"으로 정한 밭들(구상서 6-3, 여러 곳). 두 NPC가 같이 쓰고 NPC ZDO(vh_farms)에 저장한다.
+    /// [기본안] 새 밭 중심이 있던 밭 안이면 그 밭을 옮기고(반경도 새 값), 아니면 새로 더한다. 최대 Max곳.
+    /// </summary>
+    public sealed class FarmBook
+    {
+        public const int Max = 8;
+        readonly List<FarmField> _fields = new List<FarmField>();
+        public bool Dirty;
+        public IReadOnlyList<FarmField> Fields => _fields;
+
+        public FarmSetResult Set(float x, float z, int radius)
+        {
+            radius = (int)Farm.ClampRadius(radius);
+            foreach (var f in _fields)
+                if (f.Contains(x, z))
+                {
+                    f.X = x; f.Z = z; f.Radius = radius;
+                    Dirty = true;
+                    return FarmSetResult.Moved;
+                }
+            if (_fields.Count >= Max) return FarmSetResult.Full;
+            _fields.Add(new FarmField(x, z, radius));
+            Dirty = true;
+            return FarmSetResult.Added;
+        }
+
+        /// <summary>(x,z)를 품은 밭 하나를 지운다. 지웠으면 true.</summary>
+        public bool Remove(float x, float z)
+        {
+            int i = _fields.FindIndex(f => f.Contains(x, z));
+            if (i < 0) return false;
+            _fields.RemoveAt(i);
+            Dirty = true;
+            return true;
+        }
+
+        public string Save()
+        {
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var parts = new List<string>();
+            foreach (var f in _fields) parts.Add(f.X.ToString("0.0", inv) + "," + f.Z.ToString("0.0", inv) + "," + f.Radius.ToString(inv));
+            return string.Join(";", parts);
+        }
+
+        public static FarmBook Load(string text)
+        {
+            var b = new FarmBook();
+            if (string.IsNullOrEmpty(text)) return b;
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var num = System.Globalization.NumberStyles.Float;
+            foreach (var part in text.Split(';'))
+            {
+                var p = part.Split(',');
+                if (p.Length != 3 || !float.TryParse(p[0], num, inv, out float x) || !float.TryParse(p[1], num, inv, out float z)
+                    || !int.TryParse(p[2], System.Globalization.NumberStyles.Integer, inv, out int r) || r <= 0) continue;
+                if (b._fields.Count < Max) b._fields.Add(new FarmField(x, z, (int)Farm.ClampRadius(r)));
+            }
+            return b;
+        }
+    }
+}

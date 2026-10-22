@@ -155,6 +155,9 @@ namespace ValheimHelper
                         Brain.Refill.Off(cmd.Item);
                         npc.Say("keepOff", new Dictionary<string, string> { ["item"] = cmd.Item != null ? GatherJob.ItemLabel(cmd.Item) : "전부" });
                         break;
+                    case CommandKind.Farm:
+                        SetFarm(who, cmd, npc);
+                        break;
                     case CommandKind.Status:
                         npc.Say("status", new Dictionary<string, string>
                         {
@@ -253,6 +256,18 @@ namespace ValheimHelper
                 ["more"] = list.Count > 5 ? npc.Line("knowledgeMore", new Dictionary<string, string> { ["n"] = (list.Count - 5).ToString() }) : "",
                 ["looked"] = k.LookedCount.ToString(),
             });
+        }
+
+        /// <summary>!밭 N: 말한 사람이 선 곳을 중심으로 반경 N m 밭을 적어 둔다(⑨, 여러 곳). 심기·거두기는 FarmJob(다음 조각).</summary>
+        static void SetFarm(Speaker who, ChatCommand cmd, WorkerNpc npc)
+        {
+            var zdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(who.CharacterId) : null;
+            if (zdo == null) { npc.Say("farmWhere"); return; }
+            Vector3 p = zdo.GetPosition();
+            var args = new Dictionary<string, string> { ["r"] = cmd.Number.ToString() };
+            if (Crops.All.Count > 0 && !Crops.AnyGrows(Scout.BiomeAt(p))) { npc.Say("farmNoGrow", args); return; }
+            var r = Brain.Farms.Set(p.x, p.z, cmd.Number);
+            npc.Say(r == FarmSetResult.Full ? "farmFull" : r == FarmSetResult.Moved ? "farmMoved" : "farmSet", args);
         }
 
         /// <summary>!상자: 상자는 지정하지 않는다(거점 상자 전부를 씀) → 그렇다고 알려 준다.</summary>

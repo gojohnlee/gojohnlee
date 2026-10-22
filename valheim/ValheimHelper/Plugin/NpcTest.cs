@@ -107,12 +107,17 @@ namespace ValheimHelper
             float homeDist = Utils.DistanceXZ(claude.Home, claude.transform.position);
             Check($"!멈춰 → 집 도착 (집에서 {fromHome:0}m → {homeDist:0.0}m, {waited:0}초)", fromHome > 10f && claude.Ai.Current == WorkerAI.Mode.Idle && homeDist < 3f);
 
-            // 5) 아직 못 하는 명령, 형식 틀린 ! 문장
-            int before = s_heard.Count;
-            Say("!밭 10"); // 아직 못 하는 일(⑨)
+            // 5) !밭(⑨ 밭 자리 적기), 형식 틀린 ! 문장
+            TestRunner.Log("작물: " + Crops.Describe());
+            Check($"작물 목록(경작기) {Crops.All.Count}개, 당근·갈기 조각 있음", Crops.BySapling("sapling_carrot") != null && Crops.CultivatePiece != null);
+            int before = s_heard.Count, farmsBefore = Brain.Farms.Fields.Count;
+            Vector3 at = player.transform.position;
+            Say("!밭 10");
             Say("!나무 좀 많이 가져와");
             yield return new WaitForSeconds(1f);
             Check("!밭 10 / 형식 틀린 ! 문장 → 대답 2개", s_heard.Count - before == 2);
+            bool farmed = Brain.Farms.Fields.Count == farmsBefore + 1 && Brain.Farms.Remove(at.x, at.z); // 확인 뒤 지워 둔다
+            Check($"!밭 10 → 선 자리에 밭 적힘(바이옴 {Scout.BiomeAt(at)})", farmed);
 
             End(player, god, checks);
         }

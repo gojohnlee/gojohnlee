@@ -28,9 +28,9 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [루프 회차 78] ⑨ 농사 둘째 조각: Plugin/Work/Crops.cs(경작기에서 작물 16개·갈기 조각 cultivate_v2 읽음) + "!밭 N" 명령(선 자리·반경을 vh_farms에 저장, 최대 8곳, 안 자라는 바이옴은 거절) + FarmBook 테스트. dotnet 394 PASS, vh_npctest 14/14 PASS. 다음: 3) FarmJob 심기.
 - [루프 회차 77] ⑨ 농사 첫 조각: Core/Work/Farm.cs(밭 자리·간격·바이옴 규칙·무엇을 몇 개 심을지·씨앗 유지·자라는 시간) + 테스트 14개(전체 392 PASS). 게임 코드 Plant·Pickable·경작 확인해 codemap에. 다음: 2) Crops.cs·!밭 명령.
 - [루프 회차 76] "지금 먼저" 5) 끝: codemap.txt에 "시험 고르기" 표(바꾼 코드 영역 → 돌릴 시험, 바이옴 완료마다 전체 회귀 + 실제 재시작). 코드 변경 없음. 다음: ⑨ 농사 조각 나누기.
-- [루프 회차 75] "지금 먼저" 4) 끝: 실제 재시작 시험(vh_restart1 일 중간 저장·게임 끔 → VH_RESET=0으로 vh_restart2 다시 켜서 이어 하기) 5/5·12/12 PASS — NPC·깃발 수·상자·짐·하던 일·대기열 그대로. 다음: 5) 시험 고르기 표.
 
 다음 (순서대로)
 ★ 지금 먼저(사용자 결정 2026-10-22 시험 시점·시험 환경, decisions.txt) — 순서대로, 끝나면 ⑧로 돌아감:
@@ -44,8 +44,9 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   막는 문제(관련 기능 확장을 멈추고 먼저 해결): 물건 복제·소실, 저장 손상, 작업 복원 실패. 그 밖(이동 지연 등)은 한 회차에 못 풀면 Errors.txt에 적고 진행.
 ★ 지금 할 것 8) ⑨ 농사(평탄화 없이, 구상서 6-3) 조각 — 순서대로:
   1) [끝, 회차 77] Core/Work/Farm.cs: 밭 반경(기본 10·최대 20)·심을 자리(뱀 꼴 칸, 간격 = m_growRadius+0.4)·바이옴/추위 규칙·무엇을 몇 개(씨앗·자리 한도, 씨앗 10 아래면 수확물 다시 심기)·자라는 시간. dotnet test.
-  2) Plugin Crops.cs: 게임 데이터 → Crop 목록(경작기 Cultivator의 m_buildPieces에서 Plant 있는 조각: Piece.m_resources 씨앗, Plant 값, m_grownPrefabs의 Pickable m_itemPrefab·m_amount; 갈기 조각 = TerrainOp 있는 것)
+  2) [끝, 회차 78] Plugin Crops.cs: 게임 데이터 → Crop 목록(경작기 Cultivator의 m_buildPieces에서 Plant 있는 조각: Piece.m_resources 씨앗, Plant 값, m_grownPrefabs의 Pickable m_itemPrefab·m_amount; 갈기 조각 = TerrainOp 있는 것)
      + "!밭 10" 명령(ChatParser, 말한 사람 자리·반경을 Brain vh_farms에 저장, 여러 곳) + 게임 안 확인 칸(작물 목록 diag). 시험 dotnet test + vh_npctest.
+     (회차 78 확인: 작물 16개 중 씨앗 만드는 것 sapling_seedcarrot·seedturnip·seedonion·seedkale(KaleSeeds→KaleSeeds)·oat(OatSeeds→OatSeeds)·barley(Barley→Barley)가 섞임 → FarmJob은 Produce가 음식인 것과 씨앗용을 구분해 고를 것)
   3) FarmJob: 장비 상자에서 경작기 챙김(없으면 "경작기가 없어요" 거절) → 자리마다 갈기 조각 Instantiate(TerrainOp.Awake가 칠함) → 새싹 Instantiate(Piece.SetCreator, 씨앗 짐에서 뺌)
      → 시험 vh_farmtest(심은 수·씨앗 수 보존, s_plantTime 앞당겨 자람 → Pickable.Interact(NPC 됨, RPC_Pick이 떨굼) → PickDrop → 상자).
   4) 거두기 일·씨앗 유지·Departure Source 농사 연결("당근이 없어요. 심어 둘게요. N분쯤") → 5) ⑩ 자동 보충 확장.

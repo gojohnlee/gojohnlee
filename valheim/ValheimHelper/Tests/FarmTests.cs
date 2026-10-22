@@ -152,4 +152,37 @@ public class FarmTests
         Assert.Equal(6000, Farm.GrowSeconds(crops, p));
         Assert.Equal(0, Farm.GrowSeconds(crops, new FarmPlan()));
     }
+
+    [Fact]
+    public void FarmBookAddsMovesAndCaps()
+    {
+        var b = new FarmBook();
+        Assert.Equal(FarmSetResult.Added, b.Set(0, 0, 10));
+        Assert.Equal(FarmSetResult.Moved, b.Set(5, 0, 30)); // 첫 밭 안 → 옮김, 반경은 최대 20
+        Assert.Single(b.Fields);
+        Assert.Equal(5f, b.Fields[0].X);
+        Assert.Equal(20, b.Fields[0].Radius);
+        Assert.Equal(FarmSetResult.Added, b.Set(100, 0, 10));
+        for (int i = 2; i < FarmBook.Max; i++) b.Set(1000 * i, 0, 10);
+        Assert.Equal(FarmBook.Max, b.Fields.Count);
+        Assert.Equal(FarmSetResult.Full, b.Set(-5000, 0, 10));
+        Assert.True(b.Remove(101, 1));
+        Assert.False(b.Remove(-5000, 0));
+        Assert.Equal(FarmBook.Max - 1, b.Fields.Count);
+    }
+
+    [Fact]
+    public void FarmBookSaveLoadRoundTrip()
+    {
+        var b = new FarmBook();
+        b.Set(12.34f, -56.7f, 10);
+        b.Set(300, 400, 15);
+        var c = FarmBook.Load(b.Save());
+        Assert.False(c.Dirty);
+        Assert.Equal(2, c.Fields.Count);
+        Assert.Equal(12.3f, c.Fields[0].X, 1);
+        Assert.Equal(-56.7f, c.Fields[0].Z, 1);
+        Assert.Equal(15, c.Fields[1].Radius);
+        Assert.Empty(FarmBook.Load("x;1,2;3,4,-1;").Fields);
+    }
 }
