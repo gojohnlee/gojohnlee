@@ -48,6 +48,7 @@ namespace ValheimHelper
                 if (Character.InInterior(zdo.GetPosition())) continue; // 지하묘지 안(y+5000)은 그 구역 바깥 지식이 아니다
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null) continue;
+                if (!HiddenOres.Known(zdo, info)) continue; // 묻힌 은 광맥은 위시본 없이는 모른다(⑪)
                 ZoneXY zone = ZoneOf(zdo.GetPosition());
                 if (!seen.TryGetValue(zone, out var counts)) seen[zone] = counts = new Dictionary<string, int>();
                 foreach (var item in info.Produces)

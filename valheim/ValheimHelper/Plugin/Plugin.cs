@@ -53,6 +53,7 @@ namespace ValheimHelper
             Step("vh_bowtest", BowTest.Register);
             Step("vh_basetest", BaseTest.Register);
             Step("vh_escorttest", EscortTest.Register);
+            Step("vh_silvertest", SilverTest.Register);
             Step("vh_restart1·2", RestartTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");

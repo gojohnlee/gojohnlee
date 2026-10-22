@@ -22,6 +22,10 @@ namespace ValheimHelper
         public bool Falls;
         /// <summary>여러 물건 중 무작위로 떨구는 통·궤짝(barrell 등, 부수는 것에 물건 3종 이상). 사냥감이 있는 물건은 이걸 얻는 법으로 안 친다(사슴 가죽).</summary>
         public bool Loot;
+        /// <summary>땅에 묻혀 숨는 광맥(Beacon이 붙음 — 산 은). 묻혔으면 위시본을 얻어야 안다(HiddenOres, ⑪).</summary>
+        public bool Hidden;
+        /// <summary>프리팹 뿌리에서 맨 윗면까지 높이(m, 메시 기준). 드러났는지 볼 때 ZDO 높이에 더한다.</summary>
+        public float TopOffset;
     }
 
     /// <summary>
@@ -99,10 +103,14 @@ namespace ValheimHelper
             if (ZNetScene.instance == null) return;
             // 그루터기는 Destructible이라 어린 나무와 구별이 안 된다 → 나무의 m_stubPrefab으로 알아낸다.
             var stubs = new HashSet<string>();
+            // 숨는 광맥이 깨져 생긴 조각(silvervein_frac 등)은 누가 이미 깨기 시작한 것 = 드러난 것 → 숨지 않는다.
+            var broken = new HashSet<string>();
             foreach (var p in ZNetScene.instance.m_prefabs)
             {
                 var tree = p != null ? p.GetComponent<TreeBase>() : null;
                 if (tree != null && tree.m_stubPrefab != null) stubs.Add(tree.m_stubPrefab.name);
+                var des = p != null ? p.GetComponent<Destructible>() : null;
+                if (des != null && des.m_spawnWhenDestroyed != null) broken.Add(des.m_spawnWhenDestroyed.name);
                 var sm = p != null ? p.GetComponent<Smelter>() : null;
                 if (sm != null && sm.m_fuelItem != null)
                     foreach (var c in sm.m_conversion)
@@ -114,13 +122,15 @@ namespace ValheimHelper
                 var info = Describe(p, 0);
                 if (info == null || info.Produces.Count == 0) continue;
                 if (stubs.Contains(p.name)) info.Priority = 0f;
+                info.Hidden = !broken.Contains(p.name) && p.GetComponentInChildren<Beacon>(true) != null;
+                if (info.Hidden) info.TopOffset = HiddenOres.TopOffset(p);
                 s_byHash[p.name.GetStableHashCode()] = info;
             }
             Plugin.Log.LogInfo($"자원 목록: {s_byHash.Count}종");
         }
 
         /// <summary>월드가 바뀌면(ZNetScene 새로 생김) 다시 만든다.</summary>
-        public static void Reset() { s_byHash = null; Prey.Reset(); }
+        public static void Reset() { s_byHash = null; Prey.Reset(); HiddenOres.Reset(); }
 
         static ResourceInfo Describe(GameObject p, int depth)
         {

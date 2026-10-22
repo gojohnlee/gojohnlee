@@ -40,7 +40,7 @@ namespace ValheimHelper
         }
 
         /// <summary>시험 전 열쇠 상태(플레이어가 열쇠를 알았나, 보스 월드 키가 있었나). 끝에 그대로 되돌린다(플레이어 프로필은 저장되므로).</summary>
-        sealed class KeyState
+        internal sealed class KeyState
         {
             public string SharedName, BossKey;
             public bool HadKnown, HadGlobal, Saved;

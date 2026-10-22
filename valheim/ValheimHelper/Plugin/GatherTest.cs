@@ -137,7 +137,7 @@ namespace ValheimHelper
                     Object.Instantiate(dep, Ground(p), rot);
                     placed++;
                 }
-                TestRunner.Log($"광맥 놓음 {dep.name} {placed}개 (지난 구덩이 꼭짓점 {undone}개 되돌림)");
+                TestRunner.Log($"광맥 놓음 {dep.name} {placed}개 (지난 구덩이 꼭짓점 {undone}개 되돌림), 첫 광맥 집에서 {Utils.DistanceXZ(depositPos, home):0.0}m 높이차 {depositPos.y - home.y:0.0}m, 상자 {eqPos}·{resPos}, 집 {home}");
                 yield return new WaitForSeconds(1f);
                 // 일꾼이 그 광맥을 고를 수 있는지(0.3.8 첫 구리 시험: 12m 앞 광맥을 두고 580m 밖으로 감)
                 ResourceInfo info = ResourceCatalog.Get(hash);
@@ -187,10 +187,32 @@ namespace ValheimHelper
             {
                 Vector3 p = claude ? claude.transform.position : depositPos;
                 TestRunner.Log($"광맥 둘레 가장 깊은 곳 {Deepest(depositPos, 4f):0.0}m, 1호 위치 집에서 {(claude ? Utils.DistanceXZ(claude.Home, p) : -1):0}m, {(claude ? claude.MoveDebug : "")}");
+                // 남은 광맥도 치운다: 다음 시험(crypttest 110m 앞)의 길을 막는다(회차 90: 남은 Rock4_cell 사이에서 지하묘지 가기 막힘)
+                int gone = RemoveDeposits(depositPos, DepositFor(item));
                 int back = TestTerrain.Reset(depositPos, 10f); // 다음 시험을 위해 구덩이 되돌림
                 TestRunner.Log($"구덩이 되돌림: 꼭짓점 {back}개");
+                TestRunner.Log($"남은 광맥 조각 {gone}개 지움");
             }
             End(player, god, checks, onHeard, heard);
+        }
+
+        /// <summary>거점 앞 시험 광맥(그 프리팹과 깨진 조각) 중 20m 안의 것을 지운다. 지운 수.</summary>
+        static int RemoveDeposits(Vector3 at, GameObject dep)
+        {
+            if (dep == null) return 0;
+            var hashes = new HashSet<int> { dep.name.GetStableHashCode() };
+            var des = dep.GetComponent<Destructible>();
+            if (des != null && des.m_spawnWhenDestroyed != null) hashes.Add(des.m_spawnWhenDestroyed.name.GetStableHashCode());
+            int n = 0;
+            foreach (var zdo in Senses.Nearby(at, 20f))
+            {
+                if (!hashes.Contains(zdo.GetPrefab())) continue;
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v != null) { v.ClaimOwnership(); ZNetScene.instance.Destroy(v.gameObject); }
+                else ZDOMan.instance.DestroyZDO(zdo);
+                n++;
+            }
+            return n;
         }
 
         /// <summary>진단: 광맥 프리팹이 부서지면 무엇이 몇 개 나오는지(Destructible → 조각 → ...).</summary>

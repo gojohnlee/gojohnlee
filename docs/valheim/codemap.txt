@@ -72,7 +72,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 세트·자동 보충 SetMenus·Refill  vh_settest;vh_refilltest
 농사 Farm(Core)·Crops·FarmJob  dotnet test;vh_farmtest · !밭 명령 → vh_npctest · Departures.Farming → vh_farmtest(!당근 칸)
 스킬 SkillBook            vh_skilltest
-포탈·던전 Portals·Dungeons·Unlocks  vh_portaltest;vh_crypttest
+포탈·던전 Portals·Dungeons·Unlocks  vh_portaltest;vh_crypttest · 숨는 광맥 HiddenOres → vh_silvertest;vh_coppertest
 패치 NpcPatches·Buildings  vh_preptest(갑옷);vh_stonetest;vh_coppertest(NoDig);vh_fighttest
 시험 틀 TestRunner·TestKit·AutoStart·valheim-test.ps1  기본 묶음 + vh_basetest + VH_SOLO=1 단독 한 번
 
@@ -126,6 +126,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   종류는 프리팹 값(통나무 = HitType.Tree). 바위(MineRock5) 등 다른 IDestructible도 친다. TreeLog.RPC_Damage는 hit.m_pushForce×2로 통나무를 민다.
 - ZNetView.InvokeRPC는 주인이 자기면 그 자리에서 처리된다(ZRoutedRpc.InvokeRoutedRPC: target == 자기 id → HandleRoutedRPC) → 직접 피해는 같은 프레임에 체력에 반영.
 - 지하묘지(⑦): Plugin/Dungeons.cs(All[Left 남은 더미·CanOpen]·KeyDoor·TryChoose(minedOut)·IsOpen·DoorOf·Open·Entrance·Exit·ArrivePoint·Use) + Core/Work/Crypts.cs(Choose 열린 곳 먼저→열 수 있는 닫힌 곳, MinedOut) · 시험 CryptTest.cs(vh_crypttest, TestSpawnLocation으로 SunkenCrypt4 세움, 열쇠 상태 KeyState로 바꿨다 되돌림)
+- 숨는 광맥(⑪ 산 은): Core/Work/HiddenOre.cs(Exposed·Known·Score 묻힌 것은 뒤로) + Plugin/Work/HiddenOres.cs(Finder = SE_Finder 장착 물건 Wishbone, HaveFinder = Unlocks.Have, Exposed·Known·TopOffset) · ResourceInfo.Hidden·TopOffset · GatherJob.FindInSight·Senses.Look이 거름 · 시험 SilverTest.cs(vh_silvertest, CryptTest.KeyState로 위시본 얻음 바꿨다 되돌림)
 - 보스 진행 잠금 풀기: Plugin/Unlocks.cs(Have(ItemDrop) = 호스트가 주운 적 있음 IsMaterialKnown 또는 그 물건 떨구는 보스 월드 키, BossKey). 지하묘지 열쇠 문 열기 = GatherJob.UpdateOpenDoor(GoCrypt 안).
 - 포탈(⑤): Core/Work/PortalRoute.cs(PortalLink, Choose: 걷기 vs 포탈), Plugin/Portals.cs(Linked/TryChoose: ZDO "portal_wood"의 GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal)로 짝 출구 = 짝 위치+짝 rot*forward*1+up1, 바닐라 TeleportWorld.Teleport와 같음). 던전 문 Teleport 출구 = 문 위치+forward-up(문 쪽 targetPoint), 거리 TeleportTo(distantTeleport:false). GatherJob.WalkVia/PortalOr: GoZone·Return 걸음에서 포탈이 더 빠르면 입구까지 걷고 TeleportTo(출구).
 - 지하묘지 채집(⑦ 2조각): Work/GatherJob.cs Step.GoCrypt·UpdateGoCrypt·UpdateInside·LeaveCrypt(UpdateReturn이 안이면 부름)·m_cryptsDone. FindInSight(range, inside 구분), Senses.Observe는 안 물체 제외. 시험 vh_crypttest 끝 칸 "!철 3".
@@ -140,4 +141,5 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   갈기 = 조각의 TerrainOp.Awake가 둘레 Heightmap마다 TerrainComp.ApplyOperation(RPC_ApplyOperation, 설정은 프리팹 해시) 후 자기 지움. PaintType.Cultivate. 프리팹 값(m_growRadius·조각 이름 cultivate_v2 등)은 디컴파일로 안 보임 → 런타임에 읽는다.
 - 갈기 조각 cultivate_v2는 ZNetScene 프리팹 목록에 없다(GetPrefab null) → 경작기 m_buildPieces의 GameObject를 그대로 Instantiate(Crops.CultivatePrefab). 확인 회차 79.
   덩굴 새싹(VineAsh_sapling·VineGreen_sapling)은 m_attachDistance>0(조각에 붙여야 자람) → 밭 작물에서 뺌. 갈고 10초 뒤 Plant 상태 Healthy·IsCultivated True 확인(vh_farmtest).
+- 은(⑪, 회차 90 시험 diag): 은 출처 silvervein(Destructible+Beacon m_range 50, 깨지면 silvervein_frac MineRock5, 윗면 뿌리+2.03m)·rock3_silver(Beacon 없음, → rock3_silver_frac), 모두 곡괭이 단계 2. 찾는 물건 Wishbone(장착 효과 SE_Finder: 1초마다 Beacon.FindClosestBeaconInRange, 거리 XZ) = 본매스(defeated_bonemass) 전리품.
 - 거두기(Pickable): Interact(Humanoid)는 Player 아니어도 됨(스킬·통계만 건너뜀) → RPC_Pick(주인만, m_picked면 무시): m_amount(Game.ScaleDrops)+m_extraDrops를 떨굼, 효과에 Player.m_localPlayer 씀(호스트 있음). m_respawnTimeMinutes 0인 작물은 거둔 뒤 사라짐.

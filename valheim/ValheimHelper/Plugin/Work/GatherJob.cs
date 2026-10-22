@@ -575,6 +575,9 @@ namespace ValheimHelper
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
+                // 묻힌 은 광맥(숨는 광맥)은 위시본을 얻었을 때만 알고, 드러난 것이 먼저(HiddenOres, ⑪).
+                bool exposed = info.Hidden && HiddenOres.Exposed(zdo, info);
+                if (info.Hidden && !exposed && !HiddenOres.HaveFinder()) continue;
                 // 갈린 땅(밭)의 작물은 줍지 않는다: 사람이 기르는 것 — 밭일(FarmJob)만 거둔다.
                 if (info.Pickable && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
                 // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
@@ -587,7 +590,7 @@ namespace ValheimHelper
                 }
                 float dist = Utils.DistanceXZ(zdo.GetPosition(), pos);
                 if (dist > range) continue;
-                float score = dist - info.Priority;
+                float score = HiddenOre.Score(dist, info.Priority, info.Hidden, exposed);
                 if (score < bestScore) { bestScore = score; best = zdo; }
             }
             return best != null;
