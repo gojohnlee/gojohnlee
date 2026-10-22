@@ -52,6 +52,7 @@ namespace ValheimHelper
             if (m_store != null)
             {
                 if (m_store.Update(dt)) return CraftResult.Working;
+                LeaveSkipped();
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 꺼낸 것 정리 끝: 짐에 남은 {m_step.Item} {InBag()}"); // vh_crafttest 간헐 FAIL 진단(회차 35)
                 return CraftResult.Done;
             }
@@ -195,6 +196,23 @@ namespace ValheimHelper
             Plugin.Log.LogInfo($"{m_npc.NpcName} 설비 꺼냄 {m_step.Item}: 짐에 {InBag()}");
             m_store = new Unload(m_npc);
             return CraftResult.Working;
+        }
+
+        /// <summary>꺼낸 것 중 상자가 꽉 차 못 넣은 것(들고 다닐 미드 몫은 빼고)은 짐에 두지 않고 상자 앞 땅에(사용자 결정 2026-10-22).</summary>
+        void LeaveSkipped()
+        {
+            HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
+            Inventory mine = m_npc.GetInventory();
+            foreach (var it in new List<ItemDrop.ItemData>(m_store.Skipped))
+            {
+                if (it.m_dropPrefab == null || it.m_dropPrefab.name != m_step.Item || !mine.ContainsItem(it)) continue;
+                ChestRole role = Chests.RoleFor(it);
+                if (Chests.NearBase(m_npc.Home, role).Count == 0) continue; // 상자가 아예 없으면 들고 있음(예전대로)
+                int n = keep.Contains(it) ? Prep.ExtraMeads(m_npc, it) : it.m_stack;
+                if (n <= 0) continue;
+                mine.RemoveItem(it, n);
+                CraftStep.LeaveAtChest(m_npc, m_step.Item, n, role);
+            }
         }
 
         int InBag()

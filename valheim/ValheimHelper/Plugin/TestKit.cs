@@ -68,6 +68,8 @@ namespace ValheimHelper
             Vector3 home = (around ?? w.Player.transform.position) + w.Player.transform.forward * 4f;
             if (ZoneSystem.instance.GetGroundHeight(home, out float gh)) home.y = gh;
             w.Home = home;
+            // 지난 시험 상자(사용 중 표시가 남으면 비우지도 못해 재고가 틀어짐, 회차 60)를 치운다. 동시 시험(around)은 남의 상자라 안 건드림.
+            if (!around.HasValue && GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f);
             w.Player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, w.Player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
             w.Claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);

@@ -50,23 +50,41 @@ namespace ValheimHelper
                 if (Chests.InUse(c)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
             foreach (var kv in need) Take(chests, kv.Key, kv.Value);
             int left = Put(home, m_recipe.Output, m_recipe.OutputAmount * m_crafts);
-            if (left > 0) Spill(m_npc, m_recipe.Output, left);
+            if (left > 0) LeaveAtChest(m_npc, m_recipe.Output, left);
             return CraftResult.Done;
         }
 
-        /// <summary>상자에 못 넣은 결과(재료는 이미 빠짐): 짐에 넣고, 짐도 차면 발밑에 떨군다 — 사라지지 않게.</summary>
-        static void Spill(WorkerNpc npc, string prefab, int amount)
+        /// <summary>
+        /// 상자에 못 넣은 만든 물건(재료는 이미 빠짐): 짐에 넣지 않고 그 역할 상자 중 가장 가까운 것 바로 앞 땅에 내려놓고(사라지지 않게),
+        /// "상자 하나만 더 만들어 주세요"라고 한다(같은 상자는 5분에 한 번) — 사용자 결정 2026-10-22. 상자가 하나도 없으면 발밑.
+        /// </summary>
+        public static void LeaveAtChest(WorkerNpc npc, string prefab, int amount, ChestRole role = ChestRole.Mats)
         {
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
-            if (go == null) return;
-            ItemDrop.ItemData proto = go.GetComponent<ItemDrop>().m_itemData;
-            ItemDrop.ItemData d = proto.Clone();
-            d.m_stack = amount;
-            d.m_dropPrefab = go;
-            int dropped = npc.GetInventory().AddItem(d) ? 0 : d.m_stack;
-            if (dropped > 0) ItemDrop.DropItem(d, dropped, npc.transform.position + Vector3.up, Quaternion.identity);
-            Plugin.Log.LogInfo($"{npc.NpcName} 상자가 꽉 차 만든 것 {prefab} {amount}개 중 {amount - dropped}개 짐에, {dropped}개 땅에");
+            if (go == null || amount <= 0) return;
+            Container chest = null;
+            float best = float.MaxValue;
+            foreach (var c in Chests.NearBase(npc.Home, role))
+            {
+                float d = Vector3.Distance(c.transform.position, npc.transform.position);
+                if (d < best) { best = d; chest = c; }
+            }
+            Vector3 at = chest != null ? chest.transform.position + chest.transform.forward * 0.9f + Vector3.up * 0.3f : npc.transform.position + Vector3.up;
+            ItemDrop.ItemData d0 = go.GetComponent<ItemDrop>().m_itemData.Clone();
+            d0.m_dropPrefab = go;
+            int max = Mathf.Max(1, d0.m_shared.m_maxStackSize);
+            for (int left = amount; left > 0; left -= max)
+                ItemDrop.DropItem(d0, Mathf.Min(left, max), at, Quaternion.identity);
+            Plugin.Log.LogInfo($"{npc.NpcName} 상자가 꽉 차 만든 것 {prefab} {amount}개를 {(chest != null ? "상자 앞" : "발밑")}에 둠");
+            if (chest == null) return;
+            ZDOID id = chest.GetComponent<ZNetView>()?.GetZDO()?.m_uid ?? ZDOID.None;
+            if (s_whined.TryGetValue(id, out float t) && Time.time - t < WhineEvery) return;
+            s_whined[id] = Time.time;
+            npc.Say("craftChestFull");
         }
+
+        const float WhineEvery = 300f;
+        static readonly Dictionary<ZDOID, float> s_whined = new Dictionary<ZDOID, float>();
 
         /// <summary>재료 → 필요한 수. OnlyOne이면 있는 재료 하나만(없으면 첫 재료).</summary>
         Dictionary<string, int> Needs()

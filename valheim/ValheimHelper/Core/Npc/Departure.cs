@@ -198,15 +198,6 @@ namespace ValheimHelper.Core.Npc
                     return Ask(r, Question.DiedThere, alt, stockEnough, nightSoon);
                 if (level == DangerLevel.Tight)
                 {
-                    if (t.Resist != null && !i.ResistMeads.Contains(t.Resist))
-                    {
-                        // 빠듯한데 그 바이옴 저항 미드가 없음 → 그것부터 달라고 함(구상서 8-1 "독 저항 미드 하나만 주시면 갈게요")
-                        r.Condition = Resist.Condition(t.Resist);
-                        r.Args["mead"] = Resist.MeadName(t.Resist);
-                        Ask(r, Question.Condition, alt, stockEnough, nightSoon);
-                        r.Key = "ask.conditionResist";
-                        return r;
-                    }
                     if (i.HealthMeads > 0 && t.RatioWithMead < FightLine(p))
                         level = DangerLevel.Caution; // 가진 미드로 버틴다
                     else if (i.HealthMeads == 0 && t.RatioWithMead < FightLine(p))
@@ -224,6 +215,12 @@ namespace ValheimHelper.Core.Npc
                 if (stockEnough) return Ask(r, Question.Stock, null, false, false);
 
                 // 4) 출발 + 덧붙이는 말 하나
+                // 그 바이옴 저항 미드가 없으면 묻지 않고 투덜대고 간다(사용자 결정 2026-10-22, 예전엔 "독 저항 미드 하나만 주시면 갈게요"로 기다림)
+                if (level == DangerLevel.Caution && t.Resist != null && !i.ResistMeads.Contains(t.Resist))
+                {
+                    r.Args["mead"] = Resist.MeadName(t.Resist);
+                    return Go(r, DepartAction.Go, "depart.noResist", "저항 미드 없음");
+                }
                 if (level == DangerLevel.Caution) return Go(r, DepartAction.Go, "depart.warn", "주의");
             }
             else if (stockEnough) return Ask(r, Question.Stock, null, false, false);

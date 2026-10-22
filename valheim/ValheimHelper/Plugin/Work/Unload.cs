@@ -15,6 +15,8 @@ namespace ValheimHelper
         /// <summary>이 물건은 넣지 않는다(채집 중인 물건: 그건 GatherJob이 세면서 넣는다).</summary>
         readonly string m_except;
         readonly HashSet<ItemDrop.ItemData> m_skip = new HashSet<ItemDrop.ItemData>();
+        /// <summary>넣을 상자가 꽉 차(또는 없어) 못 넣고 건너뛴 것.</summary>
+        public IEnumerable<ItemDrop.ItemData> Skipped => m_skip;
         Container m_chest;
         float m_time;
 

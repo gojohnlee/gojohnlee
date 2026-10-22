@@ -100,6 +100,54 @@ namespace ValheimHelper
             checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 4)", ore + bars <= 4 && bars <= 4);
             yield return Stop();
             yield return Ferment(w, checks, made, right);
+            yield return FullChest(w, checks);
+        }
+
+        /// <summary>
+        /// 4) 상자 꽉 참(사용자 결정 2026-10-22): 활 재료(더미가 남게 하나씩 더)와 돌로 상자를 가득 채우고 "!활" → 만든 활은 짐이 아니라
+        /// 상자 앞 땅에 놓이고 "상자 하나만 더" 대사. 놓인 활은 시험이 치운다.
+        /// </summary>
+        static IEnumerator FullChest(TestKit.World w, GatherTest.Checks checks)
+        {
+            Recipe bow = null;
+            foreach (var r in ObjectDB.instance.m_recipes)
+                if (r.m_item != null && Utils.GetPrefabName(r.m_item.gameObject) == "Bow") bow = r;
+            if (bow == null) yield break;
+            string n1 = w.Claude.NpcName;
+            TestKit.ClearBaseStock(w, "Bow", "Stone");
+            foreach (var req in bow.m_resources)
+                TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount + 1);
+            var chests = Chests.NearBase(w.Home); // 지난 시험이 남긴 상자까지 전부 채운다
+            int empty = 0;
+            foreach (var c in chests)
+            {
+                for (int k = 0; k < 64 && c.GetInventory().GetEmptySlots() > 0; k++) TestKit.PutInChest(c, "Stone", 50);
+                empty += c.GetInventory().GetEmptySlots();
+            }
+            checks.Add($"거점 상자 {chests.Count}개 가득 (빈칸 {empty})", empty == 0);
+            int heard0 = w.Heard.Count;
+            string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
+            yield return Say($"!{n1} {bowName} 1", 1f);
+            ItemDrop onGround = null;
+            yield return TestKit.WaitFor(() => (onGround = BowNear(chests)) != null, 90f);
+            checks.Add($"꽉 찬 상자 → 만든 활은 상자 앞 땅에 ({TestKit.Waited:0}초)", TestKit.Ok);
+            checks.Add($"짐에는 안 넣음 (짐 활 {w.Claude.CountItem("Bow")})", w.Claude.CountItem("Bow") == 0);
+            checks.Add("\"상자 하나만 더\" 대사", w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("상자")) >= 0);
+            yield return Stop();
+            if (onGround != null && onGround.TryGetComponent(out ZNetView v) && v.IsValid()) v.Destroy();
+            TestKit.ClearBaseStock(w, "Stone");
+            foreach (var req in bow.m_resources) TestKit.ClearBaseStock(w, Utils.GetPrefabName(req.m_resItem.gameObject));
+        }
+
+        static ItemDrop BowNear(System.Collections.Generic.List<Container> chests)
+        {
+            foreach (var c in chests)
+            foreach (Collider col in Physics.OverlapSphere(c.transform.position, 2.5f, LayerMask.GetMask("item")))
+            {
+                ItemDrop d = col.GetComponentInParent<ItemDrop>();
+                if (d != null && Utils.GetPrefabName(d.gameObject) == "Bow") return d;
+            }
+            return null;
         }
 
         /// <summary>
