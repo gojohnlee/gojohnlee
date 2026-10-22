@@ -24,6 +24,7 @@ namespace ValheimHelper
             public readonly List<string> Heard = new List<string>();
             public System.Action<string, string> OnHeard;
             public string Knowledge0, Places0;
+            public bool Shared; // 동시 시험(around): 둘레가 남의 시험이라 끝 정리를 안 함
         }
 
         /// <summary>WaitFor 결과(코루틴이라 out을 못 씀).</summary>
@@ -50,6 +51,7 @@ namespace ValheimHelper
         public static IEnumerator Setup(World w, Vector3? around = null)
         {
             w.Player = Player.m_localPlayer;
+            w.Shared = around.HasValue;
             w.God = w.Player.InGodMode();
             w.Player.SetGodMode(true);
             w.Env = EnvMan.instance;
@@ -168,6 +170,42 @@ namespace ValheimHelper
             return n;
         }
 
+        /// <summary>거점 둘레 땅에 떨어진 물건.</summary>
+        static List<ZNetView> Drops(Vector3 home)
+        {
+            var list = new List<ZNetView>();
+            foreach (var zdo in Senses.Nearby(home, StartRadius))
+            {
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v != null && v.IsValid() && v.GetComponent<ItemDrop>() != null) list.Add(v);
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// 끝 정리(사용자 결정 2026-10-22 시험 환경): 시험이 남긴 둘레 생물·땅의 물건을 치우고, 0.5초 뒤에도 남으면
+        /// 정리 실패로 남은 자동 시험을 멈춘다(TestRunner.Halt — 앞 시험이 뒤 시험을 망치지 않게).
+        /// </summary>
+        static void Cleanup(World w)
+        {
+            int creatures = ClearCreatures(w.Home), drops = 0;
+            foreach (var v in Drops(w.Home))
+            {
+                v.ClaimOwnership();
+                ZNetScene.instance.Destroy(v.gameObject);
+                drops++;
+            }
+            if (creatures + drops > 0) TestRunner.Log($"끝 정리: 생물 {creatures}·땅의 물건 {drops} 치움");
+            Plugin.Instance.StartCoroutine(VerifyCleanup(w.Home));
+        }
+
+        static IEnumerator VerifyCleanup(Vector3 home)
+        {
+            yield return new WaitForSeconds(0.5f); // 없앤 것은 프레임 끝에 사라짐
+            int c = Creatures(home).Count, d = Drops(home).Count;
+            if (c + d > 0) TestRunner.Halt($"앞 시험 끝 정리 실패(거점 {StartRadius:0}m 안 생물 {c}·물건 {d} 남음)");
+        }
+
         static int Items(Inventory inv)
         {
             int n = 0;
@@ -267,6 +305,7 @@ namespace ValheimHelper
                 TestRunner.Log("--- 상태 흐름(3초마다, 최근 " + s_flow.Count + "개) ---");
                 foreach (var f in s_flow) TestRunner.Log(f);
             }
+            if (!w.Shared) Cleanup(w);
             Restore(w);
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in w.Heard) TestRunner.Log(h);

@@ -37,6 +37,15 @@ namespace ValheimHelper
         static int s_startFrame;
         const float AutoTimeout = 600f;
 
+        static string s_halt;
+
+        /// <summary>정리 실패: 남은 자동 시험은 본시험 없이 "환경 불량"으로 적고 넘긴다(TestKit 끝 정리).</summary>
+        public static void Halt(string why)
+        {
+            Plugin.Log.LogWarning(why);
+            if (s_halt == null) s_halt = why;
+        }
+
         static string PluginDir => Path.GetDirectoryName(Plugin.Instance.Info.Location);
 
         public static bool Begin(Terminal t, string name)
@@ -169,6 +178,12 @@ namespace ValheimHelper
             s_autoWait += Time.deltaTime;
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
             string cmd = s_autoQueue.Dequeue();
+            if (s_halt != null && Begin(null, cmd))
+            {
+                Log($"판정: 환경 불량 ({s_halt}) — 본시험 안 함");
+                Finish();
+                return;
+            }
             if (s_tests.TryGetValue(cmd, out var run) && Begin(null, cmd))
             {
                 Plugin.Instance.StartCoroutine(Safe(run()));
