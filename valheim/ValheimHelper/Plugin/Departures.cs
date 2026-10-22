@@ -123,7 +123,7 @@ namespace ValheimHelper
         /// 농사로만 나는 물건(당근 — 들에는 없음)이면 밭에 심는다(구상서 6-3 "당근이 없어요. 밭에 심어 둘게요. 1시간쯤"): 그 작물이 자라는 첫 밭에서
         /// 다 자란 것을 거두고 Farm.Plan만큼 심는 밭일(씨앗 유지 포함). 들에서도 나는 것(보리·씨앗)은 false → 채집. 밭이 없거나 씨앗·거둘 것이 없으면 말만 한다.
         /// </summary>
-        static bool Farming(WorkerNpc npc, ChatCommand cmd)
+        static bool Farming(WorkerNpc npc, ChatCommand cmd, Dictionary<string, string> forCraft = null)
         {
             Crop crop = Crops.ForProduce(cmd.Item);
             if (crop == null || ResourceCatalog.AnySourceBut(cmd.Item, Crops.IsGrown)) return false;
@@ -136,8 +136,29 @@ namespace ValheimHelper
             if (plan.Plant.Count == 0 && FarmJob.Ripe(field).Count == 0) { npc.Say("farmNoSeedFor", args); return true; }
             args["minutes"] = Departure.Minutes5((float)Farm.GrowSeconds(Crops.All, plan)).ToString();
             Plugin.Log.LogInfo($"{npc.NpcName} 농사로 {cmd.Item} {cmd.Amount}: 밭 ({field.X:0},{field.Z:0}) 심기 [{string.Join(", ", plan.Plant.ConvertAll(p => p.Item + " " + p.Amount).ToArray())}], 모자람 {plan.Missing.Count}");
-            if (Commands.StartFarm(npc, field, cmd.Urgent, job)) npc.Say(plan.Plant.Count > 0 ? "farmPlantFor" : "farmHarvestFor", args);
+            if (!Commands.StartFarm(npc, field, cmd.Urgent, job)) return true;
+            if (forCraft != null && plan.Plant.Count > 0)
+            {
+                forCraft["what"] = args["item"];
+                forCraft["minutes"] = args["minutes"];
+                npc.Say("craft.farm", forCraft);
+            }
+            else npc.Say(plan.Plant.Count > 0 ? "farmPlantFor" : "farmHarvestFor", args);
             return true;
+        }
+
+        /// <summary>
+        /// 제작 계획 재료가 밭에서만 나는 것이면(당근 수프의 당근, ⑨ 4d) 계획은 시작하지 않고 첫 농사 재료의 모자란 만큼 밭에 심는다
+        /// ("당근 수프 1 만들려면 당근이 있어야 해서 밭에 심어 둘게요. N분쯤 뒤에 다시 시켜 주쇼"). 자라는 데 오래 걸려 PlanJob이 기다리지 않는다.
+        /// 범위 밖·모름이 있으면 그 말이 먼저(false).
+        /// </summary>
+        static bool FarmFor(WorkerNpc npc, Plan plan, Dictionary<string, string> args)
+        {
+            if (plan.OutOfScope.Count > 0 || plan.Unknown.Count > 0) return false;
+            PlanStep farm = plan.Steps.Find(s => s.Kind == StepKind.Farm);
+            if (farm == null) return false;
+            Plugin.Log.LogInfo($"{npc.NpcName} 제작 {args["item"]}: 재료 {farm.Item} {farm.Amount}은 농사 → 밭일");
+            return Farming(npc, new ChatCommand { Kind = CommandKind.Item, Item = farm.Item, Amount = farm.Amount }, args);
         }
 
         /// <summary>시험용: 지금 그 명령을 받으면 어떻게 판단할지(말하거나 움직이지 않음).</summary>
@@ -311,6 +332,7 @@ namespace ValheimHelper
             {
                 ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString(),
             };
+            if (FarmFor(npc, plan, args)) return;
             SayPlan(npc, plan, args);
             StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], Item = cmd.Item, Amount = cmd.Amount });
         }
@@ -342,6 +364,7 @@ namespace ValheimHelper
                 plan = PlanFor(npc, targets);
             }
             args["minutes"] = Departure.Minutes5(plan.Seconds).ToString();
+            if (FarmFor(npc, plan, args)) return;
             SayPlan(npc, plan, args);
             StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], SetNo = number, Amount = amount });
         }

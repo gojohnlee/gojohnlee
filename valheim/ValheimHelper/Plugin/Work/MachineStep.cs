@@ -276,6 +276,14 @@ namespace ValheimHelper
             {
                 if (m_time - m_fireWait < 10f) return false;
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 조리대에 불이 없어 못 구움");
+                foreach (Collider col in Physics.OverlapSphere(m_cook.transform.position, 3f))
+                {
+                    Fireplace fp = col.GetComponentInParent<Fireplace>();
+                    if (fp == null || !fp.TryGetComponent(out ZNetView fv) || !fv.IsValid()) continue;
+                    Plugin.Log.LogInfo($"DIAG 불 없음: {fp.name} 켬 {fv.GetZDO().GetInt(ZDOVars.s_state, 1)} 연료 {fv.GetZDO().GetFloat(ZDOVars.s_fuel):0.0} 탐 {fp.IsBurning()}"
+                        + $" 날씨 {EnvMan.instance?.GetCurrentEnvironment()?.m_name} 젖음 {EnvMan.IsWet()} 바람 {EnvMan.instance?.GetWindIntensity():0.00}");
+                    break;
+                }
                 wait = CraftResult.Failed;
                 return false;
             }

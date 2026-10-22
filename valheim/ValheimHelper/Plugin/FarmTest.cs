@@ -157,6 +157,18 @@ namespace ValheimHelper
             seedLeft = Stock(w, Seed) + Bag(w, Seed);
             checks.Add($"!당근 3 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft}, 경작기 상자 {Stock(w, Crops.Cultivator)})",
                 TestKit.Ok && carrots == 3 && seedLeft == 0 && Stock(w, Crops.Cultivator) == 1);
+
+            // 제작 재료 농사(4d): "!당근수프 1" → 재료 당근 3은 밭에서만 나니 계획 대신 밭에 당근 3 심기(씨앗 3 → 0)
+            Clean(field);
+            TestKit.ClearBaseStock(w, Seed, Produce);
+            TestKit.PutInChest(w.Chest, Seed, 3);
+            Departures.Gather(who, new ChatCommand { Kind = CommandKind.Item, Item = "CarrotSoup", Amount = 1 }, w.Claude);
+            var soupJob = w.Claude.Ai.Job;
+            checks.Add($"!당근수프 1 → 재료 당근 밭일 ({(soupJob != null ? soupJob.GetType().Name : "없음")}, 출처 {Recipes.Book().SourceOf(Produce)})", soupJob is FarmJob);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 240f);
+            carrots = PlantsOf(field, "sapling_carrot");
+            seedLeft = Stock(w, Seed) + Bag(w, Seed);
+            checks.Add($"!당근수프 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft})", TestKit.Ok && carrots == 3 && seedLeft == 0);
             Brain.Farms.Remove(field.X, field.Z);
             Departures.Gather(who, carrotCmd, w.Claude);
             checks.Add($"밭 없으면 !당근은 밭일·채집 안 함 ({(w.Claude.Ai.Job != null ? w.Claude.Ai.Job.GetType().Name : "없음")})", w.Claude.Ai.Job == null);

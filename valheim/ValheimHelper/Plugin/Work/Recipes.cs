@@ -93,6 +93,8 @@ namespace ValheimHelper
             {
                 if (item == null) continue;
                 if (ResourceCatalog.Gatherable(item.name)) b.SetSource(item.name, SourceKind.Gather); // 캐거나 줍기가 사냥보다 먼저
+                // 밭에서만 나는 것(당근 — 들에 없음)은 농사(⑨ 4d, Departures.Farming과 같은 규칙)
+                if (Crops.ForProduce(item.name) != null && !ResourceCatalog.AnySourceBut(item.name, Crops.IsGrown)) b.SetSource(item.name, SourceKind.Farm);
             }
             s_book = b;
             Plugin.Log.LogInfo($"제작 계획: 제작법·가공표·출처 준비됨");
