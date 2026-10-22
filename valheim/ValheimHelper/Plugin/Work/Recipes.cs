@@ -82,6 +82,7 @@ namespace ValheimHelper
                                 SecondsPerProduct = c.m_cookTime, Capacity = cs.m_slots != null ? Mathf.Max(1, cs.m_slots.Length) : 1,
                                 Fuel = cs.m_fuelItem != null ? Utils.GetPrefabName(cs.m_fuelItem.gameObject) : null,
                                 FuelPerProduct = 0, // 화덕 연료는 시간당이라 셈하지 않는다(⑧에서)
+                                Attended = true, // 두 배 시간이면 타므로 곁에서 지켜 꺼낸다(MachineStep)
                             });
                 }
                 if (prefab.TryGetComponent(out CharacterDrop drops))

@@ -6,7 +6,8 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 계획의 Load·Unload 단계 하나(⑥ 실행기 조각): 거점의 제련소·숯가마 같은 Smelter나 발효기(Fermenter)에 거점 상자 재료·연료를 넣거나(Load),
-    /// 다 된 것을 꺼내 상자에 넣는다(Unload). 화덕(CookingStation)은 아직 없음(Failed → 그에 기댄 단계는 Blocked).
+    /// 다 된 것을 꺼내 상자에 넣는다(Unload). 조리대·화덕(CookingStation, ⑧)은 두 배 시간이면 타므로 Load가 올리고 곁에서 기다렸다
+    /// 익는 대로 꺼내 상자까지 넣는다(Unload는 남은 것만). 불이 꺼졌으면 거점 상자 연료로 한 번 지핀다(꺼 둔 불은 안 켬).
     /// 넣을 때 재료·연료는 한 프레임에, 열린 상자가 없을 때만 뺀다. 설비 자리가 모자라면 들어가는 만큼만(연료는 빈자리만큼만 빼서 낭비 없음).
     /// 발효기는 빈 것에 하나만 넣고, 지붕이 없으면(바닐라: 덮임 70% 미만·지붕 없음이면 시간이 멈춤) 넣지 않는다.
     /// 꺼낼 땐 완성품 줍기(소유권 요청 후 다음 프레임) → 짐 정리(Unload)로 상자에 넣는다. 발효기는 아직 발효 중이면 조금 기다렸다 따른다.
@@ -26,6 +27,9 @@ namespace ValheimHelper
         readonly bool m_load;
         Smelter m_smelter;
         Fermenter m_fermenter;
+        CookingStation m_cook;
+        bool m_cookLoaded;
+        float m_fireWait = -1f;
         Unload m_store;
         float m_time, m_busy, m_tappedAt = -1f, m_nextDiag;
 
@@ -36,24 +40,24 @@ namespace ValheimHelper
             m_load = step.Kind == StepKind.Load;
         }
 
-        /// <summary>Smelter·Fermenter 프리팹이면 true(화덕은 아직).</summary>
+        /// <summary>Smelter·Fermenter·CookingStation 프리팹이면 true.</summary>
         public static bool Supported(string station)
         {
             GameObject p = station != null ? ZNetScene.instance.GetPrefab(station) : null;
-            return p != null && (p.GetComponent<Smelter>() != null || p.GetComponent<Fermenter>() != null);
+            return p != null && (p.GetComponent<Smelter>() != null || p.GetComponent<Fermenter>() != null || p.GetComponent<CookingStation>() != null);
         }
 
-        Component Machine => m_smelter != null ? m_smelter : (Component)m_fermenter;
+        Component Machine => m_smelter != null ? m_smelter : m_fermenter != null ? m_fermenter : (Component)m_cook;
 
         public CraftResult Update(float dt)
         {
             m_time += dt;
-            if (m_time > Limit) return CraftResult.Failed;
+            if (m_time > Limit + (m_cook != null ? CookSeconds() * 2f : 0f)) return CraftResult.Failed;
             if (m_store != null)
             {
                 if (m_store.Update(dt)) return CraftResult.Working;
                 LeaveSkipped();
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 꺼낸 것 정리 끝: 짐에 남은 {m_step.Item} {InBag()}"); // vh_crafttest 간헐 FAIL 진단(회차 35)
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 꺼낸 것 정리 끝: 짐에 남은 {OutItem} {InBag()}"); // vh_crafttest 간헐 FAIL 진단(회차 35)
                 return CraftResult.Done;
             }
             Vector3 home = m_npc.Home;
@@ -63,9 +67,11 @@ namespace ValheimHelper
                 if (Machine == null) return CraftResult.Failed;
             }
             if (!Machine.TryGetComponent(out ZNetView nview) || !nview.IsValid()) return CraftResult.Failed;
+            if (m_cook != null && !m_load && CookSlotsOf(nview.GetZDO(), m_cook, false) == 0 && Drops().Count == 0) return CraftResult.Done; // 조리대는 Load가 다 꺼냄 — 남은 게 없으면 끝
             Vector3 at = Machine.transform.position;
             if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f)
             { m_npc.Ai.MoveToPoint(dt, at, 1.8f, false); return CraftResult.Working; }
+            if (m_cook != null) return Cook(nview, home);
             if (m_fermenter != null) return m_load ? FermentLoad(nview, home) : FermentUnload(nview, dt);
             return m_load ? DoLoad(nview, home) : DoUnload(nview);
         }
@@ -198,6 +204,117 @@ namespace ValheimHelper
             return CraftResult.Working;
         }
 
+        static readonly System.Func<CookingStation, bool> s_fireLit =
+            HarmonyLib.AccessTools.MethodDelegate<System.Func<CookingStation, bool>>(HarmonyLib.AccessTools.Method(typeof(CookingStation), "IsFireLit"));
+
+        /// <summary>조리대 한 번 굽는 시간(칸은 동시에 익음). 바닐라: 두 배를 넘기면 탄 것(m_overCookedItem)이 된다.</summary>
+        float CookSeconds()
+        {
+            foreach (var c in m_cook.m_conversion)
+                if (c.m_from != null && c.m_to != null && (c.m_from.gameObject.name == m_step.Item || c.m_to.gameObject.name == m_step.Item)) return c.m_cookTime;
+            return 60f;
+        }
+
+        string CookedOf(string input)
+        {
+            foreach (var c in m_cook.m_conversion)
+                if (c.m_from != null && c.m_to != null && c.m_from.gameObject.name == input) return c.m_to.gameObject.name;
+            return input;
+        }
+
+        /// <summary>바닐라 ZDO 칸("slot"+i 이름, "slotstatus"+i: 0 덜 됨·1 익음·2 탐). done이면 꺼낼 수 있는(익거나 탄) 칸 수, 아니면 차 있는 칸 수.</summary>
+        static int CookSlotsOf(ZDO zdo, CookingStation cs, bool done)
+        {
+            int n = 0;
+            for (int i = 0; i < cs.m_slots.Length; i++)
+                if (zdo.GetString("slot" + i) != "" && (!done || zdo.GetInt("slotstatus" + i) != 0)) n++;
+            return n;
+        }
+
+        /// <summary>
+        /// 조리대: (Load면) 불을 확인하고 빈 칸만큼 올린 뒤 곁에서 기다려 익은(또는 탄) 것을 하나씩 꺼내 줍고, 칸이 비면 짐 정리로 상자에.
+        /// 바닐라 RPC_RemoveDoneItem은 익거나 탄 첫 칸 하나를 사용자 쪽으로 내놓는다(NPC는 요리 스킬 덤 없음 = 1개).
+        /// </summary>
+        CraftResult Cook(ZNetView nview, Vector3 home)
+        {
+            ZDO zdo = nview.GetZDO();
+            if (m_load && !m_cookLoaded)
+            {
+                if (!Burning(nview, home, out CraftResult wait)) return wait;
+                int free = m_cook.m_slots.Length - CookSlotsOf(zdo, m_cook, false);
+                int n = Mathf.Min(m_step.Amount, free);
+                if (n <= 0 || CraftStep.Have(home, m_step.Item) < n) return CraftResult.Failed;
+                if (!TakeFromChests(home, m_step.Item, n, null, 0, out wait)) return wait;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 조리대 올림 {m_step.Item} {n}");
+                for (int i = 0; i < n; i++) nview.InvokeRPC("RPC_AddItem", m_step.Item, false);
+                m_cookLoaded = true;
+                return CraftResult.Working;
+            }
+            bool any = false;
+            foreach (ItemDrop drop in Drops())
+            {
+                any = true;
+                if (drop.CanPickup()) m_npc.Pickup(drop.gameObject);
+                else drop.RequestOwn();
+            }
+            if (CookSlotsOf(zdo, m_cook, true) > 0) { nview.InvokeRPC("RPC_RemoveDoneItem", m_npc.transform.position, 1); return CraftResult.Working; }
+            if (any) return CraftResult.Working;
+            if (CookSlotsOf(zdo, m_cook, false) > 0) // 아직 굽는 중 — 불이 꺼지면 다시 지핀다
+                return Burning(nview, home, out CraftResult w) ? CraftResult.Working : w;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 조리대 꺼냄 {OutItem}: 짐에 {InBag()}");
+            m_store = new Unload(m_npc);
+            return CraftResult.Working;
+        }
+
+        /// <summary>
+        /// 조리대가 굽고 있을 수 있으면 true. 아니면 한 번 지핀다(화덕 m_useFuel = 자기 연료, 조리대 = 3m 안 화로에 연료, 꺼 둔 불·연료 무한은 손대지 않음)
+        /// — 거점 상자 연료로, 그래도 10초 안에 안 붙으면 Failed.
+        /// </summary>
+        bool Burning(ZNetView nview, Vector3 home, out CraftResult wait)
+        {
+            wait = CraftResult.Working;
+            ZDO zdo = nview.GetZDO();
+            if ((m_cook.m_requireFire && s_fireLit(m_cook)) || (m_cook.m_useFuel && zdo.GetFloat(ZDOVars.s_fuel) > 0f)) { m_fireWait = -1f; return true; }
+            if (m_fireWait >= 0f)
+            {
+                if (m_time - m_fireWait < 10f) return false;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 조리대에 불이 없어 못 구움");
+                wait = CraftResult.Failed;
+                return false;
+            }
+            m_fireWait = m_time;
+            if (m_cook.m_useFuel && m_cook.m_fuelItem != null)
+            {
+                Feed(home, nview, m_cook.m_fuelItem, Mathf.Min(3, m_cook.m_maxFuel));
+                return false;
+            }
+            foreach (Collider col in Physics.OverlapSphere(m_cook.transform.position, 3f))
+            {
+                Fireplace fp = col.GetComponentInParent<Fireplace>();
+                if (fp == null || fp.m_infiniteFuel || !fp.m_canRefill || fp.m_fuelItem == null) continue;
+                if (!fp.TryGetComponent(out ZNetView fv) || !fv.IsValid() || fv.GetZDO().GetInt(ZDOVars.s_state, 1) != 1) continue;
+                if (fv.GetZDO().GetFloat(ZDOVars.s_fuel) >= 1f) continue;
+                Feed(home, fv, fp.m_fuelItem, Mathf.Min(3, Mathf.FloorToInt(fp.m_maxFuel)));
+                break;
+            }
+            return false;
+        }
+
+        void Feed(Vector3 home, ZNetView target, ItemDrop fuelItem, int n)
+        {
+            string fuel = Utils.GetPrefabName(fuelItem.gameObject);
+            n = Mathf.Min(n, CraftStep.Have(home, fuel));
+            if (n <= 0) return;
+            var chests = Chests.NearBase(home, ChestRole.Mats);
+            foreach (var c in chests) if (Chests.InUse(c)) return; // 열린 상자가 있으면 이번엔 안 지핌(10초 뒤 실패)
+            CraftStep.Take(chests, fuel, n);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 불 지핌 {fuel} {n}");
+            for (int i = 0; i < n; i++) target.InvokeRPC("RPC_AddFuel");
+        }
+
+        /// <summary>꺼낼 것: 조리대 싣기 단계는 구운 것, 그 밖엔 단계 물건.</summary>
+        string OutItem => m_cook != null && m_load ? CookedOf(m_step.Item) : m_step.Item;
+
         /// <summary>꺼낸 것 중 상자가 꽉 차 못 넣은 것(들고 다닐 미드 몫은 빼고)은 짐에 두지 않고 상자 앞 땅에(사용자 결정 2026-10-22).</summary>
         void LeaveSkipped()
         {
@@ -205,31 +322,33 @@ namespace ValheimHelper
             Inventory mine = m_npc.GetInventory();
             foreach (var it in new List<ItemDrop.ItemData>(m_store.Skipped))
             {
-                if (it.m_dropPrefab == null || it.m_dropPrefab.name != m_step.Item || !mine.ContainsItem(it)) continue;
+                if (it.m_dropPrefab == null || it.m_dropPrefab.name != OutItem || !mine.ContainsItem(it)) continue;
                 ChestRole role = Chests.RoleFor(it);
                 if (Chests.NearBase(m_npc.Home, role).Count == 0) continue; // 상자가 아예 없으면 들고 있음(예전대로)
                 int n = keep.Contains(it) ? Prep.ExtraMeads(m_npc, it) : it.m_stack;
                 if (n <= 0) continue;
                 mine.RemoveItem(it, n);
-                CraftStep.LeaveAtChest(m_npc, m_step.Item, n, role);
+                CraftStep.LeaveAtChest(m_npc, OutItem, n, role);
             }
         }
 
         int InBag()
         {
-            string name = CraftStep.SharedName(m_step.Item);
+            string name = CraftStep.SharedName(OutItem);
             return name == null ? 0 : m_npc.GetInventory().CountItems(name);
         }
 
         List<ItemDrop> Drops()
         {
             var list = new List<ItemDrop>();
-            Transform outPoint = m_smelter != null ? m_smelter.m_outputPoint : m_fermenter.m_outputPoint;
+            Transform outPoint = m_smelter != null ? m_smelter.m_outputPoint : m_fermenter != null ? m_fermenter.m_outputPoint : m_cook.m_spawnPoint;
+            string burnt = m_cook != null && m_cook.m_overCookedItem != null ? m_cook.m_overCookedItem.name : null;
+            string want = OutItem;
             Vector3 p = outPoint != null ? outPoint.position : Machine.transform.position;
             foreach (Collider col in Physics.OverlapSphere(p, 4f, LayerMask.GetMask("item")))
             {
                 ItemDrop d = col.GetComponentInParent<ItemDrop>();
-                if (d != null && !list.Contains(d) && Utils.GetPrefabName(d.gameObject) == m_step.Item) list.Add(d);
+                if (d != null && !list.Contains(d) && (Utils.GetPrefabName(d.gameObject) == want || Utils.GetPrefabName(d.gameObject) == burnt)) list.Add(d);
             }
             return list;
         }
@@ -237,6 +356,7 @@ namespace ValheimHelper
         /// <summary>
         /// 거점 30m 안에서 이 설비(프리팹 이름 = Station)를 고른다. 제련소: 넣을 땐 자리가 가장 넉넉한 것, 꺼낼 땐 일하는·결과가 있는 것 먼저.
         /// 발효기: 넣을 땐 빈 것, 꺼낼 땐 이 결과(m_step.Item)가 들어 있는 것 중 가장 오래 발효한 것.
+        /// 조리대: 넣을 땐 빈 칸이 가장 많은 것, 꺼낼 땐 차 있는 칸이 가장 많은 것.
         /// </summary>
         void Find(Vector3 home)
         {
@@ -247,7 +367,8 @@ namespace ValheimHelper
             {
                 Smelter s = col.GetComponentInParent<Smelter>();
                 Fermenter f = s == null ? col.GetComponentInParent<Fermenter>() : null;
-                Component c = s != null ? s : (Component)f;
+                CookingStation k = s == null && f == null ? col.GetComponentInParent<CookingStation>() : null;
+                Component c = s != null ? s : f != null ? f : (Component)k;
                 if (c == null || !seen.Add(c) || Utils.GetPrefabName(c.gameObject) != m_step.Station) continue;
                 if (!c.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
                 ZDO z = nv.GetZDO();
@@ -256,6 +377,13 @@ namespace ValheimHelper
                     int queued = z.GetInt(ZDOVars.s_queued);
                     int score = m_load ? s.m_maxOre - queued : queued + z.GetInt(ZDOVars.s_spawnAmount);
                     if (score > bestScore) { bestScore = score; m_smelter = s; }
+                    continue;
+                }
+                if (k != null)
+                {
+                    int used = CookSlotsOf(z, k, false);
+                    int score = m_load ? k.m_slots.Length - used : used;
+                    if (score > bestScore) { bestScore = score; m_cook = k; }
                     continue;
                 }
                 int content = z.GetInt(ZDOVars.s_content);

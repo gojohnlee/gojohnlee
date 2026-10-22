@@ -88,6 +88,23 @@ public class CraftPlanTests
     }
 
     [Fact]
+    public void AttendedStationHasNoWaitAndCooksSlotsTogether()
+    {
+        // 조리대(칸 2, 굽기 25초, 곁에서 지킴): 고기 5 → 싣기 3번(2·2·1), 기다리기 0초, 싣기마다 25초 지킴
+        var b = new RecipeBook();
+        b.SetSource("RawMeat", SourceKind.Hunt);
+        b.Add(new Process { Station = "cookstand", Input = "RawMeat", Output = "CookedMeat", SecondsPerProduct = 25, Capacity = 2, Attended = true });
+        var f = new Facilities();
+        f.Processors["cookstand"] = 1;
+        var plan = new CraftPlanner(b, f).Expand("CookedMeat", 5, Stock(("RawMeat", 5)));
+        var loads = plan.Steps.Where(s => s.Kind == StepKind.Load).ToList();
+        Assert.Equal(new[] { 2, 2, 1 }, loads.Select(s => s.Amount));
+        Assert.All(loads, s => Assert.Equal(25f, s.AttendSeconds));
+        Assert.All(plan.Steps.Where(s => s.Kind == StepKind.Wait), s => Assert.Equal(0f, s.Seconds));
+        Assert.True(plan.Seconds >= 75f);
+    }
+
+    [Fact]
     public void FullStockMeansNothingToDo()
     {
         var plan = new CraftPlanner(Book(), Base()).Expand("Copper", 5, Stock(("Copper", 9)));

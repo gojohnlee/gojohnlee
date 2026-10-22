@@ -340,3 +340,5 @@ Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pic
   Departures(NoCrypt 까닭), CryptTest(KeyState로 플레이어 알려진 재료·보스 월드 키를 끄고 켜 보고 끝에 되돌림, 문을 손으로 열던 칸을 없애고 "!철 3"에서 일꾼이 직접 엶).
 - Core 372 PASS(루프 회차 63과 합친 뒤, Crypts 6·Departure 1 추가), 빌드·참조 검사 PASS. 게임 시험은 클라우드라 못 함 → PC 회차가 vh_crypttest 먼저.
 - 한계: 못 닿는 더미가 남은 묘지는 다 캔 것으로 안 보여 일마다 한 번 들렀다 나옴(같은 일 안에서는 다음 묘지로 넘어감).
+
+[루프 회차 65] ⑧ 먹거리 2조각 굽기: Core Process.Attended·PlanStep.AttendSeconds(기다리기 0초) + CraftPlanTests 1개(Core 373). Plugin Recipes가 CookingStation을 Attended로, MachineStep.Cook·Burning·Feed(불 지피기 → 빈 칸만큼 올림 → RPC_RemoveDoneItem으로 하나씩 꺼내 줍기 → Unload). vh_cooktest 신설: 첫 판은 시험이 화로를 세운 뒤 연료 0으로 바꿔 불 영역이 남아(바닐라 EffectArea는 Awake 등록·OnDestroy 해제) 지피기 칸만 FAIL → 화로를 처음부터 꺼진 채 세우게 고쳐 PASS 10/10(48초). crafttest 23/23 회귀 PASS.

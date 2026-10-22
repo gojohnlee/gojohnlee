@@ -39,6 +39,8 @@ namespace ValheimHelper.Core.Work
         public float SecondsPerProduct;
         /// <summary>한 번에 넣을 수 있는 재료 수. 0이면 제한 없음.</summary>
         public int Capacity;
+        /// <summary>곁에 서서 지켜야 하는 설비(조리대: 오래 두면 탐) — 싣기 단계가 다 될 때까지 기다렸다 꺼내므로 따로 기다리기 시간이 없다. 칸은 동시에 익는다.</summary>
+        public bool Attended;
     }
 
     public enum SourceKind { None, Gather, Hunt, Farm, OutOfScope }
@@ -95,6 +97,8 @@ namespace ValheimHelper.Core.Work
         /// <summary>Craft: 만드는 횟수.</summary>
         public int Crafts;
         /// <summary>Wait: 설비가 도는 시간. 그 밖의 단계는 예상 시간(시뮬레이션이 채움).</summary>
+        /// <summary>Load: 곁에서 지키는 설비(Process.Attended)면 그 시간(칸이 동시에 익으므로 한 번 굽는 시간).</summary>
+        public float AttendSeconds;
         public float Seconds;
         public readonly List<int> After = new List<int>();
     }
@@ -315,7 +319,8 @@ namespace ValheimHelper.Core.Work
                 else if (_lastUnload.TryGetValue(p.Station + "#" + m, out var prev)) load.After.Add(prev.Id); // 다른 갈래가 쓰던 같은 설비
                 PlanStep wait = Add(StepKind.Wait, p.Output, n * p.OutputAmount);
                 wait.Station = p.Station;
-                wait.Seconds = n * p.SecondsPerProduct;
+                wait.Seconds = p.Attended ? 0f : n * p.SecondsPerProduct;
+                if (p.Attended) load.AttendSeconds = p.SecondsPerProduct;
                 wait.After.Add(load.Id);
                 PlanStep unload = Add(StepKind.Unload, p.Output, n * p.OutputAmount);
                 unload.Station = p.Station;
@@ -339,7 +344,7 @@ namespace ValheimHelper.Core.Work
                     float g = _gatherSeconds(s.Item, s.Amount);
                     return float.IsNaN(g) || float.IsInfinity(g) ? UnknownSearchSeconds + s.Amount * 4f : g;
                 case StepKind.Craft: return CraftSeconds * s.Crafts;
-                case StepKind.Load:
+                case StepKind.Load: return LoadSeconds + s.AttendSeconds;
                 case StepKind.Unload: return LoadSeconds;
             }
             return 0f;
