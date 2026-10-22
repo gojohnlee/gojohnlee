@@ -36,6 +36,29 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
+        /// <summary>
+        /// 제련 개수 보존: 원료 from과 결과 to가 상자(거점)·두 일꾼 짐·땅(설비·깃발 둘레 6m)·설비 안(대기열 s_queued + 꺼낼 것 s_spawnAmount)을 합쳐 정확히 total.
+        /// 원료 하나 = 결과 하나(제련소·용광로). 일꾼이 아직 꺼내는 중이면 땅·짐이 바뀌니 10초까지 기다려 다시 센다.
+        /// </summary>
+        static IEnumerator Conserved(TestKit.World w, GatherTest.Checks checks, GameObject machine, string from, string to, int total)
+        {
+            string where = "";
+            int sum = -1;
+            for (int i = 0; i < 10 && sum != total; i++)
+            {
+                if (i > 0) yield return new WaitForSeconds(1f);
+                int chest = Stock(w, from) + Stock(w, to);
+                int bag = BaseTest.Carried(w.Claude, from) + BaseTest.Carried(w.Claude, to) + BaseTest.Carried(w.Alarak, from) + BaseTest.Carried(w.Alarak, to);
+                Vector3 at = machine != null ? machine.transform.position : w.Home;
+                int ground = BaseTest.OnGround(at, from) + BaseTest.OnGround(at, to) + BaseTest.OnGround(w.Home, from) + BaseTest.OnGround(w.Home, to);
+                ZDO z = machine != null ? machine.GetComponent<ZNetView>()?.GetZDO() : null;
+                int inside = z != null ? z.GetInt(ZDOVars.s_queued) + z.GetInt(ZDOVars.s_spawnAmount) : 0;
+                sum = chest + bag + ground + inside;
+                where = $"상자 {chest}(원료 {Stock(w, from)}·결과 {Stock(w, to)}), 짐 {bag}, 땅 {ground}, 설비 안 {inside}";
+            }
+            checks.Add($"제련 개수 보존 {from}→{to} ({where} → 합 {sum} = {total})", sum == total);
+        }
+
         static GameObject Place(System.Collections.Generic.List<GameObject> made, string prefab, Vector3 at)
         {
             at = GatherTest.Ground(at);
@@ -85,7 +108,7 @@ namespace ValheimHelper
             TestKit.PutInChest(w.Chest, "CopperOre", 4);
             TestKit.PutInChest(w.Chest, "Coal", 20);
             if (ZNetScene.instance.GetPrefab("smelter") == null) { checks.Add("제련소 프리팹 있음", false); yield break; }
-            Place(made, "smelter", w.Home - right * 7f);
+            GameObject smelter = Place(made, "smelter", w.Home - right * 7f);
             yield return new WaitForSeconds(1f);
             string barName = Localization.instance.Localize(ObjectDB.instance.GetItemPrefab("Copper").GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
             TestRunner.Log($"구리 주괴 게임 이름: [{barName}] → Items.Resolve {Items.Resolve(barName)}, \"구리주괴\" → {Items.Resolve("구리주괴")}");
@@ -95,9 +118,8 @@ namespace ValheimHelper
             checks.Add($"구리 주괴 2개가 상자에 ({TestKit.Waited:0}초, 광석 {Stock(w, "CopperOre")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
             yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
-            // 광석 4개에서 주괴가 늘어나지 않음(상자 광석 + 주괴 ≤ 4, 복사 없음)
-            int ore = Stock(w, "CopperOre"), bars = Stock(w, "Copper");
-            checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 4)", ore + bars <= 4 && bars <= 4);
+            // 광석 4개 = 어디에 있든 합 4(복제도 소실도 없음, 사용자 2026-10-22 — E001): 상자 + 일꾼 짐 + 땅(제련소·상자 둘레) + 제련소 안
+            yield return Conserved(w, checks, smelter, "CopperOre", "Copper", 4);
             yield return Stop();
             yield return Blast(w, checks, made, right);
             yield return Ferment(w, checks, made, right);
@@ -112,15 +134,14 @@ namespace ValheimHelper
             TestKit.PutInChest(w.Chest, "IronScrap", 4);
             TestKit.PutInChest(w.Chest, "Coal", 20);
             if (ZNetScene.instance.GetPrefab("blastfurnace") == null) { checks.Add("용광로 프리팹 있음", false); yield break; }
-            Place(made, "blastfurnace", w.Home - right * 10f);
+            GameObject furnace = Place(made, "blastfurnace", w.Home - right * 10f);
             yield return new WaitForSeconds(1f);
             yield return Say($"!{n1} 철주괴 2", 1f);
             checks.Add($"용광로 계획 시작 ({w.Claude.Ai.Current}, {w.Claude.Ai.Job?.GetType().Name})", w.Claude.Ai.Job is PlanJob);
             yield return TestKit.WaitFor(() => Stock(w, "Iron") >= 2, 240f);
             checks.Add($"철 주괴 2개가 상자에 ({TestKit.Waited:0}초, 고철 {Stock(w, "IronScrap")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
             yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
-            int scrap = Stock(w, "IronScrap"), bars = Stock(w, "Iron");
-            checks.Add($"제련 뒤 개수 보존 (고철 {scrap} + 주괴 {bars} ≤ 4)", scrap + bars <= 4);
+            yield return Conserved(w, checks, furnace, "IronScrap", "Iron", 4);
             yield return Stop();
         }
 

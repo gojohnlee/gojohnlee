@@ -37,7 +37,7 @@ namespace ValheimHelper
 
         static int Base(TestKit.World w, string prefab) => GatherTest.CountBase(w.Home, prefab);
 
-        static int Carried(WorkerNpc npc, string prefab) =>
+        internal static int Carried(WorkerNpc npc, string prefab) =>
             npc == null ? 0 : npc.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
 
         static bool Idle(WorkerNpc npc) => npc != null && npc.Ai.Job == null && npc.Ai.Queue.Count == 0;
@@ -144,7 +144,7 @@ namespace ValheimHelper
             TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
         }
 
-        static int OnGround(Vector3 at, string prefab)
+        internal static int OnGround(Vector3 at, string prefab)
         {
             int n = 0;
             var seen = new HashSet<ItemDrop>();
