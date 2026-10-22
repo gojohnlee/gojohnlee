@@ -81,8 +81,10 @@ namespace ValheimHelper
 
         Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home, Chests.RoleFor(it));
 
+        // 거점에서 고칠 수 있는 닳은 장비는 지닌다(다음 출발 준비가 고침, 상자에 넣으면 부러진 채 남던 것)
         bool Storable(ItemDrop.ItemData it, HashSet<ItemDrop.ItemData> keep) =>
-            it.m_dropPrefab != null && (!keep.Contains(it) || Prep.ExtraMeads(m_npc, it) > 0) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except;
+            it.m_dropPrefab != null && (!keep.Contains(it) || Prep.ExtraMeads(m_npc, it) > 0) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except
+            && Repair.StationFor(it, m_npc.Home) == null;
 
         ItemDrop.ItemData NextToStore()
         {

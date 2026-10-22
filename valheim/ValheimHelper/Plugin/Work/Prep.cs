@@ -15,7 +15,7 @@ namespace ValheimHelper
     public sealed class Prep
     {
         public const int MeadsToCarry = 3;
-        const float WalkLimit = 60f, BusyLimit = 20f;
+        const float WalkLimit = 60f, BusyLimit = 20f, RepairReach = 3.5f;
 
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
@@ -26,6 +26,9 @@ namespace ValheimHelper
         /// <summary>이번 상자에서 챙길 것: 장비(장비 상자) / 미드(음식·미드 상자). 이름 없는 상자는 둘 다.</summary>
         bool m_takeGear, m_takeMeads;
         float m_time;
+        /// <summary>장비 수리(Repair): 지금 가는 설비, 이미 들른 설비.</summary>
+        CraftingStation m_station;
+        readonly HashSet<CraftingStation> m_repairDone = new HashSet<CraftingStation>();
 
         public Prep(WorkerNpc npc)
         {
@@ -36,8 +39,9 @@ namespace ValheimHelper
         /// <returns>true = 준비 중(걷거나 기다림), false = 끝.</returns>
         public bool Update(float dt)
         {
-            if (m_chest == null && !Next()) return false;
+            if (m_chest == null && m_station == null && !Next()) return false;
             m_time += dt;
+            if (m_station != null) return UpdateRepair(dt);
             if (m_time > WalkLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 준비: 상자에 못 닿아 건너뜀"); m_chest = null; return true; }
             Vector3 at = m_chest.transform.position;
             if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f)
@@ -62,12 +66,38 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>거점 설비까지 걸어가 짐에서 그 설비로 고칠 것을 다 고친다. 못 닿으면 건너뜀.</summary>
+        bool UpdateRepair(float dt)
+        {
+            CraftingStation cs = m_station;
+            Vector3 at = cs.transform.position;
+            float d = Utils.DistanceXZ(at, m_npc.transform.position);
+            if (m_time > WalkLimit) Plugin.Log.LogInfo($"{m_npc.NpcName} 수리: 설비에 못 닿아 건너뜀");
+            else if (d > Mathf.Min(RepairReach, cs.m_rangeBuild))
+            {
+                m_ai.MoveToPoint(dt, at, RepairReach - 1f, d > 10f);
+                return true;
+            }
+            else
+            {
+                m_ai.StopMoving();
+                m_ai.Face(at);
+                Repair.At(m_npc, cs);
+            }
+            m_repairDone.Add(cs);
+            m_station = null;
+            return true;
+        }
+
         /// <summary>다음에 갈 상자를 고른다. 갈 데가 없으면 false.</summary>
         bool Next()
         {
             m_time = 0f;
             if (!m_wore)
             {
+                // 입기 전에 고친다: 부러진 도구·갑옷은 고쳐야 고르기에 들어간다
+                m_station = Repair.Next(m_npc, m_repairDone);
+                if (m_station != null) return true;
                 m_wore = true;
                 WearPlan(m_npc, Plan(m_npc.GetInventory(), null)); // 이미 가진 건 걸어가지 않고 바로 입는다
             }

@@ -321,3 +321,7 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 [루프 회차 58, 2026-10-22] D 저항 미드 3조각: Core Departure(PlaceOption.Resist·DepartureInput.ResistMeads, 빠듯+저항 미드 없음 → Condition "resist:<종류>", 대사 ask.conditionResist {mead}),
 Resist.Condition/KindOf/MeadName, Plugin Departures(NeedsResist: 기억된 구역 바이옴 비트마다 ForBiome, 장비로 막으면 null; HasResistMead: 짐+Food 상자; ConditionMet이 조건 종류별).
 Prep: 미드를 Food 상자에서도 챙김(m_takeGear/m_takeMeads). departtest 4-2 늪 칸: 첫 실행은 걸어가는 동안 거점 근처 구리를 배워 다른 구역을 골라 FAIL(시험 문제) → OnlyFar 추가 후 26/26.
+[루프 회차 59, 2026-10-22] E 장비 수리: 게임 InventoryGui.RepairOneItem/CanRepair(1.0.20): GetWornItems(m_useDurability && 내구도<최대), m_canBeReparied,
+ObjectDB.GetRecipe(이름), recipe.m_repairStation/m_craftingStation 이름 == 지금 설비 이름(또는 item.m_worldLevel < Game.m_worldLevel이면 아무 설비 — 안 따름),
+Min(GetLevel,4) ≥ m_minStationLevel, CheckUsable(지붕 Cover 70%·underRoof, m_haveFire = EffectArea.IsPointPlus025InsideBurningArea). 무료, 효과 m_repairItemDoneEffects.
+vh_repairtest: 첫판은 제작대 4m라 0초(걷기 안 탐) → 10m로 옮겨 2초 PASS. Log "Claude 수리(작업대): AxeFlint 0→100, ArmorRagsChest 40→200".

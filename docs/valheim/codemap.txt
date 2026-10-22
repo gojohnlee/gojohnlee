@@ -20,6 +20,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
 탐험 작업              Plugin/Work/ExploreJob.cs
 출발 준비·장비         Plugin/Work/Prep.cs(장비·음식·미드 챙기기, 가방 차면 헌 장비와 맞바꿈 MakeRoom) Gear.cs(좋은 장비 고르기) + Core/Npc/Meals.cs(바닐라 음식 규칙)
+장비 수리             Plugin/Work/Repair.cs(바닐라 CanRepair 규칙: 레시피 수리대·제작대 이름·레벨·지붕/불, StationFor·Next·At) + Core/Npc/RepairRule.cs(반 넘게 닳으면). Prep이 입기 전에 들름, Unload는 고칠 수 있는 닳은 장비를 지님. 시험 RepairTest.cs(vh_repairtest)
 묘비 회수              Plugin/Work/GraveJob.cs
 짐 정리               Plugin/Work/Unload.cs(들고 다닐 것 말고 상자에 넣기: 묘비 회수 뒤, 채집 나갈 때마다)
 상자                  Plugin/Work/Chests.cs(I-1: ChestRole Any/Gear/Food/Mats 인자·TagProvider(ZDO→ChestTags, 기본 ChestTagReader.Read, null=전부)·Candidates(역할별 거리 안 ZDO 고르기). RoleFor(물건)=Unload 역할. 지정 없음: 거점 20m 안 상자 전부 NearBase·First·CountAll, 넣기 ForItem = 같은 물건 → 빈자리. !상자는 "다 씀" 대답만)
@@ -46,6 +47,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
+- 수리(InventoryGui.CanRepair): m_canBeReparied, ObjectDB.GetRecipe(it)의 m_repairStation·m_craftingStation 이름 == 설비 이름, Min(GetLevel,4)≥m_minStationLevel, CheckUsable(지붕 Cover≥0.7·underRoof, 불 EffectArea.IsPointPlus025InsideBurningArea). 무료, m_durability=GetMaxDurability().
 - 저항 미드: SE_Stats.m_mods(List<HitData.DamageModPair> m_type·m_modifier) → Character.GetDamageModifiers가 장비·SEMan 효과까지 합침. 추위(Cold·Freezing)는 Player.UpdateEnvStatusEffects에서만 → Humanoid인 일꾼은 추위를 안 탐(냉기 미드는 냉기 피해용). 독 피해는 Character.AddPoisonDamage가 SE "Poison"(SEMan.s_statusEffectPoison)을 붙임. 바닐라 이름 MeadPoisonResist·MeadFrostResist.
 - 상자 저장: Container.Load = ZDO GetByteArray(ZDOVars.s_items) → m_inventory.Load(ZPackage). Inventory.Load는 AddItem(skipValidPositionCheck=true)라 크기와 무관 → 인스턴스 없이 new Inventory(..)로 읽을 수 있음.
 ----------------------------------------------------------------------
