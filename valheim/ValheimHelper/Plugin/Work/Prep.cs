@@ -23,6 +23,8 @@ namespace ValheimHelper
         readonly HashSet<Container> m_gearDone = new HashSet<Container>(), m_foodDone = new HashSet<Container>();
         Container m_chest;
         bool m_forFood;
+        /// <summary>이번 상자에서 챙길 것: 장비(장비 상자) / 미드(음식·미드 상자). 이름 없는 상자는 둘 다.</summary>
+        bool m_takeGear, m_takeMeads;
         float m_time;
 
         public Prep(WorkerNpc npc)
@@ -45,7 +47,7 @@ namespace ValheimHelper
             }
             m_ai.StopMoving();
             m_ai.Face(at);
-            bool forFood = m_forFood;
+            bool forFood = m_forFood, takeGear = m_takeGear, takeMeads = m_takeMeads;
             bool done = Chests.TryEdit(m_chest, inv =>
             {
                 if (forFood)
@@ -53,7 +55,7 @@ namespace ValheimHelper
                     var eaten = m_npc.EatFrom(inv);
                     Plugin.Log.LogInfo($"{m_npc.NpcName} 먹음: {string.Join(", ", eaten.ToArray())} → 최대 체력 {m_npc.Meals.MaxHealth:0}");
                 }
-                else TakeGear(inv);
+                else TakeGear(inv, takeGear, takeMeads);
             });
             if (!done && m_time < BusyLimit) return true; // 누가 열고 있다
             m_chest = null;
@@ -72,8 +74,15 @@ namespace ValheimHelper
             // 거점 상자 전부(가까운 순)를 한 번씩: 더 좋은 장비·모자란 미드 → 먹을 음식
             List<Container> gearChests = Chests.NearBase(m_npc.Home, ChestRole.Gear);
             List<Container> chests = Chests.NearBase(m_npc.Home, ChestRole.Food);
-            foreach (var c in gearChests)
-                if (m_gearDone.Add(c) && NeedsGear(c.GetInventory())) { m_chest = c; m_forFood = false; return true; }
+            // 미드는 짐 정리가 음식·미드 상자(ChestRole.Food)에 넣으므로 거기서도 챙긴다(이름 붙은 "미드 상자"에서 못 꺼내던 것)
+            var takeChests = new List<Container>(gearChests);
+            foreach (var c in chests) if (!takeChests.Contains(c)) takeChests.Add(c);
+            foreach (var c in takeChests)
+            {
+                bool gear = gearChests.Contains(c), meads = chests.Contains(c);
+                if (m_gearDone.Add(c) && NeedsGear(c.GetInventory(), gear, meads))
+                { m_chest = c; m_forFood = false; m_takeGear = gear; m_takeMeads = meads; return true; }
+            }
             foreach (var c in chests)
                 if (m_foodDone.Add(c) && m_npc.CanEatFrom(c.GetInventory())) { m_chest = c; m_forFood = true; return true; }
             if (m_npc.Meals.Count == 0 && !chests.Exists(c => WorkerNpc.HasFood(c.GetInventory()))) m_npc.SayNoFoodOnce();
@@ -96,11 +105,13 @@ namespace ValheimHelper
             return plan;
         }
 
-        bool NeedsGear(Inventory chest)
+        bool NeedsGear(Inventory chest, bool gear, bool meads)
         {
             Inventory mine = m_npc.GetInventory();
-            foreach (var it in Plan(mine, chest))
-                if (chest.ContainsItem(it)) return true;
+            if (gear)
+                foreach (var it in Plan(mine, chest))
+                    if (chest.ContainsItem(it)) return true;
+            if (!meads) return false;
             if (CountMeads(mine) < MeadsToCarry && CountMeads(chest) > 0) return true;
             foreach (var k in Resist.Kinds)
                 if (CountResist(mine, k) < Resist.ToCarry && CountResist(chest, k) > 0) return true;
@@ -159,10 +170,10 @@ namespace ValheimHelper
             return n;
         }
 
-        void TakeGear(Inventory chest)
+        void TakeGear(Inventory chest, bool takeGear, bool takeMeads)
         {
             Inventory mine = m_npc.GetInventory();
-            List<ItemDrop.ItemData> plan = Plan(mine, chest);
+            List<ItemDrop.ItemData> plan = takeGear ? Plan(mine, chest) : new List<ItemDrop.ItemData>(); // 미드 상자에서는 장비를 안 꺼냄
             var taken = new List<string>();
             foreach (var it in plan)
             {
@@ -181,15 +192,18 @@ namespace ValheimHelper
             foreach (var it in new List<ItemDrop.ItemData>(mine.GetAllItems()))
             {
                 bool gear = Gear.IsMelee(it) || Gear.IsShield(it) || System.Array.IndexOf(Gear.WearSlots, it.m_shared.m_itemType) >= 0;
-                if (!gear || keep.Contains(it) || !chest.CanAddItem(it)) continue;
+                if (!takeGear || !gear || keep.Contains(it) || !chest.CanAddItem(it)) continue; // 헌 장비는 장비 상자에만
                 if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
                 chest.MoveItemToThis(mine, it);
             }
-            // 체력 미드
-            TakeMeads(mine, chest, MeadsToCarry - CountMeads(mine), Gear.IsHealthMead, taken);
-            // 저항 미드(결정 D): 종류마다 둘
-            foreach (var k in Resist.Kinds)
-                TakeMeads(mine, chest, Resist.ToCarry - CountResist(mine, k), it => Gear.ResistOf(it) == k, taken);
+            if (takeMeads)
+            {
+                // 체력 미드
+                TakeMeads(mine, chest, MeadsToCarry - CountMeads(mine), Gear.IsHealthMead, taken);
+                // 저항 미드(결정 D): 종류마다 둘
+                foreach (var k in Resist.Kinds)
+                    TakeMeads(mine, chest, Resist.ToCarry - CountResist(mine, k), it => Gear.ResistOf(it) == k, taken);
+            }
             Plugin.Log.LogInfo($"{m_npc.NpcName} 장비 챙김: {string.Join(", ", taken.ToArray())}, 방어력 {m_npc.GetBodyArmor():0}");
         }
 

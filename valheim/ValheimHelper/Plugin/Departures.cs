@@ -156,6 +156,7 @@ namespace ValheimHelper
             else if (ways.Contains(ToolKind.Pickaxe)) input.Skill = (int)npc.SkillLevels.Level((int)Skills.SkillType.Pickaxes);
             input.FoodInChest = Chests.Any(home, WorkerNpc.HasFood, ChestRole.Food);
             input.HealthMeads = CountMeads(npc.GetInventory()) + Chests.CountAll(home, CountMeads, ChestRole.Food);
+            foreach (string k in Resist.Kinds) if (HasResistMead(npc, k)) input.ResistMeads.Add(k);
             input.Stock = Stock(cmd.Item, home);
             GameObject prefab = ObjectDB.instance.GetItemPrefab(cmd.Item);
             int stack = prefab != null ? prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize : 50;
@@ -183,6 +184,7 @@ namespace ValheimHelper
                     DeathWeight = alone.DeathWeight,
                     Boss = alone.Boss,
                     TopFoe = alone.TopFoe,
+                    Resist = NeedsResist(npc, m.Biome),
                 };
                 if (partner != null) o.RatioTogether = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit + partnerHit, taken), Guard.Resolve).Ratio;
                 input.Places.Add(o);
@@ -219,6 +221,22 @@ namespace ValheimHelper
             foreach (var o in WorkerNpc.All)
                 if (o != npc && (o.Ai.Current == WorkerAI.Mode.Idle || o.Ai.Current == WorkerAI.Mode.Home) && o.Ai.Queue.Count == 0 && !s_pending.ContainsKey(o))
                     return o;
+            return null;
+        }
+
+        /// <summary>그 저항 미드를 짐이나 음식·미드 상자에 가졌는지(Prep이 거기서 챙김).</summary>
+        static bool HasResistMead(WorkerNpc npc, string kind) =>
+            npc.HasResistMead(kind) || Chests.Any(npc.Home, inv => inv.GetAllItems().Exists(it => Gear.ResistOf(it) == kind), ChestRole.Food);
+
+        /// <summary>그 구역 바이옴(기억, 게임 Heightmap.Biome 비트)에서 막아야 할 피해. 모르거나 장비로 이미 막으면 null.</summary>
+        static string NeedsResist(WorkerNpc npc, int biome)
+        {
+            for (int bit = 1; bit <= biome && bit > 0; bit <<= 1)
+            {
+                if ((biome & bit) == 0) continue;
+                string k = Resist.ForBiome(((Heightmap.Biome)bit).ToString());
+                if (k != null && !npc.Resists(k)) return k;
+            }
             return null;
         }
 
@@ -392,7 +410,7 @@ namespace ValheimHelper
                     npc.Say(act == ReplyAction.GoEscort ? "answer.escort" : act == ReplyAction.GoGrumble ? "answer.grumble" : "answer.go", args);
                     break;
                 case ReplyAction.Recheck:
-                    if (!ConditionMet(npc)) { p.AskedAt = Now; npc.Say("answer.conditionMissing", args); break; }
+                    if (!ConditionMet(npc, r.Condition)) { p.AskedAt = Now; npc.Say("answer.conditionMissing", args); break; }
                     s_pending.Remove(npc);
                     Start(npc, p.Cmd, ways, null);
                     npc.Say("answer.conditionMet", args);
@@ -415,8 +433,10 @@ namespace ValheimHelper
             return true;
         }
 
-        static bool ConditionMet(WorkerNpc npc)
+        static bool ConditionMet(WorkerNpc npc, string condition)
         {
+            string kind = Resist.KindOf(condition);
+            if (kind != null) return HasResistMead(npc, kind);
             if (CountMeads(npc.GetInventory()) > 0) return true;
             return Chests.CountAll(npc.Home, CountMeads, ChestRole.Food) > 0;
         }
@@ -439,7 +459,7 @@ namespace ValheimHelper
                     if (p.RecheckTimer <= 0f)
                     {
                         p.RecheckTimer = 5f;
-                        if (ConditionMet(npc))
+                        if (ConditionMet(npc, p.Result.Condition))
                         {
                             s_pending.Remove(npc);
                             Start(npc, p.Cmd, ResourceCatalog.WaysFor(p.Cmd.Item), null);

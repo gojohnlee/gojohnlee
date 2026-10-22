@@ -317,3 +317,7 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
   고친 것: Unload가 몫 넘는 미드를 상자로(Prep.ExtraMeads), 바닐라 AddItem 일부만 들어가고 false인 경우 개수 맞춤(Unload·CraftStep.Put), CraftStep 결과를 상자에 못 넣으면 짐/땅(Spill — 예전엔 사라짐).
   시험: crafttest에 3) 발효 칸(지붕 없음→안 넣음, MachineStep.TestIgnoreRoof로 넣고 시작 시각 당김 → 6개·보존) 16/16. preptest는 넘는 미드가 상자로 가는 새 동작에 맞춰 음식 상자도 채우고 끝에 돌·미드 치움 22/22.
   간헐 1번: 따른 뒤 60초 동안 미드 6개를 못 주움(이후 5번 PASS, DIAG "발효기 줍기" 줄 + 8초 넘게 남으면 그 자리로 걸어감).
+
+[루프 회차 58, 2026-10-22] D 저항 미드 3조각: Core Departure(PlaceOption.Resist·DepartureInput.ResistMeads, 빠듯+저항 미드 없음 → Condition "resist:<종류>", 대사 ask.conditionResist {mead}),
+Resist.Condition/KindOf/MeadName, Plugin Departures(NeedsResist: 기억된 구역 바이옴 비트마다 ForBiome, 장비로 막으면 null; HasResistMead: 짐+Food 상자; ConditionMet이 조건 종류별).
+Prep: 미드를 Food 상자에서도 챙김(m_takeGear/m_takeMeads). departtest 4-2 늪 칸: 첫 실행은 걸어가는 동안 거점 근처 구리를 배워 다른 구역을 골라 FAIL(시험 문제) → OnlyFar 추가 후 26/26.

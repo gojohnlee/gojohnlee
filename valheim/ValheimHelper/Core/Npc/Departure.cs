@@ -21,6 +21,8 @@ namespace ValheimHelper.Core.Npc
         public float DeathWeight;
         public bool Boss;
         public string TopFoe;
+        /// <summary>그 곳 바이옴에서 막아야 할 피해(Resist.ForBiome, "Poison" 등). 장비로 이미 막거나 없으면 null.</summary>
+        public string Resist;
     }
 
     public sealed class DepartureInput
@@ -40,6 +42,8 @@ namespace ValheimHelper.Core.Npc
         public bool Fed;
         public bool FoodInChest = true;
         public int HealthMeads;
+        /// <summary>가진(짐·상자) 저항 미드 종류("Poison" 등).</summary>
+        public HashSet<string> ResistMeads = new HashSet<string>();
         /// <summary>그 일의 스킬. 모르면 -1.</summary>
         public int Skill = -1;
         public int Stock;
@@ -77,7 +81,7 @@ namespace ValheimHelper.Core.Npc
         public PlaceOption Place;
         /// <summary>제안한(또는 고른) 대안. 없으면 null.</summary>
         public PlaceOption Alternative;
-        /// <summary>조건 질문의 필요한 것. 지금은 "healthMead"만.</summary>
+        /// <summary>조건 질문의 필요한 것: "healthMead" 또는 "resist:Poison" 같은 저항 미드(Resist.Condition).</summary>
         public string Condition;
         /// <summary>대사 키. null이면 플러그인의 평소 복창(gatherStart/gatherKnown/searching).</summary>
         public string Key;
@@ -194,6 +198,15 @@ namespace ValheimHelper.Core.Npc
                     return Ask(r, Question.DiedThere, alt, stockEnough, nightSoon);
                 if (level == DangerLevel.Tight)
                 {
+                    if (t.Resist != null && !i.ResistMeads.Contains(t.Resist))
+                    {
+                        // 빠듯한데 그 바이옴 저항 미드가 없음 → 그것부터 달라고 함(구상서 8-1 "독 저항 미드 하나만 주시면 갈게요")
+                        r.Condition = Resist.Condition(t.Resist);
+                        r.Args["mead"] = Resist.MeadName(t.Resist);
+                        Ask(r, Question.Condition, alt, stockEnough, nightSoon);
+                        r.Key = "ask.conditionResist";
+                        return r;
+                    }
                     if (i.HealthMeads > 0 && t.RatioWithMead < FightLine(p))
                         level = DangerLevel.Caution; // 가진 미드로 버틴다
                     else if (i.HealthMeads == 0 && t.RatioWithMead < FightLine(p))

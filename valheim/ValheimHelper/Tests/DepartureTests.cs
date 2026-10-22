@@ -71,6 +71,39 @@ public class DepartureTests
     }
 
     [Fact]
+    public void TightSwampAsksForPoisonMead()
+    {
+        var o = P(100, 0.7f, withMead: 0.5f); o.Resist = "Poison";
+        var i = In(o); i.HealthMeads = 2;
+        var r = Departure.Judge(i);
+        Assert.Equal(Question.Condition, r.Question);
+        Assert.Equal("resist:Poison", r.Condition);
+        Assert.Equal("Poison", Resist.KindOf(r.Condition));
+        Assert.Equal("ask.conditionResist", r.Key);
+        Assert.Equal("독 저항 미드", r.Args["mead"]);
+    }
+
+    [Fact]
+    public void TightSwampWithPoisonMeadUsesHealthMeadRule()
+    {
+        var o = P(100, 0.7f, withMead: 0.5f); o.Resist = "Poison";
+        var i = In(o); i.HealthMeads = 2; i.ResistMeads.Add("Poison");
+        var r = Departure.Judge(i);
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Equal("depart.warn", r.Key);
+        Assert.Null(Resist.KindOf("healthMead"));
+    }
+
+    [Fact]
+    public void CautionSwampDoesNotAskForResist()
+    {
+        var o = P(100, 0.3f); o.Resist = "Poison";
+        var r = Departure.Judge(In(o));
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Equal("depart.warn", r.Key);
+    }
+
+    [Fact]
     public void TightWithOwnMeadsJustWarns()
     {
         var i = In(P(100, 0.7f, withMead: 0.5f)); i.HealthMeads = 2;
@@ -242,7 +275,7 @@ public class DepartureSpeechTests
     static readonly string[] Keys =
     {
         "memory", "depart.warn", "depart.hungry", "depart.far", "depart.trips", "depart.lowSkill", "depart.busy", "depart.together", "depart.outOfScope",
-        "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "ask.night", "ask.stock", "note.stock", "note.night",
+        "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "ask.conditionResist", "ask.night", "ask.stock", "note.stock", "note.night",
         "answer.grumble", "answer.escort", "answer.alternative", "answer.conditionMet", "answer.conditionMissing", "answer.morning",
         "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone", "craft.plan", "craft.inStock", "craft.missing", "craft.tooLong", "craft.unknown", "setList", "setEmpty", "setNone", "keepSet", "keepOff", "refillGo",
     };

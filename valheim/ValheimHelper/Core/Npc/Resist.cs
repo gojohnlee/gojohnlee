@@ -11,6 +11,16 @@ namespace ValheimHelper.Core.Npc
         /// <summary>들고 다닐 저항 미드 수(종류마다).</summary>
         public const int ToCarry = 2;
 
+        /// <summary>출발 조건 문자열(DepartureResult.Condition·저장값). "resist:Poison".</summary>
+        public static string Condition(string kind) => "resist:" + kind;
+
+        /// <summary>조건 문자열이 저항 미드면 그 종류, 아니면 null.</summary>
+        public static string KindOf(string condition) =>
+            condition != null && condition.StartsWith("resist:", System.StringComparison.Ordinal) ? condition.Substring(7) : null;
+
+        public static string MeadName(string kind) =>
+            kind == "Poison" ? "독 저항 미드" : kind == "Frost" ? "냉기 저항 미드" : kind == "Fire" ? "불 저항 미드" : kind;
+
         /// <summary>그 바이옴의 적이 주로 주는 피해 중 미드로 막을 것. 없으면 null.</summary>
         public static string ForBiome(string biome)
         {

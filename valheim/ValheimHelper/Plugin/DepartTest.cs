@@ -127,6 +127,21 @@ namespace ValheimHelper
                     yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 8f);
                     checks.Add($"미드 생김 → 스스로 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Claude) < 0);
                     yield return Stop();
+
+                    // 4-2) 같은 곳이 늪이면: 체력 미드가 있어도 "독 저항 미드 주시면 갈게요"(결정 D 3조각) → 생기면 스스로 출발
+                    TestKit.TakeFromChest(w.Chest, "MeadPoisonResist");
+                    foreach (var it in new List<ItemDrop.ItemData>(w.Claude.GetInventory().GetAllItems())) if (Gear.ResistOf(it) == "Poison") w.Claude.GetInventory().RemoveItem(it);
+                    Brain.Get().SetBiome(far, (int)Heightmap.Biome.Swamp);
+                    OnlyFar(far, hz); // 걸어가는 동안 거점 근처 구리를 배웠을 수 있다
+                    DepartureResult rr = Departures.JudgeFor(w.Claude, copper);
+                    TestRunner.Log($"늪 판단: {rr?.Question} {rr?.Condition} — {rr?.Reason}");
+                    yield return Say($"!{n1} 구리 10", 1f);
+                    checks.Add($"늪 → 독 저항 미드 조건 ({Asked(w.Claude)})", Departures.AskedAt(w.Claude) >= 0 && LastSaid(w, n1).Contains("독 저항"));
+                    TestKit.PutInChest(w.Chest, "MeadPoisonResist", 1);
+                    yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 8f);
+                    checks.Add($"상자에 독 저항 미드 → 스스로 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Claude) < 0);
+                    yield return Stop();
+                    TestKit.TakeFromChest(w.Chest, "MeadPoisonResist");
                 }
                 Brain.ReplaceForTest("", "");
 
