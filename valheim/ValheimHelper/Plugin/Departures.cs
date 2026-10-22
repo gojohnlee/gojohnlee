@@ -534,7 +534,7 @@ namespace ValheimHelper
         /// <summary>
         /// 1분마다: 기준치 아래인 물건을 한가한 NPC 하나가 채우러 간다(직접 명령·묘비 회수가 없을 때만).
         /// 자동 보충은 묻지 않는다 — 출발 전 판단이 질문을 낼 상황(위험·재고·밤 등)이면 그 물건은 10분 쉰다.
-        /// 채집으로 나는 물건만(만드는 물건은 ⑥ 실행기 다음).
+        /// 채집으로 나는 물건은 채집 일, 못 나는 물건은 제작 계획(StartRefillMake, ⑩).
         /// </summary>
         internal static void TestRefillNow() { s_refillTimer = 0f; TickRefill(0f); }
 
@@ -550,9 +550,33 @@ namespace ValheimHelper
                 if (n.Ai.Current == WorkerAI.Mode.Idle && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n) && !n.Ai.HasChores) { npc = n; break; }
             if (npc == null) return;
             GatherJob job = NextRefillJob(npc, 0);
-            if (job == null) return;
+            if (job == null) { StartRefillMake(npc); return; }
             npc.Ai.StartJob(job);
             npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString() });
+        }
+
+        /// <summary>그 물건을 이미 누가 채우거나 만드는 중이면(두 일꾼이 같은 걸 겹쳐 만들어 재료를 두 번 쓰지 않게).</summary>
+        static bool RefillBusy(string item)
+        {
+            foreach (var n in WorkerNpc.All)
+            {
+                IWorkerJob j = n.Ai.Job;
+                if (j is GatherJob g && g.Item == item) return true;
+                if (j is PlanJob p && p.Goal != null && p.Goal.Item == item) return true;
+            }
+            return false;
+        }
+
+        /// <summary>자동 보충 재고: 채집 물건은 채집이 넣는 재료 상자(Stock), 만드는 물건은 만든 것이 놓이는 역할 상자(음식 → 음식, 장비 → 장비, 나머지 → 재료).</summary>
+        static int RefillStock(string prefab, Vector3 home)
+        {
+            if (ResourceCatalog.WaysFor(prefab).Count > 0) return Stock(prefab, home);
+            GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
+            ItemDrop drop = go != null ? go.GetComponent<ItemDrop>() : null;
+            if (drop == null) return 0;
+            int n = 0;
+            foreach (var c in Chests.NearBase(home, Chests.RoleFor(drop.m_itemData))) n += c.GetInventory().CountItems(drop.m_itemData.m_shared.m_name);
+            return n;
         }
 
         /// <summary>
@@ -564,11 +588,11 @@ namespace ValheimHelper
             RefillBook refill = Brain.Refill;
             if (refill.Count == 0) return null;
             Vector3 home = npc.Home;
-            foreach (Ingredient due in refill.Due(item => Stock(item, home), Brain.Sets))
+            foreach (Ingredient due in refill.Due(item => RefillStock(item, home), Brain.Sets))
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
                 HashSet<ToolKind> ways = ResourceCatalog.WaysFor(due.Item);
-                if (ways.Count == 0) continue;
+                if (ways.Count == 0 || RefillBusy(due.Item)) continue;
                 int amount = maxAmount > 0 ? System.Math.Min(due.Amount, maxAmount) : due.Amount;
                 var cmd = new ChatCommand { Kind = CommandKind.Item, Item = due.Item, Amount = amount };
                 DepartureInput input = Input(npc, cmd, ways, true);
@@ -579,6 +603,32 @@ namespace ValheimHelper
                 return new GatherJob(npc, due.Item, amount, ways);
             }
             return null;
+        }
+
+        /// <summary>
+        /// ⑩ 만드는 물건 자동 보충("!채워 구리주괴 20", 세트의 음식): 채집으로 안 나는 첫 모자란 물건을 제작 계획으로 만든다(묻지 않음).
+        /// 계획이 끝까지 되는 것만 — 범위 밖·모름·없는 설비·너무 김·밭 재료(⑩ 다음 조각)면 그 물건은 10분 쉰다. 시작했으면 true.
+        /// </summary>
+        static bool StartRefillMake(WorkerNpc npc)
+        {
+            if (!Features.RunPlans) return false;
+            Vector3 home = npc.Home;
+            RecipeBook book = Recipes.Book();
+            foreach (Ingredient due in Brain.Refill.Due(item => RefillStock(item, home), Brain.Sets))
+            {
+                if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
+                if (ResourceCatalog.WaysFor(due.Item).Count > 0 || RefillBusy(due.Item)) continue;
+                if (book.RecipesFor(due.Item).Count == 0 && book.ProcessesFor(due.Item).Count == 0) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
+                Plan plan = PlanFor(npc, new List<Ingredient> { due });
+                bool farm = plan.Steps.Exists(s => s.Kind == StepKind.Farm);
+                Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 만들기 {due.Item} {due.Amount}: 단계 {plan.Steps.Count}, {plan.Seconds:0}초, 부분 {plan.Partial}, 김 {plan.TooLong}, 밭 {farm}");
+                if (plan.Steps.Count == 0 || plan.Partial || plan.TooLong || farm) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
+                string label = GatherJob.ItemLabel(due.Item);
+                npc.Ai.StartJob(new PlanJob(npc, plan, label) { Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = due.Item, Amount = due.Amount } });
+                npc.Say("refillMake", new Dictionary<string, string> { ["item"] = label, ["n"] = due.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString() });
+                return true;
+            }
+            return false;
         }
 
         // ---- !기억 ----

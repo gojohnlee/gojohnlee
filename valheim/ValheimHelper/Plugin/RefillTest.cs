@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ValheimHelper
@@ -21,9 +22,11 @@ namespace ValheimHelper
                 yield break;
             }
             var w = new TestKit.World();
-            try { yield return Body(w, checks); }
+            var made = new List<GameObject>();
+            try { yield return Body(w, checks, made); }
             finally
             {
+                foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
                 Brain.Refill.Off();
                 TestKit.Restore(w);
             }
@@ -32,7 +35,7 @@ namespace ValheimHelper
 
         static int Wood(TestKit.World w) => GatherTest.CountBase(w.Home, "Wood");
 
-        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
+        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
@@ -58,6 +61,52 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
             checks.Add($"채워진 뒤엔 다시 안 나감 (나무 {full})", !(w.Claude.Ai.Job is GatherJob) && !(w.Alarak.Ai.Job is GatherJob));
             TestKit.ClearBaseStock(w, "Wood");
+            Brain.Refill.Off();
+            yield return Make(w, checks, made);
+        }
+
+        /// <summary>
+        /// 2) 만드는 물건(⑩): "!채워 구리주괴 2" + 상자 광석 2·석탄 10 + 제련소 → 한가한 일꾼이 제작 계획(PlanJob)으로 제련해 상자에 주괴 2,
+        /// 다른 일꾼이 같은 걸 겹쳐 만들지 않고, 채워진 뒤엔 다시 안 만들고, 광석+주괴가 늘지 않음.
+        /// </summary>
+        static IEnumerator Make(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
+        {
+            if (ZNetScene.instance.GetPrefab("smelter") == null) { checks.Add("제련소 프리팹 있음", false); yield break; }
+            TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
+            TestKit.PutInChest(w.Chest, "CopperOre", 2);
+            TestKit.PutInChest(w.Chest, "Coal", 10);
+            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+            made.Add(Object.Instantiate(ZNetScene.instance.GetPrefab("smelter"), GatherTest.Ground(w.Home - right * 7f), Quaternion.identity));
+            yield return new WaitForSeconds(1f);
+
+            GatherTest.Say("!채워 구리주괴 2", null);
+            yield return new WaitForSeconds(1f);
+            checks.Add("만드는 물건 기준치 등록됨", Brain.Refill.Count == 1);
+            Departures.TestRefillNow();
+            yield return new WaitForSeconds(1f);
+            WorkerNpc maker = w.Claude.Ai.Job is PlanJob ? w.Claude : w.Alarak.Ai.Job is PlanJob ? w.Alarak : null;
+            checks.Add($"한가한 일꾼이 제작 계획 시작 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", maker != null);
+            if (maker == null) yield break;
+            Departures.TestRefillNow();
+            yield return new WaitForSeconds(1f);
+            checks.Add("다른 일꾼은 같은 걸 겹쳐 안 만듦", !(w.Claude.Ai.Job is PlanJob && w.Alarak.Ai.Job is PlanJob));
+            yield return TestKit.WaitFor(() => Count(w, "Copper") >= 2, 240f);
+            checks.Add($"구리 주괴 2개가 상자에 ({TestKit.Waited:0}초, 광석 {Count(w, "CopperOre")})", TestKit.Ok);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null, 30f);
+            checks.Add("일 끝남", TestKit.Ok);
+            Departures.TestRefillNow();
+            yield return new WaitForSeconds(2f);
+            int ore = Count(w, "CopperOre"), bars = Count(w, "Copper");
+            checks.Add($"채워진 뒤엔 다시 안 만듦 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null);
+            checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 2)", ore + bars <= 2);
+            TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
+        }
+
+        static int Count(TestKit.World w, string prefab)
+        {
+            int n = 0;
+            foreach (var c in Chests.NearBase(w.Home)) n += GatherTest.Count(c, prefab);
+            return n;
         }
     }
 }
