@@ -11,6 +11,7 @@
 기능 스위치             Plugin/Features.cs(BepInEx [Features] SaveWork·KnowExplored)
 명령 나누기·실행        Plugin/Commands.cs(262) + Core/Npc/Dispatch.cs(받을 NPC, 대답 받을 NPC)
 출발 전 판단·질문·대답  Core/Npc/Departure.cs(Judge, Replies) + Plugin/Departures.cs(462: 입력 모으기, 질문 대기, 제작 계획 말하기, 자동 보충, !기억)
+동행 앞장서기          Core/Npc/Escort.cs(기다림 8m·20m 넘으면 멈춤·12m 안이면 다시·60초/90초 포기) + WorkerAI.EscortBy/EscortHolds(일하는 동안 매 프레임). 대답 "같이 가자"(GoEscort)가 붙임. 시험 EscortTest.cs(vh_escorttest)
 대사                  Core/Npc/Speech.cs(키별 대사, SCV/알라라크) Josa.cs(조사)
 NPC 몸                Plugin/WorkerNpc.cs(외형, 말하기, 음식, 미드, 사망·묘비, 스킬 재정의, 땅 물건 줍기 PickDrop) WorkerPrefab.cs(Player 복제)
 NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 걷기 MoveToPoint, 점프, 구덩이 경사로, 물 판단, 대기열 Queue)
@@ -59,7 +60,7 @@ WorkerNpc(몸·음식·사망)   기본 묶음 + vh_deathtest;vh_preptest · 땅
 Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 작업 저장 WorkSaves·WorkState  vh_basetest + vh_restart1 → vh_restart2
 채팅·명령 Commands·ChatParser·Dispatch  dotnet test + vh_npctest;vh_departtest;vh_peertest · Claude → vh_claudetest
-출발 판단 Departures·Departure  vh_departtest;vh_peertest;vh_refilltest · 저항 → vh_resisttest
+출발 판단 Departures·Departure  vh_departtest;vh_peertest;vh_refilltest · 저항 → vh_resisttest · 동행 Escort → vh_escorttest
 위험·싸움 Guard·Danger·PlaceBook  vh_fighttest;vh_raidtest;vh_helptest;vh_teamtest;vh_deathtest · 사냥감 판단 → vh_hunttest
 채집 GatherJob·ResourceCatalog  vh_woodtest;vh_stonetest;vh_coppertest;vh_tintest;vh_bagtest · 사냥 → vh_hunttest;vh_bowtest · 지하묘지 → vh_crypttest · 포탈 걸음 → vh_portaltest
 지식·탐험 Senses·Scout·MapSense·ExploreJob·Knowledge  vh_exploretest;vh_woodtest

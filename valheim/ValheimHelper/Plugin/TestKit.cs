@@ -262,11 +262,13 @@ namespace ValheimHelper
         /// <summary>그래도 생물이 남으면 신 모드를 되돌리고 EnvBadException(본시험 안 함, PASS 아님).</summary>
         public static void OldCheck(Vector3 home, Player player, bool god)
         {
-            int left = Creatures(home).Count;
-            if (left == 0) return;
+            var left = Creatures(home);
+            if (left.Count == 0) return;
             s_oldHome = null;
             player.SetGodMode(god);
-            throw new EnvBadException($"거점 {StartRadius:0}m 안 생물 {left}");
+            var names = new List<string>();
+            foreach (var c in left) names.Add($"{Utils.GetPrefabName(c.gameObject)} {Vector3.Distance(c.transform.position, home):0}m{(c.GetComponent<ZNetView>()?.IsValid() == true ? "" : " 무효")}");
+            throw new EnvBadException($"거점 {StartRadius:0}m 안 생물 {left.Count} ({string.Join(", ", names.ToArray())})");
         }
 
         /// <summary>옛 시험 끝 정리(TestRunner.Finish가 부름, OldClear를 안 부른 시험은 아무것도 안 함).</summary>

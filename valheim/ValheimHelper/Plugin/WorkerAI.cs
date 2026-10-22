@@ -100,12 +100,50 @@ namespace ValheimHelper
         public void StartJob(IWorkerJob job)
         {
             Job = job;
+            m_escort = null; // 동행은 그 일에만(부르는 쪽이 StartJob 뒤 EscortBy)
             m_guard?.Reset();
             m_choresHeld = false;
             Current = Mode.Work;
         }
 
         public void Face(Vector3 point) => LookAt(point);
+
+        Escort m_escort;
+        ZDOID m_escortId = ZDOID.None;
+        /// <summary>지금 일에 같이 가는 사람 이름(앞장서는 중), 없으면 null. 시험·!상태용.</summary>
+        public string EscortName => m_escort != null ? m_escortName : null;
+        string m_escortName;
+        /// <summary>시험용: 앞장서기 단계.</summary>
+        public Escort.Phase? EscortPhase => m_escort?.Now;
+
+        /// <summary>지금 일을 그 사람과 같이 한다(구상서 8-1): 기다렸다가 앞장서고 20m 안 유지. StartJob 뒤에 부른다.</summary>
+        public void EscortBy(ZDOID who, string name)
+        {
+            if (Current != Mode.Work || Job == null || who.IsNone()) return;
+            m_escort = new Escort();
+            m_escortId = who;
+            m_escortName = name;
+        }
+
+        /// <summary>동행자를 기다려야 하면 true(이번 프레임 일은 쉼).</summary>
+        bool EscortHolds(WorkerNpc npc, float dt)
+        {
+            ZDO z = ZDOMan.instance.GetZDO(m_escortId);
+            Vector3 pos = z != null ? z.GetPosition() : Vector3.zero;
+            float d = z != null ? Vector3.Distance(pos, transform.position) : -1f;
+            EscortAct act = m_escort.Tick(dt, d);
+            if (m_escort.Say != null) npc.Say(m_escort.Say);
+            if (act == EscortAct.GiveUp)
+            {
+                Plugin.Log.LogInfo($"{npc.NpcName}: 동행 {m_escortName} 포기(거리 {d:0}m) → 혼자 감");
+                m_escort = null;
+                return false;
+            }
+            if (act == EscortAct.Go) return false;
+            StopMoving();
+            LookAt(pos);
+            return true;
+        }
 
         Guard m_guard;
         /// <summary>위험 감지·싸움(구상서 8장). 시험·!상태용.</summary>
@@ -442,6 +480,7 @@ namespace ValheimHelper
         public void Follow(ZDOID target, string name)
         {
             Job = null;
+            m_escort = null;
             m_follow = target;
             FollowName = name;
             m_choresHeld = false;
@@ -454,6 +493,7 @@ namespace ValheimHelper
         {
             m_announceHome = announce;
             Job = null;
+            m_escort = null;
             m_follow = ZDOID.None;
             Current = Mode.Home;
             m_stuckTimer = 0f;
@@ -487,9 +527,11 @@ namespace ValheimHelper
             switch (Current)
             {
                 case Mode.Work:
+                    if (Job != null && m_escort != null && EscortHolds(npc, dt)) break;
                     if (Job == null || !Job.Update(dt))
                     {
                         Job = null;
+                        m_escort = null;
                         if (!NextQueued()) GoHome(false);
                     }
                     break;

@@ -466,6 +466,7 @@ namespace ValheimHelper
                 case ReplyAction.GoEscort:
                     s_pending.Remove(npc);
                     Start(npc, p.Cmd, ways, null); // 동행: 대답한 사람이 같이 오면 Guard가 20m 안 플레이어 힘을 합쳐 셈
+                    if (act == ReplyAction.GoEscort) npc.Ai.EscortBy(who.CharacterId, who.Name); // 기다렸다가 앞장섬(구상서 8-1)
                     npc.Say(act == ReplyAction.GoEscort ? "answer.escort" : act == ReplyAction.GoGrumble ? "answer.grumble" : "answer.go", args);
                     break;
                 case ReplyAction.Recheck:
