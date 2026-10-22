@@ -13,6 +13,8 @@ namespace ValheimHelper
     public static class Recipes
     {
         public const float BaseRange = 30f;
+        /// <summary>설비 찾기 층: 발효기는 piece 층이 아닌 충돌체만 있을 수 있어(회차 57 시험에서 못 찾음) 넓게 본다.</summary>
+        public static int MachineMask => LayerMask.GetMask("piece", "piece_nonsolid", "Default", "static_solid", "Default_small");
         static RecipeBook s_book;
         static ObjectDB s_for;
         /// <summary>설비 키(가공 설비는 프리팹 이름, 제작대는 m_name) → 보여 줄 이름.</summary>
@@ -117,7 +119,7 @@ namespace ValheimHelper
                 if (cs != null) f.Stations[name] = cs.GetLevel();
             }
             var seen = new HashSet<GameObject>();
-            foreach (Collider col in Physics.OverlapSphere(home, BaseRange, LayerMask.GetMask("piece", "piece_nonsolid")))
+            foreach (Collider col in Physics.OverlapSphere(home, BaseRange, MachineMask))
             {
                 Component c = (Component)col.GetComponentInParent<Smelter>() ?? (Component)col.GetComponentInParent<Fermenter>() ?? col.GetComponentInParent<CookingStation>();
                 if (c == null || !seen.Add(c.gameObject)) continue;

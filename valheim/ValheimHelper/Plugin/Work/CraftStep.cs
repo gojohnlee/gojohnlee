@@ -49,7 +49,23 @@ namespace ValheimHelper
             foreach (var c in chests)
                 if (Chests.InUse(c)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
             foreach (var kv in need) Take(chests, kv.Key, kv.Value);
-            return Put(home, m_recipe.Output, m_recipe.OutputAmount * m_crafts) ? CraftResult.Done : CraftResult.Failed;
+            int left = Put(home, m_recipe.Output, m_recipe.OutputAmount * m_crafts);
+            if (left > 0) Spill(m_npc, m_recipe.Output, left);
+            return CraftResult.Done;
+        }
+
+        /// <summary>상자에 못 넣은 결과(재료는 이미 빠짐): 짐에 넣고, 짐도 차면 발밑에 떨군다 — 사라지지 않게.</summary>
+        static void Spill(WorkerNpc npc, string prefab, int amount)
+        {
+            GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
+            if (go == null) return;
+            ItemDrop.ItemData proto = go.GetComponent<ItemDrop>().m_itemData;
+            ItemDrop.ItemData d = proto.Clone();
+            d.m_stack = amount;
+            d.m_dropPrefab = go;
+            int dropped = npc.GetInventory().AddItem(d) ? 0 : d.m_stack;
+            if (dropped > 0) ItemDrop.DropItem(d, dropped, npc.transform.position + Vector3.up, Quaternion.identity);
+            Plugin.Log.LogInfo($"{npc.NpcName} 상자가 꽉 차 만든 것 {prefab} {amount}개 중 {amount - dropped}개 짐에, {dropped}개 땅에");
         }
 
         /// <summary>재료 → 필요한 수. OnlyOne이면 있는 재료 하나만(없으면 첫 재료).</summary>
@@ -92,30 +108,30 @@ namespace ValheimHelper
             }
         }
 
-        /// <summary>결과를 상자에 넣는다. 자리가 없으면 false(재료는 이미 빠졌으니 호출 쪽이 알린다).</summary>
-        static bool Put(Vector3 home, string prefab, int amount)
+        /// <summary>결과를 상자에 넣는다. 못 넣은 개수를 돌려준다(0 = 다 넣음).</summary>
+        static int Put(Vector3 home, string prefab, int amount)
         {
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
-            if (go == null) return false;
+            if (go == null) return amount;
             ItemDrop.ItemData proto = go.GetComponent<ItemDrop>().m_itemData;
             int max = Mathf.Max(1, proto.m_shared.m_maxStackSize);
             while (amount > 0)
             {
                 Container chest = Chests.ForItem(prefab, home, ChestRole.Mats);
-                if (chest == null) return false;
+                if (chest == null) return amount;
                 int stack = Mathf.Min(amount, max);
-                bool added = false;
+                int added = 0;
                 Chests.TryEdit(chest, inv =>
                 {
                     ItemDrop.ItemData d = proto.Clone();
                     d.m_stack = stack;
                     d.m_dropPrefab = go;
-                    added = inv.AddItem(d);
+                    added = inv.AddItem(d) ? stack : stack - d.m_stack; // 실패해도 기존 더미에 일부 들어갔을 수 있음
                 });
-                if (!added) return false;
-                amount -= stack;
+                amount -= added;
+                if (added < stack) return amount;
             }
-            return true;
+            return 0;
         }
     }
 }

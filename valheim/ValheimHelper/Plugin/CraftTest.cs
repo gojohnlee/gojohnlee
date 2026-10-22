@@ -8,6 +8,7 @@ namespace ValheimHelper
     /// vh_crafttest (⑥ 제작 실행기): 명령이 PlanJob을 시작해 실제로 끝내는지.
     /// 1) 제작대 앞 제작: 활 재료를 거점 상자에 넣고 제작대를 세운 뒤 "!활" → 상자에 활이 생기고 재료가 줄어듦.
     /// 2) 제련: 구리 광석·석탄을 상자에 넣고 제련소를 세운 뒤 "!구리주괴 2" → 제련소에 넣고 기다렸다 꺼내 상자에 구리 주괴 2.
+    /// 3) 발효: 독 저항 미드 바탕 + 발효기 → 지붕 없으면 안 넣음, 지붕 판단 끄면 넣고 따라 6개(발효 시각은 시험이 당김).
     /// 설비는 시험이 직접 만들고 끝나면 지운다. 게임 시계로 기다리므로 2)는 1~2분 걸린다.
     /// </summary>
     static class CraftTest
@@ -97,6 +98,77 @@ namespace ValheimHelper
             // 광석 4개에서 주괴가 늘어나지 않음(상자 광석 + 주괴 ≤ 4, 복사 없음)
             int ore = Stock(w, "CopperOre"), bars = Stock(w, "Copper");
             checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 4)", ore + bars <= 4 && bars <= 4);
+            yield return Stop();
+            yield return Ferment(w, checks, made, right);
+        }
+
+        /// <summary>
+        /// 3) 발효(D 저항 미드 2조각): 독 저항 미드 바탕 1개 + 발효기. 지붕 없으면 넣지 않고(바탕 그대로),
+        /// 지붕 판단을 끄면 넣고 → 시험이 발효 시작 시각을 40분 앞으로 당김 → 다 익은 걸 보고 기다림을 끝내 따라 6개.
+        /// </summary>
+        static IEnumerator Ferment(TestKit.World w, GatherTest.Checks checks, System.Collections.Generic.List<GameObject> made, Vector3 right)
+        {
+            const string Base = "MeadBasePoisonResist", Mead = "MeadPoisonResist";
+            string n1 = w.Claude.NpcName;
+            TestKit.ClearBaseStock(w, Base, Mead);
+            foreach (var npc in new[] { w.Claude, w.Alarak }) RemoveFromBag(npc, Mead);
+            if (ZNetScene.instance.GetPrefab("fermenter") == null) { checks.Add("발효기 프리팹 있음", false); yield break; }
+            TestKit.PutInChest(w.Chest, Base, 1);
+            GameObject fe = Place(made, "fermenter", w.Home + right * 6f);
+            yield return new WaitForSeconds(1f);
+            ZDO fz = fe.GetComponent<ZNetView>().GetZDO();
+            string layers = "";
+            foreach (var col in fe.GetComponentsInChildren<Collider>()) layers += $" {LayerMask.LayerToName(col.gameObject.layer)}{(col.isTrigger ? "(t)" : "")}";
+            TestRunner.Log($"발효기 충돌체 층:{layers}, 거점 설비 {string.Join(",", Recipes.At(w.Home).Processors.Keys)}");
+            string meadName = Localization.instance.Localize(ObjectDB.instance.GetItemPrefab(Mead).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
+            TestRunner.Log($"독 저항 미드 게임 이름: [{meadName}] → Items.Resolve {Items.Resolve(meadName)}");
+
+            MachineStep.TestIgnoreRoof = false;
+            yield return Say($"!{n1} {meadName} 6", 1f);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 60f);
+            checks.Add($"지붕 없는 발효기엔 안 넣음 (바탕 {Stock(w, Base)}, 발효기 {fz.GetInt(ZDOVars.s_content) != 0})",
+                TestKit.Ok && Stock(w, Base) == 1 && fz.GetInt(ZDOVars.s_content) == 0);
+            yield return Stop();
+
+            MachineStep.TestIgnoreRoof = true;
+            try
+            {
+                yield return Say($"!{n1} {meadName} 6", 1f);
+                checks.Add($"발효 계획 시작 ({w.Claude.Ai.Current}, {w.Claude.Ai.Job?.GetType().Name})", w.Claude.Ai.Job is PlanJob);
+                yield return TestKit.WaitFor(() => fz.GetInt(ZDOVars.s_content) != 0, 60f);
+                checks.Add($"발효기에 바탕을 넣음 ({TestKit.Waited:0}초, 상자 바탕 {Stock(w, Base)})", TestKit.Ok && Stock(w, Base) == 0);
+                if (!TestKit.Ok) yield break;
+                // 게임 시계로 40분은 못 기다리니 시작 시각을 당긴다(지붕 없어도 다 익은 뒤엔 바닐라가 시계를 되돌리지 않음)
+                fz.Set(ZDOVars.s_startTime, ZNet.instance.GetTime().AddSeconds(-fe.GetComponent<Fermenter>().m_fermentationDuration - 10).Ticks);
+                yield return TestKit.WaitFor(() => Total(w, Mead) >= 6 && w.Claude.Ai.Job == null, 60f);
+                checks.Add($"독 저항 미드 6개 (상자+짐 {Total(w, Mead)}, {TestKit.Waited:0}초, {w.Claude.Ai.Current})", TestKit.Ok);
+                checks.Add($"넘는 미드는 상자로 (상자 {Stock(w, Mead)} ≥ 4, 짐은 몫 2까지)", Stock(w, Mead) >= 6 - Core.Npc.Resist.ToCarry);
+                checks.Add($"발효 뒤 개수 보존 (미드 {Total(w, Mead)} = 6, 바탕 {Stock(w, Base)} = 0, 발효기 빔)",
+                    Total(w, Mead) == 6 && Stock(w, Base) == 0 && fz.GetInt(ZDOVars.s_content) == 0);
+            }
+            finally
+            {
+                MachineStep.TestIgnoreRoof = false;
+                TestKit.ClearBaseStock(w, Base, Mead);
+                foreach (var npc in new[] { w.Claude, w.Alarak }) RemoveFromBag(npc, Mead);
+            }
+        }
+
+        /// <summary>상자 + 두 일꾼 짐(준비가 저항 미드를 둘씩 들고 다님).</summary>
+        static int Total(TestKit.World w, string prefab)
+        {
+            string name = ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            int n = Stock(w, prefab);
+            foreach (var npc in new[] { w.Claude, w.Alarak }) if (npc != null) n += npc.GetInventory().CountItems(name);
+            return n;
+        }
+
+        static void RemoveFromBag(WorkerNpc npc, string prefab)
+        {
+            if (npc == null) return;
+            string name = ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            int n = npc.GetInventory().CountItems(name);
+            if (n > 0) npc.GetInventory().RemoveItem(name, n);
         }
 
         static IEnumerator Say(string text, float wait)

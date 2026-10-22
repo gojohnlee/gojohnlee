@@ -129,6 +129,21 @@ namespace ValheimHelper
             return keep;
         }
 
+        /// <summary>
+        /// 이 미드 더미에서 들고 다닐 몫(체력 3·저항 종류마다 2)을 넘는 개수. 미드가 아니거나 넘지 않으면 0.
+        /// Kept는 더미 단위라 발효로 6개를 꺼내면 6개를 다 지니게 됨 → 짐 정리가 넘는 만큼은 상자에 넣는다.
+        /// </summary>
+        public static int ExtraMeads(WorkerNpc npc, ItemDrop.ItemData it)
+        {
+            Inventory mine = npc.GetInventory();
+            string kind = Gear.ResistOf(it);
+            int total, carry;
+            if (kind != null) { total = CountResist(mine, kind); carry = Resist.ToCarry; }
+            else if (Gear.IsHealthMead(it)) { total = CountMeads(mine); carry = MeadsToCarry; }
+            else return 0;
+            return Mathf.Clamp(total - carry, 0, it.m_stack);
+        }
+
         /// <summary>장비(무기·방패·입을 것·연장)인지: 남는 장비는 장비 상자로 돌려놓는다.</summary>
         public static bool IsGear(ItemDrop.ItemData it) =>
             Gear.IsMelee(it) || Gear.IsShield(it) || System.Array.IndexOf(Gear.WearSlots, it.m_shared.m_itemType) >= 0

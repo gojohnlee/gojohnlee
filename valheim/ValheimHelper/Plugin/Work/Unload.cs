@@ -50,6 +50,16 @@ namespace ValheimHelper
                 foreach (var it in new List<ItemDrop.ItemData>(mine.GetAllItems()))
                 {
                     if (!Storable(it, keep) || ChestFor(it) != chest || !inv.CanAddItem(it)) continue;
+                    if (keep.Contains(it)) // 들고 다닐 미드 더미: 몫을 넘는 만큼만
+                    {
+                        int extra = Prep.ExtraMeads(m_npc, it);
+                        ItemDrop.ItemData part = it.Clone();
+                        part.m_stack = extra;
+                        // 바닐라 AddItem은 기존 더미에 일부만 채우고 false를 낼 수 있음(남은 수 = part.m_stack) → 들어간 만큼만 뺀다
+                        int moved = extra <= 0 ? 0 : inv.AddItem(part) ? extra : extra - part.m_stack;
+                        if (moved > 0) mine.RemoveItem(it, moved);
+                        continue;
+                    }
                     if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
                     inv.MoveItemToThis(mine, it);
                 }
@@ -72,7 +82,7 @@ namespace ValheimHelper
         Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home, Chests.RoleFor(it));
 
         bool Storable(ItemDrop.ItemData it, HashSet<ItemDrop.ItemData> keep) =>
-            it.m_dropPrefab != null && !keep.Contains(it) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except;
+            it.m_dropPrefab != null && (!keep.Contains(it) || Prep.ExtraMeads(m_npc, it) > 0) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except;
 
         ItemDrop.ItemData NextToStore()
         {

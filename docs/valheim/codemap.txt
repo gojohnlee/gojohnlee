@@ -26,7 +26,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 상자 이름(I-2)        Core/Work/ChestNames.cs(Parse 이름→ChestTags, Select 역할 상자 있으면 그것만·없으면 일반·손대지 않음 제외)·Plugin/Work/ChestTagReader.cs(ZDO 문자열 "ChestName" = CustomChestName 모드의 이름) · Tests/ChestNamesTests
 스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
 제작 계획              Core/Work/CraftPlan.cs(426: RecipeBook·Facilities·CraftPlanner·시뮬레이션) + Plugin/Work/Recipes.cs(게임 데이터→RecipeBook, 거점 설비)
-제작 실행기             Core/Work/PlanRunner.cs(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait) + Plugin/Work/PlanJob.cs(PlanRunner를 돌리는 일: Gather→GatherJob, Craft→CraftStep, Load/Unload→MachineStep) CraftStep.cs(제작대 앞 제작) MachineStep.cs(Smelter에 넣기·꺼내기)
+제작 실행기             Core/Work/PlanRunner.cs(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait) + Plugin/Work/PlanJob.cs(PlanRunner를 돌리는 일: Gather→GatherJob, Craft→CraftStep, Load/Unload→MachineStep) CraftStep.cs(제작대 앞 제작) MachineStep.cs(Smelter·Fermenter 넣기·꺼내기, 발효기 다 익음 FermentReady)
 NPC 주인 되찾기         Workers.Reclaim(1초마다 NPC ZDO 주인을 호스트로)
 시험 자리 고르기        Core/Work/SpotSearch.cs(Find) TestSpots.cs(SpotXZ) — 동시 시험은 보류, 아직 안 씀
 세트메뉴·자동 보충      Core/Work/SetMenus.cs Refill.cs  저장: Brain.Sets/Refill(vh_sets, vh_refill)
@@ -57,6 +57,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   GetRandomSkillFactor = sqrt(0.75~1) × ZDO 값 → NPC는 재정의함. 맞힐 때 Attack이 m_character.RaiseSkill 부름. 이름 "$skill_"+종류 소문자.
 - 제작: ObjectDB.m_recipes(Recipe: m_item, m_amount, m_enabled, m_craftingStation, m_minStationLevel, m_resources[m_resItem, m_amount],
   m_requireOnlyOneIngredient). CraftingStation.FindClosestStationInRange(name, pos, range), GetLevel()(확장 포함).
+- 발효기: RPC_AddItem(int 프리팹이름 해시, bool cheated)·RPC_Tap(주인만, Ready일 때 → m_tapDelay 1.5초 뒤 m_outputPoint에 m_producedItems개), ZDO s_content(해시)·s_startTime(ZNet 시각 Ticks), 덮임 70% 미만·지붕 없으면 발효 중 시계를 처음으로(10초마다). 충돌체는 Default 층(piece 아님).
 - 가공: Smelter(m_conversion[m_from,m_to], m_fuelItem, m_fuelPerProduct 기본 4, m_secPerProduct, m_maxOre, m_maxFuel, m_name),
   Fermenter(m_conversion[m_from,m_to,m_producedItems], m_fermentationDuration), CookingStation(m_conversion[m_from,m_to,m_cookTime], m_slots, m_fuelItem).
   CharacterDrop.m_drops[m_prefab]. ZNetScene.m_prefabs, ObjectDB.m_items.

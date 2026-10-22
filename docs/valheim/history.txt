@@ -311,3 +311,9 @@ PC 세션(방식 B) 시작 순서 — 2026-10-20 사용자 결정: 클라우드 
 
 [루프 회차 37, 2026-10-22] I-1 상자 역할 한 곳: Chests에 ChestRole(Any/Gear/Food/Mats)·TagProvider·RoleFor. NearBase/ForItem/First/CountAll/Any가 역할 인자(기본 Any). 호출: Prep 장비=Gear·음식=Food, GatherJob 도구=Gear·넣기=Mats, Unload=RoleFor(물건), CraftStep/MachineStep/PlanFor/Stock=Mats, 음식·미드 재고=Food. 태그 공급자 null이라 동작 그대로.
   Core 315 PASS, preptest 22/22·crafttest 8/8·departtest 24/24 두 번 PASS. 간헐: departtest가 첫 두 번 서로 다른 칸에서 FAIL(기준 빌드도 bagtest "넣을 데가 없으면" FAIL 재현 → 기존 불안정, 상자 변경 무관).
+
+[루프 회차 57, 2026-10-22] D 저항 미드 2조각: MachineStep에 Fermenter(빈 것에 RPC_AddItem, 지붕 판단 Exposed=바닐라 UpdateCover와 같음, 다 익으면 RPC_Tap·1.5초 뒤 줍기, 덜 익었으면 기다림 최대 15분),
+  PlanJob.FinishReadyWaits(5초마다 다 익은 발효기 있으면 Wait 끝), Recipes.MachineMask(발효기 충돌체가 Default 층이라 piece 층만 보면 "발효통이 있어야" — 설비 못 찾음).
+  고친 것: Unload가 몫 넘는 미드를 상자로(Prep.ExtraMeads), 바닐라 AddItem 일부만 들어가고 false인 경우 개수 맞춤(Unload·CraftStep.Put), CraftStep 결과를 상자에 못 넣으면 짐/땅(Spill — 예전엔 사라짐).
+  시험: crafttest에 3) 발효 칸(지붕 없음→안 넣음, MachineStep.TestIgnoreRoof로 넣고 시작 시각 당김 → 6개·보존) 16/16. preptest는 넘는 미드가 상자로 가는 새 동작에 맞춰 음식 상자도 채우고 끝에 돌·미드 치움 22/22.
+  간헐 1번: 따른 뒤 60초 동안 미드 6개를 못 주움(이후 5번 PASS, DIAG "발효기 줍기" 줄 + 8초 넘게 남으면 그 자리로 걸어감).

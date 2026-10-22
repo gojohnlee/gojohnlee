@@ -138,10 +138,15 @@ namespace ValheimHelper
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(0.5f);
 
-            // 5) 가방이 꽉 찼을 때 더 좋은 갑옷(ChatGPT-01). 채우는 건 체력 미드(들고 다니는 것이라 짐 정리에 안 빠진다).
+            // 5) 가방이 꽉 찼을 때 더 좋은 갑옷(ChatGPT-01). 채우는 건 체력 미드. 몫(3)을 넘는 미드는 짐 정리가 상자로 옮기므로(회차 57)
+            //    음식 상자도 돌로 채워 둘 곳을 없앤다. 개수 보존은 짐 + 두 상자로 센다.
             GameObject mead = ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), stone = ObjectDB.instance.GetItemPrefab("Stone");
             for (int i = 0; i < 64 && mine.GetEmptySlots() > 0; i++) mine.AddItem(mead, 10);
-            int meads = claude.CountItem("MeadHealthMinor");
+            string meadName = mead.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            Chests.TryEdit(eq, inv => inv.RemoveItem(meadName, inv.CountItems(meadName))); // 상자 미드 더미에 짐 미드가 합쳐져 자리가 나지 않게
+            Chests.TryEdit(food, inv => { for (int i = 0; i < 64 && inv.GetEmptySlots() > 0; i++) inv.AddItem(stone, 50); });
+            System.Func<int> allMeads = () => claude.CountItem("MeadHealthMinor") + GatherTest.Count(eq, "MeadHealthMinor") + GatherTest.Count(food, "MeadHealthMinor");
+            int meads = allMeads();
             Chests.TryEdit(eq, inv =>
             {
                 inv.AddItem(ObjectDB.instance.GetItemPrefab("ArmorBronzeChest"), 1);
@@ -168,9 +173,13 @@ namespace ValheimHelper
                 string wornName = chestArmor?.m_dropPrefab != null ? chestArmor.m_dropPrefab.name : "없음";
                 checks.Add($"{(round == 0 ? "상자에 자리 없음: 헌 갑옷 그대로" : "상자에 자리 있음: 맞바꿔 입음")} (입은 것 {wornName}, 상자에 {other} {GatherTest.Count(eq, other)})",
                     wornName == want && GatherTest.Count(eq, other) == 1 && claude.CountItem(other) == 0);
-                checks.Add($"물건 그대로 (갑옷 들고+상자 {claude.CountItem(want) + GatherTest.Count(eq, want)}, 미드 {claude.CountItem("MeadHealthMinor")}/{meads})",
-                    claude.CountItem(want) + GatherTest.Count(eq, want) == 1 && claude.CountItem("MeadHealthMinor") == meads);
+                checks.Add($"물건 그대로 (갑옷 들고+상자 {claude.CountItem(want) + GatherTest.Count(eq, want)}, 미드 {allMeads()}/{meads})",
+                    claude.CountItem(want) + GatherTest.Count(eq, want) == 1 && allMeads() == meads);
             }
+            // 채운 돌·미드는 치운다(뒤 시험이 꽉 찬 상자를 거점 상자로 씀)
+            string stoneName = stone.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            foreach (var c in new[] { eq, food }) Chests.TryEdit(c, inv => { inv.RemoveItem(stoneName, inv.CountItems(stoneName)); inv.RemoveItem(meadName, inv.CountItems(meadName)); });
+            if (claude != null) claude.GetInventory().RemoveItem(meadName, System.Math.Max(0, claude.CountItem("MeadHealthMinor") - Prep.MeadsToCarry));
             End(player, god, env, debugTime, debugValue, checks, onHeard, heard);
         }
 

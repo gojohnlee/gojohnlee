@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 제작 계획을 실제로 돌리는 일(⑥ 실행기 셋째 조각): PlanRunner가 고른 단계를 하나씩 한다.
-    /// Gather → GatherJob(목표만큼 거점 상자에 넣으면 끝), Craft → CraftStep. Load·Unload → MachineStep(Smelter만), Hunt·Farm은 아직 없어서 Failed(그에 기댄 단계는 Blocked).
+    /// Gather → GatherJob(목표만큼 거점 상자에 넣으면 끝), Craft → CraftStep. Load·Unload → MachineStep(Smelter·Fermenter), Hunt·Farm은 아직 없어서 Failed(그에 기댄 단계는 Blocked).
     /// Wait만 남으면 가만히 시계를 기다린다(다른 일 하기는 다음 조각). 실패가 있으면 끝에 한 번 알린다.
     /// </summary>
     public sealed class PlanJob : IWorkerJob
@@ -21,7 +21,7 @@ namespace ValheimHelper
         MachineStep m_machine;
         /// <summary>Wait만 남았을 때 끼워 넣는 짧은 자동 보충(저장하지 않음 — 보충은 기준치에서 다시 정해진다).</summary>
         GatherJob m_filler;
-        float m_nextFillAt;
+        float m_nextFillAt, m_nextReadyCheck;
         /// <summary>끼워 넣기는 Wait가 이만큼(초) 남았을 때만, 한 번에 이만큼(개)만 — 끝나면 곧바로 계획으로 돌아온다.</summary>
         const float FillMinWait = 90f, FillRetry = 60f;
         const int FillAmount = 20;
@@ -45,6 +45,7 @@ namespace ValheimHelper
         public bool Update(float dt)
         {
             m_now += dt;
+            if (m_now >= m_nextReadyCheck) { m_nextReadyCheck = m_now + 5f; FinishReadyWaits(); }
             if (m_filler != null)
             {
                 bool more = m_filler.Update(dt) && m_filler.Delivered < m_filler.Target;
@@ -119,6 +120,21 @@ namespace ValheimHelper
                 m_runner.Begin(s.Id, m_now);
                 return true;
             }
+        }
+
+        /// <summary>
+        /// 발효기 Wait는 계획 시계(40분)보다 실제 발효기 상태가 기준: 다 익은 게 있으면 Wait를 바로 끝낸다
+        /// (불러온 뒤 다시 세운 계획·누가 미리 넣어 둔 것도 맞춤). 제련소 Wait는 꺼내기가 남은 것을 기다리므로 그대로.
+        /// </summary>
+        void FinishReadyWaits()
+        {
+            foreach (var s in m_runner.Plan.Steps)
+                if (s.Kind == StepKind.Wait && m_runner.StateOf(s.Id) == StepState.Running
+                    && MachineStep.FermentReady(m_npc.Home, s.Station, s.Item))
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 발효 다 됨: {s.Item} — 기다림 끝");
+                    m_runner.Complete(s.Id);
+                }
         }
 
         /// <summary>Wait만 도는 중이고 오래 남았으면 자동 보충 한 번을 끼운다. 항상 true(계속 기다림).</summary>

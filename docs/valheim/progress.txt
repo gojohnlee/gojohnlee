@@ -27,6 +27,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (2026-10-21)
+- [루프 회차 57] 7) D 저항 미드 2조각: 발효기(Fermenter) 넣기·꺼내기(MachineStep, 지붕 없으면 안 넣음, 다 익은 걸 보면 Wait 끝), 몫 넘는 미드는 상자로, 상자 꽉 차면 만든 것을 짐/땅에(사라지던 것). crafttest 16/16(발효 칸 추가)·preptest 22/22·bagtest·resisttest PASS, Core 346. 간헐 1번(따른 뒤 줍기 못 함, DIAG 넣음). 다음: D 3조각 출발 조건 "독 저항 미드 주면 갈게요" → E 장비 수리.
 - [루프 회차 56] 7) D 저항 미드 1조각: Core Resist(바이옴→독·냉기·불, 마실지)+테스트, Gear.ResistOf(SE_Stats.m_mods), Prep이 종류마다 2개 챙김·Kept, Guard가 중독되거나 그 바이옴에서 적이 보이면 마심("resist" 대사). vh_resisttest 신설 PASS 12/12, preptest·fighttest PASS, Core 346. 다음: D 2조각 발효기(Fermenter)로 저항 미드 만들기(MachineStep) → D 3조각 출발 조건 "독 저항 미드 주면 갈게요" → E 장비 수리.
 - [루프 회차 55] 사용자 요청 깃발 강제 복귀: GatherJob.RescueIfStuckAgain(막혀 목표를 바꿨는데 같은 자리 8m 안에서 또 막히면 거점으로 순간이동, 짐·체력 그대로, 들고 있으면 넣기·아니면 다음 목표). vh_stucktest 신설 PASS 9/9, copper·pit·wood·stone PASS, Core 337. 다음: 아래 "다음"의 7) D 저항 미드.
 - [루프 회차 55] 사용자 요청 주석: vh_tintest 신설·PASS 12/12(주석 광맥은 3~4개라 둘레에 더 놓음). GatherJob m_tried(와서 봤는데 없는 구역·못 간 구역은 그 일 동안 다시 안 고름), 진단 로그(SightDiag·몸 둘레 충돌체). coppertest PASS. Speech "stuck" 대사만 넣음(아직 안 씀). 다음: 사용자 요청 깃발 강제 복귀.
@@ -88,7 +89,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   Core 테스트 284. 묶음 중 고친 것: "아침에 갈까요? 응" 대기열이 아직 낮이면 바로 꺼내 질문을 되풀이하던 것(→ 다음 아침까지), 손님 게임에서 Brain.Update가 NPC ZDO에 쓰던 것.
 
 다음 (순서대로)
-★ 지금 순서: 7) D 저항 미드 — 1조각 끝(회차 56). 2조각 발효기로 저항 미드 만들기(MachineStep Fermenter, PlanJob Wait) → 3조각 출발 전 판단 조건(저항 미드) → E 장비 수리(NPC 도구·갑옷, 작업대) → 8) ⑦ 철.
+★ 지금 순서: 7) D 저항 미드 — 1·2조각 끝(회차 56·57, 발효기). 3조각 출발 전 판단 조건(저항 미드) → E 장비 수리(NPC 도구·갑옷, 작업대) → 8) ⑦ 철.
 ★ 사용자 순서(2026-10-22, 아래 옛 목록보다 먼저, 전문은 decisions.txt "노트 맞춤 2026-10-22"): 1) I-1 상자 역할 고르기 Chests 한 곳 → I-2 ChestTag 이름 읽기 → 2) B 일 끼워넣기·Wait 중 보충 → 3) 손님 코드 검사 → 4) 시험 전 코드 게임 시험 → 5) J 이동 한계 → 6) ⑤ 포탈 → 7) D·E → 8) ⑦⑧⑨⑩ → 9) C·⑪⑫⑬⑭⑮ → 10) F 길. 안 하는 것: A·G·K·건축물 수리.
 ★ 집 PC 세션 순서(사용자 결정 2026-10-21): 시험 전에 먼저 0-a, 0-b를 사용자와 같이 한다.
   0-a) [완료 2026-10-21] 계정 2개: 1번 = 기본(%USERPROFILE%\.claude, CLAUDE_CONFIG_DIR 없음), 2번 = CLAUDE_CONFIG_DIR=%USERPROFILE%\.claude-acct2.
