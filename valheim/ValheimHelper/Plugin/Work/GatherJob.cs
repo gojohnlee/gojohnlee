@@ -36,6 +36,8 @@ namespace ValheimHelper
         float m_reach;
         ZoneXY m_goalZone;
         Vector3 m_goalPos;
+        PortalLink? m_portal;
+        bool m_portalChecked;
         readonly HashSet<ZDOID> m_skip = new HashSet<ZDOID>();
         int m_swings, m_swingsNoProgress;
         bool m_wasAttacking;
@@ -106,6 +108,8 @@ namespace ValheimHelper
             m_ai.StopMoving();
             m_bestDist = float.MaxValue;
             m_progressTimer = 0f;
+            m_portal = null;
+            m_portalChecked = false;
             if (s == Step.Deposit) m_chest = null; // 넣을 상자는 그때그때 고른다
             if (s == Step.Prep) m_prep = null;
             if (s == Step.Unload) m_unload = null;
@@ -341,8 +345,8 @@ namespace ValheimHelper
                 // 새 땅으로 가는 길에 목표 구역이 밝혀졌다: 경계가 밀려났으니 다음 경계로(둘러봄 표시는 안 한다)
                 if (m_exploring && Scout.Explored(m_goalZone)) { Go(Step.Search); return true; }
             }
-            bool arrived = Walk(dt, m_goalPos, 6f);
-            if (arrived || Stuck(dt, m_goalPos))
+            bool arrived = WalkVia(dt, m_goalPos, 6f);
+            if (arrived || Stuck(dt, PortalOr(m_goalPos)))
             {
                 if (!arrived) LogStuck("구역 가기", m_goalPos);
                 Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
@@ -733,8 +737,8 @@ namespace ValheimHelper
         bool UpdateReturn(float dt)
         {
             Vector3 home = m_npc.Home;
-            if (Walk(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Deposit); return true; }
-            if (Stuck(dt, home))
+            if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Deposit); return true; }
+            if (Stuck(dt, PortalOr(home)))
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: 귀환 막힘(집에서 {Utils.DistanceXZ(home, m_npc.transform.position):0.0}m) {m_ai.BlockerAhead(home)} / {m_ai.MoveState}");
                 m_npc.TeleportTo(home, m_npc.transform.rotation, false); // 막힌 길 처리는 길 만들기(⑨)에서
@@ -815,6 +819,42 @@ namespace ValheimHelper
         }
 
         /// <summary>걷는다(WorkerAI.MoveToPoint: 길찾기 + 길 없으면 곧장 + 막히면 비켜 가기). 도착하면 true.</summary>
+        /// <summary>먼 목적지는 포탈이 더 빠르면 포탈 앞까지 걸어가 타고(순간이동), 아니면 그냥 걷는다(단계마다 한 번만 고름). 도착하면 true.</summary>
+        bool WalkVia(float dt, Vector3 dest, float dist)
+        {
+            if (!m_portalChecked)
+            {
+                m_portalChecked = true;
+                if (Portals.TryChoose(m_npc.transform.position, dest, out PortalLink link))
+                {
+                    m_portal = link;
+                    m_bestDist = float.MaxValue;
+                    m_progressTimer = 0f;
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 포탈로 간다(입구 {link.X:0},{link.Z:0} → 출구 {link.ExitX:0},{link.ExitZ:0})");
+                }
+            }
+            if (m_portal.HasValue)
+            {
+                var p = m_portal.Value;
+                var gate = new Vector3(p.X, p.Y, p.Z);
+                if (Walk(dt, gate, 2f) || Utils.DistanceXZ(gate, m_npc.transform.position) < 2.5f)
+                {
+                    m_npc.TeleportTo(new Vector3(p.ExitX, p.ExitY, p.ExitZ), m_npc.transform.rotation, false);
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 포탈 탐");
+                    m_portal = null;
+                    m_ai.StopMoving();
+                    m_bestDist = float.MaxValue;
+                    m_progressTimer = 0f;
+                }
+                else if (Stuck(dt, gate)) { m_portal = null; m_bestDist = float.MaxValue; m_progressTimer = 0f; } // 못 가면 걸어서
+                return false;
+            }
+            return Walk(dt, dest, dist);
+        }
+
+        /// <summary>막힘 판단 기준점: 포탈로 가는 중이면 포탈 입구, 아니면 목적지.</summary>
+        Vector3 PortalOr(Vector3 dest) => m_portal.HasValue ? new Vector3(m_portal.Value.X, m_portal.Value.Y, m_portal.Value.Z) : dest;
+
         bool Walk(float dt, Vector3 point, float dist) =>
             m_ai.MoveToPoint(dt, point, dist, Utils.DistanceXZ(point, m_npc.transform.position) > 10f);
 
