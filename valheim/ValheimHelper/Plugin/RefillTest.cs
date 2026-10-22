@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -100,6 +101,74 @@ namespace ValheimHelper
             checks.Add($"채워진 뒤엔 다시 안 만듦 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null);
             checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 2)", ore + bars <= 2);
             TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
+            Brain.Refill.Off();
+            yield return Set(w, checks, made);
+        }
+
+        const int SetNo = 10;
+        static readonly string[] SetItems = { "Bow", "Club" };
+
+        /// <summary>
+        /// 3) 세트(⑩ 5c): 세트 10번(활·곤봉) + "!채워 세트 10 1" + 작업대·재료 → Due가 세트 물건을 펼쳐 한가한 일꾼이 하나씩 만들어
+        /// 장비 상자에 활 1·곤봉 1, 채워진 뒤엔 다시 안 만들고 재료가 다 쓰였는지(개수 보존). 세트 10번은 끝나면 원래대로.
+        /// </summary>
+        static IEnumerator Set(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
+        {
+            var need = new Dictionary<string, int>();
+            foreach (string item in SetItems)
+                foreach (var r in ObjectDB.instance.m_recipes)
+                    if (r.m_item != null && Utils.GetPrefabName(r.m_item.gameObject) == item)
+                        foreach (var req in r.m_resources)
+                        {
+                            string key = Utils.GetPrefabName(req.m_resItem.gameObject);
+                            need.TryGetValue(key, out int n);
+                            need[key] = n + req.m_amount;
+                        }
+            checks.Add("세트 재료 레시피 있음", need.Count > 0);
+            if (need.Count == 0) yield break;
+            var clear = new List<string>(SetItems);
+            clear.AddRange(need.Keys);
+            TestKit.ClearBaseStock(w, clear.ToArray());
+            foreach (var kv in need) TestKit.PutInChest(w.Chest, kv.Key, kv.Value);
+            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+            made.Add(Object.Instantiate(ZNetScene.instance.GetPrefab("piece_workbench"), GatherTest.Ground(w.Home + right * 5f), Quaternion.identity));
+            SetMenu old = Brain.Sets.Get(SetNo);
+            string oldItems = old == null ? null : string.Join(";", old.Items.ToArray());
+            try
+            {
+                checks.Add("세트 10번 저장", Brain.Sets.Save(SetNo, SetItems, "시험 세트", "시험") == SetNo);
+                yield return new WaitForSeconds(1f);
+                GatherTest.Say($"!채워 세트 {SetNo} 1", null);
+                yield return new WaitForSeconds(1f);
+                checks.Add("세트 기준치 등록됨", Brain.Refill.Count == 1);
+                float start = Time.time;
+                while (Time.time - start < 240f && !(Count(w, "Bow") >= 1 && Count(w, "Club") >= 1))
+                {
+                    if (w.Claude.Ai.Job == null || w.Alarak.Ai.Job == null) Departures.TestRefillNow();
+                    yield return new WaitForSeconds(3f);
+                }
+                checks.Add($"세트 물건이 상자에 (활 {Count(w, "Bow")}, 곤봉 {Count(w, "Club")}, {Time.time - start:0}초)", Count(w, "Bow") >= 1 && Count(w, "Club") >= 1);
+                yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null, 30f);
+                checks.Add("일 끝남", TestKit.Ok);
+                Departures.TestRefillNow();
+                yield return new WaitForSeconds(2f);
+                checks.Add($"채워진 뒤엔 다시 안 만듦 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null);
+                string left = "";
+                bool conserved = Count(w, "Bow") == 1 && Count(w, "Club") == 1;
+                foreach (var kv in need)
+                {
+                    int c = Count(w, kv.Key);
+                    left += $" {kv.Key}={c}";
+                    if (c != 0) conserved = false;
+                }
+                checks.Add($"개수 보존 (활 {Count(w, "Bow")}, 곤봉 {Count(w, "Club")},{left})", conserved);
+            }
+            finally
+            {
+                Brain.Sets.Remove(SetNo);
+                if (oldItems != null) Brain.Sets.Save(SetNo, oldItems.Split(';'), old.Name, old.By);
+            }
+            TestKit.ClearBaseStock(w, clear.ToArray());
         }
 
         static int Count(TestKit.World w, string prefab)
