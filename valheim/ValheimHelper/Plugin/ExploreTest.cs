@@ -50,6 +50,8 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             Vector3 home = player.transform.position + player.transform.forward * 4f;
             if (ZoneSystem.instance.GetGroundHeight(home, out float gh)) home.y = gh;
+            if (TestKit.OldClear(home) > 0) yield return new WaitForSeconds(0.5f); // 둘레 생물(적·동료 해골)을 치우고 시작(사용자 결정 2026-10-22 시험 환경)
+            TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
             WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);

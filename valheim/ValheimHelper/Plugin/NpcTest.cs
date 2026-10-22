@@ -44,6 +44,8 @@ namespace ValheimHelper
             // 1) 소환 (이전 시험의 NPC는 지우고 새로)
             int removed = Workers.DespawnAll();
             yield return new WaitForSeconds(1f);
+            if (TestKit.OldClear(player.transform.position) > 0) yield return new WaitForSeconds(0.5f); // 둘레 생물을 치우고 시작(사용자 결정 2026-10-22 시험 환경)
+            TestKit.OldCheck(player.transform.position, player, god);
             TestRunner.Log($"이전 NPC {removed}명 지움. {Workers.Spawn(out var spawned)}");
             yield return new WaitForSeconds(3f);
             WorkerNpc claude = spawned.Count == 2 ? Workers.Find(spawned[0]) : null;

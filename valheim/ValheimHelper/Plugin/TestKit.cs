@@ -186,17 +186,51 @@ namespace ValheimHelper
         /// 끝 정리(사용자 결정 2026-10-22 시험 환경): 시험이 남긴 둘레 생물·땅의 물건을 치우고, 0.5초 뒤에도 남으면
         /// 정리 실패로 남은 자동 시험을 멈춘다(TestRunner.Halt — 앞 시험이 뒤 시험을 망치지 않게).
         /// </summary>
-        static void Cleanup(World w)
+        static void Cleanup(Vector3 home)
         {
-            int creatures = ClearCreatures(w.Home), drops = 0;
-            foreach (var v in Drops(w.Home))
+            int creatures = ClearCreatures(home), drops = 0;
+            foreach (var v in Drops(home))
             {
                 v.ClaimOwnership();
                 ZNetScene.instance.Destroy(v.gameObject);
                 drops++;
             }
             if (creatures + drops > 0) TestRunner.Log($"끝 정리: 생물 {creatures}·땅의 물건 {drops} 치움");
-            Plugin.Instance.StartCoroutine(VerifyCleanup(w.Home));
+            Plugin.Instance.StartCoroutine(VerifyCleanup(home));
+        }
+
+        static Vector3? s_oldHome;
+
+        /// <summary>
+        /// 옛 시험(Setup을 안 쓰는 것)의 시작 정리: 깃발을 세우기 전에 거점 둘레 생물을 치우고 거점을 기억한다
+        /// (끝 정리는 TestRunner.Finish가 OldEnd로). 치운 수를 돌려준다(0보다 크면 0.5초 기다린 뒤 OldCheck).
+        /// </summary>
+        public static int OldClear(Vector3 home)
+        {
+            s_oldHome = home;
+            int n = ClearCreatures(home);
+            if (n > 0) TestRunner.Log($"시작 정리: 거점 {StartRadius:0}m 안 생물 {n}마리 치움");
+            return n;
+        }
+
+        /// <summary>그래도 생물이 남으면 신 모드를 되돌리고 EnvBadException(본시험 안 함, PASS 아님).</summary>
+        public static void OldCheck(Vector3 home, Player player, bool god)
+        {
+            int left = Creatures(home).Count;
+            if (left == 0) return;
+            s_oldHome = null;
+            player.SetGodMode(god);
+            throw new EnvBadException($"거점 {StartRadius:0}m 안 생물 {left}");
+        }
+
+        /// <summary>옛 시험 끝 정리(TestRunner.Finish가 부름, OldClear를 안 부른 시험은 아무것도 안 함).</summary>
+        public static void OldEnd()
+        {
+            if (s_oldHome == null) return;
+            Vector3 home = s_oldHome.Value;
+            s_oldHome = null;
+            try { Cleanup(home); }
+            catch (System.Exception e) { TestRunner.Halt("끝 정리 오류: " + e.Message); }
         }
 
         static IEnumerator VerifyCleanup(Vector3 home)
@@ -305,7 +339,7 @@ namespace ValheimHelper
                 TestRunner.Log("--- 상태 흐름(3초마다, 최근 " + s_flow.Count + "개) ---");
                 foreach (var f in s_flow) TestRunner.Log(f);
             }
-            if (!w.Shared) Cleanup(w);
+            if (!w.Shared) Cleanup(w.Home);
             Restore(w);
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in w.Heard) TestRunner.Log(h);

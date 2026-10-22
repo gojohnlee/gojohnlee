@@ -74,6 +74,8 @@ namespace ValheimHelper
                 int undone = 0;
                 foreach (var sp in spots) undone += TestTerrain.Reset(sp, 9f); // 지난 시험의 구덩이
                 if (undone > 0) TestRunner.Log($"지난 구덩이 되돌림: 꼭짓점 {undone}개");
+                if (TestKit.OldClear(home) > 0) yield return new WaitForSeconds(0.5f); // 둘레 생물(적·동료 해골)을 치우고 시작(사용자 결정 2026-10-22 시험 환경)
+                TestKit.OldCheck(home, player, god);
                 player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
                 yield return new WaitForSeconds(3f);
                 WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);

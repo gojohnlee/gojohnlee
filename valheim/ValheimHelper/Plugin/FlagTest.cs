@@ -68,6 +68,8 @@ namespace ValheimHelper
             // 깃발 A
             Vector3 a = player.transform.position + player.transform.forward * 4f;
             if (ZoneSystem.instance.GetGroundHeight(a, out float ha)) a.y = ha; // 지형(바위·나무 위 말고)
+            if (TestKit.OldClear(a) > 0) yield return new WaitForSeconds(0.5f); // 둘레 생물을 치우고 시작(사용자 결정 2026-10-22 시험 환경)
+            TestKit.OldCheck(a, player, god);
             player.PlacePiece(piece, a, player.transform.rotation, doAttack: false);
             // 나타나자마자 자리를 본다(3초 기다리면 근처 적을 보고 물러나 5m 밖일 수 있음 — 0.3.8 루프 시험 FAIL)
             var zdos = Workers.AllZdos();

@@ -71,6 +71,7 @@ namespace ValheimHelper
 
         public static void Finish()
         {
+            TestKit.OldEnd(); // 옛 시험 끝 정리(로그가 이 시험 보고에 들어가게 먼저)
             Running = false;
             s_report.Add($"시간: {Time.time - s_startTime:0}초"); // 시험 스크립트 요약에 시험별로 보인다(평소보다 오래 걸린 것 알아채기)
             float real = Mathf.Max(0.001f, Time.realtimeSinceStartup - s_startReal);

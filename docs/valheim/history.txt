@@ -355,3 +355,5 @@ Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pic
 [루프 회차 69 2026-10-22] TestKit 시작·종료 통제 1조각: CheckStart(시작 정리·조건, 환경 불량), 상태 한 줄(Snapshot)·3초 링 버퍼·FAIL 순간 상태, Flat 예외 때 Dispose로 finally 실행, Summary가 "판정: 환경 불량"을 실패로 셈. hunttest 9/9·skilltest 8/8 단독 PASS, Core 378.
 
 [루프 회차 70 2026-10-22] TestKit 끝 정리: End → Cleanup(ClearCreatures + 땅의 ItemDrop, Senses.Nearby 60m) → VerifyCleanup 0.5초 뒤 남으면 TestRunner.Halt(s_halt) → UpdateAutoRun이 남은 시험을 "판정: 환경 불량"으로 적고 넘김. World.Shared(around) 시험은 정리 안 함. 연속 hunttest→skilltest PASS, hunttest 뒤 물건 55개.
+
+[루프 회차 71 2026-10-22] 지금 먼저 2) 옛 시험 시작 확인·끝 정리: TestKit.OldClear/OldCheck/OldEnd(Cleanup을 Vector3 home 받게), 9개 옛 시험 파일에 깃발 앞 두 줄, TestRunner.Finish 첫 줄 OldEnd. 시작 정리는 생물만 확인(옛 시험은 일꾼·상자를 시험 안에서 만듦). EnvBad면 신 모드만 되돌림(대사 구독은 남음, 드묾). npc·flag·wood·stone PASS.
