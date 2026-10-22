@@ -331,3 +331,12 @@ ZoneSystem.TestSpawnLocation(name,pos,disableSave)는 m_didZoneTest로 저장을
 위치 이름: Crypt2·3·4·HalfBurried_ForestCrypt = 검은숲(무덤), SunkenCrypt1~4 = 늪. 안 물체(SunkenCrypt4 하나): mudpile2(Destructible 체력 1, RandomSpawn, 부서지면 mudpile2_frac) 12~16개,
 Spawner_Draugr·Spawner_Blob·Spawner_DraugrPile, TreasureChest_sunkencrypt, Pickable_SunkenCryptRandom, 버섯, DG_SunkenCrypt(던전 생성기). 정리할 때 세운 ZDO 100개쯤.
 일꾼은 도착점에서 6.5m 떨어진 y≈도착점+6에 섬(계단 위로 내려앉는 듯, 떨어지지 않음).
+
+[2026-10-22 클라우드 세션] 사용자 직접 요청: 늪 열쇠를 얻으면 일꾼도 지하묘지 문을 연다(이후 보스·산 은도 같은 방식)
+- 확인한 게임 코드(codemap "확인된 게임 사실"): Door.Interact는 열쇠를 짐에서 확인한 뒤 RPC "UseDoor"(forward = Dot(문 forward, 사람−문) < 0), RPC_UseDoor는 주인 쪽에서 CanInteract 뒤 s_state를 씀.
+  보스 죽음은 m_defeatSetGlobalKey를 조건 없이 월드 키로. 던전 안 물체는 구역 생성(Full·Ghost) 때 DungeonGenerator가 방의 ZNetView를 다 만든다 → 남은 진흙 더미를 ZDO로 셀 수 있음.
+- 구현: Core Crypts(CryptSpot.Empty·CanOpen, Choose 두 단계, MinedOut), Departure(CryptsMinedOut → depart.cryptsEmpty), Speech(depart.cryptsEmpty·cryptOpen 두 성향),
+  Plugin Unlocks(새 파일), Dungeons(Left·CanOpen·IsOpen·DoorOf·Open·TryChoose minedOut), GatherJob(UpdateOpenDoor, m_doorTries·m_doorPhase, Go가 m_gateUsedAt 초기화),
+  Departures(NoCrypt 까닭), CryptTest(KeyState로 플레이어 알려진 재료·보스 월드 키를 끄고 켜 보고 끝에 되돌림, 문을 손으로 열던 칸을 없애고 "!철 3"에서 일꾼이 직접 엶).
+- Core 372 PASS(루프 회차 63과 합친 뒤, Crypts 6·Departure 1 추가), 빌드·참조 검사 PASS. 게임 시험은 클라우드라 못 함 → PC 회차가 vh_crypttest 먼저.
+- 한계: 못 닿는 더미가 남은 묘지는 다 캔 것으로 안 보여 일마다 한 번 들렀다 나옴(같은 일 안에서는 다음 묘지로 넘어감).

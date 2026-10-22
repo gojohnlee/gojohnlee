@@ -114,6 +114,7 @@ namespace ValheimHelper
             m_progressTimer = 0f;
             m_portal = null;
             m_portalChecked = false;
+            m_gateUsedAt = -10f; // 앞 단계(나가는 Teleport)의 시각이 남으면 다음 묘지 입구 앞에서 한참 선다
             if (s == Step.Deposit) m_chest = null; // 넣을 상자는 그때그때 고른다
             if (s == Step.Prep) m_prep = null;
             if (s == Step.Unload) m_unload = null;
@@ -154,6 +155,8 @@ namespace ValheimHelper
         Dungeons.Crypt m_crypt;
         float m_insideTime;
         float m_gateUsedAt = -10f;
+        int m_doorTries;
+        bool m_doorPhase;
 
         /// <summary>Guard: 거기는 위험하다. 그 구역(과 지금 목표)을 버리고 다른 데를 찾는다. 들고 있는 건 그대로.</summary>
         public void AvoidHere(Vector3 danger)
@@ -339,13 +342,15 @@ namespace ValheimHelper
 
         // ---- 지하묘지 (⑦ 철: 고철은 늪 지하묘지의 진흙 더미에서만 나온다) ----
 
-        /// <summary>열린 지하묘지가 있으면 거기로 간다(바깥 걷기 → 입구 Teleport).</summary>
+        /// <summary>갈 지하묘지가 있으면 거기로 간다(바깥 걷기 → 닫혔으면 열쇠 문 열기 → 입구 Teleport). 열린 곳 먼저, 다 캤으면 열 수 있는 닫힌 곳.</summary>
         bool TryStartCrypt()
         {
             if (EnvMan.IsNight()) return false; // 밤에 늪 바깥을 걷지 않는다(들어가는 건 낮에만)
             if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, m_cryptsDone)) return false;
             m_crypt = c;
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 {c.Name}로({Utils.DistanceXZ(c.Pos, m_npc.transform.position):0}m)");
+            m_doorTries = 0;
+            m_doorPhase = false;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 {c.Name}로({Utils.DistanceXZ(c.Pos, m_npc.transform.position):0}m, {(c.Open ? "열림" : "닫힘 → 연다")}, 더미 {c.Left})");
             Go(Step.GoCrypt);
             return true;
         }
@@ -361,6 +366,16 @@ namespace ValheimHelper
             }
             if (m_stepTime > CryptGoLimit) return AbandonCrypt("시간 초과");
             Vector3 pos = m_npc.transform.position;
+            if (!Dungeons.IsOpen(m_crypt.Door)) return UpdateOpenDoor(dt, pos);
+            if (m_doorPhase)
+            {
+                // 문이 열렸다: 문까지의 막힘 기록을 지우고 바로 입구로
+                m_doorPhase = false;
+                m_bestDist = float.MaxValue;
+                m_progressTimer = 0f;
+                m_gateUsedAt = -10f;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 문 열림({m_stepTime:0}초)");
+            }
             Teleport gate = Dungeons.Entrance(m_crypt.Pos);
             if (gate == null)
             {
@@ -379,6 +394,35 @@ namespace ValheimHelper
                 }
             }
             else if (Stuck(dt, gp)) return AbandonCrypt("입구 앞 막힘");
+            return true;
+        }
+
+        /// <summary>닫힌 지하묘지(플레이어가 그 열쇠를 얻음): 열쇠 문 앞까지 걸어가 연다. 세 번 해도 안 열리면 이 묘지는 포기.</summary>
+        bool UpdateOpenDoor(float dt, Vector3 pos)
+        {
+            m_doorPhase = true;
+            Door door = Dungeons.DoorOf(m_crypt.Door);
+            if (door == null)
+            {
+                // 문 구역이 아직 안 불러와졌다: 가까이 간다
+                if (!WalkVia(dt, m_crypt.Pos, 15f) && Stuck(dt, PortalOr(m_crypt.Pos))) return AbandonCrypt("문 가기 막힘");
+                return true;
+            }
+            Vector3 dp = door.transform.position;
+            if (Walk(dt, dp, 2f) || Utils.DistanceXZ(dp, pos) < 3f)
+            {
+                if (m_stepTime - m_gateUsedAt > 3f)
+                {
+                    if (m_doorTries >= 3) return AbandonCrypt("문 안 열림");
+                    m_doorTries++;
+                    m_gateUsedAt = m_stepTime;
+                    m_ai.StopMoving();
+                    if (!Dungeons.Open(m_npc, door)) return AbandonCrypt("문 못 엶(열쇠·와드)");
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 열쇠 문 엶 {m_doorTries}번째");
+                    if (m_doorTries == 1) m_npc.Say("cryptOpen", Args());
+                }
+            }
+            else if (Stuck(dt, dp)) return AbandonCrypt("문 앞 막힘");
             return true;
         }
 

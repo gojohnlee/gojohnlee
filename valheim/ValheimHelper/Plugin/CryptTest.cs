@@ -7,8 +7,9 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_crypttest (⑦ 철 1조각): 거점 110m 앞에 늪 지하묘지를 바닐라 TestSpawnLocation으로 세우고(월드 저장은 다시 켤 때까지 꺼짐 — 시험 월드 보호),
-    /// Dungeons가 찾는지·닫힌 문은 안 고르는지·문을 열면 고르는지, 입구 Teleport로 일꾼이 안(y &gt; 3000)에 들어갔다 나오는지 본다.
-    /// 안에서 고철이 나오는 물체(이름·종류·도구 단계)를 diag에 적는다(다음 조각: 진흙 고철 더미 캐기).
+    /// Dungeons가 찾는지·열쇠가 없으면 닫힌 문은 안 고르는지·플레이어가 열쇠를 얻으면(주움 또는 보스 월드 키) 고르는지, 입구 Teleport로 일꾼이
+    /// 안(y &gt; 3000)에 들어갔다 나오는지, "!철 3"에 일꾼이 열쇠 문을 직접 열고 들어가 고철을 캐 오는지 본다(사용자 결정 2026-10-22).
+    /// 열쇠 상태(플레이어 알려진 재료·월드 키)는 시험 동안 바꾸고 끝에 되돌린다.
     /// </summary>
     static class CryptTest
     {
@@ -26,14 +27,55 @@ namespace ValheimHelper
             var w = new TestKit.World();
             var before = new HashSet<ZDOID>();
             var spot = new Vector3[1];
-            try { yield return Body(w, checks, before, spot); }
+            var keys = new KeyState();
+            try { yield return Body(w, checks, before, spot, keys); }
             finally
             {
                 if (w.Claude != null) w.Claude.TeleportTo(w.Home, w.Claude.transform.rotation, false);
                 Cleanup(before, spot[0]);
+                keys.Restore();
                 TestKit.Restore(w);
             }
             TestKit.End(w, checks);
+        }
+
+        /// <summary>시험 전 열쇠 상태(플레이어가 열쇠를 알았나, 보스 월드 키가 있었나). 끝에 그대로 되돌린다(플레이어 프로필은 저장되므로).</summary>
+        sealed class KeyState
+        {
+            public string SharedName, BossKey;
+            public bool HadKnown, HadGlobal, Saved;
+
+            static HashSet<string> Known(Player p) => (HashSet<string>)HarmonyLib.AccessTools.Field(typeof(Player), "m_knownMaterial").GetValue(p);
+
+            public void Save(ItemDrop key)
+            {
+                SharedName = key.m_itemData.m_shared.m_name;
+                BossKey = Unlocks.BossKey(Utils.GetPrefabName(key.gameObject));
+                HadKnown = Player.m_localPlayer.IsMaterialKnown(SharedName);
+                HadGlobal = BossKey != null && ZoneSystem.instance.GetGlobalKey(BossKey);
+                Saved = true;
+            }
+
+            public void SetKnown(bool on)
+            {
+                var set = Known(Player.m_localPlayer);
+                if (on) set.Add(SharedName); else set.Remove(SharedName);
+            }
+
+            public void SetGlobal(bool on)
+            {
+                if (BossKey == null) return;
+                if (on) ZoneSystem.instance.SetGlobalKey(BossKey); else ZoneSystem.instance.RemoveGlobalKey(BossKey);
+            }
+
+            public bool Global => BossKey != null && ZoneSystem.instance.GetGlobalKey(BossKey);
+
+            public void Restore()
+            {
+                if (!Saved || Player.m_localPlayer == null) return;
+                SetKnown(HadKnown);
+                if (Global != HadGlobal) SetGlobal(HadGlobal);
+            }
         }
 
         static List<ZDO> Around(Vector3 at)
@@ -59,7 +101,7 @@ namespace ValheimHelper
             TestRunner.Log($"정리: 세운 지하묘지 물체 {n}개 지움");
         }
 
-        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, HashSet<ZDOID> before, Vector3[] spot)
+        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, HashSet<ZDOID> before, Vector3[] spot, KeyState keys)
         {
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC", w.Claude != null);
@@ -91,19 +133,40 @@ namespace ValheimHelper
             string doorName = mine.Door != null ? ZNetScene.instance.GetPrefab(mine.Door.GetPrefab())?.name : null;
             checks.Add($"입구 열쇠 문 찾음 ({doorName}), 처음엔 닫힘", mine.Door != null && !mine.Open);
             if (mine.Door == null) yield break;
+            checks.Add($"안에 남은 고철 더미를 셈 ({mine.Left}개)", mine.Left > 0);
+            int leftBefore = mine.Left;
+
+            // 열쇠: 플레이어가 주운 적 있음(알려진 재료) 또는 그 열쇠를 떨구는 보스가 잡힘(월드 키). 시험 동안 둘 다 끄고 하나씩 켠다.
+            Door doorPrefab = ZNetScene.instance.GetPrefab(mine.Door.GetPrefab())?.GetComponent<Door>();
+            ItemDrop keyItem = doorPrefab != null ? doorPrefab.m_keyItem : null;
+            checks.Add($"문 열쇠 물건 ({(keyItem != null ? Utils.GetPrefabName(keyItem.gameObject) : "없음")})", keyItem != null);
+            if (keyItem == null) yield break;
+            keys.Save(keyItem);
+            checks.Add($"열쇠를 떨구는 보스 월드 키 찾음 ({keys.BossKey ?? "없음"}, 시험 전 주움 {keys.HadKnown}·월드 키 {keys.HadGlobal})", keys.BossKey != null);
+            keys.SetKnown(false);
+            if (keys.Global) keys.SetGlobal(false);
+            yield return TestKit.WaitFor(() => !keys.Global, 5f);
+
             bool chosen = Dungeons.TryChoose(w.Home, out var pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f;
-            checks.Add("닫힌 지하묘지는 안 고름", !chosen);
+            checks.Add("열쇠 없으면 닫힌 지하묘지는 안 고름", !chosen);
             var scrapCmd = new ValheimHelper.Core.Chat.ChatCommand { Kind = ValheimHelper.Core.Chat.CommandKind.Item, Item = Dungeons.ScrapItem, Amount = 3 };
             var closedJudge = Departures.JudgeFor(w.Claude, scrapCmd);
-            checks.Add($"문 닫힌 묘지뿐이면 철은 출발 전에 거절 ({closedJudge?.Key})", closedJudge != null && closedJudge.Key == "depart.noCrypt");
+            checks.Add($"열쇠 없고 문 닫힌 묘지뿐이면 철은 출발 전에 거절 ({closedJudge?.Key})", closedJudge != null && closedJudge.Key == "depart.noCrypt");
 
-            ZNetView doorView = ZNetScene.instance.FindInstance(mine.Door);
-            if (doorView != null) doorView.ClaimOwnership();
-            mine.Door.Set(ZDOVars.s_state, 1);
-            chosen = Dungeons.TryChoose(w.Home, out pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f && pick.Open;
-            checks.Add("문을 열면 고름", chosen);
+            keys.SetKnown(true);
+            chosen = Dungeons.TryChoose(w.Home, out pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f && !pick.Open && pick.CanOpen;
+            checks.Add("플레이어가 열쇠를 주웠으면 닫힌 곳도 고름(열 수 있음)", chosen);
+            keys.SetKnown(false);
+            if (keys.BossKey != null)
+            {
+                keys.SetGlobal(true);
+                yield return TestKit.WaitFor(() => keys.Global, 5f);
+                chosen = Dungeons.TryChoose(w.Home, out pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f && pick.CanOpen;
+                checks.Add($"보스가 잡혔으면(월드 키) 닫힌 곳도 고름 ({TestKit.Waited:0.0}초)", chosen);
+            }
+            else keys.SetKnown(true);
             var openJudge = Departures.JudgeFor(w.Claude, scrapCmd);
-            checks.Add($"문을 열면 철은 거절 안 함 ({openJudge?.Key})", openJudge != null && openJudge.Key != "depart.noCrypt");
+            checks.Add($"열쇠를 얻었으면 철은 거절 안 함 ({openJudge?.Key})", openJudge != null && openJudge.Key != "depart.noCrypt" && openJudge.Key != "depart.cryptsEmpty");
 
             Teleport gate = Dungeons.Entrance(mine.Pos);
             checks.Add($"입구 Teleport 찾음 ({(gate != null ? Utils.DistanceXZ(gate.transform.position, mine.Pos).ToString("0") + "m" : "없음")})", gate != null);
@@ -162,10 +225,15 @@ namespace ValheimHelper
             }
             int got = GatherTest.CountBase(w.Home, "IronScrap") - stockBefore;
             TestRunner.Log($"철 일: {t:0}초, 상자에 고철 {got}개, 단계 {(w.Claude.Ai.Job is GatherJob g ? g.StepName : "-")}");
+            checks.Add($"일꾼이 열쇠 문을 직접 엶 (상태 {mine.Door.GetInt(ZDOVars.s_state)})", Dungeons.IsOpen(mine.Door));
             checks.Add("일꾼이 지하묘지 안으로 들어감", wasInside);
             checks.Add($"고철이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
             yield return new WaitForSeconds(3f);
             checks.Add("일꾼이 안에 남지 않음", !w.Claude.InInterior());
+            int leftAfter = -1;
+            foreach (var c in Dungeons.All())
+                if (Utils.DistanceXZ(c.Pos, mine.Pos) < 1f) leftAfter = c.Left;
+            TestRunner.Log($"남은 고철 더미: 처음 {leftBefore}개 → 캔 뒤 {leftAfter}개(부서진 더미 조각이 남으면 그대로일 수 있음)");
         }
     }
 }

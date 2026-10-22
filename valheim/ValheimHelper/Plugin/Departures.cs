@@ -190,7 +190,11 @@ namespace ValheimHelper
                 input.Places.Add(o);
             }
             input.Places.Sort((a, b) => a.Distance.CompareTo(b.Distance));
-            input.NoCrypt = cmd.Item == Dungeons.ScrapItem && input.Places.Count == 0 && !Dungeons.TryChoose(home, out _);
+            if (cmd.Item == Dungeons.ScrapItem && input.Places.Count == 0)
+            {
+                input.NoCrypt = !Dungeons.TryChoose(home, out _, out bool minedOut);
+                input.CryptsMinedOut = minedOut;
+            }
             return input;
         }
 
