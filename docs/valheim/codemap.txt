@@ -14,7 +14,7 @@
 대사                  Core/Npc/Speech.cs(키별 대사, SCV/알라라크) Josa.cs(조사)
 NPC 몸                Plugin/WorkerNpc.cs(504: 외형, 말하기, 음식, 미드, 사망·묘비, 스킬 재정의) WorkerPrefab.cs(Player 복제)
 NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 걷기 MoveToPoint, 점프, 구덩이 경사로, 물 판단, 대기열 Queue)
-위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook)
+위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지)
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
 지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도) MapSense.cs(밝혀진 곳은 안다)
 채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
@@ -38,7 +38,7 @@ Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) Cla
 플러그인 시작          Plugin/Plugin.cs(Update: Workers, Brain, Departures.Tick, TestRunner)
 
 게임 안 시험           Plugin/TestRunner.cs(공통·자동 실행·diag.txt) AutoStart.cs(월드 자동 입장) Minimized.cs TestTerrain.cs(판 땅 되돌림)
-                      NpcTest FlagTest GatherTest(wood·stone·copper·tin) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest DepartTest PeerTest ClaudeTest CraftTest NameTest(상자 이름→역할) SkillTest(스킬 성장·저장) RefillTest(!채워 자동 보충) RaidTest(습격 귀환) HelpTest(도와줘요 대사) TeamTest(같이 싸움: 곁 플레이어 무기가 한 방에 반영)  SetTest(세트 10번 제작 계획 실행) PortalTest StuckTest(깃발 강제 복귀: 발 묶어 끼임 흉내)
+                      NpcTest FlagTest GatherTest(wood·stone·copper·tin) PrepTest BagTest DeathTest FightTest ExploreTest PitTest FarZoneTest DepartTest PeerTest ClaudeTest CraftTest NameTest(상자 이름→역할) SkillTest(스킬 성장·저장) RefillTest(!채워 자동 보충) RaidTest(습격 귀환) HelpTest(도와줘요 대사) TeamTest(같이 싸움: 곁 플레이어 무기가 한 방에 반영)  SetTest(세트 10번 제작 계획 실행) PortalTest StuckTest(깃발 강제 복귀: 발 묶어 끼임 흉내) ResistTest(저항 미드 챙김·중독 시 마심)
                       시험 상자: GatherTest.ClearOldChests(거점 둘레 지난 시험 상자 치움)·CountBase(거점 상자 전부 합계)
 PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh
 
@@ -46,6 +46,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
+- 저항 미드: SE_Stats.m_mods(List<HitData.DamageModPair> m_type·m_modifier) → Character.GetDamageModifiers가 장비·SEMan 효과까지 합침. 추위(Cold·Freezing)는 Player.UpdateEnvStatusEffects에서만 → Humanoid인 일꾼은 추위를 안 탐(냉기 미드는 냉기 피해용). 독 피해는 Character.AddPoisonDamage가 SE "Poison"(SEMan.s_statusEffectPoison)을 붙임. 바닐라 이름 MeadPoisonResist·MeadFrostResist.
 - 상자 저장: Container.Load = ZDO GetByteArray(ZDOVars.s_items) → m_inventory.Load(ZPackage). Inventory.Load는 AddItem(skipValidPositionCheck=true)라 크기와 무관 → 인스턴스 없이 new Inventory(..)로 읽을 수 있음.
 ----------------------------------------------------------------------
 - AnimalAI(사슴 등)는 공격 코드 없이 Flee만. 사슴 진영은 AnimalsVeg가 아님(게임 시험에서 BaseAI.IsEnemy 통과) → Guard.IsFoe가 AnimalAI 제외.

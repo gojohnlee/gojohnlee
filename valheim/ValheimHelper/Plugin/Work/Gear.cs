@@ -54,6 +54,28 @@ namespace ValheimHelper
         public static ItemDrop.ItemData FindHealthMead(Inventory inv) =>
             Best(inv.GetAllItems(), IsHealthMead, it => it.m_shared.m_consumeStatusEffect is SE_Stats s ? s.m_healthUpFront + s.m_healthOverTime : 0f);
 
+        /// <summary>
+        /// 저항 미드면 막는 피해 종류("Poison"·"Frost"·"Fire", Core.Npc.Resist.Kinds), 아니면 null.
+        /// 먹으면 그 피해에 저항(약간·보통·매우)을 주는 상태 효과가 붙는 소모품(음식 아님).
+        /// </summary>
+        public static string ResistOf(ItemDrop.ItemData it)
+        {
+            if (it.m_shared.m_itemType != ItemDrop.ItemData.ItemType.Consumable || it.m_shared.m_food > 0f) return null;
+            if (!(it.m_shared.m_consumeStatusEffect is SE_Stats s)) return null;
+            foreach (var m in s.m_mods)
+            {
+                if (m.m_modifier != HitData.DamageModifier.Resistant && m.m_modifier != HitData.DamageModifier.VeryResistant
+                    && m.m_modifier != HitData.DamageModifier.SlightlyResistant) continue;
+                if (m.m_type == HitData.DamageType.Poison) return "Poison";
+                if (m.m_type == HitData.DamageType.Frost) return "Frost";
+                if (m.m_type == HitData.DamageType.Fire) return "Fire";
+            }
+            return null;
+        }
+
+        public static HitData.DamageType ResistType(string kind) =>
+            kind == "Poison" ? HitData.DamageType.Poison : kind == "Frost" ? HitData.DamageType.Frost : HitData.DamageType.Fire;
+
         public static bool IsFood(ItemDrop.ItemData it) =>
             it.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable && (it.m_shared.m_food > 0f || it.m_shared.m_foodStamina > 0f);
 

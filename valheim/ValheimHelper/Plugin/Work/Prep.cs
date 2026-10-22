@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Npc;
 
 namespace ValheimHelper
 {
@@ -100,7 +101,17 @@ namespace ValheimHelper
             Inventory mine = m_npc.GetInventory();
             foreach (var it in Plan(mine, chest))
                 if (chest.ContainsItem(it)) return true;
-            return CountMeads(mine) < MeadsToCarry && CountMeads(chest) > 0;
+            if (CountMeads(mine) < MeadsToCarry && CountMeads(chest) > 0) return true;
+            foreach (var k in Resist.Kinds)
+                if (CountResist(mine, k) < Resist.ToCarry && CountResist(chest, k) > 0) return true;
+            return false;
+        }
+
+        static int CountResist(Inventory inv, string kind)
+        {
+            int n = 0;
+            foreach (var it in inv.GetAllItems()) if (Gear.ResistOf(it) == kind) n += it.m_stack;
+            return n;
         }
 
         /// <summary>가진 것 중 가장 좋은 것을 입는다(묘비에서 되찾은 뒤 등).</summary>
@@ -113,7 +124,7 @@ namespace ValheimHelper
             var keep = new HashSet<ItemDrop.ItemData>(Plan(mine, null));
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Axe));
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Pickaxe));
-            foreach (var it in mine.GetAllItems()) if (Gear.IsHealthMead(it)) keep.Add(it);
+            foreach (var it in mine.GetAllItems()) if (Gear.IsHealthMead(it) || Gear.ResistOf(it) != null) keep.Add(it);
             keep.Remove(null);
             return keep;
         }
@@ -160,11 +171,19 @@ namespace ValheimHelper
                 chest.MoveItemToThis(mine, it);
             }
             // 체력 미드
-            int need = MeadsToCarry - CountMeads(mine);
+            TakeMeads(mine, chest, MeadsToCarry - CountMeads(mine), Gear.IsHealthMead, taken);
+            // 저항 미드(결정 D): 종류마다 둘
+            foreach (var k in Resist.Kinds)
+                TakeMeads(mine, chest, Resist.ToCarry - CountResist(mine, k), it => Gear.ResistOf(it) == k, taken);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 장비 챙김: {string.Join(", ", taken.ToArray())}, 방어력 {m_npc.GetBodyArmor():0}");
+        }
+
+        static void TakeMeads(Inventory mine, Inventory chest, int need, System.Predicate<ItemDrop.ItemData> kind, List<string> taken)
+        {
             foreach (var it in new List<ItemDrop.ItemData>(chest.GetAllItems()))
             {
                 if (need <= 0) break;
-                if (!Gear.IsHealthMead(it)) continue;
+                if (!kind(it)) continue;
                 int n = Mathf.Min(need, it.m_stack);
                 ItemDrop.ItemData copy = it.Clone();
                 copy.m_stack = n;
@@ -173,7 +192,6 @@ namespace ValheimHelper
                 need -= n;
                 taken.Add($"{it.m_shared.m_name} x{n}");
             }
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 장비 챙김: {string.Join(", ", taken.ToArray())}, 방어력 {m_npc.GetBodyArmor():0}");
         }
 
         /// <summary>

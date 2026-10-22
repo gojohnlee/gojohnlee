@@ -85,6 +85,7 @@ namespace ValheimHelper
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
             System.Func<float, float> taken = d => HitData.DamageTypes.ApplyArmor(d * scale, armor);
             FindFoes(pos, myHit, taken);
+            DrinkResist(pos);
             if (m_foes.Count == 0)
             {
                 if (m_state == State.Fight) EndFight();
@@ -201,6 +202,13 @@ namespace ValheimHelper
         /// 셈에 넣을 적: 30m 안의 적대 생물 중 나·동행을 노리거나 15m 안에 왔거나, 보스이거나, 혼자서도 못 이길 만큼 센 것(8장 a: 보이면 피함).
         /// 아직 나를 모르는 먼 잔챙이는 넣지 않는다(0.3.7: 거점 둘레를 어슬렁거리는 멧돼지·회색난쟁이 때문에 탐험을 못 함).
         /// </summary>
+        /// <summary>저항 미드(결정 D): 중독됐거나 그 바이옴에서 적이 보이면, 그 저항이 아직 없고 미드가 있으면 마신다.</summary>
+        void DrinkResist(Vector3 pos)
+        {
+            string kind = Resist.ToDrink(((Heightmap.Biome)Scout.BiomeAt(pos)).ToString(), m_foes.Count > 0, m_npc.Poisoned, m_npc.Resists, m_npc.HasResistMead);
+            if (kind != null && m_npc.DrinkResistMead(kind)) m_npc.Say("resist");
+        }
+
         void FindFoes(Vector3 pos, float myHit, System.Func<float, float> taken)
         {
             m_foes.Clear();

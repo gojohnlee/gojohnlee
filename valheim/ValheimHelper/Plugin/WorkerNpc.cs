@@ -209,6 +209,33 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>그 피해(Core.Npc.Resist.Kinds)에 이미 저항이 있는지(미드 효과·장비 포함, 바닐라 추위 판정과 같은 기준).</summary>
+        public bool Resists(string kind)
+        {
+            HitData.DamageModifier m = GetDamageModifiers().GetModifier(Gear.ResistType(kind));
+            return m == HitData.DamageModifier.Resistant || m == HitData.DamageModifier.VeryResistant || m == HitData.DamageModifier.SlightlyResistant
+                || m == HitData.DamageModifier.Immune || m == HitData.DamageModifier.Ignore;
+        }
+
+        /// <summary>그 저항 미드를 가졌는지.</summary>
+        public bool HasResistMead(string kind) => m_inventory.GetAllItems().Exists(it => Gear.ResistOf(it) == kind);
+
+        /// <summary>저항 미드를 마신다(같은 효과·같은 분류 효과가 있으면 바닐라처럼 못 마심). 마셨으면 true.</summary>
+        public bool DrinkResistMead(string kind)
+        {
+            ItemDrop.ItemData mead = m_inventory.GetAllItems().Find(it => Gear.ResistOf(it) == kind);
+            if (mead == null) return false;
+            StatusEffect se = mead.m_shared.m_consumeStatusEffect;
+            if (m_seman.HaveStatusEffect(se.NameHash()) || (!string.IsNullOrEmpty(se.m_category) && m_seman.HaveStatusEffectCategory(se.m_category))) return false;
+            m_seman.AddStatusEffect(se, true);
+            m_inventory.RemoveOneItem(mead);
+            Plugin.Log.LogInfo($"{NpcName} 저항 미드 마심: {mead.m_shared.m_name} ({kind})");
+            return true;
+        }
+
+        /// <summary>중독 중인지.</summary>
+        public bool Poisoned => m_seman.HaveStatusEffect(SEMan.s_statusEffectPoison);
+
         // ---- 죽음 (구상서 9장: 묘비 + 거점 즉시 부활, 스킬은 안 깎임) ----
 
         /// <summary>회수할 묘비들: "userID/id/시도횟수;…".</summary>
