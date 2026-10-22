@@ -46,6 +46,33 @@ Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) Cla
                       시험 상자: GatherTest.ClearOldChests(거점 둘레 지난 시험 상자 치움)·CountBase(거점 상자 전부 합계)
 PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-build.sh (VH_CHAR 시험 캐릭터·VH_RESET=0이면 월드 원본 되돌리기 안 함, 원본 %USERPROFILE%/vh-test-base, VH_SOLO=1 시험마다 따로 되돌려 단독 실행)
 
+----------------------------------------------------------------------
+시험 고르기 (바꾼 코드 영역 → 돌릴 시험, VH_TEST에 ;로 이어 씀. 사용자 결정 2026-10-22)
+- 평소: 바꾼 영역 줄의 시험만 + Core만 바꿨으면 dotnet test로 끝(그 Core를 쓰는 Plugin 줄 시험은 판단이 바뀔 때만).
+- 여러 영역이면 합집합. "공통" 줄(WorkerAI·WorkerNpc·Workers·TestRunner·TestKit·FarZones)을 바꾸면 기본 묶음 + vh_basetest.
+- 바이옴 단계 완료마다: 전체 회귀(아래 시험 전부) + 실제 재시작 vh_restart1 → VH_RESET=0 vh_restart2. 몇 시간 연속 운용은 전부 완성 뒤.
+- 시험이 Errors.txt 항목과 겹치면 그 항목 "다음 확인"도 같이 본다.
+기본 묶음(공통)          vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest
+WorkerAI 걷기·물·구덩이   기본 묶음 + vh_pittest;vh_stucktest;vh_fartest(먼 구역) · Core Water/Climb는 dotnet test + vh_pittest
+WorkerNpc(몸·음식·사망)   기본 묶음 + vh_deathtest;vh_preptest · 땅 물건 줍기 PickDrop → + vh_basetest;vh_crafttest · 활 → vh_bowtest
+Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
+작업 저장 WorkSaves·WorkState  vh_basetest + vh_restart1 → vh_restart2
+채팅·명령 Commands·ChatParser·Dispatch  dotnet test + vh_npctest;vh_departtest;vh_peertest · Claude → vh_claudetest
+출발 판단 Departures·Departure  vh_departtest;vh_peertest;vh_refilltest · 저항 → vh_resisttest
+위험·싸움 Guard·Danger·PlaceBook  vh_fighttest;vh_raidtest;vh_helptest;vh_teamtest;vh_deathtest · 사냥감 판단 → vh_hunttest
+채집 GatherJob·ResourceCatalog  vh_woodtest;vh_stonetest;vh_coppertest;vh_tintest;vh_bagtest · 사냥 → vh_hunttest;vh_bowtest · 지하묘지 → vh_crypttest · 포탈 걸음 → vh_portaltest
+지식·탐험 Senses·Scout·MapSense·ExploreJob·Knowledge  vh_exploretest;vh_woodtest
+준비·장비 Prep·Gear·Meals  vh_preptest;vh_bagtest;vh_resisttest · 활 챙기기 → vh_bowtest · 수리 Repair → vh_repairtest
+짐·상자 Unload·Chests·ChestNames  vh_bagtest;vh_nametest;vh_basetest;vh_woodtest
+묘비 GraveJob             vh_deathtest
+제작 CraftPlan·PlanRunner·PlanJob·CraftStep  dotnet test + vh_crafttest;vh_settest
+설비 MachineStep(제련·발효·조리)  vh_crafttest;vh_basetest · 조리대 → vh_cooktest
+세트·자동 보충 SetMenus·Refill  vh_settest;vh_refilltest
+스킬 SkillBook            vh_skilltest
+포탈·던전 Portals·Dungeons·Unlocks  vh_portaltest;vh_crypttest
+패치 NpcPatches·Buildings  vh_preptest(갑옷);vh_stonetest;vh_coppertest(NoDig);vh_fighttest
+시험 틀 TestRunner·TestKit·AutoStart·valheim-test.ps1  기본 묶음 + vh_basetest + VH_SOLO=1 단독 한 번
+
 ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기)
 
 ----------------------------------------------------------------------
