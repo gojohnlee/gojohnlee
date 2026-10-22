@@ -127,7 +127,7 @@ namespace ValheimHelper
         }
 
         /// <summary>결과를 상자에 넣는다. 못 넣은 개수를 돌려준다(0 = 다 넣음).</summary>
-        static int Put(Vector3 home, string prefab, int amount)
+        internal static int Put(Vector3 home, string prefab, int amount)
         {
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
             if (go == null) return amount;
