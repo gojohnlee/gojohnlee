@@ -25,7 +25,7 @@ public class SpeechTests
         var s = new Speech(new Random(2));
         var seen = new HashSet<string>();
         for (int i = 0; i < 200; i++) seen.Add(s.Say(Personality.Scv, "escort"));
-        Assert.Equal(4, seen.Count);
+        Assert.Equal(8, seen.Count);
     }
 
     [Fact]
