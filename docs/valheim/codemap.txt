@@ -85,7 +85,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
 - 시뮬레이션 거리(그래픽 설정 SimulationDistance, ZNet.GetSyncedSimulationDistance): 단계 0 = 근거리 1(네모 ±1구역, ≥64m), 1 = 근거리 2(원, 대각선 ~90m),
-  2 = 원래(근거리 2 네모, ≥128m, OriginalDistance), 3~ = 근거리 3~. 물체 인스턴스는 ZNetScene.CreateDestroyObjects가 이걸로 FindSectorObjects.
+  2 = 원래(근거리 2 네모, ≥128m, OriginalDistance), 3~ = 근거리 3~. 기본값은 단계 2(GraphicsSettingsManager 기본 m_simulationDistance=2). 물체 인스턴스는 ZNetScene.CreateDestroyObjects가 이걸로 FindSectorObjects.
   ZDOMan.FindSectorObjects(구역, new SimulationDistance(n,0)): classic이 아니면 ZonesWithinRadius(중심 거리 < n×64+32) 원 → n=2면 모서리 구역 빠짐. classic:true = 네모 ±n 전부.
   거점 범위 125m(Core BaseArea)는 Senses.Nearby가 range/64 올림 구역 수·classic으로 찾음.
 - 지하묘지: 늪 = 위치 SunkenCrypt1~4(1은 꺼짐), 검은숲 무덤 = Crypt2~4. 찾기 = LocationProxy ZDO s_location 해시. 입구 문 sunken_crypt_gate(Door m_keyItem, s_state≠0 열림). 안 = y+5000(InInterior y>3000), 입구·나가기는 Teleport(불러왔을 때만, 짝 pos+forward−up). 진흙 더미 mudpile2 = Destructible 체력 1 → mudpile2_frac. TestSpawnLocation은 월드 저장을 끔.
