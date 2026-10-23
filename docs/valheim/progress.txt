@@ -42,10 +42,6 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   다) 헛파기(E021 300~420초 땅만 53번): 원인 안 찾음 — 같은 조각 노리고 땅만 10번 파는 동안 안 줄면 그 조각에 직접 피해.
   라) 멀리(모든 플레이어 64m 밖): 묻힌 조각은 흙 파기 0번, 바로 직접 피해(곡괭이 단계·내구도 그대로), 광석은 그 자리에서 주움. 시험 칸은 플레이어를 멀리 두고.
   시험: vh_silvertest(조각 다 캠·곡괭이 다 닳아도 경사로로 나옴·짐 개수 보존) + vh_pittest·vh_coppertest + 기본 묶음. 되메우기·나무 계단은 안 함.
-★ 그다음(사용자 결정 10-23 클라우드) 전체 회귀 — 초원·검은숲·늪(회차 90 뒤 91~114에 바뀐 것 많음), 위 E021 끝난 뒤:
-  시험 전부(연속 묶음, 긴 시험은 정식) + 실제 재시작 vh_restart1 → vh_restart2. PASS한 시험의 오류(E001·E004·E012·E014·E015·E016·E018·E020)는 Errors-resolved로 닫음.
-  아래 "오류 정리 꼼수" 중 일꾼 동작(가 나무 피해 없음·나 가장자리 옮기기·다 멀리 직접 캠)과 라)의 새 칸(싸움·죽음 뒤 하던 일 이어서)은 그대로 넣고,
-  시험 쪽 꼼수(라 생물 허용·마 구덩이 다른 자리·바 비바람)와 사) 소실 보충은 회귀에서 그 오류가 다시 나올 때만(crafttest 보존 검사는 회차 90에 이미 있음).
 ★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "오류 정리 꼼수") — 오류 빨리 줄이기, 상자 ② 전에. 넣고 그 시험 PASS면 Errors.txt에서 닫음:
   가) E020 일꾼 나무·통나무 피해 없음(피해 들어오는 곳·HitType 디컴파일로) → wood·stone. 나) E018 구덩이 30초 못 나오면 가장 가까운 가장자리 위로(근처도) → pittest(위 E021 가)와 같이).
   다) E012 멀리서 목표 몇 m 앞 막힘 → 그 자리 직접 캠 → coppertest(위 E021 라)와 같이). 라) E015·E016 시험: 생물 있음 환경 불량 뺌(사냥·싸움만 유지), TestKit.WaitFor는 싸움·도망 동안 시간 멈춤(재실행 없음) → npc·escort.
@@ -57,6 +53,11 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   다) 시험 정식·약식 스위치: 긴 시험(silver·copper·crypt 등)부터. 정식은 그 기능 바꿨을 때 한 번, 회귀는 약식.
   라) 근처 막힘 30초 → 막힌 곳 너머 몇 m로 옮김 + "오딘이 날 구조하셨다!"류 대사(구덩이 가장자리 옮기기도) → 시험: stucktest 근처 칸(대사·짐 보존·안전 착지).
   마) 바다 건너 일터는 포탈로만(이어진 포탈 없으면 안 감 + 말, 일꾼 포탈 짓기 안 함) → 시험: 깊은 바다 건너 일터 칸(portaltest).
+★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "늪 회귀로 오류 정리") — 위 E021·오류 꼼수·멀리선 단순하게를 다 한 뒤, 상자 ② 전에:
+  늪 회귀: 시험 전부를 늪 거점에서 한 번(시험 월드에서 코드가 늪 자리를 골라 거점을 옮기는 스위치, 예 VH_BIOME=swamp). 그 바이옴 자원이 꼭 있어야 하는 시험
+  (구리 = 검은숲, 밭 = 초원 등 — 늪에서 안 되는 것은 게임 데이터로 확인)은 원래 자리. 늪보다 지형이 더 험한 끝낸 바이옴이 있으면 그걸로(근거를 적음). 늪은 비·적이 많음 → 일꾼이 싸우고 이어 하면 됨.
+  초원·검은숲은 회차 90 뒤 새로 넣은 시험·칸만. + 실제 재시작 vh_restart1 → vh_restart2.
+  버그가 안 나면 E001·E004·E012·E014·E015·E016·E018·E020을 해결로 닫음(Errors-resolved). 시험 쪽 꼼수(오류 꼼수 라 생물 허용·마·바)와 사) 소실 보충은 이때 다시 나온 것만.
 ★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
