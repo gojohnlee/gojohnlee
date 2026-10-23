@@ -29,6 +29,7 @@ namespace ValheimHelper
             finally
             {
                 GatherJob.TestIgnorePlayers = false;
+                GatherJob.TestFakePlayer = null;
                 TestKit.Restore(w);
             }
             TestKit.End(w, checks);
@@ -176,6 +177,59 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => Wood(w.Ragnar) == 0, 60f);
             int after = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
             checks.Add($"마저 걸어 상자에 넣음 (짐 {Wood(w.Ragnar)}, 합 {total} → {after})", TestKit.Ok && after == total);
+            yield return Drop(w, checks, spot);
+        }
+
+        /// <summary>
+        /// 가-4 칸: 생략 중 플레이어가 지도상 위치 64m 안에 오면(GatherJob.TestFakePlayer로 흉내 — 몸에선 64m 밖) 몸을 그 근처 안전한 땅에 내려
+        /// 거기서부터 걷는다. 짐·체력 그대로, 상자에 넣음.
+        /// </summary>
+        static IEnumerator Drop(TestKit.World w, GatherTest.Checks checks, Vector3 spot)
+        {
+            var ai = w.Ragnar.Ai;
+            GatherJob.TestIgnorePlayers = false;
+            TestKit.ClearBaseStock(w, "Wood");
+            if (!(ai.Job is GatherJob))
+            {
+                GatherTest.Say($"!{Workers.Name1} 나무 30", null);
+                yield return TestKit.WaitFor(() => ai.Job is GatherJob g && (g.StepName == "Search" || g.StepName == "Approach" || g.StepName == "GoZone"), 60f);
+            }
+            if (!(ai.Job is GatherJob gj)) { checks.Add("다가옴 칸: 일이 남아 있음", false); yield break; }
+            int have = Wood(w.Ragnar);
+            if (have < 30) w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("Wood"), 30 - have);
+            int skips1 = GatherJob.FarSkips, drop0 = GatherJob.FarDropped, cancel0 = GatherJob.FarCancelled, landed0 = GatherJob.FarLanded;
+            float hp0 = w.Ragnar.GetHealth();
+            int total = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
+            GatherJob.TestIgnorePlayers = true;
+            w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, w.Player.transform.rotation, false);
+            yield return new WaitForSeconds(0.5f);
+            gj.TestReturn();
+            yield return TestKit.WaitFor(() => GatherJob.FarSkips > skips1, 30f);
+            checks.Add("다가옴 칸: 이동 생략 시작", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            Vector3 at = w.Ragnar.transform.position;
+            yield return TestKit.WaitFor(() => GatherJob.FarReveals >= 4, 20f);
+            int carried = Wood(w.Ragnar);
+            // 몸에서 거점 쪽으로 (지도 위치 거리 + 30m, 최소 70m)에 가짜 플레이어 → 다음 밝힐 때(2초 안) 지도 위치는 64m 안, 몸은 64m 밖
+            Vector3 map = GatherJob.FarLastMap;
+            Vector3 fake = at + (w.Home - at).normalized * Mathf.Max(Utils.DistanceXZ(at, map) + 30f, 70f);
+            GatherJob.TestFakePlayer = fake;
+            float bodyToFake = Utils.DistanceXZ(at, fake);
+            yield return TestKit.WaitFor(() => GatherJob.FarDropped > drop0 || GatherJob.FarCancelled > cancel0 || GatherJob.FarLanded > landed0, 10f);
+            Vector3 landedAt = w.Ragnar.transform.position;
+            checks.Add($"지도 위치에 다가오면 그 근처에 내림 (내림 {GatherJob.FarDropped - drop0}, 그만둠 {GatherJob.FarCancelled - cancel0}, 끝 {GatherJob.FarLanded - landed0}, 몸–플레이어 {bodyToFake:0}m)",
+                GatherJob.FarDropped > drop0 && GatherJob.FarCancelled == cancel0 && bodyToFake > 64f);
+            checks.Add($"내린 자리 = 그때 지도 위치 근처 ({Utils.DistanceXZ(landedAt, GatherJob.FarLastMap):0.0}m, 출발점에서 {Utils.DistanceXZ(landedAt, at):0}m)",
+                Utils.DistanceXZ(landedAt, GatherJob.FarLastMap) <= 12f && Utils.DistanceXZ(landedAt, at) > 20f);
+            bool ground = ZoneSystem.instance.GetSolidHeight(landedAt, out float h);
+            checks.Add($"다가옴 칸: 단단한 땅 위 (높이 {landedAt.y:0.0}/땅 {h:0.0})", ground && Mathf.Abs(landedAt.y - h) < 1.5f && Floating.GetLiquidLevel(landedAt) < h + 0.1f);
+            checks.Add($"다가옴 칸: 짐·체력 그대로 (짐 {carried} → {Wood(w.Ragnar)}, 체력 {hp0:0} → {w.Ragnar.GetHealth():0})", Wood(w.Ragnar) == carried && w.Ragnar.GetHealth() >= hp0 - 1f);
+            int skips2 = GatherJob.FarSkips;
+            yield return TestKit.WaitFor(() => Wood(w.Ragnar) == 0, 60f);
+            int after = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
+            checks.Add($"내린 자리부터 걸어 상자에 넣음 (다시 생략 {GatherJob.FarSkips - skips2}번, 합 {total} → {after})", TestKit.Ok && after == total && GatherJob.FarSkips == skips2);
+            GatherJob.TestFakePlayer = null;
+            GatherJob.TestIgnorePlayers = false;
         }
     }
 }

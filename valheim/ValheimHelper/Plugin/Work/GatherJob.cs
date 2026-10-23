@@ -856,6 +856,8 @@ namespace ValheimHelper
         public static int Hops;
         /// <summary>시험용: 거점 근처 시험에서 2)를 실제로 돌려 보려고 플레이어 64m 판정을 끈다. 평소 false.</summary>
         public static bool TestIgnorePlayers;
+        /// <summary>시험용: TestIgnorePlayers 동안 이 자리에 플레이어가 있는 것으로 본다(멀리선 이동 생략 중 다가옴 흉내). 평소 null.</summary>
+        public static Vector3? TestFakePlayer;
 
         /// <summary>목표 쪽 순간이동을 못 하는 까닭(되면 null): 사냥·지하묘지·동행·실내는 안 함(사용자 결정 2026-10-23), 떠날 자리가 플레이어 64m 안(근처)이면 안 함.</summary>
         string HopBlocked()
@@ -870,7 +872,7 @@ namespace ValheimHelper
         /// <summary>가장 가까운 플레이어(호스트 + 접속한 사람들의 기준 위치)에서 StuckHop.NearPlayer m 밖인가.</summary>
         static bool FarFromPlayers(Vector3 p)
         {
-            if (TestIgnorePlayers) return true;
+            if (TestIgnorePlayers) return TestFakePlayer == null || Utils.DistanceXZ(p, TestFakePlayer.Value) > (float)StuckHop.NearPlayer;
             var players = new List<StuckHop.XZ>();
             if (Player.m_localPlayer != null) players.Add(new StuckHop.XZ(Player.m_localPlayer.transform.position.x, Player.m_localPlayer.transform.position.z));
             if (ZNet.instance != null)
@@ -894,8 +896,11 @@ namespace ValheimHelper
             return true;
         }
 
-        /// <summary>HopToward·멀리선 이동 생략이 같이 쓰는 내려놓기: around 둘레 후보 중 안전한 첫 자리로 옮긴다.</summary>
-        bool LandNear(Vector3 dest, out string why)
+        /// <summary>
+        /// HopToward·멀리선 이동 생략이 같이 쓰는 내려놓기: around 둘레 후보 중 안전한 첫 자리로 옮긴다.
+        /// nearPlayerOk = 플레이어 64m 안이어도 됨(생략 중 플레이어가 지도상 위치에 다가와 그 근처에 내릴 때).
+        /// </summary>
+        bool LandNear(Vector3 dest, out string why, bool nearPlayerOk = false)
         {
             ZNetView nv = m_npc.GetComponent<ZNetView>();
             if (nv == null || !nv.IsOwner()) { why = "소유자 아님"; return false; }
@@ -908,7 +913,7 @@ namespace ValheimHelper
                 tried++;
                 var p = new Vector3((float)c.X, dest.y, (float)c.Z);
                 if (!ZoneSystem.instance.IsZoneLoaded(p)) { last = "구역 안 불러와짐"; continue; }
-                if (!FarFromPlayers(p)) { last = "플레이어 근처"; continue; }
+                if (!nearPlayerOk && !FarFromPlayers(p)) { last = "플레이어 근처"; continue; }
                 if (!ZoneSystem.instance.GetSolidHeight(p, out float h, out Vector3 normal, out GameObject go) || go == null) { last = "땅 없음"; continue; }
                 if (go.GetComponentInParent<Heightmap>() == null) { last = "지형 아님(" + go.name + ")"; continue; }
                 if (normal.y < StuckHop.MinNormalY) { last = $"가파름({normal.y:0.00})"; continue; }
@@ -1866,7 +1871,7 @@ namespace ValheimHelper
         /// 멀리선 이동 생략(사용자 결정 2026-10-23, Core FarSkip): 일꾼·목적지 모두 플레이어 64m 밖이고 FarSkip.MinDistance m 넘으면
         /// 걷지 않고 길 길이 ÷ m_runSpeed초 서서 기다리며 2초마다 지도상 위치를 밝히고(Scout.Reveal), 다 기다리면 불러와진 구역 안에서
         /// HopStep m씩 목적지 쪽으로 옮긴다(LandNear: 단단한 땅·물 아님·위험 판단 통과). 목적지 ArriveNear m 안이면 마저 걷는다.
-        /// 길은 FarRoute(밝혀진 목적지는 물 피한 거친 길). 플레이어가 몸·지도 위치 64m 안에 오면 그만두고 그 자리부터 걷는다(가-4에서 지도 위치로 내림).
+        /// 길은 FarRoute(밝혀진 목적지는 물 피한 거친 길). 플레이어가 몸 64m 안에 오면 그만두고 그 자리부터, 지도 위치 64m 안에 오면 그 근처에 내려(FarDrop) 걷는다.
         /// true = 이번 프레임은 생략이 맡음(걷지 않음).
         /// </summary>
         bool FarWalk(float dt, Vector3 dest)
@@ -1898,8 +1903,10 @@ namespace ValheimHelper
                 {
                     RoughPath.P mp = m_far.MapPos;
                     var map = new Vector3((float)mp.X, me.y, (float)mp.Z);
-                    if (!FarFromPlayers(me) || !FarFromPlayers(map)) return FarCancel("플레이어가 다가옴");
+                    if (!FarFromPlayers(me)) return FarCancel("플레이어가 몸에 다가옴");
+                    if (!FarFromPlayers(map)) return FarDrop(dest);
                     Scout.Reveal(map);
+                    FarLastMap = map;
                     FarReveals++;
                 }
                 return true;
@@ -1927,6 +1934,35 @@ namespace ValheimHelper
             if (Utils.DistanceXZ(me, to) >= 5f && LandNear(to, out why)) m_farCheck = 0f;
             else Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 옮길 자리 없음({why})");
             return true;
+        }
+
+        /// <summary>시험용: 생략 중 플레이어가 지도상 위치에 다가와 그 근처(또는 길 앞쪽)에 내린 횟수와 마지막 지도상 위치.</summary>
+        public static int FarDropped;
+        public static Vector3 FarLastMap;
+
+        /// <summary>
+        /// 생략 중 플레이어가 지도상 위치 64m 안에 옴(사용자 결정 2026-10-23 [고침]): 몸을 그 근처 안전한 땅(LandNear, 플레이어 곁 허용)에
+        /// 내려 거기서부터 걷는다. [기본안] 없으면 길 앞쪽으로 10m씩 6곳. 다 안 되면 그 자리부터 걷기(FarCancel).
+        /// </summary>
+        bool FarDrop(Vector3 dest)
+        {
+            string why = "자리 없음";
+            int i = 0;
+            foreach (RoughPath.P a in m_far.DropAims(10, 6))
+            {
+                var aim = new Vector3((float)a.X, dest.y, (float)a.Z);
+                if (i++ == 0) FarLastMap = aim;
+                if (!ZoneSystem.instance.IsZoneLoaded(aim)) { why = "구역 안 불러와짐"; continue; }
+                if (!LandNear(aim, out why, true)) continue;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 중 플레이어가 지도 위치에 다가옴({m_far.Elapsed:0}/{m_far.Seconds:0}초) → 길 {(i - 1) * 10}m 앞 자리에 내림({why}) → 걷기");
+                FarDropped++;
+                m_far = null;
+                m_farCheck = 30f;
+                m_bestDist = float.MaxValue;
+                m_progressTimer = 0f;
+                return false;
+            }
+            return FarCancel($"플레이어가 지도 위치에 다가옴, 내릴 자리 없음({why})");
         }
 
         bool FarCancel(string why)

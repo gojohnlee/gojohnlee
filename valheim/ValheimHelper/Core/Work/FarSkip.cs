@@ -59,6 +59,24 @@ namespace ValheimHelper.Core.Work
         public bool LandTimedOut => !Waiting && Landing > LandLimit;
 
         /// <summary>
+        /// 기다리는 도중 플레이어가 지도상 위치에 다가왔을 때 몸을 내릴 자리 차례(사용자 결정 2026-10-23 [고침]·[기본안]):
+        /// 지금 지도상 위치 먼저, 그다음 길 앞쪽으로 step m씩 ahead번(도착점을 넘지 않음, 같은 자리는 한 번만).
+        /// </summary>
+        public IEnumerable<RoughPath.P> DropAims(double step, int ahead)
+        {
+            double at = Seconds <= 0 ? Length : Length * Math.Min(1, Elapsed / Seconds);
+            yield return RoughPath.PointAt(m_path, at);
+            double prev = at;
+            for (int i = 1; i <= ahead; i++)
+            {
+                double d = Math.Min(Length, at + step * i);
+                if (d <= prev + 1e-6) yield break; // 도착점을 이미 냈음
+                yield return RoughPath.PointAt(m_path, d);
+                prev = d;
+            }
+        }
+
+        /// <summary>
         /// 몸(from)에서 목적지(dest) 쪽으로 다음에 내릴 자리. 목적지가 ArriveNear m 안이면 false(옮기기 끝, 걷는다).
         /// 한 번에 step m, 목적지 ArriveNear m 앞을 넘지 않는다.
         /// </summary>

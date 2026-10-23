@@ -76,4 +76,26 @@ public class FarSkipTests
         Assert.True(FarSkip.Worth(FarSkip.MinDistance));
         Assert.False(FarSkip.HopAim(new P(0, 0), new P(15, 0), 60, out _));
     }
+
+    [Fact]
+    public void DropAimsStartAtMapPosThenAheadAlongPath()
+    {
+        var s = new FarSkip(new List<P> { new P(0, 0), new P(100, 0), new P(100, 100) }, 10); // 200m, 20초
+        for (int i = 0; i < 9; i++) s.Tick(1); // 90m
+        var aims = new List<P>(s.DropAims(10, 3));
+        Assert.Equal(4, aims.Count);
+        Assert.Equal(90, aims[0].X, 3); Assert.Equal(0, aims[0].Z, 3);
+        Assert.Equal(100, aims[1].X, 3); Assert.Equal(0, aims[1].Z, 3);
+        Assert.Equal(100, aims[3].X, 3); Assert.Equal(20, aims[3].Z, 3); // 모퉁이 돌아 길 따라
+    }
+
+    [Fact]
+    public void DropAimsStopAtDestination()
+    {
+        var s = Straight(100, 10);
+        for (int i = 0; i < 9; i++) s.Tick(1); // 90m
+        var aims = new List<P>(s.DropAims(10, 5));
+        Assert.Equal(2, aims.Count); // 지금 자리 + 도착점(한 번만)
+        Assert.Equal(100, aims[1].X, 3);
+    }
 }
