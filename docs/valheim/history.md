@@ -134,6 +134,8 @@
 - 한 일: 저장에 이름표 넣기·불러올 때 짐·포탈 수 대조(회차 97), 실제 게임 껐다 켜기 시험 PASS(회차 98, 짐 정리가 재료를 상자에 넣던 버그 고침).
 - 남은 것: 없음.
 
+- 근거: 커밋 8931c29 · 시험 vh_restart1 PASS 6/6, vh_restart2 PASS 14/14, vh_portalbuildtest PASS 38/38, vh_woodtest PASS 12/12, dotnet 434 PASS.
+
 ### 회차 95 · 10-23 · 일꾼 포탈 나) 일에 연결
 
 **요약**
