@@ -169,7 +169,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   덩굴 새싹(VineAsh_sapling·VineGreen_sapling)은 m_attachDistance>0(조각에 붙여야 자람) → 밭 작물에서 뺌. 갈고 10초 뒤 Plant 상태 Healthy·IsCultivated True 확인(vh_farmtest).
 - 은(⑪, 회차 90 시험 diag): 은 출처 silvervein(Destructible+Beacon m_range 50, 깨지면 silvervein_frac MineRock5, 윗면 뿌리+2.03m)·rock3_silver(Beacon 없음, → rock3_silver_frac), 모두 곡괭이 단계 2. 찾는 물건 Wishbone(장착 효과 SE_Finder: 1초마다 Beacon.FindClosestBeaconInRange, 거리 XZ) = 본매스(defeated_bonemass) 전리품.
   곡괭이 단계(m_toolTier, 회차 107): 사슴뿔 0·청동 1·철 2·흑철 3 → 은 광맥은 철 곡괭이부터. silvervein_frac 부위 약 92개, 부위 바닥이 원래 땅 8.3m까지. 땅 낮춤 한계 = TerrainComp m_levelDelta ±8m(NoDig.MaxDepth 8).
-- 내구도·땅속 드롭(클라우드 10-23 디컴파일): 바닐라 Attack은 내구도를 플레이어만 뺌(m_useDurability && IsPlayer() 세 곳) → 일꾼 연장 내구도는 모드가 빼는 곳(WorkerNpc 내구도 빼기·GatherJob 직접 피해)만.
+- 내구도·땅속 드롭(클라우드 10-23 디컴파일): 바닐라 Attack은 내구도를 플레이어만 뺌(m_useDurability && IsPlayer() 세 곳) → 일꾼 연장 내구도는 모드가 빼는 곳(WorkerNpc 내구도 빼기·GatherJob 직접 피해)만. 일꾼 연장 내구도 최저 1(WorkerNpc.WearTool, WornOut = 일에 부서짐, 경사로 깎기는 BestTool/HoldTool carve로 내구도 1도 씀).
   MineRock5.DamageArea: 도구 단계 CheckToolTier(m_minToolTier) 뒤, 부위 체력 0이면 그 부위 자리 + 반지름 0.3 무작위에 m_dropItems 생성(땅속 부위면 땅속에 생김).
   ItemDrop.TerrainCheck: 땅(GetGroundHeight)보다 0.5m 넘게 아래면 땅 + 0.5m로 올리고 속도 0 → 땅속 드롭은 땅 위로 튀어나옴(줍기는 보통대로).
 - 거두기(Pickable): Interact(Humanoid)는 Player 아니어도 됨(스킬·통계만 건너뜀) → RPC_Pick(주인만, m_picked면 무시): m_amount(Game.ScaleDrops)+m_extraDrops를 떨굼, 효과에 Player.m_localPlayer 씀(호스트 있음). m_respawnTimeMinutes 0인 작물은 거둔 뒤 사라짐.
