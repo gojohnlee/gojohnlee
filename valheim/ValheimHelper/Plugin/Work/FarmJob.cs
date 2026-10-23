@@ -425,7 +425,12 @@ namespace ValheimHelper
         {
             Vector3 home = m_npc.Home;
             if (m_ai.MoveToPoint(dt, home, 2.5f, true) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Store); return true; }
-            if (m_stepTime > HomeLimit) { m_npc.TeleportTo(home, m_npc.transform.rotation, false); Go(Step.Store); }
+            if (m_stepTime > HomeLimit)
+            {
+                // 귀환 통일(요청 코드 정리 나): 깃발 순간이동은 WorkerAI.TeleportHome(도착 확인), 그것도 안 되면 그 자리에서 쉼.
+                if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return true; }
+                Go(Step.Store);
+            }
             return true;
         }
 

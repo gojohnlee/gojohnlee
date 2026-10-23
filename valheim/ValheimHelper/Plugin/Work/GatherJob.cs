@@ -496,8 +496,7 @@ namespace ValheimHelper
             if (exit == null || m_stepTime > 120f)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 나가는 길 없음/시간 초과 → 깃발로");
-                m_npc.TeleportTo(m_npc.Home, m_npc.transform.rotation, false);
-                WorkerAI.StuckTeleports++;
+                if (!m_ai.TeleportHome()) m_ai.RestHere(m_npc); // 귀환 통일: 도착 확인, 안 되면 그 자리에서 쉼
                 return;
             }
             Vector3 ep = exit.transform.position;
