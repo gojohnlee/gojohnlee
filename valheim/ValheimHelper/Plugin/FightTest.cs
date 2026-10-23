@@ -174,6 +174,32 @@ namespace ValheimHelper
             checks.Add($"트롤 감지 거리 밖으로 멀어짐 ({start:0}m → 최대 {far:0}m)", far > Guard.SenseRange);
             checks.Add($"살아 있음 (체력 {claude.GetHealth():0})", !claude.IsDead() && claude.GetHealth() > 0f && claude.Graves().Count == 0);
 
+            // B-2) 도망 중 센 적(트롤)이 사라지고 약한 회색난쟁이만 곁에 남아 판단이 "싸움"이 돼도 도망은 끝까지
+            // (회차 139 늪 회귀 basetest: 30m 경계를 넘나드는 주술사 때문에 도망↔싸움을 되풀이 — 그때마다 목표·구역을 버림)
+            if (b != null && b.GetComponent<ZNetView>() is ZNetView bv && bv.IsValid()) bv.Destroy();
+            yield return new WaitForSeconds(1f);
+            claude.Heal(1000f, false);
+            Character b2 = Spawn(troll, claude.transform.position + claude.transform.forward * 20f, spawned);
+            yield return TestKit.WaitFor(() => claude.Ai.Guard != null && claude.Ai.Guard.StateName == "Flee", 10f);
+            bool flee2 = TestKit.Ok, fightVerdict = false, broke = false;
+            if (flee2)
+            {
+                if (b2 != null && b2.GetComponent<ZNetView>() is ZNetView b2v && b2v.IsValid()) b2v.Destroy();
+                Character weak = Spawn(gd, claude.transform.position + claude.transform.right * 6f, spawned);
+                string prev = "Flee";
+                for (float tt = 0f; tt < 4f; tt += Time.deltaTime)
+                {
+                    yield return null;
+                    string cur = claude.Ai.Guard.StateName;
+                    if (cur == "Flee" && claude.Ai.Guard.LastVerdict == Core.Npc.Verdict.Fight) fightVerdict = true;
+                    if (prev == "Flee" && cur == "Fight") broke = true; // 도망 끝(Calm)을 거치지 않고 바로 싸움
+                    prev = cur;
+                }
+                if (weak != null && !weak.IsDead()) Kill(weak);
+            }
+            checks.Add($"도망 중 약한 적만 남아 판단이 싸움이어도 도망은 끝까지 (도망 {flee2}, 싸움 판단 {fightVerdict}, 끊김 {broke})", flee2 && fightVerdict && !broke);
+            yield return new WaitForSeconds(1f);
+
             bool clean = true;
             foreach (var h in heard) if (h.Contains("{")) clean = false;
             checks.Add("대사에 자리표시자 안 남음", clean);

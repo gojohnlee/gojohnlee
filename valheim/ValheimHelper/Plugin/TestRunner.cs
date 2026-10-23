@@ -177,6 +177,9 @@ namespace ValheimHelper
         public static void UpdateAutoRun()
         {
             if (!s_auto) return;
+            // 바이옴 회귀(검은숲 등): 시험 끝 정리 전·시험 사이에도 적이 와서 시험 캐릭터가 죽으면 다음 시험이 "플레이어 죽음" 환경 불량
+            // (회차 139: peertest 뒤 회색난쟁이 4마리 → basetest 환경 불량) → 자동 시험 동안 신 모드를 유지한다(Restore가 끄면 다음 프레임에 다시 켬).
+            if (TestKit.RunBiome != Heightmap.Biome.None && Player.m_localPlayer is Player me && !me.IsDead() && !me.InGodMode()) me.SetGodMode(true);
             // 시험이 오류로 끝나지 않으면 5분 뒤 결과를 남기고 넘어간다(사용자가 지켜보지 않아도 되게).
             if (Running)
             {

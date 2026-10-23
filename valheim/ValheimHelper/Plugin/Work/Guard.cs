@@ -166,6 +166,10 @@ namespace ValheimHelper
                     }
                     break;
                 case Verdict.Fight:
+                    // 도망은 끝까지 한다(도착·40초·물 막힘 — 구상서 8장 a "그 지역을 벗어남", 물러남 판단·적 없음도 도망을 안 끊음).
+                    // (늪 회귀 basetest: 30m 경계를 넘나드는 회색난쟁이 주술사 때문에 판단이 도망↔싸움으로 바뀌어, 싸우러 무리 쪽으로 갔다가
+                    // 다시 도망을 수십 초마다 새로 시작 — 그때마다 목표·구역을 버리고 장소 기억에 도망을 더 쌓음.)
+                    if (m_state == State.Flee) break;
                     if (m_state == State.Back && m_backTimer > 0f && !Aggressive(nearest)) break; // 물러나 기다리는 중: 쫓아오지 않으면 그대로
                     Character t = FightTarget(pos);
                     if (t == null) break;

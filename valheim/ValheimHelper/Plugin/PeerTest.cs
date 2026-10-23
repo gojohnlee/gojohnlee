@@ -178,6 +178,47 @@ namespace ValheimHelper
             checks.Add($"전체 오류 0 ({errors.Count})", errors.Count == 0);
         }
 
+        /// <summary>
+        /// 진단: 뺏긴 동안 NPC ZDO를 누가 쓰는지. ZDO.IncreaseDataRevision(모든 Set이 부름) 앞에서 지켜보는 ZDO가 주인 아닐 때 부른 곳(호출 순서)을 적는다.
+        /// </summary>
+        static class WriteSpy
+        {
+            static Harmony s_h;
+            static ZDO s_watch;
+            static readonly List<string> s_seen = new List<string>();
+
+            public static void Start(ZDO zdo)
+            {
+                s_seen.Clear();
+                s_watch = zdo;
+                if (s_h != null) return;
+                s_h = new Harmony(Plugin.Guid + ".peerspy");
+                s_h.Patch(AccessTools.Method(typeof(ZDO), "IncreaseDataRevision"), prefix: new HarmonyMethod(typeof(WriteSpy), nameof(Prefix)));
+            }
+
+            public static List<string> Stop()
+            {
+                s_watch = null;
+                s_h?.UnpatchSelf();
+                s_h = null;
+                return new List<string>(s_seen);
+            }
+
+            static void Prefix(ZDO __instance)
+            {
+                if (s_watch == null || !ReferenceEquals(__instance, s_watch) || __instance.IsOwner() || s_seen.Count >= 6) return;
+                var st = new System.Diagnostics.StackTrace(1, false);
+                var parts = new List<string>();
+                for (int i = 0; i < st.FrameCount && parts.Count < 7; i++)
+                {
+                    var m = st.GetFrame(i).GetMethod();
+                    if (m != null) parts.Add((m.DeclaringType != null ? m.DeclaringType.Name + "." : "") + m.Name);
+                }
+                string s = string.Join(" < ", parts.ToArray());
+                if (!s_seen.Contains(s)) s_seen.Add(s);
+            }
+        }
+
         static readonly System.Reflection.FieldInfo IsServerField = AccessTools.Field(typeof(ZNet), "m_isServer");
 
         /// <summary>ZNet.IsServer()가 읽는 정적 값. 손님 흉내는 한 프레임 안에서만 바꾸고 곧바로 되돌린다.</summary>
@@ -222,12 +263,14 @@ namespace ValheimHelper
             uint rev0 = zdo.DataRevision;
             bool wrote = false;
             float t = 0f;
+            WriteSpy.Start(zdo); // 뺏긴 동안 쓰면 누가 썼는지 남김(회차 139: Brain.Save 30초 저장이 겹쳤던 것)
             while (!zdo.IsOwner() && t < 5f)
             {
                 yield return null;
                 t += Time.deltaTime;
                 if (!zdo.IsOwner() && zdo.DataRevision != rev0) wrote = true;
             }
+            foreach (var s in WriteSpy.Stop()) TestRunner.Log($"  {what} 뺏긴 동안 쓴 곳: {s}");
             bool back = zdo.IsOwner();
             int total1 = Total(w);
             bool locked = false;

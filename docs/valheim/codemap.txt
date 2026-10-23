@@ -149,6 +149,8 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   SimulationDistance(0,0)이면 그 구역만. ZoneSystem.c_ZoneSize = 64.
 - ZRoutedRpc.InvokeRoutedRPC(메서드, 인자)는 서버 peer로 보내는데, 호스트면 GetServerPeerID() = 자기 id → 그 자리에서 HandleRoutedRPC(같은 프레임).
   → 호스트 시험의 ChatNet.SendAsLocal 명령은 부르는 즉시 처리된다.
+- ZDO.Set(모든 형)은 주인 검사를 안 한다(값이 바뀌면 IncreaseDataRevision) → 주인 아닌 ZDO에 쓰는 건 부르는 쪽이 막아야 함(회차 139: Brain.Save가 남 소유 일꾼 ZDO에 씀 → 고침).
+  바닐라 Character(CustomFixedUpdate·땅 기울기·SetHealth)·Humanoid(공격·막기)·ZSyncAnimation·VisEquipment·SEMan 쓰기는 IsOwner 안에서만 — 싸우는 중 35초 뺏어 둔 진단에서 쓴 건 Brain.Save뿐.
 - ZDO.DataRevision은 주인이 위치·속도를 써도 오른다(ZSyncTransform.OwnerSync → ZDO.SetPosition·Set(s_velHash)). 깨어 있는 통나무(TreeLog, Rigidbody)는
   맞지 않아도 계속 오름 → 깎였는지는 체력 키로 본다: TreeBase·TreeLog·Destructible = float s_health, MineRock5 = string s_health(부위별 base64),
   MineRock = float "Health"+부위(부위 = m_areaRoot 또는 자신의 자식 충돌체). (GatherJob.HealthMark)

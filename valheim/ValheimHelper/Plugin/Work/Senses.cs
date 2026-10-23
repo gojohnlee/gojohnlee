@@ -183,10 +183,15 @@ namespace ValheimHelper
             string foes = s_foes.Save();
             string places = s_places.Save();
             string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save();
+            bool skipped = false;
             foreach (var zdo in Workers.Zdos())
             {
+                // 남(친구 컴퓨터)이 주인인 ZDO에는 안 쓴다(vh_peertest "싸우는 중": 30초 저장이 뺏긴 순간과 겹쳐 주인 아닌데 씀).
+                // Workers.Reclaim이 1초 안에 되찾으니 바뀐 표시를 남기고 2초 뒤 다시 저장한다.
+                if (zdo.HasOwner() && !zdo.IsOwner()) { skipped = true; continue; }
                 zdo.Set(Key, text); zdo.Set(KeyFoes, foes); zdo.Set(KeyPlaces, places); zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms);
             }
+            if (skipped) { s_saveTimer = 2f; return; }
             s_k.Dirty = false;
             s_places.Dirty = false;
             s_sets.Dirty = false;

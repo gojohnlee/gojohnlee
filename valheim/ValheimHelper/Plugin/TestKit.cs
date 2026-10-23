@@ -297,6 +297,7 @@ namespace ValheimHelper
                     yield return new WaitForSeconds(0.5f);
                 }
             }
+            if (RunBiome != Heightmap.Biome.None) LogSpawners(w.Home);
             var bad = new List<string>();
             if (w.Player == null || w.Player.IsDead()) bad.Add("플레이어 없음·죽음");
             else if (!w.Player.InGodMode()) bad.Add("플레이어 무적 아님");
@@ -330,6 +331,18 @@ namespace ValheimHelper
                 if (c != null && !c.IsDead() && !(c is Player) && !(c is WorkerNpc)
                     && Vector3.Distance(c.transform.position, home) < StartRadius) list.Add(c);
             return list;
+        }
+
+        /// <summary>진단(바이옴 회귀): 거점 둘레의 생물 생성기(둥지 등 SpawnArea — 바닐라 SpawnSystem과 달리 로그를 안 남김).</summary>
+        static void LogSpawners(Vector3 home)
+        {
+            var list = new List<string>();
+            foreach (var s in Object.FindObjectsByType<SpawnArea>(FindObjectsSortMode.None))
+            {
+                float d = Utils.DistanceXZ(s.transform.position, home);
+                if (d <= 200f) list.Add($"{Utils.GetPrefabName(s.gameObject)} {d:0}m(발동 {s.m_triggerDistance:0}m·{s.m_spawnIntervalSec:0}초·곁 {s.m_maxNear})");
+            }
+            TestRunner.Log($"둘레 생성기(200m): {(list.Count == 0 ? "없음" : string.Join(", ", list.ToArray()))}");
         }
 
         static int ClearCreatures(Vector3 home)
