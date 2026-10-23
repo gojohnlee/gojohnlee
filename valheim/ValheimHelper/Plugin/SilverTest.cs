@@ -111,8 +111,8 @@ namespace ValheimHelper
             checks.Add("단계 맞는 곡괭이 있음", pick != null);
             if (pick == null) yield break;
             // 둘: 은 광맥 하나에 곡괭이 하나가 닳아 없어짐(회차 107: 29개 캐고 "연장 나갔네") — 예비는 짐 정리 때 상자로 갔다가 Tool 단계가 꺼냄
-            w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
-            w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
+            // 회차 117: 철 곡괭이 2개로는 부위 약 42개뿐(조각 92개) → 5개
+            for (int i = 0; i < 5; i++) w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
             yield return new WaitForSeconds(1f);
             var hashes = new HashSet<int> { vein.name.GetStableHashCode() };
             var des = vein.GetComponent<Destructible>();

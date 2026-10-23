@@ -987,6 +987,14 @@ namespace ValheimHelper
                     DirectHit(view);
                     progress = true;
                 }
+                // 같은 땅속 조각을 겨눈 채 땅만 10번 파고 조각은 안 깎였다(E021 다 헛파기, 원인은 안 찾음): 그 조각에 직접 피해.
+                // 바닐라 휘두름이 조각을 깎으면 다시 센다.
+                if (m_aimCol == null || m_aimCol != m_digAim || mark != m_lastHealth) { m_digAim = m_aimCol; m_digOnly = 0; }
+                else if (m_ai.Digs != m_lastDigs && ++m_digOnly >= DigOnlyLimit)
+                {
+                    if (m_digOnly == DigOnlyLimit) Plugin.Log.LogInfo($"{m_npc.NpcName}: 같은 땅속 조각 겨눈 채 땅만 {DigOnlyLimit}번 → 그 조각에 직접 피해");
+                    DirectHit(view);
+                }
                 if (progress) { m_swingsNoProgress = 0; m_workIdle = m_closerTime = 0f; }
                 else m_swingsNoProgress++;
                 m_lastDigs = m_ai.Digs;
@@ -1008,8 +1016,9 @@ namespace ValheimHelper
         }
 
         float m_workIdle, m_closerTime, m_dropCheck;
-        int m_lastDigs, m_lastBlocked;
-        Collider m_aimCol;
+        int m_lastDigs, m_lastBlocked, m_digOnly;
+        Collider m_aimCol, m_digAim;
+        const int DigOnlyLimit = 10;
         bool m_saidDig;
         const float WorkIdleLimit = 30f;
         /// <summary>땅 낮춤 한계 바닥 밑으로 이만큼(m) 안에 윗면이 있는 묻힌 조각까지 캔다(바닥에 선 일꾼 팔이 닿는 정도).</summary>
