@@ -43,6 +43,8 @@ namespace ValheimHelper
         /// <summary>막힘 복구(사용자 결정 2026-10-23, Core StuckBook): 이번 일 동안 막힌 목적지·귀환 막힘. 작업 저장(WorkItem.Stuck)에 들어가 불러와도 이어진다.</summary>
         StuckBook m_book = new StuckBook();
         public string StuckSave => m_book.Save();
+        /// <summary>시험용: 이 대상을 겨누고 다가가기부터(vh_hoptest 멀리서 목표 앞 막힘 칸).</summary>
+        public void TestApproach(ZDO zdo) { Aim(zdo); Go(Step.Approach); }
         public void LoadStuck(string text) => m_book = StuckBook.Load(text);
         /// <summary>시험용: 이번 일에서 막혀 뺀 목적지 수.</summary>
         public int StuckExcluded => m_book.ExcludedCount;
@@ -724,27 +726,52 @@ namespace ValheimHelper
             }
             if (Walk(dt, m_targetPos, m_reach) || Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f || TouchingRock(zdo))
             {
-                m_swings = m_swingsNoProgress = 0;
-                m_workIdle = m_closerTime = 0f;
-                m_dropCheck = 5f;
-                m_lastDigs = m_ai.Digs;
-                m_lastBlocked = m_ai.BlockedDigs;
-                m_saidDig = false;
-                m_farDig = null;
-                m_lastHealth = null; // 캐기 첫 프레임에 잰다(HealthMark는 인스턴스가 필요)
-                Vector3 me = m_npc.transform.position;
-                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 캐기 시작(뿌리 ({m_targetPos.x:0.0},{m_targetPos.y:0.0},{m_targetPos.z:0.0})까지 {Utils.DistanceXZ(m_targetPos, me):0.0}m, 높이차 {me.y - m_targetPos.y:0.0})");
-                Go(Step.Work);
+                StartWork(false);
                 return true;
             }
             if (Stuck(dt, m_targetPos) || m_stepTime > 40f)
             {
                 LogStuck("다가가기", m_targetPos);
+                // 멀리(모든 플레이어 64m 밖) 목표 몇 m 앞에서 막혔다: 그 자리에서 직접 피해로 캔다(E012, 사용자 결정 2026-10-23 "오류 정리 꼼수").
+                if (!TestNoFarStuck && m_targetInfo != null && !m_targetInfo.Pickable && m_targetInfo.Tool != ToolKind.None
+                    && Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= FarStuckRange && FarFromPlayers(m_npc.transform.position)
+                    && ZNetScene.instance.FindInstance(zdo) != null)
+                {
+                    FarStuckHits++;
+                    StartWork(true);
+                    return true;
+                }
                 if (WalkFailed(m_targetPos, true, out bool keep, out _)) return keep;
                 Skip();
                 RescueIfStuckAgain();
             }
             return true;
+        }
+
+        /// <summary>멀리서 목표 이만큼(m) 앞에서 막히면 그 자리에서 직접 친다(E012). 목표 쪽 순간이동 자리(StuckHop.Radii 최대 8m)까지 덮는다.</summary>
+        const float FarStuckRange = 8f;
+        /// <summary>시험용: 멀리서 목표 앞 막혀 그 자리에서 직접 치기 시작한 횟수.</summary>
+        public static int FarStuckHits;
+        /// <summary>시험용: 목표 쪽 순간이동 칸(vh_hoptest)이 그 자리 치기에 가로채이지 않게 끈다. 평소 false.</summary>
+        public static bool TestNoFarStuck;
+        /// <summary>이번 대상은 닿지 않는 자리에서 직접 피해로 캔다(멀리서 목표 앞 막힘, E012).</summary>
+        bool m_farStuck;
+
+        void StartWork(bool farStuck)
+        {
+            m_farStuck = farStuck;
+            m_swings = m_swingsNoProgress = 0;
+            m_workIdle = m_closerTime = 0f;
+            m_dropCheck = 5f;
+            m_lastDigs = m_ai.Digs;
+            m_lastBlocked = m_ai.BlockedDigs;
+            m_saidDig = false;
+            m_farDig = null;
+            m_lastHealth = null; // 캐기 첫 프레임에 잰다(HealthMark는 인스턴스가 필요)
+            Vector3 me = m_npc.transform.position;
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 캐기 시작(뿌리 ({m_targetPos.x:0.0},{m_targetPos.y:0.0},{m_targetPos.z:0.0})까지 {Utils.DistanceXZ(m_targetPos, me):0.0}m, 높이차 {me.y - m_targetPos.y:0.0})" +
+                               (farStuck ? " — 멀리서 목표 앞 막힘, 그 자리에서 직접 침" : ""));
+            Go(Step.Work);
         }
 
         static readonly Collider[] s_touchBuf = new Collider[32];
@@ -968,7 +995,7 @@ namespace ValheimHelper
             // 큰 광맥은 다 캐기 전에 조각마다 떨어진 것이 둘레에 쌓인다(발밑 2m만 저절로 줍는다): 5초마다 보고 주우러 간다
             // (0.3.8 구리 시험: 다 캘 때까지 안 주워 곡괭이가 먼저 부러짐). 주운 뒤 같은 광맥을 다시 고른다.
             m_dropCheck -= Time.deltaTime;
-            if (!attacking && m_dropCheck <= 0f && m_targetInfo.Tool == ToolKind.Pickaxe)
+            if (!attacking && !m_farStuck && m_dropCheck <= 0f && m_targetInfo.Tool == ToolKind.Pickaxe) // 멀리서 막힌 자리면 줍기는 다 캔 뒤 Collect가
             {
                 m_dropCheck = 5f;
                 ItemDrop near = NearestDrop(m_targetPos);
@@ -996,8 +1023,9 @@ namespace ValheimHelper
                 // 대상 체력이 줄었으면(HealthMark) 진척. 땅을 팠으면 그것도 진척.
                 string mark = HealthMark(zdo, view);
                 bool progress = mark != m_lastHealth || m_ai.Digs != m_lastDigs;
-                if (!progress && m_farAim)
+                if (!progress && (m_farAim || m_farStuck))
                 {
+                    // 멀리서 목표 앞 막혀 닿지 않는 자리에서 캔다(E012)도 같이: 휘두를 때마다 직접 피해.
                     // 멀리(모든 플레이어 64m 밖)서 땅속 조각: 땅은 안 파고 휘두를 때마다 그 조각에 직접 피해(E021 라, 곡괭이 단계·내구도 그대로).
                     DirectHit(view);
                     progress = true;
@@ -1033,7 +1061,7 @@ namespace ValheimHelper
                 if (m_swingsNoProgress >= 8) { Plugin.Log.LogInfo($"{m_npc.NpcName}: 휘두름 8번 헛침 → 건너뜀 / {m_npc.MoveDebug}"); Skip(); return true; }
             }
             m_wasAttacking = attacking;
-            if (!attacking && (m_farAim || m_ai.IsLookingAt(aim, 25f))) m_npc.StartAttack(null, false);
+            if (!attacking && (m_farAim || m_farStuck || m_ai.IsLookingAt(aim, 25f))) m_npc.StartAttack(null, false);
             return true;
         }
 

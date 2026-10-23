@@ -27,7 +27,7 @@ namespace ValheimHelper
             try { yield return Body(w, checks, saved, c => held = c); }
             finally
             {
-                GatherJob.TestIgnorePlayers = false;
+                GatherJob.TestIgnorePlayers = GatherJob.TestNoFarStuck = false;
                 if (held != null) Speeds(held, saved, false);
                 TestKit.Restore(w);
             }
@@ -66,6 +66,7 @@ namespace ValheimHelper
 
             // 거점에서 40m 떨어진 곳으로 옮기고 발을 묶는다. 근처 판정은 끈다(먼 곳 흉내).
             GatherJob.TestIgnorePlayers = true;
+            GatherJob.TestNoFarStuck = true; // 이 칸은 순간이동을 본다(목표 몇 m 앞 막힘 → 그 자리 치기는 아래 묶인 채 칸에서)
             Quaternion rot = w.Player.transform.rotation;
             Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
             w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
@@ -96,6 +97,7 @@ namespace ValheimHelper
             checks.Add($"체력 그대로 (직전 {hpBefore:0.0} → 직후 {hpAfter:0.0})", Mathf.Abs(hpAfter - hpBefore) < 1f);
             yield return new WaitForSeconds(1f);
             Vector3 p = w.Ragnar.transform.position;
+            GatherJob.TestNoFarStuck = false;
             checks.Add($"자리를 옮김 ({Utils.DistanceXZ(before, p):0.0}m)", Utils.DistanceXZ(before, p) > 1f);
             bool ground = ZoneSystem.instance.GetSolidHeight(p, out float h);
             checks.Add($"단단한 땅 위 (높이 {p.y:0.0}/땅 {h:0.0}, 물 {Floating.GetLiquidLevel(p):0.0})", ground && Mathf.Abs(p.y - h) < 1.5f && Floating.GetLiquidLevel(p) < h + 0.1f);
@@ -119,6 +121,30 @@ namespace ValheimHelper
             }
             TestRunner.Log($"  90초 묶인 채: 순간이동 {GatherJob.Hops - hops1}번 더, 뺀 곳 {(ai.Job is GatherJob gj ? gj.StuckExcluded : -1)}, 기록 {book}");
             checks.Add($"같은 목적지 되풀이 없음 (한 곳 최대 {worst}번)", worst <= 2);
+            // E012: 멀리(플레이어 판정 끔) 서 있는 나무 5m 앞에서 묶여 막히면 그 자리에서 직접 피해로 벤다 → 나무가 쓰러진다.
+            TreeBase tree = null;
+            float bestD = float.MaxValue;
+            Vector3 me = w.Ragnar.transform.position;
+            foreach (var t in Object.FindObjectsByType<TreeBase>(FindObjectsSortMode.None))
+            {
+                float d = Utils.DistanceXZ(t.transform.position, me);
+                if (d > 10f && d < 40f && d < bestD) { bestD = d; tree = t; }
+            }
+            if (tree == null || !(ai.Job is GatherJob gt)) checks.Add("가) 멀리 목표 앞 막힘 칸: 10~40m 안 나무가 있음", false);
+            else
+            {
+                ZDO treeZdo = tree.GetComponent<ZNetView>().GetZDO();
+                ZDOID treeId = treeZdo.m_uid;
+                Vector3 off = me - tree.transform.position;
+                off.y = 0f;
+                Vector3 stand = GatherTest.Ground(tree.transform.position + off.normalized * 5f);
+                w.Ragnar.TeleportTo(stand + Vector3.up * 0.3f, Quaternion.LookRotation(-off), false);
+                yield return new WaitForSeconds(1f);
+                int far1 = GatherJob.FarStuckHits;
+                gt.TestApproach(treeZdo);
+                yield return TestKit.WaitFor(() => GatherJob.FarStuckHits > far1 && ZDOMan.instance.GetZDO(treeId) == null, 90f);
+                checks.Add($"묶인 채 나무 5m 앞 막힘 → 그 자리에서 벰 (직접 치기 {GatherJob.FarStuckHits - far1}번, 나무 쓰러짐 {ZDOMan.instance.GetZDO(treeId) == null})", TestKit.Ok);
+            }
 
             Speeds(w.Ragnar, saved, false);
             hold(null);
