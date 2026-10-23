@@ -42,7 +42,7 @@ NPC 주인 되찾기         Workers.Reclaim(1초마다 NPC ZDO 주인을 호스
 Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) ClaudePrompt.cs(지시문) ClaudeReply.cs(RateLimiter, Parse, MiniJson) + Plugin/ClaudeCli.cs(별도 스레드 프로세스, 30초 끊기) ClaudeChat.cs(채팅→Claude, 생각 중, 실패 시 대체)
 물·구덩이 판단         Core/Work/Water.cs(WaterRule) Climb.cs(IsPit, CarveDir, EdgeSpots 구덩이 가장자리 후보) · WorkerAI.EdgeRescueIfLong(30초 못 나오면 가장자리 위로, E018)
 막힘 복구              Core/Work/StuckBook.cs(목적지별 실패·뺌·대안 없음·귀환 상한, 작업 저장 WorkItem.Stuck)·StuckHop.cs(2) 목표 쪽 순간이동 자리 후보·플레이어 64m) → GatherJob 다가가기 막힘이 멀리·목표 8m 안이면 StartWork(farStuck) 그 자리 직접 치기(E012), WalkFailed·HopToward·HopBlocked·Return, Guard.SafeAt(내릴 자리 위험), WorkerAI Mode.Home·TeleportHome·RestHere(사용자 결정 2026-10-23)
-먼 길(멀리선 이동 생략)   Core/Work/RoughPath.cs(8m 칸 A*: 깊은 물·45° 넘는 칸 사이 못 감·안 밝혀진 칸 1.5배, Route = 안 밝혀진 목적지·못 찾음은 직선, Length·PointAt) · Tests/RoughPathTests · Core/Work/FarSkip.cs(기다림 = 길 ÷ m_runSpeed, 2초마다 MapPos, HopAim 60m씩·목적지 20m 앞까지, LandLimit 30초) · Tests/FarSkipTests · 게임 연결 GatherJob.WalkVia → FarWalk(플레이어 64m 밖·60m 넘음·HopBlocked 아님, 길은 아직 직선) + LandNear(HopToward와 같은 안전 확인) · 시험 Plugin/SkipTest.cs(vh_skiptest, GatherJob.TestReturn)
+먼 길(멀리선 이동 생략)   Core/Work/RoughPath.cs(8m 칸 A*, 여유 160m: 깊은 물·칸 사이 1/4·1/2·3/4 점 깊은 물·45° 넘는 칸 사이 못 감(출발·도착 칸은 봐줌)·안 밝혀진 칸 1.5배, Route = 안 밝혀진 목적지·못 찾음은 직선, Length·PointAt) · Tests/RoughPathTests · Core/Work/FarSkip.cs(기다림 = 길 ÷ m_runSpeed, 2초마다 MapPos, HopAim 60m씩·목적지 20m 앞까지, LandLimit 30초) · Tests/FarSkipTests · 게임 연결 GatherJob.WalkVia → FarWalk(플레이어 64m 밖·60m 넘음·HopBlocked 아님) → FarRoute(밝혀진 목적지면 WorldGenerator.GetHeight로 RoughPath, 펼침 6000, 아니면 직선) + LandNear(HopToward와 같은 안전 확인) · 시험 Plugin/SkipTest.cs(vh_skiptest, GatherJob.TestReturn, WaterRoute = 물 건너는 두 점 1500m 안)
 거점 깃발·소환          Plugin/BaseFlag.cs Workers.cs(설정 이름, 소환·추적, AllZdos) · 거점 범위 Core/Work/BaseArea.cs(125m: Chests·Recipes.BaseRange·NightSettle)
 먼 구역 유지           Plugin/FarZones.cs(패치 3곳)
 바닐라 규칙 잇기 패치   Plugin/NpcPatches.cs(갑옷 계산, 땅 파기 막기 NoDig, 진단 LogSpawnDiag·ImpactDiag = 일꾼 곁 통나무 생김·일꾼에 부딪힘 로그) Buildings.cs(건축물 피해 없음)
@@ -134,6 +134,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 소유권: 서버만 2초마다 정리(ZDOMan.Update → IsServer일 때 ReleaseZDOS → 호스트·접속자마다 ReleaseNearbyZDOS). 주인이 있는 물체는
   주인의 활동 영역 밖일 때만 남이 가져감(IsInPeerActiveArea, 주인 peer가 없으면 밖). FarZones 패치로 NPC 주변도 호스트 영역.
 - 지도: Minimap.m_explored·m_exploredOthers(BitArray, 비공개), IsExplored(Vector3)는 한 점만 봄(Scout.Explored = 구역 중심).
+- 지형 높이(회차 130): WorldGenerator.instance.GetHeight(float wx, float wz) = 게임 생성 높이(절대 Y, 물 높이 ZoneSystem.m_waterLevel과 비교), 안 불러온 곳도 됨, 실제 땅과 0.8m쯤 다름. 8m 칸 2천 개쯤 펼쳐 20~30ms.
 - 생성된 구역: ZoneSystem.IsZoneGenerated(Vector2s)는 비공개(m_generatedZones). ZDOMan.FindSectorObjects(Vector2s, SimulationDistance, List<ZDO>, List<ZDO> distant=null),
   SimulationDistance(0,0)이면 그 구역만. ZoneSystem.c_ZoneSize = 64.
 - ZRoutedRpc.InvokeRoutedRPC(메서드, 인자)는 서버 peer로 보내는데, 호스트면 GetServerPeerID() = 자기 id → 그 자리에서 HandleRoutedRPC(같은 프레임).

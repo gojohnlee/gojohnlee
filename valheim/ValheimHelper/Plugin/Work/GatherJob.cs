@@ -1836,12 +1836,37 @@ namespace ValheimHelper
         /// <summary>시험용: 마지막 생략의 길이(m)·기다린 시간(초)·지도 위치를 밝힌 횟수.</summary>
         public static float FarLastLength, FarLastSeconds;
         public static int FarReveals;
+        /// <summary>시험용: 마지막 FarRoute가 고른 길 종류(직선·거친 길·못 찾아 직선)와 찾는 데 쓴 시간(ms).</summary>
+        public static string FarLastKind = "";
+        public static float FarLastMs;
+
+        /// <summary>게임에서 한 번 찾을 때 펼치는 칸 한도(한 프레임 멈춤을 줄임, 넘으면 직선).</summary>
+        const int FarRouteExpand = 6000;
+
+        /// <summary>
+        /// 생략 중 지도상 위치가 따라갈 길(가-3): 목적지가 지도에 밝혀졌으면 게임 생성 지형(WorldGenerator.GetHeight — 불러오지 않은 곳도,
+        /// 실제 땅과 0.8m쯤 다름)으로 RoughPath(깊은 물·가파름 피함, 밝혀진 칸 우선), 안 밝혀졌거나 못 찾으면 직선.
+        /// 포탈은 WalkVia가 앞(입구까지 걷기)·뒤(출구부터 이 길)로 따로 나눈다.
+        /// </summary>
+        public static List<RoughPath.P> FarRoute(Vector3 from, Vector3 dest)
+        {
+            var a = new RoughPath.P(from.x, from.z);
+            var b = new RoughPath.P(dest.x, dest.z);
+            WorldGenerator wg = WorldGenerator.instance;
+            if (wg == null || !Scout.ExploredAt(dest)) { FarLastKind = "직선(안 밝혀짐)"; FarLastMs = 0f; return new List<RoughPath.P> { a, b }; }
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            List<RoughPath.P> path = RoughPath.Find(a, b, (x, z) => wg.GetHeight((float)x, (float)z), ZoneSystem.instance.m_waterLevel,
+                (x, z) => Scout.ExploredAt(new Vector3((float)x, 0f, (float)z)), FarRouteExpand);
+            FarLastMs = (float)sw.Elapsed.TotalMilliseconds;
+            FarLastKind = path != null ? $"거친 길 {path.Count}점" : "직선(길 못 찾음)";
+            return path ?? new List<RoughPath.P> { a, b };
+        }
 
         /// <summary>
         /// 멀리선 이동 생략(사용자 결정 2026-10-23, Core FarSkip): 일꾼·목적지 모두 플레이어 64m 밖이고 FarSkip.MinDistance m 넘으면
         /// 걷지 않고 길 길이 ÷ m_runSpeed초 서서 기다리며 2초마다 지도상 위치를 밝히고(Scout.Reveal), 다 기다리면 불러와진 구역 안에서
         /// HopStep m씩 목적지 쪽으로 옮긴다(LandNear: 단단한 땅·물 아님·위험 판단 통과). 목적지 ArriveNear m 안이면 마저 걷는다.
-        /// 길은 아직 직선(밝혀진 목적지의 RoughPath는 가-3). 플레이어가 몸·지도 위치 64m 안에 오면 그만두고 그 자리부터 걷는다(가-4에서 지도 위치로 내림).
+        /// 길은 FarRoute(밝혀진 목적지는 물 피한 거친 길). 플레이어가 몸·지도 위치 64m 안에 오면 그만두고 그 자리부터 걷는다(가-4에서 지도 위치로 내림).
         /// true = 이번 프레임은 생략이 맡음(걷지 않음).
         /// </summary>
         bool FarWalk(float dt, Vector3 dest)
@@ -1856,7 +1881,7 @@ namespace ValheimHelper
                 if (!FarSkip.Worth(d) || HopBlocked() != null || !FarFromPlayers(dest)) return false;
                 ZNetView nv = m_npc.GetComponent<ZNetView>();
                 if (nv == null || !nv.IsOwner()) return false;
-                m_far = new FarSkip(new List<RoughPath.P> { new RoughPath.P(me.x, me.z), new RoughPath.P(dest.x, dest.z) }, m_npc.m_runSpeed);
+                m_far = new FarSkip(FarRoute(me, dest), m_npc.m_runSpeed);
                 m_farDest = dest;
                 m_ai.StopMoving();
                 FarSkips++;
@@ -1864,7 +1889,7 @@ namespace ValheimHelper
                 FarLastSeconds = (float)m_far.Seconds;
                 FarReveals = 0;
                 m_farCheck = 0f; // 다 기다린 뒤 옮기기 재시도 간격으로 씀
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 {m_far.Length:0}m → {m_far.Seconds:0}초 기다림(달리기 {m_npc.m_runSpeed:0.0})");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 {m_far.Length:0}m({FarLastKind}, 직선 {d:0}m) → {m_far.Seconds:0}초 기다림(달리기 {m_npc.m_runSpeed:0.0})");
             }
             if (Utils.DistanceXZ(m_farDest, dest) > 1f) { m_far = null; return false; } // 목적지가 바뀜: 다음 검사에서 새로
             if (m_far.Waiting)

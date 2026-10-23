@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -7,7 +9,7 @@ namespace ValheimHelper
     /// vh_skiptest (멀리선 이동 생략 가-2, 사용자 결정 2026-10-23 "멀리선 단순하게"): 나무를 든 일꾼이 거점 120m 밖에서 돌아갈 때
     /// 걷지 않고 길이 ÷ 달리기 속도만큼 서서 기다리며(그동안 몸이 안 움직임, 2초마다 지도 위치 밝힘) 다 기다리면 목적지 쪽으로 옮겨져
     /// 마저 걸어 상자에 넣는지. 짐·체력 그대로, 나무 합 보존. 먼 곳(플레이어 64m 밖) 흉내는 GatherJob.TestIgnorePlayers
-    /// (120m = 플레이어 둘레 불러와진 구역 안이라 땅이 있다). 가는 길 밝혀짐·물 피한 길·플레이어 다가옴·아이콘은 가-3~5 칸.
+    /// (120m = 플레이어 둘레 불러와진 구역 안이라 땅이 있다). 물 피한 길은 WaterRoute 칸(가-3), 플레이어 다가옴·아이콘은 가-4~5 칸.
     /// </summary>
     static class SkipTest
     {
@@ -58,12 +60,69 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>
+        /// 가-3 칸: 거점 둘레에서 곧은 선이 깊은 물을 건너는 마른 땅 두 점을 찾아(게임 생성 지형) 도착점을 밝히고 GatherJob.FarRoute가
+        /// 물을 돌아가는 거친 길을 주는지(두 점은 물가에서 16m 이상). 길 위 2m마다 깊은 물이 없고 직선보다 김. 그런 자리가 없으면 환경 불량.
+        /// </summary>
+        static void WaterRoute(TestKit.World w, GatherTest.Checks checks)
+        {
+            WorldGenerator wg = WorldGenerator.instance;
+            float wl = ZoneSystem.instance.m_waterLevel;
+            bool Deep(Vector3 p) => wl - wg.GetHeight(p.x, p.z) > (float)WaterRule.DeepDepth;
+            bool Dry(Vector3 p) => wg.GetHeight(p.x, p.z) > wl + 1f;
+            int tries = 0;
+            for (int deg = 0; deg < 360 && tries < 60; deg += 15)
+            {
+                Vector3 dir = Quaternion.Euler(0f, deg, 0f) * Vector3.forward;
+                Vector3 a = Vector3.zero;
+                bool haveA = false, crossed = false;
+                float dryRun = 0f; // 물 앞 마른 땅이 이어진 길이(m)
+                for (float r = 16f; r <= 1500f && tries < 60; r += 4f)
+                {
+                    Vector3 p = w.Home + dir * r;
+                    if (!crossed)
+                    {
+                        // 출발점은 물가에서 16m 뗀 마른 땅(물가 칸은 RoughPath가 봐주니 그 구간에 물이 없게)
+                        if (Dry(p)) { dryRun += 4f; if (dryRun >= 20f) { a = p - dir * 16f; haveA = true; } }
+                        else { if (Deep(p) && haveA) crossed = true; dryRun = 0f; }
+                        continue;
+                    }
+                    if (!Dry(p) || !Dry(p + dir * 8f) || !Dry(p + dir * 16f)) continue;
+                    Vector3 b = p + dir * 16f;
+                    Scout.Reveal(b);
+                    if (!Scout.ExploredAt(b)) continue;
+                    List<RoughPath.P> path = GatherJob.FarRoute(a, b);
+                    if (path.Count <= 2) // 못 돌아감(큰 강·바다 등): 이 방향 더 멀리
+                    {
+                        if (tries++ < 8) TestRunner.Log($"  {deg}° {r:0}m: 직선 {Utils.DistanceXZ(a, b):0}m 건넘 → {GatherJob.FarLastKind}({GatherJob.FarLastMs:0.0}ms)");
+                        crossed = haveA = false;
+                        dryRun = 0f;
+                        continue;
+                    }
+                    float straight = Utils.DistanceXZ(a, b), len = (float)RoughPath.Length(path);
+                    int wet = 0;
+                    for (float t = 2f; t < len - 2f; t += 2f)
+                    {
+                        RoughPath.P q = RoughPath.PointAt(path, t);
+                        if (Deep(new Vector3((float)q.X, 0f, (float)q.Z))) wet++;
+                    }
+                    TestRunner.Log($"물 건너는 두 점 {deg}°: 직선 {straight:0}m, 길 {len:0}m, {GatherJob.FarLastKind}, 찾기 {GatherJob.FarLastMs:0.0}ms");
+                    checks.Add($"밝혀진 목적지 → 물 피한 거친 길 ({GatherJob.FarLastKind}, 깊은 물 지점 {wet}개)", GatherJob.FarLastKind.StartsWith("거친 길") && wet == 0);
+                    checks.Add($"돌아가는 길이 직선보다 김 ({len:0}/{straight:0}m)", len > straight + 1f);
+                    checks.Add($"길 찾기 100ms 안 ({GatherJob.FarLastMs:0.0}ms)", GatherJob.FarLastMs < 100f);
+                    return;
+                }
+            }
+            throw new TestKit.EnvBadException($"거점 1500m 안에 돌아갈 수 있는 깊은 물 건너기 자리 없음(시도 {tries})");
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
         {
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
             if (w.Ragnar == null || w.Chest == null) yield break;
             var ai = w.Ragnar.Ai;
+            WaterRoute(w, checks);
 
             TestKit.ClearBaseStock(w, "Wood");
             int skips0 = GatherJob.FarSkips;

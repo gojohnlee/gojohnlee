@@ -31,6 +31,31 @@ public class RoughPathTests
     }
 
     [Fact]
+    public void NarrowChannelBetweenCellCentersIsNotCrossed()
+    {
+        // x 101~103 좁은 깊은 물길(z < 60): 칸 중심(x 100·108)은 마른 땅이라 중심만 보면 건너 버림 → 칸 사이 점도 봐야 둘러 감
+        double H(double x, double z) => x > 101 && x < 103 && z < 60 ? 20 : 40;
+        var path = RoughPath.Find(new P(4, 4), new P(196, 4), H, Water, All);
+        Assert.NotNull(path);
+        double len = RoughPath.Length(path);
+        for (double t = 0; t <= len; t += 1)
+        {
+            var q = RoughPath.PointAt(path, t);
+            Assert.False(H(q.X, q.Z) < Water - WaterRule.DeepDepth, $"깊은 물 지남 {q}");
+        }
+    }
+
+    [Fact]
+    public void LeavesShoreWhoseCellCenterIsDeep()
+    {
+        // 출발점(6.5,4)은 마른 물가지만 그 칸 중심(4,4)은 깊은 물(x < 5) → 그래도 떠난다
+        double H(double x, double z) => x < 5 ? 20 : 40;
+        var path = RoughPath.Find(new P(6.5, 4), new P(150, 4), H, Water, All);
+        Assert.NotNull(path);
+        Assert.InRange(RoughPath.Length(path), 143, 160);
+    }
+
+    [Fact]
     public void ShallowWaterIsFine()
     {
         double H(double x, double z) => x > 80 && x < 120 ? 29.5 : 40; // 얕은 여울
