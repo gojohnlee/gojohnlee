@@ -73,6 +73,21 @@ namespace ValheimHelper
             t.Field("m_craftRecipe").SetValue(null);
         }
 
+        /// <summary>제작 목록 첫 재료 칸에 바닐라 SetupRequirement를 0.8초(깜빡임 한 주기 넘게) 불러 숫자가 한 번이라도 빨간지.</summary>
+        static IEnumerator Flash(Piece.Requirement r, Player p, int mult, bool[] red)
+        {
+            red[0] = false;
+            Transform root = InventoryGui.instance.m_recipeRequirementList[0].transform;
+            var text = root.Find("res_amount").GetComponent<TMPro.TMP_Text>();
+            for (int i = 0; i < 16; i++)
+            {
+                InventoryGui.SetupRequirement(root, r, p, craft: true, 1, mult);
+                if (text.color == Color.red) red[0] = true;
+                yield return new WaitForSeconds(0.05f);
+            }
+            InventoryGui.HideRequirement(root);
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<Container> made)
         {
             yield return TestKit.Setup(w);
@@ -108,13 +123,19 @@ namespace ValheimHelper
             int totalA = na - 1 + 3, totalB = nb - 1 + 5;
             yield return new WaitForSeconds(0.6f);
             checks.Add($"가방만으론 모자라도 상자 합으로 있음 ({a} {na}·{b} {nb})", p.HaveRequirements(recipe, false, 1));
+            checks.Add($"여러 개({InventoryGui.instance.m_multiCraftAmount}) 만들기는 합으로도 모자람", !p.HaveRequirements(recipe, false, 1, InventoryGui.instance.m_multiCraftAmount));
+            // 개수 표시: 가방 + 상자로 채워지면 안 깜빡임, 여러 개 몫은 모자라 빨갛게 깜빡임
+            var red = new bool[1];
+            yield return Flash(ra, p, 1, red);
+            checks.Add($"개수 표시: 상자 합으로 채워지면 안 깜빡임 ({a})", !red[0]);
+            yield return Flash(ra, p, InventoryGui.instance.m_multiCraftAmount, red);
+            checks.Add($"개수 표시: 모자라면 빨갛게 깜빡임 ({a} ×{InventoryGui.instance.m_multiCraftAmount})", red[0]);
 
             // 누가 연 상자는 안 셈
-            ZDO nz = near.GetComponent<ZNetView>().GetZDO();
-            nz.Set(ZDOVars.s_inUse, 1);
+            near.SetInUse(true); // ZDO만 바꾸면 Container.CheckForChanges(1초)가 0으로 되돌림
             yield return new WaitForSeconds(0.6f);
             checks.Add("열린 상자는 안 셈 → 모자람", !p.HaveRequirements(recipe, false, 1));
-            nz.Set(ZDOVars.s_inUse, 0);
+            near.SetInUse(false);
             yield return new WaitForSeconds(0.6f);
 
             int items0 = bag.CountItems(item);
@@ -234,11 +255,10 @@ namespace ValheimHelper
             // 누가 연 상자에만 있으면 안 셈
             TestKit.PutInChest(near, pa, na);
             TestKit.PutInChest(near, pb, nb);
-            ZDO nz = near.GetComponent<ZNetView>().GetZDO();
-            nz.Set(ZDOVars.s_inUse, 1);
+            near.SetInUse(true); // ZDO만 바꾸면 Container.CheckForChanges(1초)가 0으로 되돌림
             yield return new WaitForSeconds(0.6f);
             checks.Add("열린 상자에만 있으면 안 놓임", !p.HaveRequirements(piece, Player.RequirementMode.CanBuild));
-            nz.Set(ZDOVars.s_inUse, 0);
+            near.SetInUse(false);
             yield return new WaitForSeconds(0.6f);
             checks.Add("닫으면 다시 놓을 수 있음", p.HaveRequirements(piece, Player.RequirementMode.CanBuild));
 

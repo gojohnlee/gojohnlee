@@ -1,4 +1,5 @@
 using HarmonyLib;
+using UnityEngine;
 using ValheimHelper.Core.Storage;
 
 namespace ValheimHelper
@@ -6,7 +7,7 @@ namespace ValheimHelper
     /// <summary>
     /// 제작대에서 거점 상자 재료를 바로 씀(상자 기능 ① 첫 조각: 제작·업그레이드). 바닐라 Player.HaveRequirementItems(있나)·ConsumeResources(빼기),
     /// InventoryGui.DoCrafting(막대 끝 실제 제작) 기준(디컴파일 확인 2026-10-23). "하나만 있으면 되는" 제작법(m_requireOnlyOneIngredient,
-    /// GetFirstRequiredItem로 가방에서 직접 뺌)은 손대지 않는다. 건축(HaveRequirements(Piece), 둘째 조각)도 여기. 개수 표시(SetupRequirement)·예약은 다음 조각.
+    /// GetFirstRequiredItem로 가방에서 직접 뺌)은 손대지 않는다. 건축(HaveRequirements(Piece), 둘째 조각)·개수 표시(SetupRequirement, 셋째)도 여기. 예약은 다음 조각.
     /// </summary>
     static class CraftPatches
     {
@@ -107,6 +108,25 @@ namespace ValheimHelper
         {
             static void Prefix() => BaseStock.Fresh++;
             static void Finalizer() => BaseStock.Fresh--;
+        }
+
+        /// <summary>
+        /// 개수 표시(조각 3번째): 바닐라 SetupRequirement(제작 목록·망치 Hud 둘 다)는 가방 수 &lt; 필요 수면 숫자를 빨갛게 깜빡임 →
+        /// 가방 + 상자(0.5초 캐시)로 채워지면 흰색. 여러 개 만들기는 고정 m_multiCraftAmount를 craftMultiplier로 받아 같은 셈(HaveItems도 amount로 셈).
+        /// </summary>
+        [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.SetupRequirement))]
+        static class Show
+        {
+            static void Postfix(Transform elementRoot, Piece.Requirement req, Player player, int quality, int craftMultiplier, bool __result)
+            {
+                if (!__result || req?.m_resItem == null || player == null || !BaseStock.Active(player)) return;
+                int need = req.GetAmount(quality) * craftMultiplier;
+                string name = req.m_resItem.m_itemData.m_shared.m_name;
+                int have = player.GetInventory().CountItems(name);
+                if (have >= need || !StockTake.Enough(need, have, BaseStock.Count(player, name))) return;
+                var amount = elementRoot.Find("res_amount")?.GetComponent<TMPro.TMP_Text>();
+                if (amount != null) amount.color = UnityEngine.Color.white;
+            }
         }
 
         /// <summary>막대 끝 실제 제작 동안은 상자 수를 캐시 없이 셈(확인과 빼기가 같은 프레임).</summary>
