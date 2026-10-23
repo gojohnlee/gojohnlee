@@ -20,14 +20,34 @@ function Log($m) {
 }
 
 if ($Wait) {
+    # Keep the PC awake across the handoff (2026-10-23). A PC woken by a timer with nobody at it goes back to sleep the
+    # moment no program holds it awake: the old loop holds it until it exits, the new loop only after it has started,
+    # so at the 09:18 restart the PC slept 2 s after the old loop ended and stayed asleep until someone woke it at 11:44.
+    # Hold it from before the old loop exits (it waits for restart-awake) until the new loop has had time to hold it.
+    $AwakeFile = Join-Path $Dir 'restart-awake'
+    try {
+        Add-Type -Namespace VHR -Name Power -MemberDefinition '[DllImport("kernel32.dll")] public static extern uint SetThreadExecutionState(uint f);'
+        [void][VHR.Power]::SetThreadExecutionState([uint32]2147483649)   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+    } catch { Log "could not hold the PC awake: $_" }
+    New-Item -ItemType File $AwakeFile -Force | Out-Null
     $m = New-Object Threading.Mutex($false, 'Global\VhLoop')
     try { [void]$m.WaitOne() } catch [Threading.AbandonedMutexException] { }   # the loop holds it for its whole life
-    $m.ReleaseMutex(); $m.Dispose()
-    Remove-Item $Stop, $Mark -Force -ErrorAction SilentlyContinue
+    $m.ReleaseMutex()
+    Remove-Item $Stop, $Mark, $AwakeFile -Force -ErrorAction SilentlyContinue
     $t = Get-Date   # the old task instance may still be closing (conhost); "VH loop" ignores a start while it runs
     while ((Get-ScheduledTask -TaskName 'VH loop' -ErrorAction SilentlyContinue).State -eq 'Running' -and ((Get-Date) - $t).TotalSeconds -lt 120) { Start-Sleep 5 }
     Start-ScheduledTask -TaskName 'VH loop'
     Log 'old loop ended -> started task "VH loop"'
+    # until the new loop owns the mutex (at most 2 min), then 60 s more: it holds the PC awake itself right after start-up
+    $t = Get-Date
+    while (((Get-Date) - $t).TotalSeconds -lt 120) {
+        $free = $false
+        try { $free = $m.WaitOne(0) } catch [Threading.AbandonedMutexException] { $free = $true }
+        if (-not $free) { break }
+        $m.ReleaseMutex(); Start-Sleep 2
+    }
+    Start-Sleep 60
+    $m.Dispose()
     exit
 }
 

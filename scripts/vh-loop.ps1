@@ -553,7 +553,14 @@ while ($true) {
         $SelfHash = (Get-FileHash $PSCommandPath).Hash   # 못 했으면 같은 것으로 다시 시도하지 않음
     }
     if (Test-StopFile) {
-        Log '멈춤 파일 → 끝'; Write-Status $(if (Test-Path $mark) { '다시 켜는 중: 새 루프 스크립트로(1~2분)' } else { '멈춤: 멈춤 파일이 있음' }) '-'; break
+        Log '멈춤 파일 → 끝'; Write-Status $(if (Test-Path $mark) { '다시 켜는 중: 새 루프 스크립트로(1~2분)' } else { '멈춤: 멈춤 파일이 있음' }) '-'
+        if (Test-Path $mark) {
+            # 다시 켜기: 기다리는 작업(vh-loop-restart.ps1 -Wait)이 PC를 깨워 둔 뒤에 끝낸다. 사람 없이 예약으로 깨운 PC는
+            # 깨워 두는 프로그램이 없는 순간 바로 잠든다(10-23 09:18: 옛 루프 끝 → 2초 뒤 잠듦, 11:44 사람이 깨울 때까지).
+            $w = Get-Date
+            while (-not (Test-Path (Join-Path $Dir 'restart-awake')) -and ((Get-Date) - $w).TotalSeconds -lt 30) { Start-Sleep 1 }
+        }
+        break
     }
     $pause = Get-PauseUntil
     if ($pause) {
