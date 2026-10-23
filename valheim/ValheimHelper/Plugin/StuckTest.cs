@@ -60,7 +60,17 @@ namespace ValheimHelper
 
             // 거점에서 40m 떨어진 곳(근처 나무가 시야 안)으로 옮기고 발을 묶는다
             Quaternion rot = w.Player.transform.rotation;
+            // 나무 바로 옆이면 묶인 채 베어 버려 막히지 않는다(회차 122: pit→stuck 묶음에서 플레이어 방향이 달라 6m 안에서 일함, 단독은 PASS)
+            // → 가장 가까운 나무가 8~40m인 방향을 고른다(없으면 앞쪽)
             Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
+            for (float ang = 0f; ang < 360f; ang += 45f)
+            {
+                Vector3 p = GatherTest.Ground(w.Home + Quaternion.Euler(0f, ang, 0f) * rot * new Vector3(0f, 0f, 40f));
+                float near = float.MaxValue;
+                foreach (var t in Object.FindObjectsByType<TreeBase>(FindObjectsSortMode.None))
+                    near = Mathf.Min(near, Utils.DistanceXZ(t.transform.position, p));
+                if (near >= 8f && near <= 40f) { spot = p; TestRunner.Log($"묶을 자리 {ang:0}°: 가장 가까운 나무 {near:0.0}m"); break; }
+            }
             w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(1f);
             Speeds(w.Ragnar, saved, true);

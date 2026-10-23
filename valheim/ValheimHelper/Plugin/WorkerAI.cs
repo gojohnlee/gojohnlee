@@ -275,7 +275,8 @@ namespace ValheimHelper
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
             float d = Utils.DistanceXZ(point, pos);
-            if (d <= dist) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; ForgetInteriorPath(); return true; }
+            if (d <= dist) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
+            if (EdgeRescueIfLong(dt, pos)) return false;
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) return false;
             if (RescueIfTrapped(dt, pos)) return false;
@@ -322,6 +323,7 @@ namespace ValheimHelper
                 {
                     // 막혔다: 두 번까지 뛰어 보고, 구덩이에 갇혔으면 경사로를 깎고, 아니면 옆으로 비켜 간다
                     Vector3 fwd = Flat(point - pos).normalized;
+                    if (m_pitSince <= 0f && Climb.IsPit(Rise8(pos, fwd))) MarkPit(pos);
                     if (m_stuckJumps < 2 && m_detourCount == 0 && TryJump()) m_stuckJumps++; // 이미 비켜 가 봤으면 점프는 건너뜀
                     else if (!StartCarve(pos, fwd))
                     {
@@ -436,6 +438,7 @@ namespace ValheimHelper
             m_carveWalk = 0f;
             m_carveCount = 0;
             m_carveStart = m_carveSeen = Time.time;
+            MarkPit(pos);
             Brain.Places.AddFeature(Senses.ZoneOf(pos), PlaceFeature.Pit, ZNet.instance.GetTimeSeconds()); // 장소 기억: 구덩이
             Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 구덩이에 갇힘(둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))}) → 경사로 깎기");
             return true;
@@ -519,10 +522,105 @@ namespace ValheimHelper
             npc.TeleportTo(npc.Home, transform.rotation, false);
             m_trapAnchor = npc.Home;
             m_trapStill = 0f;
+            m_pitSince = 0f; // 구덩이 시간도 새로(회차 122: 도망 구덩이 시간이 이어져 다음 구덩이에서 24초 만에 옮김)
             StuckTeleports++;
             TrapRescues++;
             npc.Say("stuck");
             return true;
+        }
+
+        float m_pitSince, m_pitSeen, m_pitCheck;
+        Vector3 m_pitPos;
+        static int s_edgeMask;
+        /// <summary>시험용: 구덩이에서 30초 못 나와 가장자리 위로 옮긴 횟수.</summary>
+        public static int PitEdgeRescues;
+        /// <summary>시험용: 구덩이 가장자리 옮기기를 끈다(점프·경사로만 보는 칸).</summary>
+        public static bool TestNoEdgeRescue;
+
+        /// <summary>걷다 구덩이에 갇힌 것을 처음 본 때를 적는다(이미 적었으면 그대로).</summary>
+        void MarkPit(Vector3 pos)
+        {
+            if (m_pitSince > 0f) return;
+            m_pitSince = m_pitSeen = Time.time;
+            m_pitPos = pos;
+            m_pitCheck = 0f;
+        }
+
+        /// <summary>
+        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 30초(Climb.PitEscapeSeconds) 안에 못 나오면
+        /// 가장 가까운 가장자리 위(Climb.EdgeSpots — 단단한 지형·물 아님·몸 자리 빔·위험 판단 통과)로 옮긴다. 플레이어 근처라도. 짐·체력·일은 그대로.
+        /// 자리가 없으면 깃발로. 도망 구덩이(6초 → 깃발)는 RescueIfTrapped가 먼저 맡는다. true면 옮겼다.
+        /// </summary>
+        bool EdgeRescueIfLong(float dt, Vector3 pos)
+        {
+            if (m_pitSince <= 0f) return false;
+            if (TestNoEdgeRescue) { m_pitSince = 0f; return false; } // 꺼 둔 동안 시간을 쌓지 않는다(켜자마자 옮기지 않게)
+            if (Time.time - m_pitSeen > 5f || Utils.DistanceXZ(pos, m_pitPos) > (float)Climb.PitLeftRadius) { m_pitSince = 0f; return false; }
+            m_pitSeen = Time.time;
+            if (Time.time - m_pitSince < (float)Climb.PitEscapeSeconds || m_character.IsSwimming()) return false;
+            m_pitCheck -= dt;
+            if (m_pitCheck > 0f) return false;
+            m_pitCheck = 0.5f;
+            Vector3 toward = Flat(m_moveTarget - pos);
+            if (toward.sqrMagnitude < 0.01f) toward = Flat(transform.forward);
+            toward.Normalize();
+            if (!Climb.IsPit(Rise8(pos, toward))) { m_pitSince = 0f; return false; } // 나왔다(경사로 위)
+            var npc = (WorkerNpc)m_character;
+            float stuck = Time.time - m_pitSince;
+            var rise = new double[8][];
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 dir = Quaternion.Euler(0f, 45f * i, 0f) * toward;
+                rise[i] = new double[Climb.EdgeSteps];
+                for (int k = 0; k < Climb.EdgeSteps; k++)
+                    rise[i][k] = ZoneSystem.instance.GetGroundHeight(pos + dir * ((k + 1) * (float)Climb.EdgeStep), out float h) ? h - pos.y : double.NaN;
+            }
+            if (s_edgeMask == 0) s_edgeMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece");
+            string last = "후보 없음";
+            int tried = 0;
+            foreach (var e in Climb.EdgeSpots(rise))
+            {
+                tried++;
+                Vector3 dir = Quaternion.Euler(0f, 45f * e.Dir, 0f) * toward;
+                Vector3 p = pos + dir * ((e.Step + 1) * (float)Climb.EdgeStep + 0.5f); // 가장자리 끝에서 반 m 더 바깥
+                if (!ZoneSystem.instance.GetSolidHeight(p, out float h, out Vector3 normal, out GameObject go) || go == null) { last = "땅 없음"; continue; }
+                if (go.GetComponentInParent<Heightmap>() == null) { last = "지형 아님(" + go.name + ")"; continue; }
+                if (normal.y < StuckHop.MinNormalY) { last = $"가파름({normal.y:0.00})"; continue; }
+                p.y = h;
+                if (h < pos.y + (float)Climb.Wall) { last = "낮음"; continue; }
+                if (Climb.IsPit(Rise8(p, dir))) { last = "아직 구덩이 안"; continue; }
+                if (h < ZoneSystem.instance.m_waterLevel + 0.3f || Floating.GetLiquidLevel(p) > h + 0.1f) { last = "물"; continue; }
+                if (Physics.CheckCapsule(p + Vector3.up * 0.6f, p + Vector3.up * 1.6f, 0.45f, s_edgeMask, QueryTriggerInteraction.Ignore)) { last = "몸 자리 막힘"; continue; }
+                if (m_guard != null && !m_guard.SafeAt(p)) { last = "위험"; continue; }
+                m_carving = false;
+                StopMoving();
+                if (!npc.TeleportTo(p + Vector3.up * 0.2f, transform.rotation, false)) { last = "옮기기 실패"; continue; }
+                Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴 → 가장자리 위로 {Utils.DistanceXZ(pos, p):0.0}m 옮김(위 {h - pos.y:0.0}m, 후보 {tried}번째)");
+                AfterPitRescue(p);
+                PitEdgeRescues++;
+                npc.Say("rescue");
+                return true;
+            }
+            Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴, 가장자리 자리 없음(후보 {tried}개, 마지막: {last}) → 깃발로 순간이동");
+            m_carving = false;
+            StopMoving();
+            npc.TeleportTo(npc.Home, transform.rotation, false);
+            AfterPitRescue(npc.Home);
+            npc.Say("stuck");
+            return true;
+        }
+
+        void AfterPitRescue(Vector3 at)
+        {
+            m_pitSince = 0f;
+            m_trapAnchor = at;
+            m_trapStill = 0f;
+            m_stuckJumps = 0;
+            m_detourTime = 0f;
+            m_detourCount = 0;
+            m_samplePos = at;
+            m_sampleTimer = 0f;
+            StuckTeleports++;
         }
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
 

@@ -138,6 +138,9 @@ namespace ValheimHelper
                         foreach (var it in claude.GetInventory().GetAllItems())
                             if (WorkerNpc.IsTool(it, ToolKind.Pickaxe)) { it.m_durability = WorkerNpc.WornFloor; worn = it; }
                     int j0 = claude.Ai.Jumps, c0 = claude.Ai.CarveSwings, d0 = NpcPatches.NoDig.Dug;
+                    // 얕은 1·경사로만 7은 점프·경사로만 본다. 2~6은 30초 가장자리 옮기기도 탈출로 친다(사용자 결정 2026-10-23, E018 — 회차 122 구덩이 5: 24번 깎고도 못 나옴)
+                    WorkerAI.TestNoEdgeRescue = i == 0 || CarveOnly[i];
+                    int edge0 = WorkerAI.PitEdgeRescues;
                     var walk = new ExploreTest.WalkJob(claude.Ai, home);
                     claude.Ai.StartJob(walk);
                     string outBy = null;
@@ -165,9 +168,9 @@ namespace ValheimHelper
                         }
                     }
                     walk.Stop = true;
-                    WorkerAI.TestNoJump = WorkerAI.TestNoCarve = false;
+                    WorkerAI.TestNoJump = WorkerAI.TestNoCarve = WorkerAI.TestNoEdgeRescue = false;
                     TestRunner.Log($"구덩이 {i + 1}({kind} {depth:0.0}m): {(outBy != null ? outBy + "(으)로 나옴" : "못 나옴")} {total:0.0}초, " +
-                                   $"점프 {claude.Ai.Jumps - j0}번, 경사로 곡괭이질 {claude.Ai.CarveSwings - c0}번, 흙 파기 {NpcPatches.NoDig.Dug - d0}번, 지금 {claude.MoveDebug}");
+                                   $"점프 {claude.Ai.Jumps - j0}번, 경사로 곡괭이질 {claude.Ai.CarveSwings - c0}번, 가장자리 옮김 {WorkerAI.PitEdgeRescues - edge0}번, 흙 파기 {NpcPatches.NoDig.Dug - d0}번, 지금 {claude.MoveDebug}");
                     if (i == 0) checks.Add($"얕은 구덩이({depth:0.0}m)는 점프까지로 나옴", outBy == Phases[0] || outBy == Phases[1]);
                     else if (CarveOnly[i]) checks.Add($"점프 없이 경사로를 깎아 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy == Phases[2] && claude.Ai.CarveSwings > c0);
                     else checks.Add($"{kind} 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy != null);
@@ -181,7 +184,7 @@ namespace ValheimHelper
             }
             finally
             {
-                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = false;
+                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = WorkerAI.TestNoEdgeRescue = false;
                 player.SetGodMode(god);
             }
             // 4) 되돌리기(시험 월드의 다른 시험이 구덩이에 빠지지 않게)
@@ -300,14 +303,58 @@ namespace ValheimHelper
                     t += Time.deltaTime;
                     yield return null;
                 }
-                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = false;
+                WorkerAI.TestNoJump = WorkerAI.TestNoCarve = WorkerAI.TestNoEdgeRescue = false;
                 float toHome = Utils.DistanceXZ(claude.transform.position, claude.Home);
                 checks.Add($"도망 중 구덩이({depth:0.0}m)에 갇힘 → 깃발로 순간이동 ({t:0.0}초, 깃발과 {toHome:0.0}m)", WorkerAI.TrapRescues > r0 && toHome < 6f);
                 checks.Add($"도망은 그만두고 짐 그대로 (경계 {claude.Ai.Guard.StateName}, 짐 {claude.GetInventory().GetAllItems().Count}/{bag0})",
                     !claude.Ai.Guard.Fleeing && claude.GetInventory().GetAllItems().Count == bag0);
                 yield return new WaitForSeconds(1f);
+                yield return EdgeRescue(checks, claude, home, rot, spot, depth);
             }
             foreach (var p in tried) TestTerrain.Reset(p, 9f);
+        }
+
+        /// <summary>
+        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 점프·경사로를 끄고 깃발로 걸어가게 두면 30초 뒤 가장자리 위로 옮겨진다.
+        /// 깃발까지 가지 않고(가장자리 몇 m), 둘레 높이쯤, 짐 그대로. 벽이 완만해 걸어 나오면(E022) 환경 탓으로 칸을 세지 않는다.
+        /// </summary>
+        static IEnumerator EdgeRescue(GatherTest.Checks checks, WorkerNpc claude, Vector3 home, Quaternion rot, Vector3 spot, float depth)
+        {
+            float rim = spot.y;
+            ClearMonsters(spot, 80f);
+            claude.SetHealth(claude.GetMaxHealth());
+            WorkerAI.TestNoJump = WorkerAI.TestNoCarve = true;
+            claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
+            yield return new WaitForSeconds(1.5f);
+            int bag0 = claude.GetInventory().GetAllItems().Count, e0 = WorkerAI.PitEdgeRescues;
+            var walk = new ExploreTest.WalkJob(claude.Ai, home);
+            claude.Ai.StartJob(walk);
+            float t = 0f, logAt = 0f;
+            bool walkedOut = false;
+            while (t < 50f && WorkerAI.PitEdgeRescues == e0)
+            {
+                Vector3 p = claude.transform.position;
+                float dist = Utils.DistanceXZ(spot, p);
+                if (dist > 5f || (dist > 3.5f && p.y > rim - 0.5f)) { walkedOut = true; break; }
+                if (t >= logAt) { logAt += 5f; TestRunner.Log($"  가장자리 시험 {t:0}초: 가운데에서 {dist:0.0}m, 둘레보다 {p.y - rim:0.0}m, {claude.Ai.MoveState}"); }
+                t += Time.deltaTime;
+                yield return null;
+            }
+            walk.Stop = true;
+            WorkerAI.TestNoJump = WorkerAI.TestNoCarve = false;
+            Vector3 at = claude.transform.position;
+            float fromSpot = Utils.DistanceXZ(spot, at), toHome = Utils.DistanceXZ(at, claude.Home);
+            if (walkedOut && WorkerAI.PitEdgeRescues == e0)
+                TestRunner.Log($"환경: 가장자리 시험 구덩이({depth:0.0}m) 벽이 완만해 {t:0.0}초에 걸어 나옴(E022) — 칸 안 셈");
+            else
+            {
+                checks.Add($"구덩이({depth:0.0}m)에서 30초 못 나옴 → 가장자리 위로 옮김 ({t:0.0}초, 가운데에서 {fromSpot:0.0}m, 둘레보다 {at.y - rim:0.0}m, 깃발과 {toHome:0.0}m)",
+                    WorkerAI.PitEdgeRescues > e0 && t >= (float)Core.Work.Climb.PitEscapeSeconds - 2f && fromSpot > 2.5f && fromSpot < 10f && at.y > rim - 1.2f && toHome > 6f);
+                checks.Add($"옮긴 뒤 짐 그대로 ({claude.GetInventory().GetAllItems().Count}/{bag0})", claude.GetInventory().GetAllItems().Count == bag0);
+            }
+            yield return new WaitForSeconds(1f);
+            claude.Ai.GoHome(false);
+            yield return new WaitForSeconds(1f);
         }
 
 
