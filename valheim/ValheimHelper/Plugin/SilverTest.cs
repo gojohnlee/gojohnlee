@@ -28,6 +28,7 @@ namespace ValheimHelper
             try { yield return Body(w, checks, made, keys); }
             finally
             {
+                GatherJob.TestIgnorePlayers = false;
                 foreach (var go in made)
                     if (go != null) ZNetScene.instance.Destroy(go);
                 keys.Restore();
@@ -95,7 +96,8 @@ namespace ValheimHelper
                 checks.Add($"보스가 잡혔으면(월드 키) 묻힌 광맥도 앎 ({TestKit.Waited:0.0}초)", HiddenOres.Known(zb, info));
             }
 
-            // ⑪ 2·요청 R5: 묻힌 은 캐기 — 위시본을 얻은 채 청동 곡괭이로 "!은 50" → 파 내려가 조각을 남김없이 캐고(바닐라 땅 낮춤 한계 8m 안) 구덩이에서 나와 집으로.
+            // ⑪ 2·요청 R5·E021 라: 묻힌 은 캐기 — 위시본을 얻은 채 "!은 300", 플레이어 멀리(TestIgnorePlayers)라 땅은 안 파고 조각을 바로 쳐 남김없이 캐고 집으로.
+            // (근처 파 내려가기는 vh_pittest·vh_coppertest가 봄)
             ZNetScene.instance.Destroy(shown);
             keys.SetKnown(true);
             // 단계가 맞는 가장 낮은 곡괭이(회차 107: 청동은 "도구 단계 낮음" → 게임 데이터로 고름)
@@ -119,9 +121,10 @@ namespace ValheimHelper
             if (des != null && des.m_spawnWhenDestroyed != null) hashes.Add(des.m_spawnWhenDestroyed.name.GetStableHashCode());
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked;
             int carried0 = w.Claude.CountItem(ore), base0 = GatherTest.CountBase(w.Home, ore);
-            GatherTest.Say($"!{Workers.Name1} 은 50", null);
+            GatherJob.TestIgnorePlayers = true;
+            GatherTest.Say($"!{Workers.Name1} 은 300", null);
             yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 10f);
-            checks.Add($"\"은 50\"에 캐러 나섬({TestKit.Waited:0}초)", TestKit.Ok);
+            checks.Add($"\"은 300\"에 캐러 나섬({TestKit.Waited:0}초)", TestKit.Ok);
             float t = 0f, deepest = 0f;
             int left = Fragments(g1, hashes, ref deepest);
             for (; t < 1200f && left > 0 && w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work; t += 5f)
@@ -134,7 +137,7 @@ namespace ValheimHelper
             int dug = NpcPatches.NoDig.Dug - dug0;
             TestRunner.Log($"묻힌 은: {t:0}초, 땅 파기 판 {dug}번·막음 {NpcPatches.NoDig.Blocked - blocked0}번, 구덩이 가장 깊은 곳 {GatherTest.Deepest(g1, 4f):0.0}m, 조각 바닥 가장 깊음 {deepest:0.0}m");
             checks.Add($"묻힌 은 광맥 조각 다 캠(남은 {left}개, {t:0}초)", left == 0);
-            checks.Add($"파 내려감(판 {dug}번)", dug > 0);
+            checks.Add($"멀리라 땅 안 팜(판 {dug}번)", dug == 0);
             if (w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work) GatherTest.Say($"!{Workers.Name1} 멈춰", null);
             yield return TestKit.WaitFor(() => w.Claude == null || Utils.DistanceXZ(w.Claude.Home, w.Claude.transform.position) <= 5f, 120f);
             checks.Add($"구덩이에서 나와 집으로 돌아옴({TestKit.Waited:0}초)", TestKit.Ok);

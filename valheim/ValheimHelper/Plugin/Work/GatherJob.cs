@@ -716,6 +716,7 @@ namespace ValheimHelper
                 m_lastDigs = m_ai.Digs;
                 m_lastBlocked = m_ai.BlockedDigs;
                 m_saidDig = false;
+                m_farDig = null;
                 m_lastHealth = null; // 캐기 첫 프레임에 잰다(HealthMark는 인스턴스가 필요)
                 Vector3 me = m_npc.transform.position;
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 캐기 시작(뿌리 ({m_targetPos.x:0.0},{m_targetPos.y:0.0},{m_targetPos.z:0.0})까지 {Utils.DistanceXZ(m_targetPos, me):0.0}m, 높이차 {me.y - m_targetPos.y:0.0})");
@@ -943,6 +944,7 @@ namespace ValheimHelper
 
             Vector3 aim = m_targetPos + Vector3.up * 1f;
             m_aimCol = null;
+            m_farAim = false;
             if (m_targetInfo.Tool == ToolKind.Pickaxe && !RockAim(view, out aim))
             {
                 Skip(); // 땅속 조각만 남았는데 파서 꺼낼 물건이 아니다(돌): 남겨 둔다
@@ -980,6 +982,12 @@ namespace ValheimHelper
                 // 대상 체력이 줄었으면(HealthMark) 진척. 땅을 팠으면 그것도 진척.
                 string mark = HealthMark(zdo, view);
                 bool progress = mark != m_lastHealth || m_ai.Digs != m_lastDigs;
+                if (!progress && m_farAim)
+                {
+                    // 멀리(모든 플레이어 64m 밖)서 땅속 조각: 땅은 안 파고 휘두를 때마다 그 조각에 직접 피해(E021 라, 곡괭이 단계·내구도 그대로).
+                    DirectHit(view);
+                    progress = true;
+                }
                 if (!progress && m_ai.BlockedDigs != m_lastBlocked && m_aimCol != null)
                 {
                     // 휘두름이 바위보다 땅에 먼저 닿았는데 땅은 안 파기로 했다(돌, 3m보다 깊음): 바닐라는 이 휘두름을 버린다.
@@ -1011,7 +1019,7 @@ namespace ValheimHelper
                 if (m_swingsNoProgress >= 8) { Plugin.Log.LogInfo($"{m_npc.NpcName}: 휘두름 8번 헛침 → 건너뜀 / {m_npc.MoveDebug}"); Skip(); return true; }
             }
             m_wasAttacking = attacking;
-            if (!attacking && m_ai.IsLookingAt(aim, 25f)) m_npc.StartAttack(null, false);
+            if (!attacking && (m_farAim || m_ai.IsLookingAt(aim, 25f))) m_npc.StartAttack(null, false);
             return true;
         }
 
@@ -1020,6 +1028,10 @@ namespace ValheimHelper
         Collider m_aimCol, m_digAim;
         const int DigOnlyLimit = 10;
         bool m_saidDig;
+        /// <summary>이 대상 캐기 시작 뒤 처음 땅속 조각을 겨눌 때 잰 "모든 플레이어 64m 밖"(그 뒤 플레이어가 와도 그대로 — 땅속이라 안 보임). null = 아직 안 잼.</summary>
+        bool? m_farDig;
+        /// <summary>이번 프레임 겨눈 것이 멀리서 직접 치는 땅속 조각(땅 안 팜).</summary>
+        bool m_farAim;
         const float WorkIdleLimit = 30f;
         /// <summary>땅 낮춤 한계 바닥 밑으로 이만큼(m) 안에 윗면이 있는 묻힌 조각까지 캔다(바닥에 선 일꾼 팔이 닿는 정도).</summary>
         const float BelowFloorReach = 2f;
@@ -1062,8 +1074,19 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 조각만 남음(깊이 {depth:0.0}m) → 파지 않고 남김");
                 return false;
             }
-            if (!m_saidDig) { m_saidDig = true; Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 {Item} 파기(깊이 {depth:0.0}m)"); }
             m_aimCol = buried;
+            // 멀리(모든 플레이어 64m 밖)면 땅은 안 파고 휘두를 때마다 그 조각에 직접 피해(E021 라). 구덩이가 안 생겨 되메우기·탈출이 필요 없다.
+            // 생긴 광석은 땅 위로 튀어나온다(ItemDrop.TerrainCheck) → 보통 줍기. 가슴 높이로 휘둘러 땅을 안 친다.
+            if (m_farDig == null) m_farDig = FarFromPlayers(m_npc.transform.position);
+            if (m_farDig == true)
+            {
+                if (!m_saidDig) { m_saidDig = true; Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 {Item} — 플레이어 멀리라 안 파고 바로 침(깊이 {depth:0.0}m)"); }
+                m_farAim = true;
+                aim = buried.bounds.ClosestPoint(chest);
+                aim.y = chest.y;
+                return true;
+            }
+            if (!m_saidDig) { m_saidDig = true; Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 {Item} 파기(깊이 {depth:0.0}m)"); }
             m_ai.DigAllowedUntil = Time.time + 1.5f;
             aim = buried.bounds.ClosestPoint(chest);
             return true;
