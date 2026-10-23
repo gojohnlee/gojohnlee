@@ -2,7 +2,7 @@
 # claude가 하는 일(고친 코드·명령·결과)을 그 창에 찍는다. 창은 $ShowWindow가 $false면 켜자마자 숨긴다(사용자 요청 2026-10-22 저녁:
 # 보이게 했다가 다시 숨김, 다시 보려면 $true). 보이는 창을 닫으면 루프도 끝난다.
 # 회차: pull → 멈춤 파일 확인 → 계정 고르기 → claude -p 새 세션(scripts/vh-loop-prompt.txt) → 결과 판정 → status.txt 푸시.
-# 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
+# 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림, 바뀐 것이 없어도 올려 루프가 살아 있는지 보이게). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
 # 백업 때 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리에서 돌려 먼저 답한다.
 # 두 계정 모두 한도(또는 쉼)면 풀리는 시각까지 기다리고,
 # 모니터가 꺼졌으면 바로, 켜져 있으면 자리 비움(입력 없음 10분)일 때 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
@@ -319,8 +319,9 @@ function Backup-Wip {
     G add -A | Out-Null
     $tree = G write-tree | Select-Object -Last 1
     Remove-Item Env:GIT_INDEX_FILE
-    if ($tree -eq (G rev-parse 'HEAD^{tree}' | Select-Object -Last 1)) { return }   # 바뀐 것 없음
-    $c = G commit-tree $tree -p (G rev-parse HEAD | Select-Object -Last 1) -m "WIP backup $(Get-Date -Format 'MM-dd HH:mm')" | Select-Object -Last 1
+    # 바뀐 것이 없어도 올린다(사용자 요청 2026-10-23: WIP가 안 올라오면 루프가 멈췄는지 알 수 없음)
+    $same = $tree -eq (G rev-parse 'HEAD^{tree}' | Select-Object -Last 1)
+    $c = G commit-tree $tree -p (G rev-parse HEAD | Select-Object -Last 1) -m "WIP backup $(Get-Date -Format 'MM-dd HH:mm')$(if ($same) { ' (바뀐 것 없음, 루프 도는 중)' })" | Select-Object -Last 1
     G push -q -f origin "${c}:refs/heads/valheim-wip" | Out-Null
     Log "valheim-wip 백업 $c"
 }
