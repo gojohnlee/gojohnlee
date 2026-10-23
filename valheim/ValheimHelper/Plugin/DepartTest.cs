@@ -259,7 +259,7 @@ namespace ValheimHelper
         static string LastSaid(TestKit.World w, string name)
         {
             for (int i = w.Heard.Count - 1; i >= 0; i--)
-                if (w.Heard[i].StartsWith(name + ":")) return w.Heard[i];
+                if (w.Heard[i].StartsWith(name + ":") && !w.Bubbles.Contains(w.Heard[i])) return w.Heard[i]; // 잡담 말풍선은 건너뜀
             return "";
         }
 

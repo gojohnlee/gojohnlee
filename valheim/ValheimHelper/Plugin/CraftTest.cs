@@ -54,7 +54,7 @@ namespace ValheimHelper
                 ZDO z = machine != null ? machine.GetComponent<ZNetView>()?.GetZDO() : null;
                 int inside = z != null ? z.GetInt(ZDOVars.s_queued) + z.GetInt(ZDOVars.s_spawnAmount) : 0;
                 sum = chest + bag + ground + inside;
-                where = $"상자 {chest}(원료 {Stock(w, from)}·결과 {Stock(w, to)}), 짐 {bag}, 땅 {ground}, 설비 안 {inside}";
+                where = $"상자 {chest}(원료 {Stock(w, from)}·결과 {Stock(w, to)}), 짐 {bag}, 땅 {ground}, 설비 안 {inside}, 보충 누적 {MachineStep.Refilled}";
             }
             checks.Add($"제련 개수 보존 {from}→{to} ({where} → 합 {sum} = {total})", sum == total);
         }
@@ -112,10 +112,18 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             string barName = Localization.instance.Localize(ObjectDB.instance.GetItemPrefab("Copper").GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
             TestRunner.Log($"구리 주괴 게임 이름: [{barName}] → Items.Resolve {Items.Resolve(barName)}, \"구리주괴\" → {Items.Resolve("구리주괴")}");
+            int refilled0 = MachineStep.Refilled;
+            MachineStep.TestLose = 1; // 정리 시작 때 짐의 주괴 1개를 지워 소실 보충을 본다(E001)
+            Vector3 playerAt = w.Player.transform.position; // 5m 안 플레이어가 있으면 보충 안 함(복제 방지) → 제련 동안 25m 밖에
+            w.Player.TeleportTo(GatherTest.Ground(w.Home + right * 25f) + Vector3.up * 0.3f, w.Player.transform.rotation, false);
             yield return Say($"!{n1} 구리주괴 2", 1f);
             checks.Add($"제련 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
             yield return TestKit.WaitFor(() => Stock(w, "Copper") >= 2, 240f);
             checks.Add($"구리 주괴 2개가 상자에 ({TestKit.Waited:0}초, 광석 {Stock(w, "CopperOre")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
+            int dist = (int)Vector3.Distance(Player.m_localPlayer.transform.position, w.Ragnar.transform.position);
+            checks.Add($"짐에서 1개 잃으면 보충 1개 (보충 {MachineStep.Refilled - refilled0}, 시험 흉내 남음 {MachineStep.TestLose}, 플레이어와 {dist}m)", MachineStep.Refilled - refilled0 == 1);
+            MachineStep.TestLose = 0;
+            w.Player.TeleportTo(playerAt, w.Player.transform.rotation, false);
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
             // 광석 4개 = 어디에 있든 합 4(복제도 소실도 없음, 사용자 2026-10-22 — E001): 상자 + 일꾼 짐 + 땅(제련소·상자 둘레) + 제련소 안

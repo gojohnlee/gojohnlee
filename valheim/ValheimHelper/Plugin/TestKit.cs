@@ -70,7 +70,9 @@ namespace ValheimHelper
             public WorkerNpc Ragnar, Floki;
             public Container Chest;
             public readonly List<string> Heard = new List<string>();
-            public System.Action<string, string> OnHeard;
+            public System.Action<string, string> OnHeard, OnBubbled;
+            /// <summary>Heard 중 잡담 말풍선 줄(질문·대답을 볼 때 건너뛰려고 — departtest 회차 128: 질문 직후 말풍선이 끼어 "마지막 말"이 바뀜).</summary>
+            public readonly HashSet<string> Bubbles = new HashSet<string>();
             public string Knowledge0, Places0;
             public bool Shared; // 동시 시험(around): 둘레가 남의 시험이라 끝 정리를 안 함
             public bool CountsCreatures; // 생물을 일부러 부르거나 세는 시험(사냥·싸움 등): 시작 때 남은 생물은 환경 불량, 싸움 중 시간 안 멈춤
@@ -138,6 +140,8 @@ namespace ValheimHelper
             w.Env.SetDebugWind(0f, 0.3f);
             w.OnHeard = (n, t) => w.Heard.Add(n + ": " + t);
             ChatNet.Heard += w.OnHeard;
+            w.OnBubbled = (n, t) => w.Bubbles.Add(n + ": " + t);
+            ChatNet.Bubbled += w.OnBubbled;
             w.Knowledge0 = Brain.Get().Save();
             w.Places0 = Brain.Places.Save();
 
@@ -427,6 +431,7 @@ namespace ValheimHelper
         {
             if (s_cur == w) s_cur = null; // 상태 흐름 기록 멈춤(링 버퍼는 End가 쏟을 때까지 남김)
             if (w.OnHeard != null) { ChatNet.Heard -= w.OnHeard; w.OnHeard = null; }
+            if (w.OnBubbled != null) { ChatNet.Bubbled -= w.OnBubbled; w.OnBubbled = null; }
             if (w.Player != null) w.Player.SetGodMode(w.God);
             if (w.Env != null)
             {

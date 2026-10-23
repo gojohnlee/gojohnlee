@@ -168,8 +168,26 @@ namespace ValheimHelper
             ZNetView view = c.GetComponent<ZNetView>();
             view.GetZDO().SetOwner(ZDOMan.GetSessionID());
             LoadContainer(c); // 다른 사람이 마지막으로 저장한 내용을 읽는다(이미 최신이면 그대로)
-            edit(c.GetInventory()); // 바뀌면 Container.OnContainerChanged가 저장한다(소유자이므로)
+            Inventory inv = c.GetInventory();
+            if (s_removed.Count == 0) { edit(inv); return true; } // 바뀌면 Container.OnContainerChanged가 저장한다(소유자이므로)
+            var names = new List<string>(s_removed.Keys);
+            var before = new int[names.Count];
+            for (int i = 0; i < names.Count; i++) before[i] = inv.CountItems(names[i]);
+            edit(inv);
+            for (int i = 0; i < names.Count; i++)
+            {
+                int gone = before[i] - inv.CountItems(names[i]);
+                if (gone > 0) s_removed[names[i]] += gone;
+            }
             return true;
         }
+
+        /// <summary>
+        /// E001 소실 보충용: 지켜보는 물건(공유 이름)이 모드 편집(TryEdit)으로 상자에서 빠진 누적 수 — 정리하는 동안 다른 일꾼이 가져간 것을
+        /// 소실로 잘못 보지 않게(보충 = 복제가 되므로). 한 번 지켜보면 계속(설비 결과물 몇 가지뿐).
+        /// </summary>
+        static readonly Dictionary<string, int> s_removed = new Dictionary<string, int>();
+        public static void Watch(string name) { if (name != null && !s_removed.ContainsKey(name)) s_removed[name] = 0; }
+        public static int Removed(string name) => name != null && s_removed.TryGetValue(name, out int n) ? n : 0;
     }
 }

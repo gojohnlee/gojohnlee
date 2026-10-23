@@ -31,7 +31,9 @@ namespace ValheimHelper
         bool m_cookLoaded;
         float m_fireWait = -1f;
         Unload m_store;
-        float m_time, m_busy, m_tappedAt = -1f, m_nextDiag;
+        float m_time, m_busy, m_tappedAt = -1f, m_nextDiag, m_nextChestCheck;
+        int m_expect = -1, m_removed0;
+        bool m_othersNear;
 
         public MachineStep(WorkerNpc npc, PlanStep step)
         {
@@ -53,11 +55,13 @@ namespace ValheimHelper
         {
             m_time += dt;
             if (m_time > Limit + (m_cook != null ? CookSeconds() * 2f : 0f)) return CraftResult.Failed;
+            WatchOthers();
             if (m_store != null)
             {
                 if (m_store.Update(dt)) return CraftResult.Working;
-                LeaveSkipped();
+                int left = LeaveSkipped();
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 꺼낸 것 정리 끝: 짐에 남은 {OutItem} {InBag()}"); // vh_crafttest 간헐 FAIL 진단(회차 35)
+                Refill(left);
                 return CraftResult.Done;
             }
             Vector3 home = m_npc.Home;
@@ -166,7 +170,7 @@ namespace ValheimHelper
             }
             if (m_tappedAt >= 0f && m_time - m_tappedAt < TapWait) return CraftResult.Working;
             Plugin.Log.LogInfo($"{m_npc.NpcName} 발효기 꺼냄 {m_step.Item}: 짐에 {InBag()}");
-            m_store = new Unload(m_npc);
+            BeginStore();
             return CraftResult.Working;
         }
 
@@ -199,7 +203,7 @@ namespace ValheimHelper
             if (any) return CraftResult.Working;
             if (zdo.GetInt(ZDOVars.s_spawnAmount) > 0 || zdo.GetInt(ZDOVars.s_queued) > 0) return CraftResult.Working; // 아직 도는 중·내보내는 중
             Plugin.Log.LogInfo($"{m_npc.NpcName} 설비 꺼냄 {m_step.Item}: 짐에 {InBag()}");
-            m_store = new Unload(m_npc);
+            BeginStore();
             return CraftResult.Working;
         }
 
@@ -271,7 +275,7 @@ namespace ValheimHelper
             if (CookSlotsOf(zdo, m_cook, false) > 0) // 아직 굽는 중 — 불이 꺼지면 다시 지핀다
                 return Burning(nview, home, out CraftResult w) ? CraftResult.Working : w;
             Plugin.Log.LogInfo($"{m_npc.NpcName} 조리대 꺼냄 {OutItem}: 짐에 {InBag()}");
-            m_store = new Unload(m_npc);
+            BeginStore();
             return CraftResult.Working;
         }
 
@@ -336,9 +340,72 @@ namespace ValheimHelper
         /// <summary>꺼낼 것: 조리대 싣기 단계는 구운 것, 그 밖엔 단계 물건.</summary>
         string OutItem => m_cook != null && m_load ? CookedOf(m_step.Item) : m_step.Item;
 
-        /// <summary>꺼낸 것 중 상자가 꽉 차 못 넣은 것(들고 다닐 미드 몫은 빼고)은 짐에 두지 않고 상자 앞 땅에(사용자 결정 2026-10-22).</summary>
-        void LeaveSkipped()
+        /// <summary>시험용: 이 실행 동안 소실 보충한 물건 수(vh_crafttest가 보존 칸에 보임).</summary>
+        internal static int Refilled;
+
+        /// <summary>
+        /// 꺼낸 것을 상자에 정리하기 시작: 지금 (짐 + 거점 상자 전부)의 결과물 수를 기억한다(E001 소실 보충, 사용자 결정 10-23 "오류 정리 꼼수").
+        /// </summary>
+        void BeginStore()
         {
+            m_store = new Unload(m_npc);
+            string name = CraftStep.SharedName(OutItem);
+            if (name == null) return;
+            Chests.Watch(name);
+            m_removed0 = Chests.Removed(name);
+            m_expect = InBag() + Chests.CountAll(m_npc.Home, inv => inv.CountItems(name));
+            if (TestLose > 0 && TestRunner.Running && InBag() >= TestLose)
+            {
+                m_npc.GetInventory().RemoveItem(name, TestLose); // 소실 흉내(vh_crafttest)
+                Plugin.Log.LogInfo($"시험: {OutItem} {TestLose}개 짐에서 지움(소실 흉내)");
+                TestLose = 0;
+            }
+        }
+
+        /// <summary>시험용: 0보다 크면 다음 정리 시작 때 짐의 결과물을 그만큼 지운다(소실 흉내). 쓰면 0.</summary>
+        internal static int TestLose;
+
+        /// <summary>
+        /// 이 단계 동안 플레이어가 5m 안에 왔거나(주웠을 수 있음) 정리 중 거점 상자를 누가 열었으면 보충하지 않는다(복제 방지, [기본안] 10-23).
+        /// 상자 확인은 1초마다.
+        /// </summary>
+        void WatchOthers()
+        {
+            if (m_othersNear) return;
+            foreach (Player p in Player.GetAllPlayers())
+                if (p != null && Vector3.Distance(p.transform.position, m_npc.transform.position) < 5f) { m_othersNear = true; return; }
+            if (m_store == null || m_time < m_nextChestCheck) return;
+            m_nextChestCheck = m_time + 1f;
+            foreach (var c in Chests.NearBase(m_npc.Home))
+                if (c.IsInUse() || (c.TryGetComponent(out ZNetView v) && v.IsValid() && v.GetZDO().GetInt(ZDOVars.s_inUse) == 1)) { m_othersNear = true; return; }
+        }
+
+        /// <summary>
+        /// 정리 끝: (짐 + 거점 상자 + 상자 앞에 둔 것 + 그새 다른 일이 상자에서 뺀 것)이 정리 시작 때보다 적으면 모자란 만큼 만들어 상자에 넣는다
+        /// (못 넣으면 상자 앞 땅). 로그 "보충 N개"로 소실이 일어났음을 센다. 개수를 아는 설비 꺼내기만 — 캐기·벌목 드롭은 안 함.
+        /// </summary>
+        void Refill(int leftAtChest)
+        {
+            string name = CraftStep.SharedName(OutItem);
+            if (m_expect < 0 || name == null) return;
+            int now = InBag() + Chests.CountAll(m_npc.Home, inv => inv.CountItems(name)) + leftAtChest + (Chests.Removed(name) - m_removed0);
+            int lost = m_expect - now;
+            if (lost <= 0) return;
+            if (m_othersNear)
+            {
+                Plugin.Log.LogWarning($"{m_npc.NpcName} {OutItem} {lost}개 모자람 — 플레이어가 곁에 있었거나 상자가 열려 보충 안 함");
+                return;
+            }
+            int left = CraftStep.Put(m_npc.Home, OutItem, lost);
+            if (left > 0) CraftStep.LeaveAtChest(m_npc, OutItem, left, ChestRole.Mats);
+            Refilled += lost;
+            Plugin.Log.LogWarning($"{m_npc.NpcName} 보충 {lost}개 {OutItem} (정리 시작 {m_expect}, 끝 {now}) — E001 소실");
+        }
+
+        /// <summary>꺼낸 것 중 상자가 꽉 차 못 넣은 것(들고 다닐 미드 몫은 빼고)은 짐에 두지 않고 상자 앞 땅에(사용자 결정 2026-10-22). 둔 수를 돌려준다.</summary>
+        int LeaveSkipped()
+        {
+            int total = 0;
             HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
             Inventory mine = m_npc.GetInventory();
             foreach (var it in new List<ItemDrop.ItemData>(m_store.Skipped))
@@ -350,7 +417,9 @@ namespace ValheimHelper
                 if (n <= 0) continue;
                 mine.RemoveItem(it, n);
                 CraftStep.LeaveAtChest(m_npc, OutItem, n, role);
+                total += n;
             }
+            return total;
         }
 
         int InBag()
