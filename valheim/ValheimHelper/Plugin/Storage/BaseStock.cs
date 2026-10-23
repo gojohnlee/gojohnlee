@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HarmonyLib;
 using ValheimHelper.Core.Storage;
 using ValheimHelper.Core.Work;
 using UnityEngine;
@@ -96,6 +97,55 @@ namespace ValheimHelper
             foreach (var c in s_chests) if (c != null) n += c.GetInventory().CountItems(name);
             s_counts[name] = n;
             return n;
+        }
+
+        /// <summary>상자 내용이 바뀌었으니 다음 셈은 다시(일꾼이 같은 프레임에 꺼낸 뒤).</summary>
+        internal static void Changed() { s_at = -100f; s_frame = -1; }
+
+        static readonly AccessTools.FieldRef<InventoryGui, float> s_timer = AccessTools.FieldRefAccess<InventoryGui, float>("m_craftTimer");
+        static readonly AccessTools.FieldRef<InventoryGui, Recipe> s_recipe = AccessTools.FieldRefAccess<InventoryGui, Recipe>("m_craftRecipe");
+        static readonly AccessTools.FieldRef<InventoryGui, ItemDrop.ItemData> s_upgrade = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_craftUpgradeItem");
+        static readonly AccessTools.FieldRef<InventoryGui, bool> s_multi = AccessTools.FieldRefAccess<InventoryGui, bool>("m_multiCrafting");
+
+        /// <summary>
+        /// 예약(① 라, 사용자 요청 10-23): 호스트 플레이어의 제작 막대가 도는 동안(m_craftTimer ≥ 0) 그 제작 재료 중 가방에 없는 몫.
+        /// 막대가 끝나거나(DoCrafting 뒤 −1)·취소·창 닫힘(바닐라가 −1로)이면 바로 0 — 따로 풀기·안전 시간 없이 매번 지금 막대에서 셈(기본안).
+        /// </summary>
+        public static int Reserved(string name)
+        {
+            Player p = Player.m_localPlayer;
+            InventoryGui gui = InventoryGui.instance;
+            if (gui == null || name == null || !Active(p) || s_timer(gui) < 0f) return 0;
+            Recipe rec = s_recipe(gui);
+            if (rec == null || rec.m_requireOnlyOneIngredient) return 0;
+            ItemDrop.ItemData up = s_upgrade(gui);
+            int quality = up == null ? 1 : up.m_quality + 1;
+            int mult = s_multi(gui) ? gui.m_multiCraftAmount : 1;
+            CraftingStation station = p.GetCurrentCraftingStation();
+            int need = 0;
+            foreach (var r in rec.m_resources)
+                if (CraftPatches.Counts(station, r) && r.m_resItem.m_itemData.m_shared.m_name == name) need += r.GetAmount(quality) * mult;
+            return Mathf.Max(0, need - p.GetInventory().CountItems(name));
+        }
+
+        /// <summary>
+        /// 일꾼이 상자 c에서 name을 want개 꺼내려 할 때 꺼내도 되는 수: c가 예약 상자들(플레이어 거점의 쓸 수 있는 상자) 안이면 "합계 − 예약"까지만.
+        /// 상자끼리 옮기는 정리는 합계 그대로라 이걸 안 거침. 꺼낸 뒤엔 Changed()로 다음 셈을 새로.
+        /// </summary>
+        internal static int Allow(Container c, string name, int want)
+        {
+            if (want <= 0) return 0;
+            int reserved = Reserved(name);
+            if (reserved <= 0) return want;
+            Player p = Player.m_localPlayer;
+            Fresh++;
+            try
+            {
+                Refresh(p);
+                if (!s_chests.Contains(c)) return want;
+                return StockTake.Spare(Count(p, name), reserved, want);
+            }
+            finally { Fresh--; }
         }
 
         /// <summary>

@@ -27,5 +27,16 @@ namespace ValheimHelper.Core.Storage
             }
             return left > 0 ? null : take;
         }
+
+        /// <summary>
+        /// 예약(① 라): 사람 제작 막대가 도는 동안 가방에 없는 몫(reserved)은 일꾼이 못 가져감. 상자 합 total에서 want 중 꺼내도 되는 수.
+        /// </summary>
+        public static int Spare(int total, int reserved, int want)
+        {
+            if (want <= 0) return 0;
+            if (reserved <= 0) return want;
+            int free = total - reserved;
+            return free <= 0 ? 0 : (free < want ? free : want);
+        }
     }
 }

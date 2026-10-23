@@ -7,11 +7,11 @@ namespace ValheimHelper
     /// <summary>
     /// 제작대에서 거점 상자 재료를 바로 씀(상자 기능 ① 첫 조각: 제작·업그레이드). 바닐라 Player.HaveRequirementItems(있나)·ConsumeResources(빼기),
     /// InventoryGui.DoCrafting(막대 끝 실제 제작) 기준(디컴파일 확인 2026-10-23). "하나만 있으면 되는" 제작법(m_requireOnlyOneIngredient,
-    /// GetFirstRequiredItem로 가방에서 직접 뺌)은 손대지 않는다. 건축(HaveRequirements(Piece), 둘째 조각)·개수 표시(SetupRequirement, 셋째)도 여기. 예약은 다음 조각.
+    /// GetFirstRequiredItem로 가방에서 직접 뺌)은 손대지 않는다. 건축(HaveRequirements(Piece), 둘째 조각)·개수 표시(SetupRequirement, 셋째)도 여기. 예약은 BaseStock.Reserved·Allow.
     /// </summary>
     static class CraftPatches
     {
-        static bool Counts(CraftingStation station, Piece.Requirement r) =>
+        internal static bool Counts(CraftingStation station, Piece.Requirement r) =>
             r.m_resItem && (station == null ? !r.m_upgraderResource : station.m_upgrader == r.m_upgraderResource);
 
         /// <summary>가방만으로 모자라면 가방 + 상자로 다시 판단(바닐라와 같은 거르기·같은 가방 세기).</summary>

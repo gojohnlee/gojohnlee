@@ -179,7 +179,54 @@ namespace ValheimHelper
             if (bagA0 > 0) bag.AddItem(ra.m_resItem.gameObject, bagA0);
             if (bagB0 > 0) bag.AddItem(rb.m_resItem.gameObject, bagB0);
 
+            yield return Reserve(w, checks, recipe, near);
             yield return Build(w, checks, made, near, far);
+        }
+
+        /// <summary>
+        /// 예약(① 라): 제작 막대가 도는 동안(m_craftTimer ≥ 0) 가방에 없는 몫은 일꾼 꺼내기(CraftStep.Take)가 못 가져감, 취소(−1)하면 풀림.
+        /// 막대는 화면 없이 필드만 세우고 같은 프레임에 확인(창이 안 보여 막대가 안 흐름 — 그래도 yield 없이).
+        /// </summary>
+        static IEnumerator Reserve(TestKit.World w, GatherTest.Checks checks, Recipe recipe, Container near)
+        {
+            Piece.Requirement ra = recipe.m_resources[0];
+            string a = Name(ra), pa = ra.m_resItem.name;
+            int na = ra.GetAmount(1);
+            Player p = w.Player;
+            Inventory bag = p.GetInventory();
+            int bagA0 = bag.CountItems(a);
+            bag.RemoveItem(a, bagA0);
+            TestKit.TakeFromChest(near, pa);
+            TestKit.PutInChest(near, pa, na + 2);
+            yield return new WaitForSeconds(0.6f);
+            var gui = InventoryGui.instance;
+            var t = Traverse.Create(gui);
+            var chests = new List<Container> { near };
+            int reserved, got, after, released, got2, bagReserved;
+            t.Field("m_craftRecipe").SetValue(recipe);
+            t.Field("m_craftUpgradeItem").SetValue(null);
+            t.Field("m_multiCrafting").SetValue(false);
+            t.Field("m_craftTimer").SetValue(0f);
+            try
+            {
+                reserved = BaseStock.Reserved(a);
+                got = CraftStep.Take(chests, pa, na);
+                after = GatherTest.Count(near, pa);
+                bag.AddItem(ra.m_resItem.gameObject, na);
+                bagReserved = BaseStock.Reserved(a);
+                bag.RemoveItem(a, na);
+            }
+            finally { t.Field("m_craftTimer").SetValue(-1f); t.Field("m_craftRecipe").SetValue(null); }
+            released = BaseStock.Reserved(a);
+            got2 = CraftStep.Take(chests, pa, na);
+            checks.Add($"막대 동안 가방에 없는 몫 예약 ({a} {reserved}/{na})", reserved == na);
+            int spare = Mathf.Min(2, na);
+            checks.Add($"일꾼은 예약 밖만 가져감 ({got}/{spare}, 상자 {after}/{na + 2 - spare})", got == spare && after == na + 2 - spare);
+            checks.Add($"가방에 다 있으면 예약 없음 ({bagReserved})", bagReserved == 0);
+            checks.Add($"취소하면 풀려 다 가져감 (예약 {released}, {got2}/{na}, 상자 {GatherTest.Count(near, pa)}/{2 - spare})", released == 0 && got2 == na && GatherTest.Count(near, pa) == 2 - spare);
+            TestKit.TakeFromChest(near, pa);
+            bag.RemoveItem(a, bag.CountItems(a));
+            if (bagA0 > 0) bag.AddItem(ra.m_resItem.gameObject, bagA0);
         }
 
         /// <summary>제작대 없이 놓이고 재료 두 가지 이상인 망치 조각(모닥불 먼저).</summary>

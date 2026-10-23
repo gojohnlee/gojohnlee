@@ -48,6 +48,11 @@ namespace ValheimHelper
             var chests = Chests.NearBase(home, ChestRole.Mats);
             foreach (var c in chests)
                 if (Chests.InUse(c)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
+            foreach (var kv in need) // 사람 제작 막대가 예약한 몫을 빼면 모자라면 막대가 끝날 때까지 기다림(① 라)
+            {
+                int r = BaseStock.Reserved(SharedName(kv.Key));
+                if (r > 0 && Have(home, kv.Key) - r < kv.Value) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
+            }
             if (!TakeAll(home, chests, need)) return CraftResult.Failed;
             int left = Put(home, m_recipe.Output, m_recipe.OutputAmount * m_crafts);
             if (left > 0) LeaveAtChest(m_npc, m_recipe.Output, left);
@@ -105,7 +110,7 @@ namespace ValheimHelper
             return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name), ChestRole.Mats);
         }
 
-        /// <summary>상자들에서 뺀다. 실제로 뺀 개수를 돌려준다(상자가 그새 열렸거나 개수 확인 뒤 줄었으면 amount보다 적음).</summary>
+        /// <summary>상자들에서 뺀다. 실제로 뺀 개수를 돌려준다(상자가 그새 열렸거나 개수 확인 뒤 줄었거나 사람 제작이 예약했으면 amount보다 적음).</summary>
         internal static int Take(List<Container> chests, string prefab, int amount)
         {
             string name = SharedName(prefab);
@@ -114,11 +119,12 @@ namespace ValheimHelper
             foreach (var c in chests)
             {
                 if (taken >= amount) break;
-                int left = amount - taken;
+                int left = BaseStock.Allow(c, name, amount - taken); // 사람 제작 막대가 예약한 몫은 안 가져감
+                if (left <= 0) continue;
                 Chests.TryEdit(c, inv =>
                 {
                     int n = Mathf.Min(left, inv.CountItems(name));
-                    if (n > 0) { inv.RemoveItem(name, n); taken += n; }
+                    if (n > 0) { inv.RemoveItem(name, n); taken += n; BaseStock.Changed(); }
                 });
             }
             return taken;

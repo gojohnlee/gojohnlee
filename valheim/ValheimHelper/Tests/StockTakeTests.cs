@@ -33,5 +33,15 @@ namespace ValheimHelper.Tests
         {
             Assert.Equal(new[] { 0, 3, 1 }, StockTake.Plan(4, -1, new[] { 0, 3, 5 }));
         }
+
+        [Fact]
+        public void ReservedLeavesOnlySpare()
+        {
+            Assert.Equal(5, StockTake.Spare(10, 0, 5));
+            Assert.Equal(3, StockTake.Spare(10, 7, 5));
+            Assert.Equal(0, StockTake.Spare(6, 7, 5));
+            Assert.Equal(0, StockTake.Spare(10, 3, 0));
+            Assert.Equal(4, StockTake.Spare(10, 3, 4));
+        }
     }
 }
