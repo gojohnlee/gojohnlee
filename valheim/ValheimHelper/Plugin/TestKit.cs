@@ -65,6 +65,7 @@ namespace ValheimHelper
             public bool DebugTime;
             public float DebugValue;
             public string DebugEnv;
+            public bool DebugWind; public float DebugWindAngle, DebugWindIntensity;
             public Vector3 Home;
             public WorkerNpc Ragnar, Floki;
             public Container Chest;
@@ -132,6 +133,9 @@ namespace ValheimHelper
             // 날씨도 맑음으로 고정: 비·바람이면 화로가 젖어 조리대가 안 굽는다(E014, 바닐라 Fireplace.CheckWet) — 시험마다 날씨가 달라 흔들리지 않게
             w.DebugEnv = w.Env.m_debugEnv;
             w.Env.m_debugEnv = "Clear";
+            // 바람도 약하게 고정: 맑음이어도 바람이 0.8 넘으면 화로가 젖는다(E014 회차 127 — 맑음 바람 0.79). 바람은 5초에 걸쳐 바뀜
+            w.DebugWind = w.Env.m_debugWind; w.DebugWindAngle = w.Env.m_debugWindAngle; w.DebugWindIntensity = w.Env.m_debugWindIntensity;
+            w.Env.SetDebugWind(0f, 0.3f);
             w.OnHeard = (n, t) => w.Heard.Add(n + ": " + t);
             ChatNet.Heard += w.OnHeard;
             w.Knowledge0 = Brain.Get().Save();
@@ -429,6 +433,7 @@ namespace ValheimHelper
                 w.Env.m_debugTimeOfDay = w.DebugTime;
                 w.Env.m_debugTime = w.DebugValue;
                 w.Env.m_debugEnv = w.DebugEnv ?? "";
+                w.Env.m_debugWind = w.DebugWind; w.Env.m_debugWindAngle = w.DebugWindAngle; w.Env.m_debugWindIntensity = w.DebugWindIntensity;
             }
             if (w.Knowledge0 != null)
             {

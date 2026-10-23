@@ -443,6 +443,9 @@ namespace ValheimHelper.Core.Npc
 
         public static bool Has(Personality p, string key) => Lines[(int)p].ContainsKey(key);
 
+        /// <summary>그 키의 대사 줄 전부(시험이 들은 말과 맞춰 볼 때). 없으면 빈 배열.</summary>
+        public static string[] Options(Personality p, string key) => Lines[(int)p].TryGetValue(key, out var o) ? o : new string[0];
+
         /// <summary>대사 하나. 같은 상황에서 바로 전에 쓴 줄은 피한다. 없는 키면 키 이름을 그대로 돌려준다.</summary>
         public string Say(Personality p, string key, IDictionary<string, string> args = null)
         {

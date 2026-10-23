@@ -222,6 +222,17 @@ namespace ValheimHelper
         }
 
         /// <summary>바닐라 ZDO 칸("slot"+i 이름, "slotstatus"+i: 0 덜 됨·1 익음·2 탐). done이면 꺼낼 수 있는(익거나 탄) 칸 수, 아니면 차 있는 칸 수.</summary>
+        /// <summary>E014 진단: 화로 막힘(Fireplace.CheckUnderTerrain)의 연기 확인 — 연기 내는 곳 0.5m 안 단단한 물체 이름.</summary>
+        static string SmokeDiag(Fireplace fp)
+        {
+            SmokeSpawner sp = fp.m_smokeSpawner;
+            if (sp == null) return " 연기 없음";
+            var names = new List<string>();
+            foreach (Collider c in Physics.OverlapSphere(sp.transform.position, sp.m_testRadius, sp.m_testMask.value))
+                names.Add(c.transform.root.name + "/" + LayerMask.LayerToName(c.gameObject.layer));
+            return $" 연기 켜짐 {sp.gameObject.activeInHierarchy} 높이 {sp.transform.position.y - fp.transform.position.y:0.0} 걸림 [{string.Join(", ", names)}]";
+        }
+
         static int CookSlotsOf(ZDO zdo, CookingStation cs, bool done)
         {
             int n = 0;
@@ -282,7 +293,8 @@ namespace ValheimHelper
                     Fireplace fp = col.GetComponentInParent<Fireplace>();
                     if (fp == null || !fp.TryGetComponent(out ZNetView fv) || !fv.IsValid()) continue;
                     Plugin.Log.LogInfo($"DIAG 불 없음: {fp.name} 켬 {fv.GetZDO().GetInt(ZDOVars.s_state, 1)} 연료 {fv.GetZDO().GetFloat(ZDOVars.s_fuel):0.0} 탐 {fp.IsBurning()}"
-                        + $" 날씨 {EnvMan.instance?.GetCurrentEnvironment()?.m_name} 젖음 {EnvMan.IsWet()} 바람 {EnvMan.instance?.GetWindIntensity():0.00}");
+                        + $" 날씨 {EnvMan.instance?.GetCurrentEnvironment()?.m_name} 젖음 {EnvMan.IsWet()} 바람 {EnvMan.instance?.GetWindIntensity():0.00}"
+                        + $" 막힘 {HarmonyLib.Traverse.Create(fp).Field("m_blocked").GetValue<bool>()}" + SmokeDiag(fp));
                     // 바닐라: 비(지붕 없음)·센 바람(덮개 70% 미만)이면 화로가 젖어 약한 불만 남아 굽지 못한다(Fireplace.CheckWet) → 까닭을 말한다
                     if (fp.IsBurning() && (EnvMan.IsWet() || (EnvMan.instance != null && EnvMan.instance.GetWindIntensity() >= 0.8f))) m_npc.Say("cookWet");
                     break;
