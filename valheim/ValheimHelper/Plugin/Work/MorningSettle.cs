@@ -7,7 +7,7 @@ namespace ValheimHelper
     /// <summary>
     /// 밤사이 정산 가) 아침 정리(요청 R3): 잠자기 넘김이 끝난 순간 호스트에서 한 번, 넘김이 시작될 때 거점(깃발 30m 안)에 있던
     /// 쉬는 일꾼(Idle·Home)만. 보는 사람이 없으니 걷지 않고 바로 한다. 일꾼마다 그 아침 날짜(vh_settled)를 ZDO에 남겨 두 번 안 함.
-    /// 짐 → 상자(Unload를 걷기 없이), 제련소류(Smelter) 결과물 → 상자·상자 광석·연료로 다시 채움, 발효기 따르고 다시 채움. 다음 조각: 밭.
+    /// 짐 → 상자(Unload를 걷기 없이), 제련소류(Smelter) 결과물 → 상자·상자 광석·연료로 다시 채움, 발효기 따르고 다시 채움, 거점 밭의 다 자란 작물 → 상자·같은 자리 다시 심기.
     /// </summary>
     public static class MorningSettle
     {
@@ -67,12 +67,14 @@ namespace ValheimHelper
             if (!s_machinesDone)
             {
                 s_machinesDone = true;
-                Machines(npc, out int taken, out int filled, out int tapped, out int brewed);
+                Machines(npc, out int taken, out int filled, out int tapped, out int brewed, out int picked, out int planted);
                 StoreBag(npc); // 땅에서 주운 결과물
                 if (taken > 0) parts.Add(npc.Line("settle.out", new Dictionary<string, string> { ["n"] = taken.ToString() }));
                 if (filled > 0) parts.Add(npc.Line("settle.fill", new Dictionary<string, string> { ["n"] = filled.ToString() }));
                 if (tapped > 0) parts.Add(npc.Line("settle.tap", new Dictionary<string, string> { ["n"] = tapped.ToString() }));
                 if (brewed > 0) parts.Add(npc.Line("settle.brew", new Dictionary<string, string> { ["n"] = brewed.ToString() }));
+                if (picked > 0) parts.Add(npc.Line("settle.harvest", new Dictionary<string, string> { ["n"] = picked.ToString() }));
+                if (planted > 0) parts.Add(npc.Line("settle.plant", new Dictionary<string, string> { ["n"] = planted.ToString() }));
             }
             string summary = string.Join(", ", parts);
             LastResult[npc.NpcName] = summary;
@@ -86,9 +88,9 @@ namespace ValheimHelper
         /// 나무·보리·아마를 시키지 않은 데 쓰게 돼 꺼내기만(기본안). 넣은 광석은 다시 못 꺼내니 연료로 다 녹일 수 있는 만큼만 넣는다.
         /// 다른 일꾼이 일하는 중이면(설비를 쓰고 있을 수 있음) 안 건드리고, 설비 ZDO가 이 컴퓨터 것이 아니면 그 설비는 건너뜀.
         /// </summary>
-        static void Machines(WorkerNpc npc, out int taken, out int filled, out int tapped, out int brewed)
+        static void Machines(WorkerNpc npc, out int taken, out int filled, out int tapped, out int brewed, out int picked, out int planted)
         {
-            taken = filled = tapped = brewed = 0;
+            taken = filled = tapped = brewed = picked = planted = 0;
             foreach (var w in WorkerNpc.All)
                 if (w != null && w.Ai != null && w.Ai.Current == WorkerAI.Mode.Work)
                 { Plugin.Log.LogInfo($"밤사이 정산: {w.NpcName}이 일하는 중이라 설비는 안 건드림"); return; }
@@ -106,6 +108,7 @@ namespace ValheimHelper
                 filled += put;
             }
             Fermenters(home, ref tapped, ref brewed);
+            Farms(home, ref picked, ref planted);
         }
 
         /// <summary>
@@ -157,6 +160,65 @@ namespace ValheimHelper
                 put++;
                 Plugin.Log.LogInfo($"밤사이 정산: 발효기 채움 {from}");
             }
+        }
+
+        /// <summary>
+        /// 밭(가4): 거점 가까운 밭(중심이 깃발 BaseRange+반경 안 — 먼 밭은 안 함)의 다 자란 작물을 바닐라 RPC_Pick처럼 셈하되
+        /// 땅에 떨구지 않고 상자에(자리가 없으면 상자 앞 땅), 기록은 RPC_SetPicked(작물은 사라짐). 그 자리에 같은 작물을 상자 씨앗으로 다시 심음
+        /// (빈 자리 새로 심기는 안 함 — 기본안, 갈린 땅이 풀렸으면 다시 갈고). 씨앗이 없거나 자리가 안 맞으면(지붕·바이옴 등) 거두기만.
+        /// </summary>
+        static void Farms(Vector3 home, ref int picked, ref int planted)
+        {
+            foreach (var f in Brain.Farms.Fields)
+            {
+                if (Utils.DistanceXZ(new Vector3(f.X, 0f, f.Z), home) > Recipes.BaseRange + f.Radius) continue;
+                var chests = Chests.NearBase(home, ChestRole.Mats);
+                if (chests.Exists(Chests.InUse)) { Plugin.Log.LogInfo("밤사이 정산: 열린 상자가 있어 밭은 건너뜀"); return; }
+                foreach (Pickable p in FarmJob.Ripe(f))
+                {
+                    if (!p.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                    if (!nv.IsOwner()) { Plugin.Log.LogInfo($"밤사이 정산: {p.name} 주인이 다른 컴퓨터라 건너뜀"); continue; }
+                    string grown = Utils.GetPrefabName(p.gameObject);
+                    Crop crop = Crops.All.Find(c => c.Grown == grown);
+                    Vector3 at = p.transform.position;
+                    var got = new List<KeyValuePair<string, int>>
+                    {
+                        new KeyValuePair<string, int>(p.m_itemPrefab.name,
+                            p.m_dontScale ? p.m_amount : Mathf.Max(p.m_minAmountScaled, Game.instance.ScaleDrops(p.m_itemPrefab, p.m_amount))),
+                    };
+                    if (!p.m_extraDrops.IsEmpty())
+                        foreach (ItemDrop.ItemData d in p.m_extraDrops.GetDropListItems())
+                            if (d.m_dropPrefab != null) got.Add(new KeyValuePair<string, int>(Utils.GetPrefabName(d.m_dropPrefab), d.m_stack));
+                    nv.InvokeRPC(ZNetView.Everybody, "RPC_SetPicked", true); // 먼저 거둔 것으로: 도중 오류가 나도 두 번 안 나옴
+                    foreach (var kv in got)
+                    {
+                        int rest = CraftStep.Put(home, kv.Key, kv.Value);
+                        if (rest > 0) CraftStep.DropAt(chests.Count > 0 ? chests[0] : null, home, kv.Key, rest);
+                        picked += kv.Value;
+                    }
+                    bool again = crop != null && Replant(home, chests, crop, at);
+                    if (again) planted++;
+                    Plugin.Log.LogInfo($"밤사이 정산: 밭 거둠 {grown} {got[0].Value}{(again ? ", 다시 심음" : "")}");
+                }
+            }
+        }
+
+        static bool Replant(Vector3 home, List<Container> chests, Crop crop, Vector3 at)
+        {
+            at.y = ZoneSystem.instance.GetGroundHeight(at);
+            GameObject sapling = ZNetScene.instance.GetPrefab(crop.Sapling);
+            // 자리 참은 안 봄: 방금 거둔 작물이 이 프레임 끝에야 지워져 충돌체가 남아 있음(원래 심었던 자리)
+            string why = sapling == null ? "새싹 없음" : FarmJob.Unusable(at, crop, space: false);
+            Heightmap hm = Heightmap.FindHeightmap(at);
+            bool till = hm == null || !hm.IsCultivated(at);
+            if (why == null && till && Crops.CultivatePrefab == null) why = "갈기 조각 없음";
+            int cost = Mathf.Max(1, crop.SeedCost);
+            if (why == null && CraftStep.Have(home, crop.Seed) < cost) why = "씨앗 없음";
+            if (why == null && !CraftStep.TakeAll(home, chests, new List<KeyValuePair<string, int>> { new KeyValuePair<string, int>(crop.Seed, cost) })) why = "씨앗 못 꺼냄";
+            if (why != null) { Plugin.Log.LogInfo($"밤사이 정산: {crop.Sapling} 다시 안 심음({why})"); return false; }
+            if (till) Object.Instantiate(Crops.CultivatePrefab, at, Quaternion.identity);
+            Object.Instantiate(sapling, at, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+            return true;
         }
 
         static int TakeOut(WorkerNpc npc, Smelter s, ZDO zdo)

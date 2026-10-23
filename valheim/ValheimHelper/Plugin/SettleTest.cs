@@ -8,10 +8,12 @@ namespace ValheimHelper
     /// 밤사이 정산 시험(요청 R3 가): 1호 짐에 나무·돌, 2호는 80m 밖으로 보내고 실제 잠자기 넘김(EnvMan.SkipToMorning, 12초).
     /// 넘김이 끝나면 1호 짐이 걷지 않고 상자로(개수 보존, 대사), 2호(밖)는 그대로, 같은 아침 다시 불러도 안 함, 다음 아침이면 함.
     /// 제련소 결과물·다시 채우기(가2), 발효기 따르기·다시 채우기·익는 중은 그대로(가3).
+    /// 거점 밭의 다 자란 당근 → 상자·씨앗만큼 같은 자리 다시 심기(가4).
     /// </summary>
     static class SettleTest
     {
         static GameObject s_smelter, s_fermenter;
+        static Core.Work.FarmField s_field;
         const string MeadBase = "MeadBasePoisonResist", Mead = "MeadPoisonResist";
 
         public static void Register() => TestRunner.Register("vh_settletest", "밤사이 정산(아침 정리) 시험", Run);
@@ -91,6 +93,27 @@ namespace ValheimHelper
             int meadMade = fermenter.m_conversion.Find(c => c.m_from != null && c.m_from.gameObject.name == MeadBase)?.m_producedItems ?? -1;
             int meadBefore = GatherTest.CountBase(home, Mead);
             checks.Add($"발효기에 바탕 들어감 (내용 {fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode()}, 나오는 수 {meadMade})", fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode() && meadMade > 0);
+            // 밭(가4): 거점 밭에 다 자란 당근 2 + 상자에 당근 씨앗 1 → 아침에 당근이 상자로, 한 자리만 다시 심음(씨앗 1)
+            Core.Work.Crop carrot = Crops.ForProduce("Carrot");
+            GameObject grownPrefab = carrot != null ? ZNetScene.instance.GetPrefab(carrot.Grown) : null;
+            checks.Add($"당근 작물 있음 ({carrot?.Grown})", grownPrefab != null && Crops.CultivatePrefab != null);
+            if (grownPrefab == null || Crops.CultivatePrefab == null) { End(player, god, checks, onHeard, heard); yield break; }
+            Vector3 fc = GatherTest.Ground(home + rot * new Vector3(8f, 0f, 6f));
+            Brain.Farms.Set(fc.x, fc.z, 3);
+            s_field = Brain.Farms.At(fc.x, fc.z);
+            var ripe = new List<Pickable>();
+            foreach (float dx in new[] { -1f, 1f })
+            {
+                Vector3 sp = GatherTest.Ground(fc + rot * new Vector3(dx, 0f, 0f));
+                Object.Instantiate(Crops.CultivatePrefab, sp, Quaternion.identity);
+                ripe.Add(Object.Instantiate(grownPrefab, sp, Quaternion.identity).GetComponent<Pickable>());
+            }
+            TestKit.PutInChest(chest, carrot.Seed, 1);
+            yield return new WaitForSeconds(0.5f);
+            int carrotBefore = GatherTest.CountBase(home, "Carrot");
+            int carrotMade = 0;
+            foreach (var rp in ripe) carrotMade += rp.m_dontScale ? rp.m_amount : Mathf.Max(rp.m_minAmountScaled, Game.instance.ScaleDrops(rp.m_itemPrefab, rp.m_amount));
+            checks.Add($"밭 놓임 (다 자란 것 {(s_field != null ? FarmJob.Ripe(s_field).Count : -1)}/2)", s_field != null && FarmJob.Ripe(s_field).Count == 2);
             int copperAll = 5 + GatherTest.CountBase(home, "Copper");
             Vector3 far = GatherTest.Ground(home + rot * new Vector3(0f, 0f, -80f));
             alarak.TeleportTo(far + Vector3.up * 0.5f, rot, false);
@@ -141,6 +164,14 @@ namespace ValheimHelper
             checks.Add($"발효기 다시 채움 (상자 바탕 {GatherTest.CountBase(home, MeadBase)}, 새로 익는 중 {fage:0}초)",
                 GatherTest.CountBase(home, MeadBase) == 0 && fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode() && fage >= 0 && fage < fermenter.m_fermentationDuration);
 
+            // 밭: 당근이 상자로(땅·짐 아님), 다 자란 것 없어짐, 씨앗 1로 한 자리만 다시 심음
+            int carrotNow = GatherTest.CountBase(home, "Carrot");
+            int sprouts = Sprouts(carrot);
+            TestRunner.Log($"밭: 상자 당근 {carrotNow - carrotBefore}/{carrotMade}, 다 자란 것 {FarmJob.Ripe(s_field).Count}, 새싹 {sprouts}, 상자 씨앗 {GatherTest.CountBase(home, carrot.Seed)}");
+            checks.Add($"밭 당근 → 상자 ({carrotNow - carrotBefore}/{carrotMade}, 짐 {claude.CountItem("Carrot")})", carrotNow - carrotBefore == carrotMade && claude.CountItem("Carrot") == 0);
+            checks.Add($"다 자란 것 거둠 (남은 것 {FarmJob.Ripe(s_field).Count})", FarmJob.Ripe(s_field).Count == 0);
+            checks.Add($"씨앗만큼 다시 심음 (새싹 {sprouts}/1, 상자 씨앗 {GatherTest.CountBase(home, carrot.Seed)}/0)", sprouts == 1 && GatherTest.CountBase(home, carrot.Seed) == 0);
+
             // 같은 아침 다시(불러온 것처럼 저장된 날짜만 보고) → 안 함, 다음 아침 → 함
             claude.GetInventory().AddItem(wood, 5);
             MorningSettle.Snapshot();
@@ -162,6 +193,15 @@ namespace ValheimHelper
             End(player, god, checks, onHeard, heard);
         }
 
+        /// <summary>시험 밭 안의 그 작물 새싹(Plant) 수.</summary>
+        static int Sprouts(Core.Work.Crop crop)
+        {
+            int n = 0;
+            foreach (var p in Object.FindObjectsByType<Plant>(FindObjectsSortMode.None))
+                if (p != null && Utils.GetPrefabName(p.gameObject) == crop.Sapling && s_field.Contains(p.transform.position.x, p.transform.position.z)) n++;
+            return n;
+        }
+
         static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)
         {
             ChatNet.Heard -= onHeard;
@@ -170,6 +210,15 @@ namespace ValheimHelper
             s_smelter = null;
             if (s_fermenter != null) ZNetScene.instance.Destroy(s_fermenter);
             s_fermenter = null;
+            if (s_field != null)
+            {
+                // 시험 밭의 새싹·작물을 지우고 밭 기록도 지움
+                foreach (var p in Object.FindObjectsByType<Plant>(FindObjectsSortMode.None))
+                    if (p != null && s_field.Contains(p.transform.position.x, p.transform.position.z)) ZNetScene.instance.Destroy(p.gameObject);
+                foreach (var p in FarmJob.Ripe(s_field)) ZNetScene.instance.Destroy(p.gameObject);
+                Brain.Farms.Remove(s_field.X, s_field.Z);
+            }
+            s_field = null;
             MachineStep.TestIgnoreRoof = false;
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in heard) TestRunner.Log(h);

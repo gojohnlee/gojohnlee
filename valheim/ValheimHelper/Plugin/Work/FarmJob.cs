@@ -409,13 +409,13 @@ namespace ValheimHelper
         static readonly Collider[] s_hits = new Collider[8];
 
         /// <summary>바닐라 Plant 자라기 판정(codemap "농사")과 같은 것을 미리 본다. 쓸 수 있으면 null, 아니면 이유.</summary>
-        static string Unusable(Vector3 p, Crop crop)
+        internal static string Unusable(Vector3 p, Crop crop, bool space = true)
         {
             if (p.y < ZoneSystem.instance.m_waterLevel + 0.1f) return "물";
             if (!Farm.CanGrow(crop, Scout.BiomeAt(p))) return "바이옴";
             if (Location.IsInsideNoBuildLocation(p)) return "건축 금지";
             if (Physics.Raycast(p, Vector3.up, 100f, RoofMask)) return "지붕";
-            if (Physics.OverlapSphereNonAlloc(p, crop.GrowRadius, s_hits, SpaceMask) > 0) return "자리 참";
+            if (space && Physics.OverlapSphereNonAlloc(p, crop.GrowRadius, s_hits, SpaceMask) > 0) return "자리 참";
             return null;
         }
 
