@@ -5,7 +5,7 @@
 # 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림, 바뀐 것이 없어도 올려 루프가 살아 있는지 보이게). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
 # 백업 때 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리에서 돌려 먼저 답한다.
 # 두 계정 모두 한도(또는 쉼)면 풀리는 시각까지 기다리고,
-# 모니터가 꺼졌으면 바로, 켜져 있으면 자리 비움(입력 없음 10분)일 때 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
+# 모니터가 꺼졌다고 답하면 바로, 아니면(켜짐·답 없음) 자리 비움(입력 없음 10분)일 때 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
 # 쉬기: docs/valheim/loop-pause.txt에 다시 시작할 시각("yyyy-MM-dd HH:mm")을 쓴다(아래 Get-PauseUntil).
 # 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 history.md 맨 위, 가져간 요청은 지움). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
@@ -262,13 +262,15 @@ public static class Mon {
 '@
 } catch { $MonErr = "$_" }
 
-# 기다릴 때 30초마다 부른다. "켜짐"이라고 답한 모니터가 없으면 꺼짐(사용자 결정 2026-10-23: 모니터가 없거나 DDC/CI를 안 하거나
-# 물을 수 없어도 켜 둘 이유가 없음). 꺼짐이 2번(30초 간격) 이어져야 $true → DDC/CI가 잠깐 안 되는 것으로 쓰는 중에 잠들지 않게.
+# 기다릴 때 30초마다 부른다. 모니터가 대기·꺼짐이라고 답했을 때만 꺼짐. 아무도 답 안 하면(-1) 모름 → 입력 없음 10분으로만 잠든다
+# (2026-10-23 밤 고침: 이 PC 모니터는 켜져 쓰는 중에도 DDC/CI에 답이 없어 -1을 꺼짐으로 보면 입력과 상관없이 계속 잠들었음).
+# 꺼짐이 2번(30초 간격) 이어져야 $true → DDC/CI가 잠깐 안 되는 것으로 쓰는 중에 잠들지 않게.
 $MonOff = 0; $MonState = '모름'
 function Test-MonitorOff {
     $p = -1
     if (-not $MonErr) { try { $p = [VH.Mon]::Power() } catch { } }
     if ($p -eq 1) { $script:MonOff = 0; $script:MonState = '켜짐'; return $false }
+    if ($p -lt 0) { $script:MonOff = 0; $script:MonState = '모름(DDC/CI 답 없음)'; return $false }
     $script:MonOff++; $script:MonState = '꺼짐'
     return $script:MonOff -ge 2
 }
@@ -449,7 +451,7 @@ function Limit-Until($tail) {
 }
 
 function Wait-Until($t) {
-    # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 모니터가 꺼졌거나(Test-MonitorOff, 입력과 상관없이) 자리 비움(입력 없음 10분)이면
+    # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 모니터가 꺼졌다고 답했거나(Test-MonitorOff, 입력과 상관없이) 자리 비움(입력 없음 10분)이면
     # 최대 절전(모니터가 켜져 있고 사용자가 쓰는 중이면 그냥 기다림).
     # 잠들 때·못 잠들 때·입력 때문에 안 잠들 때(처음 한 번, 그 뒤 30분마다 마지막 입력 시각)는 status.txt "지금"에 덧붙인다
     # → 밖에서도 보인다(2026-10-23: 사람 없는 07:13에 "10분 안에 입력 있음"으로 안 잠듦, 무슨 입력인지 보려고).
@@ -477,7 +479,7 @@ function Wait-Until($t) {
             while (((Get-Date) - $h).TotalSeconds -lt 120) { Start-Sleep 2 }
             [void][VH.Power]::SetThreadExecutionState($Awake)
             # 잤다 = 2분보다 훨씬 지남(깨우기 예약) 또는 방금 입력(사람이 깨움). 아니면 못 잠든 것 → 조건이 그대로면 다음 바퀴에 다시 시도.
-            if (-not $code -and (((Get-Date) - $h).TotalSeconds -gt 150 -or [VH.Power]::IdleMs() -lt 120000)) { Log '깨어남'; $fails = 0; continue }
+            if (-not $code -and (((Get-Date) - $h).TotalSeconds -gt 150 -or [VH.Power]::IdleMs() -lt 120000)) { Log '깨어남'; $fails = 0; $script:MonOff = 0; continue }   # 꺼짐 셈은 새로(깨자마자 다시 잠들지 않게)
             $fails++
             $err = if ($code) { "shutdown /h 코드 $code" } else { '명령은 됐는데 안 잠듦' }
             Log "최대 절전 실패 ${fails}번째($err) → 2분 뒤 다시 시도"
