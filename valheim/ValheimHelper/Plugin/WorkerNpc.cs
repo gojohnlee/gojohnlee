@@ -637,6 +637,7 @@ namespace ValheimHelper
                 m_lastSaid[key] = Time.time;
             }
             SayText(s_speech.Say(Personality, key, args));
+            WorkerBanter.OnSaid(this, key, args);
         }
 
         public string Line(string key, IDictionary<string, string> args = null) => s_speech.Say(Personality, key, args);

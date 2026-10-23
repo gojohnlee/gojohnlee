@@ -167,4 +167,25 @@ public class BanterTests
         Assert.Equal("회색난쟁이", f.BeatenFoe);
         Assert.Equal("남쪽", f.PitDir);
     }
+    [Fact]
+    public void FactsFromKnowledge()
+    {
+        var k = new Knowledge();
+        var seen = new Dictionary<ZoneXY, Dictionary<string, int>> { [new ZoneXY(-3, 0)] = new Dictionary<string, int> { ["CopperOre"] = 4 } };
+        k.Saw(seen, new List<ZoneXY>(), 10);
+        k.SetBiome(new ZoneXY(0, 0), 1);       // 거점 초원
+        k.SetBiome(new ZoneXY(0, 4), 2);       // 늪 북쪽
+        k.SetBiome(new ZoneXY(0, 9), 2);       // 더 먼 늪
+        k.SetBiome(new ZoneXY(5, 0), 256);     // 바다는 안 고름
+        var f = new BanterFacts();
+        f.FromKnowledge(k, new ZoneXY(0, 0), 1, p => p == "CopperOre" ? "구리 광석" : p, n => 0);
+        Assert.Equal("구리 광석", f.Item);
+        Assert.Equal("서쪽", f.ItemDir);
+        Assert.Equal("늪", f.Biome);
+        Assert.Equal("북쪽", f.BiomeDir);
+        var empty = new BanterFacts();
+        empty.FromKnowledge(new Knowledge(), new ZoneXY(0, 0), 1, null, n => 0);
+        Assert.Null(empty.Item);
+        Assert.Null(empty.Biome);
+    }
 }

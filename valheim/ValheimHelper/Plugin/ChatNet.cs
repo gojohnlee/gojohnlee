@@ -22,6 +22,7 @@ namespace ValheimHelper
             {
                 ZRoutedRpc.instance.Register<string, ZDOID>("VH_Chat", RPC_Chat);
                 ZRoutedRpc.instance.Register<ZDOID, string, string>("VH_Say", RPC_Say);
+                ZRoutedRpc.instance.Register<ZDOID, string, string>("VH_Bubble", RPC_Bubble);
             }
         }
 
@@ -83,6 +84,26 @@ namespace ValheimHelper
             HideTimer(chat) = 0f; // 채팅창을 잠깐 띄운다(바닐라 새 메시지와 같게)
             GameObject go = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(npc) : null;
             if (go != null) chat.SetNpcText(go, Vector3.up * 2.2f, 30f, 7f, "", text, false);
+        }
+
+        /// <summary>시험용: 말풍선만 띄운 말(잡담). Heard에도 같이 온다.</summary>
+        public static event Action<string, string> Bubbled;
+
+        /// <summary>머리 위 말풍선만(채팅창엔 안 씀) — 잡담·반응(사용자 결정 2026-10-23 "잡담").</summary>
+        public static void NpcBubble(WorkerNpc npc, string text)
+        {
+            if (ZRoutedRpc.instance == null || string.IsNullOrEmpty(text)) return;
+            ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, "VH_Bubble", npc.GetZDOID(), npc.NpcName, text);
+        }
+
+        static void RPC_Bubble(long sender, ZDOID npc, string name, string text)
+        {
+            Heard?.Invoke(name, text);
+            Bubbled?.Invoke(name, text);
+            Plugin.Log.LogInfo($"<{name}> (말풍선) {text}");
+            Chat chat = Chat.instance;
+            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(npc) : null;
+            if (chat != null && go != null) chat.SetNpcText(go, Vector3.up * 2.2f, 30f, 7f, "", text, false);
         }
     }
 

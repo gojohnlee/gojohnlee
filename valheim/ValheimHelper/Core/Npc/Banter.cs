@@ -48,6 +48,38 @@ namespace ValheimHelper.Core.Npc
             if (pit != null) PitDir = DirOf(pit.Zone, home);
         }
 
+        /// <summary>
+        /// 지식에서 아는 자원 하나(많이 아는 5가지 중, 가장 가까운 구역 방향)와 거점과 다른 바이옴 하나(바다 빼고, 가장 가까운 구역 방향)를 뽑는다.
+        /// itemName = 프리팹 → 보이는 이름, pick(n) = 0..n-1 중 하나(무작위).
+        /// </summary>
+        public void FromKnowledge(Knowledge k, ZoneXY home, int homeBiome, Func<string, string> itemName, Func<int, int> pick)
+        {
+            if (k == null) return;
+            var items = k.Summary(home);
+            if (items.Count > 0)
+            {
+                var it = items[pick(Math.Min(5, items.Count))];
+                Item = itemName != null ? itemName(it.Item) : it.Item;
+                ItemDir = DirOf(it.Nearest, home);
+            }
+            var nearest = new Dictionary<int, ZoneXY>();
+            foreach (var z in k.Zones)
+            {
+                if (z.Biome == 0 || z.Biome == homeBiome || z.Biome == OceanBit) continue;
+                if (!nearest.TryGetValue(z.Biome, out var best) || z.Zone.DistSq(home) < best.DistSq(home)) nearest[z.Biome] = z.Zone;
+            }
+            if (nearest.Count > 0)
+            {
+                var biomes = new List<int>(nearest.Keys);
+                biomes.Sort();
+                int b = biomes[pick(biomes.Count)];
+                Biome = BiomeNames.Of(b);
+                BiomeDir = DirOf(nearest[b], home);
+            }
+        }
+
+        const int OceanBit = 256;
+
         static string TopKind(PlaceMemory p)
         {
             GroupFoe best = null;
@@ -130,6 +162,9 @@ namespace ValheimHelper.Core.Npc
 
         /// <summary>잡담 때가 됐는지(처음엔 true — Tick이 첫 때를 잡는다). 기억 모으기(BanterFacts)는 이때만 하면 된다.</summary>
         public bool Due(double now) => _next < 0 || now >= _next;
+
+        /// <summary>시험용: 다음 잡담 때를 정한다.</summary>
+        public void SetNext(double at) => _next = at;
 
         /// <summary>
         /// 매 판단마다 부른다. together = 둘 다 쉬며 곁에 있고 플레이어도 근처, alone = 혼자 쉬며 플레이어 근처인 NPC 자리(-1 없음).

@@ -148,6 +148,8 @@ namespace ValheimHelper
         Guard m_guard;
         /// <summary>위험 감지·싸움(구상서 8장). 시험·!상태용.</summary>
         public Guard Guard => m_guard;
+        /// <summary>이번 프레임 싸움·물러나기·도망·미드 중(잡담은 쉼).</summary>
+        public bool GuardBusy { get; private set; }
 
         /// <summary>Guard: 거기는 위험하다 → 하던 일이 그곳을 버린다.</summary>
         public void AvoidHere(Vector3 danger) => Job?.AvoidHere(danger);
@@ -624,7 +626,8 @@ namespace ValheimHelper
                     return true;
                 }
             }
-            if (m_guard.Update(dt)) return true; // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다
+            GuardBusy = m_guard.Update(dt);
+            if (GuardBusy) return true; // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다
             switch (Current)
             {
                 case Mode.Work:
@@ -677,6 +680,15 @@ namespace ValheimHelper
                         break;
                     }
                     m_homeInside = 0f;
+                    if (WorkerBanter.Facing(npc, out Vector3 talkTo))
+                    {
+                        // 잡담 중(몇 초): 멈춰 서로 바라본다. 서 있는 동안은 막힘으로 세지 않는다.
+                        StopMoving();
+                        LookAt(talkTo);
+                        m_stuckTimer = 0f;
+                        m_lastPos = transform.position;
+                        break;
+                    }
                     Vector3 home = npc.Home;
                     float d = Utils.DistanceXZ(home, transform.position);
                     if (d < 2f)
@@ -707,6 +719,7 @@ namespace ValheimHelper
                 }
                 default:
                     StopMoving();
+                    if (WorkerBanter.Facing(npc, out Vector3 faceTo)) LookAt(faceTo);
                     if (Queue.Count > 0 && NextQueued()) break; // 직접 명령 > 묘비 회수(구상서 11장 우선순위)
                     Chores(npc, dt);
                     break;

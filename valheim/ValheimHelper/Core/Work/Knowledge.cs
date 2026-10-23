@@ -58,6 +58,9 @@ namespace ValheimHelper.Core.Work
 
         public ZoneMemory Get(ZoneXY z) => _zones.TryGetValue(z, out var m) ? m : null;
 
+        /// <summary>기억하는 구역 전부(읽기만).</summary>
+        public IEnumerable<ZoneMemory> Zones => _zones.Values;
+
         ZoneMemory GetOrAdd(ZoneXY z)
         {
             if (!_zones.TryGetValue(z, out var m)) { m = new ZoneMemory { Zone = z }; _zones[z] = m; }

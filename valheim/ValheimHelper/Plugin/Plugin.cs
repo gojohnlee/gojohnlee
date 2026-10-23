@@ -37,6 +37,7 @@ namespace ValheimHelper
             Step("vh_crafttest", CraftTest.Register);
             Step("vh_claudetest", ClaudeTest.Register);
             Step("vh_nametest", NameTest.Register);
+            Step("vh_bantertest", BanterTest.Register);
             Step("vh_stocktest", StockTest.Register);
             Step("vh_skilltest", SkillTest.Register);
             Step("vh_refilltest", RefillTest.Register);
@@ -77,6 +78,7 @@ namespace ValheimHelper
             {
                 Minimized.Update(); // 먼저: 다른 오류가 나도 창은 내려 둔다
                 Workers.Update();
+                WorkerBanter.Update();
                 Brain.Update(UnityEngine.Time.deltaTime);
                 Departures.Tick(UnityEngine.Time.deltaTime);
                 ClaudeChat.Tick();
