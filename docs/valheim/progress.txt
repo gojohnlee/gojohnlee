@@ -25,6 +25,8 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
 6. dist DLL도 커밋(방식 A 한 줄 명령이 valheim/dist를 받음).
+클라우드 세션: 환경 네트워크에 nuget.bepinex.dev 허용됨(2026-10-23) → valheim-refs clone 뒤 bash scripts/valheim-build.sh로 빌드 확인 가능(ilspycmd는 dotnet tool install -g ilspycmd).
+  게임 시험은 PC만. 클라우드에서 만든 dist DLL은 커밋하지 않음(시험한 PC 빌드가 기준).
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
