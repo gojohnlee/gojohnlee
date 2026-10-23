@@ -52,11 +52,13 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   가) [끝, 클라우드 — Core Banter(Due·Tick·OnEvent·BanterFacts.FromPlaces) + Speech bt.* 54키×2, dotnet 454] 고르기·대사.
   나) 게임 연결(Plugin): 1초마다 banter.Due(now)면 기억 모아(BanterFacts: Brain.Places → FromPlaces(거점 구역, 적 보이는 이름), 지식에서 아는 자원 하나+방향,
      탐험에서 찾은 바이옴+방향, 밭 작물, 두 NPC 최고 솜씨, EnvMan 밤) Tick(together, alone). together = 두 NPC 다 쉬는 중(Idle·Home, 일·싸움·동행 아님)·서로 15m 안·
-     플레이어 64m 안, alone = 그 조건의 한 명. 줄은 Delay초 뒤 npc.Say(key, args)(말할 NPC가 죽었거나 없으면 건너뜀). Banter 하나를 Workers에 둠(시각은 ZNet 시간).
-     이벤트 OnEvent(subject, 종류, 인자, partnerNear = 상대 30m 안·플레이어 64m 안): died 말한 뒤 Died, 일 포기(cantReach·homeFail·graveFail·계획 실패) Failed,
+     플레이어 30m 안(말풍선 보이는 거리), alone = 그 조건의 한 명. 줄은 Delay초 뒤 말풍선만: 새 RPC "VH_Bubble"(모두에게, 받는 쪽 Chat.SetNpcText(머리 위 2.2m, 30m, 7초) + Heard,
+     채팅창 AddString 안 함 — 기존 VH_Say는 그대로). 말할 NPC가 죽었거나 없으면 건너뜀. 주고받는 동안(마지막 줄 + 2초) 쉬는 두 NPC는 멈춰 서로 바라봄(WorkerAI LookAt).
+     Banter 하나를 Workers에 둠(시각은 ZNet 시간).
+     이벤트 OnEvent(subject, 종류, 인자, partnerNear = 상대 30m 안·플레이어 30m 안): died 말한 뒤 Died, 일 포기(cantReach·homeFail·graveFail·계획 실패) Failed,
      gatherDone n ≥ 20이면 Haul{item,n}, rescue 말 Rescued, skillUp SkillUp{skill,level}, flee Fled{foe}, 습격 끝 Raid, exploreBiomeFound Biome{biome}, 5분 넘게 밖에 있다 귀환 Back.
-     시험 vh_bantertest: 둘이 쉬고 플레이어 곁 → 150초 안에 주고받기(다른 NPC 두 줄), 한 명 죽였다 살림 → 10초 안에 상대 반응, 상대 멀리 → 바로 반응 없고 다음 잡담에 소식,
-     플레이어 70m 밖 → 150초 동안 잡담 없음, 자리표시자 "{" 안 남음.
+     시험 vh_bantertest: 둘이 쉬고 플레이어 곁 → 150초 안에 주고받기(다른 NPC 두 줄, 채팅창엔 없음, 말하는 동안 서로 바라봄 — 앞 방향 각도 30° 안), 한 명 죽였다 살림 → 10초 안에
+     상대 반응, 상대 멀리 → 바로 반응 없고 다음 잡담에 소식, 플레이어 40m 밖 → 150초 동안 잡담 없음, 자리표시자 "{" 안 남음.
 ★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "오류 정리 꼼수") — 오류 빨리 줄이기, 상자 ② 전에. 넣고 그 시험 PASS면 Errors.txt에서 닫음:
   가) E020 일꾼 나무·통나무 피해 없음(피해 들어오는 곳·HitType 디컴파일로) → wood·stone. 나) E018 구덩이 30초 못 나오면 가장 가까운 가장자리 위로(근처도) → pittest(위 E021 가)와 같이).
   다) E012 멀리서 목표 몇 m 앞 막힘 → 그 자리 직접 캠 → coppertest(위 E021 라)와 같이). 라) E015·E016 시험: 생물 있음 환경 불량 뺌(사냥·싸움만 유지), TestKit.WaitFor는 싸움·도망 동안 시간 멈춤(재실행 없음) → npc·escort.
