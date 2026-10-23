@@ -21,10 +21,25 @@ namespace ValheimHelper
         /// <summary>태그 공급자(I-2): 그 상자(ZDO)의 이름이 가리키는 것. null = 태그 없음 = 거점 상자 전부. 기본은 상자 이름 읽기.</summary>
         public static Func<ZDO, ChestTags> TagProvider = ChestTagReader.Read;
 
+        static readonly Dictionary<int, bool> s_chestPrefab = new Dictionary<int, bool>();
+
+        /// <summary>건축물 상자 프리팹인가(Container·Piece·WearNTear — NearBase·ReadAll과 같은 조건, 수레·배 제외). 프리팹마다 한 번만 봄.</summary>
+        static bool IsChest(ZDO zdo)
+        {
+            int hash = zdo.GetPrefab();
+            if (s_chestPrefab.TryGetValue(hash, out bool yes)) return yes;
+            GameObject p = ZNetScene.instance.GetPrefab(hash);
+            yes = p != null && p.GetComponent<Container>() != null && p.GetComponent<Piece>() != null && p.GetComponent<WearNTear>() != null;
+            if (p != null) s_chestPrefab[hash] = yes; // 못 찾은 해시는 기억하지 않음
+            return yes;
+        }
+
         /// <summary>그 역할에 쓸 거점 근처 ZDO들(이름 규칙은 Core ChestNames: 역할 상자가 있으면 그것만, 손대지 않는 상자는 항상 뺌).</summary>
         static List<ZDO> Candidates(Vector3 home, ChestRole role)
         {
-            List<ZDO> all = Senses.Nearby(home, BaseRange);
+            // 상자 프리팹만(나무·바위 등 수천 개는 이름 읽기 전에 뺌 — 회차 109 부하 재기: 한 번 0.8ms → 짐 정리 최악 50ms).
+            // 상자 아닌 것(이름 없음 = 일반)이 섞이면 Select가 "일반 상자 있음"으로 잘못 봐 역할 상자만 있을 때 빈 목록이 됨 — 그것도 막음.
+            List<ZDO> all = Senses.Nearby(home, BaseRange, IsChest);
             var provider = TagProvider;
             if (provider == null) return all;
             var tags = new ChestTags[all.Count];

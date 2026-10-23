@@ -87,6 +87,8 @@ namespace ValheimHelper
             // 2) 상자를 비운다 → 나무를 넣고 돌을 모아 온다
             foreach (var c in new[] { woodChest, stoneChest }) Chests.TryEdit(c, inv => inv.RemoveAll());
             GatherTest.Say($"!{Workers.Name1} 돌 3", null);
+            var frames = new FrameMax();
+            Plugin.Instance.StartCoroutine(frames.Run()); // 짐 정리(물건마다 125m 상자 찾기)·채집 동안 가장 긴 프레임
             t = 0f;
             int stones = 0;
             while (t < 240f)
@@ -101,9 +103,52 @@ namespace ValheimHelper
                 claude != null && claude.CountItem("Wood") == 0 && GatherTest.CountBase(home, "Wood") == carried);
             checks.Add($"상자에 돌 {stones}개 ({t:0}초)", stones >= 3);
             checks.Add("곡괭이는 들고 있음", claude != null && claude.CountItem("PickaxeAntler") == 1);
+            frames.Stop = true;
+            TestRunner.Log($"부하: 짐 정리·채집 {frames.Count}프레임, 가장 긴 {frames.MaxMs:0.0}ms, 평균 {frames.AvgMs:0.0}ms");
+            LogSearchCost(home);
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(0.5f);
             End(player, god, checks, onHeard, heard);
+        }
+
+        /// <summary>프레임 시간 재기(Time.unscaledDeltaTime): 최소화 화면이라 그리기 몫은 작다.</summary>
+        sealed class FrameMax
+        {
+            public bool Stop;
+            public int Count;
+            public float MaxMs, SumMs;
+            public float AvgMs => Count > 0 ? SumMs / Count : 0f;
+
+            public IEnumerator Run()
+            {
+                yield return null; // 시작 프레임(명령 처리) 다음부터
+                while (!Stop)
+                {
+                    float ms = Time.unscaledDeltaTime * 1000f;
+                    Count++;
+                    SumMs += ms;
+                    if (ms > MaxMs) MaxMs = ms;
+                    yield return null;
+                }
+            }
+        }
+
+        /// <summary>거점 125m 상자 찾기 한 번의 값(대화 세션 10-23 부하 검토): Senses.Nearby 25구역·NearBase·ForItem, 짐 정리 최악(물건 32칸 × 2번).</summary>
+        static void LogSearchCost(Vector3 home)
+        {
+            const int n = 50;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            int zdos = 0;
+            for (int i = 0; i < n; i++) zdos = Senses.Nearby(home, Chests.BaseRange).Count;
+            double nearby = sw.Elapsed.TotalMilliseconds / n;
+            sw.Restart();
+            int chests = 0;
+            for (int i = 0; i < n; i++) chests = Chests.NearBase(home).Count;
+            double nearBase = sw.Elapsed.TotalMilliseconds / n;
+            sw.Restart();
+            for (int i = 0; i < n; i++) Chests.ForItem("Wood", home, ChestRole.Mats);
+            double forItem = sw.Elapsed.TotalMilliseconds / n;
+            TestRunner.Log($"부하: 125m ZDO {zdos}개·상자 {chests}개, 한 번에 Nearby {nearby:0.00}ms·NearBase {nearBase:0.00}ms·ForItem {forItem:0.00}ms → 짐 정리 최악(64번) {forItem * 64:0.0}ms");
         }
 
         static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)

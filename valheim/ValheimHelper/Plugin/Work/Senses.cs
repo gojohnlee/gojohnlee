@@ -25,7 +25,10 @@ namespace ValheimHelper
         public static Vector3 ZoneCenter(ZoneXY z) => ZoneSystem.GetZonePos(new Vector2s(z.X, z.Y));
 
         /// <summary>주변 ZDO(구역 3×3, 64m 넘는 range는 5×5) 중 range 안의 것.</summary>
-        public static List<ZDO> Nearby(Vector3 pos, float range)
+        public static List<ZDO> Nearby(Vector3 pos, float range) => Nearby(pos, range, null);
+
+        /// <summary>keep이 참인 것만(거리 재기 전에 거름 — 125m 상자 찾기처럼 수천 개 중 몇 개만 볼 때).</summary>
+        public static List<ZDO> Nearby(Vector3 pos, float range, System.Func<ZDO, bool> keep)
         {
             s_temp.Clear();
             // 둘레 구역 수: 64m 넘는 범위(거점 125m)는 ±2구역까지 봐야 다 들어옴. classic = 네모 전부
@@ -36,6 +39,7 @@ namespace ValheimHelper
             float r2 = range * range;
             foreach (var z in s_temp)
             {
+                if (keep != null && !keep(z)) continue;
                 Vector3 d = z.GetPosition() - pos;
                 d.y = 0f;
                 if (d.sqrMagnitude <= r2) list.Add(z);
