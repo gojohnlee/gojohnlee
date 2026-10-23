@@ -89,7 +89,7 @@ if ($env:VH_RESET -ne '0') {
         Where-Object { $_.Name -like "$Char.fch*" -or $_.Name -like "${Char}_backup*.fch" } | Remove-Item -Force   # 게임 자동 백업도
     Write-Host "시험 월드 $World 원본으로 되돌림, 시험 캐릭터 $Char 새로"
 }
-Set-Content "$plugin\autotest.txt" ("world=$World;char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $Run)   # 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
+Set-Content "$plugin\autotest.txt" ("world=$World;char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $(if ($env:VH_QUICK -eq '1') { 'quick;' } else { '' }) + $Run)   # 약식 시험 $env:VH_QUICK='1'(긴 시험만 짧게, FAIL이면 정식으로 다시). 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
 Write-Host 'Valheim Helper 설치됨'
 
 # BepInEx 콘솔(검은 창)이 게임과 같이 뜨지 않게 끈다(로그는 LogOutput.log에 그대로 남는다). 설정 파일은 첫 실행 뒤에 생긴다.

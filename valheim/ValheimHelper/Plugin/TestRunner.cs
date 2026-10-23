@@ -13,6 +13,8 @@ namespace ValheimHelper
     static class TestRunner
     {
         public static bool Running { get; private set; }
+        /// <summary>약식 시험(사용자 결정 10-23 "시험 정식·약식"): autotest.txt에 "quick"(스크립트 $env:VH_QUICK='1'). 긴 시험이 같은 판정 칸을 짧게 본다. 약식 FAIL이면 정식으로 다시.</summary>
+        public static bool Quick;
         static readonly List<string> s_report = new List<string>();
         static readonly Queue<string> s_autoQueue = new Queue<string>();
         static readonly Dictionary<string, System.Func<IEnumerator>> s_tests = new Dictionary<string, System.Func<IEnumerator>>();
@@ -161,6 +163,7 @@ namespace ValheimHelper
                 if (c.StartsWith("world=")) AutoStart.World = c.Substring(6).Trim(); // 메인 메뉴에서 이 월드로 자동 입장
                 else if (c.StartsWith("char=")) AutoStart.Character = c.Substring(5).Trim().ToLowerInvariant(); // 시험 전용 캐릭터
                 else if (c == "min") Minimized.On = true; // 창 최소화·소리 끔(시험 동안 다른 게임)
+                else if (c == "quick") Quick = true;
                 else if (c.Length > 0) s_autoQueue.Enqueue(c);
             }
             if (s_autoQueue.Count == 0) return;

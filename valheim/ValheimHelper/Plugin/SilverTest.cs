@@ -119,6 +119,13 @@ namespace ValheimHelper
             var hashes = new HashSet<int> { vein.name.GetStableHashCode() };
             var des = vein.GetComponent<Destructible>();
             if (des != null && des.m_spawnWhenDestroyed != null) hashes.Add(des.m_spawnWhenDestroyed.name.GetStableHashCode());
+            if (TestRunner.Quick)
+            {
+                // 약식: 광맥을 미리 깨고 맨 밑 부위 몇 개만 남긴다(같은 칸 — 남김없이·맨 밑 조각·나옴·개수 보존 — 을 짧게). 미리 깬 은은 치움.
+                yield return PreBreak(buried, g1, hashes, ore, 6);
+                checks.Add($"약식: 미리 깨고 맨 밑 부위만 남김(광맥 {Fragments(g1, hashes, ref s_unused)}개·부위 {s_parts}개)", s_parts > 0);
+                if (s_parts == 0) yield break;
+            }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked;
             int carried0 = w.Ragnar.CountItem(ore), base0 = GatherTest.CountBase(w.Home, ore);
             GatherJob.TestIgnorePlayers = true;
@@ -153,6 +160,49 @@ namespace ValheimHelper
         }
 
         static int s_parts;
+        static float s_unused;
+
+        /// <summary>약식 준비: 통짜 광맥(Destructible)을 깨 조각(MineRock5)으로 만들고, 바닥이 가장 낮은 keep개를 뺀 부위를 큰 곡괭이 피해로 깬 뒤 떨어진 광석을 치운다.</summary>
+        static IEnumerator PreBreak(GameObject vein, Vector3 at, HashSet<int> hashes, string ore, int keep)
+        {
+            HitData Big(Vector3 p, Collider c) => new HitData { m_damage = new HitData.DamageTypes { m_pickaxe = 100000f }, m_toolTier = 100, m_point = p, m_dir = Vector3.down, m_hitCollider = c };
+            if (vein != null) vein.GetComponent<Destructible>()?.Damage(Big(vein.transform.position, null));
+            yield return new WaitForSeconds(1f);
+            int broke = 0;
+            foreach (var zdo in Senses.Nearby(at, 10f))
+            {
+                if (!hashes.Contains(zdo.GetPrefab())) continue;
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                var rock = v != null ? v.GetComponent<MineRock5>() : null;
+                if (rock == null) continue;
+                var cols = new List<Collider>();
+                foreach (var col in v.GetComponentsInChildren<Collider>())
+                {
+                    Transform up = col.transform.parent; // 부위 충돌체만(MineRock5.Damage와 같은 거름)
+                    if (!col.isTrigger && col.enabled && (up == rock.transform || (up != null && up.parent == rock.transform))) cols.Add(col);
+                }
+                cols.Sort((a, b) => b.bounds.min.y.CompareTo(a.bounds.min.y)); // 위 → 아래
+                // 받침 검사를 끄고 깬다: 땅 표면에 닿은 윗 부위가 없어지면 묻힌 아래 부위가 받침 없음으로 한꺼번에 부서진다(첫 실행에서 부위 다 사라짐).
+                // 일꾼이 남은 부위를 치면 받침 검사가 다시 돌아 남은 것이 같이 부서질 수 있다(땅속에 은이 떨어짐 = 맨 밑 줍기 칸).
+                rock.m_supportCheck = false;
+                for (int i = 0; i < cols.Count - keep; i++)
+                {
+                    rock.Damage(Big(cols[i].bounds.center, cols[i]));
+                    broke++;
+                    if (v == null || !v.IsValid()) break;
+                }
+                if (rock != null) rock.m_supportCheck = true;
+            }
+            yield return new WaitForSeconds(2f);
+            int cleared = 0;
+            foreach (var item in Object.FindObjectsByType<ItemDrop>(FindObjectsSortMode.None))
+                if (item != null && Utils.GetPrefabName(item.gameObject) == ore && Utils.DistanceXZ(item.transform.position, at) < 12f)
+                {
+                    ZNetScene.instance.Destroy(item.gameObject);
+                    cleared++;
+                }
+            TestRunner.Log($"약식 준비: 부위 {broke}개 미리 깸, 떨어진 은 {cleared}개 치움");
+        }
 
         /// <summary>at 10m 안 은 광맥(통짜·깨진 조각) ZDO 수(s_parts = 불러온 것의 남은 부위 충돌체 수). deepest = 불러온 조각 충돌체 바닥이 원래 땅에서 가장 깊은 정도(m, 커지기만).</summary>
         static int Fragments(Vector3 at, HashSet<int> hashes, ref float deepest)
