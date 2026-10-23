@@ -37,6 +37,10 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
   시험 월드 깃발 125m 안에 원래 있던 상자·설비가 새로 잡혀 수가 어긋나면 범위 탓이 아니라 시험 자리 탓 — 그 시험만 고침. 45m·160m 자리 땅이 안 맞으면 다른 방향으로 옮김.
+★ [대화 세션 10-23 다른 모드 호환 — 사용자가 모드를 깔면] 사용자가 "상자 동시 열기"·"제작대에서 상자 재료로 바로 제작" 모드를 같이 씀(이름 확인 중 — 흔한 것 MultiUserChest·AzuCraftyBoxes,
+  클라우드에선 소스·Thunderstore 둘 다 막혀 못 읽음). 우리 쪽 의존: 상자 "사용 중"(Container.IsInUse·ZDO s_inUse — Chests.InUse, 15곳)이 참이면 안 건드림 → TryEdit가 SetOwner 후 직접 고침.
+  할 일: 1) 사용자 plugins 폴더의 그 DLL을 ilspycmd로 읽어 사용 중 표시·소유권·남의 상자 고침 처리 확인(codemap 확인된 사실에) 2) 사용 중 표시가 안 서면 Chests.InUse에 그 모드 표시를 더함
+  3) 그 모드를 켠 채 bag·base·craft·farm·settle·peer 시험 + 플레이어가 상자 연 채 일꾼이 넣기(물건 총량 같음). 시험 기본은 우리 모드만(게임 폴더 BepInEx에 다른 모드가 섞이면 결과가 달라짐).
 ★ [대화 세션 10-23 부하 검토 — 위 125m 검증 다음에] 거점 125m 찾기(Senses.Nearby 25구역)가 한 프레임에 여러 번·매 프레임 도는 곳: Unload 물건마다 ChestFor(→ForItem→NearBase, 한 상자에 물건 수×2번),
   CraftStep 상자가 열려 있는 동안(손님이 열면 최대 30초) 매 프레임 Needs·Have·NearBase, PlanJob 5초마다 FermentReady(125m OverlapSphere). 먼저 잼: 큰 거점에서 짐 정리·제작 때
   가장 긴 프레임(ms)을 diag에 → 눈에 띄면(예 16ms 넘음) Chests.Candidates에 같은 프레임·같은 깃발이면 한 번만 찾는 캐시(시험이 상자를 놓은 프레임에 바로 세는 곳 주의). 안 띄면 안 고침.
