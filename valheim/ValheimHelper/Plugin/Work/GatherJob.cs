@@ -973,10 +973,9 @@ namespace ValheimHelper
                 // (바닐라 Attack은 플레이어 도구만 닳게 해서 직접 한다. 구상서 4장: 내구도는 바닐라처럼).
                 m_swings++;
                 ItemDrop.ItemData tool = m_npc.GetCurrentWeapon();
-                if (tool != null && tool.m_shared.m_useDurability)
+                if (tool != null && tool.m_shared.m_useDurability && WorkerNpc.WearTool(tool, tool.m_shared.m_useDurabilityDrain))
                 {
-                    tool.m_durability = Mathf.Max(0f, tool.m_durability - tool.m_shared.m_useDurabilityDrain);
-                    if (tool.m_durability <= 0f) { m_npc.UnequipItem(tool); m_npc.Say("toolBroke", Args()); }
+                    m_npc.UnequipItem(tool); m_npc.Say("toolBroke", Args()); // 최저 1: 일에는 부서진 것, 경사로 깎기에는 씀
                 }
                 // 대상 체력이 줄었으면(HealthMark) 진척. 땅을 팠으면 그것도 진척.
                 string mark = HealthMark(zdo, view);

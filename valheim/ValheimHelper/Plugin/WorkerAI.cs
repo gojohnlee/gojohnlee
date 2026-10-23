@@ -424,7 +424,7 @@ namespace ValheimHelper
         bool StartCarve(Vector3 pos, Vector3 toward)
         {
             if (TestNoCarve || Time.time < m_noCarveUntil || toward.sqrMagnitude < 0.01f) return false;
-            if (WorkerNpc.BestTool(((WorkerNpc)m_character).GetInventory(), ToolKind.Pickaxe) == null) return false;
+            if (WorkerNpc.BestTool(((WorkerNpc)m_character).GetInventory(), ToolKind.Pickaxe, true) == null) return false;
             double[] rise = Rise8(pos, toward);
             if (!Climb.IsPit(rise)) return false;
             int k = Climb.CarveDir(rise);
@@ -463,7 +463,7 @@ namespace ValheimHelper
                 }
                 return true;
             }
-            if (!npc.HoldTool(ToolKind.Pickaxe)) { m_carving = false; return false; }
+            if (!npc.HoldTool(ToolKind.Pickaxe, true)) { m_carving = false; return false; }
             StopMoving();
             Vector3 aim = pos + m_carveDir * 1.2f + Vector3.up * 1f;
             LookAt(aim);

@@ -9,7 +9,7 @@ namespace ValheimHelper
     /// </summary>
     public static class Gear
     {
-        static bool Broken(ItemDrop.ItemData it) => it.m_shared.m_useDurability && it.m_durability <= 0f;
+        static bool Broken(ItemDrop.ItemData it) => WorkerNpc.WornOut(it);
 
         /// <summary>싸울 때 드는 근접 무기(곡괭이·활·지팡이 제외). 도끼도 무기다.</summary>
         public static bool IsMelee(ItemDrop.ItemData it)

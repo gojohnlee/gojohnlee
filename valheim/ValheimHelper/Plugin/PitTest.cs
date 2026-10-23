@@ -132,6 +132,11 @@ namespace ValheimHelper
                     // 바닥에 내려놓는다(구덩이 위에서 떨어뜨리면 좁은 구덩이 벽에 끼었다가 튕겨 나감, 0.3.8)
                     claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
                     yield return new WaitForSeconds(1.5f);
+                    // E021 가): 다 닳은 곡괭이(내구도 1)로도 경사로를 깎고, 깎기는 내구도를 안 씀
+                    ItemDrop.ItemData worn = null;
+                    if (CarveOnly[i])
+                        foreach (var it in claude.GetInventory().GetAllItems())
+                            if (WorkerNpc.IsTool(it, ToolKind.Pickaxe)) { it.m_durability = WorkerNpc.WornFloor; worn = it; }
                     int j0 = claude.Ai.Jumps, c0 = claude.Ai.CarveSwings, d0 = NpcPatches.NoDig.Dug;
                     var walk = new ExploreTest.WalkJob(claude.Ai, home);
                     claude.Ai.StartJob(walk);
@@ -166,6 +171,7 @@ namespace ValheimHelper
                     if (i == 0) checks.Add($"얕은 구덩이({depth:0.0}m)는 점프까지로 나옴", outBy == Phases[0] || outBy == Phases[1]);
                     else if (CarveOnly[i]) checks.Add($"점프 없이 경사로를 깎아 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy == Phases[2] && claude.Ai.CarveSwings > c0);
                     else checks.Add($"{kind} 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy != null);
+                    if (worn != null) { checks.Add($"다 닳은 곡괭이(내구도 1)로 깎음, 내구도 그대로({worn.m_durability:0.0})", worn.m_durability == WorkerNpc.WornFloor && claude.GetInventory().ContainsItem(worn)); worn.m_durability = worn.GetMaxDurability(); }
                     yield return new WaitForSeconds(1f);
                     claude.Ai.GoHome(false);
                     yield return new WaitForSeconds(1f);

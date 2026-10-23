@@ -441,13 +441,13 @@ namespace ValheimHelper
             }
         }
 
-        /// <summary>그 종류의 도구 중 가장 좋은 것(도구 단계 → 해당 피해 순).</summary>
-        public static ItemDrop.ItemData BestTool(Inventory inv, ToolKind kind)
+        /// <summary>그 종류의 도구 중 가장 좋은 것(도구 단계 → 해당 피해 순, 다 닳은 것 빼고 — carve면 내구도 1도 씀).</summary>
+        public static ItemDrop.ItemData BestTool(Inventory inv, ToolKind kind, bool carve = false)
         {
             ItemDrop.ItemData best = null;
             foreach (var it in inv.GetAllItems())
             {
-                if (!IsTool(it, kind) || it.m_durability <= 0f && it.m_shared.m_useDurability) continue;
+                if (!IsTool(it, kind) || (carve ? Gone(it) : WornOut(it))) continue;
                 if (best == null || Score(it, kind) > Score(best, kind)) best = it;
             }
             return best;
@@ -463,12 +463,29 @@ namespace ValheimHelper
             return it.m_shared.m_toolTier * 1000f + (kind == ToolKind.Axe ? d.m_chop : d.m_pickaxe);
         }
 
-        /// <summary>도구를 손에 든다(이미 들고 있으면 그대로).</summary>
-        public bool HoldTool(ToolKind kind)
+        /// <summary>
+        /// 일꾼 연장 내구도는 1 밑으로 안 내려간다(사용자 결정 10-23 "묻힌 광맥 채굴·구덩이") — 1 이하면 일에는 부서진 것(수리 대상).
+        /// 경사로 깎기(carve)는 0보다 크면 쓴다(깎기는 내구도를 안 씀) → 곡괭이가 다 닳아도 구덩이에서 나온다.
+        /// </summary>
+        public const float WornFloor = 1f;
+        public static bool WornOut(ItemDrop.ItemData it) => it.m_shared.m_useDurability && it.m_durability <= WornFloor;
+        static bool Gone(ItemDrop.ItemData it) => it.m_shared.m_useDurability && it.m_durability <= 0f;
+
+        /// <summary>쓴 만큼 닳게 한다(최저 1). 이번에 일에 못 쓰게 됐으면 true.</summary>
+        public static bool WearTool(ItemDrop.ItemData it, float drain)
+        {
+            if (!it.m_shared.m_useDurability || it.m_durability <= 0f) return false;
+            bool was = WornOut(it);
+            it.m_durability = Mathf.Max(Mathf.Min(WornFloor, it.m_durability), it.m_durability - drain);
+            return !was && WornOut(it);
+        }
+
+        /// <summary>도구를 손에 든다(이미 들고 있으면 그대로). carve면 내구도 1인 것도(경사로 깎기).</summary>
+        public bool HoldTool(ToolKind kind, bool carve = false)
         {
             ItemDrop.ItemData cur = GetCurrentWeapon();
-            if (cur != null && IsTool(cur, kind) && !(cur.m_shared.m_useDurability && cur.m_durability <= 0f)) return true;
-            ItemDrop.ItemData best = BestTool(m_inventory, kind);
+            if (cur != null && IsTool(cur, kind) && !(carve ? Gone(cur) : WornOut(cur))) return true;
+            ItemDrop.ItemData best = BestTool(m_inventory, kind, carve);
             return best != null && EquipItem(best);
         }
 
