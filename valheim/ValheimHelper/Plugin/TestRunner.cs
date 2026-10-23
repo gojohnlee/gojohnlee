@@ -164,6 +164,7 @@ namespace ValheimHelper
                 else if (c.StartsWith("char=")) AutoStart.Character = c.Substring(5).Trim().ToLowerInvariant(); // 시험 전용 캐릭터
                 else if (c == "min") Minimized.On = true; // 창 최소화·소리 끔(시험 동안 다른 게임)
                 else if (c == "quick") Quick = true;
+                else if (c.StartsWith("biome=")) TestKit.SetRunBiome(c.Substring(6).Trim()); // 늪 회귀: 그 바이옴 평지에서 시험
                 else if (c.Length > 0) s_autoQueue.Enqueue(c);
             }
             if (s_autoQueue.Count == 0) return;
@@ -192,6 +193,7 @@ namespace ValheimHelper
             s_autoWait += Time.deltaTime;
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
             if (!s_leftNoBuild) { s_leftNoBuild = true; if (TestKit.LeaveNoBuild(player)) { s_autoWait = -3f; return; } } // 시작 제단 밖으로 한 번
+            if (TestKit.GoSite(player, s_autoQueue.Peek())) { s_autoWait = -3f; return; } // 늪 회귀면 늪 평지로(원래 자리 시험은 돌아옴)
             string cmd = s_autoQueue.Dequeue();
             if (s_halt != null && Begin(null, cmd))
             {

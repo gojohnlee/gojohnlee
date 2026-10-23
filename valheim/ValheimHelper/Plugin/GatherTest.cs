@@ -424,14 +424,14 @@ namespace ValheimHelper
         {
             float wl = ZoneSystem.instance.m_waterLevel;
             Vector3 flag = p + rot * Vector3.forward * 4f;
-            if (!real && WorldGenerator.instance.GetBiome(flag) != Heightmap.Biome.Meadows) return false;
+            if (!real && WorldGenerator.instance.GetBiome(flag) != TestKit.SiteBiome) return false; // 늪 회귀면 늪
             foreach (var o in SiteSpots)
             {
                 Vector3 s = flag + rot * o;
                 float h;
                 if (real) { if (!ZoneSystem.instance.GetGroundHeight(s, out h)) return false; }
                 else h = WorldGenerator.instance.GetHeight(s.x, s.z);
-                if (h < wl + (real ? 1f : 2f)) return false;
+                if (h < wl + (real ? 1f : TestKit.DryMin)) return false;
             }
             return true;
         }

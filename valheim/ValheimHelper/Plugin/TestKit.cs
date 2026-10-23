@@ -57,6 +57,100 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>
+        /// 늪 회귀(사용자 결정 2026-10-23 "늪 회귀로 오류 정리"): autotest.txt "biome=swamp"(스크립트 $env:VH_BIOME). None이면 예전처럼 제자리.
+        /// </summary>
+        public static Heightmap.Biome RunBiome = Heightmap.Biome.None;
+        /// <summary>시험이 스스로 자리를 찾을 때 바라는 바이옴(보통 초원, 늪 회귀면 그 바이옴).</summary>
+        public static Heightmap.Biome SiteBiome => RunBiome == Heightmap.Biome.None ? Heightmap.Biome.Meadows : RunBiome;
+        /// <summary>시험 자리 찾기의 마른 땅 여유(물 위 m, 생성 높이). 늪은 물보다 1m 높은 땅도 드물어 0.5m(회차 138).</summary>
+        public static float DryMin => RunBiome == Heightmap.Biome.Swamp ? 0.5f : 2f;
+        /// <summary>
+        /// 늪 회귀에서도 원래 자리(제단 옆 초원)에서 도는 시험: 밭 작물은 늪에서 안 자람(밭·아침 정산),
+        /// 구덩이 시험은 물 높이 아래로 판 구덩이가 물에 잠겨 마른 구덩이 탈출을 못 봄(자리 찾기도 초원 고정).
+        /// </summary>
+        static readonly HashSet<string> s_stayHome = new HashSet<string> { "vh_farmtest", "vh_settletest", "vh_pittest" };
+        static Vector3? s_origin, s_biomeSpot;
+
+        public static void SetRunBiome(string name)
+        {
+            try { RunBiome = (Heightmap.Biome)System.Enum.Parse(typeof(Heightmap.Biome), name, true); }
+            catch (System.ArgumentException) { TestRunner.Halt($"모르는 바이옴 {name}"); }
+        }
+
+        /// <summary>
+        /// 자동 시험마다 시작 전에(TestRunner): RunBiome이 있으면 그 바이옴 마른 평지(처음 한 번 찾음)로, 원래 자리 시험(s_stayHome)이면 처음 자리로 옮긴다.
+        /// 옮겼으면 true(텔레포트가 끝날 때까지 기다린다). 못 찾으면 남은 시험은 환경 불량.
+        /// </summary>
+        public static bool GoSite(Player player, string test)
+        {
+            if (RunBiome == Heightmap.Biome.None) return false;
+            if (s_origin == null)
+            {
+                s_origin = player.transform.position;
+                s_biomeSpot = FindBiomeSpot(s_origin.Value, RunBiome);
+                if (s_biomeSpot == null && RunBiome == Heightmap.Biome.Swamp)
+                {
+                    // 기본안(회차 138, decisions "늪 회귀로 오류 정리"의 "더 험한 끝낸 바이옴"): 늪에 마른 땅이 없으면 검은숲(언덕·바위·나무·회색난쟁이)
+                    Plugin.Log.LogWarning("늪에 마른 땅이 없어 검은숲에서 회귀");
+                    RunBiome = Heightmap.Biome.BlackForest;
+                    s_biomeSpot = FindBiomeSpot(s_origin.Value, RunBiome);
+                }
+                if (s_biomeSpot == null) { TestRunner.Halt($"{RunBiome} 마른 평지를 못 찾음"); return false; }
+                Plugin.Log.LogInfo($"{RunBiome} 회귀: 시험 자리 {s_biomeSpot.Value} (처음 자리에서 {Utils.DistanceXZ(s_origin.Value, s_biomeSpot.Value):0}m)");
+            }
+            if (s_biomeSpot == null) return false;
+            Vector3 want = s_stayHome.Contains(test) ? s_origin.Value : s_biomeSpot.Value;
+            if (Utils.DistanceXZ(player.transform.position, want) < 30f) return false;
+            player.TeleportTo(want + Vector3.up, player.transform.rotation, true);
+            Plugin.Log.LogInfo($"{test}: {(want == s_origin.Value ? "원래 자리(바이옴 자원·물 문제)" : RunBiome + " 시험 자리")}로 옮김");
+            return true;
+        }
+
+        /// <summary>
+        /// from에서 100m~5km를 바깥으로 돌며 가운데가 그 바이옴이고 15m 둘레가 평평한(3m 안) 자리 중, 가운데·둘레 가장 낮은 곳이 물보다 1m 넘는 첫 자리
+        /// — 없으면 0.5m 넘는 것 중 가장 높은 자리(회차 138: 시험 월드 늪은 안쪽 표본 8829곳 중 가장 높아도 물 위 3.4m, 평평한 곳은 0m 이하). 생성 높이라 안 불러온 곳도 본다.
+        /// </summary>
+        static Vector3? FindBiomeSpot(Vector3 from, Heightmap.Biome biome)
+        {
+            WorldGenerator wg = WorldGenerator.instance;
+            float wl = ZoneSystem.instance.m_waterLevel;
+            Vector3? best = null;
+            float bestLow = 0.5f;
+            int seen = 0;
+            float maxH = float.MinValue, maxLow = float.MinValue; // 못 찾을 때 볼 통계: 표본 가운데 최고·평평한 자리 최저의 최고(물 위 m)
+            for (float r = 100f; r <= 5000f; r += 25f)
+            {
+                int n = Mathf.Max(32, Mathf.CeilToInt(2f * Mathf.PI * r / 25f)); // 25m 간격(회차 138: 50m·32방향은 늪 표본 131곳뿐)
+                for (int d = 0; d < n; d++)
+                {
+                    float a = d * 2f * Mathf.PI / n;
+                    Vector3 p = from + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    if (wg.GetBiome(p) != biome) continue;
+                    seen++;
+                    float h = wg.GetHeight(p.x, p.z), low = h - wl;
+                    maxH = Mathf.Max(maxH, low);
+                    bool ok = true;
+                    for (int k = 0; k < 8 && ok; k++)
+                    {
+                        Vector3 dir = new Vector3(Mathf.Cos(k * Mathf.PI / 4f), 0f, Mathf.Sin(k * Mathf.PI / 4f));
+                        Vector3 q = p + dir * 15f;
+                        float hk = wg.GetHeight(q.x, q.z);
+                        low = Mathf.Min(low, hk - wl);
+                        ok = Mathf.Abs(hk - h) < 3f; // 회차 138: 늪 안쪽은 물보다 1m 높은 평지가 없어 가장자리(둘레는 다른 바이옴이어도 됨)·3m 안까지 봄
+                    }
+                    if (!ok) continue;
+                    maxLow = Mathf.Max(maxLow, low);
+                    if (low <= bestLow || NearNoBuild(p, 45f)) continue;
+                    best = new Vector3(p.x, h, p.z);
+                    bestLow = low;
+                    if (low >= 1f) { r = float.MaxValue; break; } // 충분히 마른 첫 자리면 그만 찾음
+                }
+            }
+            Plugin.Log.LogInfo($"{biome} 자리 찾기: 그 바이옴 표본 {seen}곳(가운데 최고 {maxH:0.0}m·평평한 곳 최저의 최고 {maxLow:0.0}m), 고른 자리 물 위 최저 {(best == null ? "-" : bestLow.ToString("0.0"))}m");
+            return best;
+        }
+
         public sealed class World
         {
             public Player Player;
