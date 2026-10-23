@@ -28,6 +28,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 장비 수리             Plugin/Work/Repair.cs(바닐라 CanRepair 규칙: 레시피 수리대·제작대 이름·레벨·지붕/불, StationFor·Next·At) + Core/Npc/RepairRule.cs(반 넘게 닳으면). Prep이 입기 전에 들름, Unload는 고칠 수 있는 닳은 장비를 지님. 시험 RepairTest.cs(vh_repairtest)
 묘비 회수              Plugin/Work/GraveJob.cs
 짐 정리               Plugin/Work/Unload.cs(들고 다닐 것 말고 상자에 넣기: 묘비 회수 뒤, 채집 나갈 때마다)
+밤사이 정산(R3)         Core/Work/NightSettle.cs(넘김 시작·끝 Step, Due 한 아침 한 번, AtBase 30m) + Plugin/Work/MorningSettle.cs(Plugin.Update에서 Tick, Snapshot·SettleAll·Settle, NPC ZDO vh_settled, Unload.Instant로 짐 → 상자) · 시험 Plugin/SettleTest.cs(vh_settletest)
 상자                  Plugin/Work/Chests.cs(I-1: ChestRole Any/Gear/Food/Mats 인자·TagProvider(ZDO→ChestTags, 기본 ChestTagReader.Read, null=전부)·Candidates(역할별 거리 안 ZDO 고르기). RoleFor(물건)=Unload 역할. 지정 없음: 거점 20m 안 상자 전부 NearBase·First·CountAll, 넣기 ForItem = 같은 물건 → 빈자리. !상자는 "다 씀" 대답만)
 상자 이름(I-2)        Core/Work/ChestNames.cs(Parse 이름→ChestTags, Select 역할 상자 있으면 그것만·없으면 일반·손대지 않음 제외)·Plugin/Work/ChestTagReader.cs(ZDO 문자열 "ChestName" = CustomChestName 모드의 이름) · Tests/ChestNamesTests
 스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
@@ -68,6 +69,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 지식·탐험 Senses·Scout·MapSense·ExploreJob·Knowledge  vh_exploretest;vh_woodtest
 준비·장비 Prep·Gear·Meals  vh_preptest;vh_bagtest;vh_resisttest · 활 챙기기 → vh_bowtest · 수리 Repair → vh_repairtest
 짐·상자 Unload·Chests·ChestNames  vh_bagtest;vh_nametest;vh_basetest;vh_woodtest
+밤사이 정산 NightSettle·MorningSettle  dotnet test;vh_settletest;vh_bagtest
 묘비 GraveJob             vh_deathtest
 제작 CraftPlan·PlanRunner·PlanJob·CraftStep  dotnet test + vh_crafttest;vh_settest
 설비 MachineStep(제련·발효·조리)  vh_crafttest;vh_basetest · 조리대 → vh_cooktest
@@ -78,7 +80,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 패치 NpcPatches·Buildings  vh_preptest(갑옷);vh_stonetest;vh_coppertest(NoDig);vh_fighttest
 시험 틀 TestRunner·TestKit·AutoStart·valheim-test.ps1  기본 묶음 + vh_basetest + VH_SOLO=1 단독 한 번
 
-ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기)
+ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기) vh_settled(밤사이 정산 마지막 아침 날짜)
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
@@ -162,3 +164,4 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   일꾼(WorkerNpc : Humanoid, peer 아님)은 목록에 안 들어감 → 플레이어만 누우면 밤이 넘어감. 모드는 m_characterID·s_inBed를 안 건드림(바꾸지 말 것).
   잠자기 넘김 = EnvMan.SkipToMorning: 서버가 12초(실제 시간) 동안 ZNet 시간만 빨리 감음(m_timeSkipSpeed = 남은 시간/12). Unity 시간은 그대로라 일꾼·적은 그 12초 동안 평소처럼 움직임.
   ZNet 시간 쓰는 것(제련·발효·작물·모드의 Departures 쉼·ReadyWhen.Morning)은 건너뛰고, dt로 재는 일 시간 제한은 영향 없음.
+  넘김 끝: EnvMan.UpdateTimeSkip(서버만)이 m_skipToTime(= 다음 날 아침 시작, day*길이+0.15*길이)에 닿으면 m_skipTime=false → IsTimeSkipping() 참→거짓이 끝 순간, 그때 GetDay() = 새 아침 날짜. 회차 103 확인(vh_settletest 넘김 약 12초).
