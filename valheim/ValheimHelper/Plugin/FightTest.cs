@@ -102,6 +102,36 @@ namespace ValheimHelper
             claude.Heal(1000f, false);
             yield return new WaitForSeconds(2f);
 
+            // D) 나무 하는 중 회색난쟁이 → 싸움 → 같은 일 이어서(오류 정리 꼼수 라-2). 상자가 없으니 들고 있는 나무로 본다.
+            claude.Ai.StartJob(new GatherJob(claude, "Wood", 30, ResourceCatalog.WaysFor("Wood")));
+            t = 0f;
+            while (t < 120f && claude.CountItem("Wood") < 1 && claude.Ai.Job is GatherJob) { yield return new WaitForSeconds(0.5f); t += 0.5f; }
+            checks.Add($"나무 하는 중 ({claude.CountItem("Wood")}개, {t:0}초, {claude.Ai.Job?.StepName})", claude.Ai.Job is GatherJob && claude.CountItem("Wood") >= 1);
+            if (claude.Ai.Job is GatherJob job)
+            {
+                Character d = Spawn(gd, claude.transform.position + claude.transform.forward * 8f, spawned);
+                bool foughtD = false;
+                t = 0f;
+                while (t < 45f && d != null && !d.IsDead())
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    t += 0.5f;
+                    if (claude.Ai.Guard != null && claude.Ai.Guard.StateName == "Fight") foughtD = true;
+                }
+                if (d != null && !d.IsDead()) Kill(d);
+                checks.Add($"일하다 회색난쟁이와 싸움 ({t:0}초)", foughtD);
+                int wood = claude.CountItem("Wood") + job.Delivered;
+                t = 0f;
+                while (t < 90f && claude.Ai.Job == job && claude.CountItem("Wood") + job.Delivered <= wood) { yield return new WaitForSeconds(0.5f); t += 0.5f; }
+                checks.Add($"싸운 뒤 같은 나무 일 이어서 ({wood} → {claude.CountItem("Wood") + job.Delivered}개, {t:0}초, {claude.Ai.Current}/{claude.Ai.Job?.StepName})",
+                    claude.Ai.Job == job && claude.CountItem("Wood") + job.Delivered > wood);
+                claude.Ai.Interrupt();
+                claude.Ai.Queue.Clear();
+                claude.Ai.GoHome(false);
+                claude.Heal(1000f, false);
+                yield return new WaitForSeconds(1f);
+            }
+
             // B) 트롤 → 도망
             Vector3 trollPos = claude.transform.position + rot * new Vector3(0f, 0f, 20f);
             Character b = Spawn(troll, trollPos, spawned);

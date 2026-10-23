@@ -122,6 +122,45 @@ namespace ValheimHelper
             checks.Add($"나무는 거점 상자에 ({wood})", wood == 7);
             checks.Add($"예비 누더기는 거점 상자로 ({rags})", rags == 0 && claude.CountItem("ArmorRagsChest") == 0);
             checks.Add($"도끼는 들고 있음", claude.CountItem("AxeFlint") == 1);
+
+            // 5) 일하다 죽음 → 묘비 회수 → 하던 일 이어서(오류 정리 꼼수 라-2)
+            int wood1 = GatherTest.CountBase(home, "Wood");
+            GatherTest.Say($"!{Workers.Name1} 나무 6", null);
+            t = 0f;
+            while (t < 120f && claude != null && claude.CountItem("Wood") < 2) { yield return new WaitForSeconds(1f); t += 1f; }
+            bool working = claude != null && claude.Ai.Job is GatherJob wj && wj.Item == "Wood";
+            checks.Add($"나무 6 하다가 나무 들고 있음 ({(claude ? claude.CountItem("Wood") : -1)}개, {t:0}초)", working && claude.CountItem("Wood") >= 2);
+            if (working)
+            {
+                int graves0 = claude.Graves().Count;
+                var kill = new HitData { m_point = claude.GetCenterPoint(), m_dir = Vector3.forward };
+                kill.m_damage.m_damage = 9999f;
+                claude.Damage(kill);
+                yield return new WaitForSeconds(1.5f);
+                claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
+                bool queued = claude != null && claude.Ai.Queue.Count > 0 && claude.Ai.Job == null;
+                checks.Add($"죽은 뒤 하던 일은 대기열에 ({(claude ? claude.Ai.Queue.Count : -1)}칸, 묘비 {(claude ? claude.Graves().Count : -1)})", queued && claude.Graves().Count > graves0);
+                bool graveFirst = true, graveSeen = false, resumed = false;
+                int woodAt = -1; // 묘비 짐(나무)은 회수 때 상자로 → 이어 한 뒤 늘어난 것만 센다
+                t = 0f;
+                while (t < 240f && claude != null)
+                {
+                    yield return new WaitForSeconds(1f);
+                    t += 1f;
+                    if (claude.Ai.Job is GraveJob) graveSeen = true;
+                    if (claude.Ai.Job is GatherJob rj && rj.Item == "Wood")
+                    {
+                        if (claude.Graves().Count > graves0) graveFirst = false;
+                        if (!resumed) woodAt = GatherTest.CountBase(home, "Wood");
+                        resumed = true;
+                    }
+                    if ((int)t % 15 == 0) TestRunner.Log($"[5 {t:0}s] 상태 {claude.Ai.Current}/{claude.Ai.Job?.StepName}, 대기 {claude.Ai.Queue.Count}, 남은 묘비 {claude.Graves().Count}");
+                    if (resumed && GatherTest.CountBase(home, "Wood") > woodAt) break;
+                }
+                checks.Add($"묘비 회수부터 ({(graveSeen ? "회수함" : "안 함")})", graveSeen && graveFirst);
+                checks.Add($"그 뒤 나무 일 이어서 상자에 나무 더 (이어 할 때 {woodAt - wood1} → {GatherTest.CountBase(home, "Wood") - wood1}, {t:0}초)", resumed && GatherTest.CountBase(home, "Wood") > woodAt);
+                if (claude != null) { claude.Ai.Interrupt(); claude.Ai.Queue.Clear(); claude.Ai.GoHome(false); }
+            }
             End(player, god, env, debugTime, debugValue, checks, onHeard, heard);
         }
 

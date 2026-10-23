@@ -837,11 +837,22 @@ namespace ValheimHelper
         /// <summary>회수할 묘비가 있다(자동 보충보다 먼저, 구상서 11장).</summary>
         public bool HasChores => !m_choresHeld && ((WorkerNpc)m_character).Graves().Count > 0;
 
-        /// <summary>죽었다(WorkerNpc.OnDeath): 하던 일을 버린다. 묘비를 회수하다 죽었으면 그 묘비 시도 횟수를 올린다.</summary>
+        /// <summary>
+        /// 죽었다(WorkerNpc.OnDeath): 하던 일은 이어 하기 칸(큰 단계만, WorkSaves.FromJob)으로 대기열 맨 앞에 두고 묘비 회수가 끝난 뒤 다시 한다
+        /// (짐·연장이 묘비에 있음, 오류 정리 꼼수 라-2). 묘비를 회수하다 죽었으면 그 묘비 시도 횟수를 올린다.
+        /// </summary>
         public void OnDied()
         {
             var npc = (WorkerNpc)m_character;
             if (Job is GraveJob g) npc.SetGraves(WorkerNpc.AddTry(npc.Graves(), g.Grave, 1));
+            else if (Current == Mode.Work && Job != null && WorkSaves.FromJob(Job) is WorkItem w)
+            {
+                QueuedWork q = WorkSaves.ToQueued(npc, w);
+                System.Func<bool> ready = q.Ready;
+                q.Ready = () => !HasChores && (ready == null || ready());
+                Queue.Insert(0, q);
+                Plugin.Log.LogInfo($"{npc.NpcName}: 죽어서 하던 일({w.Label})은 묘비 회수 뒤 이어 함");
+            }
             Job = null;
             m_follow = ZDOID.None;
             Current = Mode.Idle;
