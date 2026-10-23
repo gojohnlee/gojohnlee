@@ -85,7 +85,7 @@ namespace ValheimHelper
             // 깃발 B (15m 떨어진 곳)
             if (!NpcTestGround(a, 15f, out Vector3 b)) { checks.Add("깃발 B 자리 찾기", false); End(player, god, checks); yield break; }
 
-            // 상자 2개: 먼 상자는 A 근처·B에서 먼 곳(B 반대쪽 14m), 가까운 상자는 B 3m 앞(A에서도 12m)
+            // 상자 2개: 먼 상자는 A에서 118m(거점 범위 125m 안)·B에서 125m 밖(B 반대쪽), 가까운 상자는 B 3m 앞(A에서도 12m)
             var heard = new System.Collections.Generic.List<string>();
             System.Action<string, string> onHeard = (n, t) => heard.Add(n + ": " + t);
             ChatNet.Heard += onHeard;
@@ -93,11 +93,14 @@ namespace ValheimHelper
             Piece chestPiece = ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>();
             Vector3 far = default, near = GatherTest.Ground(b + (a - b).normalized * 3f);
             bool farOk = false;
-            for (int k = 0; k < 8 && !farOk; k++)
+            Vector3 away = new Vector3(a.x - b.x, 0f, a.z - b.z).normalized;
+            for (int k = 0; k < 9 && !farOk; k++)
             {
-                float ang = k * Mathf.PI / 4f;
-                far = GatherTest.Ground(a + new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * 14f);
-                farOk = Utils.DistanceXZ(far, b) > 26f && far.y > ZoneSystem.instance.m_waterLevel + 1f && Mathf.Abs(far.y - a.y) < 5f;
+                // B 반대쪽부터 ±10°씩 번갈아(땅·물 때문에 첫 자리가 안 맞을 때)
+                Vector3 dir = Quaternion.Euler(0f, ((k + 1) / 2) * 10f * (k % 2 == 0 ? 1f : -1f), 0f) * away;
+                far = GatherTest.Ground(a + dir * 118f);
+                farOk = Utils.DistanceXZ(far, b) > Core.Work.BaseArea.Radius + 2f && Utils.DistanceXZ(far, a) < Core.Work.BaseArea.Radius - 2f
+                    && far.y > ZoneSystem.instance.m_waterLevel + 1f;
             }
             player.PlacePiece(chestPiece, far, player.transform.rotation, doAttack: false);
             player.PlacePiece(chestPiece, near, player.transform.rotation, doAttack: false);
