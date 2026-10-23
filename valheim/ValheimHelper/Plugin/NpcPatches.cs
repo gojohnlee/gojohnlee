@@ -41,6 +41,25 @@ namespace ValheimHelper
         }
 
         /// <summary>
+        /// 일꾼은 나무·통나무에 다치지 않는다(사용자 결정 2026-10-23, E020). 쓰러지는 나무·구르는 통나무는 ImpactEffect가 프리팹 값 HitType.Tree로
+        /// IDestructible.Damage → Character.Damage → RPC_Damage를 부른다(codemap "통나무 ImpactEffect"). 그 피해만 일꾼에서 버린다(밀림도 없음).
+        /// </summary>
+        [HarmonyPatch(typeof(Character), "RPC_Damage")]
+        internal static class NoTreeHurt
+        {
+            /// <summary>시험 기록: 막은 나무 피해 수.</summary>
+            public static int Spared;
+
+            static bool Prefix(Character __instance, HitData hit)
+            {
+                if (!(__instance is WorkerNpc w) || hit == null || hit.m_hitType != HitData.HitType.Tree) return true;
+                Spared++;
+                Plugin.Log.LogInfo($"나무 피해 막음 {w.NpcName}: {hit.GetTotalDamage():0}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 일꾼의 곡괭이질은 허락된 때(광석이 땅속에 남았을 때·구덩이에서 경사로를 깎을 때, WorkerAI.DigAllowed)만 땅을 판다
         /// (2026-10-21 사용자: 돌 캘 때 맨땅을 파서 구덩이에 갇힘 → 땅 파기는 최대한 자제).
         /// 바닐라 Attack.DoMeleeAttack은 휘두름이 바위보다 땅에 먼저 닿으면 땅만 파고 그 휘두름을 끝낸다 — 여기서는 파는 것만 막는다.

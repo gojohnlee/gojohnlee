@@ -191,6 +191,16 @@ namespace ValheimHelper
             if (!hungId.IsNone()) checks.Add("높이 걸린 통나무는 안 고름(쪼개면 반토막이 머리 위로 떨어짐)", !hungAimed);
             checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
             checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
+            if (claude != null && !claude.IsDead())
+            {
+                // E020: 나무·통나무 피해(HitType.Tree)는 일꾼에게 안 들어감 — 통나무 피해 50을 직접 맞혀 봄
+                float before = claude.GetHealth();
+                int spared = NpcPatches.NoTreeHurt.Spared;
+                var treeHit = new HitData { m_hitType = HitData.HitType.Tree, m_point = claude.transform.position, m_dir = UnityEngine.Vector3.forward };
+                treeHit.m_damage.m_blunt = 50f;
+                claude.Damage(treeHit);
+                checks.Add($"나무 피해 안 받음(체력 {before:0} → {claude.GetHealth():0}, 일 동안 막은 것 {spared}번)", claude.GetHealth() >= before && NpcPatches.NoTreeHurt.Spared == spared + 1);
+            }
             ItemDrop.ItemData held = claude ? claude.GetCurrentWeapon() : null;
             TestRunner.Log($"1호 손: {(held != null && held.m_dropPrefab != null ? held.m_dropPrefab.name + $" 내구도 {held.m_durability:0}/{held.GetMaxDurability():0}" : "빈손")}, 죽은 횟수(남은 묘비) {(claude ? claude.Graves().Count : -1)}");
             // 땅 파기(2026-10-21 사용자: 돌 캘 땐 땅 파기 자제, 구리는 파더라도 구덩이에서 나와야 함)
