@@ -106,8 +106,9 @@ namespace ValheimHelper
                     wait = m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working;
                     return false;
                 }
-            CraftStep.Take(chests, item, amount);
-            if (fuel > 0) CraftStep.Take(chests, fuelPrefab, fuel);
+            var need = new List<KeyValuePair<string, int>> { new KeyValuePair<string, int>(item, amount) };
+            if (fuel > 0) need.Add(new KeyValuePair<string, int>(fuelPrefab, fuel));
+            if (!CraftStep.TakeAll(home, chests, need)) { wait = CraftResult.Failed; return false; } // 덜 빠지면 되돌리고 설비에 안 넣음
             wait = CraftResult.Done;
             return true;
         }
@@ -314,7 +315,8 @@ namespace ValheimHelper
             if (n <= 0) return;
             var chests = Chests.NearBase(home, ChestRole.Mats);
             foreach (var c in chests) if (Chests.InUse(c)) return; // 열린 상자가 있으면 이번엔 안 지핌(10초 뒤 실패)
-            CraftStep.Take(chests, fuel, n);
+            n = CraftStep.Take(chests, fuel, n); // 그새 줄었으면 뺀 만큼만 지핌
+            if (n <= 0) return;
             Plugin.Log.LogInfo($"{m_npc.NpcName} 불 지핌 {fuel} {n}");
             for (int i = 0; i < n; i++) target.InvokeRPC("RPC_AddFuel");
         }

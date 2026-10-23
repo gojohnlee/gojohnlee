@@ -127,6 +127,14 @@ namespace ValheimHelper
                 checks.Add($"놓기 실패({(fail == 0 ? "첫째" : "둘째, 반쪽 지움")}) → 재료 그대로·포탈 0 ({why}, 남은 {left})",
                     !ok && Same(before, Stock(w.Chest, cost)) && left == 0);
             }
+            // 재료가 덜 빠짐(시험 스위치: 확인 뒤 상자가 줄어든 흉내) → 뺀 것 되돌림·놓인 둘 지움(요청 10-23 코드 정리)
+            CraftStep.TestShortBy = 1;
+            ok = PortalBuilder.PlacePair("시험A", w.Home, w.Home, Site(0f), out placed, out missing, out why);
+            CraftStep.TestShortBy = 0;
+            yield return new WaitForSeconds(0.5f);
+            int leftS = PortalBuilder.Mine().Count + ZdoScan.All(Portals.PrefabName).FindAll(z => z.GetString(ZDOVars.s_tag) == WorkerPortal.Tag("시험A")).Count;
+            checks.Add($"재료 덜 빠지면 → 재료 그대로·포탈 0 ({why}, 남은 {leftS}, 상자 {Show(Stock(w.Chest, cost))})",
+                !ok && Same(before, Stock(w.Chest, cost)) && leftS == 0);
             ok = PortalBuilder.PlacePair("시험A", w.Home, w.Home, Site(0f), out placed, out missing, out why);
             TestRunner.Log("놓기: " + why);
             yield return new WaitForSeconds(1f);
@@ -257,6 +265,14 @@ namespace ValheimHelper
             // 두 번째 출발 → 거점 쪽 + 한 몫
             Fill(w.Chest, cost, 2);
             job = new GatherJob(w.Claude, "Wood", 1, ways);
+            // 재료가 덜 빠짐(시험 스위치) → 놓은 거점 쪽 지움·뺀 것 되돌림·안 들고 감(요청 10-23 코드 정리)
+            var full = Stock(w.Chest, cost);
+            CraftStep.TestShortBy = 1;
+            job.TestPortalDepart(far);
+            CraftStep.TestShortBy = 0;
+            yield return new WaitForSeconds(0.5f);
+            checks.Add($"떠날 때 재료 덜 빠지면 포탈 {PortalBuilder.MineWithTag(tag)}개(0)·재료 그대로·안 들고 감",
+                PortalBuilder.MineWithTag(tag) == 0 && job.PortalCarryTag == null && Carried(cost[0].Item) == 0 && Same(full, Stock(w.Chest, cost)));
             job.TestPortalDepart(far);
             yield return new WaitForSeconds(1f);
             checks.Add($"떠날 때 거점 쪽 놓음 ({PortalBuilder.MineWithTag(tag)}개)", PortalBuilder.MineWithTag(tag) == 1 && job.PortalCarryTag == tag);

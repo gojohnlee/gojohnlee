@@ -48,7 +48,7 @@ namespace ValheimHelper
             var chests = Chests.NearBase(home, ChestRole.Mats);
             foreach (var c in chests)
                 if (Chests.InUse(c)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
-            foreach (var kv in need) Take(chests, kv.Key, kv.Value);
+            if (!TakeAll(home, chests, need)) return CraftResult.Failed;
             int left = Put(home, m_recipe.Output, m_recipe.OutputAmount * m_crafts);
             if (left > 0) LeaveAtChest(m_npc, m_recipe.Output, left);
             return CraftResult.Done;
@@ -69,12 +69,7 @@ namespace ValheimHelper
                 float d = Vector3.Distance(c.transform.position, npc.transform.position);
                 if (d < best) { best = d; chest = c; }
             }
-            Vector3 at = chest != null ? chest.transform.position + chest.transform.forward * 0.9f + Vector3.up * 0.3f : npc.transform.position + Vector3.up;
-            ItemDrop.ItemData d0 = go.GetComponent<ItemDrop>().m_itemData.Clone();
-            d0.m_dropPrefab = go;
-            int max = Mathf.Max(1, d0.m_shared.m_maxStackSize);
-            for (int left = amount; left > 0; left -= max)
-                ItemDrop.DropItem(d0, Mathf.Min(left, max), at, Quaternion.identity);
+            DropAt(chest, npc.transform.position, prefab, amount);
             Plugin.Log.LogInfo($"{npc.NpcName} 상자가 꽉 차 만든 것 {prefab} {amount}개를 {(chest != null ? "상자 앞" : "발밑")}에 둠");
             if (chest == null) return;
             ZDOID id = chest.GetComponent<ZNetView>()?.GetZDO()?.m_uid ?? ZDOID.None;
@@ -110,20 +105,64 @@ namespace ValheimHelper
             return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name), ChestRole.Mats);
         }
 
-        internal static void Take(List<Container> chests, string prefab, int amount)
+        /// <summary>상자들에서 뺀다. 실제로 뺀 개수를 돌려준다(상자가 그새 열렸거나 개수 확인 뒤 줄었으면 amount보다 적음).</summary>
+        internal static int Take(List<Container> chests, string prefab, int amount)
         {
             string name = SharedName(prefab);
+            if (TestShortBy > 0) { amount = Mathf.Max(0, amount - TestShortBy); TestShortBy = 0; }
+            int taken = 0;
             foreach (var c in chests)
             {
-                if (amount <= 0) return;
-                int left = amount;
+                if (taken >= amount) break;
+                int left = amount - taken;
                 Chests.TryEdit(c, inv =>
                 {
                     int n = Mathf.Min(left, inv.CountItems(name));
-                    if (n > 0) { inv.RemoveItem(name, n); left -= n; }
+                    if (n > 0) { inv.RemoveItem(name, n); taken += n; }
                 });
-                amount = left;
             }
+            return taken;
+        }
+
+        /// <summary>시험용: 0보다 크면 다음 Take 한 번이 그만큼 덜 뺀다(상자 변동 흉내). 쓰면 0으로 돌아감.</summary>
+        internal static int TestShortBy;
+
+        /// <summary>
+        /// 재료를 다 빼거나 하나도 안 뺀다: 하나라도 덜 빠지면 이미 뺀 것을 상자에 되돌리고 false(물건 복제·소실 막음, 요청 10-23 코드 정리).
+        /// 되돌릴 상자 자리가 없으면 첫 상자 앞 땅에.
+        /// </summary>
+        internal static bool TakeAll(Vector3 home, List<Container> chests, IEnumerable<KeyValuePair<string, int>> need)
+        {
+            var taken = new List<KeyValuePair<string, int>>();
+            string shortOf = null;
+            foreach (var kv in need)
+            {
+                if (kv.Value <= 0) continue;
+                int n = Take(chests, kv.Key, kv.Value);
+                if (n > 0) taken.Add(new KeyValuePair<string, int>(kv.Key, n));
+                if (n < kv.Value) { shortOf = $"{kv.Key} {n}/{kv.Value}"; break; }
+            }
+            if (shortOf == null) return true;
+            foreach (var kv in taken)
+            {
+                int left = Put(home, kv.Key, kv.Value);
+                if (left > 0) DropAt(chests.Count > 0 ? chests[0] : null, home, kv.Key, left);
+            }
+            Plugin.Log.LogWarning($"재료가 덜 빠짐({shortOf}) → 뺀 것 상자에 되돌리고 그만둠");
+            return false;
+        }
+
+        /// <summary>상자 바로 앞 땅에(상자가 없으면 or 자리 위에) 내려놓는다 — 사라지지 않게.</summary>
+        static void DropAt(Container chest, Vector3 or, string prefab, int amount)
+        {
+            GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
+            if (go == null) return;
+            Vector3 at = chest != null ? chest.transform.position + chest.transform.forward * 0.9f + Vector3.up * 0.3f : or + Vector3.up;
+            ItemDrop.ItemData d0 = go.GetComponent<ItemDrop>().m_itemData.Clone();
+            d0.m_dropPrefab = go;
+            int max = Mathf.Max(1, d0.m_shared.m_maxStackSize);
+            for (int left = amount; left > 0; left -= max)
+                ItemDrop.DropItem(d0, Mathf.Min(left, max), at, Quaternion.identity);
         }
 
         /// <summary>결과를 상자에 넣는다. 못 넣은 개수를 돌려준다(0 = 다 넣음).</summary>

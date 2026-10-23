@@ -159,7 +159,14 @@ namespace ValheimHelper
                 }
                 placed.Add(zdo);
             }
-            foreach (var kv in WorkerPortal.Need(cost, 2)) CraftStep.Take(chests, kv.Key, kv.Value);
+            if (!CraftStep.TakeAll(home, chests, WorkerPortal.Need(cost, 2)))
+            {
+                foreach (var z in placed) Erase(z);
+                placed.Clear();
+                why = "재료가 덜 빠짐";
+                Plugin.Log.LogWarning($"일꾼 포탈 {tag}: {why} → 놓인 것 지움, 뺀 재료 되돌림");
+                return false;
+            }
             Game.instance?.ConnectPortals();
             why = $"{tag}: 거점 쪽 {wa}, 일터 쪽 {wb}";
             Plugin.Log.LogInfo($"일꾼 포탈 놓음 {why}");
@@ -235,8 +242,15 @@ namespace ValheimHelper
             foreach (var c in chests) if (Chests.InUse(c)) { why = "상자 사용 중"; return false; }
             var one = WorkerPortal.Need(cost, 1);
             if (!FitsIn(carry, one)) { why = "짐 자리 모자람"; return false; }
-            if (placeBase && Spawn(prefab, a, ra, tag, Today()) == null) { why = "놓기 실패"; return false; } // 재료 빼기 전에 — 실패해도 재료 그대로
-            foreach (var kv in WorkerPortal.Need(cost, shares)) CraftStep.Take(chests, kv.Key, kv.Value);
+            ZDO based = null;
+            if (placeBase && (based = Spawn(prefab, a, ra, tag, Today())) == null) { why = "놓기 실패"; return false; } // 재료 빼기 전에 — 실패해도 재료 그대로
+            if (!CraftStep.TakeAll(home, chests, WorkerPortal.Need(cost, shares)))
+            {
+                if (based != null) Erase(based);
+                why = "재료가 덜 빠짐";
+                Plugin.Log.LogWarning($"일꾼 포탈 {tag}: {why} → {(based != null ? "놓은 거점 쪽 지움, " : "")}뺀 재료 되돌림");
+                return false;
+            }
             foreach (var kv in one) AddTo(carry, kv.Key, kv.Value);
             why = placeBase ? $"{tag}: 거점 쪽 {wa}, 한 몫 들고 감" : $"{tag}: 한 몫 들고 감(거점 쪽은 이미 있음)";
             Plugin.Log.LogInfo($"일꾼 포탈 {why}");
