@@ -132,6 +132,30 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(1f);
             }
 
+            // E) 멀리선 싸움 단순화(사용자 결정 2026-10-23 "멀리선 단순하게"): 플레이어 판정을 끄고(64m 밖 흉내) 머리 위 3.5m에 묶은 회색난쟁이
+            // → 휘두름이 못 닿아도(근처면 높이 3m 넘어 직접 피해 안 함 → 20초 뒤 무시) 직접 피해로 잡는다.
+            GatherJob.TestIgnorePlayers = true;
+            Character e = Spawn(gd, claude.transform.position + claude.transform.forward * 1.5f, spawned);
+            yield return null;
+            Vector3 perch = GatherTest.Ground(claude.transform.position + claude.transform.forward * 1.5f) + Vector3.up * 3.5f;
+            if (e != null && e.GetComponent<Rigidbody>() is Rigidbody eb) { eb.isKinematic = true; e.transform.position = perch; }
+            bool foughtE = false;
+            t = 0f;
+            while (t < 40f && e != null && !e.IsDead())
+            {
+                yield return new WaitForSeconds(0.5f);
+                t += 0.5f;
+                if (e != null) e.transform.position = perch;
+                if (claude.Ai.Guard != null && claude.Ai.Guard.StateName == "Fight") foughtE = true;
+                if ((int)(t * 2) % 10 == 0) TestRunner.Log($"[E {t:0}s] 경계 {claude.Ai.Guard?.StateName}/{claude.Ai.Guard?.LastVerdict}, 1호 체력 {claude.GetHealth():0}, 적 체력 {(e ? e.GetHealth() : 0):0}, 높이차 {(e ? e.transform.position.y - claude.transform.position.y : 0):0.0}m");
+            }
+            checks.Add($"멀리선 머리 위 적과 싸움 (판단 {claude.Ai.Guard?.LastVerdict})", foughtE);
+            checks.Add($"멀리선 닿지 않는 적도 직접 피해로 잡음 ({t:0}초)", e == null || e.IsDead());
+            if (e != null && !e.IsDead()) Kill(e);
+            GatherJob.TestIgnorePlayers = false;
+            claude.Heal(1000f, false);
+            yield return new WaitForSeconds(2f);
+
             // B) 트롤 → 도망
             Vector3 trollPos = claude.transform.position + rot * new Vector3(0f, 0f, 20f);
             Character b = Spawn(troll, trollPos, spawned);
@@ -178,6 +202,7 @@ namespace ValheimHelper
             foreach (var go in spawned)
                 if (go != null && go.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
             ChatNet.Heard -= onHeard;
+            GatherJob.TestIgnorePlayers = false;
             player.SetGodMode(god);
             player.SetGhostMode(ghost);
             env.m_debugTimeOfDay = debugTime;

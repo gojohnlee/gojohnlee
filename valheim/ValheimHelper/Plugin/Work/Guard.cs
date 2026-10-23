@@ -427,12 +427,28 @@ namespace ValheimHelper
             float d = Utils.DistanceXZ(tp, m_npc.transform.position) - m_target.GetRadius();
             m_fightIdle += dt;
             if (m_npc.HitBy(m_target, 1f)) m_fightIdle = 0f;
-            if (d > range * 0.9f) m_ai.MoveToPoint(dt, tp, range * 0.8f + m_target.GetRadius(), true);
+            // 멀리선 싸움 단순화(사용자 결정 2026-10-23 "멀리선 단순하게"): 모든 플레이어 64m 밖이면 휘두름 대신 한 번 칠 시간마다 직접 피해
+            // (비행·높은 곳 적 포함 — 수평 거리만 본다). 도망 판단은 그대로, 근처에선 아래 바닐라 휘두름(3번 빗나가면 직접 피해).
+            m_farCheck -= dt;
+            if (m_farCheck <= 0f) { m_farCheck = 1f; m_far = GatherJob.FarFromPlayers(m_npc.transform.position); }
+            if (m_far && d <= FarHitRange)
+            {
+                m_farHitTimer += dt;
+                if (m_farHitTimer >= FarHitEvery)
+                {
+                    m_farHitTimer = 0f;
+                    m_fightIdle = 0f;
+                    m_diagSwings++;
+                    Learn(m_target);
+                    DirectHit(weapon, "멀리서(플레이어 64m 밖)");
+                }
+            }
+            if (d > range * 0.9f && !(m_far && d <= FarHitRange)) m_ai.MoveToPoint(dt, tp, range * 0.8f + m_target.GetRadius(), true);
             else
             {
                 m_ai.StopMoving();
                 m_ai.Face(m_target.GetCenterPoint());
-                if (!m_npc.InAttack() && m_ai.IsLookingAt(tp, 25f) && m_npc.StartAttack(m_target, false))
+                if (!m_far && !m_npc.InAttack() && m_ai.IsLookingAt(tp, 25f) && m_npc.StartAttack(m_target, false))
                 {
                     m_fightIdle = 0f;
                     m_diagSwings++;
@@ -442,7 +458,7 @@ namespace ValheimHelper
                     float hp = m_target.GetHealth();
                     m_missStreak = m_diagSwings > 1 && hp >= m_lastFoeHealth ? m_missStreak + 1 : 0;
                     m_lastFoeHealth = hp;
-                    if (m_missStreak >= 3 && Mathf.Abs(tp.y - m_npc.transform.position.y) < 3f) DirectHit(weapon);
+                    if (m_missStreak >= 3 && Mathf.Abs(tp.y - m_npc.transform.position.y) < 3f) DirectHit(weapon, $"휘두름이 {m_missStreak}번 빗나가");
                 }
             }
             // 간헐 목록(회차 66 hunttest): 싸움이 오래 안 끝나면 닿지 못하는지·때리는데 안 맞는지 가른다
@@ -463,10 +479,13 @@ namespace ValheimHelper
         }
 
         int m_missStreak;
+        bool m_far;
+        float m_farCheck, m_farHitTimer;
+        const float FarHitRange = 6f, FarHitEvery = 1.5f;
         float m_lastFoeHealth;
 
         /// <summary>바닐라 Attack 판정이 못 닿을 때 무기 피해를 직접 준다(GatherJob.DirectHit와 같은 방식, 스킬 반영).</summary>
-        void DirectHit(ItemDrop.ItemData weapon)
+        void DirectHit(ItemDrop.ItemData weapon, string why)
         {
             if (weapon == null) return;
             Vector3 me = m_npc.GetCenterPoint();
@@ -483,13 +502,14 @@ namespace ValheimHelper
             hit.SetAttacker(m_npc);
             m_target.Damage(hit);
             m_npc.RaiseSkill(weapon.m_shared.m_skillType);
-            Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_target.m_name}에 휘두름이 {m_missStreak}번 빗나가 직접 피해 {hit.GetTotalDamage():0}");
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_target.m_name}에 {why} 직접 피해 {hit.GetTotalDamage():0}");
         }
 
         void EndFight()
         {
             m_missStreak = 0;
             m_lastFoeHealth = 0f;
+            m_farHitTimer = 0f;
             m_target = null;
             m_armed = false;
             m_diagSwings = 0;

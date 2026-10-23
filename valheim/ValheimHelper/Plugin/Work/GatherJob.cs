@@ -871,7 +871,7 @@ namespace ValheimHelper
         }
 
         /// <summary>가장 가까운 플레이어(호스트 + 접속한 사람들의 기준 위치)에서 StuckHop.NearPlayer m 밖인가.</summary>
-        static bool FarFromPlayers(Vector3 p)
+        internal static bool FarFromPlayers(Vector3 p)
         {
             if (TestIgnorePlayers) return TestFakePlayer == null || Utils.DistanceXZ(p, TestFakePlayer.Value) > (float)StuckHop.NearPlayer;
             var players = new List<StuckHop.XZ>();
