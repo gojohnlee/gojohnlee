@@ -22,10 +22,17 @@ namespace ValheimHelper.Core.Work
         /// 출발 (fx,fz)에서 도착 (tx,tz)까지 포탈을 타는 편이 나으면 그 포탈 번호(portals 안), 아니면 -1.
         /// 비용 = 입구까지 걷기 + 출구에서 도착까지 걷기. 가장 싼 포탈이 걸어가는 것보다 Margin 넘게 싸야 한다.
         /// </summary>
-        public static int Choose(float fx, float fz, float tx, float tz, IList<PortalLink> portals)
+        public static int Choose(float fx, float fz, float tx, float tz, IList<PortalLink> portals) => Choose(fx, fz, tx, tz, portals, null);
+
+        /// <summary>
+        /// canWalk(ax,az,bx,bz)가 있으면 걸어서 못 건너는 곳(바다 건너, 사용자 결정 2026-10-23)을 본다:
+        /// 바로 걸어서 못 가면 Margin 없이, 입구까지·출구에서 도착까지 둘 다 걸을 수 있는 포탈 중 가장 싼 것. 걸어갈 수 있으면 예전 그대로.
+        /// </summary>
+        public static int Choose(float fx, float fz, float tx, float tz, IList<PortalLink> portals, Func<float, float, float, float, bool> canWalk)
         {
+            bool direct = canWalk == null || canWalk(fx, fz, tx, tz);
             double walk = Dist(fx, fz, tx, tz);
-            double best = walk - Margin;
+            double best = direct ? walk - Margin : double.MaxValue;
             int pick = -1;
             for (int i = 0; i < portals.Count; i++)
             {
@@ -33,7 +40,9 @@ namespace ValheimHelper.Core.Work
                 double toPortal = Dist(fx, fz, p.X, p.Z);
                 if (toPortal > MaxWalkToPortal) continue;
                 double cost = toPortal + Dist(p.ExitX, p.ExitZ, tx, tz);
-                if (cost < best) { best = cost; pick = i; }
+                if (cost >= best) continue;
+                if (!direct && (!canWalk(fx, fz, p.X, p.Z) || !canWalk(p.ExitX, p.ExitZ, tx, tz))) continue;
+                best = cost; pick = i;
             }
             return pick;
         }

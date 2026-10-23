@@ -66,13 +66,42 @@ namespace ValheimHelper
         public static bool CanWalk(Vector3 from, Vector3 to) =>
             WorldGenerator.instance != null && WaterRule.CanCross(from.x, from.z, to.x, to.z, LiveDepth, NoSwim, 2.0);
 
-        /// <summary>목표 고를 때: 지금 자리에서 그 구역 중심까지 곧장 걸어 닿는지(월드 생성 높이로 4m 간격, 먼 곳은 안 불러와져 있다).</summary>
+        /// <summary>
+        /// 목표 고를 때: 지금 자리에서 그 구역 중심까지 곧장 걸어 닿거나(월드 생성 높이로 4m 간격, 먼 곳은 안 불러와져 있다),
+        /// 못 걸어가면(바다 건너) 걸어 닿는 이어진 포탈로 갈 수 있는지(사용자 결정 2026-10-23 "바다 건너 일터는 포탈로만").
+        /// </summary>
         public static bool Reachable(Vector3 from, ZoneXY z)
         {
             if (WorldGenerator.instance == null) return true;
             Vector3 c = Senses.ZoneCenter(z);
-            return WaterRule.CanCross(from.x, from.z, c.x, c.z, BaseDepth, NoSwim, 4.0);
+            return WalkFar(from.x, from.z, c.x, c.z) || PortalRoute.Choose(from.x, from.z, c.x, c.z, Portals.LinkedRecent(), WalkFar) >= 0;
         }
+
+        /// <summary>곧장 걸어 닿는지만(포탈 안 봄). 바다 건너 말을 고를 때.</summary>
+        public static bool WalkReachable(Vector3 from, ZoneXY z)
+        {
+            if (WorldGenerator.instance == null) return true;
+            Vector3 c = Senses.ZoneCenter(z);
+            return WalkFar(from.x, from.z, c.x, c.z);
+        }
+
+        /// <summary>곧은 선 위(16m 간격)에 바다(월드 생성 바이옴 Ocean)가 있는지 — 못 걸어가는 까닭이 바다인지(좁은 강·늪 물과 구분).</summary>
+        public static bool OceanBetween(Vector3 a, Vector3 b)
+        {
+            if (WorldGenerator.instance == null) return false;
+            float d = Utils.DistanceXZ(a, b);
+            int n = Mathf.Max(1, Mathf.CeilToInt(d / 16f));
+            for (int i = 0; i <= n; i++)
+            {
+                Vector3 p = Vector3.Lerp(a, b, (float)i / n);
+                if (WorldGenerator.instance.GetBiome(p.x, p.z) == Heightmap.Biome.Ocean) return true;
+            }
+            return false;
+        }
+
+        /// <summary>먼 두 점 사이를 걸어 건너는지(월드 생성 높이, 4m 간격) — 포탈 고르기(PortalRoute canWalk)에도.</summary>
+        public static bool WalkFar(float ax, float az, float bx, float bz) =>
+            WorldGenerator.instance == null || WaterRule.CanCross(ax, az, bx, bz, BaseDepth, NoSwim, 4.0);
 
         static readonly System.Reflection.MethodInfo AddPinMethod = HarmonyLib.AccessTools.Method(typeof(Minimap), "AddPin");
 

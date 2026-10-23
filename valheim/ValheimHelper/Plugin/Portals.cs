@@ -33,12 +33,22 @@ namespace ValheimHelper
             return result;
         }
 
-        /// <summary>from에서 to로 갈 때 탈 포탈(없으면 false: 걸어간다).</summary>
+        static List<PortalLink> s_recent;
+        static float s_recentAt = -100f;
+
+        /// <summary>Linked를 2초 동안 재사용(구역 고르기가 후보마다 부름 — 바다 건너 판단).</summary>
+        public static List<PortalLink> LinkedRecent()
+        {
+            if (s_recent == null || Time.time - s_recentAt > 2f || Time.time < s_recentAt) { s_recent = Linked(); s_recentAt = Time.time; }
+            return s_recent;
+        }
+
+        /// <summary>from에서 to로 갈 때 탈 포탈(없으면 false: 걸어간다). 걸어서 못 건너는 곳(바다 건너)이면 더 짧지 않아도 포탈.</summary>
         public static bool TryChoose(Vector3 from, Vector3 to, out PortalLink link)
         {
             link = default;
             var all = Linked();
-            int i = PortalRoute.Choose(from.x, from.z, to.x, to.z, all);
+            int i = PortalRoute.Choose(from.x, from.z, to.x, to.z, all, Scout.WalkFar);
             if (i < 0) return false;
             link = all[i];
             return true;

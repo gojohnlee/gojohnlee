@@ -18,6 +18,8 @@ namespace ValheimHelper
         public readonly int Target;
         public int Delivered { get; private set; }
         public string StepName => m_step.ToString();
+        /// <summary>시험용: 가려고 고른 구역.</summary>
+        public ZoneXY GoalZone => m_goalZone;
         readonly HashSet<ToolKind> m_ways;
         ResourceInfo m_targetInfo;
         /// <summary>지난 휘두름 끝의 대상 체력 기록(HealthMark). null이면 다음 프레임에 잰다.</summary>
@@ -57,7 +59,9 @@ namespace ValheimHelper
         bool m_wasAttacking;
         float m_bestDist;
         float m_progressTimer;
-        bool m_saidTooWeak, m_saidSearching, m_saidExplore, m_saidFound;
+        bool m_saidTooWeak, m_saidSearching, m_saidExplore, m_saidFound, m_saidSea;
+        /// <summary>시험용: 바다 건너라 안 간 구역을 말한 횟수.</summary>
+        public static int SeaSkips;
         /// <summary>일꾼 포탈(R2 나): 한 몫을 들고 가는 이름표, 이번 일에서 와 본 먼 구역, 재료 모자람을 말했나.</summary>
         string m_portalTag;
         readonly HashSet<ZoneXY> m_visited = new HashSet<ZoneXY>();
@@ -374,7 +378,19 @@ namespace ValheimHelper
             }
             foreach (var m in k.ZonesWith(Item, here))
             {
-                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || m_tried.Contains(m.Zone) || ZoneExcluded(m.Zone) || !Scout.Reachable(pos, m.Zone)) continue; // 물 건너·위험한 곳·이미 가 본 곳은 안 간다
+                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || m_tried.Contains(m.Zone) || ZoneExcluded(m.Zone)) continue; // 위험한 곳·이미 가 본 곳은 안 간다
+                if (!Scout.Reachable(pos, m.Zone))
+                {
+                    // 바다 건너(이어진 포탈도 없음)는 안 가고 한 번 말한다(사용자 결정 2026-10-23 "바다 건너 일터는 포탈로만"). 좁은 강·늪 물은 예전처럼 말없이 거름.
+                    if (!m_saidSea && !Scout.WalkReachable(pos, m.Zone) && Scout.OceanBetween(pos, Senses.ZoneCenter(m.Zone)))
+                    {
+                        m_saidSea = true;
+                        SeaSkips++;
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {m.Zone.X},{m.Zone.Y}는 바다 건너, 이어진 포탈 없음 → 안 감");
+                        m_npc.Say("depart.sea", Args());
+                    }
+                    continue;
+                }
                 m_goalZone = m.Zone;
                 PortalDepart();
                 GoZone();
