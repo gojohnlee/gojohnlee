@@ -135,6 +135,7 @@ namespace ValheimHelper
             s_sword = sw;
             if (sw != null) player.EquipItem(sw, false);
             yield return MovePlayer(player, npc.transform.position + back * 2f);
+            TestKit.Strict = true; // 여기부터는 싸움 판정을 몇 초 안에 보는 칸 — 시간 안 멈춤
             GameObject brute = ZNetScene.instance.GetPrefab("Greydwarf_Elite");
             checks.Add("적 프리팹 있음", brute != null && sw != null);
             if (brute == null) yield break;

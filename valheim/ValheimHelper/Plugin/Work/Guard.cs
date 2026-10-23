@@ -44,6 +44,8 @@ namespace ValheimHelper
         /// <summary>시험·!상태용.</summary>
         public string StateName => m_state.ToString();
         public bool Fleeing => m_state == State.Flee;
+        /// <summary>싸우거나 물러나거나 도망치는 중(시험이 이 동안 시간을 멈춤).</summary>
+        public bool Engaged => m_state != State.Calm;
 
         /// <summary>도망을 그만둔다(갇혀서 깃발로 순간이동했을 때).</summary>
         /// <summary>시험용: 적 없이 to로 도망을 시작한다(적이 없어도 도망은 끝까지 감).</summary>

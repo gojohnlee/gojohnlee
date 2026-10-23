@@ -103,6 +103,7 @@ namespace ValheimHelper
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, HashSet<ZDOID> before, Vector3[] spot, KeyState keys)
         {
+            w.CountsCreatures = true; // 생물을 부르거나 세는 시험
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC", w.Ragnar != null);
             if (w.Ragnar == null) yield break;

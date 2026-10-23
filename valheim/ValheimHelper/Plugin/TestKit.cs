@@ -72,23 +72,45 @@ namespace ValheimHelper
             public System.Action<string, string> OnHeard;
             public string Knowledge0, Places0;
             public bool Shared; // 동시 시험(around): 둘레가 남의 시험이라 끝 정리를 안 함
+            public bool CountsCreatures; // 생물을 일부러 부르거나 세는 시험(사냥·싸움 등): 시작 때 남은 생물은 환경 불량, 싸움 중 시간 안 멈춤
         }
 
         /// <summary>WaitFor 결과(코루틴이라 out을 못 씀).</summary>
         public static bool Ok;
         public static float Waited;
 
-        /// <summary>cond가 될 때까지 최대 max초. 결과는 Ok·Waited.</summary>
+        /// <summary>
+        /// 생물을 일부러 부르거나 세는 시험(사냥·싸움 등)이면 true — Setup(World.CountsCreatures)·OldClear(strict)가 정하고 시험 끝(OldEnd)에 끔.
+        /// false면 자연 생물이 와도 환경 불량이 아니고, WaitFor는 일꾼이 싸우거나 도망치는 동안 시간을 멈춘다(사용자 결정 2026-10-23 오류 꼼수, E015·E016).
+        /// </summary>
+        public static bool Strict;
+        /// <summary>WaitFor 하나가 싸움·도망으로 멈출 수 있는 최대 초(끝없이 기다리지 않게).</summary>
+        const float MaxPause = 120f;
+
+        /// <summary>
+        /// cond가 될 때까지 최대 max초. 결과는 Ok·Waited. Strict가 아니면 일꾼이 싸우거나 도망치는 동안은 셈에서 빼고(최대 MaxPause초),
+        /// 멈춘 만큼 로그에 남긴다(Waited는 멈춘 시간을 뺀 값).
+        /// </summary>
         public static IEnumerator WaitFor(System.Func<bool> cond, float max)
         {
             Waited = 0f;
+            float paused = 0f;
             Ok = cond();
             while (!Ok && Waited < max)
             {
                 yield return null;
-                Waited += Time.deltaTime;
+                if (!Strict && paused < MaxPause && AnyEngaged()) paused += Time.deltaTime;
+                else Waited += Time.deltaTime;
                 Ok = cond();
             }
+            if (paused >= 0.5f) TestRunner.Log($"싸움·도망으로 시험 시간 {paused:0}초 멈춤");
+        }
+
+        static bool AnyEngaged()
+        {
+            foreach (var npc in WorkerNpc.All)
+                if (npc != null && !npc.IsDead() && npc.Ai?.Guard != null && npc.Ai.Guard.Engaged) return true;
+            return false;
         }
 
         /// <summary>
@@ -99,6 +121,7 @@ namespace ValheimHelper
         {
             w.Player = Player.m_localPlayer;
             w.Shared = around.HasValue;
+            Strict = w.CountsCreatures;
             w.God = w.Player.InGodMode();
             w.Player.SetGodMode(true);
             w.Env = EnvMan.instance;
@@ -176,7 +199,8 @@ namespace ValheimHelper
             if (w.Player == null || w.Player.IsDead()) bad.Add("플레이어 없음·죽음");
             else if (!w.Player.InGodMode()) bad.Add("플레이어 무적 아님");
             int left = Creatures(w.Home).Count;
-            if (left > 0) bad.Add($"거점 {StartRadius:0}m 안 생물 {left}");
+            if (left > 0 && Strict) bad.Add($"거점 {StartRadius:0}m 안 생물 {left}");
+            else if (left > 0) TestRunner.Log($"시작: 거점 {StartRadius:0}m 안 생물 {left} 남음 — 오면 일꾼이 싸움(환경 불량 아님)");
             foreach (var npc in new[] { w.Ragnar, w.Floki })
             {
                 if (npc == null || npc.IsDead()) { bad.Add("일꾼 없음·죽음"); continue; }
@@ -264,9 +288,10 @@ namespace ValheimHelper
         /// 옛 시험(Setup을 안 쓰는 것)의 시작 정리: 깃발을 세우기 전에 거점 둘레 생물을 치우고 거점을 기억한다
         /// (끝 정리는 TestRunner.Finish가 OldEnd로). 치운 수를 돌려준다(0보다 크면 0.5초 기다린 뒤 OldCheck).
         /// </summary>
-        public static int OldClear(Vector3 home)
+        public static int OldClear(Vector3 home, bool strict = false)
         {
             s_oldHome = home;
+            Strict = strict;
             int n = ClearCreatures(home);
             if (n > 0) TestRunner.Log($"시작 정리: 거점 {StartRadius:0}m 안 생물 {n}마리 치움");
             return n;
@@ -277,6 +302,11 @@ namespace ValheimHelper
         {
             var left = Creatures(home);
             if (left.Count == 0) return;
+            if (!Strict)
+            {
+                TestRunner.Log($"시작: 거점 {StartRadius:0}m 안 생물 {left.Count} 남음 — 오면 일꾼이 싸움(환경 불량 아님)");
+                return;
+            }
             s_oldHome = null;
             player.SetGodMode(god);
             var names = new List<string>();
@@ -287,6 +317,7 @@ namespace ValheimHelper
         /// <summary>옛 시험 끝 정리(TestRunner.Finish가 부름, OldClear를 안 부른 시험은 아무것도 안 함).</summary>
         public static void OldEnd()
         {
+            Strict = false;
             if (s_oldHome == null) return;
             Vector3 home = s_oldHome.Value;
             s_oldHome = null;
@@ -309,7 +340,9 @@ namespace ValheimHelper
                 c = Creatures(home).Count;
                 d = Drops(home).Count;
             }
-            if (c + d > 0) TestRunner.Halt($"앞 시험 끝 정리 실패(거점 {StartRadius:0}m 안 생물 {c}·물건 {d} 남음)");
+            // 남은 생물은 다음 시험을 막지 않음(자연 생물 허용, 사용자 결정 2026-10-23 — 생물을 세는 시험은 시작 때 치우고 못 치우면 환경 불량)
+            if (c > 0) TestRunner.Log($"끝 정리 뒤에도 생물 {c} 남음 — 다음 시험은 그대로");
+            if (d > 0) TestRunner.Halt($"앞 시험 끝 정리 실패(거점 {StartRadius:0}m 안 물건 {d} 남음)");
         }
 
         static int Items(Inventory inv)

@@ -34,6 +34,7 @@ namespace ValheimHelper
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> boars)
         {
+            w.CountsCreatures = true; // 생물을 부르거나 세는 시험
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
             if (w.Ragnar == null || w.Chest == null) yield break;
