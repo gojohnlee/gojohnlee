@@ -47,6 +47,10 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   다) E012 멀리서 목표 몇 m 앞 막힘 → 그 자리 직접 캠 → coppertest(위 E021 라)와 같이). 라) E015·E016 시험: 생물 있음 환경 불량 뺌(사냥·싸움만 유지), TestKit.WaitFor는 싸움·도망 동안 시간 멈춤(재실행 없음) → npc·escort.
      + 새 칸: 일하는 중 몬스터 → 싸움 → 같은 일 이어서(fighttest나 woodtest), 일하다 죽음 → 묘비 회수 → 하던 일 이어서(deathtest). 안 이어지면 고침.
   마) E004 시험 구덩이 안 파지면 다른 자리(최대 3곳). 바) E014 cooktest 비바람 고정 한 번. 사) E001 crafttest 보존 검사 + 소실 보충("보충 N개", 근처 5m 플레이어 있었으면 안 함) — 설비 꺼내기·상자 옮기기만, 캐기·벌목 드롭은 안 함.
+★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "멀리선 단순하게") — 오류 꼼수 다음, 상자 ② 전에:
+  가) 멀리선 이동 생략(걷는 시간만큼 기다렸다 순간이동, 플레이어 오면 걷기) → 시험: 먼 일터 왕복 시간·짐 보존·플레이어 다가오면 걷기로 바뀜(fartest·departtest).
+  나) 멀리선 싸움 단순화(싸움 판단이면 직접 피해로 끝냄) → 시험: 플레이어 멀리 둔 싸움 칸(fighttest).
+  다) 시험 정식·약식 스위치: 긴 시험(silver·copper·crypt 등)부터. 정식은 그 기능 바꿨을 때 한 번, 회귀는 약식.
 ★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
@@ -143,7 +147,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
      + ResourceInfo.Hidden(Beacon, 깨진 조각 _frac은 아님)·TopOffset, GatherJob.FindInSight·Senses.Look이 거름. 시험 vh_silvertest 12/12.
   2) 묻힌 은 캐기: 시험에 청동 곡괭이(단계 2) + 묻힌 silvervein(윗면 땅 1m 아래) → "!은 5"에 파 내려가 캐 오는지(RockAim 3m 깊이 제한이 은에 맞는지 — 자연 은 광맥 깊이 diag로 확인).
   3) 출발 판단·말: 묻힌 것만 알고 위시본이 없으면 "드러난 은 광맥을 못 찾겠어요(위시본 필요)", 곡괭이 단계 모자라면 기존 말. Departures 은 칸 + 시험.
-  4) 서리 동굴(산 던전): 무엇이 나오는지 게임 데이터로 확인 → Dungeons 일반화(지하묘지와 같은 처리)할지 [보류] 판단.
+  4) 서리 동굴(산 던전): [사용자 결정 10-23: 해 봄] 무엇이 나오는지 게임 데이터로 확인 → Dungeons 일반화(지하묘지와 같은 처리). 3회차 넘게 걸리면 빼는 쪽(사용자에게 말함).
   5) 늑대 사냥·산 위험(드레이크 냉기 → 냉기 미드) 확인 시험 → ⑪ [x], 전체 회귀 + 실제 재시작 시험.
 ★ 사용자 순서(2026-10-22, 아래 옛 목록보다 먼저, 전문은 decisions.txt "노트 맞춤 2026-10-22"): 1) I-1 상자 역할 고르기 Chests 한 곳 → I-2 ChestTag 이름 읽기 → 2) B 일 끼워넣기·Wait 중 보충 → 3) 손님 코드 검사 → 4) 시험 전 코드 게임 시험 → 5) J 이동 한계 → 6) ⑤ 포탈 → 7) D·E → 8) ⑦⑧⑨⑩ → 9) C·⑪⑫⑬⑭⑮ (10) F 길은 뺌, 사용자 결정 2026-10-23). 안 하는 것: A·G·K·건축물 수리.
 1. [보류: 위험 대비 이득 작음, 회차 34] 시험 방식 바꾸기(사용자 결정 2026-10-21): 고정 대기 대신 조건 끝나면 바로 다음, 시험용 일꾼을 시험 수만큼(최대 8명) 불러
