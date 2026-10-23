@@ -503,6 +503,7 @@ namespace ValheimHelper
         public string NpcName => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO().GetString(KeyName, "Worker") : "Worker";
         public Personality Personality => m_nview != null && m_nview.IsValid() ? (Personality)m_nview.GetZDO().GetInt(KeyRole) : Personality.Scv;
         public Vector3 Home => m_nview.GetZDO().GetVec3(KeyHome, transform.position);
+        public ZDO Zdo => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO() : null;
 
         public override string GetHoverName() => NpcName;
 

@@ -17,6 +17,8 @@ namespace ValheimHelper
         readonly HashSet<ItemDrop.ItemData> m_skip = new HashSet<ItemDrop.ItemData>();
         /// <summary>이 프리팹들도 넣지 않는다(GatherJob: 일터로 들고 가는 포탈 한 몫 — 불러온 뒤 첫 짐 정리에서 상자로 가지 않게).</summary>
         public HashSet<string> Hold;
+        /// <summary>걷지 않고 바로 넣는다(밤사이 정산 — 보는 사람이 없을 때만).</summary>
+        public bool Instant;
         /// <summary>넣을 상자가 꽉 차(또는 없어) 못 넣고 건너뛴 것.</summary>
         public IEnumerable<ItemDrop.ItemData> Skipped => m_skip;
         Container m_chest;
@@ -45,7 +47,7 @@ namespace ValheimHelper
                 if (m_chest == null) { Plugin.Log.LogInfo($"DIAG Unload 넣을 상자 없음 {next.m_dropPrefab.name} (역할 {Chests.RoleFor(next)}, 상자 {Chests.NearBase(m_npc.Home, Chests.RoleFor(next)).Count})"); m_skip.Add(next); return true; }
             }
             var at = m_chest.transform.position;
-            if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, false); return true; }
+            if (!Instant && Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, false); return true; }
             Container chest = m_chest;
             HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
             Inventory mine = m_npc.GetInventory();

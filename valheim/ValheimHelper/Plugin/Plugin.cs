@@ -28,6 +28,7 @@ namespace ValheimHelper
             Step("vh_exploretest", ExploreTest.Register);
             Step("vh_preptest", PrepTest.Register);
             Step("vh_bagtest", BagTest.Register);
+            Step("vh_settletest", SettleTest.Register);
             Step("vh_deathtest", DeathTest.Register);
             Step("vh_fighttest", FightTest.Register);
             Step("vh_pittest", PitTest.Register);
@@ -79,6 +80,7 @@ namespace ValheimHelper
                 Departures.Tick(UnityEngine.Time.deltaTime);
                 ClaudeChat.Tick();
                 WorkSaves.Tick(UnityEngine.Time.deltaTime);
+                MorningSettle.Tick();
                 MapSense.Tick(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();
             }
