@@ -94,7 +94,7 @@ namespace ValheimHelper
                 }
                 walk.Stop = true;
                 if (claude != null) TestRunner.Log($"물가: 거점에서 {Utils.DistanceXZ(home, shore):0}m, {claude.MoveDebug}");
-                Check($"바다 앞에서 멈춤 (수영 {swim:0.0}초, 물가까지 최소 {nearest:0}m)", blocked && swim <= 3f && nearest < 20f);
+                Check($"바다 앞에서 멈춤 (막힘 {blocked}, 수영 {swim:0.0}초, 물가까지 최소 {nearest:0}m)", blocked && swim <= 3f && nearest < 20f);
                 yield return new WaitForSeconds(1f);
             }
             else TestRunner.Log("물가: 거점 300m 안에 바다 없음(건너뜀)");
@@ -247,7 +247,17 @@ namespace ValheimHelper
                         Vector3 q = p + dir * s;
                         wide = wl - wg.GetHeight(q.x, q.z) > (float)WaterRule.DeepDepth;
                     }
-                    if (wide && r < best) { best = r; shore = p; sea = p + dir * 60f; }
+                    if (wide && r < best)
+                    {
+                        best = r; sea = p + dir * 60f;
+                        // 물가 = 그 줄에서 처음 깊은 물(DeepDepth) — 완만한 물가는 3m 자리보다 한참 앞에서 선다(회차 140 검은숲 21m)
+                        shore = p;
+                        for (float b = 10f; b < r; b += 1f)
+                        {
+                            Vector3 q = home + dir * b;
+                            if (wl - wg.GetHeight(q.x, q.z) > (float)WaterRule.DeepDepth) { shore = q; break; }
+                        }
+                    }
                     break; // 이 방향은 처음 만난 물로 정한다
                 }
             }

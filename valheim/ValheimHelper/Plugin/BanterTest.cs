@@ -119,7 +119,9 @@ namespace ValheimHelper
             checks.Add($"다음 잡담에 소식 먼저 ({first})", first == rn + ":bt.ev.died.news");
             yield return new WaitForSeconds(4f);
 
-            // 4) 플레이어가 40m 밖 → 잡담 없음
+            // 4) 플레이어가 40m 밖 → 잡담 없음. 앞에서 온 생물(바이옴 회귀 검은숲 회색난쟁이, 회차 140)에 쫓겨 플레이어 쪽으로 오지 않게 먼저 치움
+            int cleared = TestKit.ClearCreatures(w.Home);
+            if (cleared > 0) TestRunner.Log($"잡담 4) 앞 생물 {cleared}마리 치움");
             WorkerBanter.SaidKeys.Clear();
             Vector3 far = GatherTest.Ground(w.Home - w.Player.transform.forward * 45f);
             Vector3 side = w.Player.transform.right * 1.5f;

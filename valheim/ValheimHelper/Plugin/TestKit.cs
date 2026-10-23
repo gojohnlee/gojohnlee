@@ -345,7 +345,7 @@ namespace ValheimHelper
             TestRunner.Log($"둘레 생성기(200m): {(list.Count == 0 ? "없음" : string.Join(", ", list.ToArray()))}");
         }
 
-        static int ClearCreatures(Vector3 home)
+        public static int ClearCreatures(Vector3 home)
         {
             int n = 0;
             foreach (var c in Creatures(home))
