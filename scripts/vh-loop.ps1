@@ -452,35 +452,39 @@ function Wait-Until($t) {
     # 최대 절전(모니터가 켜져 있고 사용자가 쓰는 중이면 그냥 기다림).
     # 잠들 때·못 잠들 때·입력 때문에 안 잠들 때(처음 한 번, 그 뒤 30분마다 마지막 입력 시각)는 status.txt "지금"에 덧붙인다
     # → 밖에서도 보인다(2026-10-23: 사람 없는 07:13에 "10분 안에 입력 있음"으로 안 잠듦, 무슨 입력인지 보려고).
-    $bk = $false; $noHib = $false; $told = [datetime]::MinValue; $why = $script:StatusNow; $script:MonOff = 0
+    # 잠들어야 하는데 못 잠들면(명령 오류, 또는 명령은 됐는데 2분 동안 안 잠듦) 2분마다 다시 시도(사용자 요청 2026-10-23).
+    # status.txt는 첫 실패와 그 뒤 15번(약 30분)마다 + 그 실패를 알린 다음 시도 때만 고친다(2분마다 커밋하지 않게).
+    $bk = $false; $fails = 0; $failTold = $false; $told = [datetime]::MinValue; $why = $script:StatusNow; $script:MonOff = 0
     while ((Get-Date) -lt $t) {
         $idle = [VH.Power]::IdleMs()
         $off = Test-MonitorOff
-        if (-not $noHib -and ($t - (Get-Date)).TotalMinutes -gt 10 -and ($off -or $idle -gt 600000)) {
+        if (($t - (Get-Date)).TotalMinutes -gt 10 -and ($off -or $idle -gt 600000)) {
             $how = if ($off) { '모니터 꺼짐' } else { '입력 없음 10분' }
             if (-not $bk) { Backup-Wip; $bk = $true }
             $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c exit'
             $set = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
             Register-ScheduledTask -TaskName 'VH loop wake' -Action $act -Trigger (New-ScheduledTaskTrigger -Once -At $t) -Settings $set -Force | Out-Null
-            Log "최대 절전($how), $($t.ToString('MM-dd HH:mm')) 깨우기 예약"
-            Write-Status "$why — $(Get-Date -Format 'HH:mm')부터 최대 절전($how, 깨우기 예약)" '-'
+            $again = if ($fails) { ", 다시 시도 $($fails + 1)번째" } else { '' }
+            Log "최대 절전($how$again), $($t.ToString('MM-dd HH:mm')) 깨우기 예약"
+            if (-not $fails -or $failTold) { Write-Status "$why — $(Get-Date -Format 'HH:mm')부터 최대 절전($how$again, 깨우기 예약)" '-'; $failTold = $false }
             [void][VH.Power]::SetThreadExecutionState($Release)
+            $h = Get-Date   # 부르기 전에 잰다: shutdown /h가 바로 돌아오든 깰 때까지 안 돌아오든 절전 시간이 벽시계에 들어간다
             & shutdown /h
             $code = $LASTEXITCODE
-            if ($code) {
-                Log "최대 절전 못 함(코드 $code) → 켠 채로 기다림"; $noHib = $true
-                Write-Status "$why — 최대 절전 못 함(shutdown /h 코드 $code), 켠 채로 기다림" '-'
-            }
             # 깨우기 예약으로 켜진(사람 없는) PC는 2분 안에 다시 잠든다 → 깨어나면 곧바로 Awake.
             # Start-Sleep은 절전 동안 시간이 안 흐르므로 벽시계로 2분을 잰다(절전 들어가는 동안 다시 걸지 않게).
-            $h = Get-Date
             while (((Get-Date) - $h).TotalSeconds -lt 120) { Start-Sleep 2 }
             [void][VH.Power]::SetThreadExecutionState($Awake)
-            if (((Get-Date) - $h).TotalSeconds -gt 150) { Log '깨어남' }
+            # 잤다 = 2분보다 훨씬 지남(깨우기 예약) 또는 방금 입력(사람이 깨움). 아니면 못 잠든 것 → 조건이 그대로면 다음 바퀴에 다시 시도.
+            if (-not $code -and (((Get-Date) - $h).TotalSeconds -gt 150 -or [VH.Power]::IdleMs() -lt 120000)) { Log '깨어남'; $fails = 0; continue }
+            $fails++
+            $err = if ($code) { "shutdown /h 코드 $code" } else { '명령은 됐는데 안 잠듦' }
+            Log "최대 절전 실패 ${fails}번째($err) → 2분 뒤 다시 시도"
+            if ($fails % 15 -eq 1) { Write-Status "$why — 최대 절전 실패 ${fails}번($err), 2분마다 다시 시도 중" '-'; $failTold = $true }
             continue
         }
         # 모니터 꺼짐을 처음 본 때(30초 뒤 한 번 더 보고 잠듦)는 알리지 않는다
-        if (-not $noHib -and $script:MonOff -eq 0 -and ((Get-Date) - $told).TotalMinutes -ge 30 -and ($t - (Get-Date)).TotalMinutes -gt 10) {
+        if ($script:MonOff -eq 0 -and ((Get-Date) - $told).TotalMinutes -ge 30 -and ($t - (Get-Date)).TotalMinutes -gt 10) {
             $told = Get-Date
             $in = (Get-Date).AddMilliseconds(-[double]$idle).ToString('HH:mm:ss')
             Log "자리 비움 아님(모니터 켜짐, 마지막 입력 $in) → 안 잠듦"
