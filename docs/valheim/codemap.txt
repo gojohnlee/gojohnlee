@@ -40,7 +40,7 @@ NPC 주인 되찾기         Workers.Reclaim(1초마다 NPC ZDO 주인을 호스
 시험 자리 고르기        Core/Work/SpotSearch.cs(Find) TestSpots.cs(SpotXZ) — 동시 시험은 보류, 아직 안 씀
 세트메뉴·자동 보충      Core/Work/SetMenus.cs Refill.cs  저장: Brain.Sets/Refill(vh_sets, vh_refill)
 Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) ClaudePrompt.cs(지시문) ClaudeReply.cs(RateLimiter, Parse, MiniJson) + Plugin/ClaudeCli.cs(별도 스레드 프로세스, 30초 끊기) ClaudeChat.cs(채팅→Claude, 생각 중, 실패 시 대체)
-물·구덩이 판단         Core/Work/Water.cs(WaterRule) Climb.cs(IsPit, CarveDir)
+물·구덩이 판단         Core/Work/Water.cs(WaterRule) Climb.cs(IsPit, CarveDir, EdgeSpots 구덩이 가장자리 후보) · WorkerAI.EdgeRescueIfLong(30초 못 나오면 가장자리 위로, E018)
 막힘 복구              Core/Work/StuckBook.cs(목적지별 실패·뺌·대안 없음·귀환 상한, 작업 저장 WorkItem.Stuck)·StuckHop.cs(2) 목표 쪽 순간이동 자리 후보·플레이어 64m) → GatherJob.WalkFailed·HopToward·HopBlocked·Return, Guard.SafeAt(내릴 자리 위험), WorkerAI Mode.Home·TeleportHome·RestHere(사용자 결정 2026-10-23)
 거점 깃발·소환          Plugin/BaseFlag.cs Workers.cs(설정 이름, 소환·추적, AllZdos) · 거점 범위 Core/Work/BaseArea.cs(125m: Chests·Recipes.BaseRange·NightSettle)
 먼 구역 유지           Plugin/FarZones.cs(패치 3곳)
