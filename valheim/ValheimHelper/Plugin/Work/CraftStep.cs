@@ -153,7 +153,7 @@ namespace ValheimHelper
         }
 
         /// <summary>상자 바로 앞 땅에(상자가 없으면 or 자리 위에) 내려놓는다 — 사라지지 않게.</summary>
-        static void DropAt(Container chest, Vector3 or, string prefab, int amount)
+        internal static void DropAt(Container chest, Vector3 or, string prefab, int amount)
         {
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
             if (go == null) return;

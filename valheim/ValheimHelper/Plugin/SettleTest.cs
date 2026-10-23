@@ -10,6 +10,8 @@ namespace ValheimHelper
     /// </summary>
     static class SettleTest
     {
+        static GameObject s_smelter;
+
         public static void Register() => TestRunner.Register("vh_settletest", "밤사이 정산(아침 정리) 시험", Run);
 
         static IEnumerator Run()
@@ -57,6 +59,20 @@ namespace ValheimHelper
             claude.GetInventory().AddItem(wood, 20);
             claude.GetInventory().AddItem(stone, 10);
             alarak.GetInventory().AddItem(wood, 10);
+            // 설비(가2): 제련소에 구리 광석 2·숯 4를 넣고 상자에 광석 3·숯 20 → 아침에 결과물 상자로, 광석 3 채움, 연료는 녹일 만큼
+            GameObject smelterPrefab = ZNetScene.instance.GetPrefab("smelter");
+            checks.Add("제련소 프리팹 있음", smelterPrefab != null);
+            if (smelterPrefab == null) { End(player, god, checks, onHeard, heard); yield break; }
+            s_smelter = Object.Instantiate(smelterPrefab, GatherTest.Ground(home + rot * new Vector3(4f, 0f, -1f)), rot);
+            Smelter smelter = s_smelter.GetComponent<Smelter>();
+            ZNetView snv = s_smelter.GetComponent<ZNetView>();
+            TestKit.PutInChest(chest, "CopperOre", 3);
+            TestKit.PutInChest(chest, "Coal", 20);
+            yield return new WaitForSeconds(1f);
+            for (int i = 0; i < 2; i++) snv.InvokeRPC("RPC_AddOre", "CopperOre", false);
+            for (int i = 0; i < 4; i++) snv.InvokeRPC("RPC_AddFuel");
+            yield return new WaitForSeconds(0.5f);
+            int copperAll = 5 + GatherTest.CountBase(home, "Copper");
             Vector3 far = GatherTest.Ground(home + rot * new Vector3(0f, 0f, -80f));
             alarak.TeleportTo(far + Vector3.up * 0.5f, rot, false);
             yield return new WaitForSeconds(1f);
@@ -84,15 +100,34 @@ namespace ValheimHelper
             checks.Add($"2호(밖)는 빠짐 (나무 {alarak.CountItem("Wood")}/10, 날짜 {alarak.Zdo.GetInt(MorningSettle.KeyDay, -1)}/{alarakDay})",
                 alarak.CountItem("Wood") == 10 && alarak.Zdo.GetInt(MorningSettle.KeyDay, -1) == alarakDay);
 
+            // 설비: 광석·주괴 합 보존(상자 주괴 + 상자 광석 + 넣어 둔 광석 + 안 내놓은 결과물), 땅·짐에 주괴 없음, 상자 광석 다 들어감, 연료는 다 녹일 만큼
+            ZDO sz = snv.GetZDO();
+            int queued = sz.GetInt(ZDOVars.s_queued), pending = sz.GetInt(ZDOVars.s_spawnAmount);
+            int bars = GatherTest.CountBase(home, "Copper"), oreChest = GatherTest.CountBase(home, "CopperOre");
+            float fuel = sz.GetFloat(ZDOVars.s_fuel);
+            TestRunner.Log($"제련소: 넣어 둔 광석 {queued}, 안 내놓은 결과 {pending}, 연료 {fuel:0.0}/{smelter.m_maxFuel}, 상자 주괴 {bars}·광석 {oreChest}·숯 {GatherTest.CountBase(home, "Coal")}, 1호 짐 주괴 {claude.CountItem("Copper")}");
+            checks.Add($"구리 합 그대로 ({bars + oreChest + queued + pending + claude.CountItem("Copper")}/{copperAll})", bars + oreChest + queued + pending + claude.CountItem("Copper") == copperAll);
+            checks.Add($"결과물이 상자로 (짐 {claude.CountItem("Copper")}·안 내놓은 것 {pending})", claude.CountItem("Copper") == 0 && pending == 0);
+            checks.Add($"상자 광석으로 채움 (상자 광석 {oreChest}, 넣어 둔 것 {queued})", oreChest == 0 && queued >= 3);
+            // 정산 뒤 제련소가 벌써 굽고 있음 → 지금 굽는 것의 진행만큼 덜 필요(1초에 굽기 1, 연료 fuelPerProduct/secPerProduct)
+            float fuelNeed = queued * smelter.m_fuelPerProduct - sz.GetFloat(ZDOVars.s_bakeTimer) * smelter.m_fuelPerProduct / smelter.m_secPerProduct;
+            checks.Add($"연료 다 녹일 만큼·상한 안 ({fuel:0.0}, 필요 {fuelNeed:0.0})", fuel >= fuelNeed - 0.05f && fuel <= smelter.m_maxFuel);
+
             // 같은 아침 다시(불러온 것처럼 저장된 날짜만 보고) → 안 함, 다음 아침 → 함
             claude.GetInventory().AddItem(wood, 5);
             MorningSettle.Snapshot();
             MorningSettle.SettleAll(day);
             checks.Add($"같은 아침 두 번 안 함 (짐 나무 {claude.CountItem("Wood")}/5)", claude.CountItem("Wood") == 5);
+            // 다음 아침: 제련소가 아직 안 내놓은 결과물 2(ZDO) → 상자로 바로
+            sz.Set(ZDOVars.s_spawnOre, "CopperOre");
+            sz.Set(ZDOVars.s_spawnAmount, 2);
+            int barsBefore = GatherTest.CountBase(home, "Copper");
             MorningSettle.Snapshot();
             MorningSettle.SettleAll(day + 1);
             checks.Add($"다음 아침엔 함 (짐 나무 {claude.CountItem("Wood")}/0, 상자 {GatherTest.CountBase(home, "Wood")}/{woodAll + 5})",
                 claude.CountItem("Wood") == 0 && GatherTest.CountBase(home, "Wood") == woodAll + 5);
+            checks.Add($"안 내놓은 결과물 → 상자 (주괴 {GatherTest.CountBase(home, "Copper")}/{barsBefore + 2}, 남은 기록 {sz.GetInt(ZDOVars.s_spawnAmount)})",
+                GatherTest.CountBase(home, "Copper") == barsBefore + 2 && sz.GetInt(ZDOVars.s_spawnAmount) == 0);
             claude.Zdo.Set(MorningSettle.KeyDay, day); // 시험이 앞당긴 날짜를 되돌림
             End(player, god, checks, onHeard, heard);
         }
@@ -101,6 +136,8 @@ namespace ValheimHelper
         {
             ChatNet.Heard -= onHeard;
             player.SetGodMode(god);
+            if (s_smelter != null) ZNetScene.instance.Destroy(s_smelter);
+            s_smelter = null;
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in heard) TestRunner.Log(h);
             TestRunner.Log($"판정: {(checks.Passed == checks.Total ? "PASS" : "FAIL")} ({checks.Passed}/{checks.Total})");
