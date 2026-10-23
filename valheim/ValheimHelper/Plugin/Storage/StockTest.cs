@@ -157,6 +157,98 @@ namespace ValheimHelper
             bag.RemoveItem(b, bag.CountItems(b));
             if (bagA0 > 0) bag.AddItem(ra.m_resItem.gameObject, bagA0);
             if (bagB0 > 0) bag.AddItem(rb.m_resItem.gameObject, bagB0);
+
+            yield return Build(w, checks, made, near, far);
+        }
+
+        /// <summary>제작대 없이 놓이고 재료 두 가지 이상인 망치 조각(모닥불 먼저).</summary>
+        static Piece PickPiece()
+        {
+            PieceTable table = ObjectDB.instance.GetItemPrefab("Hammer")?.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces;
+            if (table == null) return null;
+            Piece pick = null;
+            foreach (var go in table.m_pieces)
+            {
+                Piece pc = go != null ? go.GetComponent<Piece>() : null;
+                if (pc == null || !pc.m_enabled || pc.m_craftingStation != null || pc.m_dlc.Length > 0 || pc.m_resources.Length < 2) continue;
+                bool ok = true;
+                foreach (var q in pc.m_resources) if (!q.m_resItem || q.m_amount <= 0) ok = false;
+                if (!ok) continue;
+                if (go.name == "fire_pit") return pc;
+                if (pick == null) pick = pc;
+            }
+            return pick;
+        }
+
+        /// <summary>
+        /// 건축(조각 2번째): 망치 놓기 순서(UpdatePlacement 클릭 = Fresh 동안 HaveRequirements(CanBuild) → PlacePiece → ConsumeResources(…, 0))를 그대로 부름.
+        /// 가방 a(n−1) + 가까운 상자 a 1, 먼 상자 b 전부 → 목록에 보임·놓임·재료 총량 0. 다 쓴 뒤·열린 상자에만 있으면 안 보이고 안 놓임.
+        /// </summary>
+        static IEnumerator Build(TestKit.World w, GatherTest.Checks checks, List<Container> made, Container near, Container far)
+        {
+            Piece piece = PickPiece();
+            checks.Add($"제작대 없는 망치 조각 ({(piece != null ? piece.name : "없음")})", piece != null);
+            if (piece == null) yield break;
+            Piece.Requirement ra = piece.m_resources[0], rb = piece.m_resources[1];
+            string a = Name(ra), b = Name(rb), pa = ra.m_resItem.name, pb = rb.m_resItem.name;
+            int na = ra.m_amount, nb = rb.m_amount;
+            Player p = w.Player;
+            Inventory bag = p.GetInventory();
+            int bagA0 = bag.CountItems(a), bagB0 = bag.CountItems(b);
+            bag.RemoveItem(a, bagA0);
+            bag.RemoveItem(b, bagB0);
+            foreach (var c in new[] { near, far }) { TestKit.TakeFromChest(c, pa); TestKit.TakeFromChest(c, pb); }
+            TestKit.ClearBaseStock(w, pa, pb);
+
+            if (na > 1) bag.AddItem(ra.m_resItem.gameObject, na - 1);
+            TestKit.PutInChest(near, pa, 1);
+            TestKit.PutInChest(far, pb, nb);
+            yield return new WaitForSeconds(0.6f);
+            checks.Add($"가방에 {b} 없어도 상자에 있으면 목록에 보임", p.HaveRequirements(piece, Player.RequirementMode.CanAlmostBuild));
+
+            Vector3 at = GatherTest.Ground(w.Home + p.transform.forward * 5f - Vector3.Cross(Vector3.up, p.transform.forward).normalized * 4f);
+            BaseStock.Fresh++;
+            bool can;
+            try
+            {
+                can = p.HaveRequirements(piece, Player.RequirementMode.CanBuild);
+                if (can)
+                {
+                    p.PlacePiece(piece, at, Quaternion.identity, doAttack: false);
+                    p.ConsumeResources(piece.m_resources, 0);
+                }
+            }
+            finally { BaseStock.Fresh--; }
+            yield return new WaitForSeconds(0.5f);
+            var near1 = new List<Piece>();
+            Piece.GetAllPiecesInRadius(at, 2f, near1);
+            Piece placed = near1.Find(x => x != null && x.m_name == piece.m_name);
+            int left = bag.CountItems(a) + bag.CountItems(b) + GatherTest.Count(near, pa) + GatherTest.Count(near, pb) + GatherTest.Count(far, pa) + GatherTest.Count(far, pb);
+            checks.Add($"가방 + 상자 합으로 놓임 ({piece.name} {(placed != null ? "있음" : "없음")})", can && placed != null);
+            checks.Add($"재료 총량 = 처음 − 조각 (남은 {a}·{b} {left}, 0이어야)", left == 0);
+
+            yield return new WaitForSeconds(0.6f);
+            checks.Add("다 쓰면 목록에 안 보이고 안 놓임",
+                !p.HaveRequirements(piece, Player.RequirementMode.CanAlmostBuild) && !p.HaveRequirements(piece, Player.RequirementMode.CanBuild));
+
+            // 누가 연 상자에만 있으면 안 셈
+            TestKit.PutInChest(near, pa, na);
+            TestKit.PutInChest(near, pb, nb);
+            ZDO nz = near.GetComponent<ZNetView>().GetZDO();
+            nz.Set(ZDOVars.s_inUse, 1);
+            yield return new WaitForSeconds(0.6f);
+            checks.Add("열린 상자에만 있으면 안 놓임", !p.HaveRequirements(piece, Player.RequirementMode.CanBuild));
+            nz.Set(ZDOVars.s_inUse, 0);
+            yield return new WaitForSeconds(0.6f);
+            checks.Add("닫으면 다시 놓을 수 있음", p.HaveRequirements(piece, Player.RequirementMode.CanBuild));
+
+            if (placed != null) ZNetScene.instance.Destroy(placed.gameObject);
+            TestKit.TakeFromChest(near, pa);
+            TestKit.TakeFromChest(near, pb);
+            bag.RemoveItem(a, bag.CountItems(a));
+            bag.RemoveItem(b, bag.CountItems(b));
+            if (bagA0 > 0) bag.AddItem(ra.m_resItem.gameObject, bagA0);
+            if (bagB0 > 0) bag.AddItem(rb.m_resItem.gameObject, bagB0);
         }
     }
 }
