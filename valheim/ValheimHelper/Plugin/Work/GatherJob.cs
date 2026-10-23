@@ -1533,6 +1533,19 @@ namespace ValheimHelper
         internal void TestPortalArrive(ZoneXY z) => ArrivedAt(z);
         internal void TestPortalHome() => PortalHome();
         internal string PortalCarryTag => m_portalTag;
+
+        /// <summary>
+        /// 저장에서 불러온 이름표(WorkItem.PortalTag): 한 몫을 실제로 들고 있을 때만 이어 간다. 그 이름표 포탈이 1개면 도착해 짝을 놓고,
+        /// 0개·2개면 PlaceCarried가 거절하니 귀환 때 한 몫을 상자로(PortalHome). 안 들고 있으면 잊는다.
+        /// </summary>
+        public void LoadPortal(string tag)
+        {
+            if (string.IsNullOrEmpty(tag)) return;
+            if (!PortalBuilder.Carrying(m_npc.GetInventory())) { Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 포탈 {tag} 한 몫이 짐에 없어 잊음"); return; }
+            m_portalTag = tag;
+            int n = PortalBuilder.MineWithTag(tag);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 포탈 {tag} 이어 감(그 이름표 {n}개{(n == 1 ? ", 도착하면 짝" : ", 귀환 때 한 몫 상자로")})");
+        }
         /// <summary>시험용(vh_woodtest 높이 걸린 통나무): 지금 고른 대상.</summary>
         internal ZDOID TargetId => m_targetId;
 

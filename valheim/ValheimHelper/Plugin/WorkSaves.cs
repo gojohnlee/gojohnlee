@@ -34,6 +34,7 @@ namespace ValheimHelper
                         if (ways.Count == 0) return;
                         var job = new GatherJob(npc, w.Item, w.Amount, ways);
                         job.LoadStuck(w.Stuck); // 막힌 목적지는 불러와도 다시 안 감(사용자 결정 2026-10-23)
+                        job.LoadPortal(w.PortalTag);
                         npc.Ai.StartJob(job);
                     };
                 else
@@ -81,7 +82,7 @@ namespace ValheimHelper
             if (job is GatherJob g)
             {
                 int left = Mathf.Max(1, g.Target - g.Delivered);
-                var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = g.Item, Amount = left, Label = GatherJob.ItemLabel(g.Item) + " " + left, Stuck = g.StuckSave };
+                var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = g.Item, Amount = left, Label = GatherJob.ItemLabel(g.Item) + " " + left, Stuck = g.StuckSave, PortalTag = g.PortalCarryTag };
                 if (GoalPos(g) != Vector3.zero) { w.HasZone = true; w.Zone = GoalZone(g); }
                 return w;
             }

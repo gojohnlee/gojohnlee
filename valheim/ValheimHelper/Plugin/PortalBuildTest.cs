@@ -302,6 +302,43 @@ namespace ValheimHelper
             checks.Add("거점 쪽만 있으면 한 몫만 들고 감", job.PortalCarryTag == tag && PortalBuilder.Carrying(inv) && ChestEmpty() && PortalBuilder.MineWithTag(tag) == 1);
             job.TestPortalHome();
             checks.Add("다시 상자로", !PortalBuilder.Carrying(inv) && !ChestEmpty());
+
+            // 운반 중 저장 → 불러오기(작업 저장 문자열을 거쳐 새 일): 거점 쪽 1개 + 한 몫 → 이어 감, 도착하면 짝(요청 10-23 09:09)
+            GatherJob Reload(GatherJob from)
+            {
+                var back = WorkState.LoadQueue(WorkState.SaveQueue(new[] { WorkSaves.FromJob(from) }));
+                var j = new GatherJob(w.Claude, "Wood", 1, ways);
+                j.LoadPortal(back.Count == 1 ? back[0].PortalTag : null);
+                return j;
+            }
+            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job.TestPortalDepart(far);
+            job = Reload(job);
+            checks.Add($"불러온 뒤 이어 감 (이름표 {job.PortalCarryTag})", job.PortalCarryTag == tag && PortalBuilder.Carrying(inv) && PortalBuilder.MineWithTag(tag) == 1);
+            w.Claude.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 35f)), rot, false);
+            yield return new WaitForSeconds(1f);
+            job.TestPortalArrive(far);
+            yield return new WaitForSeconds(1f);
+            checks.Add($"불러온 뒤 도착해 짝 완성 ({PortalBuilder.MineWithTag(tag)}개, 재료 합 그대로)",
+                PortalBuilder.MineWithTag(tag) == 2 && job.PortalCarryTag == null && Carried(cost[0].Item) == 0 && ChestEmpty());
+
+            // 짝이 이미 다 있는데 한 몫을 들고 불러옴 → 더 안 놓고 귀환 때 상자로
+            Fill(w.Chest, cost, 1);
+            w.Claude.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 2f), rot, false);
+            yield return new WaitForSeconds(1f);
+            PortalBuilder.StartPair(tag, w.Home, inv, false, out _, out _);
+            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job.LoadPortal(tag);
+            job.TestPortalArrive(far);
+            yield return new WaitForSeconds(1f);
+            checks.Add($"짝이 있으면 더 안 놓음 ({PortalBuilder.MineWithTag(tag)}개)", PortalBuilder.MineWithTag(tag) == 2 && PortalBuilder.Carrying(inv));
+            job.TestPortalHome();
+            checks.Add("그 한 몫은 귀환 때 상자로", !PortalBuilder.Carrying(inv) && !ChestEmpty() && job.PortalCarryTag == null);
+
+            // 짐에 한 몫이 없으면 이름표를 잊음
+            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job.LoadPortal(tag);
+            checks.Add("짐에 없으면 잊음", job.PortalCarryTag == null);
             ClearMine();
         }
     }

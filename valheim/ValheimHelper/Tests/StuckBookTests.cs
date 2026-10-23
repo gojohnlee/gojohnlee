@@ -85,4 +85,13 @@ public class StuckBookTests
         var back = WorkState.LoadQueue(WorkState.SaveQueue(new[] { w })).Single();
         Assert.True(StuckBook.Load(back.Stuck).Excluded(64, -64));
     }
+
+    [Fact]
+    public void WorkItemCarriesPortalTag()
+    {
+        var w = new WorkItem { Kind = WorkKind.Gather, Item = "Stone", Amount = 5, Resume = true, PortalTag = "일꾼-(3,-4)" };
+        var back = WorkState.LoadQueue(WorkState.SaveQueue(new[] { w, new WorkItem { Kind = WorkKind.Gather, Item = "Wood", Amount = 1 } }));
+        Assert.Equal("일꾼-(3,-4)", back[0].PortalTag);
+        Assert.Null(back[1].PortalTag);
+    }
 }
