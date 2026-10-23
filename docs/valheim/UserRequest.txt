@@ -8,10 +8,3 @@
 - 구분선 아래만 요청으로 읽는다.
 ======================================================================
 
-
-코드 정리 — 관련 작업 때 작게 (사용자 요청 2026-10-23, 큰 리팩터링 아님)
-- 1순위(물건 복제·소실 막음): CraftStep.Take()가 실제로 꺼낸 개수를 돌려주게 한다. Chests.TryEdit 실패나 개수 확인 뒤 변동으로 덜 빠지면 부르는 쪽(PortalBuilder 2곳, MachineStep 3곳)이 되돌리거나 멈춘다. 일부러 덜 빠지게 하는 시험으로 재료 총량을 확인한다.
-- 귀환 통일: FarmJob.UpdateHome·GraveJob.UpdateHome(거의 같은 코드, 180초 뒤 TeleportTo 성공 여부를 안 보고 상자 단계로 감)과 GatherJob.LeaveCrypt의 깃발 순간이동을 WorkerAI.TeleportHome()(성공 확인)·RestHere()(실패 시 쉬기)로 맞춘다.
-- 저장 접근: WorkSaves가 ExploreJob 비공개 필드 4개(m_dirX 등)를 AccessTools 문자열로 읽는다 → ExploreJob에 저장용 internal 속성이나 메서드를 둔다.
-- 낡은 설명: "[게임 시험 안 됨]"(7개 파일 8곳)·"다음 조각"(PlanJob·Departures)은 그 파일을 고칠 때 실제 시험 여부를 확인하고 고친다. 이것만 하려고 회차를 쓰지 않는다.
-- GatherJob은 파일 크기만으로 나누지 않는다. 실패 처리와 상태 저장의 일관성을 우선한다.
