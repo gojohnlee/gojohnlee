@@ -116,25 +116,41 @@ namespace ValheimHelper
             checks.Add($"늪 지하묘지 위치 이름 있음 ({name})", name != null);
             if (name == null) yield break;
 
+            // 지하묘지 안 방은 자리마다 무작위 → 고철 더미가 없게 나오면(회차 136: 더미 0개) 지우고 깃발 둘레 110m 다른 방향에 다시(최대 3곳)
             Quaternion rot = w.Player.transform.rotation;
-            Vector3 pos = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 110f));
-            spot[0] = pos;
-            foreach (var z in Around(pos)) before.Add(z.m_uid);
-            bool spawned = ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);
-            checks.Add("지하묘지 세움(TestSpawnLocation)", spawned);
-            if (!spawned) yield break;
-            yield return new WaitForSeconds(4f);
-
             Dungeons.Crypt mine = default;
             bool found = false;
-            foreach (var c in Dungeons.All())
-                if (Utils.DistanceXZ(c.Pos, pos) < 64f) { mine = c; found = true; }
+            Vector3 pos = Vector3.zero;
+            float[] angles = { 0f, 45f, -45f };
+            for (int i = 0; i < angles.Length; i++)
+            {
+                if (i > 0)
+                {
+                    TestRunner.Log($"고철 더미 없는 지하묘지 → 지우고 {angles[i]:0}° 방향에 다시");
+                    Cleanup(before, spot[0]);
+                    spot[0] = Vector3.zero;
+                    yield return new WaitForSeconds(1f);
+                }
+                pos = GatherTest.Ground(w.Home + rot * Quaternion.Euler(0f, angles[i], 0f) * new Vector3(0f, 0f, 110f));
+                spot[0] = pos;
+                foreach (var z in Around(pos)) before.Add(z.m_uid);
+                bool spawned = ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);
+                if (!spawned) { checks.Add("지하묘지 세움(TestSpawnLocation)", false); yield break; }
+                yield return new WaitForSeconds(4f);
+
+                found = false;
+                foreach (var c in Dungeons.All())
+                    if (Utils.DistanceXZ(c.Pos, pos) < 64f) { mine = c; found = true; }
+                if (found && mine.Left > 0) break;
+            }
+            checks.Add($"지하묘지 세움(TestSpawnLocation, 깃발에서 {Utils.DistanceXZ(pos, w.Home):0}m)", true);
             checks.Add($"Dungeons.All이 찾음 ({(found ? mine.Name + " " + Utils.DistanceXZ(mine.Pos, pos).ToString("0") + "m" : "없음")})", found);
             if (!found) yield break;
             string doorName = mine.Door != null ? ZNetScene.instance.GetPrefab(mine.Door.GetPrefab())?.name : null;
             checks.Add($"입구 열쇠 문 찾음 ({doorName}), 처음엔 닫힘", mine.Door != null && !mine.Open);
             if (mine.Door == null) yield break;
             checks.Add($"안에 남은 고철 더미를 셈 ({mine.Left}개)", mine.Left > 0);
+            if (mine.Left == 0) yield break; // 더미가 없으면 뒤 칸(거절·고름·철 일)은 다 헛돎
             int leftBefore = mine.Left;
 
             // 열쇠: 플레이어가 주운 적 있음(알려진 재료) 또는 그 열쇠를 떨구는 보스가 잡힘(월드 키). 시험 동안 둘 다 끄고 하나씩 켠다.
@@ -200,6 +216,26 @@ namespace ValheimHelper
             TestRunner.Log("안의 고철 물체: " + (seen.Count == 0 ? "없음" : string.Join(", ", seen.Select(p => p.Key + " ×" + p.Value))));
             TestRunner.Log($"안의 ZNetView 물체 {all.Values.Sum()}개: " + string.Join(", ", all.OrderByDescending(p => p.Value).Take(25).Select(p => p.Key + " ×" + p.Value)));
             checks.Add($"안에 고철 나오는 물체 있음 ({seen.Values.Sum()}개)", seen.Count > 0);
+            // 진단: 도착 자리에서 더미마다 묘지 안 길(InteriorNav)이 있는지
+            InteriorNav.UseBody(w.Ragnar);
+            TestRunner.Log("  안의 " + InteriorNav.WaterDiag(here, 90f));
+            int reachable = 0, reachableOld = 0;
+            foreach (var v in Object.FindObjectsByType<Destructible>(FindObjectsSortMode.None).Select(d => d.GetComponent<ZNetView>())
+                .Where(v => v != null && v.IsValid() && Character.InInterior(v.transform.position) && Utils.DistanceXZ(v.transform.position, here) < 120f)
+                .Where(v => ResourceCatalog.Get(v.GetZDO().GetPrefab())?.Produces.Contains("IronScrap") == true)
+                .OrderBy(v => Utils.DistanceXZ(v.transform.position, here)))
+            {
+                var col = v.GetComponentInChildren<Collider>();
+                float reach = 1.7f + (col != null ? Mathf.Min(1.5f, Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) * 0.6f) : 0f); // GatherJob.Aim과 같게
+                var path = InteriorNav.Plan(here, v.transform.position, reach, out string why);
+                bool old = InteriorNav.CanReach(here, v.transform.position, reach, true);
+                if (path != null) reachable++;
+                if (old) reachableOld++;
+                TestRunner.Log($"  더미 {Utils.DistanceXZ(v.transform.position, here):0}m 높이 {v.transform.position.y - here.y:+0.0;-0.0} 닿을 {reach:0.0}m: 길 {(path != null ? "있음" : "없음")} {why} / 예전 규칙(시작 높이로만 잼) {(old ? "있음" : "없음")}"
+                    + (path == null ? " / " + InteriorNav.Explain(here, v.transform.position, reach) : ""));
+            }
+            TestRunner.Log($"  도착 자리에서 길 있는 더미 {reachable}개(예전 규칙 {reachableOld}개), 일꾼 m_swimDepth {w.Ragnar.m_swimDepth:0.00}(몸 캡슐 높이 {w.Ragnar.GetComponent<CapsuleCollider>()?.height:0.00}·반지름 {w.Ragnar.GetComponent<CapsuleCollider>()?.radius:0.00}), 깊은 물 기준 {InteriorNav.SwimDepth:0.00}m");
+            TestRunner.Log("  도착 자리 둘레 지도(±14칸, 위 +z):" + InteriorNav.Map(here, 14));
 
             Teleport exit = Dungeons.Exit(w.Ragnar.transform.position);
             checks.Add($"나가는 Teleport 찾음 ({(exit != null ? Vector3.Distance(exit.transform.position, here).ToString("0") + "m" : "없음")})", exit != null);
@@ -212,20 +248,23 @@ namespace ValheimHelper
 
             // ⑦ 철 2조각: "!철 3" → 걸어가 입구로 들어가 진흙 더미를 캐고 나와 거점 상자에 넣는다(고철 한 번에 얼마 나오는지는 바닐라 데이터)
             TestKit.ClearBaseStock(w, "IronScrap");
-            w.Ragnar.TeleportTo(w.Home, w.Ragnar.transform.rotation, false);
+            // 약식: 거점에서 묘지까지 110m 가는 길은 빼고 입구 12m 앞(거점 쪽)에서 시작 — 문 열기·안 캐기·돌아와 넣기 칸은 같음
+            Vector3 start = TestRunner.Quick ? GatherTest.Ground(gate.transform.position + Vector3.Scale(w.Home - gate.transform.position, new Vector3(1f, 0f, 1f)).normalized * 12f) : w.Home;
+            w.Ragnar.TeleportTo(start, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1.5f);
             int stockBefore = GatherTest.CountBase(w.Home, "IronScrap");
             GatherTest.Say($"!{w.Ragnar.NpcName} 철 3", null);
             bool wasInside = false;
-            float t = 0f;
+            float t = 0f, inAt = -1f, outAt = -1f;
             while (t < 480f && GatherTest.CountBase(w.Home, "IronScrap") - stockBefore < 3)
             {
                 yield return new WaitForSeconds(1f);
                 t += 1f;
-                if (w.Ragnar.InInterior()) wasInside = true;
+                if (w.Ragnar.InInterior()) { wasInside = true; if (inAt < 0f) inAt = t; }
+                else if (wasInside && outAt < 0f) outAt = t;
             }
             int got = GatherTest.CountBase(w.Home, "IronScrap") - stockBefore;
-            TestRunner.Log($"철 일: {t:0}초, 상자에 고철 {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}");
+            TestRunner.Log($"철 일: {t:0}초(들어감 {inAt:0}초·나옴 {outAt:0}초{(TestRunner.Quick ? ", 약식 입구 앞 시작" : "")}), 상자에 고철 {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}");
             checks.Add($"일꾼이 열쇠 문을 직접 엶 (상태 {mine.Door.GetInt(ZDOVars.s_state)})", Dungeons.IsOpen(mine.Door));
             checks.Add("일꾼이 지하묘지 안으로 들어감", wasInside);
             checks.Add($"고철이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);

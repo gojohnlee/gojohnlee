@@ -223,12 +223,18 @@ namespace ValheimHelper
         int m_inIdx;
         static readonly Vector3 NoGoal = new Vector3(1e9f, 0f, 1e9f);
         Vector3 m_inGoal = NoGoal;
-        float m_inPlanAt = -100f, m_inBest, m_inProgressAt;
+        float m_inPlanAt = -100f, m_inBest, m_inProgressAt, m_inDist;
+
+        bool m_inSwimLogged;
 
         void ForgetInteriorPath() { m_inPath = null; m_inGoal = NoGoal; }
 
         /// <summary>지하묘지 안 길(InteriorNav)을 따라 걷는 중이고 최근 3초 안에 다음 점에 다가갔다(막힘 판단이 길을 도는 걸음을 막힘으로 안 보게).</summary>
         public bool OnInteriorPath => m_inPath != null && Time.time - m_inProgressAt < 3f;
+
+        /// <summary>지하묘지 안에서 그 점(2m 안)·닿을 거리(0.3m 안)로 마지막에 찾은 묘지 안 길이 없었다(바닐라 걷기로 헤매는 중).</summary>
+        public bool InteriorNoPath(Vector3 point, float dist) =>
+            m_inPath == null && Character.InInterior(transform.position) && Utils.DistanceXZ(point, m_inGoal) <= 2f && Mathf.Abs(dist - m_inDist) <= 0.3f;
 
         /// <summary>
         /// 지하묘지 안 걷기: InteriorNav 칸 길을 점마다 따라간다(바닐라 길 지도는 안에서 조각나 길이 늘 "부분"). 다음 점이 턱 위면 뛴다.
@@ -236,18 +242,21 @@ namespace ValheimHelper
         /// </summary>
         bool InteriorWalk(Vector3 pos, Vector3 point, float dist, bool run)
         {
-            bool newGoal = Utils.DistanceXZ(point, m_inGoal) > 2f;
+            bool newGoal = Utils.DistanceXZ(point, m_inGoal) > 2f || Mathf.Abs(dist - m_inDist) > 0.3f; // 닿을 거리가 바뀌어도(줍기: 손 닿는 거리로) 새로 찾는다
             bool stalled = m_inPath != null && Time.time - m_inProgressAt > 3f;
             bool retry = m_inPath == null; // 못 찾았던 같은 목표: 3초마다 다시
             if (newGoal ? Time.time - m_inPlanAt > 0.5f : (stalled || retry) && Time.time - m_inPlanAt > 3f)
             {
                 m_inGoal = point;
+                m_inDist = dist;
                 m_inPlanAt = Time.time;
+                InteriorNav.UseBody(m_character);
                 m_inPath = InteriorNav.Plan(pos, point, dist, out string why);
                 m_inIdx = m_inPath != null && m_inPath.Count > 1 ? 1 : 0; // 첫 점은 지금 자리
                 m_inBest = float.MaxValue;
                 if (!stalled) m_inProgressAt = Time.time; // 멈춰서 다시 찾은 길은 실제로 다가가야 진척(막힘 판단이 계속 미뤄지지 않게)
                 Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 묘지 안 길 {(m_inPath != null ? "찾음" : "못 찾음")}{(stalled ? "(멈춰서 다시)" : "")} — {why}, 목표까지 {Utils.DistanceXZ(point, pos):0.0}m");
+                if (m_inPath == null && newGoal) Plugin.Log.LogInfo($"DIAG 묘지 안 길 없음: {InteriorNav.Explain(pos, point, dist)}, 목표 ({point.x - pos.x:0.0},{point.y - pos.y:0.0},{point.z - pos.z:0.0})");
             }
             if (m_inPath == null) return false;
             while (m_inIdx < m_inPath.Count - 1 && Utils.DistanceXZ(m_inPath[m_inIdx], pos) < 0.5f) { m_inIdx++; m_inBest = float.MaxValue; m_inProgressAt = Time.time; }
@@ -280,8 +289,18 @@ namespace ValheimHelper
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) return false;
             if (RescueIfTrapped(dt, pos)) return false;
+            bool inPath = Character.InInterior(pos) && m_inPath != null; // 지하묘지 안 길(헤엄 칸 포함)을 따라가는 중
+            if (m_character.IsSwimming() && Character.InInterior(pos) && !inPath) // 진단: 묘지 안 길 없이(바닐라 걷기로) 물에 빠짐
+            {
+                if (!m_inSwimLogged)
+                {
+                    m_inSwimLogged = true;
+                    Plugin.Log.LogInfo($"DIAG 묘지 안 길 밖 헤엄: 수면 {m_character.GetLiquidLevel() - pos.y:+0.00}, 발밑 {InteriorNav.CellDiag(pos, pos.y)}, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m 높이 " + (m_lastDry.y - pos.y).ToString("+0.0;-0.0") : "없음")}");
+                }
+            }
+            else m_inSwimLogged = false;
             if (!m_character.InLiquid()) { m_lastDry = pos; m_hasDry = true; if (Time.time > m_waterDecidedUntil) m_swimOk = false; }
-            else if (m_character.IsSwimming() && !m_swimOk && m_hasDry)
+            else if (m_character.IsSwimming() && !m_swimOk && m_hasDry && !inPath) // 묘지 안 길이 헤엄 칸을 지나면 그대로 헤엄쳐 간다(회차 136: 돌아가기를 되풀이해 20초 갇힘)
             {
                 MoveTowards(Flat(m_lastDry - pos), true);
                 return false;
@@ -627,6 +646,8 @@ namespace ValheimHelper
         /// <summary>그 방향 2.5m 앞이 깊은 물이고 건너면 안 되는 물인지. 건널 물(좁은 강)이면 m_swimOk를 켠다.</summary>
         bool WaterAhead(Vector3 pos, Vector3 dir)
         {
+            // Scout.WaterDepth는 바깥 지형·바다 높이로 잰다 — 지하묘지 안(y+5000)이면 그 자리 바깥 늪물을 앞 물로 본다. 안의 물은 InteriorNav가 헤엄 칸으로 다룬다.
+            if (Character.InInterior(pos)) return false;
             dir = Flat(dir);
             if (m_swimOk || dir.sqrMagnitude < 0.01f) return false;
             if (Time.time < m_waterDecidedUntil) return true; // 방금 못 건넌다고 봤다

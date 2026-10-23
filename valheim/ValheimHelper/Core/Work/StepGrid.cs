@@ -43,11 +43,19 @@ namespace ValheimHelper.Core.Work
         /// </summary>
         public static List<Cell> Find(Cell start, double startFloor, Func<Cell, bool> goal, Cell aim,
             Func<int, int, double?> floor, Func<Cell, Cell, bool> open, int maxExpand)
+            => Find(start, startFloor, goal, aim, (x, z, from) => floor(x, z), open, maxExpand);
+
+        /// <summary>
+        /// floorFrom(x,z,from) = 높이 from인 이웃 칸에서 건너갈 때 (x,z) 칸의 설 수 있는 바닥 높이(처음 물은 값을 그 칸 높이로 기억).
+        /// 칸 하나에 면이 여럿일 때(문틀 윗면·벽 꼭대기 아래 문간 바닥) 걷던 높이 기준으로 고르게 한다.
+        /// </summary>
+        public static List<Cell> Find(Cell start, double startFloor, Func<Cell, bool> goal, Cell aim,
+            Func<int, int, double, double?> floorFrom, Func<Cell, Cell, bool> open, int maxExpand)
         {
             var heights = new Dictionary<Cell, double?> { [start] = startFloor };
-            double? Height(Cell c)
+            double? Height(Cell c, double from)
             {
-                if (!heights.TryGetValue(c, out double? h)) heights[c] = h = floor(c.X, c.Z);
+                if (!heights.TryGetValue(c, out double? h)) heights[c] = h = floorFrom(c.X, c.Z, from);
                 return h;
             }
             double Guess(Cell c)
@@ -68,12 +76,12 @@ namespace ValheimHelper.Core.Work
                 if (!closed.Add(cur)) continue;
                 if (goal(cur)) return Path(came, start, cur);
                 if (++expanded > maxExpand) return null;
-                double hc = Height(cur).Value;
+                double hc = Height(cur, startFloor).Value;
                 for (int k = 0; k < 8; k++)
                 {
                     var n = new Cell(cur.X + DX[k], cur.Z + DZ[k]);
                     if (closed.Contains(n)) continue;
-                    double? hn = Height(n);
+                    double? hn = Height(n, hc);
                     if (hn == null) continue;
                     double dy = hn.Value - hc;
                     if (!CanStep(dy)) continue;
@@ -83,7 +91,7 @@ namespace ValheimHelper.Core.Work
                         if (Math.Abs(dy) > StepUp) continue; // 턱은 곧게만 오르내린다
                         var o1 = new Cell(cur.X + DX[k], cur.Z);
                         var o2 = new Cell(cur.X, cur.Z + DZ[k]);
-                        double? h1 = Height(o1), h2 = Height(o2);
+                        double? h1 = Height(o1, hc), h2 = Height(o2, hc);
                         if (h1 == null || h2 == null || Math.Abs(h1.Value - hc) > StepUp || Math.Abs(h2.Value - hc) > StepUp) continue;
                         if (!open(cur, o1) || !open(cur, o2)) continue;
                     }

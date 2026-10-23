@@ -92,4 +92,35 @@ public class StepGridTests
         Assert.NotNull(path);
         Assert.Equal(new Cell(4, 0), path.Last());
     }
+
+    [Fact]
+    public void FloorFromGetsHeightOfCellWeComeFrom()
+    {
+        // x 방향 계단(칸마다 0.5m 오름), z=0 줄만 바닥: 각 칸은 왼쪽 칸 높이를 기준으로 물어야 한다
+        var asked = new Dictionary<int, double>();
+        var path = StepGrid.Find(new Cell(0, 0), 0, c => c.X == 6, new Cell(6, 0),
+            (x, z, from) => { if (z != 0 || x < 0 || x > 9) return null; asked[x] = from; return 0.5 * x; }, (a, b) => true, 1000);
+        Assert.NotNull(path);
+        Assert.Equal(new Cell(6, 0), path.Last());
+        for (int x = 1; x <= 6; x++) Assert.Equal(0.5 * (x - 1), asked[x], 6);
+    }
+
+    [Fact]
+    public void DoorwayUnderLintelIsFoundFromCorridorHeight()
+    {
+        // 2026-10-24 vh_crypttest: 묘지 입구 계단 위(1.5m)에서 잰 높이 기준으로는 문간(x=3)의 첫 면이 문틀 윗면(2.5m)이라 못 지나갔다.
+        // 면 목록에서 기준 + 1m(뛰어 오르기) 아래 첫 면을 바닥으로 — 기준이 걷던 칸 높이면 문간 바닥(0)이 잡힌다.
+        double[] Surfaces(int x) => x == 3 ? new[] { 2.5, 0.0 } : new[] { x == 0 ? 1.5 : 0.0 };
+        double? Probe(int x, int z, double from)
+        {
+            if (z != 0 || x < 0 || x > 9) return null;
+            foreach (double s in Surfaces(x)) if (s <= from + StepGrid.MaxUp) return s;
+            return null;
+        }
+        var path = StepGrid.Find(new Cell(0, 0), 1.5, c => c.X == 6, new Cell(6, 0), Probe, (a, b) => true, 1000);
+        Assert.NotNull(path);
+        Assert.Contains(new Cell(3, 0), path);
+        // 예전처럼 시작 높이 하나로 재면 문틀 윗면이 바닥 → 2.5m 턱이라 못 감
+        Assert.Null(StepGrid.Find(new Cell(0, 0), 1.5, c => c.X == 6, new Cell(6, 0), (x, z) => Probe(x, z, 1.5), (a, b) => true, 1000));
+    }
 }

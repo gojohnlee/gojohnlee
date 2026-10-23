@@ -34,12 +34,18 @@ namespace ValheimHelper
             return yes;
         }
 
+        /// <summary>
+        /// 거점 상자 후보: 건축물 상자이고 지하묘지 안(y+5000, InInterior)이 아님. 거점 둘레(xz 125m) 안에 지하묘지가 있으면 그 보물 상자
+        /// (TreasureChest_sunkencrypt — Piece·WearNTear 있음)가 거점 상자로 잡혀 재고로 세고 캔 고철을 거기 넣었다(회차 136 vh_crypttest).
+        /// </summary>
+        internal static bool IsBaseChest(ZDO zdo) => IsChest(zdo) && !Character.InInterior(zdo.GetPosition());
+
         /// <summary>그 역할에 쓸 거점 근처 ZDO들(이름 규칙은 Core ChestNames: 역할 상자가 있으면 그것만, 손대지 않는 상자는 항상 뺌).</summary>
         static List<ZDO> Candidates(Vector3 home, ChestRole role)
         {
             // 상자 프리팹만(나무·바위 등 수천 개는 이름 읽기 전에 뺌 — 회차 109 부하 재기: 한 번 0.8ms → 짐 정리 최악 50ms).
             // 상자 아닌 것(이름 없음 = 일반)이 섞이면 Select가 "일반 상자 있음"으로 잘못 봐 역할 상자만 있을 때 빈 목록이 됨 — 그것도 막음.
-            List<ZDO> all = Senses.Nearby(home, BaseRange, IsChest);
+            List<ZDO> all = Senses.Nearby(home, BaseRange, IsBaseChest);
             var provider = TagProvider;
             if (provider == null) return all;
             var tags = new ChestTags[all.Count];

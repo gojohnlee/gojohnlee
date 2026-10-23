@@ -625,7 +625,8 @@ namespace ValheimHelper
             foreach (var zdo in nearby)
             {
                 if (Character.InInterior(zdo.GetPosition()) != inside) continue; // 바깥에서 지하묘지 안 물체를, 안에서 바깥 물체를 고르지 않는다
-                if (m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition()) || m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z)) continue;
+                // 막힘 기록(StuckBook)은 바깥 걷기 자리(xz)라 지하묘지 안(같은 xz, y+5000) 대상에는 안 쓴다 — 회차 136: 밖에서 막힌 자리가 묘지 안 더미를 가렸다
+                if (m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition()) || (!inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z))) continue;
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
@@ -652,10 +653,12 @@ namespace ValheimHelper
             return best != null;
         }
 
-        /// <summary>진단: 시야(44m) 안에서 그 물건이 나온다고 목록에 있는 것들과 FindInSight가 고르지 않은 까닭(앞 6개).</summary>
+        /// <summary>진단: 시야(44m, 지하묘지 안은 CryptSight) 안에서 그 물건이 나온다고 목록에 있는 것들과 FindInSight가 고르지 않은 까닭(앞 6개, 같은 안/밖만).</summary>
         string SightDiag(Vector3 pos)
         {
-            var nearby = Senses.Nearby(pos, Senses.SightRange + 4f);
+            bool inside = Character.InInterior(pos);
+            float range = inside ? CryptSight : Senses.SightRange;
+            var nearby = Senses.Nearby(pos, range + 4f);
             var pieces = new List<Vector3>();
             foreach (var zdo in nearby)
                 if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
@@ -664,15 +667,16 @@ namespace ValheimHelper
             foreach (var zdo in nearby)
             {
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
-                if (info == null || !info.Produces.Contains(Item)) continue;
+                if (info == null || !info.Produces.Contains(Item) || Character.InInterior(zdo.GetPosition()) != inside) continue;
                 if (++n > 6) break;
                 string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
+                    : !inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z) ? "막힘 기록으로 뺀 곳"
                     : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && Farmland(zdo.GetPosition()) ? "밭 작물"
                     : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) ? "건축물 4m 안"
                     : HungLog(zdo, info) ? "높이 걸린 통나무"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
-                    : Utils.DistanceXZ(zdo.GetPosition(), pos) > Senses.SightRange ? "시야 밖" : "고를 수 있음";
+                    : Utils.DistanceXZ(zdo.GetPosition(), pos) > range ? "시야 밖" : "고를 수 있음";
                 sb.Append($"[{info.Prefab} {Utils.DistanceXZ(zdo.GetPosition(), pos):0}m {why}]");
             }
             return n == 0 ? "목록에 있는 대상 없음" : sb.ToString();
@@ -713,8 +717,22 @@ namespace ValheimHelper
 
         // ---- 다가가서 베기 ----
 
+        /// <summary>
+        /// 지하묘지 안 대상인데 몸이 밖에 있다(묘지 안 물에서 헤엄만 해 갇힘 구조가 깃발로 옮김 등): 밖에서 안 대상 쪽(같은 xz)으로 걸으면
+        /// 지형 위를 헤매다 막힘으로 그 자리를 빼서 묘지 안 남은 더미까지 못 고르게 됐다(회차 136). 대상은 건너뛰고(skip) 다시 찾는다 — 묘지는 다시 들어간다.
+        /// </summary>
+        bool OutOfInterior(bool skip)
+        {
+            if (!Character.InInterior(m_targetPos) || m_npc.InInterior()) return false;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 안 대상인데 밖에 있음({m_step}) → {(skip ? "대상 건너뛰고 " : "")}다시 찾음");
+            if (skip) Skip();
+            else Go(Step.Search);
+            return true;
+        }
+
         bool UpdateApproach(float dt)
         {
+            if (OutOfInterior(true)) return true;
             ZDO zdo = ZDOMan.instance.GetZDO(m_targetId);
             if (zdo == null) { Go(Step.Collect); return true; }
             m_targetPos = zdo.GetPosition();
@@ -737,6 +755,18 @@ namespace ValheimHelper
                 StartWork(false);
                 return true;
             }
+            if (m_blockChecked != m_targetId && m_ai.InteriorNoPath(m_targetPos, m_reach))
+            {
+                // 지하묘지 안 길이 없다: 늪 지하묘지는 방 사이 통로를 진흙 더미가 막는다 — 그 길에 걸린 더미부터 캔다(대상은 그대로 두고 나중에 다시 고름)
+                m_blockChecked = m_targetId;
+                if (BlockingPile(out ZDO pile))
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab}까지 길을 {ResourceCatalog.Get(pile.GetPrefab())?.Prefab}({Utils.DistanceXZ(pile.GetPosition(), m_npc.transform.position):0}m)가 막음 → 그것부터 캠");
+                    Aim(pile);
+                    Go(Step.Approach);
+                    return true;
+                }
+            }
             if (Stuck(dt, m_targetPos) || m_stepTime > 40f)
             {
                 LogStuck("다가가기", m_targetPos);
@@ -754,6 +784,34 @@ namespace ValheimHelper
                 RescueIfStuckAgain();
             }
             return true;
+        }
+
+        /// <summary>막은 더미를 찾아본 대상(대상마다 한 번 — 길 찾기가 무겁다).</summary>
+        ZDOID m_blockChecked;
+
+        /// <summary>
+        /// 진흙 더미·광맥을 지나가도 된다고 칠 때만 대상까지 길이 있으면(InteriorNav.PilesOnWay) 그 길에 처음 걸리는 것 중 지금 연장으로 캘 수 있는 것.
+        /// </summary>
+        bool BlockingPile(out ZDO pile)
+        {
+            pile = null;
+            var piles = InteriorNav.PilesOnWay(m_npc.transform.position, m_targetPos, m_reach, out _);
+            if (piles == null) return false;
+            foreach (var p in piles)
+            {
+                ZNetView v = p.GetComponentInParent<ZNetView>();
+                if (v == null || !v.IsValid()) continue;
+                ZDO z = v.GetZDO();
+                if (z.m_uid == m_targetId) return false; // 대상까지 가는 길에 다른 더미가 안 걸림(대상 뒤 더미는 막은 게 아님)
+                if (m_skip.Contains(z.m_uid)) continue;
+                ResourceInfo info = ResourceCatalog.Get(z.GetPrefab());
+                if (info == null || info.Tool == ToolKind.None || !m_ways.Contains(info.Tool)) return false; // 처음 걸린 것을 못 캐면 그 뒤도 못 감
+                ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
+                if (tool == null || (info.MinToolTier > 0 && info.MinToolTier > tool.m_shared.m_toolTier)) return false;
+                pile = z;
+                return true;
+            }
+            return false;
         }
 
         /// <summary>멀리서 목표 이만큼(m) 앞에서 막히면 그 자리에서 직접 친다(E012). 목표 쪽 순간이동 자리(StuckHop.Radii 최대 8m)까지 덮는다.</summary>
@@ -986,6 +1044,7 @@ namespace ValheimHelper
 
         bool UpdateWork()
         {
+            if (OutOfInterior(true)) return true;
             ZDO zdo = ZDOMan.instance.GetZDO(m_targetId);
             ZNetView view = zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
             if (zdo == null || view == null || !view.IsValid())
@@ -1131,9 +1190,12 @@ namespace ValheimHelper
             Vector3 chest = m_npc.transform.position + Vector3.up;
             Collider buried = null;
             float buriedTop = float.MinValue, bestD = float.MaxValue;
+            bool inside = Character.InInterior(m_targetPos);
+            int sunk = 0;
             foreach (var col in view.GetComponentsInChildren<Collider>())
             {
                 if (col.isTrigger) continue;
+                if (inside && !DropLands(view, col, chest)) { sunk++; continue; }
                 Bounds b = col.bounds;
                 float ground = ZoneSystem.instance.GetGroundHeight(b.center, out float h) ? h : b.min.y;
                 if (b.max.y > ground + 0.3f)
@@ -1148,6 +1210,11 @@ namespace ValheimHelper
             // 드러난 조각이 있으면 광석이라도 땅을 파지 않는다: 휘두름이 땅에 먼저 닿으면 겨눈 조각에 맞은 것으로 한다(UpdateWork).
             // 다 땅속이면 광석(파서라도 꺼낼 것)만 바닐라처럼 파 내려간다. 원래 땅에서 8m(바닐라 한계)보다 깊이는 안 판다(NpcPatches.NoDig).
             // (0.3.8 구리 시험: 드러난 조각이 있어도 파게 했더니 52번 파서 3.8m 구덩이)
+            if (inside && m_aimCol == null && buried == null && sunk > 0)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 남은 조각 {sunk}개는 묘지 바닥 속(깨면 떨굼이 바닥 밑으로 빠짐) → 남김");
+                return false;
+            }
             bool dig = ResourceCatalog.WorthDigging(Item);
             if (m_aimCol != null || buried == null) return true;
             Vector3 c = buried.bounds.center;
@@ -1174,6 +1241,32 @@ namespace ValheimHelper
             m_ai.DigAllowedUntil = Time.time + 1.5f;
             aim = buried.bounds.ClosestPoint(chest);
             return true;
+        }
+
+        static readonly RaycastHit[] s_downHits = new RaycastHit[16];
+
+        /// <summary>
+        /// 지하묘지 안 큰 광맥(MineRock5, 진흙 더미 조각) 조각을 깨면 떨굼이 생기는 점(바닐라 DamageArea: m_hitEffectAreaCenter면 조각 가운데, 아니면 맞은 점 ±0.3m)
+        /// 아래 3m 안에 그 광맥 아닌 바닥 면이 있는가. 묘지 바닥 속에 묻힌 조각은 가운데가 바닥 밑이라 떨굼이 바닥 아래로 떨어져 잃는다
+        /// (회차 136: 직접 피해로 묻힌 조각을 깨 고철이 16~34m 아래로 — 바닐라 휘두름은 바닥에 막혀 못 닿는 조각).
+        /// </summary>
+        bool DropLands(ZNetView view, Collider col, Vector3 chest)
+        {
+            MineRock5 rock = view.GetComponent<MineRock5>();
+            if (rock == null) return true;
+            if (s_sightMask == 0) s_sightMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle");
+            Vector3 s = rock.m_hitEffectAreaCenter ? col.bounds.center : Closest(col, chest);
+            int n = Physics.RaycastNonAlloc(s + Vector3.up * 0.3f, Vector3.down, s_downHits, 3.3f, s_sightMask, QueryTriggerInteraction.Ignore);
+            float best = float.MaxValue;
+            bool floor = false;
+            for (int i = 0; i < n; i++)
+            {
+                RaycastHit h = s_downHits[i];
+                if (h.collider.transform.IsChildOf(view.transform) || h.distance >= best) continue;
+                best = h.distance;
+                floor = h.normal.y >= 0.5f && h.point.y <= s.y + 0.05f;
+            }
+            return floor;
         }
 
         /// <summary>충돌체에서 p에 가장 가까운 점. 오목한 메시 충돌체는 바닐라 ClosestPoint가 안 돼서(경고) 상자 경계로.</summary>
@@ -1447,6 +1540,7 @@ namespace ValheimHelper
 
         bool UpdateCollect(float dt)
         {
+            if (OutOfInterior(false)) return true;
             // 떨어지기를 기다린다: 줍는 것(Pickable)은 바로 생기고, 베고 캔 것은 통나무·바위가 부서지며 흩어진다.
             float wait = m_targetInfo != null && m_targetInfo.Pickable ? 0.3f : 1.2f;
             if (m_targetInfo != null && (m_targetInfo.Falls || m_targetInfo.Splits))
@@ -1493,8 +1587,47 @@ namespace ValheimHelper
                 Go(Step.Search); // 쓰러진 통나무가 있으면 Search가 먼저 고른다
                 return true;
             }
-            if (Walk(dt, drop.transform.position, 1.2f) || Utils.DistanceXZ(drop.transform.position, m_npc.transform.position) < 1.6f)
-                Pick(drop);
+            Vector3 dp = drop.transform.position;
+            ZDOID dropId = drop.TryGetComponent(out ZNetView dv) && dv.IsValid() ? dv.GetZDO().m_uid : ZDOID.None;
+            bool hand = !dropId.IsNone() && dropId == m_handDrop;
+            float reach = hand ? HandWalk : 1.2f;
+            if (Walk(dt, dp, reach) || Utils.DistanceXZ(dp, m_npc.transform.position) < (hand ? HandWalk + 0.3f : 1.6f))
+            {
+                if (!hand) Pick(drop);
+                else if (HandReach(drop, out string why)) { Plugin.Log.LogInfo($"{m_npc.NpcName}: 걸어서 못 닿는 {Item} — 손 닿는 데서 주움({why})"); Pick(drop); }
+                else { Plugin.Log.LogInfo($"{m_npc.NpcName}: 걸어서 못 닿는 {Item} 안 보임/멂({why}) → 건너뜀"); m_dropSkip.Add(dropId); }
+            }
+            else if (!dropId.IsNone() && m_ai.InteriorNoPath(dp, reach))
+            {
+                // 지하묘지 안: 떨굼 1.2m 안까지 가는 길이 없다(더미가 있던 구석·턱 너머로 떨어짐, 회차 136 — 30초씩 헤매다 남김).
+                // 플레이어처럼 손 닿는 거리(Player.m_maxInteractDistance, 눈에서 보이는 것)까지만 가 본다. 그 길도 없으면 그 떨굼은 건너뛴다.
+                if (!hand) { m_handDrop = dropId; Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼까지 묘지 안 길 없음 → 손 닿는 거리({HandWalk:0.0}m)까지만"); }
+                else { Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼 손 닿는 거리까지도 길 없음 → 건너뜀"); m_dropSkip.Add(dropId); }
+            }
+            return true;
+        }
+
+        /// <summary>걸어서 못 닿는 떨굼(지하묘지 안)은 이 수평 거리까지 다가가 손으로 줍는다(눈에서 HandReach 안·보일 때).</summary>
+        const float HandWalk = 3f;
+        /// <summary>손으로 줍는 거리: 바닐라 Player.m_maxInteractDistance(눈에서 맞은 점까지 5m).</summary>
+        const float HandRange = 5f;
+        /// <summary>손 닿는 거리로 줍는 중인 떨굼.</summary>
+        ZDOID m_handDrop;
+        /// <summary>지하묘지 안에서 걸어서도 손으로도 못 닿는 떨굼(이 일 동안 다시 안 고름 — 그것만 보고 줍기·캐기를 오가지 않게).</summary>
+        readonly HashSet<ZDOID> m_dropSkip = new HashSet<ZDOID>();
+        static int s_sightMask;
+
+        /// <summary>눈에서 떨굼(충돌체 가운데)까지 HandRange 안이고 사이에 단단한 것이 없는가(플레이어가 보고 집을 수 있는 것).</summary>
+        bool HandReach(ItemDrop drop, out string why)
+        {
+            if (s_sightMask == 0) s_sightMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle");
+            Vector3 eye = m_npc.GetEyePoint();
+            var col = drop.GetComponentInChildren<Collider>();
+            Vector3 at = col != null ? col.bounds.center : drop.transform.position + Vector3.up * 0.1f;
+            float d = Vector3.Distance(eye, at);
+            if (d > HandRange) { why = $"눈에서 {d:0.0}m"; return false; }
+            if (Physics.Linecast(eye, at, out RaycastHit h, s_sightMask, QueryTriggerInteraction.Ignore)) { why = $"눈에서 {d:0.0}m, 가림 {h.collider.name}"; return false; }
+            why = $"눈에서 {d:0.0}m";
             return true;
         }
 
@@ -1526,7 +1659,7 @@ namespace ValheimHelper
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view == null) continue;
                 ItemDrop drop = view.GetComponent<ItemDrop>();
-                if (drop == null || Utils.GetPrefabName(drop.gameObject) != Item) continue;
+                if (drop == null || Utils.GetPrefabName(drop.gameObject) != Item || m_dropSkip.Contains(zdo.m_uid)) continue;
                 float d = Utils.DistanceXZ(drop.transform.position, m_npc.transform.position);
                 if (d < bestD) { bestD = d; best = drop; }
             }
