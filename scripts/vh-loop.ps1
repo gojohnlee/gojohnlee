@@ -5,7 +5,7 @@
 # 15분마다 작업 트리를 valheim-wip에 백업(작업 트리·인덱스는 안 건드림). 금방 끝난 오류는 그 계정만 잠깐 쉬게 한다.
 # 백업 때 회차 시작 뒤 UserRequest.txt가 바뀌었으면 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)를 따로 작업 트리에서 돌려 먼저 답한다.
 # 두 계정 모두 한도(또는 쉼)면 풀리는 시각까지 기다리고,
-# 자리 비움(입력 없음 10분)이면 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
+# 모니터가 꺼졌으면 바로, 켜져 있으면 자리 비움(입력 없음 10분)일 때 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
 # 쉬기: docs/valheim/loop-pause.txt에 다시 시작할 시각("yyyy-MM-dd HH:mm")을 쓴다(아래 Get-PauseUntil).
 # 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 history.md 맨 위, 가져간 요청은 지움). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
@@ -218,6 +218,61 @@ $Awake = [uint32]2147483649   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED: 도는 동�
 $Release = [uint32]2147483648
 [void][VH.Power]::SetThreadExecutionState($Awake)
 
+# 모니터 전원(사용자 결정 2026-10-23: 기다릴 때 모니터가 꺼져 있으면 입력과 상관없이 바로 최대 절전, 켜져 있으면 입력 없음 10분).
+# 모니터에 DDC/CI(VCP D6 전원 모드)로 묻는다. Power(): 1 = 켜짐이라고 답한 모니터가 있음, 0 = 답한 모니터가 모두 대기·꺼짐,
+# -1 = 아무도 답 안 함(꺼져서 Windows가 모니터를 놓쳤거나 DDC/CI를 안 하는 모니터).
+$MonErr = $null
+try {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+namespace VH {
+public static class Mon {
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct PM { public IntPtr H; [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string D; }
+    delegate bool EnumProc(IntPtr m, IntPtr dc, IntPtr r, IntPtr p);
+    [DllImport("user32.dll")] static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, EnumProc cb, IntPtr p);
+    [DllImport("dxva2.dll")] static extern bool GetNumberOfPhysicalMonitorsFromHMONITOR(IntPtr m, out uint n);
+    [DllImport("dxva2.dll")] static extern bool GetPhysicalMonitorsFromHMONITOR(IntPtr m, uint n, [Out] PM[] a);
+    [DllImport("dxva2.dll")] static extern bool GetVCPFeatureAndVCPFeatureReply(IntPtr h, byte code, IntPtr type, out uint cur, out uint max);
+    [DllImport("dxva2.dll")] static extern bool DestroyPhysicalMonitors(uint n, PM[] a);
+    public static int Power() {
+        List<IntPtr> hs = new List<IntPtr>();
+        EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, delegate(IntPtr m, IntPtr dc, IntPtr r, IntPtr p) { hs.Add(m); return true; }, IntPtr.Zero);
+        int res = -1;
+        foreach (IntPtr m in hs) {
+            uint n;
+            if (!GetNumberOfPhysicalMonitorsFromHMONITOR(m, out n) || n == 0) continue;
+            PM[] a = new PM[n];
+            if (!GetPhysicalMonitorsFromHMONITOR(m, n, a)) continue;
+            try {
+                foreach (PM x in a) {
+                    uint cur, max;
+                    if (!GetVCPFeatureAndVCPFeatureReply(x.H, 0xD6, IntPtr.Zero, out cur, out max)) continue;
+                    if (cur == 1) return 1;
+                    res = 0;
+                }
+            } finally { DestroyPhysicalMonitors(n, a); }
+        }
+        return res;
+    }
+}
+}
+'@
+} catch { $MonErr = "$_" }
+
+# 기다릴 때 30초마다 부른다. "켜짐"이라고 답한 모니터가 없으면 꺼짐(사용자 결정 2026-10-23: 모니터가 없거나 DDC/CI를 안 하거나
+# 물을 수 없어도 켜 둘 이유가 없음). 꺼짐이 2번(30초 간격) 이어져야 $true → DDC/CI가 잠깐 안 되는 것으로 쓰는 중에 잠들지 않게.
+$MonOff = 0; $MonState = '모름'
+function Test-MonitorOff {
+    $p = -1
+    if (-not $MonErr) { try { $p = [VH.Mon]::Power() } catch { } }
+    if ($p -eq 1) { $script:MonOff = 0; $script:MonState = '켜짐'; return $false }
+    $script:MonOff++; $script:MonState = '꺼짐'
+    return $script:MonOff -ge 2
+}
+
 function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::AppendAllText($LogFile, "$l`r`n", $Utf8); [VH.Show]::Put("── $l", 'Gray') }
 function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
@@ -393,19 +448,22 @@ function Limit-Until($tail) {
 }
 
 function Wait-Until($t) {
-    # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 자리 비움(입력 없음 10분)이면 최대 절전(사용자가 쓰는 중이면 그냥 기다림)
+    # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 모니터가 꺼졌거나(Test-MonitorOff, 입력과 상관없이) 자리 비움(입력 없음 10분)이면
+    # 최대 절전(모니터가 켜져 있고 사용자가 쓰는 중이면 그냥 기다림).
     # 잠들 때·못 잠들 때·입력 때문에 안 잠들 때(처음 한 번, 그 뒤 30분마다 마지막 입력 시각)는 status.txt "지금"에 덧붙인다
     # → 밖에서도 보인다(2026-10-23: 사람 없는 07:13에 "10분 안에 입력 있음"으로 안 잠듦, 무슨 입력인지 보려고).
-    $bk = $false; $noHib = $false; $told = [datetime]::MinValue; $why = $script:StatusNow
+    $bk = $false; $noHib = $false; $told = [datetime]::MinValue; $why = $script:StatusNow; $script:MonOff = 0
     while ((Get-Date) -lt $t) {
         $idle = [VH.Power]::IdleMs()
-        if (-not $noHib -and ($t - (Get-Date)).TotalMinutes -gt 10 -and $idle -gt 600000) {
+        $off = Test-MonitorOff
+        if (-not $noHib -and ($t - (Get-Date)).TotalMinutes -gt 10 -and ($off -or $idle -gt 600000)) {
+            $how = if ($off) { '모니터 꺼짐' } else { '입력 없음 10분' }
             if (-not $bk) { Backup-Wip; $bk = $true }
             $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c exit'
             $set = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
             Register-ScheduledTask -TaskName 'VH loop wake' -Action $act -Trigger (New-ScheduledTaskTrigger -Once -At $t) -Settings $set -Force | Out-Null
-            Log "최대 절전, $($t.ToString('MM-dd HH:mm')) 깨우기 예약"
-            Write-Status "$why — $(Get-Date -Format 'HH:mm')부터 최대 절전(깨우기 예약)" '-'
+            Log "최대 절전($how), $($t.ToString('MM-dd HH:mm')) 깨우기 예약"
+            Write-Status "$why — $(Get-Date -Format 'HH:mm')부터 최대 절전($how, 깨우기 예약)" '-'
             [void][VH.Power]::SetThreadExecutionState($Release)
             & shutdown /h
             $code = $LASTEXITCODE
@@ -421,11 +479,12 @@ function Wait-Until($t) {
             if (((Get-Date) - $h).TotalSeconds -gt 150) { Log '깨어남' }
             continue
         }
-        if (-not $noHib -and ((Get-Date) - $told).TotalMinutes -ge 30 -and ($t - (Get-Date)).TotalMinutes -gt 10) {
+        # 모니터 꺼짐을 처음 본 때(30초 뒤 한 번 더 보고 잠듦)는 알리지 않는다
+        if (-not $noHib -and $script:MonOff -eq 0 -and ((Get-Date) - $told).TotalMinutes -ge 30 -and ($t - (Get-Date)).TotalMinutes -gt 10) {
             $told = Get-Date
             $in = (Get-Date).AddMilliseconds(-[double]$idle).ToString('HH:mm:ss')
-            Log "자리 비움 아님(마지막 입력 $in) → 안 잠듦"
-            Write-Status "$why — 키보드·마우스 입력이 있어 안 잠듦(마지막 입력 $in, 입력 없이 10분 지나면 잠듦)" '-'
+            Log "자리 비움 아님(모니터 켜짐, 마지막 입력 $in) → 안 잠듦"
+            Write-Status "$why — 모니터 켜짐, 키보드·마우스 입력이 있어 안 잠듦(마지막 입력 $in, 모니터를 끄거나 입력 없이 10분 지나면 잠듦)" '-'
         }
         Start-Sleep 30
     }
@@ -450,6 +509,8 @@ function Wait-UserRequest($why, $last) {
 
 $st = Load-State
 Log "루프 시작$(if ($Once) { ' (한 회차만)' })"
+[void](Test-MonitorOff)   # 시작 때 모니터 상태를 기록에 남긴다
+Log "모니터: $MonState$(if ($MonErr) { " (확인 못 만듦: $MonErr)" })"
 while ($true) {
     Prepare-Git
     if (-not $Once -and (Get-FileHash $PSCommandPath).Hash -ne $SelfHash) {
