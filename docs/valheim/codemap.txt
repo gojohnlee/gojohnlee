@@ -16,7 +16,7 @@
 잡담                  Core/Npc/Banter.cs(2분 잡담·이벤트 반응·소식, BanterFacts.FromPlaces·FromKnowledge, SetNext 시험용) + Speech bt.* · 테스트 BanterTests · 게임 연결 Plugin/WorkerBanter.cs(1초마다 쉬는 중·15m·플레이어 30m, WorkerNpc.Say → OnSaid 이벤트, 습격 끝·5분 밖 귀환, Facing → WorkerAI Idle·Home 서로 바라봄) + ChatNet.NpcBubble(VH_Bubble 말풍선만, 시험용 Bubbled) · 시험 BanterTest.cs(vh_bantertest)
 NPC 몸                Plugin/WorkerNpc.cs(외형, 말하기, 음식, 미드, 사망·묘비, 스킬 재정의, 땅 물건 줍기 PickDrop) WorkerPrefab.cs(Player 복제)
 NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 걷기 MoveToPoint, 점프, 구덩이 경사로, 물 판단, 대기열 Queue)
-위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 플레이어 64m 밖이면 휘두름 대신 직접 피해(m_far), 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지, 출발 조건 "resist:종류")
+위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 플레이어 64m 밖이면 휘두름 대신 직접 피해(m_far), 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Retreat.cs(물러날 방향 Guard.AwayPoint: 거점 쪽·거점 근처면 적 반대·적이 거점 쪽이면 옆으로 돌아서, 쫓기면 41° 안, RetreatTests 쫓김 흉내) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지, 출발 조건 "resist:종류")
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
 지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도, AddPin, Reachable = 걸어서 또는 이어진 포탈로·WalkFar·OceanBetween 바다 건너 판단) MapSense.cs(밝혀진 곳은 안다) MapIcons.cs(모든 플레이어 지도에 일꾼 아이콘, VH_MapIcons 2초)
 채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
@@ -69,7 +69,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 작업 저장 WorkSaves·WorkState  vh_basetest + vh_restart1 → vh_restart2
 채팅·명령 Commands·ChatParser·Dispatch  dotnet test + vh_npctest;vh_departtest;vh_peertest · Claude → vh_claudetest
 출발 판단 Departures·Departure  vh_departtest;vh_peertest;vh_refilltest · 저항 → vh_resisttest · 동행 Escort → vh_escorttest
-위험·싸움 Guard·Danger·PlaceBook  vh_fighttest;vh_raidtest;vh_helptest;vh_teamtest;vh_deathtest · 사냥감 판단 → vh_hunttest
+위험·싸움 Guard·Danger·Retreat·PlaceBook  vh_fighttest;vh_raidtest;vh_helptest;vh_teamtest;vh_deathtest · 사냥감 판단 → vh_hunttest
 채집 GatherJob·ResourceCatalog  vh_woodtest;vh_stonetest;vh_coppertest;vh_tintest;vh_bagtest · 사냥 → vh_hunttest;vh_bowtest · 지하묘지 → vh_crypttest · 포탈 걸음 → vh_portaltest
 지식·탐험 Senses·Scout·MapSense·ExploreJob·Knowledge  vh_exploretest;vh_woodtest
 준비·장비 Prep·Gear·Meals  vh_preptest;vh_bagtest;vh_resisttest · 활 챙기기 → vh_bowtest · 수리 Repair → vh_repairtest
@@ -107,6 +107,8 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 수리(InventoryGui.CanRepair): m_canBeReparied, ObjectDB.GetRecipe(it)의 m_repairStation·m_craftingStation 이름 == 설비 이름, Min(GetLevel,4)≥m_minStationLevel, CheckUsable(지붕 Cover≥0.7·underRoof, 불 EffectArea.IsPointPlus025InsideBurningArea). 무료, m_durability=GetMaxDurability().
 - 저항 미드: SE_Stats.m_mods(List<HitData.DamageModPair> m_type·m_modifier) → Character.GetDamageModifiers가 장비·SEMan 효과까지 합침. 추위(Cold·Freezing)는 Player.UpdateEnvStatusEffects에서만 → Humanoid인 일꾼은 추위를 안 탐(냉기 미드는 냉기 피해용). 독 피해는 Character.AddPoisonDamage가 SE "Poison"(SEMan.s_statusEffectPoison)을 붙임. 바닐라 이름 MeadPoisonResist·MeadFrostResist.
 - 상자 저장: Container.Load = ZDO GetByteArray(ZDOVars.s_items) → m_inventory.Load(ZPackage). Inventory.Load는 AddItem(skipValidPositionCheck=true)라 크기와 무관 → 인스턴스 없이 new Inventory(..)로 읽을 수 있음.
+- "GetBiome error A -> B (위치) -> x, y" 경고(회차 138): Player.FixedUpdate → UpdateBiome(로컬 플레이어만, 1초마다)가 WorldGenerator.GetBiomeSector(2048칸 지도)와 GetBiome(연속 함수)이 다르면 ZLog 경고만 남김 — 바이옴 경계에 선 시험 캐릭터 때문, 모드 호출 아님, 해 없음.
+- 몬스터 추적 포기(MonsterAI.UpdateTarget, 회차 138): 못 느낀 지 30초, 또는 HuntPlayer가 아니면 공격 못 한 지 60초(m_timeSinceAttacking)·m_maxChaseDistance(스폰 자리에서) 넘음 → 목표 버림, 5초 뒤(m_updateTargetTimer) 다시 찾음 → 보이는 데 있는 일꾼은 계속 쫓긴다.
 ----------------------------------------------------------------------
 - AnimalAI(사슴 등)는 공격 코드 없이 Flee만. 사슴 진영은 AnimalsVeg가 아님(게임 시험에서 BaseAI.IsEnemy 통과) → Guard.IsFoe가 AnimalAI 제외.
 - BaseAI.enabled = false면 OnDisable이 BaseAI.Instances에서 빼 MonoUpdaters가 UpdateAI를 안 부름 → 그 자리에 서서 아무것도 안 함(시험에서 적 멈추기, EscortTest).

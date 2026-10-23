@@ -111,7 +111,7 @@ namespace ValheimHelper
                 m_saidFight = false;
                 // 물러나 기다리는 중이거나 도망 중이면 마저 한다(0.3.7: 적이 30m 경계를 넘나들 때마다 도망이 취소됐다 다시 시작됨)
                 if (m_state != State.Back && m_state != State.Flee) m_state = State.Calm;
-                if (m_state == State.Calm) CloseEncounter();
+                if (m_state == State.Calm) { CloseEncounter(); m_aroundSide = 0; }
                 return;
             }
             Tally(pos);
@@ -139,6 +139,7 @@ namespace ValheimHelper
                         if (!Chased(10f)) break;
                         if (++m_chased >= 3) { StartFlee(pos, nearest, foeName); break; }
                         m_backTo = AwayPoint(pos, BackDistance);
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 쫓겨 다시 물러남 {m_chased}번째 → {m_lastAway}");
                         m_backTimer = BackWait;
                         m_backWalking = true;
                         m_backWalkTime = 0f;
@@ -149,7 +150,8 @@ namespace ValheimHelper
                     {
                         m_backs++;
                         Worse(Outcome.Back);
-                        Plugin.Log.LogInfo($"{m_npc.NpcName} 물러남 {m_backs}번째: {foeName} 등 {m_foes.Count}, 비율 {LastRatio:0.00} ({LastDetail})");
+                        m_backTo = AwayPoint(pos, BackDistance);
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 물러남 {m_backs}번째: {foeName} 등 {m_foes.Count}, 비율 {LastRatio:0.00} ({LastDetail}) → {m_lastAway}");
                         if (m_backs > MaxBacks)
                         {
                             m_npc.Say("dangerSkip", Args(foeName));
@@ -157,7 +159,6 @@ namespace ValheimHelper
                             m_backs = 0;
                         }
                         else if (!CallHelp(pos, foeName)) m_npc.Say("backOff", Args(foeName));
-                        m_backTo = AwayPoint(pos, BackDistance);
                         m_backTimer = BackWait;
                         m_backWalking = true;
                         m_backWalkTime = 0f;
@@ -197,11 +198,11 @@ namespace ValheimHelper
 
         void StartFlee(Vector3 pos, Character nearest, string foeName)
         {
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00} ({LastDetail})");
+            m_backTo = AwayPoint(pos, BackDistance * 1.5f);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00} ({LastDetail}) → {m_lastAway}");
             if (!CallHelp(pos, foeName)) m_npc.Say("flee", Args(foeName));
             Worse(Outcome.Fled);
             m_ai.AvoidHere(nearest.transform.position);
-            m_backTo = AwayPoint(pos, BackDistance * 1.5f);
             m_target = null;
             m_armed = false;
             m_fleeTime = 0f;
@@ -560,9 +561,16 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>돌아가는 쪽(Core Retreat.Way side) — 마주침이 끝나면 0.</summary>
+        int m_aroundSide;
+        /// <summary>마지막으로 고른 물러날 곳(로그용): 길 종류·거점까지 지금 → 그곳.</summary>
+        string m_lastAway = "";
+
         /// <summary>
-        /// 물러날 곳: 거점이 멀고 적 반대쪽이면 거점 쪽(온 길)으로 dist만큼(거점이 더 가까우면 거점), 거점 근처이거나
-        /// 거점 쪽에 적이 있으면 적 반대쪽으로. (0.3.7: 거점에 있는데 "거점으로 도망"이라 제자리에서 되풀이했다.)
+        /// 물러날 곳(Core Retreat.Way): 거점이 멀고 적 반대쪽과 크게 어긋나지 않으면 거점 쪽(온 길)으로 dist만큼(거점이 더 가까우면 거점),
+        /// 거점 근처면 적 반대쪽, 거점 쪽에 적이 있으면 거점 쪽 옆으로 돌아서. 쫓기는 중이면 덜 꺾는다.
+        /// (0.3.7: 거점에 있는데 "거점으로 도망"이라 제자리에서 되풀이했다. 회차 138: 거점 쪽 적을 피해 곧장 반대로 가니
+        /// 쫓아오는 회색난쟁이가 늘 거점 쪽에 남아 귀환하다 거점에서 682m까지 멀어졌다.)
         /// </summary>
         Vector3 AwayPoint(Vector3 pos, float dist)
         {
@@ -577,11 +585,13 @@ namespace ValheimHelper
             Vector3 fromFoes = Vector3.zero;
             foreach (var c in m_foes) { Vector3 v = pos - c.transform.position; v.y = 0f; fromFoes += v.normalized; }
             if (fromFoes.sqrMagnitude < 0.01f) fromFoes = -m_npc.transform.forward;
+            fromFoes.y = 0f;
             fromFoes.Normalize();
-            bool homeFar = toHome.magnitude > 10f;
-            if (homeFar && Vector3.Dot(toHome.normalized, fromFoes) > -0.3f)
-                return toHome.magnitude < dist ? m_npc.Home : pos + toHome.normalized * dist;
-            return pos + fromFoes * dist;
+            bool chased = Chased(10f);
+            RetreatWay way = Retreat.Way(toHome.x, toHome.z, fromFoes.x, fromFoes.z, chased, ref m_aroundSide, out double dx, out double dz);
+            Vector3 to = way == RetreatWay.Home && toHome.magnitude < dist ? m_npc.Home : pos + new Vector3((float)dx, 0f, (float)dz) * dist;
+            m_lastAway = $"{way}{(chased ? " 쫓김" : "")}, 거점 {toHome.magnitude:0}m → {Utils.DistanceXZ(to, m_npc.Home):0}m";
+            return to;
         }
 
         /// <summary>싸워 본 적: 게임 데이터의 실제 기본 체력·가장 센 한 방을 배운다(두 NPC가 같이 쓴다).</summary>
