@@ -18,7 +18,7 @@ NPC 몸                Plugin/WorkerNpc.cs(외형, 말하기, 음식, 미드, �
 NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 걷기 MoveToPoint, 점프, 구덩이 경사로, 물 판단, 대기열 Queue)
 위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지, 출발 조건 "resist:종류")
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
-지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도) MapSense.cs(밝혀진 곳은 안다)
+지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도, AddPin) MapSense.cs(밝혀진 곳은 안다) MapIcons.cs(모든 플레이어 지도에 일꾼 아이콘, VH_MapIcons 2초)
 채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
 사냥(⑧)               Plugin/Work/Prey.cs(CharacterDrop+MonsterAI·AnimalAI에서 물건→사냥감 프리팹, AnimalAI = 활로만 NeedsBow, ResourceCatalog.WaysFor가 ToolKind.Hunt로 돌려줌, 전리품 통 ResourceInfo.Loot은 사냥감 있으면 뺌) + GatherJob Step.Hunt(FindPrey·UpdateHunt, m_hunt) + Guard.SafePrey(한 마리 판단) 시험 Plugin/HuntTest.cs(vh_hunttest)
 활 사냥(⑧)            GatherJob.UpdateShoot·ArrowFlight + WorkerNpc.ShootingBow·HoldBow·DrawBow·ReleaseBow·StopDraw(바닐라 당기기는 Player만) + Gear.IsBow·IsArrowFor·BestBow·CountArrows + Prep.NeedsBow·TakeBow(활+화살 40, Kept) + Core/Npc/Archery.cs(Aim 앞질러·낙차) 시험 Plugin/BowTest.cs(vh_bowtest)
@@ -130,6 +130,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - Attack.SpawnOnHitTerrain은 PrivateArea(와드) 밖이고 Location.IsInsideNoBuildLocation(시작 제단 등 m_noBuild 장소) 밖일 때만 흙을 판다. 새 캐릭터는 시작 제단에서 시작(보스석 BossStone_* 둘레) → 시험은 TestKit.LeaveNoBuild로 제단 밖에서.
 - 순간이동은 transform과 m_body 위치를 같이 바꿔야 한다. Humanoid 길찾기는 물 위도 길로 침(→ HumanoidAvoidWater).
 - Minimap.AddPin 마지막 인자가 Splatform 형식(리플렉션으로 부름), Minimap.Explore는 비공개.
+- 지도 핀(회차 132): AddPin(save false)은 저장 안 되고 오른쪽 클릭 지우기에도 안 잡힘(GetClosestPin은 m_save만). PinData.m_pos만 고치고 비공개 m_pinUpdateRequired = true면 UpdatePins가 다시 그림(바닐라 UpdatePlayerPins와 같게). 먼 일꾼 ZDO는 다른 컴퓨터에 안 가서 위치는 RPC로 보냄.
 - 점프: m_jumpForce 8, 앞 2, 제자리 1.49m. 플레이어 충돌체 반지름 0.49 높이 1.85.
 - 소유권: 서버만 2초마다 정리(ZDOMan.Update → IsServer일 때 ReleaseZDOS → 호스트·접속자마다 ReleaseNearbyZDOS). 주인이 있는 물체는
   주인의 활동 영역 밖일 때만 남이 가져감(IsInPeerActiveArea, 주인 peer가 없으면 밖). FarZones 패치로 NPC 주변도 호스트 영역.
