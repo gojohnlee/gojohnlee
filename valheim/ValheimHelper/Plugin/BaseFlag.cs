@@ -53,7 +53,7 @@ namespace ValheimHelper
             go.name = Name;
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "거점 깃발";
-            piece.m_description = "일꾼 NPC(Claude·Alarak)의 집. 세우면 둘이 여기 나타나고, 일이 끝나면 여기로 돌아온다. 새로 세우면 거점이 옮겨 간다.";
+            piece.m_description = "일꾼 NPC(라그나·플로키)의 집. 세우면 둘이 여기 나타나고, 일이 끝나면 여기로 돌아온다. 새로 세우면 거점이 옮겨 간다.";
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = null; // 작업대 없이도 지을 수 있게
             piece.m_groundPiece = false;

@@ -78,7 +78,7 @@ namespace ValheimHelper
                 TestKit.OldCheck(home, player, god);
                 player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
                 yield return new WaitForSeconds(3f);
-                WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+                WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
                 checks.Add("깃발에 NPC 나타남", claude != null);
                 if (claude == null) { Done(checks); yield break; }
                 var col = claude.GetComponent<CapsuleCollider>();

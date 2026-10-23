@@ -44,26 +44,26 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> spawned)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC", w.Claude != null);
+            checks.Add("깃발·NPC", w.Ragnar != null);
             GameObject troll = ZNetScene.instance.GetPrefab("Troll");
             checks.Add("트롤 프리팹 있음", troll != null);
-            if (w.Claude == null || troll == null) yield break;
-            var ai = w.Claude.Ai;
+            if (w.Ragnar == null || troll == null) yield break;
+            var ai = w.Ragnar.Ai;
             Quaternion rot = w.Player.transform.rotation;
             Vector3 arena = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 30f));
-            w.Claude.TeleportTo(arena + Vector3.up * 0.3f, rot, false);
+            w.Ragnar.TeleportTo(arena + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(2f);
-            float dp = Vector3.Distance(w.Claude.transform.position, w.Player.transform.position);
+            float dp = Vector3.Distance(w.Ragnar.transform.position, w.Player.transform.position);
             checks.Add($"플레이어가 60m 안 ({dp:0}m)", dp <= Guard.HelpRange);
 
-            Vector3 pos = GatherTest.Ground(w.Claude.transform.position + rot * new Vector3(0f, 0f, 20f));
+            Vector3 pos = GatherTest.Ground(w.Ragnar.transform.position + rot * new Vector3(0f, 0f, 20f));
             GameObject go = Object.Instantiate(troll, pos + Vector3.up * 0.5f, Quaternion.identity);
             spawned.Add(go);
             go.GetComponent<Character>().SetLevel(1);
             yield return TestKit.WaitFor(() => w.Heard.Exists(h => h.Contains("도와") || h.Contains("살려") || h.Contains("따라와")), 30f);
             checks.Add($"위급하자 도와달라고 말함 ({TestKit.Waited:0}초)", TestKit.Ok);
             checks.Add("물러남 또는 도망 상태", ai.Guard != null && (ai.Guard.StateName == "Back" || ai.Guard.StateName == "Flee"));
-            checks.Add("살아 있음", !w.Claude.IsDead() && w.Claude.GetHealth() > 0f);
+            checks.Add("살아 있음", !w.Ragnar.IsDead() && w.Ragnar.GetHealth() > 0f);
         }
     }
 }

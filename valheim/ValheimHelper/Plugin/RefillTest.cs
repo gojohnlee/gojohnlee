@@ -39,8 +39,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
             TestKit.ClearBaseStock(w, "Wood");
             checks.Add("거점 나무 0으로 시작", Wood(w) == 0);
 
@@ -50,17 +50,17 @@ namespace ValheimHelper
 
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);
-            bool started = w.Claude.Ai.Job is GatherJob || w.Alarak.Ai.Job is GatherJob;
+            bool started = w.Ragnar.Ai.Job is GatherJob || w.Floki.Ai.Job is GatherJob;
             checks.Add("한가한 일꾼이 채집 시작", started);
             if (!started) yield break;
             yield return TestKit.WaitFor(() => Wood(w) >= 18, 180f);
             checks.Add($"나무가 기준치 근처까지 찼음 ({Wood(w)}, {TestKit.Waited:0}초)", TestKit.Ok);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null, 60f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null, 60f);
             checks.Add("일 끝남", TestKit.Ok);
             int full = Wood(w);
             Departures.TestRefillNow();
             yield return new WaitForSeconds(2f);
-            checks.Add($"채워진 뒤엔 다시 안 나감 (나무 {full})", !(w.Claude.Ai.Job is GatherJob) && !(w.Alarak.Ai.Job is GatherJob));
+            checks.Add($"채워진 뒤엔 다시 안 나감 (나무 {full})", !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob));
             TestKit.ClearBaseStock(w, "Wood");
             Brain.Refill.Off();
             yield return Make(w, checks, made);
@@ -85,20 +85,20 @@ namespace ValheimHelper
             checks.Add("만드는 물건 기준치 등록됨", Brain.Refill.Count == 1);
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);
-            WorkerNpc maker = w.Claude.Ai.Job is PlanJob ? w.Claude : w.Alarak.Ai.Job is PlanJob ? w.Alarak : null;
-            checks.Add($"한가한 일꾼이 제작 계획 시작 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", maker != null);
+            WorkerNpc maker = w.Ragnar.Ai.Job is PlanJob ? w.Ragnar : w.Floki.Ai.Job is PlanJob ? w.Floki : null;
+            checks.Add($"한가한 일꾼이 제작 계획 시작 ({w.Ragnar.Ai.Job?.GetType().Name}, {w.Floki.Ai.Job?.GetType().Name})", maker != null);
             if (maker == null) yield break;
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);
-            checks.Add("다른 일꾼은 같은 걸 겹쳐 안 만듦", !(w.Claude.Ai.Job is PlanJob && w.Alarak.Ai.Job is PlanJob));
+            checks.Add("다른 일꾼은 같은 걸 겹쳐 안 만듦", !(w.Ragnar.Ai.Job is PlanJob && w.Floki.Ai.Job is PlanJob));
             yield return TestKit.WaitFor(() => Count(w, "Copper") >= 2, 240f);
             checks.Add($"구리 주괴 2개가 상자에 ({TestKit.Waited:0}초, 광석 {Count(w, "CopperOre")})", TestKit.Ok);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null, 30f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null, 30f);
             checks.Add("일 끝남", TestKit.Ok);
             Departures.TestRefillNow();
             yield return new WaitForSeconds(2f);
             int ore = Count(w, "CopperOre"), bars = Count(w, "Copper");
-            checks.Add($"채워진 뒤엔 다시 안 만듦 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null);
+            checks.Add($"채워진 뒤엔 다시 안 만듦 ({w.Ragnar.Ai.Job?.GetType().Name}, {w.Floki.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null);
             checks.Add($"제련 뒤 개수 보존 (광석 {ore} + 주괴 {bars} ≤ 2)", ore + bars <= 2);
             TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
             Brain.Refill.Off();
@@ -144,15 +144,15 @@ namespace ValheimHelper
                 float start = Time.time;
                 while (Time.time - start < 240f && !(Count(w, "Bow") >= 1 && Count(w, "Club") >= 1))
                 {
-                    if (w.Claude.Ai.Job == null || w.Alarak.Ai.Job == null) Departures.TestRefillNow();
+                    if (w.Ragnar.Ai.Job == null || w.Floki.Ai.Job == null) Departures.TestRefillNow();
                     yield return new WaitForSeconds(3f);
                 }
                 checks.Add($"세트 물건이 상자에 (활 {Count(w, "Bow")}, 곤봉 {Count(w, "Club")}, {Time.time - start:0}초)", Count(w, "Bow") >= 1 && Count(w, "Club") >= 1);
-                yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null, 30f);
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null, 30f);
                 checks.Add("일 끝남", TestKit.Ok);
                 Departures.TestRefillNow();
                 yield return new WaitForSeconds(2f);
-                checks.Add($"채워진 뒤엔 다시 안 만듦 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null);
+                checks.Add($"채워진 뒤엔 다시 안 만듦 ({w.Ragnar.Ai.Job?.GetType().Name}, {w.Floki.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null);
                 string left = "";
                 bool conserved = Count(w, "Bow") == 1 && Count(w, "Club") == 1;
                 foreach (var kv in need)

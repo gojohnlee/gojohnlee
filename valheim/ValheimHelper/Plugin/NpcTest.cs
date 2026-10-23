@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 콘솔 명령 vh_npctest: ① 단계 첫 조각 시험.
-    /// NPC 2명 소환 → 외형·부품 확인 → 채팅 명령(!상태, !Claude 같이 가자, !멈춰, !나무 50, 형식 틀린 ! 문장)을
+    /// NPC 2명 소환 → 외형·부품 확인 → 채팅 명령(!상태, !라그나 같이 가자, !멈춰, !나무 50, 형식 틀린 ! 문장)을
     /// 실제 채팅 RPC 경로로 보내고, 따라오기·집에 가기·대답을 확인한다. NPC는 시험 뒤에도 월드에 남긴다.
     /// </summary>
     static class NpcTest
@@ -38,8 +38,9 @@ namespace ValheimHelper
 
             TestRunner.Log($"프리팹 부품 지움 [{string.Join(", ", WorkerPrefab.Removed)}]");
             TestRunner.Log($"프리팹 부품 남음 [{string.Join(", ", WorkerPrefab.Kept)}]");
-            foreach (var n in WorkerNpc.LookHair) TestRunner.Log($"머리 {n} 있음 {ObjectDB.instance.GetItemPrefab(n) != null}");
-            foreach (var n in WorkerNpc.LookBeard) TestRunner.Log($"수염 {n} 있음 {ObjectDB.instance.GetItemPrefab(n) != null}");
+            foreach (var n in WorkerNpc.LookHair) TestRunner.Log($"머리 {n} 있음 {ObjectDB.instance.GetItemPrefab(n) != null} 이름 {ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name}");
+            foreach (var n in WorkerNpc.LookBeard) TestRunner.Log($"수염 {n} 있음 {ObjectDB.instance.GetItemPrefab(n) != null} 이름 {ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name}");
+            Check("외모 프리팹 4개 있음", System.Array.TrueForAll(WorkerNpc.LookHair, n => ObjectDB.instance.GetItemPrefab(n) != null) && System.Array.TrueForAll(WorkerNpc.LookBeard, n => ObjectDB.instance.GetItemPrefab(n) != null));
 
             // 1) 소환 (이전 시험의 NPC는 지우고 새로)
             int removed = Workers.DespawnAll();
@@ -53,6 +54,13 @@ namespace ValheimHelper
             Check("NPC 2명 소환", claude != null && alarak != null && WorkerNpc.All.Count == 2);
             if (claude == null || alarak == null) { End(player, god, checks); yield break; }
             Check($"이름 {claude.GetHoverName()}, {alarak.GetHoverName()}", claude.GetHoverName() == Workers.Name1 && alarak.GetHoverName() == Workers.Name2);
+            Check($"기본 이름 {Workers.Default1}·{Workers.Default2}", Workers.Name1 == Workers.Default1 && Workers.Name2 == Workers.Default2);
+            // 옛 기본 이름(Claude·Alarak)으로 저장된 NPC는 새 이름으로(인격 바꾸기)
+            claude.Zdo.Set(WorkerNpc.KeyName, "Claude");
+            alarak.Zdo.Set(WorkerNpc.KeyName, "Alarak");
+            Workers.RenameOld(claude.Zdo);
+            Workers.RenameOld(alarak.Zdo);
+            Check($"옛 이름 → 새 이름 ({claude.NpcName}·{alarak.NpcName})", claude.NpcName == Workers.Name1 && alarak.NpcName == Workers.Name2);
             Check($"체력 {claude.GetHealth():0}/{claude.GetMaxHealth():0}", claude.GetHealth() > 0f);
             Check("호스트 소유", claude.IsOwner() && alarak.IsOwner());
             Check("소환 인사", s_heard.Count >= 2);
@@ -64,7 +72,7 @@ namespace ValheimHelper
 
             // 3) 따라가기: 1호만 부른 뒤 플레이어가 25m 떨어진 곳으로 이동
             Vector3 alarakStart = alarak.transform.position;
-            Say($"!{Workers.Name1} 같이 가자");
+            Say(Workers.Name1 == Workers.Default1 ? "!Ragnar 같이 가자" : $"!{Workers.Name1} 같이 가자"); // 별칭으로 부름
             yield return new WaitForSeconds(1f);
             Check("1호만 따라가기 시작", claude.Ai.Current == WorkerAI.Mode.Follow && alarak.Ai.Current == WorkerAI.Mode.Idle);
             if (FindGround(player.transform.position, 25f, out Vector3 spot))

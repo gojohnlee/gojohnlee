@@ -29,22 +29,22 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
         {
             yield return TestKit.Setup(w);
-            checks.Add("NPC 둘", w.Claude != null && w.Alarak != null);
-            if (w.Claude == null || w.Alarak == null) yield break;
+            checks.Add("NPC 둘", w.Ragnar != null && w.Floki != null);
+            if (w.Ragnar == null || w.Floki == null) yield break;
             var skill = Skills.SkillType.Axes;
             int id = (int)skill;
-            float before = w.Claude.SkillLevels.Level(id);
-            float otherBefore = w.Alarak.SkillLevels.Level(id);
-            float factorBefore = w.Claude.GetSkillFactor(skill);
-            for (int i = 0; i < 400; i++) w.Claude.RaiseSkill(skill, 1f);
+            float before = w.Ragnar.SkillLevels.Level(id);
+            float otherBefore = w.Floki.SkillLevels.Level(id);
+            float factorBefore = w.Ragnar.GetSkillFactor(skill);
+            for (int i = 0; i < 400; i++) w.Ragnar.RaiseSkill(skill, 1f);
             yield return null;
-            float after = w.Claude.SkillLevels.Level(id);
+            float after = w.Ragnar.SkillLevels.Level(id);
             checks.Add($"도끼 레벨 오름 ({before:0.0} → {after:0.0})", after > before);
             checks.Add($"70 넘지 않음 ({after:0.0})", after <= 70.001f);
-            checks.Add("피해 계수 오름", w.Claude.GetSkillFactor(skill) > factorBefore);
-            checks.Add($"다른 일꾼은 그대로 ({otherBefore:0.0} → {w.Alarak.SkillLevels.Level(id):0.0})", Mathf.Approximately(w.Alarak.SkillLevels.Level(id), otherBefore));
+            checks.Add("피해 계수 오름", w.Ragnar.GetSkillFactor(skill) > factorBefore);
+            checks.Add($"다른 일꾼은 그대로 ({otherBefore:0.0} → {w.Floki.SkillLevels.Level(id):0.0})", Mathf.Approximately(w.Floki.SkillLevels.Level(id), otherBefore));
 
-            string saved = w.Claude.GetComponent<ZNetView>().GetZDO().GetString(WorkerNpc.KeySkills, "");
+            string saved = w.Ragnar.GetComponent<ZNetView>().GetZDO().GetString(WorkerNpc.KeySkills, "");
             checks.Add("ZDO에 저장됨", saved.Length > 0);
             var loaded = Core.Npc.SkillBook.Load(saved);
             checks.Add($"불러와도 같음 ({loaded.Level(id):0.0})", Mathf.Abs(loaded.Level(id) - after) < 0.01f);

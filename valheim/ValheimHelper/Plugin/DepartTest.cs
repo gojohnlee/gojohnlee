@@ -48,9 +48,9 @@ namespace ValheimHelper
         {
             {
                 yield return TestKit.Setup(w);
-                checks.Add("깃발·NPC 2명·상자", w.Claude != null && w.Alarak != null && w.Chest != null);
-                if (w.Claude == null || w.Alarak == null || w.Chest == null) yield break;
-                string n1 = w.Claude.NpcName, n2 = w.Alarak.NpcName;
+                checks.Add("깃발·NPC 2명·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
+                if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
+                string n1 = w.Ragnar.NpcName, n2 = w.Floki.NpcName;
                 ZoneXY hz = Senses.ZoneOf(w.Home);
                 // 시험 월드의 같은 자리에 지난 시험(나무·구리 등)이 남긴 상자가 있어 재고가 시험이 넣은 것과 달라진다
                 // (2026-10-21: 나무 150·구리 10 → 재고 질문이 먼저 잡힘). 거점 상자에서 이 시험의 물건을 비우고 시작한다.
@@ -59,9 +59,9 @@ namespace ValheimHelper
                 // 1) 재고 질문 → "응" → 출발
                 TestKit.PutInChest(w.Chest, "Wood", 20);
                 yield return Say($"!{n1} 나무 10", 1f);
-                checks.Add($"재고 질문 ({Asked(w.Claude)})", Departures.AskedAt(w.Claude) >= 0 && LastSaid(w, n1).Contains("20"));
+                checks.Add($"재고 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0 && LastSaid(w, n1).Contains("20"));
                 yield return Say("응", 1f);
-                checks.Add($"\"응\" → 출발 ({w.Claude.Ai.Current})", Departures.AskedAt(w.Claude) < 0 && w.Claude.Ai.Current == WorkerAI.Mode.Work && w.Claude.Ai.Job is GatherJob);
+                checks.Add($"\"응\" → 출발 ({w.Ragnar.Ai.Current})", Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work && w.Ragnar.Ai.Job is GatherJob);
                 yield return Stop();
                 TestKit.TakeFromChest(w.Chest, "Wood");
 
@@ -77,20 +77,20 @@ namespace ValheimHelper
                 w.Env.m_debugTime = 0.74f;
                 yield return new WaitForSeconds(0.5f);
                 OnlyFar(far, hz); // 기다리는 동안 NPC가 둘러보며 거점 근처 구리를 다시 배웠을 수 있다(명령은 같은 프레임에 처리됨)
-                Log("곧 밤", Departures.JudgeFor(w.Claude, copper));
+                Log("곧 밤", Departures.JudgeFor(w.Ragnar, copper));
                 yield return Say($"!{n1} 구리 10", 1f);
-                checks.Add($"곧 밤 질문 ({Asked(w.Claude)})", Departures.AskedAt(w.Claude) >= 0);
+                checks.Add($"곧 밤 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0);
                 yield return Say("응", 1f);
-                var q = w.Claude.Ai.Queue;
+                var q = w.Ragnar.Ai.Queue;
                 bool queued = q.Count == 1 && q[0].Work != null && q[0].Work.Ready == ReadyWhen.Morning && q[0].Work.NotBefore > ZNet.instance.GetTimeSeconds();
-                checks.Add($"\"응\" → 대기열(다음 아침) {q.Count}칸", queued && w.Claude.Ai.Current != WorkerAI.Mode.Work);
+                checks.Add($"\"응\" → 대기열(다음 아침) {q.Count}칸", queued && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
                 yield return new WaitForSeconds(3f);
-                checks.Add("아침 전에는 안 꺼냄(질문 되풀이 없음)", q.Count == 1 && Departures.AskedAt(w.Claude) < 0 && w.Claude.Ai.Current != WorkerAI.Mode.Work);
+                checks.Add("아침 전에는 안 꺼냄(질문 되풀이 없음)", q.Count == 1 && Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
                 if (queued)
                 {
                     ZNet.instance.SetNetTime(q[0].Work.NotBefore + 5.0); // 잠자기처럼 아침으로
                     w.Env.m_debugTime = 0.3f;
-                    yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 8f);
+                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
                     checks.Add($"아침 → 대기열에서 꺼내 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && q.Count == 0);
                 }
                 w.Env.m_debugTime = 0.5f;
@@ -99,11 +99,11 @@ namespace ValheimHelper
                 // 3) 죽은 곳 질문 → "아니" → 보류
                 Brain.ReplaceForTest(knowFar, "");
                 Brain.Places.Record(far, new List<GroupFoe> { new GroupFoe { Kind = "Greydwarf", Count = 1 } }, Outcome.Died, ZNet.instance.GetTimeSeconds(), Guard.Resolve, "Greydwarf");
-                Log("죽은 곳", Departures.JudgeFor(w.Claude, copper));
+                Log("죽은 곳", Departures.JudgeFor(w.Ragnar, copper));
                 yield return Say($"!{n1} 구리 10", 1f);
-                checks.Add($"죽은 곳 질문 ({Asked(w.Claude)})", Departures.AskedAt(w.Claude) >= 0 && LastSaid(w, n1).Contains("죽"));
+                checks.Add($"죽은 곳 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0 && LastSaid(w, n1).Contains("죽"));
                 yield return Say("아니", 1f);
-                checks.Add("\"아니\" → 보류, 안 나감", Departures.AskedAt(w.Claude) < 0 && w.Claude.Ai.Current != WorkerAI.Mode.Work);
+                checks.Add("\"아니\" → 보류, 안 나감", Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
 
                 // 4) 위험 조건(체력 미드) → 미드가 생기면 스스로 출발
                 bool made = false;
@@ -113,7 +113,7 @@ namespace ValheimHelper
                     for (int n = 1; n <= 12 && !made; n++)
                     {
                         Brain.Places.Record(far, new List<GroupFoe> { new GroupFoe { Kind = kind, Count = n } }, Outcome.Back, ZNet.instance.GetTimeSeconds(), Guard.Resolve);
-                        DepartureResult r = Departures.JudgeFor(w.Claude, copper);
+                        DepartureResult r = Departures.JudgeFor(w.Ragnar, copper);
                         if (r != null && r.Action == DepartAction.Ask && r.Question == Question.Condition) { made = true; TestRunner.Log($"조건 상황: {kind} {n}마리 — {r.Reason}"); }
                     }
                     if (made) break;
@@ -122,25 +122,25 @@ namespace ValheimHelper
                 if (made)
                 {
                     yield return Say($"!{n1} 구리 10", 1f);
-                    checks.Add($"조건 질문 ({Asked(w.Claude)})", Departures.AskedAt(w.Claude) >= 0 && LastSaid(w, n1).Contains("미드"));
-                    w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), 1);
-                    yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 8f);
-                    checks.Add($"미드 생김 → 스스로 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Claude) < 0);
+                    checks.Add($"조건 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0 && LastSaid(w, n1).Contains("미드"));
+                    w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), 1);
+                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
+                    checks.Add($"미드 생김 → 스스로 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0);
                     yield return Stop();
 
                     // 4-2) 같은 곳이 늪인데 독 저항 미드가 없으면: 묻지 않고 투덜대고 바로 출발(사용자 결정 2026-10-22)
                     TestKit.TakeFromChest(w.Chest, "MeadPoisonResist");
-                    foreach (var it in new List<ItemDrop.ItemData>(w.Claude.GetInventory().GetAllItems())) if (Gear.ResistOf(it) == "Poison") w.Claude.GetInventory().RemoveItem(it);
+                    foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems())) if (Gear.ResistOf(it) == "Poison") w.Ragnar.GetInventory().RemoveItem(it);
                     Brain.Get().SetBiome(far, (int)Heightmap.Biome.Swamp);
                     OnlyFar(far, hz); // 걸어가는 동안 거점 근처 구리를 배웠을 수 있다
-                    DepartureResult rr = Departures.JudgeFor(w.Claude, copper);
+                    DepartureResult rr = Departures.JudgeFor(w.Ragnar, copper);
                     TestRunner.Log($"늪 판단: {rr?.Question} {rr?.Condition} — {rr?.Reason}");
                     int heard0 = w.Heard.Count;
                     yield return Say($"!{n1} 구리 10", 1f);
-                    yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 8f);
+                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
                     bool grumbled = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("독 저항")) >= 0;
                     checks.Add($"늪·독 저항 미드 없음 → 묻지 않고 투덜대며 출발 ({TestKit.Waited:0.0}초, 투덜 {grumbled})",
-                        TestKit.Ok && Departures.AskedAt(w.Claude) < 0 && grumbled);
+                        TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0 && grumbled);
                     yield return Stop();
                 }
                 Brain.ReplaceForTest("", "");
@@ -148,59 +148,59 @@ namespace ValheimHelper
                 // 5) 3분 무응답 → 보류
                 TestKit.PutInChest(w.Chest, "Wood", 20);
                 yield return Say($"!{n1} 나무 10", 1f);
-                bool asked = Departures.AskedAt(w.Claude) >= 0;
-                Departures.AgeQuestion(w.Claude, Replies.Timeout + 1.0);
+                bool asked = Departures.AskedAt(w.Ragnar) >= 0;
+                Departures.AgeQuestion(w.Ragnar, Replies.Timeout + 1.0);
                 int before = w.Heard.Count;
-                yield return TestKit.WaitFor(() => Departures.AskedAt(w.Claude) < 0, 2f);
-                checks.Add("3분 무응답 → 보류하고 말함", asked && TestKit.Ok && w.Heard.Count > before && w.Claude.Ai.Current != WorkerAI.Mode.Work);
+                yield return TestKit.WaitFor(() => Departures.AskedAt(w.Ragnar) < 0, 2f);
+                checks.Add("3분 무응답 → 보류하고 말함", asked && TestKit.Ok && w.Heard.Count > before && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
                 TestKit.TakeFromChest(w.Chest, "Wood");
 
                 // 6) 일하는 중 새 명령: 급함 아님 → 대기열, 급함 → 하던 일은 대기열 맨 앞
                 yield return Say($"!{n1} 나무 30", 1f);
-                bool working = w.Claude.Ai.Current == WorkerAI.Mode.Work && w.Claude.Ai.Job is GatherJob;
-                checks.Add($"나무 30 출발 ({w.Claude.Ai.Current})", working);
+                bool working = w.Ragnar.Ai.Current == WorkerAI.Mode.Work && w.Ragnar.Ai.Job is GatherJob;
+                checks.Add($"나무 30 출발 ({w.Ragnar.Ai.Current})", working);
                 yield return Say($"!{n1} 나무 5", 1f);
-                q = w.Claude.Ai.Queue;
-                checks.Add($"급하지 않음 → 대기열 ({q.Count}칸, 하던 일 {w.Claude.Ai.Job?.Label})",
-                    q.Count == 1 && q[0].Work != null && q[0].Work.Amount == 5 && w.Claude.Ai.Job is GatherJob g30 && g30.Target == 30);
+                q = w.Ragnar.Ai.Queue;
+                checks.Add($"급하지 않음 → 대기열 ({q.Count}칸, 하던 일 {w.Ragnar.Ai.Job?.Label})",
+                    q.Count == 1 && q[0].Work != null && q[0].Work.Amount == 5 && w.Ragnar.Ai.Job is GatherJob g30 && g30.Target == 30);
                 yield return Say($"!{n1} 빨리 나무 7", 1f);
-                checks.Add($"급함 → 끼어듦 ({q.Count}칸: {Labels(q)}, 지금 {w.Claude.Ai.Job?.Label})",
+                checks.Add($"급함 → 끼어듦 ({q.Count}칸: {Labels(q)}, 지금 {w.Ragnar.Ai.Job?.Label})",
                     q.Count == 2 && q[0].Resume is GatherJob r30 && r30.Target == 30 && q[0].Work != null && q[0].Work.Resume
-                    && w.Claude.Ai.Job is GatherJob g7 && g7.Target == 7);
+                    && w.Ragnar.Ai.Job is GatherJob g7 && g7.Target == 7);
 
-                // 7) 저장 왕복: 클로드는 하던 일+대기열 2칸, 알라라크는 질문 대기 → 인스턴스를 내렸다가 다시
+                // 7) 저장 왕복: 라그나는 하던 일+대기열 2칸, 플로키는 질문 대기 → 인스턴스를 내렸다가 다시
                 TestKit.PutInChest(w.Chest, "Wood", 20);
                 yield return Say($"!{n2} 나무 10", 1f);
-                checks.Add($"알라라크 재고 질문 ({Asked(w.Alarak)})", Departures.AskedAt(w.Alarak) >= 0);
+                checks.Add($"플로키 재고 질문 ({Asked(w.Floki)})", Departures.AskedAt(w.Floki) >= 0);
                 if (Features.SaveWork)
                 {
-                    w.Claude.Ai.Queue.Add(WorkSaves.ToQueued(w.Claude, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "구리 주괴 2", Item = "CopperBar", Amount = 2 }));
-                    string sigC = Sig(WorkSaves.Snapshot(w.Claude));
-                    string pendA = WorkState.SavePending(Departures.Snapshot(w.Alarak));
-                    WorkSaves.SaveNow(w.Claude);
-                    WorkSaves.SaveNow(w.Alarak);
+                    w.Ragnar.Ai.Queue.Add(WorkSaves.ToQueued(w.Ragnar, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "구리 주괴 2", Item = "CopperBar", Amount = 2 }));
+                    string sigC = Sig(WorkSaves.Snapshot(w.Ragnar));
+                    string pendA = WorkState.SavePending(Departures.Snapshot(w.Floki));
+                    WorkSaves.SaveNow(w.Ragnar);
+                    WorkSaves.SaveNow(w.Floki);
                     TestRunner.Log($"저장: {n1} [{sigC}], {n2} 질문 [{pendA}]");
-                    WorkerNpc oldC = w.Claude, oldA = w.Alarak;
+                    WorkerNpc oldC = w.Ragnar, oldA = w.Floki;
                     TestKit.Unload(oldC.GetComponent<ZNetView>());
                     TestKit.Unload(oldA.GetComponent<ZNetView>());
                     yield return TestKit.WaitFor(() =>
                     {
-                        WorkerNpc c = TestKit.Npc(Personality.Scv), a = TestKit.Npc(Personality.Alarak);
+                        WorkerNpc c = TestKit.Npc(Personality.Ragnar), a = TestKit.Npc(Personality.Floki);
                         return c != null && a != null && c != oldC && a != oldA;
                     }, 5f);
                     checks.Add($"NPC 다시 생김 ({TestKit.Waited:0.0}초)", TestKit.Ok);
-                    w.Claude = TestKit.Npc(Personality.Scv);
-                    w.Alarak = TestKit.Npc(Personality.Alarak);
+                    w.Ragnar = TestKit.Npc(Personality.Ragnar);
+                    w.Floki = TestKit.Npc(Personality.Floki);
                     yield return new WaitForSeconds(2.5f); // WorkSaves가 불러오고(1초마다) 한가하면 첫 칸을 꺼냄
-                    if (w.Claude != null && w.Alarak != null)
+                    if (w.Ragnar != null && w.Floki != null)
                     {
-                        string sigC2 = Sig(WorkSaves.Snapshot(w.Claude));
-                        string pendA2 = WorkState.SavePending(Departures.Snapshot(w.Alarak));
-                        TestRunner.Log($"불러옴: {n1} [{sigC2}] ({w.Claude.Ai.Current}), {n2} 질문 [{pendA2}]");
+                        string sigC2 = Sig(WorkSaves.Snapshot(w.Ragnar));
+                        string pendA2 = WorkState.SavePending(Departures.Snapshot(w.Floki));
+                        TestRunner.Log($"불러옴: {n1} [{sigC2}] ({w.Ragnar.Ai.Current}), {n2} 질문 [{pendA2}]");
                         checks.Add("하던 일·대기열 그대로", sigC2 == sigC);
                         checks.Add("질문 대기 그대로", pendA2 == pendA && pendA.Length > 0);
                         yield return Say("아니", 1f);
-                        checks.Add("불러온 질문에 대답 받음", Departures.AskedAt(w.Alarak) < 0);
+                        checks.Add("불러온 질문에 대답 받음", Departures.AskedAt(w.Floki) < 0);
                     }
                 }
                 else TestRunner.Log("저장 왕복 건너뜀: 설정 Features.SaveWork 꺼짐");

@@ -47,9 +47,9 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, float[] saved, System.Action<Character> hold)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
-            var ai = w.Claude.Ai;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
+            var ai = w.Ragnar.Ai;
 
             TestKit.ClearBaseStock(w, "Wood");
             GatherTest.Say($"!{Workers.Name1} 나무 30", null);
@@ -61,31 +61,31 @@ namespace ValheimHelper
             // 거점에서 40m 떨어진 곳(근처 나무가 시야 안)으로 옮기고 발을 묶는다
             Quaternion rot = w.Player.transform.rotation;
             Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
-            w.Claude.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
+            w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(1f);
-            Speeds(w.Claude, saved, true);
-            hold(w.Claude);
-            float hp0 = w.Claude.GetHealth();
+            Speeds(w.Ragnar, saved, true);
+            hold(w.Ragnar);
+            float hp0 = w.Ragnar.GetHealth();
             int rescues0 = GatherJob.Rescues, hops0 = GatherJob.Hops;
-            float d0 = Utils.DistanceXZ(w.Claude.transform.position, w.Home);
+            float d0 = Utils.DistanceXZ(w.Ragnar.transform.position, w.Home);
             checks.Add($"거점에서 떨어져 발이 묶임 ({d0:0}m)", d0 > 30f);
 
             float waited = 0f;
             for (; waited < 150f && GatherJob.Rescues == rescues0; waited += 10f)
             {
                 yield return TestKit.WaitFor(() => GatherJob.Rescues > rescues0, 10f);
-                TestRunner.Log($"  [{waited + 10f:0}s] 묶인 자리에서 {Utils.DistanceXZ(w.Claude.transform.position, spot):0.0}m, {ai.Current}/{ai.Job?.StepName}");
+                TestRunner.Log($"  [{waited + 10f:0}s] 묶인 자리에서 {Utils.DistanceXZ(w.Ragnar.transform.position, spot):0.0}m, {ai.Current}/{ai.Job?.StepName}");
             }
             bool rescued = GatherJob.Rescues > rescues0;
-            float d1 = Utils.DistanceXZ(w.Claude.transform.position, w.Home);
-            Speeds(w.Claude, saved, false);
+            float d1 = Utils.DistanceXZ(w.Ragnar.transform.position, w.Home);
+            Speeds(w.Ragnar, saved, false);
             hold(null);
             checks.Add($"깃발로 강제 복귀함 ({waited:0}초 안)", rescued);
             checks.Add($"플레이어 근처라 목표 쪽 순간이동 안 함 ({GatherJob.Hops - hops0}번)", GatherJob.Hops == hops0);
             if (!rescued) yield break;
             checks.Add($"거점에 있음 ({d1:0.0}m)", d1 < 5f);
             // 음식이 떨어지면 최대 체력이 줄어 그만큼 줄 수 있다(회차 72: 71 → 69, 최대도 69) → 최대보다 낮아졌을 때만 다친 것
-            checks.Add($"체력 그대로 ({hp0:0} → {w.Claude.GetHealth():0}/{w.Claude.GetMaxHealth():0})", Mathf.Abs(w.Claude.GetHealth() - hp0) < 1f || w.Claude.GetHealth() >= w.Claude.GetMaxHealth() - 0.5f);
+            checks.Add($"체력 그대로 ({hp0:0} → {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0})", Mathf.Abs(w.Ragnar.GetHealth() - hp0) < 1f || w.Ragnar.GetHealth() >= w.Ragnar.GetMaxHealth() - 0.5f);
             checks.Add("막힘 대사를 함", w.Heard.Exists(h => h.Contains("막") || h.Contains("꼼짝")));
             yield return new WaitForSeconds(3f);
             checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);

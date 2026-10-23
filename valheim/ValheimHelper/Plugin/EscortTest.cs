@@ -65,9 +65,9 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
-            WorkerNpc npc = w.Claude;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
+            WorkerNpc npc = w.Ragnar;
             WorkerAI ai = npc.Ai;
             Player player = w.Player;
             ZoneXY hz = Senses.ZoneOf(w.Home);
@@ -160,7 +160,7 @@ namespace ValheimHelper
             TestRunner.Log($"동행 떠남: {aloneV} 비율 {aloneR:0.00} ({g.LastDetail}), 경계 {g.StateName}, 앞장 {ai.EscortPhase}, 죽음 {npc.Deaths - deaths}, 플레이어 거리 {Vector3.Distance(player.transform.position, npc.transform.position):0}m(ZDO {(ZDOMan.instance.GetZDO(player.GetZDOID()) is ZDO pz ? Vector3.Distance(pz.GetPosition(), npc.transform.position) : -1f):0}m), 순간이동 {player.IsTeleporting()}");
             checks.Add($"동행이 떠나면 혼자 힘으로 다시 판단 (비율 {withR:0.00} → {aloneR:0.00}, 한 방 {withHit:0.0} → {GetHit(g.LastDetail):0.0})",
                 npc.Deaths == deaths && aloneR > withR);
-            bool mustBack = aloneR > Danger.FightScv;
+            bool mustBack = aloneR > Danger.FightRagnar;
             checks.Add($"혼자 무리면 물러남·도망, 아니면 싸움 (비율 {aloneR:0.00}, {aloneV})",
                 mustBack ? aloneV == Verdict.Back || aloneV == Verdict.Flee || aloneV == Verdict.Drink : aloneV == Verdict.Fight);
             if (!mustBack || foe == null || foe.IsDead()) yield break;

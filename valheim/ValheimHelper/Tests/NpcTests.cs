@@ -13,7 +13,7 @@ public class SpeechTests
         string prev = null;
         for (int i = 0; i < 200; i++)
         {
-            string line = s.Say(Personality.Scv, "escort");
+            string line = s.Say(Personality.Ragnar, "escort");
             Assert.NotEqual(prev, line);
             prev = line;
         }
@@ -24,7 +24,7 @@ public class SpeechTests
     {
         var s = new Speech(new Random(2));
         var seen = new HashSet<string>();
-        for (int i = 0; i < 200; i++) seen.Add(s.Say(Personality.Scv, "escort"));
+        for (int i = 0; i < 200; i++) seen.Add(s.Say(Personality.Ragnar, "escort"));
         Assert.Equal(8, seen.Count);
     }
 
@@ -32,20 +32,20 @@ public class SpeechTests
     public void FillsArguments()
     {
         var s = new Speech();
-        string line = s.Say(Personality.Alarak, "status", new Dictionary<string, string> { ["state"] = "노는 중", ["hp"] = "25", ["max"] = "25" });
+        string line = s.Say(Personality.Floki, "status", new Dictionary<string, string> { ["state"] = "노는 중", ["hp"] = "25", ["max"] = "25" });
         Assert.Equal("노는 중! 체력 25/25, 히히.", line);
     }
 
     [Fact]
-    public void UnknownKeyReturnsKey() => Assert.Equal("nope", new Speech().Say(Personality.Scv, "nope"));
+    public void UnknownKeyReturnsKey() => Assert.Equal("nope", new Speech().Say(Personality.Ragnar, "nope"));
 
     [Fact]
     public void BothPersonalitiesHaveSameKeys()
     {
         foreach (var key in new[] { "spawn", "escort", "escort.far", "raid", "stop", "home", "moveBase", "lost", "status", "notYet", "onlyBang", "state.idle", "state.follow", "state.home", "state.work", "gatherStart", "gatherKnown", "gatherDone", "dropJob", "searching", "noTool", "toolTooWeak", "toolBroke", "notFound", "noChest", "chestFull", "chestBusy", "chestAny", "bagFull" })
         {
-            Assert.True(Speech.Has(Personality.Scv, key), key);
-            Assert.True(Speech.Has(Personality.Alarak, key), key);
+            Assert.True(Speech.Has(Personality.Ragnar, key), key);
+            Assert.True(Speech.Has(Personality.Floki, key), key);
         }
     }
 }
@@ -54,8 +54,8 @@ public class DispatchTests
 {
     static List<NpcInfo> Npcs(bool claudeBusy = false, bool alarakBusy = false) => new List<NpcInfo>
     {
-        new NpcInfo { Name = "Claude", Personality = Personality.Scv, Busy = claudeBusy },
-        new NpcInfo { Name = "Alarak", Personality = Personality.Alarak, Busy = alarakBusy },
+        new NpcInfo { Name = "Claude", Personality = Personality.Ragnar, Busy = claudeBusy },
+        new NpcInfo { Name = "Alarak", Personality = Personality.Floki, Busy = alarakBusy },
     };
 
     [Fact]

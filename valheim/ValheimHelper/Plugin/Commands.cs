@@ -22,8 +22,9 @@ namespace ValheimHelper
                 [Workers.Name1] = Workers.Name1,
                 [Workers.Name2] = Workers.Name2,
             };
-            if (Workers.Name1 == "Claude") names["클로드"] = "Claude";
-            if (Workers.Name2 == "Alarak") names["알라라크"] = "Alarak";
+            // 기본 이름이면 별칭도(라그나: Ragnar·라그나르, 플로키: Floki). 다른 이름을 골랐으면 그 이름만.
+            if (Workers.Name1 == Workers.Default1) foreach (var a in new[] { "Ragnar", "라그나르" }) names[a] = Workers.Name1;
+            if (Workers.Name2 == Workers.Default2) names["Floki"] = Workers.Name2;
             s_parser = new ChatParser(names, Items.Resolve);
             s_namesKey = key;
             return s_parser;

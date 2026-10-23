@@ -47,8 +47,8 @@ namespace ValheimHelper
             TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
             yield return new WaitForSeconds(3f);
-            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
-            WorkerNpc alarak = WorkerNpc.All.Find(n => n.Personality != Core.Npc.Personality.Scv);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
+            WorkerNpc alarak = WorkerNpc.All.Find(n => n.Personality != Core.Npc.Personality.Ragnar);
             checks.Add("깃발에 NPC 둘 나타남", claude != null && alarak != null);
             if (claude == null || alarak == null) { End(player, god, checks, onHeard, heard); yield break; }
             if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f);

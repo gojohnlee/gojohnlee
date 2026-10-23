@@ -6,8 +6,8 @@ public class ChatParserTests
 {
     static readonly Dictionary<string, string> Names = new Dictionary<string, string>
     {
-        ["Claude"] = "Claude", ["클로드"] = "Claude",
-        ["Alarak"] = "Alarak", ["알라라크"] = "Alarak",
+        ["라그나"] = "라그나", ["Ragnar"] = "라그나", ["라그나르"] = "라그나",
+        ["플로키"] = "플로키", ["Floki"] = "플로키",
     };
 
     static string GameItems(string name) => name switch
@@ -78,7 +78,7 @@ public class ChatParserTests
     [InlineData("!탐험 저기")]
     [InlineData("!세트 11 20")]
     [InlineData("!밭 크게")]
-    [InlineData("!Claude")]
+    [InlineData("!Ragnar")]
     public void MalformedBangGoesToHaiku(string line)
     {
         var r = P.Parse(line);
@@ -89,9 +89,9 @@ public class ChatParserTests
     [Fact]
     public void HaikuKeepsTarget()
     {
-        var r = P.Parse("!Alarak 철 좀 넉넉히");
+        var r = P.Parse("!Floki 철 좀 넉넉히");
         Assert.Equal(ChatRoute.Haiku, r.Route);
-        Assert.Equal("Alarak", r.Target);
+        Assert.Equal("플로키", r.Target);
     }
 
     [Theory]
@@ -113,10 +113,10 @@ public class ChatParserTests
     public void Simple(string line, CommandKind kind) => Assert.Equal(kind, Cmd(line).Kind);
 
     [Theory]
-    [InlineData("!Alarak 철 30", "Alarak")]
-    [InlineData("!alarak 철 30", "Alarak")]
-    [InlineData("!알라라크 철 30", "Alarak")]
-    [InlineData("!클로드 철 30", "Claude")]
+    [InlineData("!Floki 철 30", "플로키")]
+    [InlineData("!floki 철 30", "플로키")]
+    [InlineData("!플로키 철 30", "플로키")]
+    [InlineData("!라그나르 철 30", "라그나")]
     public void NamedTarget(string line, string target)
     {
         var c = Cmd(line);
@@ -127,9 +127,9 @@ public class ChatParserTests
     [Fact]
     public void NamedSimpleCommand()
     {
-        var c = Cmd("!Claude 멈춰");
+        var c = Cmd("!Ragnar 멈춰");
         Assert.Equal(CommandKind.Stop, c.Kind);
-        Assert.Equal("Claude", c.Target);
+        Assert.Equal("라그나", c.Target);
     }
 
     [Theory]
@@ -149,8 +149,8 @@ public class ChatParserTests
     }
 
     [Theory]
-    [InlineData("!상자 장비 Claude", "equipment", "Claude", null)]
-    [InlineData("!상자 장비 alarak", "equipment", "Alarak", null)]
+    [InlineData("!상자 장비 Ragnar", "equipment", "라그나", null)]
+    [InlineData("!상자 장비 floki", "equipment", "플로키", null)]
     [InlineData("!상자 장비", "equipment", null, null)]
     [InlineData("!상자 음식", "food", null, null)]
     [InlineData("!상자 씨앗", "seeds", null, null)]
@@ -168,7 +168,7 @@ public class ChatParserTests
 
     [Theory]
     [InlineData("!상자")]
-    [InlineData("!상자 나무 Claude")] // 자원 상자는 같이 쓴다
+    [InlineData("!상자 나무 Ragnar")] // 자원 상자는 같이 쓴다
     [InlineData("!상자 모르는것")]
     public void BadChestGoesToHaiku(string line) => Assert.Equal(ChatRoute.Haiku, P.Parse(line).Route);
 
@@ -230,10 +230,11 @@ public class ChatParserTests
     }
 
     [Theory]
-    [InlineData("Claude야 나무 좀", "Claude")]
-    [InlineData("claude, 나무 좀", "Claude")]
-    [InlineData("알라라크 철 좀 캐 와", "Alarak")]
-    [InlineData("Claudette 안녕하세요", null)]
+    [InlineData("라그나야 나무 좀", "라그나")]
+    [InlineData("ragnar, 나무 좀", "라그나")]
+    [InlineData("플로키 철 좀 캐 와", "플로키")]
+    [InlineData("라그나르, 철 좀", "라그나")] // 긴 별칭 먼저
+    [InlineData("Ragnarson 안녕하세요", null)]
     public void SonnetTarget(string line, string target) => Assert.Equal(target, P.Parse(line).Target);
 
     [Theory]

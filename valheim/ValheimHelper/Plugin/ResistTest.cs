@@ -28,7 +28,7 @@ namespace ValheimHelper
             finally
             {
                 Cleanup(spawned);
-                if (w.Claude != null) TestKit.ClearBaseStock(w, Meads);
+                if (w.Ragnar != null) TestKit.ClearBaseStock(w, Meads);
                 TestKit.Restore(w);
             }
             TestKit.End(w, checks);
@@ -37,8 +37,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, System.Collections.Generic.List<GameObject> spawned)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
             foreach (var m in Meads)
             {
                 GameObject p = ObjectDB.instance.GetItemPrefab(m);
@@ -49,7 +49,7 @@ namespace ValheimHelper
             TestRunner.Log($"지난 시험 미드 {TestKit.ClearBaseStock(w, Meads)}개 비움");
             TestKit.PutInChest(w.Chest, "MeadPoisonResist", 5);
             TestKit.PutInChest(w.Chest, "MeadFrostResist", 3);
-            var npc = w.Claude;
+            var npc = w.Ragnar;
 
             // 1) 일 시키기 → 준비 때 챙김
             GatherTest.Say($"!{Workers.Name1} 나무 5", null);

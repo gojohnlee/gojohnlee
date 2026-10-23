@@ -46,10 +46,10 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> spawned, List<ZDO> zdos)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC", w.Claude != null);
+            checks.Add("깃발·NPC", w.Ragnar != null);
             GameObject prefab = ZNetScene.instance.GetPrefab(Portals.PrefabName);
             checks.Add("portal_wood 프리팹 있음", prefab != null);
-            if (w.Claude == null || prefab == null) yield break;
+            if (w.Ragnar == null || prefab == null) yield break;
 
             Quaternion rot = w.Player.transform.rotation;
             Vector3 gatePos = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 25f));
@@ -81,27 +81,27 @@ namespace ValheimHelper
             var exit = new Vector3(link.ExitX, link.ExitY, link.ExitZ);
             checks.Add($"출구 = 짝 앞 1m·위 1m (차이 {Vector3.Distance(exit, expect):0.00}m)", Vector3.Distance(exit, expect) < 0.5f);
 
-            Vector3 npcPos = w.Claude.transform.position;
+            Vector3 npcPos = w.Ragnar.transform.position;
             Vector3 dest = exit + farRot * Vector3.forward * 20f;
             checks.Add("먼 목적지는 포탈을 고름", Portals.TryChoose(npcPos, dest, out PortalLink chosen) && Mathf.Abs(chosen.X - gatePos.x) < 0.5f);
             checks.Add("가까운 목적지는 걸음", !Portals.TryChoose(npcPos, npcPos + rot * new Vector3(0f, 0f, 30f), out _));
 
             // R2 다) 바닐라 포탈은 광석·금속을 막지만(Player.IsTeleportable) 일꾼은 TeleportTo라 든 채로 건너야 함
-            var inv = w.Claude.GetInventory();
+            var inv = w.Ragnar.GetInventory();
             GameObject orePrefab = ObjectDB.instance.GetItemPrefab("CopperOre");
             string oreName = orePrefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
             inv.AddItem(orePrefab, 5);
             int oreBefore = inv.CountItems(oreName);
-            Vector3 before = w.Claude.transform.position;
-            w.Claude.TeleportTo(exit, w.Claude.transform.rotation, false);
+            Vector3 before = w.Ragnar.transform.position;
+            w.Ragnar.TeleportTo(exit, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(3f);
             int oreAfter = inv.CountItems(oreName);
             checks.Add($"구리 광석 들고 건넘 (전 {oreBefore}, 뒤 {oreAfter})", oreBefore >= 5 && oreAfter == oreBefore);
             inv.RemoveItem(oreName, oreAfter);
-            float moved = Vector3.Distance(before, w.Claude.transform.position);
-            float toExit = Utils.DistanceXZ(exit, w.Claude.transform.position);
+            float moved = Vector3.Distance(before, w.Ragnar.transform.position);
+            float toExit = Utils.DistanceXZ(exit, w.Ragnar.transform.position);
             checks.Add($"일꾼이 출구로 건너감 (이동 {moved:0}m, 출구와 {toExit:0.0}m)", moved > 400f && toExit < 6f);
-            w.Claude.TeleportTo(w.Home, w.Claude.transform.rotation, false);
+            w.Ragnar.TeleportTo(w.Home, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(2f);
         }
     }

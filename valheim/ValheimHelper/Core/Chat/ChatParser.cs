@@ -20,7 +20,7 @@ namespace ValheimHelper.Core.Chat
         /// <summary>수량 상한. 넘으면 상한으로 줄이고 Clamped를 켠다.</summary>
         public int MaxAmount = 999;
 
-        /// <param name="npcNames">별칭 → 설정 이름 (예: "alarak" → "Alarak", "알라라크" → "Alarak").</param>
+        /// <param name="npcNames">별칭 → 설정 이름 (예: "floki" → "플로키", "라그나르" → "라그나").</param>
         /// <param name="resolveItem">별칭표에 없는 물건 이름 → 게임 프리팹 이름. 모르면 null. 게임 쪽에서 번역 이름으로 찾는다.</param>
         public ChatParser(IDictionary<string, string> npcNames, Func<string, string> resolveItem = null)
         {
@@ -292,18 +292,23 @@ namespace ValheimHelper.Core.Chat
             return true;
         }
 
-        /// <summary>"Claude야 나무 좀", "Alarak, 철" — 줄 앞에 NPC 이름이 있으면 그 이름.</summary>
+        /// <summary>"라그나야 나무 좀", "Floki, 철" — 줄 앞에 NPC 이름이 있으면 그 이름. 겹치면 긴 별칭 먼저("라그나르"가 "라그나"보다).</summary>
         string LeadingName(string text)
         {
+            string best = null;
+            int bestLen = 0;
             foreach (var kv in _npcNames)
             {
-                if (!text.StartsWith(kv.Key, StringComparison.OrdinalIgnoreCase)) continue;
-                if (text.Length == kv.Key.Length) return kv.Value;
-                char next = text[kv.Key.Length];
-                bool asciiWord = next < 128 && char.IsLetterOrDigit(next);
-                if (!asciiWord) return kv.Value;
+                if (kv.Key.Length <= bestLen || !text.StartsWith(kv.Key, StringComparison.OrdinalIgnoreCase)) continue;
+                if (text.Length > kv.Key.Length)
+                {
+                    char next = text[kv.Key.Length];
+                    if (next < 128 && char.IsLetterOrDigit(next)) continue;
+                }
+                best = kv.Value;
+                bestLen = kv.Key.Length;
             }
-            return null;
+            return best;
         }
     }
 }

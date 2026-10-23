@@ -35,8 +35,8 @@ namespace ValheimHelper.Core.Npc
     /// </summary>
     public static class Danger
     {
-        public const float FightScv = 0.6f, FightAlarak = 0.8f;
-        public const float LowHealthScv = 0.4f, LowHealthAlarak = 0.3f;
+        public const float FightRagnar = 0.6f, FightFloki = 0.8f;
+        public const float LowHealthRagnar = 0.4f, LowHealthFloki = 0.3f;
         /// <summary>잃을 체력이 지금 체력의 이만큼을 넘으면 절대 회피.</summary>
         public const float AvoidRatio = 2f;
 
@@ -71,13 +71,13 @@ namespace ValheimHelper.Core.Npc
         public static Verdict Judge(Personality p, IList<Foe> foes, float health, float maxHealth, float myHit, Func<float, float> taken, bool haveMead)
         {
             if (foes.Count == 0) return Verdict.Calm;
-            bool alarak = p == Personality.Alarak;
-            bool low = health <= maxHealth * (alarak ? LowHealthAlarak : LowHealthScv);
+            bool alarak = p == Personality.Floki;
+            bool low = health <= maxHealth * (alarak ? LowHealthFloki : LowHealthRagnar);
             if (low && haveMead) return Verdict.Drink;
             foreach (var f in foes) if (f.Boss) return Verdict.Flee;
             if (Ratio(foes, maxHealth, myHit, taken) > AvoidRatio) return Verdict.Flee;
             if (low) return Verdict.Back;
-            return Ratio(foes, health, myHit, taken) <= (alarak ? FightAlarak : FightScv) ? Verdict.Fight : Verdict.Back;
+            return Ratio(foes, health, myHit, taken) <= (alarak ? FightFloki : FightRagnar) ? Verdict.Fight : Verdict.Back;
         }
 
         /// <summary>

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 다른 짐 시험(ChatGPT-02): 1호 가방을 나무로 운반 한도까지 채우고 뿔 곡괭이를 쥐여 준 뒤 "!Claude 돌 3".
+    /// 다른 짐 시험(ChatGPT-02): 1호 가방을 나무로 운반 한도까지 채우고 뿔 곡괭이를 쥐여 준 뒤 "!라그나 돌 3".
     /// 1) 거점 상자 둘 다 꽉 참 → 짐을 못 넣으니 준비·귀환을 되풀이하지 않고 "넣을 데가 없어요"라고 알리고 끝내는지.
     /// 2) 상자를 비움 → 나무를 상자에 넣고(짐 정리) 돌을 모아 오는지. 물건 총량이 그대로인지.
     /// </summary>
@@ -43,7 +43,7 @@ namespace ValheimHelper
             TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
             yield return new WaitForSeconds(3f);
-            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
             if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다

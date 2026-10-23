@@ -45,9 +45,9 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC 2명·상자", w.Claude != null && w.Alarak != null && w.Chest != null);
-            if (w.Claude == null || w.Alarak == null || w.Chest == null) yield break;
-            string n1 = w.Claude.NpcName;
+            checks.Add("깃발·NPC 2명·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
+            if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
+            string n1 = w.Ragnar.NpcName;
             Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
             var clear = new List<string>(Items);
             var recipes = new List<Recipe>();
@@ -80,7 +80,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             yield return TestKit.WaitFor(() => Stock(w, "Bow") >= 1 && Stock(w, "Club") >= 1, 150f);
             checks.Add($"활·곤봉이 상자에 ({TestKit.Waited:0}초, 활 {Stock(w, "Bow")}, 곤봉 {Stock(w, "Club")})", TestKit.Ok);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
             string left = "";
             bool conserved = Stock(w, "Bow") == 1 && Stock(w, "Club") == 1;

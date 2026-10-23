@@ -14,6 +14,14 @@ public class ClaudePromptTests
     }
 
     [Fact]
+    public void VoicePerPersonality()
+    {
+        Assert.Contains("히히", ClaudePrompt.Voice(ValheimHelper.Core.Npc.Personality.Floki));
+        Assert.Contains("~지", ClaudePrompt.Voice(ValheimHelper.Core.Npc.Personality.Ragnar));
+        Assert.Contains("말투로", ClaudePrompt.System(new string[0], new string[0], "a"));
+    }
+
+    [Fact]
     public void EmptyStockSaysSo()
     {
         Assert.Contains("(비어 있음)", ClaudePrompt.System(new string[0], new string[0], "a"));

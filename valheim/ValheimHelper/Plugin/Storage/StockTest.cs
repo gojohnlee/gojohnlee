@@ -91,8 +91,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<Container> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
             Recipe recipe = PickRecipe();
             checks.Add($"제작대 없는 제작법 ({(recipe != null ? recipe.m_item.name : "없음")})", recipe != null);
             if (recipe == null) yield break;
@@ -245,11 +245,11 @@ namespace ValheimHelper
             }
             checks.Add($"예약 시험 음식 ({(food != null ? food.name : "없음")})", food != null);
             if (food == null) yield break;
-            var meals = Traverse.Create(w.Claude).Property("Meals");
-            var meals0 = w.Claude.Meals;
+            var meals = Traverse.Create(w.Ragnar).Property("Meals");
+            var meals0 = w.Ragnar.Meals;
             meals.SetValue(new ValheimHelper.Core.Npc.Meals()); // 준비 때 이미 배불러 못 먹음 → 이 칸 동안만 빈 배
             try { yield return ReserveFood(w, checks, made, food); }
-            finally { if (w.Claude != null) meals.SetValue(meals0); }
+            finally { if (w.Ragnar != null) meals.SetValue(meals0); }
         }
 
         static IEnumerator ReserveFood(TestKit.World w, GatherTest.Checks checks, List<Container> made, ItemDrop food)
@@ -278,11 +278,11 @@ namespace ValheimHelper
             try
             {
                 reserved = BaseStock.Reserved(name);
-                eaten1 = w.Claude.EatFrom(c.GetInventory(), c);
+                eaten1 = w.Ragnar.EatFrom(c.GetInventory(), c);
                 left1 = GatherTest.Count(c, food.name);
             }
             finally { t.Field("m_craftTimer").SetValue(-1f); t.Field("m_craftRecipe").SetValue(null); Object.Destroy(rec); }
-            List<string> eaten2 = w.Claude.EatFrom(c.GetInventory(), c);
+            List<string> eaten2 = w.Ragnar.EatFrom(c.GetInventory(), c);
             int left2 = GatherTest.Count(c, food.name);
             checks.Add($"막대가 음식 예약 ({reserved}/1)", reserved == 1);
             checks.Add($"예약된 음식은 일꾼이 안 먹음 (먹음 {eaten1.Count}, 상자 {left1}/1)", !eaten1.Contains(food.name) && left1 == 1);

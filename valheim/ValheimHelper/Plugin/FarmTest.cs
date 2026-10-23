@@ -44,8 +44,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, System.Action<FarmField> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
             TestRunner.Log("DIAG " + Crops.Describe() + $" / ZNetScene에 갈기 조각 {Crops.CultivatePiece != null && ZNetScene.instance.GetPrefab(Crops.CultivatePiece) != null}");
             checks.Add($"작물 목록·갈기 조각 ({Crops.All.Count}, {Crops.CultivatePiece})", Crops.All.Count > 0 && Crops.CultivatePiece != null);
             if (Crops.CultivatePiece == null) yield break;
@@ -65,19 +65,19 @@ namespace ValheimHelper
 
             // 경작기 없으면 거절
             TestKit.PutInChest(w.Chest, Seed, 6);
-            w.Claude.Ai.StartJob(new FarmJob(w.Claude, field, plan));
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
+            w.Ragnar.Ai.StartJob(new FarmJob(w.Ragnar, field, plan));
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             checks.Add($"경작기 없으면 거절 ({TestKit.Waited:0}초, 새싹 {Plants(field).Count}, 씨앗 상자 {Stock(w, Seed)})", TestKit.Ok && Plants(field).Count == 0 && Stock(w, Seed) == 6);
 
             TestKit.PutInChest(w.Chest, Crops.Cultivator, 1);
-            var job = new FarmJob(w.Claude, field, plan);
-            w.Claude.Ai.StartJob(job);
+            var job = new FarmJob(w.Ragnar, field, plan);
+            w.Ragnar.Ai.StartJob(job);
             yield return TestKit.WaitFor(() => job.Planted >= 4, 120f);
             checks.Add($"새싹 4개 심음 ({TestKit.Waited:0}초, {job.Planted}, {job.StepName})", TestKit.Ok);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 120f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 120f);
             List<Plant> plants = Plants(field);
             int seeds = Stock(w, Seed) + Bag(w, Seed) - bag0;
-            checks.Add($"일 끝남·돌아옴 ({TestKit.Waited:0}초, 거점까지 {Utils.DistanceXZ(w.Home, w.Claude.transform.position):0}m)", TestKit.Ok);
+            checks.Add($"일 끝남·돌아옴 ({TestKit.Waited:0}초, 거점까지 {Utils.DistanceXZ(w.Home, w.Ragnar.transform.position):0}m)", TestKit.Ok);
             checks.Add($"밭에 새싹 4개 ({plants.Count})", plants.Count == 4);
             checks.Add($"씨앗 보존 (남은 {seeds} + 심은 {plants.Count} = 6)", seeds + plants.Count == 6);
             checks.Add($"씨앗·경작기 상자에 (씨앗 상자 {Stock(w, Seed)}, 경작기 상자 {Stock(w, Crops.Cultivator)}·짐 {Bag(w, Crops.Cultivator)})",
@@ -105,10 +105,10 @@ namespace ValheimHelper
             int expect = 0;
             foreach (var p in ripe) expect += p.m_dontScale ? p.m_amount : Mathf.Max(p.m_minAmountScaled, Game.instance.ScaleDrops(p.m_itemPrefab, p.m_amount));
             int produce0 = Stock(w, Produce) + Bag(w, Produce);
-            var harvest = new FarmJob(w.Claude, field, null, true);
-            w.Claude.Ai.StartJob(harvest);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 150f);
-            checks.Add($"거두기 끝남·돌아옴 ({TestKit.Waited:0}초, 거둠 {harvest.Harvested}/{ripe.Count}, {harvest.StepName}, 거점까지 {Utils.DistanceXZ(w.Home, w.Claude.transform.position):0}m)",
+            var harvest = new FarmJob(w.Ragnar, field, null, true);
+            w.Ragnar.Ai.StartJob(harvest);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 150f);
+            checks.Add($"거두기 끝남·돌아옴 ({TestKit.Waited:0}초, 거둠 {harvest.Harvested}/{ripe.Count}, {harvest.StepName}, 거점까지 {Utils.DistanceXZ(w.Home, w.Ragnar.transform.position):0}m)",
                 TestKit.Ok && harvest.Harvested == ripe.Count && ripe.Count > 0);
             int got = Stock(w, Produce) - produce0;
             checks.Add($"거둔 당근 상자에 ({got}/{expect}, 짐 {Bag(w, Produce)}, 땅 {OnGround(field, Produce)}, 남은 것 {FarmJob.Ripe(field).Count})",
@@ -121,26 +121,26 @@ namespace ValheimHelper
             TestKit.PutInChest(w.Chest, Produce, 4);
             Brain.Farms.Set(field.X, field.Z, field.Radius);
             FarmField booked = Brain.Farms.At(field.X, field.Z);
-            Commands.StartFarm(w.Claude, booked, false);
-            var cmdJob = w.Claude.Ai.Job as FarmJob;
-            Commands.StartFarm(w.Alarak, booked, false); // 같은 밭은 다른 일꾼이 안 맡음
-            checks.Add($"!밭 → 밭일 시작, 같은 밭은 한 명만 ({(cmdJob != null ? cmdJob.StepName : "없음")}, 알라라크 {(w.Alarak.Ai.Job != null ? w.Alarak.Ai.Job.GetType().Name : "없음")})",
-                cmdJob != null && !(w.Alarak.Ai.Job is FarmJob));
+            Commands.StartFarm(w.Ragnar, booked, false);
+            var cmdJob = w.Ragnar.Ai.Job as FarmJob;
+            Commands.StartFarm(w.Floki, booked, false); // 같은 밭은 다른 일꾼이 안 맡음
+            checks.Add($"!밭 → 밭일 시작, 같은 밭은 한 명만 ({(cmdJob != null ? cmdJob.StepName : "없음")}, 플로키 {(w.Floki.Ai.Job != null ? w.Floki.Ai.Job.GetType().Name : "없음")})",
+                cmdJob != null && !(w.Floki.Ai.Job is FarmJob));
             // 저장 칸: 하던 밭일 → WorkItem(Farm) → 글 → 다시 읽기
             WorkItem saved = WorkSaves.FromJob(cmdJob);
             var back = WorkState.LoadQueue(WorkState.SaveQueue(new List<WorkItem> { saved }));
             checks.Add($"밭일 저장 칸 ({(back.Count > 0 ? back[0].Kind + " r" + back[0].Amount + " (" + back[0].FarmX.ToString("0.0") + "," + back[0].FarmZ.ToString("0.0") + ")" : "없음")})",
                 back.Count == 1 && back[0].Kind == WorkKind.Farm && back[0].Amount == field.Radius && Mathf.Abs(back[0].FarmX - field.X) < 0.1f && Mathf.Abs(back[0].FarmZ - field.Z) < 0.1f);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 240f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 240f);
             int carrots = PlantsOf(field, "sapling_carrot"), seedCarrots = PlantsOf(field, "sapling_seedcarrot");
             int seedLeft = Stock(w, Seed) + Bag(w, Seed), produceLeft = Stock(w, Produce) + Bag(w, Produce);
             checks.Add($"!밭 심기 ({TestKit.Waited:0}초, 당근 {carrots}·당근 씨앗 {seedCarrots}, 남은 씨앗 {seedLeft}·당근 {produceLeft}, 경작기 상자 {Stock(w, Crops.Cultivator)})",
                 TestKit.Ok && carrots == 6 && seedCarrots > 0 && seedLeft + carrots == 6 && produceLeft + seedCarrots == 4 && Stock(w, Crops.Cultivator) == 1);
             // 대기열·재시작 칸에서 다시 시작(거둘 것·씨앗 없음 → 갔다 와서 끝)
-            QueuedWork q = WorkSaves.ToQueued(w.Claude, back[0]);
+            QueuedWork q = WorkSaves.ToQueued(w.Ragnar, back[0]);
             q.Start();
-            bool restarted = w.Claude.Ai.Job is FarmJob;
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 120f);
+            bool restarted = w.Ragnar.Ai.Job is FarmJob;
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 120f);
             checks.Add($"저장 칸에서 밭일 다시 시작·끝 ({restarted}, {TestKit.Waited:0}초, 짐 경작기 {Bag(w, Crops.Cultivator)})", restarted && TestKit.Ok && Bag(w, Crops.Cultivator) == 0);
 
             // 출발 판단 농사 연결(4c): "!당근 3" → 들에는 없는 것이라 밭에 당근 3 심기(씨앗 3 → 0). 밭이 없으면 밭일 안 함.
@@ -149,11 +149,11 @@ namespace ValheimHelper
             TestKit.PutInChest(w.Chest, Seed, 3);
             var who = new Speaker("시험", ZDOID.None, ZDOID.None);
             var carrotCmd = new ChatCommand { Kind = CommandKind.Item, Item = Produce, Amount = 3 };
-            Departures.Gather(who, carrotCmd, w.Claude);
-            var wantJob = w.Claude.Ai.Job as FarmJob;
-            checks.Add($"!당근 3 → 밭일 ({(w.Claude.Ai.Job != null ? w.Claude.Ai.Job.GetType().Name : "없음")}, 들에서 나는 곳 [{string.Join(",", ResourceCatalog.SourcesOf(Produce).ToArray())}])",
+            Departures.Gather(who, carrotCmd, w.Ragnar);
+            var wantJob = w.Ragnar.Ai.Job as FarmJob;
+            checks.Add($"!당근 3 → 밭일 ({(w.Ragnar.Ai.Job != null ? w.Ragnar.Ai.Job.GetType().Name : "없음")}, 들에서 나는 곳 [{string.Join(",", ResourceCatalog.SourcesOf(Produce).ToArray())}])",
                 wantJob != null);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 240f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 240f);
             carrots = PlantsOf(field, "sapling_carrot");
             seedLeft = Stock(w, Seed) + Bag(w, Seed);
             checks.Add($"!당근 3 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft}, 경작기 상자 {Stock(w, Crops.Cultivator)})",
@@ -163,10 +163,10 @@ namespace ValheimHelper
             Clean(field);
             TestKit.ClearBaseStock(w, Seed, Produce);
             TestKit.PutInChest(w.Chest, Seed, 3);
-            Departures.Gather(who, new ChatCommand { Kind = CommandKind.Item, Item = "CarrotSoup", Amount = 1 }, w.Claude);
-            var soupJob = w.Claude.Ai.Job;
+            Departures.Gather(who, new ChatCommand { Kind = CommandKind.Item, Item = "CarrotSoup", Amount = 1 }, w.Ragnar);
+            var soupJob = w.Ragnar.Ai.Job;
             checks.Add($"!당근수프 1 → 재료 당근 밭일 ({(soupJob != null ? soupJob.GetType().Name : "없음")}, 출처 {Recipes.Book().SourceOf(Produce)})", soupJob is FarmJob);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 240f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 240f);
             carrots = PlantsOf(field, "sapling_carrot");
             seedLeft = Stock(w, Seed) + Bag(w, Seed);
             checks.Add($"!당근수프 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft})", TestKit.Ok && carrots == 3 && seedLeft == 0);
@@ -176,23 +176,23 @@ namespace ValheimHelper
             Brain.Refill.Keep(Produce, 5);
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);
-            WorkerNpc farmer = w.Claude.Ai.Job is FarmJob ? w.Claude : w.Alarak.Ai.Job is FarmJob ? w.Alarak : null;
+            WorkerNpc farmer = w.Ragnar.Ai.Job is FarmJob ? w.Ragnar : w.Floki.Ai.Job is FarmJob ? w.Floki : null;
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);
-            checks.Add($"!채워 당근 → 한 명만 밭일 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})",
-                farmer != null && !(w.Claude.Ai.Job is FarmJob && w.Alarak.Ai.Job is FarmJob));
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null && w.Alarak.Ai.Job == null, 240f);
+            checks.Add($"!채워 당근 → 한 명만 밭일 ({w.Ragnar.Ai.Job?.GetType().Name}, {w.Floki.Ai.Job?.GetType().Name})",
+                farmer != null && !(w.Ragnar.Ai.Job is FarmJob && w.Floki.Ai.Job is FarmJob));
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null, 240f);
             carrots = PlantsOf(field, "sapling_carrot");
-            seedLeft = Stock(w, Seed) + Bag(w, Seed) + (w.Alarak.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(Seed).GetComponent<ItemDrop>().m_itemData.m_shared.m_name));
+            seedLeft = Stock(w, Seed) + Bag(w, Seed) + (w.Floki.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(Seed).GetComponent<ItemDrop>().m_itemData.m_shared.m_name));
             checks.Add($"!채워 당근 심기 ({TestKit.Waited:0}초, 당근 {carrots}, 남은 씨앗 {seedLeft})", TestKit.Ok && carrots == 5 && seedLeft == 0);
             TestKit.PutInChest(w.Chest, Seed, 2);
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);
-            checks.Add($"자라는 중이면 다시 안 심음 ({w.Claude.Ai.Job?.GetType().Name}, {w.Alarak.Ai.Job?.GetType().Name})", !(w.Claude.Ai.Job is FarmJob) && !(w.Alarak.Ai.Job is FarmJob));
+            checks.Add($"자라는 중이면 다시 안 심음 ({w.Ragnar.Ai.Job?.GetType().Name}, {w.Floki.Ai.Job?.GetType().Name})", !(w.Ragnar.Ai.Job is FarmJob) && !(w.Floki.Ai.Job is FarmJob));
             Brain.Refill.Off();
             Brain.Farms.Remove(field.X, field.Z);
-            Departures.Gather(who, carrotCmd, w.Claude);
-            checks.Add($"밭 없으면 !당근은 밭일·채집 안 함 ({(w.Claude.Ai.Job != null ? w.Claude.Ai.Job.GetType().Name : "없음")})", w.Claude.Ai.Job == null);
+            Departures.Gather(who, carrotCmd, w.Ragnar);
+            checks.Add($"밭 없으면 !당근은 밭일·채집 안 함 ({(w.Ragnar.Ai.Job != null ? w.Ragnar.Ai.Job.GetType().Name : "없음")})", w.Ragnar.Ai.Job == null);
 
             TestKit.ClearBaseStock(w, Crops.Cultivator, Seed, Produce);
         }
@@ -247,6 +247,6 @@ namespace ValheimHelper
         }
 
         static int Bag(TestKit.World w, string prefab) =>
-            w.Claude.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
+            w.Ragnar.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
     }
 }

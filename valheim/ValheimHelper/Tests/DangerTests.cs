@@ -39,23 +39,23 @@ public class DangerTests
     public void Verdicts()
     {
         var weak = new[] { F(40, 8) };
-        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Scv, weak, 70, 70, 20, NoArmor, false));       // 16/70
+        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Ragnar, weak, 70, 70, 20, NoArmor, false));       // 16/70
         var mid = new[] { F(100, 20) };                                                                      // 5방×20 = 100
-        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Scv, mid, 150, 150, 20, NoArmor, false));       // 0.67 > 0.6
-        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Alarak, mid, 150, 150, 20, NoArmor, false));   // ≤ 0.8
+        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, mid, 150, 150, 20, NoArmor, false));       // 0.67 > 0.6
+        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Floki, mid, 150, 150, 20, NoArmor, false));   // ≤ 0.8
         var troll = new[] { F(600, 70) };
-        Assert.Equal(Verdict.Flee, Danger.Judge(Personality.Alarak, troll, 70, 70, 20, NoArmor, false));
-        Assert.Equal(Verdict.Flee, Danger.Judge(Personality.Scv, new[] { F(1, 1, boss: true) }, 70, 70, 20, NoArmor, false));
-        Assert.Equal(Verdict.Calm, Danger.Judge(Personality.Scv, new Foe[0], 70, 70, 20, NoArmor, false));
+        Assert.Equal(Verdict.Flee, Danger.Judge(Personality.Floki, troll, 70, 70, 20, NoArmor, false));
+        Assert.Equal(Verdict.Flee, Danger.Judge(Personality.Ragnar, new[] { F(1, 1, boss: true) }, 70, 70, 20, NoArmor, false));
+        Assert.Equal(Verdict.Calm, Danger.Judge(Personality.Ragnar, new Foe[0], 70, 70, 20, NoArmor, false));
     }
 
     [Fact]
     public void LowHealthDrinksOrBacksOff()
     {
         var weak = new[] { F(10, 2) };
-        Assert.Equal(Verdict.Drink, Danger.Judge(Personality.Scv, weak, 25, 70, 20, NoArmor, true));   // 36% ≤ 40%
-        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Scv, weak, 25, 70, 20, NoArmor, false));
-        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Alarak, weak, 25, 70, 20, NoArmor, false)); // 30% 기준
+        Assert.Equal(Verdict.Drink, Danger.Judge(Personality.Ragnar, weak, 25, 70, 20, NoArmor, true));   // 36% ≤ 40%
+        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, weak, 25, 70, 20, NoArmor, false));
+        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Floki, weak, 25, 70, 20, NoArmor, false)); // 30% 기준
     }
 
     [Fact]
@@ -91,8 +91,8 @@ public class DangerOrderTests
     {
         // 체력 18/70: 지금 체력으로는 비율이 크지만, 미드가 있으면 마시는 게 먼저
         var two = new[] { F(40, 7), F(40, 7) };
-        Assert.Equal(Verdict.Drink, Danger.Judge(Personality.Scv, two, 18, 70, 13, d => d, true));
+        Assert.Equal(Verdict.Drink, Danger.Judge(Personality.Ragnar, two, 18, 70, 13, d => d, true));
         // 미드가 없으면 물러남(가득한 체력으로는 이길 만한 상대라 도망까지는 아님)
-        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Scv, two, 18, 70, 13, d => d, false));
+        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, two, 18, 70, 13, d => d, false));
     }
 }

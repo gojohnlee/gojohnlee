@@ -104,11 +104,11 @@ namespace ValheimHelper.Core.Npc
     public static class Departure
     {
         public const float NoneBelow = 0.15f, HardFrom = 1.0f;
-        public const float DeathScv = 0.25f, DeathAlarak = 0.5f;
+        public const float DeathRagnar = 0.25f, DeathFloki = 0.5f;
         public const float WalkSpeed = 5f, FarDistance = 600f, NightNearHome = 100f;
         public const int LowSkill = 20;
 
-        public static float FightLine(Personality p) => p == Personality.Alarak ? Danger.FightAlarak : Danger.FightScv;
+        public static float FightLine(Personality p) => p == Personality.Floki ? Danger.FightFloki : Danger.FightRagnar;
 
         public static DangerLevel Level(Personality p, PlaceOption o)
         {
@@ -119,7 +119,7 @@ namespace ValheimHelper.Core.Npc
             return DangerLevel.None;
         }
 
-        static bool DiedThere(Personality p, PlaceOption o) => o.DeathWeight > (p == Personality.Alarak ? DeathAlarak : DeathScv);
+        static bool DiedThere(Personality p, PlaceOption o) => o.DeathWeight > (p == Personality.Floki ? DeathFloki : DeathRagnar);
 
         static bool Together(Personality p, PlaceOption o) => !float.IsNaN(o.RatioTogether) && o.RatioTogether < FightLine(p) && !o.Boss;
 

@@ -48,7 +48,7 @@ namespace ValheimHelper
             {
                 if (i > 0) yield return new WaitForSeconds(1f);
                 int chest = Stock(w, from) + Stock(w, to);
-                int bag = BaseTest.Carried(w.Claude, from) + BaseTest.Carried(w.Claude, to) + BaseTest.Carried(w.Alarak, from) + BaseTest.Carried(w.Alarak, to);
+                int bag = BaseTest.Carried(w.Ragnar, from) + BaseTest.Carried(w.Ragnar, to) + BaseTest.Carried(w.Floki, from) + BaseTest.Carried(w.Floki, to);
                 Vector3 at = machine != null ? machine.transform.position : w.Home;
                 int ground = BaseTest.OnGround(at, from) + BaseTest.OnGround(at, to) + BaseTest.OnGround(w.Home, from) + BaseTest.OnGround(w.Home, to);
                 ZDO z = machine != null ? machine.GetComponent<ZNetView>()?.GetZDO() : null;
@@ -70,9 +70,9 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, System.Collections.Generic.List<GameObject> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC 2명·상자", w.Claude != null && w.Alarak != null && w.Chest != null);
-            if (w.Claude == null || w.Alarak == null || w.Chest == null) yield break;
-            string n1 = w.Claude.NpcName;
+            checks.Add("깃발·NPC 2명·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
+            if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
+            string n1 = w.Ragnar.NpcName;
             Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
             TestKit.ClearBaseStock(w, "Wood", "LeatherScraps", "DeerHide", "CopperOre", "Copper", "Coal", "Bow");
 
@@ -89,8 +89,8 @@ namespace ValheimHelper
             string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
             yield return Say($"!{n1} {bowName} 1", 1f);
             yield return TestKit.WaitFor(() => Stock(w, "Bow") >= 1, 90f);
-            checks.Add($"활이 거점 상자에 생김 ({TestKit.Waited:0}초, {w.Claude.Ai.Current})", TestKit.Ok);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
+            checks.Add($"활이 거점 상자에 생김 ({TestKit.Waited:0}초, {w.Ragnar.Ai.Current})", TestKit.Ok);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
             // 개수 보존: 넣은 재료는 정확히 다 쓰였고(복사 없음) 활은 1개뿐(공중 분해·복사 없음)
             string left = "";
@@ -113,10 +113,10 @@ namespace ValheimHelper
             string barName = Localization.instance.Localize(ObjectDB.instance.GetItemPrefab("Copper").GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
             TestRunner.Log($"구리 주괴 게임 이름: [{barName}] → Items.Resolve {Items.Resolve(barName)}, \"구리주괴\" → {Items.Resolve("구리주괴")}");
             yield return Say($"!{n1} 구리주괴 2", 1f);
-            checks.Add($"제련 계획 시작 ({w.Claude.Ai.Current}, {w.Claude.Ai.Job?.GetType().Name})", w.Claude.Ai.Job is PlanJob);
+            checks.Add($"제련 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
             yield return TestKit.WaitFor(() => Stock(w, "Copper") >= 2, 240f);
             checks.Add($"구리 주괴 2개가 상자에 ({TestKit.Waited:0}초, 광석 {Stock(w, "CopperOre")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
             // 광석 4개 = 어디에 있든 합 4(복제도 소실도 없음, 사용자 2026-10-22 — E001): 상자 + 일꾼 짐 + 땅(제련소·상자 둘레) + 제련소 안
             yield return Conserved(w, checks, smelter, "CopperOre", "Copper", 4);
@@ -129,7 +129,7 @@ namespace ValheimHelper
         /// <summary>3) 용광로: 고철 4·석탄 20 → "!철주괴 2" → 용광로(blastfurnace)에 넣고 기다렸다 꺼내 상자에 철 주괴 2(⑦ 철 4조각).</summary>
         static IEnumerator Blast(TestKit.World w, GatherTest.Checks checks, System.Collections.Generic.List<GameObject> made, Vector3 right)
         {
-            string n1 = w.Claude.NpcName;
+            string n1 = w.Ragnar.NpcName;
             TestKit.ClearBaseStock(w, "IronScrap", "Iron", "Coal");
             TestKit.PutInChest(w.Chest, "IronScrap", 4);
             TestKit.PutInChest(w.Chest, "Coal", 20);
@@ -137,10 +137,10 @@ namespace ValheimHelper
             GameObject furnace = Place(made, "blastfurnace", w.Home - right * 10f);
             yield return new WaitForSeconds(1f);
             yield return Say($"!{n1} 철주괴 2", 1f);
-            checks.Add($"용광로 계획 시작 ({w.Claude.Ai.Current}, {w.Claude.Ai.Job?.GetType().Name})", w.Claude.Ai.Job is PlanJob);
+            checks.Add($"용광로 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
             yield return TestKit.WaitFor(() => Stock(w, "Iron") >= 2, 240f);
             checks.Add($"철 주괴 2개가 상자에 ({TestKit.Waited:0}초, 고철 {Stock(w, "IronScrap")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 10f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             yield return Conserved(w, checks, furnace, "IronScrap", "Iron", 4);
             yield return Stop();
         }
@@ -155,7 +155,7 @@ namespace ValheimHelper
             foreach (var r in ObjectDB.instance.m_recipes)
                 if (r.m_item != null && Utils.GetPrefabName(r.m_item.gameObject) == "Bow") bow = r;
             if (bow == null) yield break;
-            string n1 = w.Claude.NpcName;
+            string n1 = w.Ragnar.NpcName;
             TestKit.ClearBaseStock(w, "Bow", "Stone");
             foreach (var req in bow.m_resources)
                 TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount + 1);
@@ -173,7 +173,7 @@ namespace ValheimHelper
             ItemDrop onGround = null;
             yield return TestKit.WaitFor(() => (onGround = BowNear(chests)) != null, 90f);
             checks.Add($"꽉 찬 상자 → 만든 활은 상자 앞 땅에 ({TestKit.Waited:0}초)", TestKit.Ok);
-            checks.Add($"짐에는 안 넣음 (짐 활 {w.Claude.CountItem("Bow")})", w.Claude.CountItem("Bow") == 0);
+            checks.Add($"짐에는 안 넣음 (짐 활 {w.Ragnar.CountItem("Bow")})", w.Ragnar.CountItem("Bow") == 0);
             checks.Add("\"상자 하나만 더\" 대사", w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("상자")) >= 0);
             yield return Stop();
             if (onGround != null && onGround.TryGetComponent(out ZNetView v) && v.IsValid()) v.Destroy();
@@ -199,9 +199,9 @@ namespace ValheimHelper
         static IEnumerator Ferment(TestKit.World w, GatherTest.Checks checks, System.Collections.Generic.List<GameObject> made, Vector3 right)
         {
             const string Base = "MeadBasePoisonResist", Mead = "MeadPoisonResist";
-            string n1 = w.Claude.NpcName;
+            string n1 = w.Ragnar.NpcName;
             TestKit.ClearBaseStock(w, Base, Mead);
-            foreach (var npc in new[] { w.Claude, w.Alarak }) RemoveFromBag(npc, Mead);
+            foreach (var npc in new[] { w.Ragnar, w.Floki }) RemoveFromBag(npc, Mead);
             if (ZNetScene.instance.GetPrefab("fermenter") == null) { checks.Add("발효기 프리팹 있음", false); yield break; }
             TestKit.PutInChest(w.Chest, Base, 1);
             GameObject fe = Place(made, "fermenter", w.Home + right * 6f);
@@ -215,7 +215,7 @@ namespace ValheimHelper
 
             MachineStep.TestIgnoreRoof = false;
             yield return Say($"!{n1} {meadName} 6", 1f);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Job == null, 60f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
             checks.Add($"지붕 없는 발효기엔 안 넣음 (바탕 {Stock(w, Base)}, 발효기 {fz.GetInt(ZDOVars.s_content) != 0})",
                 TestKit.Ok && Stock(w, Base) == 1 && fz.GetInt(ZDOVars.s_content) == 0);
             yield return Stop();
@@ -224,14 +224,14 @@ namespace ValheimHelper
             try
             {
                 yield return Say($"!{n1} {meadName} 6", 1f);
-                checks.Add($"발효 계획 시작 ({w.Claude.Ai.Current}, {w.Claude.Ai.Job?.GetType().Name})", w.Claude.Ai.Job is PlanJob);
+                checks.Add($"발효 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
                 yield return TestKit.WaitFor(() => fz.GetInt(ZDOVars.s_content) != 0, 60f);
                 checks.Add($"발효기에 바탕을 넣음 ({TestKit.Waited:0}초, 상자 바탕 {Stock(w, Base)})", TestKit.Ok && Stock(w, Base) == 0);
                 if (!TestKit.Ok) yield break;
                 // 게임 시계로 40분은 못 기다리니 시작 시각을 당긴다(지붕 없어도 다 익은 뒤엔 바닐라가 시계를 되돌리지 않음)
                 fz.Set(ZDOVars.s_startTime, ZNet.instance.GetTime().AddSeconds(-fe.GetComponent<Fermenter>().m_fermentationDuration - 10).Ticks);
-                yield return TestKit.WaitFor(() => Total(w, Mead) >= 6 && w.Claude.Ai.Job == null, 60f);
-                checks.Add($"독 저항 미드 6개 (상자+짐 {Total(w, Mead)}, {TestKit.Waited:0}초, {w.Claude.Ai.Current})", TestKit.Ok);
+                yield return TestKit.WaitFor(() => Total(w, Mead) >= 6 && w.Ragnar.Ai.Job == null, 60f);
+                checks.Add($"독 저항 미드 6개 (상자+짐 {Total(w, Mead)}, {TestKit.Waited:0}초, {w.Ragnar.Ai.Current})", TestKit.Ok);
                 checks.Add($"넘는 미드는 상자로 (상자 {Stock(w, Mead)} ≥ 4, 짐은 몫 2까지)", Stock(w, Mead) >= 6 - Core.Npc.Resist.ToCarry);
                 checks.Add($"발효 뒤 개수 보존 (미드 {Total(w, Mead)} = 6, 바탕 {Stock(w, Base)} = 0, 발효기 빔)",
                     Total(w, Mead) == 6 && Stock(w, Base) == 0 && fz.GetInt(ZDOVars.s_content) == 0);
@@ -240,7 +240,7 @@ namespace ValheimHelper
             {
                 MachineStep.TestIgnoreRoof = false;
                 TestKit.ClearBaseStock(w, Base, Mead);
-                foreach (var npc in new[] { w.Claude, w.Alarak }) RemoveFromBag(npc, Mead);
+                foreach (var npc in new[] { w.Ragnar, w.Floki }) RemoveFromBag(npc, Mead);
             }
         }
 
@@ -249,7 +249,7 @@ namespace ValheimHelper
         {
             string name = ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
             int n = Stock(w, prefab);
-            foreach (var npc in new[] { w.Claude, w.Alarak }) if (npc != null) n += npc.GetInventory().CountItems(name);
+            foreach (var npc in new[] { w.Ragnar, w.Floki }) if (npc != null) n += npc.GetInventory().CountItems(name);
             return n;
         }
 

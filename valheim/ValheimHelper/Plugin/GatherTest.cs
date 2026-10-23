@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 채집 시험(② 단계). 깃발 → 상자 2개 → 한 상자에 도구(상자는 지정하지 않음)
-    /// → "!Claude &lt;자원&gt; 10" → 거점 상자들에 10개 이상 더 들어오는지(최대 6분).
+    /// → "!라그나 &lt;자원&gt; 10" → 거점 상자들에 10개 이상 더 들어오는지(최대 6분).
     /// vh_woodtest: 부싯돌 도끼 + 나무. vh_stonetest: 뿔 곡괭이 + 돌(줍기·캐기 둘 다 가능).
     /// 깃발·상자·NPC는 시험 뒤에도 남긴다.
     /// </summary>
@@ -80,7 +80,7 @@ namespace ValheimHelper
             TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
             yield return new WaitForSeconds(3f);
-            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
 

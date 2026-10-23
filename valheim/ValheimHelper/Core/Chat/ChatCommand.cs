@@ -58,7 +58,7 @@ namespace ValheimHelper.Core.Chat
     public sealed class ChatCommand
     {
         public CommandKind Kind;
-        /// <summary>"!Alarak 철 30"처럼 이름으로 부른 NPC. 설정의 이름 그대로. 없으면 null.</summary>
+        /// <summary>"!플로키 철 30"처럼 이름으로 부른 NPC. 설정의 이름 그대로. 없으면 null.</summary>
         public string Target;
         /// <summary>Item·Keep·SetChest(자원 상자)의 물건의 게임 프리팹 이름. 모르는 이름이면 명령이 아니라 Haiku로 간다.</summary>
         public string Item;

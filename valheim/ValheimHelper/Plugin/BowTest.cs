@@ -39,8 +39,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> deer)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
             GameObject prefab = ZNetScene.instance.GetPrefab("Deer");
             checks.Add("사슴 프리팹", prefab != null);
             if (prefab == null) yield break;
@@ -54,7 +54,7 @@ namespace ValheimHelper
             // 1) 활 없음 → 곧 그만두고 needBow
             int heard = w.Heard.Count;
             GatherTest.Say("!DeerHide 1", null);
-            yield return TestKit.WaitFor(() => !(w.Claude.Ai.Job is GatherJob) && !(w.Alarak.Ai.Job is GatherJob), 60f);
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
             checks.Add($"활 없으면 곧 그만둠 ({TestKit.Waited:0}초)", TestKit.Ok);
             bool said = false;
             for (int i = heard; i < w.Heard.Count; i++) if (w.Heard[i].Contains("활")) said = true;
@@ -79,13 +79,13 @@ namespace ValheimHelper
             WorkerNpc hunter = null;
             yield return TestKit.WaitFor(() =>
             {
-                if (hunter == null) hunter = w.Claude.Ai.Job is GatherJob ? w.Claude : w.Alarak.Ai.Job is GatherJob ? w.Alarak : null;
+                if (hunter == null) hunter = w.Ragnar.Ai.Job is GatherJob ? w.Ragnar : w.Floki.Ai.Job is GatherJob ? w.Floki : null;
                 if (hunter != null && hunter.HoldingBow()) heldBow = true;
                 return GatherTest.CountBase(w.Home, "DeerHide") >= 1;
             }, 180f);
             checks.Add($"가죽이 상자에 ({GatherTest.CountBase(w.Home, "DeerHide")}개, {TestKit.Waited:0}초)", TestKit.Ok);
             checks.Add($"활을 들고 쏨({hunter?.NpcName})", heldBow);
-            if (hunter == null) hunter = w.Claude;
+            if (hunter == null) hunter = w.Ragnar;
             int arrows = Gear.CountArrows(hunter.GetInventory(), Gear.BestBow(hunter.GetInventory().GetAllItems()));
             checks.Add($"활·화살을 지님(화살 {arrows}개, 몫 {Core.Npc.Archery.ArrowsToCarry} 이하)", arrows > 0 && arrows <= Core.Npc.Archery.ArrowsToCarry);
             checks.Add($"사슴 죽음", go == null || go.GetComponent<Character>().IsDead());

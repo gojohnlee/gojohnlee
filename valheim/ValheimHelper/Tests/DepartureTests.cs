@@ -15,7 +15,7 @@ public class DepartureTests
 
     static DepartureInput In(params PlaceOption[] places) => new DepartureInput
     {
-        Personality = Personality.Scv, Item = "나무", Amount = 20, Fed = true, Places = new List<PlaceOption>(places),
+        Personality = Personality.Ragnar, Item = "나무", Amount = 20, Fed = true, Places = new List<PlaceOption>(places),
     };
 
     [Fact]
@@ -125,9 +125,9 @@ public class DepartureTests
     [Fact]
     public void AlarakIsBolder()
     {
-        var i = In(P(100, 0.7f, withMead: 0.7f)); i.Personality = Personality.Alarak;
+        var i = In(P(100, 0.7f, withMead: 0.7f)); i.Personality = Personality.Floki;
         Assert.Equal("depart.warn", Departure.Judge(i).Key);
-        i.Personality = Personality.Scv;
+        i.Personality = Personality.Ragnar;
         Assert.Equal(DepartAction.Ask, Departure.Judge(i).Action);
     }
 
@@ -159,7 +159,7 @@ public class DepartureTests
     {
         var r = Departure.Judge(In(P(100, 0.05f, death: 0.6f)));
         Assert.Equal(Question.DiedThere, r.Question);
-        var i = In(P(100, 0.05f, death: 0.4f)); i.Personality = Personality.Alarak;
+        var i = In(P(100, 0.05f, death: 0.4f)); i.Personality = Personality.Floki;
         Assert.Equal(DepartAction.Go, Departure.Judge(i).Action);
     }
 
@@ -296,8 +296,8 @@ public class DepartureSpeechTests
     {
         foreach (var k in Keys)
         {
-            Assert.True(Speech.Has(Personality.Scv, k), "SCV " + k);
-            Assert.True(Speech.Has(Personality.Alarak, k), "Alarak " + k);
+            Assert.True(Speech.Has(Personality.Ragnar, k), "SCV " + k);
+            Assert.True(Speech.Has(Personality.Floki, k), "Alarak " + k);
         }
     }
 
@@ -309,7 +309,7 @@ public class DepartureSpeechTests
         {
             if (q == Question.None) continue;
             string k = "ask." + char.ToLowerInvariant(q.ToString()[0]) + q.ToString().Substring(1);
-            Assert.True(Speech.Has(Personality.Scv, k), k);
+            Assert.True(Speech.Has(Personality.Ragnar, k), k);
         }
     }
 }

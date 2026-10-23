@@ -501,6 +501,7 @@ namespace ValheimHelper
         protected override void Start()
         {
             if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+            Workers.RenameOld(m_nview.GetZDO());
             ApplyLook();
             // 저장된 소지품의 "입음" 표시대로 다시 입는다(Player.EquipInventoryItems와 같게)
             foreach (var it in m_inventory.GetEquippedItems())
@@ -521,7 +522,7 @@ namespace ValheimHelper
         }
 
         public string NpcName => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO().GetString(KeyName, "Worker") : "Worker";
-        public Personality Personality => m_nview != null && m_nview.IsValid() ? (Personality)m_nview.GetZDO().GetInt(KeyRole) : Personality.Scv;
+        public Personality Personality => m_nview != null && m_nview.IsValid() ? (Personality)m_nview.GetZDO().GetInt(KeyRole) : Personality.Ragnar;
         public Vector3 Home => m_nview.GetZDO().GetVec3(KeyHome, transform.position);
         public ZDO Zdo => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO() : null;
 
@@ -550,23 +551,27 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 외형: 둘 다 남자 바이킹, 1호는 갈색 머리·수염, 2호는 검은 머리·짧은 수염.
+        /// 외형: 둘 다 남자 바이킹, 1호 라그나는 밝은 갈색 옆 민 땋은 머리·땋은 수염, 2호 플로키는 검은 묶은 머리·작게 땋은 턱수염(염소수염에 가까운 것).
+        /// 프리팹이 없으면(게임 판이 바뀜) 옛 모양으로.
         /// 소유자 VisEquipment는 자기 필드를 쓰므로 생성될 때마다 다시 넣는다(바뀐 값만 ZDO에 기록된다).
         /// </summary>
         void ApplyLook()
         {
             VisEquipment vis = GetComponent<VisEquipment>();
             if (vis == null) return;
-            bool scv = Personality == Personality.Scv;
+            bool ragnar = Personality == Personality.Ragnar;
             vis.SetModel(0);
-            vis.SetHairItem((scv ? LookHair[0] : LookHair[1]).GetStableHashCode());
-            vis.SetBeardItem((scv ? LookBeard[0] : LookBeard[1]).GetStableHashCode());
-            vis.SetSkinColor(scv ? new Vector3(1f, 0.92f, 0.85f) : new Vector3(0.82f, 0.7f, 0.6f));
-            vis.SetHairColor(scv ? new Vector3(0.45f, 0.35f, 0.25f) : new Vector3(0.08f, 0.08f, 0.08f));
+            vis.SetHairItem(Look(ragnar ? LookHair[0] : LookHair[1], ragnar ? "Hair2" : "Hair1").GetStableHashCode());
+            vis.SetBeardItem(Look(ragnar ? LookBeard[0] : LookBeard[1], ragnar ? "Beard5" : "Beard2").GetStableHashCode());
+            vis.SetSkinColor(ragnar ? new Vector3(1f, 0.92f, 0.85f) : new Vector3(0.82f, 0.7f, 0.6f));
+            vis.SetHairColor(ragnar ? new Vector3(0.62f, 0.47f, 0.3f) : new Vector3(0.08f, 0.08f, 0.08f));
         }
 
-        public static readonly string[] LookHair = { "Hair2", "Hair1" };
-        public static readonly string[] LookBeard = { "Beard5", "Beard2" };
+        // 이름표(현지화): Hair24 = Shaved and Braided, Hair25 = Knot, Beard18 = Jarl Braids, Beard15 = Mini Braid.
+        public static readonly string[] LookHair = { "Hair24", "Hair25" };
+        public static readonly string[] LookBeard = { "Beard18", "Beard15" };
+
+        static string Look(string want, string old) => ObjectDB.instance != null && ObjectDB.instance.GetItemPrefab(want) != null ? want : old;
 
         // ---- 스킬 (구상서 3-1장) [게임 시험 안 됨] ----
 

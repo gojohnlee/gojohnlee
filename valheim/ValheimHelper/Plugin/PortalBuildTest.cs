@@ -90,7 +90,7 @@ namespace ValheimHelper
             int old = ClearMine();
             if (old > 0) TestRunner.Log($"지난 일꾼 포탈 {old}개 지움");
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
             if (w.Chest == null) yield break;
             var cost = PortalBuilder.Cost();
             TestRunner.Log("포탈 재료(하나): " + string.Join(", ", cost.ConvertAll(c => c.Item + " " + c.Amount)));
@@ -248,7 +248,7 @@ namespace ValheimHelper
             ClearMine();
             var items = cost.ConvertAll(c => c.Item).ToArray();
             TestKit.ClearBaseStock(w, items);
-            Inventory inv = w.Claude.GetInventory();
+            Inventory inv = w.Ragnar.GetInventory();
             foreach (var k in cost) inv.RemoveItem(CraftStep.SharedName(k.Item), inv.CountItems(CraftStep.SharedName(k.Item)));
             int Carried(string item) => inv.CountItems(CraftStep.SharedName(item));
             bool ChestEmpty() { foreach (var k in cost) if (GatherTest.Count(w.Chest, k.Item) != 0) return false; return true; }
@@ -258,13 +258,13 @@ namespace ValheimHelper
 
             // 재료 없음 → 안 놓음, 짐 그대로
             Brain.Get().Visit(far);
-            var job = new GatherJob(w.Claude, "Wood", 1, ways);
+            var job = new GatherJob(w.Ragnar, "Wood", 1, ways);
             job.TestPortalDepart(far);
             checks.Add("재료 없으면 안 놓고 안 들고 감", PortalBuilder.Mine().Count == 0 && job.PortalCarryTag == null && Carried(cost[0].Item) == 0);
 
             // 두 번째 출발 → 거점 쪽 + 한 몫
             Fill(w.Chest, cost, 2);
-            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job = new GatherJob(w.Ragnar, "Wood", 1, ways);
             // 재료가 덜 빠짐(시험 스위치) → 놓은 거점 쪽 지움·뺀 것 되돌림·안 들고 감(요청 10-23 코드 정리)
             var full = Stock(w.Chest, cost);
             CraftStep.TestShortBy = 1;
@@ -281,7 +281,7 @@ namespace ValheimHelper
             checks.Add("두 번 불러도 더 안 놓음", PortalBuilder.MineWithTag(tag) == 1);
 
             // 도착(시험은 35m 밖 자리로 옮겨 놓음) → 일터 쪽, 짝 이어짐, 방문 2
-            w.Claude.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 35f)), rot, false);
+            w.Ragnar.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 35f)), rot, false);
             yield return new WaitForSeconds(1f);
             // 일터 쪽 놓기 실패(시험 스위치) → 들고 간 한 몫 그대로·포탈 늘지 않음·이어 짓기 유지(요청 10-23 09:09)
             PortalBuilder.TestFailAfter = 0;
@@ -302,9 +302,9 @@ namespace ValheimHelper
             // 못 놓고 귀환 → 한 몫 상자로
             ClearMine();
             Fill(w.Chest, cost, 2);
-            w.Claude.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 2f), rot, false);
+            w.Ragnar.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 2f), rot, false);
             yield return new WaitForSeconds(1f);
-            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job = new GatherJob(w.Ragnar, "Wood", 1, ways);
             job.TestPortalDepart(far);
             job.TestPortalHome();
             yield return new WaitForSeconds(1f);
@@ -313,7 +313,7 @@ namespace ValheimHelper
             checks.Add("못 놓은 몫 귀환 때 상자로", back && job.PortalCarryTag == null && PortalBuilder.MineWithTag(tag) == 1);
 
             // 거점 쪽만 있음 → 다음 출발에 한 몫만 들고 감
-            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job = new GatherJob(w.Ragnar, "Wood", 1, ways);
             job.TestPortalDepart(far);
             checks.Add("거점 쪽만 있으면 한 몫만 들고 감", job.PortalCarryTag == tag && PortalBuilder.Carrying(inv) && ChestEmpty() && PortalBuilder.MineWithTag(tag) == 1);
             job.TestPortalHome();
@@ -323,15 +323,15 @@ namespace ValheimHelper
             GatherJob Reload(GatherJob from)
             {
                 var back = WorkState.LoadQueue(WorkState.SaveQueue(new[] { WorkSaves.FromJob(from) }));
-                var j = new GatherJob(w.Claude, "Wood", 1, ways);
+                var j = new GatherJob(w.Ragnar, "Wood", 1, ways);
                 j.LoadPortal(back.Count == 1 ? back[0].PortalTag : null);
                 return j;
             }
-            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job = new GatherJob(w.Ragnar, "Wood", 1, ways);
             job.TestPortalDepart(far);
             job = Reload(job);
             checks.Add($"불러온 뒤 이어 감 (이름표 {job.PortalCarryTag})", job.PortalCarryTag == tag && PortalBuilder.Carrying(inv) && PortalBuilder.MineWithTag(tag) == 1);
-            w.Claude.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 35f)), rot, false);
+            w.Ragnar.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 35f)), rot, false);
             yield return new WaitForSeconds(1f);
             job.TestPortalArrive(far);
             yield return new WaitForSeconds(1f);
@@ -340,10 +340,10 @@ namespace ValheimHelper
 
             // 짝이 이미 다 있는데 한 몫을 들고 불러옴 → 더 안 놓고 귀환 때 상자로
             Fill(w.Chest, cost, 1);
-            w.Claude.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 2f), rot, false);
+            w.Ragnar.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 2f), rot, false);
             yield return new WaitForSeconds(1f);
             PortalBuilder.StartPair(tag, w.Home, inv, false, out _, out _);
-            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job = new GatherJob(w.Ragnar, "Wood", 1, ways);
             job.LoadPortal(tag);
             job.TestPortalArrive(far);
             yield return new WaitForSeconds(1f);
@@ -352,7 +352,7 @@ namespace ValheimHelper
             checks.Add("그 한 몫은 귀환 때 상자로", !PortalBuilder.Carrying(inv) && !ChestEmpty() && job.PortalCarryTag == null);
 
             // 짐에 한 몫이 없으면 이름표를 잊음
-            job = new GatherJob(w.Claude, "Wood", 1, ways);
+            job = new GatherJob(w.Ragnar, "Wood", 1, ways);
             job.LoadPortal(tag);
             checks.Add("짐에 없으면 잊음", job.PortalCarryTag == null);
             ClearMine();

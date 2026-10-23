@@ -69,29 +69,29 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, Errors errors, List<GameObject> spawned)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC 2명·상자", w.Claude != null && w.Alarak != null && w.Chest != null);
-            if (w.Claude == null || w.Alarak == null || w.Chest == null) yield break;
-            string n1 = w.Claude.NpcName, n2 = w.Alarak.NpcName;
+            checks.Add("깃발·NPC 2명·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
+            if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
+            string n1 = w.Ragnar.NpcName, n2 = w.Floki.NpcName;
             errors.Count = 0;
 
             // 1) 소유권 뺏기
             GatherTest.Say($"!{n1} 나무 20", null);
             yield return new WaitForSeconds(0.3f); // 일 시작 직후: 짐 정리·준비(상자 쓰기)
-            yield return Steal(w, checks, errors, w.Claude, "상자 쓰는 중", () => w.Claude.Ai.Current == WorkerAI.Mode.Work);
+            yield return Steal(w, checks, errors, w.Ragnar, "상자 쓰는 중", () => w.Ragnar.Ai.Current == WorkerAI.Mode.Work);
             yield return new WaitForSeconds(6f);
-            yield return Steal(w, checks, errors, w.Claude, "일하는 중", () => w.Claude.Ai.Current == WorkerAI.Mode.Work);
+            yield return Steal(w, checks, errors, w.Ragnar, "일하는 중", () => w.Ragnar.Ai.Current == WorkerAI.Mode.Work);
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
 
             // 싸우는 중: 그레이드워프 하나를 8m 앞에
             GameObject gd = ZNetScene.instance.GetPrefab("Greydwarf");
-            Vector3 at = w.Claude.transform.position + w.Claude.transform.forward * 8f;
+            Vector3 at = w.Ragnar.transform.position + w.Ragnar.transform.forward * 8f;
             GameObject foe = Object.Instantiate(gd, GatherTest.Ground(at) + Vector3.up * 0.5f, Quaternion.identity);
             spawned.Add(foe);
             foe.GetComponent<Character>().SetLevel(1);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Guard != null && w.Claude.Ai.Guard.StateName != "Calm", 10f);
-            TestRunner.Log($"싸움 시작 ({TestKit.Waited:0.0}초, Guard {w.Claude.Ai.Guard?.StateName})");
-            if (TestKit.Ok) yield return Steal(w, checks, errors, w.Claude, "싸우는 중", null);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Guard != null && w.Ragnar.Ai.Guard.StateName != "Calm", 10f);
+            TestRunner.Log($"싸움 시작 ({TestKit.Waited:0.0}초, Guard {w.Ragnar.Ai.Guard?.StateName})");
+            if (TestKit.Ok) yield return Steal(w, checks, errors, w.Ragnar, "싸우는 중", null);
             else checks.Add("싸우는 중 소유권 뺏기(싸움이 시작 안 됨)", false);
             if (foe != null && foe.GetComponent<ZNetView>() is ZNetView fv && fv.IsValid()) fv.Destroy();
             yield return new WaitForSeconds(1f);
@@ -101,9 +101,9 @@ namespace ValheimHelper
             TestKit.PutInChest(w.Chest, "Wood", 20);
             GatherTest.Say($"!{n2} 나무 10", null);
             yield return new WaitForSeconds(1f);
-            bool asked = Departures.AskedAt(w.Alarak) >= 0;
-            yield return Steal(w, checks, errors, w.Alarak, "질문 대기 중", () => Departures.AskedAt(w.Alarak) >= 0);
-            checks.Add("질문 대기가 남아 있음", asked && Departures.AskedAt(w.Alarak) >= 0);
+            bool asked = Departures.AskedAt(w.Floki) >= 0;
+            yield return Steal(w, checks, errors, w.Floki, "질문 대기 중", () => Departures.AskedAt(w.Floki) >= 0);
+            checks.Add("질문 대기가 남아 있음", asked && Departures.AskedAt(w.Floki) >= 0);
             GatherTest.Say("아니", null);
             yield return new WaitForSeconds(1f);
 
@@ -113,11 +113,11 @@ namespace ValheimHelper
             bool threw = false;
             threw |= !Handle(fake, $"!{n2} 나무 10");
             yield return new WaitForSeconds(1f);
-            bool fakeAsked = Departures.AskedAt(w.Alarak) >= 0;
+            bool fakeAsked = Departures.AskedAt(w.Floki) >= 0;
             threw |= !Handle(fake, "응");
             yield return new WaitForSeconds(1f);
-            checks.Add($"남의 명령·대답 (질문 {(fakeAsked ? "받음" : "없음")} → {w.Alarak.Ai.Current})",
-                !threw && fakeAsked && Departures.AskedAt(w.Alarak) < 0 && w.Alarak.Ai.Current == WorkerAI.Mode.Work);
+            checks.Add($"남의 명령·대답 (질문 {(fakeAsked ? "받음" : "없음")} → {w.Floki.Ai.Current})",
+                !threw && fakeAsked && Departures.AskedAt(w.Floki) < 0 && w.Floki.Ai.Current == WorkerAI.Mode.Work);
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             Departures.TestAutoGo = true;
@@ -125,7 +125,7 @@ namespace ValheimHelper
 
             threw = !Handle(fake, $"!{n1} 같이 가자");
             yield return new WaitForSeconds(2f);
-            checks.Add($"없는 사람 따라가기 → 예외 없이 그만둠 ({w.Claude.Ai.Current})", !threw && w.Claude.Ai.Current != WorkerAI.Mode.Follow);
+            checks.Add($"없는 사람 따라가기 → 예외 없이 그만둠 ({w.Ragnar.Ai.Current})", !threw && w.Ragnar.Ai.Current != WorkerAI.Mode.Follow);
 
             // !상자(이제 지정 없음, 대답만)·거점 상자 찾기: 상자 인스턴스가 호스트에 없을 때(같은 프레임에 내림)
             ZDOID chestId = w.Chest.GetComponent<ZNetView>().GetZDO().m_uid;

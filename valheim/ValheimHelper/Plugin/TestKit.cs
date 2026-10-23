@@ -66,7 +66,7 @@ namespace ValheimHelper
             public float DebugValue;
             public string DebugEnv;
             public Vector3 Home;
-            public WorkerNpc Claude, Alarak;
+            public WorkerNpc Ragnar, Floki;
             public Container Chest;
             public readonly List<string> Heard = new List<string>();
             public System.Action<string, string> OnHeard;
@@ -124,10 +124,10 @@ namespace ValheimHelper
             if (!around.HasValue && GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f);
             w.Player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, w.Player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
-            w.Claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
-            w.Alarak = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Alarak);
-            if (w.Claude == null || w.Alarak == null) yield break;
-            foreach (var npc in new[] { w.Claude, w.Alarak })
+            w.Ragnar = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
+            w.Floki = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Floki);
+            if (w.Ragnar == null || w.Floki == null) yield break;
+            foreach (var npc in new[] { w.Ragnar, w.Floki })
             {
                 foreach (var n in new[] { "AxeFlint", "PickaxeAntler", "ArmorLeatherChest", "ArmorLeatherLegs" })
                     npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
@@ -177,7 +177,7 @@ namespace ValheimHelper
             else if (!w.Player.InGodMode()) bad.Add("플레이어 무적 아님");
             int left = Creatures(w.Home).Count;
             if (left > 0) bad.Add($"거점 {StartRadius:0}m 안 생물 {left}");
-            foreach (var npc in new[] { w.Claude, w.Alarak })
+            foreach (var npc in new[] { w.Ragnar, w.Floki })
             {
                 if (npc == null || npc.IsDead()) { bad.Add("일꾼 없음·죽음"); continue; }
                 if (npc.Ai.Job != null) bad.Add($"{npc.NpcName} 일 중({npc.Ai.Job.Label})");
@@ -326,7 +326,7 @@ namespace ValheimHelper
                 $"{n.NpcName} hp{n.GetHealth():0}/{n.GetMaxHealth():0} {Vector3.Distance(n.transform.position, w.Home):0}m " +
                 $"{(n.Ai.Job == null ? "Idle" : n.Ai.Job.GetType().Name + "/" + n.Ai.Job.StepName)} 짐{Items(n.GetInventory())} 대기{n.Ai.Queue.Count}";
             string chest = w.Chest == null ? "-" : $"{Items(w.Chest.GetInventory())}{(w.Chest.IsInUse() ? " 사용중" : "")}";
-            return $"[{Time.time - s_t0:0}s] {N(w.Claude)} | {N(w.Alarak)} | 상자 {chest} | 생물 {Creatures(w.Home).Count}";
+            return $"[{Time.time - s_t0:0}s] {N(w.Ragnar)} | {N(w.Floki)} | 상자 {chest} | 생물 {Creatures(w.Home).Count}";
         }
 
         /// <summary>시험 동안 3초마다 상태를 링 버퍼에(FAIL이면 End가 diag에 쏟음).</summary>
@@ -410,7 +410,7 @@ namespace ValheimHelper
             bool clean = true;
             foreach (var h in w.Heard) if (h.Contains("{")) clean = false;
             checks.Add("대사에 자리표시자 안 남음", clean);
-            if (w.Claude != null)
+            if (w.Ragnar != null)
             {
                 try { TestRunner.Log("끝 상태: " + Snapshot(w)); }
                 catch (System.Exception e) { TestRunner.Log("끝 상태 기록 오류: " + e.Message); }

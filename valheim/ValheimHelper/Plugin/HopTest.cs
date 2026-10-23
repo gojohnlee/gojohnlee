@@ -54,9 +54,9 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, float[] saved, System.Action<Character> hold)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
-            var ai = w.Claude.Ai;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
+            var ai = w.Ragnar.Ai;
 
             TestKit.ClearBaseStock(w, "Wood");
             GatherTest.Say($"!{Workers.Name1} 나무 30", null);
@@ -68,14 +68,14 @@ namespace ValheimHelper
             GatherJob.TestIgnorePlayers = true;
             Quaternion rot = w.Player.transform.rotation;
             Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
-            w.Claude.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
+            w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(1f);
-            Speeds(w.Claude, saved, true);
-            hold(w.Claude);
-            float hp0 = w.Claude.GetHealth();
-            int carried0 = Carried(w.Claude);
+            Speeds(w.Ragnar, saved, true);
+            hold(w.Ragnar);
+            float hp0 = w.Ragnar.GetHealth();
+            int carried0 = Carried(w.Ragnar);
             int hops0 = GatherJob.Hops, rescues0 = GatherJob.Rescues;
-            Vector3 before = w.Claude.transform.position;
+            Vector3 before = w.Ragnar.transform.position;
 
             // 묶인 채로도 닿는 나무는 베어 줍는다 → 짐·체력은 순간이동 직전 프레임 값과 바로 뒤 값을 비교한다(회차 92 첫 시험: 묶은 뒤 4 → 9는 줍기 몫)
             int carriedBefore = carried0;
@@ -83,19 +83,19 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() =>
             {
                 if (GatherJob.Hops > hops0) return true;
-                carriedBefore = Carried(w.Claude);
-                hpBefore = w.Claude.GetHealth();
+                carriedBefore = Carried(w.Ragnar);
+                hpBefore = w.Ragnar.GetHealth();
                 return false;
             }, 150f);
             bool hopped = GatherJob.Hops > hops0;
-            int carriedAfter = Carried(w.Claude);
-            float hpAfter = w.Claude.GetHealth();
+            int carriedAfter = Carried(w.Ragnar);
+            float hpAfter = w.Ragnar.GetHealth();
             checks.Add($"막히자 목표 쪽으로 순간이동 ({GatherJob.Hops - hops0}번)", hopped);
             if (!hopped) yield break;
             checks.Add($"짐 그대로 (순간이동 직전 {carriedBefore} → 직후 {carriedAfter})", carriedAfter == carriedBefore);
             checks.Add($"체력 그대로 (직전 {hpBefore:0.0} → 직후 {hpAfter:0.0})", Mathf.Abs(hpAfter - hpBefore) < 1f);
             yield return new WaitForSeconds(1f);
-            Vector3 p = w.Claude.transform.position;
+            Vector3 p = w.Ragnar.transform.position;
             checks.Add($"자리를 옮김 ({Utils.DistanceXZ(before, p):0.0}m)", Utils.DistanceXZ(before, p) > 1f);
             bool ground = ZoneSystem.instance.GetSolidHeight(p, out float h);
             checks.Add($"단단한 땅 위 (높이 {p.y:0.0}/땅 {h:0.0}, 물 {Floating.GetLiquidLevel(p):0.0})", ground && Mathf.Abs(p.y - h) < 1.5f && Floating.GetLiquidLevel(p) < h + 0.1f);
@@ -120,7 +120,7 @@ namespace ValheimHelper
             TestRunner.Log($"  90초 묶인 채: 순간이동 {GatherJob.Hops - hops1}번 더, 뺀 곳 {(ai.Job is GatherJob gj ? gj.StuckExcluded : -1)}, 기록 {book}");
             checks.Add($"같은 목적지 되풀이 없음 (한 곳 최대 {worst}번)", worst <= 2);
 
-            Speeds(w.Claude, saved, false);
+            Speeds(w.Ragnar, saved, false);
             hold(null);
             GatherJob.TestIgnorePlayers = false;
             yield return new WaitForSeconds(3f);
@@ -142,23 +142,23 @@ namespace ValheimHelper
         /// </summary>
         static IEnumerator CantReach(TestKit.World w, GatherTest.Checks checks, float[] saved, System.Action<Character> hold)
         {
-            var ai = w.Claude.Ai;
+            var ai = w.Ragnar.Ai;
             Quaternion rot = w.Player.transform.rotation;
             Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
-            w.Claude.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
+            w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(1f);
             if (!(ai.Job is GatherJob g)) { checks.Add("가) 일이 남아 있음", false); yield break; }
-            if (Wood(w.Claude) == 0) w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("Wood"), 3);
+            if (Wood(w.Ragnar) == 0) w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("Wood"), 3);
             g.LoadStuck("1000|1000|2;1001|1000|2;1002|1000|2");
-            Speeds(w.Claude, saved, true);
-            hold(w.Claude);
+            Speeds(w.Ragnar, saved, true);
+            hold(w.Ragnar);
             int unreach0 = GatherJob.Unreachable, rescues0 = GatherJob.Rescues, hops0 = GatherJob.Hops;
             int heard0 = w.Heard.Count;
-            int total = Wood(w.Claude) + GatherTest.CountBase(w.Home, "Wood");
+            int total = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
             yield return TestKit.WaitFor(() =>
             {
                 if (GatherJob.Unreachable > unreach0) return true;
-                total = Wood(w.Claude) + GatherTest.CountBase(w.Home, "Wood"); // 묶인 채로 닿는 나무는 벨 수 있다 → 그만두기 직전 값
+                total = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood"); // 묶인 채로 닿는 나무는 벨 수 있다 → 그만두기 직전 값
                 return false;
             }, 150f);
             checks.Add($"뺀 곳 4곳째에 그만둠 (대안 없음 {GatherJob.Unreachable - unreach0}번)", GatherJob.Unreachable > unreach0);
@@ -167,18 +167,18 @@ namespace ValheimHelper
             checks.Add($"든 나무를 넣으러 감 ({ai.Job?.StepName})", ai.Job is GatherJob gr && gr.StepName == "Return");
 
             // 발은 계속 묶임: 귀환 걷기가 상한만큼 막히면 깃발로 순간이동
-            yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Claude.transform.position, w.Home) < 5f, 120f);
-            checks.Add($"귀환 막힘 상한 → 깃발로 순간이동 ({Utils.DistanceXZ(w.Claude.transform.position, w.Home):0.0}m)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Ragnar.transform.position, w.Home) < 5f, 120f);
+            checks.Add($"귀환 막힘 상한 → 깃발로 순간이동 ({Utils.DistanceXZ(w.Ragnar.transform.position, w.Home):0.0}m)", TestKit.Ok);
             checks.Add("깃발 강제 복귀(다시 막힘)와 따로", GatherJob.Rescues == rescues0);
-            Speeds(w.Claude, saved, false);
+            Speeds(w.Ragnar, saved, false);
             hold(null);
             yield return TestKit.WaitFor(() => !(ai.Job is GatherJob), 60f);
             checks.Add($"넣고 일을 끝냄 ({ai.Current}/{ai.Job?.StepName})", TestKit.Ok);
             bool said = false;
             for (int i = heard0; i < w.Heard.Count; i++) said |= w.Heard[i].Contains("갈 수가 없") || w.Heard[i].Contains("못 가겠");
             checks.Add("\"갈 수가 없어요\" 말함", said);
-            int after = Wood(w.Claude) + GatherTest.CountBase(w.Home, "Wood");
-            checks.Add($"나무 개수 그대로 (짐 {Wood(w.Claude)}, 그만둘 때 합 {total} → 지금 합 {after})", after == total && Wood(w.Claude) == 0);
+            int after = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
+            checks.Add($"나무 개수 그대로 (짐 {Wood(w.Ragnar)}, 그만둘 때 합 {total} → 지금 합 {after})", after == total && Wood(w.Ragnar) == 0);
         }
     }
 }

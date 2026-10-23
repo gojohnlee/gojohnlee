@@ -63,16 +63,16 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> spawned)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC", w.Claude != null);
+            checks.Add("깃발·NPC", w.Ragnar != null);
             GameObject troll = ZNetScene.instance.GetPrefab("Troll");
             checks.Add("트롤 프리팹 있음", troll != null);
-            if (w.Claude == null || troll == null) yield break;
-            var ai = w.Claude.Ai;
+            if (w.Ragnar == null || troll == null) yield break;
+            var ai = w.Ragnar.Ai;
             Quaternion rot = w.Player.transform.rotation;
 
             // A) 일꾼이 플레이어에게서 40m 앞, 트롤은 그 앞 20m
             Vector3 far = GatherTest.Ground(w.Player.transform.position + rot * new Vector3(0f, 0f, 40f));
-            w.Claude.TeleportTo(far + Vector3.up * 0.3f, rot, false);
+            w.Ragnar.TeleportTo(far + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(2f);
             GameObject t1 = Object.Instantiate(troll, GatherTest.Ground(far + rot * new Vector3(0f, 0f, 20f)) + Vector3.up * 0.5f, Quaternion.identity);
             spawned.Add(t1);
@@ -91,7 +91,7 @@ namespace ValheimHelper
             if (sw != null) p.EquipItem(sw, false);
             yield return new WaitForSeconds(1f);
             Vector3 near = GatherTest.Ground(p.transform.position + rot * new Vector3(0f, 0f, 5f));
-            w.Claude.TeleportTo(near + Vector3.up * 0.3f, rot, false);
+            w.Ragnar.TeleportTo(near + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(2f);
             GameObject t2 = Object.Instantiate(troll, GatherTest.Ground(near + rot * new Vector3(0f, 0f, 22f)) + Vector3.up * 0.5f, Quaternion.identity);
             spawned.Add(t2);

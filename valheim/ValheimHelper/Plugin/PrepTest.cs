@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 출발 준비 시험(③ 첫 조각): 깃발 → 장비 상자(가죽 갑옷·투구·바지, 사슴 망토, 나무 방패, 몽둥이, 부싯돌 도끼, 체력 미드 5)
-    /// + 음식 상자(익힌 고기·꿀·산딸기·블루베리) → 1호에게 누더기 갑옷을 입혀 두고 "!Claude 나무 5" →
+    /// + 음식 상자(익힌 고기·꿀·산딸기·블루베리) → 1호에게 누더기 갑옷을 입혀 두고 "!라그나 나무 5" →
     /// 준비가 끝나면: 더 좋은 갑옷으로 갈아입고 누더기는 상자에 돌려놓았는지, 가장 센 근접 무기·미드 3개를 챙겼는지,
     /// 음식 3종을 먹어 최대 체력이 올랐는지, 갑옷이 실제 피해를 줄이는지 → 두 번째 일은 갈 데가 없어 바로 나가는지 →
     /// 가방을 미드로 꽉 채우고 상자에 청동 갑옷(ChatGPT-01): 상자에 자리가 없으면 가죽 갑옷을 그대로 입고, 자리가 있으면 맞바꿔 입는지.
@@ -55,7 +55,7 @@ namespace ValheimHelper
             TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
             yield return new WaitForSeconds(3f);
-            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }
             if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다

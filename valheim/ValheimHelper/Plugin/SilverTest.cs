@@ -40,8 +40,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made, CryptTest.KeyState keys)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC", w.Claude != null);
-            if (w.Claude == null) yield break;
+            checks.Add("깃발·NPC", w.Ragnar != null);
+            if (w.Ragnar == null) yield break;
 
             const string ore = "SilverOre";
             GameObject vein = null;
@@ -114,40 +114,40 @@ namespace ValheimHelper
             if (pick == null) yield break;
             // 둘: 은 광맥 하나에 곡괭이 하나가 닳아 없어짐(회차 107: 29개 캐고 "연장 나갔네") — 예비는 짐 정리 때 상자로 갔다가 Tool 단계가 꺼냄
             // 회차 117: 철 곡괭이 2개로는 부위 약 42개뿐(조각 92개) → 5개
-            for (int i = 0; i < 5; i++) w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
+            for (int i = 0; i < 5; i++) w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
             yield return new WaitForSeconds(1f);
             var hashes = new HashSet<int> { vein.name.GetStableHashCode() };
             var des = vein.GetComponent<Destructible>();
             if (des != null && des.m_spawnWhenDestroyed != null) hashes.Add(des.m_spawnWhenDestroyed.name.GetStableHashCode());
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked;
-            int carried0 = w.Claude.CountItem(ore), base0 = GatherTest.CountBase(w.Home, ore);
+            int carried0 = w.Ragnar.CountItem(ore), base0 = GatherTest.CountBase(w.Home, ore);
             GatherJob.TestIgnorePlayers = true;
             GatherTest.Say($"!{Workers.Name1} 은 300", null);
-            yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 10f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 10f);
             checks.Add($"\"은 300\"에 캐러 나섬({TestKit.Waited:0}초)", TestKit.Ok);
             float t = 0f, deepest = 0f;
             int left = Fragments(g1, hashes, ref deepest);
-            for (; t < 1200f && left > 0 && w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work; t += 5f)
+            for (; t < 1200f && left > 0 && w.Ragnar != null && w.Ragnar.Ai.Current == WorkerAI.Mode.Work; t += 5f)
             {
                 yield return new WaitForSeconds(5f);
                 left = Fragments(g1, hashes, ref deepest);
                 if ((int)t % 30 == 0)
-                    TestRunner.Log($"[{t:0}s] 은 광맥 {left}개·남은 부위 {s_parts}개(가장 깊은 조각 바닥 {deepest:0.0}m), 든 은 {w.Claude.CountItem(ore)}, 상태 {w.Claude.Ai.Current}/{w.Claude.Ai.Job?.StepName}, 판 {NpcPatches.NoDig.Dug - dug0}번");
+                    TestRunner.Log($"[{t:0}s] 은 광맥 {left}개·남은 부위 {s_parts}개(가장 깊은 조각 바닥 {deepest:0.0}m), 든 은 {w.Ragnar.CountItem(ore)}, 상태 {w.Ragnar.Ai.Current}/{w.Ragnar.Ai.Job?.StepName}, 판 {NpcPatches.NoDig.Dug - dug0}번");
             }
             int dug = NpcPatches.NoDig.Dug - dug0;
             TestRunner.Log($"묻힌 은: {t:0}초, 땅 파기 판 {dug}번·막음 {NpcPatches.NoDig.Blocked - blocked0}번, 구덩이 가장 깊은 곳 {GatherTest.Deepest(g1, 4f):0.0}m, 조각 바닥 가장 깊음 {deepest:0.0}m");
             checks.Add($"묻힌 은 광맥 조각 다 캠(남은 {left}개, {t:0}초)", left == 0);
             checks.Add($"멀리라 땅 안 팜(판 {dug}번)", dug == 0);
             // 다 캐면 떨어진 은을 주울 때까지 기다린다(회차 118: 바로 "멈춰"라 은 80개가 땅에 남음 — 시험 탓)
-            yield return TestKit.WaitFor(() => w.Claude == null || w.Claude.Ai.Current != WorkerAI.Mode.Work || GatherTest.GroundCount(g1, ore) == 0, 180f);
-            TestRunner.Log($"다 캔 뒤 줍기: {TestKit.Waited:0}초, 땅에 남은 은 {GatherTest.GroundCount(g1, ore)}개, 상태 {w.Claude?.Ai.Current}");
-            if (w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work) GatherTest.Say($"!{Workers.Name1} 멈춰", null);
-            yield return TestKit.WaitFor(() => w.Claude == null || Utils.DistanceXZ(w.Claude.Home, w.Claude.transform.position) <= 5f, 120f);
+            yield return TestKit.WaitFor(() => w.Ragnar == null || w.Ragnar.Ai.Current != WorkerAI.Mode.Work || GatherTest.GroundCount(g1, ore) == 0, 180f);
+            TestRunner.Log($"다 캔 뒤 줍기: {TestKit.Waited:0}초, 땅에 남은 은 {GatherTest.GroundCount(g1, ore)}개, 상태 {w.Ragnar?.Ai.Current}");
+            if (w.Ragnar != null && w.Ragnar.Ai.Current == WorkerAI.Mode.Work) GatherTest.Say($"!{Workers.Name1} 멈춰", null);
+            yield return TestKit.WaitFor(() => w.Ragnar == null || Utils.DistanceXZ(w.Ragnar.Home, w.Ragnar.transform.position) <= 5f, 120f);
             checks.Add($"구덩이에서 나와 집으로 돌아옴({TestKit.Waited:0}초)", TestKit.Ok);
-            int got = (w.Claude != null ? w.Claude.CountItem(ore) : 0) - carried0 + GatherTest.CountBase(w.Home, ore) - base0;
+            int got = (w.Ragnar != null ? w.Ragnar.CountItem(ore) : 0) - carried0 + GatherTest.CountBase(w.Home, ore) - base0;
             int ground = GatherTest.GroundCount(g1, ore);
             checks.Add($"캔 은을 다 주움(짐·상자 {got}개, 땅에 남음 {ground}개)", got > 0 && ground == 0);
-            checks.Add($"죽지 않음({(w.Claude != null ? w.Claude.Deaths : -1)})", w.Claude != null && w.Claude.Deaths == 0);
+            checks.Add($"죽지 않음({(w.Ragnar != null ? w.Ragnar.Deaths : -1)})", w.Ragnar != null && w.Ragnar.Deaths == 0);
             GatherTest.RemoveDeposits(g1, vein);
             TestRunner.Log($"구덩이 되돌림: 꼭짓점 {TestTerrain.Reset(g1, 10f)}개");
         }

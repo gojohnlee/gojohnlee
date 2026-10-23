@@ -46,8 +46,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, System.Collections.Generic.List<Container> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
             Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
             TestKit.ClearBaseStock(w, "Bow", "Wood", "Honey");
             Container plain = w.Chest;

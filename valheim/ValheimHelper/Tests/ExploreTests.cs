@@ -27,9 +27,9 @@ public class JosaTests
     [Fact]
     public void SpeechAppliesJosa()
     {
-        string line = new Speech().Say(Personality.Alarak, "notFound", new Dictionary<string, string> { ["item"] = "철" });
+        string line = new Speech().Say(Personality.Floki, "notFound", new Dictionary<string, string> { ["item"] = "철" });
         Assert.StartsWith("철은 ", line);
-        line = new Speech().Say(Personality.Alarak, "notFound", new Dictionary<string, string> { ["item"] = "나무" });
+        line = new Speech().Say(Personality.Floki, "notFound", new Dictionary<string, string> { ["item"] = "나무" });
         Assert.StartsWith("나무는 ", line);
     }
 }

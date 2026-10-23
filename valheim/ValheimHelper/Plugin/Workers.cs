@@ -9,13 +9,17 @@ namespace ValheimHelper
     public static class Workers
     {
         static ConfigEntry<string> s_name1, s_name2;
-        public static string Name1 => s_name1?.Value ?? "Claude";
-        public static string Name2 => s_name2?.Value ?? "Alarak";
+        public const string Default1 = "라그나", Default2 = "플로키";
+        public static string Name1 => s_name1?.Value ?? Default1;
+        public static string Name2 => s_name2?.Value ?? Default2;
 
         public static void Init(ConfigFile cfg)
         {
-            s_name1 = cfg.Bind("NPC", "Name1", "Claude", "1호(SCV 성향) 이름");
-            s_name2 = cfg.Bind("NPC", "Name2", "Alarak", "2호(알라라크 성향) 이름");
+            s_name1 = cfg.Bind("NPC", "Name1", Default1, "1호(라그나 — 침착·신중) 이름");
+            s_name2 = cfg.Bind("NPC", "Name2", Default2, "2호(플로키 — 들뜬 장난꾸러기·공격적) 이름");
+            // 옛 기본값(Claude·Alarak)이 남은 설정은 한 번 새 이름으로. 사용자가 고른 다른 이름은 그대로.
+            if (s_name1.Value == Old1) s_name1.Value = Default1;
+            if (s_name2.Value == Old2) s_name2.Value = Default2;
             new Terminal.ConsoleCommand("vh_spawn", "[Valheim Helper] 일꾼 NPC 2명을 내 옆에 부른다(없는 쪽만)", args => args.Context.AddString(Spawn(out _)));
             new Terminal.ConsoleCommand("vh_despawn", "[Valheim Helper] 일꾼 NPC를 모두 없앤다", args => args.Context.AddString($"NPC {DespawnAll()}명 없앰"));
         }
@@ -35,6 +39,18 @@ namespace ValheimHelper
         }
 
         internal static void Know(ZDOID id) { if (!id.IsNone()) s_known.Add(id); }
+
+        const string Old1 = "Claude", Old2 = "Alarak";
+
+        /// <summary>옛 기본 이름(Claude·Alarak)으로 저장된 NPC는 지금 설정 이름으로 바꾼다(소유자가 Start 때 한 번).</summary>
+        public static void RenameOld(ZDO zdo)
+        {
+            if (zdo == null) return;
+            int role = zdo.GetInt(WorkerNpc.KeyRole);
+            string name = zdo.GetString(WorkerNpc.KeyName, "");
+            if (role == 0 && name == Old1 && Name1 != Old1) zdo.Set(WorkerNpc.KeyName, Name1);
+            else if (role == 1 && name == Old2 && Name2 != Old2) zdo.Set(WorkerNpc.KeyName, Name2);
+        }
 
         /// <summary>월드에 있는 NPC ZDO 전부를 직접 찾는다(느림: 소환·삭제 같은 드문 일에만). 호스트에서만 의미 있다.</summary>
         public static List<ZDO> AllZdos()

@@ -33,9 +33,9 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
-            var ai = w.Claude.Ai;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
+            var ai = w.Ragnar.Ai;
             var evs = RandEventSystem.instance.m_events;
             checks.Add("습격 목록 있음", evs.Count > 0);
             if (evs.Count == 0) yield break;
@@ -48,14 +48,14 @@ namespace ValheimHelper
             if (!TestKit.Ok) yield break;
             Quaternion rot = w.Player.transform.rotation;
             Vector3 away = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 60f));
-            w.Claude.TeleportTo(away + Vector3.up * 0.3f, rot, false);
+            w.Ragnar.TeleportTo(away + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(2f);
-            float d0 = Utils.DistanceXZ(w.Claude.transform.position, w.Home);
+            float d0 = Utils.DistanceXZ(w.Ragnar.transform.position, w.Home);
             checks.Add($"거점에서 30m 넘게 떨어짐 ({d0:0}m)", d0 > 30f);
 
             // 2) 일꾼 자리에 습격을 건다
             string name = evs[0].m_name;
-            RandEventSystem.instance.SetRandomEventByName(name, w.Claude.transform.position);
+            RandEventSystem.instance.SetRandomEventByName(name, w.Ragnar.transform.position);
             var ev = RandEventSystem.instance.GetCurrentRandomEvent();
             checks.Add($"습격이 걸림 ({name})", ev != null);
             if (ev == null) yield break;
@@ -63,8 +63,8 @@ namespace ValheimHelper
             checks.Add($"일을 접고 거점 귀환 모드 ({TestKit.Waited:0}초)", TestKit.Ok && ai.Job == null);
             bool said = w.Heard.Exists(h => h.Contains("돌아"));
             checks.Add("귀환 대사를 함", said);
-            yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Claude.transform.position, w.Home) < 15f, 60f);
-            checks.Add($"거점 근처로 돌아옴 ({Utils.DistanceXZ(w.Claude.transform.position, w.Home):0}m, {TestKit.Waited:0}초)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Ragnar.transform.position, w.Home) < 15f, 60f);
+            checks.Add($"거점 근처로 돌아옴 ({Utils.DistanceXZ(w.Ragnar.transform.position, w.Home):0}m, {TestKit.Waited:0}초)", TestKit.Ok);
         }
     }
 }

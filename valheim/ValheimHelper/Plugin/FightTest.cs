@@ -49,7 +49,7 @@ namespace ValheimHelper
             TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
             yield return new WaitForSeconds(3f);
-            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, ghost, env, debugTime, debugValue, checks, onHeard, heard, spawned); yield break; }
 

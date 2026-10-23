@@ -30,7 +30,7 @@ namespace ValheimHelper
             {
                 MachineStep.TestIgnoreRoof = false;
                 if (bench != null) ZNetScene.instance.Destroy(bench);
-                if (w.Claude != null) { Clear(w.Claude); TestKit.ClearBaseStock(w, Items); }
+                if (w.Ragnar != null) { Clear(w.Ragnar); TestKit.ClearBaseStock(w, Items); }
                 TestKit.Restore(w);
             }
             TestKit.End(w, checks);
@@ -58,9 +58,9 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, System.Action<GameObject> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
-            var npc = w.Claude;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
+            var npc = w.Ragnar;
             Clear(npc);
             TestKit.ClearBaseStock(w, Items);
             ItemDrop.ItemData axe = Give(npc, "AxeFlint", 0f), chest = Give(npc, "ArmorRagsChest", 0.2f), legs = Give(npc, "ArmorRagsLegs", 0.9f);

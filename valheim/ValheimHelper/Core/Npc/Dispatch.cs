@@ -37,8 +37,8 @@ namespace ValheimHelper.Core.Npc
                     for (int i = 0; i < npcs.Count; i++) result.Add(i);
                     return result;
             }
-            // 나머지는 한 명: 한가한 쪽, 같으면 일의 성격(전투 위주는 알라라크형, 그 밖은 SCV형).
-            Personality prefer = PrefersAlarak(kind) ? Personality.Alarak : Personality.Scv;
+            // 나머지는 한 명: 한가한 쪽, 같으면 일의 성격(전투 위주는 플로키형, 그 밖은 라그나형).
+            Personality prefer = PrefersFloki(kind) ? Personality.Floki : Personality.Ragnar;
             int best = -1, bestScore = int.MinValue;
             for (int i = 0; i < npcs.Count; i++)
             {
@@ -70,6 +70,6 @@ namespace ValheimHelper.Core.Npc
         }
 
         // 지금은 전투 위주 명령이 없다. 사냥·던전이 생기면 여기에 더한다.
-        static bool PrefersAlarak(CommandKind kind) => false;
+        static bool PrefersFloki(CommandKind kind) => false;
     }
 }

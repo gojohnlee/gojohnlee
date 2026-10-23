@@ -32,7 +32,7 @@ namespace ValheimHelper
             if (!bang && !s_sonnet.TryTake(Time.realtimeSinceStartup)) { Commands.OnlyBang(r.Target); return; }
             var npcs = WorkerNpc.All;
             var lines = new List<string>();
-            foreach (var n in npcs) lines.Add(n.NpcName + ": " + Commands.StateOf(n));
+            foreach (var n in npcs) lines.Add(n.NpcName + ": " + Commands.StateOf(n) + " — " + ClaudePrompt.Voice(n.Personality));
             var stock = new Dictionary<string, int>();
             foreach (var c in Chests.NearBase(npcs[0].Home, ChestRole.Mats))
                 foreach (var it in c.GetInventory().GetAllItems())

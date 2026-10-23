@@ -38,8 +38,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC·상자", w.Claude != null && w.Chest != null);
-            if (w.Claude == null || w.Chest == null) yield break;
+            checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
+            if (w.Ragnar == null || w.Chest == null) yield break;
             GameObject pit = ZNetScene.instance.GetPrefab("fire_pit"), stand = ZNetScene.instance.GetPrefab("piece_cookingstation");
             checks.Add("화로·조리대 프리팹", pit != null && stand != null);
             if (pit == null || stand == null) yield break;
@@ -82,12 +82,12 @@ namespace ValheimHelper
 
             GatherTest.Say($"!CookedMeat 2", null);
             yield return new WaitForSeconds(1f);
-            checks.Add($"굽기 계획 시작 ({w.Claude.Ai.Current}, {w.Claude.Ai.Job?.GetType().Name})", w.Claude.Ai.Job is PlanJob);
+            checks.Add($"굽기 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
             yield return TestKit.WaitFor(() => fz.GetFloat(ZDOVars.s_fuel) > 0f, 60f);
             checks.Add($"화로에 나무를 넣어 지핌 ({TestKit.Waited:0}초, 연료 {fz.GetFloat(ZDOVars.s_fuel):0.0})", TestKit.Ok);
-            yield return TestKit.WaitFor(() => Stock(w, "CookedMeat") >= 2 && w.Claude.Ai.Job == null, 180f);
+            yield return TestKit.WaitFor(() => Stock(w, "CookedMeat") >= 2 && w.Ragnar.Ai.Job == null, 180f);
             int cooked = Stock(w, "CookedMeat") + Bag(w, "CookedMeat"), raw = Stock(w, "RawMeat") + Bag(w, "RawMeat"), black = Stock(w, burnt) + Bag(w, burnt);
-            checks.Add($"구운 고기 2개가 상자에 ({TestKit.Waited:0}초, 상자 {Stock(w, "CookedMeat")}, {w.Claude.Ai.Current})", TestKit.Ok);
+            checks.Add($"구운 고기 2개가 상자에 ({TestKit.Waited:0}초, 상자 {Stock(w, "CookedMeat")}, {w.Ragnar.Ai.Current})", TestKit.Ok);
             checks.Add($"타지 않음 (탄 것 {black})", black == 0);
             checks.Add($"개수 보존 (날고기 {raw} + 구운 {cooked} + 탄 것 {black} = 2)", raw + cooked + black == 2);
             ZDO sz = cs.GetComponent<ZNetView>().GetZDO();
@@ -103,6 +103,6 @@ namespace ValheimHelper
         }
 
         static int Bag(TestKit.World w, string prefab) =>
-            w.Claude.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
+            w.Ragnar.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
     }
 }

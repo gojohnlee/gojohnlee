@@ -6,7 +6,7 @@ using ValheimHelper.Core.Work;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 탐험 시험(② 단계 마무리): 깃발 → "!지식", "!기억" 대답 → 지도 경계가 있는 방향으로 "!Claude 탐험 &lt;방향&gt;" →
+    /// 탐험 시험(② 단계 마무리): 깃발 → "!지식", "!기억" 대답 → 지도 경계가 있는 방향으로 "!라그나 탐험 &lt;방향&gt;" →
     /// NPC가 그 방향으로 150m 넘게 가고 처음 고른 경계 구역이 지도에 밝혀지는지(150초, 경계가 멀면 닿을 때까지 최대 300초) → "!멈춰"로 그만두고 집에 오는지.
     /// 밤이면 탐험을 안 하므로 시험 동안만 낮으로 고정한다. 대사에 "{"가 남지 않았는지(조사 처리)도 본다.
     /// </summary>
@@ -54,7 +54,7 @@ namespace ValheimHelper
             TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
-            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             Check("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, env, debugTime, debugValue, onHeard, heard); yield break; }
             // 실제 쓰임처럼 기본 장비·음식을 준다(③부터 맨손·굶은 NPC는 센 몬스터를 보면 피한다)

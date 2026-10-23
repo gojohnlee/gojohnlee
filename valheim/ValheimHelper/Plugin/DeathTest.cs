@@ -48,7 +48,7 @@ namespace ValheimHelper
             TestKit.OldCheck(home, player, god);
             player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, rot, doAttack: false);
             yield return new WaitForSeconds(3f);
-            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
             if (claude == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }
             if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다
@@ -81,7 +81,7 @@ namespace ValheimHelper
             hit.m_damage.m_damage = 9999f;
             claude.Damage(hit);
             yield return new WaitForSeconds(1.5f);
-            WorkerNpc after = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Scv);
+            WorkerNpc after = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("NPC가 사라지지 않음(같은 NPC)", after != null && after.GetComponent<ZNetView>().GetZDO().m_uid == id);
             if (after == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }
             claude = after;

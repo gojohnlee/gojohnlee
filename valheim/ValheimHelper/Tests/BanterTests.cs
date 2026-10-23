@@ -35,7 +35,7 @@ public class BanterTests
             ["partner"] = "플로키", ["who"] = "플로키", ["foe"] = "트롤", ["dir"] = "북쪽", ["deaths"] = "2", ["biome"] = "늪", ["item"] = "구리", ["n"] = "30",
             ["skill"] = "벌목", ["level"] = "12", ["pskill"] = "채굴", ["plevel"] = "20", ["crop"] = "당근",
         };
-        foreach (var p in new[] { Personality.Scv, Personality.Alarak })
+        foreach (var p in new[] { Personality.Ragnar, Personality.Floki })
             foreach (var k in keys)
             {
                 Assert.True(Speech.Has(p, k), p + " " + k);

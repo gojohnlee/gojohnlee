@@ -31,7 +31,7 @@ namespace ValheimHelper
             try { yield return Body(w, checks, before, spot, keys); }
             finally
             {
-                if (w.Claude != null) w.Claude.TeleportTo(w.Home, w.Claude.transform.rotation, false);
+                if (w.Ragnar != null) w.Ragnar.TeleportTo(w.Home, w.Ragnar.transform.rotation, false);
                 Cleanup(before, spot[0]);
                 keys.Restore();
                 TestKit.Restore(w);
@@ -104,8 +104,8 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, HashSet<ZDOID> before, Vector3[] spot, KeyState keys)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC", w.Claude != null);
-            if (w.Claude == null) yield break;
+            checks.Add("깃발·NPC", w.Ragnar != null);
+            if (w.Ragnar == null) yield break;
 
             var names = ZoneSystem.instance.m_locations.Where(l => l.m_prefabName != null && l.m_prefabName.Contains("Crypt"))
                 .Select(l => $"{l.m_prefabName}({l.m_biome})").Distinct().ToList();
@@ -150,7 +150,7 @@ namespace ValheimHelper
             bool chosen = Dungeons.TryChoose(w.Home, out var pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f;
             checks.Add("열쇠 없으면 닫힌 지하묘지는 안 고름", !chosen);
             var scrapCmd = new ValheimHelper.Core.Chat.ChatCommand { Kind = ValheimHelper.Core.Chat.CommandKind.Item, Item = Dungeons.ScrapItem, Amount = 3 };
-            var closedJudge = Departures.JudgeFor(w.Claude, scrapCmd);
+            var closedJudge = Departures.JudgeFor(w.Ragnar, scrapCmd);
             checks.Add($"열쇠 없고 문 닫힌 묘지뿐이면 철은 출발 전에 거절 ({closedJudge?.Key})", closedJudge != null && closedJudge.Key == "depart.noCrypt");
 
             keys.SetKnown(true);
@@ -165,7 +165,7 @@ namespace ValheimHelper
                 checks.Add($"보스가 잡혔으면(월드 키) 닫힌 곳도 고름 ({TestKit.Waited:0.0}초)", chosen);
             }
             else keys.SetKnown(true);
-            var openJudge = Departures.JudgeFor(w.Claude, scrapCmd);
+            var openJudge = Departures.JudgeFor(w.Ragnar, scrapCmd);
             checks.Add($"열쇠를 얻었으면 철은 거절 안 함 ({openJudge?.Key})", openJudge != null && openJudge.Key != "depart.noCrypt" && openJudge.Key != "depart.cryptsEmpty");
 
             Teleport gate = Dungeons.Entrance(mine.Pos);
@@ -174,15 +174,15 @@ namespace ValheimHelper
             Vector3 inside = Dungeons.ArrivePoint(gate, out _);
             TestRunner.Log($"입구 {gate.transform.position} → 안 {inside}");
 
-            Dungeons.Use(w.Claude, gate);
-            yield return TestKit.WaitFor(() => w.Claude.InInterior(), 10f);
-            checks.Add($"일꾼이 안으로 들어감 (y {w.Claude.transform.position.y:0}, {TestKit.Waited:0.0}초)", TestKit.Ok);
+            Dungeons.Use(w.Ragnar, gate);
+            yield return TestKit.WaitFor(() => w.Ragnar.InInterior(), 10f);
+            checks.Add($"일꾼이 안으로 들어감 (y {w.Ragnar.transform.position.y:0}, {TestKit.Waited:0.0}초)", TestKit.Ok);
             if (!TestKit.Ok) yield break;
             yield return new WaitForSeconds(3f);
-            checks.Add($"안에서 떨어지지 않음 (y {w.Claude.transform.position.y:0}, 도착점과 {Vector3.Distance(w.Claude.transform.position, inside):0.0}m)",
-                w.Claude.InInterior() && Vector3.Distance(w.Claude.transform.position, inside) < 15f);
+            checks.Add($"안에서 떨어지지 않음 (y {w.Ragnar.transform.position.y:0}, 도착점과 {Vector3.Distance(w.Ragnar.transform.position, inside):0.0}m)",
+                w.Ragnar.InInterior() && Vector3.Distance(w.Ragnar.transform.position, inside) < 15f);
             // 안의 고철 물체 조사: ResourceCatalog(Destructible → 부서지면 생기는 것까지 따라감)가 고철을 낸다고 보는 것
-            Vector3 here = w.Claude.transform.position;
+            Vector3 here = w.Ragnar.transform.position;
             var seen = new Dictionary<string, int>();
             var all = new Dictionary<string, int>();
             foreach (var v in Object.FindObjectsByType<ZNetView>(FindObjectsSortMode.None))
@@ -200,36 +200,36 @@ namespace ValheimHelper
             TestRunner.Log($"안의 ZNetView 물체 {all.Values.Sum()}개: " + string.Join(", ", all.OrderByDescending(p => p.Value).Take(25).Select(p => p.Key + " ×" + p.Value)));
             checks.Add($"안에 고철 나오는 물체 있음 ({seen.Values.Sum()}개)", seen.Count > 0);
 
-            Teleport exit = Dungeons.Exit(w.Claude.transform.position);
+            Teleport exit = Dungeons.Exit(w.Ragnar.transform.position);
             checks.Add($"나가는 Teleport 찾음 ({(exit != null ? Vector3.Distance(exit.transform.position, here).ToString("0") + "m" : "없음")})", exit != null);
             if (exit == null) yield break;
-            Dungeons.Use(w.Claude, exit);
-            yield return TestKit.WaitFor(() => !w.Claude.InInterior(), 10f);
-            float toGate = Utils.DistanceXZ(w.Claude.transform.position, gate.transform.position);
+            Dungeons.Use(w.Ragnar, exit);
+            yield return TestKit.WaitFor(() => !w.Ragnar.InInterior(), 10f);
+            float toGate = Utils.DistanceXZ(w.Ragnar.transform.position, gate.transform.position);
             checks.Add($"밖으로 나옴 (입구와 {toGate:0.0}m, {TestKit.Waited:0.0}초)", TestKit.Ok && toGate < 15f);
             yield return new WaitForSeconds(2f);
 
             // ⑦ 철 2조각: "!철 3" → 걸어가 입구로 들어가 진흙 더미를 캐고 나와 거점 상자에 넣는다(고철 한 번에 얼마 나오는지는 바닐라 데이터)
             TestKit.ClearBaseStock(w, "IronScrap");
-            w.Claude.TeleportTo(w.Home, w.Claude.transform.rotation, false);
+            w.Ragnar.TeleportTo(w.Home, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1.5f);
             int stockBefore = GatherTest.CountBase(w.Home, "IronScrap");
-            GatherTest.Say($"!{w.Claude.NpcName} 철 3", null);
+            GatherTest.Say($"!{w.Ragnar.NpcName} 철 3", null);
             bool wasInside = false;
             float t = 0f;
             while (t < 480f && GatherTest.CountBase(w.Home, "IronScrap") - stockBefore < 3)
             {
                 yield return new WaitForSeconds(1f);
                 t += 1f;
-                if (w.Claude.InInterior()) wasInside = true;
+                if (w.Ragnar.InInterior()) wasInside = true;
             }
             int got = GatherTest.CountBase(w.Home, "IronScrap") - stockBefore;
-            TestRunner.Log($"철 일: {t:0}초, 상자에 고철 {got}개, 단계 {(w.Claude.Ai.Job is GatherJob g ? g.StepName : "-")}");
+            TestRunner.Log($"철 일: {t:0}초, 상자에 고철 {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}");
             checks.Add($"일꾼이 열쇠 문을 직접 엶 (상태 {mine.Door.GetInt(ZDOVars.s_state)})", Dungeons.IsOpen(mine.Door));
             checks.Add("일꾼이 지하묘지 안으로 들어감", wasInside);
             checks.Add($"고철이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
             yield return new WaitForSeconds(3f);
-            checks.Add("일꾼이 안에 남지 않음", !w.Claude.InInterior());
+            checks.Add("일꾼이 안에 남지 않음", !w.Ragnar.InInterior());
             int leftAfter = -1;
             foreach (var c in Dungeons.All())
                 if (Utils.DistanceXZ(c.Pos, mine.Pos) < 1f) leftAfter = c.Left;
