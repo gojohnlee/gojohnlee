@@ -99,31 +99,41 @@ namespace ValheimHelper
                 claude.GetInventory().AddItem(pick, 1); // 경사로를 깎을 곡괭이
                 for (int i = 0; i < Depths.Length; i++)
                 {
+                    // 안 파지면 같은 방향으로 30m씩 더 나가 다시(최대 3곳, E004 — 사용자 결정 2026-10-23 오류 꼼수). 구덩이끼리 간격은 원래 자리와 같다.
                     Vector3 spot = spots[i];
-                    spot.y = TestTerrain.Height(spot);
-                    float rim = spot.y;
-                    rims[i] = rim;
-                    dug[i] = true;
-                    int n = 0;
-                    var offsets = Narrow[i] ? new[] { Vector3.zero }
-                        : new[] { Vector3.zero, Vector3.right * 1.2f, Vector3.left * 1.2f, Vector3.forward * 1.2f, Vector3.back * 1.2f };
-                    for (int round = 0; round < 60 && TestTerrain.Height(spot) > rim - Depths[i]; round++)
+                    float rim = 0f, depth = 0f;
+                    string kind = "";
+                    for (int place = 0; place < 3; place++)
                     {
-                        foreach (var o in offsets)
+                        spot = home + rot * Dirs[i].normalized * (12f * Dirs[i].magnitude + 30f * place);
+                        if (place > 0) { spots.Add(spots[i]); spots[i] = spot; TestTerrain.Reset(spot, 9f); } // 앞 자리도 끝에 되돌림
+                        spot.y = TestTerrain.Height(spot);
+                        rim = spot.y;
+                        rims[i] = rim;
+                        dug[i] = true;
+                        int n = 0;
+                        var offsets = Narrow[i] ? new[] { Vector3.zero }
+                            : new[] { Vector3.zero, Vector3.right * 1.2f, Vector3.left * 1.2f, Vector3.forward * 1.2f, Vector3.back * 1.2f };
+                        for (int round = 0; round < 60 && TestTerrain.Height(spot) > rim - Depths[i]; round++)
                         {
-                            Vector3 p = spot + o;
-                            p.y = TestTerrain.Height(p);
-                            Attack.SpawnOnHitTerrain(p, dig, null, 0f, null, null);
-                            n++;
+                            foreach (var o in offsets)
+                            {
+                                Vector3 p = spot + o;
+                                p.y = TestTerrain.Height(p);
+                                Attack.SpawnOnHitTerrain(p, dig, null, 0f, null, null);
+                                n++;
+                            }
+                            yield return new WaitForSeconds(0.15f);
                         }
-                        yield return new WaitForSeconds(0.15f);
+                        yield return new WaitForSeconds(0.5f);
+                        depth = rim - TestTerrain.Height(spot);
+                        kind = Narrow[i] ? "좁은" : "넓은";
+                        TestRunner.Log($"구덩이 {i + 1}({kind}{(place > 0 ? $", {place + 1}번째 자리" : "")}): 흙 파기 {n}번, 깊이 {depth:0.0}m (목표 {Depths[i]:0.0}), 1m 밖 {rim - TestTerrain.Height(spot + Vector3.right):0.0}m·2m 밖 {rim - TestTerrain.Height(spot + Vector3.right * 2f):0.0}m 깊이" +
+                                       (depth < Depths[i] * 0.5f ? $", 건축 금지 근처 {TestKit.NearNoBuild(spot, 20f)}" : ""));
+                        if (depth >= Depths[i] * 0.5f) break;
                     }
-                    yield return new WaitForSeconds(0.5f);
-                    float depth = rim - TestTerrain.Height(spot);
-                    string kind = Narrow[i] ? "좁은" : "넓은";
-                    TestRunner.Log($"구덩이 {i + 1}({kind}): 흙 파기 {n}번, 깊이 {depth:0.0}m (목표 {Depths[i]:0.0}), 1m 밖 {rim - TestTerrain.Height(spot + Vector3.right):0.0}m·2m 밖 {rim - TestTerrain.Height(spot + Vector3.right * 2f):0.0}m 깊이");
                     // 안 파진 구덩이에서 "나옴"을 PASS로 치지 않는다(사용자 결정 2026-10-22 시험 환경)
-                    if (depth < Depths[i] * 0.5f) { checks.Add($"구덩이 {i + 1} 파짐({depth:0.0}m, 목표 {Depths[i]:0.0})", false); continue; }
+                    if (depth < Depths[i] * 0.5f) { checks.Add($"구덩이 {i + 1} 파짐(3곳 다 {depth:0.0}m, 목표 {Depths[i]:0.0})", false); continue; }
 
                     // 근처 몬스터 치우고 체력 채움(루프 회차 4: 130m 옮긴 자리에 트롤이 와 구덩이 7에서 도망만 하다 끝남)
                     int cleared = ClearMonsters(spot, 80f);
@@ -192,7 +202,7 @@ namespace ValheimHelper
             foreach (var sp in spots) back += TestTerrain.Reset(sp, 9f);
             yield return new WaitForSeconds(0.5f);
             float worst = 0f;
-            for (int i = 0; i < spots.Count; i++)
+            for (int i = 0; i < Depths.Length; i++) // spots 뒤쪽은 안 파진 앞 자리(되돌리기만)
                 if (dug[i]) worst = Mathf.Max(worst, Mathf.Abs(TestTerrain.Height(spots[i]) - rims[i]));
             checks.Add($"시험 구덩이 되돌림(꼭짓점 {back}개, 파기 전과 가장 큰 차 {worst:0.0}m)", back > 0 && worst < 0.5f);
             if (startPos.HasValue)
