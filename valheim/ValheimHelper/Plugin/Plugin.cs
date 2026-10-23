@@ -86,6 +86,7 @@ namespace ValheimHelper
                 WorkSaves.Tick(UnityEngine.Time.deltaTime);
                 MorningSettle.Tick();
                 MapSense.Tick(UnityEngine.Time.deltaTime);
+                MapIcons.Update(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();
             }
             catch (Exception e)

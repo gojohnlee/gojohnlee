@@ -80,19 +80,22 @@ namespace ValheimHelper
         /// 호스트 지도에 죽음 핀(이름 = NPC 이름)을 찍는다. Minimap.AddPin의 마지막 인자(PlatformUserID)는 Splatform 어셈블리에 있어
         /// 직접 부르면 그 참조가 필요하다 → 리플렉션으로 기본값을 넣어 부른다.
         /// </summary>
-        public static void DeathPin(Vector3 pos, string name)
+        public static void DeathPin(Vector3 pos, string name) => AddPin(pos, Minimap.PinType.Death, name, true);
+
+        /// <summary>Minimap.AddPin(체크 안 됨, 주인 0)을 리플렉션으로. save false면 저장 안 되고 플레이어가 지울 수도 없다.</summary>
+        public static Minimap.PinData AddPin(Vector3 pos, Minimap.PinType type, string name, bool save)
         {
-            if (Minimap.instance == null || AddPinMethod == null) return;
+            if (Minimap.instance == null || AddPinMethod == null) return null;
             var ps = AddPinMethod.GetParameters();
             var args = new object[ps.Length];
             args[0] = pos;
-            args[1] = Minimap.PinType.Death;
+            args[1] = type;
             args[2] = name;
-            args[3] = true;  // 저장
+            args[3] = save;
             args[4] = false; // 체크 안 됨
             for (int i = 5; i < ps.Length; i++)
                 args[i] = ps[i].ParameterType.IsValueType ? System.Activator.CreateInstance(ps[i].ParameterType) : null;
-            AddPinMethod.Invoke(Minimap.instance, args);
+            return (Minimap.PinData)AddPinMethod.Invoke(Minimap.instance, args);
         }
 
         /// <summary>NPC 주변을 지도에 밝힌다(플레이어처럼, 2초마다 Senses가 부른다).</summary>

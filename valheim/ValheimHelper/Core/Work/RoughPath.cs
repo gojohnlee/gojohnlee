@@ -50,23 +50,23 @@ namespace ValheimHelper.Core.Work
             int minX = ToCell(Math.Min(start.X, goal.X) - Margin), maxX = ToCell(Math.Max(start.X, goal.X) + Margin);
             int minZ = ToCell(Math.Min(start.Z, goal.Z) - Margin), maxZ = ToCell(Math.Max(start.Z, goal.Z) + Margin);
 
-            // 칸 사이 길(중심 → 이웃 중심)의 1/4·1/2·3/4 점도 깊은 물이면 못 감(칸 모서리로 물을 스치지 않게, 회차 130 skiptest).
-            // 그 점들은 2m 격자 위라 2m 칸 좌표로 높이를 캐시한다.
+            // 칸 사이 길(중심 → 이웃 중심)의 1/8 ~ 7/8 점도 깊은 물이면 못 감(칸 모서리로 물을 스치지 않게, 회차 130 skiptest;
+            // 1/4 간격은 대각선 2.8m라 얇은 깊은 물 띠를 지나쳤다 — 회차 132). 그 점들은 1m 격자 위라 1m 좌표로 높이를 캐시한다.
             var raw = new Dictionary<StepGrid.Cell, double>();
             bool DeepAt(int qx, int qz)
             {
                 var q = new StepGrid.Cell(qx, qz);
-                if (!raw.TryGetValue(q, out double y)) raw[q] = y = height(qx * 2.0, qz * 2.0);
+                if (!raw.TryGetValue(q, out double y)) raw[q] = y = height(qx * 1.0, qz * 1.0);
                 return waterLevel - y > WaterRule.DeepDepth;
             }
-            // 출발·도착 칸은 늘 갈 수 있으니 그 칸 안 점(1/4 = a 칸, 3/4 = 이웃 칸)과 경계(1/2)는 안 본다 — 물가 출발점의 칸 중심이 물속이어도 떠나게.
+            // 출발·도착 칸은 늘 갈 수 있으니 그 칸 안 점(1/8~3/8 = a 칸, 5/8~7/8 = 이웃 칸)과 경계(4/8)는 안 본다 — 물가 출발점의 칸 중심이 물속이어도 떠나게.
             bool WetEdge(StepGrid.Cell a, StepGrid.Cell b, int dx, int dz)
             {
                 bool endA = a.Equals(s) || a.Equals(e), endB = b.Equals(s) || b.Equals(e);
-                for (int k = 1; k <= 3; k++)
+                for (int k = 1; k <= 7; k++)
                 {
-                    if ((k == 1 || k == 2) && endA || (k == 3 || k == 2) && endB) continue;
-                    if (DeepAt(4 * a.X + 2 + k * dx, 4 * a.Z + 2 + k * dz)) return true;
+                    if (k <= 4 && endA || k >= 4 && endB) continue;
+                    if (DeepAt(8 * a.X + 4 + k * dx, 8 * a.Z + 4 + k * dz)) return true;
                 }
                 return false;
             }

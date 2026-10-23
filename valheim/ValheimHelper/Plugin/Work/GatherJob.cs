@@ -41,6 +41,7 @@ namespace ValheimHelper
         bool m_portalChecked;
         FarSkip m_far;          // 멀리선 이동 생략 중인 걷기(null = 걷는 중)
         Vector3 m_farDest;
+        float m_farTickAt;     // FarWalk를 마지막으로 부른 때(Time.time) — 버려진 일의 지도 위치를 안 보이려고
         float m_farCheck;       // 생략할지 다시 보기까지(초)
         readonly HashSet<ZDOID> m_skip = new HashSet<ZDOID>();
         /// <summary>막힘 복구(사용자 결정 2026-10-23, Core StuckBook): 이번 일 동안 막힌 목적지·귀환 막힘. 작업 저장(WorkItem.Stuck)에 들어가 불러와도 이어진다.</summary>
@@ -1877,6 +1878,8 @@ namespace ValheimHelper
         bool FarWalk(float dt, Vector3 dest)
         {
             Vector3 me = m_npc.transform.position;
+            m_npc.FarJob = this;
+            m_farTickAt = Time.time;
             if (m_far == null)
             {
                 m_farCheck -= dt;
@@ -1934,6 +1937,17 @@ namespace ValheimHelper
             if (Utils.DistanceXZ(me, to) >= 5f && LandNear(to, out why)) m_farCheck = 0f;
             else Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 옮길 자리 없음({why})");
             return true;
+        }
+
+        /// <summary>멀리선 이동 생략으로 서서 기다리는 중이면 지도상 위치(지도 아이콘용, MapIcons), 아니면 null.</summary>
+        public Vector3? FarMapPos
+        {
+            get
+            {
+                if (m_far == null || !m_far.Waiting || Time.time - m_farTickAt > 3f) return null;
+                RoughPath.P mp = m_far.MapPos;
+                return new Vector3((float)mp.X, m_npc.transform.position.y, (float)mp.Z);
+            }
         }
 
         /// <summary>시험용: 생략 중 플레이어가 지도상 위치에 다가와 그 근처(또는 길 앞쪽)에 내린 횟수와 마지막 지도상 위치.</summary>

@@ -156,9 +156,18 @@ namespace ValheimHelper
 
             int carried = Wood(w.Ragnar);
             float stood = 0f; // 기다리는 동안(예상 시간 - 1초까지) 몸이 출발점에서 벗어난 최대 거리
+            float iconGap = -1f, iconBody = 0f; // 기다린 지 6초쯤 지도 아이콘: 지금 지도상 위치와의 거리, 몸과의 거리
+            int received0 = MapIcons.Received;
             yield return TestKit.WaitFor(() =>
             {
                 if (Time.time - start < expect - 1f) stood = Mathf.Max(stood, Utils.DistanceXZ(w.Ragnar.transform.position, at));
+                if (iconGap < 0f && Time.time - start > 6f && Time.time - start < expect - 2f && ai.Job is GatherJob fj && fj.FarMapPos.HasValue)
+                    foreach (var pin in MapIcons.Pins)
+                        if (pin != null && pin.m_name == w.Ragnar.NpcName)
+                        {
+                            iconGap = Utils.DistanceXZ(pin.m_pos, fj.FarMapPos.Value);
+                            iconBody = Utils.DistanceXZ(pin.m_pos, w.Ragnar.transform.position);
+                        }
                 return GatherJob.FarLanded > landed0 || GatherJob.FarCancelled > cancel0;
             }, expect + 40f);
             float took = Time.time - start;
@@ -167,6 +176,10 @@ namespace ValheimHelper
             checks.Add($"기다리는 동안 걷지 않음 (출발점에서 최대 {stood:0.0}m)", stood < 2f);
             checks.Add($"기다린 시간 ≥ 예상의 95% ({took:0.0}/{expect:0.0}초)", took >= expect * 0.95f);
             checks.Add($"기다리는 동안 밝힌 지도 위치 {GatherJob.FarReveals}번 (2초마다 + 끝)", GatherJob.FarReveals >= Mathf.FloorToInt(expect / 2f));
+            int icons = 0;
+            foreach (var pin in MapIcons.Pins) if (pin != null && (pin.m_name == w.Ragnar.NpcName || pin.m_name == w.Floki.NpcName)) icons++;
+            checks.Add($"지도 아이콘이 생략 중 지도상 위치에 (아이콘–지도 위치 {iconGap:0.0}m, 아이콘–몸 {iconBody:0}m, 받음 {MapIcons.Received - received0}번, 일꾼 아이콘 {icons}개)",
+                iconGap >= 0f && iconGap <= 20f && iconBody > 15f && MapIcons.Received - received0 >= Mathf.FloorToInt(took / 2f) - 1 && icons == 2);
             checks.Add($"목적지 20m 안에 내림 (거점까지 {Utils.DistanceXZ(landedAt, w.Home):0.0}m, 출발점에서 {Utils.DistanceXZ(landedAt, at):0}m)", Utils.DistanceXZ(landedAt, w.Home) <= 21f);
             bool ground = ZoneSystem.instance.GetSolidHeight(landedAt, out float h);
             checks.Add($"단단한 땅 위 (높이 {landedAt.y:0.0}/땅 {h:0.0})", ground && Mathf.Abs(landedAt.y - h) < 1.5f && Floating.GetLiquidLevel(landedAt) < h + 0.1f);

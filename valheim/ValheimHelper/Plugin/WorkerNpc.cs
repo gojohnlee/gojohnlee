@@ -20,6 +20,8 @@ namespace ValheimHelper
         public const string KeyGreet = "vh_greet";
 
         internal WorkerAI Ai;
+        /// <summary>마지막으로 멀리선 이동 생략을 검사한 채집 일(지도 아이콘이 생략 중 지도상 위치를 묻는 곳, PlanJob 안이어도).</summary>
+        internal GatherJob FarJob;
 
         /// <summary>
         /// 땅의 물건 줍기(플레이어 자동 줍기와 같은 순서): 내 것이면 줍고, 아니면 소유권을 요청하고 다음에 다시.
