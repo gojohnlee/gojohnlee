@@ -47,7 +47,8 @@ namespace ValheimHelper
                 if (m_chest == null) { Plugin.Log.LogInfo($"DIAG Unload 넣을 상자 없음 {next.m_dropPrefab.name} (역할 {Chests.RoleFor(next)}, 상자 {Chests.NearBase(m_npc.Home, Chests.RoleFor(next)).Count})"); m_skip.Add(next); return true; }
             }
             var at = m_chest.transform.position;
-            if (!Instant && Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, false); return true; }
+            float d = Utils.DistanceXZ(at, m_npc.transform.position);
+            if (!Instant && d > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); return true; } // 거점 125m: 멀면 뜀(Prep과 같음)
             Container chest = m_chest;
             HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
             Inventory mine = m_npc.GetInventory();

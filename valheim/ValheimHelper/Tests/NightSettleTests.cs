@@ -26,15 +26,15 @@ public class NightSettleTests
     [Fact]
     public void BaseRadius()
     {
-        Assert.True(NightSettle.AtBase(30f));
-        Assert.False(NightSettle.AtBase(30.5f));
+        Assert.True(NightSettle.AtBase(125f));
+        Assert.False(NightSettle.AtBase(125.5f));
     }
 
     [Fact]
     public void FarmRange()
     {
         Assert.True(NightSettle.FarmNear(45f, 3f));
-        Assert.True(NightSettle.FarmNear(110f, 10f));
-        Assert.False(NightSettle.FarmNear(110.5f, 10f));
+        Assert.True(NightSettle.FarmNear(135f, 10f));
+        Assert.False(NightSettle.FarmNear(135.5f, 10f));
     }
 }

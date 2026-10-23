@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     public static class Recipes
     {
-        public const float BaseRange = 30f;
+        public const float BaseRange = BaseArea.Radius;
         /// <summary>설비 찾기 층: 발효기는 piece 층이 아닌 충돌체만 있을 수 있어(회차 57 시험에서 못 찾음) 넓게 본다.</summary>
         public static int MachineMask => LayerMask.GetMask("piece", "piece_nonsolid", "Default", "static_solid", "Default_small");
         static RecipeBook s_book;
@@ -109,7 +109,7 @@ namespace ValheimHelper
             return colon > 0 ? name + " " + key.Substring(colon + 1) + "단계" : name;
         }
 
-        /// <summary>거점 설비: 제작대(확장 포함 레벨)와 가공 설비 대수(거점 30m 안).</summary>
+        /// <summary>거점 설비: 제작대(확장 포함 레벨)와 가공 설비 대수(거점 125m 안).</summary>
         public static Facilities At(Vector3 home)
         {
             Book(); // 제작대 이름 목록

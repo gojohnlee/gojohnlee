@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 밤사이 정산 시험(요청 R3 가): 1호 짐에 나무·돌, 2호는 80m 밖으로 보내고 실제 잠자기 넘김(EnvMan.SkipToMorning, 12초).
+    /// 밤사이 정산 시험(요청 R3 가): 1호 짐에 나무·돌, 2호는 160m 밖(거점 125m 밖)으로 보내고 실제 잠자기 넘김(EnvMan.SkipToMorning, 12초).
     /// 넘김이 끝나면 1호 짐이 걷지 않고 상자로(개수 보존, 대사), 2호(밖)는 그대로, 같은 아침 다시 불러도 안 함, 다음 아침이면 함.
     /// 제련소 결과물·다시 채우기(가2), 발효기 따르기·다시 채우기·익는 중은 그대로(가3).
     /// 거점 밭의 다 자란 당근 → 상자·씨앗만큼 같은 자리 다시 심기(가4).
@@ -59,7 +59,7 @@ namespace ValheimHelper
             checks.Add("상자 놓임", chest != null);
             if (chest == null) { End(player, god, checks, onHeard, heard); yield break; }
 
-            // 1호: 짐에 나무 20·돌 10, 2호: 나무 10 들고 80m 밖
+            // 1호: 짐에 나무 20·돌 10, 2호: 나무 10 들고 160m 밖
             claude.GetInventory().AddItem(wood, 20);
             claude.GetInventory().AddItem(stone, 10);
             alarak.GetInventory().AddItem(wood, 10);
@@ -98,7 +98,7 @@ namespace ValheimHelper
             GameObject grownPrefab = carrot != null ? ZNetScene.instance.GetPrefab(carrot.Grown) : null;
             checks.Add($"당근 작물 있음 ({carrot?.Grown})", grownPrefab != null && Crops.CultivatePrefab != null);
             if (grownPrefab == null || Crops.CultivatePrefab == null) { End(player, god, checks, onHeard, heard); yield break; }
-            // 깃발 45m: 예전 30m 범위 밖, 밭 범위(100m) 안(사용자 요청 2026-10-23). 2호를 보내는 -80m 쪽이라 땅이 있음
+            // 깃발 45m: 예전 30m 범위 밖, 거점 범위(125m) 안(사용자 결정 2026-10-23). 2호를 보내는 쪽(예전 -80m에 땅 있음)
             Vector3 fc = GatherTest.Ground(home + rot * new Vector3(6f, 0f, -45f));
             Brain.Farms.Set(fc.x, fc.z, 3);
             s_field = Brain.Farms.At(fc.x, fc.z);
@@ -116,7 +116,7 @@ namespace ValheimHelper
             foreach (var rp in ripe) carrotMade += rp.m_dontScale ? rp.m_amount : Mathf.Max(rp.m_minAmountScaled, Game.instance.ScaleDrops(rp.m_itemPrefab, rp.m_amount));
             checks.Add($"밭 놓임 (다 자란 것 {(s_field != null ? FarmJob.Ripe(s_field).Count : -1)}/2)", s_field != null && FarmJob.Ripe(s_field).Count == 2);
             int copperAll = 5 + GatherTest.CountBase(home, "Copper");
-            Vector3 far = GatherTest.Ground(home + rot * new Vector3(0f, 0f, -80f));
+            Vector3 far = GatherTest.Ground(home + rot * new Vector3(0f, 0f, -160f));
             alarak.TeleportTo(far + Vector3.up * 0.5f, rot, false);
             yield return new WaitForSeconds(1f);
             int alarakDay = alarak.Zdo.GetInt(MorningSettle.KeyDay, -1);

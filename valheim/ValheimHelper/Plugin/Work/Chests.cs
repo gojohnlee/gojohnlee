@@ -7,7 +7,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// NPC가 쓰는 상자 (구상서 3장, 4장): 거점 깃발 20m 안의 상자 전부. 지정하지 않는다(사용자 결정 2026-10-21 "상자는 지정하지 않는다").
+    /// NPC가 쓰는 상자 (구상서 3장, 4장): 거점 깃발 125m(BaseArea) 안의 상자 전부. 지정하지 않는다(사용자 결정 2026-10-21 "상자는 지정하지 않는다").
     /// 장비·음식·미드는 거점 상자 전부에서 찾고, 넣기는 같은 물건 있는 상자 → 빈자리 있는 상자(장비·자원 구분 없음).
     /// 상자를 고칠 때는 누가 열고 있지 않을 때만, 소유권을 가져와 한 프레임 안에 읽고-고치고-저장한다(물건 복사·증발 방지).
     /// </summary>
@@ -16,7 +16,7 @@ namespace ValheimHelper
 
     public static class Chests
     {
-        public const float BaseRange = 20f;
+        public const float BaseRange = BaseArea.Radius;
 
         /// <summary>태그 공급자(I-2): 그 상자(ZDO)의 이름이 가리키는 것. null = 태그 없음 = 거점 상자 전부. 기본은 상자 이름 읽기.</summary>
         public static Func<ZDO, ChestTags> TagProvider = ChestTagReader.Read;

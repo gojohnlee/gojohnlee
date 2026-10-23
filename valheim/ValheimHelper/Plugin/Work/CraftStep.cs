@@ -40,7 +40,7 @@ namespace ValheimHelper
                 if (cs == null || cs.GetLevel() < m_recipe.StationLevel) return CraftResult.Failed;
                 Vector3 at = cs.transform.position;
                 if (Utils.DistanceXZ(at, m_npc.transform.position) > cs.m_rangeBuild)
-                { m_npc.Ai.MoveToPoint(dt, at, Mathf.Max(1.5f, cs.m_rangeBuild * 0.6f), false); return CraftResult.Working; }
+                { m_npc.Ai.MoveToPoint(dt, at, Mathf.Max(1.5f, cs.m_rangeBuild * 0.6f), Utils.DistanceXZ(at, m_npc.transform.position) > 10f); return CraftResult.Working; }
             }
             var need = Needs();
             foreach (var kv in need)

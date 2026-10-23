@@ -24,11 +24,14 @@ namespace ValheimHelper
 
         public static Vector3 ZoneCenter(ZoneXY z) => ZoneSystem.GetZonePos(new Vector2s(z.X, z.Y));
 
-        /// <summary>주변 ZDO(구역 3×3) 중 range 안의 것.</summary>
+        /// <summary>주변 ZDO(구역 3×3, 64m 넘는 range는 5×5) 중 range 안의 것.</summary>
         public static List<ZDO> Nearby(Vector3 pos, float range)
         {
             s_temp.Clear();
-            ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(pos), new SimulationDistance(1, 0), s_temp);
+            // 둘레 구역 수: 64m 넘는 범위(거점 125m)는 ±2구역까지 봐야 다 들어옴. classic = 네모 전부
+            // (아니면 ZonesWithinRadius 원이라 ±2에서 모서리 구역이 빠져 대각선 ~90m까지만 — 게임 1.0.20 ZDOMan.FindSectorObjects)
+            int area = Mathf.Max(1, Mathf.CeilToInt(range / ZoneSystem.c_ZoneSize));
+            ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(pos), new SimulationDistance(area, 0, classic: true), s_temp);
             var list = new List<ZDO>();
             float r2 = range * range;
             foreach (var z in s_temp)

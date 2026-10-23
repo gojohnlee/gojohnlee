@@ -70,7 +70,7 @@ namespace ValheimHelper
             if (m_cook != null && !m_load && CookSlotsOf(nview.GetZDO(), m_cook, false) == 0 && Drops().Count == 0) return CraftResult.Done; // 조리대는 Load가 다 꺼냄 — 남은 게 없으면 끝
             Vector3 at = Machine.transform.position;
             if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f)
-            { m_npc.Ai.MoveToPoint(dt, at, 1.8f, false); return CraftResult.Working; }
+            { m_npc.Ai.MoveToPoint(dt, at, 1.8f, Utils.DistanceXZ(at, m_npc.transform.position) > 10f); return CraftResult.Working; }
             if (m_cook != null) return Cook(nview, home);
             if (m_fermenter != null) return m_load ? FermentLoad(nview, home) : FermentUnload(nview, dt);
             return m_load ? DoLoad(nview, home) : DoUnload(nview);
@@ -363,7 +363,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 거점 30m 안에서 이 설비(프리팹 이름 = Station)를 고른다. 제련소: 넣을 땐 자리가 가장 넉넉한 것, 꺼낼 땐 일하는·결과가 있는 것 먼저.
+        /// 거점 125m 안에서 이 설비(프리팹 이름 = Station)를 고른다. 제련소: 넣을 땐 자리가 가장 넉넉한 것, 꺼낼 땐 일하는·결과가 있는 것 먼저.
         /// 발효기: 넣을 땐 빈 것, 꺼낼 땐 이 결과(m_step.Item)가 들어 있는 것 중 가장 오래 발효한 것.
         /// 조리대: 넣을 땐 빈 칸이 가장 많은 것, 꺼낼 땐 차 있는 칸이 가장 많은 것.
         /// </summary>
@@ -403,7 +403,7 @@ namespace ValheimHelper
             }
         }
 
-        /// <summary>거점 30m 안에 이 발효기(station)가 있고 output이 다 익은 게 하나라도 있으면 true. 발효기가 아닌 설비면 false.</summary>
+        /// <summary>거점 125m 안에 이 발효기(station)가 있고 output이 다 익은 게 하나라도 있으면 true. 발효기가 아닌 설비면 false.</summary>
         public static bool FermentReady(Vector3 home, string station, string output)
         {
             foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
