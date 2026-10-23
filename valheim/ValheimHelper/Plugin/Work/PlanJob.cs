@@ -42,6 +42,22 @@ namespace ValheimHelper
 
         public void AvoidHere(Vector3 danger) { m_gather?.AvoidHere(danger); m_filler?.AvoidHere(danger); }
 
+        /// <summary>
+        /// 일꾼이 죽었다(짐은 묘비로, 몸은 깃발로) — 이 계획은 묘비 회수 뒤 객체째 이어 한다(WorkerAI.OnDied). 다시 세우면 설비에 이미 올린 것
+        /// (조리대 위 고기 등)을 몰라 재료를 또 모으러 간다(회차 128 cooktest). 모으던 단계는 남은 수만큼 새로(채집 이어 하기와 같게 — 들고 있던 것은
+        /// 묘비 회수가 상자에 넣음), 끼워 넣은 보충은 버리고, 설비 단계는 그 설비로 다시 걸어가 이어 하되 소실 보충은 끈다(짐이 묘비로 감).
+        /// </summary>
+        public void OnDied()
+        {
+            m_filler = null;
+            if (m_gather != null)
+            {
+                int left = Mathf.Max(1, m_gather.Target - m_gather.Delivered);
+                m_gather = new GatherJob(m_npc, m_gather.Item, left, ResourceCatalog.WaysFor(m_gather.Item));
+            }
+            m_machine?.OnDied();
+        }
+
         public bool Update(float dt)
         {
             m_now += dt;
@@ -55,7 +71,11 @@ namespace ValheimHelper
                 m_nextFillAt = m_now + FillRetry;
                 return true;
             }
-            if (m_step == null && !Pick()) return !m_runner.Over ? TryFill() : Finish();
+            if (m_step == null && !Pick())
+            {
+                m_npc.Ai.StopMoving(); // 가만히 기다림: 앞 단계의 걷기 방향이 남아 계속 걷지 않게(회차 128)
+                return !m_runner.Over ? TryFill() : Finish();
+            }
             if (m_step == null) return true;
 
             bool running = true;

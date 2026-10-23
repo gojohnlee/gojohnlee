@@ -181,6 +181,13 @@ namespace ValheimHelper
             ItemDrop onGround = null;
             yield return TestKit.WaitFor(() => (onGround = BowNear(chests)) != null, 90f);
             checks.Add($"꽉 찬 상자 → 만든 활은 상자 앞 땅에 ({TestKit.Waited:0}초)", TestKit.Ok);
+            if (!TestKit.Ok) // 회차 128 한 번: 땅에 없음(로그에 "상자 앞에 둠"도 없음) → 어느 상자에 들어갔고 빈칸이 어떻게 생겼는지
+                foreach (var c in Chests.NearBase(w.Home))
+                {
+                    var names = new System.Collections.Generic.List<string>();
+                    foreach (var it in c.GetInventory().GetAllItems()) if (it.m_stack < it.m_shared.m_maxStackSize || it.m_dropPrefab?.name == "Bow") names.Add($"{it.m_dropPrefab?.name}x{it.m_stack}");
+                    TestRunner.Log($"DIAG 상자 {Utils.DistanceXZ(c.transform.position, w.Home):0.0}m 빈칸 {c.GetInventory().GetEmptySlots()} 덜 찬 더미 [{string.Join(", ", names.ToArray())}]");
+                }
             checks.Add($"짐에는 안 넣음 (짐 활 {w.Ragnar.CountItem("Bow")})", w.Ragnar.CountItem("Bow") == 0);
             checks.Add("\"상자 하나만 더\" 대사", w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("상자")) >= 0);
             yield return Stop();

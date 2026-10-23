@@ -8,6 +8,7 @@ namespace ValheimHelper
     /// vh_cooktest (⑧ 굽기): 거점에 화로(fire_pit, 연료 0으로 꺼 둠)와 그 위 조리대를 세우고 상자에 날고기 2·나무 5를 넣은 뒤
     /// "!CookedMeat 2" → 계획(PlanJob)이 화로에 나무를 넣어 불을 지피고, 조리대에 고기를 올려 곁에서 기다렸다 타기 전에 꺼내
     /// 구운 고기 2개를 상자에 넣는지. 개수 보존(날고기·구운 고기·탄 것 합 2)과 조리대가 비었는지도 본다.
+    /// 이어서(맑을 때만) 한 번 더 올린 뒤 죽여서 묘비 회수 → 같은 계획을 이어 조리대를 비우는지(DeathResume).
     /// </summary>
     static class CookTest
     {
@@ -121,13 +122,59 @@ namespace ValheimHelper
                 TestKit.ClearBaseStock(w, "RawMeat", "CookedMeat", "Wood", burnt);
                 yield break;
             }
-            yield return TestKit.WaitFor(() => Stock(w, "CookedMeat") >= 2 && w.Ragnar.Ai.Job == null, 180f);
+            // 회차 128: 다가간 뒤에도 걷는 방향이 남아 조리대 한가운데(밑 화로 불)로 들어가 불붙어 죽었다 → 가장 가까이 간 거리·불붙음을 본다
+            float nearest = float.MaxValue;
+            bool burned = false;
+            int deaths0 = w.Ragnar.Deaths;
+            yield return TestKit.WaitFor(() =>
+            {
+                if (w.Ragnar.Ai.Job is PlanJob) nearest = Mathf.Min(nearest, Utils.DistanceXZ(cs.transform.position, w.Ragnar.transform.position));
+                burned |= w.Ragnar.GetSEMan().HaveStatusEffect(SEMan.s_statusEffectBurning);
+                return Stock(w, "CookedMeat") >= 2 && w.Ragnar.Ai.Job == null;
+            }, 180f);
             int cooked = Stock(w, "CookedMeat") + Bag(w, "CookedMeat"), raw = Stock(w, "RawMeat") + Bag(w, "RawMeat"), black = Stock(w, burnt) + Bag(w, burnt);
             checks.Add($"구운 고기 2개가 상자에 ({TestKit.Waited:0}초, 상자 {Stock(w, "CookedMeat")}, {w.Ragnar.Ai.Current})", TestKit.Ok);
+            checks.Add($"굽는 곁에서 불붙지 않음 (가장 가까이 {nearest:0.0}m, 불붙음 {burned}, 죽음 {w.Ragnar.Deaths - deaths0})", !burned && w.Ragnar.Deaths == deaths0 && nearest >= 1.2f);
             checks.Add($"타지 않음 (탄 것 {black})", black == 0);
             checks.Add($"개수 보존 (날고기 {raw} + 구운 {cooked} + 탄 것 {black} = 2)", raw + cooked + black == 2);
             ZDO sz = cs.GetComponent<ZNetView>().GetZDO();
             checks.Add("조리대 빔", sz.GetString("slot0") == "" && sz.GetString("slot1") == "");
+            TestKit.ClearBaseStock(w, "RawMeat", "CookedMeat", "Wood", burnt);
+            yield return DeathResume(w, checks, sz, burnt);
+        }
+
+        /// <summary>
+        /// 굽다 죽음(회차 128): 조리대에 올린 뒤 죽이면 묘비 회수 → 같은 계획(PlanJob 객체)을 이어 조리대 것을 꺼내 상자에 넣는지.
+        /// 전에는 계획을 다시 세워 날고기를 또 모으려다 "지금 Work라 시작 안 함"으로 버렸다. 오래 걸려 탔을 수 있으니 탄 것도 개수에 센다.
+        /// </summary>
+        static IEnumerator DeathResume(TestKit.World w, GatherTest.Checks checks, ZDO sz, string burnt)
+        {
+            TestKit.PutInChest(w.Chest, "RawMeat", 2);
+            TestKit.PutInChest(w.Chest, "Wood", 5);
+            GatherTest.Say($"!{Workers.Name1} CookedMeat 2", null);
+            yield return TestKit.WaitFor(() => sz.GetString("slot0") != "" && w.Ragnar.Ai.Job is PlanJob, 60f);
+            PlanJob plan = w.Ragnar.Ai.Job as PlanJob;
+            checks.Add($"둘째 굽기: 조리대에 올림 ({TestKit.Waited:0}초)", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            int graves0 = w.Ragnar.Graves().Count;
+            var kill = new HitData { m_point = w.Ragnar.GetCenterPoint(), m_dir = Vector3.forward };
+            kill.m_damage.m_damage = 9999f;
+            w.Ragnar.Damage(kill);
+            yield return new WaitForSeconds(1.5f);
+            WorkerNpc r = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
+            if (r == null) { checks.Add("죽은 뒤 라그나 있음", false); yield break; }
+            checks.Add($"굽다 죽음 → 그 계획이 대기열 맨 앞 ({r.Ai.Queue.Count}칸, 묘비 {r.Graves().Count})",
+                r.Ai.Job == null && r.Ai.Queue.Count > 0 && r.Ai.Queue[0].Resume == plan && r.Graves().Count > graves0);
+            bool graveSeen = false, resumed = false;
+            yield return TestKit.WaitFor(() =>
+            {
+                if (r.Ai.Job is GraveJob) graveSeen = true;
+                if (r.Ai.Job == plan) resumed = true;
+                return resumed && r.Ai.Job == null && sz.GetString("slot0") == "" && sz.GetString("slot1") == "";
+            }, 240f);
+            int cooked = Stock(w, "CookedMeat") + Bag(w, "CookedMeat"), raw = Stock(w, "RawMeat") + Bag(w, "RawMeat"), black = Stock(w, burnt) + Bag(w, burnt);
+            checks.Add($"묘비 회수 뒤 같은 계획 이어 조리대 비움 ({TestKit.Waited:0}초, 회수 {graveSeen}, 이어 함 {resumed}, {r.Ai.Current})", TestKit.Ok && graveSeen);
+            checks.Add($"다시 모으지 않고 개수 보존 (날고기 {raw} + 구운 {cooked} + 탄 것 {black} = 2)", raw + cooked + black == 2 && raw == 0);
             TestKit.ClearBaseStock(w, "RawMeat", "CookedMeat", "Wood", burnt);
         }
 

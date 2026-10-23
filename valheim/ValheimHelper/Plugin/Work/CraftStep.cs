@@ -41,6 +41,7 @@ namespace ValheimHelper
                 Vector3 at = cs.transform.position;
                 if (Utils.DistanceXZ(at, m_npc.transform.position) > cs.m_rangeBuild)
                 { m_npc.Ai.MoveToPoint(dt, at, Mathf.Max(1.5f, cs.m_rangeBuild * 0.6f), Utils.DistanceXZ(at, m_npc.transform.position) > 10f); return CraftResult.Working; }
+                m_npc.Ai.StopMoving(); // 걷기 방향이 남으면 설비 한가운데로 계속 걷는다(가마솥 밑 불 등 — 회차 128 MachineStep과 같은 까닭)
             }
             var need = Needs();
             foreach (var kv in need)

@@ -367,7 +367,9 @@ namespace ValheimHelper
         {
             if (!Features.RunPlans || plan.Steps.Count == 0 || plan.Partial || plan.TooLong) return;
             var mode = npc.Ai.Current;
-            if (mode != WorkerAI.Mode.Idle && mode != WorkerAI.Mode.Home)
+            // Work인데 하던 일이 없으면 대기열에서 꺼내는 중(앞 일이 막 끝남, WorkerAI.NextQueued) — 쉬는 것과 같다(회차 128: 죽은 뒤 이어 할 계획이 여기서 버려짐)
+            bool busy = mode == WorkerAI.Mode.Work ? npc.Ai.Job != null : mode != WorkerAI.Mode.Idle && mode != WorkerAI.Mode.Home;
+            if (busy)
             {
                 Plugin.Log.LogInfo($"{npc.NpcName} 계획 {label}: 지금 {mode}라 시작 안 함");
                 return;

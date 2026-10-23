@@ -847,7 +847,10 @@ namespace ValheimHelper
             if (Job is GraveJob g) npc.SetGraves(WorkerNpc.AddTry(npc.Graves(), g.Grave, 1));
             else if (Current == Mode.Work && Job != null && WorkSaves.FromJob(Job) is WorkItem w)
             {
-                QueuedWork q = WorkSaves.ToQueued(npc, w);
+                // 계획(PlanJob)은 객체째 이어 한다: 다시 세우면 설비에 이미 올린 것을 몰라 재료를 또 모은다(회차 128). 저장(재시작)은 여전히 목표 데이터(w).
+                QueuedWork q;
+                if (Job is PlanJob plan) { plan.OnDied(); q = new QueuedWork { Label = plan.Label, Resume = plan, Work = w }; }
+                else q = WorkSaves.ToQueued(npc, w);
                 System.Func<bool> ready = q.Ready;
                 q.Ready = () => !HasChores && (ready == null || ready());
                 Queue.Insert(0, q);

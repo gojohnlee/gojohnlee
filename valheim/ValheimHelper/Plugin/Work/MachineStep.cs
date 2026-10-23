@@ -15,6 +15,8 @@ namespace ValheimHelper
     public sealed class MachineStep
     {
         const float Limit = 120f, BusyLimit = 30f;
+        /// <summary>조리대 한가운데에서 이만큼(수평 m)은 떨어져 선다: 밑 화로의 불 영역(FireBurn 구 반지름 0.45) + 몸 반지름(0.5) + 여유.</summary>
+        const float CookKeepOff = 1.5f;
         /// <summary>꺼내러 왔는데 발효가 이보다 오래 남았으면 실패(계획 시계와 너무 어긋남).</summary>
         const float MaxFermentWait = 900f;
         /// <summary>RPC_Tap 뒤 바닐라는 m_tapDelay(1.5초) 뒤에 내놓는다 → 그보다 넉넉히 줍기를 기다린다.</summary>
@@ -73,8 +75,21 @@ namespace ValheimHelper
             if (!Machine.TryGetComponent(out ZNetView nview) || !nview.IsValid()) return CraftResult.Failed;
             if (m_cook != null && !m_load && CookSlotsOf(nview.GetZDO(), m_cook, false) == 0 && Drops().Count == 0) return CraftResult.Done; // 조리대는 Load가 다 꺼냄 — 남은 게 없으면 끝
             Vector3 at = Machine.transform.position;
-            if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f)
-            { m_npc.Ai.MoveToPoint(dt, at, 1.8f, Utils.DistanceXZ(at, m_npc.transform.position) > 10f); return CraftResult.Working; }
+            float d = Utils.DistanceXZ(at, m_npc.transform.position);
+            if (d > 2.5f)
+            { m_npc.Ai.MoveToPoint(dt, at, 1.8f, d > 10f); return CraftResult.Working; }
+            // 바닐라 BaseAI.MoveTo가 정한 걷는 방향(Character.m_moveDir)은 StopMoving 전까지 남는다 → 안 멈추면 설비 한가운데로 계속 달려
+            // 조리대 밑 화로 불(FireBurn) 속에서 불붙어 죽었다(회차 128 cooktest: 0.9m까지 들어감·불붙음).
+            m_npc.Ai.StopMoving();
+            if (m_cook != null && d < CookKeepOff)
+            {
+                // 조리대 밑은 불: 처음부터 곁에 있었거나 밀려 너무 가까우면 먼저 물러선다
+                Vector3 away = m_npc.transform.position - at;
+                away.y = 0f;
+                if (away.sqrMagnitude < 0.01f) away = -m_npc.transform.forward;
+                m_npc.Ai.MoveTowards(away.normalized, false);
+                return CraftResult.Working;
+            }
             if (m_cook != null) return Cook(nview, home);
             if (m_fermenter != null) return m_load ? FermentLoad(nview, home) : FermentUnload(nview, dt);
             return m_load ? DoLoad(nview, home) : DoUnload(nview);
@@ -259,11 +274,12 @@ namespace ValheimHelper
                 int n = Mathf.Min(m_step.Amount, free);
                 if (n <= 0 || CraftStep.Have(home, m_step.Item) < n) return CraftResult.Failed;
                 if (!TakeFromChests(home, m_step.Item, n, null, 0, out wait)) return wait;
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 조리대 올림 {m_step.Item} {n}");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 조리대 올림 {m_step.Item} {n}" + CookSpotDiag());
                 for (int i = 0; i < n; i++) nview.InvokeRPC("RPC_AddItem", m_step.Item, false);
                 m_cookLoaded = true;
                 return CraftResult.Working;
             }
+            if (TestRunner.Running && m_time >= m_nextDiag) { m_nextDiag = m_time + 5f; Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 굽는 곁" + CookSpotDiag()); }
             bool any = false;
             foreach (ItemDrop drop in Drops())
             {
@@ -278,6 +294,10 @@ namespace ValheimHelper
             BeginStore();
             return CraftResult.Working;
         }
+
+        /// <summary>진단: 조리대 중심까지 거리·움직임 방향 크기·불붙음.</summary>
+        string CookSpotDiag() =>
+            $" (거리 {Utils.DistanceXZ(m_cook.transform.position, m_npc.transform.position):0.00}m, 움직임 {m_npc.GetMoveDir().magnitude:0.00}, 속도 {m_npc.GetVelocity().magnitude:0.00}, 불붙음 {m_npc.GetSEMan().HaveStatusEffect(SEMan.s_statusEffectBurning)})";
 
         /// <summary>
         /// 조리대가 굽고 있을 수 있으면 true. 아니면 한 번 지핀다(화덕 m_useFuel = 자기 연료, 조리대 = 3m 안 화로에 연료, 꺼 둔 불·연료 무한은 손대지 않음)
@@ -361,6 +381,9 @@ namespace ValheimHelper
                 TestLose = 0;
             }
         }
+
+        /// <summary>일꾼이 죽었다(PlanJob.OnDied): 짐이 묘비로 가 정리 시작 때 센 수가 맞지 않으니 이 단계의 소실 보충은 하지 않는다(복제 방지).</summary>
+        public void OnDied() => m_expect = -1;
 
         /// <summary>시험용: 0보다 크면 다음 정리 시작 때 짐의 결과물을 그만큼 지운다(소실 흉내). 쓰면 0.</summary>
         internal static int TestLose;

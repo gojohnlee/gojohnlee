@@ -113,6 +113,10 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 발효기: RPC_AddItem(int 프리팹이름 해시, bool cheated)·RPC_Tap(주인만, Ready일 때 → m_tapDelay 1.5초 뒤 m_outputPoint에 m_producedItems개), ZDO s_content(해시)·s_startTime(ZNet 시각 Ticks), 덮임 70% 미만·지붕 없으면 발효 중 시계를 처음으로(10초마다). 충돌체는 Default 층(piece 아님).
 - 조리대(CookingStation): RPC_AddItem(string 프리팹, bool)·RPC_RemoveDoneItem(Vector3 사용자 위치, int 개수 = 익거나 탄 첫 칸 하나를 m_spawnPoint 또는 칸에서 사용자 쪽으로)·RPC_AddFuel(화덕 m_useFuel). ZDO 칸 "slot"+i(string 이름·float 시간)·"slotstatus"+i(0 덜 됨·1 익음·2 탐), 굽는 시간 2배 넘으면 m_overCookedItem. 굽기 조건 = (m_requireFire && IsFireLit 비공개) || (m_useFuel && 연료>0).
   IsFireLit는 EffectArea 불 영역 목록(Awake에서 등록, 꺼져도 OnDestroy까지 안 지움) → 이번 세션에 한 번 탄 불은 꺼져도 굽는다(바닐라). 화로 Fireplace: RPC_AddFuel(+1, m_maxFuel까지), IsBurning = s_state 1·연료>0, m_startFuel 3.
+- 화로 fire_pit 불(10-23 vh_cooktest DIAG): 켜진 불 물체 아래 FireWarmth(EffectArea Heat·Fire, 구 8m — 따뜻함만)·FireBurn(EffectArea Burning + Aoe 불 피해 10, 트리거 구 반지름 0.45, 화로 중심 높이 0.34)
+  → 몸이 FireBurn에 닿으면 불 피해 → SE_Burning(HitType Burning)으로 탐. 막힘(m_blocked, 4초마다 CheckUnderTerrain): 땅이 위·위로 0.5m 광선(Default·static_solid·Default_small·piece·terrain)·
+  연기 막힘(SmokeSpawner: 플레이어 64m 안에서 4초 넘게 연기를 못 냄, TestBlocked = 0.5m 위 반지름 0.75 구, 층 smoke만) → 사람·일꾼 몸(character 층)은 직접 막지 않는다.
+- 걷기 방향 남음: BaseAI.MoveTo/MoveTowards가 정한 Character.m_moveDir는 StopMoving(SetMoveDir(zero))까지 그대로(BaseAI.UpdateAI는 안 지움) → 일이 MoveToPoint를 그만 부를 땐 StopMoving.
 - 가공: Smelter(m_conversion[m_from,m_to], m_fuelItem, m_fuelPerProduct 기본 4, m_secPerProduct, m_maxOre, m_maxFuel, m_name),
   Fermenter(m_conversion[m_from,m_to,m_producedItems], m_fermentationDuration), CookingStation(m_conversion[m_from,m_to,m_cookTime], m_slots, m_fuelItem).
   CharacterDrop.m_drops[m_prefab]. ZNetScene.m_prefabs, ObjectDB.m_items.
