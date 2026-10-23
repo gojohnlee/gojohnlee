@@ -48,9 +48,11 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
      + 새 칸: 일하는 중 몬스터 → 싸움 → 같은 일 이어서(fighttest나 woodtest), 일하다 죽음 → 묘비 회수 → 하던 일 이어서(deathtest). 안 이어지면 고침.
   마) E004 시험 구덩이 안 파지면 다른 자리(최대 3곳). 바) E014 cooktest 비바람 고정 한 번. 사) E001 crafttest 보존 검사 + 소실 보충("보충 N개", 근처 5m 플레이어 있었으면 안 함) — 설비 꺼내기·상자 옮기기만, 캐기·벌목 드롭은 안 함.
 ★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "멀리선 단순하게") — 오류 꼼수 다음, 상자 ② 전에:
-  가) 멀리선 이동 생략(걷는 시간만큼 기다렸다 순간이동, 플레이어 오면 걷기) → 시험: 먼 일터 왕복 시간·짐 보존·플레이어 다가오면 걷기로 바뀜(fartest·departtest).
+  가) 멀리선 이동 생략(뛰는 시간 = 거리 ÷ m_runSpeed만큼 기다렸다 순간이동, 플레이어 오면 뛰기) → 시험: 먼 일터 왕복 시간·짐 보존·플레이어 다가오면 걷기로 바뀜(fartest·departtest).
   나) 멀리선 싸움 단순화(싸움 판단이면 직접 피해로 끝냄) → 시험: 플레이어 멀리 둔 싸움 칸(fighttest).
   다) 시험 정식·약식 스위치: 긴 시험(silver·copper·crypt 등)부터. 정식은 그 기능 바꿨을 때 한 번, 회귀는 약식.
+  라) 근처 막힘 30초 → 막힌 곳 너머 몇 m로 옮김 + "오딘이 날 구조하셨다!"류 대사(구덩이 가장자리 옮기기도) → 시험: stucktest 근처 칸(대사·짐 보존·안전 착지).
+  마) 바다 건너 일터는 포탈로만(이어진 포탈 없으면 안 감 + 말, 일꾼 포탈 짓기 안 함) → 시험: 깊은 바다 건너 일터 칸(portaltest).
 ★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
