@@ -7,7 +7,7 @@ namespace ValheimHelper
     /// <summary>
     /// 밤사이 정산 가) 아침 정리(요청 R3): 잠자기 넘김이 끝난 순간 호스트에서 한 번, 넘김이 시작될 때 거점(깃발 30m 안)에 있던
     /// 쉬는 일꾼(Idle·Home)만. 보는 사람이 없으니 걷지 않고 바로 한다. 일꾼마다 그 아침 날짜(vh_settled)를 ZDO에 남겨 두 번 안 함.
-    /// 짐 → 상자(Unload를 걷기 없이), 제련소류(Smelter) 결과물 → 상자·상자 광석·연료로 다시 채움. 다음 조각: 발효기, 밭.
+    /// 짐 → 상자(Unload를 걷기 없이), 제련소류(Smelter) 결과물 → 상자·상자 광석·연료로 다시 채움, 발효기 따르고 다시 채움. 다음 조각: 밭.
     /// </summary>
     public static class MorningSettle
     {
@@ -67,10 +67,12 @@ namespace ValheimHelper
             if (!s_machinesDone)
             {
                 s_machinesDone = true;
-                Machines(npc, out int taken, out int filled);
+                Machines(npc, out int taken, out int filled, out int tapped, out int brewed);
                 StoreBag(npc); // 땅에서 주운 결과물
                 if (taken > 0) parts.Add(npc.Line("settle.out", new Dictionary<string, string> { ["n"] = taken.ToString() }));
                 if (filled > 0) parts.Add(npc.Line("settle.fill", new Dictionary<string, string> { ["n"] = filled.ToString() }));
+                if (tapped > 0) parts.Add(npc.Line("settle.tap", new Dictionary<string, string> { ["n"] = tapped.ToString() }));
+                if (brewed > 0) parts.Add(npc.Line("settle.brew", new Dictionary<string, string> { ["n"] = brewed.ToString() }));
             }
             string summary = string.Join(", ", parts);
             LastResult[npc.NpcName] = summary;
@@ -84,9 +86,9 @@ namespace ValheimHelper
         /// 나무·보리·아마를 시키지 않은 데 쓰게 돼 꺼내기만(기본안). 넣은 광석은 다시 못 꺼내니 연료로 다 녹일 수 있는 만큼만 넣는다.
         /// 다른 일꾼이 일하는 중이면(설비를 쓰고 있을 수 있음) 안 건드리고, 설비 ZDO가 이 컴퓨터 것이 아니면 그 설비는 건너뜀.
         /// </summary>
-        static void Machines(WorkerNpc npc, out int taken, out int filled)
+        static void Machines(WorkerNpc npc, out int taken, out int filled, out int tapped, out int brewed)
         {
-            taken = filled = 0;
+            taken = filled = tapped = brewed = 0;
             foreach (var w in WorkerNpc.All)
                 if (w != null && w.Ai != null && w.Ai.Current == WorkerAI.Mode.Work)
                 { Plugin.Log.LogInfo($"밤사이 정산: {w.NpcName}이 일하는 중이라 설비는 안 건드림"); return; }
@@ -102,6 +104,58 @@ namespace ValheimHelper
                 if (got > 0 || put > 0) Plugin.Log.LogInfo($"밤사이 정산: {Utils.GetPrefabName(s.gameObject)} 꺼냄 {got}, 넣음 {put}");
                 taken += got;
                 filled += put;
+            }
+            Fermenters(home, ref tapped, ref brewed);
+        }
+
+        /// <summary>
+        /// 발효기(가3): 다 익은 것은 바닐라 RPC_Tap처럼 기록(s_content·s_startTime·s_cheatedQueued)을 지우고 결과물을 땅 대신 상자에.
+        /// 빈 발효기는 지붕이 있으면(MachineStep.Exposed가 아니면) 상자 재료로 다시 채움 — 방금 딴 것과 같은 재료 먼저, 없으면 발효기가 받는 아무 재료.
+        /// 익는 중인 것은 안 건드림. 꺼낸 결과물 수(tapped)와 넣은 재료 수(put)를 더한다.
+        /// </summary>
+        static void Fermenters(Vector3 home, ref int tapped, ref int put)
+        {
+            var seen = new HashSet<Fermenter>();
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                Fermenter f = col.GetComponentInParent<Fermenter>();
+                if (f == null || !seen.Add(f) || !f.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                if (!nv.IsOwner()) { Plugin.Log.LogInfo($"밤사이 정산: {f.name} 주인이 다른 컴퓨터라 건너뜀"); continue; }
+                ZDO zdo = nv.GetZDO();
+                int content = zdo.GetInt(ZDOVars.s_content);
+                string last = null;
+                if (content != 0)
+                {
+                    long start = zdo.GetLong(ZDOVars.s_startTime, 0L);
+                    if (start == 0L || (ZNet.instance.GetTime() - new System.DateTime(start)).TotalSeconds <= f.m_fermentationDuration) continue; // 익는 중
+                    Fermenter.ItemConversion conv = f.m_conversion.Find(c => c.m_from != null && c.m_to != null && c.m_from.gameObject.name.GetStableHashCode() == content);
+                    if (conv == null) continue; // 모르는 내용물은 안 건드림
+                    zdo.Set(ZDOVars.s_content, 0);
+                    zdo.Set(ZDOVars.s_startTime, 0);
+                    zdo.Set(ZDOVars.s_cheatedQueued, false);
+                    string made = Utils.GetPrefabName(conv.m_to.gameObject);
+                    int rest = CraftStep.Put(home, made, conv.m_producedItems);
+                    if (rest > 0)
+                    {
+                        var mats = Chests.NearBase(home, ChestRole.Mats);
+                        CraftStep.DropAt(mats.Count > 0 ? mats[0] : null, home, made, rest);
+                    }
+                    tapped += conv.m_producedItems;
+                    last = Utils.GetPrefabName(conv.m_from.gameObject);
+                    Plugin.Log.LogInfo($"밤사이 정산: 발효기 따름 {made} {conv.m_producedItems}");
+                }
+                if (MachineStep.Exposed(f)) { Plugin.Log.LogInfo("밤사이 정산: 발효기에 지붕이 없어 안 채움"); continue; }
+                var chests = Chests.NearBase(home, ChestRole.Mats);
+                if (chests.Exists(Chests.InUse)) { Plugin.Log.LogInfo("밤사이 정산: 열린 상자가 있어 발효기 채우기는 건너뜀"); continue; }
+                string from = last != null && CraftStep.Have(home, last) > 0 ? last : null;
+                if (from == null)
+                    foreach (var c in f.m_conversion)
+                        if (c.m_from != null && CraftStep.Have(home, Utils.GetPrefabName(c.m_from.gameObject)) > 0) { from = Utils.GetPrefabName(c.m_from.gameObject); break; }
+                if (from == null) continue;
+                if (!CraftStep.TakeAll(home, chests, new List<KeyValuePair<string, int>> { new KeyValuePair<string, int>(from, 1) })) continue;
+                nv.InvokeRPC("RPC_AddItem", from.GetStableHashCode(), false);
+                put++;
+                Plugin.Log.LogInfo($"밤사이 정산: 발효기 채움 {from}");
             }
         }
 

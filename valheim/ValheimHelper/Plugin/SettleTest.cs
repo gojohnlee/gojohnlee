@@ -7,10 +7,12 @@ namespace ValheimHelper
     /// <summary>
     /// 밤사이 정산 시험(요청 R3 가): 1호 짐에 나무·돌, 2호는 80m 밖으로 보내고 실제 잠자기 넘김(EnvMan.SkipToMorning, 12초).
     /// 넘김이 끝나면 1호 짐이 걷지 않고 상자로(개수 보존, 대사), 2호(밖)는 그대로, 같은 아침 다시 불러도 안 함, 다음 아침이면 함.
+    /// 제련소 결과물·다시 채우기(가2), 발효기 따르기·다시 채우기·익는 중은 그대로(가3).
     /// </summary>
     static class SettleTest
     {
-        static GameObject s_smelter;
+        static GameObject s_smelter, s_fermenter;
+        const string MeadBase = "MeadBasePoisonResist", Mead = "MeadPoisonResist";
 
         public static void Register() => TestRunner.Register("vh_settletest", "밤사이 정산(아침 정리) 시험", Run);
 
@@ -72,6 +74,23 @@ namespace ValheimHelper
             for (int i = 0; i < 2; i++) snv.InvokeRPC("RPC_AddOre", "CopperOre", false);
             for (int i = 0; i < 4; i++) snv.InvokeRPC("RPC_AddFuel");
             yield return new WaitForSeconds(0.5f);
+            // 발효기(가3): 다 익은 독 저항 미드 바탕 + 상자에 바탕 1 → 아침에 미드가 상자로, 상자 바탕으로 다시 채움(지붕은 시험에서 안 봄)
+            GameObject fermPrefab = ZNetScene.instance.GetPrefab("fermenter");
+            checks.Add("발효기 프리팹 있음", fermPrefab != null);
+            if (fermPrefab == null) { End(player, god, checks, onHeard, heard); yield break; }
+            MachineStep.TestIgnoreRoof = true;
+            s_fermenter = Object.Instantiate(fermPrefab, GatherTest.Ground(home + rot * new Vector3(0f, 0f, -6f)), rot);
+            Fermenter fermenter = s_fermenter.GetComponent<Fermenter>();
+            ZNetView fnv = s_fermenter.GetComponent<ZNetView>();
+            TestKit.PutInChest(chest, MeadBase, 1);
+            yield return new WaitForSeconds(0.5f);
+            fnv.InvokeRPC("RPC_AddItem", MeadBase.GetStableHashCode(), false);
+            yield return new WaitForSeconds(0.5f);
+            ZDO fz = fnv.GetZDO();
+            fz.Set(ZDOVars.s_startTime, ZNet.instance.GetTime().AddSeconds(-fermenter.m_fermentationDuration - 10).Ticks);
+            int meadMade = fermenter.m_conversion.Find(c => c.m_from != null && c.m_from.gameObject.name == MeadBase)?.m_producedItems ?? -1;
+            int meadBefore = GatherTest.CountBase(home, Mead);
+            checks.Add($"발효기에 바탕 들어감 (내용 {fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode()}, 나오는 수 {meadMade})", fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode() && meadMade > 0);
             int copperAll = 5 + GatherTest.CountBase(home, "Copper");
             Vector3 far = GatherTest.Ground(home + rot * new Vector3(0f, 0f, -80f));
             alarak.TeleportTo(far + Vector3.up * 0.5f, rot, false);
@@ -113,6 +132,15 @@ namespace ValheimHelper
             float fuelNeed = queued * smelter.m_fuelPerProduct - sz.GetFloat(ZDOVars.s_bakeTimer) * smelter.m_fuelPerProduct / smelter.m_secPerProduct;
             checks.Add($"연료 다 녹일 만큼·상한 안 ({fuel:0.0}, 필요 {fuelNeed:0.0})", fuel >= fuelNeed - 0.05f && fuel <= smelter.m_maxFuel);
 
+            // 발효기: 미드가 상자로(땅·짐 아님), 상자 바탕으로 다시 채움, 새로 익는 중
+            int meadNow = GatherTest.CountBase(home, Mead);
+            long fstart = fz.GetLong(ZDOVars.s_startTime, 0L);
+            double fage = fstart == 0L ? -1 : (ZNet.instance.GetTime() - new System.DateTime(fstart)).TotalSeconds;
+            TestRunner.Log($"발효기: 상자 미드 {meadNow - meadBefore}, 상자 바탕 {GatherTest.CountBase(home, MeadBase)}, 내용 {fz.GetInt(ZDOVars.s_content)}, 익은 시간 {fage:0}초");
+            checks.Add($"발효기 미드 → 상자 ({meadNow - meadBefore}/{meadMade}, 짐 {claude.CountItem(Mead)})", meadNow - meadBefore == meadMade && claude.CountItem(Mead) == 0);
+            checks.Add($"발효기 다시 채움 (상자 바탕 {GatherTest.CountBase(home, MeadBase)}, 새로 익는 중 {fage:0}초)",
+                GatherTest.CountBase(home, MeadBase) == 0 && fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode() && fage >= 0 && fage < fermenter.m_fermentationDuration);
+
             // 같은 아침 다시(불러온 것처럼 저장된 날짜만 보고) → 안 함, 다음 아침 → 함
             claude.GetInventory().AddItem(wood, 5);
             MorningSettle.Snapshot();
@@ -128,6 +156,8 @@ namespace ValheimHelper
                 claude.CountItem("Wood") == 0 && GatherTest.CountBase(home, "Wood") == woodAll + 5);
             checks.Add($"안 내놓은 결과물 → 상자 (주괴 {GatherTest.CountBase(home, "Copper")}/{barsBefore + 2}, 남은 기록 {sz.GetInt(ZDOVars.s_spawnAmount)})",
                 GatherTest.CountBase(home, "Copper") == barsBefore + 2 && sz.GetInt(ZDOVars.s_spawnAmount) == 0);
+            checks.Add($"익는 중인 발효기는 안 건드림 (미드 {GatherTest.CountBase(home, Mead)}/{meadNow}, 내용 그대로 {fz.GetLong(ZDOVars.s_startTime, 0L) == fstart})",
+                GatherTest.CountBase(home, Mead) == meadNow && fz.GetLong(ZDOVars.s_startTime, 0L) == fstart);
             claude.Zdo.Set(MorningSettle.KeyDay, day); // 시험이 앞당긴 날짜를 되돌림
             End(player, god, checks, onHeard, heard);
         }
@@ -138,6 +168,9 @@ namespace ValheimHelper
             player.SetGodMode(god);
             if (s_smelter != null) ZNetScene.instance.Destroy(s_smelter);
             s_smelter = null;
+            if (s_fermenter != null) ZNetScene.instance.Destroy(s_fermenter);
+            s_fermenter = null;
+            MachineStep.TestIgnoreRoof = false;
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in heard) TestRunner.Log(h);
             TestRunner.Log($"판정: {(checks.Passed == checks.Total ? "PASS" : "FAIL")} ({checks.Passed}/{checks.Total})");

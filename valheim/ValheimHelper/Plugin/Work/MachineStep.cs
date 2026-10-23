@@ -178,7 +178,7 @@ namespace ValheimHelper
         }
 
         /// <summary>바닐라 Fermenter.UpdateCover와 같은 판단: 덮임 70% 미만이거나 지붕 아래가 아니면 발효 시간이 계속 처음으로 돌아감.</summary>
-        static bool Exposed(Fermenter f)
+        internal static bool Exposed(Fermenter f)
         {
             if (TestRunner.Running && TestIgnoreRoof) return false;
             Vector3 p = f.m_roofCheckPoint != null ? f.m_roofCheckPoint.position : f.transform.position;
@@ -420,7 +420,7 @@ namespace ValheimHelper
             return false;
         }
 
-        static string FermentOutput(Fermenter f, int contentHash)
+        internal static string FermentOutput(Fermenter f, int contentHash)
         {
             foreach (var c in f.m_conversion)
                 if (c.m_from != null && c.m_to != null && c.m_from.gameObject.name.GetStableHashCode() == contentHash)
