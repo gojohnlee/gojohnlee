@@ -39,12 +39,16 @@ namespace ValheimHelper
         Vector3 m_goalPos;
         PortalLink? m_portal;
         bool m_portalChecked;
+        FarSkip m_far;          // 멀리선 이동 생략 중인 걷기(null = 걷는 중)
+        Vector3 m_farDest;
+        float m_farCheck;       // 생략할지 다시 보기까지(초)
         readonly HashSet<ZDOID> m_skip = new HashSet<ZDOID>();
         /// <summary>막힘 복구(사용자 결정 2026-10-23, Core StuckBook): 이번 일 동안 막힌 목적지·귀환 막힘. 작업 저장(WorkItem.Stuck)에 들어가 불러와도 이어진다.</summary>
         StuckBook m_book = new StuckBook();
         public string StuckSave => m_book.Save();
         /// <summary>시험용: 이 대상을 겨누고 다가가기부터(vh_hoptest 멀리서 목표 앞 막힘 칸).</summary>
         public void TestApproach(ZDO zdo) { Aim(zdo); Go(Step.Approach); }
+        internal void TestReturn() { if (m_step != Step.Return) Go(Step.Return); }
         public void LoadStuck(string text) => m_book = StuckBook.Load(text);
         /// <summary>시험용: 이번 일에서 막혀 뺀 목적지 수.</summary>
         public int StuckExcluded => m_book.ExcludedCount;
@@ -149,6 +153,8 @@ namespace ValheimHelper
             m_progressTimer = 0f;
             m_portal = null;
             m_portalChecked = false;
+            m_far = null;
+            m_farCheck = 0f;
             m_gateUsedAt = -10f; // 앞 단계(나가는 Teleport)의 시각이 남으면 다음 묘지 입구 앞에서 한참 선다
             if (s == Step.Deposit) m_chest = null; // 넣을 상자는 그때그때 고른다
             if (s == Step.Prep) m_prep = null;
@@ -577,7 +583,8 @@ namespace ValheimHelper
             {
                 m_scanTimer = 1f;
                 // 새 땅으로 가는 길에 목표 구역이 밝혀졌다: 경계가 밀려났으니 다음 경계로(둘러봄 표시는 안 한다)
-                if (m_exploring && Scout.Explored(m_goalZone)) { Go(Step.Search); return true; }
+                // 멀리선 이동 생략 중엔 안 봄: 지도 위치가 밝혔어도 몸은 아직 출발점(내린 뒤에 봄)
+                if (m_exploring && m_far == null && Scout.Explored(m_goalZone)) { Go(Step.Search); return true; }
             }
             bool arrived = WalkVia(dt, m_goalPos, 6f);
             if (arrived || Stuck(dt, PortalOr(m_goalPos)))
@@ -881,6 +888,15 @@ namespace ValheimHelper
         /// </summary>
         bool HopToward(Vector3 dest, out string why)
         {
+            if (!LandNear(dest, out why)) return false;
+            Hops++;
+            WorkerAI.StuckTeleports++;
+            return true;
+        }
+
+        /// <summary>HopToward·멀리선 이동 생략이 같이 쓰는 내려놓기: around 둘레 후보 중 안전한 첫 자리로 옮긴다.</summary>
+        bool LandNear(Vector3 dest, out string why)
+        {
             ZNetView nv = m_npc.GetComponent<ZNetView>();
             if (nv == null || !nv.IsOwner()) { why = "소유자 아님"; return false; }
             if (s_bodyMask == 0) s_bodyMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece");
@@ -902,8 +918,6 @@ namespace ValheimHelper
                 if (m_ai.Guard != null && !m_ai.Guard.SafeAt(p)) { last = "위험"; continue; }
                 m_ai.StopMoving();
                 if (!m_npc.TeleportTo(p + Vector3.up * 0.2f, m_npc.transform.rotation, false)) { last = "옮기기 실패"; continue; }
-                Hops++;
-                WorkerAI.StuckTeleports++;
                 why = $"{Utils.DistanceXZ(from, p):0.0}m → 목표에서 {Utils.DistanceXZ(dest, p):0.0}m (후보 {tried}번째)";
                 return true;
             }
@@ -1813,7 +1827,92 @@ namespace ValheimHelper
                 else if (Stuck(dt, gate)) { m_portal = null; m_bestDist = float.MaxValue; m_progressTimer = 0f; } // 못 가면 걸어서
                 return false;
             }
+            if (FarWalk(dt, dest)) return false;
             return Walk(dt, dest, dist);
+        }
+
+        /// <summary>시험용: 멀리선 이동 생략을 시작한 횟수·다 옮겨 끝낸 횟수·도중에 그만둔 횟수.</summary>
+        public static int FarSkips, FarLanded, FarCancelled;
+        /// <summary>시험용: 마지막 생략의 길이(m)·기다린 시간(초)·지도 위치를 밝힌 횟수.</summary>
+        public static float FarLastLength, FarLastSeconds;
+        public static int FarReveals;
+
+        /// <summary>
+        /// 멀리선 이동 생략(사용자 결정 2026-10-23, Core FarSkip): 일꾼·목적지 모두 플레이어 64m 밖이고 FarSkip.MinDistance m 넘으면
+        /// 걷지 않고 길 길이 ÷ m_runSpeed초 서서 기다리며 2초마다 지도상 위치를 밝히고(Scout.Reveal), 다 기다리면 불러와진 구역 안에서
+        /// HopStep m씩 목적지 쪽으로 옮긴다(LandNear: 단단한 땅·물 아님·위험 판단 통과). 목적지 ArriveNear m 안이면 마저 걷는다.
+        /// 길은 아직 직선(밝혀진 목적지의 RoughPath는 가-3). 플레이어가 몸·지도 위치 64m 안에 오면 그만두고 그 자리부터 걷는다(가-4에서 지도 위치로 내림).
+        /// true = 이번 프레임은 생략이 맡음(걷지 않음).
+        /// </summary>
+        bool FarWalk(float dt, Vector3 dest)
+        {
+            Vector3 me = m_npc.transform.position;
+            if (m_far == null)
+            {
+                m_farCheck -= dt;
+                if (m_farCheck > 0f) return false;
+                m_farCheck = 2f;
+                float d = Utils.DistanceXZ(me, dest);
+                if (!FarSkip.Worth(d) || HopBlocked() != null || !FarFromPlayers(dest)) return false;
+                ZNetView nv = m_npc.GetComponent<ZNetView>();
+                if (nv == null || !nv.IsOwner()) return false;
+                m_far = new FarSkip(new List<RoughPath.P> { new RoughPath.P(me.x, me.z), new RoughPath.P(dest.x, dest.z) }, m_npc.m_runSpeed);
+                m_farDest = dest;
+                m_ai.StopMoving();
+                FarSkips++;
+                FarLastLength = (float)m_far.Length;
+                FarLastSeconds = (float)m_far.Seconds;
+                FarReveals = 0;
+                m_farCheck = 0f; // 다 기다린 뒤 옮기기 재시도 간격으로 씀
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 {m_far.Length:0}m → {m_far.Seconds:0}초 기다림(달리기 {m_npc.m_runSpeed:0.0})");
+            }
+            if (Utils.DistanceXZ(m_farDest, dest) > 1f) { m_far = null; return false; } // 목적지가 바뀜: 다음 검사에서 새로
+            if (m_far.Waiting)
+            {
+                if (m_far.Tick(dt))
+                {
+                    RoughPath.P mp = m_far.MapPos;
+                    var map = new Vector3((float)mp.X, me.y, (float)mp.Z);
+                    if (!FarFromPlayers(me) || !FarFromPlayers(map)) return FarCancel("플레이어가 다가옴");
+                    Scout.Reveal(map);
+                    FarReveals++;
+                }
+                return true;
+            }
+            m_far.Tick(dt);
+            if (m_far.LandTimedOut) return FarCancel($"옮기기 {FarSkip.LandLimit:0}초 넘음");
+            if (!FarSkip.HopAim(new RoughPath.P(me.x, me.z), new RoughPath.P(dest.x, dest.z), FarSkip.HopStep, out RoughPath.P aim))
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 끝({m_far.Seconds:0}초 + 옮기기 {m_far.Landing:0.0}초, 목적지 {Utils.DistanceXZ(me, dest):0}m) → 마저 걷기");
+                FarLanded++;
+                m_far = null;
+                m_farCheck = 30f; // 마저 걷는 짧은 길은 다시 생략하지 않음
+                m_bestDist = float.MaxValue;
+                m_progressTimer = 0f;
+                return false;
+            }
+            var to = new Vector3((float)aim.X, dest.y, (float)aim.Z);
+            m_farCheck -= dt;
+            if (m_farCheck > 0f) return true;
+            m_farCheck = 1f; // 못 옮기면 1초 뒤 다시(시간 넘으면 그만둠)
+            if (!ZoneSystem.instance.IsZoneLoaded(to)) return true; // 일꾼 둘레 구역이 만들어지길 기다림(FarZones)
+            if (LandNear(to, out string why)) { m_farCheck = 0f; return true; }
+            // 그 둘레에 내릴 자리가 없음: 반만 가 본다
+            to = Vector3.Lerp(me, to, 0.5f);
+            if (Utils.DistanceXZ(me, to) >= 5f && LandNear(to, out why)) m_farCheck = 0f;
+            else Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 옮길 자리 없음({why})");
+            return true;
+        }
+
+        bool FarCancel(string why)
+        {
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 그만둠({why}, {m_far.Elapsed:0}/{m_far.Seconds:0}초) → 그 자리부터 걷기");
+            FarCancelled++;
+            m_far = null;
+            m_farCheck = 30f;
+            m_bestDist = float.MaxValue;
+            m_progressTimer = 0f;
+            return false;
         }
 
         /// <summary>막힘 판단 기준점: 포탈로 가는 중이면 포탈 입구, 아니면 목적지.</summary>
@@ -1827,6 +1926,7 @@ namespace ValheimHelper
         {
             float d = Utils.DistanceXZ(point, m_npc.transform.position);
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progressTimer = 0f; return false; }
+            if (m_far != null) { m_progressTimer = 0f; return false; } // 멀리선 이동 생략 중: 서서 기다리는 것이지 막힌 게 아니다
             if (m_ai.Carving) return false; // 구덩이에서 경사로를 깎는 중: 막힌 게 아니다
             if (m_ai.OnInteriorPath) { m_progressTimer = 0f; return false; } // 지하묘지 안 길을 따라 도는 중(목표에서 잠시 멀어질 수 있음)
             m_progressTimer += dt;
