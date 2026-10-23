@@ -163,7 +163,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 밭(가4): 거점 가까운 밭(중심이 깃발 BaseRange+반경 안 — 먼 밭은 안 함)의 다 자란 작물을 바닐라 RPC_Pick처럼 셈하되
+        /// 밭(가4): 거점 가까운 밭(중심이 깃발 NightSettle.FarmRadius(100m)+반경 안 — 먼 밭은 안 함)의 다 자란 작물을 바닐라 RPC_Pick처럼 셈하되
         /// 땅에 떨구지 않고 상자에(자리가 없으면 상자 앞 땅), 기록은 RPC_SetPicked(작물은 사라짐). 그 자리에 같은 작물을 상자 씨앗으로 다시 심음
         /// (빈 자리 새로 심기는 안 함 — 기본안, 갈린 땅이 풀렸으면 다시 갈고). 씨앗이 없거나 자리가 안 맞으면(지붕·바이옴 등) 거두기만.
         /// </summary>
@@ -171,7 +171,7 @@ namespace ValheimHelper
         {
             foreach (var f in Brain.Farms.Fields)
             {
-                if (Utils.DistanceXZ(new Vector3(f.X, 0f, f.Z), home) > Recipes.BaseRange + f.Radius) continue;
+                if (!NightSettle.FarmNear(Utils.DistanceXZ(new Vector3(f.X, 0f, f.Z), home), f.Radius)) continue;
                 var chests = Chests.NearBase(home, ChestRole.Mats);
                 if (chests.Exists(Chests.InUse)) { Plugin.Log.LogInfo("밤사이 정산: 열린 상자가 있어 밭은 건너뜀"); return; }
                 foreach (Pickable p in FarmJob.Ripe(f))

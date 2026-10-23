@@ -98,7 +98,8 @@ namespace ValheimHelper
             GameObject grownPrefab = carrot != null ? ZNetScene.instance.GetPrefab(carrot.Grown) : null;
             checks.Add($"당근 작물 있음 ({carrot?.Grown})", grownPrefab != null && Crops.CultivatePrefab != null);
             if (grownPrefab == null || Crops.CultivatePrefab == null) { End(player, god, checks, onHeard, heard); yield break; }
-            Vector3 fc = GatherTest.Ground(home + rot * new Vector3(8f, 0f, 6f));
+            // 깃발 45m: 예전 30m 범위 밖, 밭 범위(100m) 안(사용자 요청 2026-10-23). 2호를 보내는 -80m 쪽이라 땅이 있음
+            Vector3 fc = GatherTest.Ground(home + rot * new Vector3(6f, 0f, -45f));
             Brain.Farms.Set(fc.x, fc.z, 3);
             s_field = Brain.Farms.At(fc.x, fc.z);
             var ripe = new List<Pickable>();

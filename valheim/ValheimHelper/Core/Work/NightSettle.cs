@@ -25,5 +25,13 @@ namespace ValheimHelper.Core.Work
         public const float BaseRadius = 30f;
 
         public static bool AtBase(float distanceXZ) => distanceXZ <= BaseRadius;
+
+        /// <summary>
+        /// 아침에 거두는 밭: 밭 중심이 깃발에서 이 거리(m)+밭 반경 안(사용자 요청 2026-10-23 — 집이 30m를 거의 차지해 밭은 마당·더 먼 곳).
+        /// 일꾼(먼 구역 유지)·호스트 둘레 2구역(≥128m)은 불러와져 있어 이 안의 작물은 보임. 안 불러와진 작물은 안 보여 그냥 건너뜀.
+        /// </summary>
+        public const float FarmRadius = 100f;
+
+        public static bool FarmNear(float centerDistanceXZ, float fieldRadius) => centerDistanceXZ <= FarmRadius + fieldRadius;
     }
 }
