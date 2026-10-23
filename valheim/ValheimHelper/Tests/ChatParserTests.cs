@@ -41,6 +41,8 @@ public class ChatParserTests
     [InlineData("!돌 30", "Stone", 30)]
     [InlineData("!부싯돌 10", "Flint", 10)]
     [InlineData("!구리 20", "CopperOre", 20)]
+    [InlineData("!은 5", "SilverOre", 5)]
+    [InlineData("!은 주괴 3", "Silver", 3)]
     [InlineData("!주석 20", "TinOre", 20)]
     [InlineData("!철 30", "IronScrap", 30)]
     [InlineData("！철 30", "IronScrap", 30)]

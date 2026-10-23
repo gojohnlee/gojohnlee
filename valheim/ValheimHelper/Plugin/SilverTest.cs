@@ -94,6 +94,80 @@ namespace ValheimHelper
                 yield return TestKit.WaitFor(() => keys.Global, 5f);
                 checks.Add($"보스가 잡혔으면(월드 키) 묻힌 광맥도 앎 ({TestKit.Waited:0.0}초)", HiddenOres.Known(zb, info));
             }
+
+            // ⑪ 2·요청 R5: 묻힌 은 캐기 — 위시본을 얻은 채 청동 곡괭이로 "!은 50" → 파 내려가 조각을 남김없이 캐고(바닐라 땅 낮춤 한계 8m 안) 구덩이에서 나와 집으로.
+            ZNetScene.instance.Destroy(shown);
+            keys.SetKnown(true);
+            // 단계가 맞는 가장 낮은 곡괭이(회차 107: 청동은 "도구 단계 낮음" → 게임 데이터로 고름)
+            string pick = null;
+            var tiers = new List<string>();
+            foreach (string n in new[] { "PickaxeAntler", "PickaxeBronze", "PickaxeIron", "PickaxeBlackMetal" })
+            {
+                int tier = ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_toolTier ?? -1;
+                tiers.Add($"{n} {tier}");
+                if (pick == null && tier >= info.MinToolTier) pick = n;
+            }
+            TestRunner.Log($"곡괭이 단계: {string.Join(", ", tiers)} → {pick ?? "없음"}(광맥 단계 {info.MinToolTier})");
+            checks.Add("단계 맞는 곡괭이 있음", pick != null);
+            if (pick == null) yield break;
+            // 둘: 은 광맥 하나에 곡괭이 하나가 닳아 없어짐(회차 107: 29개 캐고 "연장 나갔네") — 예비는 짐 정리 때 상자로 갔다가 Tool 단계가 꺼냄
+            w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
+            w.Claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
+            yield return new WaitForSeconds(1f);
+            var hashes = new HashSet<int> { vein.name.GetStableHashCode() };
+            var des = vein.GetComponent<Destructible>();
+            if (des != null && des.m_spawnWhenDestroyed != null) hashes.Add(des.m_spawnWhenDestroyed.name.GetStableHashCode());
+            int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked;
+            int carried0 = w.Claude.CountItem(ore), base0 = GatherTest.CountBase(w.Home, ore);
+            GatherTest.Say($"!{Workers.Name1} 은 50", null);
+            yield return TestKit.WaitFor(() => w.Claude.Ai.Current == WorkerAI.Mode.Work, 10f);
+            checks.Add($"\"은 50\"에 캐러 나섬({TestKit.Waited:0}초)", TestKit.Ok);
+            float t = 0f, deepest = 0f;
+            int left = Fragments(g1, hashes, ref deepest);
+            for (; t < 780f && left > 0 && w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work; t += 5f)
+            {
+                yield return new WaitForSeconds(5f);
+                left = Fragments(g1, hashes, ref deepest);
+                if ((int)t % 30 == 0)
+                    TestRunner.Log($"[{t:0}s] 은 광맥 {left}개·남은 부위 {s_parts}개(가장 깊은 조각 바닥 {deepest:0.0}m), 든 은 {w.Claude.CountItem(ore)}, 상태 {w.Claude.Ai.Current}/{w.Claude.Ai.Job?.StepName}, 판 {NpcPatches.NoDig.Dug - dug0}번");
+            }
+            int dug = NpcPatches.NoDig.Dug - dug0;
+            TestRunner.Log($"묻힌 은: {t:0}초, 땅 파기 판 {dug}번·막음 {NpcPatches.NoDig.Blocked - blocked0}번, 구덩이 가장 깊은 곳 {GatherTest.Deepest(g1, 4f):0.0}m, 조각 바닥 가장 깊음 {deepest:0.0}m");
+            checks.Add($"묻힌 은 광맥 조각 다 캠(남은 {left}개, {t:0}초)", left == 0);
+            checks.Add($"파 내려감(판 {dug}번)", dug > 0);
+            if (w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work) GatherTest.Say($"!{Workers.Name1} 멈춰", null);
+            yield return TestKit.WaitFor(() => w.Claude == null || Utils.DistanceXZ(w.Claude.Home, w.Claude.transform.position) <= 5f, 120f);
+            checks.Add($"구덩이에서 나와 집으로 돌아옴({TestKit.Waited:0}초)", TestKit.Ok);
+            int got = (w.Claude != null ? w.Claude.CountItem(ore) : 0) - carried0 + GatherTest.CountBase(w.Home, ore) - base0;
+            int ground = GatherTest.GroundCount(g1, ore);
+            checks.Add($"캔 은을 다 주움(짐·상자 {got}개, 땅에 남음 {ground}개)", got > 0 && ground == 0);
+            checks.Add($"죽지 않음({(w.Claude != null ? w.Claude.Deaths : -1)})", w.Claude != null && w.Claude.Deaths == 0);
+            GatherTest.RemoveDeposits(g1, vein);
+            TestRunner.Log($"구덩이 되돌림: 꼭짓점 {TestTerrain.Reset(g1, 10f)}개");
+        }
+
+        static int s_parts;
+
+        /// <summary>at 10m 안 은 광맥(통짜·깨진 조각) ZDO 수(s_parts = 불러온 것의 남은 부위 충돌체 수). deepest = 불러온 조각 충돌체 바닥이 원래 땅에서 가장 깊은 정도(m, 커지기만).</summary>
+        static int Fragments(Vector3 at, HashSet<int> hashes, ref float deepest)
+        {
+            int n = 0;
+            s_parts = 0;
+            foreach (var zdo in Senses.Nearby(at, 10f))
+            {
+                if (!hashes.Contains(zdo.GetPrefab())) continue;
+                n++;
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v == null) continue;
+                foreach (var col in v.GetComponentsInChildren<Collider>())
+                {
+                    if (col.isTrigger || !col.enabled) continue;
+                    s_parts++;
+                    Vector3 c = col.bounds.center;
+                    deepest = Mathf.Max(deepest, WorldGenerator.instance.GetHeight(c.x, c.z) - col.bounds.min.y);
+                }
+            }
+            return n;
         }
 
         /// <summary>진단: 프리팹의 바닐라 부품(Destructible·MineRock5 등)과 깨지면 생기는 것.</summary>

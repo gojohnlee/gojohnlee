@@ -51,8 +51,8 @@ namespace ValheimHelper
             /// <summary>시험 기록: 일꾼이 판 횟수, 막은 횟수.</summary>
             public static int Dug, Blocked;
 
-            /// <summary>원래 땅보다 이만큼 넘게 깊이는 파지 않는다(m). 그보다 깊은 광석 조각은 남긴다(GatherJob.RockAim).</summary>
-            public const float MaxDepth = 3f;
+            /// <summary>원래 땅보다 이만큼 넘게 깊이는 파지 않는다(m) = 바닐라 땅 낮춤 한계(TerrainComp m_levelDelta ±8). 묻힌 광석은 이 안이면 다 캔다(요청 R5, 회차 107: 3m → 8m).</summary>
+            public const float MaxDepth = 8f;
 
             static bool Prefix(UnityEngine.Vector3 hitPoint, Character character, ref UnityEngine.GameObject __result)
             {

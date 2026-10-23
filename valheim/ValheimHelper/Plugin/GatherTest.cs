@@ -219,7 +219,7 @@ namespace ValheimHelper
         }
 
         /// <summary>거점 앞 시험 광맥(그 프리팹과 깨진 조각) 중 20m 안의 것을 지운다. 지운 수.</summary>
-        static int RemoveDeposits(Vector3 at, GameObject dep)
+        internal static int RemoveDeposits(Vector3 at, GameObject dep)
         {
             if (dep == null) return 0;
             var hashes = new HashSet<int> { dep.name.GetStableHashCode() };
@@ -310,7 +310,7 @@ namespace ValheimHelper
         }
 
         /// <summary>진단: 광맥 둘레 땅에 떨어진 그 물건 수.</summary>
-        static int GroundCount(Vector3 center, string item)
+        internal static int GroundCount(Vector3 center, string item)
         {
             int n = 0;
             foreach (var zdo in Senses.Nearby(center, 30f))
@@ -353,7 +353,7 @@ namespace ValheimHelper
         }
 
         /// <summary>둘레 r(m) 안에서 원래 땅보다 가장 깊이 파인 정도.</summary>
-        static float Deepest(Vector3 c, float r)
+        internal static float Deepest(Vector3 c, float r)
         {
             float worst = 0f;
             for (float x = -r; x <= r; x += 1f)
