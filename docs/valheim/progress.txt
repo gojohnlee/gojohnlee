@@ -37,11 +37,15 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
   시험 월드 깃발 125m 안에 원래 있던 상자·설비가 새로 잡혀 수가 어긋나면 범위 탓이 아니라 시험 자리 탓 — 그 시험만 고침. 45m·160m 자리 땅이 안 맞으면 다른 방향으로 옮김.
-★ [대화 세션 10-23 — 사용자 결정, 아이디어 확인 중] 상자 동시 열기(필수)·상자 재료로 바로 제작(125m, 개인 상자 포함)을 우리 모드에 넣음(decisions.txt 끝).
-  다른 모드는 안 씀. 사용자가 아이디어(순서·방식)를 고르면 여기에 조각으로 나눔. 고르기 전엔 손대지 않음.
 ★ [대화 세션 10-23 부하 검토 — 위 125m 검증 다음에] 거점 125m 찾기(Senses.Nearby 25구역)가 한 프레임에 여러 번·매 프레임 도는 곳: Unload 물건마다 ChestFor(→ForItem→NearBase, 한 상자에 물건 수×2번),
   CraftStep 상자가 열려 있는 동안(손님이 열면 최대 30초) 매 프레임 Needs·Have·NearBase, PlanJob 5초마다 FermentReady(125m OverlapSphere). 먼저 잼: 큰 거점에서 짐 정리·제작 때
   가장 긴 프레임(ms)을 diag에 → 눈에 띄면(예 16ms 넘음) Chests.Candidates에 같은 프레임·같은 깃발이면 한 번만 찾는 캐시(시험이 상자를 놓은 프레임에 바로 세는 곳 주의). 안 띄면 안 고침.
+★ 상자 기능(사용자 결정 2026-10-23, decisions.txt "상자 기능 확정") — 125m 검증·부하 검토 다음, 순서대로. 새 코드는 Plugin/Storage·Core/Storage(게임 무관 규칙은 Core + dotnet test):
+  ① 상자 재료로 바로 제작·건축: 바닐라에서 재료 세기·빼기 하는 곳(Player.HaveRequirementItems·GetFirstRequiredItem·HaveRequirements(Piece)·ConsumeResources,
+     InventoryGui.SetupRequirement 개수 표시 — 디컴파일로 다시 확인)을 내 가방 + 125m 상자(개인 포함)로. 빼기는 Chests.TryEdit(사람이 연 상자는 건너뜀). 시험 새로(제작·업그레이드·건축·개수 표시·총량).
+  ② 일꾼 상자 정리(개인 빼고 전부, 가장 많이 든 상자로 모음, 쉴 때 걸어서 + 아침 정산 때 한 번에). 시험(정리 뒤 물건 총량·개인 상자 그대로·열린 상자 안 건드림).
+  ③ 챗으로 내 개인 상자 준비(한 번·유지, 명령 꼴은 기존 ChatParser 관례로, 모자라면 만들거나 구함). 시험.
+  ④ 친구 단계(친구 오기 전): 사람끼리 동시 열기 + 친구 제작 재료 부탁(2초 제작 막대 안에 답). 같은 순간 복제는 감수, 못 넣으면 돌려줌. 시험은 가짜 손님(답 0.2~0.5초 늦춤).
 ★ [끝, 회차 101 — 가·나·다 모두 끝] 요청 코드 정리 — 관련 작업 때 작게(10-23 11:58, history.md "### 요청 · 10-23 11:58", ⑪ 산보다 먼저):
   가) [끝, 회차 99 — 커밋 d99bc33 · 시험 vh_portalbuildtest PASS 40/40, vh_crafttest PASS 23/23, vh_cooktest PASS 10/10, dotnet 434 · CraftStep.TakeAll·TestShortBy] CraftStep.Take가 실제로 꺼낸 개수를 돌려줌 → 부르는 쪽(PortalBuilder 2곳, MachineStep 3곳)이 덜 빠지면 되돌리거나 멈춤 + 일부러 덜 빠지게 하는 시험(재료 총량 보존).
   나) [끝, 회차 100 — 커밋 41bca93 · 시험 vh_farmtest PASS 25/25, vh_deathtest PASS 17/17, vh_crypttest PASS 24/24, dotnet 434] 귀환 통일: FarmJob.UpdateHome·GraveJob.UpdateHome·GatherJob.LeaveCrypt 깃발 순간이동을 WorkerAI.TeleportHome()(성공 확인)·RestHere()(실패 시 쉬기)로.
