@@ -271,6 +271,7 @@ function Backup-Wip {
 }
 
 function Write-Status($now, $last) {
+    $script:StatusNow = $now   # Wait-Until이 여기에 절전 상태를 덧붙인다
     # 할 일: progress "★ 지금 …" 머리줄 아래 들여 쓴 줄들에서 [끝]이 아닌 첫 번호 항목.
     # 번호 항목이 전부 [끝]이면 다음 "★ 지금" 머리줄로, 번호 항목이 없는 머리줄은 그 줄 자체가 할 일.
     $p = @(Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8)
@@ -393,17 +394,24 @@ function Limit-Until($tail) {
 
 function Wait-Until($t) {
     # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 자리 비움(입력 없음 10분)이면 최대 절전(사용자가 쓰는 중이면 그냥 기다림)
-    $bk = $false; $noHib = $false
+    # 잠들 때·못 잠들 때·15분 기다려도 입력 때문에 안 잠들 때(한 번)는 status.txt "지금"에 덧붙인다 → 밖에서도 보인다(2026-10-23).
+    $bk = $false; $noHib = $false; $told = $false; $t0 = Get-Date; $why = $script:StatusNow
     while ((Get-Date) -lt $t) {
-        if (-not $noHib -and ($t - (Get-Date)).TotalMinutes -gt 10 -and [VH.Power]::IdleMs() -gt 600000) {
+        $idle = [VH.Power]::IdleMs()
+        if (-not $noHib -and ($t - (Get-Date)).TotalMinutes -gt 10 -and $idle -gt 600000) {
             if (-not $bk) { Backup-Wip; $bk = $true }
             $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c exit'
             $set = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
             Register-ScheduledTask -TaskName 'VH loop wake' -Action $act -Trigger (New-ScheduledTaskTrigger -Once -At $t) -Settings $set -Force | Out-Null
             Log "최대 절전, $($t.ToString('MM-dd HH:mm')) 깨우기 예약"
+            Write-Status "$why — $(Get-Date -Format 'HH:mm')부터 최대 절전(깨우기 예약)" '-'
             [void][VH.Power]::SetThreadExecutionState($Release)
             & shutdown /h
-            if ($LASTEXITCODE) { Log "최대 절전 못 함(코드 $LASTEXITCODE) → 켠 채로 기다림"; $noHib = $true }
+            $code = $LASTEXITCODE
+            if ($code) {
+                Log "최대 절전 못 함(코드 $code) → 켠 채로 기다림"; $noHib = $true
+                Write-Status "$why — 최대 절전 못 함(shutdown /h 코드 $code), 켠 채로 기다림" '-'
+            }
             # 깨우기 예약으로 켜진(사람 없는) PC는 2분 안에 다시 잠든다 → 깨어나면 곧바로 Awake.
             # Start-Sleep은 절전 동안 시간이 안 흐르므로 벽시계로 2분을 잰다(절전 들어가는 동안 다시 걸지 않게).
             $h = Get-Date
@@ -411,6 +419,12 @@ function Wait-Until($t) {
             [void][VH.Power]::SetThreadExecutionState($Awake)
             if (((Get-Date) - $h).TotalSeconds -gt 150) { Log '깨어남' }
             continue
+        }
+        if (-not $told -and -not $noHib -and ((Get-Date) - $t0).TotalMinutes -ge 15 -and ($t - (Get-Date)).TotalMinutes -gt 10) {
+            $told = $true
+            $in = (Get-Date).AddMilliseconds(-[double]$idle).ToString('HH:mm')
+            Log "자리 비움 아님(마지막 입력 $in) → 안 잠듦"
+            Write-Status "$why — 키보드·마우스 입력이 있어 안 잠듦(마지막 입력 $in, 입력 없이 10분 지나면 잠듦)" '-'
         }
         Start-Sleep 30
     }
