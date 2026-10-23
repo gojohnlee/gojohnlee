@@ -80,8 +80,24 @@ namespace ValheimHelper
             float d0 = Utils.DistanceXZ(w.Ragnar.transform.position, w.Home);
             checks.Add($"거점에서 떨어져 발이 묶임 ({d0:0}m)", d0 > 30f);
 
-            float waited = 0f;
-            for (; waited < 150f && GatherJob.Rescues == rescues0; waited += 10f)
+            // 근처 막힘 건너뛰기(사용자 결정 10-23): 30초 넘게 못 가면 막힌 곳 너머 몇 m로 옮기고 구조 대사, 짐 그대로
+            int skips0 = GatherJob.NearSkips, items0 = w.Ragnar.GetInventory().NrOfItems();
+            Vector3 before = w.Ragnar.transform.position;
+            yield return TestKit.WaitFor(() => GatherJob.NearSkips > skips0 || GatherJob.Rescues > rescues0, 70f);
+            float skipAt = TestKit.Waited;
+            bool skipped = GatherJob.NearSkips > skips0;
+            Vector3 after = w.Ragnar.transform.position;
+            float moved = Utils.DistanceXZ(before, after);
+            bool ground = ZoneSystem.instance.GetGroundHeight(after, out float gh) && Mathf.Abs(after.y - gh) < 1.5f;
+            TestRunner.Log($"근처 막힘 건너뛰기: {skipAt:0}초, {moved:0.0}m 옮김, 땅과 {after.y - gh:0.0}m, 짐 {items0} → {w.Ragnar.GetInventory().NrOfItems()}");
+            checks.Add($"근처 30초 막힘 → 막힌 곳 너머로 옮김 ({skipAt:0}초, {moved:0.0}m)", skipped && skipAt >= 25f && moved >= 2f && moved <= 9f);
+            checks.Add("옮긴 자리가 땅 위", skipped && ground);
+            checks.Add($"짐 그대로 ({items0} → {w.Ragnar.GetInventory().NrOfItems()})", w.Ragnar.GetInventory().NrOfItems() == items0);
+            yield return new WaitForSeconds(1f);
+            checks.Add("구조 대사를 함", w.Heard.Exists(h => h.Contains("오딘") || h.Contains("신들") || h.Contains("빠져나왔")));
+
+            float waited = skipAt;
+            for (; waited < 300f && GatherJob.Rescues == rescues0; waited += 10f)
             {
                 yield return TestKit.WaitFor(() => GatherJob.Rescues > rescues0, 10f);
                 TestRunner.Log($"  [{waited + 10f:0}s] 묶인 자리에서 {Utils.DistanceXZ(w.Ragnar.transform.position, spot):0.0}m, {ai.Current}/{ai.Job?.StepName}");

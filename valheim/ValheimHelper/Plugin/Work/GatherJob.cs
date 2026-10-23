@@ -829,12 +829,13 @@ namespace ValheimHelper
             keep = true;
             moved = false;
             string why = hopKind ? HopBlocked() : "이 걷기는 안 함";
-            StuckNext next = m_book.WalkFailed(dest.x, dest.z, why == null);
+            bool near = why == NearWhy; // 근처: 목표 둘레 대신 막힌 곳 너머 몇 m로(NearSkip)
+            StuckNext next = m_book.WalkFailed(dest.x, dest.z, why == null || near);
             if (next == StuckNext.Hop)
             {
-                if (HopToward(dest, out why))
+                if (near ? NearSkip(dest, out why) : HopToward(dest, out why))
                 {
-                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 막힘 기록 ({dest.x:0},{dest.z:0}) 1번 → 목표 쪽 순간이동 {why}");
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 막힘 기록 ({dest.x:0},{dest.z:0}) 1번 → {(near ? "근처 막힘 건너뛰기" : "목표 쪽 순간이동")} {why}");
                     m_bestDist = float.MaxValue;
                     m_progressTimer = 0f;
                     m_stepTime = 0f;
@@ -866,7 +867,7 @@ namespace ValheimHelper
             if (m_hunt) return "사냥";
             if (m_npc.InInterior()) return "지하묘지·실내"; // 묘지 가기(GoCrypt)는 자기 막힘 처리라 여기 안 옴
             if (m_ai.EscortName != null) return "동행";
-            if (!FarFromPlayers(m_npc.transform.position)) return "플레이어 근처";
+            if (!FarFromPlayers(m_npc.transform.position)) return NearWhy;
             return null;
         }
 
@@ -897,11 +898,29 @@ namespace ValheimHelper
             return true;
         }
 
+        const string NearWhy = "플레이어 근처";
+        /// <summary>시험용: 근처 막힘 건너뛰기 횟수.</summary>
+        public static int NearSkips;
+
+        /// <summary>
+        /// 근처 막힘 건너뛰기(사용자 결정 2026-10-23): 플레이어 64m 안에서 30초 넘게 못 가면(비켜 가기·점프·경사로는 걷기가 이미 해 봄)
+        /// 막힌 곳 너머 몇 m(StuckHop.NearCandidates — 목표 쪽, 단단한 땅·물 아님·몸 자리 빔·위험 판단 통과)로 옮기고 "rescue" 말. 짐·체력·일은 그대로.
+        /// </summary>
+        bool NearSkip(Vector3 dest, out string why)
+        {
+            Vector3 from = m_npc.transform.position;
+            if (!LandNear(dest, out why, true, StuckHop.NearCandidates(from.x, from.z, dest.x, dest.z))) return false;
+            NearSkips++;
+            WorkerAI.StuckTeleports++;
+            m_npc.Say("rescue");
+            return true;
+        }
+
         /// <summary>
         /// HopToward·멀리선 이동 생략이 같이 쓰는 내려놓기: around 둘레 후보 중 안전한 첫 자리로 옮긴다.
         /// nearPlayerOk = 플레이어 64m 안이어도 됨(생략 중 플레이어가 지도상 위치에 다가와 그 근처에 내릴 때).
         /// </summary>
-        bool LandNear(Vector3 dest, out string why, bool nearPlayerOk = false)
+        bool LandNear(Vector3 dest, out string why, bool nearPlayerOk = false, IEnumerable<StuckHop.XZ> candidates = null)
         {
             ZNetView nv = m_npc.GetComponent<ZNetView>();
             if (nv == null || !nv.IsOwner()) { why = "소유자 아님"; return false; }
@@ -909,7 +928,7 @@ namespace ValheimHelper
             Vector3 from = m_npc.transform.position;
             int tried = 0;
             string last = "후보 없음";
-            foreach (var c in StuckHop.Candidates(from.x, from.z, dest.x, dest.z))
+            foreach (var c in candidates ?? StuckHop.Candidates(from.x, from.z, dest.x, dest.z))
             {
                 tried++;
                 var p = new Vector3((float)c.X, dest.y, (float)c.Z);
@@ -2005,7 +2024,10 @@ namespace ValheimHelper
             if (m_ai.Carving) return false; // 구덩이에서 경사로를 깎는 중: 막힌 게 아니다
             if (m_ai.OnInteriorPath) { m_progressTimer = 0f; return false; } // 지하묘지 안 길을 따라 도는 중(목표에서 잠시 멀어질 수 있음)
             m_progressTimer += dt;
-            return m_progressTimer > MoveStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp;
+            if (m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp) return true;
+            if (m_progressTimer <= MoveStuckLimit) return false;
+            // 근처에서 막힘 건너뛰기를 할 걷기는 30초까지 더 해 본다(사용자 결정 10-23 "근처 막힘 건너뛰기")
+            return m_progressTimer > (float)StuckHop.NearStuckSeconds || HopBlocked() != NearWhy;
         }
     }
 }

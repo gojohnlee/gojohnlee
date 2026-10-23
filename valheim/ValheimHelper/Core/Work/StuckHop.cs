@@ -57,5 +57,47 @@ namespace ValheimHelper.Core.Work
                 }
             }
         }
+
+        /// <summary>근처 막힘 건너뛰기(사용자 결정 2026-10-23 "근처 막힘 건너뛰기"): 플레이어 근처에서 이 초 넘게 진척이 없으면 막힌 곳 너머로 옮긴다.</summary>
+        public const double NearStuckSeconds = 30.0;
+        /// <summary>막힌 곳 너머 내릴 거리(m, 일꾼에서 목표 쪽으로), 가까운 것부터. 몸 반지름 + 바위·나무 하나를 넘는 4m부터.</summary>
+        public static readonly double[] NearSteps = { 4.0, 6.0, 8.0 };
+        /// <summary>목표 쪽 방향에서 벌리는 각(도), 곧장부터.</summary>
+        public static readonly double[] NearAngles = { 0.0, 30.0, -30.0, 60.0, -60.0 };
+
+        /// <summary>
+        /// 근처 막힘 건너뛰기 자리 후보: 일꾼에서 목표 쪽으로 NearSteps × NearAngles(가까운 거리부터, 같은 거리에선 곧장부터).
+        /// 목표를 1m 넘게 지나치거나 목표에 2m도 안 다가가는 자리는 뺀다. 목표가 가까워 그런 자리가 없으면 목표 둘레(Candidates) 중 일꾼에서 1.5~10m.
+        /// </summary>
+        public static IEnumerable<XZ> NearCandidates(double npcX, double npcZ, double destX, double destZ)
+        {
+            double dx = destX - npcX, dz = destZ - npcZ;
+            double d = Math.Sqrt(dx * dx + dz * dz);
+            bool any = false;
+            if (d > 1e-6)
+            {
+                double baseAngle = Math.Atan2(dz, dx);
+                foreach (double s in NearSteps)
+                {
+                    if (s > d - 1.0) break;
+                    foreach (double deg in NearAngles)
+                    {
+                        double a = baseAngle + deg * Math.PI / 180.0;
+                        double x = npcX + Math.Cos(a) * s, z = npcZ + Math.Sin(a) * s;
+                        double left = Math.Sqrt((destX - x) * (destX - x) + (destZ - z) * (destZ - z));
+                        if (left > d - 2.0) continue;
+                        any = true;
+                        yield return new XZ(x, z);
+                    }
+                }
+            }
+            if (any) yield break;
+            foreach (var c in Candidates(npcX, npcZ, destX, destZ))
+            {
+                double ox = c.X - npcX, oz = c.Z - npcZ;
+                double o2 = ox * ox + oz * oz;
+                if (o2 >= 1.5 * 1.5 && o2 <= 100.0) yield return c; // 제자리·먼 곳 빼고
+            }
+        }
     }
 }

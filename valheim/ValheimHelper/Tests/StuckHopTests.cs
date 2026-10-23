@@ -40,4 +40,30 @@ public class StuckHopTests
         Assert.Equal(8.0, c.X, 6);
         Assert.Equal(5.0, c.Z, 6);
     }
+
+    [Fact]
+    public void NearCandidatesAheadTowardTarget()
+    {
+        var c = StuckHop.NearCandidates(0, 0, 40, 0).ToList();
+        Assert.InRange(c.Count, 10, StuckHop.NearSteps.Length * StuckHop.NearAngles.Length); // 4m 앞 ±60°는 2m도 안 다가가 빠짐
+        // 첫 후보: 곧장 4m 앞
+        Assert.Equal(4.0, c[0].X, 6);
+        Assert.Equal(0.0, c[0].Z, 6);
+        // 모두 일꾼에서 8m 안, 목표에 2m 넘게 다가감
+        Assert.All(c, p => Assert.True(Math.Sqrt(p.X * p.X + p.Z * p.Z) <= 8.0 + 1e-6));
+        Assert.All(c, p => Assert.True(Math.Sqrt((40 - p.X) * (40 - p.X) + p.Z * p.Z) <= 38.0));
+    }
+
+    [Fact]
+    public void NearCandidatesDoNotOvershootTarget()
+    {
+        // 목표 6m: 4m 앞만(6m·8m는 목표를 지나침)
+        var c = StuckHop.NearCandidates(0, 0, 6, 0).ToList();
+        Assert.NotEmpty(c);
+        Assert.All(c, p => Assert.True(Math.Sqrt(p.X * p.X + p.Z * p.Z) <= 4.0 + 1e-6));
+        // 목표 3m: 앞쪽 자리 없음 → 목표 둘레(일꾼 10m 안)
+        var ring = StuckHop.NearCandidates(0, 0, 3, 0).ToList();
+        Assert.NotEmpty(ring);
+        Assert.All(ring, p => Assert.InRange(p.X * p.X + p.Z * p.Z, 1.5 * 1.5, 100.0 + 1e-6));
+    }
 }
