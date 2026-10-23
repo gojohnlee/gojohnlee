@@ -37,6 +37,7 @@ namespace ValheimHelper
             Step("vh_crafttest", CraftTest.Register);
             Step("vh_claudetest", ClaudeTest.Register);
             Step("vh_nametest", NameTest.Register);
+            Step("vh_stocktest", StockTest.Register);
             Step("vh_skilltest", SkillTest.Register);
             Step("vh_refilltest", RefillTest.Register);
             Step("vh_raidtest", RaidTest.Register);

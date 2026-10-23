@@ -24,7 +24,7 @@ namespace ValheimHelper
         static readonly Dictionary<int, bool> s_chestPrefab = new Dictionary<int, bool>();
 
         /// <summary>건축물 상자 프리팹인가(Container·Piece·WearNTear — NearBase·ReadAll과 같은 조건, 수레·배 제외). 프리팹마다 한 번만 봄.</summary>
-        static bool IsChest(ZDO zdo)
+        internal static bool IsChest(ZDO zdo)
         {
             int hash = zdo.GetPrefab();
             if (s_chestPrefab.TryGetValue(hash, out bool yes)) return yes;
