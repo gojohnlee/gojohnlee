@@ -25,15 +25,15 @@ public class SpeechTests
         var s = new Speech(new Random(2));
         var seen = new HashSet<string>();
         for (int i = 0; i < 200; i++) seen.Add(s.Say(Personality.Scv, "escort"));
-        Assert.Equal(3, seen.Count);
+        Assert.Equal(4, seen.Count);
     }
 
     [Fact]
     public void FillsArguments()
     {
         var s = new Speech();
-        string line = s.Say(Personality.Alarak, "status", new Dictionary<string, string> { ["state"] = "대기 중이다", ["hp"] = "25", ["max"] = "25" });
-        Assert.Equal("대기 중이다. 체력 25/25. 걱정할 것 없다.", line);
+        string line = s.Say(Personality.Alarak, "status", new Dictionary<string, string> { ["state"] = "노는 중", ["hp"] = "25", ["max"] = "25" });
+        Assert.Equal("노는 중! 체력 25/25, 히히.", line);
     }
 
     [Fact]
