@@ -30,9 +30,9 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [루프 회차 111] 상자 기능 ① 나) 망치 건축도 거점 125m 상자 재료를 바로 씀(가방 + 상자 합, 열린 상자 뺌), vh_stocktest 21/21·crafttest 23/23 PASS. 다음은 ① 다) 개수 표시.
 - [루프 회차 110] 상자 기능 ① 가) 제작대에서 거점 125m 상자 재료를 바로 씀(가방 먼저 → 가까운 상자, 열린·남의 개인 상자 뺌), vh_stocktest 14/14 PASS. 다음은 ① 나) 건축.
 - [루프 회차 109] 125m 상자 찾기 부하 재기: 한 번 0.79ms → 0.10ms로 고침(짐 정리 최악 50ms → 6.5ms), 상자·짐 시험 6개 PASS. 다음은 상자 기능 ①.
-- [루프 회차 108] 요청 거점 범위 125m 끝: 게임 시험 15개 PASS(flagtest는 먼 상자 자리를 125m 밖으로 고쳐 12/12). 다음은 125m 부하 재기.
 
 다음 (순서대로)
 ★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
@@ -44,7 +44,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   가장 긴 프레임(ms)을 diag에 → 눈에 띄면(예 16ms 넘음) Chests.Candidates에 같은 프레임·같은 깃발이면 한 번만 찾는 캐시(시험이 상자를 놓은 프레임에 바로 세는 곳 주의). 안 띄면 안 고침.
 ★ 상자 기능(사용자 결정 2026-10-23, decisions.txt "상자 기능 확정") — 125m 검증·부하 검토 다음, 순서대로. 새 코드는 Plugin/Storage·Core/Storage(게임 무관 규칙은 Core + dotnet test):
   ① 조각: 가) [끝, 회차 110 — 커밋 82f302b · 시험 vh_stocktest PASS 14/14, vh_crafttest PASS 23/23, vh_bagtest 9/9, vh_nametest 9/9, vh_preptest 22/22, dotnet 444 · Core StockTake, Plugin Storage/BaseStock·CraftPatches] 제작·업그레이드(HaveRequirementItems·ConsumeResources·DoCrafting 같은 프레임 셈). 하나만 제작법(requireOnlyOneIngredient)은 안 함.
-     나) 건축: HaveRequirements(Piece, CanBuild·CanAlmostBuild) + PlacePiece 때 Fresh(빼기는 ConsumeResources 패치가 이미 함) + 시험 칸(망치로 놓기·모자라면 안 놓임·총량).
+     나) [끝, 회차 111 — 커밋 fc3ecb2 · 시험 vh_stocktest PASS 21/21, vh_crafttest PASS 23/23, dotnet 444 · CraftPatches.HavePiece·Place] 건축: HaveRequirements(Piece, CanBuild·CanAlmostBuild) + PlacePiece 때 Fresh(빼기는 ConsumeResources 패치가 이미 함) + 시험 칸(망치로 놓기·모자라면 안 놓임·총량).
      다) 개수 표시: SetupRequirement 1751줄(가방 + 상자, 0.5초 캐시) + 여러 개 만들기(m_multiCraftAmount 최대 계산이 가방만 세는지 확인) 라) 예약(아래 + 예약).
      원래 내용: 바닐라에서 재료 세기·빼기 하는 곳(Player.HaveRequirementItems·GetFirstRequiredItem·HaveRequirements(Piece)·ConsumeResources,
      InventoryGui.SetupRequirement 개수 표시 — 디컴파일로 다시 확인)을 내 가방 + 125m 상자(개인 포함)로. 빼기는 Chests.TryEdit(사람이 연 상자는 건너뜀). 시험 새로(제작·업그레이드·건축·개수 표시·총량).
