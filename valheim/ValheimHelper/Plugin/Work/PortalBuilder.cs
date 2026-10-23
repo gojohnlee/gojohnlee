@@ -194,6 +194,9 @@ namespace ValheimHelper
 
         public static int MineWithTag(string tag) => Mine().FindAll(z => z.GetString(ZDOVars.s_tag) == tag).Count;
 
+        /// <summary>포탈 재료 프리팹 이름들(짐 정리가 들고 가는 한 몫을 상자에 넣지 않게).</summary>
+        public static HashSet<string> ShareItems() => new HashSet<string>(Cost().ConvertAll(c => c.Item));
+
         /// <summary>포탈 한 몫(재료 전부)을 들고 있나.</summary>
         public static bool Carrying(Inventory inv)
         {

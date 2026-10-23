@@ -1678,7 +1678,7 @@ namespace ValheimHelper
         /// <summary>나가기 전 짐 정리: 들고 다닐 것·모으는 물건 말고 다른 짐은 상자에 넣는다(다른 짐으로 가방이 차서 못 모으는 일 방지).</summary>
         bool UpdateUnload(float dt)
         {
-            if (m_unload == null) m_unload = new Unload(m_npc, Item);
+            if (m_unload == null) m_unload = new Unload(m_npc, Item) { Hold = m_portalTag != null ? PortalBuilder.ShareItems() : null };
             if (m_unload.Update(dt)) return true;
             Go(Step.Prep);
             return true;

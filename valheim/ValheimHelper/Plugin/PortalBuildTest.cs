@@ -43,7 +43,7 @@ namespace ValheimHelper
         }
 
         /// <summary>남은 일꾼 포탈(지난 시험 것 포함)을 재료 없이 지운다.</summary>
-        static int ClearMine()
+        internal static int ClearMine()
         {
             int n = 0;
             foreach (var z in PortalBuilder.Mine())
@@ -70,7 +70,7 @@ namespace ValheimHelper
             return string.Join(", ", parts);
         }
 
-        static void Fill(Container c, List<PortalCost> cost, int portals)
+        internal static void Fill(Container c, List<PortalCost> cost, int portals)
         {
             foreach (var kv in WorkerPortal.Need(cost, portals))
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -62,6 +63,11 @@ namespace ValheimHelper
             if (!Features.SaveWork) { checks.Add("설정 Features.SaveWork 켜짐", false); yield break; }
             string n1 = w.Claude.NpcName;
             TestKit.ClearBaseStock(w, "Wood", "Stone");
+            PortalBuildTest.ClearMine();
+            var cost = PortalBuilder.Cost();
+            TestKit.ClearBaseStock(w, cost.ConvertAll(c => c.Item).ToArray());
+            Inventory inv = w.Claude.GetInventory();
+            foreach (var k in cost) inv.RemoveItem(CraftStep.SharedName(k.Item), inv.CountItems(CraftStep.SharedName(k.Item)));
             GatherTest.Say($"!{n1} 나무 10", null);
             yield return new WaitForSeconds(1f);
             GatherTest.Say($"!{n1} 돌 3", null); // 급하지 않음 → 대기열
@@ -77,6 +83,14 @@ namespace ValheimHelper
             var g = w.Claude.Ai.Job as GatherJob;
             checks.Add($"아직 나무 하는 중 ({w.Claude.Ai.Job?.Label})", g != null && g.Item == "Wood");
             if (g == null) yield break;
+            // 포탈 운반 칸(요청 10-23 09:09 나): 거점 쪽 1개를 놓고 일터 쪽 한 몫을 든 채 종료 → 2번째가 이름표·짐·포탈 수를 이어 받는지
+            Vector3 farPt = w.Home + new Vector3(0f, 0f, 400f);
+            string tag = WorkerPortal.Tag(Senses.ZoneOf(farPt).ToString());
+            PortalBuildTest.Fill(w.Chest, cost, 2);
+            bool placed = PortalBuilder.StartPair(tag, w.Home, inv, true, out _, out string why);
+            g.LoadPortal(tag);
+            checks.Add($"거점 쪽 포탈 놓고 한 몫 듦 ({why}, 포탈 {PortalBuilder.MineWithTag(tag)}개)",
+                placed && g.PortalCarryTag == tag && PortalBuilder.MineWithTag(tag) == 1 && PortalBuilder.Carrying(inv));
             WorkSaves.SaveNow(w.Claude);
             WorkSaves.SaveNow(w.Alarak);
             var st = new List<string>
@@ -85,6 +99,7 @@ namespace ValheimHelper
                 "left=" + (g.Target - g.Delivered), "carried=" + Carried(w.Claude, "Wood"),
                 "stocked=" + Base(w.Home, "Wood"), "queue=" + w.Claude.Ai.Queue.Count,
                 "npcs=" + Workers.AllZdos().Count, "flags=" + BaseFlag.AllFlags().Count,
+                "ptag=" + tag, "pfar=" + V(farPt),
             };
             File.WriteAllLines(StatePath, st.ToArray());
             TestRunner.Log("저장한 상태: " + string.Join(", ", st.ToArray()));
@@ -122,7 +137,7 @@ namespace ValheimHelper
             w.OnHeard = (n, t) => w.Heard.Add(n + ": " + t);
             ChatNet.Heard += w.OnHeard;
             try { yield return Body2(w, checks, st); }
-            finally { TestKit.Restore(w); }
+            finally { TestKit.Restore(w); PortalBuildTest.ClearMine(); }
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             TestKit.End(w, checks);
@@ -145,13 +160,34 @@ namespace ValheimHelper
             checks.Add("상자 그대로 있음", w.Chest != null);
             if (w.Chest == null) yield break;
             checks.Add($"상자 나무 그대로 ({Base(w.Home, "Wood")}/{stocked})", Base(w.Home, "Wood") == stocked);
-            checks.Add($"짐 그대로 (나무 {Carried(w.Claude, "Wood")}/{carried}, 도끼 있음)",
-                Carried(w.Claude, "Wood") == carried && Carried(w.Claude, "AxeFlint") == 1);
+            // 게임이 실제로 꺼지기까지(로그아웃 저장) 몇 프레임 일꾼이 더 움직여 나무를 더 주울 수 있음 → 저장 때보다 적지만 않으면 됨(작업 저장도 1초마다라 그 짐과 맞음)
+            checks.Add($"짐 그대로 (나무 {Carried(w.Claude, "Wood")} ≥ {carried}, 도끼 있음)",
+                Carried(w.Claude, "Wood") >= carried && Carried(w.Claude, "AxeFlint") == 1);
             yield return TestKit.WaitFor(() => w.Claude.Ai.Job is GatherJob, 10f); // WorkSaves가 불러오고 한가하면 첫 칸을 꺼냄
             var g = w.Claude.Ai.Job as GatherJob;
             checks.Add($"하던 나무 이어 하기 ({g?.Item} 목표 {g?.Target}, 남았던 {left})", g != null && g.Item == "Wood" && g.Target == left);
             checks.Add($"대기열 돌 3 그대로 ({w.Claude.Ai.Queue.Count}칸/{st["queue"]})", w.Claude.Ai.Queue.Count.ToString() == st["queue"]);
             if (g == null) yield break;
+            if (st.TryGetValue("ptag", out string ptag))
+            {
+                var cost = PortalBuilder.Cost();
+                Inventory inv = w.Claude.GetInventory();
+                bool ChestEmpty() => cost.TrueForAll(k => GatherTest.Count(w.Chest, k.Item) == 0);
+                checks.Add($"포탈 운반 이어 감 (이름표 {g.PortalCarryTag}, 포탈 {PortalBuilder.MineWithTag(ptag)}개, 한 몫 {PortalBuilder.Carrying(inv)})",
+                    g.PortalCarryTag == ptag && PortalBuilder.MineWithTag(ptag) == 1 && PortalBuilder.Carrying(inv) && ChestEmpty());
+                // 도착(시험은 35m 밖 자리로 옮김) → 일터 쪽을 놓아 짝, 재료는 든 한 몫만 씀. 끝나면 원래 자리로 돌려 나무 일을 잇게 함
+                Vector3 at = w.Claude.transform.position;
+                Quaternion rot = w.Claude.transform.rotation;
+                w.Claude.TeleportTo(GatherTest.Ground(w.Home + new Vector3(0f, 0f, 35f)), rot, false);
+                yield return new WaitForSeconds(1f);
+                g.TestPortalArrive(Senses.ZoneOf(P(st["pfar"])));
+                yield return new WaitForSeconds(1f);
+                var pair = PortalBuilder.Mine().FindAll(z => z.GetString(ZDOVars.s_tag) == ptag);
+                bool linked = pair.Count == 2 && pair[0].GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal) == pair[1].m_uid;
+                checks.Add($"재시작 뒤 도착해 짝 완성 ({pair.Count}개, 재료 합 그대로)",
+                    linked && g.PortalCarryTag == null && !PortalBuilder.Carrying(inv) && ChestEmpty());
+                w.Claude.TeleportTo(at, rot, false);
+            }
             yield return TestKit.WaitFor(() => Base(w.Home, "Stone") >= 3 && w.Claude.Ai.Job == null && w.Claude.Ai.Queue.Count == 0, 420f);
             int wood = Base(w.Home, "Wood"), stone = Base(w.Home, "Stone");
             checks.Add($"나무·돌 끝까지 ({TestKit.Waited:0}초, 지금 {w.Claude.Ai.Current})", TestKit.Ok);

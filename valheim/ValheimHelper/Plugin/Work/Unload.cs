@@ -15,6 +15,8 @@ namespace ValheimHelper
         /// <summary>이 물건은 넣지 않는다(채집 중인 물건: 그건 GatherJob이 세면서 넣는다).</summary>
         readonly string m_except;
         readonly HashSet<ItemDrop.ItemData> m_skip = new HashSet<ItemDrop.ItemData>();
+        /// <summary>이 프리팹들도 넣지 않는다(GatherJob: 일터로 들고 가는 포탈 한 몫 — 불러온 뒤 첫 짐 정리에서 상자로 가지 않게).</summary>
+        public HashSet<string> Hold;
         /// <summary>넣을 상자가 꽉 차(또는 없어) 못 넣고 건너뛴 것.</summary>
         public IEnumerable<ItemDrop.ItemData> Skipped => m_skip;
         Container m_chest;
@@ -86,6 +88,7 @@ namespace ValheimHelper
         // 거점에서 고칠 수 있는 닳은 장비는 지닌다(다음 출발 준비가 고침, 상자에 넣으면 부러진 채 남던 것)
         bool Storable(ItemDrop.ItemData it, HashSet<ItemDrop.ItemData> keep) =>
             it.m_dropPrefab != null && (!keep.Contains(it) || Prep.ExtraMeads(m_npc, it) > 0) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except
+            && (Hold == null || !Hold.Contains(it.m_dropPrefab.name))
             && Repair.StationFor(it, m_npc.Home) == null;
 
         ItemDrop.ItemData NextToStore()
