@@ -35,6 +35,13 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 - [루프 회차 111] 상자 기능 ① 나) 망치 건축도 거점 125m 상자 재료를 바로 씀(가방 + 상자 합, 열린 상자 뺌), vh_stocktest 21/21·crafttest 23/23 PASS. 다음은 ① 다) 개수 표시.
 
 다음 (순서대로)
+★ 지금 먼저(사용자 결정 10-23 클라우드, decisions.txt "묻힌 광맥 채굴·구덩이") — E021·R5 마무리, 상자 ② 전에. 순서대로:
+  가) 경사로 깎기는 곡괭이 내구도와 무관: WorkerAI.StartCarve·UpdateCarve가 내구도 0 곡괭이도 씀(지금은 BestTool·HoldTool이 부러진 것을 거름), 깎기 곡괭이질은 내구도 안 줄임.
+     부러진 무기로 공격이 되는지·땅 깎기가 어디서 나오는지(Attack·m_spawnOnHitTerrain) 디컴파일로 확인 → 안 되면 깎기만 직접 지형 처리. 곡괭이가 아예 없으면 지금처럼.
+  나) 8m 아래 조각: 땅 낮춤 한계(NoDig.MaxDepth 8)에 닿은 바닥에서 바닥을 치면 그 아래 조각에 직접 피해(RockAim).
+  다) 헛파기 원인(E021 300~420초 땅만 53번): 겨눈 조각·깊이 로그 → 원인 찾기는 vh-debug.
+  라) 멀리(모든 플레이어 64m 밖): 묻힌 조각은 흙 파기 0번, 바로 직접 피해(곡괭이 단계·내구도 그대로), 광석은 그 자리에서 주움. 시험 칸은 플레이어를 멀리 두고.
+  시험: vh_silvertest(조각 다 캠·곡괭이 다 닳아도 경사로로 나옴·짐 개수 보존) + vh_pittest·vh_coppertest + 기본 묶음. 되메우기·나무 계단은 안 함.
 ★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
