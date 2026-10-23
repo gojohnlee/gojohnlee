@@ -20,6 +20,10 @@ namespace ValheimHelper
         public bool Pickable;
         /// <summary>서 있는 나무: 쓰러뜨리면 통나무가 넘어지며 굴러 사람을 친다(바닐라 TreeLog 충돌 피해).</summary>
         public bool Falls;
+        /// <summary>쓰러진 통나무(TreeLog, 반토막 포함): 구르는 동안 부딪히면 사람을 친다(ImpactEffect).</summary>
+        public bool Log;
+        /// <summary>쪼개면 반토막 통나무가 생기는 통나무(TreeLog.m_subLogPrefab): 반토막이 그 자리에 생겨 구른다.</summary>
+        public bool Splits;
         /// <summary>여러 물건 중 무작위로 떨구는 통·궤짝(barrell 등, 부수는 것에 물건 3종 이상). 사냥감이 있는 물건은 이걸 얻는 법으로 안 친다(사슴 가죽).</summary>
         public bool Loot;
         /// <summary>땅에 묻혀 숨는 광맥(Beacon이 붙음 — 산 은). 묻혔으면 위시본을 얻어야 안다(HiddenOres, ⑪).</summary>
@@ -146,7 +150,7 @@ namespace ValheimHelper
             var log = p.GetComponent<TreeLog>();
             if (log != null)
             {
-                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = log.m_minToolTier, Priority = 30f };
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.Axe, MinToolTier = log.m_minToolTier, Priority = 30f, Log = true, Splits = log.m_subLogPrefab != null };
                 AddDrops(r, log.m_dropWhenDestroyed);
                 AddFrom(r, Describe(log.m_subLogPrefab, depth + 1));
                 return r;

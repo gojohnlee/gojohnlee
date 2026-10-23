@@ -238,14 +238,23 @@ namespace ValheimHelper
         /// </summary>
         static void Cleanup(Vector3 home)
         {
-            int creatures = ClearCreatures(home), drops = 0;
+            int creatures = ClearCreatures(home), drops = 0, logs = 0;
             foreach (var v in Drops(home))
             {
                 v.ClaimOwnership();
                 ZNetScene.instance.Destroy(v.gameObject);
                 drops++;
             }
-            if (creatures + drops > 0) TestRunner.Log($"끝 정리: 생물 {creatures}·땅의 물건 {drops} 치움");
+            // 시험이 남긴 통나무(쓰러뜨린 나무·쪼갠 반토막)도 치운다: 다음 시험 일꾼 곁에서 밀리거나 구르면 친다(E020 — 회차 95 묶음 stonetest가 Tree에 죽음)
+            foreach (var zdo in Senses.Nearby(home, StartRadius))
+            {
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v == null || !v.IsValid() || v.GetComponent<TreeLog>() == null) continue;
+                v.ClaimOwnership();
+                ZNetScene.instance.Destroy(v.gameObject);
+                logs++;
+            }
+            if (creatures + drops + logs > 0) TestRunner.Log($"끝 정리: 생물 {creatures}·땅의 물건 {drops}·통나무 {logs} 치움");
             Plugin.Instance.StartCoroutine(VerifyCleanup(home));
         }
 

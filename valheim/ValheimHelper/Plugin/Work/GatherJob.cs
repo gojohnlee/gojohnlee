@@ -77,6 +77,15 @@ namespace ValheimHelper
         const float ChopLimit = 10f * 60f;
         /// <summary>나무를 쓰러뜨린 뒤 통나무가 멈출 때까지 기다리는 시간.</summary>
         const float FallWait = 4f;
+        /// <summary>쓰러뜨리거나 쪼갠 뒤 둘레 통나무가 멈추기를 기다리는 최대 시간(비탈을 오래 구르는 것 등), 그 둘레(m).</summary>
+        const float SettleLimit = 12f, LogWatch = 15f;
+        /// <summary>오는 통나무가 이만큼 안이면(가장 가까운 점까지 수평 m) 비킨다.</summary>
+        const float DodgeRange = 6f;
+        /// <summary>
+        /// 이보다 빠르면(m/s, rad/s) 통나무가 아직 구른다, 일꾼 쪽으로 이보다 빨리 다가오면(m/s) 오는 것.
+        /// 바닐라 통나무 충돌 피해는 그 점 속도 1m/s부터(반토막 beech_log_half 최소 1·최대 5, 피해 합 80, 일꾼이 받는 건 약 50 → 체력 25면 약 3m/s에 죽음).
+        /// </summary>
+        const float RollSpeed = 0.5f, RollSpin = 1f, ComeSpeed = 0.5f;
 
         public GatherJob(WorkerNpc npc, string item, int target, HashSet<ToolKind> ways)
         {
@@ -604,6 +613,8 @@ namespace ValheimHelper
                 if (info.Pickable && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
                 // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
                 if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f)) { m_skip.Add(zdo.m_uid); continue; }
+                // 다른 나무·바위에 높이 걸린 쪼개지는 통나무는 고르지 않는다: 밑에서 쪼개면 반토막이 머리 위에 생겨 떨어진다(HungLog, E020)
+                if (HungLog(zdo, info)) continue;
                 if (info.Tool != ToolKind.None)
                 {
                     ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
@@ -635,6 +646,7 @@ namespace ValheimHelper
                 string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
                     : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && Farmland(zdo.GetPosition()) ? "밭 작물"
                     : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) ? "건축물 4m 안"
+                    : HungLog(zdo, info) ? "높이 걸린 통나무"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
                     : Utils.DistanceXZ(zdo.GetPosition(), pos) > Senses.SightRange ? "시야 밖" : "고를 수 있음";
@@ -683,6 +695,20 @@ namespace ValheimHelper
             ZDO zdo = ZDOMan.instance.GetZDO(m_targetId);
             if (zdo == null) { Go(Step.Collect); return true; }
             m_targetPos = zdo.GetPosition();
+            if (m_targetInfo != null && m_targetInfo.Log && m_stepTime < SettleLimit && Rolling(zdo, out Rigidbody body, out Vector3 vel))
+            {
+                // 고른 통나무가 아직 구른다(쪼갠 반토막·막 쓰러진 통나무): 다가가지 않고 멈출 때까지 기다린다, 이쪽으로 오면 비킨다
+                // (E020 진단: 구르는 반토막 쪽으로 걸어가다 부딪힘)
+                if (Coming(m_targetPos, body, vel, out Vector3 at)) DodgeLog(dt, at);
+                else m_ai.StopMoving();
+                return true;
+            }
+            if (HungLog(zdo, m_targetInfo))
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 높이 걸린 통나무(뿌리 높이 {m_targetPos.y:0.0}) → 안 쪼갬");
+                Skip();
+                return true;
+            }
             if (Walk(dt, m_targetPos, m_reach) || Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f || TouchingRock(zdo))
             {
                 m_swings = m_swingsNoProgress = 0;
@@ -692,6 +718,8 @@ namespace ValheimHelper
                 m_lastBlocked = m_ai.BlockedDigs;
                 m_saidDig = false;
                 m_lastHealth = null; // 캐기 첫 프레임에 잰다(HealthMark는 인스턴스가 필요)
+                Vector3 me = m_npc.transform.position;
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 캐기 시작(뿌리 ({m_targetPos.x:0.0},{m_targetPos.y:0.0},{m_targetPos.z:0.0})까지 {Utils.DistanceXZ(m_targetPos, me):0.0}m, 높이차 {me.y - m_targetPos.y:0.0})");
                 Go(Step.Work);
                 return true;
             }
@@ -887,6 +915,7 @@ namespace ValheimHelper
                 return true;
             }
             if (m_targetInfo == null) { Skip(); return true; }
+            if (m_targetInfo.Log) m_targetPos = zdo.GetPosition(); // 통나무는 맞으면 밀려 움직인다: 쪼개진 뒤 물러날 때 지금 자리에서
             if (m_targetInfo.Pickable)
             {
                 // 손으로 줍기: 바닐라 Interact(스킬만 플레이어 전용). 떨어진 것은 Collect가 줍는다.
@@ -1070,12 +1099,23 @@ namespace ValheimHelper
                     if (dd < best) { best = dd; hitCol = col; }
                 }
             Vector3 point = hitCol != null ? Closest(hitCol, me) : target.transform.position + Vector3.up;
+            Vector3 dir = point - me;
+            if (target.GetComponent<TreeBase>() != null)
+            {
+                // 서 있는 나무는 맞은 방향으로 넘어간다(TreeBase.SpawnLog: 꼭대기에 hitDir×0.2×질량). 나무 충돌체(Lod0)는 가지까지 덮는 오목한 메시라
+                // 경계 상자로 재면 몸이 그 안이어서 맞은 점 = 내 가슴, 방향 0 → 아무 쪽으로나 넘어져 일꾼 쪽으로 올 수 있다(E020 진단).
+                // 바닐라처럼 줄기(뿌리 1m 위)를 수평으로 친 것으로 한다 → 일꾼 반대쪽으로 넘어감(Collect가 뿌리 반대로 물러남).
+                point = m_targetPos + Vector3.up;
+                dir = point - me;
+                dir.y = 0f;
+            }
+            if (dir.sqrMagnitude < 0.0001f) dir = m_npc.transform.forward;
             var hit = new HitData
             {
                 m_damage = tool.GetDamage(),
                 m_toolTier = (short)tool.m_shared.m_toolTier,
                 m_point = point,
-                m_dir = (point - me).normalized,
+                m_dir = dir.normalized,
                 m_skill = tool.m_shared.m_skillType,
                 m_hitCollider = hitCol,
             };
@@ -1083,7 +1123,8 @@ namespace ValheimHelper
             hit.SetAttacker(m_npc);
             d.Damage(hit);
             m_npc.RaiseSkill(tool.m_shared.m_skillType);
-            Plugin.Log.LogInfo($"{m_npc.NpcName}: 공격 판정이 안 닿아 직접 피해 {hit.m_damage.m_chop + hit.m_damage.m_pickaxe:0}");
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: 공격 판정이 안 닿아 직접 피해 {hit.m_damage.m_chop + hit.m_damage.m_pickaxe:0} " +
+                               $"({m_targetInfo?.Prefab} {hitCol?.name}, 맞은 점까지 {Vector3.Distance(point, me):0.0}m, 방향 ({hit.m_dir.x:0.0},{hit.m_dir.y:0.0},{hit.m_dir.z:0.0}))");
         }
 
         void Skip()
@@ -1291,16 +1332,29 @@ namespace ValheimHelper
         {
             // 떨어지기를 기다린다: 줍는 것(Pickable)은 바로 생기고, 베고 캔 것은 통나무·바위가 부서지며 흩어진다.
             float wait = m_targetInfo != null && m_targetInfo.Pickable ? 0.3f : 1.2f;
-            if (m_targetInfo != null && m_targetInfo.Falls && m_stepTime < FallWait)
+            if (m_targetInfo != null && (m_targetInfo.Falls || m_targetInfo.Splits))
             {
-                // 서 있는 나무를 쓰러뜨렸다: 통나무가 넘어지며 구르는 동안 뒤로 물러나 기다린다
-                // (0.3.7: 바로 주우러 가다 구르는 통나무에 깔려 죽음, 체력 25)
-                Vector3 me = m_npc.transform.position, back = me - m_targetPos;
-                back.y = 0f;
-                if (back.sqrMagnitude < 0.01f) back = -m_npc.transform.forward;
-                if (m_stepTime < 1.5f) m_ai.MoveToPoint(dt, me + back.normalized * 3f, 0.5f, true);
-                else m_ai.StopMoving();
-                return true;
+                // 서 있는 나무를 쓰러뜨렸거나 통나무를 쪼갰다: 통나무(반토막)가 넘어지며 구르는 동안 뒤로 물러나, 다 멈출 때까지 기다린다
+                // (0.3.7: 바로 주우러 가다 구르는 통나무에 깔려 죽음, 체력 25. E020: 쪼갠 자리에 생긴 반토막이 구르는데 1.2초 만에 주우러 가다 죽음)
+                Vector3 me = m_npc.transform.position;
+                if (m_stepTime < 1.5f)
+                {
+                    // 쪼갠 자리는 반토막이 통나무 양 끝에 생긴다: 가운데(뿌리)에서 멀어지면 가까운 반토막 쪽으로 갈 수 있어(회차 96 시험: 그 반토막이 2.8m/s로 굴러와 부딪힘)
+                    // 가장 가까운 통나무 몸에서 멀어진다. 쓰러뜨린 나무는 예전대로 뿌리 반대쪽(통나무는 맞은 쪽 = 일꾼 반대로 넘어감).
+                    Vector3 from = m_targetInfo.Splits ? NearestLog(8f, m_targetPos) : m_targetPos;
+                    Vector3 back = me - from;
+                    back.y = 0f;
+                    if (back.sqrMagnitude < 0.01f) back = -m_npc.transform.forward;
+                    m_ai.MoveToPoint(dt, me + back.normalized * 3f, 0.5f, true);
+                    return true;
+                }
+                bool rolling = RollingLogs(LogWatch, out bool coming, out Vector3 log);
+                if (m_stepTime < SettleLimit && (rolling || m_stepTime < (m_targetInfo.Falls ? FallWait : wait)))
+                {
+                    if (coming) DodgeLog(dt, log);
+                    else m_ai.StopMoving();
+                    return true;
+                }
             }
             if (m_stepTime < wait) { m_ai.StopMoving(); return true; }
             if (Full()) { Go(Step.Return); return true; }
@@ -1356,6 +1410,122 @@ namespace ValheimHelper
             return best;
         }
 
+        /// <summary>
+        /// 일꾼 둘레(range)에 아직 구르는 통나무(TreeLog)가 있는지. coming = 그중 일꾼 쪽으로 오는(머리 위에서 떨어지는 것 포함) 것이 있음, at = 그 가장 가까운 점.
+        /// 바닐라 통나무는 ImpactEffect로 부딪힌 사람을 친다: 통나무 그 점 속도가 일꾼 쪽으로 m_minVelocity(반토막 1m/s) 넘을 때만 — 일꾼이 멈춘 통나무에 부딪히는 건 안 다친다.
+        /// 그래서 오는 것만 뛰어 비키고 나머지는 서서 기다린다(회차 96 시험: 구르는 것마다 비키다 둘레 반토막을 계속 건드려 12초 내내 안 멈춤).
+        /// </summary>
+        bool RollingLogs(float range, out bool coming, out Vector3 at)
+        {
+            coming = false;
+            at = Vector3.zero;
+            bool any = false;
+            float best = float.MaxValue;
+            Vector3 me = m_npc.transform.position;
+            foreach (var zdo in Senses.Nearby(me, range))
+            {
+                ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
+                if (info == null || !info.Log || !Rolling(zdo, out Rigidbody body, out Vector3 vel)) continue;
+                any = true;
+                if (Coming(zdo.GetPosition(), body, vel, out Vector3 p) && Utils.DistanceXZ(p, me) < best) { best = Utils.DistanceXZ(p, me); at = p; coming = true; }
+            }
+            return any;
+        }
+
+        /// <summary>뿌리(ZDO 자리, 통나무 가운데)가 그 밑 땅에서 이만큼(m) 넘게 뜬 통나무는 다른 나무·바위에 걸린 것.</summary>
+        const float HungHeight = 2f;
+
+        /// <summary>
+        /// 쪼개지는 통나무(Splits)가 다른 나무·바위에 걸려 높이 떠 있는지. 바닐라 휘두름은 거기까지 안 닿고 직접 피해(DirectHit)만 닿는데,
+        /// 밑에서 쪼개면 반토막(TreeLog.Destroy)이 머리 위에 생겨 바로 떨어진다(E020 진단: 8.5m 위에 걸린 beech_log를 밑에서 직접 피해 5번 →
+        /// 4m 위에 생긴 반토막이 4.2m/s로 떨어져 일꾼 죽음, 같은 자리에서 두 번). 반토막(더 안 쪼개짐)은 쪼개도 나무만 떨어져 괜찮다.
+        /// </summary>
+        static bool HungLog(ZDO zdo, ResourceInfo info)
+        {
+            if (info == null || !info.Splits) return false;
+            Vector3 p = zdo.GetPosition();
+            return ZoneSystem.instance.GetGroundHeight(p, out float ground) && p.y - ground > HungHeight;
+        }
+
+        /// <summary>
+        /// 통나무가 움직이는지. 주인이면 Rigidbody(잠들지 않았고 속도·회전이 있음, body로 돌려줌), 아니면 주인이 쓴 ZDO 속도(ZSyncTransform s_velHash, body null).
+        /// </summary>
+        static bool Rolling(ZDO zdo, out Rigidbody body, out Vector3 vel)
+        {
+            ZNetView view = ZNetScene.instance.FindInstance(zdo);
+            body = view != null && view.IsValid() && view.IsOwner() ? view.GetComponent<Rigidbody>() : null;
+            if (body != null)
+            {
+                vel = body.linearVelocity;
+                return !body.IsSleeping() && (vel.sqrMagnitude > RollSpeed * RollSpeed || body.angularVelocity.sqrMagnitude > RollSpin * RollSpin);
+            }
+            vel = zdo.GetVec3(ZDOVars.s_velHash, Vector3.zero);
+            return vel.sqrMagnitude > RollSpeed * RollSpeed;
+        }
+
+        /// <summary>view의 충돌체 중 p에 가장 가까운 점(오목한 메시는 경계 상자로, Closest). 충돌체가 없으면 fallback.</summary>
+        static Vector3 NearestPoint(ZNetView view, Vector3 p, Vector3 fallback)
+        {
+            Vector3 at = fallback;
+            if (view == null) return at;
+            float best = float.MaxValue;
+            foreach (var col in view.GetComponentsInChildren<Collider>())
+            {
+                if (col.isTrigger || !col.enabled) continue;
+                Vector3 q = Closest(col, p);
+                float d = (q - p).sqrMagnitude;
+                if (d < best) { best = d; at = q; }
+            }
+            return at;
+        }
+
+        /// <summary>일꾼 range 안 통나무(구르든 멈췄든) 몸에서 일꾼 가슴에 가장 가까운 점. 없으면 fallback.</summary>
+        Vector3 NearestLog(float range, Vector3 fallback)
+        {
+            Vector3 chest = m_npc.transform.position + Vector3.up, at = fallback;
+            float best = float.MaxValue;
+            foreach (var zdo in Senses.Nearby(chest, range))
+            {
+                ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
+                if (info == null || !info.Log) continue;
+                Vector3 q = NearestPoint(ZNetScene.instance.FindInstance(zdo), chest, zdo.GetPosition());
+                float d = Utils.DistanceXZ(q, chest);
+                if (d < best) { best = d; at = q; }
+            }
+            return at;
+        }
+
+        /// <summary>
+        /// 이 통나무가 일꾼에게 오는지: 통나무 몸에서 일꾼 가슴에 가장 가까운 점(at)이 DodgeRange 안이고, 그 점이 가슴 쪽으로 ComeSpeed 넘게 다가옴
+        /// (주인이면 회전까지 든 그 점 속도 — 넘어지는 긴 통나무는 끝이 빠르다).
+        /// </summary>
+        bool Coming(Vector3 logPos, Rigidbody body, Vector3 vel, out Vector3 at)
+        {
+            Vector3 chest = m_npc.transform.position + Vector3.up;
+            at = body != null ? NearestPoint(body.GetComponent<ZNetView>(), chest, logPos) : logPos;
+            if (body != null) vel = body.GetPointVelocity(at);
+            if (Utils.DistanceXZ(at, chest) > DodgeRange) return false;
+            Vector3 to = chest - at;
+            if (to.sqrMagnitude < 0.01f) return vel.sqrMagnitude > ComeSpeed * ComeSpeed;
+            return Vector3.Dot(vel, to.normalized) > ComeSpeed;
+        }
+
+        /// <summary>오는 통나무(그 가장 가까운 점 log)의 반대쪽으로 뛰어 비킨다.</summary>
+        void DodgeLog(float dt, Vector3 log)
+        {
+            Vector3 me = m_npc.transform.position, away = me - log;
+            away.y = 0f;
+            if (Time.time - m_dodgeSaid > 2f)
+            {
+                m_dodgeSaid = Time.time;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 오는 통나무 비킴({away.magnitude:0.0}m, {m_step} {m_stepTime:0.0}초)");
+            }
+            if (away.sqrMagnitude < 0.01f) away = -m_npc.transform.forward;
+            m_ai.MoveToPoint(dt, me + away.normalized * 3f, 0.5f, true);
+        }
+
+        float m_dodgeSaid = -10f;
+
         // ---- 일꾼 포탈(R2 나, [기본안]: 거점에서 300m 넘는 일터에 두 번째 갈 때) ----
 
         /// <summary>시험용(vh_portalbuildtest 8): 떠날 때·도착·귀환의 일꾼 포탈 처리만 따로 부른다.</summary>
@@ -1363,6 +1533,8 @@ namespace ValheimHelper
         internal void TestPortalArrive(ZoneXY z) => ArrivedAt(z);
         internal void TestPortalHome() => PortalHome();
         internal string PortalCarryTag => m_portalTag;
+        /// <summary>시험용(vh_woodtest 높이 걸린 통나무): 지금 고른 대상.</summary>
+        internal ZDOID TargetId => m_targetId;
 
         /// <summary>먼 아는 구역으로 떠날 때(거점 근처에서만 — 상자·깃발 구역이 불러와져 있음): 거점 쪽 포탈을 놓고 한 몫을 들고 간다.</summary>
         void PortalDepart()

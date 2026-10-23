@@ -150,13 +150,33 @@ namespace ValheimHelper
                 TestRunner.Log($"  광맥 구조: {DescribeDeposit(dep, 0)}");
                 TestRunner.Log($"  광맥 조각 퍼짐: {RockSpread(firstDep, Workers.HomeSpot(home, rot, 0), eqPos, resPos)}");
             }
+            // E020: 옆 나무에 높이 걸린 통나무(밑에서 쪼개면 반토막이 머리 위로 떨어짐)는 안 고르는지. 거점 9m 앞에 땅에서 6m 뜬 채 선 통나무를
+            // 움직이지 않게(kinematic) 둔다 — 통나무 가산점(30m)으로 가장 먼저 고를 자리라 안 거르면 바로 다가간다.
+            ZDOID hungId = ZDOID.None;
+            bool hungAimed = false;
+            if (item == "Wood")
+            {
+                GameObject logPrefab = ZNetScene.instance.GetPrefab("beech_log");
+                if (logPrefab != null)
+                {
+                    GameObject hungLog = Object.Instantiate(logPrefab, Ground(home + rot * new Vector3(0f, 0f, 9f)) + Vector3.up * 6f, rot);
+                    var body = hungLog.GetComponent<Rigidbody>();
+                    if (body != null) body.isKinematic = true;
+                    hungId = hungLog.GetComponent<ZNetView>().GetZDO().m_uid;
+                }
+                checks.Add("높이 걸린 통나무 놓음(beech_log, 땅에서 6m)", !hungId.IsNone());
+            }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             Say($"!{Workers.Name1} {word} 10", null);
             int count = 0, count0 = CountBase(home, item); // 지난 시험이 거점 상자에 남긴 것은 뺀다
             float t = 0f;
             while (t < 360f)
             {
-                yield return new WaitForSeconds(5f);
+                for (int i = 0; i < 10; i++)
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    if (!hungId.IsNone() && claude != null && claude.Ai.Job is GatherJob gj && gj.TargetId == hungId) hungAimed = true;
+                }
                 t += 5f;
                 count = CountBase(home, item) - count0;
                 if ((int)t % 15 == 0)
@@ -168,6 +188,7 @@ namespace ValheimHelper
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
             checks.Add($"거점 상자에 {word} {count}개 더 ({t:0}초)", count >= 10);
+            if (!hungId.IsNone()) checks.Add("높이 걸린 통나무는 안 고름(쪼개면 반토막이 머리 위로 떨어짐)", !hungAimed);
             checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
             checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
             ItemDrop.ItemData held = claude ? claude.GetCurrentWeapon() : null;

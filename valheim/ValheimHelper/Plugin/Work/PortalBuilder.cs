@@ -141,27 +141,48 @@ namespace ValheimHelper
             foreach (var kv in WorkerPortal.Missing(cost, k => Have(chests, k), 2)) missing[kv.Key] = kv.Value;
             if (missing.Count > 0) { why = "재료 모자람"; return false; }
             foreach (var c in chests) if (Chests.InUse(c)) { why = "상자 사용 중"; return false; }
-            foreach (var kv in WorkerPortal.Need(cost, 2)) CraftStep.Take(chests, kv.Key, kv.Value);
 
+            // 놓기 먼저, 둘 다 놓인 뒤에만 재료를 뺀다: 하나라도 못 놓으면 놓인 것을 지우고 재료 그대로(요청 10-23 09:09 포탈 설치 실패 시 재료 소실 방지)
             long today = Today();
             var spots = new[] { a, b };
             var rots = new[] { ra, rb };
             for (int i = 0; i < 2; i++)
             {
                 ZDO zdo = Spawn(prefab, spots[i], rots[i], tag, today);
-                if (zdo != null) placed.Add(zdo);
+                if (zdo == null)
+                {
+                    foreach (var z in placed) Erase(z);
+                    placed.Clear();
+                    why = (i == 0 ? "거점 쪽" : "일터 쪽") + " 놓기 실패";
+                    Plugin.Log.LogWarning($"일꾼 포탈 {tag}: {why} → 놓인 것 지움, 재료 그대로");
+                    return false;
+                }
+                placed.Add(zdo);
             }
+            foreach (var kv in WorkerPortal.Need(cost, 2)) CraftStep.Take(chests, kv.Key, kv.Value);
             Game.instance?.ConnectPortals();
             why = $"{tag}: 거점 쪽 {wa}, 일터 쪽 {wb}";
             Plugin.Log.LogInfo($"일꾼 포탈 놓음 {why}");
-            return placed.Count == 2;
+            return true;
         }
+
+        /// <summary>시험용(vh_portalbuildtest): 0 이상이면 그만큼 놓은 뒤 다음 놓기를 실패시킨다(물체는 생겼다 지워짐 = 반쪽 생성 흉내). -1 = 끔.</summary>
+        internal static int TestFailAfter = -1;
 
         static ZDO Spawn(Piece prefab, Vector3 at, Quaternion rot, string tag, long today)
         {
             GameObject go = Object.Instantiate(prefab.gameObject, at, rot);
             ZDO zdo = go.GetComponent<ZNetView>()?.GetZDO();
-            if (zdo == null) return null;
+            if (TestFailAfter == 0) { TestFailAfter = -1; zdo = null; }
+            else if (TestFailAfter > 0) TestFailAfter--;
+            if (zdo == null)
+            {
+                // 생긴 물체(ZDO가 없거나 시험 실패)는 남기지 않는다
+                ZNetView v = go.GetComponent<ZNetView>();
+                if (v != null && v.IsValid()) ZNetScene.instance.Destroy(go);
+                else Object.Destroy(go);
+                return null;
+            }
             zdo.Set(ZDOVars.s_tag, tag);
             zdo.Set(ZDOVars.s_tagauthor, "");
             zdo.Set(MarkKey, true);
@@ -229,8 +250,9 @@ namespace ValheimHelper
             if (!Carrying(carry)) { why = "재료 안 들고 있음"; return false; }
             if (!FindSpot(near, out Vector3 b, out Quaternion rb, out string wb)) { why = "일터 쪽 " + wb; return false; }
             if (Utils.DistanceXZ(mine[0].GetPosition(), b) < 5f) { why = "두 자리가 너무 가까움"; return false; }
+            // 놓은 뒤에만 짐에서 뺀다: 놓기 실패면 들고 있는 한 몫 그대로(요청 10-23 09:09)
+            if (Spawn(prefab, b, rb, tag, Today()) == null) { why = "놓기 실패"; Plugin.Log.LogWarning($"일꾼 포탈 {tag}: 일터 쪽 놓기 실패, 한 몫 그대로"); return false; }
             foreach (var kv in WorkerPortal.Need(Cost(), 1)) carry.RemoveItem(CraftStep.SharedName(kv.Key), kv.Value);
-            if (Spawn(prefab, b, rb, tag, Today()) == null) { why = "놓기 실패"; return false; }
             Game.instance?.ConnectPortals();
             why = $"{tag}: 일터 쪽 {wb}";
             Plugin.Log.LogInfo($"일꾼 포탈 놓음 {why}");
@@ -326,15 +348,17 @@ namespace ValheimHelper
                 int left = CraftStep.Put(home, kv.Key, kv.Value);
                 if (left > 0) Plugin.Log.LogWarning($"일꾼 포탈 철거: {kv.Key} {left}개 못 넣음(자리 계산 어긋남)");
             }
-            foreach (var z in mine)
-            {
-                ZNetView view = ZNetScene.instance.FindInstance(z);
-                if (view != null) { view.ClaimOwnership(); ZNetScene.instance.Destroy(view.gameObject); }
-                else { z.SetOwner(ZDOMan.GetSessionID()); ZDOMan.instance.DestroyZDO(z); }
-            }
+            foreach (var z in mine) Erase(z);
             why = $"{tag} {mine.Count}개 철거, 재료 상자로";
             Plugin.Log.LogInfo($"일꾼 포탈 {why}");
             return true;
+        }
+
+        static void Erase(ZDO z)
+        {
+            ZNetView view = ZNetScene.instance.FindInstance(z);
+            if (view != null) { view.ClaimOwnership(); ZNetScene.instance.Destroy(view.gameObject); }
+            else { z.SetOwner(ZDOMan.GetSessionID()); ZDOMan.instance.DestroyZDO(z); }
         }
 
         /// <summary>오래 안 쓴 일꾼 포탈 쌍 철거(마지막으로 쓴 날 = 쌍 중 늦은 날). 철거한 이름표들.</summary>

@@ -114,8 +114,19 @@ namespace ValheimHelper
             checks.Add($"모자라면 거절 ({why}, 모자람 {Show(missing)})", !ok && missing.Count == 1 && missing.TryGetValue(lastItem, out int m1) && m1 == 1);
             checks.Add("거절하면 재료 그대로·포탈 없음", Same(before, Stock(w.Chest, cost)) && PortalBuilder.Mine().Count == 0);
 
-            // 2) 채우고 한 쌍
+            // 2) 채우고 한 쌍. 먼저 놓기 실패(시험 스위치: 첫째에서·둘째에서 = 반쪽 생김) → 재료 그대로·포탈 0개(요청 10-23 09:09)
             TestKit.PutInChest(w.Chest, lastItem, 1);
+            before = Stock(w.Chest, cost);
+            for (int fail = 0; fail < 2; fail++)
+            {
+                PortalBuilder.TestFailAfter = fail;
+                ok = PortalBuilder.PlacePair("시험A", w.Home, w.Home, Site(0f), out placed, out missing, out why);
+                PortalBuilder.TestFailAfter = -1;
+                yield return new WaitForSeconds(0.5f);
+                int left = PortalBuilder.Mine().Count + ZdoScan.All(Portals.PrefabName).FindAll(z => z.GetString(ZDOVars.s_tag) == WorkerPortal.Tag("시험A")).Count;
+                checks.Add($"놓기 실패({(fail == 0 ? "첫째" : "둘째, 반쪽 지움")}) → 재료 그대로·포탈 0 ({why}, 남은 {left})",
+                    !ok && Same(before, Stock(w.Chest, cost)) && left == 0);
+            }
             ok = PortalBuilder.PlacePair("시험A", w.Home, w.Home, Site(0f), out placed, out missing, out why);
             TestRunner.Log("놓기: " + why);
             yield return new WaitForSeconds(1f);
@@ -256,6 +267,13 @@ namespace ValheimHelper
             // 도착(시험은 35m 밖 자리로 옮겨 놓음) → 일터 쪽, 짝 이어짐, 방문 2
             w.Claude.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 35f)), rot, false);
             yield return new WaitForSeconds(1f);
+            // 일터 쪽 놓기 실패(시험 스위치) → 들고 간 한 몫 그대로·포탈 늘지 않음·이어 짓기 유지(요청 10-23 09:09)
+            PortalBuilder.TestFailAfter = 0;
+            job.TestPortalArrive(far);
+            PortalBuilder.TestFailAfter = -1;
+            yield return new WaitForSeconds(1f);
+            checks.Add($"일터 쪽 놓기 실패하면 한 몫 그대로·포탈 {PortalBuilder.MineWithTag(tag)}개(1)",
+                PortalBuilder.Carrying(inv) && PortalBuilder.MineWithTag(tag) == 1 && job.PortalCarryTag == tag && ChestEmpty());
             job.TestPortalArrive(far);
             job.TestPortalArrive(far);
             yield return new WaitForSeconds(1f);
