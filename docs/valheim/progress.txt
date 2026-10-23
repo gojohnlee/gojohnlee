@@ -39,7 +39,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
   시험 월드 깃발 125m 안에 원래 있던 상자·설비가 새로 잡혀 수가 어긋나면 범위 탓이 아니라 시험 자리 탓 — 그 시험만 고침. 45m·160m 자리 땅이 안 맞으면 다른 방향으로 옮김.
-★ [끝, 회차 109 — 커밋 2444b13 · 시험 vh_bagtest PASS 9/9(부하 줄: ForItem 0.79→0.10ms, 짐 정리 최악 50.7→6.5ms, 물체 2,916개), vh_nametest 9/9, vh_flagtest 12/12, vh_preptest 22/22, vh_crafttest 23/23, vh_refilltest 22/22, dotnet 440 · Chests.IsChest 프리팹 거름, Senses.Nearby(keep). 프레임 캐시는 안 넣음] 부하 검토 — 원래 내용: 거점 125m 찾기(Senses.Nearby 25구역)가 한 프레임에 여러 번·매 프레임 도는 곳: Unload 물건마다 ChestFor(→ForItem→NearBase, 한 상자에 물건 수×2번),
+★ [끝, 회차 109 — 커밋 3bcd001 · 시험 vh_bagtest PASS 9/9(부하 줄: ForItem 0.79→0.10ms, 짐 정리 최악 50.7→6.5ms, 물체 2,916개), vh_nametest 9/9, vh_flagtest 12/12, vh_preptest 22/22, vh_crafttest 23/23, vh_refilltest 22/22, dotnet 440 · Chests.IsChest 프리팹 거름, Senses.Nearby(keep). 프레임 캐시는 안 넣음] 부하 검토 — 원래 내용: 거점 125m 찾기(Senses.Nearby 25구역)가 한 프레임에 여러 번·매 프레임 도는 곳: Unload 물건마다 ChestFor(→ForItem→NearBase, 한 상자에 물건 수×2번),
   CraftStep 상자가 열려 있는 동안(손님이 열면 최대 30초) 매 프레임 Needs·Have·NearBase, PlanJob 5초마다 FermentReady(125m OverlapSphere). 먼저 잼: 큰 거점에서 짐 정리·제작 때
   가장 긴 프레임(ms)을 diag에 → 눈에 띄면(예 16ms 넘음) Chests.Candidates에 같은 프레임·같은 깃발이면 한 번만 찾는 캐시(시험이 상자를 놓은 프레임에 바로 세는 곳 주의). 안 띄면 안 고침.
 ★ 상자 기능(사용자 결정 2026-10-23, decisions.txt "상자 기능 확정") — 125m 검증·부하 검토 다음, 순서대로. 새 코드는 Plugin/Storage·Core/Storage(게임 무관 규칙은 Core + dotnet test):
