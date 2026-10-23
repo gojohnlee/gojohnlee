@@ -16,7 +16,7 @@
 잡담                  Core/Npc/Banter.cs(2분 잡담·이벤트 반응·소식, BanterFacts.FromPlaces·FromKnowledge, SetNext 시험용) + Speech bt.* · 테스트 BanterTests · 게임 연결 Plugin/WorkerBanter.cs(1초마다 쉬는 중·15m·플레이어 30m, WorkerNpc.Say → OnSaid 이벤트, 습격 끝·5분 밖 귀환, Facing → WorkerAI Idle·Home 서로 바라봄) + ChatNet.NpcBubble(VH_Bubble 말풍선만, 시험용 Bubbled) · 시험 BanterTest.cs(vh_bantertest)
 NPC 몸                Plugin/WorkerNpc.cs(외형, 말하기, 음식, 미드, 사망·묘비, 스킬 재정의, 땅 물건 줍기 PickDrop) WorkerPrefab.cs(Player 복제)
 NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 걷기 MoveToPoint, 점프, 구덩이 경사로, 물 판단, 대기열 Queue)
-위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지, 출발 조건 "resist:종류")
+위험·싸움              Plugin/Work/Guard.cs(496: 0.5초 판단, 싸움·물러남·도망·미드, 플레이어 64m 밖이면 휘두름 대신 직접 피해(m_far), 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지, 출발 조건 "resist:종류")
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
 지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도, AddPin) MapSense.cs(밝혀진 곳은 안다) MapIcons.cs(모든 플레이어 지도에 일꾼 아이콘, VH_MapIcons 2초)
 채집                  Plugin/Work/GatherJob.cs(795: 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)
