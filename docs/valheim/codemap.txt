@@ -33,7 +33,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 상자 이름(I-2)        Core/Work/ChestNames.cs(Parse 이름→ChestTags, Select 역할 상자 있으면 그것만·없으면 일반·손대지 않음 제외)·Plugin/Work/ChestTagReader.cs(ZDO 문자열 "ChestName" = CustomChestName 모드의 이름) · Tests/ChestNamesTests
 스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
 제작 계획              Core/Work/CraftPlan.cs(426: RecipeBook·Facilities·CraftPlanner·시뮬레이션) + Plugin/Work/Recipes.cs(게임 데이터→RecipeBook, 거점 설비)
-제작 실행기             Core/Work/PlanRunner.cs(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait) + Plugin/Work/PlanJob.cs(PlanRunner를 돌리는 일: Gather→GatherJob, Craft→CraftStep, Load/Unload→MachineStep) CraftStep.cs(제작대 앞 제작) MachineStep.cs(Smelter·Fermenter·CookingStation 넣기·꺼내기, 발효기 다 익음 FermentReady)
+제작 실행기             Core/Work/PlanRunner.cs(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait) + Plugin/Work/PlanJob.cs(PlanRunner를 돌리는 일: Gather→GatherJob, Craft→CraftStep, Load/Unload→MachineStep) CraftStep.cs(제작대 앞 제작) MachineStep.cs(Smelter·Fermenter·CookingStation 넣기·꺼내기, 발효기 다 익음 FermentReady), MorningSettle.cs(밤사이 정산: 짐·제련소·발효기)
 NPC 주인 되찾기         Workers.Reclaim(1초마다 NPC ZDO 주인을 호스트로)
 시험 자리 고르기        Core/Work/SpotSearch.cs(Find) TestSpots.cs(SpotXZ) — 동시 시험은 보류, 아직 안 씀
 세트메뉴·자동 보충      Core/Work/SetMenus.cs Refill.cs  저장: Brain.Sets/Refill(vh_sets, vh_refill)
