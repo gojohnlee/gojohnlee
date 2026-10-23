@@ -498,17 +498,31 @@ function Wait-Until($t) {
 
 # 멈춤 조건(사용자 확인 필요·할 일 없음·같은 FAIL·진척 없음)이면 끝내지 않고 사용자 요청을 기다린다: 밖에서 GitHub으로
 # docs/valheim/UserRequest.txt를 고치면 다시 돈다(5분마다 pull해서 그 파일이 바뀌었나 봄). 기다리는 동안 PC는 깨어 있다. 멈춤 파일이면 $false.
-# 회차 결과(사용자 결정 2026-10-23): 진척은 "끝낸 것"이 새로 생겼을 때만 센다. 푸시·문구 고침·시험 실행·코드 변경만으로는 안 셈.
-# 끝낸 것 = $before..$after에서 새로 들어온 줄 중 progress "[끝, 회차 N"(이번 회차 번호), history "**끝**"·"**답**" … 회차 N(요청),
-# Errors-resolved.txt에 새로 옮겨진 ID(문제 닫음). 지난 회차 번호가 붙은 줄을 고친 것·Errors·계획 문구만 바꾼 것은 결과가 아니다.
+# 회차 결과(사용자 결정 2026-10-23): 진척은 근거가 붙은 "끝낸 것"이 새로 생겼을 때만 센다. [끝] 표시·푸시·문구 고침·시험 실행·코드 변경만으로는 안 셈.
+# 끝낸 것 = $before..$after에서 새로 들어온 줄 중
+#  progress "[끝, 회차 N"(이번 회차 번호)이면서 근거: 실제 있는 커밋 해시 + 시험 PASS, 또는 "문서만"(문서 항목은 변경 내용으로 확인)
+#  history "**답**" … 회차 N(질문에 답) · Errors-resolved.txt에 새로 옮긴 ID(줄에 실제 있는 커밋 해시).
+# "구현 완료·검증 대기"는 끝이 아니다. 허위 완료까지 잡지는 않는다(사용자: 거기에 시간 쓰지 말 것).
 function Test-RoundResult($before, $after, $n) {
     if ($before -eq $after) { return $false }
-    $add = @(G diff -U0 $before $after -- docs/valheim/progress.txt docs/valheim/history.md | Where-Object { $_ -match '^\+[^+]' })
-    if ($add | Where-Object { $_ -match "\[끝,?\s*회차\s*$n(?!\d)" -or $_ -match "^\+\*\*(끝|답)\*\*.*회차\s*$n(?!\d)" }) { return $true }
+    $hasCommit = {
+        param($text)
+        foreach ($m in [regex]::Matches($text, '\b[0-9a-f]{7,40}\b')) {
+            $c = G rev-parse -q --verify "$($m.Value)^{commit}" | Select-Object -Last 1
+            if ($c -match '^[0-9a-f]{40}$' -and (G merge-base $c $after | Select-Object -Last 1) -eq $c) { return $true }
+        }
+        return $false
+    }
+    $add = @(G diff -U0 $before $after -- docs/valheim/progress.txt | Where-Object { $_ -match "^\+[^+].*\[끝,?\s*회차\s*$n(?!\d)" })
+    foreach ($l in $add) { if ($l -match '문서만' -or ($l -match '\bPASS\b' -and (& $hasCommit $l))) { return $true } }
+    if (@(G diff -U0 $before $after -- docs/valheim/history.md | Where-Object { $_ -match "^\+\*\*답\*\*.*회차\s*$n(?!\d)" }).Count) { return $true }
     $res = @(G diff -U0 $before $after -- docs/valheim/Errors-resolved.txt)
-    $plus = @($res | Where-Object { $_ -match '^\+[^+]' } | ForEach-Object { [regex]::Matches($_, 'E\d{3}') } | ForEach-Object { $_.Value })
     $minus = @($res | Where-Object { $_ -match '^-[^-]' } | ForEach-Object { [regex]::Matches($_, 'E\d{3}') } | ForEach-Object { $_.Value })
-    return @($plus | Where-Object { $minus -notcontains $_ }).Count -gt 0   # 고쳐 쓴 줄(같은 ID가 빠지고 들어옴)은 안 셈
+    foreach ($l in @($res | Where-Object { $_ -match '^\+[^+]' })) {
+        $new = @([regex]::Matches($l, 'E\d{3}') | ForEach-Object { $_.Value } | Where-Object { $minus -notcontains $_ })   # 고쳐 쓴 줄(같은 ID가 빠지고 들어옴)은 안 셈
+        if ($new.Count -and (& $hasCommit $l)) { return $true }
+    }
+    return $false
 }
 
 function Wait-UserRequest($why, $last) {
@@ -593,7 +607,7 @@ while ($true) {
         if ($st.lastFail -eq $Matches[1]) { $stop = "같은 시험 2회차 연속 FAIL($($Matches[1]))" }
         $st.lastFail = $Matches[1]
     } else { $st.lastFail = '' }
-    if (-not $stop -and $st.noProg -ge 3) { $stop = '3회차 연속 끝낸 것 없음(항목 [끝]·요청 끝/답·닫은 문제 없음)' }
+    if (-not $stop -and $st.noProg -ge 3) { $stop = '3회차 연속 근거 있는 완료 없음(커밋·시험 붙은 [끝]·질문 답·닫은 문제 없음)' }
     if ($last -match '^LOOP: ERROR') { Start-Sleep 300 }   # 네트워크 등 → 5분 쉬고
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }
     if (-not $stop) { Write-Status $(if ($Once) { '한 회차 끝(시험 실행)' } else { '다음 회차 준비' }) $last }
