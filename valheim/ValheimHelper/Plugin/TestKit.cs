@@ -360,20 +360,28 @@ namespace ValheimHelper
         {
             var stack = new Stack<IEnumerator>();
             stack.Push(root);
-            while (stack.Count > 0)
+            try
             {
-                IEnumerator top = stack.Peek();
-                bool moved;
-                try { moved = top.MoveNext(); }
-                catch
+                while (stack.Count > 0)
                 {
-                    // 바깥 코루틴들의 finally(Restore·정리)가 돌게 닫고 다시 던진다(TestRunner.Safe가 FAIL·환경 불량으로 적음).
-                    while (stack.Count > 0) (stack.Pop() as System.IDisposable)?.Dispose();
-                    throw;
+                    IEnumerator top = stack.Peek();
+                    bool moved;
+                    try { moved = top.MoveNext(); }
+                    catch
+                    {
+                        // 바깥 코루틴들의 finally(Restore·정리)가 돌게 닫고 다시 던진다(TestRunner.Safe가 FAIL·환경 불량으로 적음).
+                        while (stack.Count > 0) (stack.Pop() as System.IDisposable)?.Dispose();
+                        throw;
+                    }
+                    if (!moved) { stack.Pop(); continue; }
+                    if (top.Current is IEnumerator inner) { stack.Push(inner); continue; }
+                    yield return top.Current;
                 }
-                if (!moved) { stack.Pop(); continue; }
-                if (top.Current is IEnumerator inner) { stack.Push(inner); continue; }
-                yield return top.Current;
+            }
+            finally
+            {
+                // 한도로 끊겨 Dispose되면(TestRunner.Safe) 안쪽 finally(Restore·정리)도 돈다
+                while (stack.Count > 0) (stack.Pop() as System.IDisposable)?.Dispose();
             }
         }
 

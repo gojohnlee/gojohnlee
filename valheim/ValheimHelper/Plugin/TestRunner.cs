@@ -21,9 +21,10 @@ namespace ValheimHelper
         /// 시험 등록: 콘솔 명령(F5, 콘솔을 켰을 때)으로도, 자동 시험으로도 돈다. 자동 시험은 콘솔을 거치지 않으므로
         /// 게임을 -console 없이 켜도 된다(Steam이 실행 인자 경고를 띄우지 않게).
         /// </summary>
-        public static void Register(string name, string description, System.Func<IEnumerator> run)
+        public static void Register(string name, string description, System.Func<IEnumerator> run, float timeout = DefaultTimeout)
         {
             s_tests[name] = run;
+            s_timeouts[name] = timeout;
             new Terminal.ConsoleCommand(name, "[Valheim Helper] " + description, args =>
             {
                 if (Begin(args.Context, name)) Plugin.Instance.StartCoroutine(Safe(run()));
@@ -35,7 +36,12 @@ namespace ValheimHelper
         static float s_startTime;
         static float s_startReal;
         static int s_startFrame;
-        const float AutoTimeout = 600f;
+        const float DefaultTimeout = 600f;
+        /// <summary>시험마다 자동 시험 한도(초). 긴 시험(silvertest 묻힌 광맥 다 캐기)은 등록 때 늘린다.</summary>
+        static readonly Dictionary<string, float> s_timeouts = new Dictionary<string, float>();
+        static float s_timeout = DefaultTimeout;
+        /// <summary>시험 차례 번호: 한도로 끊긴 시험 코루틴이 다음 시험까지 돌지 않게(회차 117: 끊긴 silvertest가 pittest 보고에 섞임).</summary>
+        static int s_gen;
 
         static string s_halt;
 
@@ -52,6 +58,8 @@ namespace ValheimHelper
         {
             if (Running) { t?.AddString("이미 시험 중입니다."); return false; }
             Running = true;
+            s_gen++;
+            s_timeout = s_timeouts.TryGetValue(name, out float lim) ? lim : DefaultTimeout;
             s_startTime = Time.time;
             s_startReal = Time.realtimeSinceStartup;
             s_startFrame = Time.frameCount;
@@ -168,9 +176,9 @@ namespace ValheimHelper
             // 시험이 오류로 끝나지 않으면 5분 뒤 결과를 남기고 넘어간다(사용자가 지켜보지 않아도 되게).
             if (Running)
             {
-                if (Time.time - s_startTime > AutoTimeout)
+                if (Time.time - s_startTime > s_timeout)
                 {
-                    Log($"FAIL: 시험이 {AutoTimeout:0}초 안에 끝나지 않음(오류는 BepInEx 로그 참고)");
+                    Log($"FAIL: 시험이 {s_timeout:0}초 안에 끝나지 않음(오류는 BepInEx 로그 참고)");
                     Finish();
                 }
                 return;
@@ -204,8 +212,15 @@ namespace ValheimHelper
         /// </summary>
         static IEnumerator Safe(IEnumerator inner)
         {
+            int gen = s_gen;
             while (true)
             {
+                if (gen != s_gen || !Running)
+                {
+                    // 한도로 끊겼다: 시험 코드의 finally(되돌리기)만 돌리고 멈춘다
+                    try { (inner as System.IDisposable)?.Dispose(); } catch (System.Exception e) { Plugin.Log.LogWarning("끊긴 시험 정리 오류: " + e.Message); }
+                    yield break;
+                }
                 object current;
                 try
                 {

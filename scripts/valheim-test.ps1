@@ -130,7 +130,7 @@ if ($Min) {
 }
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
 $t = 0
-while ((Test-Game) -and $t -lt 1500) { Start-Sleep 3; $t += 3 }   # 25분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
+while ((Test-Game) -and $t -lt 1800) { Start-Sleep 3; $t += 3 }   # 30분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
 if (Test-Game) { Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Stop-Process -Force -ErrorAction SilentlyContinue }
 
 # 4) 결과 → 짧은 요약만 화면·클립보드에(토큰 아끼기, 2026-10-21). 자세한 건 diag.txt·LogOutput.log를 FAIL일 때만 연다.

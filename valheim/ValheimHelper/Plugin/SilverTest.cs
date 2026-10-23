@@ -11,7 +11,7 @@ namespace ValheimHelper
     /// </summary>
     static class SilverTest
     {
-        public static void Register() => TestRunner.Register("vh_silvertest", "은 광맥 시험", () => TestKit.Flat(Run()));
+        public static void Register() => TestRunner.Register("vh_silvertest", "은 광맥 시험", () => TestKit.Flat(Run()), 1400f); // 조각 92개를 다 캐면 15~20분(회차 117)
 
         static IEnumerator Run()
         {
@@ -124,7 +124,7 @@ namespace ValheimHelper
             checks.Add($"\"은 50\"에 캐러 나섬({TestKit.Waited:0}초)", TestKit.Ok);
             float t = 0f, deepest = 0f;
             int left = Fragments(g1, hashes, ref deepest);
-            for (; t < 780f && left > 0 && w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work; t += 5f)
+            for (; t < 1200f && left > 0 && w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work; t += 5f)
             {
                 yield return new WaitForSeconds(5f);
                 left = Fragments(g1, hashes, ref deepest);
