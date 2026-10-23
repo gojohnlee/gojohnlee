@@ -394,8 +394,9 @@ function Limit-Until($tail) {
 
 function Wait-Until($t) {
     # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 자리 비움(입력 없음 10분)이면 최대 절전(사용자가 쓰는 중이면 그냥 기다림)
-    # 잠들 때·못 잠들 때·15분 기다려도 입력 때문에 안 잠들 때(한 번)는 status.txt "지금"에 덧붙인다 → 밖에서도 보인다(2026-10-23).
-    $bk = $false; $noHib = $false; $told = $false; $t0 = Get-Date; $why = $script:StatusNow
+    # 잠들 때·못 잠들 때·입력 때문에 안 잠들 때(처음 한 번, 그 뒤 30분마다 마지막 입력 시각)는 status.txt "지금"에 덧붙인다
+    # → 밖에서도 보인다(2026-10-23: 사람 없는 07:13에 "10분 안에 입력 있음"으로 안 잠듦, 무슨 입력인지 보려고).
+    $bk = $false; $noHib = $false; $told = [datetime]::MinValue; $why = $script:StatusNow
     while ((Get-Date) -lt $t) {
         $idle = [VH.Power]::IdleMs()
         if (-not $noHib -and ($t - (Get-Date)).TotalMinutes -gt 10 -and $idle -gt 600000) {
@@ -420,9 +421,9 @@ function Wait-Until($t) {
             if (((Get-Date) - $h).TotalSeconds -gt 150) { Log '깨어남' }
             continue
         }
-        if (-not $told -and -not $noHib -and ((Get-Date) - $t0).TotalMinutes -ge 15 -and ($t - (Get-Date)).TotalMinutes -gt 10) {
-            $told = $true
-            $in = (Get-Date).AddMilliseconds(-[double]$idle).ToString('HH:mm')
+        if (-not $noHib -and ((Get-Date) - $told).TotalMinutes -ge 30 -and ($t - (Get-Date)).TotalMinutes -gt 10) {
+            $told = Get-Date
+            $in = (Get-Date).AddMilliseconds(-[double]$idle).ToString('HH:mm:ss')
             Log "자리 비움 아님(마지막 입력 $in) → 안 잠듦"
             Write-Status "$why — 키보드·마우스 입력이 있어 안 잠듦(마지막 입력 $in, 입력 없이 10분 지나면 잠듦)" '-'
         }
