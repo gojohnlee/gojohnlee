@@ -142,7 +142,7 @@ namespace ValheimHelper
                 Chests.TryEdit(c, inv =>
                 {
                     var tool = FindTool(inv);
-                    if (tool != null && mine.CanAddItem(tool)) mine.MoveItemToThis(inv, tool);
+                    if (tool != null && mine.CanAddItem(tool) && BaseStock.Allow(c, tool.m_shared.m_name, 1) > 0) { mine.MoveItemToThis(inv, tool); BaseStock.Changed(); }
                 });
                 if (FindTool(mine) == null) { m_npc.Say("chestFull"); return false; } // 가방이 꽉 참
             }
@@ -205,11 +205,13 @@ namespace ValheimHelper
                     foreach (var it in new List<ItemDrop.ItemData>(inv.GetAllItems()))
                     {
                         if (need <= 0 || it.m_shared.m_name != name) continue;
-                        int n = Mathf.Min(need, it.m_stack);
+                        int n = BaseStock.Allow(c, name, Mathf.Min(need, it.m_stack)); // 사람 제작 막대가 예약한 몫은 안 가져감(보리·아마 씨앗은 재료이기도)
+                        if (n <= 0) return;
                         ItemDrop.ItemData copy = it.Clone();
                         copy.m_stack = n;
                         if (!mine.AddItem(copy)) return;
                         inv.RemoveItem(it, n);
+                        BaseStock.Changed();
                         need -= n;
                     }
                 });

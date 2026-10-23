@@ -308,7 +308,7 @@ namespace ValheimHelper
                 {
                     if (Usable(w)) continue;
                     ItemDrop.ItemData best = WorkerNpc.BestTool(inv, w);
-                    if (best != null) m_npc.GetInventory().MoveItemToThis(inv, best);
+                    if (best != null && BaseStock.Allow(m_chest, best.m_shared.m_name, 1) > 0) { m_npc.GetInventory().MoveItemToThis(inv, best); BaseStock.Changed(); }
                 }
             });
             if (!took) return m_stepTime < 90f || GiveUp("noTool"); // 누가 열고 있다: 기다린다

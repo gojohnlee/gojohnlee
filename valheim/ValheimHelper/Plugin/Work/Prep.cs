@@ -52,14 +52,15 @@ namespace ValheimHelper
             m_ai.StopMoving();
             m_ai.Face(at);
             bool forFood = m_forFood, takeGear = m_takeGear, takeMeads = m_takeMeads;
-            bool done = Chests.TryEdit(m_chest, inv =>
+            Container from = m_chest;
+            bool done = Chests.TryEdit(from, inv =>
             {
                 if (forFood)
                 {
-                    var eaten = m_npc.EatFrom(inv);
+                    var eaten = m_npc.EatFrom(inv, from);
                     Plugin.Log.LogInfo($"{m_npc.NpcName} 먹음: {string.Join(", ", eaten.ToArray())} → 최대 체력 {m_npc.Meals.MaxHealth:0}");
                 }
-                else TakeGear(inv, takeGear, takeMeads);
+                else TakeGear(from, inv, takeGear, takeMeads);
             });
             if (!done && m_time < BusyLimit) return true; // 누가 열고 있다
             m_chest = null;
@@ -186,10 +187,11 @@ namespace ValheimHelper
             return bow != null && Gear.CountArrows(mine, bow) < Archery.ArrowsToCarry && Gear.CountArrows(chest, bow) > 0;
         }
 
-        void TakeBow(Inventory mine, Inventory chest, List<string> taken)
+        void TakeBow(Container from, Inventory mine, Inventory chest, List<string> taken)
         {
             ItemDrop.ItemData have = Gear.BestBow(mine.GetAllItems()), there = Gear.BestBow(chest.GetAllItems());
-            if (there != null && (have == null || Gear.WeaponScore(there) > Gear.WeaponScore(have)) && mine.CanAddItem(there))
+            if (there != null && (have == null || Gear.WeaponScore(there) > Gear.WeaponScore(have)) && mine.CanAddItem(there)
+                && BaseStock.Allow(from, there.m_shared.m_name, 1) > 0)
             {
                 mine.MoveItemToThis(chest, there);
                 if (!chest.ContainsItem(there))
@@ -206,7 +208,7 @@ namespace ValheimHelper
             }
             ItemDrop.ItemData bow = Gear.BestBow(mine.GetAllItems());
             if (bow != null)
-                TakeMeads(mine, chest, Archery.ArrowsToCarry - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken);
+                TakeMeads(from, mine, chest, Archery.ArrowsToCarry - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken);
         }
 
         /// <summary>
@@ -239,7 +241,7 @@ namespace ValheimHelper
             return n;
         }
 
-        void TakeGear(Inventory chest, bool takeGear, bool takeMeads)
+        void TakeGear(Container from, Inventory chest, bool takeGear, bool takeMeads)
         {
             Inventory mine = m_npc.GetInventory();
             List<ItemDrop.ItemData> plan = takeGear ? Plan(mine, chest) : new List<ItemDrop.ItemData>(); // 미드 상자에서는 장비를 안 꺼냄
@@ -247,9 +249,11 @@ namespace ValheimHelper
             foreach (var it in plan)
             {
                 if (!chest.ContainsItem(it)) continue;
+                if (BaseStock.Allow(from, it.m_shared.m_name, it.m_stack) < it.m_stack) continue; // 사람 제작 막대가 예약한 것
                 if (!mine.CanAddItem(it) && !MakeRoom(mine, chest, it, plan)) continue; // 못 바꾸면 헌 것을 그대로 입고 간다
                 mine.MoveItemToThis(chest, it);
                 if (chest.ContainsItem(it)) continue;
+                BaseStock.Changed();
                 taken.Add(it.m_shared.m_name);
             }
             // 실제로 가진 것 기준으로(ChatGPT-01: 새 갑옷을 못 가져왔는데 헌 갑옷만 벗고 감) 입고, 밀려난 헌 장비는 돌려놓는다
@@ -265,29 +269,31 @@ namespace ValheimHelper
                 if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
                 chest.MoveItemToThis(mine, it);
             }
-            if (takeGear) TakeBow(mine, chest, taken);
+            if (takeGear) TakeBow(from, mine, chest, taken);
             if (takeMeads)
             {
                 // 체력 미드
-                TakeMeads(mine, chest, MeadsToCarry - CountMeads(mine), Gear.IsHealthMead, taken);
+                TakeMeads(from, mine, chest, MeadsToCarry - CountMeads(mine), Gear.IsHealthMead, taken);
                 // 저항 미드(결정 D): 종류마다 둘
                 foreach (var k in Resist.Kinds)
-                    TakeMeads(mine, chest, Resist.ToCarry - CountResist(mine, k), it => Gear.ResistOf(it) == k, taken);
+                    TakeMeads(from, mine, chest, Resist.ToCarry - CountResist(mine, k), it => Gear.ResistOf(it) == k, taken);
             }
             Plugin.Log.LogInfo($"{m_npc.NpcName} 장비 챙김: {string.Join(", ", taken.ToArray())}, 방어력 {m_npc.GetBodyArmor():0}");
         }
 
-        static void TakeMeads(Inventory mine, Inventory chest, int need, System.Predicate<ItemDrop.ItemData> kind, List<string> taken)
+        static void TakeMeads(Container from, Inventory mine, Inventory chest, int need, System.Predicate<ItemDrop.ItemData> kind, List<string> taken)
         {
             foreach (var it in new List<ItemDrop.ItemData>(chest.GetAllItems()))
             {
                 if (need <= 0) break;
                 if (!kind(it)) continue;
-                int n = Mathf.Min(need, it.m_stack);
+                int n = BaseStock.Allow(from, it.m_shared.m_name, Mathf.Min(need, it.m_stack)); // 사람 제작 막대가 예약한 몫은 안 가져감
+                if (n <= 0) continue;
                 ItemDrop.ItemData copy = it.Clone();
                 copy.m_stack = n;
                 if (!mine.AddItem(copy)) break;
                 chest.RemoveItem(it, n);
+                BaseStock.Changed();
                 need -= n;
                 taken.Add($"{it.m_shared.m_name} x{n}");
             }

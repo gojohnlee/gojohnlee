@@ -180,6 +180,7 @@ namespace ValheimHelper
             if (bagB0 > 0) bag.AddItem(rb.m_resItem.gameObject, bagB0);
 
             yield return Reserve(w, checks, recipe, near);
+            yield return ReserveFood(w, checks, made);
             yield return Build(w, checks, made, near, far);
         }
 
@@ -227,6 +228,67 @@ namespace ValheimHelper
             TestKit.TakeFromChest(near, pa);
             bag.RemoveItem(a, bag.CountItems(a));
             if (bagA0 > 0) bag.AddItem(ra.m_resItem.gameObject, bagA0);
+        }
+
+        /// <summary>
+        /// 예약(① 라2): 막대가 음식 1개를 예약하면 일꾼 밥 챙기기(Prep → EatFrom(상자))가 그 음식을 안 먹음, 취소하면 먹음.
+        /// 제작법은 그 음식 1개짜리를 즉석으로 만들어 막대 필드에 세움(Reserved는 재료 목록만 봄). 새 상자(거점 왼쪽 3m)에 그 음식만 넣는다.
+        /// </summary>
+        static IEnumerator ReserveFood(TestKit.World w, GatherTest.Checks checks, List<Container> made)
+        {
+            Player p = w.Player;
+            ItemDrop food = null;
+            foreach (var n in new[] { "Raspberry", "Blueberries", "CookedMeat", "Honey" })
+            {
+                ItemDrop d = ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>();
+                if (d != null && Gear.IsFood(d.m_itemData)) { food = d; break; }
+            }
+            checks.Add($"예약 시험 음식 ({(food != null ? food.name : "없음")})", food != null);
+            if (food == null) yield break;
+            var meals = Traverse.Create(w.Claude).Property("Meals");
+            var meals0 = w.Claude.Meals;
+            meals.SetValue(new ValheimHelper.Core.Npc.Meals()); // 준비 때 이미 배불러 못 먹음 → 이 칸 동안만 빈 배
+            try { yield return ReserveFood(w, checks, made, food); }
+            finally { if (w.Claude != null) meals.SetValue(meals0); }
+        }
+
+        static IEnumerator ReserveFood(TestKit.World w, GatherTest.Checks checks, List<Container> made, ItemDrop food)
+        {
+            Player p = w.Player;
+            Container c = Chest(w, made, w.Home - p.transform.right * 3f);
+            checks.Add("음식 상자", c != null);
+            if (c == null) yield break;
+            string name = food.m_itemData.m_shared.m_name;
+            Inventory bag = p.GetInventory();
+            int bag0 = bag.CountItems(name);
+            bag.RemoveItem(name, bag0);
+            TestKit.PutInChest(c, food.name, 1);
+            yield return new WaitForSeconds(0.6f);
+            BaseStock.Changed();
+            var rec = ScriptableObject.CreateInstance<Recipe>();
+            rec.m_item = food;
+            rec.m_resources = new[] { new Piece.Requirement { m_resItem = food, m_amount = 1 } };
+            var t = Traverse.Create(InventoryGui.instance);
+            int reserved, left1;
+            List<string> eaten1;
+            t.Field("m_craftRecipe").SetValue(rec);
+            t.Field("m_craftUpgradeItem").SetValue(null);
+            t.Field("m_multiCrafting").SetValue(false);
+            t.Field("m_craftTimer").SetValue(0f);
+            try
+            {
+                reserved = BaseStock.Reserved(name);
+                eaten1 = w.Claude.EatFrom(c.GetInventory(), c);
+                left1 = GatherTest.Count(c, food.name);
+            }
+            finally { t.Field("m_craftTimer").SetValue(-1f); t.Field("m_craftRecipe").SetValue(null); Object.Destroy(rec); }
+            List<string> eaten2 = w.Claude.EatFrom(c.GetInventory(), c);
+            int left2 = GatherTest.Count(c, food.name);
+            checks.Add($"막대가 음식 예약 ({reserved}/1)", reserved == 1);
+            checks.Add($"예약된 음식은 일꾼이 안 먹음 (먹음 {eaten1.Count}, 상자 {left1}/1)", !eaten1.Contains(food.name) && left1 == 1);
+            checks.Add($"취소하면 먹음 ({string.Join(",", eaten2.ToArray())}, 상자 {left2}/0)", eaten2.Contains(food.name) && left2 == 0);
+            TestKit.TakeFromChest(c, food.name);
+            if (bag0 > 0) bag.AddItem(food.gameObject, bag0);
         }
 
         /// <summary>제작대 없이 놓이고 재료 두 가지 이상인 망치 조각(모닥불 먼저).</summary>

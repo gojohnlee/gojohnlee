@@ -225,14 +225,16 @@ namespace ValheimHelper
             return false;
         }
 
-        /// <summary>그 상자(인벤토리)에서 지금 먹을 수 있는 가장 좋은 음식들을 하나씩 꺼내 먹는다. 먹은 프리팹 이름들.</summary>
-        public List<string> EatFrom(Inventory inv)
+        /// <summary>그 상자(인벤토리)에서 지금 먹을 수 있는 가장 좋은 음식들을 하나씩 꺼내 먹는다. 먹은 프리팹 이름들.
+        /// from(그 인벤토리의 상자)을 주면 사람 제작 막대가 예약한 음식은 건너뜀(BaseStock.Allow).</summary>
+        public List<string> EatFrom(Inventory inv, Container from = null)
         {
             var foods = new List<FoodInfo>();
             var byName = new Dictionary<string, ItemDrop.ItemData>();
             foreach (var it in inv.GetAllItems())
             {
                 if (!Gear.IsFood(it)) continue;
+                if (from != null && BaseStock.Allow(from, it.m_shared.m_name, 1) < 1) continue;
                 FoodInfo f = Gear.FoodOf(it);
                 if (byName.ContainsKey(f.Name)) continue;
                 byName[f.Name] = it;
@@ -240,6 +242,7 @@ namespace ValheimHelper
             }
             List<string> eaten = Meals.EatBest(foods);
             foreach (var n in eaten) inv.RemoveOneItem(byName[n]);
+            if (eaten.Count > 0 && from != null) BaseStock.Changed();
             if (eaten.Count > 0)
             {
                 m_saidNoFood = false;
