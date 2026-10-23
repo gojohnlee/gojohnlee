@@ -322,6 +322,20 @@ namespace ValheimHelper
         {
             if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
             if (m_npc.InInterior()) return UpdateInside();
+            if (m_leftDrops is Vector3 left)
+            {
+                // 짐이 차서 남기고 온 것부터 줍는다. 두 번 가 봐도 남거나 2분 걸어도 못 가면 잊는다(못 닿는 곳).
+                if (m_leftDropsTries < 2 && m_stepTime < 120f && NearestDrop(left) != null)
+                {
+                    if (!Walk(dt, left, 6f)) return true;
+                    m_leftDropsTries++;
+                    m_targetPos = left;
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 남기고 간 것 주우러 옴({m_leftDropsTries}번째)");
+                    Go(Step.Collect);
+                    return true;
+                }
+                m_leftDrops = null;
+            }
             if (m_hunt)
             {
                 if (FindPrey()) { Go(Step.Hunt); return true; }
@@ -957,7 +971,7 @@ namespace ValheimHelper
             if (!attacking && m_dropCheck <= 0f && m_targetInfo.Tool == ToolKind.Pickaxe)
             {
                 m_dropCheck = 5f;
-                ItemDrop near = NearestDrop();
+                ItemDrop near = NearestDrop(m_targetPos);
                 if (near != null && Utils.DistanceXZ(near.transform.position, m_npc.transform.position) > 2f) { Go(Step.Collect); return true; }
             }
             // 땅속 광석을 파는데 두 번 휘둘러도 안 닿았다: 구덩이가 깊어져 손이 안 닿으니 3초까지 다가간다
@@ -1028,6 +1042,9 @@ namespace ValheimHelper
         Collider m_aimCol, m_digAim;
         const int DigOnlyLimit = 10;
         bool m_saidDig;
+        /// <summary>짐이 차서 떨어진 것을 남기고 돌아간 자리(다음 Search가 먼저 와서 줍는다). null = 없음.</summary>
+        Vector3? m_leftDrops;
+        int m_leftDropsTries;
         /// <summary>이 대상 캐기 시작 뒤 처음 땅속 조각을 겨눌 때 잰 "모든 플레이어 64m 밖"(그 뒤 플레이어가 와도 그대로 — 땅속이라 안 보임). null = 아직 안 잼.</summary>
         bool? m_farDig;
         /// <summary>이번 프레임 겨눈 것이 멀리서 직접 치는 땅속 조각(땅 안 팜).</summary>
@@ -1390,8 +1407,14 @@ namespace ValheimHelper
                 }
             }
             if (m_stepTime < wait) { m_ai.StopMoving(); return true; }
-            if (Full()) { Go(Step.Return); return true; }
-            ItemDrop drop = NearestDrop();
+            if (Full())
+            {
+                // 짐이 차서 남기고 간다: 내려놓고 와서 마저 줍는다(회차 118: 묻힌 은 72개 중 22개만 들고 가 남은 50개를 잊고 새 광맥 찾으러 감)
+                if (NearestDrop(m_targetPos) != null) { m_leftDrops = m_targetPos; m_leftDropsTries = 0; }
+                Go(Step.Return);
+                return true;
+            }
+            ItemDrop drop = NearestDrop(m_targetPos);
             if (drop == null && m_hunt && m_stepTime < LootWait)
             {
                 // 사냥감의 떨굼은 쓰러진 몸(Ragdoll)이 사라질 때 나온다 → 그 자리로 가서 기다린다(활로 잡으면 멀다)
@@ -1427,11 +1450,11 @@ namespace ValheimHelper
         /// <summary>내 것이면 줍고 아니면 소유권 요청(WorkerNpc.PickDrop — 지워진 물건 또 줍기·NPC 오류 막음).</summary>
         void Pick(ItemDrop drop) => m_npc.PickDrop(drop);
 
-        ItemDrop NearestDrop()
+        ItemDrop NearestDrop(Vector3 at)
         {
             ItemDrop best = null;
             float bestD = float.MaxValue; // 대상 14m 안(Nearby)에서 일꾼에게 가장 가까운 것 — 일꾼 기준 14m면 활로 잡은 먼 사냥감 것을 못 찾음
-            foreach (var zdo in Senses.Nearby(m_targetPos, 14f))
+            foreach (var zdo in Senses.Nearby(at, 14f))
             {
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view == null) continue;

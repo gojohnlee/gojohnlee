@@ -138,6 +138,9 @@ namespace ValheimHelper
             TestRunner.Log($"묻힌 은: {t:0}초, 땅 파기 판 {dug}번·막음 {NpcPatches.NoDig.Blocked - blocked0}번, 구덩이 가장 깊은 곳 {GatherTest.Deepest(g1, 4f):0.0}m, 조각 바닥 가장 깊음 {deepest:0.0}m");
             checks.Add($"묻힌 은 광맥 조각 다 캠(남은 {left}개, {t:0}초)", left == 0);
             checks.Add($"멀리라 땅 안 팜(판 {dug}번)", dug == 0);
+            // 다 캐면 떨어진 은을 주울 때까지 기다린다(회차 118: 바로 "멈춰"라 은 80개가 땅에 남음 — 시험 탓)
+            yield return TestKit.WaitFor(() => w.Claude == null || w.Claude.Ai.Current != WorkerAI.Mode.Work || GatherTest.GroundCount(g1, ore) == 0, 180f);
+            TestRunner.Log($"다 캔 뒤 줍기: {TestKit.Waited:0}초, 땅에 남은 은 {GatherTest.GroundCount(g1, ore)}개, 상태 {w.Claude?.Ai.Current}");
             if (w.Claude != null && w.Claude.Ai.Current == WorkerAI.Mode.Work) GatherTest.Say($"!{Workers.Name1} 멈춰", null);
             yield return TestKit.WaitFor(() => w.Claude == null || Utils.DistanceXZ(w.Claude.Home, w.Claude.transform.position) <= 5f, 120f);
             checks.Add($"구덩이에서 나와 집으로 돌아옴({TestKit.Waited:0}초)", TestKit.Ok);
