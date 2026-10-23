@@ -119,9 +119,13 @@ namespace ValheimHelper
             float hp = claude.GetHealth();
             var hit = new HitData { m_point = claude.GetCenterPoint(), m_dir = Vector3.forward };
             hit.m_damage.m_blunt = 20f;
-            claude.Damage(hit);
-            yield return new WaitForSeconds(0.5f);
+            claude.Damage(hit); // 소유자(호스트)에게 가는 RPC는 ZRoutedRpc가 그 자리에서 처리 → 체력이 바로 깎임
             float lost = hp - claude.GetHealth();
+            // 0.5초 뒤에 재면 그사이 10초마다 오는 음식 회복(Meals.Tick, 바닐라 Player.UpdateFood와 같음)이 섞일 수 있다(E007)
+            float regen = 0f;
+            foreach (var n in claude.Meals.Names) regen += Gear.FoodOf(n)?.Regen ?? 0f;
+            yield return new WaitForSeconds(0.5f);
+            TestRunner.Log($"피해 바로 {lost:0.0}, 0.5초 뒤 {hp - claude.GetHealth():0.0} (음식 회복 {regen:0.#}/10초)");
             float expect = HitData.DamageTypes.ApplyArmor(20f, armor); // 바닐라 갑옷 공식
             checks.Add($"갑옷 {armor:0}이 피해를 줄임 (둔기 20 → {lost:0.0}, 바닐라 공식 {expect:0.0})", armor > 0f && Mathf.Abs(lost - expect) < 0.5f && lost < 19f);
             claude.Heal(100f, false);

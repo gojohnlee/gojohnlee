@@ -115,6 +115,8 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   CharacterDrop.m_drops[m_prefab]. ZNetScene.m_prefabs, ObjectDB.m_items.
 - Inventory.CountItems(이름), GetEmptySlots(). HitData.DamageTypes.Modify(배율), ApplyArmor.
 - 바닐라 RPC_Damage는 플레이어만 갑옷 계산(→ NpcPatches.ArmorCounts). 바닐라 Attack은 플레이어 도구만 닳게 함(→ 직접 깎음).
+- Character.Damage → ZNetView.InvokeRPC → ZRoutedRpc.InvokeRoutedRPC는 대상이 자기(소유자 = 호스트)면 HandleRoutedRPC를 그 자리에서 불러 ApplyDamage·SetHealth까지 같은 프레임에 끝남(→ 시험은 바로 잼).
+  플레이어 아닌 쪽 ApplyDamage는 GetDifficultyDamageScaleEnemy(근처 플레이어 수, 혼자면 1)·m_playerDamageRate를 곱함. 음식 회복은 10초마다(Player.UpdateFood m_foodRegenTimer, 일꾼 Meals.Tick 같음) — 꿀·익힌 고기·블루베리 합 4.
 - ItemDrop.Pickup(Humanoid)의 소유권 대기는 줍는 쪽을 Player로 캐스팅 → NPC면 NRE(→ CanPickup이면 Humanoid.Pickup).
 - 곡괭이 휘두름이 바위보다 땅에 먼저 닿으면 땅만 판다(Attack.SpawnOnHitTerrain → NoDig 패치).
 - Attack.SpawnOnHitTerrain은 PrivateArea(와드) 밖이고 Location.IsInsideNoBuildLocation(시작 제단 등 m_noBuild 장소) 밖일 때만 흙을 판다. 새 캐릭터는 시작 제단에서 시작(보스석 BossStone_* 둘레) → 시험은 TestKit.LeaveNoBuild로 제단 밖에서.
