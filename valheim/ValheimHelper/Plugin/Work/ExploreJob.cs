@@ -51,6 +51,12 @@ namespace ValheimHelper
 
         public string StateLine() => m_npc.Line("state.explore", new Dictionary<string, string> { ["where"] = m_where });
 
+        /// <summary>대기열·재시작 저장(WorkSaves.FromJob): 방향·바이옴·이름 그대로 이어 간다.</summary>
+        public WorkItem ToWork() => new WorkItem
+        {
+            Kind = WorkKind.Explore, Resume = true, Label = Label, DirX = m_dirX, DirY = m_dirY, BiomeId = m_biome, Where = m_where,
+        };
+
         /// <summary>Guard: 지금 목표 경계는 위험하다 → 둘러본 셈 치고 다음 경계로.</summary>
         public void AvoidHere(Vector3 danger)
         {

@@ -116,6 +116,10 @@ namespace ValheimHelper
             Say($"!{Workers.Name1} 탐험 {Bearing.KoreanOf(dirName)}");
             yield return new WaitForSeconds(1f);
             Check("1호가 탐험 시작", claude.Ai.Current == WorkerAI.Mode.Work && claude.Ai.Job is ExploreJob);
+            // 저장 칸: 하던 탐험 → WorkItem(Explore) → 글 → 다시 읽기(방향·이름 그대로)
+            var saved = claude.Ai.Job is ExploreJob ej ? WorkState.LoadQueue(WorkState.SaveQueue(new List<WorkItem> { WorkSaves.FromJob(ej) })) : new List<WorkItem>();
+            Check($"탐험 저장 칸 ({(saved.Count > 0 ? saved[0].Kind + " d=" + saved[0].DirX + "|" + saved[0].DirY + " " + saved[0].Where : "없음")})",
+                saved.Count == 1 && saved[0].Kind == WorkKind.Explore && saved[0].Resume && (saved[0].DirX != 0 || saved[0].DirY != 0) && !string.IsNullOrEmpty(saved[0].Where));
             float maxDist = 0f, t = 0f, swimRun = 0f, maxSwimRun = 0f;
             Vector3 last = claude.transform.position;
             while ((t < 150f || (t < 300f && !Scout.Explored(first))) && claude != null && claude.Ai.Current == WorkerAI.Mode.Work)

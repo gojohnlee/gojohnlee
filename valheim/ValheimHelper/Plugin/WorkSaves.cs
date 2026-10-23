@@ -71,10 +71,6 @@ namespace ValheimHelper
 
         static readonly AccessTools.FieldRef<GatherJob, ZoneXY> GoalZone = AccessTools.FieldRefAccess<GatherJob, ZoneXY>("m_goalZone");
         static readonly AccessTools.FieldRef<GatherJob, Vector3> GoalPos = AccessTools.FieldRefAccess<GatherJob, Vector3>("m_goalPos");
-        static readonly System.Reflection.FieldInfo ExDirX = AccessTools.Field(typeof(ExploreJob), "m_dirX");
-        static readonly System.Reflection.FieldInfo ExDirY = AccessTools.Field(typeof(ExploreJob), "m_dirY");
-        static readonly System.Reflection.FieldInfo ExBiome = AccessTools.Field(typeof(ExploreJob), "m_biome");
-        static readonly System.Reflection.FieldInfo ExWhere = AccessTools.Field(typeof(ExploreJob), "m_where");
 
         /// <summary>하던 일 → 이어 하기 칸(큰 단계만). 저장할 수 없는 일(묘비 회수 등)이면 null.</summary>
         public static WorkItem FromJob(IWorkerJob job)
@@ -88,12 +84,7 @@ namespace ValheimHelper
             }
             if (job is PlanJob p && p.Goal != null) return p.Goal;
             if (job is FarmJob fj) return fj.ToWork();
-            if (job is ExploreJob e)
-                return new WorkItem
-                {
-                    Kind = WorkKind.Explore, Resume = true, Label = e.Label,
-                    DirX = (int)ExDirX.GetValue(e), DirY = (int)ExDirY.GetValue(e), BiomeId = (int)ExBiome.GetValue(e), Where = (string)ExWhere.GetValue(e),
-                };
+            if (job is ExploreJob e) return e.ToWork();
             return null;
         }
 
