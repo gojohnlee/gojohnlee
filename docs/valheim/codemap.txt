@@ -31,6 +31,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 밤사이 정산(R3)         Core/Work/NightSettle.cs(넘김 시작·끝 Step, Due 한 아침 한 번, AtBase 30m) + Plugin/Work/MorningSettle.cs(Plugin.Update에서 Tick, Snapshot·SettleAll·Settle, NPC ZDO vh_settled, Unload.Instant로 짐 → 상자, Machines·TakeOut·Refill 제련소류 꺼내기·채우기, Fermenters 발효기 따르기·채우기, Farms·Replant 거점 밭 거두기·같은 자리 다시 심기 — FarmJob.Unusable(space:false)) · 시험 Plugin/SettleTest.cs(vh_settletest)
 상자                  Plugin/Work/Chests.cs(I-1: ChestRole Any/Gear/Food/Mats 인자·TagProvider(ZDO→ChestTags, 기본 ChestTagReader.Read, null=전부)·Candidates(역할별 거리 안 ZDO 고르기). RoleFor(물건)=Unload 역할. 지정 없음: 거점 125m(Core BaseArea) 안 상자 전부 NearBase·First·CountAll, 넣기 ForItem = 같은 물건 → 빈자리. !상자는 "다 씀" 대답만)
 상자 이름(I-2)        Core/Work/ChestNames.cs(Parse 이름→ChestTags, Select 역할 상자 있으면 그것만·없으면 일반·손대지 않음 제외)·Plugin/Work/ChestTagReader.cs(ZDO 문자열 "ChestName" = CustomChestName 모드의 이름) · Tests/ChestNamesTests
+상자 재료로 제작(①)   Core/Storage/StockTake.cs(Enough·Plan 가방 먼저 → 가까운 상자) + Plugin/Storage/BaseStock.cs(호스트 자기 플레이어만, 가까운 깃발 125m 안 불러와진 상자·열린 것·남의 개인 상자 뺌, Count 0.5초 캐시·DoCrafting 동안 Fresh, Take=Chests.TryEdit)·CraftPatches.cs(Player.HaveRequirementItems Postfix·ConsumeResources Prefix·InventoryGui.DoCrafting Fresh) · 시험 Plugin/Storage/StockTest.cs(vh_stocktest) · Tests/StockTakeTests
 스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
 제작 계획              Core/Work/CraftPlan.cs(426: RecipeBook·Facilities·CraftPlanner·시뮬레이션) + Plugin/Work/Recipes.cs(게임 데이터→RecipeBook, 거점 설비)
 제작 실행기             Core/Work/PlanRunner.cs(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait) + Plugin/Work/PlanJob.cs(PlanRunner를 돌리는 일: Gather→GatherJob, Craft→CraftStep, Load/Unload→MachineStep) CraftStep.cs(제작대 앞 제작) MachineStep.cs(Smelter·Fermenter·CookingStation 넣기·꺼내기, 발효기 다 익음 FermentReady)
@@ -69,6 +70,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 지식·탐험 Senses·Scout·MapSense·ExploreJob·Knowledge  vh_exploretest;vh_woodtest
 준비·장비 Prep·Gear·Meals  vh_preptest;vh_bagtest;vh_resisttest · 활 챙기기 → vh_bowtest · 수리 Repair → vh_repairtest
 짐·상자 Unload·Chests·ChestNames  vh_bagtest;vh_nametest;vh_basetest;vh_woodtest
+상자 재료 제작 Storage/*        vh_stocktest;vh_crafttest;vh_nametest
 밤사이 정산 NightSettle·MorningSettle  dotnet test;vh_settletest;vh_bagtest
 묘비 GraveJob             vh_deathtest
 제작 CraftPlan·PlanRunner·PlanJob·CraftStep  dotnet test + vh_crafttest;vh_settest
@@ -84,6 +86,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
+- 사람 제작 재료(10-23): Player.HaveRequirementItems(가방만, 물건마다 품질별 최대 개수, requireOnlyOneIngredient는 하나만)·GetFirstRequiredItem(하나만 제작법, 가방에서 직접 뺌)·HaveRequirements(Piece, 모드 CanBuild=CountItems)·ConsumeResources(요구마다 RemoveItem(이름, 수, -1) — 제작 InventoryGui.DoCrafting 1912줄·건축 Player.PlacePiece 1398줄). DoCrafting은 막대 끝에 HaveRequirements 다시 확인 → 물건 AddItem → 그 뒤 ConsumeResources(같은 프레임). 개수 표시 InventoryGui.SetupRequirement 1751줄 CountItems.
 - 시뮬레이션 거리(그래픽 설정 SimulationDistance, ZNet.GetSyncedSimulationDistance): 단계 0 = 근거리 1(네모 ±1구역, ≥64m), 1 = 근거리 2(원, 대각선 ~90m),
   2 = 원래(근거리 2 네모, ≥128m, OriginalDistance), 3~ = 근거리 3~. 기본값은 단계 2(GraphicsSettingsManager 기본 m_simulationDistance=2). 물체 인스턴스는 ZNetScene.CreateDestroyObjects가 이걸로 FindSectorObjects.
   ZDOMan.FindSectorObjects(구역, new SimulationDistance(n,0)): classic이 아니면 ZonesWithinRadius(중심 거리 < n×64+32) 원 → n=2면 모서리 구역 빠짐. classic:true = 네모 ±n 전부.
