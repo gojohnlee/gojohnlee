@@ -54,11 +54,14 @@ namespace ValheimHelper
             /// <summary>원래 땅보다 이만큼 넘게 깊이는 파지 않는다(m) = 바닐라 땅 낮춤 한계(TerrainComp m_levelDelta ±8). 묻힌 광석은 이 안이면 다 캔다(요청 R5, 회차 107: 3m → 8m).</summary>
             public const float MaxDepth = 8f;
 
+            /// <summary>바닥에 닿았다고 보는 여유(m): 한계 바닥(원래 땅 −8m)을 친 휘두름은 바닐라가 더 못 낮추는데 "판 것"으로 세면 진척으로 오해한다(E021 헛파기) → 막은 것으로 세어 겨눈 조각에 직접 피해.</summary>
+            const float FloorMargin = 0.4f;
+
             static bool Prefix(UnityEngine.Vector3 hitPoint, Character character, ref UnityEngine.GameObject __result)
             {
                 if (!(character is WorkerNpc w)) return true;
                 // 경사로 깎기는 깊이 제한 없음(구덩이에서 나오려고 위로 깎는 것)
-                bool tooDeep = w.Ai != null && !w.Ai.Carving && WorldGenerator.instance != null && hitPoint.y < WorldGenerator.instance.GetHeight(hitPoint.x, hitPoint.z) - MaxDepth;
+                bool tooDeep = w.Ai != null && !w.Ai.Carving && WorldGenerator.instance != null && hitPoint.y < WorldGenerator.instance.GetHeight(hitPoint.x, hitPoint.z) - MaxDepth + FloorMargin;
                 if (w.Ai != null && w.Ai.DigAllowed && !tooDeep) { Dug++; w.Ai.Digs++; return true; }
                 Blocked++;
                 if (w.Ai != null) w.Ai.BlockedDigs++;

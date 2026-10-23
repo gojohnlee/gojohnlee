@@ -1012,6 +1012,8 @@ namespace ValheimHelper
         Collider m_aimCol;
         bool m_saidDig;
         const float WorkIdleLimit = 30f;
+        /// <summary>땅 낮춤 한계 바닥 밑으로 이만큼(m) 안에 윗면이 있는 묻힌 조각까지 캔다(바닥에 선 일꾼 팔이 닿는 정도).</summary>
+        const float BelowFloorReach = 2f;
 
         /// <summary>
         /// 곡괭이로 칠 곳: 남은 조각 중 땅 위로 드러난 가장 가까운 조각(휘두름이 땅에 먼저 닿으면 바위가 안 깎인다).
@@ -1045,7 +1047,8 @@ namespace ValheimHelper
             if (m_aimCol != null || buried == null) return true;
             Vector3 c = buried.bounds.center;
             float depth = WorldGenerator.instance.GetHeight(c.x, c.z) - buriedTop; // 원래 땅에서 얼마나 깊은지
-            if (!dig || depth > NpcPatches.NoDig.MaxDepth)
+            // 한계 바닥(8m)보다 조금 아래 조각(silvervein 바닥 8.3m)도 겨눈다: 바닥을 친 휘두름은 NoDig이 막고 UpdateWork가 그 조각에 직접 피해(E021 나).
+            if (!dig || depth > NpcPatches.NoDig.MaxDepth + BelowFloorReach)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 조각만 남음(깊이 {depth:0.0}m) → 파지 않고 남김");
                 return false;
