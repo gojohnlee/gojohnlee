@@ -81,6 +81,7 @@ namespace ValheimHelper
             // 바닐라 BaseAI.MoveTo가 정한 걷는 방향(Character.m_moveDir)은 StopMoving 전까지 남는다 → 안 멈추면 설비 한가운데로 계속 달려
             // 조리대 밑 화로 불(FireBurn) 속에서 불붙어 죽었다(회차 128 cooktest: 0.9m까지 들어감·불붙음).
             m_npc.Ai.StopMoving();
+            m_npc.Ai.Hold("설비 앞 일");
             if (m_cook != null && d < CookKeepOff)
             {
                 // 조리대 밑은 불: 처음부터 곁에 있었거나 밀려 너무 가까우면 먼저 물러선다

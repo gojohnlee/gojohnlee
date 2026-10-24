@@ -57,6 +57,11 @@ namespace ValheimHelper
         public Mode Current { get; private set; } = Mode.Idle;
         public string FollowName { get; private set; }
 
+        /// <summary>일부러 서 있는 까닭(통나무 기다림·설비 기다림 등) — 매 프레임 Hold로 적고, 시험의 멈춤 재기(TestKit.Stalls)만 읽는다.</summary>
+        public string HoldWhy { get; private set; }
+        public float HoldAt { get; private set; } = -99f;
+        public void Hold(string why) { HoldWhy = why; HoldAt = Time.time; }
+
         ZDOID m_follow = ZDOID.None;
         float m_farSayAt;
         float m_raidCheckAt;

@@ -73,6 +73,7 @@ namespace ValheimHelper
             }
             if (m_step == null && !Pick())
             {
+                m_npc.Ai.Hold("만들기 차례 기다림");
                 m_npc.Ai.StopMoving(); // 가만히 기다림: 앞 단계의 걷기 방향이 남아 계속 걷지 않게(회차 128)
                 return !m_runner.Over ? TryFill() : Finish();
             }

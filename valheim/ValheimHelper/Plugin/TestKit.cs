@@ -322,6 +322,7 @@ namespace ValheimHelper
                 throw new EnvBadException(string.Join(", ", bad.ToArray()));
             }
             Plugin.Instance.StartCoroutine(Track(w));
+            StartStalls();
         }
 
         /// <summary>거점 둘레의 플레이어·일꾼이 아닌 생물(적·짐승·동료 해골).</summary>
@@ -504,6 +505,7 @@ namespace ValheimHelper
         /// <summary>그래도 생물이 남으면 신 모드를 되돌리고 EnvBadException(본시험 안 함, PASS 아님).</summary>
         public static void OldCheck(Vector3 home, Player player, bool god)
         {
+            StartStalls();
             var left = Creatures(home);
             if (left.Count == 0) return;
             if (!Strict)
@@ -521,6 +523,8 @@ namespace ValheimHelper
         /// <summary>옛 시험 끝 정리(TestRunner.Finish가 부름, OldClear를 안 부른 시험은 아무것도 안 함).</summary>
         public static void OldEnd()
         {
+            try { LogStalls(); }
+            catch (System.Exception e) { TestRunner.Log("멈춤 기록 오류: " + e.Message); }
             Strict = false;
             if (s_oldHome == null) return;
             Vector3 home = s_oldHome.Value;
@@ -600,6 +604,116 @@ namespace ValheimHelper
             }
         }
 
+
+        // ---- 멈춤 재기(사용자 요청 10-25 "멍하니 서 있기"): 일이 있는데 5초 넘게 1m 안에서 안 움직이고 안 휘두르면 한 번 ----
+        const float StallMin = 5f, StallMove = 1f, StallTick = 0.25f;
+        sealed class StallState { public Vector3 Anchor; public float Since; public string Label; public string Why; }
+        static readonly Dictionary<WorkerNpc, StallState> s_stall = new Dictionary<WorkerNpc, StallState>();
+        // 끝난 멈춤(까닭·단계, 초): 까닭 없는 것 / 일부러 선 것(WorkerAI.Hold·질문 답 기다림)
+        static readonly List<KeyValuePair<string, float>> s_stalls = new List<KeyValuePair<string, float>>();
+        static readonly List<KeyValuePair<string, float>> s_holds = new List<KeyValuePair<string, float>>();
+
+        static object s_stallRun;
+        static int s_samples;       // 일 중 1m 안에 서 있던 표본 수(재기가 도는지 보려고)
+        static float s_maxStill;    // 그중 가장 오래 선 초(5초 안 되는 것까지)
+        static readonly Dictionary<string, float> s_holdTime = new Dictionary<string, float>(); // Hold 까닭별 합(5초 안 되는 것까지)
+        static int s_miss0;         // 시작 때 GatherJob.MissSwings
+
+        /// <summary>멈춤 재기 시작(새 시험 CheckStart·옛 시험 OldCheck). 끝은 LogStalls(End·OldEnd).</summary>
+        public static void StartStalls()
+        {
+            var run = s_stallRun = new object();
+            Plugin.Instance.StartCoroutine(Stalls(run));
+        }
+
+        static IEnumerator Stalls(object run)
+        {
+            s_stall.Clear(); s_stalls.Clear(); s_holds.Clear();
+            s_samples = 0; s_maxStill = 0f;
+            s_holdTime.Clear(); s_miss0 = GatherJob.MissSwings;
+            while (s_stallRun == run && TestRunner.Running)
+            {
+                try
+                {
+                    foreach (var npc in WorkerNpc.All)
+                    {
+                        if (npc == null || npc.IsDead() || npc.Ai == null) continue;
+                        var ai = npc.Ai;
+                        Vector3 p = npc.transform.position;
+                        if (ai.Job != null && Time.time - ai.HoldAt < StallTick + 0.1f && ai.HoldWhy != null)
+                        {
+                            s_holdTime.TryGetValue(ai.HoldWhy, out float ht);
+                            s_holdTime[ai.HoldWhy] = ht + StallTick;
+                        }
+                        if (!s_stall.TryGetValue(npc, out StallState st)) s_stall[npc] = st = new StallState { Anchor = p, Since = Time.time };
+                        bool idle = ai.Job == null || (ai.Guard != null && ai.Guard.Engaged) || npc.InAttack();
+                        if (idle || Vector3.Distance(p, st.Anchor) > StallMove)
+                        {
+                            CloseStall(npc, st);
+                            st.Anchor = p; st.Since = Time.time; st.Label = null; st.Why = null;
+                            continue;
+                        }
+                        if (st.Label == null) st.Label = ai.Job.GetType().Name + "/" + ai.Job.StepName;
+                        s_samples++;
+                        s_maxStill = Mathf.Max(s_maxStill, Time.time - st.Since);
+                        if (st.Why == null)
+                        {
+                            if (Time.time - ai.HoldAt < 0.6f) st.Why = ai.HoldWhy;
+                            else if (Departures.Awaiting) st.Why = "질문 답 기다림";
+                        }
+                    }
+                }
+                catch (System.Exception e) { Plugin.Log.LogWarning("멈춤 재기 오류: " + e.Message); }
+                yield return new WaitForSeconds(StallTick);
+            }
+        }
+
+        static void CloseStall(WorkerNpc npc, StallState st)
+        {
+            float t = Time.time - st.Since;
+            if (st.Label == null || t < StallMin) return;
+            string what = st.Why != null ? $"{st.Why} {st.Label}" : st.Label;
+            (st.Why != null ? s_holds : s_stalls).Add(new KeyValuePair<string, float>(what, t));
+            Plugin.Log.LogInfo($"멈춤 {t:0.0}초: {npc.NpcName} {what}{(st.Why != null ? " (일부러)" : "")} / {npc.MoveDebug}");
+        }
+
+        /// <summary>시험 끝 diag 한 줄: 까닭 없는 멈춤과 일부러 선 것을 따로.</summary>
+        static void LogStalls()
+        {
+            if (s_stallRun == null) return;
+            s_stallRun = null;
+            foreach (var kv in s_stall) if (kv.Key != null) CloseStall(kv.Key, kv.Value);
+            s_stall.Clear();
+            TestRunner.Log($"멈춤 {Sum(s_stalls)} · 일부러 선 것 {Sum(s_holds)} (선 표본 {s_samples}, 가장 오래 {s_maxStill:0.0}초) · 헛휘두름 {GatherJob.MissSwings - s_miss0}번 · 기다림 합 {HoldTimes()}");
+        }
+
+        static string HoldTimes()
+        {
+            if (s_holdTime.Count == 0) return "없음";
+            var parts = new List<string>();
+            foreach (var kv in s_holdTime) parts.Add($"{kv.Key} {kv.Value:0}초");
+            return string.Join(", ", parts.ToArray());
+        }
+
+        static string Sum(List<KeyValuePair<string, float>> list)
+        {
+            if (list.Count == 0) return "0번";
+            float total = 0f;
+            var longest = list[0];
+            var by = new Dictionary<string, float>();
+            foreach (var kv in list)
+            {
+                total += kv.Value;
+                if (kv.Value > longest.Value) longest = kv;
+                by.TryGetValue(kv.Key, out float s);
+                by[kv.Key] = s + kv.Value;
+            }
+            var top = new List<KeyValuePair<string, float>>(by);
+            top.Sort((a, b) => b.Value.CompareTo(a.Value));
+            var parts = new List<string>();
+            for (int i = 0; i < top.Count && i < 3; i++) parts.Add($"{top[i].Key} {top[i].Value:0}초");
+            return $"{list.Count}번, 합 {total:0}초, 가장 긴 {longest.Value:0}초({longest.Key}) [많은 것: {string.Join(", ", parts.ToArray())}]";
+        }
         /// <summary>검사 하나가 FAIL인 순간의 상태(Checks.Add가 부름).</summary>
         public static void NoteFail()
         {
@@ -673,6 +787,8 @@ namespace ValheimHelper
                 try { TestRunner.Log("끝 상태: " + Snapshot(w)); }
                 catch (System.Exception e) { TestRunner.Log("끝 상태 기록 오류: " + e.Message); }
             }
+            try { LogStalls(); }
+            catch (System.Exception e) { TestRunner.Log("멈춤 기록 오류: " + e.Message); }
             if (checks.Passed != checks.Total && s_flow.Count > 0)
             {
                 TestRunner.Log("--- 상태 흐름(3초마다, 최근 " + s_flow.Count + "개) ---");
