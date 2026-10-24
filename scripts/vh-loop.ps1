@@ -271,23 +271,38 @@ function Backup-Wip {
     Log "valheim-wip 백업 $c"
 }
 
+# 할 일: progress "다음" 아래 첫 안 끝난 "★" 덩어리와 그 안의 첫 안 끝난 조각("  가) …"·"  2) …").
+# [끝]·[보류]로 시작하는 덩어리·조각, 조각이 다 끝난 덩어리는 건너뛴다. 조각이 없는 덩어리는 이름만.
+# ★가 없으면 "구현 단계" 표의 첫 [ ]·[~] 단계.
+function Get-Todo($path) {
+    $p = @(Get-Content $path -Encoding UTF8)
+    $i = 0
+    while ($i -lt $p.Count -and $p[$i] -notmatch '^다음') { $i++ }
+    for ($i++; $i -lt $p.Count; $i++) {
+        if ($p[$i] -notmatch '^★\s*(.*)$') { continue }
+        $head = $Matches[1]
+        if ($head -match '^\[(끝|보류)') { continue }
+        $sub = ''; $items = 0
+        for ($j = $i + 1; $j -lt $p.Count -and $p[$j] -match '^\s+\S'; $j++) {
+            if ($p[$j] -notmatch '^\s+[^\s\[\]()]{1,4}\)\s*(.*)$') { continue }
+            $items++
+            if ($Matches[1] -match '^\[(끝|보류)') { continue }
+            $sub = $p[$j].Trim(); break
+        }
+        if ($items -and -not $sub) { continue }   # 조각이 다 끝난 덩어리(다음 회차가 지움)
+        $name = ($head -split '\s[(—]')[0].Trim()
+        $todo = if ($sub) { "$name → $sub" } else { $name }
+        if ($todo.Length -gt 120) { $todo = $todo.Substring(0, 120) + '…' }
+        return $todo
+    }
+    $stage = $p | Where-Object { $_ -match '^- \[( |~)\]' } | Select-Object -First 1
+    if ($stage) { return "$stage".Trim() }
+    return '(없음)'
+}
+
 function Write-Status($now, $last) {
     $script:StatusNow = $now   # Wait-Until이 여기에 절전 상태를 덧붙인다
-    # 할 일: progress "★ 지금 …" 머리줄 아래 들여 쓴 줄들에서 [끝]이 아닌 첫 번호 항목.
-    # 번호 항목이 전부 [끝]이면 다음 "★ 지금" 머리줄로, 번호 항목이 없는 머리줄은 그 줄 자체가 할 일.
-    $p = @(Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8)
-    $todo = ''
-    for ($i = 0; $i -lt $p.Count -and -not $todo; $i++) {
-        if ($p[$i] -notmatch '^★ 지금') { continue }
-        $items = 0
-        for ($j = $i + 1; $j -lt $p.Count -and $p[$j] -match '^\s+\S'; $j++) {
-            if ($p[$j] -notmatch '^\s+\d+\)') { continue }
-            $items++
-            if ($p[$j] -notmatch '^\s+\d+\)\s*\[끝') { $todo = $p[$j]; break }
-        }
-        if (-not $todo -and $items -eq 0) { $todo = $p[$i] }
-    }
-    $todo = "$todo".Trim(); if ($todo.Length -gt 120) { $todo = $todo.Substring(0, 120) + '…' }
+    $todo = Get-Todo (Join-Path $Repo 'docs\valheim\progress.txt')
     $test = if (Test-Path $Diag) { "$((Get-Item $Diag).LastWriteTime.ToString('MM-dd HH:mm')) $(Get-Content $Diag -Encoding UTF8 -TotalCount 1)" } else { '(없음)' }
     $lim = @(0, 1 | ForEach-Object { if ($st.until[$_] -and [datetime]$st.until[$_] -gt (Get-Date)) { "$($Accounts[$_].Name) $(([datetime]$st.until[$_]).ToString('MM-dd HH:mm'))까지" } })
     $text = @(

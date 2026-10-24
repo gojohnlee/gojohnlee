@@ -1,11 +1,15 @@
 발헤임 일꾼 NPC — 진행 상황 (세션이 끊겨도 여기서 이어간다)
 
+이 파일은 "지금 상태 + 남은 일 순서"만 둔다(사용자 결정 10-24: 끝난 일은 history.md에 있으니 여기서 지움). 옛 전체본은 git 커밋 a01aaee의 이 파일.
 읽는 순서(토큰 아끼기, 2026-10-21 사용자 결정)
 - 새 세션: 이 파일 → 필요한 코드만 codemap.txt로 찾아 읽기. 구상서(concept-v1.txt)·설계서(design-depart-craft.txt)는 그 장만. 결정은 decisions.txt(grep).
 - 지난 기록(시험 결과·원인 분석·예전 결정 전체)은 history.md — 평소엔 읽지 않고 필요할 때 grep.
 - 파일은 통째로 읽지 말고 grep으로 찾은 부분만. 게임 코드 확인 결과는 codemap.txt "확인된 게임 사실"에 적어 두고 다시 디컴파일하지 않는다.
 - 15분마다(빌드·테스트 통과 때마다) 커밋·푸시하고 이 파일의 "지금"과 "다음"만 고친다. 끝낸 일 기록은 history.md 맨 위 "회차 기록"에
   bash scripts/vh-history-add.sh로 넣고(history.md는 읽지 않음), "지금"에는 같은 요약을 맨 위에 넣고 최근 3개만 둔다(넘친 것은 지움 — history에 이미 있음).
+- "다음" 정리(사용자 결정 10-24): 조각을 끝내면 그 줄을 "[끝, 회차 N — 커밋 · 시험]" 한 줄로 줄인다. ★ 덩어리의 조각이 전부 [끝]이면
+  다음 회차가 시작할 때 덩어리째 지운다(같은 회차에 지우면 루프가 [끝] 줄을 못 봐 진척으로 안 셈). 덩어리 머리는 "★ 이름 (근거)", 조각은 "  가) …" 꼴로
+  — status.txt "할 일"이 "다음"의 첫 안 끝난 ★와 그 첫 안 끝난 조각을 보여 준다(scripts/vh-loop.ps1 Write-Status).
 
 ======================================================================
 PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
@@ -26,183 +30,45 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
 6. dist DLL도 커밋(방식 A 한 줄 명령이 valheim/dist를 받음).
 클라우드 세션: 환경 네트워크에 nuget.bepinex.dev 허용됨(2026-10-23) → valheim-refs clone 뒤 bash scripts/valheim-build.sh로 빌드 확인 가능(ilspycmd는 dotnet tool install -g ilspycmd).
-  게임 시험은 PC만. 클라우드에서 만든 dist DLL은 커밋하지 않음(시험한 PC 빌드가 기준).
+  게임 시험은 PC만. 클라우드에 dotnet이 없으면 dot.net/v1/dotnet-install.sh --channel 8.0 → ilspycmd --version 8.2.0.7535, 실행 때 DOTNET_ROLL_FORWARD=Major(10-24 확인).
+  클라우드에서 만든 dist DLL은 커밋하지 않음(시험한 PC 빌드가 기준).
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [클라우드 10-24] 사용자와 점검: progress를 남은 일만으로 줄임(54KB → 14KB, 옛 전체본은 커밋 a01aaee), status "할 일" 줄 고침(Get-Todo), 단계 표 ④ 끝·risks 새로. 사용자 결정 셋(죽을 각만 아니면 싸움·동료 부르기·도망 뒤 거점 안 목표 다시 — "다음" 첫 일), 게임 갈고리 사실(codemap). 회차 144 기록의 커밋 2699deb는 rebase로 0059ee7이 됨.
 - [루프 회차 144] 검은숲 자리에서 실제 게임 재시작 시험(일 중간에 끄고 다시 켜기) 두 번 다 PASS. 처음엔 2번째 실행에서 회색난쟁이 때문에 돌 3개를 시간 안에 못 했는데, 시험 쪽 문제(2번째 실행만 시험 자리 생물 치우기가 안 켜짐)라 고침.
 - [루프 회차 143] 늪 회귀(검은숲) 마지막 묶음 5개(습격·도움·팀·동행·Claude) 다 PASS로 나) 끝. 작은 버그 하나 고침 — 건너뛴 대상만 보이는 구역을 "없음"으로 지식에서 지우던 것. 시험 정리도 하나 손봄(E027 습격 시험 뒤 남은 물건 1개, 다시 돌려 재현 안 됨).
-- [루프 회차 142] 늪 회귀(검은숲) 다섯째 묶음 4개: 버그 하나 고침 — 캐다가 적을 피해 물러난 뒤 멀리 떨어진 자리에서 그대로 곡괭이질을 이어 20m 밖 바위 조각에 피해가 들어가던 것(이제 다시 다가감). 구리 시험 자리에 회색난쟁이가 계속 와서 일꾼이 광맥을 버리던 것은 시험 쪽에서 막음. 4개 다 PASS.
 
-다음 (순서대로)
-★ [끝] E021·R5 묻힌 광맥 채굴·구덩이(사용자 결정 10-23, decisions.txt "묻힌 광맥 채굴·구덩이") — E021은 Errors-resolved로 닫음:
-  가) [끝, 회차 115 — 커밋 a8ffb47 · 시험 vh_pittest PASS 15/15, vh_coppertest 11/11, vh_repairtest 10/10, vh_woodtest 12/12] 연장 내구도 최저 1, 경사로 깎기는 내구도와 무관.
-  나) [끝, 회차 116 — 커밋 e7ae9c3 · 시험 vh_pittest PASS 15/15, vh_coppertest 11/11, silvertest 바닥 막음 87·직접 피해 82] 8m 바닥 아래 조각은 직접 피해.
-  다) [끝, 회차 118 — 커밋 9770e35·6643d28 · 시험 vh_coppertest PASS 11/11(회차 117·118); 근처 헛파기 규칙은 회차 117 silvertest 로그로 발동 확인, silvertest가 멀리로 바뀌어 칸으로는 안 봄] 땅만 10번이면 직접 피해.
-  라) [끝, 회차 118 — 커밋 bcb2512·a90fe28 · 시험 vh_silvertest PASS 19/19(땅 0번 파고 조각 다 캠 25초, 은 72개 다 주움), vh_coppertest 11/11, vh_woodtest 12/12, dotnet 454] 멀리선 안 파고 직접 침 + 짐이 차서 남긴 것 다시 주우러 옴.
-★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "인격 바꾸기") — E021 다음 바로(대사는 이미 바뀌어 이름만 옛것):
-  가) [끝, 클라우드 — Speech 대사 두 인격 새로(152키, 라그나 602줄·플로키 600줄 — 사용자 요청으로 약 3배, 새 키 rescue·depart.sea), dotnet 445] 대사.
-  나) [끝, 회차 119 — 커밋 10806ef · 시험 vh_npctest PASS 17/17(외모 프리팹·기본 이름·옛 이름 → 새 이름·별칭 !Ragnar), vh_flagtest 12/12, vh_woodtest 12/12, vh_stonetest 10/10, vh_nametest 9/9, dotnet 456] 이름·별칭: Workers Name1/Name2 기본 "라그나"/"플로키"(설정 설명도), 별칭 Ragnar·라그나르 / Floki(Commands.cs), 옛 기본값(Claude/Alarak)인 설정·NPC ZDO 이름은 한 번 새 이름으로,
-     BaseFlag 설명, ClaudeReply 예시, ClaudePrompt NPC 줄에 말투 한 줄(라그나 침착한 반말 "~지/~군", 플로키 들뜬 반말 "히히"·신 이야기), enum Scv→Ragnar·Alarak→Floki(값 0·1 그대로),
-     외모(라그나 밝은 갈색 땋은 머리·수염, 플로키 검은 머리·염소수염 — 바닐라 목록에서 가까운 것), 시험의 "!Claude"·이름 기대값. 시험: 기본 묶음 + nametest + 옛 설정 → 새 이름 칸.
-  rescue 키는 막힘 건너뛰기·구덩이 가장자리 옮기기 때, depart.sea는 바다 건너 포탈 없을 때 쓴다.
-★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "잡담") — 인격 바꾸기 나) 다음:
-  가) [끝, 클라우드 — Core Banter(Due·Tick·OnEvent·BanterFacts.FromPlaces) + Speech bt.* 54키×2, dotnet 454] 고르기·대사.
-  나) [끝, 회차 120 — 커밋 ce8ac53 · 시험 vh_bantertest PASS 13/13(주고받기·말풍선만·서로 바라봄·죽음 반응·멀면 소식·플레이어 멀면 없음), vh_npctest 17/17, vh_flagtest 12/12, vh_woodtest 12/12, vh_stonetest 10/10, vh_basetest 22/22, dotnet 457 · 잡담 때는 시험이 DueNow로 당김] 게임 연결(Plugin): 1초마다 banter.Due(now)면 기억 모아(BanterFacts: Brain.Places → FromPlaces(거점 구역, 적 보이는 이름), 지식에서 아는 자원 하나+방향,
-     탐험에서 찾은 바이옴+방향, 밭 작물, 두 NPC 최고 솜씨, EnvMan 밤) Tick(together, alone). together = 두 NPC 다 쉬는 중(Idle·Home, 일·싸움·동행 아님)·서로 15m 안·
-     플레이어 30m 안(말풍선 보이는 거리), alone = 그 조건의 한 명. 줄은 Delay초 뒤 말풍선만: 새 RPC "VH_Bubble"(모두에게, 받는 쪽 Chat.SetNpcText(머리 위 2.2m, 30m, 7초) + Heard,
-     채팅창 AddString 안 함 — 기존 VH_Say는 그대로). 말할 NPC가 죽었거나 없으면 건너뜀. 주고받는 동안(마지막 줄 + 2초) 쉬는 두 NPC는 멈춰 서로 바라봄(WorkerAI LookAt).
-     Banter 하나를 Workers에 둠(시각은 ZNet 시간).
-     이벤트 OnEvent(subject, 종류, 인자, partnerNear = 상대 30m 안·플레이어 30m 안): died 말한 뒤 Died, 일 포기(cantReach·homeFail·graveFail·계획 실패) Failed,
-     gatherDone n ≥ 20이면 Haul{item,n}, rescue 말 Rescued, skillUp SkillUp{skill,level}, flee Fled{foe}, 습격 끝 Raid, exploreBiomeFound Biome{biome}, 5분 넘게 밖에 있다 귀환 Back.
-     시험 vh_bantertest: 둘이 쉬고 플레이어 곁 → 150초 안에 주고받기(다른 NPC 두 줄, 채팅창엔 없음, 말하는 동안 서로 바라봄 — 앞 방향 각도 30° 안), 한 명 죽였다 살림 → 10초 안에
-     상대 반응, 상대 멀리 → 바로 반응 없고 다음 잡담에 소식, 플레이어 40m 밖 → 150초 동안 잡담 없음, 자리표시자 "{" 안 남음.
-★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "오류 정리 꼼수") — 오류 빨리 줄이기, 상자 ② 전에. 넣고 그 시험 PASS면 Errors.txt에서 닫음:
-  가) [끝, 회차 121 — 커밋 7364ee6 · 시험 vh_woodtest PASS 13/13(새 칸 통나무 피해 50 → 체력 그대로, 일 중 1번 막음), vh_stonetest 11/11, dotnet 457 · NpcPatches.NoTreeHurt, E020 닫음] E020 일꾼 나무·통나무 피해 없음.
-  나) [끝, 회차 122 — 커밋 24c5f12 · 시험 vh_pittest PASS 17/17(새 칸 30초 → 가장자리 위 32.3초·짐 그대로, 구덩이 5·6 가장자리로 나옴), vh_stucktest 10/10(pit→stuck 묶음), vh_hoptest 19/19, dotnet 460 · WorkerAI.EdgeRescueIfLong·Climb.EdgeSpots, E018 닫음] E018 구덩이 30초 못 나오면 가장 가까운 가장자리 위로(근처도).
-  다) [끝, 회차 123 — 커밋 32ebb9a · 시험 vh_hoptest PASS 20/20(새 칸: 묶인 채 나무 5m 앞 → 그 자리에서 직접 치기·쓰러짐), vh_coppertest 12/12, vh_woodtest 13/13, dotnet 460 · GatherJob.StartWork(farStuck)·FarStuckRange 8m, E012 닫음] E012 멀리서 목표 몇 m 앞 막힘 → 그 자리 직접 캠.
-  라) [끝, 회차 124 — 커밋 8878435 · 시험 vh_npctest PASS 17/17, vh_escorttest 18/18, vh_flagtest 12/12, vh_woodtest 13/13, vh_stonetest 11/11, vh_basetest 22/22, vh_hunttest 9/9, dotnet 460 · TestKit.Strict·World.CountsCreatures·Guard.Engaged, E015·E016 닫음] E015·E016 시험: 생물 있음 환경 불량 뺌(사냥·싸움·도우미·팀·피어·습격·지하묘지·활만 유지), TestKit.WaitFor는 싸움·도망 동안 시간 멈춤(최대 120초), 끝 정리 뒤 남은 생물은 다음 시험 안 멈춤.
-  라-2) [끝, 회차 125 — 커밋 52bf326 · 시험 vh_deathtest PASS 21/21(새 칸: 나무 일 중 죽음 → 대기열 1칸 → 묘비 회수부터 → 나무 일 이어 상자 3→14), vh_fighttest 14/14(새 칸: 나무 일 중 회색난쟁이 싸움 → 같은 일 이어 3→4개), vh_bantertest 13/13, dotnet 460 · WorkerAI.OnDied 하던 일 → 대기열 맨 앞(Ready = 묘비 회수 끝)] 싸움 뒤는 원래 이어졌고, 죽음 뒤는 일을 버리던 것을 고침.
-  마) [끝, 회차 126 — 커밋 0dae4ba · 시험 vh_pittest PASS 17/17, dotnet 460 · PitTest 같은 방향 30m씩 3곳, E004 닫음] E004 시험 구덩이 안 파지면 다른 자리(최대 3곳).
-  바) [끝, 회차 127 — 커밋 39f318e · 시험 vh_cookwettest PASS 10/10(뇌우 고정 → cookWet 말·계획 그만둠·날고기 그대로), vh_cooktest 10/10 ×3(cookwet 뒤 묶음), dotnet 460 · TestKit 바람 0.3 고정, E014 닫음·새 E024 관찰 중] E014 cooktest 비바람 고정 한 번.
-  사) [끝, 회차 128 — 커밋 3182cda·a0e0c11 · 시험 vh_crafttest PASS 24/24(새 칸: 정리 시작 때 짐에서 1개 지움 → 보충 1·보존 4=4, 용광로·발효는 잘못된 보충 0), vh_departtest 25/25, vh_basetest 22/22, vh_cooktest 15/15, vh_deathtest 21/21, dotnet 460 · MachineStep.Refill·Chests.Watch, E001 닫음; 상자 옮기기(CraftStep.TakeAll·Put)는 한 프레임·되돌림이라 소실 길이 없어 보충 안 넣음] E001 crafttest 보존 검사 + 소실 보충("보충 N개", 근처 5m 플레이어 있었으면 안 함) — 설비 꺼내기·상자 옮기기만, 캐기·벌목 드롭은 안 함.
-★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "멀리선 단순하게") — 오류 꼼수 다음, 상자 ② 전에:
-  가) 멀리선 이동 생략(뛰는 시간 = 길 길이 ÷ m_runSpeed만큼 기다렸다 순간이동) + 지도(사용자 결정 10-23 클라우드, decisions.txt "멀리선 이동 생략 때 지도"):
-     생략 중 지도상 위치를 2초마다 길 따라 옮겨 Scout.Reveal·아이콘. 길 = 밝혀진 목적지면 게임 생성 지형으로 거친 칸 길 찾기(깊은 물·가파름 피함, 밝혀진 칸 우선 —
-     게임 무관 길 찾기는 Core + dotnet test, 시간 제한·없으면 직선), 안 밝혀진 목적지(탐험·찾기)는 직선, 포탈은 앞뒤 따로. 플레이어가 지도상 위치 64m 안에 오면 그 근처 안전한 땅에 내려 걷기.
-     일꾼 아이콘(이름, 모든 플레이어 지도, 저장 안 함, 죽으면 없앰 — 먼 일꾼 정보가 다른 컴퓨터에 가는지·지형 높이 함수는 DLL로 확인).
-     → 시험: 먼 일터 왕복 시간·짐 보존·플레이어 다가오면 그 근처에서 걷기·가는 길 중간이 밝혀짐·아이콘이 중간 위치·밝혀진 목적지는 물 피한 길(fartest·departtest).
-     조각: 가-1) [끝, 회차 128 — 커밋 fe576e3 · 시험 dotnet test PASS 469/469(RoughPathTests 9개: 평지 곧게·깊은 호수 둘러 감·얕은 여울 지남·절벽 피해 비탈로·밝혀진 띠 우선·길 없음 → 직선·펼침 한도·안 밝혀진 목적지 직선·PointAt)] Core/Work/RoughPath.cs(8m 칸 A*, Route·Find·Length·PointAt).
-       가-2) [끝, 회차 129 — 커밋 238b3ab · 시험 vh_skiptest PASS 15/15(118m 귀환 → 16.9초 기다림·걷지 않음·지도 9번·거점 15m 앞 땅 위·짐 30 그대로·상자 30), vh_hoptest 20/20, vh_woodtest 13/13, vh_stonetest 11/11, dotnet 475 · Core FarSkip, GatherJob.FarWalk·LandNear(HopToward와 공유), 플레이어 다가오면 그만두고 그 자리부터 걷기(가-4에서 지도 위치로)] 게임 연결 첫 조각: 일꾼·목적지가 모두 플레이어 64m 밖이면 직선 길로 기다림(길이 ÷ m_runSpeed) → 2초마다 지도상 위치로 Scout.Reveal → 끝나면 R1 안전 확인 뒤 순간이동(실패면 걷기). 어디서 걷는지(GatherJob GoZone·Return 등)부터 읽음. 시험 fartest(왕복 시간·짐 보존·중간 밝혀짐).
-       가-3) [끝, 회차 130 — 커밋 7b92732 · 시험 vh_skiptest PASS 18/18(새 칸 WaterRoute: 직선 380m 호수 건넘 → 거친 길 553m·깊은 물 0·21.9ms), vh_hoptest 20/20, vh_woodtest 13/13, vh_stonetest 11/11, dotnet 477 · GatherJob.FarRoute, RoughPath 칸 사이 물 검사·여유 160m·출발·도착 칸 봐줌; 포탈은 WalkVia가 입구까지 걷고 출구부터 FarRoute라 이미 따로] 밝혀진 목적지는 RoughPath(지형 높이 = 게임 생성 함수 DLL로 확인 후 codemap "확인된 게임 사실"에), 포탈은 앞뒤 따로. 시험: 물 피한 길.
-       가-4) [끝, 회차 131 — 커밋 550c5ec · 시험 vh_skiptest PASS 24/24(새 칸: 몸에서 81m·지도 위치 곁 플레이어 → 지도 위치 3m 옆에 내림·짐 30 그대로·다시 생략 없이 상자 30), vh_hoptest 20/20, vh_woodtest 13/13, vh_stonetest 11/11, dotnet 479 · GatherJob.FarDrop, Core FarSkip.DropAims, LandNear nearPlayerOk, 시험 TestFakePlayer] 도중에 플레이어가 지도상 위치 64m 안 → 그 근처 안전한 땅(없으면 길 앞쪽)에 내려 걷기. 시험 칸.
-       가-5) [끝, 회차 132 — 커밋 824bd79 · 시험 vh_skiptest PASS 25/25(새 칸: 생략 중 아이콘–지도상 위치 10.2m·아이콘–몸 32m·2초마다 받음·일꾼 아이콘 2개, 물 피한 길 칸도), vh_npctest 17/17, vh_woodtest 13/13, dotnet 479; vh_hoptest 19/20은 싸움 뒤 귀환 막힘 칸 E026(무관) · Plugin/Work/MapIcons.cs, GatherJob.FarMapPos, RoughPath 칸 사이 물 검사 1/8 간격] 일꾼 위치 아이콘(이름, 모든 플레이어 지도, 2초, 저장 안 함, 죽으면 없앰 — 먼 일꾼 ZDO는 안 가서 호스트가 RPC로 보냄).
-  나) [끝, 회차 133 — 커밋 40c9499 · 시험 vh_fighttest PASS 16/16(새 칸 E: 플레이어 판정 끄고 머리 위 3.5m 묶은 회색난쟁이 → 직접 피해 4번·7초에 잡음), vh_hoptest 20/20, dotnet 479 · Guard.UpdateFight m_far(1초마다 GatherJob.FarFromPlayers) → 휘두름 대신 수평 6m 안 1.5초마다 DirectHit] 멀리선 싸움 단순화.
-  다) 시험 정식·약식 스위치: 긴 시험(silver·copper·crypt 등)부터. 정식은 그 기능 바꿨을 때 한 번, 회귀는 약식. 조각:
-     다-1) [끝, 회차 134 — 커밋 aea674f · 시험 vh_silvertest 약식 PASS 20/20(37초, 부위 94개 미리 깸·맨 밑 6부위·조각 바닥 5.2m 다 캠·은 다 주움) · TestRunner.Quick·VH_QUICK, SilverTest.PreBreak(받침 검사 끄고 깸)] 스위치 + 은.
-     다-2) [끝, 회차 136 — 커밋 4729f57 · 시험 vh_crypttest 약식 PASS 24/24(FAIL 났던 배치 철 일 158초·정상 배치 179초), 정식 24/24(139초), dotnet 483 · CryptTest 약식 = 입구 12m 앞 시작·더미 0개면 다른 방향 재배치, InteriorNav 이웃 높이 기준 바닥·몸 기둥 물·헤엄 24칸, GatherJob.BlockingPile·DropLands·손 줍기·묘지 밖이면 다시 찾기, Chests.IsBaseChest] 지하묘지 약식 + 그때 나온 묘지 안 길 찾기 버그 넷.
-     다-3) [보류: 이득 작음, 회차 137 — coppertest 173초·pittest 228초로 짧고, 대부분 일부러 둔 기다림(경사로만 74초·가장자리 옮기기 30초 타이머)이라 판정을 약하게 해야 줄어듦] 다음 긴 시험 약식: vh_coppertest·vh_pittest. (참고: 묘지 더미마다 바닥 속이라 남긴 조각 12~22개 — 고철 덜 나오면 DropLands 기준 다시 봄)
-  라) [끝, 회차 135 — 커밋 f596706 · 시험 vh_stucktest PASS 14/14(30초에 2.3m 옮김·땅 위·짐 4 그대로·구조 대사), vh_hoptest 20/20, vh_woodtest 13/13, dotnet 481 · StuckHop.NearCandidates·GatherJob.NearSkip, 구덩이 가장자리 옮기기는 이미 rescue 말] 근처 막힘 30초 → 막힌 곳 너머 몇 m로 옮김 + "오딘이 날 구조하셨다!"류 대사(구덩이 가장자리 옮기기도) → 시험: stucktest 근처 칸(대사·짐 보존·안전 착지).
-  마) [끝, 회차 137 — 커밋 d09652c · 시험 vh_portaltest PASS 14/14(새 칸: 679m 바다 건너 구역 → 포탈 없으면 안 감·"바다 건너" 말, 이어진 포탈 놓으면 그 구역 골라 4초에 포탈로 건너감), vh_portalbuildtest 40/40, vh_woodtest 13/13, vh_skiptest 25/25, dotnet 486 · Core PortalRoute.Choose(canWalk), Scout.Reachable·WalkFar·OceanBetween, Portals.LinkedRecent, GatherJob m_saidSea] 바다 건너 일터는 포탈로만(이어진 포탈 없으면 안 감 + 말, 일꾼 포탈 짓기 안 함).
-★ 그다음(사용자 결정 10-23 클라우드, decisions.txt "늪 회귀로 오류 정리") — 위 E021·오류 꼼수·멀리선 단순하게를 다 한 뒤, 상자 ② 전에:
-  늪 회귀: 시험 전부를 늪 거점에서 한 번(시험 월드에서 코드가 늪 자리를 골라 거점을 옮기는 스위치, 예 VH_BIOME=swamp). 그 바이옴 자원이 꼭 있어야 하는 시험
-  (구리 = 검은숲, 밭 = 초원 등 — 늪에서 안 되는 것은 게임 데이터로 확인)은 원래 자리. 늪보다 지형이 더 험한 끝낸 바이옴이 있으면 그걸로(근거를 적음). 늪은 비·적이 많음 → 일꾼이 싸우고 이어 하면 됨.
-  초원·검은숲은 회차 90 뒤 새로 넣은 시험·칸만. + 실제 재시작 vh_restart1 → vh_restart2.
-  버그가 안 나면 E001·E004·E012·E014·E015·E016·E018·E020을 해결로 닫음(Errors-resolved). 시험 쪽 꼼수(오류 꼼수 라 생물 허용·마·바)와 사) 소실 보충은 이때 다시 나온 것만.
-  조각: 가) [끝, 회차 138 — 커밋 c0413b6·f44667f · 시험 늪 스위치 vh_npctest PASS 17/17·vh_woodtest 13/13(고치기 전 12/13)·vh_fighttest 16/16, 기본 자리 woodtest 13/13·fighttest 16/16·raidtest 9/9·helptest 7/7·teamtest 6/6·deathtest 21/21, dotnet 495] 스위치 VH_BIOME(TestKit.GoSite·FindBiomeSpot, 밭·정산·구덩이 시험은 원래 자리)
-     — 이 월드 늪은 5km 안 표본 8829곳 가운데 최고 물 위 3.4m·평평한 곳 0m 이하라 마른 땅 없음 → 기본안 검은숲(decisions). 첫 회귀에서 버그 하나: 귀환 중 거점 쪽 회색난쟁이에 쫓겨 거점에서 682m까지 멀어짐 → Core Retreat(거점 쪽 옆으로 돌기·쫓기면 41° 안).
-     나) 나머지 시험을 VH_BIOME=swamp로 묶어 돌림(한 회차 몇 개씩, codemap "시험 고르기" 표 순서). 나-1) [끝, 회차 139 — 커밋 330e903 · 시험 검은숲 flag 12/12·stone 11/11·bag 9/9·prep 22/22·craft 24/24·cook 15/15·depart 25/25·refill 22/22·name 9/9·stock 33/33·set 7/7, 고친 뒤 peer 14/14·base 22/22, 기본 자리 fight 17/17·escort 18/18·help 7/7·team 6/6·death 21/21, dotnet 495] 버그 둘(Brain.Save 주인 아닌 ZDO에 씀·도망↔싸움 되풀이) 고침.
-       나-2) [끝, 회차 140 — 커밋 a1cd72a · 시험 검은숲 hunt 9/9·bow 12/12·resist 14/14·repair 10/10·skill 8/8, 고친 뒤 banter 13/13·explore 16/16, 기본 자리 explore 16/16, dotnet 495] 시험 쪽 둘(잡담 4) 앞 생물 치움·탐험 물가 = 처음 1.2m 깊이).
-       나-3) [끝, 회차 141 — 커밋 3d06da3·0953377 · 시험 검은숲 stuck 14/14·hop 20/20(×2)·skip 25/25·far PASS·portal 14/14·portalbuild 40/40·cookwet 10/10(고친 뒤)·cook 15/15·death 22/22, 기본 자리 stuck 14/14·hop 20/20·far·portal 14/14·death 22/22, dotnet 495, E026 닫음] 죽으면 도망 끝냄(Guard.OnDied), 시험 쪽 여섯(묶인 일꾼 둘레 생물 치움·앞 튐 묶음·벨 수 있는 나무·옮긴 프레임에 목표 바꿈·포탈 고른 구역 도중 확인·멧돼지 따라갈 표지·비바람 기다림 120초).
-       나-4) [끝, 회차 142 — 커밋 bf2c715 · 시험 검은숲 copper 13/13(고친 뒤, 고치기 전 10/12)·tin 13/13·crypt 24/24·silver 19/19, 기본 자리 copper 13/13·wood 13/13·fight 17/17, dotnet 495] 캐는 사이 경계(물러나기·싸움)가 옮겨 놓으면 그 자리에서 휘두르지 않고 다시 다가감(20.6m 직접 피해 막음, GatherJob m_workPos), 시험: 바이옴 회귀 때 시험 자리 생물 1초마다 치움(TestKit.KeepSiteClear)·구리 새 칸(25m 옮김 → 다시 다가감).
-         곁가지: Workers.OnBaseMoved도 주인 확인 없이 ZDO에 씀(드묾) — 관련 작업 때 같이. [끝, 회차 143 — 커밋 3325ed4 · 시험 vh_woodtest PASS 13/13·vh_stonetest 11/11·vh_coppertest 13/13] GatherJob.UpdateSearch 건너뛴 대상만 보이면 k.Forget 안 함(m_sawSkipped).
-         [기본안, 사용자 확인 필요] 도망치면 거점 바로 앞 목표도 그 일 동안 버림(구상서 8장 a 그대로) — 약한 일꾼이 검은숲에서 먼 곳만 헤맴. 바꾸지 않음(decisions.txt).
-       나-5) [끝, 회차 143 — 커밋 3325ed4 · 시험 검은숲 raid 9/9·help 7/7·team 6/6·escort 18/18·claude 5/5(고친 뒤, 첫 실행은 raid 뒤 E027로 넷 환경 불량), dotnet 495] 나) 끝 — 모든 시험 검은숲(원래 자리 farm·settle·pit 빼고) 한 번씩 PASS.
-       다) [끝, 회차 144 — 커밋 2699deb · 시험 검은숲 vh_restart1 PASS 6/6 → VH_RESET=0 vh_restart2 PASS 14/14, dotnet 495 · 첫 시도 restart2 12/14(회색난쟁이에 돌 3 시간 넘김) → 시험 쪽: 상태 파일 biome, 2번째도 KeepSiteClear] 실제 재시작.
-       라) 버그 없으면 Errors 닫기(E001·E004·E012·E014·E015·E016·E018·E020은 이미 닫힘 — 남은 E022·E024·E025·E027 관찰 중 확인).
-★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
-  (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
-  할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
-  시험 월드 깃발 125m 안에 원래 있던 상자·설비가 새로 잡혀 수가 어긋나면 범위 탓이 아니라 시험 자리 탓 — 그 시험만 고침. 45m·160m 자리 땅이 안 맞으면 다른 방향으로 옮김.
-★ [끝, 회차 109 — 커밋 3bcd001 · 시험 vh_bagtest PASS 9/9(부하 줄: ForItem 0.79→0.10ms, 짐 정리 최악 50.7→6.5ms, 물체 2,916개), vh_nametest 9/9, vh_flagtest 12/12, vh_preptest 22/22, vh_crafttest 23/23, vh_refilltest 22/22, dotnet 440 · Chests.IsChest 프리팹 거름, Senses.Nearby(keep). 프레임 캐시는 안 넣음] 부하 검토 — 원래 내용: 거점 125m 찾기(Senses.Nearby 25구역)가 한 프레임에 여러 번·매 프레임 도는 곳: Unload 물건마다 ChestFor(→ForItem→NearBase, 한 상자에 물건 수×2번),
-  CraftStep 상자가 열려 있는 동안(손님이 열면 최대 30초) 매 프레임 Needs·Have·NearBase, PlanJob 5초마다 FermentReady(125m OverlapSphere). 먼저 잼: 큰 거점에서 짐 정리·제작 때
-  가장 긴 프레임(ms)을 diag에 → 눈에 띄면(예 16ms 넘음) Chests.Candidates에 같은 프레임·같은 깃발이면 한 번만 찾는 캐시(시험이 상자를 놓은 프레임에 바로 세는 곳 주의). 안 띄면 안 고침.
-★ 상자 기능(사용자 결정 2026-10-23, decisions.txt "상자 기능 확정") — 125m 검증·부하 검토 다음, 순서대로. 새 코드는 Plugin/Storage·Core/Storage(게임 무관 규칙은 Core + dotnet test):
-  ① 조각: 가) [끝, 회차 110 — 커밋 82f302b · 시험 vh_stocktest PASS 14/14, vh_crafttest PASS 23/23, vh_bagtest 9/9, vh_nametest 9/9, vh_preptest 22/22, dotnet 444 · Core StockTake, Plugin Storage/BaseStock·CraftPatches] 제작·업그레이드(HaveRequirementItems·ConsumeResources·DoCrafting 같은 프레임 셈). 하나만 제작법(requireOnlyOneIngredient)은 안 함.
-     나) [끝, 회차 111 — 커밋 fc3ecb2 · 시험 vh_stocktest PASS 21/21, vh_crafttest PASS 23/23, dotnet 444 · CraftPatches.HavePiece·Place] 건축: HaveRequirements(Piece, CanBuild·CanAlmostBuild) + PlacePiece 때 Fresh(빼기는 ConsumeResources 패치가 이미 함) + 시험 칸(망치로 놓기·모자라면 안 놓임·총량).
-     다) [끝, 회차 112 — 커밋 f335dfd · 시험 vh_stocktest PASS 24/24, vh_crafttest PASS 23/23, dotnet 444 · CraftPatches.Show] 개수 표시: SetupRequirement Postfix(가방 + 상자 0.5초 캐시로 채워지면 빨간 깜빡임 끔, 제작 목록·망치 Hud 공용). 여러 개 만들기는 고정 m_multiCraftAmount(최대 계산 없음)라 HaveItems amount로 이미 셈. 시험의 열린 상자 칸은 SetInUse로(ZDO만 바꾸면 Container가 1초마다 0으로 되돌려 우연 PASS였음).
-     라1) [끝, 회차 113 — 커밋 06a3a8a · 시험 vh_stocktest PASS 28/28, vh_crafttest PASS 23/23, dotnet 445 · BaseStock.Reserved·Allow, CraftStep.Take·기다림] 예약: 지금 막대에서 매번 셈(끝·취소·창 닫힘이면 바로 풀림, 안전 시간 필요 없음), 일꾼 재료 꺼내기(CraftStep.Take — 제작·설비·포탈·아침 정산)는 합계 − 예약까지만.
-     라2) [끝, 회차 114 — 커밋 63516dd · 시험 vh_stocktest PASS 33/33, vh_farmtest PASS 25/25, vh_preptest PASS 22/22, dotnet 445 · WorkerNpc.EatFrom(from)·Prep.TakeGear·TakeBow·TakeMeads·FarmJob 씨앗·경작기·GatherJob 도구. GraveJob은 묘비라 거점 상자 아님 → 안 넣음] 나머지 꺼내기에도 BaseStock.Allow: Prep(음식·미드·장비, Prep.cs 55·290), FarmJob(씨앗·도구 142·203), GatherJob 도구(305), GraveJob(108) — 물건마다 Allow 뒤 Changed. 시험: stocktest에 Prep 한 칸(막대 중 음식 재료 예약분 안 챙김).
-     원래 내용: 바닐라에서 재료 세기·빼기 하는 곳(Player.HaveRequirementItems·GetFirstRequiredItem·HaveRequirements(Piece)·ConsumeResources,
-     InventoryGui.SetupRequirement 개수 표시 — 디컴파일로 다시 확인)을 내 가방 + 125m 상자(개인 포함)로. 빼기는 Chests.TryEdit(사람이 연 상자는 건너뜀). 시험 새로(제작·업그레이드·건축·개수 표시·총량).
-     제작대를 보는 동안 상자는 안 잠김(일꾼 정리·사용 그대로). 개수 표시는 바닐라 UpdateRecipe가 매 프레임 부르니 상자 합계는 0.5초 캐시. 빼기는 제작 막대 끝(DoCrafting이
-     HaveRequirements 다시 확인 → 그사이 모자라면 안 만들어짐, 재료 안 사라짐). 호스트 안 일(사람 제작·일꾼)은 한 줄로 차례로 돌아 서로 겹치지 않음.
-     + 예약(사용자 요청 10-23): 막대 시작(InventoryGui m_craftTimer = 0f 자리)에 그 제작 재료 중 가방에 없는 몫을 예약 → 일꾼이 상자에서 꺼낼 때(CraftStep.Take,
-     Prep 음식·미드·장비, FarmJob 씨앗·도구, GatherJob 도구 — grep RemoveItem·MoveItemToThis) "상자 합계 − 예약"까지만. 풀림: 만들어짐(DoCrafting)·취소(바닐라 m_craftTimer = -1f 세 곳)·
-     안전장치(막대 시간 + 3초, 여러 개 만들기는 m_multiCraftDuration). 정리(상자끼리 옮김)는 합계 그대로라 막지 않음. 시험: 막대 중 일꾼 제작이 예약분을 못 가져감·취소하면 풀림.
-  ② 일꾼 상자 정리(개인 빼고 전부, 가장 많이 든 상자로 모음, 쉴 때 걸어서 + 아침 정산 때 한 번에). 시험(정리 뒤 물건 총량·개인 상자 그대로·열린 상자 안 건드림).
-  ③ 챗으로 내 개인 상자 준비(한 번·유지, 명령 꼴은 기존 ChatParser 관례로, 모자라면 만들거나 구함). 시험.
-  ④ 친구 단계(친구 오기 전): 사람끼리 동시 열기 + 친구 제작 재료 부탁(2초 제작 막대 안에 답). 같은 순간 복제는 감수, 못 넣으면 돌려줌. 시험은 가짜 손님(답 0.2~0.5초 늦춤).
-★ [끝, 회차 101 — 가·나·다 모두 끝] 요청 코드 정리 — 관련 작업 때 작게(10-23 11:58, history.md "### 요청 · 10-23 11:58", ⑪ 산보다 먼저):
-  가) [끝, 회차 99 — 커밋 d99bc33 · 시험 vh_portalbuildtest PASS 40/40, vh_crafttest PASS 23/23, vh_cooktest PASS 10/10, dotnet 434 · CraftStep.TakeAll·TestShortBy] CraftStep.Take가 실제로 꺼낸 개수를 돌려줌 → 부르는 쪽(PortalBuilder 2곳, MachineStep 3곳)이 덜 빠지면 되돌리거나 멈춤 + 일부러 덜 빠지게 하는 시험(재료 총량 보존).
-  나) [끝, 회차 100 — 커밋 41bca93 · 시험 vh_farmtest PASS 25/25, vh_deathtest PASS 17/17, vh_crypttest PASS 24/24, dotnet 434] 귀환 통일: FarmJob.UpdateHome·GraveJob.UpdateHome·GatherJob.LeaveCrypt 깃발 순간이동을 WorkerAI.TeleportHome()(성공 확인)·RestHere()(실패 시 쉬기)로.
-  다) [끝, 회차 101 — 커밋 14c0560 · 시험 vh_exploretest PASS 16/16, vh_basetest PASS 22/22, dotnet 434 · ExploreJob.ToWork] WorkSaves의 ExploreJob 비공개 필드 4개 AccessTools 문자열 읽기 → ExploreJob.ToWork().
-  (낡은 "[게임 시험 안 됨]"·"다음 조각" 설명은 그 파일 고칠 때만. GatherJob은 크기만으로 안 나눔.)
-★ [끝, 회차 98 — 커밋 8931c29 · 시험 vh_restart1 PASS 6/6, vh_restart2 PASS 14/14, vh_portalbuildtest PASS 38/38, vh_woodtest PASS 12/12, dotnet 434] 요청(10-23 09:09 — history.md "### 요청 · 10-23 09:09", 물건 소실·작업 복원):
-  [끝, 회차 96 — 놓기 먼저·성공 뒤 빼기·반쪽 지움, portalbuildtest 33/33] 요청 포탈 설치 실패 시 재료 소실 방지.
-  [끝, 회차 97·98 — 커밋 8931c29 · 시험 vh_restart1 PASS 6/6, vh_restart2 PASS 14/14, vh_portalbuildtest PASS 38/38 · WorkItem "pt=", GatherJob.LoadPortal, Unload.Hold] vh_restart1/2에 포탈 운반 칸(거점 포탈 1개 + 한 몫 든 채 실제 종료 → 재시작 → 이름표 이어짐·도착해 짝·재료 합). 원래 내용: 요청 포탈 건설 도중 저장·재시작 복원: GatherJob m_portalTag를 WorkItem 저장에 넣고 불러올 때 실제 포탈 수·짐 대조(1개+한 몫 → 이어 지음, 2개 → 짓지 않고 한 몫 상자로). 시험 거점 포탈 → 운반 중 실제 종료 → 재시작 → 짝 완성(재료 합·중복 없음·상태 정리).
-★ 사용자 요청(10-23, 받음 — 전문은 history.md "### 요청 · 10-23", 순서대로. 전부 ⑪ 산 이어가기 전에. E017·E018은 막힘 복구 가) 안에서 같이 본다):
-  R1) [끝, 회차 93] 요청 막힘 복구 규칙: 64m는 "우리가 정한 근거리 품질 기준"(decisions.txt 근거 고침, FarZones·ZoneSystem 판정과 섞지 않음). 공통 막힘 감지(걸어갈 목표가 있는데 진척 없음만,
-      캐기·싸움·설비·동행 기다림 제외)·목적지별 실패 횟수(작업 저장에 넣음, 이번 일 동안만). 순서: 1) 비켜 가기·점프 2) [GatherJob만, 근처 아님] 목표 쪽 순간이동(짐·체력 그대로,
-      떠날·내릴 자리 모두 기준 밖, 단단한 땅·위험 판단 통과·구역 불러와짐, 안 되면 실패로 셈) 3) 같은 목적지 2번 실패 → 후보에서 뺌 4) 대안 없음 → 보류 + "○○에 갈 수가 없어요" → 집.
-      귀환: 걷기 재시도 상한 넘으면 깃발 순간이동, 그것도 안 되면 그 자리 쉬기 + "집에 못 가요". 근처에선 2) 안 함.
-      조각 가) [끝, 회차 91 — 게임 시험은 vh_stucktest(막힘 기록 2번 → 뺌)·기본 묶음, "갈 수가 없어요"·귀환 상한 게임 칸은 나) 시험에 같이] 공통 감지·횟수·제외·보류·보고 + 귀환 상한 → 깃발 순간이동 → 시험
-      조각 나) [끝, 회차 92 — Core StuckHop(후보·64m)·GatherJob.HopToward·Guard.SafeAt, vh_hoptest 11/11 ×2·stucktest 근처라 안 함] GatherJob에 2) → 시험.
-      조각 다) [끝, 회차 93 — vh_hoptest 뒷부분 19/19. WorkerAI Mode.Home 귀환 칸은 같은 StuckBook이라 시험 안 붙임] "갈 수가 없어요"(뺀 곳 4 → 그만둠)·귀환 걷기 상한 → 깃발 순간이동 게임 칸(vh_hoptest나 stucktest에 붙임) → R1 끝.
-      시험: 짐·체력 보존, 전체 개수, 점유 풀림, 저장 후 중복 없음, 무한 왕복 없음, 정해진 시간 안 끝남, 캐기·싸움·대기 중 막힘 판정 없음, 착지 안전.
-      Errors.txt 먼 곳 끼임(E012 등)은 상태 "복구로 대응(먼 곳)", 3번 넘거나 근처에서 나면 다시 "조사 중".
-  R2) [끝, 회차 102 — 가·나·다 모두 끝] 요청 일꾼 포탈 짓기: 건축 예외로 포탈만(decisions.txt·구상서 14장). 광석·금속 항상 포탈 통과(PortalRoute·Portals의 광석 회피 조건 뺌).
-      기본안: 거점에서 300m 넘는 일터에 두 번째 갈 때 그 근처 + 깃발 옆에 짝, 이어진 포탈(플레이어 것 포함) 있으면 그걸 씀. 최대 3쌍, 이름표 "일꾼-<일터>", 오래 안 쓰면 철거·재료 상자로.
-      플레이어 포탈은 안 건드림. 자리: 평평·단단, 건축 금지·남의 와드·물·용암 아님, 제작대 필요 여부는 게임 코드로. 재료는 실제 제작법·상자에서(수르틀링 핵은 구하러 안 감, 모자라면 말만).
-      조각 가) [끝, 회차 94 — Core WorkerPortal·Plugin PortalBuilder(PlacePair·RemovePair·RemoveIdle·MarkUsed), vh_portalbuildtest 20/20. 작업대 조건은 안 따름(기본안)] 놓기·짝·재료·철거
-      나) [끝, 회차 95 — 떠날 때 거점 쪽 놓고 한 몫 들고 가 도착해 일터 쪽 놓음(Knowledge 방문 수), 포탈 탈 때 MarkUsedNear, 귀환 때 못 놓은 몫 상자로·RemoveIdle, 재료 모자라면 portal.need 말. vh_portalbuildtest 30/30] 언제 놓나를 출발 판단·포탈 길에 연결(GatherJob 일터 거리·방문 수 → ShouldPlace → 거점에서 PlacePair: 일터 쪽 구역이 안 불러와져 있으니 일꾼이 일터에 도착했을 때 놓거나 ZDO만 만들기 — 정할 것,
-         포탈 탈 때 MarkUsed, 거점 귀환 때 RemoveIdle, 재료 모자라면 "수르틀링 핵 N개 있으면 포탈 놓을게요" 말만) 다) [끝, 회차 102 — 커밋 e9500c9 · 시험 vh_portaltest PASS 10/10, vh_portalbuildtest PASS 40/40] 광석 들고 통과(우리 코드엔 광석 막는 조건이 없음 — 회차 94 grep, 일꾼은 TeleportTo라 시험 칸만). 시험: 짝, 재료 정확, 광석 통과, 저장 후 중복 없음, 3쌍 한도, 철거 환불, 와드·금지 구역 안 놓음.
-  R3) 요청 밤사이 정산: 모두 자서 아침이 된 순간 한 번(그 밤 날짜 저장해 두 번 안 함, 호스트만, 거점에 있던 일꾼만), 걷지 않고 바로.
-      가) 아침 정리: 설비 결과물 → 상자, 상자 광석·연료로 다시 채움, 발효기 따르고 채움, 다 자란 밭 거두고 심기, 짐 상자에(기존 코드에서 걷기만 뺌) + 한 마디 요약.
-      조각 가1) [끝, 회차 103 — 커밋 9ead965 · 시험 vh_settletest PASS 12/12, vh_bagtest PASS 9/9, dotnet 437 · Core NightSettle·Plugin MorningSettle·Unload.Instant] 넘김 끝 감지(EnvMan.IsTimeSkipping 참→거짓)·시작 때 거점 30m 안 일꾼만·일꾼 ZDO vh_settled 날짜·쉬는 일꾼(Idle·Home)만·짐 → 상자 걷기 없이 + 요약 말.
-      가2) [끝, 회차 104 — 커밋 4705f31 · 시험 vh_settletest PASS 18/18, vh_bagtest PASS 9/9, dotnet 437 · MorningSettle.Machines·TakeOut·Refill, 채우기는 연료 쓰는 설비만(decisions 기본안)] 설비(Smelter: 제련소·숯가마 등) 결과물 → 상자, 상자 광석·연료로 다시 채움(MachineStep 넣기·꺼내기를 걷기 없이, 점유 풀림). 시험 vh_settletest 칸.
-      가3) [끝, 회차 105 — 커밋 5e9eeeb · 시험 vh_settletest PASS 23/23, vh_bagtest PASS 9/9, dotnet 437 · MorningSettle.Fermenters, 채우기는 같은 바탕 먼저 → 아무 바탕(decisions 기본안)] 발효기 따르고 다시 채움(지붕 판단 그대로).
-      가4) [끝, 회차 106 — 커밋 30dd3f0 · 시험 vh_settletest PASS 28/28, vh_farmtest PASS 25/25, vh_bagtest PASS 9/9, dotnet 437 · MorningSettle.Farms·Replant, 같은 자리만 다시 심음(decisions 기본안)] 다 자란 밭 거두고 다시 심기. 다음은 나) 판단.
-      나) [끝, 회차 107 — 문서만: 안 하기로 판단(progress·history). 게임이 밤 넘김 동안 ZNet 시간으로 제련·발효·작물을 이미 진행 → 가상으로 여러 번 처리하면 이중 계산(복제 위험), 거점 제작을 걷지 않고 바로 하면 제작대·시간 확인을 건너뜀] 밤새 일한 셈. R3 끝.
-      시험: 전체 개수, 한 밤 한 번(불러와도), 밖 일꾼 빠짐, 점유 풀림, 나) 계산 = 결과.
-  R4) [끝, 회차 91 — 문서 고침, "흙 파기 0번"은 GatherTest "땅을 파지 않음" 칸이 이미 돌·나무에 있음] 요청 길 만들기(F) 뺌: decisions.txt "확정: 길 만들기"·구상서 6-5·안개땅 "길 만들어"에 [사용자 결정 2026-10-23: 뺌], progress 순서·구현 단계에서 지움(문서만 — R1 전에 바로 함).
-      + vh_stonetest·vh_woodtest에 "흙 파기 0번" 칸(그 시험을 손댈 때 같이).
-  R5) [진행 중, 회차 107 — 커밋 8222d3b · 깊이 3m→8m·"은"=은 광석 · vh_coppertest PASS 11/11, vh_silvertest 묻힌 은 칸 FAIL(E021: 곡괭이 닳음·없이 구덩이 갇힘·헛파기) → 다음 회차 E021 먼저] 요청 묻힌 자원은 남김없이: 땅에 묻힌 광맥(게임 데이터로 판정: 조각이 땅 밑) 은 GatherJob.RockAim 3m 깊이 제한을 풀거나 늘려 조각을 다 캠, 판 뒤 경사로로 나오고 안 되면 막힘 복구.
-      돌·나무는 흙 파기 0번. 시험: vh_coppertest(·은)에서 광맥 조각 0개 남음, 빠져나옴(또는 귀환), 짐·개수 보존. (⑪ 2) 묻힌 은 캐기와 겹침 → 같이)
-★ 지금 먼저(사용자 결정 2026-10-22 시험 시점·시험 환경, decisions.txt) — 순서대로, 끝나면 ⑧로 돌아감:
-  1) [끝, 회차 67·68] 시험 환경 분리: 전용 시험 캐릭터·월드 원본 되돌리기(규칙·예외는 decisions.txt "시험 시점 원칙").
-  2) [끝, 회차 69~71] 시작·종료 통제(TestKit): 시작 조건 확인 → "환경 불량", 끝 정리, FAIL 순간 상태·링 버퍼(규칙은 decisions.txt).
-  3) [끝, 회차 72 — 원인: 시작 제단(건축 금지·보스석)·비켜 가기·바위 위 적] 기존 간헐 FAIL 재확인. 남은 것은 docs/valheim/Errors.txt:
-     막음은 관련 기능 확장 전에 먼저, 조사 중은 관련 시험을 돌릴 때 "다음 확인"부터, 관찰 중은 그 시험을 돌릴 때만. 재실행 PASS로 닫지 않는다.
-  4) [끝, 회차 73~75: vh_basetest + 실제 재시작 vh_restart1→vh_restart2] 원래 내용: vh_basetest(일 중간 취소·전환, NPC 지웠다 ZDO에서 다시 불러 이어 하기 = 빠른 복원 시험, 두 일꾼 같은 상자·설비 동시, 수량 보존)
-     + 실제 재시작 시험(시험 실행 두 번: 1번째에 일 중간 저장·게임 종료, 2번째에 켜서 이어 하는지·수량·저장 손상 없음). NPC 재생성은 재시작을 대신하지 않음.
-  5) [끝, 회차 76] 시험 고르기 표(코드 영역 → 관련 시험)를 codemap.txt에. 평소엔 바꾼 영역 관련 시험만, 바이옴 완료마다 전체 회귀 + 실제 재시작 시험.
-  막는 문제(관련 기능 확장을 멈추고 먼저 해결): 물건 복제·소실, 저장 손상, 작업 복원 실패. 그 밖(이동 지연 등)은 한 회차에 못 풀면 Errors.txt에 적고 진행.
-★ 지금 할 것 8) ⑨ 농사(평탄화 없이, 구상서 6-3) 조각 — 순서대로:
-  1) [끝, 회차 77] Core/Work/Farm.cs: 밭 반경(기본 10·최대 20)·심을 자리(뱀 꼴 칸, 간격 = m_growRadius+0.4)·바이옴/추위 규칙·무엇을 몇 개(씨앗·자리 한도, 씨앗 10 아래면 수확물 다시 심기)·자라는 시간. dotnet test.
-  2) [끝, 회차 78] Plugin Crops.cs: 게임 데이터 → Crop 목록(경작기 Cultivator의 m_buildPieces에서 Plant 있는 조각: Piece.m_resources 씨앗, Plant 값, m_grownPrefabs의 Pickable m_itemPrefab·m_amount; 갈기 조각 = TerrainOp 있는 것)
-     + "!밭 10" 명령(ChatParser, 말한 사람 자리·반경을 Brain vh_farms에 저장, 여러 곳) + 게임 안 확인 칸(작물 목록 diag). 시험 dotnet test + vh_npctest.
-     (회차 78 확인: 작물 16개 중 씨앗 만드는 것 sapling_seedcarrot·seedturnip·seedonion·seedkale(KaleSeeds→KaleSeeds)·oat(OatSeeds→OatSeeds)·barley(Barley→Barley)가 섞임 → FarmJob은 Produce가 음식인 것과 씨앗용을 구분해 고를 것)
-  3) [끝, 회차 79 — 심기까지. 명령 연결·작업 저장(WorkSaves)은 4)에서] FarmJob: 장비 상자에서 경작기 챙김(없으면 "경작기가 없어요" 거절) → 자리마다 갈기 조각 Instantiate(TerrainOp.Awake가 칠함) → 새싹 Instantiate(Piece.SetCreator, 씨앗 짐에서 뺌)
-     → 시험 vh_farmtest(심은 수·씨앗 수 보존, s_plantTime 앞당겨 자람 → Pickable.Interact(NPC 됨, RPC_Pick이 떨굼) → PickDrop → 상자).
-  4a) [끝, 회차 80] 거두기: FarmJob(harvest:true) Step.Harvest(Ripe → Interact → 떨군 것 Collect, 짐 꽉 차면 그만) → 심기, vh_farmtest 거두기 칸 2개.
-  4b) [끝, 회차 81] 명령 연결: "!밭" 말이 "심는 건 아직 배우는 중"이라 고칠 것 → 밭 명령/일 시작(거두기+심기, Farm.Plan으로 씨앗 유지), FarmJob 대기열·재시작 저장(WorkSaves). 시험 vh_farmtest(명령으로)·vh_npctest.
-  4c) [끝, 회차 82] 출발 판단 농사 연결: Departures.Farming(Crops.ForProduce, 들 출처 없음 = ResourceCatalog.AnySourceBut(Crops.IsGrown)) → FarmJob.ForWant(Farm.Plan) → Commands.StartFarm(job). 씨앗용·음식 구분은 Plan(Produce 기준)·Fill(회차 81)에 이미 있음.
-     대기열로 미뤄지면 밭 자리만 저장(꺼낼 때 ForField = Fill, 시킨 수는 잊음 — 작은 차이라 그대로).
-  4d) [끝, 회차 83] 제작 재료 농사: Recipes가 밭에서만 나는 것을 SourceKind.Farm으로, Departures.FarmFor가 계획 대신 첫 농사 재료를 밭에 심고 "craft.farm" 말(자라면 다시 시켜야 함).
-  5) ⑩ 자동 보충 확장(구상서 11장) — 조각:
-    5a) [끝, 회차 84] 만드는 물건: Departures.StartRefillMake(채집 안 되는 물건 → PlanFor → 끝까지 되면 PlanJob, 아니면 10분 쉼), RefillStock(만든 것은 RoleFor 역할 상자), RefillBusy(겹침 막기). vh_refilltest 2) 제련.
-    5b) [끝, 회차 85 — RefillFarm·FarmJob.Coming] 밭 재료: 밭에서만 나는 물건(당근 등)·밭 재료가 낀 계획이면 밭이 있고 씨앗이 있을 때만 Commands.StartFarm(말 없이 refillGo 꼴 한 줄), 아니면 10분 쉼. 시험 vh_farmtest에 !채워 당근 칸.
-    5c) [끝, 회차 86 — 코드 변경 없음, 시험만] 세트 자동 보충: vh_refilltest 3) 세트 10번(활·곤봉) "!채워 세트 10 1" → 두 일꾼이 하나씩 만들어 장비 상자에, 재료 보존. ⑩ [x].
-★ 지금 할 것 9) C 동행 앞장서기(구상서 8-1 "같이 가자고 한 사람을 기다렸다가 앞장선다. 20m 안 유지, 멀어지면 어디 가요?!, 위험하면 물러난다") 조각:
-  1) [끝, 회차 87] Core/Npc/Escort.cs 규칙 + WorkerAI.EscortBy/EscortHolds + 대답 "같이 가자"(GoEscort)가 붙임, 시험 vh_escorttest 11/11.
-  2) [끝, 회차 88] 일하는 중(Mode.Work) "!같이 가자"는 따라가기로 일을 버리지 말고 지금 일에 동행을 붙임(EscortBy, "앞장설게요" 말), 쉬는 중이면 지금처럼 따라가기.
-     !상태에 "OO와 같이"(EscortName). 시험 vh_escorttest 칸 + vh_npctest(따라가기 그대로).
-  3) [끝, 회차 89 — 코드 변경 없음, 시험만. C [x]] 위험하면 물러남 확인: 동행 있을 때 Guard가 동행 힘을 셈(20m 안)·동행을 놓치면(포기) 다시 판단해 물러나는지 vh_escorttest 칸(적 소환). 그 뒤 C [x] → ⑪ 산.
-★ [끝, 회차 91 — E017 고침·닫음, E018 재현 안 돼 관찰 중] 지금 먼저(회차 90 전체 회귀에서 남은 것, 플레이어 근처 이동 = 고칠 대상 — 사용자 결정 "눈앞에서만"): vh-debug로
-  a) E018 pittest 좁은 깊은 구덩이(4~5m)에서 경사로를 깎아도 못 나옴 b) E017 coppertest 큰 광맥 조각(rock4_copper_frac)에 밀려 막힘. 고친 뒤 그 시험 + 기본 묶음.
-★ 지금 할 것 10) ⑪ 산(구상서 7-1 산, decisions.txt "보스 진행으로 풀리는 일" — 은은 드러난 것 먼저, 묻힌 것은 위시본을 얻었을 때만) 조각:
-  1) [끝, 회차 90] 숨는 광맥 판단: Core HiddenOre(드러남·앎·점수) + Plugin HiddenOres(Finder = 장착 효과 SE_Finder 물건 = Wishbone, Unlocks.Have, Exposed = ZDO 높이+TopOffset vs 땅)
-     + ResourceInfo.Hidden(Beacon, 깨진 조각 _frac은 아님)·TopOffset, GatherJob.FindInSight·Senses.Look이 거름. 시험 vh_silvertest 12/12.
-  2) 묻힌 은 캐기: 시험에 청동 곡괭이(단계 2) + 묻힌 silvervein(윗면 땅 1m 아래) → "!은 5"에 파 내려가 캐 오는지(RockAim 3m 깊이 제한이 은에 맞는지 — 자연 은 광맥 깊이 diag로 확인).
+
+다음 (순서대로 — 안 끝난 일만)
+★ 싸움 더 공격적으로 + 동료 부르기 + 도망 뒤 거점 안 목표 다시 (사용자 결정 10-24 클라우드, decisions.txt "더 공격적으로") — 상자 ② 전에:
+  가) Core Danger.Judge 기준: 싸움 = 지금 체력으로 잃을 비율 ≤ 라그나 0.85·플로키 0.95(지금 0.6·0.8 — "죽을 각만 아니면 싸움").
+     체력 낮음(40%·30%)이면 미드부터는 그대로, 미드가 없어도 바로 물러나지 않고 같은 비율로 판단. 도망(보스·가득 찬 체력으로도 2배 넘음)은 그대로.
+     dotnet test(기존 Danger 시험 기대값 고침) + 게임 vh_fighttest.
+  나) 동료 부르기: Guard.MyHit에 20m 안 동료 일꾼 한 방도 더함(지금은 플레이어만). 혼자면 물러남·도망인데 동료를 합치면 싸움이고, 동료가 100m 안·
+     싸움·도망·죽음·포탈 건너는 중이 아니면 "이리 와!"(대사 새 키 callMate·mateComing, 두 인격 Speech) → 부른 쪽은 동료가 20m 안에 올 때까지 물러나 기다림(최대 30초,
+     못 오면 원래 판단) → 동료는 하던 일을 그대로 둔 채(Guard가 일보다 먼저인 지금 구조) 달려와 같은 적과 싸우고, 끝나면 하던 일을 이어 감.
+     혼자도 싸움이지만 비율 0.6 넘거나 적 3마리 이상이면 같은 방법으로 부름(같이 패기). → 시험 vh_teamtest 칸(또는 새 vh_matetest):
+     혼자면 물러날 적 → 부름 → 둘이 잡음 → 동료 원래 일 이어 감·짐 보존, 동료 100m 밖이면 안 부름, 부른 동료가 죽었거나 못 오면 30초 뒤 원래 판단.
+  다) 도망 뒤 목표(10-24 사용자 확인, 회차 142 기본안 바꿈): 거점 125m(BaseArea.Radius) 안 목표는 도망이 끝나면 건너뜀(GatherJob.AvoidHere → m_skip)에서 빼고 다시 함,
+     같은 목표에서 두 번 도망치면 그 일 동안 뺌. 시험: 검은숲 coppertest(거점 12m 광맥을 버리지 않음).
+  라) 회귀: vh_fighttest·raidtest·helptest·teamtest·deathtest·escorttest·basetest·hunttest + 검은숲(VH_BIOME=swamp) copper·stone·wood.
+     기준이 바뀌어 예전 기대값("물러남")이 틀려지면 시험 기대값을 바꾸고 까닭을 history에 적는다.
+★ 상자 기능 ②~④ (사용자 결정 10-23, decisions.txt "상자 기능 확정" — ① 제작·건축·개수 표시·예약은 회차 110~114에 끝). 새 코드는 Plugin/Storage·Core/Storage:
+  가) ② 일꾼 상자 정리(개인 빼고 전부, 가장 많이 든 상자로 모음, 쉴 때 걸어서 + 아침 정산 때 한 번에). 시험(정리 뒤 물건 총량·개인 상자 그대로·열린 상자 안 건드림).
+  나) ③ 챗으로 내 개인 상자 준비(한 번·유지, 명령 꼴은 기존 ChatParser 관례로, 모자라면 만들거나 구함). 시험.
+  다) ④ 친구 단계(친구 오기 전): 사람끼리 동시 열기 + 친구 제작 재료 부탁(2초 제작 막대 안에 답). 같은 순간 복제는 감수, 못 넣으면 돌려줌. 시험은 가짜 손님(답 0.2~0.5초 늦춤).
+★ ⑪ 산 (구상서 7-1, decisions.txt "보스 진행으로 풀리는 일" — 은은 드러난 것 먼저, 묻힌 것은 위시본을 얻었을 때만. 1) 숨는 광맥 판단은 회차 90에 끝):
+  2) 묻힌 은 캐기 — 회차 107·115~118(R5·E021)에서 깊이 8m·vh_silvertest 묻힌 은 PASS 19/19로 대부분 됨 → 청동 곡괭이(단계 2)·"!은 5" 명령 경로만 확인하고 [끝].
   3) 출발 판단·말: 묻힌 것만 알고 위시본이 없으면 "드러난 은 광맥을 못 찾겠어요(위시본 필요)", 곡괭이 단계 모자라면 기존 말. Departures 은 칸 + 시험.
   4) 서리 동굴(산 던전): [사용자 결정 10-23: 해 봄] 무엇이 나오는지 게임 데이터로 확인 → Dungeons 일반화(지하묘지와 같은 처리). 3회차 넘게 걸리면 빼는 쪽(사용자에게 말함).
   5) 늑대 사냥·산 위험(드레이크 냉기 → 냉기 미드) 확인 시험 → ⑪ [x], 전체 회귀 + 실제 재시작 시험.
-★ 사용자 순서(2026-10-22, 아래 옛 목록보다 먼저, 전문은 decisions.txt "노트 맞춤 2026-10-22"): 1) I-1 상자 역할 고르기 Chests 한 곳 → I-2 ChestTag 이름 읽기 → 2) B 일 끼워넣기·Wait 중 보충 → 3) 손님 코드 검사 → 4) 시험 전 코드 게임 시험 → 5) J 이동 한계 → 6) ⑤ 포탈 → 7) D·E → 8) ⑦⑧⑨⑩ → 9) C·⑪⑫⑬⑭⑮ (10) F 길은 뺌, 사용자 결정 2026-10-23). 안 하는 것: A·G·K·건축물 수리.
-1. [보류: 위험 대비 이득 작음, 회차 34] 시험 방식 바꾸기(사용자 결정 2026-10-21): 고정 대기 대신 조건 끝나면 바로 다음, 시험용 일꾼을 시험 수만큼(최대 8명) 불러
-   1km 간격 고정 자리에서 동시에(2명부터 시작, 문제없으면 8명). 같이 쓰는 것 막기: 동시 시험은 낮 고정(밤·사망 시험은 따로 혼자),
-   자기 일꾼만 정리, 지식 판정은 자기 근처만, 자리는 시험 월드에서 코드가 평평한 숲 자리를 골라 고정. 순차 실행 스위치 유지.
-   프레임·시험 시간을 diag에 기록.
+★ 그 뒤: 아래 "구현 단계" 표의 [ ] 단계 차례로(⑫ 평원 → ⑬ 안개땅 → ⑭ 애쉬랜드 → ⑮ 딥노스). 단계마다 조각으로 나눠 여기에 ★ 덩어리로 적는다(vh-loop-prompt 2-1).
+  ⑬ 메모(사용자 10-24): 절벽은 지금 규칙(플레이어가 안 보면 순간이동·보면 "오딘 구조" 옮기기)으로 먼저 해 보고, 게임의 갈고리
+  (GrapplingPoint, codemap "확인된 게임 사실")는 그때 보고 쓸지 정한다.
+
+보류 (이득 작음 — 사용자가 원할 때만): 긴 시험 약식 coppertest·pittest(회차 137) · 시험 동시 실행(회차 34) · 길 만들기·평탄화(사용자 결정 10-21·10-23).
+늘 지키는 것: 막는 문제(물건 복제·소실, 저장 손상, 작업 복원 실패)는 관련 기능 확장을 멈추고 먼저 푼다. 그 밖은 한 회차에 못 풀면 Errors.txt에 적고 진행.
 
 알려진 한계: NPC 스태미나 없음, NPC 피해도 몬스터 난이도 배율을 받음, 방패 막기 안 함, 적 약점 안 셈, 물 건너 아는 곳은 직선 판단,
 시험의 Workers.DespawnAll이 Brain 로드 전이면 지식이 비워짐(시험 환경 문제).
@@ -218,12 +84,16 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 - [x] ① 거점 깃발, NPC 2명, 채팅 명령, 알림
 - [x] ② 나무·돌·부싯돌, 상자, 지식, 새 땅 탐험
 - [x] ③ 장비·음식·위험·사망·장소 기억·출발 전 판단·스킬·습격 귀환·도움 요청·같이 싸움 시험 PASS(회차 41~47), 저항 미드(회차 56~58)·장비 수리(회차 59, vh_repairtest) 끝.
-- [~] ④ 구리·주석 (0.3.8)
+- [x] ④ 구리·주석 — vh_coppertest·vh_tintest 검은숲 PASS 13/13(회차 142)
 - [x] ⑤ 포탈 이용 — 계산·ZDO 읽기·구역 가기/귀환·던전 문(지하묘지 Teleport, Dungeons) 완료, vh_portaltest·vh_crypttest PASS
 - [x] ⑥ 가공·제작 — 실행기(PlanRunner·PlanJob·CraftStep·MachineStep), Wait 중 자동 보충 완료, vh_crafttest PASS
 - [x] ⑦ 철(지하묘지) — 찾기·드나들기·!철 일·안 위험·철 주괴 제련 완료(vh_crypttest 19/19, crafttest 용광로 칸)
 - [x] ⑧ 먹거리·세트메뉴 — 세트 계획 vh_settest, 사냥(멧돼지류 vh_hunttest), 굽기(vh_cooktest), 사슴 활 사냥(vh_bowtest), 발효(D) PASS
 - [x] ⑨ 농사 — Core Farm.cs(77)·Crops·!밭(78)·FarmJob 심기(79)·거두기(80)·명령 연결·저장(81)·!작물(82)·제작 재료 농사(83) (평탄화·길 만들기는 보류, 사용자 결정 2026-10-21)
 - [x] ⑩ 자동 보충 — 채집 물건·만드는 물건(회차 84), 밭 재료(85), 세트 확인(86)
-- [~] ⑪ 산(회차 90: 숨는 은 광맥 판단) ⑫ 평원 ⑬ 안개땅 → ⑭ 애쉬랜드 ⑮ 딥노스 (⑭⑮는 ⑬ 뒤에 진행, 보류 해제 2026-10-22)
-위험 순위·보류 목록·멀티 시험·저장 설계: risks.txt (일 고를 때 본다)
+- [~] ⑪ 산 — 숨는 은 광맥 판단(회차 90), 묻힌 광맥 채굴(회차 115~118). 남은 조각은 "다음"
+- [ ] ⑫ 평원
+- [ ] ⑬ 안개땅
+- [ ] ⑭ 애쉬랜드 (⑬ 뒤, 보류 해제 2026-10-22)
+- [ ] ⑮ 딥노스 (⑭ 뒤)
+위험 순위·멀티 시험·저장 설계: risks.txt (일 고를 때 본다)

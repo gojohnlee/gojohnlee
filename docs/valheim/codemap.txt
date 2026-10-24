@@ -203,3 +203,6 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   ZNet 시간 쓰는 것(제련·발효·작물·모드의 Departures 쉼·ReadyWhen.Morning)은 건너뛰고, dt로 재는 일 시간 제한은 영향 없음.
   넘김 끝: EnvMan.UpdateTimeSkip(서버만)이 m_skipToTime(= 다음 날 아침 시작, day*길이+0.15*길이)에 닿으면 m_skipTime=false → IsTimeSkipping() 참→거짓이 끝 순간, 그때 GetDay() = 새 아침 날짜. 회차 103 확인(vh_settletest 넘김 약 12초).
   제련소(Smelter.UpdateSmelter, 주인만): 광석 대기열이 비거나 연료가 0이면 SpawnProcessed로 결과물(ZDO s_spawnOre = 원료 프리팹 이름, s_spawnAmount)을 m_outputPoint 땅에 내놓음 → 밤새 돌면 아침엔 대개 땅에 있음. RPC_AddFuel은 상한을 안 봄(OnAddFuel만 봄). 굽기 1초에 s_bakeTimer +1, 연료 m_fuelPerProduct/m_secPerProduct. 회차 104 확인.
+- 갈고리(클라우드 10-24 디컴파일, valheim-refs DLL): GrapplingPoint(네트워크 물체, 맞은 곳에 붙는 투사체 쪽)·GrapplingBlocker(붙으면 안 되는 물체 표시).
+  Activate(Character)가 주인을 끌어당김(ForceJump, OneBoost·ConstantVelocity), 최대 길이 m_maxLength 50m, m_equipCheck 아이템을 들고 있어야 유지(Humanoid.IsItemTypeEquiped),
+  당기는 동안 m_grappledSE(낙하 피해·속도 조정). 주인 찾기(FindCharacter)는 Player 목록에서만 → 일꾼이 쓰려면 Activate 직접 호출이 필요. 어느 아이템·바이옴인지는 프리팹이라 DLL로 모름(PC에서 ObjectDB로).
