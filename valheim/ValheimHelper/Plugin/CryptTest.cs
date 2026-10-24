@@ -81,18 +81,19 @@ namespace ValheimHelper
         internal static List<ZDO> Around(Vector3 at)
         {
             var list = new List<ZDO>();
-            if (at != Vector3.zero) ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(at), new SimulationDistance(1, 0), list);
+            if (at != Vector3.zero) ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(at), new SimulationDistance(2, 0), list); // 2칸: 서리 동굴 안은 위치 중심에서 70m 넘게 퍼짐
             return list;
         }
 
-        /// <summary>세운 지하묘지(시험 전에 없던 ZDO 중 70m 안, 일꾼·플레이어 빼고)를 지운다.</summary>
+        /// <summary>세운 지하묘지·동굴(시험 전에 없던 ZDO 중 70m 안 또는 던전 안 높이, 일꾼·플레이어 빼고)을 지운다.
+        /// 던전 안 방은 70m 밖까지 퍼져 남으면 다음 시험이 같은 자리에 세운 던전과 겹쳤다(회차 168 frostcave→crypt 묶음 FAIL).</summary>
         internal static void Cleanup(HashSet<ZDOID> before, Vector3 at)
         {
             if (at == Vector3.zero) return;
             int n = 0;
             foreach (var z in Around(at))
             {
-                if (before.Contains(z.m_uid) || Utils.DistanceXZ(z.GetPosition(), at) > 70f) continue;
+                if (before.Contains(z.m_uid) || (Utils.DistanceXZ(z.GetPosition(), at) > 70f && z.GetPosition().y < 4000f)) continue;
                 var inst = ZNetScene.instance.FindInstance(z);
                 if (inst != null && (inst.GetComponent<WorkerNpc>() != null || inst.GetComponent<Player>() != null)) continue;
                 ZDOMan.instance.DestroyZDO(z);

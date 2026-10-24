@@ -123,4 +123,14 @@ public class StepGridTests
         // 예전처럼 시작 높이 하나로 재면 문틀 윗면이 바닥 → 2.5m 턱이라 못 감
         Assert.Null(StepGrid.Find(new Cell(0, 0), 1.5, c => c.X == 6, new Cell(6, 0), (x, z) => Probe(x, z, 1.5), (a, b) => true, 1000));
     }
+
+    [Fact]
+    public void ReachNeedsSameFloor()
+    {
+        // E032: 서리 동굴 위층(수평 2.3m, 대상이 34.5m 아래)은 닿은 게 아니다
+        Assert.False(StepGrid.Reached(2.3, 0, -34.5, 2.5));
+        Assert.True(StepGrid.Reached(2.3, 0, -0.5, 2.5));
+        Assert.True(StepGrid.Reached(1, 1, 2.5, 2.5)); // 벽에 붙은 수정
+        Assert.False(StepGrid.Reached(3, 0, 0, 2.5));
+    }
 }

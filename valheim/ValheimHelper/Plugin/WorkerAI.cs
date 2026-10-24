@@ -293,7 +293,7 @@ namespace ValheimHelper
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
             float d = Utils.DistanceXZ(point, pos);
-            if (d <= dist) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
+            if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
             if (EdgeRescueIfLong(dt, pos)) return false;
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) return false;
