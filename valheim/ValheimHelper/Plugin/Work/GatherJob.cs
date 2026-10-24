@@ -25,6 +25,8 @@ namespace ValheimHelper
         /// <summary>지난 휘두름 끝의 대상 체력 기록(HealthMark). null이면 다음 프레임에 잰다.</summary>
         string m_lastHealth;
         bool m_sawTooHard;
+        /// <summary>사냥감 둘레 무리가 세서 못 잡은 적 이름(preyPack 대사). 한 번 보면 이 일 동안 둔다.</summary>
+        string m_packFoe;
         /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
         bool m_sawSkipped;
         readonly WorkerNpc m_npc;
@@ -188,7 +190,9 @@ namespace ValheimHelper
 
         bool Fail(string key)
         {
-            m_npc.Say(key, Args());
+            var args = Args();
+            if (m_packFoe != null) args["foe"] = m_packFoe;
+            m_npc.Say(key, args);
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item} 실패: {key} ({Delivered}/{Target})");
             return false;
         }
@@ -242,6 +246,12 @@ namespace ValheimHelper
                 return;
             }
             m_avoid.Add(Senses.ZoneOf(danger));
+            if (m_hunt && m_packFoe == null && PreyNear(danger, out string foe))
+            {
+                // ⑫ 사냥감이 위험한 무리 속에 있어 물러나거나 도망쳤다 → 다른 데를 헤매지 말고 같이 가 달라고 한다(다음 Search에서 preyPack)
+                m_packFoe = foe;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 사냥감이 위험 곁에 있음({foe}) → 도움 요청");
+            }
             if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Unload || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
             bool hasTarget = !m_targetId.IsNone();
             bool drop = m_fled.Fled(m_targetId, hasTarget, InBase(hasTarget ? m_targetPos : m_npc.transform.position));
@@ -385,6 +395,8 @@ namespace ValheimHelper
             if (m_hunt)
             {
                 if (FindPrey()) { Go(Step.Hunt); return true; }
+                // ⑫ 풀링 마을: 혼자면 잡을 사냥감인데 둘레 무리가 세다 → 도움 요청(같이 가 주면 MyHit에 플레이어 몫이 더해짐)하고 그만둔다
+                if (m_packFoe != null) return GiveUp("preyPack");
                 // 사슴 가죽처럼 활로만 잡는 것뿐인데 쏠 활·화살이 없다(장비 상자에 넣어 주면 Prep이 챙긴다)
                 if (!Prey.Any(Item, false) && (m_bowFailed || m_npc.ShootingBow() == null)) return GiveUp("needBow");
             }
@@ -1446,7 +1458,16 @@ namespace ValheimHelper
                 Vector3 p = c.transform.position;
                 float d = Utils.DistanceXZ(p, me);
                 if (d >= bestD || Mathf.Abs(p.y - me.y) > 15f || Avoided(p)) continue;
-                if (!m_ai.Guard.SafePrey(c)) { m_huntSkip[c] = Time.time + 120f; continue; }
+                if (!m_ai.Guard.SafePrey(c, out Character pack))
+                {
+                    m_huntSkip[c] = Time.time + 120f;
+                    if (pack != null && m_packFoe == null)
+                    {
+                        m_packFoe = Localization.instance.Localize(pack.m_name);
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {Utils.GetPrefabName(c.gameObject)} 혼자면 되는데 둘레 무리({Utils.GetPrefabName(pack.gameObject)} 등) 때문에 안 됨");
+                    }
+                    continue;
+                }
                 best = c;
                 bestD = d;
             }
@@ -1455,6 +1476,23 @@ namespace ValheimHelper
             m_preyShots = 0;
             if (best != null) Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {Utils.GetPrefabName(best.gameObject)} {bestD:0}m 앞");
             return best != null;
+        }
+
+        /// <summary>위험한 곳(Guard가 피한 적 자리) 둘레 20m 안에 이 물건의 사냥감이 살아 있나. foe = 그 자리에서 가장 가까운 적 이름(대사용).</summary>
+        bool PreyNear(Vector3 danger, out string foe)
+        {
+            foe = null;
+            bool prey = false;
+            float bestD = float.MaxValue;
+            foreach (Character c in Character.GetAllCharacters())
+            {
+                if (c == null || c.IsDead() || c.IsPlayer() || c is WorkerNpc || c.IsTamed()) continue;
+                float d = Utils.DistanceXZ(c.transform.position, danger);
+                if (d > 20f) continue;
+                if (Prey.Is(Item, c, true)) prey = true;
+                if (d < bestD && BaseAI.IsEnemy(m_npc, c)) { bestD = d; foe = Localization.instance.Localize(c.m_name); }
+            }
+            return prey && foe != null;
         }
 
         /// <summary>쫓아가 친다(Guard.UpdateFight와 같은 방식). 죽으면 떨어진 것을 줍고, 2분 안에 못 잡거나 체력이 40% 아래면 그만둔다.</summary>

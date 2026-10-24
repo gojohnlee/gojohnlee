@@ -482,15 +482,39 @@ namespace ValheimHelper
             return ai == null || !ai.IsSleeping();
         }
 
-        /// <summary>사냥감으로 삼아도 되나(⑧): 그 한 마리만 놓고 보면 싸우는 쪽으로 판단될 때(체력 낮으면 안 됨).</summary>
-        public bool SafePrey(Character c)
+        /// <summary>사냥감 둘레 이만큼 안의 적은 같이 덤빈다고 본다(⑫ 풀링 마을 무리·주술사).</summary>
+        public const float PackRange = 15f;
+
+        /// <summary>
+        /// 사냥감으로 삼아도 되나(⑧): 그 한 마리와 둘레 PackRange 안 적(자는 것 포함 — 치면 깬다)을 같이 놓고 싸우는 쪽으로 판단될 때(체력 낮으면 안 됨).
+        /// pack = 혼자면 되는데 무리 때문에 안 될 때 그 무리에서 가장 센 적(대사용), 아니면 null.
+        /// </summary>
+        public bool SafePrey(Character c, out Character pack)
         {
-            Vector3 pos = m_npc.transform.position;
+            pack = null;
+            Vector3 pos = m_npc.transform.position, at = c.transform.position;
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
+            float hit = MyHit(pos);
+            var taken = Taken(scale, armor);
             var one = new List<Foe>(1) { View(c, pos) };
-            return Danger.Judge(m_npc.Personality, one, m_npc.GetHealth(), m_npc.GetMaxHealth(), MyHit(pos),
-                Taken(scale, armor), false) == Verdict.Fight;
+            if (Danger.Judge(m_npc.Personality, one, m_npc.GetHealth(), m_npc.GetMaxHealth(), hit, taken, false) != Verdict.Fight) return false;
+            var all = new List<Foe>(one);
+            Character strongest = null;
+            float most = 0f;
+            foreach (Character o in Character.GetAllCharacters())
+            {
+                if (o == null || o == c || o == m_npc || o.IsDead() || o.IsPlayer() || o is WorkerNpc || o.IsTamed()) continue;
+                if (o.GetFaction() == Character.Faction.AnimalsVeg || o.GetBaseAI() is AnimalAI || !BaseAI.IsEnemy(m_npc, o)) continue;
+                if (Vector3.Distance(o.transform.position, at) > PackRange) continue;
+                Foe f = View(o, pos);
+                all.Add(f);
+                if (f.Health * f.Damage > most) { most = f.Health * f.Damage; strongest = o; }
+            }
+            if (all.Count == 1) return true;
+            if (Danger.Judge(m_npc.Personality, all, m_npc.GetHealth(), m_npc.GetMaxHealth(), hit, taken, false) == Verdict.Fight) return true;
+            pack = strongest;
+            return false;
         }
 
         /// <summary>

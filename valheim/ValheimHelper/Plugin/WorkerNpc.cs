@@ -194,6 +194,14 @@ namespace ValheimHelper
 
         public const string KeyFoods = "vh_foods";
         public Meals Meals { get; private set; } = new Meals();
+
+        /// <summary>먹은 음식을 다 비운다(시험이 다른 음식을 먹이려고 — Setup의 초반 음식은 반 넘게 남아 다시 못 먹음).</summary>
+        public void ResetMeals()
+        {
+            Meals = new Meals();
+            SaveFoods();
+            SetMaxHealth(Meals.MaxHealth);
+        }
         float m_foodTimer, m_foodSaveTimer;
         bool m_saidNoFood;
 
