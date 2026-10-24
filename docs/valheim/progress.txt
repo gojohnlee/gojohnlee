@@ -30,9 +30,9 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [루프 회차 144] 검은숲 자리에서 실제 게임 재시작 시험(일 중간에 끄고 다시 켜기) 두 번 다 PASS. 처음엔 2번째 실행에서 회색난쟁이 때문에 돌 3개를 시간 안에 못 했는데, 시험 쪽 문제(2번째 실행만 시험 자리 생물 치우기가 안 켜짐)라 고침.
 - [루프 회차 143] 늪 회귀(검은숲) 마지막 묶음 5개(습격·도움·팀·동행·Claude) 다 PASS로 나) 끝. 작은 버그 하나 고침 — 건너뛴 대상만 보이는 구역을 "없음"으로 지식에서 지우던 것. 시험 정리도 하나 손봄(E027 습격 시험 뒤 남은 물건 1개, 다시 돌려 재현 안 됨).
 - [루프 회차 142] 늪 회귀(검은숲) 다섯째 묶음 4개: 버그 하나 고침 — 캐다가 적을 피해 물러난 뒤 멀리 떨어진 자리에서 그대로 곡괭이질을 이어 20m 밖 바위 조각에 피해가 들어가던 것(이제 다시 다가감). 구리 시험 자리에 회색난쟁이가 계속 와서 일꾼이 광맥을 버리던 것은 시험 쪽에서 막음. 4개 다 PASS.
-- [루프 회차 141] 늪 회귀(검은숲) 넷째 묶음 8개: 버그 하나 고침 — 일꾼이 죽어 거점에서 다시 일어나도 죽기 전 도망을 이어 가 죽은 곳 쪽으로 다시 달려가던 것. 시험 쪽 문제 여섯 고침(발 묶인 일꾼 곁 생물 치움 등). 8개 다 PASS, 기본 자리 5개 PASS, E026 닫음.
 
 다음 (순서대로)
 ★ [끝] E021·R5 묻힌 광맥 채굴·구덩이(사용자 결정 10-23, decisions.txt "묻힌 광맥 채굴·구덩이") — E021은 Errors-resolved로 닫음:
@@ -98,7 +98,8 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
          곁가지: Workers.OnBaseMoved도 주인 확인 없이 ZDO에 씀(드묾) — 관련 작업 때 같이. [끝, 회차 143 — 커밋 3325ed4 · 시험 vh_woodtest PASS 13/13·vh_stonetest 11/11·vh_coppertest 13/13] GatherJob.UpdateSearch 건너뛴 대상만 보이면 k.Forget 안 함(m_sawSkipped).
          [기본안, 사용자 확인 필요] 도망치면 거점 바로 앞 목표도 그 일 동안 버림(구상서 8장 a 그대로) — 약한 일꾼이 검은숲에서 먼 곳만 헤맴. 바꾸지 않음(decisions.txt).
        나-5) [끝, 회차 143 — 커밋 3325ed4 · 시험 검은숲 raid 9/9·help 7/7·team 6/6·escort 18/18·claude 5/5(고친 뒤, 첫 실행은 raid 뒤 E027로 넷 환경 불량), dotnet 495] 나) 끝 — 모든 시험 검은숲(원래 자리 farm·settle·pit 빼고) 한 번씩 PASS.
-       다) 실제 재시작 vh_restart1 → VH_RESET=0 vh_restart2(검은숲 자리). 라) 버그 없으면 Errors 닫기.
+       다) [끝, 회차 144 — 커밋 2699deb · 시험 검은숲 vh_restart1 PASS 6/6 → VH_RESET=0 vh_restart2 PASS 14/14, dotnet 495 · 첫 시도 restart2 12/14(회색난쟁이에 돌 3 시간 넘김) → 시험 쪽: 상태 파일 biome, 2번째도 KeepSiteClear] 실제 재시작.
+       라) 버그 없으면 Errors 닫기(E001·E004·E012·E014·E015·E016·E018·E020은 이미 닫힘 — 남은 E022·E024·E025·E027 관찰 중 확인).
 ★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
