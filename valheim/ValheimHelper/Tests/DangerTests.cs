@@ -100,3 +100,34 @@ public class DangerOrderTests
         Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, two, 18, 70, 13, d => d, false));
     }
 }
+
+public class MateCallTests
+{
+    static Foe F(float hp, float dmg) => new Foe { Kind = "x", Health = hp, Damage = dmg };
+
+    [Fact]
+    public void CallsMateWhenTogetherWins()
+    {
+        // 혼자면 물러남·도망이지만 동료 한 방을 합치면 싸움 → 불러 놓고 기다림
+        Assert.Equal(MateCall.Wait, Danger.ShouldCallMate(Verdict.Back, Verdict.Fight, 1.2f, 2));
+        Assert.Equal(MateCall.Wait, Danger.ShouldCallMate(Verdict.Flee, Verdict.Fight, 2f, 1));
+        // 같이여도 안 되면(보스 등) 안 부름
+        Assert.Equal(MateCall.None, Danger.ShouldCallMate(Verdict.Flee, Verdict.Flee, 3f, 1));
+        Assert.Equal(MateCall.None, Danger.ShouldCallMate(Verdict.Drink, Verdict.Fight, 1f, 1));
+        // 혼자도 싸움: 빡빡하거나 3마리 이상이면 같이 패기, 아니면 혼자
+        Assert.Equal(MateCall.Join, Danger.ShouldCallMate(Verdict.Fight, Verdict.Fight, 0.7f, 1));
+        Assert.Equal(MateCall.Join, Danger.ShouldCallMate(Verdict.Fight, Verdict.Fight, 0.2f, 3));
+        Assert.Equal(MateCall.None, Danger.ShouldCallMate(Verdict.Fight, Verdict.Fight, 0.3f, 2));
+    }
+
+    [Fact]
+    public void MateHitTurnsBackIntoFight()
+    {
+        // 혼자(한 방 8)면 물러나는 두 마리가 동료(한 방 8)를 합치면 싸움
+        var two = new[] { F(40, 5), F(40, 5) };
+        Verdict alone = Danger.Judge(Personality.Ragnar, two, 70, 70, 8, d => d, false);
+        Verdict together = Danger.Judge(Personality.Ragnar, two, 70, 70, 16, d => d, false);
+        Assert.NotEqual(Verdict.Fight, alone);
+        Assert.Equal(Verdict.Fight, together);
+    }
+}

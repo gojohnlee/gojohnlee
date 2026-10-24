@@ -44,6 +44,7 @@ namespace ValheimHelper
             Step("vh_raidtest", RaidTest.Register);
             Step("vh_helptest", HelpTest.Register);
             Step("vh_teamtest", TeamTest.Register);
+            Step("vh_matetest", MateTest.Register);
             Step("vh_settest", SetTest.Register);
             Step("vh_portaltest", PortalTest.Register);
             Step("vh_portalbuildtest", PortalBuildTest.Register);

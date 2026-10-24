@@ -18,10 +18,12 @@ namespace ValheimHelper
         public const float SenseRange = 30f, CloseRange = 8f, AllyRange = 20f, HelpRange = 60f, EngageRange = 15f;
         const float JudgeEvery = 0.5f, BackDistance = 40f, BackWait = 30f;
         public const int MaxBacks = 2;
+        /// <summary>동료 부르기(사용자 결정 2026-10-24 나): 이 거리 안 동료를 부르고, 20m 안에 올 때까지 최대 MateWait초 기다린다.</summary>
+        public const float MateCallRange = 100f, MateWait = 30f, MateCallEvery = 60f, ComeLimit = 40f;
         /// <summary>[기본안] 내가 한 번 휘두를 때 적이 치는 횟수(바닐라 몬스터의 공격 간격 반영, 시험으로 조정).</summary>
         public const float FoeHitsPerSwing = 0.5f;
 
-        enum State { Calm, Fight, Back, Flee }
+        enum State { Calm, Fight, Back, Flee, Come }
 
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
@@ -64,6 +66,8 @@ namespace ValheimHelper
             m_target = null;
         }
         public Character Target => m_target;
+        /// <summary>시험용: 동료 부르기 60초 쉬는 시간을 없앤다.</summary>
+        internal void TestForgetMateCall() { m_mateAt = -999f; m_waitMate = null; }
         public float LastRatio { get; private set; }
         public Verdict LastVerdict { get; private set; }
         /// <summary>시험 기록용: 마지막 판단에 쓴 수치.</summary>
@@ -79,6 +83,8 @@ namespace ValheimHelper
             m_backWalking = false;
             m_backs = 0;
             m_aroundSide = 0;
+            m_waitMate = null;
+            m_caller = null;
         }
 
         /// <summary>새 일을 받으면 물러난 횟수를 다시 센다.</summary>
@@ -87,6 +93,8 @@ namespace ValheimHelper
             m_backs = 0;
             m_state = State.Calm;
             m_target = null;
+            m_waitMate = null;
+            m_caller = null;
         }
 
         /// <returns>true면 이번 프레임은 경계가 몸을 썼다(일·따라가기는 쉰다).</returns>
@@ -103,6 +111,7 @@ namespace ValheimHelper
                 case State.Fight: return UpdateFight(dt);
                 case State.Back: return UpdateBack(dt);
                 case State.Flee: return UpdateFlee(dt);
+                case State.Come: return UpdateCome(dt);
             }
             return false;
         }
@@ -115,14 +124,14 @@ namespace ValheimHelper
             float myHit = MyHit(pos);
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
-            System.Func<float, float> taken = d => HitData.DamageTypes.ApplyArmor(d * scale, armor);
+            System.Func<float, float> taken = Taken(scale, armor);
             FindFoes(pos, myHit, taken);
             if (m_foes.Count == 0)
             {
                 if (m_state == State.Fight) EndFight();
                 m_saidFight = false;
                 // 물러나 기다리는 중이거나 도망 중이면 마저 한다(0.3.7: 적이 30m 경계를 넘나들 때마다 도망이 취소됐다 다시 시작됨)
-                if (m_state != State.Back && m_state != State.Flee) m_state = State.Calm;
+                if (m_state != State.Back && m_state != State.Flee && m_state != State.Come) m_state = State.Calm;
                 if (m_state == State.Calm) { CloseEncounter(); m_aroundSide = 0; }
                 return;
             }
@@ -134,6 +143,7 @@ namespace ValheimHelper
             LastDetail = $"내 한 방 {myHit:0.0}, 갑옷 {armor:0}, 배율 {scale:0.00}, 체력 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 적 [" + string.Join("; ", m_views.ConvertAll(f => $"{f.Kind} {f.Health:0}/{f.Damage:0.0}→{taken(f.Damage):0.0} {f.Distance:0}m{(Brain.Foes.Knows(f.Kind) ? "" : " 짐작")}").ToArray()) + "]";
             Character nearest = Nearest(pos);
             string foeName = Localization.instance.Localize(nearest.m_name);
+            if (TryCallMate(pos, v, myHit, taken, mead, foeName)) return;
             switch (v)
             {
                 case Verdict.Flee:
@@ -182,9 +192,11 @@ namespace ValheimHelper
                     // (늪 회귀 basetest: 30m 경계를 넘나드는 회색난쟁이 주술사 때문에 판단이 도망↔싸움으로 바뀌어, 싸우러 무리 쪽으로 갔다가
                     // 다시 도망을 수십 초마다 새로 시작 — 그때마다 목표·구역을 버리고 장소 기억에 도망을 더 쌓음.)
                     if (m_state == State.Flee) break;
-                    if (m_state == State.Back && m_backTimer > 0f && !Aggressive(nearest)) break; // 물러나 기다리는 중: 쫓아오지 않으면 그대로
+                    // 물러나 기다리는 중: 쫓아오지 않으면 그대로(부른 동료가 와서 싸움이 된 것이면 싸운다)
+                    if (m_state == State.Back && m_backTimer > 0f && !Aggressive(nearest) && m_waitMate == null) break;
                     Character t = FightTarget(pos);
                     if (t == null) break;
+                    if (m_waitMate != null) { Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 옴 → 같이 싸움"); m_waitMate = null; }
                     if (t != m_target) { DrinkResist(pos, t); m_missStreak = 0; m_diagSwings = 0; }
                     if (!m_saidFight) { m_saidFight = true; m_npc.Say("fightStart", Args(Localization.instance.Localize(t.m_name))); }
                     m_target = t;
@@ -194,6 +206,87 @@ namespace ValheimHelper
         }
 
         int m_chased;
+
+        // ---- 동료 부르기(사용자 결정 2026-10-24 "더 공격적으로" 나) ----
+
+        float m_mateAt = -999f;
+        /// <summary>불러 놓고 물러나 기다리는 동료(오면 싸움, 못 오면 MateWait 뒤 원래 판단).</summary>
+        WorkerNpc m_waitMate;
+        /// <summary>나를 부른 동료(State.Come 동안 그쪽으로 달려감).</summary>
+        WorkerNpc m_caller;
+        float m_comeTime;
+        /// <summary>마지막 동료 부르기(시험용): 부른 쪽·온 쪽 이름과 Wait/Join.</summary>
+        public static string LastMateCall { get; internal set; } = "";
+
+        /// <summary>
+        /// 20m 안에 동료가 없고, 부를 수 있는 동료(MateCallRange 안·쉬거나 일하는 중 — 싸움·물러남·도망·오는 중·죽음·순간이동 아님)가 있으면
+        /// 그 한 방을 합쳐 다시 판단해 Danger.ShouldCallMate대로 부른다. Wait이면 물러나 기다리고 true(이번 판단은 끝), Join이면 부르고 false(그대로 싸움).
+        /// </summary>
+        bool TryCallMate(Vector3 pos, Verdict alone, float myHit, System.Func<float, float> taken, bool mead, string foeName)
+        {
+            if (m_state == State.Flee || m_state == State.Come || m_waitMate != null || Time.time - m_mateAt < MateCallEvery) return false;
+            if (alone != Verdict.Fight && alone != Verdict.Back && alone != Verdict.Flee) return false;
+            WorkerNpc mate = null;
+            float best = float.MaxValue;
+            foreach (var n in WorkerNpc.All)
+            {
+                if (n == null || n == m_npc || n.IsDead() || n.Ai == null) continue;
+                float d = Vector3.Distance(n.transform.position, pos);
+                if (d <= AllyRange) return false; // 이미 곁에 있다(MyHit에 들어 있음)
+                if (d > MateCallRange || n.IsTeleporting() || (n.Ai.Guard != null && n.Ai.Guard.Engaged)) continue;
+                if (d < best) { best = d; mate = n; }
+            }
+            if (mate == null) return false;
+            Verdict together = Danger.Judge(m_npc.Personality, m_views, m_npc.GetHealth(), m_npc.GetMaxHealth(), myHit + HitOf(mate) * 0.9f, taken, mead);
+            MateCall call = Danger.ShouldCallMate(alone, together, LastRatio, m_views.Count);
+            if (call == MateCall.None) return false;
+            if (mate.Ai.Guard == null || !mate.Ai.Guard.Summon(m_npc)) return false;
+            m_mateAt = Time.time;
+            LastMateCall = $"{m_npc.NpcName}→{mate.NpcName} {call}";
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 부름({call}): {mate.NpcName} {best:0}m, 혼자 {alone} 비율 {LastRatio:0.00} → 같이 {together}, {foeName} 등 {m_foes.Count}");
+            m_npc.Say("callMate", Args(foeName));
+            if (call == MateCall.Join) return false;
+            m_waitMate = mate;
+            m_target = null;
+            m_backTo = AwayPoint(pos, BackDistance);
+            m_backTimer = MateWait;
+            m_backWalking = true;
+            m_backWalkTime = 0f;
+            m_chased = 0;
+            m_state = State.Back;
+            return true;
+        }
+
+        /// <summary>동료가 불렀다: 하던 일은 그대로 두고(경계가 일보다 먼저) 그쪽으로 달려가 같은 적과 싸운다. 바쁘면 false.</summary>
+        public bool Summon(WorkerNpc caller)
+        {
+            if (m_state != State.Calm || m_npc.IsDead()) return false;
+            m_caller = caller;
+            m_comeTime = 0f;
+            m_state = State.Come;
+            m_judgeTimer = JudgeEvery;
+            m_npc.Say("mateComing", new Dictionary<string, string> { ["name"] = caller.NpcName });
+            return true;
+        }
+
+        bool UpdateCome(float dt)
+        {
+            m_comeTime += dt;
+            WorkerNpc c = m_caller;
+            float d = c != null && !c.IsDead() ? Vector3.Distance(c.transform.position, m_npc.transform.position) : -1f;
+            // 부른 쪽이 죽었거나 없어졌거나, 다 왔는데 적이 없거나, 너무 오래 걸리면 하던 일로
+            if (d < 0f || m_comeTime > ComeLimit || (d < 8f && m_foes.Count == 0))
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 동료에게 가기 끝: {(d < 0f ? "부른 쪽 없음" : m_comeTime > ComeLimit ? "시간" : "적 없음")}");
+                m_ai.StopMoving();
+                m_caller = null;
+                m_state = State.Calm;
+                return false;
+            }
+            if (d < 4f) m_ai.StopMoving();
+            else m_ai.MoveToPoint(dt, c.transform.position, 3f, true);
+            return true;
+        }
 
         float m_helpAt = -999f;
 
@@ -328,7 +421,7 @@ namespace ValheimHelper
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
             var one = new List<Foe>(1) { View(c, pos) };
             return Danger.Judge(m_npc.Personality, one, m_npc.GetHealth(), m_npc.GetMaxHealth(), MyHit(pos),
-                d => HitData.DamageTypes.ApplyArmor(d * scale, armor), false) == Verdict.Fight;
+                Taken(scale, armor), false) == Verdict.Fight;
         }
 
         /// <summary>
@@ -349,7 +442,7 @@ namespace ValheimHelper
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(at) * Game.m_enemyDamageRate;
             return Danger.Judge(m_npc.Personality, views, m_npc.GetHealth(), m_npc.GetMaxHealth(), MyHit(at),
-                d => HitData.DamageTypes.ApplyArmor(d * scale, armor), false) == Verdict.Fight;
+                Taken(scale, armor), false) == Verdict.Fight;
         }
 
         /// <summary>나·동행을 노리거나, 경계 중이거나, 가까이 왔거나, 방금 나를 때렸다.</summary>
@@ -416,6 +509,10 @@ namespace ValheimHelper
                 ItemDrop.ItemData pw = p.GetCurrentWeapon();
                 hit += pw != null ? Gear.WeaponScore(pw) : 5f;
             }
+            // 20m 안 동료 일꾼도 같이 싸운다(도망 중·죽은 동료는 빼고, 사용자 결정 2026-10-24 나)
+            foreach (var n in WorkerNpc.All)
+                if (n != null && n != m_npc && !n.IsDead() && !(n.Ai?.Guard?.Fleeing ?? false) && Vector3.Distance(n.transform.position, pos) <= AllyRange)
+                    hit += HitOf(n) / 0.9f;
             return hit * 0.9f; // 바닐라 무작위 피해 계수(0.75~1의 제곱근) 평균쯤
         }
 
@@ -553,7 +650,7 @@ namespace ValheimHelper
             }
             m_ai.StopMoving();
             m_backTimer -= dt;
-            if (m_backTimer <= 0f) { m_state = State.Calm; return false; } // 다시 해 본다
+            if (m_backTimer <= 0f) { m_state = State.Calm; m_waitMate = null; return false; } // 다시 해 본다
             return true;
         }
 
@@ -716,7 +813,14 @@ namespace ValheimHelper
         {
             float armor = npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(npc.Home) * Game.m_enemyDamageRate;
-            return d => HitData.DamageTypes.ApplyArmor(d * scale, armor);
+            return Taken(scale, armor);
         }
+
+        /// <summary>
+        /// 판단식의 적 피해(한 방 × FoeHitsPerSwing)가 갑옷을 거쳐 들어오는 몫. 갑옷은 실제 한 방에 매기고 나서 공격 간격을 곱한다
+        /// (회차 146 matetest: 줄인 피해 7에 갑옷 6을 매겨 2.0으로 셌는데 실제 14 → 8의 반 4 — 체력 32에서 회색난쟁이 둘과 싸우다 죽음).
+        /// </summary>
+        static System.Func<float, float> Taken(float scale, float armor) =>
+            d => HitData.DamageTypes.ApplyArmor(d / FoeHitsPerSwing * scale, armor) * FoeHitsPerSwing;
     }
 }

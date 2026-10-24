@@ -28,6 +28,16 @@ namespace ValheimHelper.Core.Npc
         Drink,
     }
 
+    /// <summary>동료 부르기(Danger.ShouldCallMate).</summary>
+    public enum MateCall
+    {
+        None,
+        /// <summary>불러 놓고 동료가 올 때까지 물러나 기다림.</summary>
+        Wait,
+        /// <summary>불러 놓고 바로 싸움.</summary>
+        Join,
+    }
+
     /// <summary>
     /// 위험 판단 (구상서 8장, 0.5초마다, 규칙). 기획서의 "위협도 ÷ 전투력"을 "이 싸움에서 잃을 체력 ÷ 지금 체력"으로 계산한다:
     /// 약한 적부터 잡는다고 보고, 적 하나를 잡는 동안(그 적 체력 ÷ 내 한 방) 아직 살아 있는 적 모두에게 맞는다(갑옷 반영).
@@ -82,6 +92,21 @@ namespace ValheimHelper.Core.Npc
             float loss = ExpectedLoss(foes, myHit, taken), spare = 0f;
             foreach (var f in foes) spare = Math.Max(spare, taken(f.Damage));
             return loss / Math.Max(health, 1f) <= (alarak ? FightFloki : FightRagnar) && health - loss > spare ? Verdict.Fight : Verdict.Back;
+        }
+
+        /// <summary>혼자도 싸움이지만 비율이 이보다 크거나 적이 이만큼 이상이면 동료를 부른다(같이 패기, 사용자 결정 2026-10-24 나).</summary>
+        public const float MateCallRatio = 0.6f;
+        public const int MateCallFoes = 3;
+
+        /// <summary>
+        /// 동료를 부를지(사용자 결정 2026-10-24 "더 공격적으로" 나): 혼자면 물러남·도망인데 동료 한 방을 합치면 싸움 → 불러 놓고 물러나 기다림(Wait),
+        /// 혼자도 싸움이지만 빡빡하면(비율 MateCallRatio 넘음·적 MateCallFoes 이상) → 불러 놓고 바로 싸움(Join). 보스는 같이여도 도망이라 안 부름.
+        /// </summary>
+        public static MateCall ShouldCallMate(Verdict alone, Verdict together, float aloneRatio, int foes)
+        {
+            if (alone == Verdict.Fight) return aloneRatio > MateCallRatio || foes >= MateCallFoes ? MateCall.Join : MateCall.None;
+            if ((alone == Verdict.Back || alone == Verdict.Flee) && together == Verdict.Fight) return MateCall.Wait;
+            return MateCall.None;
         }
 
         /// <summary>
