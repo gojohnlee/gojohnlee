@@ -10,7 +10,7 @@
 작업 상태 저장          Core/Work/WorkState.cs(WorkItem·PendingData 저장 형식) + Plugin/WorkSaves.cs(1초마다 ZDO에, NPC 생기면 불러옴)
 기능 스위치             Plugin/Features.cs(BepInEx [Features] SaveWork·KnowExplored)
 명령 나누기·실행        Plugin/Commands.cs(262) + Core/Npc/Dispatch.cs(받을 NPC, 대답 받을 NPC)
-출발 전 판단·질문·대답  Core/Npc/Departure.cs(Judge, Replies) + Plugin/Departures.cs(462: 입력 모으기, 질문 대기, 제작 계획 말하기, 자동 보충, !기억) · 연장 단계 GatherJob.ToolFor(ResourceCatalog.MinTier → Weak) · 은 위시본 필요 NeedFinder(ResourceCatalog.FromHidden·HiddenOres.HaveFinder, 아는 곳 없을 때 depart.needFinder)
+출발 전 판단·질문·대답  Core/Npc/Departure.cs(Judge, Replies, 장비 조건 "gear" = PlaceOption.GearRatio ← PlaceBook.BiomeRisk·Departures.NativeTo, 상자 장비까지 Prep.Ready) + Plugin/Departures.cs(462: 입력 모으기, 질문 대기, 제작 계획 말하기, 자동 보충, !기억) · 연장 단계 GatherJob.ToolFor(ResourceCatalog.MinTier → Weak) · 은 위시본 필요 NeedFinder(ResourceCatalog.FromHidden·HiddenOres.HaveFinder, 아는 곳 없을 때 depart.needFinder)
 동행 앞장서기          Core/Npc/Escort.cs(기다림 8m·20m 넘으면 멈춤·12m 안이면 다시·60초/90초 포기) + WorkerAI.EscortBy/EscortHolds(일하는 동안 매 프레임). 대답 "같이 가자"(GoEscort)·일하는 중 "!같이 가자"(Commands.Run)가 붙임. 시험 EscortTest.cs(vh_escorttest)
 대사                  Core/Npc/Speech.cs(키별 대사, 1호 라그나/2호 플로키 — enum은 아직 Scv/Alarak) Josa.cs(조사)
 잡담                  Core/Npc/Banter.cs(2분 잡담·이벤트 반응·소식, BanterFacts.FromPlaces·FromKnowledge, SetNext 시험용) + Speech bt.* · 테스트 BanterTests · 게임 연결 Plugin/WorkerBanter.cs(1초마다 쉬는 중·15m·플레이어 30m, WorkerNpc.Say → OnSaid 이벤트, 습격 끝·5분 밖 귀환, Facing → WorkerAI Idle·Home 서로 바라봄) + ChatNet.NpcBubble(VH_Bubble 말풍선만, 시험용 Bubbled) · 시험 BanterTest.cs(vh_bantertest)
@@ -226,5 +226,6 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   보리·아마 = 밭(sapling_barley·flax 바이옴 16=평원만) + 야생 Pickable_Barley_Wild·Flax_Wild(풀링 마을), 클라우드베리 = CloudberryBush(Pickable+Destructible, 떨굼 없음),
   록스 고기 = 록스 사냥, 바늘 = 데스킷(m_flying이라 Prey에서 빠짐). 덤불·밭 작물(Pickable_Carrot 등)은 Pickable과 Destructible을 같이 가짐.
   프리팹 체력: Goblin 175·GoblinBrute 800·GoblinShaman 100·Deathsquito 10·Lox 1000·BlobTar 100.
+  바이옴 토박이 적(회차 171, Departures.NativeTo): ZoneSystem.m_zoneCtrlPrefab의 SpawnSystem.m_spawnLists(SpawnSystemList.m_spawners — SpawnData.m_prefab·m_biome 비트·m_enabled). 처음 판단 때 한 번 읽어 둠.
   적 한 방 데이터(회차 170, Guard.DataHit = 공격 물건(m_defaultItems·m_randomWeapon·m_randomSets) 피해 합 × m_attack.m_damageMultiplier 중 최대, 별마다 ×1.5 = Attack.GetLevelDamageFactor):
   Goblin 90·GoblinBrute 130·GoblinShaman 120·Deathsquito 90·Lox 130·BlobTar 95. 몸집 짐작(GuessDamage)은 공격 물건 없을 때만.

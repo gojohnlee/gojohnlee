@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
 
@@ -13,7 +14,7 @@ namespace ValheimHelper
     /// </summary>
     static class PlainsTest
     {
-        public static void Register() => TestRunner.Register("vh_plainstest", "평원 자료 시험", () => Run(), 120f);
+        public static void Register() => TestRunner.Register("vh_plainstest", "평원 자료·출발 판단 시험", () => Run(), 150f);
 
         static IEnumerator Run()
         {
@@ -77,6 +78,61 @@ namespace ValheimHelper
             checks.Add($"데스킷 한 방이 몸집 짐작(4.7)보다 훨씬 셈 (데이터 {sting:0.0})", sting > 20f);
             checks.Add("평원 적 프리팹(풀링·데스킷·록스) 있음",
                 ZNetScene.instance.GetPrefab("Goblin") != null && ZNetScene.instance.GetPrefab("Deathsquito") != null && ZNetScene.instance.GetPrefab("Lox") != null);
+
+            // ⑫ 다: 평원에서 데스킷을 겪은 뒤 약한 장비로 평원 물건을 시키면 "이 장비론 평원 무리" → 장비 상자에 갑옷을 넣으면 스스로 출발
+            yield return GearJudge(w, checks);
+        }
+
+        static readonly string[] WolfSet = { "ArmorWolfChest", "ArmorWolfLegs", "HelmetDrake" };
+
+        static IEnumerator GearJudge(TestKit.World w, GatherTest.Checks checks)
+        {
+            string k0 = Brain.Get().Save(), p0 = Brain.Places.Save();
+            Departures.TestAutoGo = false;
+            try
+            {
+                ZoneXY hz = Senses.ZoneOf(w.Home);
+                var far = new ZoneXY(hz.X + 3, hz.Y);
+                var fought = new ZoneXY(hz.X + 3, hz.Y + 2);
+                double now = ZNet.instance.GetTimeSeconds();
+                Brain.ReplaceForTest("", "");
+                Brain.Get().Saw(new Dictionary<ZoneXY, Dictionary<string, int>> { [far] = new Dictionary<string, int> { ["Cloudberry"] = 5 } }, new List<ZoneXY> { far }, now);
+                Brain.Get().SetBiome(far, (int)Heightmap.Biome.Plains);
+                Brain.Get().SetBiome(fought, (int)Heightmap.Biome.Plains);
+                TestRunner.Log($"거점 상자에서 갑옷 {TestKit.ClearBaseStock(w, WolfSet)}개 비움");
+                var cmd = new ChatCommand { Kind = CommandKind.Item, Item = "Cloudberry", Amount = 10 };
+
+                DepartureResult before = Departures.JudgeFor(w.Ragnar, cmd);
+                TestRunner.Log($"데스킷 겪기 전: {before?.Action} {before?.Question} ({before?.Reason})");
+                checks.Add("평원 적을 겪기 전엔 장비 질문 없음(맨땅에 헤딩)", before != null && before.Condition != "gear");
+
+                Brain.Places.Record(fought, new List<GroupFoe> { new GroupFoe { Kind = "Deathsquito", Count = 2 } }, Outcome.Fled, now, Guard.Resolve);
+                DepartureResult weak = Departures.JudgeFor(w.Ragnar, cmd);
+                TestRunner.Log($"데스킷 겪은 뒤(갑옷 {w.Ragnar.GetBodyArmor():0}): {weak?.Action} {weak?.Question} {weak?.Condition} ({weak?.Reason})");
+                checks.Add("약한 장비 → 평원 장비 조건 질문", weak != null && weak.Question == Question.Condition && weak.Condition == "gear");
+
+                int heard0 = w.Heard.Count;
+                Departures.Gather(new Speaker(Player.m_localPlayer.GetPlayerName(), ZDOID.None, ZDOID.None), cmd, w.Ragnar);
+                yield return new WaitForSeconds(1f);
+                string n1 = w.Ragnar.NpcName;
+                bool said = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("평원")) >= 0;
+                checks.Add($"\"평원\" 장비 말하고 기다림 (말 {said})", Departures.AskedAt(w.Ragnar) >= 0 && said && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
+
+                foreach (string a in WolfSet) TestKit.PutInChest(w.Chest, a, 1);
+                DepartureResult good = Departures.JudgeFor(w.Ragnar, cmd);
+                TestRunner.Log($"상자에 늑대 갑옷: {good?.Action} {good?.Question} {good?.Condition} ({good?.Reason})");
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
+                checks.Add($"장비 상자에 갑옷 → 스스로 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0);
+                GatherTest.Say("!멈춰", null);
+                yield return new WaitForSeconds(1f);
+            }
+            finally
+            {
+                Departures.TestAutoGo = true;
+                Departures.Forget(w.Ragnar);
+                Brain.ReplaceForTest(k0, p0);
+                TestKit.ClearBaseStock(w, WolfSet);
+            }
         }
     }
 }

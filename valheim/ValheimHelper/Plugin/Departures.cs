@@ -217,14 +217,20 @@ namespace ValheimHelper
             input.CarryPerTrip = Mathf.Max(1, npc.GetInventory().GetEmptySlots()) * Mathf.Max(1, stack);
             input.SecondsToNight = SecondsToNight();
 
-            // 후보 장소: 아는 곳 가까운 순, 각 곳의 위험을 지금 내 상태(+동료)로
+            // 후보 장소: 아는 곳 가까운 순, 각 곳의 위험을 지금 내 상태(+동료)로 — 장비는 출발 준비에서 챙길 상자의 더 좋은 것까지(⑫ 다)
             float health = npc.GetMaxHealth() + (!input.Fed && input.FoodInChest ? FoodHealthGuess : 0f);
-            float hit = Guard.HitOf(npc);
-            System.Func<float, float> taken = Guard.TakenFor(npc);
+            Prep.Ready(npc, out float armor, out ItemDrop.ItemData weapon);
+            armor = Mathf.Max(armor, npc.GetBodyArmor());
+            float hit = Mathf.Max(Guard.HitWith(npc, weapon), Guard.HitOf(npc));
+            System.Func<float, float> taken = Guard.TakenFor(npc, armor);
             WorkerNpc partner = IdlePartner(npc);
             float partnerHit = partner != null ? Guard.HitOf(partner) : 0f;
             PlaceBook book = Brain.Places;
             double now = Now;
+            var biomes = new Dictionary<ZoneXY, int>();
+            Knowledge known = Brain.Get();
+            System.Func<ZoneXY, int> biomeOf = z => biomes.TryGetValue(z, out int b) ? b : biomes[z] = known.BiomeOf(z) != 0 ? known.BiomeOf(z) : Scout.BiomeAt(Senses.ZoneCenter(z));
+            var gearBy = new Dictionary<int, PlaceRisk>();
             foreach (ZoneMemory m in Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(home)))
             {
                 if (input.Places.Count >= MaxPlaces) break;
@@ -241,6 +247,12 @@ namespace ValheimHelper
                     Resist = NeedsResist(npc, m.Biome),
                 };
                 if (partner != null) o.RatioTogether = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit + partnerHit, taken), Guard.Resolve).Ratio;
+                int biome = m.Biome != 0 ? m.Biome : biomeOf(m.Zone);
+                if (!gearBy.TryGetValue(biome, out PlaceRisk land))
+                    gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, f => Danger.Ratio(f, health, hit, taken), Guard.Resolve, NativeTo);
+                o.GearRatio = land.Ratio;
+                o.GearFoe = land.TopFoe;
+                o.BiomeName = BiomeNames.Of(biome);
                 input.Places.Add(o);
             }
             input.Places.Sort((a, b) => a.Distance.CompareTo(b.Distance));
@@ -250,6 +262,30 @@ namespace ValheimHelper
                 input.CryptsMinedOut = minedOut;
             }
             return input;
+        }
+
+        static Dictionary<string, int> s_native;
+
+        /// <summary>
+        /// 그 적이 그 바이옴에 나는가(게임 생성 표 ZoneSystem.m_zoneCtrlPrefab의 SpawnSystem.m_spawnLists — 켜진 것만).
+        /// 출발 판단의 "이 장비론 평원 무리"가 떠돌다 넘어온 적(초원의 트롤)으로 그 땅 전체를 막지 않게. 표를 못 읽으면 다 셈.
+        /// </summary>
+        static bool NativeTo(string kind, int biome)
+        {
+            if (s_native == null)
+            {
+                var map = new Dictionary<string, int>();
+                SpawnSystem ss = ZoneSystem.instance != null && ZoneSystem.instance.m_zoneCtrlPrefab != null ? ZoneSystem.instance.m_zoneCtrlPrefab.GetComponentInChildren<SpawnSystem>(true) : null;
+                if (ss != null)
+                    foreach (SpawnSystemList list in ss.m_spawnLists)
+                        foreach (SpawnSystem.SpawnData d in list.m_spawners)
+                            if (d.m_enabled && d.m_prefab != null)
+                                map[d.m_prefab.name] = (map.TryGetValue(d.m_prefab.name, out int m) ? m : 0) | (int)d.m_biome;
+                if (map.Count == 0) return true; // 아직 못 읽음 — 다음에 다시
+                s_native = map;
+                Plugin.Log.LogInfo($"생성 표: 적 {map.Count}종 바이옴 읽음");
+            }
+            return s_native.TryGetValue(kind, out int mask) && (mask & biome) != 0;
         }
 
         static Dictionary<string, string> Args(WorkerNpc npc, DepartureResult r)
@@ -490,10 +526,10 @@ namespace ValheimHelper
                     npc.Say(act == ReplyAction.GoEscort ? "answer.escort" : act == ReplyAction.GoGrumble ? "answer.grumble" : "answer.go", args);
                     break;
                 case ReplyAction.Recheck:
-                    if (!ConditionMet(npc, r.Condition)) { p.AskedAt = Now; npc.Say("answer.conditionMissing", args); break; }
+                    if (!ConditionMet(npc, p)) { p.AskedAt = Now; npc.Say(r.Condition == "gear" ? "answer.gearMissing" : "answer.conditionMissing", args); break; }
                     s_pending.Remove(npc);
                     Start(npc, p.Cmd, ways, null);
-                    npc.Say("answer.conditionMet", args);
+                    npc.Say(r.Condition == "gear" ? "answer.gearMet" : "answer.conditionMet", args);
                     break;
                 case ReplyAction.WaitMorning:
                     s_pending.Remove(npc);
@@ -513,8 +549,16 @@ namespace ValheimHelper
             return true;
         }
 
-        static bool ConditionMet(WorkerNpc npc, string condition)
+        static bool ConditionMet(WorkerNpc npc, Pending p)
         {
+            string condition = p.Result.Condition;
+            if (condition == "gear") // 상자의 더 좋은 장비까지 넣어 그 곳(없으면 가장 가까운 곳)을 다시 셈
+            {
+                DepartureInput input = Input(npc, p.Cmd, ResourceCatalog.WaysFor(p.Cmd.Item), true);
+                PlaceOption at = p.Result.Place != null ? input.Places.Find(o => o.Zone.Equals(p.Result.Place.Zone)) : null;
+                if (at == null && input.Places.Count > 0) at = input.Places[0];
+                return at == null || !at.GearShort;
+            }
             string kind = Resist.KindOf(condition);
             if (kind != null) return HasResistMead(npc, kind);
             if (CountMeads(npc.GetInventory()) > 0) return true;
@@ -539,11 +583,11 @@ namespace ValheimHelper
                     if (p.RecheckTimer <= 0f)
                     {
                         p.RecheckTimer = 5f;
-                        if (ConditionMet(npc, p.Result.Condition))
+                        if (ConditionMet(npc, p))
                         {
                             s_pending.Remove(npc);
                             Start(npc, p.Cmd, ResourceCatalog.WaysFor(p.Cmd.Item), null);
-                            npc.Say("answer.conditionMet", Args(npc, p.Result));
+                            npc.Say(p.Result.Condition == "gear" ? "answer.gearMet" : "answer.conditionMet", Args(npc, p.Result));
                             continue;
                         }
                     }

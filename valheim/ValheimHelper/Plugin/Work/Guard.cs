@@ -856,17 +856,20 @@ namespace ValheimHelper
         }
 
         /// <summary>출발 전 판단용 내 한 방(가장 좋은 무기, 없으면 맨손; 플레이어는 빼고).</summary>
-        public static float HitOf(WorkerNpc npc)
+        public static float HitOf(WorkerNpc npc) => HitWith(npc, Gear.Best(npc.GetInventory().GetAllItems(), Gear.IsMelee, Gear.WeaponScore));
+
+        /// <summary>그 무기(null이면 맨손)를 들었을 때 내 한 방(Prep.Ready — 상자의 더 좋은 무기까지).</summary>
+        public static float HitWith(WorkerNpc npc, ItemDrop.ItemData w)
         {
-            ItemDrop.ItemData w = Gear.Best(npc.GetInventory().GetAllItems(), Gear.IsMelee, Gear.WeaponScore);
             // 스킬 반영(3-1장): 평균 피해 계수(스킬 10이면 0.46, 70이면 0.82)
             return (w != null ? Gear.WeaponScore(w) * npc.MeanSkillFactor(w.m_shared.m_skillType) : 5f * npc.MeanSkillFactor(Skills.SkillType.Unarmed));
         }
 
         /// <summary>출발 전 판단용: 적의 한 방이 내 갑옷을 거쳐 들어오는 피해(거점 기준 난이도 배율).</summary>
-        public static System.Func<float, float> TakenFor(WorkerNpc npc)
+        public static System.Func<float, float> TakenFor(WorkerNpc npc) => TakenFor(npc, npc.GetBodyArmor());
+
+        public static System.Func<float, float> TakenFor(WorkerNpc npc, float armor)
         {
-            float armor = npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(npc.Home) * Game.m_enemyDamageRate;
             return Taken(scale, armor);
         }

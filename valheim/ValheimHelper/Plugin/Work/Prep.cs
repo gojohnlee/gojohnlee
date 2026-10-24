@@ -125,6 +125,25 @@ namespace ValheimHelper
         {
             var all = new List<ItemDrop.ItemData>(mine.GetAllItems());
             if (chest != null) all.AddRange(chest.GetAllItems());
+            return Plan(all);
+        }
+
+        /// <summary>
+        /// 출발 준비를 마치면 입고 들 것: 짐 + 거점 장비 상자 전부에서 고른 갑옷 합(GetBodyArmor처럼 입는 칸)과 가장 센 근접 무기(Guard.HitOf처럼).
+        /// 출발 판단이 상자에 넣어 둔 더 좋은 장비까지 셈(⑫ 다 "이 장비론 평원 무리예요" — 갑옷을 넣으면 다시 보고 출발).
+        /// </summary>
+        public static void Ready(WorkerNpc npc, out float armor, out ItemDrop.ItemData weapon)
+        {
+            var all = new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems());
+            foreach (var c in Chests.NearBase(npc.Home, ChestRole.Gear)) all.AddRange(c.GetInventory().GetAllItems());
+            armor = 0f;
+            foreach (var it in Plan(all))
+                if (System.Array.IndexOf(Gear.WearSlots, it.m_shared.m_itemType) >= 0) armor += it.GetArmor();
+            weapon = Gear.Best(all, Gear.IsMelee, Gear.WeaponScore);
+        }
+
+        static List<ItemDrop.ItemData> Plan(List<ItemDrop.ItemData> all)
+        {
             ItemDrop.ItemData shield = Gear.Best(all, Gear.IsShield, Gear.ShieldScore);
             ItemDrop.ItemData weapon = Gear.Best(all, it => Gear.IsMelee(it) && (shield == null || !it.IsTwoHanded()), Gear.WeaponScore)
                                        ?? Gear.Best(all, Gear.IsMelee, Gear.WeaponScore);

@@ -152,4 +152,25 @@ public class PlaceBookTests
         var c = PlaceBook.Load("garbage\n1,2|x\n,,,|\n");
         Assert.Equal(0, c.Count);
     }
+
+    [Fact]
+    public void BiomeRiskTakesWorstSingleFoeOfThatBiomeWithoutDecay()
+    {
+        // ⑫ 다: 평원(16) 구역에서 겪은 트롤 셋 → 평원 어디든 트롤 하나 몫, 오래돼도 그대로. 다른 바이옴 기록·보스는 안 셈.
+        var b = new PlaceBook();
+        var plains = new ZoneXY(10, 10);
+        b.Record(plains, G("troll", 3), Outcome.Fled, 0, Resolve);
+        b.Record(Z, G("greyling", 5), Outcome.Won, 0, Resolve);
+        b.Record(new ZoneXY(11, 10), G("troll", 1, boss: true), Outcome.Fled, 0, Resolve);
+        System.Func<ZoneXY, int> biomeOf = z => z.X >= 10 ? 16 : 8;
+        var r = b.BiomeRisk(16, biomeOf, Weak, Resolve);
+        Assert.True(r.Known);
+        Assert.Equal("troll", r.TopFoe);
+        Assert.Equal(Danger.Ratio(new List<Foe> { Resolve(G("troll", 1)[0]) }, 100, 20, d => d), r.Ratio, 3);
+        Assert.True(b.BiomeRisk(16, biomeOf, Strong, Resolve).Ratio < r.Ratio);
+        Assert.Equal(0f, b.BiomeRisk(32, biomeOf, Weak, Resolve).Ratio);
+        Assert.False(b.BiomeRisk(0, biomeOf, Weak, Resolve).Known);
+        // 트롤이 평원 토박이가 아니면(떠돌다 넘어옴) 평원 몫에서 빠짐
+        Assert.Equal(0f, b.BiomeRisk(16, biomeOf, Weak, Resolve, (k, bio) => k != "troll").Ratio);
+    }
 }

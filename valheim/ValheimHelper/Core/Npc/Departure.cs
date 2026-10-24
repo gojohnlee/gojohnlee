@@ -23,6 +23,13 @@ namespace ValheimHelper.Core.Npc
         public string TopFoe;
         /// <summary>그 곳 바이옴에서 막아야 할 피해(Resist.ForBiome, "Poison" 등). 장비로 이미 막거나 없으면 null.</summary>
         public string Resist;
+        /// <summary>그 바이옴에서 겪은 적 하나를 지금 장비(상자의 더 좋은 것 포함)로 상대할 때 비율(PlaceBook.BiomeRisk). HardFrom 넘으면 "이 장비론 무리".</summary>
+        public float GearRatio;
+        /// <summary>GearRatio를 정한 적 종류.</summary>
+        public string GearFoe;
+        /// <summary>바이옴 이름(대사용, "평원").</summary>
+        public string BiomeName;
+        public bool GearShort => GearRatio >= Departure.HardFrom;
     }
 
     public sealed class DepartureInput
@@ -87,7 +94,7 @@ namespace ValheimHelper.Core.Npc
         public PlaceOption Place;
         /// <summary>제안한(또는 고른) 대안. 없으면 null.</summary>
         public PlaceOption Alternative;
-        /// <summary>조건 질문의 필요한 것: "healthMead" 또는 "resist:Poison" 같은 저항 미드(Resist.Condition).</summary>
+        /// <summary>조건 질문의 필요한 것: "healthMead", "resist:Poison" 같은 저항 미드(Resist.Condition), 또는 "gear"(더 좋은 장비, ⑫ 다).</summary>
         public string Condition;
         /// <summary>대사 키. null이면 플러그인의 평소 복창(gatherStart/gatherKnown/searching).</summary>
         public string Key;
@@ -132,7 +139,7 @@ namespace ValheimHelper.Core.Npc
             PlaceOption best = null;
             foreach (var o in places)
             {
-                if (o == from || o.Distance > limit || Level(p, o) > DangerLevel.Caution || DiedThere(p, o)) continue;
+                if (o == from || o.Distance > limit || Level(p, o) > DangerLevel.Caution || o.GearShort || DiedThere(p, o)) continue;
                 if (best == null || o.Distance < best.Distance) best = o;
             }
             return best;
@@ -194,7 +201,19 @@ namespace ValheimHelper.Core.Npc
                 var level = Level(p, t);
                 r.Args["foe"] = t.TopFoe ?? "";
                 r.Reason += $"위험 {t.Ratio:0.00} {level}, 죽음 {t.DeathWeight:0.00}";
-                PlaceOption alt = level >= DangerLevel.Tight || DiedThere(p, t) ? Alternative(p, i.Places, t) : null;
+                PlaceOption alt = level >= DangerLevel.Tight || t.GearShort || DiedThere(p, t) ? Alternative(p, i.Places, t) : null;
+
+                // 그 바이옴 적 하나도 지금 장비론 못 당함 → "이 장비론 평원 무리예요. 더 좋은 갑옷 주세요"(⑫ 다, 보스·못 갈 곳은 아래 그대로)
+                if (t.GearShort && level != DangerLevel.Impossible)
+                {
+                    r.Condition = "gear";
+                    r.Args["biome"] = t.BiomeName ?? "";
+                    if (t.GearFoe != null) r.Args["foe"] = t.GearFoe;
+                    r.Reason += $", 장비 {t.GearRatio:0.00}";
+                    Ask(r, Question.Condition, alt, stockEnough, nightSoon);
+                    r.Key = "ask.gear";
+                    return r;
+                }
 
                 if (level >= DangerLevel.Hard)
                 {

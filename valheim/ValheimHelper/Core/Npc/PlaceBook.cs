@@ -189,6 +189,33 @@ namespace ValheimHelper.Core.Npc
             return r;
         }
 
+        /// <summary>
+        /// 그 바이옴 땅 자체의 위험(⑫ 다, 구상서 7-1 "이 장비론 평원 무리예요"): 그 바이옴 구역(biomeOf)에서 겪은 적 종류 하나씩(보스 빼고)을
+        /// 지금 내 상태로 셈한 비율 중 가장 큰 것. 그 바이옴 어디서나 나오는 적이라 감쇠하지 않는다. 겪은 적이 없으면 0.
+        /// native(종류, 바이옴): 그 바이옴에 나는 적인지(게임 생성 표). null이면 다 셈.
+        /// </summary>
+        public PlaceRisk BiomeRisk(int biome, Func<ZoneXY, int> biomeOf, Func<IList<Foe>, float> ratio, Func<GroupFoe, Foe> resolve, Func<string, int, bool> native = null)
+        {
+            var r = new PlaceRisk();
+            if (biome == 0) return r;
+            var one = new List<Foe>(1) { null };
+            foreach (var m in _places.Values)
+            {
+                if (m.Group.Count == 0 || biomeOf(m.Zone) != biome) continue;
+                r.Known = true;
+                foreach (var g in m.Group)
+                {
+                    if (g.Boss || native != null && !native(g.Kind, biome)) continue; // 떠돌다 넘어온 다른 바이옴 적(초원의 트롤)은 그 땅 몫이 아님
+                    Foe f = resolve(g);
+                    if (f.Boss) continue;
+                    one[0] = new Foe { Kind = g.Kind, Health = f.Health, Damage = f.Damage };
+                    float v = ratio(one);
+                    if (v > r.Ratio) { r.Ratio = v; r.TopFoe = g.Kind; }
+                }
+            }
+            return r;
+        }
+
         /// <summary>!기억: 지금 위험(무리 감쇠·죽음 무게 중 큰 쪽) 높은 순.</summary>
         public List<PlaceMemory> Top(int n, double now, Func<IList<Foe>, float> ratio, Func<GroupFoe, Foe> resolve)
         {

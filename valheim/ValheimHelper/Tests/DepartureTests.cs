@@ -94,6 +94,28 @@ public class DepartureTests
     }
 
     [Fact]
+    public void WeakGearForBiomeAsksForBetterGear()
+    {
+        // ⑫ 다: 평원 적 하나도 못 당하는 장비 → "이 장비론 평원 무리" 조건 질문, 다른 바이옴의 괜찮은 곳이 있으면 대안으로
+        var o = P(100); o.GearRatio = 1.4f; o.GearFoe = "데스킷"; o.BiomeName = "평원";
+        var r = Departure.Judge(In(o));
+        Assert.Equal(Question.Condition, r.Question);
+        Assert.Equal("gear", r.Condition);
+        Assert.Equal("ask.gear", r.Key);
+        Assert.Equal("평원", r.Args["biome"]);
+        Assert.Equal("데스킷", r.Args["foe"]);
+        Assert.Null(r.Alternative);
+        var other = P(300, x: 1);
+        var plains2 = P(200, x: 2); plains2.GearRatio = 1.4f;
+        r = Departure.Judge(In(o, plains2, other));
+        Assert.Same(other, r.Alternative);
+        o.GearRatio = 0.9f;
+        Assert.Equal(DepartAction.Go, Departure.Judge(In(o)).Action);
+        o.GearRatio = 1.4f; o.Boss = true;
+        Assert.Equal(Question.Escort, Departure.Judge(In(o)).Question);
+    }
+
+    [Fact]
     public void TightSwampWithoutPoisonMeadGrumblesAndGoes()
     {
         var o = P(100, 0.9f, withMead: 0.5f); o.Resist = "Poison";
@@ -297,7 +319,7 @@ public class DepartureSpeechTests
     static readonly string[] Keys =
     {
         "memory", "depart.warn", "depart.hungry", "depart.far", "depart.trips", "depart.lowSkill", "depart.busy", "depart.together", "depart.outOfScope", "depart.noCrypt", "depart.cryptsEmpty", "cryptOpen",
-        "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "depart.noResist", "ask.night", "ask.stock", "note.stock", "note.night",
+        "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "ask.gear", "answer.gearMet", "answer.gearMissing", "depart.noResist", "ask.night", "ask.stock", "note.stock", "note.night",
         "craftChestFull", "answer.grumble", "answer.escort", "answer.alternative", "answer.conditionMet", "answer.conditionMissing", "answer.morning",
         "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone", "craft.plan", "craft.inStock", "craft.missing", "craft.tooLong", "craft.unknown", "setList", "setEmpty", "setNone", "keepSet", "keepOff", "prepOnce", "prepKeep", "prepOff", "prepNoChest", "prepShort", "state.prep", "refillGo", "refillMake", "refillFarm",
         "farmSet", "farmMoved", "farmFull", "farmNoGrow", "farmWhere", "farmNoTool", "farmNoSeed", "farmGo", "farmDone", "farmNoRoom", "state.farm", "farmHarvest", "farmPlantFor", "farmHarvestFor", "farmNoField", "farmNoSeedFor", "craft.farm",
