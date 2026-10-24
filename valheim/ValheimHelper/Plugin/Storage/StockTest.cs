@@ -43,7 +43,7 @@ namespace ValheimHelper
         }
 
         /// <summary>제작대 없이 되고 재료 두 가지 이상인 제작법(망치 먼저).</summary>
-        static Recipe PickRecipe()
+        internal static Recipe PickRecipe()
         {
             Recipe pick = null;
             foreach (var r in ObjectDB.instance.m_recipes)

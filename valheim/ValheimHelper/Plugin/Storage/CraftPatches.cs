@@ -20,7 +20,7 @@ namespace ValheimHelper
         {
             static void Postfix(Player __instance, Recipe piece, bool discover, int qualityLevel, int amount, ref bool __result)
             {
-                if (__result || discover || piece == null || piece.m_requireOnlyOneIngredient || !BaseStock.Active(__instance)) return;
+                if (__result || discover || piece == null || piece.m_requireOnlyOneIngredient || !(BaseStock.Active(__instance) || SharedCraft.Counts(__instance))) return;
                 CraftingStation station = __instance.GetCurrentCraftingStation();
                 Inventory bag = __instance.GetInventory();
                 foreach (var r in piece.m_resources)
@@ -119,7 +119,7 @@ namespace ValheimHelper
         {
             static void Postfix(Transform elementRoot, Piece.Requirement req, Player player, int quality, int craftMultiplier, bool __result)
             {
-                if (!__result || req?.m_resItem == null || player == null || !BaseStock.Active(player)) return;
+                if (!__result || req?.m_resItem == null || player == null || !(BaseStock.Active(player) || SharedCraft.CountsShown(player))) return;
                 int need = req.GetAmount(quality) * craftMultiplier;
                 string name = req.m_resItem.m_itemData.m_shared.m_name;
                 int have = player.GetInventory().CountItems(name);

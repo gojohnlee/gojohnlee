@@ -52,6 +52,8 @@ namespace ValheimHelper
 
         public static bool Active => s_container != null;
         public static bool Confirmed => s_confirmed;
+        /// <summary>손님이 우리 길로 지금 연 상자인지(손님 제작 재료 셈에서 뺌 — 호스트가 보는 사람으로 빼므로).</summary>
+        public static bool IsOpen(Container c) => c != null && c == s_container;
         public static Inventory View => s_view;
         public static int Pending => s_ledger.Count;
         /// <summary>답 기다리며 가방에 꺼내 온 그 물건 수(다-3 나머지: 버리기·쓰기·제작 막기가 씀).</summary>
@@ -144,7 +146,7 @@ namespace ValheimHelper
             Player.m_localPlayer?.Message(MessageHud.MessageType.Center, "$msg_inuse");
         }
 
-        static void Send(string rpc, params object[] args)
+        internal static void Send(string rpc, params object[] args)
         {
             float due = Time.time;
             if (DelayMax > 0f) due += UnityEngine.Random.Range(DelayMin, DelayMax);
@@ -342,7 +344,7 @@ namespace ValheimHelper
         }
 
         /// <summary>가방에 n개(한 칸 최대씩), 자리 없으면 발밑에 떨굼 — 잃지 않게.</summary>
-        static void Add(Inventory inv, ItemDrop.ItemData template, int n)
+        internal static void Add(Inventory inv, ItemDrop.ItemData template, int n)
         {
             int max = Math.Max(1, template.m_shared.m_maxStackSize);
             while (n > 0)

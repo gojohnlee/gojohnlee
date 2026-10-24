@@ -182,6 +182,104 @@ namespace ValheimHelper
             InventoryGui.instance.Hide();
             yield return new WaitForSeconds(0.8f);
             checks.Add($"닫으면 손님 길 끝·호스트 보는 사람에서 빠짐 ({SharedGuest.Active}, {SharedChests.GuestViewing(id)})", !SharedGuest.Active && !SharedChests.GuestViewing(id));
+
+            yield return CraftPart(w, checks);
+        }
+
+        static readonly MethodInfo DoCrafting = AccessTools.Method(typeof(InventoryGui), "DoCrafting");
+
+        /// <summary>막대 시작 흉내(바닐라 OnCraftPressed가 고치는 칸 그대로) → SharedCraft.Started.</summary>
+        static void StartBar(Recipe r)
+        {
+            var t = Traverse.Create(InventoryGui.instance);
+            t.Field("m_craftRecipe").SetValue(r);
+            t.Field("m_craftUpgradeItem").SetValue(null);
+            t.Field("m_multiCrafting").SetValue(false);
+            t.Field("m_craftVariant").SetValue(0);
+            t.Field("m_craftTimer").SetValue(0f);
+            SharedCraft.Started(InventoryGui.instance);
+        }
+
+        static void EndBar()
+        {
+            try { DoCrafting.Invoke(InventoryGui.instance, new object[] { Player.m_localPlayer }); }
+            catch (System.Exception e) { TestRunner.Log($"DoCrafting 예외(제작 뒤 화면 갱신일 수 있음): {(e.InnerException ?? e).GetType().Name} {(e.InnerException ?? e).Message}"); }
+        }
+
+        static void StopBar()
+        {
+            var t = Traverse.Create(InventoryGui.instance);
+            t.Field("m_craftTimer").SetValue(-1f);
+            t.Field("m_craftRecipe").SetValue(null);
+            SharedCraft.Held = false;
+        }
+
+        static IEnumerator WaitCraft()
+        {
+            float until = Time.time + 3f;
+            while (SharedCraft.Pending > 0 && Time.time < until) yield return null;
+        }
+
+        /// <summary>8) 다-4a 손님 제작 재료 부탁: 거점 상자 재료로 제작 가능, 막대 시작 때 부탁 → 답 전 막대 끝은 잡아 둠 → 답 뒤 만듦(상자에서 한 번만 빠짐), 그사이 상자에서 빠지면 안 만들어짐.</summary>
+        static IEnumerator CraftPart(TestKit.World w, GatherTest.Checks checks)
+        {
+            Player p = w.Player;
+            Inventory bag = p.GetInventory();
+            Recipe recipe = StockTest.PickRecipe();
+            checks.Add($"손님 제작: 제작대 없는 제작법 ({(recipe != null ? recipe.m_item.name : "없음")})", recipe != null && w.Chest != null);
+            if (recipe == null || w.Chest == null) yield break;
+            Piece.Requirement ra = recipe.m_resources[0], rb = recipe.m_resources[1];
+            string a = ra.m_resItem.m_itemData.m_shared.m_name, b = rb.m_resItem.m_itemData.m_shared.m_name, item = recipe.m_item.m_itemData.m_shared.m_name;
+            string pa = ra.m_resItem.name, pb = rb.m_resItem.name;
+            int na = ra.GetAmount(1), nb = rb.GetAmount(1);
+            bag.RemoveItem(a, bag.CountItems(a));
+            bag.RemoveItem(b, bag.CountItems(b));
+            TestKit.ClearBaseStock(w, pa, pb);
+            TestKit.PutInChest(w.Chest, pa, na);
+            TestKit.PutInChest(w.Chest, pb, nb + 2);
+            yield return new WaitForSeconds(0.6f);
+            int items0 = bag.CountItems(item);
+            try
+            {
+                checks.Add($"손님도 거점 상자 재료로 제작 가능 ({a} {na}·{b} {nb}, 가방 0)", p.HaveRequirements(recipe, false, 1) && BaseStock.Active(p) == false);
+
+                StartBar(recipe);
+                bool asked = SharedCraft.Pending == 1;
+                EndBar();
+                checks.Add($"막대 시작 때 부탁({asked}), 답 전 막대 끝은 잡아 둠(만든 것 {bag.CountItems(item)}/{items0}, 잡음 {SharedCraft.Held})",
+                    asked && SharedCraft.Held && bag.CountItems(item) == items0 && GatherTest.Count(w.Chest, pa) == na);
+                yield return WaitCraft();
+                checks.Add($"답 뒤 가방에 재료 ({a} {bag.CountItems(a)}/{na}·{b} {bag.CountItems(b)}/{nb}), 상자 {GatherTest.Count(w.Chest, pa)}·{GatherTest.Count(w.Chest, pb)}",
+                    SharedCraft.Pending == 0 && bag.CountItems(a) == na && bag.CountItems(b) == nb && GatherTest.Count(w.Chest, pa) == 0 && GatherTest.Count(w.Chest, pb) == 2);
+                EndBar();
+                checks.Add($"답 뒤 막대 끝에 만들어짐 ({item} {bag.CountItems(item)}/{items0 + recipe.m_amount}), 상자에서 더 안 빠짐 ({b} {GatherTest.Count(w.Chest, pb)}/2)",
+                    bag.CountItems(item) == items0 + recipe.m_amount && bag.CountItems(a) == 0 && bag.CountItems(b) == 0 && GatherTest.Count(w.Chest, pb) == 2);
+                StopBar();
+
+                // 그사이 호스트가 상자에서 가져감 → 받은 만큼만, 안 만들어지고 복제 없음
+                TestKit.PutInChest(w.Chest, pa, na);
+                TestKit.TakeFromChest(w.Chest, pb);
+                TestKit.PutInChest(w.Chest, pb, nb);
+                yield return new WaitForSeconds(0.6f);
+                int items1 = bag.CountItems(item);
+                StartBar(recipe);
+                TestKit.TakeFromChest(w.Chest, pa);
+                yield return WaitCraft();
+                EndBar();
+                int ga = bag.CountItems(a), gb = bag.CountItems(b);
+                checks.Add($"그사이 상자에서 빠짐: 받은 것 {a} {ga}·{b} {gb}, 안 만들어짐 ({bag.CountItems(item)}/{items1}), 상자 {b} {GatherTest.Count(w.Chest, pb)}",
+                    ga == 0 && gb == nb && bag.CountItems(item) == items1 && GatherTest.Count(w.Chest, pb) == 0);
+                StopBar();
+            }
+            finally
+            {
+                StopBar();
+                bag.RemoveItem(a, bag.CountItems(a));
+                bag.RemoveItem(b, bag.CountItems(b));
+                int made = bag.CountItems(item) - items0;
+                if (made > 0) bag.RemoveItem(item, made);
+                TestKit.ClearBaseStock(w, pa, pb);
+            }
         }
     }
 }

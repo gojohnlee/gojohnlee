@@ -52,11 +52,11 @@ namespace ValheimHelper
         }
 
         /// <summary>남이 지은 개인·보물 상자(내 제작에 안 씀, 기본안).</summary>
-        static bool OthersPrivate(ZDO zdo, Player p)
+        static bool OthersPrivate(ZDO zdo, long playerID)
         {
             if ((ChestTagReader.Read(zdo) & ChestTags.Private) == 0) return false;
             long creator = zdo.GetLong(ZDOVars.s_creator);
-            return creator != 0 && creator != p.GetPlayerID();
+            return creator != 0 && creator != playerID;
         }
 
         static void Refresh(Player p)
@@ -66,20 +66,25 @@ namespace ValheimHelper
             s_at = Time.time;
             s_frame = Time.frameCount;
             s_for = p;
-            s_chests.Clear();
             s_counts.Clear();
-            Vector3? home = Home(p.transform.position);
+            Collect(p.transform.position, p.GetPlayerID(), s_chests);
+        }
+
+        /// <summary>pos에서 가장 가까운 깃발 거점의 쓸 수 있는 상자(가까운 순). 손님 쪽은 자기가 연 상자도 뺌(호스트가 보는 사람으로 빼므로).</summary>
+        static void Collect(Vector3 me, long playerID, List<Container> into)
+        {
+            into.Clear();
+            Vector3? home = Home(me);
             if (!home.HasValue) return;
             foreach (var zdo in Senses.Nearby(home.Value, BaseArea.Radius, Chests.IsBaseChest))
             {
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view == null) continue;
                 Container c = view.GetComponent<Container>();
-                if (c == null || Chests.InUse(c) || OthersPrivate(zdo, p)) continue;
-                s_chests.Add(c);
+                if (c == null || Chests.InUse(c) || SharedGuest.IsOpen(c) || OthersPrivate(zdo, playerID)) continue;
+                into.Add(c);
             }
-            Vector3 me = p.transform.position;
-            s_chests.Sort((a, b) => Utils.DistanceXZ(a.transform.position, me).CompareTo(Utils.DistanceXZ(b.transform.position, me)));
+            into.Sort((a, b) => Utils.DistanceXZ(a.transform.position, me).CompareTo(Utils.DistanceXZ(b.transform.position, me)));
         }
 
         /// <summary>쓸 수 있는 상자들(가까운 순).</summary>
@@ -156,7 +161,23 @@ namespace ValheimHelper
         {
             if (n <= 0) return 0;
             Refresh(p);
-            var chests = new List<Container>(s_chests);
+            return TakeFrom(new List<Container>(s_chests), name, n, null);
+        }
+
+        /// <summary>
+        /// 호스트: 손님 제작 재료 부탁(④ 다-4a) — 손님 자리 pos의 거점 상자(가까운 순, 그 손님 기준 개인 상자 규칙)에서 n개를 빼서 got에 물건째 담음.
+        /// 캐시 없이 지금 세고 뺌. 실제로 뺀 수.
+        /// </summary>
+        public static int TakeFor(Vector3 pos, long playerID, string name, int n, List<ItemDrop.ItemData> got)
+        {
+            if (n <= 0) return 0;
+            var chests = new List<Container>();
+            Collect(pos, playerID, chests);
+            return TakeFrom(chests, name, n, got);
+        }
+
+        static int TakeFrom(List<Container> chests, string name, int n, List<ItemDrop.ItemData> got)
+        {
             var have = new int[chests.Count];
             int total = 0;
             for (int i = 0; i < chests.Count; i++) { have[i] = chests[i] != null ? chests[i].GetInventory().CountItems(name) : 0; total += have[i]; }
@@ -169,13 +190,30 @@ namespace ValheimHelper
                     if (k <= 0) continue;
                     Container c = chests[i];
                     int before = 0;
-                    if (Chests.TryEdit(c, inv => { before = inv.CountItems(name); inv.RemoveItem(name, k); }))
+                    if (Chests.TryEdit(c, inv => { before = inv.CountItems(name); Remove(inv, name, k, got); }))
                         removed += before - c.GetInventory().CountItems(name);
                 }
             s_at = -100f; // 바뀐 개수를 다음에 다시 셈
             s_frame = -1;
             if (removed < n) Plugin.Log.LogWarning($"상자 재료: {name} {n}개 중 {removed}개만 뺌");
             return removed;
+        }
+
+        /// <summary>k개 빼기. got이 있으면 뺀 것을 더미째(복제본) 담음 — 손님에게 보낼 것.</summary>
+        static void Remove(Inventory inv, string name, int k, List<ItemDrop.ItemData> got)
+        {
+            if (got == null) { inv.RemoveItem(name, k); return; }
+            foreach (var it in new List<ItemDrop.ItemData>(inv.GetAllItems()))
+            {
+                if (k <= 0) break;
+                if (it.m_shared.m_name != name) continue;
+                int m = Mathf.Min(k, it.m_stack);
+                ItemDrop.ItemData one = it.Clone();
+                one.m_stack = m;
+                inv.RemoveItem(it, m);
+                got.Add(one);
+                k -= m;
+            }
         }
     }
 }
