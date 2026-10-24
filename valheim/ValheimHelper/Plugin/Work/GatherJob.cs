@@ -189,7 +189,14 @@ namespace ValheimHelper
         /// <summary>위험해서 버린 구역(Guard: 도망쳤거나 두 번 물러남). 이 일 동안은 그 구역의 대상·구역을 고르지 않는다.</summary>
         readonly HashSet<ZoneXY> m_avoid = new HashSet<ZoneXY>();
 
-        bool Avoided(Vector3 p) => m_avoid.Count > 0 && m_avoid.Contains(Senses.ZoneOf(p));
+        /// <summary>도망 뒤 목표(Core FleeBook): 거점 안 목표는 두 번째 도망부터 뺌, 거점 안 위험 구역은 도망이 쌓인 뒤에만 피함.</summary>
+        readonly FleeBook<ZDOID> m_fled = new FleeBook<ZDOID>();
+
+        bool InBase(Vector3 p) => BaseArea.Contains(Utils.DistanceXZ(p, m_npc.Home));
+
+        bool Avoided(Vector3 p) => m_avoid.Count > 0 && m_avoid.Contains(Senses.ZoneOf(p)) && (m_fled.AvoidInBase || !InBase(p));
+
+        bool ZoneAvoided(ZoneXY z) => m_avoid.Contains(z) && (m_fled.AvoidInBase || !InBase(Senses.ZoneCenter(z)));
 
         /// <summary>
         /// 이 일 동안 이미 가 봤거나(와서 봤는데 쓸 게 없었다) 못 간(길이 막힘) 구역. 지식(Brain)은 시야 안의 목록 대상을 다 세므로(FindInSight가 안 고르는
@@ -218,9 +225,13 @@ namespace ValheimHelper
             }
             m_avoid.Add(Senses.ZoneOf(danger));
             if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Unload || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
+            bool hasTarget = !m_targetId.IsNone();
+            bool drop = m_fled.Fled(m_targetId, hasTarget, InBase(hasTarget ? m_targetPos : m_npc.transform.position));
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 위험 → 구역 {Senses.ZoneOf(danger).X},{Senses.ZoneOf(danger).Y} 피함" +
-                               (m_targetId.IsNone() ? "" : $", 목표 {m_targetInfo?.Prefab}(위험에서 {Utils.DistanceXZ(m_targetPos, danger):0}m, 집에서 {Utils.DistanceXZ(m_targetPos, m_npc.Home):0}m) 버림"));
-            if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
+                               (m_fled.AvoidInBase ? "" : "(거점 안은 빼고)") +
+                               (!hasTarget ? "" : $", 목표 {m_targetInfo?.Prefab}(위험에서 {Utils.DistanceXZ(m_targetPos, danger):0}m, 집에서 {Utils.DistanceXZ(m_targetPos, m_npc.Home):0}m) " +
+                                                  (drop ? "버림" : "거점 안이라 도망 뒤 다시")));
+            if (drop) m_skip.Add(m_targetId);
             if (m_prey != null) m_huntSkip[m_prey] = float.MaxValue;
             m_prey = null;
             Go(Step.Search);
@@ -382,7 +393,7 @@ namespace ValheimHelper
             }
             foreach (var m in k.ZonesWith(Item, here))
             {
-                if (m.Zone.Equals(here) || m_avoid.Contains(m.Zone) || m_tried.Contains(m.Zone) || ZoneExcluded(m.Zone)) continue; // 위험한 곳·이미 가 본 곳은 안 간다
+                if (m.Zone.Equals(here) || ZoneAvoided(m.Zone) || m_tried.Contains(m.Zone) || ZoneExcluded(m.Zone)) continue; // 위험한 곳·이미 가 본 곳은 안 간다
                 if (!Scout.Reachable(pos, m.Zone))
                 {
                     // 바다 건너(이어진 포탈도 없음)는 안 가고 한 번 말한다(사용자 결정 2026-10-23 "바다 건너 일터는 포탈로만"). 좁은 강·늪 물은 예전처럼 말없이 거름.
@@ -402,7 +413,7 @@ namespace ValheimHelper
             }
             // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
             if (!m_exploring && m_searchTime <= SearchLimit
-                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !m_avoid.Contains(z) && !m_tried.Contains(z) && !ZoneExcluded(z) && Scout.Reachable(pos, z), out m_goalZone))
+                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !ZoneAvoided(z) && !m_tried.Contains(z) && !ZoneExcluded(z) && Scout.Reachable(pos, z), out m_goalZone))
             {
                 if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
                 GoZone();
