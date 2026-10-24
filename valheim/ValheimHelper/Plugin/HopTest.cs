@@ -153,8 +153,8 @@ namespace ValheimHelper
                 Vector3 off = me - tree.transform.position;
                 off.y = 0f;
                 Vector3 stand = GatherTest.Ground(tree.transform.position + off.normalized * 5f);
+                // 옮긴 그 프레임에 목표를 바꾼다: 1초 기다리면 묶인 채 쌓인 막힘 시간으로 옛 목표 쪽 순간이동이 끼어들어 나무에서 멀어짐(회차 141 기본 자리: 15.8m에서 시작해 걸어가 보통으로 벰)
                 w.Ragnar.TeleportTo(stand + Vector3.up * 0.3f, Quaternion.LookRotation(-off), false);
-                yield return new WaitForSeconds(1f);
                 int far1 = GatherJob.FarStuckHits;
                 gt.TestApproach(treeZdo);
                 yield return TestKit.WaitFor(() => GatherJob.FarStuckHits > far1 && ZDOMan.instance.GetZDO(treeId) == null, 90f);
