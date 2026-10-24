@@ -694,11 +694,14 @@ namespace ValheimHelper
                 // 건너뛴 대상이 보이면 "와서 봤는데 없음"이 아니다 — 지식에서 지우지 않고 이 일 동안만 그 구역을 뺀다(m_tried)
                 if (skipped) { m_sawSkipped = true; continue; }
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
+                // 타르에 잠긴 덩어리는 바닐라도 못 줍는다(Pickable.m_tarPreventsPicking — "타르에 붙음") — 떠오를 수 있으니 지식은 그대로
+                if (info.Pickable && StuckInTar(zdo)) { m_sawSkipped = true; continue; }
                 // 묻힌 은 광맥(숨는 광맥)은 위시본을 얻었을 때만 알고, 드러난 것이 먼저(HiddenOres, ⑪).
                 bool exposed = info.Hidden && HiddenOres.Exposed(zdo, info);
                 if (info.Hidden && !exposed && !HiddenOres.HaveFinder()) continue;
-                // 갈린 땅(밭)의 작물은 줍지 않는다: 사람이 기르는 것 — 밭일(FarmJob)만 거둔다.
-                if (info.Pickable && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
+                // 갈린 땅(밭)의 기른 작물은 줍지 않는다: 사람이 기르는 것 — 밭일(FarmJob)만 거둔다. 기른 작물만 본다: 타르 웅덩이 땅도
+                // 갈린 땅 칠(IsCultivated)이라 웅덩이 위 줍는 타르를 밭 작물로 건너뛰었다(회차 174 vh_tartest).
+                if (info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
                 // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
                 if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f)) { m_skip.Add(zdo.m_uid); continue; }
                 // 다른 나무·바위에 높이 걸린 쪼개지는 통나무는 고르지 않는다: 밑에서 쪼개면 반토막이 머리 위에 생겨 떨어진다(HungLog, E020)
@@ -735,7 +738,7 @@ namespace ValheimHelper
                 if (++n > 6) break;
                 string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
                     : !inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z) ? "막힘 기록으로 뺀 곳"
-                    : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && Farmland(zdo.GetPosition()) ? "밭 작물"
+                    : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && StuckInTar(zdo) ? "타르에 잠김" : info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition()) ? "밭 작물"
                     : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) ? "건축물 4m 안"
                     : HungLog(zdo, info) ? "높이 걸린 통나무"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
@@ -744,6 +747,18 @@ namespace ValheimHelper
                 sb.Append($"[{info.Prefab} {Utils.DistanceXZ(zdo.GetPosition(), pos):0}m {why}]");
             }
             return n == 0 ? "목록에 있는 대상 없음" : sb.ToString();
+        }
+
+        /// <summary>
+        /// 줍는 것이 타르에 잠겨 지금 못 줍는지(바닐라 Pickable.Interact: m_tarPreventsPicking이고 Floating.IsInTar — 무게중심이 타르 표면보다 0.2m 넘게 아래).
+        /// 웅덩이 위 타르 덩어리(Pickable_Tar)는 떠 있다 잠겼다 한다(회차 174 vh_tartest: 잠긴 것을 Interact만 되풀이). 불러오지 않은 것은 모름(false).
+        /// </summary>
+        static bool StuckInTar(ZDO zdo)
+        {
+            ZNetView view = ZNetScene.instance.FindInstance(zdo);
+            if (view == null) return false;
+            Pickable pick = view.GetComponent<Pickable>();
+            return pick != null && pick.m_tarPreventsPicking && view.GetComponent<Floating>() is Floating f && f.IsInTar();
         }
 
         /// <summary>갈린 땅이거나 적어 둔 밭(!밭) 안인지.</summary>
@@ -1151,6 +1166,7 @@ namespace ValheimHelper
                 // 손으로 줍기: 바닐라 Interact(스킬만 플레이어 전용). 떨어진 것은 Collect가 줍는다.
                 Pickable pick = view.GetComponent<Pickable>();
                 if (pick == null || !pick.CanBePicked()) { Skip(); return true; }
+                if (StuckInTar(zdo)) { Go(Step.Search); return true; } // 다가가는 사이 잠김
                 if (m_stepTime > 0.1f)
                 {
                     pick.Interact(m_npc, false, false);

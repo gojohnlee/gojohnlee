@@ -309,15 +309,16 @@ namespace ValheimHelper
             }
             else m_inSwimLogged = false;
             if (!m_character.InLiquid()) { m_lastDry = pos; m_hasDry = true; if (Time.time > m_waterDecidedUntil) m_swimOk = false; }
-            else if (m_character.IsSwimming() && !m_swimOk && m_hasDry && !inPath) // 묘지 안 길이 헤엄 칸을 지나면 그대로 헤엄쳐 간다(회차 136: 돌아가기를 되풀이해 20초 갇힘)
+            else if (m_character.IsSwimming() && !m_swimOk && m_hasDry && !inPath && !TarGoal(point)) // 줍는 타르는 웅덩이 안에 떠 있다(그때만 헤엄쳐 감). 묘지 안 길이 헤엄 칸을 지나면 그대로 헤엄쳐 간다(회차 136: 돌아가기를 되풀이해 20초 갇힘)
             {
                 MoveTowards(Flat(m_lastDry - pos), true);
                 return false;
             }
+            if (TarStep(dt, pos, point, dist)) return false;
             if (m_detourTime > 0f)
             {
                 m_detourTime -= dt;
-                if (!WaterAhead(pos, m_detourDir)) MoveTowards(m_detourDir, true); // 걷기(1.6m/s)로는 큰 바위를 못 돌아감 → 달림
+                if (!WaterAhead(pos, m_detourDir) && !TarAhead(pos, m_detourDir, point)) MoveTowards(m_detourDir, true); // 걷기(1.6m/s)로는 큰 바위를 못 돌아감 → 달림
                 else m_detourTime = 0f;
                 return false;
             }
@@ -337,6 +338,7 @@ namespace ValheimHelper
                 return false;
             }
             WaterBlockedTime = 0f;
+            if (TarAhead(pos, m_character.GetMoveDir(), point)) { StartTarDetour(pos, point); return false; }
             // 바위·통나무·구덩이 벽 같은 턱에 걸려 섰으면 뛴다(플레이어처럼)
             m_ledgeTimer -= dt;
             if (m_ledgeTimer <= 0f)
@@ -651,6 +653,90 @@ namespace ValheimHelper
             StuckTeleports++;
         }
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+
+        // ---- 타르 웅덩이 (⑫ 평원 바): 빠지면 Tared(느려짐)라 걸어 들어가지 않고, 빠졌으면 마지막 타르 밖 자리로 돌아간다 ----
+
+        /// <summary>이보다 깊은 타르(m)는 걸어 들어가지 않는다(무릎 아래 가장자리는 지나감).</summary>
+        public const float TarWade = 0.4f;
+        /// <summary>시험 기록: 타르를 비켜 간 횟수, TarWade보다 깊은 타르에 있던 시간(초).</summary>
+        public int TarDetours { get; private set; }
+        public float TarTime { get; private set; }
+        Vector3 m_lastNoTar;
+        bool m_hasNoTar, m_tarLogged;
+        Vector3 m_tarTarget;
+        float m_tarSide = 1f;
+
+        /// <summary>
+        /// 그 자리(xz) 땅 위 타르 깊이(m), 없으면 0. 타르(LiquidVolume)는 평원에만 있다. 바닐라 Floating.GetLiquidLevel(타르만)
+        /// — 웅덩이 충돌체는 볼록 껍질이라 땅 0.2m 위 점으로 물으면 웅덩이 안에서 잡히고, 타르가 없는 칸은 표면이 땅보다 낮게 나온다(LiquidVolume.GetSurface).
+        /// </summary>
+        public static float TarDepth(Vector3 p)
+        {
+            if (Character.InInterior(p) || WorldGenerator.instance == null || WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.Plains) return 0f;
+            if (ZoneSystem.instance == null || !ZoneSystem.instance.GetGroundHeight(p, out float g)) return 0f;
+            float tar = Floating.GetLiquidLevel(new Vector3(p.x, g + 0.2f, p.z), 1f, LiquidType.Tar);
+            return tar < -1000f ? 0f : Mathf.Max(0f, tar - g);
+        }
+
+        /// <summary>깊은 타르에 빠졌으면 마지막 타르 밖 자리로 달려 나온다(목표가 타르 안이거나 바로 옆이면 그대로). 나오는 중이면 true.</summary>
+        bool TarStep(float dt, Vector3 pos, Vector3 point, float dist)
+        {
+            float here = TarDepth(pos);
+            if (here < 0.1f) { m_lastNoTar = pos; m_hasNoTar = true; m_tarLogged = false; return false; }
+            if (here <= TarWade) return false;
+            TarTime += dt;
+            if (!m_hasNoTar || TarGoal(point) || Utils.DistanceXZ(point, pos) <= dist + 1f) return false;
+            if (!m_tarLogged)
+            {
+                m_tarLogged = true;
+                Plugin.Log.LogInfo($"{(m_character as WorkerNpc)?.NpcName}: 타르 {here:0.0}m에 빠짐 → 타르 밖 {Utils.DistanceXZ(m_lastNoTar, pos):0.0}m로 나옴");
+            }
+            MoveTowards(Flat(m_lastNoTar - pos), true);
+            return true;
+        }
+
+        /// <summary>그 방향 1.5m 앞이 깊은 타르인지(목표가 2m 안이면 안 봄 — 가장자리 타르를 주우러 감).</summary>
+        bool TarAhead(Vector3 pos, Vector3 dir, Vector3 point)
+        {
+            dir = Flat(dir);
+            if (dir.sqrMagnitude < 0.01f || Utils.DistanceXZ(point, pos) < 2f || TarGoal(point)) return false;
+            return TarDepth(pos + dir.normalized * 1.5f) > TarWade;
+        }
+
+        Vector3 m_tarGoalAt = new Vector3(1e7f, 0f, 1e7f);
+        bool m_tarGoal;
+
+        /// <summary>
+        /// 가는 곳 자체가 깊은 타르 안인지(줍는 타르 Pickable_Tar는 웅덩이 1.3~3.8m 타르 위에 떠 있다 — 회차 174 vh_tartest, 플레이어도 들어가서 줍는다).
+        /// 그때만 타르에 들어가고, 지나가는 길이면 피한다. 목표가 0.5m 넘게 바뀔 때만 다시 잰다.
+        /// </summary>
+        bool TarGoal(Vector3 point)
+        {
+            if (Utils.DistanceXZ(point, m_tarGoalAt) > 0.5f) { m_tarGoalAt = point; m_tarGoal = TarDepth(point) > TarWade; }
+            return m_tarGoal;
+        }
+
+        /// <summary>앞이 타르: 같은 목표면 같은 쪽으로(가장자리를 따라 돎) 비켜 간다. 처음엔 타르가 얕은 쪽을 고른다.</summary>
+        void StartTarDetour(Vector3 pos, Vector3 point)
+        {
+            Vector3 fwd = Flat(point - pos).normalized;
+            Vector3 right = Vector3.Cross(Vector3.up, fwd);
+            if (Utils.DistanceXZ(point, m_tarTarget) > 2f)
+            {
+                m_tarTarget = point;
+                m_tarSide = TarDepth(pos + right * 3f + fwd * 1.5f) <= TarDepth(pos - right * 3f + fwd * 1.5f) ? 1f : -1f;
+            }
+            for (int flip = 0; flip < 2; flip++)
+            {
+                Vector3 side = right * m_tarSide;
+                foreach (Vector3 dir in new[] { (side + fwd * 0.3f).normalized, side, (side - fwd * 0.5f).normalized })
+                    if (!TarAhead(pos, dir, point)) { m_detourDir = dir; m_detourTime = 0.8f; TarDetours++; return; }
+                m_tarSide = -m_tarSide;
+            }
+            m_detourDir = -fwd; // 앞뒤 옆이 다 타르: 뒤로
+            m_detourTime = 0.8f;
+            TarDetours++;
+        }
 
         /// <summary>그 방향 2.5m 앞이 깊은 물이고 건너면 안 되는 물인지. 건널 물(좁은 강)이면 m_swimOk를 켠다.</summary>
         bool WaterAhead(Vector3 pos, Vector3 dir)
