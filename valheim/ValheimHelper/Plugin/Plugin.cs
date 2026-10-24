@@ -42,6 +42,7 @@ namespace ValheimHelper
             Step("vh_tidytest", TidyTest.Register);
             Step("vh_tidywalktest", TidyWalkTest.Register);
             Step("vh_mychesttest", MyChestTest.Register);
+            Step("vh_sharetest", ShareTest.Register);
             Step("vh_skilltest", SkillTest.Register);
             Step("vh_refilltest", RefillTest.Register);
             Step("vh_raidtest", RaidTest.Register);
@@ -91,6 +92,7 @@ namespace ValheimHelper
                 MorningSettle.Tick();
                 Tidy.Tick(UnityEngine.Time.deltaTime);
                 PersonalChests.Tick(UnityEngine.Time.deltaTime);
+                SharedChests.Tick();
                 MapSense.Tick(UnityEngine.Time.deltaTime);
                 MapIcons.Update(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();

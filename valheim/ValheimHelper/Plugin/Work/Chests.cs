@@ -164,7 +164,7 @@ namespace ValheimHelper
         public static bool InUse(Container c)
         {
             ZNetView view = c.GetComponent<ZNetView>();
-            return view == null || !view.IsValid() || c.IsInUse() || view.GetZDO().GetInt(ZDOVars.s_inUse) == 1;
+            return view == null || !view.IsValid() || c.IsInUse() || view.GetZDO().GetInt(ZDOVars.s_inUse) == 1 || SharedChests.GuestViewing(view.GetZDO().m_uid);
         }
 
         /// <summary>상자 내용을 고친다. 누가 열고 있으면 false(나중에 다시).</summary>
