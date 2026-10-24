@@ -409,7 +409,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 시작 땅 정리(개선 셋 가, 사용자 10-25): 앞 시험이 남긴 거점 둘레 땅 물건·쓰러진 몸(Ragdoll — 몇 초 뒤 전리품을 떨굼)·통나무 수를
-        /// 이름과 함께 diag에 늘 적고(0이어도 — E025·E027·E033 대조용), 있으면 치운다. 치운 수를 돌려준다(0보다 크면 0.5초 기다림).
+        /// 이름과 함께 diag에 늘 적고(0이어도 — E025·E027·E033 대조용), 있으면 치운다. 지금 일꾼 것이 아닌 묘비도(이름·거리). 치운 수를 돌려준다(0보다 크면 0.5초 기다림).
         /// </summary>
         static int SweepGround(Vector3 home)
         {
@@ -441,11 +441,23 @@ namespace ValheimHelper
                 ZNetScene.instance.Destroy(v.gameObject);
                 logs++;
             }
+            // 옛 묘비(사용자 요청 10-25): 원본 월드에 옛 이름 "Claude" 묘비가 있음 — 지금 일꾼(Name1·Name2) 것이 아니면 이름·거리를 적고 치운다
+            var graves = new List<string>();
+            foreach (var zdo in Senses.Nearby(home, StartRadius))
+            {
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v == null || !v.IsValid() || v.GetComponent<TombStone>() == null) continue;
+                string owner = zdo.GetString(ZDOVars.s_ownerName);
+                if (owner == Workers.Name1 || owner == Workers.Name2) continue;
+                graves.Add($"{owner} {Vector3.Distance(zdo.GetPosition(), home):0}m");
+                v.ClaimOwnership();
+                ZNetScene.instance.Destroy(v.gameObject);
+            }
             var parts = new List<string>();
             foreach (var kv in names) parts.Add($"{kv.Key} {kv.Value}");
-            TestRunner.Log($"시작 땅: 거점 {StartRadius:0}m 안 물건 {drops}{(parts.Count > 0 ? " (" + string.Join(", ", parts.ToArray()) + ")" : "")}·쓰러진 몸 {bodies}·통나무 {logs}"
-                + (drops + bodies + logs > 0 ? " → 치우고 시작" : ""));
-            return drops + bodies + logs;
+            TestRunner.Log($"시작 땅: 거점 {StartRadius:0}m 안 물건 {drops}{(parts.Count > 0 ? " (" + string.Join(", ", parts.ToArray()) + ")" : "")}·쓰러진 몸 {bodies}·통나무 {logs}·옛 묘비 {graves.Count}{(graves.Count > 0 ? " (" + string.Join(", ", graves.ToArray()) + ")" : "")}"
+                + (drops + bodies + logs + graves.Count > 0 ? " → 치우고 시작" : ""));
+            return drops + bodies + logs + graves.Count;
         }
 
         /// <summary>
