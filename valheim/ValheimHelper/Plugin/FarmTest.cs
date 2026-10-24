@@ -197,7 +197,7 @@ namespace ValheimHelper
             TestKit.ClearBaseStock(w, Crops.Cultivator, Seed, Produce);
         }
 
-        static List<Plant> Plants(FarmField f)
+        internal static List<Plant> Plants(FarmField f)
         {
             var list = new List<Plant>();
             foreach (var p in Object.FindObjectsByType<Plant>(FindObjectsSortMode.None))
@@ -205,7 +205,7 @@ namespace ValheimHelper
             return list;
         }
 
-        static int PlantsOf(FarmField f, string sapling)
+        internal static int PlantsOf(FarmField f, string sapling)
         {
             int n = 0;
             foreach (var p in Plants(f)) if (Utils.GetPrefabName(p.gameObject) == sapling) n++;
@@ -239,14 +239,14 @@ namespace ValheimHelper
             return n;
         }
 
-        static int Stock(TestKit.World w, string prefab)
+        internal static int Stock(TestKit.World w, string prefab)
         {
             int n = 0;
             foreach (var c in Chests.NearBase(w.Home)) n += GatherTest.Count(c, prefab);
             return n;
         }
 
-        static int Bag(TestKit.World w, string prefab) =>
+        internal static int Bag(TestKit.World w, string prefab) =>
             w.Ragnar.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
     }
 }

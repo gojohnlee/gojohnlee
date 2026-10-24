@@ -27,6 +27,8 @@ namespace ValheimHelper
         bool m_sawTooHard;
         /// <summary>사냥감 둘레 무리가 세서 못 잡은 적 이름(preyPack 대사). 한 번 보면 이 일 동안 둔다.</summary>
         string m_packFoe;
+        /// <summary>사냥감 한 마리가 혼자 상대하기엔 센 것(록스 등, SafePrey가 무리 없이 거절)의 이름(preyStrong 대사). 한 번 보면 이 일 동안 둔다.</summary>
+        string m_strongFoe;
         /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
         bool m_sawSkipped;
         readonly WorkerNpc m_npc;
@@ -191,7 +193,7 @@ namespace ValheimHelper
         bool Fail(string key)
         {
             var args = Args();
-            if (m_packFoe != null) args["foe"] = m_packFoe;
+            if (m_packFoe != null || m_strongFoe != null) args["foe"] = m_packFoe ?? m_strongFoe;
             m_npc.Say(key, args);
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item} 실패: {key} ({Delivered}/{Target})");
             return false;
@@ -397,6 +399,8 @@ namespace ValheimHelper
                 if (FindPrey()) { Go(Step.Hunt); return true; }
                 // ⑫ 풀링 마을: 혼자면 잡을 사냥감인데 둘레 무리가 세다 → 도움 요청(같이 가 주면 MyHit에 플레이어 몫이 더해짐)하고 그만둔다
                 if (m_packFoe != null) return GiveUp("preyPack");
+                // ⑫ 록스처럼 그 한 마리가 혼자 잡기엔 세다(위험 크면 안 함) → 헤매지 말고 같이 가 달라고 한다
+                if (m_strongFoe != null) return GiveUp("preyStrong");
                 // 사슴 가죽처럼 활로만 잡는 것뿐인데 쏠 활·화살이 없다(장비 상자에 넣어 주면 Prep이 챙긴다)
                 if (!Prey.Any(Item, false) && (m_bowFailed || m_npc.ShootingBow() == null)) return GiveUp("needBow");
             }
@@ -1482,6 +1486,11 @@ namespace ValheimHelper
                         m_packFoe = Localization.instance.Localize(pack.m_name);
                         Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {Utils.GetPrefabName(c.gameObject)} 혼자면 되는데 둘레 무리({Utils.GetPrefabName(pack.gameObject)} 등) 때문에 안 됨");
                     }
+                    else if (pack == null && m_strongFoe == null)
+                    {
+                        m_strongFoe = Localization.instance.Localize(c.m_name);
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {Utils.GetPrefabName(c.gameObject)} 혼자 잡기엔 너무 셈 — 안 덤빔");
+                    }
                     continue;
                 }
                 best = c;
@@ -1556,6 +1565,19 @@ namespace ValheimHelper
         int m_shots, m_preyShots;
         static int s_shotMask;
 
+        /// <summary>사냥감의 실제 움직임(0.25초마다 자리 차이). GetVelocity는 가려는 속도라 비탈·막힘에 서 있어도 달리는 값이 나와 앞질러 쏜 화살이 땅에 박혔다(회차 175 vh_bowtest).</summary>
+        Character m_velOf;
+        Vector3 m_velPos, m_preyVel;
+        float m_velAt;
+
+        Vector3 PreyVelocity()
+        {
+            Vector3 now = m_prey.transform.position;
+            if (m_velOf != m_prey) { m_velOf = m_prey; m_velPos = now; m_velAt = Time.time; m_preyVel = Vector3.zero; }
+            else if (Time.time - m_velAt >= 0.25f) { m_preyVel = (now - m_velPos) / (Time.time - m_velAt); m_velPos = now; m_velAt = Time.time; }
+            return m_preyVel;
+        }
+
         /// <summary>
         /// 활 사냥(사슴·토끼, 도망만 함): 30m 안에서 가리는 것이 없으면 서서 활을 끝까지 당겨, 갈 곳을 앞질러(Archery.Aim) 쏜다.
         /// 멀거나 가리면 다가간다(당기는 동안은 못 뛴다 → 당김을 풀고). 화살이 떨어지면 그 짐승은 그만두고 근접 무기를 든다.
@@ -1587,7 +1609,7 @@ namespace ValheimHelper
             ItemDrop.ItemData bow = m_npc.GetCurrentWeapon();
             if (ArrowFlight(bow, out float speed, out float gravity))
             {
-                Vector3 rel = center - eye, v = m_prey.GetVelocity();
+                Vector3 rel = center - eye, v = PreyVelocity();
                 if (Archery.Aim(rel.x, rel.y, rel.z, v.x, v.y, v.z, speed, gravity, out float ax, out float ay, out float az))
                     aim = eye + new Vector3(ax, ay, az);
             }
@@ -1598,7 +1620,7 @@ namespace ValheimHelper
                 m_diagShot = false;
                 m_diagArrow = bow.m_lastProjectile;
                 m_diagTracking = true;
-                Plugin.Log.LogInfo($"DIAG 활: 눈 {eye} 겨눔 {aim} 보는 쪽 {m_npc.GetLookDir()} 몸 앞 {m_npc.transform.forward} 화살 {m_diagArrow.transform.position} 속력 {speed:0} 중력 {gravity:0.0} 사슴 속도 {m_prey.GetVelocity()}");
+                Plugin.Log.LogInfo($"DIAG 활: 눈 {eye} 겨눔 {aim} 보는 쪽 {m_npc.GetLookDir()} 몸 앞 {m_npc.transform.forward} 화살 {m_diagArrow.transform.position} 속력 {speed:0} 중력 {gravity:0.0} 사슴 속도 {m_preyVel} (가려는 {m_prey.GetVelocity()}) 실제 화살 속도 {(m_diagArrow.GetComponent<Projectile>() is Projectile pj ? pj.GetVelocity().magnitude.ToString("0.0") + " 저항 " + pj.m_drag : "?")}");
             }
             if (m_diagArrow != null) m_diagLast = m_diagArrow.transform.position;
             else if (m_diagTracking)

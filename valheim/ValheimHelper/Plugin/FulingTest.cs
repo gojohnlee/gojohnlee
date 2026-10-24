@@ -14,7 +14,7 @@ namespace ValheimHelper
     {
         public static void Register() => TestRunner.Register("vh_fulingtest", "풀링 사냥(흑금속 고철) 시험", () => TestKit.Flat(Run()));
 
-        static readonly string[] PlainsGear = { "ArmorWolfChest", "ArmorWolfLegs", "HelmetDrake", "CapeWolf", "SwordIron" };
+        internal static readonly string[] PlainsGear = { "ArmorWolfChest", "ArmorWolfLegs", "HelmetDrake", "CapeWolf", "SwordIron" };
         const string Scrap = "BlackMetalScrap";
 
         static IEnumerator Run()
@@ -129,13 +129,13 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
         }
 
-        static void Cleanup(List<GameObject> spawned)
+        internal static void Cleanup(List<GameObject> spawned)
         {
             foreach (var go in spawned)
                 if (go != null && go.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
         }
 
-        static Character Spawn(GameObject prefab, Vector3 pos, List<GameObject> spawned)
+        internal static Character Spawn(GameObject prefab, Vector3 pos, List<GameObject> spawned)
         {
             GameObject go = Object.Instantiate(prefab, GatherTest.Ground(pos) + Vector3.up * 0.5f, Quaternion.identity);
             spawned.Add(go);
@@ -144,7 +144,7 @@ namespace ValheimHelper
             return ch;
         }
 
-        static void Kill(Character c)
+        internal static void Kill(Character c)
         {
             var hit = new HitData { m_point = c.GetCenterPoint() };
             hit.m_damage.m_damage = 99999f;
