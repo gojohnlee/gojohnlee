@@ -99,7 +99,7 @@ namespace ValheimHelper
                 "left=" + (g.Target - g.Delivered), "carried=" + Carried(w.Ragnar, "Wood"),
                 "stocked=" + Base(w.Home, "Wood"), "queue=" + w.Ragnar.Ai.Queue.Count,
                 "npcs=" + Workers.AllZdos().Count, "flags=" + BaseFlag.AllFlags().Count,
-                "ptag=" + tag, "pfar=" + V(farPt),
+                "ptag=" + tag, "pfar=" + V(farPt), "biome=" + TestKit.RunBiome,
             };
             File.WriteAllLines(StatePath, st.ToArray());
             TestRunner.Log("저장한 상태: " + string.Join(", ", st.ToArray()));
@@ -136,8 +136,12 @@ namespace ValheimHelper
             w.Env.m_debugTime = 0.5f;
             w.OnHeard = (n, t) => w.Heard.Add(n + ": " + t);
             ChatNet.Heard += w.OnHeard;
+            // 바이옴 회귀(1번째가 RunBiome으로 옮겨 저장): 2번째는 VH_BIOME 없이 저장된 자리에서 시작하니 다른 채집 시험처럼 시험 자리 생물을 치움
+            // (회차 144 검은숲: 회색난쟁이에 도망만 되풀이해 돌 3을 420초 안에 못 함)
+            bool keepClear = st.TryGetValue("biome", out string biome) && biome != Heightmap.Biome.None.ToString();
+            if (keepClear) Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(w.Home, () => keepClear));
             try { yield return Body2(w, checks, st); }
-            finally { TestKit.Restore(w); PortalBuildTest.ClearMine(); }
+            finally { keepClear = false; TestKit.Restore(w); PortalBuildTest.ClearMine(); }
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             TestKit.End(w, checks);
