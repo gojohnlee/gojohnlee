@@ -137,9 +137,9 @@ namespace ValheimHelper
             checks.Add($"개수 그대로 (나무 {woodNow}/{woodAll}, 돌 {stoneNow}/{stoneAll})", woodNow == woodAll && stoneNow == stoneAll);
             checks.Add($"걷지 않음 (움직인 거리 {Utils.DistanceXZ(claude.transform.position, claudeAt):0.0}m)", Utils.DistanceXZ(claude.transform.position, claudeAt) < 3f);
             checks.Add($"1호 아침 날짜 기록 ({claude.Zdo.GetInt(MorningSettle.KeyDay, -1)}/{day})", claude.Zdo.GetInt(MorningSettle.KeyDay, -1) == day);
-            string said = claude.Line("settle", new Dictionary<string, string> { ["what"] = "" });
-            string head = said.Substring(0, Mathf.Min(6, said.Length));
-            checks.Add("1호가 정리 요약을 말함", heard.Exists(h => h.Contains(head)));
+            // 대사 틀은 여러 개 중 무작위라(회차 150: 틀로 만든 머리글이 실제 대사와 달라 FAIL) 정산 요약 자체가 들렸는지 본다
+            string sum = MorningSettle.LastResult.TryGetValue(claude.NpcName, out string s0) ? s0 : null;
+            checks.Add("1호가 정리 요약을 말함", !string.IsNullOrEmpty(sum) && heard.Exists(h => h.Contains(sum)));
             checks.Add($"2호(밖)는 빠짐 (나무 {alarak.CountItem("Wood")}/10, 날짜 {alarak.Zdo.GetInt(MorningSettle.KeyDay, -1)}/{alarakDay})",
                 alarak.CountItem("Wood") == 10 && alarak.Zdo.GetInt(MorningSettle.KeyDay, -1) == alarakDay);
 

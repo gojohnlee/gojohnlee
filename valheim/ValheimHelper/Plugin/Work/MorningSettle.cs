@@ -69,6 +69,8 @@ namespace ValheimHelper
                 s_machinesDone = true;
                 Machines(npc, out int taken, out int filled, out int tapped, out int brewed, out int picked, out int planted);
                 StoreBag(npc); // 땅에서 주운 결과물
+                int tidied = Tidy.Instant(npc.Home); // 상자 정리(②): 같은 물건은 가장 많이 든 상자로
+                if (tidied > 0) parts.Add(npc.Line("settle.tidy", new Dictionary<string, string> { ["n"] = tidied.ToString() }));
                 if (taken > 0) parts.Add(npc.Line("settle.out", new Dictionary<string, string> { ["n"] = taken.ToString() }));
                 if (filled > 0) parts.Add(npc.Line("settle.fill", new Dictionary<string, string> { ["n"] = filled.ToString() }));
                 if (tapped > 0) parts.Add(npc.Line("settle.tap", new Dictionary<string, string> { ["n"] = tapped.ToString() }));
