@@ -171,10 +171,16 @@ namespace ValheimHelper
                 job = new GatherJob(npc, Item, 3, ways);
                 npc.Ai.StartJob(job);
                 Vector3 start = npc.transform.position;
-                for (t = 0f; t < 40f && Utils.DistanceXZ(npc.transform.position, land) > 15f; t += 0.5f) yield return new WaitForSeconds(0.5f);
+                bool chose = false; // 도착해 그 구역에 물건이 없으면(바이옴에 따라) 다음 구역으로 고른 구역이 바로 바뀌므로 도중에 본다
+                for (t = 0f; t < 40f && Utils.DistanceXZ(npc.transform.position, land) > 15f; t += 0.5f)
+                {
+                    if (job.GoalZone.Equals(zone)) chose = true;
+                    yield return new WaitForSeconds(0.5f);
+                }
+                if (job.GoalZone.Equals(zone)) chose = true;
                 float near = Utils.DistanceXZ(npc.transform.position, land);
-                checks.Add($"포탈로 바다 건너 구역에 감({t:0.0}초, 고른 구역 {job.GoalZone.X},{job.GoalZone.Y}, 출구와 {near:0}m, 바다 말 {GatherJob.SeaSkips - sea0 - 1}번 더)",
-                    job.GoalZone.Equals(zone) && near <= 15f && GatherJob.SeaSkips == sea0 + 1);
+                checks.Add($"포탈로 바다 건너 구역에 감({t:0.0}초, 고른 구역 {(chose ? "맞음" : $"{job.GoalZone.X},{job.GoalZone.Y}")}, 출구와 {near:0}m, 바다 말 {GatherJob.SeaSkips - sea0 - 1}번 더)",
+                    chose && near <= 15f && GatherJob.SeaSkips == sea0 + 1);
                 npc.Ai.GoHome(false);
                 yield return new WaitForSeconds(1f);
                 npc.TeleportTo(home, npc.transform.rotation, false);

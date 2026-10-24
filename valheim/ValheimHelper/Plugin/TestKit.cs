@@ -359,6 +359,25 @@ namespace ValheimHelper
             return n;
         }
 
+        /// <summary>ClearWhileHeld가 치운 생물 수.</summary>
+        public static int KeptClear;
+
+        /// <summary>
+        /// 시험이 일꾼 발을 묶은 동안(held()가 null 아님) 1초마다 그 일꾼·거점 둘레 생물을 치운다. 묶인 일꾼은 도망도 싸움도 못 하고
+        /// 죽어도 같은 몸으로 거점에서 일어나 묶인 채라(WorkerNpc.OnDeath), 자연 생물이 오면 거점에서 되풀이해 죽는다
+        /// (회차 141 검은숲 vh_hoptest: 회색 난쟁이에 60번 넘게 죽어 뒷칸 FAIL). running()이 false가 되면 끝.
+        /// </summary>
+        public static IEnumerator ClearWhileHeld(World w, System.Func<Character> held, System.Func<bool> running)
+        {
+            KeptClear = 0;
+            while (running())
+            {
+                Character c = held();
+                if (c != null && !Strict) KeptClear += ClearCreatures(c.transform.position) + ClearCreatures(w.Home);
+                yield return new WaitForSeconds(1f);
+            }
+        }
+
         /// <summary>거점 둘레 땅에 떨어진 물건.</summary>
         static List<ZNetView> Drops(Vector3 home)
         {

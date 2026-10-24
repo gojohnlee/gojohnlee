@@ -69,6 +69,18 @@ namespace ValheimHelper
         /// <summary>시험 기록용: 마지막 판단에 쓴 수치.</summary>
         public string LastDetail { get; private set; } = "";
 
+        /// <summary>
+        /// 죽어서 거점에서 다시 일어났다(WorkerAI.OnDied): 싸움·물러나기·도망을 끝낸다. 안 그러면 죽기 전에 고른 물러날 곳·도망 목적지
+        /// (죽은 곳 둘레)로 거점에서 다시 걸어간다(회차 141 검은숲 vh_hoptest: 도망 하나가 죽음 4~10번을 넘어 이어지다 "도망 끝: 40초").
+        /// </summary>
+        public void OnDied()
+        {
+            EndFight();
+            m_backWalking = false;
+            m_backs = 0;
+            m_aroundSide = 0;
+        }
+
         /// <summary>새 일을 받으면 물러난 횟수를 다시 센다.</summary>
         public void Reset()
         {

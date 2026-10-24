@@ -76,11 +76,13 @@ namespace ValheimHelper
             Vector3 deathPos = claude.transform.position;
             checks.Add($"40m 밖으로 옮겨짐 ({Utils.DistanceXZ(deathPos, home):0}m)", Utils.DistanceXZ(deathPos, home) > 30f);
 
-            // 3) 죽인다
+            // 3) 도망 중에 죽인다(회차 141: 죽기 전 도망 목적지로 거점에서 다시 달려가면 안 됨)
+            claude.Ai.Guard?.TestFlee(GatherTest.Ground(home + rot * new Vector3(0f, 0f, 100f)));
             var hit = new HitData { m_point = claude.GetCenterPoint(), m_dir = Vector3.forward };
             hit.m_damage.m_damage = 9999f;
             claude.Damage(hit);
             yield return new WaitForSeconds(1.5f);
+            checks.Add($"죽기 전 도망을 이어 가지 않음 (경계 {claude.Ai.Guard?.StateName})", claude.Ai.Guard == null || !claude.Ai.Guard.Engaged);
             WorkerNpc after = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("NPC가 사라지지 않음(같은 NPC)", after != null && after.GetComponent<ZNetView>().GetZDO().m_uid == id);
             if (after == null) { End(player, god, env, debugTime, debugValue, checks, onHeard, heard); yield break; }

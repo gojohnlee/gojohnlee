@@ -22,26 +22,31 @@ namespace ValheimHelper
                 yield break;
             }
             var w = new TestKit.World();
-            var saved = new float[5];
+            var saved = new float[6];
             Character held = null;
+            bool running = true;
+            Plugin.Instance.StartCoroutine(TestKit.ClearWhileHeld(w, () => held, () => running)); // 묶인 일꾼은 도망 못 함 → 둘레 생물 치움
             try { yield return Body(w, checks, saved, c => held = c); }
             finally
             {
+                running = false;
                 GatherJob.TestIgnorePlayers = GatherJob.TestNoFarStuck = false;
                 if (held != null) Speeds(held, saved, false);
                 TestKit.Restore(w);
             }
+            if (TestKit.KeptClear > 0) TestRunner.Log($"발 묶인 동안 둘레 생물 {TestKit.KeptClear}마리 치움");
             TestKit.End(w, checks);
         }
 
         static void Speeds(Character c, float[] saved, bool freeze)
         {
-            if (freeze) { saved[0] = c.m_speed; saved[1] = c.m_walkSpeed; saved[2] = c.m_runSpeed; saved[3] = c.m_swimSpeed; saved[4] = c.m_jumpForce; }
+            if (freeze) { saved[0] = c.m_speed; saved[1] = c.m_walkSpeed; saved[2] = c.m_runSpeed; saved[3] = c.m_swimSpeed; saved[4] = c.m_jumpForce; saved[5] = c.m_jumpForceForward; }
             c.m_speed = freeze ? 0f : saved[0];
             c.m_walkSpeed = freeze ? 0f : saved[1];
             c.m_runSpeed = freeze ? 0f : saved[2];
             c.m_swimSpeed = freeze ? 0f : saved[3];
             c.m_jumpForce = freeze ? 0f : saved[4];
+            c.m_jumpForceForward = freeze ? 0f : saved[5]; // 점프 힘 0이어도 앞으로 튐(Character.Jump: forward × m_jumpForceForward) → 묶인 채 조금씩 나아가 귀환 막힘을 못 셈(E026)
         }
 
         static int Carried(Humanoid c)
@@ -122,14 +127,24 @@ namespace ValheimHelper
             TestRunner.Log($"  90초 묶인 채: 순간이동 {GatherJob.Hops - hops1}번 더, 뺀 곳 {(ai.Job is GatherJob gj ? gj.StuckExcluded : -1)}, 기록 {book}");
             checks.Add($"같은 목적지 되풀이 없음 (한 곳 최대 {worst}번)", worst <= 2);
             // E012: 멀리(플레이어 판정 끔) 서 있는 나무 5m 앞에서 묶여 막히면 그 자리에서 직접 피해로 벤다 → 나무가 쓰러진다.
+            // 들고 있는 도끼로 벨 수 있는 나무만(TreeBase.RPC_Damage: CheckToolTier(m_minToolTier) 못 넘으면 피해 없음 — 회차 141 기본 자리에서
+            // 가장 가까운 게 자작나무라 직접 치기 60번에도 안 쓰러짐. 일의 Search는 이미 도구 단계로 거름, TestApproach는 안 거름)
+            ItemDrop.ItemData axe = WorkerNpc.BestTool(w.Ragnar.GetInventory(), ToolKind.Axe);
+            int axeTier = axe != null ? axe.m_shared.m_toolTier : 0;
             TreeBase tree = null;
             float bestD = float.MaxValue;
+            string hard = "";
+            float hardD = float.MaxValue;
             Vector3 me = w.Ragnar.transform.position;
             foreach (var t in Object.FindObjectsByType<TreeBase>(FindObjectsSortMode.None))
             {
                 float d = Utils.DistanceXZ(t.transform.position, me);
-                if (d > 10f && d < 40f && d < bestD) { bestD = d; tree = t; }
+                if (d <= 10f || d >= 40f || d >= bestD) continue;
+                if (t.m_minToolTier > axeTier) { if (d < hardD) { hardD = d; hard = $"{Utils.GetPrefabName(t.gameObject)} {d:0}m(단계 {t.m_minToolTier})"; } continue; }
+                bestD = d;
+                tree = t;
             }
+            if (tree != null) TestRunner.Log($"  묶인 채 나무 칸: {Utils.GetPrefabName(tree.gameObject)} {bestD:0}m (단계 {tree.m_minToolTier}, 도끼 {axeTier}){(hardD < bestD ? ", 더 가깝지만 못 벰 " + hard : "")}");
             if (tree == null || !(ai.Job is GatherJob gt)) checks.Add("가) 멀리 목표 앞 막힘 칸: 10~40m 안 나무가 있음", false);
             else
             {
@@ -193,8 +208,9 @@ namespace ValheimHelper
             checks.Add($"든 나무를 넣으러 감 ({ai.Job?.StepName})", ai.Job is GatherJob gr && gr.StepName == "Return");
 
             // 발은 계속 묶임: 귀환 걷기가 상한만큼 막히면 깃발로 순간이동
+            int jumps0 = ai.Jumps;
             yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Ragnar.transform.position, w.Home) < 5f, 120f);
-            checks.Add($"귀환 막힘 상한 → 깃발로 순간이동 ({Utils.DistanceXZ(w.Ragnar.transform.position, w.Home):0.0}m)", TestKit.Ok);
+            checks.Add($"귀환 막힘 상한 → 깃발로 순간이동 ({Utils.DistanceXZ(w.Ragnar.transform.position, w.Home):0.0}m, 뛴 횟수 {ai.Jumps - jumps0})", TestKit.Ok);
             checks.Add("깃발 강제 복귀(다시 막힘)와 따로", GatherJob.Rescues == rescues0);
             Speeds(w.Ragnar, saved, false);
             hold(null);

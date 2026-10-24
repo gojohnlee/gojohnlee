@@ -48,14 +48,15 @@ namespace ValheimHelper
             {
                 // Setup이 고정한 맑음·약한 바람을 뇌우·센 바람으로(끝의 Restore가 원래대로). 날씨는 10여 초에 걸쳐 섞이며 바뀌고(EnvMan, 회차 127 확인),
                 // 마른 불이 한 번 켜지면 젖어도 불 영역이 남아 계속 굽는다 → 다 젖은 뒤에 화로를 세운다
+                // 바람은 프레임마다 0.02초씩만 섞임(EnvMan.FixedUpdate: 한 프레임 한 번·dt = fixedDeltaTime, 섞임 5초 = 250프레임) → 최소화로 프레임이 낮으면 40초 넘음(회차 141 검은숲: 40초에 0.77)
                 w.Env.m_debugEnv = "ThunderStorm";
                 w.Env.SetDebugWind(0f, 1f);
-                yield return TestKit.WaitFor(() => EnvMan.IsWet() && EnvMan.instance.GetWindIntensity() >= 0.8f, 40f);
+                yield return TestKit.WaitFor(() => EnvMan.IsWet() && EnvMan.instance.GetWindIntensity() >= 0.8f, 120f);
                 checks.Add($"뇌우·센 바람으로 바뀜 ({TestKit.Waited:0}초, 바람 {EnvMan.instance.GetWindIntensity():0.00})", TestKit.Ok);
                 yield return new WaitForSeconds(1f);
             }
             else if (EnvMan.IsWet() || EnvMan.instance.GetWindIntensity() >= 0.8f)
-                yield return TestKit.WaitFor(() => !EnvMan.IsWet() && EnvMan.instance.GetWindIntensity() < 0.8f, 40f);   // 앞 시험의 비바람이 맑음으로 다 바뀔 때까지
+                yield return TestKit.WaitFor(() => !EnvMan.IsWet() && EnvMan.instance.GetWindIntensity() < 0.8f, 120f);   // 앞 시험의 비바람이 맑음으로 다 바뀔 때까지
             checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
             if (w.Ragnar == null || w.Chest == null) yield break;
             GameObject pit = ZNetScene.instance.GetPrefab("fire_pit"), stand = ZNetScene.instance.GetPrefab("piece_cookingstation");

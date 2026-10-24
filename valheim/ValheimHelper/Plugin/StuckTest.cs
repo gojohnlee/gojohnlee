@@ -22,26 +22,31 @@ namespace ValheimHelper
                 yield break;
             }
             var w = new TestKit.World();
-            var saved = new float[5];
+            var saved = new float[6];
             Character held = null;
+            bool running = true;
+            Plugin.Instance.StartCoroutine(TestKit.ClearWhileHeld(w, () => held, () => running)); // 묶인 일꾼은 도망 못 함 → 둘레 생물 치움
             try { yield return Body(w, checks, saved, c => held = c); }
             finally
             {
+                running = false;
                 if (held != null) Speeds(held, saved, false);
                 TestKit.Restore(w);
             }
+            if (TestKit.KeptClear > 0) TestRunner.Log($"발 묶인 동안 둘레 생물 {TestKit.KeptClear}마리 치움");
             TestKit.End(w, checks);
         }
 
         /// <summary>걷기·달리기·점프 힘을 0으로 묶거나(freeze) saved로 되돌린다.</summary>
         static void Speeds(Character c, float[] saved, bool freeze)
         {
-            if (freeze) { saved[0] = c.m_speed; saved[1] = c.m_walkSpeed; saved[2] = c.m_runSpeed; saved[3] = c.m_swimSpeed; saved[4] = c.m_jumpForce; }
+            if (freeze) { saved[0] = c.m_speed; saved[1] = c.m_walkSpeed; saved[2] = c.m_runSpeed; saved[3] = c.m_swimSpeed; saved[4] = c.m_jumpForce; saved[5] = c.m_jumpForceForward; }
             c.m_speed = freeze ? 0f : saved[0];
             c.m_walkSpeed = freeze ? 0f : saved[1];
             c.m_runSpeed = freeze ? 0f : saved[2];
             c.m_swimSpeed = freeze ? 0f : saved[3];
             c.m_jumpForce = freeze ? 0f : saved[4];
+            c.m_jumpForceForward = freeze ? 0f : saved[5]; // 점프 힘 0이어도 앞으로 튐(Character.Jump: forward × m_jumpForceForward) → 묶인 채 조금씩 나아가 귀환 막힘을 못 셈(E026)
         }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, float[] saved, System.Action<Character> hold)

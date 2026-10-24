@@ -879,6 +879,7 @@ namespace ValheimHelper
             }
             Job = null;
             m_follow = ZDOID.None;
+            m_guard?.OnDied(); // 죽기 전 도망·물러날 곳으로 거점에서 다시 걸어가지 않게
             Current = Mode.Idle;
             StopMoving();
             m_choresHeld = false;

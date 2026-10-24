@@ -90,6 +90,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
+  EnvMan 바람: SetDebugWind는 목표만 바꾸고 m_windTransitionDuration 5초에 걸쳐 섞음. FixedUpdate는 한 프레임 한 번(s_lastFrame)인데 dt = fixedDeltaTime 0.02 → 250프레임, 최소화(낮은 fps)면 40초 넘음.
 - 머리·수염 프리팹(10-23, 게임 데이터·vh_npctest 로그): HairN·BeardN 아이템 m_name = $customization_hairNN(현지화 영어: Hair24 Shaved and Braided, Hair25 Knot, Hair11 Long Braid, Hair17 Neat Braids, Beard18 Jarl Braids, Beard15 Mini Braid, Beard05 Single Braid, Beard22 Mustache). Hair1~38·Beard1~26.
 - 사람 제작 재료(10-23): Player.HaveRequirementItems(가방만, 물건마다 품질별 최대 개수, requireOnlyOneIngredient는 하나만)·GetFirstRequiredItem(하나만 제작법, 가방에서 직접 뺌)·HaveRequirements(Piece, 모드 CanBuild=CountItems)·ConsumeResources(요구마다 RemoveItem(이름, 수, -1) — 제작 InventoryGui.DoCrafting 1912줄·건축 Player.PlacePiece 1398줄). DoCrafting은 막대 끝에 HaveRequirements 다시 확인 → 물건 AddItem → 그 뒤 ConsumeResources(같은 프레임). 개수 표시 InventoryGui.SetupRequirement 1751줄 CountItems(필요 수만 표시, 가방 < 필요면 빨강·흰색 깜빡임, 제작 목록·Hud 망치 공용). 여러 개 만들기 = 고정 m_multiCraftAmount(5). Container.CheckForChanges(1초)가 주인 쪽 ZDO s_inUse를 m_inUse로 덮음 → 시험은 SetInUse로.
 - 시뮬레이션 거리(그래픽 설정 SimulationDistance, ZNet.GetSyncedSimulationDistance): 단계 0 = 근거리 1(네모 ±1구역, ≥64m), 1 = 근거리 2(원, 대각선 ~90m),
