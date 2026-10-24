@@ -213,6 +213,15 @@ namespace ValheimHelper
                 AddDrops(r, rock5.m_dropItems);
                 return r;
             }
+            // 줍는 것을 부술 것보다 먼저: 덤불·야생 작물(CloudberryBush·Pickable_Barley_Wild)은 Destructible도 가져 곡괭이로 잘못 보거나(떨굼 없으면) 빠졌음(회차 169)
+            var pick = p.GetComponent<Pickable>();
+            if (pick != null && pick.m_itemPrefab != null)
+            {
+                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.None, Pickable = true, Priority = 5f };
+                if (pick.m_itemPrefab.GetComponent<ItemDrop>() != null) r.Produces.Add(pick.m_itemPrefab.name);
+                AddDrops(r, pick.m_extraDrops);
+                return r;
+            }
             var des = p.GetComponent<Destructible>();
             if (des != null)
             {
@@ -222,14 +231,6 @@ namespace ValheimHelper
                 if (drop != null) AddDrops(r, drop.m_dropWhenDestroyed);
                 r.Loot = !tree2 && drop?.m_dropWhenDestroyed?.m_drops != null && drop.m_dropWhenDestroyed.m_drops.Count >= 3;
                 AddFrom(r, Describe(des.m_spawnWhenDestroyed, depth + 1));
-                return r;
-            }
-            var pick = p.GetComponent<Pickable>();
-            if (pick != null && pick.m_itemPrefab != null)
-            {
-                var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.None, Pickable = true, Priority = 5f };
-                if (pick.m_itemPrefab.GetComponent<ItemDrop>() != null) r.Produces.Add(pick.m_itemPrefab.name);
-                AddDrops(r, pick.m_extraDrops);
                 return r;
             }
             return null;
