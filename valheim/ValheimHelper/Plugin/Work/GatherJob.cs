@@ -753,11 +753,12 @@ namespace ValheimHelper
             return false;
         }
 
-        void Aim(ZDO zdo)
+        /// <summary>info = 자원 목록 밖 대상(길을 막은 얼음 벽 등, ResourceCatalog.Obstacle)일 때만 준다.</summary>
+        void Aim(ZDO zdo, ResourceInfo info = null)
         {
             m_targetId = zdo.m_uid;
             m_targetPos = zdo.GetPosition();
-            m_targetInfo = ResourceCatalog.Get(zdo.GetPrefab());
+            m_targetInfo = info ?? ResourceCatalog.Get(zdo.GetPrefab());
             m_reach = m_targetInfo != null && m_targetInfo.Pickable ? 1.3f : 1.7f;
             ZNetView view = ZNetScene.instance.FindInstance(zdo);
             if (view != null)
@@ -809,12 +810,13 @@ namespace ValheimHelper
             }
             if (m_blockChecked != m_targetId && m_ai.InteriorNoPath(m_targetPos, m_reach))
             {
-                // 지하묘지 안 길이 없다: 늪 지하묘지는 방 사이 통로를 진흙 더미가 막는다 — 그 길에 걸린 더미부터 캔다(대상은 그대로 두고 나중에 다시 고름)
+                // 지하묘지 안 길이 없다: 늪 지하묘지는 방 사이 통로를 진흙 더미가, 서리 동굴은 얼음 벽·석순이 막는다 — 그 길에 걸린 것부터 깬다(대상은 그대로 두고 나중에 다시 고름)
                 m_blockChecked = m_targetId;
-                if (BlockingPile(out ZDO pile))
+                if (BlockingPile(out ZDO pile, out ResourceInfo pileInfo))
                 {
-                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab}까지 길을 {ResourceCatalog.Get(pile.GetPrefab())?.Prefab}({Utils.DistanceXZ(pile.GetPosition(), m_npc.transform.position):0}m)가 막음 → 그것부터 캠");
-                    Aim(pile);
+                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab}까지 길을 {pileInfo.Prefab}({Utils.DistanceXZ(pile.GetPosition(), m_npc.transform.position):0}m)가 막음 → 그것부터 {(pileInfo.Produces.Count > 0 ? "캠" : "깸")}");
+                    m_blockChecked = ZDOID.None; // 깬 뒤 같은 대상을 다시 고르면 그 뒤에 걸린 것도 본다(얼음 벽 뒤 석순)
+                    Aim(pile, pileInfo);
                     Go(Step.Approach);
                     return true;
                 }
@@ -843,10 +845,12 @@ namespace ValheimHelper
 
         /// <summary>
         /// 진흙 더미·광맥을 지나가도 된다고 칠 때만 대상까지 길이 있으면(InteriorNav.PilesOnWay) 그 길에 처음 걸리는 것 중 지금 연장으로 캘 수 있는 것.
+        /// 떨구는 것 없는 깨지는 물체(서리 동굴 얼음 벽, ResourceCatalog.Obstacle)도 깬다 — 회차 167 E031: 도착한 방이 얼음 벽으로 막혀 수정 29개 모두 길이 없었다.
         /// </summary>
-        bool BlockingPile(out ZDO pile)
+        bool BlockingPile(out ZDO pile, out ResourceInfo pileInfo)
         {
             pile = null;
+            pileInfo = null;
             var piles = InteriorNav.PilesOnWay(m_npc.transform.position, m_targetPos, m_reach, out _);
             if (piles == null) return false;
             foreach (var p in piles)
@@ -856,11 +860,12 @@ namespace ValheimHelper
                 ZDO z = v.GetZDO();
                 if (z.m_uid == m_targetId) return false; // 대상까지 가는 길에 다른 더미가 안 걸림(대상 뒤 더미는 막은 게 아님)
                 if (m_skip.Contains(z.m_uid)) continue;
-                ResourceInfo info = ResourceCatalog.Get(z.GetPrefab());
+                ResourceInfo info = ResourceCatalog.Get(z.GetPrefab()) ?? ResourceCatalog.Obstacle(z.GetPrefab());
                 if (info == null || info.Tool == ToolKind.None || !m_ways.Contains(info.Tool)) return false; // 처음 걸린 것을 못 캐면 그 뒤도 못 감
                 ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
                 if (tool == null || (info.MinToolTier > 0 && info.MinToolTier > tool.m_shared.m_toolTier)) return false;
                 pile = z;
+                pileInfo = info;
                 return true;
             }
             return false;
@@ -1075,7 +1080,9 @@ namespace ValheimHelper
             if (m_stuckAt.HasValue && Utils.DistanceXZ(m_stuckAt.Value, pos) < 8f) m_stuckCount++;
             else { m_stuckAt = pos; m_stuckCount = 1; }
             if (m_stuckCount < 2) return;
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 같은 자리에서 {m_stuckCount}번 막힘 → 깃발로 강제 복귀");
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 같은 자리에서 {m_stuckCount}번 막힘 → 깃발로 강제 복귀{(m_npc.InInterior() ? " (이 던전은 이 일 동안 다시 안 들어감)" : "")}");
+            // 던전 안에서 막혀 돌아오면 그 던전도 버린 곳: 안 빼면 다시 들어가 같은 자리에서 또 막혔다(E031 — 480초 동안 서리 동굴 드나들기 되풀이)
+            if (m_npc.InInterior()) m_cryptsDone.Add(m_crypt.Pos);
             m_stuckAt = null;
             m_stuckCount = 0;
             m_targetId = ZDOID.None;

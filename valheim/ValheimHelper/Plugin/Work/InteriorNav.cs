@@ -340,7 +340,10 @@ namespace ValheimHelper
         {
             if (c == null) return "?";
             Component pile = PileOf(c);
-            return pile != null ? "더미 " + Utils.GetPrefabName(pile.gameObject) : c.name;
+            if (pile != null) return "더미 " + Utils.GetPrefabName(pile.gameObject);
+            // 방 모델의 메시 충돌체는 이름이 "default"뿐이다 — 어느 물체인지 부모 이름을 붙인다(진단, E031)
+            Transform up = c.transform.parent;
+            return c.name == "default" && up != null ? $"{c.name}/{Utils.GetPrefabName(up.gameObject)}" : c.name;
         }
 
         /// <summary>a→b 선분을 막는 첫 물체(없으면 null). passPiles면 진흙 더미·광맥은 지나간다.</summary>

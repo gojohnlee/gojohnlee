@@ -94,6 +94,7 @@ namespace ValheimHelper
                     var cs = prefab.GetComponent<CreatureSpawner>();
                     if (cs != null && cs.m_creaturePrefab != null) parts.Add("스포너 " + cs.m_creaturePrefab.name);
                     if (prefab.GetComponent<Pickable>() != null && info == null) parts.Add("Pickable(목록 밖)");
+                    if (info == null && Breakable(prefab) is string br) parts.Add(br);
                 }
                 notes[n] = string.Join(" · ", parts);
             }
@@ -104,7 +105,8 @@ namespace ValheimHelper
 
             // ⑪ 4다) "!수정 3" → 열쇠 문 없는 동굴 입구로 들어가 수정을 캐고 나와 거점 상자에 넣는다(박쥐·울브 스포너, 얼음 종유석이 길을 막는지도 봄)
             if (gate == null) yield break;
-            bool listed = Dungeons.All("Crystal").Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Keyless && c.Left > 0);
+            yield return PathDiag(w, gate);
+            bool listed =Dungeons.All("Crystal").Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Keyless && c.Left > 0);
             checks.Add("Dungeons.All(수정)이 이 동굴을 열린 곳으로 셈", listed);
             TestKit.ClearBaseStock(w, "Crystal");
             // 약식: 거점에서 110m 가는 길은 빼고 입구 12m 앞에서 시작(CryptTest와 같음)
@@ -128,6 +130,65 @@ namespace ValheimHelper
             checks.Add($"수정이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
             yield return new WaitForSeconds(3f);
             checks.Add("일꾼이 안에 남지 않음", !w.Ragnar.InInterior());
+        }
+
+        /// <summary>진단: 자원 목록 밖인데 부술 수 있는 물체(Destructible·MineRock5·MineRock)의 바닐라 값.</summary>
+        static string Breakable(GameObject p)
+        {
+            string Mods(HitData.DamageModifiers m) => $"곡괭이 {m.m_pickaxe}·둔기 {m.m_blunt}·베기 {m.m_slash}·찌르기 {m.m_pierce}·도끼 {m.m_chop}·불 {m.m_fire}";
+            var d = p.GetComponent<Destructible>();
+            if (d != null)
+            {
+                var drop = p.GetComponent<DropOnDestroyed>();
+                var hurt = d.m_spawnWhenDestroyed != null ? d.m_spawnWhenDestroyed.GetComponentInChildren<ImpactEffect>(true) : null;
+                return $"Destructible 체력 {d.m_health} 단계 {d.m_minToolTier} {Mods(d.m_damages)} 종류 {d.m_destructibleType}" +
+                       $"{(d.m_spawnWhenDestroyed != null ? " → " + d.m_spawnWhenDestroyed.name + (hurt != null ? $"(부딪힘 피해 {hurt.m_damages.GetTotalDamage():0})" : "") : "")}" +
+                       $"{(drop?.m_dropWhenDestroyed?.m_drops?.Count > 0 ? $" 떨굼 {drop.m_dropWhenDestroyed.m_drops.Count}종" : "")}" +
+                       $", 길 막으면 {(ResourceCatalog.Obstacle(p.name.GetStableHashCode()) != null ? "깸" : "안 깸")}";
+            }
+            var r5 = p.GetComponent<MineRock5>();
+            if (r5 != null) return $"MineRock5 체력 {r5.m_health} 단계 {r5.m_minToolTier} {Mods(r5.m_damageModifiers)} 떨굼 {r5.m_dropItems?.m_drops?.Count ?? 0}종";
+            var r = p.GetComponent<MineRock>();
+            if (r != null) return $"MineRock 체력 {r.m_health} 단계 {r.m_minToolTier} {Mods(r.m_damageModifiers)} 떨굼 {r.m_dropItems?.m_drops?.Count ?? 0}종";
+            return null;
+        }
+
+        /// <summary>
+        /// 진단(E031): 일꾼을 입구로 들여보내 도착 자리에서 수정마다 묘지 안 길(InteriorNav)이 있는지, 없으면 막은 것을 적고 다시 내보낸다.
+        /// 동굴 방 배치는 세운 자리마다 달라(DungeonGenerator 씨앗 = 월드 씨앗 + 자리) 길이 막히는 배치가 따로 있다.
+        /// </summary>
+        static IEnumerator PathDiag(TestKit.World w, Teleport gate)
+        {
+            var dg = Object.FindObjectsByType<DungeonGenerator>(FindObjectsSortMode.None).FirstOrDefault(g => Utils.DistanceXZ(g.transform.position, gate.transform.position) < 80f);
+            TestRunner.Log($"동굴 생성기 {(dg != null ? $"{dg.name} 씨앗 {dg.m_generatedSeed}" : "없음")}");
+            Dungeons.Use(w.Ragnar, gate);
+            yield return TestKit.WaitFor(() => w.Ragnar.InInterior(), 10f);
+            if (!TestKit.Ok) { TestRunner.Log("진단: 안으로 못 들어감"); yield break; }
+            yield return new WaitForSeconds(2f);
+            Vector3 here = w.Ragnar.transform.position;
+            InteriorNav.UseBody(w.Ragnar);
+            var tool = WorkerNpc.BestTool(w.Ragnar.GetInventory(), ToolKind.Pickaxe);
+            TestRunner.Log($"  일꾼 곡괭이 {(tool != null ? $"{tool.m_shared.m_name} 단계 {tool.m_shared.m_toolTier} 곡괭이 {tool.GetDamage().m_pickaxe:0}·둔기 {tool.GetDamage().m_blunt:0}" : "없음")}");
+            int ok = 0, n = 0, explained = 0;
+            foreach (var v in Object.FindObjectsByType<Pickable>(FindObjectsSortMode.None).Select(p => p.GetComponent<ZNetView>())
+                .Where(v => v != null && v.IsValid() && Character.InInterior(v.transform.position) && Utils.DistanceXZ(v.transform.position, here) < 120f)
+                .Where(v => ResourceCatalog.Get(v.GetZDO().GetPrefab())?.Produces.Contains("Crystal") == true)
+                .OrderBy(v => Utils.DistanceXZ(v.transform.position, here)))
+            {
+                n++;
+                var col = v.GetComponentInChildren<Collider>();
+                float reach = 1.3f + (col != null ? Mathf.Min(1.5f, Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) * 0.6f) : 0f); // GatherJob.Aim과 같게
+                var path = InteriorNav.Plan(here, v.transform.position, reach, out string why);
+                if (path != null) ok++;
+                TestRunner.Log($"  수정 {Utils.DistanceXZ(v.transform.position, here):0}m 높이 {v.transform.position.y - here.y:+0.0;-0.0}: 길 {(path != null ? "있음" : "없음")} {why}"
+                    + (path == null && explained++ < 3 ? " / " + InteriorNav.Explain(here, v.transform.position, reach) : ""));
+            }
+            TestRunner.Log($"  도착 자리에서 길 있는 수정 {ok}/{n}개");
+            if (ok * 2 < n) TestRunner.Log("  도착 자리 둘레 지도(±14칸, 위 +z):" + InteriorNav.Map(here, 14));
+            Teleport exit = Dungeons.Exit(here);
+            if (exit != null) Dungeons.Use(w.Ragnar, exit);
+            yield return TestKit.WaitFor(() => !w.Ragnar.InInterior(), 10f);
+            yield return new WaitForSeconds(1f);
         }
     }
 }

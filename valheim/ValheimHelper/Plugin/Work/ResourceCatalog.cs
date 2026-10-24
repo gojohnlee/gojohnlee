@@ -152,7 +152,33 @@ namespace ValheimHelper
         }
 
         /// <summary>월드가 바뀌면(ZNetScene 새로 생김) 다시 만든다.</summary>
-        public static void Reset() { s_byHash = null; Prey.Reset(); HiddenOres.Reset(); }
+        public static void Reset() { s_byHash = null; s_obstacles.Clear(); Prey.Reset(); HiddenOres.Reset(); }
+
+        static readonly Dictionary<int, ResourceInfo> s_obstacles = new Dictionary<int, ResourceInfo>();
+
+        /// <summary>
+        /// 떨구는 것이 없어 자원 목록에 없지만 연장으로 깨는 Destructible(던전 안 길을 막은 것): 서리 동굴 얼음 벽 caverock_ice_pillar_wall
+        /// (체력 50·단계 0·모든 피해 Weak)·얼음 석순 caverock_ice_stalagmite(체력 10) — 바닐라도 곡괭이로 깨고 지나가는 벽(E031).
+        /// 그 연장 피해가 안 먹히거나(Immune·Ignore) 깨면 생기는 것이 맞은 것을 다치게 하면(떨어지는 고드름 — ImpactEffect 피해) null.
+        /// </summary>
+        public static ResourceInfo Obstacle(int prefabHash)
+        {
+            if (s_obstacles.TryGetValue(prefabHash, out var cached)) return cached;
+            if (ZNetScene.instance == null) return null;
+            ResourceInfo r = null;
+            GameObject p = ZNetScene.instance.GetPrefab(prefabHash);
+            var des = p != null ? p.GetComponent<Destructible>() : null;
+            if (des != null)
+            {
+                bool tree = (des.m_destructibleType & DestructibleType.Tree) != 0;
+                var mod = tree ? des.m_damages.m_chop : des.m_damages.m_pickaxe;
+                var hurt = des.m_spawnWhenDestroyed != null ? des.m_spawnWhenDestroyed.GetComponentInChildren<ImpactEffect>(true) : null;
+                if (mod != HitData.DamageModifier.Immune && mod != HitData.DamageModifier.Ignore && (hurt == null || !hurt.m_damages.HaveDamage()))
+                    r = new ResourceInfo { Prefab = p.name, Tool = tree ? ToolKind.Axe : ToolKind.Pickaxe, MinToolTier = des.m_minToolTier };
+            }
+            s_obstacles[prefabHash] = r;
+            return r;
+        }
 
         static ResourceInfo Describe(GameObject p, int depth)
         {
