@@ -247,6 +247,7 @@ namespace ValheimHelper
             w.Home = home;
             // 지난 시험 상자(사용 중 표시가 남으면 비우지도 못해 재고가 틀어짐, 회차 60)를 치운다. 동시 시험(around)은 남의 상자라 안 건드림.
             if (!around.HasValue && GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f);
+            if (!around.HasValue && SweepGround(home) > 0) yield return new WaitForSeconds(0.5f); // 앞 시험이 남긴 땅 물건·몸·통나무(개선 셋 가)
             w.Player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, w.Player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
             w.Ragnar = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
@@ -407,6 +408,47 @@ namespace ValheimHelper
         }
 
         /// <summary>
+        /// 시작 땅 정리(개선 셋 가, 사용자 10-25): 앞 시험이 남긴 거점 둘레 땅 물건·쓰러진 몸(Ragdoll — 몇 초 뒤 전리품을 떨굼)·통나무 수를
+        /// 이름과 함께 diag에 늘 적고(0이어도 — E025·E027·E033 대조용), 있으면 치운다. 치운 수를 돌려준다(0보다 크면 0.5초 기다림).
+        /// </summary>
+        static int SweepGround(Vector3 home)
+        {
+            var names = new Dictionary<string, int>();
+            int drops = 0, bodies = 0, logs = 0;
+            foreach (var v in Drops(home))
+            {
+                var it = v.GetComponent<ItemDrop>();
+                string n = Utils.GetPrefabName(v.gameObject);
+                names.TryGetValue(n, out int c);
+                names[n] = c + (it != null && it.m_itemData != null ? it.m_itemData.m_stack : 1);
+                v.ClaimOwnership();
+                ZNetScene.instance.Destroy(v.gameObject);
+                drops++;
+            }
+            foreach (var r in Object.FindObjectsByType<Ragdoll>(FindObjectsSortMode.None))
+            {
+                var rv = r.GetComponent<ZNetView>();
+                if (rv == null || !rv.IsValid() || Vector3.Distance(r.transform.position, home) > StartRadius) continue;
+                rv.ClaimOwnership();
+                ZNetScene.instance.Destroy(r.gameObject);
+                bodies++;
+            }
+            foreach (var zdo in Senses.Nearby(home, StartRadius))
+            {
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v == null || !v.IsValid() || v.GetComponent<TreeLog>() == null) continue;
+                v.ClaimOwnership();
+                ZNetScene.instance.Destroy(v.gameObject);
+                logs++;
+            }
+            var parts = new List<string>();
+            foreach (var kv in names) parts.Add($"{kv.Key} {kv.Value}");
+            TestRunner.Log($"시작 땅: 거점 {StartRadius:0}m 안 물건 {drops}{(parts.Count > 0 ? " (" + string.Join(", ", parts.ToArray()) + ")" : "")}·쓰러진 몸 {bodies}·통나무 {logs}"
+                + (drops + bodies + logs > 0 ? " → 치우고 시작" : ""));
+            return drops + bodies + logs;
+        }
+
+        /// <summary>
         /// 끝 정리(사용자 결정 2026-10-22 시험 환경): 시험이 남긴 둘레 생물·땅의 물건을 치우고, 0.5초 뒤에도 남으면
         /// 정리 실패로 남은 자동 시험을 멈춘다(TestRunner.Halt — 앞 시험이 뒤 시험을 망치지 않게).
         /// </summary>
@@ -444,7 +486,7 @@ namespace ValheimHelper
             Strict = strict;
             int n = ClearCreatures(home);
             if (n > 0) TestRunner.Log($"시작 정리: 거점 {StartRadius:0}m 안 생물 {n}마리 치움");
-            return n;
+            return n + SweepGround(home); // 앞 시험이 남긴 땅 물건·몸·통나무도(개선 셋 가)
         }
 
         /// <summary>그래도 생물이 남으면 신 모드를 되돌리고 EnvBadException(본시험 안 함, PASS 아님).</summary>
