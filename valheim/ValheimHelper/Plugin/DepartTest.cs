@@ -107,15 +107,24 @@ namespace ValheimHelper
 
                 // 4) 위험 조건(체력 미드) → 미드가 생기면 스스로 출발
                 bool made = false;
-                foreach (var kind in new[] { "Greydwarf", "Skeleton", "Greydwarf_Elite", "Draugr", "Troll" })
+                // 한 종류만 늘리면 비율이 0.65 → 1.30처럼 뛰어 Tight 창(싸움 선~1.0)을 건너뛴다(E030, 회차 167) → 약한 적을 섞어 잘게 맞춘다
+                foreach (var kind in new[] { "Greydwarf", "Skeleton", "Draugr", "Greydwarf_Elite" })
                 {
-                    Brain.ReplaceForTest(knowFar, "");
-                    for (int n = 1; n <= 12 && !made; n++)
-                    {
-                        Brain.Places.Record(far, new List<GroupFoe> { new GroupFoe { Kind = kind, Count = n } }, Outcome.Back, ZNet.instance.GetTimeSeconds(), Guard.Resolve);
-                        DepartureResult r = Departures.JudgeFor(w.Ragnar, copper);
-                        if (r != null && r.Action == DepartAction.Ask && r.Question == Question.Condition) { made = true; TestRunner.Log($"조건 상황: {kind} {n}마리 — {r.Reason}"); }
-                    }
+                    for (int n = 1; n <= 3 && !made; n++)
+                        foreach (var small in new[] { "", "Greyling", "Neck", "Boar", "Deer" })
+                        {
+                            for (int m = small == "" ? 0 : 1; m <= (small == "" ? 0 : 6) && !made; m++)
+                            {
+                                Brain.ReplaceForTest(knowFar, "");
+                                var foes = new List<GroupFoe> { new GroupFoe { Kind = kind, Count = n } };
+                                if (m > 0) foes.Add(new GroupFoe { Kind = small, Count = m });
+                                Brain.Places.Record(far, foes, Outcome.Back, ZNet.instance.GetTimeSeconds(), Guard.Resolve);
+                                DepartureResult r = Departures.JudgeFor(w.Ragnar, copper);
+                                if (r != null && r.Action == DepartAction.Ask && r.Question == Question.Condition) { made = true; TestRunner.Log($"조건 상황: {kind} {n}마리 + {small} {m}마리 — {r.Reason}"); }
+                                else if (r != null && m <= 1) TestRunner.Log($"조건 아님: {kind} {n}마리 + {small} {m}마리 — {r.Action} {r.Question} | {r.Reason} | 미드 짐 {MeadsIn(w.Ragnar)}");
+                            }
+                            if (made) break;
+                        }
                     if (made) break;
                 }
                 checks.Add("위험 조건 상황 만들기", made);
@@ -252,6 +261,13 @@ namespace ValheimHelper
         {
             foreach (var m in Brain.Get().ZonesWith("CopperOre", hz))
                 if (!m.Zone.Equals(far)) Brain.Get().Forget(m.Zone, "CopperOre");
+        }
+
+        static int MeadsIn(WorkerNpc npc)
+        {
+            int n = 0;
+            foreach (var it in npc.GetInventory().GetAllItems()) if (Gear.IsHealthMead(it)) n += it.m_stack;
+            return n;
         }
 
         static string Asked(WorkerNpc npc) => Departures.AskedAt(npc) >= 0 ? "기다림" : "안 물음";
