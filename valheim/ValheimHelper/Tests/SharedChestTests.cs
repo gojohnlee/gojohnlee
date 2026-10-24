@@ -63,14 +63,18 @@ namespace ValheimHelper.Tests
         }
 
         [Fact]
-        public void LedgerFullReplyAndExpireKeepsBag()
+        public void LedgerExpireReturnsSentKeepsTaken()
         {
             var g = new GuestLedger();
             int a = g.Begin(false, "Wood", 10, 0f);
             Assert.Equal(0, g.Reply(a, 10, out _));
             int b = g.Begin(true, "Stone", 8, 1f);
             g.Begin(false, "Resin", 2, 4f);
-            Assert.Equal(1, g.Expire(6f, 3f)); // b만 시간 넘김
+            var back = new System.Collections.Generic.List<PutStepBack>();
+            Assert.Equal(1, g.Expire(6f, 3f, back)); // b만 시간 넘김 → 보낸 돌 8개 돌려받음
+            Assert.Single(back);
+            Assert.Equal("Stone", back[0].Key);
+            Assert.Equal(8, back[0].N);
             Assert.Equal(0, g.Reply(b, 0, out _)); // 늦게 온 답은 무시(가방 그대로)
             Assert.Equal(2, g.Locked("Resin"));
             Assert.Equal(1, g.Count);

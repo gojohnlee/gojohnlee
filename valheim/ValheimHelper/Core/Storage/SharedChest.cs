@@ -51,7 +51,7 @@ namespace ValheimHelper.Core.Storage
 
     /// <summary>
     /// 손님 쪽 답 기다리는 옮기기 장부. 답 오기 전 그 물건은 가방 안 이동만 되고 버리기·쓰기·입기·제작 재료는 막는다(Locked).
-    /// 답(Reply)이 예측과 다르면 가방을 그 차이만큼 고친다. 시간 넘김(답이 끊김 = 접속 끊김 정도)이면 가방은 그대로 둔다 — 손실보다 복제 쪽.
+    /// 답(Reply)이 예측과 다르면 가방을 그 차이만큼 고친다. 시간 넘김(답이 끊김 = 접속 끊김 정도)이면 꺼낸 것은 두고 보낸 것은 돌려받는다 — 손실보다 복제 쪽.
     /// </summary>
     public sealed class GuestLedger
     {
@@ -95,13 +95,28 @@ namespace ValheimHelper.Core.Storage
             return n;
         }
 
-        /// <summary>timeout초 넘게 답이 없는 부탁을 지움(가방은 그대로). 지운 수.</summary>
-        public int Expire(float now, float timeout)
+        /// <summary>
+        /// timeout초 넘게 답이 없는 부탁을 지움. 꺼내 온 것은 그대로 두고, 보내려고 뺀 것은 돌려받음(back에 키·수) — 손실보다 복제 쪽. 지운 수.
+        /// </summary>
+        public int Expire(float now, float timeout, List<PutStepBack> back)
         {
             var old = new List<int>();
             foreach (var kv in m_pending) if (now - kv.Value.Since > timeout) old.Add(kv.Key);
-            foreach (int id in old) m_pending.Remove(id);
+            foreach (int id in old)
+            {
+                var p = m_pending[id];
+                if (p.Put && back != null) back.Add(new PutStepBack(p.Key, p.Amount));
+                m_pending.Remove(id);
+            }
             return old.Count;
         }
+    }
+
+    /// <summary>시간 넘김으로 손님 가방에 돌려받을 물건.</summary>
+    public readonly struct PutStepBack
+    {
+        public readonly string Key;
+        public readonly int N;
+        public PutStepBack(string key, int n) { Key = key; N = n; }
     }
 }
