@@ -78,7 +78,7 @@ namespace ValheimHelper
             }
         }
 
-        static List<ZDO> Around(Vector3 at)
+        internal static List<ZDO> Around(Vector3 at)
         {
             var list = new List<ZDO>();
             if (at != Vector3.zero) ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(at), new SimulationDistance(1, 0), list);
@@ -86,7 +86,7 @@ namespace ValheimHelper
         }
 
         /// <summary>세운 지하묘지(시험 전에 없던 ZDO 중 70m 안, 일꾼·플레이어 빼고)를 지운다.</summary>
-        static void Cleanup(HashSet<ZDOID> before, Vector3 at)
+        internal static void Cleanup(HashSet<ZDOID> before, Vector3 at)
         {
             if (at == Vector3.zero) return;
             int n = 0;
