@@ -399,7 +399,7 @@ namespace ValheimHelper
                 m_saidTooWeak = true;
                 m_npc.Say("toolTooWeak", Args());
             }
-            if (Item == Dungeons.ScrapItem && TryStartCrypt()) return true;
+            if (Dungeons.InsideOnly(Item) && TryStartCrypt()) return true;
             Knowledge k = Brain.Get();
             Vector3 pos = m_npc.transform.position;
             ZoneXY here = Senses.ZoneOf(pos);
@@ -461,7 +461,7 @@ namespace ValheimHelper
         bool TryStartCrypt()
         {
             if (EnvMan.IsNight()) return false; // 밤에 늪 바깥을 걷지 않는다(들어가는 건 낮에만)
-            if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, m_cryptsDone)) return false;
+            if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, m_cryptsDone, Item)) return false;
             m_crypt = c;
             m_doorTries = 0;
             m_doorPhase = false;
@@ -481,7 +481,7 @@ namespace ValheimHelper
             }
             if (m_stepTime > CryptGoLimit) return AbandonCrypt("시간 초과");
             Vector3 pos = m_npc.transform.position;
-            if (!Dungeons.IsOpen(m_crypt.Door)) return UpdateOpenDoor(dt, pos);
+            if (!m_crypt.Keyless && !Dungeons.IsOpen(m_crypt.Door)) return UpdateOpenDoor(dt, pos);
             if (m_doorPhase)
             {
                 // 문이 열렸다: 문까지의 막힘 기록을 지우고 바로 입구로
@@ -1928,7 +1928,7 @@ namespace ValheimHelper
                 LeaveCrypt(dt);
                 return true;
             }
-            if (Carried() == 0 && m_giveUp == null && m_cryptsDone.Count > 0 && Item == Dungeons.ScrapItem)
+            if (Carried() == 0 && m_giveUp == null && m_cryptsDone.Count > 0 && Dungeons.InsideOnly(Item))
             {
                 Go(Step.Search); // 빈손으로 지하묘지에서 나옴: 집까지 안 가고 다음 묘지·찾기
                 return true;

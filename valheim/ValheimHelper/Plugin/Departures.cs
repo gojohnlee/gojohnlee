@@ -201,7 +201,8 @@ namespace ValheimHelper
                 Urgent = cmd.Urgent,
                 CurrentJob = !fromQueue && npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !npc.Ai.Yields ? npc.Ai.Job.Label : null,
                 Tool = GatherJob.ToolFor(npc, ways, cmd.Item),
-                NeedFinder = ResourceCatalog.FromHidden(cmd.Item) && !HiddenOres.HaveFinder(),
+                // 지하묘지 진흙 더미에도 Beacon이 붙어 숨는 것으로 잡히지만, 던전 물건은 들어가서 캔다(회차 164: crypttest가 needFinder로 거절됨)
+                NeedFinder = !Dungeons.InsideOnly(cmd.Item) && ResourceCatalog.FromHidden(cmd.Item) && !HiddenOres.HaveFinder(),
                 Fed = npc.Meals.Count > 0,
                 SecondsPerUnit = ways.Contains(ToolKind.Hunt) ? 40f : ways.Count == 1 && ways.Contains(ToolKind.None) ? 1.5f : 4f,
             };
@@ -243,7 +244,7 @@ namespace ValheimHelper
                 input.Places.Add(o);
             }
             input.Places.Sort((a, b) => a.Distance.CompareTo(b.Distance));
-            if (cmd.Item == Dungeons.ScrapItem && input.Places.Count == 0)
+            if (cmd.Item == Dungeons.ScrapItem && input.Places.Count == 0) // 거절 대사가 지하묘지 말이라 고철만(서리 동굴은 못 찾으면 일이 찾기·탐험으로)
             {
                 input.NoCrypt = !Dungeons.TryChoose(home, out _, out bool minedOut);
                 input.CryptsMinedOut = minedOut;

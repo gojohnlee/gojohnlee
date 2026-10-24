@@ -168,7 +168,12 @@ namespace ValheimHelper
             checks.Add("열쇠 없으면 닫힌 지하묘지는 안 고름", !chosen);
             var scrapCmd = new ValheimHelper.Core.Chat.ChatCommand { Kind = ValheimHelper.Core.Chat.CommandKind.Item, Item = Dungeons.ScrapItem, Amount = 3 };
             var closedJudge = Departures.JudgeFor(w.Ragnar, scrapCmd);
-            checks.Add($"열쇠 없고 문 닫힌 묘지뿐이면 철은 출발 전에 거절 ({closedJudge?.Key})", closedJudge != null && closedJudge.Key == "depart.noCrypt");
+            // 다른 지하묘지가 다 캔 곳(더미 0)이면 Core 규칙(Crypts.MinedOut)대로 "다 캠"이 맞다 — 회차 164: 자리를 옮겨 세운 뒤 23/24(cryptsEmpty), 그때 목록을 남긴다
+            var allNow = Dungeons.All();
+            bool otherEmpty = allNow.Any(c => c.Left == 0);
+            string wantKey = otherEmpty ? "depart.cryptsEmpty" : "depart.noCrypt";
+            TestRunner.Log("지하묘지 목록: " + string.Join(", ", allNow.Select(c => $"{c.Name} {Utils.DistanceXZ(c.Pos, w.Home):0}m {(c.Open ? "열림" : "닫힘")} 더미 {c.Left}")));
+            checks.Add($"열쇠 없고 문 닫힌 묘지뿐이면 철은 출발 전에 거절 ({closedJudge?.Key}, 기대 {wantKey})", closedJudge != null && closedJudge.Key == wantKey);
 
             keys.SetKnown(true);
             chosen = Dungeons.TryChoose(w.Home, out pick) && Utils.DistanceXZ(pick.Pos, mine.Pos) < 1f && !pick.Open && pick.CanOpen;
