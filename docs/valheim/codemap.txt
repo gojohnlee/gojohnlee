@@ -33,7 +33,7 @@ NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 
 상자                  Plugin/Work/Chests.cs(I-1: ChestRole Any/Gear/Food/Mats 인자·TagProvider(ZDO→ChestTags, 기본 ChestTagReader.Read, null=전부)·Candidates(역할별 거리 안 ZDO 고르기). RoleFor(물건)=Unload 역할. 지정 없음: 거점 125m(Core BaseArea) 안 상자 전부 NearBase·First·CountAll, 넣기 ForItem = 같은 물건 → 빈자리. !상자는 "다 씀" 대답만)
 상자 이름(I-2)        Core/Work/ChestNames.cs(Parse 이름→ChestTags, Select 역할 상자 있으면 그것만·없으면 일반·손대지 않음 제외)·Plugin/Work/ChestTagReader.cs(ZDO 문자열 "ChestName" = CustomChestName 모드의 이름) · Tests/ChestNamesTests
 상자 재료로 제작(①)   Core/Storage/StockTake.cs(Enough·Plan 가방 먼저 → 가까운 상자) + Plugin/Storage/BaseStock.cs(호스트 자기 플레이어만, 가까운 깃발 125m 안 불러와진 상자·열린 것·남의 개인 상자 뺌, Count 0.5초 캐시·DoCrafting 동안 Fresh, Take=Chests.TryEdit)·CraftPatches.cs(Player.HaveRequirementItems Postfix·ConsumeResources Prefix·InventoryGui.DoCrafting Fresh·HaveRequirements(Piece)·SetupRequirement 개수 색) · 시험 Plugin/Storage/StockTest.cs(vh_stocktest) · Tests/StockTakeTests
-상자 정리(②)          Core/Storage/ChestTidy.cs(Target: 고를 수 있는 상자 중 가장 많이 든 것·같으면 가까운 것, 옮길 것 없으면 -1) + Plugin/Storage/Tidy.cs(Instant: 거점 상자 중 개인·열린 것 빼고 물건마다 역할 Select → 두 상자 TryEdit 겹쳐 MoveItemToThis, 합 검사) — MorningSettle이 아침에 부름 · 시험 Plugin/Storage/TidyTest.cs(vh_tidytest) · Tests/ChestTidyTests
+상자 정리(②)          Core/Storage/ChestTidy.cs(Target: 고를 수 있는 상자 중 가장 많이 든 것·같으면 가까운 것, 옮길 것 없으면 -1) + Plugin/Storage/Tidy.cs(Instant: 거점 상자 중 개인·열린 것 빼고 물건마다 역할 Select → 두 상자 TryEdit 겹쳐 MoveItemToThis, 합 검사) — MorningSettle이 아침에 부름 · 시험 Plugin/Storage/TidyTest.cs(vh_tidytest) · Tests/ChestTidyTests · 가-2 Tidy.Plan(옮길 것 목록, 모을 상자에 자리 있을 때만)·Tick(60초마다 거점 30m 안 쉬는 일꾼, 플레이어 64m 밖이면 Instant, 아니면 Plugin/Storage/TidyJob.cs 걸어서: 꺼내 들고 → 넣기, 8번·180초, 남은 짐 Unload, 시험 중엔 TestAllow만) · WorkerAI.Job 바뀌면 TidyJob.PutBack(든 것 바로 상자로), WorkerAI.Yields(묘비·정리 = 새 명령에 바로 양보) · 시험 TidyWalkTest.cs(vh_tidywalktest)
 스킬                  Core/Npc/SkillBook.cs + WorkerNpc.RaiseSkill/GetSkillFactor (ZDO vh_skills)
 제작 계획              Core/Work/CraftPlan.cs(426: RecipeBook·Facilities·CraftPlanner·시뮬레이션) + Plugin/Work/Recipes.cs(게임 데이터→RecipeBook, 거점 설비)
 제작 실행기             Core/Work/PlanRunner.cs(단계 상태기계: Next·Begin·Complete·Fail→Blocked·Wait) + Plugin/Work/PlanJob.cs(PlanRunner를 돌리는 일: Gather→GatherJob, Craft→CraftStep, Load/Unload→MachineStep) CraftStep.cs(제작대 앞 제작) MachineStep.cs(Smelter·Fermenter·CookingStation 넣기·꺼내기, 발효기 다 익음 FermentReady)
@@ -77,7 +77,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 준비·장비 Prep·Gear·Meals  vh_preptest;vh_bagtest;vh_resisttest · 활 챙기기 → vh_bowtest · 수리 Repair → vh_repairtest
 짐·상자 Unload·Chests·ChestNames  vh_bagtest;vh_nametest;vh_basetest;vh_woodtest
 상자 재료 제작 Storage/*        vh_stocktest;vh_crafttest;vh_nametest
-상자 정리 Tidy·MorningSettle   vh_tidytest;vh_settletest
+상자 정리 Tidy·MorningSettle   vh_tidytest;vh_tidywalktest;vh_settletest
 밤사이 정산 NightSettle·MorningSettle  dotnet test;vh_settletest;vh_bagtest
 묘비 GraveJob             vh_deathtest
 제작 CraftPlan·PlanRunner·PlanJob·CraftStep  dotnet test + vh_crafttest;vh_settest

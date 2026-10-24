@@ -42,7 +42,16 @@ namespace ValheimHelper
         public enum Mode { Idle, Follow, Home, Work }
 
         /// <summary>Mode.Work일 때 하는 일(채집 GatherJob, 탐험 ExploreJob).</summary>
-        public IWorkerJob Job { get; private set; }
+        public IWorkerJob Job
+        {
+            get => m_job;
+            // 쉴 때 상자 정리(TidyJob)를 다른 일·명령·쉬기로 바꾸면 든 물건을 바로 상자에 되돌린다
+            private set { if (m_job is TidyJob t && !ReferenceEquals(value, t)) t.PutBack(); m_job = value; }
+        }
+        IWorkerJob m_job;
+
+        /// <summary>지금 일이 새 명령에 바로 자리를 내주는 일(묘비 회수·쉴 때 상자 정리) — 대기열에 안 넣고 "~부터 하고 갈게요"도 안 함.</summary>
+        public bool Yields => Job is GraveJob || Job is TidyJob;
         float m_senseTimer;
 
         public Mode Current { get; private set; } = Mode.Idle;
@@ -76,7 +85,7 @@ namespace ValheimHelper
         /// <summary>급한 명령: 하던 일을 대기열 맨 앞에 넣고 비운다(새 일은 부르는 쪽이 StartJob).</summary>
         public void Interrupt()
         {
-            if (Current == Mode.Work && Job != null && !(Job is GraveJob))
+            if (Current == Mode.Work && Job != null && !Yields)
                 Queue.Insert(0, new QueuedWork { Label = Job.Label, Resume = Job, Work = WorkSaves.FromJob(Job) });
             Job = null;
         }

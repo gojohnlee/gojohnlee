@@ -199,7 +199,7 @@ namespace ValheimHelper
                 Item = GatherJob.ItemLabel(cmd.Item),
                 Amount = cmd.Amount,
                 Urgent = cmd.Urgent,
-                CurrentJob = !fromQueue && npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is GraveJob) ? npc.Ai.Job.Label : null,
+                CurrentJob = !fromQueue && npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !npc.Ai.Yields ? npc.Ai.Job.Label : null,
                 Tool = GatherJob.CanStart(npc, ways) ? ToolState.Ok : ToolState.None,
                 Fed = npc.Meals.Count > 0,
                 SecondsPerUnit = ways.Contains(ToolKind.Hunt) ? 40f : ways.Count == 1 && ways.Contains(ToolKind.None) ? 1.5f : 4f,
@@ -368,7 +368,7 @@ namespace ValheimHelper
             if (!Features.RunPlans || plan.Steps.Count == 0 || plan.Partial || plan.TooLong) return;
             var mode = npc.Ai.Current;
             // Work인데 하던 일이 없으면 대기열에서 꺼내는 중(앞 일이 막 끝남, WorkerAI.NextQueued) — 쉬는 것과 같다(회차 128: 죽은 뒤 이어 할 계획이 여기서 버려짐)
-            bool busy = mode == WorkerAI.Mode.Work ? npc.Ai.Job != null : mode != WorkerAI.Mode.Idle && mode != WorkerAI.Mode.Home;
+            bool busy = mode == WorkerAI.Mode.Work ? npc.Ai.Job != null && !(npc.Ai.Job is TidyJob) : mode != WorkerAI.Mode.Idle && mode != WorkerAI.Mode.Home;
             if (busy)
             {
                 Plugin.Log.LogInfo($"{npc.NpcName} 계획 {label}: 지금 {mode}라 시작 안 함");

@@ -40,6 +40,7 @@ namespace ValheimHelper
             Step("vh_bantertest", BanterTest.Register);
             Step("vh_stocktest", StockTest.Register);
             Step("vh_tidytest", TidyTest.Register);
+            Step("vh_tidywalktest", TidyWalkTest.Register);
             Step("vh_skilltest", SkillTest.Register);
             Step("vh_refilltest", RefillTest.Register);
             Step("vh_raidtest", RaidTest.Register);
@@ -87,6 +88,7 @@ namespace ValheimHelper
                 ClaudeChat.Tick();
                 WorkSaves.Tick(UnityEngine.Time.deltaTime);
                 MorningSettle.Tick();
+                Tidy.Tick(UnityEngine.Time.deltaTime);
                 MapSense.Tick(UnityEngine.Time.deltaTime);
                 MapIcons.Update(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();

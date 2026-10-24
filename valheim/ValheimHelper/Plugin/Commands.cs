@@ -110,7 +110,7 @@ namespace ValheimHelper
                 {
                     case CommandKind.Escort:
                         // 일하는 중이면 일을 버리지 않고 그 일에 동행을 붙인다(구상서 8-1), 쉬는 중이면 따라가기
-                        if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null)
+                        if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is TidyJob))
                         {
                             npc.Ai.EscortBy(who.CharacterId, who.Name);
                             npc.Say("answer.escort");
@@ -215,7 +215,7 @@ namespace ValheimHelper
             var args = new Dictionary<string, string> { ["where"] = where, ["biome"] = where };
             if (EnvMan.IsNight()) { npc.Say("nightNoExplore", args); return; }
             // 일하는 중이면: 급하면 하던 일을 멈추고, 아니면 대기열(설계 B-5)
-            if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is GraveJob))
+            if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !npc.Ai.Yields)
             {
                 if (!cmd.Urgent)
                 {
@@ -292,7 +292,7 @@ namespace ValheimHelper
                     if (other != npc) npc.Say("farmAlready", new Dictionary<string, string> { ["npc"] = other.NpcName });
                     return false;
                 }
-            if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is GraveJob))
+            if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !npc.Ai.Yields)
             {
                 if (!urgent)
                 {

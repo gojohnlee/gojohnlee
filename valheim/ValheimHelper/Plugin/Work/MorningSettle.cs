@@ -94,7 +94,7 @@ namespace ValheimHelper
         {
             taken = filled = tapped = brewed = picked = planted = 0;
             foreach (var w in WorkerNpc.All)
-                if (w != null && w.Ai != null && w.Ai.Current == WorkerAI.Mode.Work)
+                if (w != null && w.Ai != null && w.Ai.Current == WorkerAI.Mode.Work && !(w.Ai.Job is TidyJob))
                 { Plugin.Log.LogInfo($"밤사이 정산: {w.NpcName}이 일하는 중이라 설비는 안 건드림"); return; }
             Vector3 home = npc.Home;
             var seen = new HashSet<Smelter>();
