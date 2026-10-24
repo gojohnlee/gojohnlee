@@ -60,6 +60,8 @@ namespace ValheimHelper.Tests
             int put = g.Begin(D(("Stone", -8)), 0f);
             Assert.Equal(10, g.Locked("Wood"));
             Assert.Equal(0, g.Locked("Stone")); // 보낸 것은 가방에 없음
+            Assert.Equal(10, g.LockedWhere(k => k.StartsWith("Wo")));
+            Assert.Equal(0, g.LockedWhere(k => k == "Stone"));
             Assert.Equal(D(("Wood", -4)), g.Reply(take, D(("Wood", -6)))); // 6개만 꺼내짐 → 가방에서 4 뺌
             Assert.Equal(0, g.Locked("Wood"));
             Assert.Equal(D(("Stone", 3)), g.Reply(put, D(("Stone", 5)))); // 5개만 들어감 → 3개 돌려받음

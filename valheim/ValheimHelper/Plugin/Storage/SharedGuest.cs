@@ -358,14 +358,110 @@ namespace ValheimHelper
             }
         }
 
+
+        // ── 답 기다리는 물건(다-3b): 꺼내 온 것은 답 전에 버리기·쓰기·입기·상자에 다시 넣기·제작 재료로 못 씀 ──
+
+        /// <summary>이름(·품질, -1이면 모두)이 맞는 답 기다리는 물건 수.</summary>
+        public static int LockedName(string name, int quality)
+        {
+            if (s_ledger.Count == 0) return 0;
+            return s_ledger.LockedWhere(k =>
+            {
+                string[] p = k.Split('|');
+                return (name == null || p[0] == name) && (quality < 0 || (p.Length > 1 && p[1] == quality.ToString()));
+            });
+        }
+
+        static bool Mine(Humanoid h, Inventory inv) =>
+            h != null && h == Player.m_localPlayer && (inv == null || inv == h.GetInventory());
+
+        static bool Blocked(ItemDrop.ItemData item)
+        {
+            if (s_ledger.Count == 0 || Locked(item) <= 0) return false;
+            Player.m_localPlayer?.Message(MessageHud.MessageType.Center, "상자 답을 기다리는 중…");
+            return true;
+        }
+
+        [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.DropItem))]
+        static class DropPatch
+        {
+            static bool Prefix(Humanoid __instance, Inventory inventory, ItemDrop.ItemData item, ref bool __result)
+            {
+                if (!Mine(__instance, inventory) || !Blocked(item)) return true;
+                __result = false;
+                return false;
+            }
+        }
+
+        [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.UseItem))]
+        static class UsePatch
+        {
+            static bool Prefix(Humanoid __instance, Inventory inventory, ItemDrop.ItemData item) =>
+                !Mine(__instance, inventory) || !Blocked(item);
+        }
+
+        [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.EquipItem))]
+        static class EquipPatch
+        {
+            static bool Prefix(Humanoid __instance, ItemDrop.ItemData item, ref bool __result)
+            {
+                if (!Mine(__instance, null) || !Blocked(item)) return true;
+                __result = false;
+                return false;
+            }
+        }
+
+        /// <summary>가방 물건을 상자로(끌어 놓기·자리 바꾸기·Shift 옮기기) — 꺼내기 답이 줄면 가방에서 뺄 물건이라 다시 넣지 못함.</summary>
+        static bool PutBlocked(InventoryGui gui, InventoryGrid grid, ItemDrop.ItemData item, InventoryGrid.Modifier mod)
+        {
+            if (!Active || s_ledger.Count == 0 || grid == null || Player.m_localPlayer == null) return false;
+            Inventory bag = Player.m_localPlayer.GetInventory(), target = grid.GetInventory();
+            ItemDrop.ItemData drag = GuiDragItem(gui);
+            if (drag != null)
+            {
+                Inventory from = GuiDragInv(gui);
+                if (from == bag && target == s_view) return Blocked(drag);
+                if (from == s_view && target == bag && item != null) return Blocked(item); // 자리 바꾸기 → 가방 것이 상자로
+                return false;
+            }
+            return mod == InventoryGrid.Modifier.Move && target == bag && Blocked(item);
+        }
+
+        /// <summary>제작·건축 재료 셈(아래 범위 안)에서는 답 기다리는 물건을 뺌 — 빼기(ConsumeResources)는 그대로 둬도 남는 수가 잠긴 수 이상.</summary>
+        static int s_reqScope;
+
+        [HarmonyPatch(typeof(Inventory), nameof(Inventory.CountItems))]
+        static class CountPatch
+        {
+            static void Postfix(Inventory __instance, string name, int quality, ref int __result)
+            {
+                if (s_reqScope <= 0 || s_ledger.Count == 0 || Player.m_localPlayer == null || __instance != Player.m_localPlayer.GetInventory()) return;
+                __result = Math.Max(0, __result - LockedName(name, quality));
+            }
+        }
+
+        [HarmonyPatch]
+        static class ReqScope
+        {
+            static IEnumerable<System.Reflection.MethodBase> TargetMethods()
+            {
+                yield return AccessTools.Method(typeof(Player), "HaveRequirementItems");
+                yield return AccessTools.Method(typeof(Player), nameof(Player.HaveRequirements), new[] { typeof(Piece), typeof(Player.RequirementMode) });
+                yield return AccessTools.Method(typeof(Player), nameof(Player.GetFirstRequiredItem));
+                yield return AccessTools.Method(typeof(InventoryGui), nameof(InventoryGui.SetupRequirement));
+            }
+            static void Prefix() => s_reqScope++;
+            static void Finalizer() => s_reqScope--;
+        }
         [HarmonyPatch(typeof(InventoryGui), "OnSelectedItem")]
         static class SelectedPatch
         {
-            static bool Prefix(InventoryGui __instance, InventoryGrid grid, InventoryGrid.Modifier mod, out Snap __state)
+            static bool Prefix(InventoryGui __instance, InventoryGrid grid, ItemDrop.ItemData item, InventoryGrid.Modifier mod, out Snap __state)
             {
                 __state = null;
                 // 상자 물건을 땅에 버리기(Ctrl 클릭)는 가방을 안 거쳐 셈이 안 맞음 → 막음
                 if (Active && mod == InventoryGrid.Modifier.Drop && grid != null && grid.GetInventory() == s_view) return false;
+                if (PutBlocked(__instance, grid, item, mod)) return false;
                 return Before(__instance, out __state);
             }
             static void Postfix(Snap __state) => After(__state);
@@ -391,7 +487,12 @@ namespace ValheimHelper
         [HarmonyPatch(typeof(InventoryGui), "OnStackAll")]
         static class StackAllPatch
         {
-            static bool Prefix(InventoryGui __instance, out Snap __state) => Before(__instance, out __state);
+            static bool Prefix(InventoryGui __instance, out Snap __state)
+            {
+                __state = null;
+                if (Active && s_ledger.Count > 0) { Player.m_localPlayer?.Message(MessageHud.MessageType.Center, "상자 답을 기다리는 중…"); return false; }
+                return Before(__instance, out __state);
+            }
             static void Postfix(Snap __state) => After(__state);
             static Exception Finalizer(Exception __exception, Snap __state)
             {

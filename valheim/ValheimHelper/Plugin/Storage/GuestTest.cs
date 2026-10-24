@@ -44,11 +44,15 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
+        static string ClubName => ObjectDB.instance.GetItemPrefab("Club").GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+
         static void ClearBag()
         {
             Inventory bag = Player.m_localPlayer.GetInventory();
             bag.RemoveItem("$item_wood", bag.CountItems("$item_wood"));
             bag.RemoveItem("$item_stone", bag.CountItems("$item_stone"));
+            ItemDrop.ItemData club = bag.GetItem(ClubName);
+            if (club != null) { Player.m_localPlayer.UnequipItem(club); bag.RemoveItem(club); }
         }
 
         static void Move(InventoryGrid grid, ItemDrop.ItemData item, InventoryGrid.Modifier mod = InventoryGrid.Modifier.Move) =>
@@ -110,8 +114,30 @@ namespace ValheimHelper
             Move(cg, First(view, W));
             bool predicted = bag.CountItems(W) == 20 && view.CountItems(W) == 0 && host.CountItems(W) == 20;
             checks.Add($"꺼내기 예측: 가방 {bag.CountItems(W)}·화면 {view.CountItems(W)} 바로, 호스트 상자 {host.CountItems(W)}는 아직", predicted);
+            // 1-1) 답 전 꺼내 온 나무: 버리기·상자에 다시 넣기·건축 재료 막힘(가방 수는 그대로)
+            Piece bench = ZNetScene.instance.GetPrefab("piece_workbench").GetComponent<Piece>();
+            bool dropped = p.DropItem(bag, First(bag, W), 1);
+            Move(pg, First(bag, W));
+            bool canBuild = p.HaveRequirements(bench, Player.RequirementMode.CanBuild);
+            checks.Add($"답 전 나무: 버리기 {dropped}·다시 넣기 화면 {view.CountItems(W)}·작업대 재료 {canBuild} 막힘, 가방 {bag.CountItems(W)}",
+                SharedGuest.Pending > 0 && !dropped && view.CountItems(W) == 0 && !canBuild && bag.CountItems(W) == 20);
             yield return Settle();
             checks.Add($"꺼내기 답 뒤: 호스트 {host.CountItems(W)}·가방 {bag.CountItems(W)}·화면 {view.CountItems(W)}", host.CountItems(W) == 0 && bag.CountItems(W) == 20 && view.CountItems(W) == 0);
+            checks.Add($"답 뒤 나무는 작업대 재료로 씀 ({p.HaveRequirements(bench, Player.RequirementMode.CanBuild)})", p.HaveRequirements(bench, Player.RequirementMode.CanBuild));
+
+            // 1-2) 답 전 꺼내 온 몽둥이: 쓰기·입기 막힘, 답 뒤 입힘
+            host.AddItem(ObjectDB.instance.GetItemPrefab("Club"), 1);
+            yield return new WaitForSeconds(0.3f);
+            ItemDrop.ItemData vc = First(view, ClubName);
+            if (vc != null) Move(cg, vc);
+            ItemDrop.ItemData club = First(bag, ClubName);
+            bool eq1 = false;
+            if (club != null) { p.UseItem(bag, club, true); eq1 = p.IsItemEquiped(club) || p.EquipItem(club); }
+            checks.Add($"답 전 몽둥이: 화면 {vc != null}·가방 {club != null}, 쓰기·입기 막힘 ({eq1})", club != null && SharedGuest.Pending > 0 && !eq1);
+            yield return Settle();
+            bool eq2 = club != null && p.EquipItem(club) && p.IsItemEquiped(club);
+            if (club != null) { p.UnequipItem(club); bag.RemoveItem(club); }
+            checks.Add($"답 뒤 몽둥이 입힘 ({eq2})", eq2);
 
             // 2) 넣기
             bag.AddItem(stone, 10);

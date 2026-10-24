@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace ValheimHelper.Core.Storage
@@ -143,6 +144,15 @@ namespace ValheimHelper.Core.Storage
         {
             int n = 0;
             foreach (var p in m_pending.Values) if (p.Bag.TryGetValue(key, out int d) && d > 0) n += d;
+            return n;
+        }
+
+        /// <summary>키가 match에 맞는 물건들의 Locked 합(이름·품질로 세는 바닐라 CountItems에 맞춤).</summary>
+        public int LockedWhere(Func<string, bool> match)
+        {
+            int n = 0;
+            foreach (var p in m_pending.Values)
+                foreach (var kv in p.Bag) if (kv.Value > 0 && match(kv.Key)) n += kv.Value;
             return n;
         }
 

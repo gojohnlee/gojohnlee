@@ -29,7 +29,8 @@ namespace ValheimHelper
         internal static int Fresh;
 
         public static bool Active(Player p) =>
-            p != null && p == Player.m_localPlayer && ZNet.instance != null && ZNet.instance.IsServer() && ZNetScene.instance != null;
+            p != null && p == Player.m_localPlayer && ZNet.instance != null && ZNet.instance.IsServer() && ZNetScene.instance != null
+            && !SharedGuest.Force; // 가짜 손님 시험 = 손님(거점 상자 재료는 호스트 자기만)
 
         /// <summary>플레이어에게서 가장 가까운 거점 깃발(125m 안), 없으면 null. 깃발 목록은 5초 캐시(전체 ZDO 훑기라).</summary>
         static Vector3? Home(Vector3 pos)
