@@ -153,6 +153,7 @@ namespace ValheimHelper
                     yield return new WaitForSeconds(1f);
                     t += 1f;
                     if (claude.Ai.Job is GraveJob) graveSeen = true;
+                    else if (!resumed && claude.Graves().Count <= graves0) graveSeen = true; // 거점 0m에서 죽으면 1초 표본 사이에 회수가 끝남(회차 182)
                     if (claude.Ai.Job is GatherJob rj && rj.Item == "Wood")
                     {
                         if (claude.Graves().Count > graves0) graveFirst = false;

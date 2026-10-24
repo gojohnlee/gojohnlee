@@ -303,6 +303,15 @@ namespace ValheimHelper
             if (w.Player == null || w.Player.IsDead()) bad.Add("플레이어 없음·죽음");
             else if (!w.Player.InGodMode()) bad.Add("플레이어 무적 아님");
             int left = Creatures(w.Home).Count;
+            for (int i = 0; i < 3 && left > 0 && Strict && clear; i++) // 치운 뒤 새로 난 것(자연 생성)도 다시 치움(회차 182 peertest)
+            {
+                var names = new List<string>();
+                foreach (var c in Creatures(w.Home)) names.Add($"{Utils.GetPrefabName(c.gameObject)} {Vector3.Distance(c.transform.position, w.Home):0}m{(c.GetComponent<ZNetView>()?.IsValid() == true ? "" : " 무효")}");
+                TestRunner.Log($"시작 정리 뒤 생물 {left} ({string.Join(", ", names.ToArray())}) → 다시 치움");
+                ClearCreatures(w.Home);
+                yield return new WaitForSeconds(0.5f);
+                left = Creatures(w.Home).Count;
+            }
             if (left > 0 && Strict) bad.Add($"거점 {StartRadius:0}m 안 생물 {left}");
             else if (left > 0) TestRunner.Log($"시작: 거점 {StartRadius:0}m 안 생물 {left} 남음 — 오면 일꾼이 싸움(환경 불량 아님)");
             foreach (var npc in new[] { w.Ragnar, w.Floki })
