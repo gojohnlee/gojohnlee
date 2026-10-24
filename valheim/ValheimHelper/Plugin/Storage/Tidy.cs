@@ -18,6 +18,8 @@ namespace ValheimHelper
         {
             public Container From, To;
             public string Name;
+            /// <summary>꺼낼 수 한도(0 = 그 물건 전부) — 개인 상자 준비(상자 기능 ③)가 모자란 만큼만.</summary>
+            public int Count;
         }
 
         /// <summary>
@@ -89,6 +91,35 @@ namespace ValheimHelper
             int after = Count(to, name);
             if (after + Count(from, name) != sum) Plugin.Log.LogError($"상자 정리: {name} 합이 바뀜 {sum} → {after + Count(from, name)}");
             return after - before;
+        }
+
+        /// <summary>
+        /// from의 그 물건을 to로 최대 limit개(to에 자리 있는 만큼). 옮긴 수. 더미를 나눌 땐 복제본을 to에 다 넣을 수 있을 때만 넣고 from에서 그만큼 뺌(합 보존).
+        /// </summary>
+        internal static int TakeSome(Inventory from, Inventory to, string prefab, int limit)
+        {
+            int moved = 0;
+            foreach (var it in new List<ItemDrop.ItemData>(from.GetAllItems()))
+            {
+                if (moved >= limit) break;
+                if (it.m_dropPrefab == null || it.m_dropPrefab.name != prefab) continue;
+                int k = System.Math.Min(it.m_stack, limit - moved);
+                if (!to.CanAddItem(it, k)) continue;
+                if (k == it.m_stack)
+                {
+                    to.MoveItemToThis(from, it);
+                    moved += k - (from.ContainsItem(it) ? it.m_stack : 0);
+                    continue;
+                }
+                ItemDrop.ItemData part = it.Clone();
+                part.m_stack = k;
+                bool ok = to.AddItem(part);
+                int added = ok ? k : k - part.m_stack; // 실패해도 더미에 더해진 몫은 들어감
+                if (added > 0) from.RemoveItem(it, added);
+                moved += added;
+                if (!ok) { Plugin.Log.LogError($"개인 상자 준비: {prefab} {k}개 중 {added}개만 들어감(자리 확인 뒤)"); break; }
+            }
+            return moved;
         }
 
         internal static int Count(Container c, string prefab) => Count(c.GetInventory(), prefab);

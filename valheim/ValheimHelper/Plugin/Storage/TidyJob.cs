@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace ValheimHelper
     /// 다 옮기거나 MaxTrips번·Limit초면 끝, 남은 짐(모을 상자가 꽉 참 등)은 Unload로 상자에. 가방에 이미 그 물건이 있으면 그 옮기기는 건너뜀(일꾼 것과 안 섞음).
     /// 누가 상자를 열고 있으면 EditWait초 기다리다 건너뜀. 도중에 다른 일·명령·싸움 위험이 오면(WorkerAI.Job이 바뀜) PutBack으로 든 것을 바로 상자에 되돌린다.
     /// 쉬는 일이라 대기열에 안 들어가고 새 명령에 바로 자리를 내준다(WorkerAI.Yields).
+    /// 개인 상자 준비(상자 기능 ③)도 같은 걸음으로: 옮길 것 목록(plan)·상태 말(label)만 바꾸고 Move.Count만큼만 꺼낸다.
     /// </summary>
     public sealed class TidyJob : IWorkerJob
     {
@@ -27,18 +29,22 @@ namespace ValheimHelper
         bool m_abort;
         Unload m_unload;
         readonly HashSet<string> m_skip = new HashSet<string>();
+        readonly Func<Vector3, List<Tidy.Move>> m_plan;
+        readonly string m_label;
 
         /// <summary>옮긴 물건 수(시험용).</summary>
         public int Moved { get; private set; }
         public string StepName => "Tidy" + m_step;
-        public string Label => m_npc.Line("state.tidy");
-        public string StateLine() => m_npc.Line("state.tidy");
+        public string Label => m_npc.Line(m_label);
+        public string StateLine() => m_npc.Line(m_label);
         public void AvoidHere(Vector3 danger) => m_abort = true;
 
-        public TidyJob(WorkerNpc npc)
+        public TidyJob(WorkerNpc npc, Func<Vector3, List<Tidy.Move>> plan = null, string label = "state.tidy")
         {
             m_npc = npc;
             m_ai = npc.Ai;
+            m_plan = plan ?? Tidy.Plan;
+            m_label = label;
         }
 
         void Go(Step s)
@@ -74,7 +80,7 @@ namespace ValheimHelper
             if (m_trips >= MaxTrips) { Go(Step.Store); return true; }
             m_move = null;
             Inventory mine = m_npc.GetInventory();
-            foreach (var m in Tidy.Plan(m_npc.Home))
+            foreach (var m in m_plan(m_npc.Home))
                 if (!m_skip.Contains(m.Name) && Tidy.Count(mine, m.Name) == 0) { m_move = m; break; }
             if (m_move == null) { Go(Step.Store); return true; }
             Go(Step.ToFrom);
@@ -99,8 +105,10 @@ namespace ValheimHelper
             if (!Reach(dt, m_move.From, out bool failed)) { if (failed) Skip("못 닿음"); return true; }
             Inventory mine = m_npc.GetInventory();
             string name = m_move.Name;
+            int limit = m_move.Count;
             bool done = Chests.TryEdit(m_move.From, finv =>
             {
+                if (limit > 0) { Tidy.TakeSome(finv, mine, name, limit); return; }
                 foreach (var it in new List<ItemDrop.ItemData>(finv.GetAllItems()))
                     if (it.m_dropPrefab != null && it.m_dropPrefab.name == name && mine.CanAddItem(it, 1)) mine.MoveItemToThis(finv, it);
             });

@@ -97,6 +97,7 @@ namespace ValheimHelper.Core.Chat
                 case "탐험": case "explore": return ParseExplore(t);
                 case "상자": case "chest": return ParseChest(t);
                 case "채워": case "keep": return ParseKeep(t);
+                case "준비": case "prep": return ParsePrep(t, 1, CommandKind.Prep);
                 case "세트": case "set": return ParseSet(t);
                 case "밭": case "farm": return ParseRadius(CommandKind.Farm, t);
                 case "평탄화": case "level": return ParseRadius(CommandKind.Level, t);
@@ -181,6 +182,7 @@ namespace ValheimHelper.Core.Chat
         {
             if (t.Length < 2) return null;
             string second = Lower(t[1]);
+            if (second == "개인" || second == "private" || second == "personal") return ParsePrep(t, 2, CommandKind.PrepKeep);
             if (second == "끔" || second == "off")
             {
                 var off = Kind(CommandKind.KeepOff);
@@ -194,6 +196,21 @@ namespace ValheimHelper.Core.Chat
                 return set;
             }
             return ParseItemAmount(t, 1, t.Length, CommandKind.Keep);
+        }
+
+        /// <summary>t[from..] = "끔 [물건]" 또는 "&lt;물건&gt; &lt;수량&gt;"(내 개인 상자 준비, 상자 기능 ③).</summary>
+        ChatCommand ParsePrep(string[] t, int from, CommandKind kind)
+        {
+            if (t.Length <= from) return null;
+            string first = Lower(t[from]);
+            if (first == "끔" || first == "off")
+            {
+                var off = Kind(CommandKind.PrepOff);
+                if (t.Length == from + 1) return off;
+                off.Item = ResolveItem(t, from + 1, t.Length);
+                return off.Item == null ? null : off;
+            }
+            return ParseItemAmount(t, from, t.Length, kind);
         }
 
         ChatCommand ParseSet(string[] t)

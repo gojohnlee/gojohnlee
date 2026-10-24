@@ -287,7 +287,7 @@ public class DepartureSpeechTests
         "memory", "depart.warn", "depart.hungry", "depart.far", "depart.trips", "depart.lowSkill", "depart.busy", "depart.together", "depart.outOfScope", "depart.noCrypt", "depart.cryptsEmpty", "cryptOpen",
         "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "depart.noResist", "ask.night", "ask.stock", "note.stock", "note.night",
         "craftChestFull", "answer.grumble", "answer.escort", "answer.alternative", "answer.conditionMet", "answer.conditionMissing", "answer.morning",
-        "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone", "craft.plan", "craft.inStock", "craft.missing", "craft.tooLong", "craft.unknown", "setList", "setEmpty", "setNone", "keepSet", "keepOff", "refillGo", "refillMake", "refillFarm",
+        "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone", "craft.plan", "craft.inStock", "craft.missing", "craft.tooLong", "craft.unknown", "setList", "setEmpty", "setNone", "keepSet", "keepOff", "prepOnce", "prepKeep", "prepOff", "prepNoChest", "prepShort", "state.prep", "refillGo", "refillMake", "refillFarm",
         "farmSet", "farmMoved", "farmFull", "farmNoGrow", "farmWhere", "farmNoTool", "farmNoSeed", "farmGo", "farmDone", "farmNoRoom", "state.farm", "farmHarvest", "farmPlantFor", "farmHarvestFor", "farmNoField", "farmNoSeedFor", "craft.farm",
     };
 

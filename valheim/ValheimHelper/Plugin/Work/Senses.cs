@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Storage;
 using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
@@ -90,7 +91,10 @@ namespace ValheimHelper
         public const string KeySets = "vh_sets", KeyRefill = "vh_refill";
         /// <summary>"!밭"으로 정한 밭들(⑨).</summary>
         public const string KeyFarms = "vh_farms";
+        /// <summary>내 개인 상자 준비(상자 기능 ③) — 사람마다 물건·수.</summary>
+        public const string KeyPersonal = "vh_personal";
         static Knowledge s_k;
+        static PersonalBook s_personal;
         static PlaceBook s_places;
         static SetMenuBook s_sets;
         static RefillBook s_refill;
@@ -105,7 +109,7 @@ namespace ValheimHelper
             if (s_k == null || s_for != ZDOMan.instance)
             {
                 s_for = ZDOMan.instance;
-                string best = "", foes = "", places = "", sets = "", refill = "", farms = "";
+                string best = "", foes = "", places = "", sets = "", refill = "", farms = "", personal = "";
                 foreach (var zdo in Workers.AllZdos()) // 월드 불러온 직후 한 번만
                 {
                     string t = zdo.GetString(Key, "");
@@ -120,6 +124,8 @@ namespace ValheimHelper
                     if (re.Length > refill.Length) refill = re;
                     string fa = zdo.GetString(KeyFarms, "");
                     if (fa.Length > farms.Length) farms = fa;
+                    string pe = zdo.GetString(KeyPersonal, "");
+                    if (pe.Length > personal.Length) personal = pe;
                 }
                 s_k = Knowledge.Load(best);
                 s_foes = FoeBook.Load(foes);
@@ -128,6 +134,7 @@ namespace ValheimHelper
                 s_sets = SetMenuBook.Load(sets);
                 s_refill = RefillBook.Load(refill);
                 s_farms = FarmBook.Load(farms);
+                s_personal = PersonalBook.Load(personal);
             }
             return s_k;
         }
@@ -167,13 +174,18 @@ namespace ValheimHelper
             get { Get(); return s_farms; }
         }
 
+        public static PersonalBook Personal
+        {
+            get { Get(); return s_personal; }
+        }
+
         public static void Update(float dt)
         {
             if (s_k == null || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 손님 게임에서는 NPC ZDO에 쓰지 않는다(vh_peertest 3)
             s_saveTimer -= dt;
             if (s_saveTimer > 0f) return;
             s_saveTimer = 30f;
-            if (s_k.Dirty || s_places.Dirty || s_sets.Dirty || s_refill.Dirty || s_farms.Dirty || s_foes.Save() != s_foesSaved) Save();
+            if (s_k.Dirty || s_places.Dirty || s_sets.Dirty || s_refill.Dirty || s_farms.Dirty || s_personal.Dirty || s_foes.Save() != s_foesSaved) Save();
         }
 
         public static void Save()
@@ -182,14 +194,14 @@ namespace ValheimHelper
             string text = s_k.Save();
             string foes = s_foes.Save();
             string places = s_places.Save();
-            string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save();
+            string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save(), personal = s_personal.Save();
             bool skipped = false;
             foreach (var zdo in Workers.Zdos())
             {
                 // 남(친구 컴퓨터)이 주인인 ZDO에는 안 쓴다(vh_peertest "싸우는 중": 30초 저장이 뺏긴 순간과 겹쳐 주인 아닌데 씀).
                 // Workers.Reclaim이 1초 안에 되찾으니 바뀐 표시를 남기고 2초 뒤 다시 저장한다.
                 if (zdo.HasOwner() && !zdo.IsOwner()) { skipped = true; continue; }
-                zdo.Set(Key, text); zdo.Set(KeyFoes, foes); zdo.Set(KeyPlaces, places); zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms);
+                zdo.Set(Key, text); zdo.Set(KeyFoes, foes); zdo.Set(KeyPlaces, places); zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms); zdo.Set(KeyPersonal, personal);
             }
             if (skipped) { s_saveTimer = 2f; return; }
             s_k.Dirty = false;
@@ -197,6 +209,7 @@ namespace ValheimHelper
             s_sets.Dirty = false;
             s_refill.Dirty = false;
             s_farms.Dirty = false;
+            s_personal.Dirty = false;
             s_foesSaved = foes;
         }
     }

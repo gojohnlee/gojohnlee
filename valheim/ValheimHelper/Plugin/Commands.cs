@@ -163,6 +163,11 @@ namespace ValheimHelper
                         Brain.Refill.Off(cmd.Item);
                         npc.Say("keepOff", new Dictionary<string, string> { ["item"] = cmd.Item != null ? GatherJob.ItemLabel(cmd.Item) : "전부" });
                         break;
+                    case CommandKind.Prep:
+                    case CommandKind.PrepKeep:
+                    case CommandKind.PrepOff:
+                        PersonalChests.Command(who, cmd, npc);
+                        break;
                     case CommandKind.Farm:
                         SetFarm(who, cmd, npc);
                         break;

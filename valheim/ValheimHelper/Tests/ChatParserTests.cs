@@ -194,6 +194,35 @@ public class ChatParserTests
     }
 
     [Fact]
+    public void PersonalPrep()
+    {
+        var c = Cmd("!준비 나무 5");
+        Assert.Equal(CommandKind.Prep, c.Kind);
+        Assert.Equal("Wood", c.Item);
+        Assert.Equal(5, c.Amount);
+
+        c = Cmd("!채워 개인 구리주괴 20");
+        Assert.Equal(CommandKind.PrepKeep, c.Kind);
+        Assert.Equal("Copper", c.Item);
+        Assert.Equal(20, c.Amount);
+
+        c = Cmd("!채워 개인 끔");
+        Assert.Equal(CommandKind.PrepOff, c.Kind);
+        Assert.Null(c.Item);
+
+        c = Cmd("!준비 끔 나무");
+        Assert.Equal(CommandKind.PrepOff, c.Kind);
+        Assert.Equal("Wood", c.Item);
+
+        c = Cmd("!keep private wood 3");
+        Assert.Equal(CommandKind.PrepKeep, c.Kind);
+        Assert.Equal(3, c.Amount);
+
+        Assert.Equal(ChatRoute.Haiku, P.Parse("!준비").Route);
+        Assert.Equal(ChatRoute.Haiku, P.Parse("!준비 나무").Route);
+    }
+
+    [Fact]
     public void SetMake()
     {
         var c = Cmd("!세트 1 20");
