@@ -46,7 +46,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   나-1) [끝, 회차 152 — 커밋 e5b3bac · 시험 vh_mychesttest PASS 16/16, tidywalktest 13/13·tidytest 13/13, Core 509/509] 챗으로 내 개인 상자 준비(!준비·!채워 개인·끔, 거점 상자에 있는 만큼, Core PersonalPrep·Plugin/Storage/PersonalChests).
   나-2) [끝, 회차 153 — 커밋 9a69e35 · 시험 vh_mychesttest PASS 19/19, refilltest 22/22·tidywalktest 13/13, Core 510/510] 거점 상자에도 모자란 몫은 자동 보충이 채집·제작(Departures.RefillDue·PersonalBook.Short).
   다) ④ 친구 단계(친구 오기 전): 사람끼리 동시 열기 + 친구 제작 재료 부탁(2초 제작 막대 안에 답). 같은 순간 복제는 감수, 못 넣으면 돌려줌. 시험은 가짜 손님(답 0.2~0.5초 늦춤). 조각:
-  다-1) [끝, 회차 154 — 커밋 aa48a6f · Core 515/515(SharedChestTests 5)] Core 규칙: 호스트 판정 ChestDeal.Take·Put, 손님 예측 장부 GuestLedger(Core/Storage/SharedChest.cs).
+  다-1) [끝, 회차 154 — 커밋 aa48a6f·e3392e8 · Core 515/515(SharedChestTests 5)] Core 규칙: 호스트 판정 ChestDeal.Take·Put, 손님 예측 장부 GuestLedger(Core/Storage/SharedChest.cs).
   다-2) 호스트 쪽: 상자 주인은 늘 호스트(RPC_RequestOpen 패치 — 손님이 열어도 SetOwner 안 하고 열림 답만, 사람이 연 상자도 다른 사람에게 열어 줌) + 손님 부탁 RPC(꺼내기·넣기 → ChestDeal로 Chests.TryEdit, 답 = 옮긴 수). 넣기 자리가 일꾼이 막 넣은 것 때문에 없으면 일꾼 가방으로 되돌려 자리 냄은 다-4로.
   다-3) 손님 쪽: 주인 아닌 상자 화면의 끌기·놓기(InventoryGrid·InventoryGui 옮기기)를 예측 + 부탁으로, 답 전 그 물건 버리기·쓰기·입기·제작 재료 막기(GuestLedger.Locked), StackAll·TakeAll도 부탁으로. 가짜 손님 시험(호스트 안에서 답 0.2~0.5초 늦춤).
   다-4) 친구 제작·건축 재료 부탁(제작 막대 시작 때 부탁, 건축은 놓고 뒤에서 뺌·모자라면 걷음) + 일꾼 넣은 것 되돌려 자리 내기.
