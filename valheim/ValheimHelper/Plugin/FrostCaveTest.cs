@@ -101,6 +101,33 @@ namespace ValheimHelper
                 TestRunner.Log($"  안 {kv.Key} ×{kv.Value}{(notes[kv.Key].Length > 0 ? "  [" + notes[kv.Key] + "]" : "")}");
             checks.Add($"안 물체 셈 ({inside}개, {counts.Count}종)", inside > 0);
             checks.Add($"안에 캐거나 줍는 것 있음 ({resources}종)", resources > 0);
+
+            // ⑪ 4다) "!수정 3" → 열쇠 문 없는 동굴 입구로 들어가 수정을 캐고 나와 거점 상자에 넣는다(박쥐·울브 스포너, 얼음 종유석이 길을 막는지도 봄)
+            if (gate == null) yield break;
+            bool listed = Dungeons.All("Crystal").Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Keyless && c.Left > 0);
+            checks.Add("Dungeons.All(수정)이 이 동굴을 열린 곳으로 셈", listed);
+            TestKit.ClearBaseStock(w, "Crystal");
+            // 약식: 거점에서 110m 가는 길은 빼고 입구 12m 앞에서 시작(CryptTest와 같음)
+            Vector3 start = TestRunner.Quick ? GatherTest.Ground(gate.transform.position + Vector3.Scale(w.Home - gate.transform.position, new Vector3(1f, 0f, 1f)).normalized * 12f) : w.Home;
+            w.Ragnar.TeleportTo(start, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(1.5f);
+            int stockBefore = GatherTest.CountBase(w.Home, "Crystal");
+            GatherTest.Say($"!{w.Ragnar.NpcName} 수정 3", null);
+            bool wasInside = false;
+            float t = 0f, inAt = -1f, outAt = -1f;
+            while (t < 480f && GatherTest.CountBase(w.Home, "Crystal") - stockBefore < 3)
+            {
+                yield return new WaitForSeconds(1f);
+                t += 1f;
+                if (w.Ragnar.InInterior()) { wasInside = true; if (inAt < 0f) inAt = t; }
+                else if (wasInside && outAt < 0f) outAt = t;
+            }
+            int got = GatherTest.CountBase(w.Home, "Crystal") - stockBefore;
+            TestRunner.Log($"수정 일: {t:0}초(들어감 {inAt:0}초·나옴 {outAt:0}초{(TestRunner.Quick ? ", 약식 입구 앞 시작" : "")}), 상자에 수정 {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}, 체력 {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}");
+            checks.Add("일꾼이 동굴 안으로 들어감", wasInside);
+            checks.Add($"수정이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
+            yield return new WaitForSeconds(3f);
+            checks.Add("일꾼이 안에 남지 않음", !w.Ragnar.InInterior());
         }
     }
 }
