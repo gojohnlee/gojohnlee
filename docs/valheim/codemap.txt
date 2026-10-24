@@ -225,4 +225,6 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 평원 자료(회차 169 vh_plainstest, 게임 1.0.20): 흑금속 고철 = 풀링 사냥(CharacterDrop), 타르 = Pickable_Tar·Pickable_TarBig 맨손(성장체 BlobTar도 떨굼),
   보리·아마 = 밭(sapling_barley·flax 바이옴 16=평원만) + 야생 Pickable_Barley_Wild·Flax_Wild(풀링 마을), 클라우드베리 = CloudberryBush(Pickable+Destructible, 떨굼 없음),
   록스 고기 = 록스 사냥, 바늘 = 데스킷(m_flying이라 Prey에서 빠짐). 덤불·밭 작물(Pickable_Carrot 등)은 Pickable과 Destructible을 같이 가짐.
-  프리팹 체력: Goblin 175·GoblinBrute 800·GoblinShaman 100·Deathsquito 10·Lox 1000·BlobTar 100. 안 배운 적 한 방은 몸집 짐작(Danger.GuessDamage)이라 데스킷 4.7로 너무 낮음.
+  프리팹 체력: Goblin 175·GoblinBrute 800·GoblinShaman 100·Deathsquito 10·Lox 1000·BlobTar 100.
+  적 한 방 데이터(회차 170, Guard.DataHit = 공격 물건(m_defaultItems·m_randomWeapon·m_randomSets) 피해 합 × m_attack.m_damageMultiplier 중 최대, 별마다 ×1.5 = Attack.GetLevelDamageFactor):
+  Goblin 90·GoblinBrute 130·GoblinShaman 120·Deathsquito 90·Lox 130·BlobTar 95. 몸집 짐작(GuessDamage)은 공격 물건 없을 때만.
