@@ -1,0 +1,436 @@
+using System.Collections.Generic;
+using UnityEngine;
+using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
+
+namespace ValheimHelper
+{
+    public sealed partial class GatherJob
+    {
+        // ---- 찾기 ----
+
+        bool UpdateSearch(float dt)
+        {
+            if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
+            if (m_npc.InInterior()) return UpdateInside();
+            if (m_leftDrops is Vector3 left)
+            {
+                // 짐이 차서 남기고 온 것부터 줍는다. 두 번 가 봐도 남거나 2분 걸어도 못 가면 잊는다(못 닿는 곳).
+                if (m_leftDropsTries < 2 && m_stepTime < 120f && NearestDrop(left) != null)
+                {
+                    if (!Walk(dt, left, 6f)) return true;
+                    m_leftDropsTries++;
+                    m_targetPos = left;
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 남기고 간 것 주우러 옴({m_leftDropsTries}번째)");
+                    Go(Step.Collect);
+                    return true;
+                }
+                m_leftDrops = null;
+            }
+            if (m_hunt)
+            {
+                if (FindPrey()) { Go(Step.Hunt); return true; }
+                // ⑫ 풀링 마을: 혼자면 잡을 사냥감인데 둘레 무리가 세다 → 도움 요청(같이 가 주면 MyHit에 플레이어 몫이 더해짐)하고 그만둔다
+                if (m_packFoe != null) return GiveUp("preyPack");
+                // ⑫ 록스처럼 그 한 마리가 혼자 잡기엔 세다(위험 크면 안 함) → 헤매지 말고 같이 가 달라고 한다
+                if (m_strongFoe != null) return GiveUp("preyStrong");
+                // 사슴 가죽처럼 활로만 잡는 것뿐인데 쏠 활·화살이 없다(장비 상자에 넣어 주면 Prep이 챙긴다)
+                if (!Prey.Any(Item, false) && (m_bowFailed || m_npc.ShootingBow() == null)) return GiveUp("needBow");
+            }
+            else if (FindInSight(out ZDO zdo))
+            {
+                Found(zdo);
+                return true;
+            }
+            if (m_sawTooHard && !m_saidTooWeak)
+            {
+                // 해 보고 배운다(8-2장): 보이는 건 있는데 지금 연장으론 안 된다. 한 번만 말한다.
+                m_saidTooWeak = true;
+                m_npc.Say("toolTooWeak", Args());
+            }
+            if (Dungeons.InsideOnly(Item) && TryStartCrypt()) return true;
+            Knowledge k = Brain.Get();
+            Vector3 pos = m_npc.transform.position;
+            ZoneXY here = Senses.ZoneOf(pos);
+            if (Utils.DistanceXZ(Senses.ZoneCenter(here), pos) < 20f)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {here.X},{here.Y}에 와서 봤는데 쓸 게 없음 / {SightDiag(pos)}");
+                if (!m_sawSkipped) k.Forget(here, Item); // 여기 와서 봤는데 없다(건너뛴 것만 보이면 지식은 그대로)
+                m_tried.Add(here);
+            }
+            foreach (var m in k.ZonesWith(Item, here))
+            {
+                if (m.Zone.Equals(here) || ZoneAvoided(m.Zone) || m_tried.Contains(m.Zone) || ZoneExcluded(m.Zone)) continue; // 위험한 곳·이미 가 본 곳은 안 간다
+                if (!Scout.Reachable(pos, m.Zone))
+                {
+                    // 바다 건너(이어진 포탈도 없음)는 안 가고 한 번 말한다(사용자 결정 2026-10-23 "바다 건너 일터는 포탈로만"). 좁은 강·늪 물은 예전처럼 말없이 거름.
+                    if (!m_saidSea && !Scout.WalkReachable(pos, m.Zone) && Scout.OceanBetween(pos, Senses.ZoneCenter(m.Zone)))
+                    {
+                        m_saidSea = true;
+                        SeaSkips++;
+                        Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {m.Zone.X},{m.Zone.Y}는 바다 건너, 이어진 포탈 없음 → 안 감");
+                        m_npc.Say("depart.sea", Args());
+                    }
+                    continue;
+                }
+                m_goalZone = m.Zone;
+                PortalDepart();
+                GoZone();
+                return true;
+            }
+            // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
+            if (!m_exploring && m_searchTime <= SearchLimit
+                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !ZoneAvoided(z) && !m_tried.Contains(z) && !ZoneExcluded(z) && Scout.Reachable(pos, z), out m_goalZone))
+            {
+                if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
+                GoZone();
+                return true;
+            }
+            // 2) 다 둘러봤거나 15분이 지났다: 새 땅(지도 경계)으로 30분까지. 밤에는 모르는 땅에 가지 않는다.
+            if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
+            if (EnvMan.IsNight()) return GiveUp(m_exploring ? "nightBack" : "nightNoExplore");
+            int biomes = k.BiomesOf(Item); // 그 물건이 나던 바이옴 쪽 경계부터
+            if (Scout.NextFrontier(m_npc, 0, 0, biomes, m_avoid, out m_goalZone))
+            {
+                if (!m_exploring)
+                {
+                    m_exploring = true;
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 아는 곳에 없음 → 새 땅 탐험");
+                    if (!m_saidExplore) { m_saidExplore = true; m_npc.Say("exploreStart", Args()); }
+                }
+                GoZone();
+                return true;
+            }
+            return GiveUp("notFound");
+        }
+
+        // ---- 지하묘지 (⑦ 철: 고철은 늪 지하묘지의 진흙 더미에서만 나온다) ----
+
+        /// <summary>갈 지하묘지가 있으면 거기로 간다(바깥 걷기 → 닫혔으면 열쇠 문 열기 → 입구 Teleport). 열린 곳 먼저, 다 캤으면 열 수 있는 닫힌 곳.</summary>
+        bool TryStartCrypt()
+        {
+            if (EnvMan.IsNight()) return false; // 밤에 늪 바깥을 걷지 않는다(들어가는 건 낮에만)
+            if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, m_cryptsDone, Item)) return false;
+            m_crypt = c;
+            m_doorTries = 0;
+            m_doorPhase = false;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 {c.Name}로({Utils.DistanceXZ(c.Pos, m_npc.transform.position):0}m, {(c.Open ? "열림" : "닫힘 → 연다")}, 더미 {c.Left})");
+            Go(Step.GoCrypt);
+            return true;
+        }
+
+        bool UpdateGoCrypt(float dt)
+        {
+            if (m_npc.InInterior())
+            {
+                m_insideTime = 0f;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 들어감(y {m_npc.transform.position.y:0})");
+                Go(Step.Search);
+                return true;
+            }
+            if (m_stepTime > CryptGoLimit) return AbandonCrypt("시간 초과");
+            Vector3 pos = m_npc.transform.position;
+            if (!m_crypt.Keyless && !Dungeons.IsOpen(m_crypt.Door)) return UpdateOpenDoor(dt, pos);
+            if (m_doorPhase)
+            {
+                // 문이 열렸다: 문까지의 막힘 기록을 지우고 바로 입구로
+                m_doorPhase = false;
+                m_bestDist = float.MaxValue;
+                m_progressTimer = 0f;
+                m_gateUsedAt = -10f;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 문 열림({m_stepTime:0}초)");
+            }
+            Teleport gate = Dungeons.Entrance(m_crypt.Pos);
+            if (gate == null)
+            {
+                // 입구 구역이 아직 안 불러와졌다: 가까이 가서 기다린다
+                if (!WalkVia(dt, m_crypt.Pos, 15f) && Stuck(dt, PortalOr(m_crypt.Pos))) return AbandonCrypt("입구 가기 막힘");
+                return true;
+            }
+            Vector3 gp = gate.transform.position;
+            if (Walk(dt, gp, 1.5f) || Utils.DistanceXZ(gp, pos) < 2.5f)
+            {
+                if (m_stepTime - m_gateUsedAt > 3f)
+                {
+                    m_gateUsedAt = m_stepTime;
+                    m_ai.StopMoving();
+                    if (!Dungeons.Use(m_npc, gate)) return AbandonCrypt("입구 Teleport 실패");
+                }
+            }
+            else if (Stuck(dt, gp)) return AbandonCrypt("입구 앞 막힘");
+            return true;
+        }
+
+        /// <summary>닫힌 지하묘지(플레이어가 그 열쇠를 얻음): 열쇠 문 앞까지 걸어가 연다. 세 번 해도 안 열리면 이 묘지는 포기.</summary>
+        bool UpdateOpenDoor(float dt, Vector3 pos)
+        {
+            m_doorPhase = true;
+            Door door = Dungeons.DoorOf(m_crypt.Door);
+            if (door == null)
+            {
+                // 문 구역이 아직 안 불러와졌다: 가까이 간다
+                if (!WalkVia(dt, m_crypt.Pos, 15f) && Stuck(dt, PortalOr(m_crypt.Pos))) return AbandonCrypt("문 가기 막힘");
+                return true;
+            }
+            Vector3 dp = door.transform.position;
+            if (Walk(dt, dp, 2f) || Utils.DistanceXZ(dp, pos) < 3f)
+            {
+                if (m_stepTime - m_gateUsedAt > 3f)
+                {
+                    if (m_doorTries >= 3) return AbandonCrypt("문 안 열림");
+                    m_doorTries++;
+                    m_gateUsedAt = m_stepTime;
+                    m_ai.StopMoving();
+                    if (!Dungeons.Open(m_npc, door)) return AbandonCrypt("문 못 엶(열쇠·와드)");
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 열쇠 문 엶 {m_doorTries}번째");
+                    if (m_doorTries == 1) m_npc.Say("cryptOpen", Args());
+                }
+            }
+            else if (Stuck(dt, dp)) return AbandonCrypt("문 앞 막힘");
+            return true;
+        }
+
+        bool AbandonCrypt(string why)
+        {
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 포기({why})");
+            LogStuck("지하묘지", m_crypt.Pos);
+            m_cryptsDone.Add(m_crypt.Pos);
+            Go(Step.Search);
+            RescueIfStuckAgain();
+            return true;
+        }
+
+        /// <summary>안에서 찾기: 90m 안의 진흙 더미 중 가까운 것. 없으면 이 지하묘지는 다 캔 것 → 나간다.</summary>
+        bool UpdateInside()
+        {
+            if (FindInSight(out ZDO zdo, CryptSight)) { Found(zdo); return true; }
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지에 더 없음 / {SightDiag(m_npc.transform.position)}");
+            m_cryptsDone.Add(m_crypt.Pos);
+            Go(Step.Return);
+            return true;
+        }
+
+        /// <summary>안에서 나가는 Teleport까지 걸어가 쓴다. 나가는 길이 없거나 2분 넘으면 깃발로.</summary>
+        void LeaveCrypt(float dt)
+        {
+            Teleport exit = Dungeons.Exit(m_npc.transform.position);
+            if (exit == null || m_stepTime > 120f)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 지하묘지 나가는 길 없음/시간 초과 → 깃발로");
+                if (!m_ai.TeleportHome()) m_ai.RestHere(m_npc); // 귀환 통일: 도착 확인, 안 되면 그 자리에서 쉼
+                return;
+            }
+            Vector3 ep = exit.transform.position;
+            if (Walk(dt, ep, 1.5f) || Vector3.Distance(ep, m_npc.transform.position) < 2.5f)
+            {
+                if (m_stepTime - m_gateUsedAt > 3f)
+                {
+                    m_gateUsedAt = m_stepTime;
+                    m_ai.StopMoving();
+                    Dungeons.Use(m_npc, exit);
+                }
+            }
+        }
+
+        void GoZone()
+        {
+            m_goalPos = Scout.GroundPos(m_goalZone);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {m_goalZone.X},{m_goalZone.Y}로({Utils.DistanceXZ(m_goalPos, m_npc.transform.position):0}m, 탐험 {m_exploring})");
+            Go(Step.GoZone);
+        }
+
+        /// <summary>보이는 대상으로 간다. 새 땅에서 처음 찾았으면 어디인지 알린다.</summary>
+        void Found(ZDO zdo)
+        {
+            if (m_exploring && !m_saidFound)
+            {
+                m_saidFound = true;
+                Scout.FromHome(m_npc.Home, zdo.GetPosition(), out string dir, out string dist);
+                var args = Args();
+                args["dir"] = dir;
+                args["dist"] = dist;
+                m_npc.Say("exploreFound", args);
+            }
+            m_exploring = false; // 찾았으니 다음엔 다시 아는 곳부터
+            ArrivedAt(Senses.ZoneOf(zdo.GetPosition()));
+            Aim(zdo);
+            Go(Step.Approach);
+        }
+
+        bool UpdateGoZone(float dt)
+        {
+            if (m_exploring)
+            {
+                m_exploreTime += dt;
+                if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
+                if (EnvMan.IsNight()) return GiveUp("nightBack");
+            }
+            else
+            {
+                m_searchTime += dt;
+                if (m_searchTime > SearchLimit) { Go(Step.Search); return true; } // 새 땅으로
+            }
+            // 가는 길에 보이면 바로 그쪽으로
+            m_scanTimer -= dt;
+            if (m_scanTimer <= 0f && m_hunt && FindPrey()) { Go(Step.Hunt); return true; }
+            if (m_scanTimer <= 0f && !m_hunt && FindInSight(out ZDO zdo))
+            {
+                Found(zdo);
+                return true;
+            }
+            if (m_scanTimer <= 0f)
+            {
+                m_scanTimer = 1f;
+                // 새 땅으로 가는 길에 목표 구역이 밝혀졌다: 경계가 밀려났으니 다음 경계로(둘러봄 표시는 안 한다)
+                // 멀리선 이동 생략 중엔 안 봄: 지도 위치가 밝혔어도 몸은 아직 출발점(내린 뒤에 봄)
+                if (m_exploring && m_far == null && Scout.Explored(m_goalZone)) { Go(Step.Search); return true; }
+            }
+            bool arrived = WalkVia(dt, m_goalPos, 6f);
+            if (arrived || Stuck(dt, PortalOr(m_goalPos)))
+            {
+                if (arrived) ArrivedAt(m_goalZone);
+                if (!arrived)
+                {
+                    LogStuck("구역 가기", m_goalPos);
+                    Vector3 c = Senses.ZoneCenter(m_goalZone); // ZoneExcluded와 같은 자리로 센다
+                    // 탐험(새 땅 경계)은 순간이동 안 함(사용자 결정 2026-10-23). 옮겼으면 그 구역으로 마저 걷는다.
+                    bool done = WalkFailed(c, !m_exploring, out bool keep, out bool moved);
+                    if (moved) return true;
+                    m_tried.Add(m_goalZone); // 못 간 곳을 또 고르면 같은 자리에서 되풀이한다
+                    if (done) { Brain.Get().MarkLooked(m_goalZone); return keep; }
+                }
+                Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
+                Go(Step.Search);
+                if (!arrived) RescueIfStuckAgain();
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 시야 안에서 그 물건이 나오는 것 중 지금 다룰 수 있는 것.
+        /// 가까운 순이되 가산점: 쓰러진 통나무 30m > 큰 나무·바위 10m > 줍는 것 5m > 어린 나무·그루터기·작은 돌 0.
+        /// </summary>
+        bool FindInSight(out ZDO best, float range = Senses.SightRange)
+        {
+            best = null;
+            m_sawSkipped = false;
+            bool inside = m_npc.InInterior();
+            float bestScore = float.MaxValue;
+            Vector3 pos = m_npc.transform.position;
+            var nearby = Senses.Nearby(pos, range + 4f);
+            var pieces = new List<Vector3>();
+            foreach (var zdo in nearby)
+                if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
+            foreach (var zdo in nearby)
+            {
+                if (Character.InInterior(zdo.GetPosition()) != inside) continue; // 바깥에서 지하묘지 안 물체를, 안에서 바깥 물체를 고르지 않는다
+                // 막힘 기록(StuckBook)은 바깥 걷기 자리(xz)라 지하묘지 안(같은 xz, y+5000) 대상에는 안 쓴다 — 회차 136: 밖에서 막힌 자리가 묘지 안 더미를 가렸다
+                bool skipped = m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition()) || (!inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z));
+                ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
+                if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
+                // 건너뛴 대상이 보이면 "와서 봤는데 없음"이 아니다 — 지식에서 지우지 않고 이 일 동안만 그 구역을 뺀다(m_tried)
+                if (skipped) { m_sawSkipped = true; continue; }
+                if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
+                // 타르에 잠긴 덩어리는 바닐라도 못 줍는다(Pickable.m_tarPreventsPicking — "타르에 붙음") — 떠오를 수 있으니 지식은 그대로
+                if (info.Pickable && StuckInTar(zdo)) { m_sawSkipped = true; continue; }
+                // 묻힌 은 광맥(숨는 광맥)은 위시본을 얻었을 때만 알고, 드러난 것이 먼저(HiddenOres, ⑪).
+                bool exposed = info.Hidden && HiddenOres.Exposed(zdo, info);
+                if (info.Hidden && !exposed && !HiddenOres.HaveFinder()) continue;
+                // 갈린 땅(밭)의 기른 작물은 줍지 않는다: 사람이 기르는 것 — 밭일(FarmJob)만 거둔다. 기른 작물만 본다: 타르 웅덩이 땅도
+                // 갈린 땅 칠(IsCultivated)이라 웅덩이 위 줍는 타르를 밭 작물로 건너뛰었다(회차 174 vh_tartest).
+                if (info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
+                // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
+                if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f)) { m_skip.Add(zdo.m_uid); continue; }
+                // 다른 나무·바위에 높이 걸린 쪼개지는 통나무는 고르지 않는다: 밑에서 쪼개면 반토막이 머리 위에 생겨 떨어진다(HungLog, E020)
+                if (HungLog(zdo, info)) continue;
+                if (info.Tool != ToolKind.None)
+                {
+                    ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
+                    if (tool == null) continue;
+                    if (info.MinToolTier > 0 && info.MinToolTier > tool.m_shared.m_toolTier) { m_sawTooHard = true; continue; }
+                }
+                float dist = Utils.DistanceXZ(zdo.GetPosition(), pos);
+                if (dist > range) continue;
+                float score = HiddenOre.Score(dist, info.Priority, info.Hidden, exposed);
+                if (score < bestScore) { bestScore = score; best = zdo; }
+            }
+            return best != null;
+        }
+
+        /// <summary>진단: 시야(44m, 지하묘지 안은 CryptSight) 안에서 그 물건이 나온다고 목록에 있는 것들과 FindInSight가 고르지 않은 까닭(앞 6개, 같은 안/밖만).</summary>
+        string SightDiag(Vector3 pos)
+        {
+            bool inside = Character.InInterior(pos);
+            float range = inside ? CryptSight : Senses.SightRange;
+            var nearby = Senses.Nearby(pos, range + 4f);
+            var pieces = new List<Vector3>();
+            foreach (var zdo in nearby)
+                if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
+            var sb = new System.Text.StringBuilder();
+            int n = 0;
+            foreach (var zdo in nearby)
+            {
+                ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
+                if (info == null || !info.Produces.Contains(Item) || Character.InInterior(zdo.GetPosition()) != inside) continue;
+                if (++n > 6) break;
+                string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
+                    : !inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z) ? "막힘 기록으로 뺀 곳"
+                    : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && StuckInTar(zdo) ? "타르에 잠김" : info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition()) ? "밭 작물"
+                    : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) ? "건축물 4m 안"
+                    : HungLog(zdo, info) ? "높이 걸린 통나무"
+                    : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
+                    : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
+                    : Utils.DistanceXZ(zdo.GetPosition(), pos) > range ? "시야 밖" : "고를 수 있음";
+                sb.Append($"[{info.Prefab} {Utils.DistanceXZ(zdo.GetPosition(), pos):0}m {why}]");
+            }
+            return n == 0 ? "목록에 있는 대상 없음" : sb.ToString();
+        }
+
+        /// <summary>
+        /// 줍는 것이 타르에 잠겨 지금 못 줍는지(바닐라 Pickable.Interact: m_tarPreventsPicking이고 Floating.IsInTar — 무게중심이 타르 표면보다 0.2m 넘게 아래).
+        /// 웅덩이 위 타르 덩어리(Pickable_Tar)는 떠 있다 잠겼다 한다(회차 174 vh_tartest: 잠긴 것을 Interact만 되풀이). 불러오지 않은 것은 모름(false).
+        /// </summary>
+        static bool StuckInTar(ZDO zdo)
+        {
+            ZNetView view = ZNetScene.instance.FindInstance(zdo);
+            if (view == null) return false;
+            Pickable pick = view.GetComponent<Pickable>();
+            return pick != null && pick.m_tarPreventsPicking && view.GetComponent<Floating>() is Floating f && f.IsInTar();
+        }
+
+        /// <summary>갈린 땅이거나 적어 둔 밭(!밭) 안인지.</summary>
+        static bool Farmland(Vector3 p)
+        {
+            if (Brain.Farms.At(p.x, p.z) != null) return true;
+            Heightmap hm = Heightmap.FindHeightmap(p);
+            return hm != null && hm.IsCultivated(p);
+        }
+
+        static bool NearAny(Vector3 p, List<Vector3> points, float range)
+        {
+            float r2 = range * range;
+            foreach (var q in points)
+            {
+                float dx = p.x - q.x, dz = p.z - q.z;
+                if (dx * dx + dz * dz < r2) return true;
+            }
+            return false;
+        }
+
+        /// <summary>info = 자원 목록 밖 대상(길을 막은 얼음 벽 등, ResourceCatalog.Obstacle)일 때만 준다.</summary>
+        void Aim(ZDO zdo, ResourceInfo info = null)
+        {
+            m_targetId = zdo.m_uid;
+            m_targetPos = zdo.GetPosition();
+            m_targetInfo = info ?? ResourceCatalog.Get(zdo.GetPrefab());
+            m_reach = m_targetInfo != null && m_targetInfo.Pickable ? 1.3f : 1.7f;
+            ZNetView view = ZNetScene.instance.FindInstance(zdo);
+            if (view != null)
+            {
+                var col = view.GetComponentInChildren<Collider>();
+                if (col != null) m_reach += Mathf.Min(1.5f, Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) * 0.6f);
+            }
+        }
+
+    }
+}
