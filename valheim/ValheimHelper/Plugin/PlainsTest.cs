@@ -109,22 +109,22 @@ namespace ValheimHelper
                 Brain.Places.Record(fought, new List<GroupFoe> { new GroupFoe { Kind = "Deathsquito", Count = 2 } }, Outcome.Fled, now, Guard.Resolve);
                 DepartureResult weak = Departures.JudgeFor(w.Ragnar, cmd);
                 TestRunner.Log($"데스킷 겪은 뒤(갑옷 {w.Ragnar.GetBodyArmor():0}): {weak?.Action} {weak?.Question} {weak?.Condition} ({weak?.Reason})");
-                checks.Add("약한 장비 → 평원 장비 조건 질문", weak != null && weak.Question == Question.Condition && weak.Condition == "gear");
+                // 위험은 묻지 않고 경고하고 간다(사용자 결정 2026-10-25)
+                checks.Add("약한 장비 → 평원 장비 경고하고 출발", weak != null && weak.Action == DepartAction.Go && weak.Key == "depart.gear");
 
                 int heard0 = w.Heard.Count;
                 Departures.Gather(new Speaker(Player.m_localPlayer.GetPlayerName(), ZDOID.None, ZDOID.None), cmd, w.Ragnar);
-                yield return new WaitForSeconds(1f);
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
                 string n1 = w.Ragnar.NpcName;
                 bool said = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("평원")) >= 0;
-                checks.Add($"\"평원\" 장비 말하고 기다림 (말 {said})", Departures.AskedAt(w.Ragnar) >= 0 && said && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
+                checks.Add($"\"평원\" 장비 말하고 묻지 않고 출발 (말 {said}, {TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0 && said);
+                GatherTest.Say("!멈춰", null);
+                yield return new WaitForSeconds(1f);
 
                 foreach (string a in WolfSet) TestKit.PutInChest(w.Chest, a, 1);
                 DepartureResult good = Departures.JudgeFor(w.Ragnar, cmd);
-                TestRunner.Log($"상자에 늑대 갑옷: {good?.Action} {good?.Question} {good?.Condition} ({good?.Reason})");
-                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
-                checks.Add($"장비 상자에 갑옷 → 스스로 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0);
-                GatherTest.Say("!멈춰", null);
-                yield return new WaitForSeconds(1f);
+                TestRunner.Log($"상자에 늑대 갑옷: {good?.Action} {good?.Question} {good?.Key} ({good?.Reason})");
+                checks.Add("장비 상자에 갑옷 → 장비 경고 없음", good != null && good.Action == DepartAction.Go && good.Key != "depart.gear");
             }
             finally
             {

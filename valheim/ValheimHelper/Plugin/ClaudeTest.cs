@@ -43,6 +43,18 @@ namespace ValheimHelper
                 checks.Add("수다: 대사가 나옴(또는 조용히 무시)", true);
                 yield return new WaitForSeconds(3f);
                 checks.Add("호출이 끝나 NPC가 멀쩡함", w.Ragnar != null && w.Ragnar.GetHealth() > 0f);
+
+                // 3) 수량 없는 부탁 → 되묻지 않고 기본 수로 시작, 되물었으면 짧은 대답("30개")을 앞 말과 이어 시작(사용자 2026-10-25)
+                yield return new WaitForSeconds(2f);
+                GatherTest.Say($"{n1} 돌 좀 캐 와", null);
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 45f);
+                bool direct = w.Ragnar.Ai.Current == WorkerAI.Mode.Work;
+                if (!direct)
+                {
+                    GatherTest.Say($"{n1} 30개", null);
+                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 45f);
+                }
+                checks.Add($"수량 없는 부탁 → 일 시작 ({(direct ? "바로" : "대답 뒤")}, 일 {w.Ragnar.Ai.Job?.Label})", w.Ragnar.Ai.Current == WorkerAI.Mode.Work);
             }
             finally { TestKit.Restore(w); }
             GatherTest.Say("!멈춰", null);

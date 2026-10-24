@@ -96,16 +96,16 @@ namespace ValheimHelper
                 w.Env.m_debugTime = 0.5f;
                 yield return Stop();
 
-                // 3) 죽은 곳 질문 → "아니" → 보류
+                // 3) 죽은 곳 → 묻지 않고 경고하고 출발(사용자 결정 2026-10-25, 예전엔 질문 → "아니" → 보류)
                 Brain.ReplaceForTest(knowFar, "");
                 Brain.Places.Record(far, new List<GroupFoe> { new GroupFoe { Kind = "Greydwarf", Count = 1 } }, Outcome.Died, ZNet.instance.GetTimeSeconds(), Guard.Resolve, "Greydwarf");
                 Log("죽은 곳", Departures.JudgeFor(w.Ragnar, copper));
                 yield return Say($"!{n1} 구리 10", 1f);
-                checks.Add($"죽은 곳 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0 && LastSaid(w, n1).Contains("죽"));
-                yield return Say("아니", 1f);
-                checks.Add("\"아니\" → 보류, 안 나감", Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
+                checks.Add($"죽은 곳 → 경고하고 출발 ({w.Ragnar.Ai.Current}, 말 \"{LastSaid(w, n1)}\")",
+                    Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work && LastSaid(w, n1).Contains("위험"));
+                yield return Stop();
 
-                // 4) 위험 조건(체력 미드) → 미드가 생기면 스스로 출발
+                // 4) 빠듯한 곳(Tight, 예전 체력 미드 조건 질문) → 묻지 않고 경고하고 출발. 미드 하나면 주의가 되는 곳이라 아래 늪 칸에도 쓴다
                 bool made = false;
                 // 한 종류만 늘리면 비율이 0.65 → 1.30처럼 뛰어 Tight 창(싸움 선~1.0)을 건너뛴다(E030, 회차 167) → 약한 적을 섞어 잘게 맞춘다
                 foreach (var kind in new[] { "Greydwarf", "Skeleton", "Draugr", "Greydwarf_Elite" })
@@ -120,7 +120,7 @@ namespace ValheimHelper
                                 if (m > 0) foes.Add(new GroupFoe { Kind = small, Count = m });
                                 Brain.Places.Record(far, foes, Outcome.Back, ZNet.instance.GetTimeSeconds(), Guard.Resolve);
                                 DepartureResult r = Departures.JudgeFor(w.Ragnar, copper);
-                                if (r != null && r.Action == DepartAction.Ask && r.Question == Question.Condition) { made = true; TestRunner.Log($"조건 상황: {kind} {n}마리 + {small} {m}마리 — {r.Reason}"); }
+                                if (r != null && r.Action != DepartAction.Ask && r.Reason.Contains(" Tight,") && WarnsWithMead(w.Ragnar, copper)) { made = true; TestRunner.Log($"위험 상황: {kind} {n}마리 + {small} {m}마리 — {r.Reason}"); }
                                 else if (r != null && m <= 1) TestRunner.Log($"조건 아님: {kind} {n}마리 + {small} {m}마리 — {r.Action} {r.Question} | {r.Reason} | 미드 짐 {MeadsIn(w.Ragnar)}");
                             }
                             if (made) break;
@@ -131,11 +131,10 @@ namespace ValheimHelper
                 if (made)
                 {
                     yield return Say($"!{n1} 구리 10", 1f);
-                    checks.Add($"조건 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0 && LastSaid(w, n1).Contains("미드"));
-                    w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), 1);
-                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
-                    checks.Add($"미드 생김 → 스스로 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0);
+                    checks.Add($"빠듯한 곳 → 묻지 않고 경고하고 출발 ({w.Ragnar.Ai.Current}, 말 \"{LastSaid(w, n1)}\")",
+                        Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work);
                     yield return Stop();
+                    w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), 1); // 아래 늪 칸은 체력 미드를 가진 상태(→ 주의)에서
 
                     // 4-2) 같은 곳이 늪인데 독 저항 미드가 없으면: 묻지 않고 투덜대고 바로 출발(사용자 결정 2026-10-22)
                     TestKit.TakeFromChest(w.Chest, "MeadPoisonResist");
@@ -268,6 +267,17 @@ namespace ValheimHelper
             int n = 0;
             foreach (var it in npc.GetInventory().GetAllItems()) if (Gear.IsHealthMead(it)) n += it.m_stack;
             return n;
+        }
+
+        /// <summary>체력 미드 하나를 쥐여 주면 "주의"(depart.warn)로 내려가는 곳인지 — 아래 늪 칸이 쓰는 상황.</summary>
+        static bool WarnsWithMead(WorkerNpc npc, ChatCommand cmd)
+        {
+            var inv = npc.GetInventory();
+            inv.AddItem(ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), 1);
+            DepartureResult r = Departures.JudgeFor(npc, cmd);
+            foreach (var it in new List<ItemDrop.ItemData>(inv.GetAllItems()))
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") { inv.RemoveItem(it, 1); break; }
+            return r != null && r.Key == "depart.warn";
         }
 
         static string Asked(WorkerNpc npc) => Departures.AskedAt(npc) >= 0 ? "기다림" : "안 물음";
