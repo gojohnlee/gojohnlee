@@ -5,8 +5,8 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_mychesttest (상자 기능 ③ 나-1): 챗으로 내 개인 상자 준비. 개인 상자가 없으면 "없어" 말·안 적음, "!준비 나무 5" → 쉬는 일꾼이 걸어서 거점 상자에서 5개만 내 개인 상자로,
-    /// "!채워 개인 돌 4"(플레이어 멀면 바로) → 4개 유지(빼면 다시 채움), 상자에 모자란 한 번 준비는 있는 만큼 넣고 "모자라" 말·지움, "!채워 개인 끔" → 다 지움.
+    /// vh_mychesttest (상자 기능 ③ 나-1·나-2): 챗으로 내 개인 상자 준비. 개인 상자가 없으면 "없어" 말·안 적음, "!준비 나무 5" → 쉬는 일꾼이 걸어서 거점 상자에서 5개만 내 개인 상자로,
+    /// "!채워 개인 돌 4"(플레이어 멀면 바로) → 4개 유지(빼면 다시 채움), 상자에 모자란 한 번 준비는 있는 만큼 넣고 "모자라" 말·지움(구하러 못 갈 때), 구할 수 있으면 자동 보충이 채집해 와서 개인 상자로(나-2), "!채워 개인 끔" → 다 지움.
     /// 남이 지은 개인 상자·총량은 그대로.
     /// </summary>
     static class MyChestTest
@@ -152,12 +152,34 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             checks.Add($"쓴 만큼 다시 채움 (내 상자 돌 {N(mine, "Stone")}/4, 거점 {N(src, "Stone")}/{stone0 - 7})", N(mine, "Stone") == 4 && N(src, "Stone") == stone0 - 7);
 
-            // 3) 거점 상자에 모자란 한 번 준비: 있는 만큼 넣고 "모자라"·지움
+            // 3) 거점 상자에 모자란 한 번 준비, 구하러도 못 감(출발 판단이 막은 것처럼): 있는 만큼 넣고 "모자라"·지움
             int h3 = w.Heard.Count;
+            Departures.TestSkip("Wood", true);
             Say(who, "!준비 나무 30");
             yield return new WaitForSeconds(5f);
             checks.Add($"있는 만큼 넣음 (내 상자 나무 {N(mine, "Wood")}/{wood0}, 거점 {N(src, "Wood")}/0)", N(mine, "Wood") == wood0 && N(src, "Wood") == 0);
             checks.Add($"모자라 말·지움 (적힘 {Brain.Personal.Find(s_owner, "Wood") != null})", Brain.Personal.Find(s_owner, "Wood") == null && HeardAny(w, h3, "모자라", "더 없어"));
+
+            // 3-2) 나-2: 거점 상자에 없지만 구할 수 있으면 자동 보충이 채집해 오고 → 개인 상자로
+            Departures.TestSkip("Wood", false);
+            int base0 = GatherTest.CountBase(w.Home, "Wood"), mine0 = N(mine, "Wood");
+            Say(who, $"!준비 나무 {mine0 + 3}");
+            yield return new WaitForSeconds(3f);
+            checks.Add($"구할 수 있는 건 기다림 (적힘 {Brain.Personal.Find(s_owner, "Wood") != null}, 거점 나무 {base0})", Brain.Personal.Find(s_owner, "Wood") != null);
+            Departures.TestRefillNow();
+            WorkerNpc g = null;
+            foreach (var n in WorkerNpc.All) if (n != null && n.Ai != null && n.Ai.Job is GatherJob gj && gj.Item == "Wood") g = n;
+            checks.Add($"모자란 3개 채집하러 감 ({(g != null ? g.NpcName + " 목표 " + ((GatherJob)g.Ai.Job).Target : "없음")})", g != null && ((GatherJob)g.Ai.Job).Target == 3);
+            if (g != null)
+            {
+                float gs = 0f;
+                for (; gs < 240f && g.Ai.Job is GatherJob; gs += 0.5f) yield return new WaitForSeconds(0.5f);
+                TestRunner.Log($"채집 끝 {gs:0}초, 거점 나무 {GatherTest.CountBase(w.Home, "Wood")}");
+                for (float s = 0f; s < 20f && Brain.Personal.Find(s_owner, "Wood") != null; s += 0.5f) { PersonalChests.TestNow(); yield return new WaitForSeconds(0.5f); }
+                checks.Add($"구해 온 것 내 상자로 (내 상자 나무 {N(mine, "Wood")}/{mine0 + 3}, 지움 {Brain.Personal.Find(s_owner, "Wood") == null})",
+                    N(mine, "Wood") == mine0 + 3 && Brain.Personal.Find(s_owner, "Wood") == null);
+            }
+            int gathered = N(mine, "Wood") - mine0;
 
             // 4) 끔 → 그 사람 것 전부 지움
             Say(who, "!채워 개인 끔");
@@ -169,8 +191,8 @@ namespace ValheimHelper
 
             int woodAll = N(src, "Wood") + N(mine, "Wood") + N(other, "Wood") + Bag("Wood");
             int stoneAll = N(src, "Stone") + N(mine, "Stone") + N(other, "Stone") + Bag("Stone");
-            checks.Add($"총량 그대로·남 상자 그대로 (나무 {woodAll}/{wood0}, 돌 {stoneAll}/{stone0 - 3}, 남 상자 {N(other, "Wood") + N(other, "Stone")}/0)",
-                woodAll == wood0 && stoneAll == stone0 - 3 && N(other, "Wood") + N(other, "Stone") == 0);
+            checks.Add($"총량 그대로·남 상자 그대로 (나무 {woodAll}/{wood0 + gathered}, 돌 {stoneAll}/{stone0 - 3}, 남 상자 {N(other, "Wood") + N(other, "Stone")}/0)",
+                woodAll == wood0 + gathered && stoneAll == stone0 - 3 && N(other, "Wood") + N(other, "Stone") == 0);
             foreach (var c in made) foreach (var p in new[] { "Wood", "Stone" }) TestKit.TakeFromChest(c, p);
         }
     }

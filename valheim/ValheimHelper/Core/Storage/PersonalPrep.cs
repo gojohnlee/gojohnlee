@@ -73,6 +73,28 @@ namespace ValheimHelper.Core.Storage
             return due;
         }
 
+        /// <summary>
+        /// 나-2: 거점 상자로도 못 채우는 몫(물건마다, 넣은 순서대로) — 모든 사람의 모자란 수 합 − 거점 상자(개인 아닌 것)에 든 수.
+        /// 이만큼은 자동 보충처럼 채집·제작으로 구해 거점 상자에 넣고, 개인 상자로는 쉴 때 채우기가 옮긴다.
+        /// </summary>
+        public List<Work.Ingredient> Short(Func<long, string, int> stock, Func<string, int> baseStock)
+        {
+            var sum = new Dictionary<string, int>();
+            var order = new List<string>();
+            foreach (var need in Due(stock))
+            {
+                if (!sum.ContainsKey(need.Entry.Item)) { sum[need.Entry.Item] = 0; order.Add(need.Entry.Item); }
+                sum[need.Entry.Item] += need.Missing;
+            }
+            var list = new List<Work.Ingredient>();
+            foreach (string item in order)
+            {
+                int n = sum[item] - baseStock(item);
+                if (n > 0) list.Add(new Work.Ingredient(item, n));
+            }
+            return list;
+        }
+
         // ---- 저장: "주인|물건|수|o 또는 k;…" ----
 
         public string Save()

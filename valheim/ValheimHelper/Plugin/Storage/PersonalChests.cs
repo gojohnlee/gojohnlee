@@ -11,7 +11,8 @@ namespace ValheimHelper
     /// 내 개인 상자 = 이름에 개인·보물(ChestTags.Private) + 내가 지은 상자(Piece 만든 이 = 내 플레이어 ID), 일꾼 거점 125m 안·불러와진 것.
     /// 일꾼은 개인 상자에 넣기만 한다. 꺼내는 곳은 개인 아닌 거점 상자(열린 것 빼고). 쉬는 일꾼이 CheckEvery초마다(명령 직후엔 바로) —
     /// 플레이어가 모두 64m 밖이면 걷지 않고 바로, 아니면 TidyJob 걸음(꺼내 들고 → 개인 상자에 넣기, 그만두면 든 것 되돌림).
-    /// 나-1: 거점 상자에 있는 만큼만. 상자에 모자라면 한 번 준비는 "모자라" 말하고 지움, 유지는 기다림(만들거나 구하기는 나-2).
+    /// 나-1: 거점 상자에 있는 것을 옮김. 나-2: 거점 상자에도 모자란 몫은 자동 보충이 채집·제작으로 구해 거점 상자에 넣고(Shortages),
+    /// 다음 확인 때 옮김. 구할 수 없거나 출발 판단이 막으면(10분 쉼) 한 번 준비는 "모자라" 말하고 지움, 유지는 기다림.
     /// </summary>
     public static class PersonalChests
     {
@@ -72,6 +73,31 @@ namespace ValheimHelper
             }
             list.Sort((a, b) => Tidy.Count(b, item).CompareTo(Tidy.Count(a, item)));
             return list;
+        }
+
+        /// <summary>개인·보물 아닌 거점 상자에 든 수(열린 상자 포함 — 누가 잠깐 연 사이에 또 구하러 가지 않게).</summary>
+        static int BaseCount(Vector3 home, string item)
+        {
+            int n = 0;
+            var provider = Chests.TagProvider;
+            foreach (var zdo in Senses.Nearby(home, Chests.BaseRange, Chests.IsBaseChest))
+            {
+                if (provider != null && (provider(zdo) & ChestTags.Private) != 0) continue;
+                ZNetView view = ZNetScene.instance.FindInstance(zdo);
+                Container c = view != null ? view.GetComponent<Container>() : null;
+                if (c != null) n += Tidy.Count(c, item);
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// 나-2: 거점 상자로도 못 채우는 몫 — 자동 보충(Departures.RefillDue)이 채집·제작 일로 구해 거점 상자에 넣는다.
+        /// 개인 상자로 옮기는 건 그 뒤 Tick. 거점 상자에 개인 상자가 없는 사람 것도 셈(명령 때 확인함 — 상자를 부쉈으면 구해만 둠).
+        /// </summary>
+        internal static List<Ingredient> Shortages(Vector3 home)
+        {
+            if (Brain.Personal.Count == 0) return new List<Ingredient>();
+            return Brain.Personal.Short((o, it) => Stock(o, it, home), it => BaseCount(home, it));
         }
 
         /// <summary>옮길 것(모자란 물건마다 가장 많이 든 상자 하나 → 자리 있는 첫 개인 상자, 모자란 수만큼). TidyJob이 다녀올 때마다 다시 부른다.</summary>
@@ -147,8 +173,10 @@ namespace ValheimHelper
             foreach (var need in Brain.Personal.Due((o, it) => Stock(o, it, home)))
             {
                 if (!need.Entry.Once || Sources(home, need.Entry.Item).Count > 0) continue;
+                // 나-2: 구할 수 있으면(채집·제작·밭, 출발 판단이 막지 않음) 자동 보충이 구해 올 때까지 둔다. 누가 구하는 중이어도 둠.
+                if (Departures.RefillBusy(need.Entry.Item) || (Departures.Obtainable(need.Entry.Item) && !Departures.RefillSkipped(need.Entry.Item))) continue;
                 int have = need.Entry.Amount - need.Missing;
-                Plugin.Log.LogInfo($"개인 상자 준비: {need.Entry.Item} 거점 상자에 없음 → 한 번 준비 끝(개인 상자 {have}/{need.Entry.Amount})");
+                Plugin.Log.LogInfo($"개인 상자 준비: {need.Entry.Item} 거점 상자에 없고 구할 수 없음 → 한 번 준비 끝(개인 상자 {have}/{need.Entry.Amount})");
                 npc.Say("prepShort", new Dictionary<string, string> { ["owner"] = NameOf(need.Entry.Owner), ["item"] = GatherJob.ItemLabel(need.Entry.Item), ["n"] = have.ToString() });
                 Brain.Personal.Done(need.Entry);
             }

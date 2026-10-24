@@ -62,5 +62,24 @@ namespace ValheimHelper.Tests
             Assert.Equal(100, c.Find(42, "ArrowWood").Amount);
             Assert.Equal(0, PersonalBook.Load("엉망|x;1|Wood|abc|o").Count);
         }
+
+        [Fact]
+        public void ShortSumsOwnersMinusBaseStock()
+        {
+            var b = new PersonalBook();
+            b.Set(1, "Wood", 5, true);
+            b.Set(2, "Wood", 7, false);
+            b.Set(1, "Stone", 4, true);
+            b.Set(1, "Resin", 3, true);
+            var mine = new Dictionary<string, int> { ["Wood"] = 1 };
+            var base_ = new Dictionary<string, int> { ["Wood"] = 6, ["Stone"] = 4 };
+            var s = b.Short((o, it) => mine.TryGetValue(it, out int n) ? n : 0, it => base_.TryGetValue(it, out int n) ? n : 0);
+            // 나무: (5-1)+(7-1)=10 − 거점 6 = 4, 돌: 4−4 = 0(빠짐), 송진 3
+            Assert.Equal(2, s.Count);
+            Assert.Equal("Wood", s[0].Item);
+            Assert.Equal(4, s[0].Amount);
+            Assert.Equal("Resin", s[1].Item);
+            Assert.Equal(3, s[1].Amount);
+        }
     }
 }

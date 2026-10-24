@@ -572,7 +572,7 @@ namespace ValheimHelper
             if (s_refillTimer > 0f) return;
             s_refillTimer = (float)RefillBook.CheckEvery;
             RefillBook refill = Brain.Refill;
-            if (refill.Count == 0 || WorkerNpc.All.Count == 0) return;
+            if ((refill.Count == 0 && Brain.Personal.Count == 0) || WorkerNpc.All.Count == 0) return;
             WorkerNpc npc = null;
             foreach (var n in WorkerNpc.All)
                 if (n.Ai.Current == WorkerAI.Mode.Idle && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n) && !n.Ai.HasChores) { npc = n; break; }
@@ -583,8 +583,40 @@ namespace ValheimHelper
             npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString() });
         }
 
+        /// <summary>자동 보충할 것: !채워 기준치 아래인 것 + 개인 상자 준비(상자 기능 ③ 나-2)에서 거점 상자로도 모자란 몫(같은 물건이면 더함).</summary>
+        static List<Ingredient> RefillDue(Vector3 home)
+        {
+            List<Ingredient> due = Brain.Refill.Count > 0 ? Brain.Refill.Due(item => RefillStock(item, home), Brain.Sets) : new List<Ingredient>();
+            foreach (Ingredient s in PersonalChests.Shortages(home))
+            {
+                Ingredient same = due.Find(d => d.Item == s.Item);
+                if (same != null) same.Amount += s.Amount;
+                else due.Add(s);
+            }
+            return due;
+        }
+
+        /// <summary>자동 보충으로 구할 수 있는 물건인지(채집·밭·제작법·가공). 출발 판단은 따로(RefillSkipped).</summary>
+        internal static bool Obtainable(string item)
+        {
+            if (ResourceCatalog.WaysFor(item).Count > 0 || Crops.ForProduce(item) != null) return true;
+            if (!Features.RunPlans) return false;
+            RecipeBook book = Recipes.Book();
+            return book.RecipesFor(item).Count > 0 || book.ProcessesFor(item).Count > 0;
+        }
+
+        /// <summary>자동 보충이 그 물건을 쉬는 중(출발 판단이 막음·계획이 안 됨 등, 10분).</summary>
+        internal static bool RefillSkipped(string item) => s_refillSkipUntil.TryGetValue(item, out float until) && Time.time < until;
+
+        /// <summary>시험용: 출발 판단이 막은 것처럼 그 물건을 쉬게 하거나 풀기.</summary>
+        internal static void TestSkip(string item, bool on)
+        {
+            if (on) s_refillSkipUntil[item] = Time.time + 600f;
+            else s_refillSkipUntil.Remove(item);
+        }
+
         /// <summary>그 물건을 이미 누가 채우거나 만드는 중이면(두 일꾼이 같은 걸 겹쳐 만들어 재료를 두 번 쓰지 않게).</summary>
-        static bool RefillBusy(string item)
+        internal static bool RefillBusy(string item)
         {
             foreach (var n in WorkerNpc.All)
             {
@@ -614,9 +646,9 @@ namespace ValheimHelper
         internal static GatherJob NextRefillJob(WorkerNpc npc, int maxAmount)
         {
             RefillBook refill = Brain.Refill;
-            if (refill.Count == 0) return null;
+            if (refill.Count == 0 && Brain.Personal.Count == 0) return null;
             Vector3 home = npc.Home;
-            foreach (Ingredient due in refill.Due(item => RefillStock(item, home), Brain.Sets))
+            foreach (Ingredient due in RefillDue(home))
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
                 HashSet<ToolKind> ways = ResourceCatalog.WaysFor(due.Item);
@@ -642,7 +674,7 @@ namespace ValheimHelper
             if (!Features.RunPlans) return false;
             Vector3 home = npc.Home;
             RecipeBook book = Recipes.Book();
-            foreach (Ingredient due in Brain.Refill.Due(item => RefillStock(item, home), Brain.Sets))
+            foreach (Ingredient due in RefillDue(home))
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
                 if (RefillBusy(due.Item)) continue;
