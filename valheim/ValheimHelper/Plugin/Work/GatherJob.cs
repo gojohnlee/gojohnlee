@@ -135,6 +135,24 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>
+        /// 나서기 전 연장 판단(⑪ 3): 맨손·사냥이거나 짐·장비 상자에 그 물건을 캘 단계(ResourceCatalog.MinTier)의 연장이 있으면 Ok,
+        /// 연장은 있는데 다 단계가 모자라면 Weak(청동 곡괭이로 은), 아무것도 없으면 None.
+        /// </summary>
+        public static ToolState ToolFor(WorkerNpc npc, HashSet<ToolKind> ways, string item)
+        {
+            bool any = false;
+            foreach (var w in ways)
+            {
+                if (w == ToolKind.None || w == ToolKind.Hunt) return ToolState.Ok;
+                int need = ResourceCatalog.MinTier(item, w);
+                System.Func<Inventory, bool> strong = inv => WorkerNpc.BestTool(inv, w) is ItemDrop.ItemData t && t.m_shared.m_toolTier >= need;
+                if (strong(npc.GetInventory()) || Chests.First(npc.Home, inv => strong(inv), ChestRole.Gear) != null) return ToolState.Ok;
+                if (CanStart(npc, new HashSet<ToolKind> { w })) any = true;
+            }
+            return any ? ToolState.Weak : ToolState.None;
+        }
+
         public static string ItemLabel(string prefab)
         {
             GameObject go = ObjectDB.instance?.GetItemPrefab(prefab);

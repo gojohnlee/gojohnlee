@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Chat;
+using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -85,6 +88,21 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => !keys.Global, 5f);
             checks.Add("위시본 없으면 묻힌 광맥은 모름", !HiddenOres.HaveFinder() && !HiddenOres.Known(zb, info));
             checks.Add("위시본 없어도 드러난 광맥은 앎", HiddenOres.Known(zs, info));
+
+            // ⑪ 3: 출발 판단 — 아는 은 자리를 지우고(드러난 것도 모르는 셈) 청동 곡괭이만이면 "연장 약함", 단계 맞는 곡괭이면 "위시본 필요"
+            foreach (ZoneMemory m in Brain.Get().Zones) m.Items.Remove(ore);
+            Inventory bag = w.Ragnar.GetInventory();
+            var held = bag.GetAllItems().FindAll(it => it.m_shared.m_skillType == Skills.SkillType.Pickaxes);
+            foreach (var it in held) bag.RemoveItem(it);
+            bag.AddItem(ObjectDB.instance.GetItemPrefab("PickaxeBronze"), 1);
+            var cmd = new ChatCommand { Kind = CommandKind.Item, Item = ore, Amount = 10 };
+            DepartureResult weak = Departures.JudgeFor(w.Ragnar, cmd);
+            checks.Add($"청동 곡괭이만이면 나서기 전에 \"연장 약함\" ({weak?.Key} {weak?.Reason})", weak != null && weak.Key == "toolTooWeak");
+            bag.AddItem(ObjectDB.instance.GetItemPrefab("PickaxeIron"), 1);
+            DepartureResult need = Departures.JudgeFor(w.Ragnar, cmd);
+            checks.Add($"묻힌 것뿐·위시본 없으면 \"위시본 필요\" ({need?.Key} {need?.Reason})", need != null && need.Key == "depart.needFinder");
+            foreach (var it in bag.GetAllItems().FindAll(it => it.m_shared.m_skillType == Skills.SkillType.Pickaxes)) bag.RemoveItem(it);
+            foreach (var it in held) bag.AddItem(it);
 
             keys.SetKnown(true);
             checks.Add("위시본을 주웠으면 묻힌 광맥도 앎", HiddenOres.Known(zb, info));

@@ -79,6 +79,24 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>그 물건이 묻혀 숨는 광맥(산 은)에서 나오는지. 은은 드러난 바위(rock3_silver)·깨진 조각에서도 나오지만 대부분 묻혀 있다.</summary>
+        public static bool FromHidden(string item)
+        {
+            if (s_byHash == null) Build();
+            foreach (var r in s_byHash.Values) if (r.Hidden && r.Produces.Contains(item)) return true;
+            return false;
+        }
+
+        /// <summary>그 도구로 그 물건을 캐는 곳 중 가장 낮은 도구 단계(m_minToolTier). 그 도구로 캐는 곳이 없으면 0.</summary>
+        public static int MinTier(string item, ToolKind tool)
+        {
+            if (s_byHash == null) Build();
+            int min = int.MaxValue;
+            foreach (var r in s_byHash.Values)
+                if (r.Tool == tool && r.Produces.Contains(item) && r.MinToolTier < min) min = r.MinToolTier;
+            return min == int.MaxValue ? 0 : min;
+        }
+
         /// <summary>캐거나 줍는 방법이 하나라도 있는가(사냥만 되는 물건은 false).</summary>
         public static bool Gatherable(string item)
         {

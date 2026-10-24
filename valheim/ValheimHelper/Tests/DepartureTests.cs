@@ -39,6 +39,18 @@ public class DepartureTests
     }
 
     [Fact]
+    public void BuriedOnlyNeedsFinder()
+    {
+        // ⑪ 3: 묻힌 은만 있고 위시본이 없으면 거절, 드러난 곳을 알면 간다, 연장 단계가 모자라면 그 말이 먼저
+        var i = In(); i.NeedFinder = true;
+        Assert.Equal("depart.needFinder", Departure.Judge(i).Key);
+        i.Tool = ToolState.Weak;
+        Assert.Equal("toolTooWeak", Departure.Judge(i).Key);
+        var known = In(P(100)); known.NeedFinder = true;
+        Assert.Equal(DepartAction.Go, Departure.Judge(known).Action);
+    }
+
+    [Fact]
     public void NoCryptRefusesWithReason()
     {
         var i = In(); i.Tool = ToolState.Ok; i.NoCrypt = true;

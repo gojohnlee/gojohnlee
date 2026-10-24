@@ -200,7 +200,8 @@ namespace ValheimHelper
                 Amount = cmd.Amount,
                 Urgent = cmd.Urgent,
                 CurrentJob = !fromQueue && npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !npc.Ai.Yields ? npc.Ai.Job.Label : null,
-                Tool = GatherJob.CanStart(npc, ways) ? ToolState.Ok : ToolState.None,
+                Tool = GatherJob.ToolFor(npc, ways, cmd.Item),
+                NeedFinder = ResourceCatalog.FromHidden(cmd.Item) && !HiddenOres.HaveFinder(),
                 Fed = npc.Meals.Count > 0,
                 SecondsPerUnit = ways.Contains(ToolKind.Hunt) ? 40f : ways.Count == 1 && ways.Contains(ToolKind.None) ? 1.5f : 4f,
             };

@@ -43,6 +43,8 @@ namespace ValheimHelper.Core.Npc
         public bool NoCrypt;
         /// <summary>NoCrypt의 까닭이 다 캔 지하묘지다(새 곳이 필요). 아니면 문이 닫혀서.</summary>
         public bool CryptsMinedOut;
+        /// <summary>묻혀 숨는 광맥(산 은)에서 나는 물건인데 아는 곳(드러난 광맥)이 없고 위시본도 아직 없다(⑪ 3).</summary>
+        public bool NeedFinder;
         public bool Fed;
         public bool FoodInChest = true;
         public int HealthMeads;
@@ -161,6 +163,7 @@ namespace ValheimHelper.Core.Npc
             if (i.NoCrypt) return i.CryptsMinedOut ? Refuse(r, "depart.cryptsEmpty", "지하묘지 다 캠") : Refuse(r, "depart.noCrypt", "열린 지하묘지 없음");
             if (i.Tool == ToolState.None) return Refuse(r, "noTool", "연장 없음");
             if (i.Tool == ToolState.Weak) return Refuse(r, "toolTooWeak", "연장 약함");
+            if (i.NeedFinder && i.Places.Count == 0) return Refuse(r, "depart.needFinder", "묻힌 광맥뿐, 위시본 없음");
 
             // 2) 하던 일
             if (i.CurrentJob != null)
