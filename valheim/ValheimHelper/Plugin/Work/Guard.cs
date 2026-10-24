@@ -48,6 +48,8 @@ namespace ValheimHelper
         public bool Fleeing => m_state == State.Flee;
         /// <summary>싸우거나 물러나거나 도망치는 중(시험이 이 동안 시간을 멈춤).</summary>
         public bool Engaged => m_state != State.Calm;
+        /// <summary>시험용: 불러 놓고 동료를 기다리는 중.</summary>
+        public bool WaitingMate => m_waitMate != null;
 
         /// <summary>도망을 그만둔다(갇혀서 깃발로 순간이동했을 때).</summary>
         /// <summary>시험용: 적 없이 to로 도망을 시작한다(적이 없어도 도망은 끝까지 감).</summary>
@@ -159,6 +161,14 @@ namespace ValheimHelper
                     {
                         // 물러났는데 쫓아온다: 다시 물러나고, 세 번째면 도망(그곳은 버린다)
                         if (!Chased(10f)) break;
+                        if (m_waitMate != null && !m_waitMate.IsDead())
+                        {
+                            // 부른 동료를 기다리다 쫓긴다: 동료 쪽으로 물러난다(회차 147 vh_matetest: 멀리 물러나다 세 번째에 도망 → 온 동료가 혼자 싸움)
+                            m_backTo = m_waitMate.transform.position;
+                            m_backWalking = true;
+                            m_backWalkTime = 0f;
+                            break;
+                        }
                         if (++m_chased >= 3) { StartFlee(pos, nearest, foeName); break; }
                         m_backTo = AwayPoint(pos, BackDistance);
                         Plugin.Log.LogInfo($"{m_npc.NpcName} 쫓겨 다시 물러남 {m_chased}번째 → {m_lastAway}");
@@ -167,7 +177,7 @@ namespace ValheimHelper
                         m_backWalkTime = 0f;
                         break;
                     }
-                    if (m_state == State.Flee) break;
+                    if (m_state == State.Flee || ComingAlone()) break;
                     m_chased = 0;
                     {
                         m_backs++;
@@ -191,11 +201,15 @@ namespace ValheimHelper
                     // 도망은 끝까지 한다(도착·40초·물 막힘 — 구상서 8장 a "그 지역을 벗어남", 물러남 판단·적 없음도 도망을 안 끊음).
                     // (늪 회귀 basetest: 30m 경계를 넘나드는 회색난쟁이 주술사 때문에 판단이 도망↔싸움으로 바뀌어, 싸우러 무리 쪽으로 갔다가
                     // 다시 도망을 수십 초마다 새로 시작 — 그때마다 목표·구역을 버리고 장소 기억에 도망을 더 쌓음.)
-                    if (m_state == State.Flee) break;
+                    if (m_state == State.Flee || ComingAlone()) break;
                     // 물러나 기다리는 중: 쫓아오지 않으면 그대로(부른 동료가 와서 싸움이 된 것이면 싸운다)
                     if (m_state == State.Back && m_backTimer > 0f && !Aggressive(nearest) && m_waitMate == null) break;
                     Character t = FightTarget(pos);
                     if (t == null) break;
+                    // 기다리는 동료가 아직 곁(AllyRange)에 없으면 판단이 잠깐 싸움으로 흔들려도 바로 덤비는 적이 없는 한 마저 기다린다
+                    // (회차 147 vh_matetest C: 발 묶인 동료 63m인데 1초 만에 "옴 → 같이 싸움"으로 기다림을 접음)
+                    if (m_waitMate != null && m_state == State.Back && !m_waitMate.IsDead()
+                        && Vector3.Distance(m_waitMate.transform.position, pos) > AllyRange && !Chased(CloseRange)) break;
                     if (m_waitMate != null) { Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 옴 → 같이 싸움"); m_waitMate = null; }
                     if (t != m_target) { DrinkResist(pos, t); m_missStreak = 0; m_diagSwings = 0; }
                     if (!m_saidFight) { m_saidFight = true; m_npc.Say("fightStart", Args(Localization.instance.Localize(t.m_name))); }
@@ -240,6 +254,16 @@ namespace ValheimHelper
             Verdict together = Danger.Judge(m_npc.Personality, m_views, m_npc.GetHealth(), m_npc.GetMaxHealth(), myHit + HitOf(mate) * 0.9f, taken, mead);
             MateCall call = Danger.ShouldCallMate(alone, together, LastRatio, m_views.Count);
             if (call == MateCall.None) return false;
+            // 동료 쪽에서 봐도(그 체력·갑옷) 같이면 싸움이어야 부른다(회차 147 vh_fighttest: 맨몸 체력 25 동료를 불러, 와서 혼자 물러나고 부른 쪽이 죽음)
+            float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
+            Verdict theirs = Danger.Judge(mate.Personality, m_views, mate.GetHealth(), mate.GetMaxHealth(), HitOf(mate) + myHit * 0.9f,
+                Taken(scale, mate.GetBodyArmor()), mate.CanDrinkHealthMead());
+            if (theirs != Verdict.Fight)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 안 부름: {mate.NpcName} 쪽 판단 {theirs} (체력 {mate.GetHealth():0}/{mate.GetMaxHealth():0}, 갑옷 {mate.GetBodyArmor():0})");
+                m_mateAt = Time.time; // 60초 동안 다시 셈하지 않음
+                return false;
+            }
             if (mate.Ai.Guard == null || !mate.Ai.Guard.Summon(m_npc)) return false;
             m_mateAt = Time.time;
             LastMateCall = $"{m_npc.NpcName}→{mate.NpcName} {call}";
@@ -267,6 +291,16 @@ namespace ValheimHelper
             m_judgeTimer = JudgeEvery;
             m_npc.Say("mateComing", new Dictionary<string, string> { ["name"] = caller.NpcName });
             return true;
+        }
+
+        /// <summary>
+        /// 부름을 받고 가는 중인데 아직 부른 쪽 곁(AllyRange)이 아니고 바로 덤비는 적(CloseRange)도 없다: 혼자 판단으로 싸우거나 물러나지 않고 마저 간다
+        /// (회차 147 vh_matetest: 온 동료가 혼자 싸움 판단으로 먼저 덤벼 체력 71→26).
+        /// </summary>
+        bool ComingAlone()
+        {
+            if (m_state != State.Come || m_caller == null || m_caller.IsDead()) return false;
+            return Vector3.Distance(m_caller.transform.position, m_npc.transform.position) > AllyRange && !Chased(CloseRange);
         }
 
         bool UpdateCome(float dt)
@@ -640,6 +674,8 @@ namespace ValheimHelper
             if (m_backWalking)
             {
                 m_backWalkTime += dt;
+                // 동료 기다림(MateWait)은 걷는 동안에도 센다(회차 147 vh_matetest C: 걷기 30초 + 기다림 30초 = 60초 기다림)
+                if (m_waitMate != null && (m_backTimer -= dt) <= 0f) { m_ai.StopMoving(); m_backWalking = false; m_state = State.Calm; m_waitMate = null; return false; }
                 bool there = Utils.DistanceXZ(m_backTo, m_npc.transform.position) < 3f;
                 if (!there && m_backWalkTime < 30f && m_ai.WaterBlockedTime <= WorkerAI.WaterGiveUp)
                 {
