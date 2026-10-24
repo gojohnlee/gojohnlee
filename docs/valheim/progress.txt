@@ -35,9 +35,9 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [루프 회차 149] 싸움·동료 부르기·도망 뒤 목표 회귀(라): 싸움·습격·도움·같이 싸움·죽음·동행·거점·사냥 시험 8개 한 묶음 8/8 PASS, 고칠 것 없음. 다음은 상자 정리(②).
 - [루프 회차 148] 도망 뒤 목표(다): 거점 125m 안 목표는 도망이 끝나면 다시 하고 같은 목표에서 두 번 도망쳐야 뺌. 거점 밖은 예전처럼 버림. coppertest 14/14(검은숲).
 - [루프 회차 147] 동료 부르기 마무리(나-2): 못 오는 동료는 30초 뒤 포기·적 셋이면 부르고 바로 싸움 시험(C·D) + 묶음 시험에서 찾은 버그 넷 고침(맨몸 동료를 불러 부른 쪽이 죽음 등). matetest 18/18, 싸움 시험 6개 PASS.
-- [루프 회차 146] 동료 부르기(나): 혼자면 물러날 싸움에서 100m 안 동료를 "이리 와!"로 불러 기다렸다 둘이 잡고, 동료는 하던 일로 돌아감. 적 피해 셈이 갑옷을 반으로 줄인 피해에 매겨 절반으로 보던 버그도 고침. matetest 12/12, fight·team·help·raid·death·escort·hunt PASS.
 
 
 다음 (순서대로 — 안 끝난 일만)
@@ -46,8 +46,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   나) [끝, 회차 146 — 커밋 38ac836 · 시험 vh_matetest PASS 12/12, fighttest 17/17·teamtest 6/6·helptest 7/7·raidtest 9/9·deathtest 22/22·escorttest 18/18·hunttest 9/9, Core 497/497] 동료 부르기(부름·대답·기다림·둘이 잡음·동료 일 이어 감·100m 밖 안 부름) + 피해 셈 고침(갑옷을 실제 한 방에).
   나-2) [끝, 회차 147 — 커밋 d5f9d29 · 시험 vh_matetest PASS 18/18(단독·묶음), fighttest 17/17·teamtest 6/6·helptest 7/7·raidtest 9/9·deathtest 22/22·escorttest 18/18, Core 497/497] 못 온 동료 30초 뒤 원래 판단·적 셋이면 부르고 바로 싸움(C·D) + 동료 쪽 판단·쫓기면 동료 쪽으로·도착 전 혼자 안 싸움.
   다) [끝, 회차 148 — 커밋 3a63f6a · 시험 vh_coppertest PASS 14/14(검은숲), tintest 13/13·woodtest 13/13·stonetest 11/11, Core 500/500] 거점 안 목표는 두 번째 도망부터 뺌(Core FleeBook), 거점 안 위험 구역은 도망 3번 뒤에만 피함.
-  라) 회귀: vh_fighttest·raidtest·helptest·teamtest·deathtest·escorttest·basetest·hunttest (검은숲 copper·tin·wood·stone은 회차 148에 PASS).
-     기준이 바뀌어 예전 기대값("물러남")이 틀려지면 시험 기대값을 바꾸고 까닭을 history에 적는다.
+  라) [끝, 회차 149 — 커밋 3a63f6a(코드 그대로) · 시험 묶음 8/8 PASS: vh_fighttest 17/17·raidtest 9/9·helptest 7/7·teamtest 6/6·deathtest 22/22·escorttest 18/18·basetest 22/22·hunttest 9/9] 회귀 — 기대값 바꿀 것 없음.
 ★ 상자 기능 ②~④ (사용자 결정 10-23, decisions.txt "상자 기능 확정" — ① 제작·건축·개수 표시·예약은 회차 110~114에 끝). 새 코드는 Plugin/Storage·Core/Storage:
   가) ② 일꾼 상자 정리(개인 빼고 전부, 가장 많이 든 상자로 모음, 쉴 때 걸어서 + 아침 정산 때 한 번에). 시험(정리 뒤 물건 총량·개인 상자 그대로·열린 상자 안 건드림).
   나) ③ 챗으로 내 개인 상자 준비(한 번·유지, 명령 꼴은 기존 ChatParser 관례로, 모자라면 만들거나 구함). 시험.
