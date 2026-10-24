@@ -33,3 +33,6 @@ E013 | vh_basetest | 제련 개수 보존 (상자 주괴 6, 광석 4 넣음 → 
 - | vh_departtest | 13/21 FAIL | 시험 월드에 남은 옛 상자(지난 시험 잔여) | 시험 시작 때 옛 상자 치움(회차 2) | 24/24 PASS
 - | vh_pittest | 구덩이에 물이 참 | 시험 자리가 물가 | 물가면 300m 안 마른 초원으로 옮김(회차 1) | PASS
 E014 | vh_cooktest | 화로를 지폈는데 조리대 불이 안 붙음(묶음 2번째) | 비바람(뇌우)·센 바람(0.8 이상)에 화로가 젖어 약한 불만 남음(바닐라 Fireplace.CheckWet). 날씨는 10여 초에 걸쳐 바뀌어 앞 시험 비바람이 다음 시험에 남음 | 회차 90 맑음 고정·cookWet 말 + 회차 127 39f318e 바람도 약하게 고정(SetDebugWind 0.3)·날씨 다 바뀔 때까지 기다림, 새 시험 vh_cookwettest | cookwettest 10/10(뇌우 고정 → cookWet 말·계획 그만둠·날고기 2 그대로), 그 뒤 cooktest 10/10 ×3(묶음 3번). 맑은데 안 타는 1번은 새 E024
+E028 | vh_matetest | 라그나가 물러나다 맞아 갑자기 죽음 | 일꾼(WorkerAI=BaseAI)이 경계를 안 켜 300초마다 첫 한 방이 몬스터 뒤치기 4배로 들어옴(Character.RPC_Damage) | 회차 166 27d1136 NpcPatches.LikePlayerHit(뒤치기 1배·비틀 2배 뺌) | 원인 고침으로 닫음, resisttest 20/20·matetest 18/18·fighttest 17/17
+E029 | vh_matetest | 셈은 한 방 4.0인데 5초에 체력 61→13 | E028과 같은 원인(뒤치기 4배) | 회차 166 27d1136 NpcPatches.LikePlayerHit | 원인 고침으로 닫음, matetest 18/18
+- | vh_deathtest | 묘비가 비어 사라짐(묶음, 묘비까지 91m) | 시험이 묘비 ZDO 객체를 붙들고 있었는데 지워진 ZDO가 다른 물체에 다시 쓰임(ZDOPool.Release) | 회차 166 27d1136 묘비를 ZDOID·자리로 기억 | 묶음 deathtest 22/22
