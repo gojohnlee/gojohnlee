@@ -74,7 +74,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 채팅·명령 Commands·ChatParser·Dispatch  dotnet test + vh_npctest;vh_departtest;vh_peertest · Claude → vh_claudetest
 출발 판단 Departures·Departure  vh_departtest;vh_peertest;vh_refilltest · 저항 → vh_resisttest · 동행 Escort → vh_escorttest
 위험·싸움 Guard·Danger·Retreat·PlaceBook  vh_fighttest;vh_raidtest;vh_helptest;vh_teamtest;vh_matetest;vh_deathtest · 사냥감 판단 → vh_hunttest
-채집 GatherJob·ResourceCatalog  vh_woodtest;vh_stonetest;vh_coppertest;vh_tintest;vh_bagtest · 사냥 → vh_hunttest;vh_bowtest · 지하묘지 → vh_crypttest · 포탈 걸음 → vh_portaltest · 평원 자료(줍기·사냥·밭 길, 적 위험 수치) → vh_plainstest
+채집 GatherJob·ResourceCatalog  vh_woodtest;vh_stonetest;vh_coppertest;vh_tintest;vh_bagtest · 사냥 → vh_hunttest;vh_bowtest · 지하묘지 → vh_crypttest · 포탈 걸음 → vh_portaltest · 평원 자료(줍기·사냥·밭 길, 적 위험 수치) → vh_plainstest · 데스킷(날기 적) 싸움 → vh_squitotest (Guard 싸움·물러남을 바꾸면 vh_fighttest;vh_resisttest도)
 지식·탐험 Senses·Scout·MapSense·ExploreJob·Knowledge  vh_exploretest;vh_woodtest
 준비·장비 Prep·Gear·Meals  vh_preptest;vh_bagtest;vh_resisttest · 활 챙기기 → vh_bowtest · 수리 Repair → vh_repairtest
 짐·상자 Unload·Chests·ChestNames  vh_bagtest;vh_nametest;vh_basetest;vh_woodtest
@@ -186,6 +186,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - 서리 동굴 내용 확인: Plugin/FrostCaveTest.cs(vh_frostcavetest, CryptTest.Cleanup·Around 같이 씀).
 - 숨는 광맥(⑪ 산 은): Core/Work/HiddenOre.cs(Exposed·Known·Score 묻힌 것은 뒤로) + Plugin/Work/HiddenOres.cs(Finder = SE_Finder 장착 물건 Wishbone, HaveFinder = Unlocks.Have, Exposed·Known·TopOffset) · ResourceInfo.Hidden·TopOffset · GatherJob.FindInSight·Senses.Look이 거름 · 시험 SilverTest.cs(vh_silvertest, CryptTest.KeyState로 위시본 얻음 바꿨다 되돌림)
 - 평원(⑫): 시험 Plugin/PlainsTest.cs(vh_plainstest 1조각 자료: 평원 물건 얻는 길·평원 적 한 마리 위험 비율을 diag에). ResourceCatalog.Describe는 Pickable을 Destructible보다 먼저 봄(덤불·야생 작물).
+  시험 Plugin/SquitoTest.cs(vh_squitotest ⑫ 라: 평원 차림으로 데스킷 잡기, 약한 차림+둘 반응). Guard.ChaseSpeed = 날기 적은 m_flyFastSpeed(물러나도 못 떨침 판단).
 - 보스 진행 잠금 풀기: Plugin/Unlocks.cs(Have(ItemDrop) = 호스트가 주운 적 있음 IsMaterialKnown 또는 그 물건 떨구는 보스 월드 키, BossKey). 지하묘지 열쇠 문 열기 = GatherJob.UpdateOpenDoor(GoCrypt 안).
 - 포탈(⑤): Core/Work/PortalRoute.cs(PortalLink, Choose: 걷기 vs 포탈), Plugin/Portals.cs(Linked/TryChoose: ZDO "portal_wood"의 GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal)로 짝 출구 = 짝 위치+짝 rot*forward*1+up1, 바닐라 TeleportWorld.Teleport와 같음). 던전 문 Teleport 출구 = 문 위치+forward-up(문 쪽 targetPoint), 거리 TeleportTo(distantTeleport:false). GatherJob.WalkVia/PortalOr: GoZone·Return 걸음에서 포탈이 더 빠르면 입구까지 걷고 TeleportTo(출구).
 - 일꾼 포탈 짓기(R2 가): Core/Work/WorkerPortal.cs(Tag "일꾼-<일터>"·Pairs·CanAddPair 3쌍·ShouldPlace 300m 두 번째·IsIdle 5일·Need/Missing) + Plugin/Work/PortalBuilder.cs(Cost = portal_wood Piece.m_resources, Mine = ZDO "vh_wportal" 표시, FindSpot 2~12m 둘레(건축 금지·남의 와드·평평 0.6m·물·용암·자리 막힘), PlacePair 재료 두 몫 한 번에 빼고 같은 tag → Game.ConnectPortals, MarkUsed "vh_wportal_day", RemovePair 재료 상자로(자리 다 있을 때만)·RemoveIdle). 시험 PortalBuildTest(vh_portalbuildtest). 아직 일에 연결 안 됨(나 조각).
@@ -226,6 +227,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   보리·아마 = 밭(sapling_barley·flax 바이옴 16=평원만) + 야생 Pickable_Barley_Wild·Flax_Wild(풀링 마을), 클라우드베리 = CloudberryBush(Pickable+Destructible, 떨굼 없음),
   록스 고기 = 록스 사냥, 바늘 = 데스킷(m_flying이라 Prey에서 빠짐). 덤불·밭 작물(Pickable_Carrot 등)은 Pickable과 Destructible을 같이 가짐.
   프리팹 체력: Goblin 175·GoblinBrute 800·GoblinShaman 100·Deathsquito 10·Lox 1000·BlobTar 100.
+  날기 적 속도(Character 이동): m_flying이면 m_run ? m_flyFastSpeed : m_flySlowSpeed — 데스킷 10·10(m_runSpeed 5는 안 씀), 일꾼 달리기 7.
   바이옴 토박이 적(회차 171, Departures.NativeTo): ZoneSystem.m_zoneCtrlPrefab의 SpawnSystem.m_spawnLists(SpawnSystemList.m_spawners — SpawnData.m_prefab·m_biome 비트·m_enabled). 처음 판단 때 한 번 읽어 둠.
   적 한 방 데이터(회차 170, Guard.DataHit = 공격 물건(m_defaultItems·m_randomWeapon·m_randomSets) 피해 합 × m_attack.m_damageMultiplier 중 최대, 별마다 ×1.5 = Attack.GetLevelDamageFactor):
   Goblin 90·GoblinBrute 130·GoblinShaman 120·Deathsquito 90·Lox 130·BlobTar 95. 몸집 짐작(GuessDamage)은 공격 물건 없을 때만.

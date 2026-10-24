@@ -143,9 +143,9 @@ namespace ValheimHelper
             Character nearest = Nearest(pos);
             // 나보다 빠른 적이 덤벼 오면 물러나도 등 뒤로 맞기만 한다 → 물러남 대신 싸움(도망 판단은 그대로).
             // (⑪ 5 기본안 10-24. 회차 166 vh_resisttest에서 철 갑옷 라그나가 늑대에게 한순간에 죽은 건 물러남 탓이 아니라 일꾼이 받던 몬스터 뒤치기 4배 — NpcPatches.LikePlayerHit로 고침)
-            if (v == Verdict.Back && Aggressive(nearest) && nearest.m_runSpeed > m_npc.m_runSpeed * 1.05f)
+            if (v == Verdict.Back && Aggressive(nearest) && ChaseSpeed(nearest) > m_npc.m_runSpeed * 1.05f)
             {
-                if (m_state != State.Fight) Plugin.Log.LogInfo($"{m_npc.NpcName} 물러나도 못 떨침({Utils.GetPrefabName(nearest.gameObject)} 달리기 {nearest.m_runSpeed:0.0} > 나 {m_npc.m_runSpeed:0.0}) → 싸움");
+                if (m_state != State.Fight) Plugin.Log.LogInfo($"{m_npc.NpcName} 물러나도 못 떨침({Utils.GetPrefabName(nearest.gameObject)} 달리기 {ChaseSpeed(nearest):0.0} > 나 {m_npc.m_runSpeed:0.0}) → 싸움");
                 v = Verdict.Fight;
             }
             LastVerdict = v;
@@ -429,6 +429,9 @@ namespace ValheimHelper
                 yield return drop.m_itemData;
             }
         }
+
+        /// <summary>쫓아오는 속도: 날기 적(데스킷 등)은 바닐라가 m_runSpeed 대신 m_flyFastSpeed로 난다(Character 이동, ⑫ 라).</summary>
+        public static float ChaseSpeed(Character c) => c.m_flying ? c.m_flyFastSpeed : c.m_runSpeed;
 
         /// <summary>
         /// 게임 데이터의 별 없는 가장 센 한 방: 공격 물건 피해 합 × 그 공격의 m_damageMultiplier(바닐라 Attack.ModifyDamage, 별 배율은 따로).
