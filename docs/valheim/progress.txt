@@ -24,7 +24,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    (-File은 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨림. 이 PC엔 파이썬 없음 → 수정은 Edit 도구. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    설치 → Steam 실행 → 인트로 건너뜀 → te4st41 자동 입장 → 시험 → 2초 뒤 종료 → 결과 출력.
    시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_bagtest·vh_deathtest·vh_fighttest·vh_exploretest·
-   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_portalbuildtest·vh_tintest·vh_stucktest·vh_hoptest·vh_skiptest(멀리선 이동 생략)·vh_resisttest·vh_repairtest·vh_crypttest·vh_hunttest·vh_cooktest·vh_cookwettest(비바람)·vh_farmtest·vh_basetest(기반 대표)·vh_escorttest(동행)·vh_mychesttest(개인 상자 준비)·vh_sharetest(상자 손님 부탁 호스트 쪽)·vh_guesttest(손님 화면 옮기기, 가짜 손님)·vh_plainstest(평원 자료)·vh_squitotest(데스킷 싸움, VH_BIOME=plains)·vh_fulingtest(풀링 사냥·무리면 도움 요청, VH_BIOME=plains)·vh_tartest(타르 줍기·웅덩이 피하기, VH_BIOME=plains). 실제 재시작: VH_TEST=vh_restart1(되돌리기 켜고, 끝에 바로 꺼짐) 다음 VH_RESET=0·VH_TEST=vh_restart2. 월드 $env:VH_WORLD. 시험 캐릭터는 전용 vhtest(없으면 모드가 만듦), 실행마다 시험 월드를 원본(%USERPROFILE%/vh-test-base, 첫 실행 때 뜸)으로 되돌림 — 끄기 $env:VH_RESET="0"(재시작 시험 2번째 실행). 기본은 연속 묶음(한 번 되돌리고 이어 돌림), 약식(긴 시험 짧게) $env:VH_QUICK="1", 깨끗한 단독 시험은 $env:VH_SOLO="1"(시험마다 되돌리고 게임 새로 켬, 시험별 diag-<시험>.txt). 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
+   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_portalbuildtest·vh_tintest·vh_stucktest·vh_hoptest·vh_skiptest(멀리선 이동 생략)·vh_resisttest·vh_repairtest·vh_crypttest·vh_hunttest·vh_cooktest·vh_cookwettest(비바람)·vh_farmtest·vh_basetest(기반 대표)·vh_escorttest(동행)·vh_mychesttest(개인 상자 준비)·vh_sharetest(상자 손님 부탁 호스트 쪽)·vh_guesttest(손님 화면 옮기기, 가짜 손님)·vh_plainstest(평원 자료)·vh_squitotest(데스킷 싸움, VH_BIOME=plains)·vh_fulingtest(풀링 사냥·무리면 도움 요청, VH_BIOME=plains)·vh_tartest(타르 줍기·웅덩이 피하기, VH_BIOME=plains)·vh_plainsfarmtest(보리·아마 밭·록스 판단, VH_BIOME=plains). 실제 재시작: VH_TEST=vh_restart1(되돌리기 켜고, 끝에 바로 꺼짐) 다음 VH_RESET=0·VH_TEST=vh_restart2. 월드 $env:VH_WORLD. 시험 캐릭터는 전용 vhtest(없으면 모드가 만듦), 실행마다 시험 월드를 원본(%USERPROFILE%/vh-test-base, 첫 실행 때 뜸)으로 되돌림 — 끄기 $env:VH_RESET="0"(재시작 시험 2번째 실행). 기본은 연속 묶음(한 번 되돌리고 이어 돌림), 약식(긴 시험 짧게) $env:VH_QUICK="1", 깨끗한 단독 시험은 $env:VH_SOLO="1"(시험마다 되돌리고 게임 새로 켬, 시험별 diag-<시험>.txt). 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
    결과: 스크립트는 짧은 요약만 출력(diag 첫 줄, 시험별 판정·시간, FAIL 줄, 로그 오류 종류 8개 — 2026-10-21 토큰 절약).
    전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
@@ -35,9 +35,9 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [루프 회차 175] 평원 밭: 보리·아마를 평원 밭에 심고 거둠(!밭은 먹을 몫을 남기려 반씩만). 록스는 혼자 잡기엔 세서 덤비지 않고 "같이 가 줘". 활 조준 고침. 다음은 평원 전체 회귀·재시작 시험.
 - [루프 회차 174] 타르: 줍는 타르는 웅덩이 안 타르 위에 떠 있어 그것을 주우러 갈 때만 들어가 줍고 나옴(타르에 잠긴 덩어리는 안 고름). 다른 데로 지나갈 땐 웅덩이를 돌아감. 다음은 보리·아마 평원 밭·록스.
 - [루프 회차 173] 풀링(흑금속 고철) 사냥: 풀링 하나면 쫓아가 잡고 떨군 고철을 상자에(25초). 큰 풀링·주술사가 붙은 무리면 덤비지 않고 "무리가 너무 세, 같이 가 줘"로 그만둠. 다음은 타르.
-- [루프 회차 172] 데스킷(날아드는 모기) 싸움 시험: 평원 차림이면 3초 만에 맞혀 잡고 안 다침. 데스킷이 일꾼보다 빨리 난다는 걸 제대로 셈(물러나도 못 떨치면 싸움). 다음은 풀링 사냥·흑금속 고철.
 
 다음 (순서대로 — 안 끝난 일만)
 ★ 개선 셋 (사용자 10-25 클라우드 브리핑 답 "ㅇㅇ" — ⑫ 남은 조각보다 먼저, decisions.txt 10-25):
@@ -53,7 +53,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   라) [끝, 회차 172 — 커밋 c1dfc5b · 시험 vh_squitotest PASS 9/9(평원 자리·기본 자리 2번)·resisttest 20/20·fighttest 17/17, dotnet test 526/526] 데스킷 싸움 시험, 날기 적 쫓는 속도 = m_flyFastSpeed.
   마) [끝, 회차 173 — 커밋 77896c3 · 시험 vh_fulingtest PASS 13/13(평원 자리)·hunttest 9/9·bowtest 12/12, dotnet test 526/526] 풀링 사냥(흑금속 고철): 사냥감 둘레 15m 무리까지 셈(Guard.SafePrey pack), 무리면·무리에서 도망치면 preyPack "같이 가 줘"로 그만둠.
   바) [끝, 회차 174 — 커밋 f833485 · 시험 vh_tartest PASS 14/14(실제 TarPit1 옆)·plainstest 21/21·fulingtest 13/13·farmtest 25/25·npc 17/17·flag 12/12·wood 13/13·stone 11/11·stuck 14/14·hop 20/20, pittest 14/15(E022 시험 환경, 기본 자리 — 타르 코드는 평원에서만), dotnet test 526/526] 타르: 웅덩이 위 떠 있는 타르를 들어가 줍고(잠긴 것은 안 고름) 나옴, 지나갈 땐 깊은 타르를 돌아감.
-  사) 보리·아마 평원 밭, 록스 사냥 판단(위험 크면 안 함) — vh_farmtest 평원 자리.
+  사) [끝, 회차 175 — 커밋 b95bde8 · 시험 vh_plainsfarmtest PASS 15/15(평원 자리)·fulingtest 13/13·hunttest 9/9·farmtest 25/25·npctest 17/17·fighttest 17/17·bowtest 12/12 3번(같은 묶음 FAIL 2번 → 조준 고침·E034), dotnet test 526/526] 평원 밭 보리·아마(씨앗=수확물, !밭은 반씩), 록스처럼 혼자 잡기엔 센 사냥감은 덤비지 않고 "같이 가 줘"(preyStrong).
   아) 평원 전체 회귀 + 실제 재시작 시험.
 ★ 전투 보강 (사용자 10-25 "ㅇㅇ" — ⑬ 안개땅 전에. 안개땅 적(시커 병사·걀)은 세게 때려 지금은 "피하고 도움 요청"만 늘 것):
   가) 방패 막기: 방패를 들었으면 적 공격이 올 때 막기(게임의 막기·패링 코드를 디컴파일로 확인해 맞춤, codemap에 적음), 위험 판단에 막기로 줄어드는 피해를 셈. 게임 시험 + 싸움 회귀.
