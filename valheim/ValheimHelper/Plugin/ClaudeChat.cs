@@ -18,6 +18,25 @@ namespace ValheimHelper
         static ChatResult s_waiting;
         static Speaker s_waitingWho;
         static float s_started;
+        /// <summary>최근 대화(플레이어 말·NPC 답), 지시문에 붙인다. RecentSeconds 지나거나 RecentMax 넘으면 버린다.</summary>
+        static readonly List<KeyValuePair<float, string>> s_recent = new List<KeyValuePair<float, string>>();
+        const float RecentSeconds = 300f;
+        const int RecentMax = 8;
+
+        static void Remember(string line)
+        {
+            s_recent.Add(new KeyValuePair<float, string>(Time.realtimeSinceStartup, line));
+            if (s_recent.Count > RecentMax) s_recent.RemoveAt(0);
+        }
+
+        static List<string> Recent()
+        {
+            float now = Time.realtimeSinceStartup;
+            s_recent.RemoveAll(kv => now - kv.Key > RecentSeconds);
+            var l = new List<string>();
+            foreach (var kv in s_recent) l.Add(kv.Value);
+            return l;
+        }
 
         public static void Ask(Speaker who, ChatResult r)
         {
@@ -43,7 +62,8 @@ namespace ValheimHelper
                     }
             var stockLines = new List<string>();
             foreach (var kv in stock) stockLines.Add(kv.Key + " " + kv.Value);
-            string prompt = ClaudePrompt.System(lines, stockLines, who.Name);
+            string prompt = ClaudePrompt.System(lines, stockLines, who.Name, Recent());
+            Remember(who.Name + ": " + r.Text);
             s_who = who; s_pending = r; s_started = Time.realtimeSinceStartup;
             s_call = ClaudeCli.Start(ClaudeCall.Model(bang), prompt, r.Text);
             npcs[0].Say("thinking");
@@ -80,7 +100,7 @@ namespace ValheimHelper
             WorkerNpc speaker = null;
             if (r.Target != null) foreach (var n in npcs) if (n.NpcName == r.Target) speaker = n;
             if (speaker == null) speaker = npcs[0];
-            if (res.Reply != null) speaker.SayText(res.Reply);
+            if (res.Reply != null) { speaker.SayText(res.Reply); Remember(speaker.NpcName + ": " + res.Reply); }
             foreach (var t in res.Tasks) Commands.RunClaudeTask(who, t, npcs);
         }
     }

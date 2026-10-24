@@ -84,35 +84,32 @@ public class DepartureTests
         Assert.Equal("트롤", r.Args["foe"]);
     }
 
+    // 위험은 묻거나 거절하지 않고 경고만 하고 간다(사용자 결정 2026-10-25)
     [Fact]
-    public void TightAsksForMeadWhenOneWouldDo()
+    public void TightWithoutMeadWarnsAndGoes()
     {
         var r = Departure.Judge(In(P(100, 0.9f, withMead: 0.5f)));
-        Assert.Equal(Question.Condition, r.Question);
-        Assert.Equal("healthMead", r.Condition);
-        Assert.Equal("ask.condition", r.Key);
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Null(r.Condition);
+        Assert.Equal("depart.danger", r.Key);
     }
 
     [Fact]
-    public void WeakGearForBiomeAsksForBetterGear()
+    public void WeakGearForBiomeWarnsAndGoes()
     {
-        // ⑫ 다: 평원 적 하나도 못 당하는 장비 → "이 장비론 평원 무리" 조건 질문, 다른 바이옴의 괜찮은 곳이 있으면 대안으로
+        // ⑫ 다: 평원 적 하나도 못 당하는 장비 → "이 장비론 평원 무리인데… 그래도 가지"
         var o = P(100); o.GearRatio = 1.4f; o.GearFoe = "데스킷"; o.BiomeName = "평원";
         var r = Departure.Judge(In(o));
-        Assert.Equal(Question.Condition, r.Question);
-        Assert.Equal("gear", r.Condition);
-        Assert.Equal("ask.gear", r.Key);
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Equal("depart.gear", r.Key);
         Assert.Equal("평원", r.Args["biome"]);
         Assert.Equal("데스킷", r.Args["foe"]);
-        Assert.Null(r.Alternative);
-        var other = P(300, x: 1);
-        var plains2 = P(200, x: 2); plains2.GearRatio = 1.4f;
-        r = Departure.Judge(In(o, plains2, other));
-        Assert.Same(other, r.Alternative);
         o.GearRatio = 0.9f;
-        Assert.Equal(DepartAction.Go, Departure.Judge(In(o)).Action);
+        Assert.Null(Departure.Judge(In(o)).Key);
         o.GearRatio = 1.4f; o.Boss = true;
-        Assert.Equal(Question.Escort, Departure.Judge(In(o)).Question);
+        r = Departure.Judge(In(o));
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Equal("depart.danger", r.Key);
     }
 
     [Fact]
@@ -162,18 +159,16 @@ public class DepartureTests
         var i = In(P(100, 0.9f, withMead: 0.9f)); i.Personality = Personality.Floki;
         Assert.Equal("depart.warn", Departure.Judge(i).Key);
         i.Personality = Personality.Ragnar;
-        Assert.Equal(DepartAction.Ask, Departure.Judge(i).Action);
+        Assert.Equal("depart.danger", Departure.Judge(i).Key);
     }
 
     [Fact]
-    public void HardOffersAlternativeOrEscort()
+    public void HardWarnsAndGoesToNearest()
     {
         var r = Departure.Judge(In(P(100, 1.3f, x: 1), P(250, 0.1f, x: 2)));
-        Assert.Equal(Question.Alternative, r.Question);
-        Assert.Equal(2, r.Alternative.Zone.X);
-        r = Departure.Judge(In(P(100, 1.3f, x: 1), P(900, 0.1f, x: 2))); // 너무 멂
-        Assert.Equal(Question.Escort, r.Question);
-        Assert.Null(r.Alternative);
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Equal("depart.danger", r.Key);
+        Assert.Equal(1, r.Place.Zone.X);
     }
 
     [Fact]
@@ -182,17 +177,19 @@ public class DepartureTests
         var r = Departure.Judge(In(P(100, 1.3f, together: 0.4f)));
         Assert.Equal(DepartAction.GoTogether, r.Action);
         Assert.Equal("depart.together", r.Key);
-        r = Departure.Judge(In(P(100, 2.5f, together: 0.4f))); // 불가는 같이도 안 감
-        Assert.Equal(Question.Escort, r.Question);
+        r = Departure.Judge(In(P(100, 2.5f, together: 0.4f))); // 불가는 같이 안 가고 경고만
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Equal("depart.danger", r.Key);
         r = Departure.Judge(In(P(100, 0.5f, together: 0.1f, boss: true)));
-        Assert.Equal(Question.Escort, r.Question);
+        Assert.Equal("depart.danger", r.Key);
     }
 
     [Fact]
-    public void DiedThereAsksEvenIfSafeNow()
+    public void DiedThereWarnsEvenIfSafeNow()
     {
         var r = Departure.Judge(In(P(100, 0.05f, death: 0.6f)));
-        Assert.Equal(Question.DiedThere, r.Question);
+        Assert.Equal(DepartAction.Go, r.Action);
+        Assert.Equal("depart.danger", r.Key);
         var i = In(P(100, 0.05f, death: 0.4f)); i.Personality = Personality.Floki;
         Assert.Equal(DepartAction.Go, Departure.Judge(i).Action);
     }
@@ -213,14 +210,16 @@ public class DepartureTests
     }
 
     [Fact]
-    public void DangerQuestionWinsAndCarriesNote()
+    public void NightAndStockStillAskWhenDangerous()
     {
         var i = In(P(300, 1.3f)); i.Stock = 500; i.SecondsToNight = 0;
         var r = Departure.Judge(i);
-        Assert.Equal(Question.Escort, r.Question);
+        Assert.Equal(Question.Night, r.Question);
         Assert.Equal("note.stock", r.ExtraKey);
+        i.SecondsToNight = float.PositiveInfinity;
+        Assert.Equal(Question.Stock, Departure.Judge(i).Question);
         i.Stock = 0;
-        Assert.Equal("note.night", Departure.Judge(i).ExtraKey);
+        Assert.Equal("depart.danger", Departure.Judge(i).Key);
     }
 
     [Fact]

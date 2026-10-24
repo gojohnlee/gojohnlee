@@ -12,7 +12,10 @@ namespace ValheimHelper.Core.Chat
             ? "말투: 들뜬 반말, \"히히\", 오딘·로키 같은 신 이야기와 엉뚱한 농담, 나무·배를 좋아함"
             : "말투: 침착하고 담담한 반말 \"~지/~군/~나?\", 실리를 따짐, 가끔 오딘·농사 이야기";
 
-        public static string System(IEnumerable<string> npcLines, IEnumerable<string> stockLines, string playerName)
+        /// <summary>되물은 뒤 "40개"처럼 짧게 답해도 앞 말과 잇도록 최근 대화를 붙인다(사용자 2026-10-25: 되묻기만 하고 일을 안 했다).</summary>
+        public const int DefaultAmount = 20;
+
+        public static string System(IEnumerable<string> npcLines, IEnumerable<string> stockLines, string playerName, IEnumerable<string> recent = null)
         {
             var sb = new StringBuilder();
             sb.Append("너는 발헤임 게임의 일꾼 NPC들을 부리는 명령 해석기다. 플레이어 ").Append(playerName).Append("의 채팅 한 줄을 읽고 JSON 객체 하나만 출력한다. 설명·코드블록 금지.\n");
@@ -20,7 +23,9 @@ namespace ValheimHelper.Core.Chat
             sb.Append("NPC에게 하는 말이 아닌 수다·혼잣말이면 {\"chatter\":true}. 작업은 최대 ").Append(ClaudeReply.MaxTasks).Append("개.\n");
             sb.Append("kind: item(item=게임 물건 이름, amount), keep(item, amount: 상자에 늘 이만큼 유지), keepoff(item 생략=전부), explore(arg=동서남북 방향 또는 바이옴), ");
             sb.Append("escort(따라오기), stop, status, memory, knowledge, skills, setmake(number, amount), setsave(number 생략 가능, name, items[]), setedit(number, remove[], add[]).\n");
-            sb.Append("이 밖의 작업·모르는 물건은 만들지 말고 reply로 못 한다고 답한다. 수량이 불분명하면 reply로 되묻는다.\n");
+            sb.Append("이 밖의 작업·모르는 물건은 만들지 말고 reply로 못 한다고 답한다.\n");
+            sb.Append("물건·수량이 빠진 말은 최근 대화에서 채운다(앞에서 되물은 것의 대답일 수 있다). 그래도 수량을 모르면 되묻지 말고 ")
+              .Append(DefaultAmount).Append("개로 바로 시작하고 reply에 그 수를 말한다. \"둘 다\"면 NPC마다 작업을 하나씩 낸다.\n");
             sb.Append("reply는 대답할 NPC(npc, 없으면 첫 NPC)의 말투로 쓴다.\n");
             sb.Append("NPC:\n");
             foreach (var l in npcLines) sb.Append("- ").Append(l).Append('\n');
@@ -28,6 +33,15 @@ namespace ValheimHelper.Core.Chat
             bool any = false;
             foreach (var l in stockLines) { sb.Append("- ").Append(l).Append('\n'); any = true; }
             if (!any) sb.Append("- (비어 있음)\n");
+            if (recent != null)
+            {
+                bool head = false;
+                foreach (var l in recent)
+                {
+                    if (!head) { sb.Append("최근 대화(오래된 것부터):\n"); head = true; }
+                    sb.Append("- ").Append(l).Append('\n');
+                }
+            }
             return sb.ToString();
         }
     }

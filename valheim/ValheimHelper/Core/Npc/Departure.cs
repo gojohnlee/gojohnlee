@@ -195,51 +195,31 @@ namespace ValheimHelper.Core.Npc
             bool nightSoon = t != null && t.Distance > NightNearHome && i.SecondsToNight < r.Seconds;
             r.Args["stock"] = i.Stock.ToString();
 
-            // 3) 질문 하나
+            // 3) 질문 하나(밤·재고만). 위험은 묻거나 거절하지 않고 "위험한데 그냥 가지"로 경고만 하고 간다
+            //    (사용자 결정 2026-10-25, 예전엔 장비·체력 미드·대안·동행·죽은 곳 질문으로 기다려 초원에서도 일을 안 했다)
             if (t != null)
             {
                 var level = Level(p, t);
                 r.Args["foe"] = t.TopFoe ?? "";
                 r.Reason += $"위험 {t.Ratio:0.00} {level}, 죽음 {t.DeathWeight:0.00}";
-                PlaceOption alt = level >= DangerLevel.Tight || t.GearShort || DiedThere(p, t) ? Alternative(p, i.Places, t) : null;
-
-                // 그 바이옴 적 하나도 지금 장비론 못 당함 → "이 장비론 평원 무리예요. 더 좋은 갑옷 주세요"(⑫ 다, 보스·못 갈 곳은 아래 그대로)
-                if (t.GearShort && level != DangerLevel.Impossible)
-                {
-                    r.Condition = "gear";
-                    r.Args["biome"] = t.BiomeName ?? "";
-                    if (t.GearFoe != null) r.Args["foe"] = t.GearFoe;
-                    r.Reason += $", 장비 {t.GearRatio:0.00}";
-                    Ask(r, Question.Condition, alt, stockEnough, nightSoon);
-                    r.Key = "ask.gear";
-                    return r;
-                }
-
-                if (level >= DangerLevel.Hard)
-                {
-                    if (level == DangerLevel.Hard && Together(p, t))
-                        return Go(r, DepartAction.GoTogether, "depart.together", "동료와 합치면 됨");
-                    return alt != null ? Ask(r, Question.Alternative, alt, stockEnough, nightSoon) : Ask(r, Question.Escort, null, stockEnough, nightSoon);
-                }
-                if (DiedThere(p, t))
-                    return Ask(r, Question.DiedThere, alt, stockEnough, nightSoon);
-                if (level == DangerLevel.Tight)
-                {
-                    if (i.HealthMeads > 0 && t.RatioWithMead < FightLine(p))
-                        level = DangerLevel.Caution; // 가진 미드로 버틴다
-                    else if (i.HealthMeads == 0 && t.RatioWithMead < FightLine(p))
-                    {
-                        r.Condition = "healthMead";
-                        return Ask(r, Question.Condition, alt, stockEnough, nightSoon);
-                    }
-                    else if (Together(p, t))
-                        return Go(r, DepartAction.GoTogether, "depart.together", "동료와 합치면 됨");
-                    else
-                        return alt != null ? Ask(r, Question.Alternative, alt, stockEnough, nightSoon) : Ask(r, Question.Escort, null, stockEnough, nightSoon);
-                }
+                if (level == DangerLevel.Tight && i.HealthMeads > 0 && t.RatioWithMead < FightLine(p))
+                    level = DangerLevel.Caution; // 가진 미드로 버틴다
 
                 if (nightSoon) return Ask(r, Question.Night, null, stockEnough, false);
                 if (stockEnough) return Ask(r, Question.Stock, null, false, false);
+
+                // 그 바이옴 적 하나도 지금 장비론 못 당함(⑫ 다) → "이 장비론 평원 무리인데… 그래도 가지"
+                if (t.GearShort && level != DangerLevel.Impossible)
+                {
+                    r.Args["biome"] = t.BiomeName ?? "";
+                    if (t.GearFoe != null) r.Args["foe"] = t.GearFoe;
+                    r.Reason += $", 장비 {t.GearRatio:0.00}";
+                    return Go(r, DepartAction.Go, "depart.gear", "장비 모자라도 감");
+                }
+                if ((level == DangerLevel.Hard || level == DangerLevel.Tight) && Together(p, t))
+                    return Go(r, DepartAction.GoTogether, "depart.together", "동료와 합치면 됨");
+                if (level >= DangerLevel.Tight || DiedThere(p, t))
+                    return Go(r, DepartAction.Go, "depart.danger", "위험해도 감");
 
                 // 4) 출발 + 덧붙이는 말 하나
                 // 그 바이옴 저항 미드가 없으면 묻지 않고 투덜대고 간다(사용자 결정 2026-10-22, 예전엔 "독 저항 미드 하나만 주시면 갈게요"로 기다림)

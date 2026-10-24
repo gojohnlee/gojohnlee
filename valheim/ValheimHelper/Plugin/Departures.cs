@@ -231,6 +231,7 @@ namespace ValheimHelper
             Knowledge known = Brain.Get();
             System.Func<ZoneXY, int> biomeOf = z => biomes.TryGetValue(z, out int b) ? b : biomes[z] = known.BiomeOf(z) != 0 ? known.BiomeOf(z) : Scout.BiomeAt(Senses.ZoneCenter(z));
             var gearBy = new Dictionary<int, PlaceRisk>();
+            int homeBiome = biomeOf(Senses.ZoneOf(home));
             foreach (ZoneMemory m in Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(home)))
             {
                 if (input.Places.Count >= MaxPlaces) break;
@@ -248,6 +249,8 @@ namespace ValheimHelper
                 };
                 if (partner != null) o.RatioTogether = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit + partnerHit, taken), Guard.Resolve).Ratio;
                 int biome = m.Biome != 0 ? m.Biome : biomeOf(m.Zone);
+                // 거점 바이옴(처음엔 초원)은 장비 검사 안 함: 줄 수 있는 더 좋은 장비가 없어 초반에 일을 못 했다(사용자 결정 2026-10-25)
+                if (biome == homeBiome) gearBy[biome] = new PlaceRisk();
                 if (!gearBy.TryGetValue(biome, out PlaceRisk land))
                     gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, f => Danger.Ratio(f, health, hit, taken), Guard.Resolve, NativeTo);
                 o.GearRatio = land.Ratio;

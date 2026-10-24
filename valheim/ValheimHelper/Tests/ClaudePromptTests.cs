@@ -22,6 +22,15 @@ public class ClaudePromptTests
     }
 
     [Fact]
+    public void RecentDialogueAndDefaultAmount()
+    {
+        string s = ClaudePrompt.System(new string[0], new string[0], "a", new[] { "a: 나무 캐", "플로키: 몇 개?" });
+        Assert.Contains("최근 대화(오래된 것부터):\n- a: 나무 캐\n- 플로키: 몇 개?", s);
+        Assert.Contains(ClaudePrompt.DefaultAmount + "개로 바로 시작", s);
+        Assert.DoesNotContain("최근 대화(", ClaudePrompt.System(new string[0], new string[0], "a", new string[0]));
+    }
+
+    [Fact]
     public void EmptyStockSaysSo()
     {
         Assert.Contains("(비어 있음)", ClaudePrompt.System(new string[0], new string[0], "a"));

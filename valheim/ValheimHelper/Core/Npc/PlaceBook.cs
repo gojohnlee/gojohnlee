@@ -198,6 +198,11 @@ namespace ValheimHelper.Core.Npc
         {
             var r = new PlaceRisk();
             if (biome == 0) return r;
+            // 이긴 적 있는 무리의 종류는 "못 당함"에서 뺀다(사용자 결정 2026-10-25: 이긴 멧돼지로 초원 장비 부족이라 했다)
+            var beaten = new HashSet<string>();
+            foreach (var m in _places.Values)
+                if (m.Wins > 0)
+                    foreach (var g in m.Group) beaten.Add(g.Kind);
             var one = new List<Foe>(1) { null };
             foreach (var m in _places.Values)
             {
@@ -206,6 +211,7 @@ namespace ValheimHelper.Core.Npc
                 foreach (var g in m.Group)
                 {
                     if (g.Boss || native != null && !native(g.Kind, biome)) continue; // 떠돌다 넘어온 다른 바이옴 적(초원의 트롤)은 그 땅 몫이 아님
+                    if (beaten.Contains(g.Kind)) continue;
                     Foe f = resolve(g);
                     if (f.Boss) continue;
                     one[0] = new Foe { Kind = g.Kind, Health = f.Health, Damage = f.Damage };
