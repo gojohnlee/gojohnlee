@@ -90,7 +90,10 @@ namespace ValheimHelper
             checks.Add($"거점에서 일어남 ({Utils.DistanceXZ(claude.transform.position, home):0}m)", Utils.DistanceXZ(claude.transform.position, home) < 5f);
             checks.Add($"살아 있고 체력 가득 ({claude.GetHealth():0}/{claude.GetMaxHealth():0})", !claude.IsDead() && claude.GetHealth() >= claude.GetMaxHealth() - 0.5f && claude.GetHealth() > 0f);
             var graves = claude.Graves();
-            ZDO graveZdo = graves.Count > 0 ? ZDOMan.instance.GetZDO(graves[0].Id) : null;
+            // 묘비는 ZDOID와 자리로 기억한다 — 지워진 ZDO 객체는 ZDOPool이 다른 새 물체에 다시 쓴다(m_uid·자리가 바뀜, 회차 166 묶음에서 "비어 사라짐" FAIL·"묘비까지 91m")
+            ZDOID graveId = graves.Count > 0 ? graves[0].Id : ZDOID.None;
+            ZDO graveZdo = graves.Count > 0 ? ZDOMan.instance.GetZDO(graveId) : null;
+            Vector3 gravePos = graveZdo != null ? graveZdo.GetPosition() : deathPos;
             checks.Add($"죽은 자리에 묘비 ({(graveZdo != null ? Utils.DistanceXZ(graveZdo.GetPosition(), deathPos).ToString("0") + "m" : "없음")})",
                 graveZdo != null && Utils.DistanceXZ(graveZdo.GetPosition(), deathPos) < 5f);
             Container grave = graves.Count > 0 ? Chests.FromId(graves[0].Id) : null;
@@ -111,12 +114,12 @@ namespace ValheimHelper
                     started = true;
                     if (claude.CountItem("ArmorRagsChest") > 0) wasRags = true;
                 }
-                if ((int)t % 15 == 0) TestRunner.Log($"[{t:0}s] 상태 {claude.Ai.Current}/{claude.Ai.Job?.StepName}, 묘비까지 {(graveZdo != null ? Utils.DistanceXZ(graveZdo.GetPosition(), claude.transform.position) : -1):0}m, 남은 묘비 {claude.Graves().Count}");
+                if ((int)t % 15 == 0) TestRunner.Log($"[{t:0}s] 상태 {claude.Ai.Current}/{claude.Ai.Job?.StepName}, 묘비까지 {(graveZdo != null ? Utils.DistanceXZ(gravePos, claude.transform.position) : -1):0}m, 남은 묘비 {claude.Graves().Count}");
                 if (started && claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
             checks.Add($"스스로 묘비 회수 시작 ({(started ? "예" : "아니오")})", started);
             checks.Add("가는 길에 예비 장비(누더기)를 참", wasRags);
-            checks.Add("묘비가 비어 사라짐", claude.Graves().Count == 0 && (graveZdo == null || ZDOMan.instance.GetZDO(graveZdo.m_uid) == null));
+            checks.Add("묘비가 비어 사라짐", claude.Graves().Count == 0 && (graveId.IsNone() || ZDOMan.instance.GetZDO(graveId) == null));
             var worn = new List<string>();
             foreach (var it in mine.GetEquippedItems()) worn.Add(it.m_dropPrefab != null ? it.m_dropPrefab.name : "?");
             checks.Add($"되찾은 가죽 갑옷을 입음 ({string.Join(", ", worn.ToArray())})", worn.Contains("ArmorLeatherChest") && worn.Contains("ArmorLeatherLegs"));

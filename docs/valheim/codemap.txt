@@ -49,7 +49,7 @@ Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) Cla
 먼 길(멀리선 이동 생략)   Core/Work/RoughPath.cs(8m 칸 A*, 여유 160m: 깊은 물·칸 사이 1/4·1/2·3/4 점 깊은 물·45° 넘는 칸 사이 못 감(출발·도착 칸은 봐줌)·안 밝혀진 칸 1.5배, Route = 안 밝혀진 목적지·못 찾음은 직선, Length·PointAt) · Tests/RoughPathTests · Core/Work/FarSkip.cs(기다림 = 길 ÷ m_runSpeed, 2초마다 MapPos, HopAim 60m씩·목적지 20m 앞까지, LandLimit 30초) · Tests/FarSkipTests · 게임 연결 GatherJob.WalkVia → FarWalk(플레이어 64m 밖·60m 넘음·HopBlocked 아님) → FarRoute(밝혀진 목적지면 WorldGenerator.GetHeight로 RoughPath, 펼침 6000, 아니면 직선) + LandNear(HopToward와 같은 안전 확인) · 플레이어가 지도 위치 64m 안이면 FarDrop(FarSkip.DropAims: 지도 위치 → 길 앞 10m씩, LandNear nearPlayerOk) · 시험 Plugin/SkipTest.cs(vh_skiptest, GatherJob.TestReturn·TestFakePlayer, WaterRoute = 물 건너는 두 점 1500m 안)
 거점 깃발·소환          Plugin/BaseFlag.cs Workers.cs(설정 이름, 소환·추적, AllZdos) · 거점 범위 Core/Work/BaseArea.cs(125m: Chests·Recipes.BaseRange·NightSettle)
 먼 구역 유지           Plugin/FarZones.cs(패치 3곳)
-바닐라 규칙 잇기 패치   Plugin/NpcPatches.cs(갑옷 계산, 땅 파기 막기 NoDig, 진단 LogSpawnDiag·ImpactDiag = 일꾼 곁 통나무 생김·일꾼에 부딪힘 로그) Buildings.cs(건축물 피해 없음)
+바닐라 규칙 잇기 패치   Plugin/NpcPatches.cs(갑옷 계산, 뒤치기·비틀 치명타 빼기 LikePlayerHit, 진단 HitDiag = 일꾼 큰 피해 한 방, 땅 파기 막기 NoDig, 진단 LogSpawnDiag·ImpactDiag = 일꾼 곁 통나무 생김·일꾼에 부딪힘 로그) Buildings.cs(건축물 피해 없음)
 플러그인 시작          Plugin/Plugin.cs(Update: Workers, Brain, Departures.Tick, TestRunner)
 
 게임 안 시험           Plugin/TestRunner.cs(공통·자동 실행·diag.txt) AutoStart.cs(월드 자동 입장·시험 캐릭터 vhtest 만들기·고르기) Minimized.cs TestTerrain.cs(판 땅 되돌림) · TestKit.cs(Setup 끝 CheckStart = 시작 조건·환경 불량 EnvBadException(남은 생물은 Strict = World.CountsCreatures·OldClear strict 시험만), WaitFor는 Strict 아니면 일꾼 싸움·도망(Guard.Engaged) 동안 시간 멈춤, Snapshot·상태 흐름 링 버퍼·NoteFail)·Cleanup(End 끝 정리: 생물·땅 물건·통나무 TreeLog, 생물·물건이 남으면 TestRunner.Halt로 남은 자동 시험 환경 불량)
@@ -143,6 +143,9 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
   CharacterDrop.m_drops[m_prefab]. ZNetScene.m_prefabs, ObjectDB.m_items.
 - Inventory.CountItems(이름), GetEmptySlots(). HitData.DamageTypes.Modify(배율), ApplyArmor.
 - 바닐라 RPC_Damage는 플레이어만 갑옷 계산(→ NpcPatches.ArmorCounts). 바닐라 Attack은 플레이어 도구만 닳게 함(→ 직접 깎음).
+  RPC_Damage의 몬스터 전용 배율(회차 166): 뒤치기 = m_baseAI 있고 !IsAlerted()·hit.m_backstabBonus > 1·300초에 한 번(m_backstabTime) → 그 배율(몬스터 무기 SharedData 기본 4) —
+  일꾼은 WorkerAI(BaseAI)라 경계가 꺼져 늘 받았음, 비틀 치명타 = IsStaggering() && !IsPlayer() → 2배(→ 둘 다 NpcPatches.LikePlayerHit). 남은 차이: !IsPlayer면 ApplyDamage가 난이도 배율·m_playerDamageRate를 곱함(알려진 한계).
+- 지워진 ZDO는 ZDOPool.Release(Reset: m_uid None·자리 0)로 돌아가 다음 새 물체에 다시 쓰인다 → ZDO 객체를 붙들고 나중에 m_uid·자리를 읽으면 다른 물체. 기억은 ZDOID로.
 - Character.Damage → ZNetView.InvokeRPC → ZRoutedRpc.InvokeRoutedRPC는 대상이 자기(소유자 = 호스트)면 HandleRoutedRPC를 그 자리에서 불러 ApplyDamage·SetHealth까지 같은 프레임에 끝남(→ 시험은 바로 잼).
   플레이어 아닌 쪽 ApplyDamage는 GetDifficultyDamageScaleEnemy(근처 플레이어 수, 혼자면 1)·m_playerDamageRate를 곱함. 음식 회복은 10초마다(Player.UpdateFood m_foodRegenTimer, 일꾼 Meals.Tick 같음) — 꿀·익힌 고기·블루베리 합 4.
 - ItemDrop.Pickup(Humanoid)의 소유권 대기는 줍는 쪽을 Player로 캐스팅 → NPC면 NRE(→ CanPickup이면 Humanoid.Pickup).

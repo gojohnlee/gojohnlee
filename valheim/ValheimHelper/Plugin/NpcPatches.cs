@@ -60,6 +60,79 @@ namespace ValheimHelper
         }
 
         /// <summary>
+        /// Character.RPC_Damage(게임 1.0.20)의 몬스터 전용 피해 배율 둘을 일꾼에게서 뺀다(플레이어처럼, 회차 166):
+        /// - 뒤치기: if (m_baseAI != null && !m_baseAI.IsAlerted() && hit.m_backstabBonus > 1f && 300초에 한 번) hit.ApplyModifier(m_backstabBonus).
+        ///   일꾼은 WorkerAI(BaseAI)인데 경계(alerted)를 켜지 않아 300초마다 첫 한 방이 공격자 무기의 뒤치기 배율(몬스터 무기 기본 4배)로 들어왔다
+        ///   (vh_resisttest 진단: 늑대 69.6 × 4 − 갑옷 42 → 체력 71/71 일꾼 즉사). 플레이어는 BaseAI가 없어 안 받는다 → 일꾼이 받는 hit의 배율을 1로.
+        /// - 비틀 치명타: if (IsStaggering() && !IsPlayer()) hit.ApplyModifier(2f) — 그 IsPlayer 하나만 "플레이어 또는 일꾼"으로(ArmorCounts와 같은 방식).
+        /// </summary>
+        [HarmonyPatch(typeof(Character), "RPC_Damage")]
+        static class LikePlayerHit
+        {
+            static void Prefix(Character __instance, HitData hit)
+            {
+                if (__instance is WorkerNpc && hit != null) hit.m_backstabBonus = 1f;
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> code)
+            {
+                var list = new List<CodeInstruction>(code);
+                MethodInfo isPlayer = AccessTools.Method(typeof(Character), nameof(Character.IsPlayer));
+                MethodInfo staggering = AccessTools.Method(typeof(Character), nameof(Character.IsStaggering));
+                MethodInfo like = AccessTools.Method(typeof(LikePlayerHit), nameof(PlayerOrWorker));
+                int patched = 0;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (!list[i].Calls(isPlayer)) continue;
+                    bool afterStagger = false;
+                    for (int j = Math.Max(0, i - 4); j < i; j++) if (list[j].Calls(staggering)) afterStagger = true;
+                    if (!afterStagger) continue;
+                    list[i] = new CodeInstruction(OpCodes.Call, like).MoveLabelsFrom(list[i]);
+                    patched++;
+                }
+                if (patched != 1) Plugin.Log.LogWarning($"비틀 치명타 패치: 바꾼 자리 {patched}곳(1곳이어야 함). 게임 버전이 바뀌었는지 확인 필요");
+                return list;
+            }
+
+            static bool PlayerOrWorker(Character c) => c.IsPlayer() || c is WorkerNpc;
+        }
+
+        /// <summary>
+        /// 진단(회차 166): 일꾼이 한 방에 최대 체력 20% 넘게 잃거나 죽거나 뒤치기가 들어가면 한 줄 — 원래 피해·뒤치기 배율·비틀거림·체력 흐름.
+        /// (vh_resisttest: 체력 71·갑옷 42 일꾼이 늑대 한 방에 죽음 → 뒤치기 4배였음, LikePlayerHit)
+        /// </summary>
+        [HarmonyPatch(typeof(Character), "RPC_Damage")]
+        internal static class HitDiag
+        {
+            static readonly AccessTools.FieldRef<Character, float> BackstabTime = AccessTools.FieldRefAccess<Character, float>("m_backstabTime");
+
+            internal struct Before { public bool On; public float Hp, Raw, Bonus, Stab; public bool Stagger, Alerted; }
+
+            static void Prefix(Character __instance, HitData hit, out Before __state)
+            {
+                __state = default;
+                if (!(__instance is WorkerNpc) || hit == null) return;
+                var nv = __instance.GetComponent<ZNetView>();
+                if (nv == null || !nv.IsValid() || !nv.IsOwner()) return;
+                BaseAI ai = __instance.GetBaseAI();
+                __state = new Before { On = true, Hp = __instance.GetHealth(), Raw = hit.GetTotalDamage(), Bonus = hit.m_backstabBonus, Stab = BackstabTime(__instance),
+                                       Stagger = __instance.IsStaggering(), Alerted = ai != null && ai.IsAlerted() };
+            }
+
+            static void Postfix(Character __instance, HitData hit, Before __state)
+            {
+                if (!__state.On) return;
+                var w = (WorkerNpc)__instance;
+                Character a = hit.GetAttacker();
+                bool stab = BackstabTime(__instance) != __state.Stab;
+                float lost = __state.Hp - w.GetHealth();
+                if (!stab && lost < w.GetMaxHealth() * 0.2f && w.GetHealth() > 0f) return;
+                Plugin.Log.LogInfo($"진단 큰 피해 {w.NpcName} ← {(a != null ? Utils.GetPrefabName(a.gameObject) : hit.m_hitType.ToString())}: 원래 {__state.Raw:0.0}, 뒤치기 x{__state.Bonus:0.#}{(stab ? " 적용" : "")}, " +
+                                   $"비틀 {__state.Stagger}, 경계 {__state.Alerted}, 갑옷 {w.GetBodyArmor():0}, 체력 {__state.Hp:0.0} → {w.GetHealth():0.0}/{w.GetMaxHealth():0}");
+            }
+        }
+
+        /// <summary>
         /// 일꾼의 곡괭이질은 허락된 때(광석이 땅속에 남았을 때·구덩이에서 경사로를 깎을 때, WorkerAI.DigAllowed)만 땅을 판다
         /// (2026-10-21 사용자: 돌 캘 때 맨땅을 파서 구덩이에 갇힘 → 땅 파기는 최대한 자제).
         /// 바닐라 Attack.DoMeleeAttack은 휘두름이 바위보다 땅에 먼저 닿으면 땅만 파고 그 휘두름을 끝낸다 — 여기서는 파는 것만 막는다.

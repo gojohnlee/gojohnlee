@@ -5,7 +5,8 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_resisttest (D 저항 미드): 준비 때 거점 상자의 독·냉기 저항 미드를 종류마다 둘씩 챙기고,
-    /// 중독돼도 안 마시고(늦음), 속성 없는 적과는 안 마시고, 독 공격 적(블롭)과 싸우기 직전에 독 저항만 마시는지(사용자 결정 2026-10-22).
+    /// 중독돼도 안 마시고(늦음), 속성 없는 적과는 안 마시고, 독 공격 적(블롭)과 싸우기 직전에 독 저항만 마시는지(사용자 결정 2026-10-22),
+    /// 산(⑪ 5): 빠른 늑대에게서 물러나지 않고 싸우며 냉기 미드는 안 마시고(속성 없음), 드레이크(냉기 침)와 싸우거나 쫓겨 피하기 직전엔 마시는지.
     /// </summary>
     static class ResistTest
     {
@@ -91,6 +92,39 @@ namespace ValheimHelper
             checks.Add($"한 병만 마심 (독 {npc.CountItem("MeadPoisonResist")})", npc.CountItem("MeadPoisonResist") == 1);
             checks.Add($"냉기 미드는 안 마심 ({npc.CountItem("MeadFrostResist")})", npc.CountItem("MeadFrostResist") == 2);
             checks.Add("저항 대사", w.Heard.Exists(h => h.Contains("저항 미드")));
+
+            // 5) 산(⑪ 5): 늑대는 속성 피해 없음 → 냉기 미드 안 마심. 드레이크(Hatchling)는 냉기 침 → 싸우기 직전(또는 쫓겨 물러날·도망칠 때) 냉기 저항만 마심.
+            // 산 갈 차림(철 갑옷). 늑대는 일꾼보다 빨라 물러나도 못 떨침 → 물러남 대신 싸움. 늑대가 한 번 물거나(체력 70% 밑) 8초 싸우면 늑대를 치움(마실지만 본다).
+            // 한 번은 물리게 둔다 — 회차 166: 일꾼이 받는 첫 한 방에 몬스터 뒤치기 4배가 붙어 체력 71·갑옷 42 일꾼이 늑대 한 방에 죽었음(NpcPatches.LikePlayerHit)
+            foreach (var a in new[] { "ArmorIronChest", "ArmorIronLegs", "HelmetIron" }) npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(a), 1);
+            Prep.WearBest(npc);
+            npc.Heal(npc.GetMaxHealth(), false);
+            int deaths0 = npc.Deaths;
+            Character wolf = Spawn("Wolf", npc.transform.position + npc.transform.forward * 12f, spawned);
+            Guard.Learn(wolf);
+            float wolfT = 0f;
+            bool wolfFight = false;
+            while (wolfT < 10f && wolf != null && !wolf.IsDead() && !npc.IsDead() && npc.Deaths == deaths0 && npc.GetHealth() > npc.GetMaxHealth() * 0.7f && !(wolfFight && wolfT > 8f))
+            {
+                if (npc.Ai.Guard?.StateName == "Fight") wolfFight = true;
+                wolfT += 0.25f;
+                yield return new WaitForSeconds(0.25f);
+            }
+            checks.Add($"빠른 늑대에게서 물러나지 않고 싸움 ({wolfT:0.0}초, 경계 {npc.Ai.Guard?.StateName}/{npc.Ai.Guard?.LastVerdict})", wolfFight);
+            checks.Add($"늑대와 싸움 — 냉기 미드 안 마심 ({npc.CountItem("MeadFrostResist")}, {wolfT:0.0}초, 체력 {npc.GetHealth():0}/{npc.GetMaxHealth():0}·갑옷 {npc.GetBodyArmor():0}, 늑대 {(wolf == null ? "없어짐" : wolf.IsDead() ? "죽음" : "살아 있음")})", npc.CountItem("MeadFrostResist") == 2);
+            if (wolf != null && !wolf.IsDead()) { var kill = new HitData { m_point = wolf.GetCenterPoint() }; kill.m_damage.m_damage = 99999f; wolf.Damage(kill); }
+            yield return new WaitForSeconds(2f);
+            checks.Add($"늑대에게 안 죽음 (죽음 {npc.Deaths - deaths0}, 체력 {npc.GetHealth():0}/{npc.GetMaxHealth():0})", npc.Deaths == deaths0);
+            npc.Heal(npc.GetMaxHealth(), false);
+            Character drake = Spawn("Hatchling", npc.transform.position + npc.transform.forward * 8f, spawned);
+            Guard.Learn(drake);
+            yield return TestKit.WaitFor(() => npc.CountItem("MeadFrostResist") == 1, 30f);
+            checks.Add($"드레이크와 싸우기 전 냉기 저항 미드 마심 ({TestKit.Waited:0.0}초)", TestKit.Ok);
+            checks.Add("냉기 저항 생김", npc.Resists("Frost"));
+            if (drake != null && !drake.IsDead()) { var kill = new HitData { m_point = drake.GetCenterPoint() }; kill.m_damage.m_damage = 99999f; drake.Damage(kill); }
+            yield return new WaitForSeconds(2f);
+            checks.Add($"냉기도 한 병만 (냉기 {npc.CountItem("MeadFrostResist")}·독 {npc.CountItem("MeadPoisonResist")})",
+                npc.CountItem("MeadFrostResist") == 1 && npc.CountItem("MeadPoisonResist") == 1);
         }
 
         static void Cleanup(System.Collections.Generic.List<GameObject> spawned)

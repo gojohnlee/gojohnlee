@@ -132,7 +132,11 @@ namespace ValheimHelper
             f.TeleportTo(farAway + Vector3.up * 0.3f, rot, false);
             float[] fSaved = new float[6];
             Speeds(f, fSaved, true); // B·C 동안 2호 발 묶음(안 그러면 나무를 상자에 넣으러 거점 쪽으로 걸어와 1호 곁까지 옴 — 회차 147 묶음 실행)
-            yield return new WaitForSeconds(2f);
+            // 1호도 제자리로(회차 166 묶음: A 물러남으로 거점 61m에 있던 1호가 2호를 89m로 보고 Wait로 부름), 둘이 다 옮겨질 때까지
+            r.Ai.Guard?.Reset();
+            r.TeleportTo(arena + Vector3.up * 0.3f, rot, false);
+            yield return TestKit.WaitFor(() => Vector3.Distance(r.transform.position, f.transform.position) > Guard.MateCallRange + 20f, 10f);
+            yield return new WaitForSeconds(1f);
             r.Heal(1000f, false);
             r.SetHealth(r.GetMaxHealth() * 0.8f);
             r.Ai.Guard?.TestForgetMateCall();
@@ -150,6 +154,10 @@ namespace ValheimHelper
             r.TeleportTo(arena + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(2f);
             yield return TestKit.WaitFor(() => f.Ai.Guard != null && !f.Ai.Guard.Engaged && r.Ai.Guard != null && !r.Ai.Guard.Engaged, 30f);
+            // 2호 둘레 들생물을 치우고 체력을 채움(회차 166 fight→mate 묶음: 2호가 들 회색난쟁이와 싸워 체력 36/70 → 1호가 "2호 쪽 판단 Back"으로 안 부름)
+            TestKit.ClearCreatures(f.transform.position);
+            f.Heal(1000f, false);
+            f.Ai.Guard?.Reset();
             r.Heal(1000f, false);
             r.SetHealth(r.GetMaxHealth() * 0.8f);
             r.Ai.Guard?.TestForgetMateCall();

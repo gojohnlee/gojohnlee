@@ -140,11 +140,20 @@ namespace ValheimHelper
             Tally(pos);
             bool mead = m_npc.CanDrinkHealthMead();
             Verdict v = Danger.Judge(m_npc.Personality, m_views, m_npc.GetHealth(), m_npc.GetMaxHealth(), myHit, taken, mead);
+            Character nearest = Nearest(pos);
+            // 나보다 빠른 적이 덤벼 오면 물러나도 등 뒤로 맞기만 한다 → 물러남 대신 싸움(도망 판단은 그대로).
+            // (⑪ 5 기본안 10-24. 회차 166 vh_resisttest에서 철 갑옷 라그나가 늑대에게 한순간에 죽은 건 물러남 탓이 아니라 일꾼이 받던 몬스터 뒤치기 4배 — NpcPatches.LikePlayerHit로 고침)
+            if (v == Verdict.Back && Aggressive(nearest) && nearest.m_runSpeed > m_npc.m_runSpeed * 1.05f)
+            {
+                if (m_state != State.Fight) Plugin.Log.LogInfo($"{m_npc.NpcName} 물러나도 못 떨침({Utils.GetPrefabName(nearest.gameObject)} 달리기 {nearest.m_runSpeed:0.0} > 나 {m_npc.m_runSpeed:0.0}) → 싸움");
+                v = Verdict.Fight;
+            }
             LastVerdict = v;
             LastRatio = Danger.Ratio(m_views, m_npc.GetHealth(), myHit, taken);
             LastDetail = $"내 한 방 {myHit:0.0}, 갑옷 {armor:0}, 배율 {scale:0.00}, 체력 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 적 [" + string.Join("; ", m_views.ConvertAll(f => $"{f.Kind} {f.Health:0}/{f.Damage:0.0}→{taken(f.Damage):0.0} {f.Distance:0}m{(Brain.Foes.Knows(f.Kind) ? "" : " 짐작")}").ToArray()) + "]";
-            Character nearest = Nearest(pos);
             string foeName = Localization.instance.Localize(nearest.m_name);
+            // 쫓아오는 속성 적에게서 물러나거나 도망칠 때도 그 저항 미드를 마신다(⑪ 5 기본안 10-24: 드레이크 냉기 침은 날아서 못 때리고 도망치는 동안 맞음)
+            if ((v == Verdict.Flee || v == Verdict.Back) && Aggressive(nearest)) DrinkResist(pos, nearest);
             if (TryCallMate(pos, v, myHit, taken, mead, foeName)) return;
             switch (v)
             {
