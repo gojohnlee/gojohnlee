@@ -25,6 +25,8 @@ namespace ValheimHelper
         /// <summary>지난 휘두름 끝의 대상 체력 기록(HealthMark). null이면 다음 프레임에 잰다.</summary>
         string m_lastHealth;
         bool m_sawTooHard;
+        /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
+        bool m_sawSkipped;
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
 
@@ -375,7 +377,7 @@ namespace ValheimHelper
             if (Utils.DistanceXZ(Senses.ZoneCenter(here), pos) < 20f)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {here.X},{here.Y}에 와서 봤는데 쓸 게 없음 / {SightDiag(pos)}");
-                k.Forget(here, Item); // 여기 와서 봤는데 없다
+                if (!m_sawSkipped) k.Forget(here, Item); // 여기 와서 봤는데 없다(건너뛴 것만 보이면 지식은 그대로)
                 m_tried.Add(here);
             }
             foreach (var m in k.ZonesWith(Item, here))
@@ -633,6 +635,7 @@ namespace ValheimHelper
         bool FindInSight(out ZDO best, float range = Senses.SightRange)
         {
             best = null;
+            m_sawSkipped = false;
             bool inside = m_npc.InInterior();
             float bestScore = float.MaxValue;
             Vector3 pos = m_npc.transform.position;
@@ -644,9 +647,11 @@ namespace ValheimHelper
             {
                 if (Character.InInterior(zdo.GetPosition()) != inside) continue; // 바깥에서 지하묘지 안 물체를, 안에서 바깥 물체를 고르지 않는다
                 // 막힘 기록(StuckBook)은 바깥 걷기 자리(xz)라 지하묘지 안(같은 xz, y+5000) 대상에는 안 쓴다 — 회차 136: 밖에서 막힌 자리가 묘지 안 더미를 가렸다
-                if (m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition()) || (!inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z))) continue;
+                bool skipped = m_skip.Contains(zdo.m_uid) || Avoided(zdo.GetPosition()) || (!inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z));
                 ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                 if (info == null || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
+                // 건너뛴 대상이 보이면 "와서 봤는데 없음"이 아니다 — 지식에서 지우지 않고 이 일 동안만 그 구역을 뺀다(m_tried)
+                if (skipped) { m_sawSkipped = true; continue; }
                 if (info.Pickable && zdo.GetBool(ZDOVars.s_picked)) continue;
                 // 묻힌 은 광맥(숨는 광맥)은 위시본을 얻었을 때만 알고, 드러난 것이 먼저(HiddenOres, ⑪).
                 bool exposed = info.Hidden && HiddenOres.Exposed(zdo, info);

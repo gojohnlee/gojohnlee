@@ -492,6 +492,25 @@ namespace ValheimHelper
             }
             // 남은 생물은 다음 시험을 막지 않음(자연 생물 허용, 사용자 결정 2026-10-23 — 생물을 세는 시험은 시작 때 치우고 못 치우면 환경 불량)
             if (c > 0) TestRunner.Log($"끝 정리 뒤에도 생물 {c} 남음 — 다음 시험은 그대로");
+            // 죽은 적의 쓰러진 몸(Ragdoll)은 몇 초 뒤 사라지며 전리품을 떨군다(E027: raidtest 뒤 0.5초에 물건 1) → 몸을 치우고 물건을 이름과 함께 남긴 뒤 다시 치움(최대 3번)
+            for (int i = 0; i < 3 && d > 0; i++)
+            {
+                var names = new List<string>();
+                foreach (var v in Drops(home)) names.Add($"{Utils.GetPrefabName(v.gameObject)} {Vector3.Distance(v.transform.position, home):0}m");
+                int bodies = 0;
+                foreach (var r in Object.FindObjectsByType<Ragdoll>(FindObjectsSortMode.None))
+                {
+                    var rv = r.GetComponent<ZNetView>();
+                    if (rv == null || !rv.IsValid() || Vector3.Distance(r.transform.position, home) > StartRadius + 20f) continue;
+                    rv.ClaimOwnership();
+                    ZNetScene.instance.Destroy(r.gameObject);
+                    bodies++;
+                }
+                TestRunner.Log($"끝 정리 뒤 물건 {d} ({string.Join(", ", names.ToArray())}), 쓰러진 몸 {bodies} → 다시 치움");
+                foreach (var v in Drops(home)) { v.ClaimOwnership(); ZNetScene.instance.Destroy(v.gameObject); }
+                yield return new WaitForSeconds(1f);
+                d = Drops(home).Count;
+            }
             if (d > 0) TestRunner.Halt($"앞 시험 끝 정리 실패(거점 {StartRadius:0}m 안 물건 {d} 남음)");
         }
 
