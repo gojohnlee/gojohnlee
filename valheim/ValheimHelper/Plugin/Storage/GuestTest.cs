@@ -184,6 +184,7 @@ namespace ValheimHelper
             checks.Add($"닫으면 손님 길 끝·호스트 보는 사람에서 빠짐 ({SharedGuest.Active}, {SharedChests.GuestViewing(id)})", !SharedGuest.Active && !SharedChests.GuestViewing(id));
 
             yield return CraftPart(w, checks);
+            yield return BuildPart(w, checks);
         }
 
         static readonly MethodInfo DoCrafting = AccessTools.Method(typeof(InventoryGui), "DoCrafting");
@@ -280,6 +281,66 @@ namespace ValheimHelper
                 if (made > 0) bag.RemoveItem(item, made);
                 TestKit.ClearBaseStock(w, pa, pb);
             }
+        }
+
+        /// <summary>9) 다-4b 손님 건축 재료: 가방 + 거점 상자로 놓기 가능·망치 개수 표시, 놓자마자 조각·가방 몫만 빠짐 → 답 뒤 상자 몫 빠짐, 그사이 상자에서 빠지면 조각 걷고 가방 몫 돌려받음.</summary>
+        static IEnumerator BuildPart(TestKit.World w, GatherTest.Checks checks)
+        {
+            Player p = w.Player;
+            Inventory bag = p.GetInventory();
+            Piece piece = ZNetScene.instance.GetPrefab("fire_pit")?.GetComponent<Piece>();
+            bool usable = piece != null && piece.m_craftingStation == null && piece.m_resources.Length >= 2 && w.Chest != null;
+            checks.Add($"손님 건축: 제작대 없는 조각 ({(piece != null ? piece.name : "없음")})", usable);
+            if (!usable) yield break;
+            Piece.Requirement ra = piece.m_resources[0], rb = piece.m_resources[1];
+            string a = ra.m_resItem.m_itemData.m_shared.m_name, b = rb.m_resItem.m_itemData.m_shared.m_name;
+            string pa = ra.m_resItem.name, pb = rb.m_resItem.name;
+            int na = ra.m_amount, nb = rb.m_amount;
+            bag.RemoveItem(a, bag.CountItems(a));
+            bag.RemoveItem(b, bag.CountItems(b));
+            TestKit.ClearBaseStock(w, pa, pb);
+            bag.AddItem(ObjectDB.instance.GetItemPrefab(pa), na);
+            TestKit.PutInChest(w.Chest, pb, nb + 1);
+            yield return new WaitForSeconds(0.6f);
+            Piece one = null, two = null;
+            try
+            {
+                checks.Add($"손님도 가방 {a} {na} + 상자 {b} {nb}로 놓기 가능, 망치 개수 표시도 상자 셈",
+                    p.HaveRequirements(piece, Player.RequirementMode.CanBuild) && SharedCraft.CountsShown(p) && !BaseStock.Active(p));
+
+                one = SharedCraft.TestPlace(p, piece, GatherTest.Ground(p.transform.position + p.transform.forward * 4f + p.transform.right * 3f), p.transform.rotation);
+                checks.Add($"놓자마자 조각 생김({one != null}), 가방 몫만 빠짐 ({a} {bag.CountItems(a)}), 상자 몫은 부탁({SharedCraft.BuildPending}) — 답 전 상자 {b} {GatherTest.Count(w.Chest, pb)}/{nb + 1}",
+                    one != null && bag.CountItems(a) == 0 && SharedCraft.BuildPending == 1 && GatherTest.Count(w.Chest, pb) == nb + 1);
+                yield return WaitBuild();
+                checks.Add($"답 뒤 상자에서 {b} {nb}개 빠짐 (남음 {GatherTest.Count(w.Chest, pb)}/1), 조각 그대로({one != null})",
+                    SharedCraft.BuildPending == 0 && one != null && GatherTest.Count(w.Chest, pb) == 1 && bag.CountItems(b) == 0);
+
+                // 그사이 호스트 쪽에서 상자 물건이 빠짐 → 조각 걷고 가방 몫 돌려받음(복제·손실 없음)
+                bag.AddItem(ObjectDB.instance.GetItemPrefab(pa), na);
+                if (nb > 1) TestKit.PutInChest(w.Chest, pb, nb - 1);
+                yield return new WaitForSeconds(0.6f);
+                two = SharedCraft.TestPlace(p, piece, GatherTest.Ground(p.transform.position + p.transform.forward * 4f - p.transform.right * 3f), p.transform.rotation);
+                bool placed = two != null && bag.CountItems(a) == 0;
+                TestKit.TakeFromChest(w.Chest, pb);
+                yield return WaitBuild();
+                checks.Add($"그사이 상자에서 빠짐: 놓였다가({placed}) 조각 걷음({two == null}), 가방 {a} {bag.CountItems(a)}/{na} 돌려받음, 상자 {b} {GatherTest.Count(w.Chest, pb)}",
+                    placed && two == null && bag.CountItems(a) == na && bag.CountItems(b) == 0 && GatherTest.Count(w.Chest, pb) == 0);
+            }
+            finally
+            {
+                if (one != null) ZNetScene.instance.Destroy(one.gameObject);
+                if (two != null) ZNetScene.instance.Destroy(two.gameObject);
+                bag.RemoveItem(a, bag.CountItems(a));
+                bag.RemoveItem(b, bag.CountItems(b));
+                TestKit.ClearBaseStock(w, pa, pb);
+            }
+        }
+
+        static IEnumerator WaitBuild()
+        {
+            float until = Time.time + 3f;
+            while (SharedCraft.BuildPending > 0 && Time.time < until) yield return null;
+            yield return new WaitForSeconds(0.3f); // 걷은 조각이 프레임 끝에 사라짐
         }
     }
 }

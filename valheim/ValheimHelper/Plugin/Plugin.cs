@@ -95,6 +95,7 @@ namespace ValheimHelper
                 PersonalChests.Tick(UnityEngine.Time.deltaTime);
                 SharedChests.Tick();
                 SharedGuest.Tick();
+                SharedCraft.Tick();
                 MapSense.Tick(UnityEngine.Time.deltaTime);
                 MapIcons.Update(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();

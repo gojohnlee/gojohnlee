@@ -72,7 +72,7 @@ namespace ValheimHelper
         {
             static void Postfix(Player __instance, Piece piece, Player.RequirementMode mode, ref bool __result)
             {
-                if (__result || piece == null || mode == Player.RequirementMode.IsKnown || !BaseStock.Active(__instance)) return;
+                if (__result || piece == null || mode == Player.RequirementMode.IsKnown || !(BaseStock.Active(__instance) || SharedCraft.Counts(__instance))) return;
                 if (piece.m_craftingStation)
                 {
                     if (mode == Player.RequirementMode.CanAlmostBuild)

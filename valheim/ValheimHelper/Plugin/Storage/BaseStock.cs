@@ -176,6 +176,16 @@ namespace ValheimHelper
             return TakeFrom(chests, name, n, got);
         }
 
+        /// <summary>호스트: 손님 자리 pos의 거점 상자 전부의 그 물건 수(캐시 없이, 손님 건축 ④ 다-4b).</summary>
+        public static int CountFor(Vector3 pos, long playerID, string name)
+        {
+            var chests = new List<Container>();
+            Collect(pos, playerID, chests);
+            int n = 0;
+            foreach (var c in chests) if (c != null) n += c.GetInventory().CountItems(name);
+            return n;
+        }
+
         static int TakeFrom(List<Container> chests, string name, int n, List<ItemDrop.ItemData> got)
         {
             var have = new int[chests.Count];
