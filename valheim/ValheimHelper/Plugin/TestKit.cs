@@ -378,6 +378,22 @@ namespace ValheimHelper
             }
         }
 
+        /// <summary>
+        /// 바이옴 회귀(RunBiome) 채집 시험 동안 1초마다 거점 둘레(StartRadius) 생물을 치운다. 시험 일꾼은 뿔 곡괭이만 들고 갑옷이 없어 검은숲 회색난쟁이
+        /// 한 마리에도 도망치고(잃을 체력 비율 5), 도망은 설계상 그 목표를 버린다(구상서 8장 a) — 회차 142 검은숲 vh_coppertest: 거점 12m 앞 시험 광맥을
+        /// 버리고 480m 밖 광맥으로 감. 시험 자리만 지키고 먼 구역은 그대로. running()이 false이거나 다음 시험이 시작되면 끝. 치운 수는 KeptClear.
+        /// </summary>
+        public static IEnumerator KeepSiteClear(Vector3 home, System.Func<bool> running)
+        {
+            KeptClear = 0;
+            int gen = TestRunner.Gen;
+            while (running() && TestRunner.Running && TestRunner.Gen == gen)
+            {
+                if (!Strict) KeptClear += ClearCreatures(home);
+                yield return new WaitForSeconds(1f);
+            }
+        }
+
         /// <summary>거점 둘레 땅에 떨어진 물건.</summary>
         static List<ZNetView> Drops(Vector3 home)
         {

@@ -216,6 +216,8 @@ namespace ValheimHelper
             }
             m_avoid.Add(Senses.ZoneOf(danger));
             if (m_step == Step.Return || m_step == Step.Deposit || m_step == Step.Unload || m_step == Step.Prep || m_step == Step.Tool || m_step == Step.GoChest) return;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 위험 → 구역 {Senses.ZoneOf(danger).X},{Senses.ZoneOf(danger).Y} 피함" +
+                               (m_targetId.IsNone() ? "" : $", 목표 {m_targetInfo?.Prefab}(위험에서 {Utils.DistanceXZ(m_targetPos, danger):0}m, 집에서 {Utils.DistanceXZ(m_targetPos, m_npc.Home):0}m) 버림"));
             if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
             if (m_prey != null) m_huntSkip[m_prey] = float.MaxValue;
             m_prey = null;
@@ -851,6 +853,7 @@ namespace ValheimHelper
             m_farDig = null;
             m_lastHealth = null; // 캐기 첫 프레임에 잰다(HealthMark는 인스턴스가 필요)
             Vector3 me = m_npc.transform.position;
+            m_workPos = me;
             Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 캐기 시작(뿌리 ({m_targetPos.x:0.0},{m_targetPos.y:0.0},{m_targetPos.z:0.0})까지 {Utils.DistanceXZ(m_targetPos, me):0.0}m, 높이차 {me.y - m_targetPos.y:0.0})" +
                                (farStuck ? " — 멀리서 목표 앞 막힘, 그 자리에서 직접 침" : ""));
             Go(Step.Work);
@@ -1070,6 +1073,18 @@ namespace ValheimHelper
                 return true;
             }
             if (m_targetInfo == null) { Skip(); return true; }
+            // 경계(Guard)가 몸을 쓰는 동안(물러나기 40m·싸움)은 이 일이 멈춰 있다: 그 사이 옮겨졌으면 그 자리에서 휘두르지 않고 다시 다가간다
+            // (회차 142 검은숲 coppertest: 물러났다 34m 밖에서 일이 이어져 헛휘두름 → 직접 피해가 20.6m 떨어진 조각에 들어감).
+            Vector3 here = m_npc.transform.position;
+            if (Utils.DistanceXZ(m_workPos, here) > WorkMoved)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: 캐는 사이 {Utils.DistanceXZ(m_workPos, here):0.0}m 옮겨짐(경계 {m_ai.Guard?.StateName}) → 다시 다가감");
+                WorkReapproaches++;
+                m_wasAttacking = false;
+                Go(Step.Approach);
+                return true;
+            }
+            m_workPos = here;
             if (m_targetInfo.Log) m_targetPos = zdo.GetPosition(); // 통나무는 맞으면 밀려 움직인다: 쪼개진 뒤 물러날 때 지금 자리에서
             if (m_targetInfo.Pickable)
             {
@@ -1180,6 +1195,12 @@ namespace ValheimHelper
         }
 
         float m_workIdle, m_closerTime, m_dropCheck;
+        /// <summary>캐기 마지막 프레임의 몸 자리(그 사이 WorkMoved 넘게 옮겨졌으면 다시 다가간다).</summary>
+        Vector3 m_workPos;
+        /// <summary>캐기 프레임 사이에 이만큼(m) 넘게 옮겨졌으면 경계가 몸을 쓴 것(일은 멈춰 있었음) — 걷기 3초 다가가기는 프레임마다 조금씩이라 안 걸림.</summary>
+        const float WorkMoved = 3f;
+        /// <summary>시험용: 캐는 사이 옮겨져 다시 다가간 횟수 / 맞은 점이 FarStuckRange보다 먼 직접 피해 횟수(vh_coppertest).</summary>
+        public static int WorkReapproaches, LongDirectHits;
         int m_lastDigs, m_lastBlocked, m_digOnly;
         Collider m_aimCol, m_digAim;
         const int DigOnlyLimit = 10;
@@ -1348,6 +1369,7 @@ namespace ValheimHelper
             hit.m_damage.Modify(m_npc.GetRandomSkillFactor(tool.m_shared.m_skillType)); // 스킬 반영(바닐라 Attack과 같게)
             hit.SetAttacker(m_npc);
             d.Damage(hit);
+            if (Vector3.Distance(point, me) > FarStuckRange) LongDirectHits++;
             m_npc.RaiseSkill(tool.m_shared.m_skillType);
             Plugin.Log.LogInfo($"{m_npc.NpcName}: 공격 판정이 안 닿아 직접 피해 {hit.m_damage.m_chop + hit.m_damage.m_pickaxe:0} " +
                                $"({m_targetInfo?.Prefab} {hitCol?.name}, 맞은 점까지 {Vector3.Distance(point, me):0.0}m, 방향 ({hit.m_dir.x:0.0},{hit.m_dir.y:0.0},{hit.m_dir.z:0.0}))");

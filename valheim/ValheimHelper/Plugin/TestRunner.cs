@@ -44,6 +44,8 @@ namespace ValheimHelper
         static float s_timeout = DefaultTimeout;
         /// <summary>시험 차례 번호: 한도로 끊긴 시험 코루틴이 다음 시험까지 돌지 않게(회차 117: 끊긴 silvertest가 pittest 보고에 섞임).</summary>
         static int s_gen;
+        /// <summary>지금 시험 차례 번호(곁 코루틴이 시험이 바뀌면 멈추게).</summary>
+        public static int Gen => s_gen;
 
         static string s_halt;
 

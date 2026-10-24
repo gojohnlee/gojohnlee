@@ -167,8 +167,15 @@ namespace ValheimHelper
                 checks.Add("높이 걸린 통나무 놓음(beech_log, 땅에서 6m)", !hungId.IsNone());
             }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
+            // 바이옴 회귀(검은숲): 시험 자리(거점 60m) 생물은 계속 치운다 — 뿔 곡괭이만 든 일꾼은 회색난쟁이에 도망치고 도망은 그 목표를 버린다(회차 142)
+            bool keepClear = TestKit.RunBiome != Heightmap.Biome.None;
+            if (keepClear) Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(home, () => keepClear));
             Say($"!{Workers.Name1} {word} 10", null);
             int count = 0, count0 = CountBase(home, item); // 지난 시험이 거점 상자에 남긴 것은 뺀다
+            // 회차 142: 경계가 몸을 옮긴 뒤(물러나기·도망) 캐기가 이어지면 그 자리에서 휘두르지 않고 다시 다가가는지 — 캐는 중 한 번 25m 도망시킨다
+            // (검은숲: 물러났다 34m 밖에서 일이 이어져 직접 피해가 20.6m 떨어진 조각에 들어감)
+            bool moveCheck = item == "CopperOre", moved = false;
+            int reapproach0 = GatherJob.WorkReapproaches, longHits0 = GatherJob.LongDirectHits;
             float t = 0f;
             while (t < 360f)
             {
@@ -176,6 +183,16 @@ namespace ValheimHelper
                 {
                     yield return new WaitForSeconds(0.5f);
                     if (!hungId.IsNone() && claude != null && claude.Ai.Job is GatherJob gj && gj.TargetId == hungId) hungAimed = true;
+                    if (moveCheck && !moved && claude != null && claude.Ai.Job is GatherJob gw && gw.StepName == "Work" && claude.Ai.Guard != null && !claude.Ai.Guard.Engaged)
+                    {
+                        moved = true;
+                        Vector3 off = claude.transform.position - depositPos;
+                        off.y = 0f;
+                        if (off.sqrMagnitude < 0.01f) off = rot * Vector3.back;
+                        Vector3 to = Ground(claude.transform.position + off.normalized * 25f);
+                        TestRunner.Log($"  [{t:0}s] 캐는 중 25m 도망시킴(경계 시험, 광맥에서 {Utils.DistanceXZ(depositPos, claude.transform.position):0.0}m → {Utils.DistanceXZ(depositPos, to):0.0}m)");
+                        claude.Ai.Guard.TestFlee(to);
+                    }
                 }
                 t += 5f;
                 count = CountBase(home, item) - count0;
@@ -188,6 +205,9 @@ namespace ValheimHelper
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
             checks.Add($"거점 상자에 {word} {count}개 더 ({t:0}초)", count >= 10);
+            if (moveCheck)
+                checks.Add($"캐는 중 도망으로 옮겨진 뒤 다시 다가감({(moved ? "도망시킴" : "못 시킴")}, 다시 다가감 {GatherJob.WorkReapproaches - reapproach0}번, 8m 넘는 직접 피해 {GatherJob.LongDirectHits - longHits0}번)",
+                           moved && GatherJob.WorkReapproaches > reapproach0 && GatherJob.LongDirectHits == longHits0);
             if (!hungId.IsNone()) checks.Add("높이 걸린 통나무는 안 고름(쪼개면 반토막이 머리 위로 떨어짐)", !hungAimed);
             checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
             checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
@@ -214,6 +234,7 @@ namespace ValheimHelper
                 for (; w < 60f && Utils.DistanceXZ(claude.Home, claude.transform.position) > 5f; w += 1f) yield return new WaitForSeconds(1f);
                 checks.Add($"구덩이에서 나와 거점으로 돌아옴({w:0}초, 집에서 {Utils.DistanceXZ(claude.Home, claude.transform.position):0}m)", Utils.DistanceXZ(claude.Home, claude.transform.position) <= 5f);
             }
+            if (keepClear) { keepClear = false; TestRunner.Log($"바이옴 회귀: 시험 자리(거점 60m) 생물 {TestKit.KeptClear}마리 치움(시험 동안)"); }
             checks.Add($"길이 막혀 순간이동하지 않음({WorkerAI.StuckTeleports - tp0}번)", WorkerAI.StuckTeleports == tp0);
             if (spawnDeposit)
             {
