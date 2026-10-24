@@ -10,7 +10,7 @@ namespace ValheimHelper
     /// 사람끼리 동시 열기(상자 기능 ④ 다-2, 호스트 쪽 — decisions.txt "상자 기능 확정" ④): 우리 모드 손님은 바닐라 RPC_RequestOpen 대신 VH_ChestOpen으로 열고,
     /// 상자 ZDO 주인은 호스트에 둔 채(SetOwner 안 함) 꺼내기·넣기를 VH_ChestDeal로 부탁한다 → 호스트가 Core ChestDeal로 판정해 고치고 옮긴 수를 답(VH_ChestDone).
     /// 모드 없는 손님은 바닐라 그대로(다만 우리 손님이 보는 동안엔 "사용 중"). 손님이 보는 상자는 Chests.InUse = 일꾼이 안 건드림.
-    /// 사람이 연 상자도 열어 줌, 같은 물건을 같은 순간 둘이 잡는 복제는 감수(사용자 결정 10-23). 손님 화면(예측·잠금)은 다-3.
+    /// 사람이 연 상자도 열어 줌, 같은 물건을 같은 순간 둘이 잡는 복제는 감수(사용자 결정 10-23). 손님 화면(예측)은 SharedGuest(다-3).
     /// </summary>
     public static class SharedChests
     {
@@ -18,12 +18,11 @@ namespace ValheimHelper
         static readonly Dictionary<ZDOID, HashSet<long>> s_viewers = new Dictionary<ZDOID, HashSet<long>>();
         /// <summary>시험용 가짜 손님 uid(피어가 없어도 Tick이 안 지움).</summary>
         public static readonly HashSet<long> Fake = new HashSet<long>();
-        /// <summary>손님 쪽 답 받기(다-3이 씀): 열림 답, 부탁 답(번호·옮긴 수).</summary>
+        /// <summary>손님 쪽 답 받기(SharedGuest가 씀): 열림 답, 부탁 답(번호·물건마다 상자가 변한 수).</summary>
         public static event Action<ZDOID, bool> OpenReplied;
-        public static event Action<int, int> DealReplied;
+        public static event Action<int, Dictionary<string, int>> DealReplied;
 
         const float CloseDistance = 12f; // 바닐라 m_autoCloseDistance(4m)보다 넉넉히 — 손님 위치(m_refPos)는 늦게 옴
-        const byte KindTake = 0, KindPut = 1;
         static float s_nextTick;
 
         [HarmonyPatch(typeof(Game), "Start")]
@@ -36,7 +35,7 @@ namespace ValheimHelper
                 ZRoutedRpc.instance.Register<ZDOID>("VH_ChestClose", RPC_Close);
                 ZRoutedRpc.instance.Register<ZDOID, ZPackage>("VH_ChestDeal", RPC_Deal);
                 ZRoutedRpc.instance.Register<ZDOID, bool>("VH_ChestOpenRe", (s, id, ok) => OpenReplied?.Invoke(id, ok));
-                ZRoutedRpc.instance.Register<int, int>("VH_ChestDone", (s, req, done) => DealReplied?.Invoke(req, done));
+                ZRoutedRpc.instance.Register<int, ZPackage>("VH_ChestDone", (s, req, pkg) => DealReplied?.Invoke(req, ReadNet(pkg)));
             }
         }
 
@@ -82,35 +81,84 @@ namespace ValheimHelper
             if (ZNet.instance.IsServer()) Close(uid, id);
         }
 
+        /// <summary>
+        /// 손님 부탁 한 번(화면에서 한 번 옮긴 것): 번호, 물건마다 가방 변화, 꺼내기(칸·키·수), 넣기(칸·물건). 답 = 번호와 물건마다 상자가 실제로 변한 수.
+        /// 오류여도 답은 보냄(빈 답 = 아무것도 안 됨 → 손님이 가방을 되돌림).
+        /// </summary>
         static void RPC_Deal(long uid, ZDOID id, ZPackage pkg)
         {
             if (!ZNet.instance.IsServer()) return;
-            int req = 0, done = 0;
+            int req = 0;
+            var net = new Dictionary<string, int>();
             try
             {
-                byte kind = pkg.ReadByte();
                 req = pkg.ReadInt();
-                int slot = pkg.ReadInt();
-                if (kind == KindTake) done = Take(uid, id, slot, pkg.ReadString(), pkg.ReadInt());
-                else if (kind == KindPut) done = Put(uid, id, slot, Unpack(pkg.ReadByteArray()));
+                var bag = new Dictionary<string, int>();
+                for (int i = pkg.ReadInt(); i > 0; i--) { string k = pkg.ReadString(); bag[k] = pkg.ReadInt(); }
+                var takes = new List<SlotOp>();
+                for (int i = pkg.ReadInt(); i > 0; i--) { int s = pkg.ReadInt(); string k = pkg.ReadString(); takes.Add(new SlotOp(s, k, pkg.ReadInt())); }
+                var puts = new List<KeyValuePair<int, ItemDrop.ItemData>>();
+                for (int i = pkg.ReadInt(); i > 0; i--) { int s = pkg.ReadInt(); puts.Add(new KeyValuePair<int, ItemDrop.ItemData>(s, Unpack(pkg.ReadByteArray()))); }
+                net = Batch(uid, id, bag, takes, puts);
             }
             catch (Exception e) { Plugin.Log.LogWarning($"[ValheimHelper] 손님 상자 부탁 오류: {e}"); }
-            ZRoutedRpc.instance.InvokeRoutedRPC(uid, "VH_ChestDone", req, done);
+            var re = new ZPackage();
+            re.Write(net.Count);
+            foreach (var kv in net) { re.Write(kv.Key); re.Write(kv.Value); }
+            ZRoutedRpc.instance.InvokeRoutedRPC(uid, "VH_ChestDone", req, re);
         }
 
-        /// <summary>손님 쪽(다-3)이 부탁을 보낼 때 쓰는 꼴.</summary>
-        public static ZPackage TakePackage(int req, int slot, string key, int want)
+        static Dictionary<string, int> ReadNet(ZPackage pkg)
+        {
+            var net = new Dictionary<string, int>();
+            for (int i = pkg.ReadInt(); i > 0; i--) { string k = pkg.ReadString(); net[k] = pkg.ReadInt(); }
+            return net;
+        }
+
+        /// <summary>손님 쪽이 부탁을 보낼 때 쓰는 꼴(RPC_Deal과 같은 순서).</summary>
+        public static ZPackage DealPackage(int req, IDictionary<string, int> bag, List<SlotOp> takes, List<KeyValuePair<int, ItemDrop.ItemData>> puts)
         {
             var p = new ZPackage();
-            p.Write(KindTake); p.Write(req); p.Write(slot); p.Write(key ?? ""); p.Write(want);
+            p.Write(req);
+            p.Write(bag.Count);
+            foreach (var kv in bag) { p.Write(kv.Key); p.Write(kv.Value); }
+            p.Write(takes.Count);
+            foreach (var t in takes) { p.Write(t.Slot); p.Write(t.Key ?? ""); p.Write(t.N); }
+            p.Write(puts.Count);
+            foreach (var kv in puts) { p.Write(kv.Key); p.Write(Pack(kv.Value)); }
             return p;
         }
 
-        public static ZPackage PutPackage(int req, int slot, ItemDrop.ItemData item)
+        /// <summary>
+        /// 호스트: 부탁 한 번 처리 — 꺼내기를 모두 한 뒤 넣기(그 물건은 이번에 꺼낸 수 + 가방에서 보낸 수까지만, ChestDiff.PutAllowed).
+        /// 물건마다 상자가 실제로 변한 수(+ 들어감, - 나감)를 돌려줌.
+        /// </summary>
+        public static Dictionary<string, int> Batch(long uid, ZDOID id, IDictionary<string, int> bag, List<SlotOp> takes, List<KeyValuePair<int, ItemDrop.ItemData>> puts)
         {
-            var p = new ZPackage();
-            p.Write(KindPut); p.Write(req); p.Write(slot); p.Write(Pack(item));
-            return p;
+            var taken = new Dictionary<string, int>();
+            var put = new Dictionary<string, int>();
+            foreach (var t in takes)
+            {
+                int n = Take(uid, id, t.Slot, t.Key, t.N);
+                if (n > 0) { taken.TryGetValue(t.Key, out int had); taken[t.Key] = had + n; }
+            }
+            foreach (var kv in puts)
+            {
+                ItemDrop.ItemData item = kv.Value;
+                if (item == null) continue;
+                string k = Key(item);
+                taken.TryGetValue(k, out int got);
+                bag.TryGetValue(k, out int moved);
+                put.TryGetValue(k, out int done);
+                int allow = ChestDiff.PutAllowed(got, -moved, done);
+                if (allow <= 0) continue;
+                if (item.m_stack > allow) item.m_stack = allow;
+                put[k] = done + Put(uid, id, kv.Key, item);
+            }
+            var net = new Dictionary<string, int>();
+            foreach (var kv in taken) net[kv.Key] = -kv.Value;
+            foreach (var kv in put) { net.TryGetValue(kv.Key, out int n); n += kv.Value; if (n != 0) net[kv.Key] = n; else net.Remove(kv.Key); }
+            return net;
         }
 
         // ── 호스트: 판정(시험이 바로 부름) ──
