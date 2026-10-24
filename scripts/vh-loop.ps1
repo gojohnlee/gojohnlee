@@ -32,6 +32,8 @@ $ReplyDir = Join-Path $Dir 'reply'   # 답 전용 작업 트리(회차가 쓰는
 $SelfHash = (Get-FileHash $PSCommandPath).Hash   # 지금 도는 스크립트(바뀌면 다시 켜기, claude에는 VH_LOOP_HASH로 넘김)
 $StaleNote = ''   # 다시 켜기를 못 하면 status.txt에 이유
 $Diag = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimHelper\diag.txt'
+$GameDll = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll'
+$GameNote = ''   # 게임 업데이트 감지 때 status.txt에 한 줄(그 회차가 전체 회귀)
 $Utf8 = New-Object Text.UTF8Encoding($false)
 
 $mutex = New-Object Threading.Mutex($false, 'Global\VhLoop')
@@ -222,12 +224,17 @@ function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::Ap
 function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
-    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0 }
+    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = '' }
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
     }
     $s.until = @($s.until); $s.noProg = 0; $s.lastFail = ''; $s.errs = 0   # 다시 켜면 멈춤 셈은 새로
     $s
+}
+# 게임 업데이트 감지: assembly_valheim.dll 파일 버전 + 해시 앞 12자. 지난 회차 것($st.game)과 다르면 그 회차에 VH_GAME_UPDATE로 알린다.
+function Get-GameId {
+    if (-not (Test-Path $GameDll)) { return '' }
+    try { "$((Get-Item $GameDll).VersionInfo.FileVersion) $((Get-FileHash $GameDll).Hash.Substring(0, 12))" } catch { '' }
 }
 function Save-State { [IO.File]::WriteAllText($StateFile, ($st | ConvertTo-Json), $Utf8) }
 
@@ -313,7 +320,7 @@ function Write-Status($now, $last) {
         "마지막 시험: $test",
         "Claude가 한 일: $last",
         "요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
-    ) + @(if ($StaleNote) { $StaleNote }) -join "`n"
+    ) + @(if ($StaleNote) { $StaleNote }) + @(if ($GameNote) { $GameNote }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
     [IO.File]::WriteAllText($f, "$text`n", $Utf8)
     G add docs/valheim/status.txt | Out-Null
@@ -334,6 +341,7 @@ function Start-Claude($acct, $workDir, $prompt, $tag) {
     # 배경 서브에이전트가 남은 채 턴이 끝나도 10분 뒤 끊지 않고 끝까지 기다린다(회차 54가 그렇게 끊겨 LOOP 줄 없이 끝남). 회차 시간 제한은 그대로.
     $psi.EnvironmentVariables['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'
     $psi.EnvironmentVariables['VH_LOOP_HASH'] = $SelfHash   # 회차 claude가 vh-loop-restart.ps1로 옛 루프인지 본다
+    if ($GameUpdate) { $psi.EnvironmentVariables['VH_GAME_UPDATE'] = $GameUpdate } else { $psi.EnvironmentVariables.Remove('VH_GAME_UPDATE') }   # 회차 claude: 전체 회귀부터(vh-loop-prompt 1-0)
     $p = [Diagnostics.Process]::Start($psi)
     @{ P = $p; F = New-Object VH.Feed($p, $tag, $workDir); Start = Get-Date }
 }
@@ -533,6 +541,12 @@ while ($true) {
     if ($free -notcontains $st.acct) { $st.acct = $free[0] }
     $acct = $Accounts[$st.acct]
     $st.round++
+    $gid = Get-GameId; $GameUpdate = ''; $GameNote = ''
+    if ($gid -and $st.game -and $gid -ne $st.game) {
+        $GameUpdate = "$($st.game) → $gid"
+        $GameNote = "게임 업데이트 감지: $GameUpdate (확인된 게임 사실은 1.0.20 기준) — 회차 $($st.round)이 전체 회귀부터"
+        Log $GameNote
+    }
     Write-Status "회차 $($st.round) 진행 중" '(진행 중)'
     $before = G rev-parse origin/valheim | Select-Object -Last 1
     $st.reqSeen = G rev-parse 'HEAD:docs/valheim/UserRequest.txt' | Select-Object -Last 1   # 이 회차가 0번에서 읽을 요청(이후 바뀌면 백업 때 따로 답)
@@ -559,6 +573,7 @@ while ($true) {
         }
     }
     $st.errs = 0
+    if ($gid) { $st.game = $gid }   # 알린 회차가 끝났으면 본 것으로(한도·금방 끝난 오류면 위에서 continue → 다음 회차에 다시 알림)
     $last = $last.Trim()
     Log $last
     Prepare-Git
