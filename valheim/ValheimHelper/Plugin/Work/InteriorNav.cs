@@ -62,7 +62,13 @@ namespace ValheimHelper
         static int Mask => s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
 
         /// <summary>
-        /// from에서 to의 dist m 안(XZ) 칸까지의 길(세계 좌표, 바닥 높이, 첫 점 = from). 못 찾으면 null과 까닭.
+        /// 닿았는가: 수평 거리 dist 안 + 던전 안이면 높이 차 StepGrid.ReachDy 안(E032 — 서리 동굴 위층에서 아래층 수정을 "닿음"으로 봤다). 밖은 수평 거리만(비탈·나무 뿌리).
+        /// </summary>
+        public static bool Reached(Vector3 me, Vector3 to, float dist) =>
+            Utils.DistanceXZ(me, to) <= dist && (!Character.InInterior(me) || Mathf.Abs(to.y - me.y) <= (float)StepGrid.ReachDy);
+
+        /// <summary>
+        /// from에서 to의 dist m 안(XZ)·높이 차 StepGrid.ReachDy 안 칸까지의 길(세계 좌표, 바닥 높이, 첫 점 = from). 못 찾으면 null과 까닭.
         /// 같은 높이로 곧게 트인 구간은 끝점만 남긴다(턱 앞뒤 점은 남음 — 걷는 쪽이 높이로 뛸지 정한다).
         /// </summary>
         public static List<Vector3> Plan(Vector3 from, Vector3 to, float dist, out string why)
@@ -299,7 +305,8 @@ namespace ValheimHelper
                 return hit == null;
             }
 
-            bool Goal(StepGrid.Cell c) => Utils.DistanceXZ(At(c, 0), m_to) <= m_reach;
+            /// <summary>목표 칸: 수평 m_reach 안이고 바닥이 대상 높이에서 StepGrid.ReachDy 안(E032 — 위층 칸은 아래층 대상의 목표가 아니다).</summary>
+            bool Goal(StepGrid.Cell c) => Utils.DistanceXZ(At(c, 0), m_to) <= m_reach && System.Math.Abs((Height(c) ?? m_yRef) - m_to.y) <= StepGrid.ReachDy;
 
             public List<StepGrid.Cell> Find() => StepGrid.Find(new StepGrid.Cell(0, 0), m_yRef, Goal, m_aim, Floor, Open, MaxExpand);
 

@@ -40,14 +40,6 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 - [루프 회차 165] ⑪ 산 4다) "!수정 3"을 시험: 일꾼이 서리 동굴(열쇠 없음)에 들어가 수정 4개를 캐고 나와 거점 상자에 넣음(44초). 수정·붉은 황마·늑대 털을 채팅 이름으로 알아듣게 함. frostcavetest 11/11.
 
 다음 (순서대로 — 안 끝난 일만)
-★ ⑪ 산 (구상서 7-1, decisions.txt "보스 진행으로 풀리는 일" — 은은 드러난 것 먼저, 묻힌 것은 위시본을 얻었을 때만. 1) 숨는 광맥 판단은 회차 90에 끝):
-  2) [끝, 회차 161 — 커밋 1141e05(코드 변경 없음, dist 다시 빌드) · 시험 vh_silvertest 약식 PASS 20/20] 묻힌 은 캐기 확인: 곡괭이 단계는 게임 데이터로 사슴뿔 0·청동 1·철 2 → 은(단계 2)은 철 곡괭이부터(옛 "청동 단계 2"는 틀린 메모), "!라그나 은 300"으로 바로 나서 맨 밑 조각까지 캠("!은 5"도 같은 명령 경로, 수만 다름).
-  3) [끝, 회차 162 — 커밋 8d69882 · 시험 vh_silvertest 약식 PASS 22/22(단독), dotnet test 519/519; vh_departtest는 변경 전 DLL로도 같은 FAIL → E030] 출발 판단: 아는 은 자리 없음·위시본 없음 → "depart.needFinder", 곡괭이 단계 모자람 → 나서기 전 "toolTooWeak"(GatherJob.ToolFor, 모든 채집 물건).
-  4가) [끝, 회차 163 — 커밋 a2c6d0d · 시험 vh_frostcavetest PASS 7/7] 서리 동굴 내용 확인(codemap "확인된 게임 사실" 서리 동굴): 열쇠 문 없음, 캘 것 = 수정(Crystal) 9·붉은 황마 천 5·늑대 털 1, 박쥐·울브 스포너. [사용자 결정 10-23: 해 봄, 회차 163부터 3회차 넘게 걸리면 빼는 쪽(사용자에게 말함)]
-  4나) [끝, 회차 164 — 커밋 8d13e5e · 시험 vh_crypttest PASS 24/24, vh_frostcavetest PASS 7/7, dotnet test 519/519] Dungeons 일반화: Dungeons.InsideOnly(고철·Crystal·JuteRed·WolfHairBundle), All/TryChoose(item), 서리 동굴 Keyless(늘 열림), Left = 그 물건 내는 안 자원 수. 던전 물건은 needFinder 판단에서 뺌(진흙 더미도 Beacon — 회차 162부터 crypttest가 거절로 FAIL했음). 출발 전 "던전 없음" 거절은 대사가 지하묘지 말이라 고철만.
-  4다) [끝, 회차 165 — 커밋 e603e3f · 시험 vh_frostcavetest 약식 PASS 11/11, dotnet test 523/523] "!수정 3": 입구 12m 앞에서 3초에 들어가 14초에 나옴, 상자에 수정 4개(44초). ItemAliases에 수정·붉은 황마·늑대 털 추가.
-  5) [끝, 회차 166 — 커밋 27d1136 · 시험 vh_resisttest PASS 20/20(단독·묶음), vh_matetest 18/18, vh_deathtest 22/22, vh_fighttest 17/17, teamtest 6/6, helptest 7/7, raidtest 9/9, dotnet test 523/523] 늑대·드레이크: 빠른 적엔 물러남 대신 싸움, 물러날 때도 저항 미드. 일꾼이 맞던 몬스터 전용 뒤치기 4배(5분마다 첫 한 방, E028·E029 원인)·비틀 2배 뺌(NpcPatches.LikePlayerHit).
-  6) [끝, 회차 167 — 커밋 dcb516c·774f05c · 시험 전체 회귀 50개 9묶음 PASS(departtest 25/25 — E030 시험 고침, frostcavetest 11/11 — E031 얼음 벽 깨기), vh_restart1 6/6 → vh_restart2 14/14, dotnet test 523/523] ⑪ 마무리: 전체 회귀 + 실제 재시작.
 ★ 던전 여러 층 (E032 — 다른 던전 단계가 기대는 바탕이라 ⑫ 앞에):
   가) 아래층 수정을 위층에서 바닥 너머로 캐는 것: 닿음 판정(InteriorNav.Grid.Goal·GatherJob 닿음·줍기)에 높이차 상한 + 아래층으로 가는 길이 있는지 → vh_frostcavetest·vh_crypttest.
 ★ 그 뒤: 아래 "구현 단계" 표의 [ ] 단계 차례로(⑫ 평원 → ⑬ 안개땅 → ⑭ 애쉬랜드 → ⑮ 딥노스). 단계마다 조각으로 나눠 여기에 ★ 덩어리로 적는다(vh-loop-prompt 2-1).

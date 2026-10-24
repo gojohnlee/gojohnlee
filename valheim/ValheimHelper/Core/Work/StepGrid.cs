@@ -33,6 +33,15 @@ namespace ValheimHelper.Core.Work
         /// <summary>높이 차 dy(갈 칸 − 지금 칸)를 넘을 수 있는가.</summary>
         public static bool CanStep(double dy) => dy <= MaxUp && dy >= -MaxDrop;
 
+        /// <summary>
+        /// 던전 안에서 닿았다고 보는 높이 차(m, 대상 뿌리 − 선 자리, 위아래 같음). 서리 동굴은 같은 xz에 바닥이 여럿이라
+        /// 수평 거리만 재면 35m 위층에서 아래층 수정을 "닿음"으로 보고 바닥 너머로 캤다(E032). 벽에 붙은 수정·선반 위 더미(몸 1.8m+팔)까지는 덮는다.
+        /// </summary>
+        public const double ReachDy = 3.0;
+
+        /// <summary>수평 거리(dx, dz)가 dist 안이고 높이 차 dy가 ReachDy 안인가(던전 안 닿음).</summary>
+        public static bool Reached(double dx, double dz, double dy, double dist) => dx * dx + dz * dz <= dist * dist && Math.Abs(dy) <= ReachDy;
+
         static readonly int[] DX = { 1, -1, 0, 0, 1, 1, -1, -1 };
         static readonly int[] DZ = { 0, 0, 1, -1, 1, -1, 1, -1 };
 

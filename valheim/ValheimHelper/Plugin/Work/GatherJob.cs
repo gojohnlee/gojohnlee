@@ -803,7 +803,7 @@ namespace ValheimHelper
                 Skip();
                 return true;
             }
-            if (Walk(dt, m_targetPos, m_reach) || Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f || TouchingRock(zdo))
+            if (Walk(dt, m_targetPos, m_reach) || InteriorNav.Reached(m_npc.transform.position, m_targetPos, m_reach + 0.3f) || TouchingRock(zdo))
             {
                 StartWork(false);
                 return true;
@@ -821,12 +821,19 @@ namespace ValheimHelper
                     return true;
                 }
             }
+            if (Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f && m_ai.InteriorNoPath(m_targetPos, m_reach))
+            {
+                // 바로 위·아래 다른 층의 대상인데 그 층으로 가는 길이 없다(E032): 헤매지 말고 건너뛴다
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 다른 층(높이차 {m_targetPos.y - m_npc.transform.position.y:0.0}m)인데 가는 길 없음 → 건너뜀");
+                Skip();
+                return true;
+            }
             if (Stuck(dt, m_targetPos) || m_stepTime > 40f)
             {
                 LogStuck("다가가기", m_targetPos);
                 // 멀리(모든 플레이어 64m 밖) 목표 몇 m 앞에서 막혔다: 그 자리에서 직접 피해로 캔다(E012, 사용자 결정 2026-10-23 "오류 정리 꼼수").
                 if (!TestNoFarStuck && m_targetInfo != null && !m_targetInfo.Pickable && m_targetInfo.Tool != ToolKind.None
-                    && Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= FarStuckRange && FarFromPlayers(m_npc.transform.position)
+                    && InteriorNav.Reached(m_npc.transform.position, m_targetPos, FarStuckRange) && FarFromPlayers(m_npc.transform.position)
                     && ZNetScene.instance.FindInstance(zdo) != null)
                 {
                     FarStuckHits++;
@@ -1670,7 +1677,7 @@ namespace ValheimHelper
             ZDOID dropId = drop.TryGetComponent(out ZNetView dv) && dv.IsValid() ? dv.GetZDO().m_uid : ZDOID.None;
             bool hand = !dropId.IsNone() && dropId == m_handDrop;
             float reach = hand ? HandWalk : 1.2f;
-            if (Walk(dt, dp, reach) || Utils.DistanceXZ(dp, m_npc.transform.position) < (hand ? HandWalk + 0.3f : 1.6f))
+            if (Walk(dt, dp, reach) || InteriorNav.Reached(m_npc.transform.position, dp, hand ? HandWalk + 0.3f : 1.6f))
             {
                 if (!hand) Pick(drop);
                 else if (HandReach(drop, out string why)) { Plugin.Log.LogInfo($"{m_npc.NpcName}: 걸어서 못 닿는 {Item} — 손 닿는 데서 주움({why})"); Pick(drop); }
