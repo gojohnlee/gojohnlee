@@ -395,20 +395,10 @@ namespace ValheimHelper
             Dictionary<string, float> kinds = null;
             if (foe is Humanoid h)
             {
-                var items = new List<GameObject>();
-                if (h.m_defaultItems != null) items.AddRange(h.m_defaultItems);
-                if (h.m_randomWeapon != null) items.AddRange(h.m_randomWeapon);
-                if (h.m_randomSets != null) foreach (var set in h.m_randomSets) if (set?.m_items != null) items.AddRange(set.m_items);
-                foreach (var go in items)
+                foreach (var it in AttackItems(h))
                 {
-                    var drop = go != null ? go.GetComponent<ItemDrop>() : null;
-                    if (drop == null) continue;
-                    var shared = drop.m_itemData.m_shared;
-                    if (shared.m_itemType == ItemDrop.ItemData.ItemType.Shield || shared.m_itemType == ItemDrop.ItemData.ItemType.Chest
-                        || shared.m_itemType == ItemDrop.ItemData.ItemType.Legs || shared.m_itemType == ItemDrop.ItemData.ItemType.Helmet
-                        || shared.m_itemType == ItemDrop.ItemData.ItemType.Shoulder || shared.m_itemType == ItemDrop.ItemData.ItemType.Utility) continue;
                     if (kinds == null) kinds = new Dictionary<string, float>();
-                    var d = shared.m_damages;
+                    var d = it.m_shared.m_damages;
                     void Add(string k, float v) { if (v > 0f) kinds[k] = Mathf.Max(v, kinds.TryGetValue(k, out float o) ? o : 0f); }
                     Add("Poison", d.m_poison);
                     Add("Frost", d.m_frost);
@@ -421,6 +411,39 @@ namespace ValheimHelper
         }
 
         static IEnumerable<string> FoeElements(Character foe) => FoeElementDamage(foe)?.Keys;
+
+        /// <summary>Humanoid의 공격 물건(m_defaultItems·m_randomWeapon·m_randomSets, 방패·갑옷 빼고).</summary>
+        static IEnumerable<ItemDrop.ItemData> AttackItems(Humanoid h)
+        {
+            var gos = new List<GameObject>();
+            if (h.m_defaultItems != null) gos.AddRange(h.m_defaultItems);
+            if (h.m_randomWeapon != null) gos.AddRange(h.m_randomWeapon);
+            if (h.m_randomSets != null) foreach (var set in h.m_randomSets) if (set?.m_items != null) gos.AddRange(set.m_items);
+            foreach (var go in gos)
+            {
+                var drop = go != null ? go.GetComponent<ItemDrop>() : null;
+                if (drop == null) continue;
+                var t = drop.m_itemData.m_shared.m_itemType;
+                if (t == ItemDrop.ItemData.ItemType.Shield || t == ItemDrop.ItemData.ItemType.Chest || t == ItemDrop.ItemData.ItemType.Legs
+                    || t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Shoulder || t == ItemDrop.ItemData.ItemType.Utility) continue;
+                yield return drop.m_itemData;
+            }
+        }
+
+        /// <summary>
+        /// 게임 데이터의 별 없는 가장 센 한 방: 공격 물건 피해 합 × 그 공격의 m_damageMultiplier(바닐라 Attack.ModifyDamage, 별 배율은 따로).
+        /// 공격 물건이 없으면 0(→ 몸집 짐작). 장소 기억의 프리팹에도 쓴다.
+        /// </summary>
+        public static float DataHit(Character c)
+        {
+            if (!(c is Humanoid h)) return 0f;
+            float dmg = 0f;
+            foreach (var it in AttackItems(h))
+                dmg = Mathf.Max(dmg, Gear.WeaponScore(it) * it.m_shared.m_attack.m_damageMultiplier);
+            ItemDrop.ItemData cur = h.GetCurrentWeapon();
+            if (cur != null) dmg = Mathf.Max(dmg, Gear.WeaponScore(cur) * cur.m_shared.m_attack.m_damageMultiplier);
+            return dmg;
+        }
 
         /// <summary>
         /// 셈에 넣을 적: 30m 안의 적대 생물 중 나·동행을 노리거나 15m 안에 왔거나, 보스이거나, 혼자서도 못 이길 만큼 센 것(8장 a: 보이면 피함).
@@ -523,17 +546,19 @@ namespace ValheimHelper
             return best;
         }
 
-        /// <summary>적 하나의 판단용 수치: 체력은 보이는 값(체력바), 한 방은 아는 적이면 배운 값(별 레벨 반영), 처음 보는 적이면 몸집 짐작.</summary>
+        /// <summary>적 하나의 판단용 수치: 체력은 보이는 값(체력바), 한 방은 아는 적이면 배운 값, 처음 보는 적이면 게임 데이터(DataHit)에 별 레벨 반영, 데이터도 없으면 몸집 짐작.</summary>
         Foe View(Character c, Vector3 pos)
         {
             string kind = Utils.GetPrefabName(c.gameObject);
             int level = c.GetLevel();
             float health = c.GetHealth();
-            float damage = Brain.Foes.TryGet(kind, out _, out float baseDmg)
+            // 회차 170: 안 배운 적도 공격 물건 데이터로(몸집 짐작은 데스킷을 4.7로 봄)
+            float baseDmg = Brain.Foes.TryGet(kind, out _, out float learned) ? learned : DataHit(c);
+            float damage = baseDmg > 0f
                 ? baseDmg * (1f + Mathf.Max(0, level - 1) * 0.5f)
                 : Danger.GuessDamage(c.GetHeight(), c.GetRadius(), level);
-            // 저항 미드(사용자 결정 2026-10-22): 그 속성 저항이 있거나 미드를 들고 있으면(싸우기 직전에 마심) 속성 몫을 반(Resistant)으로 센다. 배운 적만.
-            if (Brain.Foes.Knows(kind) && FoeElementDamage(c) is Dictionary<string, float> el)
+            // 저항 미드(사용자 결정 2026-10-22): 그 속성 저항이 있거나 미드를 들고 있으면(싸우기 직전에 마심) 속성 몫을 반(Resistant)으로 센다. 데이터로 센 한 방만.
+            if (baseDmg > 0f && FoeElementDamage(c) is Dictionary<string, float> el)
                 foreach (var e in el)
                     if (m_npc.Resists(e.Key) || m_npc.HasResistMead(e.Key))
                         damage = Mathf.Max(0f, damage - e.Value * 0.5f * (1f + Mathf.Max(0, level - 1) * 0.5f));
@@ -758,25 +783,9 @@ namespace ValheimHelper
             if (c == null) return;
             string kind = Utils.GetPrefabName(c.gameObject);
             if (Brain.Foes.Knows(kind)) return;
-            float dmg = 0f;
-            if (c is Humanoid h)
-            {
-                foreach (var go in Concat(h.m_defaultItems, h.m_randomWeapon))
-                {
-                    ItemDrop drop = go != null ? go.GetComponent<ItemDrop>() : null;
-                    if (drop != null) dmg = Mathf.Max(dmg, Gear.WeaponScore(drop.m_itemData));
-                }
-                ItemDrop.ItemData cur = h.GetCurrentWeapon();
-                if (cur != null) dmg = Mathf.Max(dmg, Gear.WeaponScore(cur));
-            }
+            float dmg = DataHit(c);
             Brain.Foes.Learn(kind, c.m_health, dmg);
             Plugin.Log.LogInfo($"적 배움: {kind} 체력 {c.m_health:0}, 한 방 {dmg:0}");
-        }
-
-        static IEnumerable<GameObject> Concat(GameObject[] a, GameObject[] b)
-        {
-            if (a != null) foreach (var x in a) yield return x;
-            if (b != null) foreach (var x in b) yield return x;
         }
 
         // ---- 장소 기억 (설계 A-5) [게임 시험 안 됨] ----
@@ -828,7 +837,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 장소 기억의 적 한 종류(레벨 포함) → 판단용 수치. 배운 적이면 배운 값, 아니면 프리팹의 기본 체력과 몸집 짐작.
+        /// 장소 기억의 적 한 종류(레벨 포함) → 판단용 수치. 배운 적이면 배운 값, 아니면 프리팹의 기본 체력과 게임 데이터 한 방(DataHit, 없으면 몸집 짐작).
         /// 체력은 바닐라처럼 기본 × 레벨(Character.SetupMaxHealth), 한 방은 별마다 ×1.5, 공격 간격 반영(FoeHitsPerSwing).
         /// </summary>
         public static Foe Resolve(GroupFoe g)
@@ -839,7 +848,8 @@ namespace ValheimHelper
                 Character c = prefab != null ? prefab.GetComponent<Character>() : null;
                 CapsuleCollider col = prefab != null ? prefab.GetComponent<CapsuleCollider>() : null;
                 hp = c != null ? c.m_health : 100f;
-                dmg = Danger.GuessDamage(col != null ? col.height : 1.8f, col != null ? col.radius : 0.4f, 1);
+                dmg = c != null ? DataHit(c) : 0f;
+                if (dmg <= 0f) dmg = Danger.GuessDamage(col != null ? col.height : 1.8f, col != null ? col.radius : 0.4f, 1);
             }
             int level = Mathf.Max(1, g.Level);
             return new Foe { Kind = g.Kind, Health = hp * level, Damage = dmg * (1f + (level - 1) * 0.5f) * FoeHitsPerSwing, Boss = g.Boss };

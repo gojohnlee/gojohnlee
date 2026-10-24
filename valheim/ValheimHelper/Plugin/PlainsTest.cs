@@ -68,8 +68,13 @@ namespace ValheimHelper
                 if (c == null) { TestRunner.Log($"{kind}: 프리팹 없음"); continue; }
                 Foe f = Guard.Resolve(new GroupFoe { Kind = kind, Count = 1, Level = 1 });
                 float ratio = Danger.Ratio(new List<Foe> { f }, hp, hit, taken);
-                TestRunner.Log($"{kind}: 체력 {f.Health:0}, 한 방 {f.Damage:0.0}, 날기 {c.m_flying}, 위험 비율 {ratio:0.00}");
+                float data = Guard.DataHit(c);
+                TestRunner.Log($"{kind}: 체력 {f.Health:0}, 한 방 {f.Damage:0.0}(데이터 {data:0.0}, 배움 {Brain.Foes.Knows(kind)}), 날기 {c.m_flying}, 위험 비율 {ratio:0.00}");
+                // 회차 170: 안 배운 적 한 방은 몸집 짐작 대신 게임 데이터(공격 물건) — 평원 적은 모두 데이터가 있어야 한다
+                if (kind != "Boar") checks.Add($"{kind} 한 방을 게임 데이터로 셈 (데이터 {data:0.0})", data > 0f);
             }
+            float sting = Guard.DataHit(ZNetScene.instance.GetPrefab("Deathsquito")?.GetComponent<Character>());
+            checks.Add($"데스킷 한 방이 몸집 짐작(4.7)보다 훨씬 셈 (데이터 {sting:0.0})", sting > 20f);
             checks.Add("평원 적 프리팹(풀링·데스킷·록스) 있음",
                 ZNetScene.instance.GetPrefab("Goblin") != null && ZNetScene.instance.GetPrefab("Deathsquito") != null && ZNetScene.instance.GetPrefab("Lox") != null);
         }
