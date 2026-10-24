@@ -40,9 +40,10 @@ public class DangerTests
     {
         var weak = new[] { F(40, 8) };
         Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Ragnar, weak, 70, 70, 20, NoArmor, false));       // 16/70
-        var mid = new[] { F(100, 20) };                                                                      // 5방×20 = 100
-        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, mid, 150, 150, 20, NoArmor, false));       // 0.67 > 0.6
-        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Floki, mid, 150, 150, 20, NoArmor, false));   // ≤ 0.8
+        var mid = new[] { F(100, 13) };                                                                      // 10방×13 = 130
+        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, mid, 150, 150, 10, NoArmor, false));       // 0.87 > 0.85
+        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Floki, mid, 150, 150, 10, NoArmor, false));   // ≤ 0.95, 20 남음 > 13
+        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Ragnar, new[] { F(100, 20) }, 150, 150, 20, NoArmor, false)); // 0.67 — 전엔 물러남
         var troll = new[] { F(600, 70) };
         Assert.Equal(Verdict.Flee, Danger.Judge(Personality.Floki, troll, 70, 70, 20, NoArmor, false));
         Assert.Equal(Verdict.Flee, Danger.Judge(Personality.Ragnar, new[] { F(1, 1, boss: true) }, 70, 70, 20, NoArmor, false));
@@ -54,8 +55,11 @@ public class DangerTests
     {
         var weak = new[] { F(10, 2) };
         Assert.Equal(Verdict.Drink, Danger.Judge(Personality.Ragnar, weak, 25, 70, 20, NoArmor, true));   // 36% ≤ 40%
-        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, weak, 25, 70, 20, NoArmor, false));
+        Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Ragnar, weak, 25, 70, 20, NoArmor, false)); // 미드 없어도 비율 0.08이면 싸움
+        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, new[] { F(100, 6) }, 25, 70, 20, NoArmor, false)); // 30/25 > 0.85
         Assert.Equal(Verdict.Fight, Danger.Judge(Personality.Floki, weak, 25, 70, 20, NoArmor, false)); // 30% 기준
+        // 비율 15/18 = 0.83 ≤ 0.85지만 끝나면 3 남음 < 적 한 방 5 → 물러남(회차 145 fighttest에서 이렇게 죽음)
+        Assert.Equal(Verdict.Back, Danger.Judge(Personality.Ragnar, new[] { F(40, 5) }, 18, 71, 15, NoArmor, false));
     }
 
     [Fact]

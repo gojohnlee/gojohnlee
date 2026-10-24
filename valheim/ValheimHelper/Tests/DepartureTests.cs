@@ -75,7 +75,7 @@ public class DepartureTests
     [Fact]
     public void TightAsksForMeadWhenOneWouldDo()
     {
-        var r = Departure.Judge(In(P(100, 0.7f, withMead: 0.5f)));
+        var r = Departure.Judge(In(P(100, 0.9f, withMead: 0.5f)));
         Assert.Equal(Question.Condition, r.Question);
         Assert.Equal("healthMead", r.Condition);
         Assert.Equal("ask.condition", r.Key);
@@ -84,7 +84,7 @@ public class DepartureTests
     [Fact]
     public void TightSwampWithoutPoisonMeadGrumblesAndGoes()
     {
-        var o = P(100, 0.7f, withMead: 0.5f); o.Resist = "Poison";
+        var o = P(100, 0.9f, withMead: 0.5f); o.Resist = "Poison";
         var i = In(o); i.HealthMeads = 2;
         var r = Departure.Judge(i);
         Assert.Equal(DepartAction.Go, r.Action);
@@ -96,7 +96,7 @@ public class DepartureTests
     [Fact]
     public void TightSwampWithPoisonMeadUsesHealthMeadRule()
     {
-        var o = P(100, 0.7f, withMead: 0.5f); o.Resist = "Poison";
+        var o = P(100, 0.9f, withMead: 0.5f); o.Resist = "Poison";
         var i = In(o); i.HealthMeads = 2; i.ResistMeads.Add("Poison");
         var r = Departure.Judge(i);
         Assert.Equal(DepartAction.Go, r.Action);
@@ -116,7 +116,7 @@ public class DepartureTests
     [Fact]
     public void TightWithOwnMeadsJustWarns()
     {
-        var i = In(P(100, 0.7f, withMead: 0.5f)); i.HealthMeads = 2;
+        var i = In(P(100, 0.9f, withMead: 0.5f)); i.HealthMeads = 2;
         var r = Departure.Judge(i);
         Assert.Equal(DepartAction.Go, r.Action);
         Assert.Equal("depart.warn", r.Key);
@@ -125,7 +125,7 @@ public class DepartureTests
     [Fact]
     public void AlarakIsBolder()
     {
-        var i = In(P(100, 0.7f, withMead: 0.7f)); i.Personality = Personality.Floki;
+        var i = In(P(100, 0.9f, withMead: 0.9f)); i.Personality = Personality.Floki;
         Assert.Equal("depart.warn", Departure.Judge(i).Key);
         i.Personality = Personality.Ragnar;
         Assert.Equal(DepartAction.Ask, Departure.Judge(i).Action);

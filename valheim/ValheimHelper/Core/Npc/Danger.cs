@@ -35,7 +35,8 @@ namespace ValheimHelper.Core.Npc
     /// </summary>
     public static class Danger
     {
-        public const float FightRagnar = 0.6f, FightFloki = 0.8f;
+        /// <summary>잃을 비율이 이 이하면 싸움 — "죽을 각만 아니면 싸움"(사용자 결정 2026-10-24, 전 0.6·0.8).</summary>
+        public const float FightRagnar = 0.85f, FightFloki = 0.95f;
         public const float LowHealthRagnar = 0.4f, LowHealthFloki = 0.3f;
         /// <summary>잃을 체력이 지금 체력의 이만큼을 넘으면 절대 회피.</summary>
         public const float AvoidRatio = 2f;
@@ -65,7 +66,8 @@ namespace ValheimHelper.Core.Npc
 
         /// <summary>
         /// 순서: 체력이 낮으면 미드부터(마시는 건 바로 끝난다) → 보스, 또는 체력이 가득해도 이길 수 없는 적(최대 체력 기준 2배)은 도망 →
-        /// 체력이 낮은데 미드도 없으면 물러남 → 지금 체력으로 잃을 비율이 기준 이하면 싸움, 넘으면 물러남.
+        /// 지금 체력으로 잃을 비율이 기준 이하이고 그 뒤에도 적 한 방을 더 버틸 체력이 남으면 싸움, 아니면 물러남
+        /// (체력이 낮은데 미드가 없어도 같은 기준으로 — 사용자 결정 2026-10-24).
         /// (0.3.7 시험: 체력 25%에서 회색난쟁이를 보고 미드 대신 도망부터 쳤다 — 도망 기준을 지금 체력으로 재서.)
         /// </summary>
         public static Verdict Judge(Personality p, IList<Foe> foes, float health, float maxHealth, float myHit, Func<float, float> taken, bool haveMead)
@@ -76,8 +78,10 @@ namespace ValheimHelper.Core.Npc
             if (low && haveMead) return Verdict.Drink;
             foreach (var f in foes) if (f.Boss) return Verdict.Flee;
             if (Ratio(foes, maxHealth, myHit, taken) > AvoidRatio) return Verdict.Flee;
-            if (low) return Verdict.Back;
-            return Ratio(foes, health, myHit, taken) <= (alarak ? FightFloki : FightRagnar) ? Verdict.Fight : Verdict.Back;
+            // 계산대로 끝나도 적 한 방은 더 버틸 체력이 남아야 싸움(체력이 낮을 때 비율만 보면 운 나쁜 한 방에 죽음 — 회차 145 fighttest, 체력 18에 회색난쟁이)
+            float loss = ExpectedLoss(foes, myHit, taken), spare = 0f;
+            foreach (var f in foes) spare = Math.Max(spare, taken(f.Damage));
+            return loss / Math.Max(health, 1f) <= (alarak ? FightFloki : FightRagnar) && health - loss > spare ? Verdict.Fight : Verdict.Back;
         }
 
         /// <summary>
