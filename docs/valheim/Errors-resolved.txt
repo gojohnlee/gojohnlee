@@ -37,3 +37,4 @@ E028 | vh_matetest | 라그나가 물러나다 맞아 갑자기 죽음 | 일꾼(
 E029 | vh_matetest | 셈은 한 방 4.0인데 5초에 체력 61→13 | E028과 같은 원인(뒤치기 4배) | 회차 166 27d1136 NpcPatches.LikePlayerHit | 원인 고침으로 닫음, matetest 18/18
 - | vh_deathtest | 묘비가 비어 사라짐(묶음, 묘비까지 91m) | 시험이 묘비 ZDO 객체를 붙들고 있었는데 지워진 ZDO가 다른 물체에 다시 쓰임(ZDOPool.Release) | 회차 166 27d1136 묘비를 ZDOID·자리로 기억 | 묶음 deathtest 22/22
 E030 | vh_departtest | 위험 조건 상황 만들기(체력 미드 조건 질문 안 나옴) | 시험이 한 종류 적만 1마리씩 늘려 위험 비율이 0.65→1.30처럼 뛰어 Tight 창(0.85~1.0)을 늘 건너뜀(본체 판단은 맞음) | 회차 167 dcb516c 약한 적(그레이링 등)을 섞어 잘게 맞춤 | 원인 고침으로 닫음, departtest 25/25(Greydwarf 1+Greyling 2 → 0.88)
+E031 | vh_frostcavetest | 수정이 거점 상자에 들어옴(0개, 480초): 서리 동굴 안 길 못 찾고 귀환 되풀이 | 도착 방 출구를 얼음 벽(caverock_ice_pillar_wall, 떨굼 없어 자원 목록 밖)이 막았는데 BlockingPile이 목록 밖은 안 깸 + 던전 안 강제 복귀 뒤 그 던전을 안 뺌 | 회차 167 774f05c ResourceCatalog.Obstacle·던전 강제 복귀 뒤 제외 | 원인 고침으로 닫음, 같은 배치(씨앗 1665470611) 단독 11/11 두 번·원래 5개 묶음 11/11, crypttest 24/24
