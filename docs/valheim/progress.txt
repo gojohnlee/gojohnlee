@@ -30,9 +30,9 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [루프 회차 143] 늪 회귀(검은숲) 마지막 묶음 5개(습격·도움·팀·동행·Claude) 다 PASS로 나) 끝. 작은 버그 하나 고침 — 건너뛴 대상만 보이는 구역을 "없음"으로 지식에서 지우던 것. 시험 정리도 하나 손봄(E027 습격 시험 뒤 남은 물건 1개, 다시 돌려 재현 안 됨).
 - [루프 회차 142] 늪 회귀(검은숲) 다섯째 묶음 4개: 버그 하나 고침 — 캐다가 적을 피해 물러난 뒤 멀리 떨어진 자리에서 그대로 곡괭이질을 이어 20m 밖 바위 조각에 피해가 들어가던 것(이제 다시 다가감). 구리 시험 자리에 회색난쟁이가 계속 와서 일꾼이 광맥을 버리던 것은 시험 쪽에서 막음. 4개 다 PASS.
 - [루프 회차 141] 늪 회귀(검은숲) 넷째 묶음 8개: 버그 하나 고침 — 일꾼이 죽어 거점에서 다시 일어나도 죽기 전 도망을 이어 가 죽은 곳 쪽으로 다시 달려가던 것. 시험 쪽 문제 여섯 고침(발 묶인 일꾼 곁 생물 치움 등). 8개 다 PASS, 기본 자리 5개 PASS, E026 닫음.
-- [루프 회차 140] 늪 회귀(검은숲) 셋째 묶음 7개: 시험 쪽 문제 둘 고침 — 잡담 시험이 앞서 온 회색난쟁이에 일꾼이 쫓겨 플레이어 곁으로 와 버리던 것(그 칸 전에 생물 치움), 탐험 시험이 완만한 물가에서 바르게 선 일꾼을 "물가에서 21m"로 FAIL 하던 것(물가 = 처음 깊은 물). 7개 다 PASS, 탐험 기본 자리 16/16, dotnet 495.
 
 다음 (순서대로)
 ★ [끝] E021·R5 묻힌 광맥 채굴·구덩이(사용자 결정 10-23, decisions.txt "묻힌 광맥 채굴·구덩이") — E021은 Errors-resolved로 닫음:
@@ -95,9 +95,10 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
        나-2) [끝, 회차 140 — 커밋 a1cd72a · 시험 검은숲 hunt 9/9·bow 12/12·resist 14/14·repair 10/10·skill 8/8, 고친 뒤 banter 13/13·explore 16/16, 기본 자리 explore 16/16, dotnet 495] 시험 쪽 둘(잡담 4) 앞 생물 치움·탐험 물가 = 처음 1.2m 깊이).
        나-3) [끝, 회차 141 — 커밋 3d06da3·0953377 · 시험 검은숲 stuck 14/14·hop 20/20(×2)·skip 25/25·far PASS·portal 14/14·portalbuild 40/40·cookwet 10/10(고친 뒤)·cook 15/15·death 22/22, 기본 자리 stuck 14/14·hop 20/20·far·portal 14/14·death 22/22, dotnet 495, E026 닫음] 죽으면 도망 끝냄(Guard.OnDied), 시험 쪽 여섯(묶인 일꾼 둘레 생물 치움·앞 튐 묶음·벨 수 있는 나무·옮긴 프레임에 목표 바꿈·포탈 고른 구역 도중 확인·멧돼지 따라갈 표지·비바람 기다림 120초).
        나-4) [끝, 회차 142 — 커밋 bf2c715 · 시험 검은숲 copper 13/13(고친 뒤, 고치기 전 10/12)·tin 13/13·crypt 24/24·silver 19/19, 기본 자리 copper 13/13·wood 13/13·fight 17/17, dotnet 495] 캐는 사이 경계(물러나기·싸움)가 옮겨 놓으면 그 자리에서 휘두르지 않고 다시 다가감(20.6m 직접 피해 막음, GatherJob m_workPos), 시험: 바이옴 회귀 때 시험 자리 생물 1초마다 치움(TestKit.KeepSiteClear)·구리 새 칸(25m 옮김 → 다시 다가감).
-         곁가지: Workers.OnBaseMoved도 주인 확인 없이 ZDO에 씀(드묾) — 관련 작업 때 같이. GatherJob.UpdateSearch가 보이는 대상이 건너뜀 목록이면 "와서 봤는데 없음"으로 지식에서 그 자원을 지움(k.Forget) — 작은 버그, 다) 앞에 고침.
+         곁가지: Workers.OnBaseMoved도 주인 확인 없이 ZDO에 씀(드묾) — 관련 작업 때 같이. [끝, 회차 143 — 커밋 3325ed4 · 시험 vh_woodtest PASS 13/13·vh_stonetest 11/11·vh_coppertest 13/13] GatherJob.UpdateSearch 건너뛴 대상만 보이면 k.Forget 안 함(m_sawSkipped).
          [기본안, 사용자 확인 필요] 도망치면 거점 바로 앞 목표도 그 일 동안 버림(구상서 8장 a 그대로) — 약한 일꾼이 검은숲에서 먼 곳만 헤맴. 바꾸지 않음(decisions.txt).
-       다) 실제 재시작. 라) 버그 없으면 Errors 닫기.
+       나-5) [끝, 회차 143 — 커밋 3325ed4 · 시험 검은숲 raid 9/9·help 7/7·team 6/6·escort 18/18·claude 5/5(고친 뒤, 첫 실행은 raid 뒤 E027로 넷 환경 불량), dotnet 495] 나) 끝 — 모든 시험 검은숲(원래 자리 farm·settle·pit 빼고) 한 번씩 PASS.
+       다) 실제 재시작 vh_restart1 → VH_RESET=0 vh_restart2(검은숲 자리). 라) 버그 없으면 Errors 닫기.
 ★ [끝, 회차 108 — 커밋 b2c6c6a·38dee2a · 시험 vh_npctest PASS 14/14, vh_flagtest PASS 12/12, vh_settletest PASS 28/28, vh_woodtest 12/12, vh_stonetest 10/10, vh_bagtest 9/9, vh_preptest 22/22, vh_crafttest 23/23, vh_cooktest 10/10, vh_refilltest 22/22, vh_nametest 9/9, vh_basetest 22/22, vh_repairtest 10/10, vh_settest 7/7, vh_farmtest 25/25, dotnet 440] 거점 범위 125m
   (Core BaseArea.Radius → Chests·Recipes.BaseRange·NightSettle.AtBase·FarmNear, Senses.Nearby 125m는 ±2구역 classic, 상자·설비·제작대 10m 넘으면 뜀, 대사 chestAny 125m).
   할 일: valheim-build.sh(dist DLL 커밋) → 기본 묶음 + vh_settletest(밭 깃발 45m·2호 160m 밖) + 상자·설비 쓰는 시험(bag·prep·craft·cook·refill·name·base·repair·set·farm) PASS → 이 줄을 [끝, 회차 N — 커밋·시험]으로.
