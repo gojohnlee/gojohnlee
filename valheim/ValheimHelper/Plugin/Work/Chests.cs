@@ -175,17 +175,61 @@ namespace ValheimHelper
             view.GetZDO().SetOwner(ZDOMan.GetSessionID());
             LoadContainer(c); // 다른 사람이 마지막으로 저장한 내용을 읽는다(이미 최신이면 그대로)
             Inventory inv = c.GetInventory();
-            if (s_removed.Count == 0) { edit(inv); return true; } // 바뀌면 Container.OnContainerChanged가 저장한다(소유자이므로)
+            var slots = Slots(inv);
             var names = new List<string>(s_removed.Keys);
             var before = new int[names.Count];
             for (int i = 0; i < names.Count; i++) before[i] = inv.CountItems(names[i]);
-            edit(inv);
+            edit(inv); // 바뀌면 Container.OnContainerChanged가 저장한다(소유자이므로)
             for (int i = 0; i < names.Count; i++)
             {
                 int gone = before[i] - inv.CountItems(names[i]);
                 if (gone > 0) s_removed[names[i]] += gone;
             }
+            NoteAdded(view.GetZDO().m_uid, slots, Slots(inv));
             return true;
+        }
+
+        /// <summary>
+        /// 다-4c: 일꾼(모드 편집)이 막 넣은 것 — 칸마다 늘어난 물건 키·수. 손님 넣기에 자리가 없으면 SharedChests.Put이 이것을 일꾼 가방으로 되돌려 자리를 낸다
+        /// (사람 우선, decisions.txt "상자 기능 확정" 앞 사용자 10-23). RecentWindow초가 지나면 버림.
+        /// </summary>
+        public sealed class Added { public float Time; public int Slot; public string Key; public int N; }
+        public const float RecentWindow = 15f;
+        static readonly Dictionary<ZDOID, List<Added>> s_added = new Dictionary<ZDOID, List<Added>>();
+
+        static KeyValuePair<string, int>[] Slots(Inventory inv)
+        {
+            int w = inv.GetWidth();
+            var s = new KeyValuePair<string, int>[w * inv.GetHeight()];
+            foreach (var it in inv.GetAllItems())
+            {
+                int i = it.m_gridPos.y * w + it.m_gridPos.x;
+                if (i >= 0 && i < s.Length) s[i] = new KeyValuePair<string, int>(SharedChests.Key(it), it.m_stack);
+            }
+            return s;
+        }
+
+        static void NoteAdded(ZDOID id, KeyValuePair<string, int>[] was, KeyValuePair<string, int>[] now)
+        {
+            RecentAdded(id); // 지난 것 지움(상자마다 많아야 몇 줄)
+            List<Added> list = null;
+            for (int i = 0; i < now.Length && i < was.Length; i++)
+            {
+                if (now[i].Key == null) continue;
+                int n = now[i].Key == was[i].Key ? now[i].Value - was[i].Value : now[i].Value;
+                if (n <= 0) continue;
+                if (list == null && !s_added.TryGetValue(id, out list)) s_added[id] = list = new List<Added>();
+                list.Add(new Added { Time = UnityEngine.Time.time, Slot = i, Key = now[i].Key, N = n });
+            }
+        }
+
+        /// <summary>이 상자에 RecentWindow초 안에 일꾼이 넣은 것(최근 것이 뒤). 지난 것은 지움. 고쳐 쓰면(N 줄이기) 그대로 남는다.</summary>
+        public static List<Added> RecentAdded(ZDOID id)
+        {
+            if (!s_added.TryGetValue(id, out var list)) return null;
+            list.RemoveAll(a => a.N <= 0 || Time.time - a.Time > RecentWindow);
+            if (list.Count == 0) { s_added.Remove(id); return null; }
+            return list;
         }
 
         /// <summary>

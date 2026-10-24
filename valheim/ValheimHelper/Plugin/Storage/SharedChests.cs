@@ -237,24 +237,22 @@ namespace ValheimHelper
             return n;
         }
 
-        /// <summary>손님 넣기: 놓은 칸 → 같은 물건 칸 → 빈칸. 실제로 넣은 수(나머지는 손님이 돌려받음).</summary>
+        /// <summary>
+        /// 손님 넣기: 놓은 칸 → 같은 물건 칸 → 빈칸. 실제로 넣은 수(나머지는 손님이 돌려받음).
+        /// 자리가 모자라면 일꾼이 막 넣은 것(Chests.RecentAdded)을 근처 일꾼 가방으로 되돌려 자리를 낸 뒤 다시 잰다(다-4c, 사람 우선).
+        /// </summary>
         public static int Put(long uid, ZDOID id, int slot, ItemDrop.ItemData item)
         {
             if (item == null || item.m_stack <= 0 || !Viewing(uid, id)) return 0;
             Container c = ForEdit(id);
             if (c == null) return 0;
             Inventory inv = c.GetInventory();
-            int w = inv.GetWidth(), h = inv.GetHeight();
-            var keys = new string[w * h];
-            var amounts = new int[w * h];
-            foreach (var it in inv.GetAllItems())
-            {
-                int i = it.m_gridPos.y * w + it.m_gridPos.x;
-                if (i < 0 || i >= keys.Length) continue;
-                keys[i] = Key(it); amounts[i] = it.m_stack;
-            }
+            int w = inv.GetWidth();
             string key = Key(item);
-            var plan = ChestDeal.Put(keys, amounts, Math.Max(1, item.m_shared.m_maxStackSize), slot, key, item.m_stack, out int leftover);
+            int max = Math.Max(1, item.m_shared.m_maxStackSize);
+            var plan = PlanPut(inv, slot, key, max, item.m_stack, out int leftover);
+            if (leftover > 0 && MakeRoom(c, id, key, max, leftover) > 0)
+                plan = PlanPut(inv, slot, key, max, item.m_stack, out leftover);
             int done = 0;
             foreach (var step in plan)
             {
@@ -274,6 +272,63 @@ namespace ValheimHelper
                 done += step.N;
             }
             return done;
+        }
+
+        static List<PutStep> PlanPut(Inventory inv, int slot, string key, int max, int n, out int leftover)
+        {
+            int w = inv.GetWidth(), h = inv.GetHeight();
+            var keys = new string[w * h];
+            var amounts = new int[w * h];
+            foreach (var it in inv.GetAllItems())
+            {
+                int i = it.m_gridPos.y * w + it.m_gridPos.x;
+                if (i < 0 || i >= keys.Length) continue;
+                keys[i] = Key(it); amounts[i] = it.m_stack;
+            }
+            return ChestDeal.Put(keys, amounts, max, slot, key, n, out leftover);
+        }
+
+        /// <summary>일꾼이 막 넣은 것을 되돌릴 때 그 일꾼을 찾는 거리(넣은 일꾼은 상자 앞에 서 있음, 바로 옮기기면 없을 수 있음 → 안 되돌림).</summary>
+        const float ReturnDistance = 10f;
+
+        /// <summary>
+        /// 다-4c: 손님 넣기 자리가 need개 모자랄 때 최근 RecentWindow초 안에 일꾼이 넣은 것을 가장 가까운 일꾼 가방으로 되돌린다(최근 것부터).
+        /// 같은 물건이면 넣은 수만큼, 다른 물건이면 그 칸이 통째로 일꾼 것일 때만(빈칸이 생겨야 자리). 일꾼 가방에 다 들어갈 때만 빼므로 잃는 것 없음.
+        /// 낸 자리 수(대략, 다시 재는 건 부른 쪽).
+        /// </summary>
+        static int MakeRoom(Container c, ZDOID id, string key, int max, int need)
+        {
+            var recent = Chests.RecentAdded(id);
+            if (recent == null) return 0;
+            WorkerNpc npc = null;
+            float best = ReturnDistance;
+            foreach (var n in WorkerNpc.All)
+            {
+                if (n == null || n.IsDead()) continue;
+                float d = Vector3.Distance(n.transform.position, c.transform.position);
+                if (d <= best) { best = d; npc = n; }
+            }
+            if (npc == null) return 0;
+            Inventory inv = c.GetInventory(), bag = npc.GetInventory();
+            int freed = 0;
+            for (int i = recent.Count - 1; i >= 0 && freed < need; i--)
+            {
+                Chests.Added a = recent[i];
+                ItemDrop.ItemData there = At(inv, a.Slot);
+                if (there == null || Key(there) != a.Key) continue;
+                bool same = a.Key == key;
+                int n = Math.Min(a.N, there.m_stack);
+                if (!same && n < there.m_stack) continue; // 칸이 안 비면 다른 물건 자리는 안 생김
+                ItemDrop.ItemData part = there.Clone();
+                part.m_stack = n;
+                if (!bag.CanAddItem(part)) continue;
+                if (!bag.AddItem(part)) { Plugin.Log.LogWarning($"손님 넣기 자리 내기: {npc.NpcName} 가방에 {there.m_shared.m_name} {n}개 못 넣음"); continue; }
+                inv.RemoveItem(there, n); // 주인이라 OnContainerChanged가 저장
+                a.N -= n;
+                freed += same ? n : max;
+                Plugin.Log.LogInfo($"손님 넣기 자리 내기: 일꾼이 막 넣은 {there.m_shared.m_name} {n}개를 {npc.NpcName} 가방으로 되돌림");
+            }
+            return freed;
         }
 
         /// <summary>호스트 매 프레임(1초마다): 떠난 손님·멀어진 손님을 보는 사람에서 뺌(닫기 RPC를 못 받아도 일꾼이 영영 못 쓰지 않게).</summary>

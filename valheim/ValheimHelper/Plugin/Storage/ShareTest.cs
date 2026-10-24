@@ -106,6 +106,25 @@ namespace ValheimHelper
             int p4 = SharedChests.Put(Guest, id, 3, StackOf(stone, room + 18));
             checks.Add($"꽉 찬 상자에 돌 {room + 18} → {room}만 넣고 18은 돌려줌 ({p4})", p4 == room && at5.m_stack == maxStone);
 
+            // 다-4c: 일꾼이 막 넣은 송진 때문에 자리가 없으면 송진을 근처 일꾼 가방으로 되돌리고 손님 부싯돌을 넣음
+            SharedChests.Close(Guest, id);
+            ItemDrop.ItemData oneWood = ci.GetAllItems().Find(it => it.m_shared.m_name == woodName);
+            ci.RemoveItem(oneWood); // 칸 하나 비움(TryEdit 아님 = 일꾼이 넣은 것으로 안 셈)
+            ItemDrop resin = ObjectDB.instance.GetItemPrefab("Resin").GetComponent<ItemDrop>();
+            ItemDrop flint = ObjectDB.instance.GetItemPrefab("Flint").GetComponent<ItemDrop>();
+            string resinName = resin.m_itemData.m_shared.m_name, flintName = flint.m_itemData.m_shared.m_name;
+            Chests.TryEdit(c, inv => inv.AddItem(resin.gameObject, 20));
+            int woodBefore = Count(c, woodName), bagResin = w.Ragnar.GetInventory().CountItems(resinName);
+            w.Ragnar.transform.position = c.transform.position + c.transform.forward * 1.5f;
+            SharedChests.Open(Guest, id, me);
+            int p5 = SharedChests.Put(Guest, id, 3, StackOf(flint, 5));
+            int gotResin = w.Ragnar.GetInventory().CountItems(resinName) - bagResin;
+            checks.Add($"일꾼이 막 넣은 송진 20 → 라그나 가방으로 되돌리고 부싯돌 5 넣음 (넣음 {p5}, 상자 송진 {Count(c, resinName)}, 가방 +{gotResin}, 나무 그대로 {Count(c, woodName) == woodBefore})",
+                p5 == 5 && Count(c, flintName) == 5 && Count(c, resinName) == 0 && gotResin == 20 && Count(c, woodName) == woodBefore);
+            int p6 = SharedChests.Put(Guest, id, 3, StackOf(resin, 1));
+            checks.Add($"되돌릴 것이 더 없으면 송진 1 → 0 돌려줌 ({p6})", p6 == 0 && Count(c, resinName) == 0);
+            w.Ragnar.GetInventory().RemoveItem(resinName, gotResin);
+
             // 호스트가 연 상자에도 손님 부탁이 됨
             c.SetInUse(true); // 호스트가 연 상태(InventoryGui.UpdateContainer가 하는 것 — 최소화 창에선 GUI가 안 돌 수 있음)
             yield return new WaitForSeconds(0.5f);
