@@ -36,3 +36,4 @@ E014 | vh_cooktest | 화로를 지폈는데 조리대 불이 안 붙음(묶음 2
 E028 | vh_matetest | 라그나가 물러나다 맞아 갑자기 죽음 | 일꾼(WorkerAI=BaseAI)이 경계를 안 켜 300초마다 첫 한 방이 몬스터 뒤치기 4배로 들어옴(Character.RPC_Damage) | 회차 166 27d1136 NpcPatches.LikePlayerHit(뒤치기 1배·비틀 2배 뺌) | 원인 고침으로 닫음, resisttest 20/20·matetest 18/18·fighttest 17/17
 E029 | vh_matetest | 셈은 한 방 4.0인데 5초에 체력 61→13 | E028과 같은 원인(뒤치기 4배) | 회차 166 27d1136 NpcPatches.LikePlayerHit | 원인 고침으로 닫음, matetest 18/18
 - | vh_deathtest | 묘비가 비어 사라짐(묶음, 묘비까지 91m) | 시험이 묘비 ZDO 객체를 붙들고 있었는데 지워진 ZDO가 다른 물체에 다시 쓰임(ZDOPool.Release) | 회차 166 27d1136 묘비를 ZDOID·자리로 기억 | 묶음 deathtest 22/22
+E030 | vh_departtest | 위험 조건 상황 만들기(체력 미드 조건 질문 안 나옴) | 시험이 한 종류 적만 1마리씩 늘려 위험 비율이 0.65→1.30처럼 뛰어 Tight 창(0.85~1.0)을 늘 건너뜀(본체 판단은 맞음) | 회차 167 dcb516c 약한 적(그레이링 등)을 섞어 잘게 맞춤 | 원인 고침으로 닫음, departtest 25/25(Greydwarf 1+Greyling 2 → 0.88)

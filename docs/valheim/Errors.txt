@@ -32,8 +32,3 @@ E027 / 관찰 중 — vh_raidtest 뒤 끝 정리 실패 "거점 60m 안 물건 1
   확인된 사실: 회차 138 변경(Guard 물러남 방향)은 습격 귀환 뒤 땅 물건과 무관해 보임 — 남은 것이 무엇인지 로그에 없음.
   다음 확인: 회차 143에 넣은 "끝 정리 뒤 물건 N (이름 거리), 쓰러진 몸 N → 다시 치움" 줄(최대 3번 다시 치움)을 본다 — 짐작은 죽은 적 Ragdoll이 늦게 떨군 전리품.
 
-E030 / 조사 중 — vh_departtest "위험 조건 상황 만들기" FAIL: 적 종류·수를 바꿔도 체력 미드 조건 질문(Ask Condition)이 안 나옴
-  증상·조건: 단독(VH_SOLO) 2번, silver→depart 묶음 1번 모두. 앞 칸(재고·곧 밤·죽은 곳 질문)은 PASS.
-  근거: 회차 162 — 회차 161 dist DLL(이번 변경 전)로도 같은 FAIL → 이번 변경(⑪ 3 연장·위시본 판단)과 무관, 그 전 어느 회차부터인지 모름.
-  확인된 사실: 시험이 Greydwarf·Skeleton·Greydwarf_Elite·Draugr·Troll 1~12마리로 비율을 맞추는데 한 번도 Condition이 안 됨(JudgeFor 결과는 diag에 안 남음).
-  다음 확인: 루프에서 kind·n별 JudgeFor 결과(Action·Question·Reason)를 diag에 남겨 비율 창(미드 없이 Tight, 미드로 됨)이 어디서 빠지는지 — 피해 셈 변경(회차 146 Guard.Taken) 의심.

@@ -47,7 +47,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   4나) [끝, 회차 164 — 커밋 8d13e5e · 시험 vh_crypttest PASS 24/24, vh_frostcavetest PASS 7/7, dotnet test 519/519] Dungeons 일반화: Dungeons.InsideOnly(고철·Crystal·JuteRed·WolfHairBundle), All/TryChoose(item), 서리 동굴 Keyless(늘 열림), Left = 그 물건 내는 안 자원 수. 던전 물건은 needFinder 판단에서 뺌(진흙 더미도 Beacon — 회차 162부터 crypttest가 거절로 FAIL했음). 출발 전 "던전 없음" 거절은 대사가 지하묘지 말이라 고철만.
   4다) [끝, 회차 165 — 커밋 e603e3f · 시험 vh_frostcavetest 약식 PASS 11/11, dotnet test 523/523] "!수정 3": 입구 12m 앞에서 3초에 들어가 14초에 나옴, 상자에 수정 4개(44초). ItemAliases에 수정·붉은 황마·늑대 털 추가.
   5) [끝, 회차 166 — 커밋 27d1136 · 시험 vh_resisttest PASS 20/20(단독·묶음), vh_matetest 18/18, vh_deathtest 22/22, vh_fighttest 17/17, teamtest 6/6, helptest 7/7, raidtest 9/9, dotnet test 523/523] 늑대·드레이크: 빠른 적엔 물러남 대신 싸움, 물러날 때도 저항 미드. 일꾼이 맞던 몬스터 전용 뒤치기 4배(5분마다 첫 한 방, E028·E029 원인)·비틀 2배 뺌(NpcPatches.LikePlayerHit).
-  6) ⑪ 마무리: 전체 회귀 + 실제 재시작 시험(vh_restart1 → vh_restart2) → 구현 단계 ⑪ [x].
+  6) ⑪ 마무리: 전체 회귀 + 실제 재시작 시험(vh_restart1 → vh_restart2) → 구현 단계 ⑪ [x]. [회차 167 진행 중: 묶음 1~7 PASS(departtest E030 시험 고쳐 25/25, dcb516c), 남은 묶음 banter·mate·mychest·share·guest·tidy·tidywalk·settle·stock·portalbuild·hop·skip·cookwet·frostcave + 재시작]
 ★ 그 뒤: 아래 "구현 단계" 표의 [ ] 단계 차례로(⑫ 평원 → ⑬ 안개땅 → ⑭ 애쉬랜드 → ⑮ 딥노스). 단계마다 조각으로 나눠 여기에 ★ 덩어리로 적는다(vh-loop-prompt 2-1).
   ⑬ 메모(사용자 10-24): 절벽은 지금 규칙(플레이어가 안 보면 순간이동·보면 "오딘 구조" 옮기기)으로 먼저 해 보고, 게임의 갈고리
   (GrapplingPoint, codemap "확인된 게임 사실")는 그때 보고 쓸지 정한다.
