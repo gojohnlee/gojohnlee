@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 연구 탭 '용병단'. 루트(야전 캠프 설계)가 자유 설계를 열고, 분기마다 I 연구가 3단계와 교리를, II 연구가 4·5단계를 연다.
+     일부 퍽은 바닐라 연구도 요구한다(박격포·IED·포탑·차지샷·메카텍). 행은 분기, 열은 깊이. -->
+<Defs>
+  <ResearchTabDef>
+    <defName>GJL_MC_ResearchTab</defName>
+    <label>용병단</label>
+  </ResearchTabDef>
+
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_CampPlanning</defName>
+    <label>야전 캠프 설계</label>
+    <description>용병단과 함께 캠프를 직접 설계하는 법을 익힙니다. 보급소 관리창에서 자유 설계로 전환하면, 건축 메뉴의 '용병단' 탭에서 침상·식탁·막사 벽·포대·방어선·경계 초소·집결지를 원하는 곳에 배치하고 용병들이 평시에 직접 시공합니다. 모든 용병단 교리 연구의 출발점입니다.</description>
+    <baseCost>500</baseCost><techLevel>Industrial</techLevel>
+    <customUnlockTexts><li>자유 설계 (캠프 배치 직접 편집)</li><li>경계 초소·집결지 지정</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>0</researchViewX><researchViewY>2.40</researchViewY>
+  </ResearchProjectDef>
+
+  <!-- 병력 -->
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_SquadTactics</defName>
+    <label>분대 전술</label>
+    <description>용병 분대를 중대 규모로 운용하는 편제와 전술 교리입니다.</description>
+    <baseCost>1000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li></prerequisites>
+    <customUnlockTexts><li>병력 3단계: 주둔 중대</li><li>병력 교리: 기동 타격대 · 참호 수비대</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>0.00</researchViewY>
+  </ResearchProjectDef>
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_CommandStructure</defName>
+    <label>지휘 체계</label>
+    <description>분대장과 상비 병력을 두는 상설 지휘 체계입니다.</description>
+    <baseCost>2000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_SquadTactics</li></prerequisites>
+    <customUnlockTexts><li>병력 4단계: 분대장</li><li>병력 5단계: 상비군</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>3.00</researchViewX><researchViewY>0.00</researchViewY>
+  </ResearchProjectDef>
+
+  <!-- 정예 -->
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_EliteTraining</defName>
+    <label>정예 훈련 계약</label>
+    <description>정밀 사격 훈련을 받은 대원과 강화갑옷 보급을 계약에 넣습니다.</description>
+    <baseCost>1200</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li><li>PrecisionRifling</li></prerequisites>
+    <customUnlockTexts><li>정예 3단계: 최정예 계약</li><li>정예 교리: 속사 훈련 · 중장갑 계약</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>0.80</researchViewY>
+  </ResearchProjectDef>
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_SpacerContracts</defName>
+    <label>우주 장비 계약</label>
+    <description>차지 무기와 해병 장비를 다루는 특수부대 계약입니다.</description>
+    <baseCost>2500</baseCost><techLevel>Spacer</techLevel>
+    <prerequisites><li>GJL_MC_Res_EliteTraining</li><li>ChargedShot</li></prerequisites>
+    <customUnlockTexts><li>정예 4단계: 우주 장비</li><li>정예 5단계: 특수부대</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>3.00</researchViewX><researchViewY>0.80</researchViewY>
+  </ResearchProjectDef>
+
+  <!-- 포병 -->
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_ArtilleryDoctrine</defName>
+    <label>포병 교리</label>
+    <description>용병 포병 중대의 사격 절차와 탄약 보급 체계입니다.</description>
+    <baseCost>1000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li><li>Mortars</li></prerequisites>
+    <customUnlockTexts><li>포병 3단계: 포병 중대</li><li>포병 교리: 탄약 비축 · EMP 탄두</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>1.60</researchViewY>
+  </ResearchProjectDef>
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_FireControl</defName>
+    <label>화력 통제</label>
+    <description>관측병과 사격 통제 장비로 포격을 맵 전체로 넓힙니다.</description>
+    <baseCost>2000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_ArtilleryDoctrine</li><li>MicroelectronicsBasics</li></prerequisites>
+    <customUnlockTexts><li>포병 4단계: 소이탄</li><li>포병 5단계: 포병 관측</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>3.00</researchViewX><researchViewY>1.60</researchViewY>
+  </ResearchProjectDef>
+
+  <!-- 공병 -->
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_FieldFortification</defName>
+    <label>야전 축성</label>
+    <description>용병 공병이 캠프 주변에 포탑과 함정을 짓는 법입니다.</description>
+    <baseCost>1000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li></prerequisites>
+    <customUnlockTexts><li>공병 3단계: 자동 포탑</li><li>공병 교리: 지뢰 지대 · 진지 정비반</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>2.40</researchViewY>
+  </ResearchProjectDef>
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_Fortress</defName>
+    <label>요새 공학</label>
+    <description>바리케이드와 중화기 포대로 캠프를 요새로 만듭니다.</description>
+    <baseCost>2000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_FieldFortification</li><li>GunTurrets</li></prerequisites>
+    <customUnlockTexts><li>공병 4단계: 요새화</li><li>공병 5단계: 중화기 포대</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>3.00</researchViewX><researchViewY>2.40</researchViewY>
+  </ResearchProjectDef>
+
+  <!-- 정찰 -->
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_Scouting</defName>
+    <label>정찰 교리</label>
+    <description>저격조와 정찰병을 운용하는 교리입니다.</description>
+    <baseCost>1000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li></prerequisites>
+    <customUnlockTexts><li>정찰 3단계: 저격조</li><li>정찰 교리: 표적 지정 · 정보망</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>3.20</researchViewY>
+  </ResearchProjectDef>
+  <ResearchProjectDef>
+    <defName>GJL_MC_Res_Intel</defName>
+    <label>정보전</label>
+    <description>통신 감청과 교란으로 적의 습격을 미리 꺾습니다.</description>
+    <baseCost>2000</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_Scouting</li><li>MicroelectronicsBasics</li></prerequisites>
+    <customUnlockTexts><li>정찰 4단계: 매복</li><li>정찰 5단계: 정보 교란</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>3.00</researchViewX><researchViewY>3.20</researchViewY>
+  </ResearchProjectDef>
+
+  <!-- DLC 분기: 해당 DLC가 없으면 건너뛴다 -->
+  <ResearchProjectDef MayRequire="Ludeon.RimWorld.Anomaly">
+    <defName>GJL_MC_Res_BeastHandling</defName>
+    <label>변칙체 조련</label>
+    <description>포획한 살덩이 괴수를 우리에 가두고 풀어놓는 조련법입니다.</description>
+    <baseCost>1500</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li><li>EntityContainment</li></prerequisites>
+    <customUnlockTexts><li>변칙 3~5단계</li><li>변칙 교리: 굶주린 무리 · 재생 조직</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>4.00</researchViewY>
+  </ResearchProjectDef>
+  <ResearchProjectDef MayRequire="Ludeon.RimWorld.Biotech">
+    <defName>GJL_MC_Res_MechContracts</defName>
+    <label>메카 정비 계약</label>
+    <description>용병단 정비고의 메카를 중형·초중형으로 늘리는 정비 계약입니다.</description>
+    <baseCost>1500</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li><li>BasicMechtech</li></prerequisites>
+    <customUnlockTexts><li>메카 3~5단계</li><li>메카 교리: 과부하 구동 · 증가 장갑</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>4.80</researchViewY>
+  </ResearchProjectDef>
+  <ResearchProjectDef MayRequire="Ludeon.RimWorld.Royalty">
+    <defName>GJL_MC_Res_PsychicContracts</defName>
+    <label>사이킥 계약</label>
+    <description>사이캐스터 용병의 사이링크를 깊게 하는 계약입니다.</description>
+    <baseCost>1500</baseCost><techLevel>Industrial</techLevel>
+    <prerequisites><li>GJL_MC_Res_CampPlanning</li></prerequisites>
+    <customUnlockTexts><li>사이킥 3~5단계</li><li>사이킥 교리: 정신 증폭 · 신경열 배출</li></customUnlockTexts>
+    <tab>GJL_MC_ResearchTab</tab><researchViewX>1.50</researchViewX><researchViewY>5.60</researchViewY>
+  </ResearchProjectDef>
+</Defs>

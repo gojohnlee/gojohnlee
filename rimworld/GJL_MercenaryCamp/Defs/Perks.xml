@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 계약 점수 비용은 단계와 같다(1~5점). 점수 대신 price의 물자를 창고에서 내고 즉시 살 수도 있다.
+     물자 가격은 은 환산으로 대략 1단계 600, 2단계 1200, 3단계 2200, 4단계 3800, 5단계 6000. 장비·기계 분기는 더 비싸다. -->
+<Defs>
+  <!-- 병력 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Force1</defName><iconThing>Bed</iconThing><label>분대 증원</label><description>정원 6명. 침상 2개 추가.</description><branch>Force</branch><tier>1</tier><cost>1</cost><capacity>6</capacity>
+    <price><Silver>400</Silver><WoodLog>150</WoodLog></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Force2</defName><iconThing>DoubleBed</iconThing><label>상설 분대</label><description>정원 8명. 침상 2개 추가.</description><branch>Force</branch><tier>2</tier><cost>2</cost><capacity>8</capacity>
+    <price><Silver>800</Silver><WoodLog>300</WoodLog></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Force3</defName><iconThing>Apparel_SimpleHelmet</iconThing><researchPrerequisites><li>GJL_MC_Res_SquadTactics</li></researchPrerequisites><label>주둔 중대</label><description>정원 12명.</description><branch>Force</branch><tier>3</tier><cost>3</cost><capacity>12</capacity>
+    <price><Silver>1500</Silver><WoodLog>300</WoodLog><Steel>200</Steel></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Force4</defName><iconThing>Apparel_AdvancedHelmet</iconThing><researchPrerequisites><li>GJL_MC_Res_CommandStructure</li></researchPrerequisites><label>분대장</label><description>명단 첫 대원이 분대장. 분대장이 다운되지 않은 동안 전원 사격 정확도 +2%p, 정신 붕괴 기준 -8%p.</description><branch>Force</branch><tier>4</tier><cost>4</cost><leader>true</leader>
+    <price><Silver>3000</Silver><MedicineIndustrial>20</MedicineIndustrial><ComponentIndustrial>10</ComponentIndustrial></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Force5</defName><iconThing>Silver</iconThing><researchPrerequisites><li>GJL_MC_Res_CommandStructure</li></researchPrerequisites><label>상비군</label><description>충원 비용(은) 면제, 충원 대기 시간 1/4.</description><branch>Force</branch><tier>5</tier><cost>5</cost><freeRefill>true</freeRefill><refillFactor>0.25</refillFactor>
+    <price><Silver>5000</Silver><Gold>100</Gold></price></MercenaryCamp.CampPerkDef>
+  <!-- 정예: 사격 숙련은 새로 들어오는 대원에게 적용 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Elite1</defName><label>전문 사수</label><description>보급 시점에 중기관단총 지급. 새 대원의 사격 10.</description><branch>Elite</branch><tier>1</tier><cost>1</cost><shooting>10</shooting><weapon>Gun_HeavySMG</weapon>
+    <price><Steel>150</Steel><ComponentIndustrial>6</ComponentIndustrial><Silver>150</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Elite2</defName><iconThing>Apparel_FlakVest</iconThing><label>정예 장비</label><description>돌격소총과 방탄조끼 지급. 새 대원의 사격 12.</description><branch>Elite</branch><tier>2</tier><cost>2</cost><shooting>12</shooting><weapon>Gun_AssaultRifle</weapon><armor>Apparel_FlakVest</armor>
+    <price><Steel>250</Steel><ComponentIndustrial>10</ComponentIndustrial><Silver>400</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Elite3</defName><iconThing>Apparel_PowerArmor</iconThing><researchPrerequisites><li>GJL_MC_Res_EliteTraining</li></researchPrerequisites><label>최정예 계약</label><description>돌격소총과 강화갑옷. 새 대원의 사격 15.</description><branch>Elite</branch><tier>3</tier><cost>3</cost><shooting>15</shooting><weapon>Gun_AssaultRifle</weapon><armor>Apparel_PowerArmor</armor>
+    <price><Plasteel>150</Plasteel><ComponentIndustrial>20</ComponentIndustrial><Silver>600</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Elite4</defName><researchPrerequisites><li>GJL_MC_Res_SpacerContracts</li></researchPrerequisites><label>우주 장비</label><description>차지 라이플, 강화갑옷, 해병 헬멧. 새 대원의 사격 17.</description><branch>Elite</branch><tier>4</tier><cost>4</cost><shooting>17</shooting><weapon>Gun_ChargeRifle</weapon><armor>Apparel_PowerArmor</armor><helmet>Apparel_PowerArmorHelmet</helmet>
+    <price><Plasteel>250</Plasteel><ComponentSpacer>4</ComponentSpacer><ComponentIndustrial>20</ComponentIndustrial><Silver>800</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Elite5</defName><iconThing>Gun_ChargeLance</iconThing><researchPrerequisites><li>GJL_MC_Res_SpacerContracts</li></researchPrerequisites><label>특수부대</label><description>새 대원의 사격 20. 대원 2명은 차지 랜스를 든 장거리 랜서.</description><branch>Elite</branch><tier>5</tier><cost>5</cost><shooting>20</shooting><lancers>2</lancers><weapon>Gun_ChargeRifle</weapon><armor>Apparel_PowerArmor</armor><helmet>Apparel_PowerArmorHelmet</helmet>
+    <price><Plasteel>400</Plasteel><ComponentSpacer>8</ComponentSpacer><Silver>1500</Silver></price></MercenaryCamp.CampPerkDef>
+  <!-- 포병. defName은 기존 세이브 호환을 위해 Support 그대로 둔다. -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Support1</defName><iconThing>Turret_Mortar</iconThing><researchPrerequisites><li>Mortars</li></researchPrerequisites><label>박격포 분대</label><description>박격포 2문, 포수는 정원 안에서 지정. 구역 안 30칸 밖의 적을 포격, 포탄은 계약에 포함. 충원 2.5일.</description><branch>Support</branch><tier>1</tier><cost>1</cost><mortars>2</mortars><refillDays>2.5</refillDays>
+    <price><Steel>250</Steel><ComponentIndustrial>6</ComponentIndustrial><Silver>100</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Support2</defName><iconThing>Shell_HighExplosive</iconThing><label>포병 증강</label><description>박격포 3문. 충원 2일, 재정비 안정 시간 30초.</description><branch>Support</branch><tier>2</tier><cost>2</cost><mortars>3</mortars><refillDays>2</refillDays>
+    <price><Steel>400</Steel><ComponentIndustrial>10</ComponentIndustrial><Silver>300</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Support3</defName><iconThing>Turret_Mortar</iconThing><researchPrerequisites><li>GJL_MC_Res_ArtilleryDoctrine</li></researchPrerequisites><label>포병 중대</label><description>박격포 4문. 충원 1일.</description><branch>Support</branch><tier>3</tier><cost>3</cost><mortars>4</mortars><refillDays>1</refillDays>
+    <price><Steel>600</Steel><ComponentIndustrial>15</ComponentIndustrial><Silver>600</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Support4</defName><iconThing>Shell_Incendiary</iconThing><researchPrerequisites><li>GJL_MC_Res_FireControl</li></researchPrerequisites><label>소이탄</label><description>포탄 절반이 소이탄. 불은 구역 밖으로도 번질 수 있습니다.</description><branch>Support</branch><tier>4</tier><cost>4</cost><mortars>4</mortars><incendiary>true</incendiary>
+    <price><Chemfuel>400</Chemfuel><Steel>400</Steel><Silver>2000</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Support5</defName><iconThing>Shell_AntigrainWarhead</iconThing><researchPrerequisites><li>GJL_MC_Res_FireControl</li></researchPrerequisites><label>포병 관측</label><description>구역 밖 맵 전체의 적도 포격(아군 근처 금지는 유지). 계약 포탄 지급·비축 2배.</description><branch>Support</branch><tier>5</tier><cost>5</cost><mortars>4</mortars><artilleryAnywhere>true</artilleryAnywhere><shellFactor>2</shellFactor>
+    <price><ComponentIndustrial>30</ComponentIndustrial><Plasteel>150</Plasteel><Gold>100</Gold><Silver>2500</Silver></price></MercenaryCamp.CampPerkDef>
+  <!-- 공병: 부지 바로 바깥 한 줄. 막힌 칸은 건너뛰고 다음 정비 때 다시 시도 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Engineer1</defName><iconThing>Sandbags</iconThing><label>모래주머니 방어선</label><description>캠프 외곽 한 줄에 모래주머니. 네 방향 가운데는 통로로 비워 둡니다.</description><branch>Engineer</branch><tier>1</tier><cost>1</cost><sandbags>true</sandbags>
+    <price><WoodLog>250</WoodLog><Steel>100</Steel><Silver>100</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Engineer2</defName><iconThing>TrapIED_HighExplosive</iconThing><researchPrerequisites><li>IEDs</li></researchPrerequisites><label>IED 매설</label><description>통로 양옆에 고폭 IED 8개. 터진 함정은 평시에 무료로 다시 설치. 아군은 밟아도 터지지 않습니다.</description><branch>Engineer</branch><tier>2</tier><cost>2</cost><sandbags>true</sandbags><ieds>true</ieds>
+    <price><Steel>300</Steel><Chemfuel>100</Chemfuel><ComponentIndustrial>4</ComponentIndustrial><Silver>200</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Engineer3</defName><iconThing>Turret_MiniTurret</iconThing><researchPrerequisites><li>GJL_MC_Res_FieldFortification</li><li>GunTurrets</li></researchPrerequisites><label>자동 포탑</label><description>모서리에 미니 포탑 2기. 계약 발전기로 전력 불필요, 고장·포신 정비 무료. 구역 안 적만 사격.</description><branch>Engineer</branch><tier>3</tier><cost>3</cost><sandbags>true</sandbags><ieds>true</ieds><miniTurrets>2</miniTurrets>
+    <price><Steel>500</Steel><ComponentIndustrial>15</ComponentIndustrial><Silver>600</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Engineer4</defName><iconThing>Barricade</iconThing><researchPrerequisites><li>GJL_MC_Res_Fortress</li></researchPrerequisites><label>요새화</label><description>미니 포탑 4기, 모래주머니를 바리케이드로 교체.</description><branch>Engineer</branch><tier>4</tier><cost>4</cost><sandbags>true</sandbags><barricades>true</barricades><ieds>true</ieds><miniTurrets>4</miniTurrets>
+    <price><Steel>800</Steel><ComponentIndustrial>25</ComponentIndustrial><Silver>1200</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Engineer5</defName><iconThing>Turret_Autocannon</iconThing><researchPrerequisites><li>GJL_MC_Res_Fortress</li><li>HeavyTurrets</li></researchPrerequisites><label>중화기 포대</label><description>동서 양쪽에 오토캐논 포탑 2기 추가.</description><branch>Engineer</branch><tier>5</tier><cost>5</cost><sandbags>true</sandbags><barricades>true</barricades><ieds>true</ieds><miniTurrets>4</miniTurrets><autocannons>2</autocannons>
+    <price><Steel>1000</Steel><Plasteel>100</Plasteel><ComponentIndustrial>30</ComponentIndustrial><Silver>2000</Silver></price></MercenaryCamp.CampPerkDef>
+  <!-- 정찰 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Recon1</defName><iconThing>CommsConsole</iconThing><label>정찰 보고</label><description>적이 맵에 나타나면 규모·구성·위치를 편지로 알리고, 관리창에 적 구성을 표시합니다.</description><branch>Recon</branch><tier>1</tier><cost>1</cost><raidAlert>true</raidAlert>
+    <price><Silver>400</Silver><ComponentIndustrial>4</ComponentIndustrial></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Recon2</defName><iconThing>Apparel_ArmorRecon</iconThing><label>조기 경보</label><description>적대 세력 습격을 4시간 전에 포착해 미리 알립니다(퀘스트 습격 제외).</description><branch>Recon</branch><tier>2</tier><cost>2</cost><raidWarningHours>4</raidWarningHours>
+    <price><Silver>800</Silver><ComponentIndustrial>8</ComponentIndustrial></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Recon3</defName><iconThing>Gun_SniperRifle</iconThing><researchPrerequisites><li>GJL_MC_Res_Scouting</li></researchPrerequisites><label>저격조</label><description>대원 2명이 저격 소총을 든 저격수.</description><branch>Recon</branch><tier>3</tier><cost>3</cost><snipers>2</snipers>
+    <price><Steel>300</Steel><ComponentIndustrial>12</ComponentIndustrial><Silver>1000</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Recon4</defName><iconThing>Gun_ChainShotgun</iconThing><researchPrerequisites><li>GJL_MC_Res_Intel</li></researchPrerequisites><label>매복</label><description>구역 경계 바깥 10칸까지 사격·포격 허용. 그 바깥으로 추격하지는 않습니다.</description><branch>Recon</branch><tier>4</tier><cost>4</cost><ambushRange>10</ambushRange>
+    <price><Silver>2500</Silver><Steel>300</Steel><ComponentIndustrial>15</ComponentIndustrial></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_Recon5</defName><iconThing>AIPersonaCore</iconThing><researchPrerequisites><li>GJL_MC_Res_Intel</li></researchPrerequisites><label>정보 교란</label><description>이 맵을 노리는 적대 습격 규모 -15%.</description><branch>Recon</branch><tier>5</tier><cost>5</cost><raidPointsFactor>0.85</raidPointsFactor>
+    <price><Silver>4000</Silver><Gold>150</Gold></price></MercenaryCamp.CampPerkDef>
+</Defs>

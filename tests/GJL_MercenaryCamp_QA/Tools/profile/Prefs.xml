@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PrefsData>
+  <volumeMaster>0</volumeMaster>
+  <volumeGame>0</volumeGame>
+  <volumeMusic>0</volumeMusic>
+  <volumeAmbient>0</volumeAmbient>
+  <volumeUI>0</volumeUI>
+  <screenWidth>1280</screenWidth>
+  <screenHeight>720</screenHeight>
+  <fullscreen>False</fullscreen>
+  <runInBackground>True</runInBackground>
+  <pauseOnLoad>False</pauseOnLoad>
+  <pauseOnError>False</pauseOnError>
+  <automaticPauseMode>Never</automaticPauseMode>
+  <devMode>True</devMode>
+  <langFolderName>English</langFolderName>
+</PrefsData>

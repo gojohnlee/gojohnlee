@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 교리: 분기 2단계를 달성하면 그 분기의 교리를 모두 살 수 있다. 분기 I 연구가 필요하고, 값은 점수 3점 또는 물자(은 환산 약 2000).
+     효과는 대원·괴물·메카에게 붙는 헤디프, 또는 캠프 수치(포탄·IED·경보)에 곱하거나 더하는 보너스. -->
+<Defs>
+  <HediffDef Name="GJL_MC_DoctrineBase" Abstract="True">
+    <hediffClass>HediffWithComps</hediffClass><defaultLabelColor>(0.6, 0.8, 1)</defaultLabelColor><isBad>false</isBad><everCurableByItem>false</everCurableByItem>
+  </HediffDef>
+  <HediffDef ParentName="GJL_MC_DoctrineBase">
+    <defName>GJL_MC_Doc_Rapid</defName><label>기동 타격대 교리</label><description>빠른 기동과 선제 사격을 훈련받았습니다.</description>
+    <stages><li><statOffsets><MoveSpeed>0.5</MoveSpeed></statOffsets><statFactors><AimingDelayFactor>0.9</AimingDelayFactor></statFactors></li></stages>
+  </HediffDef>
+  <HediffDef ParentName="GJL_MC_DoctrineBase">
+    <defName>GJL_MC_Doc_Trench</defName><label>참호 수비</label><description>방어 진지에 자리를 잡아 피해를 덜 받습니다.</description>
+    <stages><li><statFactors><IncomingDamageFactor>0.75</IncomingDamageFactor></statFactors><statOffsets><MentalBreakThreshold>-0.05</MentalBreakThreshold></statOffsets></li></stages>
+  </HediffDef>
+  <HediffDef ParentName="GJL_MC_DoctrineBase">
+    <defName>GJL_MC_Doc_Fast</defName><label>속사 훈련</label><description>조준 동작을 줄이는 속사 훈련을 받았습니다.</description>
+    <stages><li><statFactors><AimingDelayFactor>0.8</AimingDelayFactor></statFactors></li></stages>
+  </HediffDef>
+  <HediffDef ParentName="GJL_MC_DoctrineBase">
+    <defName>GJL_MC_Doc_Heavy</defName><label>중장갑 계약</label><description>추가 방탄판과 보강 장비를 착용했습니다.</description>
+    <stages><li><statOffsets><ArmorRating_Sharp>0.15</ArmorRating_Sharp><ArmorRating_Blunt>0.10</ArmorRating_Blunt><MoveSpeed>-0.3</MoveSpeed></statOffsets></li></stages>
+  </HediffDef>
+  <HediffDef>
+    <defName>GJL_MC_Marked</defName><label>표적 지정</label><description>용병단 정찰병이 위치를 계속 알리고 있어 더 큰 피해를 받습니다.</description>
+    <hediffClass>HediffWithComps</hediffClass><defaultLabelColor>(1, 0.55, 0.3)</defaultLabelColor><isBad>true</isBad><everCurableByItem>false</everCurableByItem>
+    <comps><li Class="HediffCompProperties_Disappears"><disappearsAfterTicks>300~300</disappearsAfterTicks></li></comps>
+    <stages><li><statFactors><IncomingDamageFactor>1.15</IncomingDamageFactor></statFactors></li></stages>
+  </HediffDef>
+
+  <!-- 병력 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocForce_Rapid</defName><label>기동 타격대</label>
+    <description>대원 이동 속도 +0.5칸/초, 조준 시간 -10%. 구역 끝까지 빨리 닿고 먼저 쏩니다.</description>
+    <branch>Force</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <memberHediff>GJL_MC_Doc_Rapid</memberHediff><iconThing>Gun_MachinePistol</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_SquadTactics</li></researchPrerequisites>
+    <price><Silver>1600</Silver><MedicineIndustrial>20</MedicineIndustrial></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocForce_Trench</defName><label>참호 수비대</label>
+    <description>캠프·경계 초소·엄폐물 옆에 있는 동안 받는 피해 -25%, 정신 붕괴 기준 -5%p. 진지를 떠나면 효과가 사라집니다.</description>
+    <branch>Force</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <memberHediff>GJL_MC_Doc_Trench</memberHediff><atPostOnly>true</atPostOnly><iconThing>Sandbags</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_SquadTactics</li></researchPrerequisites>
+    <price><Silver>1000</Silver><WoodLog>500</WoodLog><Steel>300</Steel></price></MercenaryCamp.CampPerkDef>
+  <!-- 정예 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocElite_Fast</defName><label>속사 훈련</label>
+    <description>대원 조준 시간 -20%. 같은 시간에 더 많이 쏩니다.</description>
+    <branch>Elite</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <memberHediff>GJL_MC_Doc_Fast</memberHediff><iconThing>Gun_LMG</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_EliteTraining</li></researchPrerequisites>
+    <price><Steel>350</Steel><ComponentIndustrial>10</ComponentIndustrial><Silver>1000</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocElite_Heavy</defName><label>중장갑 계약</label>
+    <description>날카로움 방어 +15%p, 둔기 방어 +10%p. 대신 이동 속도 -0.3칸/초.</description>
+    <branch>Elite</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <memberHediff>GJL_MC_Doc_Heavy</memberHediff><iconThing>Apparel_PlateArmor</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_EliteTraining</li></researchPrerequisites>
+    <price><Steel>600</Steel><Plasteel>80</Plasteel><Silver>700</Silver></price></MercenaryCamp.CampPerkDef>
+  <!-- 포병 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocSupport_Stock</defName><label>탄약 비축</label>
+    <description>계약 포탄 지급과 비축 한도 +50%. 포병 관측과 곱해집니다.</description>
+    <branch>Support</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <shellMultiplier>1.5</shellMultiplier><iconThing>Shell_HighExplosive</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_ArtilleryDoctrine</li></researchPrerequisites>
+    <price><Steel>500</Steel><Chemfuel>200</Chemfuel><Silver>900</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocSupport_EMP</defName><label>EMP 탄두</label>
+    <description>맵의 적 절반 이상이 기계체면 모든 포탄을 EMP탄으로 쏩니다. 기계 습격을 멈춰 세웁니다.</description>
+    <branch>Support</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <empShells>true</empShells><iconThing>Shell_EMP</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_ArtilleryDoctrine</li></researchPrerequisites>
+    <price><ComponentIndustrial>16</ComponentIndustrial><Steel>350</Steel><Silver>1000</Silver></price></MercenaryCamp.CampPerkDef>
+  <!-- 공병 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocEngineer_Mines</defName><label>지뢰 지대</label>
+    <description>IED 8개 추가(총 16). 표준 배치는 통로 양옆 바깥 줄에 묻고, 자유 설계는 IED 한도가 8 늘어납니다.</description>
+    <branch>Engineer</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <iedBonus>8</iedBonus><iconThing>TrapIED_Incendiary</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_FieldFortification</li></researchPrerequisites>
+    <price><Steel>500</Steel><Chemfuel>250</Chemfuel><Silver>600</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocEngineer_Repair</defName><label>진지 정비반</label>
+    <description>캠프 시설이 전투 중에도 10초마다 최대 체력의 4%씩 저절로 복구됩니다.</description>
+    <branch>Engineer</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <autoRepair>true</autoRepair><iconThing>ComponentIndustrial</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_FieldFortification</li></researchPrerequisites>
+    <price><Steel>500</Steel><ComponentIndustrial>14</ComponentIndustrial><Silver>700</Silver></price></MercenaryCamp.CampPerkDef>
+  <!-- 정찰 -->
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocRecon_Mark</defName><label>표적 지정</label>
+    <description>교전 중 구역 안의 적에게 표적 지정: 받는 피해 +15%. 대원·포탑·포격·괴물·메카 모두 혜택을 봅니다.</description>
+    <branch>Recon</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <markTargets>true</markTargets><iconThing>Gun_SniperRifle</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_Scouting</li></researchPrerequisites>
+    <price><Silver>1600</Silver><ComponentIndustrial>10</ComponentIndustrial></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef><defName>GJL_MC_DocRecon_Network</defName><label>정보망</label>
+    <description>조기 경보 +4시간(총 8시간), 이 맵을 노리는 습격 규모 추가 -5%.</description>
+    <branch>Recon</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <raidWarningBonus>4</raidWarningBonus><raidPointsMultiplier>0.95</raidPointsMultiplier><iconThing>CommsConsole</iconThing>
+    <researchPrerequisites><li>GJL_MC_Res_Scouting</li></researchPrerequisites>
+    <price><Silver>1700</Silver><ComponentIndustrial>10</ComponentIndustrial></price></MercenaryCamp.CampPerkDef>
+</Defs>

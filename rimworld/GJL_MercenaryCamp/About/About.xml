@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>자율 주둔 용병단 · Mercenary Camp</name><author>gojohnlee</author><packageId>gojohnlee.mercenarycamp</packageId>
+  <supportedVersions><li>1.7</li></supportedVersions>
+  <modDependencies><li><packageId>brrainz.harmony</packageId><displayName>Harmony</displayName><steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl></li></modDependencies>
+  <loadAfter><li>brrainz.harmony</li></loadAfter>
+  <description>직접 조종하지 않는 이웃 용병단. 캠프 부지와 보급품을 제공하고, 퀘스트로 계약 점수를 모아 병력·정예·포병·공병·정찰 퍽을 각각 5단계까지 올리세요. DLC가 있으면 변칙(아노말리: 포획 괴물), 메카(바이오테크), 사이킥(로열티) 분기도 열립니다. 지정 구역 방어, 캠프 후퇴, 생활과 지연 충원을 지원합니다.
+
+연구 탭 '용병단': 분기별 연구가 높은 단계를 열고, 일부 퍽은 박격포·포탑·차지샷·메카텍 같은 바닐라 연구도 요구합니다.
+교리: 분기마다 2단계부터 살 수 있는 교리 2개씩, 모두 함께 적용 가능(기동 타격대·참호 수비대, 탄약 비축·EMP 탄두, 지뢰 지대·진지 정비반 등).
+자유 설계: '야전 캠프 설계' 연구 후 건축 메뉴 '용병단' 탭에서 침상·막사 벽·포대·방어선·경계 초소·집결지·우리·정비고를 직접 배치하면 용병들이 평시에 시공합니다. RimWorld 1.7.4985용. 추가 DLC는 필수가 아닙니다.</description>
+</ModMetaData>

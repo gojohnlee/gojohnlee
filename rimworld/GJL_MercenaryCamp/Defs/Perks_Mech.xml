@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 메카 분기: 바이오테크 DLC가 없으면 건너뛴다. 교전 때 정비고(캠프 북쪽)에서 출격, 구역 안 적만 상대, 끝나면 귀환. -->
+<Defs>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Biotech"><defName>GJL_MC_Mech1</defName><researchPrerequisites><li>BasicMechtech</li></researchPrerequisites><label>경량 메카 소대</label><description>교전이 시작되면 밀리터 3기가 출격합니다. 구역 안 적만 상대하고 끝나면 정비고로 귀환. 파괴된 기체는 3일 뒤 무료 재생산.</description><branch>Mech</branch><tier>1</tier><cost>1</cost>
+    <price><Steel>250</Steel><ComponentIndustrial>6</ComponentIndustrial><Silver>100</Silver></price>
+    <mechs><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Militor</li></mechs></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Biotech"><defName>GJL_MC_Mech2</defName><researchPrerequisites><li>StandardMechtech</li></researchPrerequisites><label>랜서 편성</label><description>랜서 2기 추가.</description><branch>Mech</branch><tier>2</tier><cost>2</cost>
+    <price><Plasteel>100</Plasteel><ComponentIndustrial>10</ComponentIndustrial><Silver>300</Silver></price>
+    <mechs><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Lancer</li><li>Mech_Lancer</li></mechs></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Biotech"><defName>GJL_MC_Mech3</defName><researchPrerequisites><li>GJL_MC_Res_MechContracts</li><li>StandardMechtech</li></researchPrerequisites><label>방패 지원</label><description>방어막을 펼치는 리저너리 1기 추가.</description><branch>Mech</branch><tier>3</tier><cost>3</cost>
+    <price><Plasteel>150</Plasteel><ComponentIndustrial>15</ComponentIndustrial><Silver>600</Silver></price>
+    <mechs><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Lancer</li><li>Mech_Lancer</li><li>Mech_Legionary</li></mechs></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Biotech"><defName>GJL_MC_Mech4</defName><researchPrerequisites><li>GJL_MC_Res_MechContracts</li></researchPrerequisites><label>돌격 메카</label><description>근접 돌격형 사이더 2기 추가.</description><branch>Mech</branch><tier>4</tier><cost>4</cost>
+    <price><Plasteel>250</Plasteel><ComponentIndustrial>20</ComponentIndustrial><Silver>1000</Silver></price>
+    <mechs><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Lancer</li><li>Mech_Lancer</li><li>Mech_Legionary</li><li>Mech_Scyther</li><li>Mech_Scyther</li></mechs></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Biotech"><defName>GJL_MC_Mech5</defName><researchPrerequisites><li>GJL_MC_Res_MechContracts</li><li>HighMechtech</li></researchPrerequisites><label>초중량 기갑</label><description>센추리온 1기 추가.</description><branch>Mech</branch><tier>5</tier><cost>5</cost>
+    <price><Plasteel>400</Plasteel><ComponentSpacer>6</ComponentSpacer><Silver>2000</Silver></price>
+    <mechs><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Militor</li><li>Mech_Lancer</li><li>Mech_Lancer</li><li>Mech_Legionary</li><li>Mech_Scyther</li><li>Mech_Scyther</li><li>Mech_Centurion</li></mechs></MercenaryCamp.CampPerkDef>
+  <!-- 메카 교리: 출격한 메카에게 붙는 헤디프 -->
+  <HediffDef ParentName="GJL_MC_DoctrineBase" MayRequire="Ludeon.RimWorld.Biotech">
+    <defName>GJL_MC_Doc_Overdrive</defName><label>과부하 구동</label><description>안전 한계를 풀어 더 빠르게 움직이고 쏩니다.</description>
+    <stages><li><statFactors><MoveSpeed>1.2</MoveSpeed><RangedCooldownFactor>0.85</RangedCooldownFactor></statFactors></li></stages>
+  </HediffDef>
+  <HediffDef ParentName="GJL_MC_DoctrineBase" MayRequire="Ludeon.RimWorld.Biotech">
+    <defName>GJL_MC_Doc_Plating</defName><label>증가 장갑</label><description>덧댄 장갑판이 피해를 줄입니다.</description>
+    <stages><li><statFactors><IncomingDamageFactor>0.8</IncomingDamageFactor></statFactors></li></stages>
+  </HediffDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Biotech"><defName>GJL_MC_DocMech_Overdrive</defName><label>과부하 구동</label>
+    <description>출격한 메카 이동 속도 +20%, 사격 쿨다운 -15%.</description>
+    <branch>Mech</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <squadHediff>GJL_MC_Doc_Overdrive</squadHediff><iconKind>Mech_Lancer</iconKind>
+    <researchPrerequisites><li>GJL_MC_Res_MechContracts</li></researchPrerequisites>
+    <price><ComponentIndustrial>16</ComponentIndustrial><Steel>500</Steel><Silver>700</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Biotech"><defName>GJL_MC_DocMech_Plating</defName><label>증가 장갑</label>
+    <description>출격한 메카가 받는 피해 -20%, 파괴된 기체 재생산 시간 절반.</description>
+    <branch>Mech</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <squadHediff>GJL_MC_Doc_Plating</squadHediff><rebuildFactor>0.5</rebuildFactor><iconKind>Mech_Legionary</iconKind>
+    <researchPrerequisites><li>GJL_MC_Res_MechContracts</li></researchPrerequisites>
+    <price><Plasteel>140</Plasteel><Steel>350</Steel><Silver>700</Silver></price></MercenaryCamp.CampPerkDef>
+</Defs>

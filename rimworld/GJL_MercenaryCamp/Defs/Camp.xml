@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="StorageShelfBase">
+    <defName>GJL_MC_ContractDepot</defName><label>용병 계약 보급소</label>
+    <description>용병단과 계약하는 창구. 표준 배치는 주변 19×15칸의 평탄하고 비어 있는 부지가 필요합니다(전선은 그대로 둬도 됩니다). '야전 캠프 설계' 연구 후 자유 설계로 전환하면 캠프 시설을 원하는 곳에 직접 배치합니다. 계약 물자와 식량·약은 상인처럼 창고(저장 구역·선반)와 거주 구역에서 바로 가져가며, 금지한 물건은 건드리지 않습니다. 건설 후 선택하여 용병단 관리 화면을 여세요.</description>
+    <thingClass>MercenaryCamp.Building_ContractDepot</thingClass>
+    <graphicData><texPath>Things/Building/Furniture/Shelf</texPath><graphicClass>Graphic_Multi</graphicClass><drawSize>(4,3)</drawSize></graphicData>
+    <size>(3,2)</size><rotatable>false</rotatable><minifiedDef IsNull="True"/><designationHotKey IsNull="True"/><thingCategories Inherit="False"/>
+    <costStuffCount>60</costStuffCount><statBases><MaxHitPoints>350</MaxHitPoints><Mass>30</Mass><WorkToBuild>1200</WorkToBuild></statBases>
+    <placeWorkers><li>MercenaryCamp.PlaceWorker_Camp</li></placeWorkers>
+    <designationCategory>GJL_MC_Camp</designationCategory><uiOrder>1</uiOrder>
+    <building><maxItemsInCell>3</maxItemsInCell><storageGroupTag IsNull="True"/>
+      <!-- Supplies come straight from colony storage; hauling food here would only leave it to rot in the open aisle. -->
+      <defaultStorageSettings><priority>Low</priority><filter Inherit="False"/></defaultStorageSettings>
+    </building>
+  </ThingDef>
+  <FactionDef ParentName="OutlanderFactionBase">
+    <defName>GJL_MC_Company</defName><label>주둔 용병단</label><description>정착지와 보급 계약을 맺는 독립 용병단.</description>
+    <hidden>true</hidden><requiredCountAtGameStart>0</requiredCountAtGameStart><maxCountAtGameStart>0</maxCountAtGameStart><canMakeRandomly>false</canMakeRandomly>
+    <settlementGenerationWeight>0</settlementGenerationWeight><basicMemberKind>GJL_MC_Rifleman</basicMemberKind>
+    <pawnGroupMakers Inherit="False"/><caravanTraderKinds Inherit="False"/><visitorTraderKinds Inherit="False"/>
+    <xenotypeSet Inherit="False"/><fixedName>주둔 용병단</fixedName>
+  </FactionDef>
+  <PawnKindDef ParentName="BasePlayerPawnKind">
+    <defName>GJL_MC_Rifleman</defName><label>계약 사수</label><race>Human</race><defaultFactionType>GJL_MC_Company</defaultFactionType>
+    <combatPower>80</combatPower><isFighter>true</isFighter><initialResistanceRange>14~23</initialResistanceRange><apparelMoney>350~500</apparelMoney>
+    <apparelTags><li>IndustrialBasic</li></apparelTags><weaponMoney>0~0</weaponMoney>
+  </PawnKindDef>
+  <ThinkTreeDef>
+    <defName>GJL_MC_CampBehavior</defName><insertTag>Humanlike_PostMentalState</insertTag><insertPriority>100</insertPriority>
+    <thinkRoot Class="MercenaryCamp.ThinkNode_ConditionalMercenary"><subNodes><li Class="MercenaryCamp.JobGiver_Camp"/></subNodes></thinkRoot>
+  </ThinkTreeDef>
+  <JobDef><defName>GJL_MC_Relax</defName><driverClass>MercenaryCamp.JobDriver_CampRelax</driverClass><reportString>캠프에서 휴식 중.</reportString><casualInterruptible>true</casualInterruptible></JobDef>
+  <JobDef><defName>GJL_MC_Train</defName><driverClass>MercenaryCamp.JobDriver_CampTrain</driverClass><reportString>사격 훈련 중.</reportString><casualInterruptible>true</casualInterruptible></JobDef>
+  <JobDef><defName>GJL_MC_Clean</defName><driverClass>MercenaryCamp.JobDriver_CampClean</driverClass><reportString>캠프를 청소 중.</reportString><casualInterruptible>true</casualInterruptible></JobDef>
+  <JobDef><defName>GJL_MC_Build</defName><driverClass>MercenaryCamp.JobDriver_CampBuild</driverClass><reportString>캠프 시설을 시공 중.</reportString><casualInterruptible>true</casualInterruptible></JobDef>
+  <!-- 건축 메뉴 '용병단' 탭: 보급소, 그리고 '야전 캠프 설계' 연구 뒤에 나타나는 자유 설계 도구. -->
+  <DesignationCategoryDef>
+    <defName>GJL_MC_Camp</defName><label>용병단</label><description>용병 보급소와 용병단 캠프 설계 도구.</description><order>280</order>
+    <specialDesignatorClasses>
+      <li>MercenaryCamp.Designator_CampBed</li><li>MercenaryCamp.Designator_CampMedicalBed</li><li>MercenaryCamp.Designator_CampTable</li>
+      <li>MercenaryCamp.Designator_CampChair</li><li>MercenaryCamp.Designator_CampWall</li><li>MercenaryCamp.Designator_CampDoor</li>
+      <li>MercenaryCamp.Designator_CampMortar</li><li>MercenaryCamp.Designator_CampMiniTurret</li><li>MercenaryCamp.Designator_CampAutocannon</li>
+      <li>MercenaryCamp.Designator_CampCover</li><li>MercenaryCamp.Designator_CampIED</li><li>MercenaryCamp.Designator_CampPost</li>
+      <li>MercenaryCamp.Designator_CampRally</li><li>MercenaryCamp.Designator_CampPen</li><li>MercenaryCamp.Designator_CampBay</li>
+      <li>MercenaryCamp.Designator_CampPlanRemove</li>
+    </specialDesignatorClasses>
+  </DesignationCategoryDef>
+  <JobDef><defName>GJL_MC_Rescue</defName><driverClass>MercenaryCamp.JobDriver_CampRescue</driverClass><reportString>쓰러진 동료를 침상으로 옮기는 중.</reportString></JobDef>
+  <HediffDef>
+    <defName>GJL_MC_Leadership</defName><label>분대 지휘</label><description>분대장의 지휘 아래 있어 사격이 정확해지고 정신이 안정됩니다.</description>
+    <hediffClass>HediffWithComps</hediffClass><defaultLabelColor>(0.6, 0.8, 1)</defaultLabelColor><isBad>false</isBad><everCurableByItem>false</everCurableByItem>
+    <stages><li><statOffsets><ShootingAccuracyPawn>0.02</ShootingAccuracyPawn><MentalBreakThreshold>-0.08</MentalBreakThreshold></statOffsets></li></stages>
+  </HediffDef>
+  <DutyDef>
+    <defName>GJL_MC_MechSquad</defName>
+    <thinkNode Class="ThinkNode_Priority"><subNodes><li Class="MercenaryCamp.JobGiver_CampMechFight"/><li Class="MercenaryCamp.JobGiver_CampBeastReturn"/></subNodes></thinkNode>
+  </DutyDef>
+  <QuestScriptDef><defName>GJL_MC_ContractQuest</defName><root Class="MercenaryCamp.QuestNode_Contract"/><autoAccept>false</autoAccept><sendAvailableLetter>false</sendAvailableLetter></QuestScriptDef>
+</Defs>

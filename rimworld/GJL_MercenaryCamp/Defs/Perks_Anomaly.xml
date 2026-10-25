@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 변칙 분기 ("전쟁의 개"): 아노말리 DLC가 없으면 이 파일의 정의는 모두 건너뛴다. -->
+<Defs>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Anomaly"><defName>GJL_MC_Anomaly1</defName><label>포획 우리</label><description>교전이 시작되면 핑거스파이크 4마리를 풀어놓습니다. 맵 전체의 적을 쫓고, 적이 사라지면 우리로 돌아옵니다. 죽은 개체는 3일 뒤 재포획.</description><branch>Anomaly</branch><tier>1</tier><cost>1</cost>
+    <price><Bioferrite>200</Bioferrite><Silver>400</Silver></price>
+    <beasts><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li></beasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Anomaly"><defName>GJL_MC_Anomaly2</defName><label>사육 구획</label><description>핑거스파이크 4마리와 터프스파이크 2마리.</description><branch>Anomaly</branch><tier>2</tier><cost>2</cost>
+    <price><Bioferrite>400</Bioferrite><Silver>800</Silver></price>
+    <beasts><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Toughspike</li><li>Toughspike</li></beasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Anomaly"><defName>GJL_MC_Anomaly3</defName><researchPrerequisites><li>GJL_MC_Res_BeastHandling</li></researchPrerequisites><label>전쟁의 개</label><description>핑거스파이크 4, 터프스파이크 3, 트라이스파이크 2마리. 트라이스파이크는 죽으면 분열해 계속 싸웁니다.</description><branch>Anomaly</branch><tier>3</tier><cost>3</cost>
+    <price><Bioferrite>600</Bioferrite><Silver>1700</Silver></price>
+    <beasts><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Toughspike</li><li>Toughspike</li><li>Toughspike</li><li>Trispike</li><li>Trispike</li></beasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Anomaly"><defName>GJL_MC_Anomaly4</defName><researchPrerequisites><li>GJL_MC_Res_BeastHandling</li></researchPrerequisites><label>거대 표본</label><description>벌브프릭 1마리 추가. 죽으면 여러 살덩이 괴수로 분열합니다.</description><branch>Anomaly</branch><tier>4</tier><cost>4</cost>
+    <price><Bioferrite>1000</Bioferrite><Silver>3000</Silver></price>
+    <beasts><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Toughspike</li><li>Toughspike</li><li>Toughspike</li><li>Trispike</li><li>Trispike</li><li>Bulbfreak</li></beasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Anomaly"><defName>GJL_MC_Anomaly5</defName><researchPrerequisites><li>GJL_MC_Res_BeastHandling</li></researchPrerequisites><label>괴수 사육장</label><description>벌브프릭 2마리. 죽은 개체 재포획 1일.</description><branch>Anomaly</branch><tier>5</tier><cost>5</cost><recaptureDays>1</recaptureDays>
+    <price><Bioferrite>1500</Bioferrite><Silver>5000</Silver></price>
+    <beasts><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Fingerspike</li><li>Toughspike</li><li>Toughspike</li><li>Toughspike</li><li>Trispike</li><li>Trispike</li><li>Bulbfreak</li><li>Bulbfreak</li></beasts></MercenaryCamp.CampPerkDef>
+  <ThinkTreeDef MayRequire="Ludeon.RimWorld.Anomaly">
+    <defName>GJL_MC_BeastBehavior</defName><insertTag>Fleshbeast_PreMain</insertTag><insertPriority>100</insertPriority>
+    <thinkRoot Class="MercenaryCamp.ThinkNode_ConditionalCampBeast"><subNodes>
+      <li Class="MercenaryCamp.ThinkNode_ConditionalCampBeastRecalled"><subNodes><li Class="MercenaryCamp.JobGiver_CampBeastReturn"/></subNodes></li>
+      <li Class="JobGiver_AIFightEnemies"><targetAcquireRadius>500</targetAcquireRadius><targetKeepRadius>500</targetKeepRadius></li>
+      <li Class="JobGiver_AIGotoNearestHostile"/>
+      <li Class="MercenaryCamp.JobGiver_CampBeastReturn"/>
+    </subNodes></thinkRoot>
+  </ThinkTreeDef>
+  <!-- 변칙 교리: 풀려난 괴물에게 붙는 헤디프 -->
+  <HediffDef ParentName="GJL_MC_DoctrineBase" MayRequire="Ludeon.RimWorld.Anomaly">
+    <defName>GJL_MC_Doc_Frenzy</defName><label>굶주린 무리</label><description>굶주린 채 풀려나 더 빠르고 사납게 사냥합니다.</description>
+    <stages><li><statFactors><MoveSpeed>1.2</MoveSpeed><MeleeDamageFactor>1.25</MeleeDamageFactor></statFactors></li></stages>
+  </HediffDef>
+  <HediffDef ParentName="GJL_MC_DoctrineBase" MayRequire="Ludeon.RimWorld.Anomaly">
+    <defName>GJL_MC_Doc_Regen</defName><label>재생 조직</label><description>상처가 빠르게 메워지는 조직으로 피해를 덜 받습니다.</description>
+    <stages><li><statFactors><IncomingDamageFactor>0.8</IncomingDamageFactor></statFactors></li></stages>
+  </HediffDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Anomaly"><defName>GJL_MC_DocAnomaly_Frenzy</defName><label>굶주린 무리</label>
+    <description>풀려난 괴물 이동 속도 +20%, 근접 피해 +25%.</description>
+    <branch>Anomaly</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <squadHediff>GJL_MC_Doc_Frenzy</squadHediff><iconKind>Fingerspike</iconKind>
+    <researchPrerequisites><li>GJL_MC_Res_BeastHandling</li></researchPrerequisites>
+    <price><Bioferrite>500</Bioferrite><Silver>900</Silver></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Anomaly"><defName>GJL_MC_DocAnomaly_Regen</defName><label>재생 조직</label>
+    <description>괴물이 받는 피해 -20%, 죽은 개체 재포획 시간 절반.</description>
+    <branch>Anomaly</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <squadHediff>GJL_MC_Doc_Regen</squadHediff><recaptureFactor>0.5</recaptureFactor><iconKind>Toughspike</iconKind>
+    <researchPrerequisites><li>GJL_MC_Res_BeastHandling</li></researchPrerequisites>
+    <price><Bioferrite>500</Bioferrite><Silver>900</Silver></price></MercenaryCamp.CampPerkDef>
+</Defs>

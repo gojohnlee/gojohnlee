@@ -1,0 +1,4 @@
+<Defs>
+  <JobDef><defName>GJL_MC_Attack</defName><driverClass>MercenaryCamp.JobDriver_CampAttack</driverClass><reportString>활동 구역의 적과 교전 중.</reportString><casualInterruptible>true</casualInterruptible></JobDef>
+  <JobDef><defName>GJL_MC_CombatMove</defName><driverClass>MercenaryCamp.JobDriver_CampCombatMove</driverClass><reportString>활동 구역 안에서 사격 위치로 이동 중.</reportString><casualInterruptible>true</casualInterruptible></JobDef>
+</Defs>

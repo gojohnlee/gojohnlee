@@ -7,3 +7,6 @@ obj/
 rimworld/*/1.*/Assemblies/*.dll
 rimworld/*/1.*/Assemblies/*.pdb
 rimworld/*/diag.txt
+
+# 용병단 인게임 QA 빌드 결과물
+tests/GJL_MercenaryCamp_QA/Assemblies/

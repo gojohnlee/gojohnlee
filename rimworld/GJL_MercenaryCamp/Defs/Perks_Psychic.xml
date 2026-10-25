@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 사이킥 분기: 로열티 DLC가 없으면 건너뛴다. 사이캐스터는 정원 안에서 지정, 교전 중 강한 능력부터 자동 사용. -->
+<Defs>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Royalty"><defName>GJL_MC_Psychic1</defName><label>사이캐스터</label><description>대원 1명이 사이링크 1 사이캐스터. 교전 중 구역 안 적에게 기절을 사용. 사이포커스는 계약으로 무료 회복.</description><branch>Psychic</branch><tier>1</tier><cost>1</cost><psycasters>1</psycasters><psylink>1</psylink>
+    <price><Silver>500</Silver><Gold>20</Gold></price>
+    <psycasts><li>Stun</li></psycasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Royalty"><defName>GJL_MC_Psychic2</defName><label>짐덩이</label><description>사이링크 2. 적을 느리게 만드는 짐덩이 추가.</description><branch>Psychic</branch><tier>2</tier><cost>2</cost><psycasters>1</psycasters><psylink>2</psylink>
+    <price><Silver>1500</Silver><Gold>70</Gold></price>
+    <psycasts><li>Burden</li></psycasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Royalty"><defName>GJL_MC_Psychic3</defName><researchPrerequisites><li>GJL_MC_Res_PsychicContracts</li></researchPrerequisites><label>사이킥 분대</label><description>사이캐스터 2명, 사이링크 3. 범위 현기증 파동 추가(아군이 10칸 안에 있으면 쓰지 않음).</description><branch>Psychic</branch><tier>3</tier><cost>3</cost><psycasters>2</psycasters><psylink>3</psylink>
+    <price><Silver>1500</Silver><Gold>80</Gold></price>
+    <psycasts><li>VertigoPulse</li></psycasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Royalty"><defName>GJL_MC_Psychic4</defName><researchPrerequisites><li>GJL_MC_Res_PsychicContracts</li></researchPrerequisites><label>광란 파동</label><description>사이링크 6. 적 무리를 서로 싸우게 하는 광란 파동 추가.</description><branch>Psychic</branch><tier>4</tier><cost>4</cost><psycasters>2</psycasters><psylink>6</psylink>
+    <price><Silver>2500</Silver><Gold>150</Gold></price>
+    <psycasts><li>BerserkPulse</li></psycasts></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Royalty"><defName>GJL_MC_Psychic5</defName><researchPrerequisites><li>GJL_MC_Res_PsychicContracts</li></researchPrerequisites><label>대규모 혼돈 도약</label><description>적 무리를 사방으로 흩어 버리는 대규모 혼돈 도약 추가.</description><branch>Psychic</branch><tier>5</tier><cost>5</cost><psycasters>2</psycasters><psylink>6</psylink>
+    <price><Silver>4000</Silver><Gold>200</Gold></price>
+    <psycasts><li>MassChaosSkip</li></psycasts></MercenaryCamp.CampPerkDef>
+  <!-- 사이킥 교리: 사이캐스터에게만 붙는 헤디프 -->
+  <HediffDef ParentName="GJL_MC_DoctrineBase" MayRequire="Ludeon.RimWorld.Royalty">
+    <defName>GJL_MC_Doc_Amp</defName><label>정신 증폭</label><description>증폭 훈련으로 사이킥 감도가 높아졌습니다.</description>
+    <stages><li><statOffsets><PsychicSensitivity>0.5</PsychicSensitivity></statOffsets></li></stages>
+  </HediffDef>
+  <HediffDef ParentName="GJL_MC_DoctrineBase" MayRequire="Ludeon.RimWorld.Royalty">
+    <defName>GJL_MC_Doc_Vent</defName><label>신경열 배출</label><description>신경열을 빠르게 흘려보내는 명상법을 익혔습니다.</description>
+    <stages><li><statFactors><PsychicEntropyRecoveryRate>2</PsychicEntropyRecoveryRate></statFactors></li></stages>
+  </HediffDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Royalty"><defName>GJL_MC_DocPsychic_Amp</defName><label>정신 증폭</label>
+    <description>사이캐스터 사이킥 감도 +50%. 기절·혼란 같은 효과가 더 오래, 더 강하게 걸립니다.</description>
+    <branch>Psychic</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <memberHediff>GJL_MC_Doc_Amp</memberHediff><roles><li>Psycaster</li></roles><iconAbility>Neuroquake</iconAbility>
+    <researchPrerequisites><li>GJL_MC_Res_PsychicContracts</li></researchPrerequisites>
+    <price><Silver>1500</Silver><Gold>70</Gold></price></MercenaryCamp.CampPerkDef>
+  <MercenaryCamp.CampPerkDef MayRequire="Ludeon.RimWorld.Royalty"><defName>GJL_MC_DocPsychic_Vent</defName><label>신경열 배출</label>
+    <description>사이캐스터 신경열 회복 속도 2배. 교전 중 더 자주 시전합니다.</description>
+    <branch>Psychic</branch><tier>2</tier><cost>3</cost><doctrine>true</doctrine>
+    <memberHediff>GJL_MC_Doc_Vent</memberHediff><roles><li>Psycaster</li></roles><iconAbility>Skip</iconAbility>
+    <researchPrerequisites><li>GJL_MC_Res_PsychicContracts</li></researchPrerequisites>
+    <price><Silver>1500</Silver><Gold>70</Gold></price></MercenaryCamp.CampPerkDef>
+</Defs>
