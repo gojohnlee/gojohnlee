@@ -7,6 +7,7 @@ param(
     [string]$BaseCommit,
     [string]$Root=(Join-Path $env:USERPROFILE 'vh-loop\harness'),
     [string]$Game='C:\Program Files (x86)\Steam\steamapps\common\Valheim',
+    [string]$CodexExecutable='codex',
     [int]$ReviewTimeoutSeconds=1800
 )
 $ErrorActionPreference='Stop'
@@ -76,6 +77,7 @@ try {
     $task=Get-Content "$dir\state.json" -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($task.id -cne $TaskId) { throw 'Task identity mismatch' }
     if ($Action -eq 'Status') { $task | ConvertTo-Json -Depth 20; return }
+    Assert-VhChildrenStopped $dir
     if (-not $task.target) { throw 'Preparation did not finish; prepare a new task' }
     if ((Get-VhTextHash (($task.target | ConvertTo-Json -Depth 10 -Compress)+($task.plan | ConvertTo-Json -Depth 10 -Compress))) -cne $task.target_hash) { throw 'Target or plan changed after preparation' }
     if (-not (Test-VhEvidence $task.target.baseline)) { throw 'Test world baseline changed' }
@@ -83,6 +85,16 @@ try {
     if ($source.commit -cne $task.target.commit -or $source.hash -cne $task.target.source -or (Get-VhHash $task.target.dll) -cne $task.target.dll_hash -or -not (Test-VhEvidence $task.target.game) -or -not (Test-VhEvidence $task.build)) { throw 'Target or build evidence changed; prepare a new task' }
     if ($Action -eq 'Test') {
         if (Get-Process -Name 'valheim*' -ErrorAction SilentlyContinue) { throw 'A game is active; no process was terminated' }
+        foreach ($pending in @(Get-ChildItem -LiteralPath $Root -Directory)) {
+            if ($pending.Name -eq $TaskId -or -not (Test-Path (Join-Path $pending.FullName 'state.json'))) { continue }
+            $oldTask=Get-Content (Join-Path $pending.FullName 'state.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+            foreach ($unfinished in @(Get-VhLatestGroups $oldTask | Where-Object { $_.status -eq 'RUNNING' })) {
+                Assert-VhChildrenStopped $pending.FullName
+                Save-VhInterruptedEvidence $unfinished.directory $Game
+                $unfinished.status='INTERRUPTED'; $oldTask.stage='INTERRUPTED'; $oldTask.next='Interrupted evidence preserved before another task; inspect original logs'
+                Write-VhJson (Join-Path $pending.FullName 'state.json') $oldTask
+            }
+        }
         $loopMutex=New-Object Threading.Mutex($false,'Global\VhLoop')
         $loopOwned=$false
         try {
@@ -90,6 +102,13 @@ try {
             if (-not $loopOwned) { throw 'Autonomous loop is active' }
             for ($i=0; $i -lt @($task.plan.groups).Count; $i++) {
                 $existing=@($task.groups | Where-Object { $_.index -eq $i } | Select-Object -Last 1)
+                if ($existing.Count -and $existing[0].status -eq 'RUNNING') {
+                    Save-VhInterruptedEvidence $existing[0].directory $Game
+                    # An interrupted real execution requires a new task; never erase uncertain first-failure evidence.
+                    $task.stage='INTERRUPTED'; $task.next='Inspect preserved interrupted evidence and prepare a new task from the group beginning'
+                    Write-VhJson "$dir\state.json" $task
+                    throw 'Interrupted attempt preserved. Prepare a new task; do not silently retry over its evidence.'
+                }
                 $resume=Get-VhResumeDecision $(if ($existing.Count) { $existing[0] } else { $null })
                 if ($resume -eq 'REJECT') { throw 'Previous evidence is damaged or an interrupted failure exists. Preserve it and prepare a new task.' }
                 if ($resume -eq 'REUSE') { continue }
@@ -130,10 +149,14 @@ try {
     }
     if ($Action -eq 'Review') {
         if ($task.stage -notin @('REVIEW','COMPLETE','FIX','REVIEW_UNAVAILABLE')) { throw 'Run the planned tests first' }
-        if ($task.review -and (Test-VhEvidence $task.review.evidence) -and $task.review.status -eq 'COMPLETE') { Write-Output 'Existing review retained; no model call'; return }
         $latest=@(Get-VhLatestGroups $task)
         if (-not $latest) { throw 'No game execution evidence' }
-        foreach ($g in $latest) { if (-not (Test-VhEvidence $g.evidence) -or $g.status -eq 'RUNNING') { throw 'Test evidence missing or changed' } }
+        foreach ($g in $latest) { if (-not (Test-VhEvidence $g.evidence) -or $g.status -eq 'RUNNING') {
+            $task.stage='INVALID'; $task.next='Preserve damaged test evidence; new preparation required'; Write-VhJson "$dir\state.json" $task
+            throw 'Test evidence missing or changed'
+        } }
+        if ($task.review -and (Test-VhEvidence $task.review.evidence) -and $task.review.status -eq 'COMPLETE') { Write-Output 'Existing review retained; no model call'; return }
+        $reviewStarted=$true
         $task.attempt++; $reviewDir=Join-Path $dir "review-$($task.attempt)"; [IO.Directory]::CreateDirectory($reviewDir) | Out-Null
         $task.stage='REVIEW'; $task.next='Astra review in progress'; Write-VhJson "$dir\state.json" $task
         $rules=[IO.File]::ReadAllText("$PSScriptRoot\vh-verify-prompt.txt")
@@ -174,7 +197,7 @@ try {
         $prompt=$packet -join "`n`n"
         if ([Text.Encoding]::UTF8.GetByteCount($prompt) -gt 400000) { throw 'Review packet exceeds 400KB; split the implementation into a smaller review task' }
         [IO.File]::WriteAllText("$reviewDir\packet.txt",$prompt,[Text.Encoding]::UTF8)
-        $codex=(Get-Command codex -ErrorAction Stop).Source
+        $codex=(Get-Command $CodexExecutable -ErrorAction Stop).Source
         # Feed the prepared material on stdin; no filesystem tool permission is needed by the model.
         $args='exec --ignore-user-config -m gpt-6-astra -c model_reasoning_effort="high" --sandbox read-only --ephemeral --json --output-schema "'+$PSScriptRoot+'\vh-review.schema.json" -o "'+$reviewDir+'\review.json" -'
         $result=Invoke-VhProcess $codex $args $repo "$reviewDir\events.jsonl" "$reviewDir\stderr.log" $ReviewTimeoutSeconds $prompt
@@ -196,4 +219,14 @@ try {
         Write-VhJson "$dir\state.json" $task
         Write-Output "Review: $outcome; stage: $($task.stage); $reviewDir"
     }
+} catch {
+    if ($Action -eq 'Review' -and $reviewStarted) {
+        if (-not $reviewDir) { $reviewDir=Join-Path $dir ('review-start-error-'+[guid]::NewGuid().ToString('N')) }
+        Write-VhJson (Join-Path $reviewDir 'launch-error.json') @{ status='ERROR'; error=$_.Exception.Message; at=(Get-Date).ToString('o') }
+        $task.review=[pscustomobject]@{ status='ERROR'; directory=$reviewDir; evidence=@(Get-VhEvidence @(Get-ChildItem $reviewDir -File | ForEach-Object FullName)); model='gpt-6-astra' }
+        $task.stage='REVIEW_UNAVAILABLE'; $task.next='Claude fallback review; preserve all test evidence and confirmed blockers'
+        Write-VhJson "$dir\state.json" $task
+        Write-Output "Review unavailable: $($_.Exception.Message)"; return
+    }
+    throw
 } finally { if ($executionOwned) { $executionMutex.ReleaseMutex() }; $executionMutex.Dispose(); if ($owned) { $mutex.ReleaseMutex() }; $mutex.Dispose() }

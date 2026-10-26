@@ -61,7 +61,10 @@ $Char = if ($env:VH_CHAR) { $env:VH_CHAR.ToLower() } else { 'vhtest' }   # 시�
 $Solo = $env:VH_SOLO -eq '1'
 if ($Solo -and $env:VH_RESET -eq '0') { throw '단독 시험은 원본 되돌리기가 필요함(VH_SOLO=1과 VH_RESET=0은 같이 못 씀)' }
 $runs = if ($Solo) { @($Test -split ';' | Where-Object { $_ }) } else { @($Test) }
-Remove-Item $tmp -Recurse -Force
+$resolvedTmp=[IO.Path]::GetFullPath($tmp)
+$tempRoot=[IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')+'\'
+if (-not $resolvedTmp.StartsWith($tempRoot,[StringComparison]::OrdinalIgnoreCase) -or (Split-Path $resolvedTmp -Leaf) -notmatch '^valheim-test-\d+$') { throw 'Unsafe temporary cleanup path' }
+Remove-Item -LiteralPath $resolvedTmp -Recurse -Force
 $reports = @()
 foreach ($Run in $runs) {
 $runStarted = Get-Date

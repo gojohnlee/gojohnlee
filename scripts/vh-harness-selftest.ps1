@@ -62,4 +62,16 @@ $pipe=Invoke-VhProcess 'powershell.exe' ('-NoProfile -EncodedCommand '+(ConvertT
 Check ($pipe.exit_code -eq 0 -and [IO.File]::ReadAllText("$OutputDirectory\pipe.out") -eq [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($sample))) 'UTF-8 stdin transport on Windows'
 $timed=Invoke-VhProcess 'powershell.exe' '-NoProfile -Command Start-Sleep 20' $PSScriptRoot "$OutputDirectory\timeout.out" "$OutputDirectory\timeout.err" 1
 Check $timed.timed_out 'controlled child timeout preserves evidence'
+$fakeGame=Join-Path $OutputDirectory 'game-fixture'
+[IO.Directory]::CreateDirectory((Join-Path $fakeGame 'BepInEx\plugins\ValheimHelper')) | Out-Null
+$shared=Join-Path $fakeGame 'BepInEx\plugins\ValheimHelper\diag.txt'
+[IO.File]::WriteAllText($shared,'FAIL original interrupted evidence')
+$attempt=Join-Path $OutputDirectory 'interrupted-attempt'; [IO.Directory]::CreateDirectory($attempt) | Out-Null
+Save-VhInterruptedEvidence $attempt $fakeGame
+[IO.File]::WriteAllText($shared,'new run')
+$recovered=Get-ChildItem $attempt -Recurse -Filter diag.txt | Select-Object -First 1
+Check ([IO.File]::ReadAllText($recovered.FullName) -eq 'FAIL original interrupted evidence') 'interrupted shared diagnostic survives next run'
+$liveDir=Join-Path $OutputDirectory 'live-child'; [IO.Directory]::CreateDirectory($liveDir) | Out-Null
+Write-VhJson (Join-Path $liveDir 'live.process.json') @{pid=$PID;started_ticks=(Get-Process -Id $PID).StartTime.ToUniversalTime().Ticks}
+Reject { Assert-VhChildrenStopped $liveDir } 'live previous child prevents duplicate work'
 Write-Output "Harness self-test: $script:checks PASS; evidence: $OutputDirectory"

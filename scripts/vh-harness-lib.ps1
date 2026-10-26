@@ -160,7 +160,12 @@ function Invoke-VhProcess($File, [string]$Arguments, $WorkingDirectory, $Out, $E
     if ($InputText) { $psi.RedirectStandardInput=$true }
     $psi.StandardOutputEncoding=[Text.Encoding]::UTF8; $psi.StandardErrorEncoding=[Text.Encoding]::UTF8
     $p = [Diagnostics.Process]::Start($psi)
-    $stdout = $p.StandardOutput.ReadToEndAsync(); $stderr = $p.StandardError.ReadToEndAsync()
+    Write-VhJson "$Out.process.json" @{ pid=$p.Id; started_ticks=$p.StartTime.ToUniversalTime().Ticks; executable=$File }
+    # Persist bytes while the child runs, including before a parent interruption.
+    $outStream=New-Object IO.FileStream($Out,[IO.FileMode]::Create,[IO.FileAccess]::Write,[IO.FileShare]::Read,1,[IO.FileOptions]::WriteThrough)
+    $errStream=New-Object IO.FileStream($Err,[IO.FileMode]::Create,[IO.FileAccess]::Write,[IO.FileShare]::Read,1,[IO.FileOptions]::WriteThrough)
+    try {
+    $stdout = $p.StandardOutput.BaseStream.CopyToAsync($outStream); $stderr = $p.StandardError.BaseStream.CopyToAsync($errStream)
     if ($InputText) {
         # Windows PowerShell 5.1's StreamWriter uses the system code page; Codex requires UTF-8.
         $bytes=[Text.Encoding]::UTF8.GetBytes($InputText)
@@ -170,9 +175,24 @@ function Invoke-VhProcess($File, [string]$Arguments, $WorkingDirectory, $Out, $E
     $timedOut = -not $p.WaitForExit($TimeoutSeconds*1000)
     if ($timedOut) { & taskkill /PID $p.Id /T /F | Out-Null; [void]$p.WaitForExit(10000) }
     if (-not $stdout.Wait(10000) -or -not $stderr.Wait(10000)) { throw 'Child output pipe did not close; evidence incomplete' }
-    [IO.File]::WriteAllText($Out, $stdout.Result, [Text.Encoding]::UTF8)
-    [IO.File]::WriteAllText($Err, $stderr.Result, [Text.Encoding]::UTF8)
     [pscustomobject]@{ exit_code=$p.ExitCode; timed_out=$timedOut }
+    } finally { $outStream.Dispose(); $errStream.Dispose(); $p.Dispose() }
+}
+function Assert-VhChildrenStopped($Directory) {
+    foreach ($file in @(Get-ChildItem -LiteralPath $Directory -Recurse -Filter '*.process.json')) {
+        $record=Get-Content $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+        $process=Get-Process -Id $record.pid -ErrorAction SilentlyContinue
+        if ($process -and $process.StartTime.ToUniversalTime().Ticks -eq $record.started_ticks) { throw "Previous child is still running: $($record.pid). No duplicate execution started." }
+    }
+}
+function Save-VhInterruptedEvidence($Directory,$Game) {
+    $recovery=Join-Path $Directory ('interrupted-'+[guid]::NewGuid().ToString('N'))
+    [IO.Directory]::CreateDirectory($recovery) | Out-Null
+    foreach ($relative in @('BepInEx\plugins\ValheimHelper\diag.txt','BepInEx\LogOutput.log')) {
+        $file=Join-Path $Game $relative
+        if (Test-Path -LiteralPath $file) { Copy-Item -LiteralPath $file -Destination $recovery }
+    }
+    Write-VhJson (Join-Path $recovery 'recovery.json') @{ status='INTERRUPTED'; note='Recovered shared logs before retry; ownership/freshness not proven. Original attempt remains incomplete.'; at=(Get-Date).ToString('o') }
 }
 function ConvertTo-VhEncodedCommand([string]$Command) { [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($Command)) }
 function Quote-VhPS([string]$Value) { "'" + $Value.Replace("'", "''") + "'" }
