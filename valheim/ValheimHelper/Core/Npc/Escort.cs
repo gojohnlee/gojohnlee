@@ -3,7 +3,7 @@ namespace ValheimHelper.Core.Npc
     public enum EscortAct { Go, Wait, GiveUp }
 
     /// <summary>
-    /// 동행(일꾼끼리만 — 사용자 결정 2026-10-26): 앞장설 일꾼이 같이 갈 동료 일꾼을 기다렸다가 앞장서고, 20m 안을 유지한다.
+    /// 동행(일꾼 + 호위병 — 사용자 결정 2026-10-26): 앞장설 일꾼이 호위병을 기다렸다가 앞장서고, 20m 안을 유지한다.
     /// 일꾼이 일(GatherJob 등)을 하는 동안 매 프레임 Tick → Go면 일을 계속, Wait면 그 자리에서 기다림, GiveUp이면 혼자 감.
     /// 동료는 거리와 상관없이 부르므로 출발 전 기다림은 처음 거리에 맞춰 늘고(ForMate), 오는 동안은 200m 밖이어도 포기하지 않는다.
     /// Say는 이번에 할 말(Speech 키) 또는 null.
@@ -39,6 +39,8 @@ namespace ValheimHelper.Core.Npc
 
         public Phase Now { get; private set; } = Phase.Waiting;
         public string Say { get; private set; }
+        /// <summary>이번에 멈춰 기다린 지 몇 초째(Paused일 때만, 아니면 0) — 오래 못 따라오면 플러그인이 동행자를 곁으로 옮긴다.</summary>
+        public float PausedFor { get; private set; }
         float m_waited;
         float m_sayIn;
         bool m_saidWait;
@@ -47,6 +49,7 @@ namespace ValheimHelper.Core.Npc
         public EscortAct Tick(float dt, float distance)
         {
             Say = null;
+            if (Now != Phase.Paused) PausedFor = 0f;
             if (Now == Phase.Alone) return EscortAct.Go;
             if (distance < 0f || (distance > Gone && Now != Phase.Waiting)) return GiveUp();
             m_sayIn -= dt;
@@ -64,8 +67,9 @@ namespace ValheimHelper.Core.Npc
                     if (m_sayIn <= 0f) { m_sayIn = SayEvery; Say = "escort.far"; }
                     return EscortAct.Wait;
                 default: // Paused
-                    if (distance <= Resume) { Now = Phase.Leading; return EscortAct.Go; }
+                    if (distance <= Resume) { Now = Phase.Leading; PausedFor = 0f; return EscortAct.Go; }
                     m_waited += dt;
+                    PausedFor += dt;
                     if (m_waited > LostWait) return GiveUp();
                     if (m_sayIn <= 0f) { m_sayIn = SayEvery; Say = "escort.far"; }
                     return EscortAct.Wait;

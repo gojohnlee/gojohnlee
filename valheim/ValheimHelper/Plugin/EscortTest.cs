@@ -7,14 +7,14 @@ using ValheimHelper.Core.Work;
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_escorttest (동행은 일꾼끼리만 — 사용자 결정 2026-10-26): 아는 구리 자리가 죽은 기록이 있는 먼 곳뿐이면(덜 위험한 곳 없음)
-    /// 묻지 않고 플로키와 같이 감 → 라그나는 플로키(60m 뒤)가 8m 안에 올 때까지 출발 안 함 → 오면 앞장섬.
-    /// 플로키가 일하는 중이어도 그 일은 대기열 맨 앞에 두고 따라옴. 일하는 중 "!같이 가자" → 플로키가 와서 붙음.
-    /// 동료가 곁에 있으면 경계가 그 힘을 셈(회색난쟁이 우두머리). 기다림 한도·포기는 Core EscortTests.
+    /// vh_escorttest (호위병 — 사용자 결정 2026-10-26): 아는 구리 자리가 죽은 기록이 있는 먼 곳뿐이면(덜 위험한 곳 없음) 묻지 않고 호위병을 데려감
+    /// → 라그나는 호위병(60m 뒤)이 8m 안에 올 때까지 출발 안 함 → 오면 앞장섬 → 라그나만 멀리 건너가면(포탈·던전 문 흉내) 호위병을 곁으로 옮김.
+    /// 호위병이 플로키를 따라가는 중이면 라그나는 거점에서 기다렸다가(대기열 "호위병이 쉴 때") 호위병이 쉬게 되면 같이 출발.
+    /// 일하는 중 "!같이 가자" → 호위병이 와서 붙음. 호위병이 곁에 있으면 경계가 그 힘을 셈. 기다림 한도·포기는 Core EscortTests.
     /// </summary>
     static class EscortTest
     {
-        public static void Register() => TestRunner.Register("vh_escorttest", "일꾼끼리 동행 시험", () => TestKit.Flat(Run()));
+        public static void Register() => TestRunner.Register("vh_escorttest", "호위병 동행 시험", () => TestKit.Flat(Run()));
 
         static IEnumerator Run()
         {
@@ -41,29 +41,33 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
-        static bool Together(WorkerNpc lead, WorkerNpc mate) =>
-            lead.Ai.Current == WorkerAI.Mode.Work && lead.Ai.EscortName == mate.NpcName
-            && mate.Ai.Current == WorkerAI.Mode.Follow && mate.Ai.FollowTarget == lead.GetZDOID();
+        static bool Together(WorkerNpc lead, WorkerNpc guard) =>
+            lead.Ai.Current == WorkerAI.Mode.Work && lead.Ai.EscortName == guard.NpcName
+            && guard.Ai.Current == WorkerAI.Mode.Follow && guard.Ai.FollowTarget == lead.GetZDOID();
 
-        static IEnumerator StopBoth(TestKit.World w)
+        static IEnumerator StopAll(TestKit.World w)
         {
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             foreach (var n in new[] { w.Ragnar, w.Floki }) { n.Ai.Interrupt(); n.Ai.Queue.Clear(); n.Ai.GoHome(false); }
-            yield return new WaitForSeconds(1f);
+            yield return TestKit.WaitFor(() => Departures.GuardIdle(), 30f);
         }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
         {
             yield return TestKit.Setup(w);
-            checks.Add("깃발·NPC 둘·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
+            checks.Add("깃발·일꾼 둘·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
             if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
-            WorkerNpc npc = w.Ragnar, mate = w.Floki;
+            yield return TestKit.SpawnGuard();
+            WorkerNpc guard = WorkerNpc.TheGuard;
+            checks.Add($"호위병 생김 ({guard?.NpcName ?? "없음"}, {TestKit.Waited:0}초)", TestKit.Ok && guard != null && guard.IsGuard && !WorkerNpc.All.Contains(guard));
+            if (guard == null) yield break;
+            WorkerNpc npc = w.Ragnar;
             WorkerAI ai = npc.Ai;
             ZoneXY hz = Senses.ZoneOf(w.Home);
             TestKit.ClearBaseStock(w, "CopperOre", "Wood", "MeadHealthMinor", "MeadHealthMedium");
 
-            // 먼 곳(3구역 동쪽)의 구리만 알고, 거기서 죽은 기록 → 덜 위험한 곳이 없으니 둘이 같이
+            // 먼 곳(3구역 동쪽)의 구리만 알고, 거기서 죽은 기록 → 덜 위험한 곳이 없으니 호위병과
             var far = new ZoneXY(hz.X + 3, hz.Y);
             Brain.ReplaceForTest("", "");
             Brain.Get().Saw(new Dictionary<ZoneXY, Dictionary<string, int>> { [far] = new Dictionary<string, int> { ["CopperOre"] = 5 } },
@@ -71,44 +75,53 @@ namespace ValheimHelper
             Brain.Places.Record(far, new List<GroupFoe> { new GroupFoe { Kind = "Greydwarf", Count = 1 } }, Outcome.Died, ZNet.instance.GetTimeSeconds(), Guard.Resolve, "Greydwarf");
             foreach (var m in Brain.Get().ZonesWith("CopperOre", hz)) if (!m.Zone.Equals(far)) Brain.Get().Forget(m.Zone, "CopperOre");
 
-            // 1) 플로키는 거점 뒤 60m(앞장서기 전 기다림을 보려고)
+            // 1) 호위병은 거점 뒤 60m(앞장서기 전 기다림을 보려고)
             Vector3 back = -(Senses.ZoneCenter(far) - w.Home); back.y = 0f; back.Normalize();
-            mate.TeleportTo(GatherTest.Ground(w.Home + back * 60f) + Vector3.up * 0.3f, mate.transform.rotation, false);
+            guard.TeleportTo(GatherTest.Ground(w.Home + back * 60f) + Vector3.up * 0.3f, guard.transform.rotation, false);
             yield return new WaitForSeconds(1.5f);
-            float md = Vector3.Distance(mate.transform.position, npc.transform.position);
-            checks.Add($"플로키가 떨어짐 ({md:0}m)", md > 40f);
-            DepartureResult judged = Departures.JudgeFor(npc, new Core.Chat.ChatCommand { Kind = Core.Chat.CommandKind.Item, Item = "CopperOre", Amount = 10 });
-            checks.Add($"판단: 묻지 않고 동료와 같이 ({judged?.Action}, {judged?.Reason})", judged != null && judged.Action == DepartAction.GoTogether && judged.Question == Question.None);
+            float gd = Vector3.Distance(guard.transform.position, npc.transform.position);
+            checks.Add($"호위병이 떨어짐 ({gd:0}m)", gd > 40f);
+            var copper = new Core.Chat.ChatCommand { Kind = Core.Chat.CommandKind.Item, Item = "CopperOre", Amount = 10 };
+            DepartureResult judged = Departures.JudgeFor(npc, copper);
+            checks.Add($"판단: 묻지 않고 호위병과 ({judged?.Action}, {judged?.Reason})", judged != null && judged.Action == DepartAction.GoTogether && judged.Question == Question.None);
             GatherTest.Say($"!{npc.NpcName} 구리 10", null);
             yield return new WaitForSeconds(1f);
-            checks.Add($"질문 없이 일 + 플로키 동행 ({ai.Current}, {ai.EscortName ?? "동행 없음"}, {ai.EscortPhase}, 플로키 {mate.Ai.Current})",
-                Departures.AskedAt(npc) < 0 && Together(npc, mate) && ai.EscortPhase == Escort.Phase.Waiting);
+            checks.Add($"질문 없이 일 + 호위병 동행 ({ai.Current}, {ai.EscortName ?? "동행 없음"}, {ai.EscortPhase}, 호위병 {guard.Ai.Current})",
+                Departures.AskedAt(npc) < 0 && Together(npc, guard) && ai.EscortPhase == Escort.Phase.Waiting);
             Vector3 start = npc.transform.position;
             yield return new WaitForSeconds(3f);
             float moved = Utils.DistanceXZ(start, npc.transform.position);
-            md = Vector3.Distance(mate.transform.position, npc.transform.position);
-            checks.Add($"플로키가 멀리 있는 동안 출발 안 함 ({moved:0.0}m 움직임, 플로키 {md:0}m, {ai.EscortPhase})",
-                moved < 2f && (ai.EscortPhase == Escort.Phase.Waiting || md <= Escort.Near + 1f));
+            gd = Vector3.Distance(guard.transform.position, npc.transform.position);
+            checks.Add($"호위병이 멀리 있는 동안 출발 안 함 ({moved:0.0}m 움직임, 호위병 {gd:0}m, {ai.EscortPhase})",
+                moved < 2f && (ai.EscortPhase == Escort.Phase.Waiting || gd <= Escort.Near + 1f));
             yield return TestKit.WaitFor(() => ai.EscortPhase == Escort.Phase.Leading, 60f);
-            checks.Add($"플로키가 곁에 오면 앞장섬 ({TestKit.Waited:0.0}초, {ai.EscortPhase})", TestKit.Ok);
-            start = npc.transform.position;
-            yield return new WaitForSeconds(5f);
-            md = Vector3.Distance(mate.transform.position, npc.transform.position);
-            checks.Add($"이어 가며 움직이고 플로키가 따라옴 ({Utils.DistanceXZ(start, npc.transform.position):0.0}m, 플로키 {md:0}m)",
-                Utils.DistanceXZ(start, npc.transform.position) > 2f && md < Escort.Far + 5f);
+            checks.Add($"호위병이 곁에 오면 앞장섬 ({TestKit.Waited:0.0}초, {ai.EscortPhase})", TestKit.Ok);
 
-            // 2) 플로키가 일하는 중이어도: 하던 일은 대기열 맨 앞, 따라옴
-            yield return StopBoth(w);
-            GatherTest.Say($"!{mate.NpcName} 나무 5", null);
-            yield return TestKit.WaitFor(() => mate.Ai.Current == WorkerAI.Mode.Work && mate.Ai.Job != null, 10f);
-            string mateJob = mate.Ai.Job?.Label;
+            // 2) 라그나만 멀리 건너감(포탈·던전 문 흉내, 200m 넘게) → 호위병을 곁으로 옮기고 동행은 그대로
+            int brings = WorkerAI.MateBrings;
+            Vector3 jump = GatherTest.Ground(w.Home - back * 260f) + Vector3.up * 0.3f;
+            npc.TeleportTo(jump, npc.transform.rotation, false);
+            yield return TestKit.WaitFor(() => WorkerAI.MateBrings > brings && Vector3.Distance(guard.transform.position, npc.transform.position) < 15f, 25f);
+            gd = Vector3.Distance(guard.transform.position, npc.transform.position);
+            checks.Add($"멀리 건너가도 호위병을 곁으로 옮김 ({TestKit.Waited:0.0}초, 옮김 {WorkerAI.MateBrings - brings}번, 호위병 {gd:0}m, 동행 {ai.EscortName ?? "끊김"})",
+                TestKit.Ok && ai.EscortName == guard.NpcName);
+
+            // 3) 호위병이 플로키를 따라가는 중 → 라그나는 거점에서 기다렸다가 호위병이 쉬면 같이 출발
+            yield return StopAll(w);
+            checks.Add($"멈추면 호위병도 쉼 ({guard.Ai.Current})", Departures.GuardIdle());
+            GatherTest.Say($"!{w.Floki.NpcName} 구리 10", null);
+            yield return TestKit.WaitFor(() => Together(w.Floki, guard), 5f);
+            checks.Add($"플로키가 호위병을 데려감 ({w.Floki.Ai.EscortName ?? "동행 없음"})", TestKit.Ok);
             GatherTest.Say($"!{npc.NpcName} 구리 10", null);
             yield return new WaitForSeconds(1f);
-            checks.Add($"일하던 플로키도 와서 같이 ({mateJob} → {mate.Ai.Current}, 대기열 {mate.Ai.Queue.Count}: {(mate.Ai.Queue.Count > 0 ? mate.Ai.Queue[0].Label : "")})",
-                Together(npc, mate) && mate.Ai.Queue.Count > 0 && mate.Ai.Queue[0].Label == mateJob);
+            bool queued = ai.Queue.Exists(q => q.Work != null && q.Work.Ready == ReadyWhen.GuardIdle);
+            checks.Add($"호위병이 바쁘면 거점에서 기다림 ({ai.Current}, 대기열 {ai.Queue.Count}, 호위병 기다림 {queued})", queued && ai.Current != WorkerAI.Mode.Work);
+            GatherTest.Say($"!{w.Floki.NpcName} 멈춰", null);
+            yield return TestKit.WaitFor(() => Together(npc, guard), 40f);
+            checks.Add($"호위병이 쉬게 되면 같이 출발 ({TestKit.Waited:0.0}초, {ai.Current}, {ai.EscortName ?? "동행 없음"})", TestKit.Ok);
 
-            // 3) 일하는 중 "!같이 가자": 플로키가 와서 지금 일에 붙음
-            yield return StopBoth(w);
+            // 4) 일하는 중 "!같이 가자": 안전한 나무 일에도 호위병이 와서 붙음
+            yield return StopAll(w);
             GatherTest.Say($"!{npc.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() => ai.Current == WorkerAI.Mode.Work && ai.Job != null, 10f);
             IWorkerJob job = ai.Job;
@@ -116,11 +129,11 @@ namespace ValheimHelper
             GatherTest.Say($"!{npc.NpcName} 같이 가자", null);
             yield return new WaitForSeconds(1f);
             string state = Commands.StateOf(npc);
-            checks.Add($"일하는 중 \"!같이 가자\" → 같은 일 + 플로키 동행 ({ai.Current}, {ai.EscortName ?? "동행 없음"})", ai.Job == job && Together(npc, mate));
-            checks.Add($"!상태에 동행 이름 ({state})", state.Contains(mate.NpcName));
+            checks.Add($"일하는 중 \"!같이 가자\" → 같은 일 + 호위병 동행 ({ai.Current}, {ai.EscortName ?? "동행 없음"})", ai.Job == job && Together(npc, guard));
+            checks.Add($"!상태에 동행 이름 ({state})", state.Contains(guard.NpcName));
             yield return TestKit.WaitFor(() => ai.EscortPhase == Escort.Phase.Leading, 30f);
 
-            // 4) 동료가 곁에 있으면 경계가 그 힘을 셈(MyHit 20m)
+            // 5) 호위병이 곁에 있으면 경계가 그 힘을 셈(MyHit 20m)
             TestKit.Strict = true; // 싸움 판정을 몇 초 안에 보는 칸 — 시간 안 멈춤
             GameObject brute = ZNetScene.instance.GetPrefab("Greydwarf_Elite");
             checks.Add("적 프리팹 있음", brute != null);
@@ -135,9 +148,9 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => g != null && g.LastDetail.Contains("Greydwarf_Elite"), 5f);
             string withD = g?.LastDetail ?? "";
             float withHit = GetHit(withD);
-            md = Vector3.Distance(mate.transform.position, npc.transform.position);
-            TestRunner.Log($"동료 곁({md:0}m): {g?.LastVerdict} 비율 {g?.LastRatio:0.00} ({withD})");
-            checks.Add($"동료 곁에선 동료 힘까지 셈 (내 한 방 {withHit:0.0} > 혼자 {Guard.HitOf(npc):0.0}, 플로키 {md:0}m)", md > Guard.AllyRange || withHit > Guard.HitOf(npc) + 1f);
+            gd = Vector3.Distance(guard.transform.position, npc.transform.position);
+            TestRunner.Log($"호위병 곁({gd:0}m): {g?.LastVerdict} 비율 {g?.LastRatio:0.00} ({withD})");
+            checks.Add($"호위병 곁에선 그 힘까지 셈 (내 한 방 {withHit:0.0} > 혼자 {Guard.HitOf(npc):0.0}, 호위병 {gd:0}m)", gd > Guard.AllyRange || withHit > Guard.HitOf(npc) + 1f);
         }
 
         /// <summary>Guard.LastDetail의 "내 한 방 N".</summary>

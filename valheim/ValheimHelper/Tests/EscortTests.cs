@@ -74,4 +74,18 @@ public class EscortTests
         Assert.Equal(Escort.Phase.Leading, e.Now);
         Assert.Equal(EscortAct.Wait, Escort.ForMate(10f).Tick(1f, 10f)); // 가까워도 최소 60초
     }
+
+    [Fact]
+    public void PausedForCountsOnlyThisPause()
+    {
+        var e = new Escort();
+        e.Tick(1f, 5f);
+        e.Tick(1f, 30f);
+        Assert.Equal(Escort.Phase.Paused, e.Now);
+        Assert.Equal(0f, e.PausedFor);
+        e.Tick(2f, 30f); e.Tick(3f, 30f);
+        Assert.Equal(5f, e.PausedFor);
+        e.Tick(1f, 5f);
+        Assert.Equal(0f, e.PausedFor);
+    }
 }

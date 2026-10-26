@@ -109,12 +109,10 @@ namespace ValheimHelper
                 switch (cmd.Kind)
                 {
                     case CommandKind.Escort:
-                        if (npc.Ai.Current == WorkerAI.Mode.Follow && npc.Ai.FollowTarget != who.CharacterId && WorkerNpc.All.Exists(o => o.GetZDOID() == npc.Ai.FollowTarget))
-                            break; // 이미 동료 일꾼과 같이 가는 중(같은 명령에 둘 다 불렸을 때)
-                        // 일하는 중이면 그 일에 동료 일꾼을 붙인다(동행은 일꾼끼리만 — 사용자 결정 2026-10-26), 쉬는 중이면 말한 사람 따라가기
+                        // 일하는 중이면 그 일에 호위병을 붙인다(사용자 결정 2026-10-26), 쉬는 중이면 말한 사람 따라가기
                         if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !(npc.Ai.Job is TidyJob))
                         {
-                            WorkerNpc mate = npc.Ai.EscortName != null ? null : Departures.GoWithMate(npc);
+                            WorkerNpc mate = npc.Ai.EscortName != null ? null : Departures.GoWithGuard(npc);
                             string partner = mate != null ? mate.NpcName : npc.Ai.EscortName;
                             npc.Say(partner != null ? "answer.escort" : "escort.noMate", new Dictionary<string, string> { ["partner"] = partner ?? "" });
                             break;

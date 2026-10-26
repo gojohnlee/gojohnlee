@@ -95,6 +95,13 @@ namespace ValheimHelper
                     npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, WorkSaves.GatherItem(who, cmd, args["item"] + " " + cmd.Amount, ReadyWhen.Always)));
                     npc.Say(r.Key, args);
                     return;
+                case DepartAction.WaitGuard:
+                    // 위험한 곳인데 호위병이 바쁘다: 거점으로 돌아와 기다렸다가 호위병이 쉬게 되면 같이 출발(사용자 10-26, 대기열에 저장됨)
+                    if (r.Interrupts) { npc.Ai.Interrupt(); npc.Say("dropJob", args); }
+                    npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, WorkSaves.GatherItem(who, cmd, args["item"] + " " + cmd.Amount, ReadyWhen.GuardIdle)));
+                    if (npc.Ai.Current != WorkerAI.Mode.Work && Utils.DistanceXZ(npc.transform.position, npc.Home) > 5f) npc.Ai.GoHome(false);
+                    npc.Say(r.Key, args);
+                    return;
                 case DepartAction.Ask:
                     if (r.Interrupts) { npc.Ai.Interrupt(); npc.Ai.GoHome(false); npc.Say("dropJob", args); }
                     s_pending[npc] = new Pending { Result = r, Cmd = cmd, Who = who, AskedAt = Now };
@@ -111,8 +118,8 @@ namespace ValheimHelper
             Start(npc, cmd, ways, r.Avoid);
             if (r.Action == DepartAction.GoTogether)
             {
-                // 남은 곳이 다 위험: 동료 일꾼이 하던 일을 두고 와서 같이 간다(사용자 결정 2026-10-26, 거리 무관)
-                WorkerNpc partner = GoWithMate(npc);
+                // 남은 곳이 다 위험: 호위병을 데려간다(사용자 결정 2026-10-26)
+                WorkerNpc partner = GoWithGuard(npc);
                 args["partner"] = partner != null ? partner.NpcName : "";
                 if (partner == null) r.Key = "depart.danger";
             }
@@ -191,35 +198,40 @@ namespace ValheimHelper
             npc.Ai.StartJob(job);
         }
 
-        /// <summary>
-        /// 같이 갈 동료 일꾼(사용자 결정 2026-10-26: 거리·하던 일과 상관없이). 죽음·질문 대기·자기가 다른 동행을 이끄는 중·
-        /// 다른 이를 따라가는 중이면 없음(null).
-        /// </summary>
-        internal static WorkerNpc MateFor(WorkerNpc npc)
-        {
-            foreach (var o in WorkerNpc.All)
-            {
-                if (o == npc || o.IsDead() || s_pending.ContainsKey(o) || o.Ai.EscortName != null) continue;
-                if (o.Ai.Current == WorkerAI.Mode.Follow && o.Ai.FollowTarget != npc.GetZDOID()) continue;
-                return o;
-            }
-            return null;
-        }
+        /// <summary>호위병(사용자 결정 2026-10-26 — 일꾼끼리는 같이 가지 않음). 없으면 null.</summary>
+        internal static WorkerNpc GuardOf() => WorkerNpc.TheGuard;
+
+        /// <summary>호위병을 지금 데려갈 수 있나: 살아 있고 쉬는 중(거점에서 쉼·집에 감·장비 챙기기). 다른 일꾼을 따라가는 중·묘비 회수 중이면 아님.</summary>
+        internal static bool GuardFree(WorkerNpc g) => g != null && !g.IsDead()
+            && (g.Ai.Current == WorkerAI.Mode.Idle || g.Ai.Current == WorkerAI.Mode.Home || g.Ai.Current == WorkerAI.Mode.Work && g.Ai.Job is GuardReadyJob);
+
+        /// <summary>대기열 "호위병이 쉴 때"(ReadyWhen.GuardIdle).</summary>
+        internal static bool GuardIdle() => GuardFree(GuardOf());
 
         /// <summary>
-        /// 동행(일꾼끼리만): 동료 일꾼을 지금 일에 붙인다. 동료는 하던 일을 대기열 맨 앞에 두고 따라오고, 이 일꾼은 동료가 8m 안에 올 때까지
-        /// 기다렸다가 앞장선다(처음 거리만큼 기다림). StartJob 뒤에 부른다. 붙였으면 그 동료, 아니면 null.
+        /// 호위병을 지금 일에 붙인다: 호위병은 따라오고, 이 일꾼은 호위병이 8m 안에 올 때까지 기다렸다가 앞장선다(처음 거리만큼 기다림).
+        /// StartJob 뒤에 부른다. 붙였으면 호위병, 못 붙였으면(없음·바쁨) null.
         /// </summary>
-        internal static WorkerNpc GoWithMate(WorkerNpc npc)
+        internal static WorkerNpc GoWithGuard(WorkerNpc npc)
         {
-            WorkerNpc mate = MateFor(npc);
-            if (mate == null || npc.Ai.Current != WorkerAI.Mode.Work || npc.Ai.Job == null) return null;
-            float d = Vector3.Distance(mate.transform.position, npc.transform.position);
-            if (mate.Ai.Current == WorkerAI.Mode.Work) mate.Ai.Interrupt();
-            mate.Ai.Follow(npc.GetZDOID(), npc.NpcName);
-            npc.Ai.EscortBy(mate.GetZDOID(), mate.NpcName, Escort.ForMate(d));
-            Plugin.Log.LogInfo($"{npc.NpcName}: {mate.NpcName}와 같이 감({d:0}m, 동료가 하던 일 {mate.Ai.Queue.Count}개 대기열)");
-            return mate;
+            WorkerNpc g = GuardOf();
+            if (!GuardFree(g) || npc.Ai.Current != WorkerAI.Mode.Work || npc.Ai.Job == null || npc.Ai.EscortName != null) return null;
+            float d = Vector3.Distance(g.transform.position, npc.transform.position);
+            g.Ai.Follow(npc.GetZDOID(), npc.NpcName);
+            npc.Ai.EscortBy(g.GetZDOID(), g.NpcName, Escort.ForMate(d));
+            Plugin.Log.LogInfo($"{npc.NpcName}: 호위병 {g.NpcName}과 같이 감({d:0}m)");
+            return g;
+        }
+
+        /// <summary>제작 계획의 채집 단계 출발 판단(재고·밤 질문 없이 위험만 — 직접 명령과 같은 규칙, 외부 검토 10-26). 채집으로 안 나면 null.</summary>
+        internal static DepartureResult JudgeStep(WorkerNpc npc, string item, int amount)
+        {
+            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(item);
+            if (ways.Count == 0) return null;
+            DepartureInput input = Input(npc, new ChatCommand { Kind = CommandKind.Item, Item = item, Amount = amount }, ways, true);
+            input.Stock = 0;
+            input.SecondsToNight = float.PositiveInfinity;
+            return Departure.Judge(input);
         }
 
         static DepartureInput Input(WorkerNpc npc, ChatCommand cmd, HashSet<ToolKind> ways, bool fromQueue)
@@ -289,7 +301,9 @@ namespace ValheimHelper
                 input.Places.Add(o);
             }
             input.Places.Sort((a, b) => a.Distance.CompareTo(b.Distance));
-            input.Mate = MateFor(npc)?.NpcName;
+            WorkerNpc guard = GuardOf();
+            input.Guard = guard?.NpcName;
+            input.GuardBusy = guard != null && !GuardFree(guard);
             if (cmd.Item == Dungeons.ScrapItem && input.Places.Count == 0) // 거절 대사가 지하묘지 말이라 고철만(서리 동굴은 못 찾으면 일이 찾기·탐험으로)
             {
                 input.NoCrypt = !Dungeons.TryChoose(home, out _, out bool minedOut);
@@ -332,7 +346,7 @@ namespace ValheimHelper
                 args["altDir"] = dir;
                 args["altDist"] = dist;
             }
-            if (!args.ContainsKey("partner")) args["partner"] = MateFor(npc)?.NpcName ?? "";
+            if (!args.ContainsKey("partner")) args["partner"] = GuardOf()?.NpcName ?? "";
             if (!args.ContainsKey("extra")) args["extra"] = "";
             return args;
         }
@@ -549,8 +563,8 @@ namespace ValheimHelper
                 {
                     s_pending.Remove(npc);
                     Start(npc, p.Cmd, ways, null);
-                    // "같이 가자": 동행은 일꾼끼리만(사용자 결정 2026-10-26) — 동료 일꾼이 와서 같이 간다
-                    WorkerNpc mate = act == ReplyAction.GoEscort ? GoWithMate(npc) : null;
+                    // "같이 가자": 호위병이 와서 같이 간다(사용자 결정 2026-10-26 — 일꾼끼리는 같이 가지 않음)
+                    WorkerNpc mate = act == ReplyAction.GoEscort ? GoWithGuard(npc) : null;
                     if (mate != null) args["partner"] = mate.NpcName;
                     npc.Say(mate != null ? "answer.escort" : act == ReplyAction.GoGrumble ? "answer.grumble" : "answer.go", args);
                     break;
@@ -653,9 +667,10 @@ namespace ValheimHelper
             foreach (var n in WorkerNpc.All)
                 if (n.Ai.Current == WorkerAI.Mode.Idle && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n) && !n.Ai.HasChores) { npc = n; break; }
             if (npc == null) return;
-            GatherJob job = NextRefillJob(npc, 0);
+            GatherJob job = NextRefillJob(npc, 0, true);
             if (job == null) { StartRefillMake(npc); return; }
             npc.Ai.StartJob(job);
+            if (job.WantGuard) GoWithGuard(npc);
             npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString() });
         }
 
@@ -719,7 +734,8 @@ namespace ValheimHelper
         /// 기준치 아래인 물건 중 갈 만한 첫 채집 일(없으면 null). 시작은 부르는 쪽 몫.
         /// maxAmount가 0보다 크면 한 번에 그만큼만(Wait 중 짧게 다녀오기).
         /// </summary>
-        internal static GatherJob NextRefillJob(WorkerNpc npc, int maxAmount)
+        /// <param name="canEscort">호위병을 데려갈 수 있는 자리(거점에서 바로 시작) — 제작 계획 Wait 중 끼워 넣기는 false(위험한 곳만 남으면 그 물건은 미룸).</param>
+        internal static GatherJob NextRefillJob(WorkerNpc npc, int maxAmount, bool canEscort = false)
         {
             RefillBook refill = Brain.Refill;
             if (refill.Count == 0 && Brain.Personal.Count == 0) return null;
@@ -735,9 +751,10 @@ namespace ValheimHelper
                 input.Stock = 0; // 모자란 만큼만 시켰으니 재고 질문은 하지 않는다
                 DepartureResult r = Departure.Judge(input);
                 Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {due.Item} {amount}: {r.Action} {r.Question} ({r.Reason})");
-                if (r.Action != DepartAction.Go && r.Action != DepartAction.GoTogether) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
-                // 자동 보충은 동료를 데려가지 않는다(남이 하던 일을 끊지 않게 — 남은 곳이 다 위험해도 혼자, Guard가 판단). 덜 위험한 곳으로는 바꿔 간다
-                var job = new GatherJob(npc, due.Item, amount, ways);
+                // 자동 보충도 같은 판단: 덜 위험한 곳으로 바꿔 가고, 다 위험하면 호위병과(바쁘면 기다리지 않고 그 물건은 10분 뒤로 — 사용자 10-26)
+                bool together = r.Action == DepartAction.GoTogether && canEscort && GuardIdle();
+                if (r.Action != DepartAction.Go && !together) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
+                var job = new GatherJob(npc, due.Item, amount, ways) { WantGuard = together };
                 foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
                 return job;
             }

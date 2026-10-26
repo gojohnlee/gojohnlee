@@ -11,7 +11,22 @@ namespace ValheimHelper
     /// </summary>
     public class WorkerNpc : Humanoid
     {
+        /// <summary>일꾼(역할 0·1)만. 호위병은 일·명령·잡담·상자 정리에 안 끼므로 Guards에 따로 둔다(사용자 10-26).</summary>
         public static readonly List<WorkerNpc> All = new List<WorkerNpc>();
+        /// <summary>호위병(역할 2, 보통 하나).</summary>
+        public static readonly List<WorkerNpc> Guards = new List<WorkerNpc>();
+        public const int GuardRole = 2;
+
+        /// <summary>지금 불러와진 호위병(살아 있든 아니든), 없으면 null.</summary>
+        public static WorkerNpc TheGuard => Guards.Count > 0 ? Guards[0] : null;
+
+        /// <summary>그 ZDOID의 일꾼·호위병 인스턴스(불러와져 있으면), 없으면 null.</summary>
+        public static WorkerNpc FindById(ZDOID id)
+        {
+            foreach (var n in All) if (n != null && n.GetZDOID() == id) return n;
+            foreach (var n in Guards) if (n != null && n.GetZDOID() == id) return n;
+            return null;
+        }
 
         public const string KeyName = "vh_name";
         public const string KeyRole = "vh_role";
@@ -43,7 +58,7 @@ namespace ValheimHelper
         {
             base.Awake();
             Ai = GetComponent<WorkerAI>();
-            All.Add(this);
+            if (m_nview.IsValid() && m_nview.GetZDO().GetInt(KeyRole) == GuardRole) Guards.Add(this); else All.Add(this);
             if (m_nview.IsValid()) Workers.Know(m_nview.GetZDO().m_uid);
             // 바닐라 몬스터는 소지품을 저장하지 않는다. 일꾼은 들고 있던 짐·도구를 ZDO에 저장해 둔다.
             if (m_nview.IsValid() && m_nview.IsOwner())
@@ -528,11 +543,14 @@ namespace ValheimHelper
         protected override void OnDestroy()
         {
             All.Remove(this);
+            Guards.Remove(this);
             base.OnDestroy();
         }
 
         public string NpcName => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO().GetString(KeyName, "Worker") : "Worker";
         public Personality Personality => m_nview != null && m_nview.IsValid() ? (Personality)m_nview.GetZDO().GetInt(KeyRole) : Personality.Ragnar;
+        /// <summary>호위병인지(일은 안 하고 위험한 곳에 가는 일꾼을 따라가 싸움 — 사용자 10-26).</summary>
+        public bool IsGuard => Personality == Personality.Guard;
         public Vector3 Home => m_nview.GetZDO().GetVec3(KeyHome, transform.position);
         public ZDO Zdo => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO() : null;
 

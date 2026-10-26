@@ -34,7 +34,10 @@ namespace ValheimHelper
         {
             m_npc = npc;
             m_ai = npc.Ai;
+            m_noBow = npc.IsGuard; // 호위병은 활(사냥)을 안 챙긴다 — 일꾼 몫(사용자 10-26)
         }
+
+        readonly bool m_noBow;
 
         /// <returns>true = 준비 중(걷거나 기다림), false = 끝.</returns>
         public bool Update(float dt)
@@ -161,7 +164,7 @@ namespace ValheimHelper
             if (gear)
                 foreach (var it in Plan(mine, chest))
                     if (chest.ContainsItem(it)) return true;
-            if (gear && NeedsBow(mine, chest)) return true;
+            if (gear && !m_noBow && NeedsBow(mine, chest)) return true;
             if (!meads) return false;
             if (CountMeads(mine) < MeadsToCarry && CountMeads(chest) > 0) return true;
             foreach (var k in Resist.Kinds)
@@ -288,7 +291,7 @@ namespace ValheimHelper
                 if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
                 chest.MoveItemToThis(mine, it);
             }
-            if (takeGear) TakeBow(from, mine, chest, taken);
+            if (takeGear && !m_noBow) TakeBow(from, mine, chest, taken);
             if (takeMeads)
             {
                 // 체력 미드

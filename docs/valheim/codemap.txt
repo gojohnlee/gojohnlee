@@ -12,14 +12,16 @@
 명령 나누기·실행        Plugin/Commands.cs(262) + Core/Npc/Dispatch.cs(받을 NPC, 대답 받을 NPC)
 출발 전 판단·질문·대답  Core/Npc/Departure.cs(Judge: 질문은 밤·재고만, Risky·Alternative = 위험하면 조용히 덜 위험한 곳(거리 무관)·Avoid, 다 위험하면 GoTogether(Input.Mate), 거점 안 InBase는 안 바꿈,
                       장비 비율 PlaceOption.GearRatio ← PlaceBook.BiomeRisk·Departures.NativeTo, 상자 장비까지 Prep.Ready · Replies) + Plugin/Departures.cs(입력 모으기, MateFor·GoWithMate 동료와 같이, 질문 대기, 제작 계획 말하기, 자동 보충, !기억) · 연장 단계 GatherJob.ToolFor(ResourceCatalog.MinTier → Weak) · 은 위시본 필요 NeedFinder(ResourceCatalog.FromHidden·HiddenOres.HaveFinder, 아는 곳 없을 때 depart.needFinder)
-동행(일꾼끼리만)        Core/Npc/Escort.cs(기다림 8m·20m 넘으면 멈춤·12m 안이면 다시, 출발 전 기다림 ForMate = 거리 ÷ 4 + 30초(최소 60), 가는 중 90초·200m 포기) + WorkerAI.EscortBy/EscortHolds
-                      (일하는 동안 매 프레임, 동료가 따라오기를 그만두면 바로 혼자) · 동료 쪽 Mode.Follow(일꾼을 따라가면 거리 무관, 이끄는 쪽이 쉬거나 안 기다리면 집으로) ·
-                      붙이는 곳 Departures.GoWithMate(출발 GoTogether·대답 "같이 가자"·일하는 중 "!같이 가자" Commands.Run·사냥 GatherJob.CallMateForPrey). 시험 EscortTest.cs(vh_escorttest)
+호위병·동행(10-26)       호위병 = 역할 2 WorkerNpc(WorkerNpc.Guards·TheGuard·IsGuard, 일꾼 목록 All에는 없음 — 명령·잡담·상자 정리·저장 대상 아님), 소환 Workers.SpawnMissing(Name3, 깃발 뒤 자리,
+                      옛 월드는 불러올 때 Workers.Update가 켜진 깃발에 만듦, 시험 중엔 Workers.SkipGuard), 쉴 때 1분마다 Plugin/Work/GuardReadyJob.cs(Prep, 활 안 챙김 Prep.m_noBow).
+                      데려가기 Departures.GuardOf·GuardFree·GuardIdle·GoWithGuard(출발 GoTogether·바쁘면 WaitGuard → 대기열 ReadyWhen.GuardIdle, 대답 "같이 가자"·일하는 중 "!같이 가자"·
+                      사냥 GatherJob.CallGuardForPrey·제작 채집 PlanJob(JudgeStep, 단계 끝 WorkerAI.EndEscort)·자동 보충 WantGuard) · 동행 Core/Npc/Escort.cs(8m·20m·12m, ForMate 기다림,
+                      PausedFor) + WorkerAI.EscortHolds·BringMate(나만 건너감·안 보는 곳·15초 못 따라옴 → 호위병을 곁으로, MateBrings) · 호위병 쪽 Mode.Follow · 시험 EscortTest.cs(vh_escorttest)
 대사                  Core/Npc/Speech.cs(키별 대사, Personality.Ragnar/Floki) Josa.cs(조사)
 잡담                  Core/Npc/Banter.cs(2분 잡담·이벤트 반응·소식, BanterFacts.FromPlaces·FromKnowledge, SetNext 시험용) + Speech bt.* · 테스트 BanterTests · 게임 연결 Plugin/WorkerBanter.cs(1초마다 쉬는 중·15m·플레이어 30m, WorkerNpc.Say → OnSaid 이벤트, 습격 끝·5분 밖 귀환, Facing → WorkerAI Idle·Home 서로 바라봄) + ChatNet.NpcBubble(VH_Bubble 말풍선만, 시험용 Bubbled) · 시험 BanterTest.cs(vh_bantertest)
 NPC 몸                Plugin/WorkerNpc.cs(외형, 말하기, 음식, 미드, 사망·묘비, 스킬 재정의, 땅 물건 줍기 PickDrop) WorkerPrefab.cs(Player 복제)
 NPC 행동 틀            Plugin/WorkerAI.cs(513: 모드 Idle/Follow/Home/Work, 걷기 MoveToPoint, 점프, 구덩이 경사로, 물 판단, 대기열 Queue)
-위험·싸움              Plugin/Work/Guard.cs(0.5초 판단, 싸움·물러남·도망·미드, 동료 부르기 TryCallMate·Summon·State.Come(Danger.ShouldCallMate, 100m·30초 기다림), 피해 셈 Taken(갑옷은 실제 한 방에 매긴 뒤 ×FoeHitsPerSwing), 플레이어 64m 밖이면 휘두름 대신 직접 피해(m_far), 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Retreat.cs(물러날 방향 Guard.AwayPoint: 거점 쪽·거점 근처면 적 반대·적이 거점 쪽이면 옆으로 돌아서, 쫓기면 41° 안, RetreatTests 쫓김 흉내) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지, 출발 조건 "resist:종류")
+위험·싸움              Plugin/Work/Guard.cs(0.5초 판단, 싸움·물러남·도망·미드, 동료 부르기 TryCallMate·Summon·State.Come(Danger.ShouldCallMate, 일꾼끼리 50m·30초 기다림, 호위병은 안 부름), MyHit = 20m 안 일꾼·호위병·플레이어, 피해 셈 Taken(갑옷은 실제 한 방에 매긴 뒤 ×FoeHitsPerSwing), 플레이어 64m 밖이면 휘두름 대신 직접 피해(m_far), 적 배우기, 장소 기억 기록) + Core/Npc/Danger.cs(판단식, FoeBook) Core/Npc/Retreat.cs(물러날 방향 Guard.AwayPoint: 거점 쪽·거점 근처면 적 반대·적이 거점 쪽이면 옆으로 돌아서, 쫓기면 41° 안, RetreatTests 쫓김 흉내) Core/Npc/Resist.cs(저항 미드: 바이옴→독·냉기·불, 마실지, 출발 조건 "resist:종류")
 장소 기억              Core/Npc/PlaceBook.cs(위험 무리·감쇠·100곳)  저장: Brain.Places(ZDO vh_places)
 지식·탐험              Core/Work/Knowledge.cs(구역별 자원) Explore.cs(경계 고르기, BiomeNames) ExploredSweep.cs(밝혀진 구역 훑기 순서) + Plugin/Work/Senses.cs(시야, Brain 저장) Scout.cs(지도, AddPin, Reachable = 걸어서 또는 이어진 포탈로·WalkFar·OceanBetween 바다 건너 판단) MapSense.cs(밝혀진 곳은 안다) MapIcons.cs(모든 플레이어 지도에 일꾼 아이콘, VH_MapIcons 2초)
 채집                  Plugin/Work/GatherJob.cs(partial, 회차 181에 쪼갬: 본체 GatherJob.cs = 필드·Update·준비·도구·넣기 / .Search 찾기·지하묘지 / .Approach 다가가기·캐기·막힘 / .Hunt 사냥·활 / .Collect 줍기 / .Move 일꾼 포탈·걷기·먼 길. 짐 정리→준비→도구→찾기→다가가기→캐기→줍기→귀환→상자, 가방 차면 bagFull) ResourceCatalog.cs(무엇을 무엇으로 캐나)

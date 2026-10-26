@@ -19,7 +19,8 @@ namespace ValheimHelper
         const float JudgeEvery = 0.5f, BackDistance = 40f, BackWait = 30f;
         public const int MaxBacks = 2;
         /// <summary>동료 부르기(사용자 결정 2026-10-24 나): 이 거리 안 동료를 부르고, 20m 안에 올 때까지 최대 MateWait초 기다린다.</summary>
-        public const float MateCallRange = 100f, MateWait = 30f, MateCallEvery = 60f, ComeLimit = 40f;
+        /// <summary>동료 부르기: 일꾼끼리는 서로 일을 끊고 돕지 않는다 — 50m 안만(사용자 결정 2026-10-26, 전 100m).</summary>
+        public const float MateCallRange = 50f, MateWait = 30f, MateCallEvery = 60f, ComeLimit = 40f;
         /// <summary>[기본안] 내가 한 번 휘두를 때 적이 치는 횟수(바닐라 몬스터의 공격 간격 반영, 시험으로 조정).</summary>
         public const float FoeHitsPerSwing = 0.5f;
 
@@ -248,6 +249,7 @@ namespace ValheimHelper
         bool TryCallMate(Vector3 pos, Verdict alone, float myHit, System.Func<float, float> taken, bool mead, string foeName)
         {
             if (m_state == State.Flee || m_state == State.Come || m_waitMate != null || Time.time - m_mateAt < MateCallEvery) return false;
+            if (m_npc.IsGuard) return false; // 호위병은 일꾼을 부르지 않는다(일꾼의 일을 끊지 않게)
             if (alone != Verdict.Fight && alone != Verdict.Back && alone != Verdict.Flee) return false;
             WorkerNpc mate = null;
             float best = float.MaxValue;
@@ -604,10 +606,11 @@ namespace ValheimHelper
                 ItemDrop.ItemData pw = p.GetCurrentWeapon();
                 hit += pw != null ? Gear.WeaponScore(pw) : 5f;
             }
-            // 20m 안 동료 일꾼도 같이 싸운다(도망 중·죽은 동료는 빼고, 사용자 결정 2026-10-24 나)
-            foreach (var n in WorkerNpc.All)
-                if (n != null && n != m_npc && !n.IsDead() && !(n.Ai?.Guard?.Fleeing ?? false) && Vector3.Distance(n.transform.position, pos) <= AllyRange)
-                    hit += HitOf(n) / 0.9f;
+            // 20m 안 동료 일꾼·호위병도 같이 싸운다(도망 중·죽은 동료는 빼고, 사용자 결정 2026-10-24 나·10-26 호위병)
+            foreach (var list in new[] { WorkerNpc.All, WorkerNpc.Guards })
+                foreach (var n in list)
+                    if (n != null && n != m_npc && !n.IsDead() && !(n.Ai?.Guard?.Fleeing ?? false) && Vector3.Distance(n.transform.position, pos) <= AllyRange)
+                        hit += HitOf(n) / 0.9f;
             return hit * 0.9f; // 바닐라 무작위 피해 계수(0.75~1의 제곱근) 평균쯤
         }
 

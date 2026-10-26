@@ -67,15 +67,19 @@ namespace ValheimHelper.Core.Npc
         /// <summary>한 개 모으는 데 드는 초.</summary>
         public float SecondsPerUnit = 4f;
         public bool KnowsPortal;
-        /// <summary>같이 갈 수 있는 동료 일꾼 이름(거리·하던 일 무관, 죽음·질문 대기·플레이어 따라가기면 없음). 없으면 null.</summary>
-        public string Mate;
+        /// <summary>호위병 이름(사용자 10-26). 호위병이 없으면 null.</summary>
+        public string Guard;
+        /// <summary>호위병이 다른 일꾼을 따라가는 중·묘비 회수 등으로 지금 못 옴(쉬게 되면 같이 출발).</summary>
+        public bool GuardBusy;
     }
 
     public enum DepartAction
     {
         Go,
-        /// <summary>남은 곳이 다 위험해서 동료 일꾼과 같이 간다(묻지 않음, 거리·하던 일 무관 — 사용자 결정 2026-10-26).</summary>
+        /// <summary>남은 곳이 다 위험해서 호위병을 데리고 간다(묻지 않음 — 사용자 결정 2026-10-26).</summary>
         GoTogether,
+        /// <summary>남은 곳이 다 위험한데 호위병이 바쁘다 → 거점에서 기다렸다가 호위병이 쉬게 되면 같이 출발(대기열, 사용자 10-26).</summary>
+        WaitGuard,
         Ask,
         /// <summary>"~부터 하고 갈게요" → 대기열 끝. 꺼낼 때 다시 판단한다.</summary>
         Queue,
@@ -112,7 +116,7 @@ namespace ValheimHelper.Core.Npc
 
     /// <summary>
     /// 출발 전 판단 (구상서 8-1장, 설계 docs/valheim/design-depart-craft.txt B장). 규칙만, 대사는 키로 돌려준다.
-    /// 순서: 막힘(거절) → 하던 일(대기열, 급하면 끼어듦) → 질문 하나(밤 > 재고) → 위험하면 조용히 덜 위험한 곳, 없으면 동료와 같이 → 출발 + 덧붙이는 말 하나.
+    /// 순서: 막힘(거절) → 하던 일(대기열, 급하면 끼어듦) → 질문 하나(밤 > 재고) → 위험하면 조용히 덜 위험한 곳, 없으면 호위병과 같이(바쁘면 기다림) → 출발 + 덧붙이는 말 하나.
     /// </summary>
     public static class Departure
     {
@@ -121,7 +125,7 @@ namespace ValheimHelper.Core.Npc
         public const float WalkSpeed = 5f, FarDistance = 600f, NightNearHome = 100f;
         public const int LowSkill = 20;
 
-        public static float FightLine(Personality p) => p == Personality.Floki ? Danger.FightFloki : Danger.FightRagnar;
+        public static float FightLine(Personality p) => p == Personality.Ragnar ? Danger.FightRagnar : Danger.FightFloki;
 
         public static DangerLevel Level(Personality p, PlaceOption o)
         {
@@ -132,7 +136,7 @@ namespace ValheimHelper.Core.Npc
             return DangerLevel.None;
         }
 
-        static bool DiedThere(Personality p, PlaceOption o) => o.DeathWeight > (p == Personality.Floki ? DeathFloki : DeathRagnar);
+        static bool DiedThere(Personality p, PlaceOption o) => o.DeathWeight > (p == Personality.Ragnar ? DeathRagnar : DeathFloki);
 
         /// <summary>위험한 곳: 빠듯 이상, 이 장비론 그 바이옴 무리, 또는 죽은 곳.</summary>
         public static bool Risky(Personality p, PlaceOption o, DangerLevel level) => level >= DangerLevel.Tight || o.GearShort || DiedThere(p, o);
@@ -200,7 +204,7 @@ namespace ValheimHelper.Core.Npc
             r.Args["stock"] = i.Stock.ToString();
 
             // 3) 질문 하나(밤·재고만). 위험은 묻거나 거절하지 않는다(사용자 결정 2026-10-25):
-            //    위험한 곳이면 조용히 덜 위험한 곳(거리 무관)으로, 그런 곳이 없으면 동료와 같이 간다(사용자 결정 2026-10-26).
+            //    위험한 곳이면 조용히 덜 위험한 곳(거리 무관)으로, 그런 곳이 없으면 호위병을 데려간다(바쁘면 기다렸다 같이 — 사용자 결정 2026-10-26).
             if (t != null)
             {
                 var level = Level(p, t);
@@ -227,10 +231,11 @@ namespace ValheimHelper.Core.Npc
                     foreach (var o in i.Places)
                         if (o != t && !o.InBase && Risky(p, o, Level(p, o))) r.Avoid.Add(o);
                 }
-                else if (i.Mate != null)
+                else if (i.Guard != null)
                 {
-                    r.Args["partner"] = i.Mate;
-                    return Go(r, DepartAction.GoTogether, "depart.together", "남은 곳이 다 위험 → 동료와 같이");
+                    r.Args["partner"] = i.Guard;
+                    if (i.GuardBusy) return Go(r, DepartAction.WaitGuard, "depart.waitGuard", "남은 곳이 다 위험·호위병 바쁨 → 기다렸다 같이");
+                    return Go(r, DepartAction.GoTogether, "depart.together", "남은 곳이 다 위험 → 호위병과 같이");
                 }
                 else if (t.GearShort && level != DangerLevel.Impossible) // 그 바이옴 적 하나도 지금 장비론 못 당함(⑫ 다)
                 {

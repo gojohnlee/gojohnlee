@@ -30,9 +30,10 @@ namespace ValheimHelper
             if (m_hunt)
             {
                 if (FindPrey()) { Go(Step.Hunt); return true; }
-                // ⑫ 풀링 마을 무리·록스처럼 혼자면 못 잡는 사냥감: 동료 일꾼과 둘이면 되면 불러서 같이(사용자 결정 2026-10-26)
-                if ((m_packFoe != null || m_strongFoe != null) && CallMateForPrey()) return true;
-                // 둘이도 안 되면 헤매지 말고 그만두고 더 좋은 장비를 달라고 한다
+                // ⑫ 풀링 마을 무리·록스처럼 혼자면 못 잡는 사냥감: 호위병과 둘이면 되면 불러서 같이, 바쁘면 남은 양을 호위병이 쉴 때로 미룸(사용자 결정 2026-10-26)
+                if ((m_packFoe != null || m_strongFoe != null) && CallGuardForPrey()) return true;
+                if (m_guardQueued) return GiveUp("preyWaitGuard");
+                // 둘이도 안 되거나 호위병이 없으면 헤매지 말고 그만두고 더 좋은 장비를 달라고 한다
                 if (m_packFoe != null) return GiveUp("preyPack");
                 if (m_strongFoe != null) return GiveUp("preyStrong");
                 // 사슴 가죽처럼 활로만 잡는 것뿐인데 쏠 활·화살이 없다(장비 상자에 넣어 주면 Prep이 챙긴다)

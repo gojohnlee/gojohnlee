@@ -9,7 +9,8 @@ namespace ValheimHelper.Core.Work
     public enum WorkKind { Gather, Explore, Make, Farm }
 
     /// <summary>대기열 칸을 꺼낼 수 있는 조건.</summary>
-    public enum ReadyWhen { Always, Morning }
+    /// <summary>대기열 칸을 꺼낼 때: 언제나 / 아침 / 호위병이 쉴 때(위험한 곳인데 호위병이 바빴음, 사용자 10-26).</summary>
+    public enum ReadyWhen { Always, Morning, GuardIdle }
 
     /// <summary>
     /// 대기열 한 칸·하던 일을 데이터로 (risks.txt "작업 상태 저장 설계"). 플러그인이 이걸로 Start/Ready를 만든다.

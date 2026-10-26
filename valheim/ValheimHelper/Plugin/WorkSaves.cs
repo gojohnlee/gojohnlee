@@ -25,6 +25,7 @@ namespace ValheimHelper
         {
             var q = new QueuedWork { Label = w.Label, Work = w };
             if (w.Ready == ReadyWhen.Morning) q.Ready = () => WorkState.IsReady(w, ZNet.instance.GetTimeSeconds(), EnvMan.IsNight());
+            if (w.Ready == ReadyWhen.GuardIdle) q.Ready = Departures.GuardIdle; // 위험한 곳인데 호위병이 바빴음: 쉬게 되면 같이 출발(사용자 10-26)
             if (w.Kind == WorkKind.Gather)
             {
                 if (w.Resume)

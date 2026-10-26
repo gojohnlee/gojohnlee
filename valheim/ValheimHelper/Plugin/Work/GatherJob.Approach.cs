@@ -221,7 +221,6 @@ namespace ValheimHelper
         {
             if (m_hunt) return "사냥";
             if (m_npc.InInterior()) return "지하묘지·실내"; // 묘지 가기(GoCrypt)는 자기 막힘 처리라 여기 안 옴
-            if (m_ai.EscortName != null) return "동행";
             if (!FarFromPlayers(m_npc.transform.position)) return NearWhy;
             return null;
         }

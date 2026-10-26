@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
@@ -25,6 +26,12 @@ namespace ValheimHelper
         /// <summary>끼워 넣기는 Wait가 이만큼(초) 남았을 때만, 한 번에 이만큼(개)만 — 끝나면 곧바로 계획으로 돌아온다.</summary>
         const float FillMinWait = 90f, FillRetry = 60f;
         const int FillAmount = 20;
+        /// <summary>
+        /// 재료 채집 단계도 직접 명령과 같은 출발 판단(외부 검토 10-26): 위험한 곳은 피하고, 다 위험하면 호위병과 — 그 단계가 끝나면 호위병을 돌려보냄.
+        /// 호위병이 바쁘면 그 단계는 거점에서 기다렸다가(m_waitGuard, 3초마다 다시 판단) 같이 출발(사용자 10-26).
+        /// </summary>
+        bool m_withGuard, m_waitGuard;
+        float m_guardCheckAt;
 
         public PlanJob(WorkerNpc npc, Plan plan, string goalLabel)
         {
@@ -73,7 +80,8 @@ namespace ValheimHelper
             }
             if (m_step == null && !Pick())
             {
-                m_npc.Ai.Hold("만들기 차례 기다림");
+                if (m_waitGuard && Utils.DistanceXZ(m_npc.Home, m_npc.transform.position) > 4f) { m_npc.Ai.MoveToPoint(dt, m_npc.Home, 2f, true); return true; }
+                m_npc.Ai.Hold(m_waitGuard ? "호위병 기다림" : "만들기 차례 기다림");
                 m_npc.Ai.StopMoving(); // 가만히 기다림: 앞 단계의 걷기 방향이 남아 계속 걷지 않게(회차 128)
                 return !m_runner.Over ? TryFill() : Finish();
             }
@@ -102,6 +110,7 @@ namespace ValheimHelper
                     break;
             }
             if (running) return true;
+            if (m_withGuard) { m_npc.Ai.EndEscort(); m_withGuard = false; } // 재료 채집 단계 끝: 호위병은 거점으로(제작 내내 붙잡지 않음)
             if (ok) m_runner.Complete(m_step.Id);
             else
             {
@@ -125,7 +134,19 @@ namespace ValheimHelper
                     case StepKind.Hunt:
                         HashSet<ToolKind> ways = ResourceCatalog.WaysFor(s.Item);
                         if (ways.Count == 0 || s.Amount <= 0) { m_runner.Fail(s.Id); continue; }
-                        m_gather = new GatherJob(m_npc, s.Item, s.Amount, ways);
+                        if (m_waitGuard && m_now < m_guardCheckAt) return false;
+                        DepartureResult j = Departures.JudgeStep(m_npc, s.Item, s.Amount);
+                        if (j != null && j.Action == DepartAction.WaitGuard)
+                        {
+                            if (!m_waitGuard) { Plugin.Log.LogInfo($"{m_npc.NpcName} 계획 {m_goal}: {s.Item} 채집은 위험한데 호위병이 바쁨 → 거점에서 기다림"); m_npc.Say("depart.waitGuard", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(s.Item), ["n"] = s.Amount.ToString(), ["partner"] = WorkerNpc.TheGuard?.NpcName ?? "" }); }
+                            m_waitGuard = true;
+                            m_guardCheckAt = m_now + 3f;
+                            return false;
+                        }
+                        m_waitGuard = false;
+                        m_gather = new GatherJob(m_npc, s.Item, s.Amount, ways) { InPlan = true };
+                        if (j != null) foreach (var o in j.Avoid) m_gather.AvoidZone(o.Zone);
+                        m_withGuard = j != null && j.Action == DepartAction.GoTogether;
                         break;
                     case StepKind.Craft:
                         m_craft = new CraftStep(m_npc, s);
@@ -141,6 +162,7 @@ namespace ValheimHelper
                 }
                 m_step = s;
                 m_runner.Begin(s.Id, m_now);
+                if (m_withGuard && Departures.GoWithGuard(m_npc) == null) m_withGuard = false;
                 return true;
             }
         }
