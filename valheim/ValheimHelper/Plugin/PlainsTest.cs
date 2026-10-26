@@ -109,15 +109,16 @@ namespace ValheimHelper
                 Brain.Places.Record(fought, new List<GroupFoe> { new GroupFoe { Kind = "Deathsquito", Count = 2 } }, Outcome.Fled, now, Guard.Resolve);
                 DepartureResult weak = Departures.JudgeFor(w.Ragnar, cmd);
                 TestRunner.Log($"데스킷 겪은 뒤(갑옷 {w.Ragnar.GetBodyArmor():0}): {weak?.Action} {weak?.Question} {weak?.Condition} ({weak?.Reason})");
-                // 위험은 묻지 않고 경고하고 간다(사용자 결정 2026-10-25)
-                checks.Add("약한 장비 → 평원 장비 경고하고 출발", weak != null && weak.Action == DepartAction.Go && weak.Key == "depart.gear");
+                // 위험은 묻지 않는다(사용자 결정 2026-10-25). 남은 곳이 다 위험하면 동료와 같이, 동료 없으면 "이 장비론 평원 무리" 경고하고 혼자(10-26)
+                bool together = weak != null && weak.Action == DepartAction.GoTogether;
+                checks.Add($"약한 장비 → 위험한 곳으로 쳐서 동료와 같이·장비 경고하고 출발 ({weak?.Action} {weak?.Key})", weak != null && (together || weak.Action == DepartAction.Go && weak.Key == "depart.gear"));
 
                 int heard0 = w.Heard.Count;
                 Departures.Gather(new Speaker(Player.m_localPlayer.GetPlayerName(), ZDOID.None, ZDOID.None), cmd, w.Ragnar);
                 yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
                 string n1 = w.Ragnar.NpcName;
-                bool said = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("평원")) >= 0;
-                checks.Add($"\"평원\" 장비 말하고 묻지 않고 출발 (말 {said}, {TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0 && said);
+                bool said = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains(together ? "같이" : "평원")) >= 0;
+                checks.Add($"{(together ? "\"같이\"" : "\"평원\" 장비")} 말하고 묻지 않고 출발 (말 {said}, {TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0 && said);
                 GatherTest.Say("!멈춰", null);
                 yield return new WaitForSeconds(1f);
 

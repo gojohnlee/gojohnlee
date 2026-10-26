@@ -96,13 +96,13 @@ namespace ValheimHelper
                 w.Env.m_debugTime = 0.5f;
                 yield return Stop();
 
-                // 3) 죽은 곳 → 묻지 않고 경고하고 출발(사용자 결정 2026-10-25, 예전엔 질문 → "아니" → 보류)
+                // 3) 죽은 곳 → 묻지 않고 출발: 다른 곳도 다 위험하면 동료와 같이, 동료 없으면 경고만 하고 혼자(10-26 규칙, 예전엔 질문 → "아니" → 보류)
                 Brain.ReplaceForTest(knowFar, "");
                 Brain.Places.Record(far, new List<GroupFoe> { new GroupFoe { Kind = "Greydwarf", Count = 1 } }, Outcome.Died, ZNet.instance.GetTimeSeconds(), Guard.Resolve, "Greydwarf");
                 Log("죽은 곳", Departures.JudgeFor(w.Ragnar, copper));
                 yield return Say($"!{n1} 구리 10", 1f);
-                checks.Add($"죽은 곳 → 경고하고 출발 ({w.Ragnar.Ai.Current}, 말 \"{LastSaid(w, n1)}\")",
-                    Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work && LastSaid(w, n1).Contains("위험"));
+                checks.Add($"죽은 곳 → 묻지 않고 출발(같이·경고) ({w.Ragnar.Ai.Current}, 말 \"{LastSaid(w, n1)}\")",
+                    Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work && (LastSaid(w, n1).Contains("위험") || LastSaid(w, n1).Contains("같이")));
                 yield return Stop();
 
                 // 4) 빠듯한 곳(Tight, 예전 체력 미드 조건 질문) → 묻지 않고 경고하고 출발. 미드 하나면 주의가 되는 곳이라 아래 늪 칸에도 쓴다
