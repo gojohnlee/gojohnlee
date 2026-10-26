@@ -34,6 +34,11 @@ $review.target_hash='fixed'; $review.verdict='BLOCKED'; $review.findings=@([pscu
 Reject { Assert-VhReview $review $fakeTask } 'hypothesis cannot block'
 $review.findings[0].basis='code'; Assert-VhReview $review $fakeTask
 Check $true 'confirmed blocker retained'
+$review.findings[0] | Add-Member category environment
+Reject { Assert-VhReview $review $fakeTask } 'environment cannot become gameplay blocker'
+$taskHistory=[pscustomobject]@{groups=@([pscustomobject]@{index=0;status='RUNNING'},[pscustomobject]@{index=0;status='PASS'},[pscustomobject]@{index=1;status='FAIL'})}
+$latest=@(Get-VhLatestGroups $taskHistory)
+Check ($latest.Count -eq 2 -and $latest[0].status -eq 'PASS' -and $latest[1].status -eq 'FAIL') 'resume uses latest attempt per group, preserving first failure history'
 $file=Join-Path $OutputDirectory 'evidence.txt'; [IO.File]::WriteAllText($file,'original')
 $ev=@(Get-VhEvidence @($file)); Check (Test-VhEvidence $ev) 'original evidence reusable'
 [IO.File]::WriteAllText($file,'changed'); Check (-not (Test-VhEvidence $ev)) 'changed evidence invalidated'

@@ -203,4 +203,4 @@ $text = $reports -join "`r`n`r`n"
 if ($env:VH_HARNESS -ne '1') { Set-Clipboard $text }
 Write-Host $text
 Write-Host ''
-Write-Host '결과를 클립보드에 복사했습니다. 대화창에 붙여넣어 주세요.'
+if ($env:VH_HARNESS -ne '1') { Write-Host '결과를 클립보드에 복사했습니다. 대화창에 붙여넣어 주세요.' }

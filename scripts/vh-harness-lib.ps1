@@ -109,9 +109,10 @@ function Get-VhModelOutcome($ExitCode, [bool]$TimedOut, [string]$Events, [bool]$
 }
 function Assert-VhReview($Review, $Task) {
     if ($Review.task_id -cne $Task.id -or $Review.commit -cne $Task.target.commit -or $Review.target_hash -cne $Task.target_hash) { throw 'Review target mismatch' }
-    if ($Review.verdict -notin @('PASS','ISSUES','BLOCKED')) { throw 'Invalid review verdict' }
+    if ($Review.verdict -notin @('PASS','ISSUES','BLOCKED','INCOMPLETE')) { throw 'Invalid review verdict' }
     foreach ($f in @($Review.findings)) {
         if ($f.basis -notin @('code','execution','hypothesis')) { throw 'Invalid finding basis' }
+        if ($f.category -eq 'environment' -and $f.blocking) { throw 'Environment failure is not a confirmed gameplay blocker' }
         if ($f.blocking -and ($f.basis -eq 'hypothesis' -or -not $f.evidence)) { throw 'Blocking finding lacks confirmed evidence' }
     }
     $blocking = @($Review.findings | Where-Object { $_.blocking })
@@ -139,14 +140,16 @@ function Test-VhImplementationProcess($Repo) {
         $_.ExecutablePath -ieq $configured -or $_.CommandLine -match 'vh-loop-prompt\.txt|vh-reply-prompt\.txt' -or $_.CommandLine -like "*$Repo*"
     }).Count -gt 0
 }
-function Invoke-VhProcess($File, [string]$Arguments, $WorkingDirectory, $Out, $Err, [int]$TimeoutSeconds=1800) {
+function Invoke-VhProcess($File, [string]$Arguments, $WorkingDirectory, $Out, $Err, [int]$TimeoutSeconds=1800, [string]$InputText) {
     $psi = New-Object Diagnostics.ProcessStartInfo
     $psi.FileName=$File; $psi.Arguments=$Arguments; $psi.WorkingDirectory=$WorkingDirectory
     $psi.UseShellExecute=$false; $psi.CreateNoWindow=$true
     $psi.RedirectStandardOutput=$true; $psi.RedirectStandardError=$true
+    if ($InputText) { $psi.RedirectStandardInput=$true }
     $psi.StandardOutputEncoding=[Text.Encoding]::UTF8; $psi.StandardErrorEncoding=[Text.Encoding]::UTF8
     $p = [Diagnostics.Process]::Start($psi)
     $stdout = $p.StandardOutput.ReadToEndAsync(); $stderr = $p.StandardError.ReadToEndAsync()
+    if ($InputText) { $p.StandardInput.Write($InputText); $p.StandardInput.Close() }
     $timedOut = -not $p.WaitForExit($TimeoutSeconds*1000)
     if ($timedOut) { & taskkill /PID $p.Id /T /F | Out-Null; [void]$p.WaitForExit(10000) }
     if (-not $stdout.Wait(10000) -or -not $stderr.Wait(10000)) { throw 'Child output pipe did not close; evidence incomplete' }
