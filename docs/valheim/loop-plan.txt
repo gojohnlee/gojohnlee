@@ -6,6 +6,7 @@
 - 사용자는 GitHub 웹(PC·휴대폰)으로 본다. 요청은 docs/valheim/UserRequest.txt에 쓰고, 답은 history.md 맨 위.
   회차 도중 요청이 바뀌면 15분 백업 때 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)가 따로 작업 트리(%USERPROFILE%\vh-loop\reply)에서 답한다
   (질문은 바로 답, 일은 "[받음 시각]"을 붙여 다음 회차에 넘김). history.md는 merge=union.
+- 계획 [사용자 10-26]: Claude 구현 → GPT(PC Codex) 검증 분업 — 아직 안 만듦. 규칙은 decisions.txt 2절 "GPT 검증 분업", 순서는 progress ★(먼저 회차별 토큰·시간 재기).
 
 멈춤·쉼
 - 멈추기: docs/valheim/loop-stop.txt(아무 내용) 또는 %USERPROFILE%\vh-loop\stop. 쉬기: docs/valheim/loop-pause.txt 첫 줄에 다시 시작할 시각.
