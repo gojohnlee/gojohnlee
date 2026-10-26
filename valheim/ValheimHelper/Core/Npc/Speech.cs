@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace ValheimHelper.Core.Npc
 {
     /// <summary>1호 = 라그나(미드 바이킹스 라그나르 로드브로크 성향: 침착·호기심·실리, 신중), 2호 = 플로키(플로키 성향: 신들린 장난꾸러기·배 목수, 공격적).
-    /// 이름은 아직 옛 자리(Scv·Alarak) 그대로 — 바꾸기는 progress "인격 바꾸기" 나).</summary>
+    /// 신중(싸움 기준 0.85)·대담(0.95) 기준은 Danger.FightRagnar·FightFloki.</summary>
     public enum Personality { Ragnar = 0, Floki = 1 }
 
     /// <summary>

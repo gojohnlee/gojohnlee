@@ -32,45 +32,56 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 클라우드 세션: 환경 네트워크에 nuget.bepinex.dev 허용됨(2026-10-23) → valheim-refs clone 뒤 bash scripts/valheim-build.sh로 빌드 확인 가능(ilspycmd는 dotnet tool install -g ilspycmd).
   게임 시험은 PC만. 클라우드에 dotnet이 없으면 dot.net/v1/dotnet-install.sh --channel 8.0 → ilspycmd --version 8.2.0.7535, 실행 때 DOTNET_ROLL_FORWARD=Major(10-24 확인).
   클라우드에서 만든 dist DLL은 커밋하지 않음(시험한 PC 빌드가 기준).
+  클라우드 컴파일 확인(10-26): valheim-refs에 Unity.TextMeshPro.dll이 없어 그대로는 TMPro 오류 3개 → 스크래치에 빈 껍데기 Unity.TextMeshPro
+  (namespace TMPro { class TMP_Text : UnityEngine.MonoBehaviour { string text; Color color } }, net462·UnityEngine.Modules 6000.0.75)를 만들어 refs 3개 링크와 한 폴더에 두고
+  dotnet build valheim/ValheimHelper/Plugin -c Release -p:ValheimRefs=<그 폴더> → 오류 0이면 컴파일 확인. 이 DLL은 게임에 쓰지 않음.
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
-- [PC 세션 10-25, 사용자 플레이테스트 중 루프 멈춤] 일꾼이 명령을 받고 질문만 하고 안 움직이던 것 3가지 고침(decisions.txt 2026-10-25):
-  위험은 묻지·거절하지 않고 "위험한데 그냥 가지"(depart.danger·depart.gear, 밤·재고 질문만 남음), 장비 검사는 거점 바이옴 빼고 이긴 적 종류도 뺌,
-  Claude 채팅에 최근 대화 8줄(5분)을 붙이고 수량 모르면 20개로 바로 시작. Core 테스트 527, departtest 23/23·plainstest 21/21·claudetest 6/6(새 규칙으로 고침) PASS.
-  루프 다시 켤 때: 회차 182 hoptest 작업은 git stash에 있음(stash@{0}, git stash pop으로 되살려 이어 할 것).
-- [루프 회차 181] 채집 코드(GatherJob.cs 2,190줄)를 하는 일별 6개 파일로 나눔(찾기·다가가 캐기·사냥·줍기·이동). 동작은 그대로(줄 내용이 원본과 똑같은지 확인). 다음은 평원 전체 회귀.
-- [루프 회차 180] 게임 업데이트 감지: 루프가 회차마다 게임 dll(버전·해시)을 지난번과 비교, 바뀌면 status.txt에 적고 그 회차가 전체 회귀부터 함. 지금 1.0.20 = 94998885B103. 다음은 GatherJob.cs 쪼개기.
-- [루프 회차 179] 머뭇거림 마무리: 길 비켜 가기 시험 4개(먼 곳·막힘 뛰기·탐험·출발)에서 멈춤을 봄. 까닭 없는 멈춤 0번(hoptest 멈춤은 시험이 발을 묶은 것) → 요청 머뭇거림 줄이기 끝. 다음은 게임 업데이트 감지.
+- [클라우드 세션 10-26, 사용자 요청] 서로 어긋나던 규칙 정리: 위험하면 묻지 않고 덜 위험한 곳으로(거리 무관), 다 위험하면 두 일꾼이 같이(동료가 하던 일은 대기열 맨 앞),
+  사냥감이 혼자면 무리면 동료를 먼저 부름, 동행은 일꾼끼리만, 막혔을 때 시간 제한 모두 절반. 문서(decisions·구상서·설계서·codemap·risks·loop-plan)는 옛 방향을 지우고 지금 것으로.
+  커밋 68385c9, Core 테스트 531 통과·플러그인 컴파일 확인. 게임 시험은 PC에서(아래 "다음" 첫 ★).
+- [PC 세션 10-25, 사용자 플레이테스트 중 루프 멈춤] 일꾼이 명령을 받고 질문만 하고 안 움직이던 것 3가지 고침(decisions.txt 6절):
+  위험은 묻지·거절하지 않음, 장비 검사는 거점 바이옴 빼고 이긴 적 종류도 뺌, Claude 채팅에 최근 대화 8줄(5분)을 붙이고 수량 모르면 20개로 바로 시작.
+  루프 다시 켤 때: 회차 182 hoptest 작업은 git stash에 있음(stash@{0}, git stash pop으로 되살려 이어 할 것 — 막힘 시간이 절반이 됐으니 기대값 다시 볼 것).
+- [루프 회차 181] 채집 코드(GatherJob.cs 2,190줄)를 하는 일별 6개 파일로 나눔(찾기·다가가 캐기·사냥·줍기·이동). 동작은 그대로. 다음은 평원 전체 회귀.
 
 다음 (순서대로 — 안 끝난 일만)
+★ 10-26 변경 게임 시험 (클라우드 세션 코드 — 게임 시험 전, decisions.txt 6·9·10절):
+  가) [구현 완료·검증 대기, 클라우드 10-26 — 커밋 68385c9 · 시험 못 함: 클라우드] 출발·동행·사냥: vh_escorttest(일꾼끼리로 다시 씀)·vh_fulingtest(C 둘이면 동료 부름 새 칸, VH_BIOME=plains)·
+     vh_plainsfarmtest(plains)·vh_departtest·vh_refilltest·vh_teamtest·vh_helptest·vh_hunttest·vh_npctest·vh_peertest. FAIL이면 기대값이 옛 규칙(질문·플레이어 동행)인지 먼저 본다.
+  나) [구현 완료·검증 대기, 클라우드 10-26 — 커밋 68385c9 · 시험 못 함: 클라우드] 막힘 시간 절반 회귀: vh_pittest·vh_stucktest·vh_hoptest(stash의 회차 182 작업과 같이)·vh_skiptest·
+     vh_crypttest·vh_exploretest·vh_farmtest·vh_deathtest·vh_woodtest·vh_stonetest·vh_coppertest. 정상 걷기가 막힘으로 잘못 잡히면(먼 상자·던전 굽은 길) 그 한 곳만 되돌릴지 본다.
 ★ ⑫ 평원 (구상서 7-1장 "평원": 데스킷·풀링 마을 흑금속·타르·평원 밭·록스 — 기반부터):
   가) [끝, 회차 169 — 커밋 89f7e45 · 시험 vh_plainstest PASS 10/10·vh_farmtest 25/25·vh_settest 7/7·vh_woodtest 13/13, dotnet test 524/524] 평원 자료 시험(얻는 길·적 위험 수치), 줍는 것을 부술 것보다 먼저 봄(클라우드베리 덤불이 빠지고 야생 보리가 곡괭이로 잡히던 것).
   나) [끝, 회차 170 — 커밋 afec579 · 시험 vh_plainstest PASS 17/17·fighttest 17/17·departtest 25/25·raidtest 9/9·helptest 7/7·teamtest 6/6·matetest 18/18·deathtest 22/22·hunttest 9/9, dotnet test 524/524] 안 배운 적 한 방 = 게임 데이터(Guard.DataHit), 데스킷 4.7 → 90.
-  다) [끝, 회차 171 — 커밋 fccb99a · 시험 vh_plainstest PASS 21/21·departtest 25/25·peertest 14/14·refilltest 22/22, dotnet test 526/526] 평원 출발 판단: 그 바이옴 토박이 적 하나도 못 당하면 "이 장비론 평원 무리" 조건 질문, 상자 장비까지 셈.
+  다) [끝, 회차 171 — 커밋 fccb99a · 시험 vh_plainstest PASS 21/21·departtest 25/25·peertest 14/14·refilltest 22/22, dotnet test 526/526] 평원 출발 판단: 그 바이옴 토박이 적 하나도 못 당하면 "이 장비론 평원 무리" 조건 질문, 상자 장비까지 셈. (→ 10-25에 질문 없앰, 10-26부터 위험한 곳으로 쳐서 덜 위험한 곳·둘이 같이)
   라) [끝, 회차 172 — 커밋 c1dfc5b · 시험 vh_squitotest PASS 9/9(평원 자리·기본 자리 2번)·resisttest 20/20·fighttest 17/17, dotnet test 526/526] 데스킷 싸움 시험, 날기 적 쫓는 속도 = m_flyFastSpeed.
-  마) [끝, 회차 173 — 커밋 77896c3 · 시험 vh_fulingtest PASS 13/13(평원 자리)·hunttest 9/9·bowtest 12/12, dotnet test 526/526] 풀링 사냥(흑금속 고철): 사냥감 둘레 15m 무리까지 셈(Guard.SafePrey pack), 무리면·무리에서 도망치면 preyPack "같이 가 줘"로 그만둠.
+  마) [끝, 회차 173 — 커밋 77896c3 · 시험 vh_fulingtest PASS 13/13(평원 자리)·hunttest 9/9·bowtest 12/12, dotnet test 526/526] 풀링 사냥(흑금속 고철): 사냥감 둘레 15m 무리까지 셈(Guard.SafePrey pack), 무리면·무리에서 도망치면 preyPack "같이 가 줘"로 그만둠. (→ 10-26: 동료와 둘이면 부름, 둘이도 안 되면 장비 요청)
   바) [끝, 회차 174 — 커밋 f833485 · 시험 vh_tartest PASS 14/14(실제 TarPit1 옆)·plainstest 21/21·fulingtest 13/13·farmtest 25/25·npc 17/17·flag 12/12·wood 13/13·stone 11/11·stuck 14/14·hop 20/20, pittest 14/15(E022 시험 환경, 기본 자리 — 타르 코드는 평원에서만), dotnet test 526/526] 타르: 웅덩이 위 떠 있는 타르를 들어가 줍고(잠긴 것은 안 고름) 나옴, 지나갈 땐 깊은 타르를 돌아감.
-  사) [끝, 회차 175 — 커밋 b95bde8 · 시험 vh_plainsfarmtest PASS 15/15(평원 자리)·fulingtest 13/13·hunttest 9/9·farmtest 25/25·npctest 17/17·fighttest 17/17·bowtest 12/12 3번(같은 묶음 FAIL 2번 → 조준 고침·E034), dotnet test 526/526] 평원 밭 보리·아마(씨앗=수확물, !밭은 반씩), 록스처럼 혼자 잡기엔 센 사냥감은 덤비지 않고 "같이 가 줘"(preyStrong).
+  사) [끝, 회차 175 — 커밋 b95bde8 · 시험 vh_plainsfarmtest PASS 15/15(평원 자리)·fulingtest 13/13·hunttest 9/9·farmtest 25/25·npctest 17/17·fighttest 17/17·bowtest 12/12 3번(같은 묶음 FAIL 2번 → 조준 고침·E034), dotnet test 526/526] 평원 밭 보리·아마(씨앗=수확물, !밭은 반씩), 록스처럼 혼자 잡기엔 센 사냥감은 덤비지 않고 "같이 가 줘"(preyStrong). (→ 10-26: 동료 먼저 부름)
   아) 평원 전체 회귀 + 실제 재시작 시험.
 ★ 전투 보강 (사용자 10-25 "ㅇㅇ" — ⑬ 안개땅 전에. 안개땅 적(시커 병사·걀)은 세게 때려 지금은 "피하고 도움 요청"만 늘 것):
-  가) 방패 막기: 방패를 들었으면 적 공격이 올 때 막기(게임의 막기·패링 코드를 디컴파일로 확인해 맞춤, codemap에 적음), 위험 판단에 막기로 줄어드는 피해를 셈. 게임 시험 + 싸움 회귀.
+  가) 방패 막기: 방패를 들었으면 적 공격이 올 때 막기(게임의 막기·패링 코드를 디컴파일로 확인해 맞춤, codemap에 적음), 위험 판단에 막기로 줄어드는 피해를 셈.
+     스태미나는 따지지 않는다(일꾼은 스태미나 없음 → 무한 막기 그대로, 사용자 10-26 "편하자고 만든 건데"). 게임 시험 + 싸움 회귀.
   나) 적 약점: 적의 피해 종류별 약점·저항(m_damageModifiers)을 셈해 무기 고르기·위험 판단에 반영(예: 둔기에 약한 적엔 몽둥이). 게임 시험 + 싸움 회귀.
   (스태미나 없음은 그대로 — 사용자 10-25)
 ★ 그 뒤: 아래 "구현 단계" 표의 [ ] 단계 차례로(⑫ 평원 → ⑬ 안개땅 → ⑭ 애쉬랜드 → ⑮ 딥노스). 단계마다 조각으로 나눠 여기에 ★ 덩어리로 적는다(vh-loop-prompt 2-1).
   ⑬ 메모(사용자 10-24): 절벽은 지금 규칙(플레이어가 안 보면 순간이동·보면 "오딘 구조" 옮기기)으로 먼저 해 보고, 게임의 갈고리
   (GrapplingPoint, codemap "확인된 게임 사실")는 그때 보고 쓸지 정한다.
 
-보류 (이득 작음 — 사용자가 원할 때만): 긴 시험 약식 coppertest·pittest(회차 137) · 시험 동시 실행(회차 34) · 길 만들기·평탄화(사용자 결정 10-21·10-23).
+보류 (이득 작음 — 사용자가 원할 때만): 긴 시험 약식 coppertest·pittest(회차 137). 하지 않는 것은 decisions.txt 16절(시험 동시 실행·길 만들기·평탄화 등).
 늘 지키는 것: 막는 문제(물건 복제·소실, 저장 손상, 작업 복원 실패)는 관련 기능 확장을 멈추고 먼저 푼다. 그 밖은 한 회차에 못 풀면 Errors.txt에 적고 진행.
 
-알려진 한계: NPC 스태미나 없음, NPC 피해도 몬스터 난이도 배율을 받음, 방패 막기 안 함, 적 약점 안 셈, 물 건너 아는 곳은 직선 판단,
+알려진 한계: NPC 스태미나 없음(무제한), NPC 피해도 몬스터 난이도 배율을 받음, 방패 막기 안 함, 적 약점 안 셈, 물 건너 아는 곳은 직선 판단,
+동료가 멀리서 같이 가러 올 때는 걸어서 옴(멀리선 이동 생략은 이끄는 쪽만 — 느리면 이끄는 쪽이 기다리다 혼자 감),
 시험의 Workers.DespawnAll이 Brain 로드 전이면 지식이 비워짐(시험 환경 문제).
-동행 플레이어는 20m 안에만 있으면 실제로 안 싸워도 위험 판단에서 그 무기 힘을 셈(회차 89: 시험 플레이어가 서 있는 사이 회색난쟁이 우두머리에게 죽음 — 실제 게임에선 같이 싸운다고 보고 그대로).
+플레이어가 20m 안에만 있으면 실제로 안 싸워도 위험 판단에서 그 무기 힘을 셈(회차 89: 시험 플레이어가 서 있는 사이 회색난쟁이 우두머리에게 죽음 — 실제 게임에선 같이 싸운다고 보고 그대로).
 
 결정 모음(자세한 건 decisions.txt·history.md)
 - 노력: 메인 보통, 원인 찾기 버그는 vh-debug(엑스트라 하이).
-- 일하는 중 새 명령: "빨리·이거부터"면 바로(멈춘 일은 대기열 맨 앞), 아니면 "~부터 하고 갈게요" + 대기열. 제작법은 전부 앎.
+- 일하는 중 새 명령: "빨리·이거부터"면 바로(멈춘 일은 대기열 맨 앞), 아니면 "~부터 하고 갈게" + 대기열. 제작법은 전부 앎.
+- 위험은 묻지 않는다: 덜 위험한 곳으로 조용히(거리 무관), 다 위험하면 두 일꾼이 같이. 동행은 일꾼끼리만. 막힘 시간 제한은 절반(10-26).
 - 좁은 강(깊은 물 24m 이하)만 헤엄. 깃발이 작고 묻혀 보이는 건 "다음에 같이". NPC가 플레이어를 미는 건 그대로 둠.
 - 큰 파일(WorkerAI·Guard)은 따로 쪼개지 않고 고칠 일이 생길 때 같이 쪼갠다. 중복 정리 리팩터링은 하지 않는다.
 

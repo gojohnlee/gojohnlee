@@ -5,7 +5,7 @@
   GitHub는 앱이 아니라 웹 브라우저로 본다(PC·휴대폰) → 사람이 읽을 파일은 마크다운으로, 휴대폰 화면에서도 읽히게.
   결과물 파일은 대화에 파일로 보내고 GitHub 링크(https://github.com/gojohnlee/gojohnlee/blob/valheim/<경로>)도 준다.
 - 사용자 목표: 버그 없고 매끄럽게, 토큰은 최소로. 사용자는 기본적으로 개입하지 않음 → 스스로 진행하고, 새 게임플레이 결정이 필요할 때만 묻는다.
-- 새 세션은 이전 대화를 기억하지 못함 → 중요한 상태는 docs/valheim/progress.txt, 결정은 docs/valheim/decisions.txt 끝에 기록.
+- 새 세션은 이전 대화를 기억하지 못함 → 중요한 상태는 docs/valheim/progress.txt, 결정은 docs/valheim/decisions.txt 맞는 절에 기록(어긋나는 옛 줄은 지우고 구상서·설계서·codemap도 같이 맞춤 — 사용자 결정 10-26).
 - 이 브랜치가 저장소 기본 브랜치(2026-10-21). 림월드(철기병 등) 작업과 파일은 `rimworld` 브랜치에만 있다(그쪽 CLAUDE.md). 이 브랜치에는 발헤임만 둔다.
 
 # 발헤임 일꾼 NPC

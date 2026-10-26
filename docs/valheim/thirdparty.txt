@@ -1,7 +1,7 @@
 외부 모드 (저장소에는 메모만, 파일은 올리지 않음)
 ======================================================================
 
-CustomChestName — 상자 이름 바꾸기 모드. 이름으로 상자 역할(장비·음식/미드·재료·손대지 않음)을 가린다(I 항목, vh-loop-prompt.txt 1-2).
+CustomChestName — 상자 이름 바꾸기 모드. 이름으로 상자 역할(장비·음식/미드·재료·손대지 않음)을 가린다(규칙은 decisions.txt 8절).
 - 사용자 결정 2026-10-22: ChestTag(Nexus 4388) 대신 이것(이름만 있는 모드라서). ChestTag는 게임 plugins에서 뺐음(원본은 사용자 Downloads에).
 - 출처: Thunderstore 패키지 GemHunter1-CustomChestName-1.1.2 (manifest website_url: https://www.nexusmods.com/valheim/mods/1781).
   manifest 의존성 denikson-BepInExPack_Valheim-5.4.2350. README 변경 기록 "v1.1.2 updated for Valheim 1.0.7" (우리 기준 게임 1.0.20 → 시험으로 확인).
