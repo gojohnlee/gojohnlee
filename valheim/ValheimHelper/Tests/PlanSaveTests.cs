@@ -142,4 +142,15 @@ public class PlanSaveTests
         Assert.Equal(plan, back.Plan);
         Assert.NotNull(PlanSave.Load(back.Plan));
     }
+    [Fact]
+    public void MissingStationsSurviveSave()
+    {
+        var plan = Copper();
+        plan.MissingStations.Add("piece_workbench:1");
+        plan.MissingStations.Add("forge:2");
+        var back = PlanSave.Load(PlanSave.Save(new PlanRunner(plan), id => 0));
+        Assert.Equal(new[] { "piece_workbench:1", "forge:2" }, back.Plan.MissingStations);
+        Assert.Empty(PlanSave.Load(PlanSave.Save(new PlanRunner(Copper()), id => 0)).Plan.MissingStations);
+        Assert.Null(PlanSave.Load("v1#a#b~0/0/Wood/5////0/0/0/0//0/0"));
+    }
 }

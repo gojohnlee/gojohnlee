@@ -458,10 +458,13 @@ namespace ValheimHelper
             StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], Item = cmd.Item, Amount = cmd.Amount });
         }
 
-        /// <summary>계획이 끝까지 할 수 있는 것이면 실제로 시작(6번 실행기). 일하는 중이면 시작하지 않음(대기열은 데이터 없는 PlanJob을 못 저장).</summary>
+        /// <summary>
+        /// 계획이 끝까지 할 수 있거나 모자란 게 설비뿐이면(StationsOnly — 재료는 모아 두고 끝에 지어 달라고 함, 10-26) 실제로 시작(6번 실행기).
+        /// 범위 밖·모름이 끼면 시작하지 않음. 일하는 중이면 시작하지 않음(대기열은 데이터 없는 PlanJob을 못 저장).
+        /// </summary>
         static void StartPlan(WorkerNpc npc, Plan plan, string label, WorkItem goal)
         {
-            if (!Features.RunPlans || plan.Steps.Count == 0 || plan.Partial || plan.TooLong) return;
+            if (!Features.RunPlans || plan.Steps.Count == 0 || (plan.Partial && !plan.StationsOnly) || plan.TooLong) return;
             var mode = npc.Ai.Current;
             // Work인데 하던 일이 없으면 대기열에서 꺼내는 중(앞 일이 막 끝남, WorkerAI.NextQueued) — 쉬는 것과 같다(회차 128: 죽은 뒤 이어 할 계획이 여기서 버려짐)
             bool busy = mode == WorkerAI.Mode.Work ? npc.Ai.Job != null && !(npc.Ai.Job is TidyJob) : mode != WorkerAI.Mode.Idle && mode != WorkerAI.Mode.Home;
@@ -524,7 +527,13 @@ namespace ValheimHelper
         {
             if (plan.OutOfScope.Count > 0) { npc.Say("depart.outOfScope", args); return; }
             if (plan.Steps.Count == 0 && !plan.Partial) { npc.Say("craft.inStock", args); return; }
-            if (plan.MissingStations.Count > 0) { args["station"] = Recipes.StationName(plan.MissingStations[0]); npc.Say("craft.missing", args); return; }
+            if (plan.MissingStations.Count > 0)
+            {
+                args["station"] = Recipes.StationName(plan.MissingStations[0]);
+                // 설비만 없고 모을 재료가 있으면 모아 둔다(StartPlan이 시작) — 끝나면 PlanJob이 craft.missingDone
+                npc.Say(plan.StationsOnly && plan.Steps.Count > 0 && !plan.TooLong && Features.RunPlans ? "craft.missingGather" : "craft.missing", args);
+                return;
+            }
             if (plan.Unknown.Count > 0) { args["what"] = GatherJob.ItemLabel(plan.Unknown[0]); npc.Say("craft.unknown", args); return; }
             if (plan.TooLong) { npc.Say("craft.tooLong", args); return; }
             var shortNames = new List<string>();

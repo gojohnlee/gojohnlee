@@ -59,6 +59,49 @@ namespace ValheimHelper
             checks.Add($"제련 개수 보존 {from}→{to} ({where} → 합 {sum} = {total})", sum == total);
         }
 
+        /// <summary>
+        /// 0) 설비만 없음(부분 계획, 외부 검토 + 사용자 승인 10-26): 제작대 없이 "!활 1"(목재 말고 재료는 상자에) → 목재만 모아 두고
+        /// "재료는 모았는데 제작대가 없어"(craft.missingDone). 활은 안 생기고 다른 재료는 그대로. 끝나면 활 재료를 비워 1)이 개수를 다시 셈.
+        /// </summary>
+        static IEnumerator MissingStation(TestKit.World w, GatherTest.Checks checks, Recipe bow)
+        {
+            string station = bow.m_craftingStation != null ? bow.m_craftingStation.m_name : null;
+            bool none = station != null && !Recipes.At(w.Home).HasStation(station, 1);
+            checks.Add($"제작대 없는 거점에서 시작 ({station})", none);
+            if (!none) yield break;
+            int wood = 0;
+            var others = new System.Collections.Generic.List<string>();
+            foreach (var req in bow.m_resources)
+            {
+                string p = Utils.GetPrefabName(req.m_resItem.gameObject);
+                if (p == "Wood") wood = req.m_amount;
+                else { TestKit.PutInChest(w.Chest, p, req.m_amount); others.Add(p); }
+            }
+            checks.Add($"활 재료에 목재 ({wood}개)", wood > 0);
+            if (wood == 0) yield break;
+            string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
+            int heard0 = w.Heard.Count;
+            yield return Say($"!{w.Ragnar.NpcName} {bowName} 1", 1f);
+            checks.Add($"설비가 없어도 재료 모으기 시작 ({w.Ragnar.Ai.Job?.GetType().Name} {w.Ragnar.Ai.Job?.StepName})", w.Ragnar.Ai.Job is PlanJob);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && Stock(w, "Wood") >= wood, 240f);
+            checks.Add($"목재 {Stock(w, "Wood")}/{wood} 모아 두고 끝 ({TestKit.Waited:0}초, {w.Ragnar.Ai.Current})", TestKit.Ok);
+            string said = null;
+            for (int i = heard0; i < w.Heard.Count; i++)
+                if (w.Heard[i].StartsWith(w.Ragnar.NpcName) && (w.Heard[i].Contains("모았") || w.Heard[i].Contains("모아 뒀"))) said = w.Heard[i];
+            checks.Add($"끝에 설비를 지어 달라고 함 ({said ?? "못 들음"})", said != null);
+            bool kept = Stock(w, "Bow") == 0;
+            foreach (var p in others) kept &= Stock(w, p) == Need(bow, p);
+            checks.Add($"활은 안 생기고 다른 재료는 그대로 (활 {Stock(w, "Bow")})", kept);
+            yield return Stop();
+            foreach (var req in bow.m_resources) TestKit.ClearBaseStock(w, Utils.GetPrefabName(req.m_resItem.gameObject));
+        }
+
+        static int Need(Recipe r, string prefab)
+        {
+            foreach (var req in r.m_resources) if (Utils.GetPrefabName(req.m_resItem.gameObject) == prefab) return req.m_amount;
+            return 0;
+        }
+
         static GameObject Place(System.Collections.Generic.List<GameObject> made, string prefab, Vector3 at)
         {
             at = GatherTest.Ground(at);
@@ -82,6 +125,7 @@ namespace ValheimHelper
                 if (r.m_item != null && Utils.GetPrefabName(r.m_item.gameObject) == "Bow") bow = r;
             checks.Add("활 레시피 있음", bow != null);
             if (bow == null) yield break;
+            yield return MissingStation(w, checks, bow);
             foreach (var req in bow.m_resources)
                 TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount);
             Place(made, "piece_workbench", w.Home - right * 4f);

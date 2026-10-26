@@ -9,7 +9,8 @@ namespace ValheimHelper.Core.Work
     /// 다시 세우면 설비에 넣은 재료·나오는 중인 결과물을 몰라 재료를 또 모으고 더 만들었다(설비 속 재료를 재고로 세면 광석을 다시 꺼낸다거나
     /// 아직 안 나온 주괴로 제작을 시작하는 오판, 두 작업이 같은 설비를 세면 중복). 이어 가면 "기다렸다 회수할 물량"은 그 작업의
     /// 남은 기다림·꺼내기 단계로 남고, 다른 작업과 나눠 세지 않는다.
-    /// 형식: "v1" ~ 단계마다 "id/kind/item/amount/station/fuel/fuelAmount/crafts/attend/seconds/after(+)/state/progress".
+    /// 형식: "v1"(없는 설비가 있으면 "v1#설비+설비") ~ 단계마다 "id/kind/item/amount/station/fuel/fuelAmount/crafts/attend/seconds/after(+)/state/progress".
+    /// 없는 설비는 끝에 "재료는 모았는데 ○○이 없어"를 말하려고 같이 둔다(설비만 없는 부분 계획, 10-26).
     /// 물건·설비 이름은 프리팹·제작대 이름이라 / ~ + 를 쓰지 않는다(쓰면 그 칸은 깨진 것으로 봄). 바깥 저장(WorkState)이 % ; , = | 를 감싼다.
     /// </summary>
     public static class PlanSave
@@ -20,7 +21,8 @@ namespace ValheimHelper.Core.Work
         /// <param name="progress">단계 번호 → 진행(채집·사냥: 지금까지 상자에 넣은 수), 모르면 0.</param>
         public static string Save(PlanRunner runner, Func<int, int> progress)
         {
-            var parts = new List<string> { Version };
+            var missing = runner.Plan.MissingStations;
+            var parts = new List<string> { missing.Count > 0 ? Version + "#" + string.Join("+", missing.ToArray()) : Version };
             foreach (var s in runner.Plan.Steps)
             {
                 var after = new List<string>();
@@ -43,8 +45,12 @@ namespace ValheimHelper.Core.Work
         {
             if (string.IsNullOrEmpty(text)) return null;
             string[] parts = text.Split('~');
-            if (parts.Length < 2 || parts[0] != Version) return null;
+            if (parts.Length < 2) return null;
+            string[] head = parts[0].Split('#');
+            if (head[0] != Version || head.Length > 2) return null;
             var plan = new Plan();
+            if (head.Length == 2)
+                foreach (string m in head[1].Split('+')) if (m.Length > 0) plan.MissingStations.Add(m);
             var states = new StepState[parts.Length - 1];
             var progress = new int[parts.Length - 1];
             for (int i = 1; i < parts.Length; i++)
