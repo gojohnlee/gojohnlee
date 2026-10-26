@@ -1,8 +1,8 @@
 갱신: 2026-10-26 23:13  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
+지금: 다시 켜는 중: 새 루프 스크립트로(1~2분)
 회차: 182, 계정: 2번, 한도: 없음
 할 일: 회차 사용량 재기 → 가) [구현 완료·검증 대기, PC 10-26 — 커밋 553e59d(Codex)·96c3d37 · 실제 회차 기록 없음: 루프 멈춤] vh-loop.ps1이 회차마다 claude 결과의 사용량…
 마지막 시험: 10-26 23:12 요약: 1/1 PASS
-Claude가 한 일: LOOP: DONE 10-26 출발 규칙 게임 시험 5개 PASS(departtest·plainstest 기대값을 새 규칙으로 고침)
+Claude가 한 일: -
 분업(Claude 구현 → Astra 검증): off: 기준 회차 0/5
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
