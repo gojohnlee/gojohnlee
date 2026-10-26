@@ -268,6 +268,7 @@ namespace ValheimHelper
             float hit = Mathf.Max(Guard.HitWith(npc, weapon), Guard.HitOf(npc));
             Shield? shield = npc.BlockStats(shieldItem) ?? npc.BlockStats(); // 막기는 그 무리 적 수에 따라(Block.MaxFoes)
             System.Func<IList<Foe>, System.Func<float, float>> taken = f => Guard.TakenFor(npc, armor, shield, f.Count);
+            System.Func<GroupFoe, Foe> resolve = Guard.ResolveFor(npc, Prep.Arsenal(npc)); // 적 약점·저항을 내 무기로(전투 보강 나)
             PlaceBook book = Brain.Places;
             double now = Now;
             var biomes = new Dictionary<ZoneXY, int>();
@@ -278,13 +279,13 @@ namespace ValheimHelper
             foreach (ZoneMemory m in Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(home)))
             {
                 if (input.Places.Count >= MaxPlaces) break;
-                PlaceRisk alone = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit, taken(f)), Guard.Resolve);
+                PlaceRisk alone = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit, taken(f)), resolve);
                 var o = new PlaceOption
                 {
                     Zone = m.Zone,
                     Distance = Utils.DistanceXZ(home, Senses.ZoneCenter(m.Zone)),
                     Ratio = alone.Ratio,
-                    RatioWithMead = book.Risk(m.Zone, now, f => Danger.Ratio(f, health + MeadHeal, hit, taken(f)), Guard.Resolve).Ratio,
+                    RatioWithMead = book.Risk(m.Zone, now, f => Danger.Ratio(f, health + MeadHeal, hit, taken(f)), resolve).Ratio,
                     DeathWeight = alone.DeathWeight,
                     Boss = alone.Boss,
                     TopFoe = alone.TopFoe,
@@ -294,7 +295,7 @@ namespace ValheimHelper
                 // 거점 바이옴(처음엔 초원)은 장비 검사 안 함: 줄 수 있는 더 좋은 장비가 없어 초반에 일을 못 했다(사용자 결정 2026-10-25)
                 if (biome == homeBiome) gearBy[biome] = new PlaceRisk();
                 if (!gearBy.TryGetValue(biome, out PlaceRisk land))
-                    gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, f => Danger.Ratio(f, health, hit, taken(f)), Guard.Resolve, NativeTo);
+                    gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, f => Danger.Ratio(f, health, hit, taken(f)), resolve, NativeTo);
                 o.GearRatio = land.Ratio;
                 o.GearFoe = land.TopFoe;
                 o.BiomeName = BiomeNames.Of(biome);

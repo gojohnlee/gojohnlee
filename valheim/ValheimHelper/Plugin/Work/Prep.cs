@@ -140,13 +140,20 @@ namespace ValheimHelper
         /// <summary>Ready + 싸울 때 들 방패(전투 보강 가: 출발 판단이 막기를 셈).</summary>
         public static void Ready(WorkerNpc npc, out float armor, out ItemDrop.ItemData weapon, out ItemDrop.ItemData shield)
         {
-            var all = new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems());
-            foreach (var c in Chests.NearBase(npc.Home, ChestRole.Gear)) all.AddRange(c.GetInventory().GetAllItems());
+            var all = Arsenal(npc);
             armor = 0f;
             foreach (var it in Plan(all))
                 if (System.Array.IndexOf(Gear.WearSlots, it.m_shared.m_itemType) >= 0) armor += it.GetArmor();
             weapon = Gear.Best(all, Gear.IsMelee, Gear.WeaponScore);
             shield = WorkerNpc.FightShield(all);
+        }
+
+        /// <summary>출발 준비 때 고를 수 있는 것 전부: 짐 + 거점 장비 상자(역할 없으면 상자 전부).</summary>
+        public static List<ItemDrop.ItemData> Arsenal(WorkerNpc npc)
+        {
+            var all = new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems());
+            foreach (var c in Chests.NearBase(npc.Home, ChestRole.Gear)) all.AddRange(c.GetInventory().GetAllItems());
+            return all;
         }
 
         static List<ItemDrop.ItemData> Plan(List<ItemDrop.ItemData> all)

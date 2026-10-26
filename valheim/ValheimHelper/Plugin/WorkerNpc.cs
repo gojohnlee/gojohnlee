@@ -123,13 +123,17 @@ namespace ValheimHelper
                 if (it != null && m_inventory.ContainsItem(it) && !IsItemEquiped(it)) EquipItem(it);
         }
 
-        /// <summary>싸울 무기와 방패를 든다(가진 것 중 가장 좋은 것, 방패가 있으면 한손 무기). 없으면 false.</summary>
-        public bool HoldWeapon()
+        /// <summary>
+        /// 싸울 무기와 방패를 든다(가진 것 중 가장 좋은 것, 방패가 있으면 한손 무기). 없으면 false.
+        /// mults(그 적의 피해 종류별 배율, Guard.Mults)를 주면 그 적에게 가장 세게 들어가는 무기(약점·저항·스킬 셈, 전투 보강 나).
+        /// </summary>
+        public bool HoldWeapon(float[] mults = null)
         {
             var items = m_inventory.GetAllItems();
             ItemDrop.ItemData shield = Gear.Best(items, Gear.IsShield, Gear.ShieldScore);
-            ItemDrop.ItemData weapon = Gear.Best(items, it => Gear.IsMelee(it) && (shield == null || !it.IsTwoHanded()), Gear.WeaponScore)
-                                       ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
+            ItemDrop.ItemData weapon = mults != null ? Guard.BestVs(this, items, shield != null, mults)
+                                       : Gear.Best(items, it => Gear.IsMelee(it) && (shield == null || !it.IsTwoHanded()), Gear.WeaponScore)
+                                         ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
             if (weapon == null)
             {
                 if (HoldingBow()) { StopDraw(); UnequipItem(GetCurrentWeapon(), false); } // 활은 사냥에만: 싸울 땐 맨손이 낫다

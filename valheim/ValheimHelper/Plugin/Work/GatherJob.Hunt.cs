@@ -129,7 +129,7 @@ namespace ValheimHelper
                 return true;
             }
             if (Prey.NeedsBow(m_prey)) return UpdateShoot(dt);
-            if (!m_huntArmed || m_npc.HoldingBow()) { m_huntArmed = true; m_npc.HoldWeapon(); } // 없으면 맨손으로
+            if (!m_huntArmed || m_npc.HoldingBow()) { m_huntArmed = true; m_npc.HoldWeapon(Guard.Mults(m_prey.GetDamageModifiers())); } // 없으면 맨손으로, 사냥감 약점에 맞는 무기
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
             float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
             float d = Utils.DistanceXZ(m_preyPos, m_npc.transform.position) - m_prey.GetRadius();

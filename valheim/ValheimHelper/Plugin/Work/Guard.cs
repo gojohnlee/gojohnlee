@@ -596,6 +596,8 @@ namespace ValheimHelper
                         damage = Mathf.Max(0f, damage - e.Value * 0.5f * (1f + Mathf.Max(0, level - 1) * 0.5f));
             // 판단식은 "내가 한 번 칠 때 맞는 피해"로 센다. 바닐라 몬스터는 공격 사이 쉬는 시간이 있어 대략 내가 두 번 칠 때 한 번 친다.
             damage *= FoeHitsPerSwing;
+            // 적 약점·저항(전투 보강 나): 내 무기 중 그 적에게 가장 세게 들어가는 한 방으로 셈 → 체력을 그 비만큼(약하면 덜, 저항·면역이면 더)
+            health *= WeakScale(m_npc, m_npc.GetInventory().GetAllItems(), Mults(c.GetDamageModifiers()));
             return new Foe { Kind = kind, Health = health, Damage = damage, Boss = c.IsBoss(), Distance = Vector3.Distance(c.transform.position, pos) };
         }
 
@@ -620,6 +622,7 @@ namespace ValheimHelper
         // ---- 행동 ----
 
         bool m_armed;
+        Character m_armedFor;
         float m_fightIdle;
         float m_diagTimer;
         int m_diagSwings;
@@ -635,7 +638,8 @@ namespace ValheimHelper
                 m_judgeTimer = 0f; // 다음 적을 바로 고른다
                 return true;
             }
-            if (!m_armed || m_npc.HoldingBow()) { m_armed = true; m_fightIdle = 0f; m_npc.StopDraw(); m_npc.HoldWeapon(); } // 없으면 맨손으로. 활은 사냥에만
+            // 없으면 맨손으로. 활은 사냥에만. 그 적의 약점·저항에 가장 세게 들어가는 무기(전투 보강 나) — 적이 바뀌면 다시 고름
+            if (!m_armed || m_npc.HoldingBow() || m_armedFor != m_target) { m_armed = true; m_armedFor = m_target; m_fightIdle = 0f; m_npc.StopDraw(); m_npc.HoldWeapon(Mults(m_target.GetDamageModifiers())); }
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
             float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
             Vector3 tp = m_target.transform.position;
@@ -732,6 +736,7 @@ namespace ValheimHelper
             m_farHitTimer = 0f;
             m_target = null;
             m_armed = false;
+            m_armedFor = null;
             m_diagSwings = 0;
             m_npc.DropBlock();
             m_state = State.Calm;
@@ -898,10 +903,64 @@ namespace ValheimHelper
         public static float HitOf(WorkerNpc npc) => HitWith(npc, Gear.Best(npc.GetInventory().GetAllItems(), Gear.IsMelee, Gear.WeaponScore));
 
         /// <summary>그 무기(null이면 맨손)를 들었을 때 내 한 방(Prep.Ready — 상자의 더 좋은 무기까지).</summary>
-        public static float HitWith(WorkerNpc npc, ItemDrop.ItemData w)
+        public static float HitWith(WorkerNpc npc, ItemDrop.ItemData w) => HitWith(npc, w, null);
+
+        /// <summary>그 무기(null이면 맨손 = 둔기 5)로 그 적(mults = Mults, null이면 배율 없이)에게 들어가는 한 방.</summary>
+        public static float HitWith(WorkerNpc npc, ItemDrop.ItemData w, float[] mults)
         {
             // 스킬 반영(3-1장): 평균 피해 계수(스킬 10이면 0.46, 70이면 0.82)
-            return (w != null ? Gear.WeaponScore(w) * npc.MeanSkillFactor(w.m_shared.m_skillType) : 5f * npc.MeanSkillFactor(Skills.SkillType.Unarmed));
+            if (w == null) return 5f * (mults != null ? mults[Weakness.Blunt] : 1f) * npc.MeanSkillFactor(Skills.SkillType.Unarmed);
+            HitData.DamageTypes d = w.GetDamage();
+            return Weakness.Hit(d.m_damage, Damages(d), mults) * npc.MeanSkillFactor(w.m_shared.m_skillType);
+        }
+
+        // ---- 적 약점·저항 (전투 보강 나, 바닐라 HitData.ApplyResistance) ----
+
+        /// <summary>적의 피해 종류별 배율(Weakness.Kinds 순서). 살아 있는 적은 GetDamageModifiers(상태 효과 포함), 프리팹은 m_damageModifiers.</summary>
+        public static float[] Mults(HitData.DamageModifiers m) => new[]
+        {
+            W(m.m_blunt), W(m.m_slash), W(m.m_pierce), W(m.m_fire), W(m.m_frost), W(m.m_lightning), W(m.m_poison), W(m.m_spirit),
+        };
+
+        static float W(HitData.DamageModifier d) => Weakness.Mult((int)d);
+
+        static float[] Damages(HitData.DamageTypes d) => new[] { d.m_blunt, d.m_slash, d.m_pierce, d.m_fire, d.m_frost, d.m_lightning, d.m_poison, d.m_spirit };
+
+        /// <summary>그 적에게 가장 세게 들어가는 근접 무기(스킬 반영). oneHanded면(방패가 있으면) 한손 무기 먼저. 없으면 null.</summary>
+        public static ItemDrop.ItemData BestVs(WorkerNpc npc, IEnumerable<ItemDrop.ItemData> items, bool oneHanded, float[] mults)
+        {
+            System.Func<ItemDrop.ItemData, float> score = it => HitWith(npc, it, mults);
+            return Gear.Best(items, it => Gear.IsMelee(it) && (!oneHanded || !it.IsTwoHanded()), score) ?? Gear.Best(items, Gear.IsMelee, score);
+        }
+
+        /// <summary>
+        /// 위험 판단의 적 체력 보정(Weakness.HealthScale): 판단식은 배율 없는 내 한 방(HitOf)으로 세니, 내 무기 중 그 적에게 가장 세게 들어가는 한 방과의 비만큼 체력을 바꾼다.
+        /// (함께 싸우는 플레이어·동료 몫도 같은 비로 본다 — 짐작.)
+        /// </summary>
+        public static float WeakScale(WorkerNpc npc, IEnumerable<ItemDrop.ItemData> items, float[] mults)
+        {
+            var list = new List<ItemDrop.ItemData>(items);
+            float raw = HitWith(npc, Gear.Best(list, Gear.IsMelee, Gear.WeaponScore));
+            float eff = HitWith(npc, BestVs(npc, list, false, mults), mults);
+            return Weakness.HealthScale(raw, eff);
+        }
+
+        /// <summary>출발 판단용 Resolve: 장소 기억의 적 체력을 그 적 프리팹의 약점·저항과 내 무기(items, 상자 장비까지)로 보정.</summary>
+        public static System.Func<GroupFoe, Foe> ResolveFor(WorkerNpc npc, List<ItemDrop.ItemData> items)
+        {
+            var scales = new Dictionary<string, float>();
+            return g =>
+            {
+                Foe f = Resolve(g);
+                if (!scales.TryGetValue(g.Kind, out float k))
+                {
+                    GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(g.Kind) : null;
+                    Character c = prefab != null ? prefab.GetComponent<Character>() : null;
+                    scales[g.Kind] = k = c != null ? WeakScale(npc, items, Mults(c.m_damageModifiers)) : 1f;
+                }
+                f.Health *= k;
+                return f;
+            };
         }
 
         /// <summary>출발 전 판단용: 적의 한 방이 내 갑옷을 거쳐 들어오는 피해(거점 기준 난이도 배율). 막기는 안 셈(!기억·시험용).</summary>
