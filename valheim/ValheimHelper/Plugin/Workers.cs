@@ -5,22 +5,27 @@ using ValheimHelper.Core.Npc;
 
 namespace ValheimHelper
 {
-    /// <summary>NPC 2명 설정·소환·삭제·추적 (구상서 3장). 추적: 호스트가 모든 NPC 주변을 계속 돌린다(FarZones).</summary>
+    /// <summary>일꾼 2명 + 호위병 1명 설정·소환·삭제·추적 (구상서 3장). 추적: 호스트가 모든 NPC 주변을 계속 돌린다(FarZones).</summary>
     public static class Workers
     {
-        static ConfigEntry<string> s_name1, s_name2;
-        public const string Default1 = "라그나", Default2 = "플로키";
+        static ConfigEntry<string> s_name1, s_name2, s_name3;
+        public const string Default1 = "라그나", Default2 = "플로키", Default3 = "호위병";
         public static string Name1 => s_name1?.Value ?? Default1;
         public static string Name2 => s_name2?.Value ?? Default2;
+        /// <summary>호위병 이름(사용자 10-26: 이름·성격은 나중에 정함).</summary>
+        public static string Name3 => s_name3?.Value ?? Default3;
+        /// <summary>시험 중엔 호위병을 만들지 않는다(그 힘이 위험 판단에 끼어 기존 시험 기대값이 바뀜). 호위병 시험만 켠다(TestKit.WithGuard).</summary>
+        public static bool SkipGuard;
 
         public static void Init(ConfigFile cfg)
         {
             s_name1 = cfg.Bind("NPC", "Name1", Default1, "1호(라그나 — 침착·신중) 이름");
             s_name2 = cfg.Bind("NPC", "Name2", Default2, "2호(플로키 — 들뜬 장난꾸러기·공격적) 이름");
+            s_name3 = cfg.Bind("NPC", "Name3", Default3, "호위병(일은 안 하고 위험한 곳에 따라가 싸움) 이름");
             // 옛 기본값(Claude·Alarak)이 남은 설정은 한 번 새 이름으로. 사용자가 고른 다른 이름은 그대로.
             if (s_name1.Value == Old1) s_name1.Value = Default1;
             if (s_name2.Value == Old2) s_name2.Value = Default2;
-            new Terminal.ConsoleCommand("vh_spawn", "[Valheim Helper] 일꾼 NPC 2명을 내 옆에 부른다(없는 쪽만)", args => args.Context.AddString(Spawn(out _)));
+            new Terminal.ConsoleCommand("vh_spawn", "[Valheim Helper] 일꾼 2명·호위병을 내 옆에 부른다(없는 쪽만)", args => args.Context.AddString(Spawn(out _)));
             new Terminal.ConsoleCommand("vh_despawn", "[Valheim Helper] 일꾼 NPC를 모두 없앤다", args => args.Context.AddString($"NPC {DespawnAll()}명 없앰"));
         }
 
@@ -67,13 +72,13 @@ namespace ValheimHelper
             Player player = Player.m_localPlayer;
             if (player == null || !ZNet.instance.IsServer()) return "월드 호스트(싱글 또는 서버 시작)에서만 부를 수 있어요.";
             spawned = SpawnMissing(player.transform.position, player.transform.rotation);
-            return spawned.Count == 0 ? "두 명 다 이미 있어요." : $"NPC {spawned.Count}명 부름";
+            return spawned.Count == 0 ? "다 이미 있어요." : $"NPC {spawned.Count}명 부름";
         }
 
-        /// <summary>거점 둘레의 각자 자리: 1호는 왼쪽 앞, 2호는 오른쪽 앞.</summary>
+        /// <summary>거점 둘레의 각자 자리: 1호는 왼쪽 앞, 2호는 오른쪽 앞, 호위병은 뒤.</summary>
         public static Vector3 HomeSpot(Vector3 center, Quaternion rot, int role)
         {
-            Vector3 p = center + rot * new Vector3(role == 0 ? -1.5f : 1.5f, 0f, 2f);
+            Vector3 p = center + rot * (role == WorkerNpc.GuardRole ? new Vector3(0f, 0f, -2.5f) : new Vector3(role == 0 ? -1.5f : 1.5f, 0f, 2f));
             // 높이는 지형 기준(깃발이 바위 위에 있어도 NPC 집은 땅): 구역이 안 불러와졌으면 깃발 높이 그대로.
             if (ZoneSystem.instance.GetGroundHeight(p, out float h)) p.y = h;
             return p;
@@ -91,9 +96,9 @@ namespace ValheimHelper
             GameObject prefab = ZNetScene.instance.GetPrefab(WorkerPrefab.Name);
             ZNetView view = prefab.GetComponent<ZNetView>();
             int hash = WorkerPrefab.Name.GetStableHashCode();
-            for (int role = 0; role < 2; role++)
+            for (int role = 0; role <= WorkerNpc.GuardRole; role++)
             {
-                if (existing.Contains(role)) continue;
+                if (existing.Contains(role) || role == WorkerNpc.GuardRole && SkipGuard) continue;
                 Vector3 pos = HomeSpot(center, rot, role) + Vector3.up * 0.5f;
                 ZDO zdo = ZDOMan.instance.CreateNewZDO(pos, hash);
                 zdo.Persistent = true;
@@ -101,7 +106,7 @@ namespace ValheimHelper
                 zdo.Distant = view.m_distant;
                 zdo.SetPrefab(hash);
                 zdo.SetRotation(rot);
-                zdo.Set(WorkerNpc.KeyName, role == 0 ? Name1 : Name2);
+                zdo.Set(WorkerNpc.KeyName, role == 0 ? Name1 : role == 1 ? Name2 : Name3);
                 zdo.Set(WorkerNpc.KeyRole, role);
                 zdo.Set(WorkerNpc.KeyHome, HomeSpot(center, rot, role));
                 zdo.Set(WorkerNpc.KeyGreet, true);
@@ -139,6 +144,22 @@ namespace ValheimHelper
         }
 
         public static int DespawnAll() => DespawnNear(null, 0f);
+
+        /// <summary>호위병만 없앤다(호위병 시험 끝 정리).</summary>
+        public static int DespawnGuards()
+        {
+            int n = 0;
+            foreach (var zdo in AllZdos())
+            {
+                if (zdo.GetInt(WorkerNpc.KeyRole) != WorkerNpc.GuardRole) continue;
+                FarZones.Untrack(zdo.m_uid);
+                ZNetView view = ZNetScene.instance.FindInstance(zdo);
+                if (view != null) ZNetScene.instance.Destroy(view.gameObject);
+                else { zdo.SetOwner(ZDOMan.GetSessionID()); ZDOMan.instance.DestroyZDO(zdo); }
+                n++;
+            }
+            return n;
+        }
 
         /// <summary>center 둘레 radius(수평) 안의 일꾼만 없앤다(동시 시험: 자기 자리 일꾼만 정리). center가 null이면 전부.</summary>
         public static int DespawnNear(Vector3? center, float radius)
@@ -200,6 +221,12 @@ namespace ValheimHelper
             s_scanDone = true;
             foreach (var zdo in s_scanList) { FarZones.Track(zdo.m_uid); Know(zdo.m_uid); }
             Plugin.Log.LogInfo($"저장된 NPC {s_scanList.Count}명 추적 시작");
+            // 호위병 전에 만든 월드(일꾼 둘만): 켜진 깃발 뒤에 호위병을 만든다(사용자 10-26)
+            if (s_scanList.Count > 0 && !SkipGuard && !s_scanList.Exists(z => z.GetInt(WorkerNpc.KeyRole) == WorkerNpc.GuardRole))
+            {
+                ZDO flag = BaseFlag.AllFlags().Find(f => f.GetBool(BaseFlag.KeyActive));
+                if (flag != null) Plugin.Log.LogInfo($"호위병 없음 → 거점에 만듦 {SpawnMissing(flag.GetPosition(), flag.GetRotation()).Count}명");
+            }
             s_scanList.Clear();
         }
     }

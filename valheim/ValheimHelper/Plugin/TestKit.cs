@@ -765,8 +765,21 @@ namespace ValheimHelper
         }
 
         /// <summary>시험이 바꾼 것을 되돌린다(예외로 끝나도 finally에서 부름, 여러 번 불러도 됨).</summary>
+        /// <summary>호위병 시험: Setup 전에 부르면 깃발에 호위병도 만든다(시험은 기본으로 호위병 없이 — Workers.SkipGuard). Restore가 끄고 호위병을 치운다.</summary>
+        public static void WithGuard() => Workers.SkipGuard = false;
+
+        /// <summary>Setup 뒤에 호위병을 켜진 깃발에 만들고 불러와질 때까지 기다린다(최대 20초). TestKit.Waited·Ok를 남김.</summary>
+        public static IEnumerator SpawnGuard()
+        {
+            WithGuard();
+            ZDO flag = BaseFlag.AllFlags().Find(f => f.GetBool(BaseFlag.KeyActive));
+            if (flag != null) Workers.SpawnMissing(flag.GetPosition(), flag.GetRotation());
+            yield return WaitFor(() => WorkerNpc.TheGuard != null && WorkerNpc.TheGuard.Zdo != null, 20f);
+        }
+
         public static void Restore(World w)
         {
+            if (!Workers.SkipGuard) { Workers.SkipGuard = true; Workers.DespawnGuards(); }
             if (s_cur == w) s_cur = null; // 상태 흐름 기록 멈춤(링 버퍼는 End가 쏟을 때까지 남김)
             if (w.OnHeard != null) { ChatNet.Heard -= w.OnHeard; w.OnHeard = null; }
             if (w.OnBubbled != null) { ChatNet.Bubbled -= w.OnBubbled; w.OnBubbled = null; }

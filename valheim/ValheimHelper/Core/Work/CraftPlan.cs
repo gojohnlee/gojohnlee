@@ -121,6 +121,11 @@ namespace ValheimHelper.Core.Work
         public bool TooLong => Seconds > CraftPlanner.MaxSeconds;
         /// <summary>설비가 없거나 범위 밖·모르는 재료가 있어 끝까지는 못 한다(할 수 있는 단계까지만).</summary>
         public bool Partial => MissingStations.Count > 0 || OutOfScope.Count > 0 || Unknown.Count > 0;
+        /// <summary>
+        /// 모자란 게 설비뿐(범위 밖·모름 없음): 할 수 있는 단계(재료 채집·있는 설비 가공)는 실행하고 끝에 설비를 지어 달라고 한다
+        /// (구상서 6-1 "광석은 다 모았는데 제련소가 없어", 외부 검토 + 사용자 승인 10-26).
+        /// </summary>
+        public bool StationsOnly => MissingStations.Count > 0 && OutOfScope.Count == 0 && Unknown.Count == 0;
     }
 
     /// <summary>

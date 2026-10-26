@@ -73,6 +73,10 @@ namespace ValheimHelper
             Step("vh_tartest", TarTest.Register);
             Step("vh_plainsfarmtest", PlainsFarmTest.Register);
             Step("vh_restart1·2", RestartTest.Register);
+            Step("vh_restartcraft", RestartCraftTest.Register);
+            Step("vh_machinestucktest", MachineStuckTest.Register);
+            Step("vh_blocktest", BlockTest.Register);
+            Step("vh_weaktest", WeakTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {Version} 로드됨");
         }

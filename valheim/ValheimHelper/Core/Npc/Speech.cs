@@ -5,7 +5,7 @@ namespace ValheimHelper.Core.Npc
 {
     /// <summary>1호 = 라그나(미드 바이킹스 라그나르 로드브로크 성향: 침착·호기심·실리, 신중), 2호 = 플로키(플로키 성향: 신들린 장난꾸러기·배 목수, 공격적).
     /// 신중(싸움 기준 0.85)·대담(0.95) 기준은 Danger.FightRagnar·FightFloki.</summary>
-    public enum Personality { Ragnar = 0, Floki = 1 }
+    public enum Personality { Ragnar = 0, Floki = 1, Guard = 2 }
 
     /// <summary>
     /// 상황별 대사 고르기. 원작 대사는 쓰지 않는다(성격·말버릇만, decisions.txt "인격 바꾸기"). 최근에 쓴 줄은 피한다 (10-1장).
@@ -116,6 +116,8 @@ namespace ValheimHelper.Core.Npc
                 ["craft.plan"] = new[] { "{item} {n}이면 {short|이} 없어서 {minutes}분쯤 걸려. 바로 시작하지.", "{item} {n}. {short|이} 없으니 {minutes}분쯤 걸리겠군. 시작하지.", "{short|이} 모자라서 {item} {n}은 {minutes}분쯤 걸려. 바로 하지.", "{item} {n}이라. {short|을} 구해야 하니 {minutes}분쯤이야." },
                 ["craft.inStock"] = new[] { "{item} {n}? 상자에 이미 있어.", "{item} {n}? 이미 상자에 있어.", "상자를 봐. {item} {n}, 벌써 있지.", "{item} {n}? 이미 넉넉히 있어. 또 만들까?" },
                 ["craft.missing"] = new[] { "{item} 만들려면 {station|이} 있어야 해. 하나 지어 줘.", "{item|을} 만들려면 {station|이} 필요해. 지어 줘.", "{station|이} 없으면 {item|은} 못 만들어." },
+                ["craft.missingGather"] = new[] { "{station|이} 없어서 {item|은} 못 만들어. 재료는 모아 두지, {minutes}분쯤. 그사이 하나 지어 줘.", "{item} 만들 {station|이} 없군. 재료부터 모아 둘게({minutes}분쯤). {station|을} 지어 줘." },
+                ["craft.missingDone"] = new[] { "{item} 재료는 다 모았어. {station|이} 없어서 못 만들어. 하나 지어 줘.", "재료는 상자에 모아 뒀어. {station|이} 있어야 {item|을} 만들지." },
                 ["craft.tooLong"] = new[] { "{item} {n}은 {minutes}분 넘게 걸려. 너무 길어, 나눠서 시켜 줘.", "{item} {n}은 {minutes}분이 넘게 걸려. 조금씩 나눠서 시켜 줘.", "그건 너무 오래 걸려. {item} {n}이면 {minutes}분이 넘지. 나눠서 하자." },
                 ["craft.unknown"] = new[] { "{item} 만들 재료 중에 {what|은} 어디서 나는지 모르겠군.", "{item}에 들어갈 {what|이} 어디 있는지 모르겠어.", "{what|은} 본 적이 없어. {item|은} 아직 못 만들어." },
                 ["setList"] = new[] { "세트메뉴? {list}.", "세트메뉴라면 {list}." },
@@ -160,6 +162,8 @@ namespace ValheimHelper.Core.Npc
                 ["depart.lowSkill"] = new[] { "아직 손이 서툴러서 좀 걸려. 다녀오지.", "솜씨가 아직이라... 천천히 해 오지.", "아직 서툴러. 시간이 좀 걸리겠지만 가지.", "익숙하지 않아서 느릴 거야. 그래도 가지.", "솜씨는 다니면서 늘지. 다녀오지." },
                 ["depart.busy"] = new[] { "지금 {job}부터 하고 가지.", "{job} 끝내고 바로 가지.", "{job}부터 끝내고 가지.", "지금은 {job} 중이야. 끝나면 가지.", "{job}부터 마무리하지. 그다음에 가지." },
                 ["depart.together"] = new[] { "혼자서는 빡빡한 데라 {partner}랑 같이 다녀오지.", "거긴 둘이 가야 해. {partner}, 같이 가자.", "거긴 혼자 가면 안 돼. {partner|이랑} 같이 가지.", "{partner}, 같이 가지. 혼자선 위험해.", "둘이 가면 덜 위험하지. {partner|이랑} 가지." },
+                ["depart.waitGuard"] = new[] { "{item}... 혼자 가기엔 위험한 데군. {partner|이} 돌아오면 같이 가지.", "{partner|을} 기다렸다가 같이 가지. 혼자선 위험해.", "거긴 혼자 안 가. {partner|이} 쉬면 같이 출발하지." },
+                ["preyWaitGuard"] = new[] { "{foe|은} 혼자선 무리야. {partner|이} 오면 다시 가지.", "{partner|이} 바쁘군. {item|은} 같이 갈 수 있을 때 가져오지." },
                 ["depart.outOfScope"] = new[] { "그건 내 손으로는 못 구해. 배나 보스를 잡아야 하는 거라서.", "그건 내 힘으론 못 구해. 배나 보스가 있어야 하지.", "그건 아직 무리야. 배를 타거나 보스를 잡아야 해." },
                 ["depart.noCrypt"] = new[] { "철은 늪 지하묘지에서 나와. 열쇠로 연 문이 없어서 못 가. 문 하나만 열어 줘.", "철은 늪 지하묘지에 있어. 열린 문이 없어서 못 가. 열쇠로 문 하나만 열어 줘." },
                 ["depart.cryptsEmpty"] = new[] { "아는 지하묘지는 고철을 다 캤어. 새 지하묘지를 찾아 줘야 가지.", "아는 지하묘지는 다 캤어. 새 지하묘지를 찾아 줘.", "고철은 다 캐 왔어. 새 지하묘지가 필요해." },
@@ -345,6 +349,8 @@ namespace ValheimHelper.Core.Npc
                 ["craft.plan"] = new[] { "{item} {n}! {short|이} 없어서 {minutes}분쯤 걸려. 바로 할게!", "{item} {n}! {short|이} 없으니까 {minutes}분쯤! 시작한다!", "{short|이} 모자라! {item} {n}은 {minutes}분쯤 걸려. 바로 할게!", "{item} {n}, {short}부터 구해야 해. {minutes}분쯤!" },
                 ["craft.inStock"] = new[] { "{item} {n}? 상자에 벌써 있는데? 히히.", "{item} {n}? 상자 봐, 벌써 있어!", "{item} {n}? 이미 있어! 히히, 또 만들어?", "상자에 {item} {n} 있는데? 눈 감고 봤어?" },
                 ["craft.missing"] = new[] { "{item} 만들려면 {station|이} 필요해! 하나 지어 줘.", "{station|이} 없어! {item|은} 못 만들어.", "{item} 만들려면 {station}! 지어 줘, 히히." },
+                ["craft.missingGather"] = new[] { "{station|이} 없어! 그래도 {item} 재료는 모아 둘게, {minutes}분쯤! 지어 줘!", "{item} 만들 {station|이} 없네! 재료만 먼저 모을게({minutes}분쯤). 히히." },
+                ["craft.missingDone"] = new[] { "{item} 재료 다 모았어! 이제 {station}만 지어 줘!", "재료는 상자에 있어! {station|이} 없어서 {item|은} 못 만들어, 히히." },
                 ["craft.tooLong"] = new[] { "{item} {n}? {minutes}분 넘게 걸려! 나눠서 시켜 줘.", "{item} {n}? {minutes}분 넘게 걸려! 나눠서 시켜.", "그건 너무 길어! {item} {n}은 {minutes}분 넘어." },
                 ["craft.unknown"] = new[] { "{item} 재료 중에 {what|은} 어디서 나는지 몰라!", "{item}에 들어갈 {what|이} 어디 있는지 몰라!", "{what}? 그게 뭐야? {item|은} 아직 못 만들어." },
                 ["setList"] = new[] { "세트메뉴! {list}.", "세트메뉴 들어 봐! {list}." },
@@ -389,6 +395,8 @@ namespace ValheimHelper.Core.Npc
                 ["depart.lowSkill"] = new[] { "아직 서툴러서 좀 걸려! 다녀올게.", "솜씨가 아직이야. 천천히 할게, 히히.", "아직 서툴러! 그래도 간다, 히히.", "솜씨는 없어도 열정은 있어! 다녀올게.", "느려도 간다! 배우면서 하지." },
                 ["depart.busy"] = new[] { "{job}부터 하고 갈게!", "{job} 끝나면 바로 간다!", "지금 {job} 중이야! 끝나면 갈게.", "{job}부터! 히히, 그다음에.", "{job} 끝내고 바로!" },
                 ["depart.together"] = new[] { "거긴 혼자 무리야. {partner}랑 갈래!", "{partner}! 같이 가자, 히히.", "{partner}! 같이 가자, 혼자는 무서워. 히히.", "거긴 둘이 가야 해! {partner|이랑} 갈게.", "{partner|이랑} 가면 재밌겠다!" },
+                ["depart.waitGuard"] = new[] { "거긴 혼자 가면 큰일 나! {partner} 오면 같이 갈래, 히히.", "{partner|을} 기다릴게! 혼자는 무서워.", "{item}? {partner|이랑} 같이 가야 해. 쉴 때까지 기다리지 뭐!" },
+                ["preyWaitGuard"] = new[] { "{foe|이} 너무 세! {partner} 오면 다시 갈게!", "{partner|이} 바빠? 그럼 나중에 같이 {item} 잡으러 가자, 히히." },
                 ["depart.outOfScope"] = new[] { "그건 내가 못 구해! 배나 보스가 있어야 해.", "그건 못 구해! 배가 있거나 보스를 잡아야 해.", "그건 신들도 못 줘! 배나 보스가 필요해." },
                 ["depart.noCrypt"] = new[] { "철은 늪 지하묘지에 있어! 열린 문이 없어. 문 하나만 열어 줘.", "철은 늪 지하묘지에 있어! 문이 다 닫혔어. 열쇠로 하나만 열어 줘." },
                 ["depart.cryptsEmpty"] = new[] { "아는 지하묘지는 다 털었어! 새 지하묘지를 찾아 줘.", "지하묘지는 다 털었어! 새 데 찾아 줘.", "고철 다 캤어! 새 지하묘지가 필요해!" },
@@ -481,15 +489,18 @@ namespace ValheimHelper.Core.Npc
 
         public Speech(Random rng = null) { _rng = rng ?? new Random(); }
 
-        public static bool Has(Personality p, string key) => Lines[(int)p].ContainsKey(key);
+        /// <summary>대사 묶음: 호위병(Guard)은 이름·성격을 정하기 전까지 라그나 대사를 쓴다(사용자 10-26 "추후에").</summary>
+        static Dictionary<string, string[]> SetOf(Personality p) => Lines[p == Personality.Floki ? 1 : 0];
+
+        public static bool Has(Personality p, string key) => SetOf(p).ContainsKey(key);
 
         /// <summary>그 키의 대사 줄 전부(시험이 들은 말과 맞춰 볼 때). 없으면 빈 배열.</summary>
-        public static string[] Options(Personality p, string key) => Lines[(int)p].TryGetValue(key, out var o) ? o : new string[0];
+        public static string[] Options(Personality p, string key) => SetOf(p).TryGetValue(key, out var o) ? o : new string[0];
 
         /// <summary>대사 하나. 같은 상황에서 바로 전에 쓴 줄은 피한다. 없는 키면 키 이름을 그대로 돌려준다.</summary>
         public string Say(Personality p, string key, IDictionary<string, string> args = null)
         {
-            if (!Lines[(int)p].TryGetValue(key, out var options) || options.Length == 0) return key;
+            if (!SetOf(p).TryGetValue(key, out var options) || options.Length == 0) return key;
             string memo = (int)p + "/" + key;
             _last.TryGetValue(memo, out var last);
             string line;

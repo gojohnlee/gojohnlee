@@ -22,8 +22,39 @@ namespace ValheimHelper.Core.Work
             _started = new float[plan.Steps.Count];
         }
 
+        /// <summary>
+        /// 저장에서 되살린다(PlanSave.Load, 재시작 — 외부 검토 10-26). 진행 중이던 단계 맞추기:
+        /// 채집·사냥은 넣은 만큼 줄여 다시(다 넣었으면 끝, 들고 있던 것은 다음 넣기에서 저절로 셈), 설비 넣기는 한 번에 넣으므로 아직 안 넣은 것으로 다시
+        /// (곁에서 지키는 조리대는 이미 올라가 있으면 끝으로 — 꺼내기 단계가 마저 꺼냄), 기다림은 지금부터 다시 잼(플러그인이 설비가 실제로 다 되면 일찍 끝냄),
+        /// 꺼내기·제작은 다시. 끝·실패·막힘은 그대로.
+        /// </summary>
+        public static PlanRunner Restore(Plan plan, StepState[] states, int[] progress, Func<PlanStep, bool> alreadyLoaded = null)
+        {
+            var r = new PlanRunner(plan);
+            foreach (var s in plan.Steps)
+            {
+                StepState st = states[s.Id];
+                if (st == StepState.Running)
+                {
+                    if (s.Kind == StepKind.Wait) st = StepState.Running;
+                    else if (s.Kind == StepKind.Load && s.AttendSeconds > 0 && alreadyLoaded != null && alreadyLoaded(s)) st = StepState.Done;
+                    else st = StepState.Pending;
+                }
+                if ((s.Kind == StepKind.Gather || s.Kind == StepKind.Hunt) && st == StepState.Pending && progress[s.Id] > 0)
+                {
+                    int left = s.Amount - progress[s.Id];
+                    if (left <= 0) st = StepState.Done; else s.Amount = left;
+                }
+                r._state[s.Id] = st;
+            }
+            return r;
+        }
+
         public Plan Plan => _plan;
         public StepState StateOf(int id) => _state[id];
+
+        /// <summary>그 단계가 도는 동안 지난 초(돌고 있지 않으면 0).</summary>
+        public float RunningFor(int id, float now) => _state[id] == StepState.Running ? now - _started[id] : 0f;
 
         bool DepsDone(PlanStep s)
         {

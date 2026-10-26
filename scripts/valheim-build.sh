@@ -11,7 +11,9 @@ export PATH="$PATH:$HOME/.dotnet/tools"
 dotnet build "$PROJ" -c Release -nologo -v q
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-ilspycmd -p -o "$TMP" "$PROJ/bin/Release/ValheimHelper.dll" >/dev/null
+# 메서드 몇 개 디컴파일 오류(ILSpy 버그, 회차 184 BlockTest·WeakTest.Run)는 참조 검사와 무관 → csproj만 있으면 됨
+ilspycmd -p -o "$TMP" "$PROJ/bin/Release/ValheimHelper.dll" >/dev/null 2>&1 || true
+ls "$TMP"/*.csproj >/dev/null 2>&1 || { echo "참조 검사용 디컴파일 실패(csproj 없음)" >&2; exit 1; }
 bad=$(grep -o 'Reference Include="[^"]*"' "$TMP"/*.csproj | sed 's/.*="\(.*\)"/\1/' |
       grep -vE '^(0Harmony|BepInEx|assembly_.*|UnityEngine(\..*)?|Unity\..*|mscorlib|netstandard|System|System\.Core|System\.Xml|System\.Data)$' || true)
 if [ -n "$bad" ]; then

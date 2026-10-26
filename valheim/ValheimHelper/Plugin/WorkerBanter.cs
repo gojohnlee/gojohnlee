@@ -108,7 +108,7 @@ namespace ValheimHelper
         /// <summary>WorkerNpc.Say가 말한 뒤 부른다: 그 말이 잡담 거리면 이벤트로.</summary>
         public static void OnSaid(WorkerNpc npc, string key, IDictionary<string, string> args)
         {
-            if (npc == null || ZNet.instance == null || !ZNet.instance.IsServer()) return;
+            if (npc == null || npc.IsGuard || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 호위병은 잡담에 안 낌(대사·성격 나중에)
             BanterEvent e;
             Dictionary<string, string> ea = null;
             switch (key)

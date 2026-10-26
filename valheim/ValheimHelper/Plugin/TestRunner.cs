@@ -62,6 +62,7 @@ namespace ValheimHelper
         {
             if (Running) { t?.AddString("이미 시험 중입니다."); return false; }
             Running = true;
+            Workers.SkipGuard = true; // 시험은 기본으로 호위병 없이(호위병 시험만 켬)
             s_gen++;
             s_timeout = s_timeouts.TryGetValue(name, out float lim) ? lim : DefaultTimeout;
             s_startTime = Time.time;
@@ -85,6 +86,7 @@ namespace ValheimHelper
         {
             TestKit.OldEnd(); // 옛 시험 끝 정리(로그가 이 시험 보고에 들어가게 먼저)
             Running = false;
+            Workers.SkipGuard = false;
             s_report.Add($"시간: {Time.time - s_startTime:0}초"); // 시험 스크립트 요약에 시험별로 보인다(평소보다 오래 걸린 것 알아채기)
             float real = Mathf.Max(0.001f, Time.realtimeSinceStartup - s_startReal);
             s_report.Add($"프레임: 평균 {(Time.frameCount - s_startFrame) / real:0} FPS (실시간 {real:0}초)"); // 시험 틀 바꾸기: 동시 시험 때 느려짐을 보기 위함

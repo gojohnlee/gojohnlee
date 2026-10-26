@@ -140,6 +140,7 @@ public class CraftPlanTests
         Assert.Contains("smelter", plan.MissingStations);
         Assert.Equal(10, plan.Gathers["CopperOre"]);
         Assert.True(plan.Partial);
+        Assert.True(plan.StationsOnly); // 설비만 없음 → 재료 채집은 실행(10-26)
         var noForge = new CraftPlanner(Book(), Base(forge: 0)).Expand("Bronze", 1, null);
         Assert.Contains("forge:1", noForge.MissingStations);
         Assert.True(noForge.Gathers.ContainsKey("CopperOre"));

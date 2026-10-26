@@ -50,27 +50,38 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 혼자면 못 잡을 사냥감(무리 속·센 것): 동료 일꾼과 둘이면 잡을 수 있으면 불러서 같이 잡는다(사용자 결정 2026-10-26, 거리 무관).
-        /// 동료가 이미 곁(20m)이면 셈에 들어 있으니 둘이도 안 되는 것. 불렀으면 true(동료가 올 때까지 기다렸다가 다시 찾음), 이 일에 한 번만.
+        /// 혼자면 못 잡을 사냥감(무리 속·센 것): 호위병과 둘이면 잡을 수 있으면 부른다(사용자 결정 2026-10-26 — 일꾼끼리는 안 부름).
+        /// 호위병이 쉬면 와서 같이(true — 올 때까지 기다렸다가 다시 찾음), 바쁘면 남은 양을 "호위병이 쉴 때" 대기열에 넣고 그만둠(m_guardQueued, 계획 단계는 그냥 그만둠).
+        /// 호위병이 이미 곁(20m)이면 셈에 들어 있으니 둘이도 안 되는 것. 이 일에 한 번만.
         /// </summary>
-        bool CallMateForPrey()
+        bool CallGuardForPrey()
         {
             if (m_mateCalled || m_ai.EscortName != null) return false;
             m_mateCalled = true;
-            WorkerNpc mate = Departures.MateFor(m_npc);
-            if (mate == null || m_hardPrey == null || m_hardPrey.IsDead()) return false;
-            float extra = Vector3.Distance(mate.transform.position, m_npc.transform.position) <= Guard.AllyRange ? 0f : Guard.HitOf(mate);
+            WorkerNpc guard = Departures.GuardOf();
+            if (guard == null || m_hardPrey == null || m_hardPrey.IsDead()) return false;
+            float extra = Vector3.Distance(guard.transform.position, m_npc.transform.position) <= Guard.AllyRange ? 0f : Guard.HitOf(guard);
             if (extra <= 0f || !m_ai.Guard.SafePrey(m_hardPrey, out _, extra))
             {
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {mate.NpcName}와 둘이도 {Utils.GetPrefabName(m_hardPrey.gameObject)}는 무리");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 호위병 {guard.NpcName}과 둘이도 {Utils.GetPrefabName(m_hardPrey.gameObject)}는 무리");
                 return false;
             }
-            if (Departures.GoWithMate(m_npc) == null) return false;
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 혼자면 안 되는 {Utils.GetPrefabName(m_hardPrey.gameObject)} → {mate.NpcName} 불러 같이 잡음");
-            m_npc.Say("preyMate", new Dictionary<string, string> { ["partner"] = mate.NpcName, ["item"] = ItemLabel(Item), ["foe"] = m_packFoe ?? m_strongFoe ?? "" });
-            m_packFoe = m_strongFoe = null;
-            m_huntSkip.Clear();
-            return true;
+            var args = new Dictionary<string, string> { ["partner"] = guard.NpcName, ["item"] = ItemLabel(Item), ["foe"] = m_packFoe ?? m_strongFoe ?? "" };
+            if (Departures.GoWithGuard(m_npc) != null)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 혼자면 안 되는 {Utils.GetPrefabName(m_hardPrey.gameObject)} → 호위병 {guard.NpcName} 불러 같이 잡음");
+                m_npc.Say("preyMate", args);
+                m_packFoe = m_strongFoe = null;
+                m_huntSkip.Clear();
+                return true;
+            }
+            if (InPlan) return false;
+            int left = Mathf.Max(1, Target - Delivered);
+            var cmd = new Core.Chat.ChatCommand { Kind = Core.Chat.CommandKind.Item, Item = Item, Amount = left };
+            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, WorkSaves.GatherItem(new Speaker("", ZDOID.None, ZDOID.None), cmd, ItemLabel(Item) + " " + left, ReadyWhen.GuardIdle)));
+            m_guardQueued = true;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 호위병이 바쁨 → 남은 {left}개는 호위병이 쉴 때 다시");
+            return false;
         }
 
         /// <summary>위험한 곳(Guard가 피한 적 자리) 둘레 20m 안에 이 물건의 사냥감이 살아 있나. foe = 그 자리에서 가장 가까운 적 이름(대사용).</summary>
@@ -118,7 +129,7 @@ namespace ValheimHelper
                 return true;
             }
             if (Prey.NeedsBow(m_prey)) return UpdateShoot(dt);
-            if (!m_huntArmed || m_npc.HoldingBow()) { m_huntArmed = true; m_npc.HoldWeapon(); } // 없으면 맨손으로
+            if (!m_huntArmed || m_npc.HoldingBow()) { m_huntArmed = true; m_npc.HoldWeapon(Guard.Mults(m_prey.GetDamageModifiers())); } // 없으면 맨손으로, 사냥감 약점에 맞는 무기
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
             float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
             float d = Utils.DistanceXZ(m_preyPos, m_npc.transform.position) - m_prey.GetRadius();

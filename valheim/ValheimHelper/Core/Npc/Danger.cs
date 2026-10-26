@@ -83,7 +83,7 @@ namespace ValheimHelper.Core.Npc
         public static Verdict Judge(Personality p, IList<Foe> foes, float health, float maxHealth, float myHit, Func<float, float> taken, bool haveMead)
         {
             if (foes.Count == 0) return Verdict.Calm;
-            bool alarak = p == Personality.Floki;
+            bool alarak = p != Personality.Ragnar; // 플로키·호위병은 대담한 기준
             bool low = health <= maxHealth * (alarak ? LowHealthFloki : LowHealthRagnar);
             if (low && haveMead) return Verdict.Drink;
             foreach (var f in foes) if (f.Boss) return Verdict.Flee;

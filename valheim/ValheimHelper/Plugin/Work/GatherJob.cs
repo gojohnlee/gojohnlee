@@ -29,9 +29,13 @@ namespace ValheimHelper
         string m_packFoe;
         /// <summary>사냥감 한 마리가 혼자 상대하기엔 센 것(록스 등, SafePrey가 무리 없이 거절)의 이름(preyStrong 대사). 한 번 보면 이 일 동안 둔다.</summary>
         string m_strongFoe;
-        /// <summary>혼자면 안 되던 가장 가까운 사냥감(동료와 합쳐 다시 셈), 동료를 이미 불렀는지(이 일에 한 번).</summary>
+        /// <summary>혼자면 안 되던 가장 가까운 사냥감(호위병과 합쳐 다시 셈), 호위병을 이미 불렀는지(이 일에 한 번), 호위병이 바빠 대기열에 미뤘는지.</summary>
         Character m_hardPrey;
-        bool m_mateCalled;
+        bool m_mateCalled, m_guardQueued;
+        /// <summary>자동 보충: 시작하면 호위병을 붙인다(남은 곳이 다 위험, Departures.NextRefillJob).</summary>
+        public bool WantGuard;
+        /// <summary>제작 계획의 채집 단계(PlanJob)인지 — 호위병이 바빠도 대기열에 따로 미루지 않는다(계획이 그 단계를 다룸).</summary>
+        public bool InPlan;
         /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
         bool m_sawSkipped;
         readonly WorkerNpc m_npc;
@@ -186,6 +190,7 @@ namespace ValheimHelper
         {
             var args = Args();
             if (m_packFoe != null || m_strongFoe != null) args["foe"] = m_packFoe ?? m_strongFoe;
+            args["partner"] = WorkerNpc.TheGuard?.NpcName ?? "";
             m_npc.Say(key, args);
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item} 실패: {key} ({Delivered}/{Target})");
             return false;

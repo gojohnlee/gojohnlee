@@ -41,12 +41,12 @@ namespace ValheimHelper.Core.Work
         /// 내릴 자리 후보: 목표 둘레 Radii × Directions, 가까운 거리부터, 같은 거리에선 일꾼이 오던 쪽(목표→일꾼 방향)에 가까운 방향부터.
         /// 일꾼이 목표와 같은 자리면 +x 쪽부터.
         /// </summary>
-        public static IEnumerable<XZ> Candidates(double npcX, double npcZ, double destX, double destZ)
+        public static IEnumerable<XZ> Candidates(double npcX, double npcZ, double destX, double destZ, double[] radii = null)
         {
             double baseAngle = Math.Atan2(npcZ - destZ, npcX - destX);
             if (Math.Abs(npcX - destX) < 1e-6 && Math.Abs(npcZ - destZ) < 1e-6) baseAngle = 0;
             double step = 2 * Math.PI / Directions;
-            foreach (double r in Radii)
+            foreach (double r in radii ?? Radii)
             {
                 // 0, +1, -1, +2, -2, ... 칸
                 for (int i = 0; i < Directions; i++)
@@ -56,6 +56,19 @@ namespace ValheimHelper.Core.Work
                     yield return new XZ(destX + Math.Cos(a) * r, destZ + Math.Sin(a) * r);
                 }
             }
+        }
+
+        /// <summary>설비 곁에 내릴 거리(m, 설비 가운데에서): 설비 앞 일 거리 2.5m 안(E035 설비 접근 막힘, 10-26).</summary>
+        public static readonly double[] MachineRadii = { 2.2, 2.4 };
+        /// <summary>설비에 곧장 못 다가갈 때 차례로 돌아 볼 쪽(도, 설비→일꾼 방향 기준): 옆 둘, 뒤(E035, 10-26).</summary>
+        public static readonly double[] SideAngles = { 90.0, -90.0, 180.0 };
+
+        /// <summary>설비 (cx,cz) 둘레 r m에서 side번째(SideAngles) 돌아 볼 접근점. 일꾼이 설비와 같은 자리면 +x 쪽 기준.</summary>
+        public static XZ Side(double npcX, double npcZ, double cx, double cz, double r, int side)
+        {
+            double a = Math.Abs(npcX - cx) < 1e-6 && Math.Abs(npcZ - cz) < 1e-6 ? 0 : Math.Atan2(npcZ - cz, npcX - cx);
+            a += SideAngles[side] * Math.PI / 180.0;
+            return new XZ(cx + Math.Cos(a) * r, cz + Math.Sin(a) * r);
         }
 
         /// <summary>근처 막힘 건너뛰기(사용자 결정 2026-10-23 "근처 막힘 건너뛰기"): 플레이어 근처에서 이 초 넘게 진척이 없으면 막힌 곳 너머로 옮긴다(30 → 15초 10-26).</summary>

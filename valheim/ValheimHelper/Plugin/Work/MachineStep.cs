@@ -37,6 +37,54 @@ namespace ValheimHelper
         int m_expect = -1, m_removed0;
         bool m_othersNear;
 
+        /// <summary>
+        /// 설비 접근 막힘(E035, 외부 검토 + 사용자 승인 10-26): 2.5m 밖에서 걷기만 되풀이(동료·상자·설비에 막힘)하면 SideSeconds마다 다가갈 자리(0.5m)에
+        /// 못 다가간 것으로 보고 옆 둘·뒤 접근점(StuckHop.Side, 설비에서 2.2m)으로 차례로 돌아 본다. 다 안 되면 설비 곁 빈 자리(2.2~2.4m, 같은 바닥 높이)로
+        /// 한 번 옮기고 "rescue"(근처 막힘 건너뛰기와 같은 규칙, 사용자 결정 10-23). 그래도 안 되면 곧장 걷기로 시간 한계(Limit)까지.
+        /// </summary>
+        const float SideSeconds = 5f;
+        Vector3? m_sideGoal;
+        float m_goalBest = float.MaxValue, m_noProgress;
+        int m_side = -1;
+        bool m_hopped;
+        /// <summary>시험용: 설비 접근 막힘으로 돌아 본 수·곁으로 옮긴 수.</summary>
+        internal static int SideTries, Hops;
+
+        CraftResult Approach(float dt, Vector3 at, float d)
+        {
+            Vector3 me = m_npc.transform.position;
+            Vector3 goal = m_sideGoal ?? at;
+            float g = Utils.DistanceXZ(goal, me);
+            if (g < m_goalBest - 0.5f) { m_goalBest = g; m_noProgress = 0f; }
+            else m_noProgress += dt;
+            if (m_sideGoal.HasValue && g < 0.4f) { m_sideGoal = null; ResetProgress(); } // 옆 접근점에 닿음 → 거기서 곧장
+            else if (m_noProgress > SideSeconds)
+            {
+                string diag = $"{m_noProgress:0}초 못 다가감, 설비까지 {d:0.0}m / {m_npc.Ai.BlockerAhead(goal)}";
+                m_sideGoal = null;
+                if (m_side + 1 < StuckHop.SideAngles.Length)
+                {
+                    m_side++;
+                    SideTries++;
+                    var p = StuckHop.Side(me.x, me.z, at.x, at.z, StuckHop.MachineRadii[0], m_side);
+                    m_sideGoal = new Vector3((float)p.X, at.y, (float)p.Z);
+                    Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → 다른 쪽({StuckHop.SideAngles[m_side]:0}°)으로");
+                }
+                else if (!m_hopped)
+                {
+                    m_hopped = true;
+                    bool ok = GatherJob.Land(m_npc, at, out string why, true, StuckHop.Candidates(me.x, me.z, at.x, at.z, StuckHop.MachineRadii), at.y);
+                    Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → {(ok ? "곁으로 옮김" : "못 옮김")} {why}");
+                    if (ok) { Hops++; WorkerAI.StuckTeleports++; m_npc.Say("rescue"); }
+                }
+                ResetProgress();
+            }
+            m_npc.Ai.MoveToPoint(dt, m_sideGoal ?? at, m_sideGoal.HasValue ? 0.3f : 1.8f, d > 10f);
+            return CraftResult.Working;
+        }
+
+        void ResetProgress() { m_goalBest = float.MaxValue; m_noProgress = 0f; }
+
         public MachineStep(WorkerNpc npc, PlanStep step)
         {
             m_npc = npc;
@@ -76,8 +124,7 @@ namespace ValheimHelper
             if (m_cook != null && !m_load && CookSlotsOf(nview.GetZDO(), m_cook, false) == 0 && Drops().Count == 0) return CraftResult.Done; // 조리대는 Load가 다 꺼냄 — 남은 게 없으면 끝
             Vector3 at = Machine.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
-            if (d > 2.5f)
-            { m_npc.Ai.MoveToPoint(dt, at, 1.8f, d > 10f); return CraftResult.Working; }
+            if (d > 2.5f) return Approach(dt, at, d);
             // 바닐라 BaseAI.MoveTo가 정한 걷는 방향(Character.m_moveDir)은 StopMoving 전까지 남는다 → 안 멈추면 설비 한가운데로 계속 달려
             // 조리대 밑 화로 불(FireBurn) 속에서 불붙어 죽었다(회차 128 cooktest: 0.9m까지 들어감·불붙음).
             m_npc.Ai.StopMoving();
@@ -521,6 +568,48 @@ namespace ValheimHelper
                 long start = z.GetLong(ZDOVars.s_startTime, 0L);
                 if (content == 0 || start == 0L || FermentOutput(f, content) != output) continue;
                 if ((ZNet.instance.GetTime() - new System.DateTime(start)).TotalSeconds > f.m_fermentationDuration) return true;
+            }
+            return false;
+        }
+
+        /// <summary>거점 125m 안에 이 제련소·숯가마(station)가 하나 이상 있고 모두 넣은 것이 0(다 돎)이면 true. Smelter가 아니거나 없으면 false.</summary>
+        public static bool SmeltersIdle(Vector3 home, string station)
+        {
+            bool found = false;
+            var seen = new HashSet<Smelter>();
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                Smelter s = col.GetComponentInParent<Smelter>();
+                if (s == null || !seen.Add(s) || Utils.GetPrefabName(s.gameObject) != station) continue;
+                if (!s.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                if (nv.GetZDO().GetInt(ZDOVars.s_queued) > 0) return false;
+                found = true;
+            }
+            return found;
+        }
+
+        /// <summary>
+        /// 재시작 복원(PlanSave.Load): 곁에서 지키던 조리대 넣기가 진행 중이었을 때 이미 올렸는지 — 거점의 그 조리대 칸에 이 물건(날것·익은 것·탄 것)이
+        /// 있으면 true(넣기는 끝으로 보고 꺼내기 단계가 마저 꺼냄). 짐의 익은 것은 안 본다(일꾼이 음식으로 들고 다님 — 잘못 끝으로 볼 수 있음).
+        /// </summary>
+        public static bool AlreadyCooking(Vector3 home, PlanStep step)
+        {
+            if (step.Kind != StepKind.Load || step.AttendSeconds <= 0f) return false;
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                CookingStation k = col.GetComponentInParent<CookingStation>();
+                if (k == null || Utils.GetPrefabName(k.gameObject) != step.Station) continue;
+                if (!k.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                string cooked = null;
+                foreach (var c in k.m_conversion)
+                    if (c.m_from != null && c.m_to != null && c.m_from.gameObject.name == step.Item) cooked = c.m_to.gameObject.name;
+                string burnt = k.m_overCookedItem != null ? k.m_overCookedItem.name : null;
+                ZDO z = nv.GetZDO();
+                for (int i = 0; i < k.m_slots.Length; i++)
+                {
+                    string it = z.GetString("slot" + i);
+                    if (it != "" && (it == step.Item || it == cooked || it == burnt)) return true;
+                }
             }
             return false;
         }

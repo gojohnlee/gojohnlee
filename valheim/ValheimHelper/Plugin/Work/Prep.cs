@@ -34,7 +34,10 @@ namespace ValheimHelper
         {
             m_npc = npc;
             m_ai = npc.Ai;
+            m_noBow = npc.IsGuard; // 호위병은 활(사냥)을 안 챙긴다 — 일꾼 몫(사용자 10-26)
         }
+
+        readonly bool m_noBow;
 
         /// <returns>true = 준비 중(걷거나 기다림), false = 끝.</returns>
         public bool Update(float dt)
@@ -132,14 +135,25 @@ namespace ValheimHelper
         /// 출발 준비를 마치면 입고 들 것: 짐 + 거점 장비 상자 전부에서 고른 갑옷 합(GetBodyArmor처럼 입는 칸)과 가장 센 근접 무기(Guard.HitOf처럼).
         /// 출발 판단이 상자에 넣어 둔 더 좋은 장비까지 셈(⑫ 다 "이 장비론 평원 무리예요" — 갑옷을 넣으면 다시 보고 출발).
         /// </summary>
-        public static void Ready(WorkerNpc npc, out float armor, out ItemDrop.ItemData weapon)
+        public static void Ready(WorkerNpc npc, out float armor, out ItemDrop.ItemData weapon) => Ready(npc, out armor, out weapon, out _);
+
+        /// <summary>Ready + 싸울 때 들 방패(전투 보강 가: 출발 판단이 막기를 셈).</summary>
+        public static void Ready(WorkerNpc npc, out float armor, out ItemDrop.ItemData weapon, out ItemDrop.ItemData shield)
         {
-            var all = new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems());
-            foreach (var c in Chests.NearBase(npc.Home, ChestRole.Gear)) all.AddRange(c.GetInventory().GetAllItems());
+            var all = Arsenal(npc);
             armor = 0f;
             foreach (var it in Plan(all))
                 if (System.Array.IndexOf(Gear.WearSlots, it.m_shared.m_itemType) >= 0) armor += it.GetArmor();
             weapon = Gear.Best(all, Gear.IsMelee, Gear.WeaponScore);
+            shield = WorkerNpc.FightShield(all);
+        }
+
+        /// <summary>출발 준비 때 고를 수 있는 것 전부: 짐 + 거점 장비 상자(역할 없으면 상자 전부).</summary>
+        public static List<ItemDrop.ItemData> Arsenal(WorkerNpc npc)
+        {
+            var all = new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems());
+            foreach (var c in Chests.NearBase(npc.Home, ChestRole.Gear)) all.AddRange(c.GetInventory().GetAllItems());
+            return all;
         }
 
         static List<ItemDrop.ItemData> Plan(List<ItemDrop.ItemData> all)
@@ -161,7 +175,7 @@ namespace ValheimHelper
             if (gear)
                 foreach (var it in Plan(mine, chest))
                     if (chest.ContainsItem(it)) return true;
-            if (gear && NeedsBow(mine, chest)) return true;
+            if (gear && !m_noBow && NeedsBow(mine, chest)) return true;
             if (!meads) return false;
             if (CountMeads(mine) < MeadsToCarry && CountMeads(chest) > 0) return true;
             foreach (var k in Resist.Kinds)
@@ -288,7 +302,7 @@ namespace ValheimHelper
                 if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
                 chest.MoveItemToThis(mine, it);
             }
-            if (takeGear) TakeBow(from, mine, chest, taken);
+            if (takeGear && !m_noBow) TakeBow(from, mine, chest, taken);
             if (takeMeads)
             {
                 // 체력 미드

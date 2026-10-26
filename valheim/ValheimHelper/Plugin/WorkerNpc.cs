@@ -11,7 +11,22 @@ namespace ValheimHelper
     /// </summary>
     public class WorkerNpc : Humanoid
     {
+        /// <summary>일꾼(역할 0·1)만. 호위병은 일·명령·잡담·상자 정리에 안 끼므로 Guards에 따로 둔다(사용자 10-26).</summary>
         public static readonly List<WorkerNpc> All = new List<WorkerNpc>();
+        /// <summary>호위병(역할 2, 보통 하나).</summary>
+        public static readonly List<WorkerNpc> Guards = new List<WorkerNpc>();
+        public const int GuardRole = 2;
+
+        /// <summary>지금 불러와진 호위병(살아 있든 아니든), 없으면 null.</summary>
+        public static WorkerNpc TheGuard => Guards.Count > 0 ? Guards[0] : null;
+
+        /// <summary>그 ZDOID의 일꾼·호위병 인스턴스(불러와져 있으면), 없으면 null.</summary>
+        public static WorkerNpc FindById(ZDOID id)
+        {
+            foreach (var n in All) if (n != null && n.GetZDOID() == id) return n;
+            foreach (var n in Guards) if (n != null && n.GetZDOID() == id) return n;
+            return null;
+        }
 
         public const string KeyName = "vh_name";
         public const string KeyRole = "vh_role";
@@ -43,7 +58,7 @@ namespace ValheimHelper
         {
             base.Awake();
             Ai = GetComponent<WorkerAI>();
-            All.Add(this);
+            if (m_nview.IsValid() && m_nview.GetZDO().GetInt(KeyRole) == GuardRole) Guards.Add(this); else All.Add(this);
             if (m_nview.IsValid()) Workers.Know(m_nview.GetZDO().m_uid);
             // 바닐라 몬스터는 소지품을 저장하지 않는다. 일꾼은 들고 있던 짐·도구를 ZDO에 저장해 둔다.
             if (m_nview.IsValid() && m_nview.IsOwner())
@@ -108,13 +123,17 @@ namespace ValheimHelper
                 if (it != null && m_inventory.ContainsItem(it) && !IsItemEquiped(it)) EquipItem(it);
         }
 
-        /// <summary>싸울 무기와 방패를 든다(가진 것 중 가장 좋은 것, 방패가 있으면 한손 무기). 없으면 false.</summary>
-        public bool HoldWeapon()
+        /// <summary>
+        /// 싸울 무기와 방패를 든다(가진 것 중 가장 좋은 것, 방패가 있으면 한손 무기). 없으면 false.
+        /// mults(그 적의 피해 종류별 배율, Guard.Mults)를 주면 그 적에게 가장 세게 들어가는 무기(약점·저항·스킬 셈, 전투 보강 나).
+        /// </summary>
+        public bool HoldWeapon(float[] mults = null)
         {
             var items = m_inventory.GetAllItems();
             ItemDrop.ItemData shield = Gear.Best(items, Gear.IsShield, Gear.ShieldScore);
-            ItemDrop.ItemData weapon = Gear.Best(items, it => Gear.IsMelee(it) && (shield == null || !it.IsTwoHanded()), Gear.WeaponScore)
-                                       ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
+            ItemDrop.ItemData weapon = mults != null ? Guard.BestVs(this, items, shield != null, mults)
+                                       : Gear.Best(items, it => Gear.IsMelee(it) && (shield == null || !it.IsTwoHanded()), Gear.WeaponScore)
+                                         ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
             if (weapon == null)
             {
                 if (HoldingBow()) { StopDraw(); UnequipItem(GetCurrentWeapon(), false); } // 활은 사냥에만: 싸울 땐 맨손이 낫다
@@ -274,6 +293,62 @@ namespace ValheimHelper
             if (m_hitBy.Count > 40) { var old = new List<Character>(); foreach (var kv in m_hitBy) if (kv.Key == null || Time.time - kv.Value > 60f) old.Add(kv.Key); foreach (var o in old) m_hitBy.Remove(o); }
             m_hitBy[attacker] = Time.time;
             Guard.Learn(attacker); // 맞아 봤으니 그 적을 안다
+        }
+
+        // ---- 방패 막기 (전투 보강 가, 바닐라 Humanoid.BlockAttack — codemap "확인된 게임 사실") ----
+
+        float m_blockUntil;
+        /// <summary>막아 낸 수(이번 몸이 생긴 뒤)·마지막으로 막아 줄인 피해. 시험·진단용.</summary>
+        public int Blocks { get; private set; }
+        public float LastBlocked { get; private set; }
+
+        /// <summary>싸울 때 들 방패(HoldWeapon과 같은 고르기): 가장 좋은 방패, 무기가 없거나 양손이면 없음.</summary>
+        public static ItemDrop.ItemData FightShield(List<ItemDrop.ItemData> items)
+        {
+            ItemDrop.ItemData shield = Gear.Best(items, Gear.IsShield, Gear.ShieldScore);
+            if (shield == null) return null;
+            ItemDrop.ItemData weapon = Gear.Best(items, it => Gear.IsMelee(it) && !it.IsTwoHanded(), Gear.WeaponScore)
+                                       ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
+            return weapon == null || weapon.IsTwoHanded() ? null : shield;
+        }
+
+        /// <summary>그 방패의 막기 수치(내 막기 스킬·최대 체력 기준). 방패가 없으면 null.</summary>
+        public Shield? BlockStats(ItemDrop.ItemData shield)
+        {
+            if (shield == null) return null;
+            return new Shield { Power = shield.GetBlockPower(GetSkillFactor(Skills.SkillType.Blocking)), StaggerLimit = GetMaxHealth() * m_staggerDamageFactor };
+        }
+
+        /// <summary>가진 것 중 싸울 때 들 방패의 막기 수치.</summary>
+        public Shield? BlockStats() => BlockStats(FightShield(m_inventory.GetAllItems()));
+
+        /// <summary>방패를 들고 있나(왼손이 방패).</summary>
+        public bool HoldingShield => m_leftItem != null && Gear.IsShield(m_leftItem);
+
+        /// <summary>잠깐(0.3초) 방패를 든다. Guard 싸움이 매 판단 부른다 — 안 부르면 저절로 내린다(싸움이 어떻게 끝나도 들린 채 남지 않게).</summary>
+        public void HoldBlock() => m_blockUntil = Time.time + 0.3f;
+
+        public void DropBlock() => m_blockUntil = 0f;
+
+        public override void CustomFixedUpdate(float fixedDeltaTime)
+        {
+            // 바닐라 IsBlocking = m_blocking && 공격·구르기 중 아님 → 휘두르는 동안은 저절로 안 막는다. 스태미나는 안 씀(Character.HaveStamina가 늘 참).
+            m_blocking = HoldingShield && Time.time < m_blockUntil;
+            base.CustomFixedUpdate(fixedDeltaTime);
+        }
+
+        protected override bool BlockAttack(HitData hit, Character attacker)
+        {
+            float before = hit.GetTotalBlockableDamage();
+            bool done = base.BlockAttack(hit, attacker);
+            float cut = before - hit.GetTotalBlockableDamage();
+            if (done && cut > 0f) // 비틀리면 바닐라가 막기를 안 줄임(BlockDamage 건너뜀)
+            {
+                Blocks++;
+                LastBlocked = cut;
+                Plugin.Log.LogInfo($"{NpcName} 막음: {attacker?.m_name} {before:0.0} → {before - cut:0.0}");
+            }
+            return done;
         }
 
         /// <summary>그 적에게 최근 seconds초 안에 맞았는지.</summary>
@@ -528,11 +603,14 @@ namespace ValheimHelper
         protected override void OnDestroy()
         {
             All.Remove(this);
+            Guards.Remove(this);
             base.OnDestroy();
         }
 
         public string NpcName => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO().GetString(KeyName, "Worker") : "Worker";
         public Personality Personality => m_nview != null && m_nview.IsValid() ? (Personality)m_nview.GetZDO().GetInt(KeyRole) : Personality.Ragnar;
+        /// <summary>호위병인지(일은 안 하고 위험한 곳에 가는 일꾼을 따라가 싸움 — 사용자 10-26).</summary>
+        public bool IsGuard => Personality == Personality.Guard;
         public Vector3 Home => m_nview.GetZDO().GetVec3(KeyHome, transform.position);
         public ZDO Zdo => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO() : null;
 

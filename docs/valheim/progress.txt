@@ -24,7 +24,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    (-File은 PowerShell 5.1이 BOM 없는 UTF-8 한글을 깨뜨림. 이 PC엔 파이썬 없음 → 수정은 Edit 도구. git 이름은 저장소 설정 Claude <noreply@anthropic.com>.)
    설치 → Steam 실행 → 인트로 건너뜀 → te4st41 자동 입장 → 시험 → 2초 뒤 종료 → 결과 출력.
    시험 고르기 $env:VH_TEST="vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest"(기본). 그 밖에 vh_preptest·vh_bagtest·vh_deathtest·vh_fighttest·vh_exploretest·
-   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_portalbuildtest·vh_tintest·vh_stucktest·vh_hoptest·vh_skiptest(멀리선 이동 생략)·vh_resisttest·vh_repairtest·vh_crypttest·vh_hunttest·vh_cooktest·vh_cookwettest(비바람)·vh_farmtest·vh_basetest(기반 대표)·vh_escorttest(동행)·vh_mychesttest(개인 상자 준비)·vh_sharetest(상자 손님 부탁 호스트 쪽)·vh_guesttest(손님 화면 옮기기, 가짜 손님)·vh_plainstest(평원 자료)·vh_squitotest(데스킷 싸움, VH_BIOME=plains)·vh_fulingtest(풀링 사냥·무리면 도움 요청, VH_BIOME=plains)·vh_tartest(타르 줍기·웅덩이 피하기, VH_BIOME=plains)·vh_plainsfarmtest(보리·아마 밭·록스 판단, VH_BIOME=plains). 실제 재시작: VH_TEST=vh_restart1(되돌리기 켜고, 끝에 바로 꺼짐) 다음 VH_RESET=0·VH_TEST=vh_restart2. 월드 $env:VH_WORLD. 시험 캐릭터는 전용 vhtest(없으면 모드가 만듦), 실행마다 시험 월드를 원본(%USERPROFILE%/vh-test-base, 첫 실행 때 뜸)으로 되돌림 — 끄기 $env:VH_RESET="0"(재시작 시험 2번째 실행). 기본은 연속 묶음(한 번 되돌리고 이어 돌림), 약식(긴 시험 짧게) $env:VH_QUICK="1", 깨끗한 단독 시험은 $env:VH_SOLO="1"(시험마다 되돌리고 게임 새로 켬, 시험별 diag-<시험>.txt). 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
+   vh_pittest·vh_coppertest·vh_fartest·vh_departtest·vh_peertest(묶음 1), vh_portaltest·vh_portalbuildtest·vh_tintest·vh_stucktest·vh_hoptest·vh_skiptest(멀리선 이동 생략)·vh_resisttest·vh_repairtest·vh_crypttest·vh_hunttest·vh_cooktest·vh_cookwettest(비바람)·vh_farmtest·vh_basetest(기반 대표)·vh_escorttest(동행)·vh_mychesttest(개인 상자 준비)·vh_sharetest(상자 손님 부탁 호스트 쪽)·vh_guesttest(손님 화면 옮기기, 가짜 손님)·vh_plainstest(평원 자료)·vh_squitotest(데스킷 싸움, VH_BIOME=plains)·vh_fulingtest(풀링 사냥·무리면 도움 요청, VH_BIOME=plains)·vh_tartest(타르 줍기·웅덩이 피하기, VH_BIOME=plains)·vh_plainsfarmtest(보리·아마 밭·록스 판단, VH_BIOME=plains). 실제 재시작: VH_TEST=vh_restart1(되돌리기 켜고, 끝에 바로 꺼짐) 다음 VH_RESET=0·VH_TEST=vh_restart2 (제작 재시작은 vh_restartcraft_load·_part·_carry 중 하나 → vh_restartcraft2). 월드 $env:VH_WORLD. 시험 캐릭터는 전용 vhtest(없으면 모드가 만듦), 실행마다 시험 월드를 원본(%USERPROFILE%/vh-test-base, 첫 실행 때 뜸)으로 되돌림 — 끄기 $env:VH_RESET="0"(재시작 시험 2번째 실행). 기본은 연속 묶음(한 번 되돌리고 이어 돌림), 약식(긴 시험 짧게) $env:VH_QUICK="1", 깨끗한 단독 시험은 $env:VH_SOLO="1"(시험마다 되돌리고 게임 새로 켬, 시험별 diag-<시험>.txt). 항상 최소화·소리 끔이 기본(사용자 2026-10-21), 화면 보려면 $env:VH_MIN='0'.
    결과: 스크립트는 짧은 요약만 출력(diag 첫 줄, 시험별 판정·시간, FAIL 줄, 로그 오류 종류 8개 — 2026-10-21 토큰 절약).
    전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log.
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
@@ -45,13 +45,8 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   실제 인계 2회: 빌드·Core 531 PASS·vh_npctest 17/17 PASS, Astra는 ChatGPT 한도(10-27 01:16까지) → "Astra 못 씀"으로 Claude 리뷰로 넘어감(정상). 게임 종료 멈춤 2회 → E038.
 
 다음 (순서대로 — 안 끝난 일만)
-★ 회차 사용량 재기 (사용자 10-26, decisions.txt 2절 "GPT 검증 분업"의 첫 단계 — 다른 일보다 먼저, 한 조각):
-  가) [끝, 회차 183 — 커밋 553e59d · 시험 usage.csv 기록 PASS(회차 182 줄: result present, out 10019·cache-read 1912241·33턴·12.6분)] vh-loop.ps1이 회차마다 claude 결과 사용량을 usage.csv·loop.log에.
-★ 10-26 변경 게임 시험 (클라우드 세션 코드 — 게임 시험 전, decisions.txt 6·10절). 결과는 이 커밋(68385c9) 기준으로 따로 남긴다(뒤 수정분과 섞지 않음):
-  가) [끝, 회차 182 — 커밋 41d8b32 · 시험 vh_departtest PASS 23/23·vh_refilltest 22/22·vh_npctest 17/17·vh_peertest 14/14·vh_plainstest 21/21(기본 자리), dotnet test 531/531] 출발(덜 위험한 곳·다 위험하면 동료와 같이): 코드는 68385c9 그대로, departtest·plainstest 기대값만 옛 규칙(경고하고 혼자)에서 고침.
-  나) [끝, 회차 183 — 커밋 68385c9(코드)·94e6ae2(시험 자리 정리) · 시험 vh_pittest PASS 17/17·stucktest 14/14·hoptest 20/20·skiptest 25/25·exploretest 16/16·woodtest 13/13·stonetest 11/11·crypttest 24/24·farmtest 25/25·deathtest 22/22·coppertest 14/14(검은숲), dotnet test 531/531] 막힘 시간 절반 회귀: stuck·hop 첫 FAIL은 묶을 자리 옆 나무·그루터기 탓(시험 환경).
-★ 호위병 (사용자 결정 10-26, decisions.txt 5·6·7·9절) — 코드는 세션 브랜치 claude/upbeat-cori-qwctib에 미리 짬(위 ★ 시험 결과를 남긴 뒤 git merge로 합침):
-  가) 호위병 NPC(역할 2, 일꾼 목록과 따로, 장비는 같은 규칙·활 연장 빼고), 위험하면 데려감·바쁘면 귀환 후 대기, 사냥 센 적 → 호위병, 일꾼끼리 부르기 50m,
+★ 호위병 (사용자 결정 10-26, decisions.txt 5·6·7·9절) — 세션 브랜치 claude/upbeat-cori-qwctib(호위병·제작 재시작·설비 막힘·재료만·방패·약점)를 회차 184에 합침:
+  가) [구현 완료·검증 대기, 클라우드 10-26 — 세션 브랜치 · Core 테스트 533 통과·컴파일 확인 · 시험 못 함: 클라우드] 호위병 NPC(역할 2, 일꾼 목록과 따로, 장비는 같은 규칙·활 연장 빼고), 위험하면 데려감·바쁘면 귀환 후 대기, 사냥 센 적 → 호위병, 일꾼끼리 부르기 50m,
      제작 재료 채집도 같은 출발 판단·단계 끝나면 호위병 돌려보냄, 동행 끊김 경로(포탈·던전·멀리선 이동 생략·막힘)에서 호위병 따라 옮김. 게임 시험: vh_escorttest(호위병)·vh_fulingtest C.
 ★ Claude 구현 → GPT 검증 분업 (사용자 10-26, decisions.txt 2절 — 사용량 기준이 5회차 넘게 쌓인 뒤. 모자라면 이 ★는 건너뛰고 다음 ★ 한 조각을 한 뒤 돌아옴.
    하네스·루프 연결·지시문 0-1·3-1은 PC 세션 10-26에 만듦 — docs/valheim/Harness.md. PC Codex는 ChatGPT 로그인됨(10-26 확인)):
@@ -60,11 +55,14 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   나) 첫 실제 인계 확인: HANDOFF → 루프 검증 → VH_VERIFY 왕복, FIX 반환, Astra 한도 때 Claude 리뷰로 복귀를 실제 회차로(모의·손 시험은 PC 세션 10-26에 함).
   다) 비교: 분업 회차를 비슷한 작업의 기준과 비교해 history에 보고(handoff-records의 단계별 분·Astra 사용량 포함, 멈추지 않음, 계속할지는 사용자).
 ★ 맡긴 일 끝까지 (외부 검토 + 사용자 승인 10-26, 순서대로):
-  가) 제작 재시작 복원: 다시 계획할 때 "지금 쓸 수 있는 재고"와 "생산 중이라 기다렸다 회수할 물량"(설비 안 재료·결과물)을 나누고 그 작업에 묶는다
-     (설비를 어느 작업이 쓰는지 기록 — 두 작업이 같은 생산 예정량을 중복으로 잡지 않게, 광석을 다시 꺼낸다거나 안 나온 주괴로 제작을 시작하지 않게).
-     일꾼 짐은 그 작업이 실제로 쓸 물건만. 시험: 넣은 직후·일부 완성·일꾼이 결과물을 든 상태·두 일꾼이 같은 설비를 쓰는 상태에서 각각 실제 재시작, 최종 수량·추가 재료 소비·물건 보존.
-  나) 설비 접근 막힘 복구(E035): 설비 2.5m 밖에서 걷기만 되풀이 → 막힘이면 접근점 바꾸기·옮기기.
-  다) 설비가 없으면 모을 수 있는 재료만이라도(구상서 6-1): StartPlan이 설비 부족만인 부분 계획은 실행, 범위 밖·모름은 그대로 막음.
+  가) [구현 완료·검증 대기, 클라우드 10-26 — 세션 브랜치 · Core 테스트 546 통과·컴파일 확인 · 시험 못 함: 클라우드] 제작 재시작 복원(decisions.txt 13절 "재시작"):
+     계획을 다시 세우지 않고 저장한 단계·상태·진행으로 이어 감(설비 안 것은 그 작업의 기다림·꺼내기로 남아 재고·다른 작업과 안 섞임), 단계 끝마다 바로 저장, 제련소 다 돌면 기다림 일찍 끝.
+     게임 시험(두 일꾼이 제련소 하나, 셋 각각): VH_TEST=vh_restartcraft_load(되돌리기 켜고, 끝에 바로 꺼짐) 다음 VH_RESET=0·VH_TEST=vh_restartcraft2 →
+     같은 짝을 _part(일부 완성)·_carry(꺼낸 주괴를 든 채)로. 회귀 vh_crafttest·vh_basetest·vh_cooktest·vh_settest·vh_restart1→2.
+  나) [구현 완료·검증 대기, 클라우드 10-26 — 세션 브랜치 · Core 테스트 548 통과·컴파일 확인 · 시험 못 함: 클라우드] 설비 접근 막힘 복구(E035, decisions.txt 10절):
+     5초 진척 없으면 옆·옆·뒤로 돌아 보고, 다 안 되면 설비 곁으로 한 번 옮김. 게임 시험 vh_machinestucktest(새, 발 묶어 흉내)·vh_basetest·vh_crafttest·vh_cooktest·vh_hoptest.
+  다) [구현 완료·검증 대기, 클라우드 10-26 — 세션 브랜치 · Core 테스트 549 통과·컴파일 확인 · 시험 못 함: 클라우드] 설비가 없으면 모을 수 있는 재료만이라도(decisions.txt 13절):
+     Plan.StationsOnly면 StartPlan이 실행, 시작 craft.missingGather·끝 craft.missingDone, 범위 밖·모름은 그대로 막음. 게임 시험 vh_crafttest(0번 칸 새로: 제작대 없이 활 → 목재만 모음)·vh_settest·vh_refilltest.
   (E034·E036은 다시 나오면 진단 줄 근거로)
 ★ ⑫ 평원 (구상서 7-1장 "평원": 데스킷·풀링 마을 흑금속·타르·평원 밭·록스 — 기반부터):
   가) [끝, 회차 169 — 커밋 89f7e45 · 시험 vh_plainstest PASS 10/10·vh_farmtest 25/25·vh_settest 7/7·vh_woodtest 13/13, dotnet test 524/524] 평원 자료 시험(얻는 길·적 위험 수치), 줍는 것을 부술 것보다 먼저 봄(클라우드베리 덤불이 빠지고 야생 보리가 곡괭이로 잡히던 것).
@@ -76,9 +74,13 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
   사) [끝, 회차 175 — 커밋 b95bde8 · 시험 vh_plainsfarmtest PASS 15/15(평원 자리)·fulingtest 13/13·hunttest 9/9·farmtest 25/25·npctest 17/17·fighttest 17/17·bowtest 12/12 3번(같은 묶음 FAIL 2번 → 조준 고침·E034), dotnet test 526/526] 평원 밭 보리·아마(씨앗=수확물, !밭은 반씩), 록스처럼 혼자 잡기엔 센 사냥감은 덤비지 않고 "같이 가 줘"(preyStrong). (→ 10-26: 동료 먼저 부름)
   아) 평원 전체 회귀 + 실제 재시작 시험.
 ★ 전투 보강 (사용자 10-25 "ㅇㅇ" — ⑬ 안개땅 전에. 안개땅 적(시커 병사·걀)은 세게 때려 지금은 "피하고 도움 요청"만 늘 것):
-  가) 방패 막기: 방패를 들었으면 적 공격이 올 때 막기(게임의 막기·패링 코드를 디컴파일로 확인해 맞춤, codemap에 적음), 위험 판단에 막기로 줄어드는 피해를 셈.
-     스태미나는 따지지 않는다(일꾼은 스태미나 없음 → 무한 막기 그대로, 사용자 10-26 "편하자고 만든 건데"). 게임 시험 + 싸움 회귀.
-  나) 적 약점: 적의 피해 종류별 약점·저항(m_damageModifiers)을 셈해 무기 고르기·위험 판단에 반영(예: 둔기에 약한 적엔 몽둥이). 게임 시험 + 싸움 회귀.
+  가) [구현 완료·검증 대기, 클라우드 10-26 — 세션 브랜치 · Core 테스트 555 통과·컴파일 확인 · 시험 못 함: 클라우드] 방패 막기(decisions.txt 7절, codemap "막기" 사실):
+     붙어 싸울 땐 방패 듦·적이 휘두르면 막음·쫓을 땐 내림, 위험 판단은 Block.Taken(적 3마리 이상 안 셈). 게임 시험 vh_blocktest(새) +
+     싸움 회귀 vh_fighttest·vh_teamtest·vh_matetest·vh_resisttest·vh_squitotest(plains)·vh_fulingtest(plains)·vh_escorttest·vh_preptest(방패 챙김)·vh_departtest.
+     FAIL이면: 막음 0번이면 diag의 "막는 중"·"막음" 줄, 싸움이 길어져 지면 Block.SlowFactor·StaggerShare(기본안)부터.
+  나) [구현 완료·검증 대기, 클라우드 10-26 — 세션 브랜치 · Core 테스트 559 통과·컴파일 확인 · 시험 못 함: 클라우드] 적 약점(decisions.txt 7절, codemap "약점·저항" 사실):
+     싸울·사냥할 무기 = 그 적에게 가장 세게 들어가는 것(Guard.BestVs), 위험 판단 적 체력 × WeakScale(출발 판단은 ResolveFor). 게임 시험 vh_weaktest(새, 해골·청동 칼·몽둥이) +
+     싸움 회귀(가와 같이) + vh_hunttest·vh_crypttest(해골). FAIL이면: 든 무기가 다르면 diag "해골 배율" 줄과 칼·몽둥이 한 방, 위험 판단이 틀어지면 Weakness.HealthScale 범위부터.
   (스태미나 없음은 그대로 — 사용자 10-25)
 ★ 그 뒤: 아래 "구현 단계" 표의 [ ] 단계 차례로(⑫ 평원 → ⑬ 안개땅 → ⑭ 애쉬랜드 → ⑮ 딥노스). 단계마다 조각으로 나눠 여기에 ★ 덩어리로 적는다(vh-loop-prompt 2-1).
   ⑬ 메모(사용자 10-24): 절벽은 지금 규칙(플레이어가 안 보면 순간이동·보면 "오딘 구조" 옮기기)으로 먼저 해 보고, 게임의 갈고리
@@ -87,7 +89,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 보류 (이득 작음 — 사용자가 원할 때만): 긴 시험 약식 coppertest·pittest(회차 137). 하지 않는 것은 decisions.txt 16절(시험 동시 실행·길 만들기·평탄화 등).
 늘 지키는 것: 막는 문제(물건 복제·소실, 저장 손상, 작업 복원 실패)는 관련 기능 확장을 멈추고 먼저 푼다. 그 밖은 한 회차에 못 풀면 Errors.txt에 적고 진행.
 
-알려진 한계: NPC 스태미나 없음(무제한), NPC 피해도 몬스터 난이도 배율을 받음, 방패 막기 안 함, 적 약점 안 셈, 물 건너 아는 곳은 직선 판단,
+알려진 한계: NPC 스태미나 없음(무제한), NPC 피해도 몬스터 난이도 배율을 받음, 패링은 노리지 않음·못 막는 공격 안 가름, 약점 부위(WeakSpot)는 안 셈, 물 건너 아는 곳은 직선 판단,
 동료가 멀리서 같이 가러 올 때는 걸어서 옴(멀리선 이동 생략은 이끄는 쪽만 — 느리면 이끄는 쪽이 기다리다 혼자 감),
 시험의 Workers.DespawnAll이 Brain 로드 전이면 지식이 비워짐(시험 환경 문제).
 플레이어가 20m 안에만 있으면 실제로 안 싸워도 위험 판단에서 그 무기 힘을 셈(회차 89: 시험 플레이어가 서 있는 사이 회색난쟁이 우두머리에게 죽음 — 실제 게임에선 같이 싸운다고 보고 그대로).

@@ -9,7 +9,8 @@ namespace ValheimHelper.Core.Work
     public enum WorkKind { Gather, Explore, Make, Farm }
 
     /// <summary>대기열 칸을 꺼낼 수 있는 조건.</summary>
-    public enum ReadyWhen { Always, Morning }
+    /// <summary>대기열 칸을 꺼낼 때: 언제나 / 아침 / 호위병이 쉴 때(위험한 곳인데 호위병이 바빴음, 사용자 10-26).</summary>
+    public enum ReadyWhen { Always, Morning, GuardIdle }
 
     /// <summary>
     /// 대기열 한 칸·하던 일을 데이터로 (risks.txt "작업 상태 저장 설계"). 플러그인이 이걸로 Start/Ready를 만든다.
@@ -52,6 +53,8 @@ namespace ValheimHelper.Core.Work
         public string Stuck;
         /// <summary>일꾼 포탈(R2 나): 일터 쪽 한 몫을 들고 가던 이름표. 불러올 때 실제 포탈 수·짐과 맞춰 본다(요청 10-23 09:09).</summary>
         public string PortalTag;
+        /// <summary>제작(Make) 이어 하기: 하던 계획의 단계·상태·진행(PlanSave). 있으면 계획을 다시 세우지 않고 이어 간다(외부 검토 10-26). 없으면(옛 저장) 다시 세움.</summary>
+        public string Plan;
     }
 
     /// <summary>질문하고 대답을 기다리는 상태(Departures 질문 대기).</summary>
@@ -110,6 +113,7 @@ namespace ValheimHelper.Core.Work
                 if (w.SetNo != 0) f.Add("sn=" + w.SetNo.ToString(Inv));
                 if (!string.IsNullOrEmpty(w.Stuck)) f.Add("sb=" + Esc(w.Stuck));
                 if (!string.IsNullOrEmpty(w.PortalTag)) f.Add("pt=" + Esc(w.PortalTag));
+                if (!string.IsNullOrEmpty(w.Plan)) f.Add("pl=" + Esc(w.Plan));
                 if (w.Kind == WorkKind.Farm) f.Add("f=" + w.FarmX.ToString("0.0", Inv) + "|" + w.FarmZ.ToString("0.0", Inv));
                 parts.Add(string.Join(",", f.ToArray()));
             }
@@ -143,6 +147,7 @@ namespace ValheimHelper.Core.Work
                 if (f.TryGetValue("sn", out v)) TryInt(v, out w.SetNo);
                 if (f.TryGetValue("sb", out v)) w.Stuck = v;
                 if (f.TryGetValue("pt", out v)) w.PortalTag = v;
+                if (f.TryGetValue("pl", out v)) w.Plan = v;
                 bool farmAt = f.TryGetValue("f", out v) && TryFloatPair(v, out w.FarmX, out w.FarmZ);
                 if (w.Kind == WorkKind.Gather && (string.IsNullOrEmpty(w.Item) || w.Amount <= 0)) continue; // 깨진 칸
                 if (w.Kind == WorkKind.Make && (w.Amount <= 0 || (w.SetNo <= 0 && string.IsNullOrEmpty(w.Item)))) continue; // 깨진 칸

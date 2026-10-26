@@ -66,4 +66,25 @@ public class StuckHopTests
         Assert.NotEmpty(ring);
         Assert.All(ring, p => Assert.InRange(p.X * p.X + p.Z * p.Z, 1.5 * 1.5, 100.0 + 1e-6));
     }
+    [Fact]
+    public void MachineSidePointsGoAroundThenBehind()
+    {
+        // 일꾼 (10,0), 설비 (0,0): 옆 둘(90°·-90°) 다음 뒤(180°), 모두 설비에서 2.2m
+        var a = StuckHop.Side(10, 0, 0, 0, 2.2, 0);
+        var b = StuckHop.Side(10, 0, 0, 0, 2.2, 1);
+        var c = StuckHop.Side(10, 0, 0, 0, 2.2, 2);
+        Assert.Equal(0, a.X, 6); Assert.Equal(2.2, a.Z, 6);
+        Assert.Equal(0, b.X, 6); Assert.Equal(-2.2, b.Z, 6);
+        Assert.Equal(-2.2, c.X, 6); Assert.Equal(0, c.Z, 6);
+    }
+
+    [Fact]
+    public void MachineLandingStaysInsideWorkRange()
+    {
+        var ring = StuckHop.Candidates(10, 0, 0, 0, StuckHop.MachineRadii).ToList();
+        Assert.Equal(StuckHop.MachineRadii.Length * StuckHop.Directions, ring.Count);
+        Assert.Equal(2.2, ring[0].X, 6); // 오던 쪽부터
+        Assert.All(ring, p => Assert.True(Math.Sqrt(p.X * p.X + p.Z * p.Z) < 2.5)); // MachineStep 설비 앞 일 거리 2.5m 안
+        Assert.Equal(StuckHop.Radii.Length * StuckHop.Directions, StuckHop.Candidates(10, 0, 0, 0).Count()); // 기본은 그대로
+    }
 }

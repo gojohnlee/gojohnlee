@@ -141,20 +141,31 @@ namespace ValheimHelper
             m_escortName = name;
         }
 
+        /// <summary>지금 일의 동행을 끝낸다(제작 재료 채집 단계가 끝남 등) — 호위병은 이걸 보고 거점으로 돌아간다(Follow).</summary>
+        public void EndEscort()
+        {
+            if (m_escort == null) return;
+            Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 동행 {m_escortName} 끝 → 돌려보냄");
+            m_escort = null;
+        }
+
         /// <summary>동행자를 기다려야 하면 true(이번 프레임 일은 쉼).</summary>
         bool EscortHolds(WorkerNpc npc, float dt)
         {
-            foreach (var mate in WorkerNpc.All)
-                if (mate != npc && mate.GetZDOID() == m_escortId && (mate.Ai.Current != Mode.Follow || mate.Ai.FollowTarget != npc.GetZDOID()))
-                {
-                    // 동료가 따라오기를 그만둠(다른 일을 받음·죽음 등): 기다리지 않고 혼자 감
-                    Plugin.Log.LogInfo($"{npc.NpcName}: 동행 {m_escortName}이 따라오기를 그만둠({mate.Ai.Current}) → 혼자 감");
-                    m_escort = null;
-                    return false;
-                }
+            WorkerNpc mate = WorkerNpc.FindById(m_escortId);
+            if (mate != null && (mate.IsDead() || mate.Ai.Current != Mode.Follow || mate.Ai.FollowTarget != npc.GetZDOID()))
+            {
+                // 호위병이 따라오기를 그만둠(죽음·다른 일 등): 기다리지 않고 혼자 감(위험해도 거절 안 함 — 사용자 10-25), 알린다
+                Plugin.Log.LogInfo($"{npc.NpcName}: 동행 {m_escortName}이 따라오기를 그만둠({mate.Ai.Current}, 죽음 {mate.IsDead()}) → 혼자 감");
+                npc.Say("escort.giveup");
+                m_escort = null;
+                return false;
+            }
             ZDO z = ZDOMan.instance.GetZDO(m_escortId);
             Vector3 pos = z != null ? z.GetPosition() : Vector3.zero;
             float d = z != null ? Vector3.Distance(pos, transform.position) : -1f;
+            if (mate != null && mate.IsTeleporting()) d = Mathf.Min(d, Escort.Resume); // 곁으로 옮기는 중: 포기하지 않는다
+            else if (mate != null && d > Escort.Far && BringMate(npc, mate, d)) d = Escort.Resume;
             EscortAct act = m_escort.Tick(dt, d);
             if (m_escort.Say != null) npc.Say(m_escort.Say);
             if (act == EscortAct.GiveUp)
@@ -168,6 +179,30 @@ namespace ValheimHelper
             LookAt(pos);
             return true;
         }
+
+        /// <summary>
+        /// 동행이 끊기지 않게(사용자 10-26 검토): 포탈·던전 문처럼 나만 건너갔거나(Gone 넘게 벌어짐), 둘 다 아무 플레이어에게서 64m 밖이거나
+        /// (멀리선 이동 생략으로 나만 건너뜀), 출발 뒤 15초 넘게 못 따라오면(막힘) 동행자를 내 곁으로 옮긴다. 막힘이고 플레이어가 보면 구조 말.
+        /// 출발 전(Waiting)엔 보이는 곳이면 걸어오게 둔다. 옮겼으면 true. 시험용 횟수 MateBrings.
+        /// </summary>
+        bool BringMate(WorkerNpc npc, WorkerNpc mate, float d)
+        {
+            bool jumped = d > Escort.Gone;
+            bool unseen = GatherJob.FarFromPlayers(transform.position) && GatherJob.FarFromPlayers(mate.transform.position);
+            bool stuck = m_escort.Now == Escort.Phase.Paused && m_escort.PausedFor > (float)StuckHop.NearStuckSeconds;
+            if (!jumped && !unseen && !stuck) return false;
+            Vector3 me = transform.position, at = me - Flat(transform.forward).normalized * 1.5f + Vector3.up * 0.3f;
+            if (Character.InInterior(me) || !ZoneSystem.instance.GetSolidHeight(at, out float h) || Mathf.Abs(h - me.y) > 1.5f) at = me + Vector3.up * 0.3f;
+            else at.y = h + 0.3f;
+            if (!mate.TeleportTo(at, transform.rotation, false)) return false;
+            MateBrings++;
+            Plugin.Log.LogInfo($"{npc.NpcName}: 동행 {mate.NpcName}을 곁으로 옮김({d:0}m, {(jumped ? "건너감" : unseen ? "안 보는 곳" : "못 따라옴")})");
+            if (stuck && !unseen) mate.Say("rescue");
+            return true;
+        }
+
+        /// <summary>시험용: 동행자를 곁으로 옮긴 횟수.</summary>
+        public static int MateBrings;
 
         Guard m_guard;
         /// <summary>위험 감지·싸움(구상서 8장). 시험·!상태용.</summary>
@@ -958,6 +993,7 @@ namespace ValheimHelper
                     if (WorkerBanter.Facing(npc, out Vector3 faceTo)) LookAt(faceTo);
                     if (Queue.Count > 0 && NextQueued()) break; // 직접 명령 > 묘비 회수(구상서 11장 우선순위)
                     Chores(npc, dt);
+                    if (npc.IsGuard && Current == Mode.Idle) GuardReady(npc, dt);
                     break;
             }
             return true;
@@ -968,6 +1004,16 @@ namespace ValheimHelper
         /// <summary>!멈춰로 쉬라고 했다: 다음 명령이나 다음 죽음 전까지 묘비 회수를 스스로 시작하지 않는다.</summary>
         bool m_choresHeld;
         float m_choreTimer = 3f;
+        float m_guardReadyTimer = 5f;
+
+        /// <summary>쉬는 호위병: 1분마다 거점 상자에서 더 좋은 장비·음식·미드를 챙긴다(챙길 게 없으면 바로 끝남, 사용자 10-26).</summary>
+        void GuardReady(WorkerNpc npc, float dt)
+        {
+            m_guardReadyTimer -= dt;
+            if (m_guardReadyTimer > 0f) return;
+            m_guardReadyTimer = 60f;
+            StartJob(new GuardReadyJob(npc));
+        }
         bool m_saidGraveNight;
 
         public void HoldChores() => m_choresHeld = true;

@@ -187,31 +187,46 @@ public class DepartureTests
     public void RiskyPlaceInsideBaseIsNotSwappedOrAvoided()
     {
         var home = P(60, 0.05f, death: 0.6f, x: 1); home.InBase = true; // 습격 때 죽은 기록
-        var i = In(home, P(500, 0.05f, x: 2), P(300, 1.3f, x: 3)); i.Mate = "플로키";
+        var i = In(home, P(500, 0.05f, x: 2), P(300, 1.3f, x: 3)); i.Guard = "호위병";
         var r = Departure.Judge(i);
         Assert.Equal(1, r.Place.Zone.X);
-        Assert.Equal(DepartAction.GoTogether, r.Action); // 바꿔 가진 않고, 위험하니 둘이
+        Assert.Equal(DepartAction.GoTogether, r.Action); // 바꿔 가진 않고, 위험하니 호위병과
         var safe = P(60, 0.05f, x: 1); safe.InBase = true;
         var inBaseRisky = P(80, 1.3f, x: 4); inBaseRisky.InBase = true;
         r = Departure.Judge(In(safe, inBaseRisky, P(300, 1.3f, x: 3)));
         Assert.Equal(3, Assert.Single(r.Avoid).Zone.X); // 거점 안 위험한 곳은 피할 곳에 안 넣음
     }
 
+    // 덜 위험한 곳이 없으면 호위병을 데려간다, 바쁘면 거점에서 기다렸다 같이(사용자 결정 2026-10-26)
     [Fact]
-    public void AllRiskyGoesTogetherWithMate()
+    public void AllRiskyTakesGuardOrWaitsForIt()
     {
-        var i = In(P(100, 1.3f, x: 1), P(400, 0.9f, death: 0.6f, x: 2)); i.Mate = "플로키";
+        var i = In(P(100, 1.3f, x: 1), P(400, 0.9f, death: 0.6f, x: 2)); i.Guard = "호위병";
         var r = Departure.Judge(i);
         Assert.Equal(DepartAction.GoTogether, r.Action);
         Assert.Equal("depart.together", r.Key);
-        Assert.Equal("플로키", r.Args["partner"]);
+        Assert.Equal("호위병", r.Args["partner"]);
         Assert.Equal(1, r.Place.Zone.X);
         Assert.Empty(r.Avoid);
-        i = In(P(100, 2.5f, boss: true)); i.Mate = "플로키"; // 보스·불가도 둘이 간다
+        i.GuardBusy = true;
+        r = Departure.Judge(i);
+        Assert.Equal(DepartAction.WaitGuard, r.Action);
+        Assert.Equal("depart.waitGuard", r.Key);
+        i = In(P(100, 2.5f, boss: true)); i.Guard = "호위병"; // 보스·불가도 호위병과
         Assert.Equal(DepartAction.GoTogether, Departure.Judge(i).Action);
-        r = Departure.Judge(In(P(100, 1.3f))); // 동료가 없으면 경고만 하고 혼자
+        r = Departure.Judge(In(P(100, 1.3f))); // 호위병이 없으면 경고만 하고 혼자
         Assert.Equal(DepartAction.Go, r.Action);
         Assert.Equal("depart.danger", r.Key);
+        i = In(P(100, 0.05f), P(200, 1.3f, x: 2)); i.Guard = "호위병"; i.GuardBusy = true; // 안전한 곳이면 호위병과 상관없이 감
+        Assert.Equal(DepartAction.Go, Departure.Judge(i).Action);
+    }
+
+    [Fact]
+    public void GuardUsesBoldLine()
+    {
+        Assert.Equal(Danger.FightFloki, Departure.FightLine(Personality.Guard));
+        Assert.Equal(Departure.FightLine(Personality.Floki), Departure.FightLine(Personality.Guard));
+        Assert.True(Speech.Has(Personality.Guard, "fightStart")); // 대사는 임시로 라그나 것
     }
 
     [Fact]
