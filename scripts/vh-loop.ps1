@@ -365,6 +365,7 @@ function End-Claude($c, $outFile) {
     [IO.File]::WriteAllText($outFile, $text, $Utf8)
     try {
         $u = Write-VhUsage $Dir $c.F.ResultJson $st.round $c.Account $c.Kind $c.Todo $c.Start $c.P.ExitCode $c.RunId $c.Mode
+        $script:LastUsage = $u
         Log ("usage {0}/{9} round={1} in={2} out={3} cache-read={4} cache-write={5} turns={6} minutes={7} result={8}" -f $u.kind,$u.round,$u.input_tokens,$u.output_tokens,$u.cache_read_tokens,$u.cache_write_tokens,$u.turns,$u.elapsed_minutes,$u.result,$u.mode)
     } catch { Log "usage write failed (not zero usage): $_" }
     @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes }
@@ -602,7 +603,9 @@ while ($true) {
     $st.replyFails = 0
     Log "회차 $($st.round) 시작 ($($acct.Name) 계정)"
     $Host.UI.RawUI.WindowTitle = "VH loop - 회차 $($st.round)"
+    $script:LastUsage = $null
     $r = Run-Claude $acct (Join-Path $Dir "round-$($st.round).txt")
+    $roundUsage = $script:LastUsage   # 뒤의 답 전용 세션(인계 대기 중)이 덮기 전에
     $lines = @($r.Text -split "`r?`n" | Where-Object { $_.Trim() })
     $last = $lines | Where-Object { $_ -match '^\s*LOOP:' } | Select-Object -Last 1
     if (-not $last) {
@@ -632,7 +635,7 @@ while ($true) {
     $after = G rev-parse origin/valheim | Select-Object -Last 1
     # 분업(decisions.txt 2절): 회차가 커밋한 것을 스크립트가 빌드·Core·게임 시험하고 Astra가 리뷰(모델 세션 없이 기다림), 결과는 다음 회차에 VH_VERIFY로.
     # 구현 회차 + 그 검증이 한 논리 회차: 검증 통과면 진척은 다음 회차가 [끝]을 적을 때 세고, 아니면 끝낸 것 없음으로 센다.
-    $e = $null; $vstop = $null
+    $e = $null; $vstop = $null; $vtext = ''
     if ($handoff) {
         $hb = Get-Date; $script:HandoffBk = Get-Date
         $wait = { if (((Get-Date) - $script:HandoffBk).TotalMinutes -ge $BackupMin) { Backup-Wip; Reply-Requests $acct; $script:HandoffBk = Get-Date } }
@@ -672,6 +675,21 @@ while ($true) {
     Save-State
     if (Test-Path $TrialFile) {
         # 시험 운전(사용자 10-26): 정한 회차 수를 돌면(또는 멈춤 조건이면) 보고 세션 → 멈춤 파일 → 컴퓨터 끔
+        # 회차마다 그 회차 history 항목에 토큰 줄을 바로 붙여 올린다(사용자 10-26: 한도로 중간에 멈춰도 남게). 항목이 없으면 새 항목.
+        if ($roundUsage) {
+            $u = $roundUsage
+            $note = "**토큰**(루프 기록) · 입력 $($u.input_tokens) · 출력 $($u.output_tokens) · 캐시 읽기 $($u.cache_read_tokens) · 캐시 쓰기 $($u.cache_write_tokens) · $($u.turns)턴 · $([math]::Round([double]$u.elapsed_minutes))분 · $(if ($u.mode -eq 'handoff') { '분업' } else { 'Claude만(기준)' })$(if ($vtext) { " · 검증: $vtext" })"
+            $nf = Join-Path $Dir 'round-note.txt'; [IO.File]::WriteAllText($nf, "$note`n", $Utf8)
+            $bash = 'C:\Program Files\Git\bin\bash.exe'
+            $hp = Start-Process $bash -ArgumentList 'scripts/vh-history-note.sh', "`"회차 $($st.round) ·`"" -WorkingDirectory $Repo -RedirectStandardInput $nf -NoNewWindow -Wait -PassThru
+            if ($hp.ExitCode) {
+                [IO.File]::WriteAllText($nf, "### 회차 $($st.round) · $(Get-Date -Format 'MM-dd') · (회차가 기록을 못 남김 — 루프가 남긴 토큰)`n`n**요약**`n`n- $last`n`n$note`n", $Utf8)
+                [void](Start-Process $bash -ArgumentList 'scripts/vh-history-add.sh' -WorkingDirectory $Repo -RedirectStandardInput $nf -NoNewWindow -Wait -PassThru)
+            }
+            G add docs/valheim/history.md | Out-Null; G commit -q -m "Valheim: round $($st.round) usage" -- docs/valheim/history.md | Out-Null
+            G push -q origin valheim | Out-Null
+            if ($LASTEXITCODE -ne 0) { G pull -q --rebase --autostash origin valheim | Out-Null; G push -q origin valheim | Out-Null }
+        }
         $tr = Get-Content $TrialFile -Raw -Encoding UTF8 | ConvertFrom-Json
         $tr.left = [int]$tr.left - 1; [IO.File]::WriteAllText($TrialFile, ($tr | ConvertTo-Json), $Utf8)
         Log "시험 운전: 남은 회차 $($tr.left)"

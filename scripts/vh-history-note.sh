@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# docs/valheim/history.md에서 "### 요청 · ... · <이름>"(또는 "### 질문 · ...") 항목(맨 위 = 최근 것)을 찾아 그 항목 끝(다음 ### · ## · <details 줄 바로 위)에
+# docs/valheim/history.md에서 "### 요청 · ... · <이름>"(또는 "### 질문 · ...", 루프가 토큰 줄을 붙일 때 "### 회차 N · ...") 항목(맨 위 = 최근 것)을 찾아 그 항목 끝(다음 ### · ## · <details 줄 바로 위)에
 # 표준 입력을 끼워 넣는다. 요청 일을 끝낸 회차가 "**끝**"을 같은 항목에 붙일 때 쓴다(history.md는 읽거나 열지 않음).
 #   bash scripts/vh-history-note.sh "<요청 이름 앞부분>" <<'EOF'
 #   **끝** · MM-dd HH:mm 회차 N
@@ -10,7 +10,7 @@ set -e
 f="$(cd "$(dirname "$0")/.." && pwd)/docs/valheim/history.md"
 key="$1"
 [ -n "$key" ] || { echo "요청 이름을 주세요" >&2; exit 1; }
-start="$(grep -nE -- '^### (요청|질문) · ' "$f" | grep -F -- "$key" | head -1 | cut -d: -f1)"
+start="$(grep -nE -- '^### (요청 · |질문 · |회차 [0-9]+ · )' "$f" | grep -F -- "$key" | head -1 | cut -d: -f1)"
 [ -n "$start" ] || { echo "history.md에 '### 요청(질문) · … $key' 항목이 없음" >&2; exit 1; }
 end="$(awk -v s="$start" 'NR > s && /^(### |## |<details)/ { print NR; exit }' "$f")"
 [ -n "$end" ] || end=$(( $(wc -l < "$f") + 1 ))
