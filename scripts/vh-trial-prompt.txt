@@ -1,0 +1,14 @@
+이번 세션은 발헤임 무인 루프(scripts/vh-loop.ps1)의 "시험 운전 보고" 세션이다. 사용자가 정한 회차 수만큼 루프가 돌았고, 이 보고 뒤 PC가 꺼진다. 사용자는 자리에 없다. 묻지 않는다.
+보고할 범위는 환경 변수 VH_TRIAL(echo $env:VH_TRIAL — "회차 A-B, 시작 시각")이다. 코드·빌드·게임 시험·서브에이전트는 하지 않는다. 짧게 끝낸다.
+
+1. 자료(통째로 읽지 말고 필요한 줄만): %USERPROFILE%\vh-loop\loop.log 의 그 시각 뒤 줄, %USERPROFILE%\vh-loop\usage.csv 의 그 회차 줄,
+   %USERPROFILE%\vh-loop\handoff-records\*.json(그 시각 뒤), round-<회차>.txt 마지막 몇 줄, git log --oneline(그 시각 뒤), docs/valheim/status.txt.
+2. history.md 맨 위에 bash scripts/vh-history-add.sh로 넣는다(꼴은 그 스크립트 머리 주석, 사용자가 휴대폰으로 읽음 — 쉬운 말):
+   "### 시험 운전 · MM-dd · 무인 루프 N회차(분업 켬) 결과" → **요약** 2~3줄 → **자세히** "- " 목록:
+   - 회차마다 한 줄: 회차 번호·한 일(LOOP 줄)·끝낸 것 여부·Claude 토큰(입력·출력·캐시 읽기·쓰기)·걸린 분·mode(claude-only/handoff).
+   - 인계(HANDOFF)가 있었으면: 작업 ID·시험 결과·Astra 리뷰 결과(COMPLETE/LIMIT 등)·단계별 분·Astra 토큰. 다음 회차가 그 결과를 받아 무엇을 했는지.
+   - Claude 토큰 합계·회차당 평균. 분업 회차와 아닌 회차를 나눠서(수가 적어 결론은 내지 않는다고 적음). 없는 수치는 "기록 없음".
+   - 문제(오류·한도·멈춤·게임 종료 멈춤 E038 발생 수)와 사용자가 볼 것.
+3. git add docs/valheim/history.md → git commit -m "Valheim: trial run report" → git push origin HEAD:valheim(거부되면 git pull --rebase origin valheim 후 다시, 3번까지).
+   다른 파일은 고치지 않는다.
+마지막 줄은 반드시: REPORT: <한 줄 요약>

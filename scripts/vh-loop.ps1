@@ -521,6 +521,26 @@ function Wait-UserRequest($why, $last) {
     }
 }
 
+$TrialFile = Join-Path $Dir 'trial.json'   # {"total":5,"left":5,"first":N,"started":"..."} — 있으면 그 회차 수만 돌고 보고 후 끔
+function End-Trial($tr, $why) {
+    $range = "회차 $($tr.first)-$($st.round), 시작 $($tr.started)$(if ($why) { ", 일찍 끝남: $why" })"
+    Log "시험 운전 끝($range) → 보고 세션"
+    Write-Status "시험 운전 끝($range): 결과를 history에 올리고 PC를 끔(입력 10분 없을 때)" '-'
+    $env:VH_TRIAL = $range
+    $free = @(0, 1 | Where-Object { -not $st.until[$_] -or [datetime]$st.until[$_] -le (Get-Date) })
+    $c = Start-Claude $Accounts[$(if ($free.Count) { $free[0] } else { $st.acct })] $Repo 'scripts/vh-trial-prompt.txt' '[보고] '
+    if (-not $c.P.WaitForExit(20 * 60000)) { Log '보고 세션 시간 초과 → 끔'; & taskkill /T /F /PID $c.P.Id | Out-Null }
+    $r = End-Claude $c (Join-Path $Dir "trial-report-$($st.round).txt")
+    Log "보고: $(@($r.Text -split "`r?`n" | Where-Object { $_ -match '^\s*REPORT:' } | Select-Object -Last 1))"
+    Remove-Item $TrialFile -Force
+    [IO.File]::WriteAllText((Join-Path $Dir 'stop'), "trial done $(Get-Date -Format 'MM-dd HH:mm') — 다시 돌리려면 이 파일을 지움", $Utf8)
+    Prepare-Git
+    Write-Status "멈춤: 시험 운전 끝($range) — history.md 맨 위에 결과. 다시 돌리려면 %USERPROFILE%\vh-loop\stop을 지움" '-'
+    while ([VH.Power]::IdleMs() -lt 600000) { Start-Sleep 30 }   # 평소처럼: 사용자가 쓰는 중이면 안 끔
+    Log '시험 운전 끝 → 최대 절전'
+    [void][VH.Power]::SetThreadExecutionState($Release)
+    & shutdown /h
+}
 $st = Load-State
 Log "루프 시작$(if ($Once) { ' (한 회차만)' })"
 $Gate = $null; $HandoffOn = $false
@@ -650,6 +670,13 @@ while ($true) {
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }
     if (-not $stop) { Write-Status $(if ($Once) { '한 회차 끝(시험 실행)' } else { '다음 회차 준비' }) $last }
     Save-State
+    if (Test-Path $TrialFile) {
+        # 시험 운전(사용자 10-26): 정한 회차 수를 돌면(또는 멈춤 조건이면) 보고 세션 → 멈춤 파일 → 평소처럼 입력 10분 없을 때 최대 절전
+        $tr = Get-Content $TrialFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        $tr.left = [int]$tr.left - 1; [IO.File]::WriteAllText($TrialFile, ($tr | ConvertTo-Json), $Utf8)
+        Log "시험 운전: 남은 회차 $($tr.left)"
+        if ($tr.left -le 0 -or $stop) { End-Trial $tr $stop; break }
+    }
     if ($stop) {
         if (-not (Wait-UserRequest $stop $last)) { Log '멈춤 파일 → 끝'; Write-Status '멈춤: 멈춤 파일이 있음' '-'; break }
         $st.noProg = 0; $st.lastFail = ''; Save-State; continue

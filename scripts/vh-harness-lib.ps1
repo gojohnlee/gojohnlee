@@ -304,12 +304,15 @@ function Get-VhHandoffEffect($Task) {
 }
 # Division of labour is on only when the user's switch file exists, 5+ real baseline rounds are recorded and Astra is not backed off.
 function Get-VhHandoffGate($Directory, $Repo, $AstraUntil) {
-    $on = Test-Path -LiteralPath (Join-Path $Repo 'docs\valheim\handoff-on.txt')
+    $sw = Join-Path $Repo 'docs\valheim\handoff-on.txt'
+    $on = Test-Path -LiteralPath $sw
+    # "기준 생략" in the switch file: the user asked to try division of labour before the 5-round baseline (10-26 trial run)
+    $skip = $on -and ([IO.File]::ReadAllText($sw) -match '기준 생략')
     $baseline = @(Get-ChildItem -LiteralPath (Join-Path $Directory 'usage-records') -Filter '*.json' -ErrorAction SilentlyContinue | ForEach-Object {
         try { Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { }
     } | Where-Object { $_.kind -eq 'implementation' -and $_.result -eq 'present' -and $_.mode -ne 'handoff' }).Count
     $why = if (-not $on) { 'off: docs/valheim/handoff-on.txt 없음' }
-        elseif ($baseline -lt 5) { "off: 기준 회차 $baseline/5" }
+        elseif ($baseline -lt 5 -and -not $skip) { "off: 기준 회차 $baseline/5" }
         elseif ($AstraUntil -and [datetime]$AstraUntil -gt (Get-Date)) { "off: Astra 다시 시도 $(([datetime]$AstraUntil).ToString('MM-dd HH:mm'))(한도 해제 시각 아님)" }
         else { 'on' }
     [pscustomobject]@{ on=($why -eq 'on'); why=$why; baseline=$baseline }

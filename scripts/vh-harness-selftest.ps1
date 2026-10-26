@@ -102,6 +102,9 @@ Check ($sum -match 'vh_b: FAIL' -and $sum -match '실행 판정 FAIL') 'summary 
 $grepo=Join-Path $OutputDirectory 'gate-repo'; $gdir=Join-Path $OutputDirectory 'gate-loop'; [IO.Directory]::CreateDirectory("$grepo\docs\valheim") | Out-Null
 Check (-not (Get-VhHandoffGate $gdir $grepo '').on) 'division of labour off without switch file'
 [IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on')
+[IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on — 기준 생략',[Text.Encoding]::UTF8)
+Check ((Get-VhHandoffGate $gdir $grepo '').on) 'user trial switch skips the baseline'
+[IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on')
 foreach ($k in 1..4) { [void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' $k 'a' 'implementation' 't' (Get-Date) 0 "g$k") }
 [void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' 5 'a' 'implementation' 't' (Get-Date) 0 'g5' 'handoff')
 [void](Write-VhUsage $gdir '' 6 'a' 'implementation' 't' (Get-Date) 1 'g6')
