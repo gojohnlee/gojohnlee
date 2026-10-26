@@ -21,6 +21,8 @@
 - vh_restart2 FAIL "NPC 3/2": 복제 아님. 월드를 불러올 때 "호위병 없는 옛 월드 → 깃발에 호위병 만듦"이 돌았는데, 시험의 호위병 끄기(SkipGuard)는 3초 뒤 시험 시작 때라 늦었음.
   autotest.txt를 읽는 순간 SkipGuard를 켜게 고침 → restart1→2 6/6·14/14, escorttest 18/18 PASS. 로그의 TerrainComp NullReference는 codemap에 적힌 게임 원래 오류.
 
+**토큰**(루프 기록) · 입력 70 · 출력 9597 · 캐시 읽기 1298380 · 캐시 쓰기 42543 · 35턴 · 35분 · Claude만(기준)
+
 ### 회차 184 · 10-27 · 호위병 게임 시험 통과
 
 **요약**
