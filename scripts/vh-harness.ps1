@@ -209,7 +209,8 @@ try {
         if ($outcome -eq 'COMPLETE') {
             try { $review=Get-Content "$reviewDir\review.json" -Raw -Encoding UTF8 | ConvertFrom-Json; Assert-VhReview $review $task; if ($review.verdict -eq 'INCOMPLETE') { $outcome='INCOMPLETE' } } catch { $outcome='INVALID' }
         }
-        $task.review=[pscustomobject]@{ status=$outcome; directory=$reviewDir; evidence=@(Get-VhEvidence @(Get-ChildItem $reviewDir -File | ForEach-Object FullName)); model='gpt-6-astra' }
+        $retryAt=if ($outcome -eq 'LIMIT') { Get-VhLimitUntil ([IO.File]::ReadAllText("$reviewDir\events.jsonl")) } else { $null }
+        $task.review=[pscustomobject]@{ status=$outcome; directory=$reviewDir; evidence=@(Get-VhEvidence @(Get-ChildItem $reviewDir -File | ForEach-Object FullName)); model='gpt-6-astra'; retry_at=$(if ($retryAt) { $retryAt.ToString('o') } else { $null }) }
         if ($outcome -eq 'COMPLETE') {
             $allPass=@($latest | Where-Object { $_.status -ne 'PASS' }).Count -eq 0 -and $latest.Count -eq @($task.plan.groups).Count
             $task.stage=if ($allPass -and $review.verdict -eq 'PASS') { 'COMPLETE' } else { 'FIX' }

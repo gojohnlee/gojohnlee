@@ -6,11 +6,12 @@
 - 사용자는 GitHub 웹(PC·휴대폰)으로 본다. 요청은 docs/valheim/UserRequest.txt에 쓰고, 답은 history.md 맨 위.
   회차 도중 요청이 바뀌면 15분 백업 때 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)가 따로 작업 트리(%USERPROFILE%\vh-loop\reply)에서 답한다
   (질문은 바로 답, 일은 "[받음 시각]"을 붙여 다음 회차에 넘김). history.md는 merge=union.
-- 계획 [사용자 10-26]: Claude 구현 → GPT(PC Codex) 검증 분업 — 아직 안 만듦. 규칙은 decisions.txt 2절 "GPT 검증 분업", 순서는 progress ★(먼저 회차별 토큰·시간 재기).
+- 분업 [사용자 10-26, 만듦 PC 10-26 — 꺼져 있음]: Claude 구현 → GPT(Astra) 검증. docs/valheim/handoff-on.txt + 기준 5회차면 회차에 VH_HANDOFF=1, 회차가 "LOOP: HANDOFF"로 끝내면
+  루프가 그 커밋을 scripts/vh-harness.ps1로 빌드·게임 시험·리뷰하고 결과를 다음 회차에 VH_VERIFY로. 규칙은 decisions.txt 2절, 쓰는 법은 Harness.md.
 
 멈춤·쉼
 - 멈추기: docs/valheim/loop-stop.txt(아무 내용) 또는 %USERPROFILE%\vh-loop\stop. 쉬기: docs/valheim/loop-pause.txt 첫 줄에 다시 시작할 시각.
-- 루프가 스스로 멈추는 때: 사용자 확인 필요(NEED_USER), 3회차 연속 근거 있는 완료 없음, 같은 시험이 같은 이유로 2회차 연속 FAIL. 멈춘 뒤 UserRequest.txt가 바뀌면 5분 안에 다시 돈다.
+- 루프가 스스로 멈추는 때: 사용자 확인 필요(NEED_USER), 3회차 연속 근거 있는 완료 없음, 같은 시험이 같은 이유로 2회차 연속 FAIL(분업 검증은 3번 연속). 멈춘 뒤 UserRequest.txt가 바뀌면 5분 안에 다시 돈다.
 - [클라우드 주의] 밖에서 문서를 고칠 때 loop-pause.txt로 쉬게 하면 최대 절전에 들어가 파일을 지워도 그 시각까지 안 깬다 → 쉬기 대신 회차 기록 커밋이 올라온 직후 바로 푸시
   (회차 중 푸시는 회차 커밋 해시를 바꾼다 — 지시문 4번).
 

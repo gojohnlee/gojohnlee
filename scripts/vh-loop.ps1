@@ -629,9 +629,10 @@ while ($true) {
             if ($st.verifyFailN -ge 3) { $vstop = "같은 시험 검증 3번 연속 FAIL($key)" }
         } else { $st.verifyFail = ''; $st.verifyFailN = 0 }
         if ($e -and $e.astra_down) {
-            $st.astraFails++; $h = [math]::Min(24, 3 * [math]::Pow(2, $st.astraFails - 1))
-            $st.astraUntil = (Get-Date).AddHours($h).ToString('o')
-            Log "Astra 리뷰 못 함($($e.review)) → ${h}시간 분업 끔(다시 시도 시각일 뿐 한도 해제 시각 아님, 그동안 회차가 직접 시험·리뷰)"
+            $st.astraFails++
+            if ($e.retry_at) { $st.astraUntil = "$($e.retry_at)"; $how = 'Codex가 알려 준 해제 시각' }   # 한도 문구의 "try again at …"
+            else { $h = [math]::Min(24, 3 * [math]::Pow(2, $st.astraFails - 1)); $st.astraUntil = (Get-Date).AddHours($h).ToString('o'); $how = "${h}시간 뒤 다시 시도(해제 시각 아님)" }
+            Log "Astra 리뷰 못 함($($e.review)) → $(([datetime]$st.astraUntil).ToString('MM-dd HH:mm'))까지 분업 끔($how, 그동안 회차가 직접 시험·리뷰)"
         } elseif ($e -and $e.review -eq 'COMPLETE') { $st.astraFails = 0 }
     }
     if (Test-RoundResult $before $after $st.round) { $st.noProg = 0 }

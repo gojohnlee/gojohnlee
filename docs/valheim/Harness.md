@@ -1,38 +1,48 @@
 # PC 검증 하네스
 
-사용자 요청 2026-10-26: 기존 루프를 다시 켜지 않고 준비한다. `scripts/vh-loop.ps1`은 다음 회차부터 실제 Claude result의 사용량을 기록한다. 기준 5~10회차 측정 및 호위병 전 선행 시험 순서는 그대로다.
+Claude가 구현한 커밋을 **스크립트가** 빌드·Core·게임 시험하고 **Astra(gpt-6-astra, PC Codex 앱의 codex exec)** 가 리뷰하는 장치입니다. 규칙은 decisions.txt 2절 "GPT 검증 분업"을 따릅니다.
+처음 만든 것은 PC Codex(10-26, 커밋 553e59d~c9dfd23)이고, 루프 연결과 마무리는 PC Claude 세션(10-26)이 했습니다.
 
-## 준비된 명령
+## 지금 상태
 
-Windows PowerShell 5.1에서 저장소 루트 기준:
+- **꺼져 있음.** 루프가 회차마다 스위치를 봅니다. `docs/valheim/handoff-on.txt`가 있고, 분업 전 실제 회차 사용량 기록이 5개 이상이고, Astra 쉼이 아닐 때만 켜집니다. 상태는 status.txt "분업" 줄에 나옵니다.
+- 켜지면 회차에 `VH_HANDOFF=1`이 갑니다. 회차는 게임 시험을 직접 하지 않고 시험 계획(`%USERPROFILE%\vh-loop\handoff-plan.json`)을 남긴 뒤 `LOOP: HANDOFF`로 끝냅니다(지시문 3-1).
+- 그러면 루프가 `Invoke-VhHandoff`로 준비(빌드·Core·자가 시험) → 게임 시험 → Astra 리뷰 → 요약을 차례로 돌립니다. 모델 세션은 기다리지 않습니다. 요약은 다음 회차에 `VH_VERIFY`(지시문 0-1)로 넘어갑니다.
+- **Astra 한도·오류(사용자 10-26):** 그 검증은 "Astra 못 씀"이 되고 다음 Claude 회차가 직접 리뷰합니다. 한도 문구의 "try again at" 시각까지 분업을 끕니다(문구에 없으면 3·6·12·24시간 뒤 다시 시도). 그동안은 예전처럼 Claude가 시험·리뷰를 다 합니다.
+- 셈: 구현 회차와 그 검증을 한 묶음으로 봅니다. 검증이 통과하면 다음 회차가 `[끝]`을 적을 때 진척으로 칩니다. 통과 못 하면 "끝낸 것 없음"이 됩니다. 같은 시험이 검증에서 3번 연속 FAIL이면 멈춥니다.
+- 인계 도중 루프가 꺼지면 다음 회차에 "결과 없음, PASS 아님"을 알립니다(`handoff-running.json`).
+
+## 손으로 돌리기
+
+Windows PowerShell 5.1에서 저장소 루트 기준으로 실행합니다. 루프가 돌고 있으면 거부됩니다.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness-selftest.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Action Prepare -BaseCommit <구현-이전-SHA> -Plan scripts\vh-harness-smoke.json
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Action Test -TaskId <출력된-ID>
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Action Review -TaskId <같은-ID>
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Action Test -TaskId <ID>
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Action Review -TaskId <ID>
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Action Summary -TaskId <ID>
 ```
 
-Prepare는 깨끗한 커밋에서 빌드·참조 검사·Core 시험을 직접 실행한다. 검증 빌드는 `--no-dist`로 배포 파일을 덮어쓰지 않고 실제 빌드 DLL 해시를 고정한다. 기존 구현 작업·게임 프로세스가 돌고 있으면 중단하며 이를 강제 종료하지 않는다.
+- **Prepare:** 깨끗한 커밋에서 빌드(`--no-dist`)·참조 검사·Core·자가 시험을 합니다. 실행할 DLL·게임 DLL·시험 월드 원본의 해시를 고정합니다. 계획의 `requirements`는 `"경로: 절 제목 글자"` 꼴이고, 그 절만 리뷰 자료에 들어갑니다.
+- **Test:** 전용 te4st41/vhtest만 씁니다.
+  - `sequence`: 한 게임에서 순서대로 돕니다.
+  - `solo`: 시험마다 원본을 복원합니다.
+  - `restart`: vh_restart1 → vh_restart2이고, 두 번째는 원본을 복원하지 않습니다.
+  - 중단된 묶음은 새 작업으로 처음부터 다시 합니다.
+  - 알려진 무해 줄(BepInEx "Unable to start Unity log writer")은 오류로 치지 않습니다. 정확히 그 줄만입니다.
+  - 저장 뒤 게임 종료가 멈추면(E038) 2분 뒤 끄고 `exit_hang`만 표시합니다.
+- **Review:** 실행 파일은 PATH에서 찾고, 없으면 `%LOCALAPPDATA%\OpenAI\Codex\bin\*\codex.exe` 중 가장 최근 것을 씁니다. 읽기 전용 고정 JSON입니다. 작업 ID·커밋·대상 해시가 다르면 무효입니다. 소스·DLL·증거가 바뀌면 MUTATION입니다.
+- **리뷰 자료:** 대상 확인 정보, diff 앞뒤 30줄, 지정 절, 관련 Errors 항목, 같은 줄을 묶은 로그 요약만 넣습니다(10-26: 32만 → 고정분 약 9KB + diff).
 
-Test는 전용 te4st41/vhtest만 쓴다. plan의 `sequence`는 한 게임에서 순서·중복을 유지하고, `solo`는 각각 원본을 복원한다. `restart`는 `["vh_restart1","vh_restart2"]`로, 두 번째에만 원본 복원을 끈다. 중단된 묶음은 처음부터 재실행하며, 결과와 원본 해시가 유효한 완료 묶음은 재사용한다. FAIL을 재시도하려면 새 작업 ID를 준비하여 최초 기록을 남긴다.
+## 로컬 기록 (공개 Git에 안 올림)
 
-Review는 로컬 ChatGPT 로그인으로 `gpt-6-astra`를 호출한다. 읽기 전용·고정 JSON 출력이며 실행 전후 소스·DLL·증거 해시를 비교한다. 응답의 작업 ID·커밋·검증 해시가 다르면 무효다. 한도/인증/실행 오류/시간 초과/결과 누락은 별도 상태로, 성공으로 간주하지 않는다. 알 수 없는 한도 해제 시각은 만들지 않는다. 검증 장애 때 다음 작업자는 기존 Claude 방식으로 검토하며 확인된 차단 결함을 유지한다.
+- `%USERPROFILE%\vh-loop\usage-records\<실행-ID>.json` + `usage.csv`: Claude 회차·답 전용 세션의 실제 수치입니다. 없는 수치는 null입니다. `mode`는 claude-only(기준)와 handoff로 나뉩니다.
+- `%USERPROFILE%\vh-loop\harness\<작업-ID>\`: state.json, handoff.md, result.md(요약), 빌드·Core 로그, 묶음별 diag·LogOutput·run.json, review-N(packet·events·usage).
+- `%USERPROFILE%\vh-loop\handoff-records\<작업-ID>.json`: 단계별 걸린 분과 Astra 사용량입니다(분업 전후 비교용).
 
-## 로컬 기록
+## 남은 일
 
-- `%USERPROFILE%\vh-loop\usage-records\<실행-ID>.json`: 회차·답 전용 시도별 원본 수치. 없는 수치는 null. `usage.csv`는 이 기록의 색인이다.
-- `%USERPROFILE%\vh-loop\harness\<작업-ID>\state.json`: 기준/대상 커밋, 소스·실행 DLL·게임 DLL·시험 원본 해시, 계획, 단계와 다음 행동.
-- 같은 작업 폴더의 `handoff.md`, 빌드/Core 로그·TRX, 묶음별 diag/LogOutput/실행 로그, Astra 이벤트·최종 JSON. 원본은 공개 Git에 올리지 않는다.
-- `COMPLETE`는 지정한 시험 묶음과 리뷰만 완료했다는 뜻이다. 전체 모드 완성이나 전체 회귀 완료가 아니다.
-
-## 활성화 전에 남은 일
-
-현재는 사용량 수집을 기존 루프에 연결하고 독립 검증 명령을 준비한 단계다. **무인 루프의 `LOOP: HANDOFF` 자동 전환은 아직 연결하지 않았다.** 따라서 다음 Claude 회차는 기존 방식대로 게임 시험까지 한다.
-
-1. 실제 회차에서 사용량 기록을 5~10회 모으고 종류별 기준을 만든다. 모의 시험 기록은 기준에 넣지 않는다.
-2. progress의 10-26 변경분 시험 → 호위병 순서를 유지한다.
-3. 자동 인계·Claude 수정 반환을 하나의 논리 회차로 연결하고 기존 연속 FAIL/무진척 규칙을 종단 검증한다. 그 전에는 자동 분업 완료로 표시하지 않는다.
-4. 필요 구간 디컴파일 캐시·변경분 검색 색인·로그 중복 압축은 이후 측정에 따라 추가한다. 이번 준비에 벡터 DB·로컬 LLM은 도입하지 않았다.
-
-Codex CLI 형식은 설치된 `codex exec --help` 및 [공식 비대화형 실행 문서](https://learn.chatgpt.com/docs/non-interactive-mode)를 확인했다.
+1. 루프를 다시 켜서 실제 회차 사용량 기록 5개 이상 모으기(지금 0개 — 루프가 10-25부터 멈춤).
+2. progress ★ 순서대로 진행하다 분업 ★에서 기준을 정리하고 `handoff-on.txt`를 만들기 → 첫 실제 HANDOFF 왕복과 FIX 반환을 확인.
+3. 디컴파일 캐시·검색 색인·로컬 모델은 측정해서 필요할 때만 넣습니다(지금은 안 넣음).

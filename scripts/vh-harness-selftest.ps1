@@ -116,4 +116,8 @@ Check ($slow.timed_out -and $script:waits -eq 0) 'short timeout ends without wai
 $hl=Join-Path $OutputDirectory 'handoff-loop'; [IO.Directory]::CreateDirectory($hl) | Out-Null
 $hv=Invoke-VhHandoff (Split-Path $PSScriptRoot -Parent) $hl 'base' 5 $null 1
 Check ($null -eq $hv.Effect -and [IO.File]::ReadAllText($hv.File) -match 'PASS 아님' -and -not (Test-Path "$hl\handoff-running.json")) 'missing plan is a reported failure, not a pass'
+$realLimit='{"type":"error","message":"You'+[char]0x2019+'ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 27th, 2026 1:16 AM."}'
+Check ((Get-VhModelOutcome 1 $false $realLimit $false) -eq 'LIMIT') 'real Codex limit message is LIMIT'
+Check ((Get-VhLimitUntil $realLimit) -eq (New-Object DateTime(2026,10,27,1,18,0))) 'reset time read from the limit message'
+Check ($null -eq (Get-VhLimitUntil '{"type":"error","message":"hit your usage limit"}')) 'no stated reset time stays unknown'
 Write-Output "Harness self-test: $script:checks PASS; evidence: $OutputDirectory"

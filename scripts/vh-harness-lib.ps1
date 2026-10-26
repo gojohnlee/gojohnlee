@@ -103,10 +103,27 @@ function Get-VhModelOutcome($ExitCode, [bool]$TimedOut, [string]$Events, [bool]$
     }
     $errorText = $errors -join "`n"
     if ($errorText -match '"(code|type)"\s*:\s*"(usage_limit_reached|rate_limit_exceeded)"') { return 'LIMIT' }
+    # Real Codex 0.164 output (10-26) has no code: {"type":"error","message":"You've hit your usage limit. ... try again at Oct 27th, 2026 1:16 AM."}
+    if ($errorText -match '(?i)hit your usage limit') { return 'LIMIT' }
     if ($errorText -match '"(code|type)"\s*:\s*"(unauthorized|authentication_error|invalid_api_key)"') { return 'AUTH' }
     if ($ExitCode -ne 0 -or $errors.Count -gt 0) { return 'ERROR' }
     if (-not $HasResult -or -not $completed) { return 'MISSING' }
     'COMPLETE'
+}
+# Reset time only when the structured error states it ("try again at Oct 27th, 2026 1:16 AM", local time); otherwise $null, never a guess.
+function Get-VhLimitUntil([string]$Events) {
+    foreach ($line in ($Events -split '\r?\n')) {
+        try { $e = $line | ConvertFrom-Json } catch { continue }
+        if ($e.type -notin @('error','turn.failed')) { continue }
+        $m = "$($e.message) $($e.error.message)"
+        if ($m -match '(?i)try again at ([A-Z][a-z]{2})[a-z]* (\d{1,2})(?:st|nd|rd|th)?, (\d{4}) (\d{1,2}):(\d{2}) ?([AP]M)') {
+            $mo = [array]::IndexOf(@('jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'), $Matches[1].ToLower()) + 1
+            if (-not $mo) { continue }
+            $h = [int]$Matches[4] % 12; if ($Matches[6] -ieq 'PM') { $h += 12 }
+            return (New-Object DateTime([int]$Matches[3], $mo, [int]$Matches[2], $h, [int]$Matches[5], 0)).AddMinutes(2)
+        }
+    }
+    $null
 }
 function Assert-VhReview($Review, $Task) {
     if ($Review.task_id -cne $Task.id -or $Review.commit -cne $Task.target.commit -or $Review.target_hash -cne $Task.target_hash) { throw 'Review target mismatch' }
@@ -283,7 +300,7 @@ function Get-VhHandoffEffect($Task) {
     }
     $review = if ($Task.review) { "$($Task.review.status)" } else { '' }
     [pscustomobject]@{ stage="$($Task.stage)"; complete=($Task.stage -eq 'COMPLETE'); fail=@($fail | Select-Object -Unique); review=$review
-        astra_down=($review -in @('LIMIT','AUTH','ERROR','TIMEOUT','POLICY')) }
+        astra_down=($review -in @('LIMIT','AUTH','ERROR','TIMEOUT','POLICY')); retry_at=$(if ($Task.review) { $Task.review.retry_at } else { $null }) }
 }
 # Division of labour is on only when the user's switch file exists, 5+ real baseline rounds are recorded and Astra is not backed off.
 function Get-VhHandoffGate($Directory, $Repo, $AstraUntil) {
@@ -310,6 +327,7 @@ function Get-VhSummary($Task, $Dir) {
             try { $r = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $o += "  - run.json 못 읽음: $($f.FullName)"; continue }
             foreach ($s in @($r.sections)) { $o += "  - $($s.name): $($s.verdict) — $((@($s.evidence) | Select-Object -First 6) -join ' / ')" }
             if ($r.status -ne 'PASS') { $o += "  - 실행 판정 $($r.status), 원본: $($f.DirectoryName) (diag.txt·LogOutput.log)" }
+            if ($r.exit_hang) { $o += '  - 게임 종료 멈춤(저장 뒤, 강제 종료) — 판정과 별개, Errors.txt E038 발생 횟수에 더함' }
         }
         foreach ($x in @(Get-ChildItem -LiteralPath $g[0].directory -Directory -Filter 'interrupted-*' -ErrorAction SilentlyContinue)) { $o += "  - 중단 증거: $($x.FullName)" }
     }

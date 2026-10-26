@@ -145,11 +145,12 @@ $t = 0; $exitHang = $false
 $gameLog = Join-Path $game 'BepInEx\LogOutput.log'
 while ((Test-Game) -and $t -lt 1800) {   # 30분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
     Start-Sleep 3; $t += 3
-    # 종료 끝 줄(Steam manager on destroy, 정상이면 1~2초 뒤 꺼짐)이 이번 실행 로그에 찍히고 2분 넘게 안 꺼지면 멈춘 것(10-26: 25분 응답 없음) → 30분 기다리지 않고 끈다.
+    # 저장 끝(ZNet OnDestroy, 정상이면 1~2초 뒤 꺼짐)이 이번 실행 로그에 찍힌 뒤 로그가 2분 넘게 멈춰 있으면 종료 멈춤(10-26 두 번: 마지막 줄은
+    # "Steam manager on destroy"·"Stopping build thread"로 달랐음, 응답 없음) → 30분 기다리지 않고 끈다(E038).
     $gp = Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Select-Object -First 1
     $li = Get-Item $gameLog -ErrorAction SilentlyContinue
     if ($gp -and $li -and $li.LastWriteTime -gt $gp.StartTime -and ((Get-Date) - $li.LastWriteTime).TotalSeconds -gt 120 -and
-        (Get-Content $gameLog -Tail 5 -Encoding UTF8 -ErrorAction SilentlyContinue | Where-Object { $_ -match 'Steam manager on destroy' })) { $exitHang = $true; break }
+        (Select-String -LiteralPath $gameLog -SimpleMatch 'ZNet OnDestroy' -Quiet -ErrorAction SilentlyContinue)) { $exitHang = $true; break }
 }
 $runTimedOut = Test-Game
 if ($runTimedOut) {
@@ -191,7 +192,7 @@ if (Test-Path $log) {
     }
 } else { $report += '(LogOutput.log 없음: BepInEx가 로드되지 않았음)' }
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
-if ($exitHang) { $report += '게임 종료 멈춤: 종료 끝 줄 뒤 2분 넘게 안 꺼져 강제 종료(Errors.txt E038) — 시험 판정과 별개로 중단(PASS로 치지 않음)' }
+if ($exitHang) { $report += '게임 종료 멈춤: 저장 끝(ZNet OnDestroy) 뒤 2분 넘게 안 꺼져 강제 종료(Errors.txt E038 — 발생 횟수 더하기). 시험 판정은 그대로' }
 elseif ($runTimedOut) { $report += '게임이 30분 안에 안 꺼져 강제 종료 — 중단(PASS로 치지 않음)' }
 if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }
 $reports += ($report -join "`r`n")
@@ -205,10 +206,11 @@ if ($env:VH_EVIDENCE_DIR) {
     if (Test-Path $log) { Copy-Item -LiteralPath $log -Destination (Join-Path $evidenceDir 'LogOutput.log'); $logText = [IO.File]::ReadAllText((Join-Path $evidenceDir 'LogOutput.log')) }
     $parsed = Read-VhDiag $diagText @($Run -split ';' | Where-Object { $_ })
     $status = $parsed.status
-    if ($runGameProcess) { $runGameProcess.WaitForExit(); if ($runGameProcess.ExitCode -ne 0) { $status='ABORTED' } }
+    # 저장이 끝난 뒤의 종료 멈춤(exit_hang)은 모드 동작과 무관 → 시험 판정을 그대로 두고 run.json에 표시만(PC 세션 10-26 기본안, E038)
+    if ($runGameProcess) { $runGameProcess.WaitForExit(); if ($runGameProcess.ExitCode -ne 0 -and -not $exitHang) { $status='ABORTED' } }
     if ($logText -notmatch 'Valheim Helper .* 로드됨') { $status = 'ENVIRONMENT' }
     if (@(Get-VhLogProblems $logText).Count) { $status = 'EXCEPTION' }   # 알려진 무해 줄(BepInEx log writer)만 뺀다
-    if ($runTimedOut) { $status = 'ABORTED' }
+    if ($runTimedOut -and -not $exitHang) { $status = 'ABORTED' }
     Write-VhJson (Join-Path $evidenceDir 'run.json') ([ordered]@{
         status=$status; started=$runStarted.ToString('o'); ended=(Get-Date).ToString('o'); tests=$Run
         dll_hash=(Get-VhHash (Join-Path $plugin 'ValheimHelper.dll')); world=$World; character=$Char
