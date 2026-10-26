@@ -58,8 +58,8 @@ namespace ValheimHelper.Core.Work
             }
         }
 
-        /// <summary>근처 막힘 건너뛰기(사용자 결정 2026-10-23 "근처 막힘 건너뛰기"): 플레이어 근처에서 이 초 넘게 진척이 없으면 막힌 곳 너머로 옮긴다.</summary>
-        public const double NearStuckSeconds = 30.0;
+        /// <summary>근처 막힘 건너뛰기(사용자 결정 2026-10-23 "근처 막힘 건너뛰기"): 플레이어 근처에서 이 초 넘게 진척이 없으면 막힌 곳 너머로 옮긴다(30 → 15초 10-26).</summary>
+        public const double NearStuckSeconds = 15.0;
         /// <summary>막힌 곳 너머 내릴 거리(m, 일꾼에서 목표 쪽으로), 가까운 것부터. 몸 반지름 + 바위·나무 하나를 넘는 4m부터.</summary>
         public static readonly double[] NearSteps = { 4.0, 6.0, 8.0 };
         /// <summary>목표 쪽 방향에서 벌리는 각(도), 곧장부터.</summary>

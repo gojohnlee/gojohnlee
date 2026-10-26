@@ -30,9 +30,10 @@ namespace ValheimHelper
             if (m_hunt)
             {
                 if (FindPrey()) { Go(Step.Hunt); return true; }
-                // ⑫ 풀링 마을: 혼자면 잡을 사냥감인데 둘레 무리가 세다 → 도움 요청(같이 가 주면 MyHit에 플레이어 몫이 더해짐)하고 그만둔다
+                // ⑫ 풀링 마을 무리·록스처럼 혼자면 못 잡는 사냥감: 동료 일꾼과 둘이면 되면 불러서 같이(사용자 결정 2026-10-26)
+                if ((m_packFoe != null || m_strongFoe != null) && CallMateForPrey()) return true;
+                // 둘이도 안 되면 헤매지 말고 그만두고 더 좋은 장비를 달라고 한다
                 if (m_packFoe != null) return GiveUp("preyPack");
-                // ⑫ 록스처럼 그 한 마리가 혼자 잡기엔 세다(위험 크면 안 함) → 헤매지 말고 같이 가 달라고 한다
                 if (m_strongFoe != null) return GiveUp("preyStrong");
                 // 사슴 가죽처럼 활로만 잡는 것뿐인데 쏠 활·화살이 없다(장비 상자에 넣어 주면 Prep이 챙긴다)
                 if (!Prey.Any(Item, false) && (m_bowFailed || m_npc.ShootingBow() == null)) return GiveUp("needBow");

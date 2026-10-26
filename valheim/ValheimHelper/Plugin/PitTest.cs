@@ -148,7 +148,7 @@ namespace ValheimHelper
                         foreach (var it in claude.GetInventory().GetAllItems())
                             if (WorkerNpc.IsTool(it, ToolKind.Pickaxe)) { it.m_durability = WorkerNpc.WornFloor; worn = it; }
                     int j0 = claude.Ai.Jumps, c0 = claude.Ai.CarveSwings, d0 = NpcPatches.NoDig.Dug;
-                    // 얕은 1·경사로만 7은 점프·경사로만 본다. 2~6은 30초 가장자리 옮기기도 탈출로 친다(사용자 결정 2026-10-23, E018 — 회차 122 구덩이 5: 24번 깎고도 못 나옴)
+                    // 얕은 1·경사로만 7은 점프·경사로만 본다. 2~6은 15초(Climb.PitEscapeSeconds) 가장자리 옮기기도 탈출로 친다(사용자 결정 2026-10-23, E018 — 회차 122 구덩이 5: 24번 깎고도 못 나옴)
                     WorkerAI.TestNoEdgeRescue = i == 0 || CarveOnly[i];
                     int edge0 = WorkerAI.PitEdgeRescues;
                     var walk = new ExploreTest.WalkJob(claude.Ai, home);
@@ -263,7 +263,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 도망 중 구덩이(사용자 결정 2026-10-22): 위 구덩이와 겹치지 않는 자리(거점 20m)에 좁고 깊은(4m) 구덩이를 따로 파고 바닥에 넣은 뒤,
-        /// 점프·깎기를 끈 채 도망을 시키면 6초쯤 못 벗어난 뒤 깃발로 순간이동하는지(짐 그대로, 도망 그만둠). 끝나면 그 자리 지형을 되돌린다.
+        /// 점프·깎기를 끈 채 도망을 시키면 3초(Climb.FleeTrapSeconds)쯤 못 벗어난 뒤 깃발로 순간이동하는지(짐 그대로, 도망 그만둠). 끝나면 그 자리 지형을 되돌린다.
         /// (넓은 구덩이는 비탈이라 걸어 나옴 — 회차 60 첫 시도.) 걷기(일)로는 이 구조가 안 붙는 것은 위 구덩이 칸들이 본다.
         /// </summary>
         static IEnumerator FleeTrap(GatherTest.Checks checks, WorkerNpc claude, Vector3 home, Quaternion rot, GameObject dig)
@@ -325,7 +325,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 점프·경사로를 끄고 깃발로 걸어가게 두면 30초 뒤 가장자리 위로 옮겨진다.
+        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 점프·경사로를 끄고 깃발로 걸어가게 두면 15초(Climb.PitEscapeSeconds) 뒤 가장자리 위로 옮겨진다.
         /// 깃발까지 가지 않고(가장자리 몇 m), 둘레 높이쯤, 짐 그대로. 벽이 완만해 걸어 나오면(E022) 환경 탓으로 칸을 세지 않는다.
         /// </summary>
         static IEnumerator EdgeRescue(GatherTest.Checks checks, WorkerNpc claude, Vector3 home, Quaternion rot, Vector3 spot, float depth)
@@ -358,7 +358,7 @@ namespace ValheimHelper
                 TestRunner.Log($"환경: 가장자리 시험 구덩이({depth:0.0}m) 벽이 완만해 {t:0.0}초에 걸어 나옴(E022) — 칸 안 셈");
             else
             {
-                checks.Add($"구덩이({depth:0.0}m)에서 30초 못 나옴 → 가장자리 위로 옮김 ({t:0.0}초, 가운데에서 {fromSpot:0.0}m, 둘레보다 {at.y - rim:0.0}m, 깃발과 {toHome:0.0}m)",
+                checks.Add($"구덩이({depth:0.0}m)에서 {Core.Work.Climb.PitEscapeSeconds:0}초 못 나옴 → 가장자리 위로 옮김 ({t:0.0}초, 가운데에서 {fromSpot:0.0}m, 둘레보다 {at.y - rim:0.0}m, 깃발과 {toHome:0.0}m)",
                     WorkerAI.PitEdgeRescues > e0 && t >= (float)Core.Work.Climb.PitEscapeSeconds - 2f && fromSpot > 2.5f && fromSpot < 10f && at.y > rim - 1.2f && toHome > 6f);
                 checks.Add($"옮긴 뒤 짐 그대로 ({claude.GetInventory().GetAllItems().Count}/{bag0})", claude.GetInventory().GetAllItems().Count == bag0);
             }

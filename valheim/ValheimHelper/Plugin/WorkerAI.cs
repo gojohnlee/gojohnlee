@@ -56,6 +56,8 @@ namespace ValheimHelper
 
         public Mode Current { get; private set; } = Mode.Idle;
         public string FollowName { get; private set; }
+        /// <summary>따라가는 대상(플레이어 또는 동료 일꾼), 없으면 None.</summary>
+        public ZDOID FollowTarget => m_follow;
 
         /// <summary>일부러 서 있는 까닭(통나무 기다림·설비 기다림 등) — 매 프레임 Hold로 적고, 시험의 멈춤 재기(TestKit.Stalls)만 읽는다.</summary>
         public string HoldWhy { get; private set; }
@@ -124,17 +126,17 @@ namespace ValheimHelper
 
         Escort m_escort;
         ZDOID m_escortId = ZDOID.None;
-        /// <summary>지금 일에 같이 가는 사람 이름(앞장서는 중), 없으면 null. 시험·!상태용.</summary>
+        /// <summary>지금 일에 같이 가는 동료 일꾼 이름(앞장서는 중), 없으면 null. 시험·!상태용.</summary>
         public string EscortName => m_escort != null ? m_escortName : null;
         string m_escortName;
         /// <summary>시험용: 앞장서기 단계.</summary>
         public Escort.Phase? EscortPhase => m_escort?.Now;
 
-        /// <summary>지금 일을 그 사람과 같이 한다(구상서 8-1): 기다렸다가 앞장서고 20m 안 유지. StartJob 뒤에 부른다.</summary>
-        public void EscortBy(ZDOID who, string name)
+        /// <summary>지금 일을 동료 일꾼과 같이 한다(Departures.GoWithMate): 기다렸다가 앞장서고 20m 안 유지. StartJob 뒤에 부른다.</summary>
+        public void EscortBy(ZDOID who, string name, Escort escort = null)
         {
             if (Current != Mode.Work || Job == null || who.IsNone()) return;
-            m_escort = new Escort();
+            m_escort = escort ?? new Escort();
             m_escortId = who;
             m_escortName = name;
         }
@@ -142,6 +144,14 @@ namespace ValheimHelper
         /// <summary>동행자를 기다려야 하면 true(이번 프레임 일은 쉼).</summary>
         bool EscortHolds(WorkerNpc npc, float dt)
         {
+            foreach (var mate in WorkerNpc.All)
+                if (mate != npc && mate.GetZDOID() == m_escortId && (mate.Ai.Current != Mode.Follow || mate.Ai.FollowTarget != npc.GetZDOID()))
+                {
+                    // 동료가 따라오기를 그만둠(다른 일을 받음·죽음 등): 기다리지 않고 혼자 감
+                    Plugin.Log.LogInfo($"{npc.NpcName}: 동행 {m_escortName}이 따라오기를 그만둠({mate.Ai.Current}) → 혼자 감");
+                    m_escort = null;
+                    return false;
+                }
             ZDO z = ZDOMan.instance.GetZDO(m_escortId);
             Vector3 pos = z != null ? z.GetPosition() : Vector3.zero;
             float d = z != null ? Vector3.Distance(pos, transform.position) : -1f;
@@ -582,7 +592,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 30초(Climb.PitEscapeSeconds) 안에 못 나오면
+        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 15초(Climb.PitEscapeSeconds) 안에 못 나오면
         /// 가장 가까운 가장자리 위(Climb.EdgeSpots — 단단한 지형·물 아님·몸 자리 빔·위험 판단 통과)로 옮긴다. 플레이어 근처라도. 짐·체력·일은 그대로.
         /// 자리가 없으면 깃발로. 도망 구덩이(6초 → 깃발)는 RescueIfTrapped가 먼저 맡는다. true면 옮겼다.
         /// </summary>
@@ -864,12 +874,19 @@ namespace ValheimHelper
                     if (target == null) { Lost(npc); break; }
                     Vector3 pos = target.GetPosition();
                     float d = Vector3.Distance(pos, transform.position);
-                    if (d > 200f) { Lost(npc); break; } // 포탈 등으로 사라짐. 포탈 따라가기는 ⑤ 단계.
-                    if (d > 20f && Time.time >= m_farSayAt) { m_farSayAt = Time.time + 30f; npc.Say("escort.far"); } // 동행자와 20m 유지(구상서 8-1)
-                    // 같이 간 동료(3-2장)가 일을 마치고 쉬면 따라가기도 끝
-                    foreach (var lead in WorkerNpc.All)
-                        if (lead != npc && lead.GetZDOID() == m_follow && (lead.Ai.Current == Mode.Idle || lead.Ai.Current == Mode.Home)) { GoHome(false); break; }
-                    if (Current != Mode.Follow) break;
+                    WorkerNpc lead = null;
+                    foreach (var o in WorkerNpc.All)
+                        if (o != npc && o.GetZDOID() == m_follow) { lead = o; break; }
+                    if (lead != null)
+                    {
+                        // 같이 가는 동료 일꾼(사용자 결정 2026-10-26: 거리 무관 — 멀어도 따라감). 그쪽이 일을 마치고 쉬거나 나를 더는 안 기다리면(혼자 감) 끝
+                        if (lead.Ai.Current == Mode.Idle || lead.Ai.Current == Mode.Home || lead.Ai.EscortName != npc.NpcName) { GoHome(false); break; }
+                    }
+                    else
+                    {
+                        if (d > 200f) { Lost(npc); break; } // 포탈 등으로 사라짐. 포탈 따라가기는 ⑤ 단계.
+                        if (d > 20f && Time.time >= m_farSayAt) { m_farSayAt = Time.time + 30f; npc.Say("escort.far"); } // 따라가는 플레이어와 20m 유지
+                    }
                     if (d < 3f) StopMoving();
                     else MoveToPoint(dt, pos, 2.5f, d > 8f);
                     break;
@@ -919,11 +936,11 @@ namespace ValheimHelper
                         break;
                     }
                     MoveToPoint(dt, home, 1.5f, d > 15f);
-                    // 막힘 복구(사용자 결정 2026-10-23): 15초 동안 못 움직이면 막힘 1번(비켜 가기·점프는 걷기가 계속 함).
+                    // 막힘 복구(사용자 결정 2026-10-23): 7.5초 동안 못 움직이면 막힘 1번(비켜 가기·점프는 걷기가 계속 함).
                     // StuckBook.HomeWalkTries번째면 더 걷지 않고 깃발로 순간이동, 그것도 안 되면 그 자리에서 쉰다("집에 못 가요").
                     m_stuckTimer = Vector3.Distance(m_lastPos, transform.position) < 0.5f * dt && !m_carving ? m_stuckTimer + dt : 0f;
                     m_lastPos = transform.position;
-                    if (m_stuckTimer > 15f)
+                    if (m_stuckTimer > 7.5f) // 집 가는 길 막힘 15 → 7.5초(막힘 시간 절반, 사용자 결정 2026-10-26)
                     {
                         m_stuckTimer = 0f;
                         if (!m_homeBook.HomeWalkFailed())

@@ -12,7 +12,7 @@ namespace ValheimHelper
     public sealed class GraveJob : IWorkerJob
     {
         public const int MaxTries = 2;
-        const float GoStuckLimit = 30f, TotalLimit = 20f * 60f;
+        const float GoStuckLimit = 15f, TotalLimit = 20f * 60f; // 막힘 30 → 15초(사용자 결정 2026-10-26)
 
         enum Step { Prep, Go, Loot, Home, Store }
 

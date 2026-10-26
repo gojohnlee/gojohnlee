@@ -59,7 +59,8 @@ namespace ValheimHelper
                 Skip();
                 return true;
             }
-            if (Stuck(dt, m_targetPos) || m_stepTime > 40f)
+            // 다가가기 한도 40 → 20초(막힘 시간 절반, 사용자 결정 2026-10-26). 던전 안은 90m 시야에 길이 굽어 40초 그대로
+            if (Stuck(dt, m_targetPos) || m_stepTime > (m_npc.InInterior() ? 40f : 20f))
             {
                 LogStuck("다가가기", m_targetPos);
                 // 멀리(모든 플레이어 64m 밖) 목표 몇 m 앞에서 막혔다: 그 자리에서 직접 피해로 캔다(E012, 사용자 결정 2026-10-23 "오류 정리 꼼수").

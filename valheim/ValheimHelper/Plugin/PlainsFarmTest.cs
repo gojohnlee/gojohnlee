@@ -9,7 +9,7 @@ namespace ValheimHelper
     /// vh_plainsfarmtest (⑫ 사): 평원 자리(VH_BIOME=plains)에서
     /// A) 보리 4를 시키면(Farm.Plan, 씨앗 = 수확물) 거점 옆 밭에 보리 새싹을 심고, 자라게 한 뒤 거둬 상자에 넣는지(보리 수 보존 + 수확).
     /// B) "!밭"(Farm.Fill): 상자 보리 4·아마 4 → 먹을 몫을 남겨 반씩(보리 2·아마 2)만 심는지.
-    /// C) 록스 사냥 판단: 평원 차림으로 록스 한 마리 → Guard.SafePrey 판단을 따르는지(안 되면 덤비지 않고 "같이 가 줘" preyStrong, 되면 잡음).
+    /// C) 록스 사냥 판단: 평원 차림으로 록스 한 마리 → Guard.SafePrey 판단을 따르는지(곁의 플로키까지 셈해도 안 되면 덤비지 않고 "더 센 무기를 줘" preyStrong, 되면 잡음).
     /// </summary>
     static class PlainsFarmTest
     {
@@ -144,7 +144,7 @@ namespace ValheimHelper
                     if (npc.Ai.Guard != null && npc.Ai.Guard.StateName != "Calm") states.Add(npc.Ai.Guard.StateName);
             }
             bool said = false;
-            for (int i = heard; i < w.Heard.Count; i++) { TestRunner.Log($"들음: {w.Heard[i]}"); if (w.Heard[i].Contains("같이") || w.Heard[i].Contains("도와")) said = true; }
+            for (int i = heard; i < w.Heard.Count; i++) { TestRunner.Log($"들음: {w.Heard[i]}"); if (w.Heard[i].Contains("장비") || w.Heard[i].Contains("무기")) said = true; }
             bool done = !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob);
             string st = string.Join(",", new List<string>(states).ToArray());
             if (safe)
@@ -156,7 +156,7 @@ namespace ValheimHelper
             else
             {
                 checks.Add($"센 록스는 그만둠 ({t:0.0}초)", done);
-                checks.Add("같이 가 달라고 말함(preyStrong)", said);
+                checks.Add("장비를 달라고 말함(preyStrong — 곁의 플로키까지 셈해도 안 됨)", said);
                 checks.Add($"록스에 덤비지 않음 (경계 [{st}], 록스 {(lox == null || lox.IsDead() ? "죽음" : "삶 " + lox.GetHealth().ToString("0"))})", !states.Contains("Fight") && lox != null && !lox.IsDead());
             }
             if (lox != null && !lox.IsDead()) FulingTest.Kill(lox);

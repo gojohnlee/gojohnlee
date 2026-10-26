@@ -11,7 +11,7 @@ namespace ValheimHelper
     public sealed class ExploreJob : IWorkerJob
     {
         const float Limit = 30f * 60f;
-        const float StuckLimit = 20f;
+        const float StuckLimit = 10f; // 막힘 20 → 10초(사용자 결정 2026-10-26)
 
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;

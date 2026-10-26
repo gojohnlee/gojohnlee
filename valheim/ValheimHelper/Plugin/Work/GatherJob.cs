@@ -29,6 +29,9 @@ namespace ValheimHelper
         string m_packFoe;
         /// <summary>사냥감 한 마리가 혼자 상대하기엔 센 것(록스 등, SafePrey가 무리 없이 거절)의 이름(preyStrong 대사). 한 번 보면 이 일 동안 둔다.</summary>
         string m_strongFoe;
+        /// <summary>혼자면 안 되던 가장 가까운 사냥감(동료와 합쳐 다시 셈), 동료를 이미 불렀는지(이 일에 한 번).</summary>
+        Character m_hardPrey;
+        bool m_mateCalled;
         /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
         bool m_sawSkipped;
         readonly WorkerNpc m_npc;
@@ -85,7 +88,7 @@ namespace ValheimHelper
         const float ExploreLimit = 30f * 60f;
         /// <summary>안 둘러본 밝혀진 구역을 거점에서 몇 구역까지 찾는지.</summary>
         const int KnownRing = 10;
-        const float MoveStuckLimit = 20f;
+        const float MoveStuckLimit = 10f; // 막힘 시간 제한 절반(20 → 10초, 사용자 결정 2026-10-26)
         /// <summary>지하묘지(⑦ 철): 입구까지 가는 최대 시간, 안에서 머무는 최대 시간, 안에서 보는 거리.</summary>
         const float CryptGoLimit = 6f * 60f;
         const float CryptStayLimit = 15f * 60f;
@@ -207,9 +210,14 @@ namespace ValheimHelper
 
         bool InBase(Vector3 p) => BaseArea.Contains(Utils.DistanceXZ(p, m_npc.Home));
 
-        bool Avoided(Vector3 p) => m_avoid.Count > 0 && m_avoid.Contains(Senses.ZoneOf(p)) && (m_fled.AvoidInBase || !InBase(p));
+        /// <summary>출발 판단이 덜 위험한 곳으로 바꿔 가며 피하라고 한 위험한 곳(거점 밖만, 사용자 결정 2026-10-26). 이 일 동안 안 고른다.</summary>
+        readonly HashSet<ZoneXY> m_departAvoid = new HashSet<ZoneXY>();
 
-        bool ZoneAvoided(ZoneXY z) => m_avoid.Contains(z) && (m_fled.AvoidInBase || !InBase(Senses.ZoneCenter(z)));
+        public void AvoidZone(ZoneXY z) => m_departAvoid.Add(z);
+
+        bool Avoided(Vector3 p) => (m_avoid.Count > 0 || m_departAvoid.Count > 0) && ZoneAvoided(Senses.ZoneOf(p));
+
+        bool ZoneAvoided(ZoneXY z) => m_departAvoid.Contains(z) || m_avoid.Contains(z) && (m_fled.AvoidInBase || !InBase(Senses.ZoneCenter(z)));
 
         /// <summary>
         /// 이 일 동안 이미 가 봤거나(와서 봤는데 쓸 게 없었다) 못 간(길이 막힘) 구역. 지식(Brain)은 시야 안의 목록 대상을 다 세므로(FindInSight가 안 고르는
@@ -410,7 +418,8 @@ namespace ValheimHelper
             if (m_chest == null) return Fail("noChest");
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
             {
-                if (m_stepTime > 30f)
+                // 상자 가기 막힘: 진척 없이 MoveStuckLimit(근처 15초)이면 상자 앞으로(예전 단계 30초 — 막힘 시간 절반, 사용자 결정 2026-10-26). 먼 상자로 그냥 오래 걷는 건 60초까지
+                if (Stuck(dt, m_chest.transform.position) || m_stepTime > 60f)
                 {
                     LogStuck("넣기", m_chest.transform.position);
                     m_npc.TeleportTo(m_chest.transform.position + m_chest.transform.forward * 1.5f, m_npc.transform.rotation, false);

@@ -16,8 +16,6 @@ namespace ValheimHelper.Core.Npc
         public float Ratio;
         /// <summary>체력 미드 하나를 더 마신다고 쳤을 때 비율.</summary>
         public float RatioWithMead;
-        /// <summary>한가한 동료와 같이 갈 때 비율. 동료가 없거나 바쁘면 NaN.</summary>
-        public float RatioTogether = float.NaN;
         public float DeathWeight;
         public bool Boss;
         public string TopFoe;
@@ -30,6 +28,8 @@ namespace ValheimHelper.Core.Npc
         /// <summary>바이옴 이름(대사용, "평원").</summary>
         public string BiomeName;
         public bool GearShort => GearRatio >= Departure.HardFrom;
+        /// <summary>거점 범위(125m) 안: 위험해도 피해 바꿔 가지 않는다(습격 한 번에 집 앞 자원을 버리지 않게 — 도망 뒤 목표 FleeBook과 같은 원칙).</summary>
+        public bool InBase;
     }
 
     public sealed class DepartureInput
@@ -67,12 +67,14 @@ namespace ValheimHelper.Core.Npc
         /// <summary>한 개 모으는 데 드는 초.</summary>
         public float SecondsPerUnit = 4f;
         public bool KnowsPortal;
+        /// <summary>같이 갈 수 있는 동료 일꾼 이름(거리·하던 일 무관, 죽음·질문 대기·플레이어 따라가기면 없음). 없으면 null.</summary>
+        public string Mate;
     }
 
     public enum DepartAction
     {
         Go,
-        /// <summary>한가한 동료와 같이 간다(3-2장: 묻지 않음).</summary>
+        /// <summary>남은 곳이 다 위험해서 동료 일꾼과 같이 간다(묻지 않음, 거리·하던 일 무관 — 사용자 결정 2026-10-26).</summary>
         GoTogether,
         Ask,
         /// <summary>"~부터 하고 갈게요" → 대기열 끝. 꺼낼 때 다시 판단한다.</summary>
@@ -92,8 +94,10 @@ namespace ValheimHelper.Core.Npc
         public Question Question;
         /// <summary>갈 곳(원래 목표). 모르는 물건이면 null.</summary>
         public PlaceOption Place;
-        /// <summary>제안한(또는 고른) 대안. 없으면 null.</summary>
+        /// <summary>위험해서 조용히 바꿔 고른 덜 위험한 곳(이때 Place도 이것). 없으면 null.</summary>
         public PlaceOption Alternative;
+        /// <summary>이번 일에서 피할 위험한 곳(덜 위험한 곳이 하나라도 있을 때만 채움).</summary>
+        public readonly List<PlaceOption> Avoid = new List<PlaceOption>();
         /// <summary>조건 질문의 필요한 것: "healthMead", "resist:Poison" 같은 저항 미드(Resist.Condition), 또는 "gear"(더 좋은 장비, ⑫ 다).</summary>
         public string Condition;
         /// <summary>대사 키. null이면 플러그인의 평소 복창(gatherStart/gatherKnown/searching).</summary>
@@ -108,7 +112,7 @@ namespace ValheimHelper.Core.Npc
 
     /// <summary>
     /// 출발 전 판단 (구상서 8-1장, 설계 docs/valheim/design-depart-craft.txt B장). 규칙만, 대사는 키로 돌려준다.
-    /// 순서: 막힘(거절) → 하던 일(대기열, 급하면 끼어듦) → 질문 하나(위험·대안 > 죽은 곳 > 조건 > 밤 > 재고) → 출발 + 덧붙이는 말 하나.
+    /// 순서: 막힘(거절) → 하던 일(대기열, 급하면 끼어듦) → 질문 하나(밤 > 재고) → 위험하면 조용히 덜 위험한 곳, 없으면 동료와 같이 → 출발 + 덧붙이는 말 하나.
     /// </summary>
     public static class Departure
     {
@@ -130,16 +134,16 @@ namespace ValheimHelper.Core.Npc
 
         static bool DiedThere(Personality p, PlaceOption o) => o.DeathWeight > (p == Personality.Floki ? DeathFloki : DeathRagnar);
 
-        static bool Together(Personality p, PlaceOption o) => !float.IsNaN(o.RatioTogether) && o.RatioTogether < FightLine(p) && !o.Boss;
+        /// <summary>위험한 곳: 빠듯 이상, 이 장비론 그 바이옴 무리, 또는 죽은 곳.</summary>
+        public static bool Risky(Personality p, PlaceOption o, DangerLevel level) => level >= DangerLevel.Tight || o.GearShort || DiedThere(p, o);
 
-        /// <summary>대안: 위험 "주의" 이하, 죽은 곳 아님, 원래 곳의 2배 또는 +300m 안에서 가장 가까운 곳.</summary>
+        /// <summary>대안: 위험하지 않은 곳 중 가장 가까운 곳(거리 제한 없음 — 사용자 결정 2026-10-26).</summary>
         public static PlaceOption Alternative(Personality p, List<PlaceOption> places, PlaceOption from)
         {
-            float limit = Math.Max(from.Distance * 2f, from.Distance + 300f);
             PlaceOption best = null;
             foreach (var o in places)
             {
-                if (o == from || o.Distance > limit || Level(p, o) > DangerLevel.Caution || o.GearShort || DiedThere(p, o)) continue;
+                if (o == from || Risky(p, o, Level(p, o))) continue;
                 if (best == null || o.Distance < best.Distance) best = o;
             }
             return best;
@@ -195,8 +199,8 @@ namespace ValheimHelper.Core.Npc
             bool nightSoon = t != null && t.Distance > NightNearHome && i.SecondsToNight < r.Seconds;
             r.Args["stock"] = i.Stock.ToString();
 
-            // 3) 질문 하나(밤·재고만). 위험은 묻거나 거절하지 않고 "위험한데 그냥 가지"로 경고만 하고 간다
-            //    (사용자 결정 2026-10-25, 예전엔 장비·체력 미드·대안·동행·죽은 곳 질문으로 기다려 초원에서도 일을 안 했다)
+            // 3) 질문 하나(밤·재고만). 위험은 묻거나 거절하지 않는다(사용자 결정 2026-10-25):
+            //    위험한 곳이면 조용히 덜 위험한 곳(거리 무관)으로, 그런 곳이 없으면 동료와 같이 간다(사용자 결정 2026-10-26).
             if (t != null)
             {
                 var level = Level(p, t);
@@ -208,18 +212,34 @@ namespace ValheimHelper.Core.Npc
                 if (nightSoon) return Ask(r, Question.Night, null, stockEnough, false);
                 if (stockEnough) return Ask(r, Question.Stock, null, false, false);
 
-                // 그 바이옴 적 하나도 지금 장비론 못 당함(⑫ 다) → "이 장비론 평원 무리인데… 그래도 가지"
-                if (t.GearShort && level != DangerLevel.Impossible)
+                PlaceOption alt = Risky(p, t, level) && !t.InBase ? Alternative(p, i.Places, t) : null;
+                if (alt != null)
+                {
+                    r.Alternative = r.Place = t = alt;
+                    level = Level(p, alt);
+                    r.Seconds = Estimate(i, alt);
+                    r.Args["minutes"] = Minutes5(r.Seconds).ToString();
+                    r.Args["foe"] = alt.TopFoe ?? "";
+                    r.Reason += $" → 덜 위험한 곳 {alt.Distance:0}m(위험 {alt.Ratio:0.00})";
+                }
+                if (!Risky(p, t, level)) // 덜 위험한 곳으로 가니 위험한 곳은 이번 일에서 피한다(일이 스스로 고르는 구역에서도)
+                {
+                    foreach (var o in i.Places)
+                        if (o != t && !o.InBase && Risky(p, o, Level(p, o))) r.Avoid.Add(o);
+                }
+                else if (i.Mate != null)
+                {
+                    r.Args["partner"] = i.Mate;
+                    return Go(r, DepartAction.GoTogether, "depart.together", "남은 곳이 다 위험 → 동료와 같이");
+                }
+                else if (t.GearShort && level != DangerLevel.Impossible) // 그 바이옴 적 하나도 지금 장비론 못 당함(⑫ 다)
                 {
                     r.Args["biome"] = t.BiomeName ?? "";
                     if (t.GearFoe != null) r.Args["foe"] = t.GearFoe;
                     r.Reason += $", 장비 {t.GearRatio:0.00}";
                     return Go(r, DepartAction.Go, "depart.gear", "장비 모자라도 감");
                 }
-                if ((level == DangerLevel.Hard || level == DangerLevel.Tight) && Together(p, t))
-                    return Go(r, DepartAction.GoTogether, "depart.together", "동료와 합치면 됨");
-                if (level >= DangerLevel.Tight || DiedThere(p, t))
-                    return Go(r, DepartAction.Go, "depart.danger", "위험해도 감");
+                else return Go(r, DepartAction.Go, "depart.danger", "위험해도 감");
 
                 // 4) 출발 + 덧붙이는 말 하나
                 // 그 바이옴 저항 미드가 없으면 묻지 않고 투덜대고 간다(사용자 결정 2026-10-22, 예전엔 "독 저항 미드 하나만 주시면 갈게요"로 기다림)

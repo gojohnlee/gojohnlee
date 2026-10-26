@@ -108,12 +108,13 @@ namespace ValheimHelper
                     return;
             }
             if (r.Interrupts) { npc.Ai.Interrupt(); npc.Say("dropJob", args); }
-            Start(npc, cmd, ways, null);
+            Start(npc, cmd, ways, r.Avoid);
             if (r.Action == DepartAction.GoTogether)
             {
-                WorkerNpc partner = IdlePartner(npc);
-                if (partner != null) partner.Ai.Follow(npc.GetZDOID(), npc.NpcName);
+                // 남은 곳이 다 위험: 동료 일꾼이 하던 일을 두고 와서 같이 간다(사용자 결정 2026-10-26, 거리 무관)
+                WorkerNpc partner = GoWithMate(npc);
                 args["partner"] = partner != null ? partner.NpcName : "";
+                if (partner == null) r.Key = "depart.danger";
             }
             if (r.Key != null) npc.Say(r.Key, args);
             else npc.Say(input.Places.Count > 0 ? "gatherKnown" : "gatherStart", args);
@@ -183,11 +184,42 @@ namespace ValheimHelper
             if (s_pending.TryGetValue(npc, out var p)) p.AskedAt -= seconds;
         }
 
-        static void Start(WorkerNpc npc, ChatCommand cmd, HashSet<ToolKind> ways, PlaceOption avoid)
+        static void Start(WorkerNpc npc, ChatCommand cmd, HashSet<ToolKind> ways, List<PlaceOption> avoid)
         {
             var job = new GatherJob(npc, cmd.Item, cmd.Amount, ways);
-            if (avoid != null) job.AvoidHere(Senses.ZoneCenter(avoid.Zone)); // 대안으로: 원래 곳은 이번 일에서 버림
+            if (avoid != null) foreach (var o in avoid) job.AvoidZone(o.Zone); // 덜 위험한 곳으로 가니 위험한 곳은 이번 일에서 안 고름
             npc.Ai.StartJob(job);
+        }
+
+        /// <summary>
+        /// 같이 갈 동료 일꾼(사용자 결정 2026-10-26: 거리·하던 일과 상관없이). 죽음·질문 대기·자기가 다른 동행을 이끄는 중·
+        /// 다른 이를 따라가는 중이면 없음(null).
+        /// </summary>
+        internal static WorkerNpc MateFor(WorkerNpc npc)
+        {
+            foreach (var o in WorkerNpc.All)
+            {
+                if (o == npc || o.IsDead() || s_pending.ContainsKey(o) || o.Ai.EscortName != null) continue;
+                if (o.Ai.Current == WorkerAI.Mode.Follow && o.Ai.FollowTarget != npc.GetZDOID()) continue;
+                return o;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 동행(일꾼끼리만): 동료 일꾼을 지금 일에 붙인다. 동료는 하던 일을 대기열 맨 앞에 두고 따라오고, 이 일꾼은 동료가 8m 안에 올 때까지
+        /// 기다렸다가 앞장선다(처음 거리만큼 기다림). StartJob 뒤에 부른다. 붙였으면 그 동료, 아니면 null.
+        /// </summary>
+        internal static WorkerNpc GoWithMate(WorkerNpc npc)
+        {
+            WorkerNpc mate = MateFor(npc);
+            if (mate == null || npc.Ai.Current != WorkerAI.Mode.Work || npc.Ai.Job == null) return null;
+            float d = Vector3.Distance(mate.transform.position, npc.transform.position);
+            if (mate.Ai.Current == WorkerAI.Mode.Work) mate.Ai.Interrupt();
+            mate.Ai.Follow(npc.GetZDOID(), npc.NpcName);
+            npc.Ai.EscortBy(mate.GetZDOID(), mate.NpcName, Escort.ForMate(d));
+            Plugin.Log.LogInfo($"{npc.NpcName}: {mate.NpcName}와 같이 감({d:0}m, 동료가 하던 일 {mate.Ai.Queue.Count}개 대기열)");
+            return mate;
         }
 
         static DepartureInput Input(WorkerNpc npc, ChatCommand cmd, HashSet<ToolKind> ways, bool fromQueue)
@@ -223,8 +255,6 @@ namespace ValheimHelper
             armor = Mathf.Max(armor, npc.GetBodyArmor());
             float hit = Mathf.Max(Guard.HitWith(npc, weapon), Guard.HitOf(npc));
             System.Func<float, float> taken = Guard.TakenFor(npc, armor);
-            WorkerNpc partner = IdlePartner(npc);
-            float partnerHit = partner != null ? Guard.HitOf(partner) : 0f;
             PlaceBook book = Brain.Places;
             double now = Now;
             var biomes = new Dictionary<ZoneXY, int>();
@@ -247,7 +277,6 @@ namespace ValheimHelper
                     TopFoe = alone.TopFoe,
                     Resist = NeedsResist(npc, m.Biome),
                 };
-                if (partner != null) o.RatioTogether = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit + partnerHit, taken), Guard.Resolve).Ratio;
                 int biome = m.Biome != 0 ? m.Biome : biomeOf(m.Zone);
                 // 거점 바이옴(처음엔 초원)은 장비 검사 안 함: 줄 수 있는 더 좋은 장비가 없어 초반에 일을 못 했다(사용자 결정 2026-10-25)
                 if (biome == homeBiome) gearBy[biome] = new PlaceRisk();
@@ -256,9 +285,11 @@ namespace ValheimHelper
                 o.GearRatio = land.Ratio;
                 o.GearFoe = land.TopFoe;
                 o.BiomeName = BiomeNames.Of(biome);
+                o.InBase = BaseArea.Contains(o.Distance);
                 input.Places.Add(o);
             }
             input.Places.Sort((a, b) => a.Distance.CompareTo(b.Distance));
+            input.Mate = MateFor(npc)?.NpcName;
             if (cmd.Item == Dungeons.ScrapItem && input.Places.Count == 0) // 거절 대사가 지하묘지 말이라 고철만(서리 동굴은 못 찾으면 일이 찾기·탐험으로)
             {
                 input.NoCrypt = !Dungeons.TryChoose(home, out _, out bool minedOut);
@@ -301,7 +332,7 @@ namespace ValheimHelper
                 args["altDir"] = dir;
                 args["altDist"] = dist;
             }
-            if (!args.ContainsKey("partner")) args["partner"] = IdlePartner(npc)?.NpcName ?? "";
+            if (!args.ContainsKey("partner")) args["partner"] = MateFor(npc)?.NpcName ?? "";
             if (!args.ContainsKey("extra")) args["extra"] = "";
             return args;
         }
@@ -312,14 +343,6 @@ namespace ValheimHelper
             GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(kind) : null;
             Character c = prefab != null ? prefab.GetComponent<Character>() : null;
             return c != null ? Localization.instance.Localize(c.m_name) : kind;
-        }
-
-        static WorkerNpc IdlePartner(WorkerNpc npc)
-        {
-            foreach (var o in WorkerNpc.All)
-                if (o != npc && (o.Ai.Current == WorkerAI.Mode.Idle || o.Ai.Current == WorkerAI.Mode.Home) && o.Ai.Queue.Count == 0 && !s_pending.ContainsKey(o))
-                    return o;
-            return null;
         }
 
         /// <summary>그 저항 미드를 짐이나 음식·미드 상자에 가졌는지(Prep이 거기서 챙김).</summary>
@@ -515,19 +538,23 @@ namespace ValheimHelper
             var args = Args(npc, r);
             switch (act)
             {
-                case ReplyAction.GoAlternative:
+                case ReplyAction.GoAlternative: // 옛 저장의 대안 질문(이제 묻지 않음): Place가 원래 곳
                     s_pending.Remove(npc);
-                    Start(npc, p.Cmd, ways, r.Place);
+                    Start(npc, p.Cmd, ways, r.Place != null ? new List<PlaceOption> { r.Place } : null);
                     npc.Say("answer.alternative", args);
                     break;
                 case ReplyAction.GoAlone:
                 case ReplyAction.GoGrumble:
                 case ReplyAction.GoEscort:
+                {
                     s_pending.Remove(npc);
-                    Start(npc, p.Cmd, ways, null); // 동행: 대답한 사람이 같이 오면 Guard가 20m 안 플레이어 힘을 합쳐 셈
-                    if (act == ReplyAction.GoEscort) npc.Ai.EscortBy(who.CharacterId, who.Name); // 기다렸다가 앞장섬(구상서 8-1)
-                    npc.Say(act == ReplyAction.GoEscort ? "answer.escort" : act == ReplyAction.GoGrumble ? "answer.grumble" : "answer.go", args);
+                    Start(npc, p.Cmd, ways, null);
+                    // "같이 가자": 동행은 일꾼끼리만(사용자 결정 2026-10-26) — 동료 일꾼이 와서 같이 간다
+                    WorkerNpc mate = act == ReplyAction.GoEscort ? GoWithMate(npc) : null;
+                    if (mate != null) args["partner"] = mate.NpcName;
+                    npc.Say(mate != null ? "answer.escort" : act == ReplyAction.GoGrumble ? "answer.grumble" : "answer.go", args);
                     break;
+                }
                 case ReplyAction.Recheck:
                     if (!ConditionMet(npc, p)) { p.AskedAt = Now; npc.Say(r.Condition == "gear" ? "answer.gearMissing" : "answer.conditionMissing", args); break; }
                     s_pending.Remove(npc);
@@ -709,7 +736,10 @@ namespace ValheimHelper
                 DepartureResult r = Departure.Judge(input);
                 Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {due.Item} {amount}: {r.Action} {r.Question} ({r.Reason})");
                 if (r.Action != DepartAction.Go && r.Action != DepartAction.GoTogether) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
-                return new GatherJob(npc, due.Item, amount, ways);
+                // 자동 보충은 동료를 데려가지 않는다(남이 하던 일을 끊지 않게 — 남은 곳이 다 위험해도 혼자, Guard가 판단). 덜 위험한 곳으로는 바꿔 간다
+                var job = new GatherJob(npc, due.Item, amount, ways);
+                foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
+                return job;
             }
             return null;
         }

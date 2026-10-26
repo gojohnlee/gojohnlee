@@ -489,13 +489,13 @@ namespace ValheimHelper
         /// 사냥감으로 삼아도 되나(⑧): 그 한 마리와 둘레 PackRange 안 적(자는 것 포함 — 치면 깬다)을 같이 놓고 싸우는 쪽으로 판단될 때(체력 낮으면 안 됨).
         /// pack = 혼자면 되는데 무리 때문에 안 될 때 그 무리에서 가장 센 적(대사용), 아니면 null.
         /// </summary>
-        public bool SafePrey(Character c, out Character pack)
+        public bool SafePrey(Character c, out Character pack, float extraHit = 0f)
         {
             pack = null;
             Vector3 pos = m_npc.transform.position, at = c.transform.position;
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
-            float hit = MyHit(pos);
+            float hit = MyHit(pos) + extraHit; // extraHit = 아직 곁에 없는 동료 일꾼 한 방(부르면 올 때, GatherJob.CallMateForPrey)
             var taken = Taken(scale, armor);
             var one = new List<Foe>(1) { View(c, pos) };
             if (Danger.Judge(m_npc.Personality, one, m_npc.GetHealth(), m_npc.GetMaxHealth(), hit, taken, false) != Verdict.Fight) return false;

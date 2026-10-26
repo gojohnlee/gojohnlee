@@ -6,11 +6,11 @@ using Xunit;
 
 public class DepartureTests
 {
-    static PlaceOption P(float dist, float ratio = 0f, float withMead = float.NaN, float together = float.NaN, float death = 0f, bool boss = false, int x = 0) =>
+    static PlaceOption P(float dist, float ratio = 0f, float withMead = float.NaN, float death = 0f, bool boss = false, int x = 0) =>
         new PlaceOption
         {
             Zone = new ZoneXY(x, 0), Distance = dist, Ratio = ratio, RatioWithMead = float.IsNaN(withMead) ? ratio : withMead,
-            RatioTogether = together, DeathWeight = death, Boss = boss, TopFoe = "트롤",
+            DeathWeight = death, Boss = boss, TopFoe = "트롤",
         };
 
     static DepartureInput In(params PlaceOption[] places) => new DepartureInput
@@ -162,26 +162,66 @@ public class DepartureTests
         Assert.Equal("depart.danger", Departure.Judge(i).Key);
     }
 
+    // 위험한 곳이면 묻지 않고 조용히 덜 위험한 곳으로(거리 무관), 그런 곳이 없으면 동료와 같이(사용자 결정 2026-10-26)
     [Fact]
-    public void HardWarnsAndGoesToNearest()
+    public void HardQuietlyGoesToSaferPlaceAtAnyDistance()
     {
-        var r = Departure.Judge(In(P(100, 1.3f, x: 1), P(250, 0.1f, x: 2)));
+        var r = Departure.Judge(In(P(100, 1.3f, x: 1), P(3000, 0.1f, x: 2), P(200, 2.5f, x: 3)));
         Assert.Equal(DepartAction.Go, r.Action);
-        Assert.Equal("depart.danger", r.Key);
-        Assert.Equal(1, r.Place.Zone.X);
+        Assert.Equal("depart.far", r.Key); // 바꾼 걸 말하지 않는다(덧붙이는 말은 새 곳 기준 — 멀다)
+        Assert.Equal(2, r.Place.Zone.X);
+        Assert.Same(r.Place, r.Alternative);
+        Assert.Equal(new[] { 1, 3 }, r.Avoid.ConvertAll(o => o.Zone.X).ToArray());
     }
 
     [Fact]
-    public void HardGoesTogetherWhenPartnerIsEnough()
+    public void SafeNearestStillAvoidsRiskyOthers()
     {
-        var r = Departure.Judge(In(P(100, 1.3f, together: 0.4f)));
+        var r = Departure.Judge(In(P(100, 0.05f, x: 1), P(150, 1.3f, x: 2)));
+        Assert.Null(r.Alternative);
+        Assert.Equal(1, r.Place.Zone.X);
+        Assert.Equal(2, Assert.Single(r.Avoid).Zone.X);
+    }
+
+    [Fact]
+    public void RiskyPlaceInsideBaseIsNotSwappedOrAvoided()
+    {
+        var home = P(60, 0.05f, death: 0.6f, x: 1); home.InBase = true; // 습격 때 죽은 기록
+        var i = In(home, P(500, 0.05f, x: 2), P(300, 1.3f, x: 3)); i.Mate = "플로키";
+        var r = Departure.Judge(i);
+        Assert.Equal(1, r.Place.Zone.X);
+        Assert.Equal(DepartAction.GoTogether, r.Action); // 바꿔 가진 않고, 위험하니 둘이
+        var safe = P(60, 0.05f, x: 1); safe.InBase = true;
+        var inBaseRisky = P(80, 1.3f, x: 4); inBaseRisky.InBase = true;
+        r = Departure.Judge(In(safe, inBaseRisky, P(300, 1.3f, x: 3)));
+        Assert.Equal(3, Assert.Single(r.Avoid).Zone.X); // 거점 안 위험한 곳은 피할 곳에 안 넣음
+    }
+
+    [Fact]
+    public void AllRiskyGoesTogetherWithMate()
+    {
+        var i = In(P(100, 1.3f, x: 1), P(400, 0.9f, death: 0.6f, x: 2)); i.Mate = "플로키";
+        var r = Departure.Judge(i);
         Assert.Equal(DepartAction.GoTogether, r.Action);
         Assert.Equal("depart.together", r.Key);
-        r = Departure.Judge(In(P(100, 2.5f, together: 0.4f))); // 불가는 같이 안 가고 경고만
+        Assert.Equal("플로키", r.Args["partner"]);
+        Assert.Equal(1, r.Place.Zone.X);
+        Assert.Empty(r.Avoid);
+        i = In(P(100, 2.5f, boss: true)); i.Mate = "플로키"; // 보스·불가도 둘이 간다
+        Assert.Equal(DepartAction.GoTogether, Departure.Judge(i).Action);
+        r = Departure.Judge(In(P(100, 1.3f))); // 동료가 없으면 경고만 하고 혼자
         Assert.Equal(DepartAction.Go, r.Action);
         Assert.Equal("depart.danger", r.Key);
-        r = Departure.Judge(In(P(100, 0.5f, together: 0.1f, boss: true)));
-        Assert.Equal("depart.danger", r.Key);
+    }
+
+    [Fact]
+    public void WeakGearPlaceSwapsToSaferBiome()
+    {
+        var plains = P(100, x: 1); plains.GearRatio = 1.4f;
+        var meadow = P(900, 0.1f, x: 2);
+        var r = Departure.Judge(In(plains, meadow));
+        Assert.Equal(2, r.Place.Zone.X);
+        Assert.Equal("depart.far", r.Key);
     }
 
     [Fact]

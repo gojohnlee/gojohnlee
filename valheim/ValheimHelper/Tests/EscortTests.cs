@@ -56,7 +56,22 @@ public class EscortTests
         var e = new Escort();
         e.Tick(1f, 5f);
         Assert.Equal(EscortAct.GiveUp, e.Tick(1f, -1f));
-        var f = new Escort();
-        Assert.Equal(EscortAct.GiveUp, f.Tick(1f, 250f));
+        e = new Escort();
+        e.Tick(1f, 5f);
+        Assert.Equal(EscortAct.GiveUp, e.Tick(1f, 250f)); // 같이 가다 200m 넘게 벌어짐(포탈 등)
+    }
+
+    // 동료 일꾼은 거리와 상관없이 부른다(사용자 결정 2026-10-26): 출발 전엔 멀어도 기다리고, 기다림은 처음 거리만큼 늘어난다
+    [Fact]
+    public void FarMateIsWaitedForByDistance()
+    {
+        var e = Escort.ForMate(600f); // 600 / 4 + 30 = 180초
+        for (int i = 0; i < 180; i++) Assert.Equal(EscortAct.Wait, e.Tick(1f, 600f - i * 3f));
+        Assert.Equal(EscortAct.GiveUp, e.Tick(1f, 50f));
+        e = Escort.ForMate(600f);
+        Assert.Equal(EscortAct.Wait, e.Tick(1f, 600f));
+        Assert.Equal(EscortAct.Go, e.Tick(1f, 6f));
+        Assert.Equal(Escort.Phase.Leading, e.Now);
+        Assert.Equal(EscortAct.Wait, Escort.ForMate(10f).Tick(1f, 10f)); // 가까워도 최소 60초
     }
 }

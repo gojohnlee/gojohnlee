@@ -26,6 +26,7 @@ namespace ValheimHelper
                 if (!m_ai.Guard.SafePrey(c, out Character pack))
                 {
                     m_huntSkip[c] = Time.time + 120f;
+                    if (m_hardPrey == null || m_hardPrey.IsDead() || d < Utils.DistanceXZ(m_hardPrey.transform.position, me)) m_hardPrey = c;
                     if (pack != null && m_packFoe == null)
                     {
                         m_packFoe = Localization.instance.Localize(pack.m_name);
@@ -46,6 +47,30 @@ namespace ValheimHelper
             m_preyShots = 0;
             if (best != null) Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {Utils.GetPrefabName(best.gameObject)} {bestD:0}m 앞");
             return best != null;
+        }
+
+        /// <summary>
+        /// 혼자면 못 잡을 사냥감(무리 속·센 것): 동료 일꾼과 둘이면 잡을 수 있으면 불러서 같이 잡는다(사용자 결정 2026-10-26, 거리 무관).
+        /// 동료가 이미 곁(20m)이면 셈에 들어 있으니 둘이도 안 되는 것. 불렀으면 true(동료가 올 때까지 기다렸다가 다시 찾음), 이 일에 한 번만.
+        /// </summary>
+        bool CallMateForPrey()
+        {
+            if (m_mateCalled || m_ai.EscortName != null) return false;
+            m_mateCalled = true;
+            WorkerNpc mate = Departures.MateFor(m_npc);
+            if (mate == null || m_hardPrey == null || m_hardPrey.IsDead()) return false;
+            float extra = Vector3.Distance(mate.transform.position, m_npc.transform.position) <= Guard.AllyRange ? 0f : Guard.HitOf(mate);
+            if (extra <= 0f || !m_ai.Guard.SafePrey(m_hardPrey, out _, extra))
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {mate.NpcName}와 둘이도 {Utils.GetPrefabName(m_hardPrey.gameObject)}는 무리");
+                return false;
+            }
+            if (Departures.GoWithMate(m_npc) == null) return false;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 혼자면 안 되는 {Utils.GetPrefabName(m_hardPrey.gameObject)} → {mate.NpcName} 불러 같이 잡음");
+            m_npc.Say("preyMate", new Dictionary<string, string> { ["partner"] = mate.NpcName, ["item"] = ItemLabel(Item), ["foe"] = m_packFoe ?? m_strongFoe ?? "" });
+            m_packFoe = m_strongFoe = null;
+            m_huntSkip.Clear();
+            return true;
         }
 
         /// <summary>위험한 곳(Guard가 피한 적 자리) 둘레 20m 안에 이 물건의 사냥감이 살아 있나. foe = 그 자리에서 가장 가까운 적 이름(대사용).</summary>

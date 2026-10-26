@@ -15,7 +15,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class FarmJob : IWorkerJob
     {
-        const float TotalLimit = 15f * 60f, BusyLimit = 30f, GoStuckLimit = 30f, SpotLimit = 15f, HomeLimit = 180f, PickWait = 4f;
+        const float TotalLimit = 15f * 60f, BusyLimit = 30f, GoStuckLimit = 15f /* 막힘 30 → 15초, 사용자 결정 2026-10-26 */, SpotLimit = 15f, HomeLimit = 180f, PickWait = 4f;
 
         enum Step { Fetch, Go, Harvest, Plant, Home, Store }
 

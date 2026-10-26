@@ -35,10 +35,10 @@ namespace ValheimHelper.Core.Work
             return best;
         }
 
-        /// <summary>도망 중 구덩이에 갇혀 이만큼(초) 3m 안을 못 벗어나면 깃발로 순간이동(사용자 결정 2026-10-22: 도망을 못 가니까).</summary>
-        public const double FleeTrapSeconds = 6;
-        /// <summary>헤엄치며 이만큼(초) 3m 안을 못 벗어나면(물 찬 구덩이에서 헤엄만 함) 깃발로 순간이동(사용자 결정 2026-10-22).</summary>
-        public const double SwimTrapSeconds = 20;
+        /// <summary>도망 중 구덩이에 갇혀 이만큼(초) 3m 안을 못 벗어나면 깃발로 순간이동(사용자 결정 2026-10-22: 도망을 못 가니까, 6 → 3초 10-26).</summary>
+        public const double FleeTrapSeconds = 3;
+        /// <summary>헤엄치며 이만큼(초) 3m 안을 못 벗어나면(물 찬 구덩이에서 헤엄만 함) 깃발로 순간이동(사용자 결정 2026-10-22, 20 → 10초 10-26).</summary>
+        public const double SwimTrapSeconds = 10;
         /// <summary>이 거리(m) 안에서만 맴돌면 못 움직인 것으로 센다.</summary>
         public const double TrapRadius = 3;
 
@@ -53,8 +53,8 @@ namespace ValheimHelper.Core.Work
             return null;
         }
 
-        /// <summary>걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 이만큼(초) 못 나오면 가장 가까운 가장자리 위로 옮긴다(사용자 결정 2026-10-23, E018).</summary>
-        public const double PitEscapeSeconds = 30;
+        /// <summary>걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 이만큼(초) 못 나오면 가장 가까운 가장자리 위로 옮긴다(사용자 결정 2026-10-23, E018 · 30 → 15초 10-26).</summary>
+        public const double PitEscapeSeconds = 15;
         /// <summary>구덩이 기록 자리에서 이만큼(m) 넘게 벗어나면 나온 것으로 본다.</summary>
         public const double PitLeftRadius = 6;
         /// <summary>가장자리 찾기: 8방향으로 EdgeStep(m)마다 EdgeSteps번 잰다.</summary>
