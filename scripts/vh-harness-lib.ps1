@@ -70,7 +70,6 @@ function Read-VhDiag([string]$Text, [string[]]$Expected) {
                 if ($v -eq '환경 불량') { $current.verdict='ENVIRONMENT' }
                 elseif ($current.verdict -ne 'FAIL') { $current.verdict=$v }
             }
-            elseif ($line -match '^PASS(?:\s|$)' -and $current.verdict -eq 'MISSING') { $current.verdict='PASS' }
             if ($line -match '^FAIL(?:\s|:|$)') { $current.verdict='FAIL' }
             if ($line -match '^FAIL|^판정:|^시간:|^시작 상태:|환경 불량|Exception') { $current.evidence += $line }
         }
@@ -133,6 +132,19 @@ function Get-VhEvidence([string[]]$Paths) {
 function Get-VhLatestGroups($Task) {
     @($Task.groups | Group-Object index | ForEach-Object { $_.Group | Select-Object -Last 1 } | Sort-Object index)
 }
+function Get-VhResumeDecision($Record) {
+    if (-not $Record) { return 'RUN' }
+    if ($Record.status -eq 'RUNNING') {
+        foreach ($p in @(Get-ChildItem -LiteralPath $Record.directory -Recurse -Filter run.json -ErrorAction SilentlyContinue)) {
+            try { $r=Get-Content $p.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { return 'REJECT' }
+            if ($r.status -ne 'PASS') { return 'REJECT' }
+        }
+        return 'RESTART_GROUP'
+    }
+    if (-not (Test-VhEvidence $Record.evidence)) { return 'REJECT' }
+    if ($Record.status -eq 'PASS') { return 'REUSE' }
+    'REVIEW'
+}
 function Test-VhImplementationProcess($Repo) {
     $configured=Join-Path $env:USERPROFILE '.local\bin\claude.exe'
     # Claude Desktop and its UI helpers are unrelated to the configured loop worker.
@@ -149,7 +161,12 @@ function Invoke-VhProcess($File, [string]$Arguments, $WorkingDirectory, $Out, $E
     $psi.StandardOutputEncoding=[Text.Encoding]::UTF8; $psi.StandardErrorEncoding=[Text.Encoding]::UTF8
     $p = [Diagnostics.Process]::Start($psi)
     $stdout = $p.StandardOutput.ReadToEndAsync(); $stderr = $p.StandardError.ReadToEndAsync()
-    if ($InputText) { $p.StandardInput.Write($InputText); $p.StandardInput.Close() }
+    if ($InputText) {
+        # Windows PowerShell 5.1's StreamWriter uses the system code page; Codex requires UTF-8.
+        $bytes=[Text.Encoding]::UTF8.GetBytes($InputText)
+        $p.StandardInput.BaseStream.Write($bytes,0,$bytes.Length)
+        $p.StandardInput.BaseStream.Flush(); $p.StandardInput.Close()
+    }
     $timedOut = -not $p.WaitForExit($TimeoutSeconds*1000)
     if ($timedOut) { & taskkill /PID $p.Id /T /F | Out-Null; [void]$p.WaitForExit(10000) }
     if (-not $stdout.Wait(10000) -or -not $stderr.Wait(10000)) { throw 'Child output pipe did not close; evidence incomplete' }
