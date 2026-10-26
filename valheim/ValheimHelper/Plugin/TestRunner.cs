@@ -173,6 +173,7 @@ namespace ValheimHelper
             }
             if (s_autoQueue.Count == 0) return;
             s_auto = true;
+            Workers.SkipGuard = true; // 월드 불러올 때 "호위병 없음 → 만듦"도 막는다(재시작 시험 2번째가 NPC 3/2로 FAIL, 회차 185)
             Plugin.Log.LogInfo($"자동 시험 예약: 월드에 들어가면 {string.Join(", ", s_autoQueue.ToArray())}를 차례로 실행합니다.");
         }
 
