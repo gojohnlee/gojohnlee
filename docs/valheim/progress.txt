@@ -38,13 +38,11 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [회차 182] 10-26 클라우드 변경(위험하면 덜 위험한 곳·다 위험하면 동료와 같이)의 출발 시험: 코드는 문제없고, 옛 규칙을 기대하던 departtest·plainstest 두 시험만 고쳐 5개 모두 PASS(커밋 41d8b32).
 - [PC 세션 10-26, 사용자 요청] PC Codex가 만들다 한도로 멈춘 검증 하네스를 마무리해 루프에 연결(꺼져 있음 — 켜기: docs/valheim/handoff-on.txt + 기준 5회차, 쓰는 법 Harness.md).
   고친 것: 무해한 BepInEx 줄 때문에 하네스 시험이 늘 EXCEPTION, Codex에 BOM, codex를 PATH에서 못 찾음, 리뷰 자료 과다, 실제 한도 문구 분류. 자가 시험 59 PASS.
   실제 인계 2회: 빌드·Core 531 PASS·vh_npctest 17/17 PASS, Astra는 ChatGPT 한도(10-27 01:16까지) → "Astra 못 씀"으로 Claude 리뷰로 넘어감(정상). 게임 종료 멈춤 2회 → E038.
 - [클라우드 세션 10-26, 사용자 결정] Claude 구현 → GPT 검증 분업 규칙을 GPT와 합의해 정함(decisions.txt 2절 "GPT 검증 분업").
-- [클라우드 세션 10-26, 사용자 요청] 서로 어긋나던 규칙 정리: 위험하면 묻지 않고 덜 위험한 곳으로(거리 무관), 다 위험하면 두 일꾼이 같이(동료가 하던 일은 대기열 맨 앞),
-  사냥감이 혼자면 무리면 동료를 먼저 부름, 동행은 일꾼끼리만, 막혔을 때 시간 제한 모두 절반. 문서(decisions·구상서·설계서·codemap·risks·loop-plan)는 옛 방향을 지우고 지금 것으로.
-  커밋 68385c9, Core 테스트 531 통과·플러그인 컴파일 확인. 게임 시험은 PC에서(아래 "다음" 첫 ★).
 
 다음 (순서대로 — 안 끝난 일만)
 ★ 회차 사용량 재기 (사용자 10-26, decisions.txt 2절 "GPT 검증 분업"의 첫 단계 — 다른 일보다 먼저, 한 조각):
@@ -52,8 +50,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
      %USERPROFILE%\vh-loop\usage-records\<ID>.json + usage.csv + loop.log "usage" 줄에(mode: claude-only/handoff, 답 전용은 kind reply). 루프를 다시 켠 뒤
      두 번째 회차가 usage.csv에 앞 회차 줄(result present, 토큰 수 있음)을 보면 "[끝, 회차 N — 커밋 553e59d · 시험 usage.csv 기록 PASS]".
 ★ 10-26 변경 게임 시험 (클라우드 세션 코드 — 게임 시험 전, decisions.txt 6·10절). 결과는 이 커밋(68385c9) 기준으로 따로 남긴다(뒤 수정분과 섞지 않음):
-  가) [구현 완료·검증 대기, 클라우드 10-26 — 커밋 68385c9 · 시험 못 함: 클라우드] 출발(덜 위험한 곳으로): vh_departtest·vh_refilltest·vh_plainstest(plains)·vh_npctest·vh_peertest.
-     일꾼끼리 동행·동료 사냥 부르기(vh_escorttest·vh_fulingtest C)는 호위병으로 바뀌므로 건너뜀. FAIL이면 기대값이 옛 규칙(질문·플레이어 동행)인지 먼저 본다.
+  가) [끝, 회차 182 — 커밋 41d8b32 · 시험 vh_departtest PASS 23/23·vh_refilltest 22/22·vh_npctest 17/17·vh_peertest 14/14·vh_plainstest 21/21(기본 자리), dotnet test 531/531] 출발(덜 위험한 곳·다 위험하면 동료와 같이): 코드는 68385c9 그대로, departtest·plainstest 기대값만 옛 규칙(경고하고 혼자)에서 고침.
   나) [구현 완료·검증 대기, 클라우드 10-26 — 커밋 68385c9 · 시험 못 함: 클라우드] 막힘 시간 절반 회귀: vh_pittest·vh_stucktest·vh_hoptest(회차 182 작업이 git stash@{0}에 — git stash pop으로 되살려 같이, 막힘 시간 절반이라 기대값 다시 볼 것)·vh_skiptest·
      vh_crypttest·vh_exploretest·vh_farmtest·vh_deathtest·vh_woodtest·vh_stonetest·vh_coppertest. 정상 걷기가 막힘으로 잘못 잡히면(먼 상자·던전 굽은 길) 그 한 곳만 되돌릴지 본다.
 ★ 호위병 (사용자 결정 10-26, decisions.txt 5·6·7·9절) — 코드는 세션 브랜치 claude/upbeat-cori-qwctib에 미리 짬(위 ★ 시험 결과를 남긴 뒤 git merge로 합침):
