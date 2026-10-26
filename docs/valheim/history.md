@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 187 · 10-27 · 설비 막힘 복구·재료만 모으기 검증 받음
+
+**요약**
+
+- 설비 막힘 복구(E035)·설비 없을 때 재료만 모으기 검증 통과: 시험 7개 모두 PASS, 리뷰는 Astra 대신 Claude가 함(코드 c24ba82·c066bc1).
+
+**자세히**
+
+- 분업 첫 왕복: 하네스가 커밋 efcba40을 빌드·Core 559/559·게임 시험 한 묶음(machinestucktest 8/8 → basetest 22/22 → crafttest 30/30 → cooktest 15/15 → hoptest 20/20 → settest 7/7 → refilltest 22/22)으로 확인.
+- Astra 리뷰는 자료(소스·decisions 본문)가 패킷에 안 들어가 INCOMPLETE → Claude가 diff 직접 리뷰: 막힘 시 옆·옆·뒤 → 곁으로 한 번 옮김, 저장 꼴 "v1#설비" 읽기·쓰기, StationsOnly 시작 조건 문제 없음.
+- E035는 원래 순서(npc→flag→wood→stone→basetest 다섯째)에서 한 번 더 봐야 닫음 → ⑫ 아) 평원 전체 회귀 때 같이.
+- 다음 분업 개선거리: Astra 패킷에 바뀐 소스 diff·decisions 해당 절 본문을 넣어야 리뷰가 됨.
+
 ### 회차 186 · 10-27 · 분업 첫 인계(설비 막힘 복구·재료만 모으기)
 
 **요약**

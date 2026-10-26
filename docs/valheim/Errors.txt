@@ -45,11 +45,12 @@ E034 / 관찰 중 — vh_bowtest 사슴이 비탈 위(8m 높이·23~29m)에 서 
   확인된 사실: 실제 화살 속력 35·저항(m_drag) 0 = 계산값과 같음. 바닐라는 쏠 때 ±(활+화살 m_projectileAccuracy, 당김 비율) 도 만큼 무작위로 틀어진다(Attack.cs). 고친 뒤 bowtest 단독 묶음 2번 PASS.
   다음 확인: 다시 나오면 같은 DIAG(실제 화살 속도·저항 줄)와 사라진 자리 바로 아래 땅 높이 — 비탈에 박히는 것이면 가리는지 볼 때(Linecast) 화살 궤적 몇 점을 함께 본다.
 
-E035 / 고침·검증 대기(클라우드 10-26, 세션 브랜치) — vh_basetest "같은 제련소 동시: 주괴 2 ≥ 4 (광석 남음 2)" FAIL(21/22)
+E035 / 고침·관찰 중(회차 187 검증 PASS, 원래 순서 확인 남음) — vh_basetest "같은 제련소 동시: 주괴 2 ≥ 4 (광석 남음 2)" FAIL(21/22)
   증상·조건: npc→flag→wood→stone→basetest 기본 묶음 다섯째, 기본 자리. 라그나가 제련소 넣기(PlanJob/Load) 중 거점 4m에 117초 서 있다가 MachineStep 120초 한계로 그만둠. 플로키는 Wait 뒤 끝. 개수 보존은 OK(물건 소실 아님).
   근거: 회차 176 1회(diag 10-25 02:31, 시작 땅 정리 들어간 빌드, basetest 시작 땅 0 → 앞 시험 찌꺼기 아님). 같은 회차 basetest 첫째 묶음 22/22.
   확인된 사실: MachineStep.Update는 설비와 2.5m 넘게 떨어지면 MoveToPoint(1.8m)만 되풀이 → 라그나가 제련소에 못 다가감(플로키·설비·상자에 막힘 짐작).
   고친 것(10-26): MachineStep.Approach — 5초 진척 없으면 옆·옆·뒤 접근점, 다 안 되면 설비 곁으로 한 번 옮김(decisions.txt 10절). 그때마다 "DIAG … 설비 접근 막힘" 줄(설비까지 거리·앞에 걸린 것).
+  회차 187 검증(커밋 efcba40): machinestucktest 8/8 → basetest 22/22(둘째)·crafttest·cooktest·hoptest·settest·refilltest PASS.
   다음 확인: 새 시험 vh_machinestucktest(발 묶어 막힘 흉내) PASS, vh_basetest 여러 번에서 다시 안 나오면 Errors-resolved.txt로. 다시 나오면 DIAG 줄로 어느 단계에서 못 갔는지 본다.
 
 E036 / 관찰 중 — vh_fulingtest 풀링은 잡았는데 "떨군 고철을 주워 상자에 (0개, 120초)" FAIL(12/13)
