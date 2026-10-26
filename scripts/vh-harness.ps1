@@ -25,7 +25,7 @@ try {
     if ($Action -ne 'Status') {
         try { $executionOwned=$executionMutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $executionOwned=$true }
         if (-not $executionOwned) { throw 'Autonomous implementation loop is active' }
-        if (Get-Process -Name claude -ErrorAction SilentlyContinue) { throw 'An implementation worker is active' }
+        if (Test-VhImplementationProcess $repo) { throw 'An implementation worker is active' }
     }
     if ($Action -eq 'Prepare') {
         if (-not $Plan -or -not $BaseCommit) { throw 'Prepare requires -Plan and -BaseCommit' }
@@ -79,7 +79,7 @@ try {
     $source=Get-VhSource $repo
     if ($source.commit -cne $task.target.commit -or $source.hash -cne $task.target.source -or (Get-VhHash $task.target.dll) -cne $task.target.dll_hash -or -not (Test-VhEvidence $task.target.game) -or -not (Test-VhEvidence $task.build)) { throw 'Target or build evidence changed; prepare a new task' }
     if ($Action -eq 'Test') {
-        if (Get-Process -Name 'valheim*','claude' -ErrorAction SilentlyContinue) { throw 'A game or implementation worker is active; no process was terminated' }
+        if (Get-Process -Name 'valheim*' -ErrorAction SilentlyContinue) { throw 'A game is active; no process was terminated' }
         $loopMutex=New-Object Threading.Mutex($false,'Global\VhLoop')
         $loopOwned=$false
         try {

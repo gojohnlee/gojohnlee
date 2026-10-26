@@ -132,6 +132,13 @@ function Get-VhEvidence([string[]]$Paths) {
 function Get-VhLatestGroups($Task) {
     @($Task.groups | Group-Object index | ForEach-Object { $_.Group | Select-Object -Last 1 } | Sort-Object index)
 }
+function Test-VhImplementationProcess($Repo) {
+    $configured=Join-Path $env:USERPROFILE '.local\bin\claude.exe'
+    # Claude Desktop and its UI helpers are unrelated to the configured loop worker.
+    @(Get-CimInstance Win32_Process -Filter "Name='claude.exe'" | Where-Object {
+        $_.ExecutablePath -ieq $configured -or $_.CommandLine -match 'vh-loop-prompt\.txt|vh-reply-prompt\.txt' -or $_.CommandLine -like "*$Repo*"
+    }).Count -gt 0
+}
 function Invoke-VhProcess($File, [string]$Arguments, $WorkingDirectory, $Out, $Err, [int]$TimeoutSeconds=1800) {
     $psi = New-Object Diagnostics.ProcessStartInfo
     $psi.FileName=$File; $psi.Arguments=$Arguments; $psi.WorkingDirectory=$WorkingDirectory
