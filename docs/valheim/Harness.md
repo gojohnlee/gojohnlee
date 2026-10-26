@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Acti
   - 알려진 무해 줄(BepInEx "Unable to start Unity log writer")은 오류로 치지 않습니다. 정확히 그 줄만입니다.
   - 저장 뒤 게임 종료가 멈추면(E038) 2분 뒤 끄고 `exit_hang`만 표시합니다.
 - **Review:** 실행 파일은 PATH에서 찾고, 없으면 `%LOCALAPPDATA%\OpenAI\Codex\bin\*\codex.exe` 중 가장 최근 것을 씁니다. 읽기 전용 고정 JSON입니다. 작업 ID·커밋·대상 해시가 다르면 무효입니다. 소스·DLL·증거가 바뀌면 MUTATION입니다.
-- **리뷰 자료:** 대상 확인 정보, diff 앞뒤 30줄, 지정 절, 관련 Errors 항목, 같은 줄을 묶은 로그 요약만 넣습니다(10-26: 32만 → 고정분 약 9KB + diff).
+- **리뷰 자료:** 대상 확인 정보, diff 앞뒤 30줄, 지정 절, 관련 Errors 항목, 같은 줄을 묶은 로그 요약만 넣습니다(10-26: 32만 → 고정분 약 9KB + diff). 모자라면 Astra가 시험한 커밋의 코드·요구사항·원본 로그를 읽기 전용으로 더 조회합니다(사용자 10-26). 코드 수정·게임 실행·커밋은 금지입니다.
 
 ## 로컬 기록 (공개 Git에 안 올림)
 

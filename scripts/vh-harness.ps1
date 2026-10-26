@@ -197,7 +197,7 @@ try {
         # From here a failure means the verifier could not run (Astra unavailable). Packet errors above are not Astra failures.
         $reviewStarted=$true
         $codex=Resolve-VhCodex $CodexExecutable
-        # Feed the prepared material on stdin; no filesystem tool permission is needed by the model.
+        # Feed the prepared material on stdin; the model may add read-only lookups (code at the tested commit, requirements, original logs) inside the read-only sandbox.
         $args='exec --ignore-user-config -m gpt-6-astra -c model_reasoning_effort="high" --sandbox read-only --ephemeral --json --output-schema "'+$PSScriptRoot+'\vh-review.schema.json" -o "'+$reviewDir+'\review.json" -'
         $result=Invoke-VhProcess $codex $args $repo "$reviewDir\events.jsonl" "$reviewDir\stderr.log" $ReviewTimeoutSeconds $prompt
         $outcome=Get-VhModelOutcome $result.exit_code $result.timed_out ([IO.File]::ReadAllText("$reviewDir\events.jsonl")) (Test-Path "$reviewDir\review.json")
