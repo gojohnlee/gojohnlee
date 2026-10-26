@@ -109,6 +109,9 @@ namespace ValheimHelper
             // 3) 호위병이 플로키를 따라가는 중 → 라그나는 거점에서 기다렸다가 호위병이 쉬면 같이 출발
             yield return StopAll(w);
             checks.Add($"멈추면 호위병도 쉼 ({guard.Ai.Current})", Departures.GuardIdle());
+            // 2)에서 260m 밖에 둔 라그나를 거점 곁으로(대기열은 집에 와서 봄 — 걸어오느라 40초를 넘기던 것, 회차 184)
+            npc.TeleportTo(GatherTest.Ground(w.Home + back * 4f) + Vector3.up * 0.3f, npc.transform.rotation, false);
+            yield return new WaitForSeconds(2f);
             GatherTest.Say($"!{w.Floki.NpcName} 구리 10", null);
             yield return TestKit.WaitFor(() => Together(w.Floki, guard), 5f);
             checks.Add($"플로키가 호위병을 데려감 ({w.Floki.Ai.EscortName ?? "동행 없음"})", TestKit.Ok);
