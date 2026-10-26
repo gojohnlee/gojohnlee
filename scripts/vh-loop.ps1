@@ -11,6 +11,8 @@
 # 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 history.md 맨 위, 가져간 요청은 지움). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
 # pull로 이 스크립트가 바뀌면 이번 회차 뒤 새 스크립트로 저절로 다시 켜진다(scripts/vh-loop-restart.ps1, PC에 사람이 없어도). 고칠 때 UTF-8 BOM을 지킨다.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
+# 분업(decisions.txt 2절, docs/valheim/Harness.md): handoff-on.txt + 기준 5회차면 회차에 VH_HANDOFF=1 → 회차가 "LOOP: HANDOFF"로 끝내면
+# vh-harness.ps1이 그 커밋을 빌드·게임 시험·Astra 리뷰(Invoke-VhHandoff), 결과 파일을 다음 회차에 VH_VERIFY로 넘긴다.
 param([switch]$Once)   # -Once: 한 회차만(처음 지켜보는 시험용)
 $ErrorActionPreference = 'Continue'
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
@@ -227,11 +229,12 @@ function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::Ap
 function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
-    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = '' }
+    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''
+            verify = ''; verifyFail = ''; verifyFailN = 0; astraUntil = ''; astraFails = 0 }   # 분업: 다음 회차에 넘길 검증 결과·같은 시험 연속 FAIL·Astra 쉼
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
     }
-    $s.until = @($s.until); $s.noProg = 0; $s.lastFail = ''; $s.errs = 0   # 다시 켜면 멈춤 셈은 새로
+    $s.until = @($s.until); $s.noProg = 0; $s.lastFail = ''; $s.errs = 0; $s.verifyFail = ''; $s.verifyFailN = 0   # 다시 켜면 멈춤 셈은 새로
     $s
 }
 # 게임 업데이트 감지: assembly_valheim.dll 파일 버전 + 해시 앞 12자. 지난 회차 것($st.game)과 다르면 그 회차에 VH_GAME_UPDATE로 알린다.
@@ -322,6 +325,7 @@ function Write-Status($now, $last) {
         "할 일: $todo",
         "마지막 시험: $test",
         "Claude가 한 일: $last",
+        "분업(Claude 구현 → Astra 검증): $(if ($Gate) { $Gate.why } else { '-' })",
         "요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
     ) + @(if ($StaleNote) { $StaleNote }) + @(if ($GameNote) { $GameNote }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
@@ -345,8 +349,13 @@ function Start-Claude($acct, $workDir, $prompt, $tag) {
     $psi.EnvironmentVariables['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'
     $psi.EnvironmentVariables['VH_LOOP_HASH'] = $SelfHash   # 회차 claude가 vh-loop-restart.ps1로 옛 루프인지 본다
     if ($GameUpdate) { $psi.EnvironmentVariables['VH_GAME_UPDATE'] = $GameUpdate } else { $psi.EnvironmentVariables.Remove('VH_GAME_UPDATE') }   # 회차 claude: 전체 회귀부터(vh-loop-prompt 1-0)
+    # 분업(vh-loop-prompt 0-1·3-1): VH_HANDOFF=1이면 게임 시험 대신 인계, VH_VERIFY = 지난 인계의 검증 결과 파일. 답 전용 세션에는 안 줌.
+    $verify = if (-not $tag -and $st.verify -and (Test-Path $st.verify)) { $st.verify } else { '' }
+    if ($tag) { $psi.EnvironmentVariables.Remove('VH_HANDOFF') } else { $psi.EnvironmentVariables['VH_HANDOFF'] = $(if ($HandoffOn) { '1' } else { '0' }) }
+    if ($verify) { $psi.EnvironmentVariables['VH_VERIFY'] = $verify } else { $psi.EnvironmentVariables.Remove('VH_VERIFY') }
     $p = [Diagnostics.Process]::Start($psi)
-    @{ P = $p; F = New-Object VH.Feed($p, $tag, $workDir); Start = Get-Date; RunId = [guid]::NewGuid().ToString('N'); Account = $acct.Name; Kind = $(if ($tag) { 'reply' } else { 'implementation' }); Todo = (Get-Todo (Join-Path $workDir 'docs\valheim\progress.txt')) }
+    @{ P = $p; F = New-Object VH.Feed($p, $tag, $workDir); Start = Get-Date; RunId = [guid]::NewGuid().ToString('N'); Account = $acct.Name; Kind = $(if ($tag) { 'reply' } else { 'implementation' }); Todo = (Get-Todo (Join-Path $workDir 'docs\valheim\progress.txt'))
+       Mode = $(if (-not $tag -and ($HandoffOn -or $verify)) { 'handoff' } else { 'claude-only' }) }   # 기준(분업 전) 회차와 분업 회차를 따로 센다
 }
 
 function End-Claude($c, $outFile) {
@@ -355,8 +364,8 @@ function End-Claude($c, $outFile) {
     $text = "$($c.F.Final)`n$($c.F.Err)"
     [IO.File]::WriteAllText($outFile, $text, $Utf8)
     try {
-        $u = Write-VhUsage $Dir $c.F.ResultJson $st.round $c.Account $c.Kind $c.Todo $c.Start $c.P.ExitCode $c.RunId
-        Log ("usage {0} round={1} in={2} out={3} cache-read={4} cache-write={5} turns={6} minutes={7} result={8}" -f $u.kind,$u.round,$u.input_tokens,$u.output_tokens,$u.cache_read_tokens,$u.cache_write_tokens,$u.turns,$u.elapsed_minutes,$u.result)
+        $u = Write-VhUsage $Dir $c.F.ResultJson $st.round $c.Account $c.Kind $c.Todo $c.Start $c.P.ExitCode $c.RunId $c.Mode
+        Log ("usage {0}/{9} round={1} in={2} out={3} cache-read={4} cache-write={5} turns={6} minutes={7} result={8}" -f $u.kind,$u.round,$u.input_tokens,$u.output_tokens,$u.cache_read_tokens,$u.cache_write_tokens,$u.turns,$u.elapsed_minutes,$u.result,$u.mode)
     } catch { Log "usage write failed (not zero usage): $_" }
     @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes }
 }
@@ -514,6 +523,15 @@ function Wait-UserRequest($why, $last) {
 
 $st = Load-State
 Log "루프 시작$(if ($Once) { ' (한 회차만)' })"
+$Gate = $null; $HandoffOn = $false
+$hr = Join-Path $Dir 'handoff-running.json'
+if (Test-Path $hr) {
+    # 인계 도중 루프가 꺼졌음(재시작·절전 실패 등): 결과가 없다는 것을 다음 회차에 알린다(PASS 아님, 같은 커밋을 다시 인계하거나 직접 시험)
+    $j = try { Get-Content $hr -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $null }
+    $f = Join-Path $Dir 'verify-result.md'
+    [IO.File]::WriteAllText($f, "# 검증 인계 중단(루프가 도중에 꺼짐)`n- 회차 $($j.round), 기준 커밋 $($j.base), 작업 $($j.task) — 결과 없음, PASS 아님`n- 원본: $Dir\harness\$($j.task) (state.json 단계). 같은 커밋을 다시 인계하거나 직접 시험한다.`n", $Utf8)
+    $st.verify = $f; Remove-Item $hr -Force; Log "지난 인계가 도중에 끊김(작업 $($j.task)) → 다음 회차에 알림"
+}
 while ($true) {
     Prepare-Git
     if (-not $Once -and (Get-FileHash $PSCommandPath).Hash -ne $SelfHash) {
@@ -554,6 +572,10 @@ while ($true) {
         $GameNote = "게임 업데이트 감지: $GameUpdate (확인된 게임 사실은 1.0.20 기준) — 회차 $($st.round)이 전체 회귀부터"
         Log $GameNote
     }
+    $Gate = Get-VhHandoffGate $Dir $Repo $st.astraUntil; $HandoffOn = $Gate.on
+    Log "분업 $($Gate.why)"
+    $plan = Join-Path $Dir 'handoff-plan.json'   # 지난 회차가 HANDOFF 없이 남긴 계획은 쓰지 않는다
+    if (Test-Path $plan) { Move-Item $plan (Join-Path $Dir "handoff-plan.stale-$(Get-Date -Format 'yyyyMMdd-HHmmss').json") -Force }
     Write-Status "회차 $($st.round) 진행 중" '(진행 중)'
     $before = G rev-parse origin/valheim | Select-Object -Last 1
     $st.reqSeen = G rev-parse 'HEAD:docs/valheim/UserRequest.txt' | Select-Object -Last 1   # 이 회차가 0번에서 읽을 요청(이후 바뀌면 백업 때 따로 답)
@@ -583,9 +605,37 @@ while ($true) {
     if ($gid) { $st.game = $gid }   # 알린 회차가 끝났으면 본 것으로(한도·금방 끝난 오류면 위에서 continue → 다음 회차에 다시 알림)
     $last = $last.Trim()
     Log $last
+    $st.verify = ''   # 이 회차가 받은 검증 결과는 다 넘겨 줌
+    $handoff = $last -match '^LOOP: HANDOFF'
+    if ($handoff -and -not $HandoffOn) { Log "분업 꺼짐($($Gate.why))인데 HANDOFF → 인계 안 함(progress에 검증 대기로 남음)"; $handoff = $false }
     Prepare-Git
     $after = G rev-parse origin/valheim | Select-Object -Last 1
-    if (Test-RoundResult $before $after $st.round) { $st.noProg = 0 } else { $st.noProg++; Log "끝낸 것 없는 회차 $($st.noProg)/3" }
+    # 분업(decisions.txt 2절): 회차가 커밋한 것을 스크립트가 빌드·Core·게임 시험하고 Astra가 리뷰(모델 세션 없이 기다림), 결과는 다음 회차에 VH_VERIFY로.
+    # 구현 회차 + 그 검증이 한 논리 회차: 검증 통과면 진척은 다음 회차가 [끝]을 적을 때 세고, 아니면 끝낸 것 없음으로 센다.
+    $e = $null; $vstop = $null
+    if ($handoff) {
+        $hb = Get-Date; $script:HandoffBk = Get-Date
+        $wait = { if (((Get-Date) - $script:HandoffBk).TotalMinutes -ge $BackupMin) { Backup-Wip; Reply-Requests $acct; $script:HandoffBk = Get-Date } }
+        Write-Status "회차 $($st.round) 인계 검증 중(빌드·게임 시험·Astra 리뷰 — 스크립트가 함)" $last   # Prepare 전에 커밋(검증 중에는 HEAD를 안 바꿈)
+        $v = Invoke-VhHandoff $Repo $Dir $before $RoundTimeoutMin $wait $st.round   # 기준 = 회차 시작 때 커밋, 대상 = 지금 HEAD
+        $st.verify = $v.File; $e = $v.Effect
+        $vtext = if ($e) { "$($v.Id) $($e.stage), 리뷰 $($e.review)$(if ($e.fail.Count) { ", FAIL $($e.fail -join ',')" })" } else { '준비 실패' }
+        Log "인계 검증: $vtext ($([math]::Round(((Get-Date) - $hb).TotalMinutes))분) → $($v.File)"
+        $last = "$last · 검증: $vtext"
+        if ($e -and $e.fail.Count) {
+            $key = (@($e.fail) | Sort-Object) -join ','
+            if ($st.verifyFail -eq $key) { $st.verifyFailN++ } else { $st.verifyFail = $key; $st.verifyFailN = 1 }
+            # 예전엔 회차 안에서 한 번 고쳐 다시 돌렸다: 처음 구현 FAIL + 고친 회차 두 번 FAIL = 예전 "같은 시험 2회차 연속 FAIL"
+            if ($st.verifyFailN -ge 3) { $vstop = "같은 시험 검증 3번 연속 FAIL($key)" }
+        } else { $st.verifyFail = ''; $st.verifyFailN = 0 }
+        if ($e -and $e.astra_down) {
+            $st.astraFails++; $h = [math]::Min(24, 3 * [math]::Pow(2, $st.astraFails - 1))
+            $st.astraUntil = (Get-Date).AddHours($h).ToString('o')
+            Log "Astra 리뷰 못 함($($e.review)) → ${h}시간 분업 끔(다시 시도 시각일 뿐 한도 해제 시각 아님, 그동안 회차가 직접 시험·리뷰)"
+        } elseif ($e -and $e.review -eq 'COMPLETE') { $st.astraFails = 0 }
+    }
+    if (Test-RoundResult $before $after $st.round) { $st.noProg = 0 }
+    elseif (-not ($e -and $e.complete)) { $st.noProg++; Log "끝낸 것 없는 회차 $($st.noProg)/3" }
     $stop = $null
     if ($last -match '^LOOP: NEED_USER') { $stop = '사용자 확인 필요' }
     elseif ($last -match '^LOOP: ALLDONE') { $stop = '할 일 없음' }
@@ -593,6 +643,7 @@ while ($true) {
         if ($st.lastFail -eq $Matches[1]) { $stop = "같은 시험 2회차 연속 FAIL($($Matches[1]))" }
         $st.lastFail = $Matches[1]
     } else { $st.lastFail = '' }
+    if (-not $stop -and $vstop) { $stop = $vstop }
     if (-not $stop -and $st.noProg -ge 3) { $stop = '3회차 연속 근거 있는 완료 없음(커밋·시험 붙은 [끝]·질문 답·닫은 문제 없음)' }
     if ($last -match '^LOOP: ERROR') { Start-Sleep 300 }   # 네트워크 등 → 5분 쉬고
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }

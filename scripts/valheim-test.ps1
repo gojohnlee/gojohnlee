@@ -193,7 +193,7 @@ if ($env:VH_EVIDENCE_DIR) {
     $status = $parsed.status
     if ($runGameProcess) { $runGameProcess.WaitForExit(); if ($runGameProcess.ExitCode -ne 0) { $status='ABORTED' } }
     if ($logText -notmatch 'Valheim Helper .* 로드됨') { $status = 'ENVIRONMENT' }
-    if ($logText -match '(?m)^.*(?:\[Error\s*:|Exception)') { $status = 'EXCEPTION' }
+    if (@(Get-VhLogProblems $logText).Count) { $status = 'EXCEPTION' }   # 알려진 무해 줄(BepInEx log writer)만 뺀다
     if ($runTimedOut) { $status = 'ABORTED' }
     Write-VhJson (Join-Path $evidenceDir 'run.json') ([ordered]@{
         status=$status; started=$runStarted.ToString('o'); ended=(Get-Date).ToString('o'); tests=$Run

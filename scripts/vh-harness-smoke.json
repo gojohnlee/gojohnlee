@@ -1,6 +1,6 @@
 {
   "purpose": "하네스의 실제 PC 인계와 시험 증거 수집 확인 (전체 게임 회귀 아님)",
-  "requirements": ["docs/valheim/PC-Astra-Integration.md: 하네스 자체의 완료 시험", "docs/valheim/decisions.txt: 2절"],
+  "requirements": ["docs/valheim/PC-Astra-Integration.md: 하네스 자체의 완료 시험", "docs/valheim/decisions.txt: GPT 검증 분업"],
   "errors": [],
   "groups": [{"mode":"sequence", "tests":["vh_npctest"], "biome":"", "quick":false}]
 }

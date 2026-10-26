@@ -74,4 +74,46 @@ Check ([IO.File]::ReadAllText($recovered.FullName) -eq 'FAIL original interrupte
 $liveDir=Join-Path $OutputDirectory 'live-child'; [IO.Directory]::CreateDirectory($liveDir) | Out-Null
 Write-VhJson (Join-Path $liveDir 'live.process.json') @{pid=$PID;started_ticks=(Get-Process -Id $PID).StartTime.ToUniversalTime().Ticks}
 Reject { Assert-VhChildrenStopped $liveDir } 'live previous child prevents duplicate work'
+$benign="[Error  :   BepInEx] Unable to start Unity log writer`n[Info   :Valheim Helper] Valheim Helper 1 로드됨"
+Check (@(Get-VhLogProblems $benign).Count -eq 0) 'known BepInEx log-writer line is not an exception'
+Check (@(Get-VhLogProblems "$benign`n[Error  :Valheim Helper] boom").Count -eq 1) 'real error still makes EXCEPTION'
+Check (@(Get-VhLogProblems "[Error  :   BepInEx] Unable to start Unity log writer because X").Count -eq 1) 'benign match is exact, not a prefix'
+$logFile=Join-Path $OutputDirectory 'LogOutput.log'; [IO.File]::WriteAllText($logFile,"[Error  :   BepInEx] Unable to start Unity log writer`nok`nNullReferenceException: a`nNullReferenceException: a")
+$digest=Get-VhLogDigest $logFile
+Check ($digest -match 'line 3 x2: NullReferenceException' -and $digest -match 'known harmless') 'log digest groups repeats and labels known lines'
+$doc=@('# T','## A','a1','### A1','a2','## B','b1')
+Check ((Get-VhSection $doc '## A') -eq "## A`na1`n### A1`na2") 'markdown section ends at same-level heading'
+$txt=@('- one [x]','  more','- two','  two more')
+Check ((Get-VhSection $txt 'one') -eq "- one [x]`n  more") 'indented section ends at next item'
+Reject { Get-VhSection $txt 'absent' } 'missing requirement section is an error'
+$err=@('head','==========','E001 / 관찰 중 — vh_alpha FAIL','  근거: x','','E002 / 조사 중 — vh_beta FAIL','  근거: y','==========')
+$ex=Get-VhErrorsExcerpt $err @() @('vh_beta')
+Check ($ex -match 'E001 / 관찰' -and $ex -match '근거: y' -and $ex -notmatch '근거: x') 'errors excerpt: all headings, related entries only'
+$hdir=Join-Path $OutputDirectory 'handoff-group'; [IO.Directory]::CreateDirectory("$hdir\run-0") | Out-Null
+Write-VhJson "$hdir\run-0\run.json" @{ status='FAIL'; sections=@(@{name='vh_a';verdict='PASS'},@{name='vh_b';verdict='FAIL'}) }
+$ht=[pscustomobject]@{ stage='FIX'; groups=@([pscustomobject]@{index=0;status='FAIL';directory=$hdir}); review=[pscustomobject]@{status='LIMIT'} }
+$he=Get-VhHandoffEffect $ht
+Check (-not $he.complete -and ($he.fail -join ',') -eq 'vh_b' -and $he.astra_down) 'handoff effect: failing test names and Astra limit'
+$ht.stage='COMPLETE'; $ht.groups[0].status='PASS'; $ht.review.status='COMPLETE'; $he=Get-VhHandoffEffect $ht
+Check ($he.complete -and $he.fail.Count -eq 0 -and -not $he.astra_down) 'handoff effect: complete'
+$sum=Get-VhSummary ([pscustomobject]@{ id='t1'; base='b'; stage='FIX'; next='n'; target=[pscustomobject]@{commit='c'}; build_result=$null; review=$null
+    plan=[pscustomobject]@{ purpose='p'; groups=@([pscustomobject]@{mode='sequence';tests=@('vh_a','vh_b')}) }; groups=@([pscustomobject]@{index=0;status='FAIL';directory=$hdir}) }) $hdir
+Check ($sum -match 'vh_b: FAIL' -and $sum -match '실행 판정 FAIL') 'summary lists failing section and original path'
+$grepo=Join-Path $OutputDirectory 'gate-repo'; $gdir=Join-Path $OutputDirectory 'gate-loop'; [IO.Directory]::CreateDirectory("$grepo\docs\valheim") | Out-Null
+Check (-not (Get-VhHandoffGate $gdir $grepo '').on) 'division of labour off without switch file'
+[IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on')
+foreach ($k in 1..4) { [void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' $k 'a' 'implementation' 't' (Get-Date) 0 "g$k") }
+[void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' 5 'a' 'implementation' 't' (Get-Date) 0 'g5' 'handoff')
+[void](Write-VhUsage $gdir '' 6 'a' 'implementation' 't' (Get-Date) 1 'g6')
+Check ((Get-VhHandoffGate $gdir $grepo '').baseline -eq 4) 'baseline counts real claude-only rounds only'
+[void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' 7 'a' 'implementation' 't' (Get-Date) 0 'g7')
+Check ((Get-VhHandoffGate $gdir $grepo '').on) 'division of labour on after 5 baseline rounds'
+Check (-not (Get-VhHandoffGate $gdir $grepo (Get-Date).AddHours(1).ToString('o')).on) 'Astra backoff turns it off'
+Check ((Get-Content "$gdir\usage.csv" -TotalCount 1) -match '"mode"') 'usage csv keeps the mode column'
+$script:waits=0
+$slow=Invoke-VhProcess 'powershell.exe' '-NoProfile -Command Start-Sleep 2' $PSScriptRoot "$OutputDirectory\slow.out" "$OutputDirectory\slow.err" 1 '' { $script:waits++ }
+Check ($slow.timed_out -and $script:waits -eq 0) 'short timeout ends without waiting a full minute'
+$hl=Join-Path $OutputDirectory 'handoff-loop'; [IO.Directory]::CreateDirectory($hl) | Out-Null
+$hv=Invoke-VhHandoff (Split-Path $PSScriptRoot -Parent) $hl 'base' 5 $null 1
+Check ($null -eq $hv.Effect -and [IO.File]::ReadAllText($hv.File) -match 'PASS 아님' -and -not (Test-Path "$hl\handoff-running.json")) 'missing plan is a reported failure, not a pass'
 Write-Output "Harness self-test: $script:checks PASS; evidence: $OutputDirectory"
