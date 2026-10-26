@@ -38,21 +38,18 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
 
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [회차 183] 막힘 시간 절반 회귀 11개 모두 PASS(stucktest·hoptest는 시험 자리 옆 나무·그루터기 치우기만 고침, 커밋 94e6ae2). 회차 사용량 기록(usage.csv) 실제로 쌓임 확인.
 - [회차 182] 10-26 클라우드 변경(위험하면 덜 위험한 곳·다 위험하면 동료와 같이)의 출발 시험: 코드는 문제없고, 옛 규칙을 기대하던 departtest·plainstest 두 시험만 고쳐 5개 모두 PASS(커밋 41d8b32).
 - [PC 세션 10-26, 사용자 요청] PC Codex가 만들다 한도로 멈춘 검증 하네스를 마무리해 루프에 연결(꺼져 있음 — 켜기: docs/valheim/handoff-on.txt + 기준 5회차, 쓰는 법 Harness.md).
   고친 것: 무해한 BepInEx 줄 때문에 하네스 시험이 늘 EXCEPTION, Codex에 BOM, codex를 PATH에서 못 찾음, 리뷰 자료 과다, 실제 한도 문구 분류. 자가 시험 59 PASS.
   실제 인계 2회: 빌드·Core 531 PASS·vh_npctest 17/17 PASS, Astra는 ChatGPT 한도(10-27 01:16까지) → "Astra 못 씀"으로 Claude 리뷰로 넘어감(정상). 게임 종료 멈춤 2회 → E038.
-- [클라우드 세션 10-26, 사용자 결정] Claude 구현 → GPT 검증 분업 규칙을 GPT와 합의해 정함(decisions.txt 2절 "GPT 검증 분업").
 
 다음 (순서대로 — 안 끝난 일만)
 ★ 회차 사용량 재기 (사용자 10-26, decisions.txt 2절 "GPT 검증 분업"의 첫 단계 — 다른 일보다 먼저, 한 조각):
-  가) [구현 완료·검증 대기, PC 10-26 — 커밋 553e59d(Codex)·96c3d37 · 실제 회차 기록 없음: 루프 멈춤] vh-loop.ps1이 회차마다 claude 결과의 사용량을
-     %USERPROFILE%\vh-loop\usage-records\<ID>.json + usage.csv + loop.log "usage" 줄에(mode: claude-only/handoff, 답 전용은 kind reply). 루프를 다시 켠 뒤
-     두 번째 회차가 usage.csv에 앞 회차 줄(result present, 토큰 수 있음)을 보면 "[끝, 회차 N — 커밋 553e59d · 시험 usage.csv 기록 PASS]".
+  가) [끝, 회차 183 — 커밋 553e59d · 시험 usage.csv 기록 PASS(회차 182 줄: result present, out 10019·cache-read 1912241·33턴·12.6분)] vh-loop.ps1이 회차마다 claude 결과 사용량을 usage.csv·loop.log에.
 ★ 10-26 변경 게임 시험 (클라우드 세션 코드 — 게임 시험 전, decisions.txt 6·10절). 결과는 이 커밋(68385c9) 기준으로 따로 남긴다(뒤 수정분과 섞지 않음):
   가) [끝, 회차 182 — 커밋 41d8b32 · 시험 vh_departtest PASS 23/23·vh_refilltest 22/22·vh_npctest 17/17·vh_peertest 14/14·vh_plainstest 21/21(기본 자리), dotnet test 531/531] 출발(덜 위험한 곳·다 위험하면 동료와 같이): 코드는 68385c9 그대로, departtest·plainstest 기대값만 옛 규칙(경고하고 혼자)에서 고침.
-  나) [구현 완료·검증 대기, 클라우드 10-26 — 커밋 68385c9 · 시험 못 함: 클라우드] 막힘 시간 절반 회귀: vh_pittest·vh_stucktest·vh_hoptest(회차 182 작업이 git stash@{0}에 — git stash pop으로 되살려 같이, 막힘 시간 절반이라 기대값 다시 볼 것)·vh_skiptest·
-     vh_crypttest·vh_exploretest·vh_farmtest·vh_deathtest·vh_woodtest·vh_stonetest·vh_coppertest. 정상 걷기가 막힘으로 잘못 잡히면(먼 상자·던전 굽은 길) 그 한 곳만 되돌릴지 본다.
+  나) [끝, 회차 183 — 커밋 68385c9(코드)·94e6ae2(시험 자리 정리) · 시험 vh_pittest PASS 17/17·stucktest 14/14·hoptest 20/20·skiptest 25/25·exploretest 16/16·woodtest 13/13·stonetest 11/11·crypttest 24/24·farmtest 25/25·deathtest 22/22·coppertest 14/14(검은숲), dotnet test 531/531] 막힘 시간 절반 회귀: stuck·hop 첫 FAIL은 묶을 자리 옆 나무·그루터기 탓(시험 환경).
 ★ 호위병 (사용자 결정 10-26, decisions.txt 5·6·7·9절) — 코드는 세션 브랜치 claude/upbeat-cori-qwctib에 미리 짬(위 ★ 시험 결과를 남긴 뒤 git merge로 합침):
   가) 호위병 NPC(역할 2, 일꾼 목록과 따로, 장비는 같은 규칙·활 연장 빼고), 위험하면 데려감·바쁘면 귀환 후 대기, 사냥 센 적 → 호위병, 일꾼끼리 부르기 50m,
      제작 재료 채집도 같은 출발 판단·단계 끝나면 호위병 돌려보냄, 동행 끊김 경로(포탈·던전·멀리선 이동 생략·막힘)에서 호위병 따라 옮김. 게임 시험: vh_escorttest(호위병)·vh_fulingtest C.
