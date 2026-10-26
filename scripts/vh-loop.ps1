@@ -601,7 +601,7 @@ while ($true) {
         $tj = Get-Content $TrialFile -Raw -Encoding UTF8 | ConvertFrom-Json
         $af = $tj.astraFrom
         $after = if ($null -ne $tj.handoffAfter) { [int]$tj.handoffAfter } else { 5 }
-        if ([int]$tj.total - [int]$tj.left -lt $after) { $HandoffOn = $false; $Gate = [pscustomobject]@{ on=$false; why="off: 시험 운전 앞 $after회차는 Claude만"; baseline=$Gate.baseline } }
+        if ([int]$tj.total - [int]$tj.left -lt $after) { $HandoffOn = $false; $Gate = [pscustomobject]@{ on=$false; why="off: 시험 운전 앞 ${after}회차는 Claude만"; baseline=$Gate.baseline } }
         elseif (-not ($af -and [datetime]$af -gt (Get-Date)) -and (Test-Path (Join-Path $Repo 'docs\valheim\handoff-on.txt')) -and -not ($st.astraUntil -and [datetime]$st.astraUntil -gt (Get-Date))) {
             $HandoffOn = $true; $Gate = [pscustomobject]@{ on=$true; why='on(시험 운전)'; baseline=$Gate.baseline }
         }
