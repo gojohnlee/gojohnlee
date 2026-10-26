@@ -76,6 +76,9 @@ namespace ValheimHelper
                     near = Mathf.Min(near, Utils.DistanceXZ(t.transform.position, p));
                 if (near >= 8f && near <= 40f) { spot = p; TestRunner.Log($"묶을 자리 {ang:0}°: 가장 가까운 나무 {near:0.0}m"); break; }
             }
+            // 나무만 보면 통나무·그루터기가 팔 닿는 데 남아(회차 183: Beech1 3.4m·통나무 4.5m) 건너뛰기가 1.5m만 옮기고 베기만 되풀이 → 둘레를 치움
+            int cut = GatherTest.ClearWood(spot, 12f);
+            if (cut > 0) TestRunner.Log($"자리 12m 안 나무·통나무·그루터기 {cut}개 치움");
             w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(1f);
             Speeds(w.Ragnar, saved, true);

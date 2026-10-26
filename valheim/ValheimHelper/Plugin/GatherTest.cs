@@ -491,6 +491,27 @@ namespace ValheimHelper
             return p;
         }
 
+        /// <summary>
+        /// 시험용: 자리 r m 안의 나무·통나무·그루터기를 치우고 개수를 돌려준다. 발 묶은 자리에서 팔 닿는 나무가 있으면
+        /// 베고 줍기만 되풀이해 막힘·순간이동 칸이 안 생긴다(회차 182 hoptest, 회차 183 stucktest — 그루터기 4.5m).
+        /// </summary>
+        internal static int ClearWood(Vector3 spot, float r)
+        {
+            int cut = 0;
+            foreach (var zdo in Senses.Nearby(spot, r))
+            {
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v == null || !v.IsValid()) continue;
+                bool wood = v.GetComponent<TreeBase>() != null || v.GetComponent<TreeLog>() != null
+                    || (v.GetComponent<Destructible>() != null && v.name.IndexOf("stub", System.StringComparison.OrdinalIgnoreCase) >= 0);
+                if (!wood) continue;
+                v.ClaimOwnership();
+                ZNetScene.instance.Destroy(v.gameObject);
+                cut++;
+            }
+            return cut;
+        }
+
         internal static Container ChestAt(Vector3 pos)
         {
             foreach (var zdo in Senses.Nearby(pos, 1.5f))

@@ -74,6 +74,9 @@ namespace ValheimHelper
             GatherJob.TestNoFarStuck = true; // 이 칸은 순간이동을 본다(목표 몇 m 앞 막힘 → 그 자리 치기는 아래 묶인 채 칸에서)
             Quaternion rot = w.Player.transform.rotation;
             Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
+            // 목표가 3.9m 앞이면 순간이동이 0.8m만 옮겨 "자리를 옮김" FAIL(회차 183, 막힘 시간 절반으로 11초에 막힘) → 둘레 나무를 치워 목표를 멀리
+            int cut0 = GatherTest.ClearWood(spot, 12f);
+            if (cut0 > 0) TestRunner.Log($"자리 12m 안 나무·통나무·그루터기 {cut0}개 치움");
             w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(1f);
             Speeds(w.Ragnar, saved, true);
@@ -186,6 +189,9 @@ namespace ValheimHelper
             var ai = w.Ragnar.Ai;
             Quaternion rot = w.Player.transform.rotation;
             Vector3 spot = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 40f));
+            // 묶인 채 팔 닿는 나무·통나무가 있으면 150초 내내 베고 기다려 막힘이 안 생김(회차 182, 짐 14→17) → 그 둘레만 치움
+            int cut = GatherTest.ClearWood(spot, 12f);
+            if (cut > 0) TestRunner.Log($"가) 자리 12m 안 나무·통나무·그루터기 {cut}개 치움");
             w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(1f);
             if (!(ai.Job is GatherJob g)) { checks.Add("가) 일이 남아 있음", false); yield break; }
