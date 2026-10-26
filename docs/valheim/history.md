@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 185 · 10-27 · 제작 재시작 복원 시험 통과, 재시작 시험의 호위병 끼어듦 고침
+
+**요약**
+
+- 제작 재시작 복원 시험 3짝(처음·일부 완성·주괴 든 채) 모두 PASS. 재시작 시험이 호위병 자동 생성 때문에 NPC 3/2로 FAIL → 자동 시험은 불러올 때부터 호위병 끔(커밋 cb68378).
+
+**자세히**
+
+- 분업 ★는 사용량 기준이 3회차(182~184)뿐이라 건너뜀(5회차 넘으면 돌아옴).
+- vh_restartcraft_load·_part·_carry → vh_restartcraft2 모두 PASS(5/5·12/12씩). 회귀 crafttest 30/30·basetest 22/22·cooktest 15/15·settest 7/7 PASS.
+- vh_restart2 FAIL "NPC 3/2": 복제 아님. 월드를 불러올 때 "호위병 없는 옛 월드 → 깃발에 호위병 만듦"이 돌았는데, 시험의 호위병 끄기(SkipGuard)는 3초 뒤 시험 시작 때라 늦었음.
+  autotest.txt를 읽는 순간 SkipGuard를 켜게 고침 → restart1→2 6/6·14/14, escorttest 18/18 PASS. 로그의 TerrainComp NullReference는 codemap에 적힌 게임 원래 오류.
+
 ### 회차 184 · 10-27 · 호위병 게임 시험 통과
 
 **요약**
