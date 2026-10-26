@@ -291,6 +291,62 @@ namespace ValheimHelper
             Guard.Learn(attacker); // 맞아 봤으니 그 적을 안다
         }
 
+        // ---- 방패 막기 (전투 보강 가, 바닐라 Humanoid.BlockAttack — codemap "확인된 게임 사실") ----
+
+        float m_blockUntil;
+        /// <summary>막아 낸 수(이번 몸이 생긴 뒤)·마지막으로 막아 줄인 피해. 시험·진단용.</summary>
+        public int Blocks { get; private set; }
+        public float LastBlocked { get; private set; }
+
+        /// <summary>싸울 때 들 방패(HoldWeapon과 같은 고르기): 가장 좋은 방패, 무기가 없거나 양손이면 없음.</summary>
+        public static ItemDrop.ItemData FightShield(List<ItemDrop.ItemData> items)
+        {
+            ItemDrop.ItemData shield = Gear.Best(items, Gear.IsShield, Gear.ShieldScore);
+            if (shield == null) return null;
+            ItemDrop.ItemData weapon = Gear.Best(items, it => Gear.IsMelee(it) && !it.IsTwoHanded(), Gear.WeaponScore)
+                                       ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
+            return weapon == null || weapon.IsTwoHanded() ? null : shield;
+        }
+
+        /// <summary>그 방패의 막기 수치(내 막기 스킬·최대 체력 기준). 방패가 없으면 null.</summary>
+        public Shield? BlockStats(ItemDrop.ItemData shield)
+        {
+            if (shield == null) return null;
+            return new Shield { Power = shield.GetBlockPower(GetSkillFactor(Skills.SkillType.Blocking)), StaggerLimit = GetMaxHealth() * m_staggerDamageFactor };
+        }
+
+        /// <summary>가진 것 중 싸울 때 들 방패의 막기 수치.</summary>
+        public Shield? BlockStats() => BlockStats(FightShield(m_inventory.GetAllItems()));
+
+        /// <summary>방패를 들고 있나(왼손이 방패).</summary>
+        public bool HoldingShield => m_leftItem != null && Gear.IsShield(m_leftItem);
+
+        /// <summary>잠깐(0.3초) 방패를 든다. Guard 싸움이 매 판단 부른다 — 안 부르면 저절로 내린다(싸움이 어떻게 끝나도 들린 채 남지 않게).</summary>
+        public void HoldBlock() => m_blockUntil = Time.time + 0.3f;
+
+        public void DropBlock() => m_blockUntil = 0f;
+
+        public override void CustomFixedUpdate(float fixedDeltaTime)
+        {
+            // 바닐라 IsBlocking = m_blocking && 공격·구르기 중 아님 → 휘두르는 동안은 저절로 안 막는다. 스태미나는 안 씀(Character.HaveStamina가 늘 참).
+            m_blocking = HoldingShield && Time.time < m_blockUntil;
+            base.CustomFixedUpdate(fixedDeltaTime);
+        }
+
+        protected override bool BlockAttack(HitData hit, Character attacker)
+        {
+            float before = hit.GetTotalBlockableDamage();
+            bool done = base.BlockAttack(hit, attacker);
+            float cut = before - hit.GetTotalBlockableDamage();
+            if (done && cut > 0f) // 비틀리면 바닐라가 막기를 안 줄임(BlockDamage 건너뜀)
+            {
+                Blocks++;
+                LastBlocked = cut;
+                Plugin.Log.LogInfo($"{NpcName} 막음: {attacker?.m_name} {before:0.0} → {before - cut:0.0}");
+            }
+            return done;
+        }
+
         /// <summary>그 적에게 최근 seconds초 안에 맞았는지.</summary>
         public bool HitBy(Character c, float seconds) => c != null && m_hitBy.TryGetValue(c, out float t) && Time.time - t < seconds;
 

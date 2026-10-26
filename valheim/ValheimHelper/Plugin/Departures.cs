@@ -263,10 +263,11 @@ namespace ValheimHelper
 
             // 후보 장소: 아는 곳 가까운 순, 각 곳의 위험을 지금 내 상태(+동료)로 — 장비는 출발 준비에서 챙길 상자의 더 좋은 것까지(⑫ 다)
             float health = npc.GetMaxHealth() + (!input.Fed && input.FoodInChest ? FoodHealthGuess : 0f);
-            Prep.Ready(npc, out float armor, out ItemDrop.ItemData weapon);
+            Prep.Ready(npc, out float armor, out ItemDrop.ItemData weapon, out ItemDrop.ItemData shieldItem);
             armor = Mathf.Max(armor, npc.GetBodyArmor());
             float hit = Mathf.Max(Guard.HitWith(npc, weapon), Guard.HitOf(npc));
-            System.Func<float, float> taken = Guard.TakenFor(npc, armor);
+            Shield? shield = npc.BlockStats(shieldItem) ?? npc.BlockStats(); // 막기는 그 무리 적 수에 따라(Block.MaxFoes)
+            System.Func<IList<Foe>, System.Func<float, float>> taken = f => Guard.TakenFor(npc, armor, shield, f.Count);
             PlaceBook book = Brain.Places;
             double now = Now;
             var biomes = new Dictionary<ZoneXY, int>();
@@ -277,13 +278,13 @@ namespace ValheimHelper
             foreach (ZoneMemory m in Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(home)))
             {
                 if (input.Places.Count >= MaxPlaces) break;
-                PlaceRisk alone = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit, taken), Guard.Resolve);
+                PlaceRisk alone = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit, taken(f)), Guard.Resolve);
                 var o = new PlaceOption
                 {
                     Zone = m.Zone,
                     Distance = Utils.DistanceXZ(home, Senses.ZoneCenter(m.Zone)),
                     Ratio = alone.Ratio,
-                    RatioWithMead = book.Risk(m.Zone, now, f => Danger.Ratio(f, health + MeadHeal, hit, taken), Guard.Resolve).Ratio,
+                    RatioWithMead = book.Risk(m.Zone, now, f => Danger.Ratio(f, health + MeadHeal, hit, taken(f)), Guard.Resolve).Ratio,
                     DeathWeight = alone.DeathWeight,
                     Boss = alone.Boss,
                     TopFoe = alone.TopFoe,
@@ -293,7 +294,7 @@ namespace ValheimHelper
                 // 거점 바이옴(처음엔 초원)은 장비 검사 안 함: 줄 수 있는 더 좋은 장비가 없어 초반에 일을 못 했다(사용자 결정 2026-10-25)
                 if (biome == homeBiome) gearBy[biome] = new PlaceRisk();
                 if (!gearBy.TryGetValue(biome, out PlaceRisk land))
-                    gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, f => Danger.Ratio(f, health, hit, taken), Guard.Resolve, NativeTo);
+                    gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, f => Danger.Ratio(f, health, hit, taken(f)), Guard.Resolve, NativeTo);
                 o.GearRatio = land.Ratio;
                 o.GearFoe = land.TopFoe;
                 o.BiomeName = BiomeNames.Of(biome);

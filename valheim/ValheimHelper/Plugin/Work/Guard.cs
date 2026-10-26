@@ -127,7 +127,8 @@ namespace ValheimHelper
             float myHit = MyHit(pos);
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
-            System.Func<float, float> taken = Taken(scale, armor);
+            Shield? shield = m_npc.BlockStats();
+            System.Func<float, float> taken = Taken(scale, armor, shield, 1);
             FindFoes(pos, myHit, taken);
             if (m_foes.Count == 0)
             {
@@ -139,6 +140,7 @@ namespace ValheimHelper
                 return;
             }
             Tally(pos);
+            taken = Taken(scale, armor, shield, m_views.Count); // 막기는 적 수에 따라(Block.MaxFoes)
             bool mead = m_npc.CanDrinkHealthMead();
             Verdict v = Danger.Judge(m_npc.Personality, m_views, m_npc.GetHealth(), m_npc.GetMaxHealth(), myHit, taken, mead);
             Character nearest = Nearest(pos);
@@ -151,7 +153,7 @@ namespace ValheimHelper
             }
             LastVerdict = v;
             LastRatio = Danger.Ratio(m_views, m_npc.GetHealth(), myHit, taken);
-            LastDetail = $"내 한 방 {myHit:0.0}, 갑옷 {armor:0}, 배율 {scale:0.00}, 체력 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 적 [" + string.Join("; ", m_views.ConvertAll(f => $"{f.Kind} {f.Health:0}/{f.Damage:0.0}→{taken(f.Damage):0.0} {f.Distance:0}m{(Brain.Foes.Knows(f.Kind) ? "" : " 짐작")}").ToArray()) + "]";
+            LastDetail = $"내 한 방 {myHit:0.0}, 갑옷 {armor:0}{(shield != null ? $", 막기 {shield.Value.Power:0}" : "")}, 배율 {scale:0.00}, 체력 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 적 [" + string.Join("; ", m_views.ConvertAll(f => $"{f.Kind} {f.Health:0}/{f.Damage:0.0}→{taken(f.Damage):0.0} {f.Distance:0}m{(Brain.Foes.Knows(f.Kind) ? "" : " 짐작")}").ToArray()) + "]";
             string foeName = Localization.instance.Localize(nearest.m_name);
             // 쫓아오는 속성 적에게서 물러나거나 도망칠 때도 그 저항 미드를 마신다(⑪ 5 기본안 10-24: 드레이크 냉기 침은 날아서 못 때리고 도망치는 동안 맞음)
             if ((v == Verdict.Flee || v == Verdict.Back) && Aggressive(nearest)) DrinkResist(pos, nearest);
@@ -268,7 +270,7 @@ namespace ValheimHelper
             // 동료 쪽에서 봐도(그 체력·갑옷) 같이면 싸움이어야 부른다(회차 147 vh_fighttest: 맨몸 체력 25 동료를 불러, 와서 혼자 물러나고 부른 쪽이 죽음)
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
             Verdict theirs = Danger.Judge(mate.Personality, m_views, mate.GetHealth(), mate.GetMaxHealth(), HitOf(mate) + myHit * 0.9f,
-                Taken(scale, mate.GetBodyArmor()), mate.CanDrinkHealthMead());
+                Taken(scale, mate.GetBodyArmor(), mate.BlockStats(), m_views.Count), mate.CanDrinkHealthMead());
             if (theirs != Verdict.Fight)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 안 부름: {mate.NpcName} 쪽 판단 {theirs} (체력 {mate.GetHealth():0}/{mate.GetMaxHealth():0}, 갑옷 {mate.GetBodyArmor():0})");
@@ -498,7 +500,8 @@ namespace ValheimHelper
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
             float hit = MyHit(pos) + extraHit; // extraHit = 아직 곁에 없는 동료 일꾼 한 방(부르면 올 때, GatherJob.CallMateForPrey)
-            var taken = Taken(scale, armor);
+            Shield? shield = m_npc.BlockStats();
+            var taken = Taken(scale, armor, shield, 1);
             var one = new List<Foe>(1) { View(c, pos) };
             if (Danger.Judge(m_npc.Personality, one, m_npc.GetHealth(), m_npc.GetMaxHealth(), hit, taken, false) != Verdict.Fight) return false;
             var all = new List<Foe>(one);
@@ -514,7 +517,7 @@ namespace ValheimHelper
                 if (f.Health * f.Damage > most) { most = f.Health * f.Damage; strongest = o; }
             }
             if (all.Count == 1) return true;
-            if (Danger.Judge(m_npc.Personality, all, m_npc.GetHealth(), m_npc.GetMaxHealth(), hit, taken, false) == Verdict.Fight) return true;
+            if (Danger.Judge(m_npc.Personality, all, m_npc.GetHealth(), m_npc.GetMaxHealth(), hit, Taken(scale, armor, shield, all.Count), false) == Verdict.Fight) return true;
             pack = strongest;
             return false;
         }
@@ -537,7 +540,7 @@ namespace ValheimHelper
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(at) * Game.m_enemyDamageRate;
             return Danger.Judge(m_npc.Personality, views, m_npc.GetHealth(), m_npc.GetMaxHealth(), MyHit(at),
-                Taken(scale, armor), false) == Verdict.Fight;
+                Taken(scale, armor, m_npc.BlockStats(), views.Count), false) == Verdict.Fight;
         }
 
         /// <summary>나·동행을 노리거나, 경계 중이거나, 가까이 왔거나, 방금 나를 때렸다.</summary>
@@ -655,12 +658,17 @@ namespace ValheimHelper
                     DirectHit(weapon, "멀리서(플레이어 64m 밖)");
                 }
             }
-            if (d > range * 0.9f && !(m_far && d <= FarHitRange)) m_ai.MoveToPoint(dt, tp, range * 0.8f + m_target.GetRadius(), true);
+            if (d > range * 0.9f && !(m_far && d <= FarHitRange)) { m_npc.DropBlock(); m_ai.MoveToPoint(dt, tp, range * 0.8f + m_target.GetRadius(), true); } // 방패를 들면 못 달림
             else
             {
                 m_ai.StopMoving();
                 m_ai.Face(m_target.GetCenterPoint());
-                if (!m_far && !m_npc.InAttack() && m_ai.IsLookingAt(tp, 25f) && m_npc.StartAttack(m_target, false))
+                // 방패 막기(전투 보강 가): 붙어 싸울 땐 방패를 들고 있다(휘두르는 동안은 바닐라가 저절로 안 막음),
+                // 적이 휘두르는 중이면 새로 치지 않고 막는다. 앞에서 온 것만 막히니 적을 본다(위 Face).
+                bool shieldUp = m_npc.HoldingShield;
+                if (shieldUp) m_npc.HoldBlock();
+                bool foeSwings = shieldUp && m_target.InAttack();
+                if (!m_far && !foeSwings && !m_npc.InAttack() && m_ai.IsLookingAt(tp, 25f) && m_npc.StartAttack(m_target, false))
                 {
                     m_fightIdle = 0f;
                     m_diagSwings++;
@@ -678,7 +686,7 @@ namespace ValheimHelper
             if (m_diagTimer > 5f)
             {
                 m_diagTimer = 0f;
-                Plugin.Log.LogInfo($"DIAG 싸움 {m_npc.NpcName}→{m_target.m_name}: 거리 {d:0.0}/{range:0.0} 휘두름 {m_diagSwings} 적 체력 {m_target.GetHealth():0}/{m_target.GetMaxHealth():0} 공격 중 {m_npc.InAttack()} 봄 {m_ai.IsLookingAt(tp, 25f)} 높이차 {tp.y - m_npc.transform.position.y:0.0} 물 {m_target.InWater()} 쉼 {m_fightIdle:0}");
+                Plugin.Log.LogInfo($"DIAG 싸움 {m_npc.NpcName}→{m_target.m_name}: 거리 {d:0.0}/{range:0.0} 휘두름 {m_diagSwings} 적 체력 {m_target.GetHealth():0}/{m_target.GetMaxHealth():0} 공격 중 {m_npc.InAttack()} 봄 {m_ai.IsLookingAt(tp, 25f)} 높이차 {tp.y - m_npc.transform.position.y:0.0} 물 {m_target.InWater()} 쉼 {m_fightIdle:0} 막음 {m_npc.Blocks}");
             }
             // 닿지 않는 곳(절벽 위·물 건너)의 적: 20초 동안 서로 못 때리면 1분 동안 무시한다
             if (m_fightIdle > FightIdleLimit)
@@ -725,6 +733,7 @@ namespace ValheimHelper
             m_target = null;
             m_armed = false;
             m_diagSwings = 0;
+            m_npc.DropBlock();
             m_state = State.Calm;
         }
 
@@ -895,20 +904,21 @@ namespace ValheimHelper
             return (w != null ? Gear.WeaponScore(w) * npc.MeanSkillFactor(w.m_shared.m_skillType) : 5f * npc.MeanSkillFactor(Skills.SkillType.Unarmed));
         }
 
-        /// <summary>출발 전 판단용: 적의 한 방이 내 갑옷을 거쳐 들어오는 피해(거점 기준 난이도 배율).</summary>
+        /// <summary>출발 전 판단용: 적의 한 방이 내 갑옷을 거쳐 들어오는 피해(거점 기준 난이도 배율). 막기는 안 셈(!기억·시험용).</summary>
         public static System.Func<float, float> TakenFor(WorkerNpc npc) => TakenFor(npc, npc.GetBodyArmor());
 
-        public static System.Func<float, float> TakenFor(WorkerNpc npc, float armor)
+        public static System.Func<float, float> TakenFor(WorkerNpc npc, float armor, Shield? shield = null, int foes = 1)
         {
             float scale = Game.instance.GetDifficultyDamageScalePlayer(npc.Home) * Game.m_enemyDamageRate;
-            return Taken(scale, armor);
+            return Taken(scale, armor, shield, foes);
         }
 
         /// <summary>
         /// 판단식의 적 피해(한 방 × FoeHitsPerSwing)가 갑옷을 거쳐 들어오는 몫. 갑옷은 실제 한 방에 매기고 나서 공격 간격을 곱한다
         /// (회차 146 matetest: 줄인 피해 7에 갑옷 6을 매겨 2.0으로 셌는데 실제 14 → 8의 반 4 — 체력 32에서 회색난쟁이 둘과 싸우다 죽음).
         /// </summary>
-        static System.Func<float, float> Taken(float scale, float armor) =>
-            d => HitData.DamageTypes.ApplyArmor(d / FoeHitsPerSwing * scale, armor) * FoeHitsPerSwing;
+        /// 방패가 있으면(shield, 전투 보강 가) 실제 한 방을 먼저 막기로 줄이고 갑옷을 매긴다 — 적이 Block.MaxFoes보다 많으면 안 셈(Core Block.Taken).
+        static System.Func<float, float> Taken(float scale, float armor, Shield? shield, int foes) =>
+            d => Block.Taken(d / FoeHitsPerSwing * scale, armor, shield, foes) * FoeHitsPerSwing;
     }
 }
