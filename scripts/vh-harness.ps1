@@ -45,7 +45,7 @@ try {
         $task=[pscustomobject][ordered]@{ schema=1; id=$TaskId; base=$base; stage='BUILD'; created=(Get-Date).ToString('o'); plan=$p; target=$null; target_hash=''; build=@(); groups=@(); review=$null; next='Build and Core tests'; attempt=0 }
         Write-VhJson "$dir\state.json" $task
         $before=Get-VhSource $repo
-        $build=Invoke-VhProcess 'C:\Program Files\Git\bin\bash.exe' 'scripts/valheim-build.sh' $repo "$dir\build.log" "$dir\build.err" 600
+        $build=Invoke-VhProcess 'C:\Program Files\Git\bin\bash.exe' 'scripts/valheim-build.sh --no-dist' $repo "$dir\build.log" "$dir\build.err" 600
         if ($build.exit_code -ne 0 -or $build.timed_out) { throw "Build failed: $dir\build.log" }
         $core=Invoke-VhProcess 'dotnet.exe' ('test "'+$repo+'\valheim\ValheimHelper\ValheimHelper.slnx" --logger "trx;LogFileName=core.trx" --results-directory "'+$dir+'"') $repo "$dir\core.log" "$dir\core.err" 600
         # dotnet needs the repository project path while TRX belongs to this task.

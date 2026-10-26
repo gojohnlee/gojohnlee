@@ -13,7 +13,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Acti
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Action Review -TaskId <같은-ID>
 ```
 
-Prepare는 깨끗한 커밋에서 빌드·참조 검사·Core 시험을 직접 실행한다. 빌드가 dist를 바꾸면 새 DLL을 커밋한 뒤 다시 준비한다. 기존 구현 작업·게임 프로세스가 돌고 있으면 중단하며 이를 강제 종료하지 않는다.
+Prepare는 깨끗한 커밋에서 빌드·참조 검사·Core 시험을 직접 실행한다. 검증 빌드는 `--no-dist`로 배포 파일을 덮어쓰지 않고 실제 빌드 DLL 해시를 고정한다. 기존 구현 작업·게임 프로세스가 돌고 있으면 중단하며 이를 강제 종료하지 않는다.
 
 Test는 전용 te4st41/vhtest만 쓴다. plan의 `sequence`는 한 게임에서 순서·중복을 유지하고, `solo`는 각각 원본을 복원한다. `restart`는 `["vh_restart1","vh_restart2"]`로, 두 번째에만 원본 복원을 끈다. 중단된 묶음은 처음부터 재실행하며, 결과와 원본 해시가 유효한 완료 묶음은 재사용한다. FAIL을 재시도하려면 새 작업 ID를 준비하여 최초 기록을 남긴다.
 

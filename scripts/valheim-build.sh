@@ -3,6 +3,8 @@
 # 필요: 게임 DLL(/home/user/valheim-refs, 비공개 저장소 gojohnlee/valheim-refs), ilspycmd(dotnet tool install -g ilspycmd).
 # 0.1.0에서 System.ValueTuple 참조 때문에 게임에서 플러그인 로드가 깨졌다 → 허용 목록 밖 참조는 실패로 막는다.
 set -euo pipefail
+MODE="${1:-}"
+if [[ -n "$MODE" && "$MODE" != "--no-dist" ]]; then echo "usage: $0 [--no-dist]" >&2; exit 2; fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJ="$ROOT/valheim/ValheimHelper/Plugin"
 export PATH="$PATH:$HOME/.dotnet/tools"
@@ -16,5 +18,7 @@ if [ -n "$bad" ]; then
   echo "게임 런타임에 없을 수 있는 참조: $bad" >&2
   exit 1
 fi
-cp "$PROJ/bin/Release/ValheimHelper.dll" "$ROOT/valheim/dist/"
-echo "빌드·참조 검사 통과 → valheim/dist/ValheimHelper.dll"
+if [[ "$MODE" != "--no-dist" ]]; then
+  cp "$PROJ/bin/Release/ValheimHelper.dll" "$ROOT/valheim/dist/"
+fi
+echo "빌드·참조 검사 통과 (dist 복사 제외: ${MODE:-아니오})"
