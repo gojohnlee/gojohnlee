@@ -33,15 +33,31 @@ namespace ValheimHelper
         bool m_withGuard, m_waitGuard;
         float m_guardCheckAt;
 
-        public PlanJob(WorkerNpc npc, Plan plan, string goalLabel)
+        public PlanJob(WorkerNpc npc, Plan plan, string goalLabel) : this(npc, new PlanRunner(plan), goalLabel) { }
+
+        /// <summary>저장에서 되살린 계획으로(재시작 — PlanSave.Load, Departures.ResumeMake). 돌던 기다림은 지금부터 다시 잰다(m_now 0).</summary>
+        public PlanJob(WorkerNpc npc, PlanRunner runner, string goalLabel)
         {
             m_npc = npc;
-            m_runner = new PlanRunner(plan);
+            m_runner = runner;
             m_goal = goalLabel;
         }
 
-        /// <summary>작업 상태 저장용: 이 계획을 세운 목표(제작 물건 또는 세트). 이어 할 때 계획을 다시 세운다.</summary>
+        /// <summary>
+        /// 작업 상태 저장용: 이 계획을 세운 목표(제작 물건 또는 세트). 저장 칸(ToWork)에는 계획 단계·상태·진행도 같이 넣어
+        /// 재시작 뒤 다시 세우지 않고 이어 간다(외부 검토 + 사용자 승인 10-26). 계획이 깨져 못 읽으면 이 목표로 다시 세운다.
+        /// </summary>
         public WorkItem Goal;
+
+        public WorkItem ToWork() => new WorkItem
+        {
+            Kind = Goal.Kind, Resume = Goal.Resume, Label = Goal.Label, Item = Goal.Item, Amount = Goal.Amount, SetNo = Goal.SetNo,
+            Plan = PlanSave.Save(m_runner, Progress),
+        };
+
+        /// <summary>모으던 단계의 진행: 그 단계 수에서 남은 수를 뺀 것(죽은 뒤 남은 수로 새로 만든 채집도 맞음). 그 밖엔 0.</summary>
+        int Progress(int id) =>
+            m_step != null && m_step.Id == id && m_gather != null ? m_step.Amount - Mathf.Max(0, m_gather.Target - m_gather.Delivered) : 0;
         public PlanRunner Runner => m_runner;
         public string StepName => m_step != null ? m_step.Kind.ToString() : "Wait";
         public string Label => m_goal;
@@ -60,7 +76,7 @@ namespace ValheimHelper
             if (m_gather != null)
             {
                 int left = Mathf.Max(1, m_gather.Target - m_gather.Delivered);
-                m_gather = new GatherJob(m_npc, m_gather.Item, left, ResourceCatalog.WaysFor(m_gather.Item));
+                m_gather = new GatherJob(m_npc, m_gather.Item, left, ResourceCatalog.WaysFor(m_gather.Item)) { InPlan = true };
             }
             m_machine?.OnDied();
         }
@@ -118,6 +134,7 @@ namespace ValheimHelper
                 m_runner.Fail(m_step.Id);
             }
             m_step = null; m_gather = null; m_craft = null; m_machine = null;
+            WorkSaves.Flush(m_npc); // 끝난 단계를 바로 저장: 1초 사이에 꺼지면 넣기·제작을 한 번 더 해 재료가 두 번 들어감
             return true;
         }
 
@@ -168,18 +185,25 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 발효기 Wait는 계획 시계(40분)보다 실제 발효기 상태가 기준: 다 익은 게 있으면 Wait를 바로 끝낸다
-        /// (불러온 뒤 다시 세운 계획·누가 미리 넣어 둔 것도 맞춤). 제련소 Wait는 꺼내기가 남은 것을 기다리므로 그대로.
+        /// Wait는 계획 시계보다 실제 설비 상태가 기준. 발효기: 다 익은 게 있으면 바로 끝(누가 미리 넣어 둔 것도 맞춤).
+        /// 제련소·숯가마: 10초 넘게 기다렸고 거점의 그 설비가 모두 다 돌았으면(넣은 것 0) 끝 — 재시작 뒤 시계를 처음부터 다시 재므로
+        /// 그새 다 된 것을 한참 더 기다리지 않게(10-26). 아직 도는 게 있으면 시계대로(꺼내기도 다 돌 때까지 곁에서 기다림).
         /// </summary>
         void FinishReadyWaits()
         {
+            bool any = false;
             foreach (var s in m_runner.Plan.Steps)
-                if (s.Kind == StepKind.Wait && m_runner.StateOf(s.Id) == StepState.Running
-                    && MachineStep.FermentReady(m_npc.Home, s.Station, s.Item))
-                {
+            {
+                if (s.Kind != StepKind.Wait || m_runner.StateOf(s.Id) != StepState.Running) continue;
+                if (MachineStep.FermentReady(m_npc.Home, s.Station, s.Item))
                     Plugin.Log.LogInfo($"{m_npc.NpcName} 발효 다 됨: {s.Item} — 기다림 끝");
-                    m_runner.Complete(s.Id);
-                }
+                else if (m_runner.RunningFor(s.Id, m_now) >= 10f && MachineStep.SmeltersIdle(m_npc.Home, s.Station))
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} {s.Station} 다 돎: {s.Item} — 기다림 끝({m_runner.RunningFor(s.Id, m_now):0}초)");
+                else continue;
+                m_runner.Complete(s.Id);
+                any = true;
+            }
+            if (any) WorkSaves.Flush(m_npc);
         }
 
         /// <summary>Wait만 도는 중이고 오래 남았으면 자동 보충 한 번을 끼운다. 항상 true(계속 기다림).</summary>

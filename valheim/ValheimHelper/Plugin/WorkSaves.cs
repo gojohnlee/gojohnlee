@@ -83,7 +83,7 @@ namespace ValheimHelper
                 if (GoalPos(g) != Vector3.zero) { w.HasZone = true; w.Zone = GoalZone(g); }
                 return w;
             }
-            if (job is PlanJob p && p.Goal != null) return p.Goal;
+            if (job is PlanJob p && p.Goal != null) return p.ToWork(); // 계획 단계·상태·진행까지(재시작 뒤 이어 감)
             if (job is FarmJob fj) return fj.ToWork();
             if (job is ExploreJob e) return e.ToWork();
             return null;
@@ -138,7 +138,7 @@ namespace ValheimHelper
             }
         }
 
-        /// <summary>시험용: 그 NPC를 지금 바로 저장(다음 Tick을 기다리지 않음).</summary>
+        /// <summary>그 NPC를 지금 바로 저장(다음 Tick을 기다리지 않음). 시험과 Flush가 쓴다.</summary>
         public static void SaveNow(WorkerNpc npc)
         {
             ZDO zdo = npc.GetComponent<ZNetView>().GetZDO();
@@ -146,6 +146,18 @@ namespace ValheimHelper
             zdo.Set(KeyQueue, queue);
             zdo.Set(KeyPending, pending);
             s_saved[npc] = new[] { queue, pending };
+        }
+
+        /// <summary>
+        /// 지금 바로 저장(제작 계획 단계가 끝날 때 — PlanJob). 1초 Tick 사이에 꺼지면 끝난 넣기·제작이 "진행 중"으로 남아 재시작 뒤 한 번 더 한다.
+        /// 아직 불러오지 않은 NPC는 건드리지 않는다(빈 대기열로 덮어쓰지 않게).
+        /// </summary>
+        public static void Flush(WorkerNpc npc)
+        {
+            if (!Features.SaveWork || ZNet.instance == null || !ZNet.instance.IsServer() || npc == null || !s_saved.ContainsKey(npc)) return;
+            ZNetView view = npc.GetComponent<ZNetView>();
+            if (view == null || !view.IsValid() || !view.IsOwner()) return;
+            SaveNow(npc);
         }
 
         static void Load(WorkerNpc npc, ZDO zdo)

@@ -525,6 +525,48 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>거점 125m 안에 이 제련소·숯가마(station)가 하나 이상 있고 모두 넣은 것이 0(다 돎)이면 true. Smelter가 아니거나 없으면 false.</summary>
+        public static bool SmeltersIdle(Vector3 home, string station)
+        {
+            bool found = false;
+            var seen = new HashSet<Smelter>();
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                Smelter s = col.GetComponentInParent<Smelter>();
+                if (s == null || !seen.Add(s) || Utils.GetPrefabName(s.gameObject) != station) continue;
+                if (!s.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                if (nv.GetZDO().GetInt(ZDOVars.s_queued) > 0) return false;
+                found = true;
+            }
+            return found;
+        }
+
+        /// <summary>
+        /// 재시작 복원(PlanSave.Load): 곁에서 지키던 조리대 넣기가 진행 중이었을 때 이미 올렸는지 — 거점의 그 조리대 칸에 이 물건(날것·익은 것·탄 것)이
+        /// 있으면 true(넣기는 끝으로 보고 꺼내기 단계가 마저 꺼냄). 짐의 익은 것은 안 본다(일꾼이 음식으로 들고 다님 — 잘못 끝으로 볼 수 있음).
+        /// </summary>
+        public static bool AlreadyCooking(Vector3 home, PlanStep step)
+        {
+            if (step.Kind != StepKind.Load || step.AttendSeconds <= 0f) return false;
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                CookingStation k = col.GetComponentInParent<CookingStation>();
+                if (k == null || Utils.GetPrefabName(k.gameObject) != step.Station) continue;
+                if (!k.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                string cooked = null;
+                foreach (var c in k.m_conversion)
+                    if (c.m_from != null && c.m_to != null && c.m_from.gameObject.name == step.Item) cooked = c.m_to.gameObject.name;
+                string burnt = k.m_overCookedItem != null ? k.m_overCookedItem.name : null;
+                ZDO z = nv.GetZDO();
+                for (int i = 0; i < k.m_slots.Length; i++)
+                {
+                    string it = z.GetString("slot" + i);
+                    if (it != "" && (it == step.Item || it == cooked || it == burnt)) return true;
+                }
+            }
+            return false;
+        }
+
         internal static string FermentOutput(Fermenter f, int contentHash)
         {
             foreach (var c in f.m_conversion)

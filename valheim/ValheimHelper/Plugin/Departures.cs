@@ -419,9 +419,27 @@ namespace ValheimHelper
 
         // ---- 제작 계획 (설계 C, 계획을 말한 뒤 PlanJob으로 실행) ----
 
-        /// <summary>저장에서 불러온 제작 칸을 다시 시작(계획을 현재 재고로 새로 세움).</summary>
+        /// <summary>시험용(vh_restartcraft): 이번 실행에서 저장한 계획으로 이어 간 수, 계획을 다시 세운 수.</summary>
+        internal static int ResumedPlans, ReplannedPlans;
+
+        /// <summary>
+        /// 저장에서 불러온 제작 칸을 다시 시작. 저장한 계획(w.Plan)이 있으면 그 단계·상태·진행으로 이어 간다(외부 검토 + 사용자 승인 10-26):
+        /// 설비에 넣은 것·나오는 중인 것은 이 작업의 남은 기다림·꺼내기로 남아 재고로 다시 세거나 다른 작업과 나눠 세지 않는다.
+        /// 없거나(옛 저장) 깨졌으면 현재 재고로 새로 세운다.
+        /// </summary>
         public static void ResumeMake(WorkerNpc npc, WorkItem w)
         {
+            PlanRunner saved = Features.RunPlans ? PlanSave.Load(w.Plan, s => MachineStep.AlreadyCooking(npc.Home, s)) : null;
+            if (saved != null)
+            {
+                ResumedPlans++;
+                Plugin.Log.LogInfo($"{npc.NpcName} 계획 이어 함(저장): {w.Label} — 끝 {saved.Count(StepState.Done)}/{saved.Plan.Steps.Count}, 돌던 기다림 {saved.Count(StepState.Running)}");
+                npc.Ai.StartJob(new PlanJob(npc, saved, w.Label) { Goal = w });
+                return;
+            }
+            ReplannedPlans++;
+            if (!string.IsNullOrEmpty(w.Plan)) Plugin.Log.LogWarning($"{npc.NpcName} 저장된 계획을 못 읽음 — {w.Label} 다시 세움");
+            else Plugin.Log.LogInfo($"{npc.NpcName} 저장된 계획 없음 — {w.Label} 다시 세움");
             if (w.SetNo > 0) MakeSet(npc, w.SetNo, w.Amount);
             else Craft(npc, new ChatCommand { Kind = CommandKind.Item, Item = w.Item, Amount = w.Amount });
         }
