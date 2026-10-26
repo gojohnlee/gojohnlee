@@ -595,6 +595,15 @@ while ($true) {
     }
     $Gate = Get-VhHandoffGate $Dir $Repo $st.astraUntil; $HandoffOn = $Gate.on
     Log "분업 $($Gate.why)"
+    if ((Test-Path $TrialFile) -and $Gate.baseline -ge 5) {
+        # 시험 운전(사용자 10-26): 기준 회차가 일찍 끝나도 ChatGPT 한도가 풀리기 전엔 분업 회차를 시작하지 않고 절전했다가 잇는다
+        $af = (Get-Content $TrialFile -Raw -Encoding UTF8 | ConvertFrom-Json).astraFrom
+        if ($af -and [datetime]$af -gt (Get-Date)) {
+            $st.round--; Log "시험 운전: 기준 끝, ChatGPT 준비 $(([datetime]$af).ToString('MM-dd HH:mm'))까지 쉼"
+            Write-Status "시험 운전: 기준 5회차 끝 — ChatGPT 한도가 풀리는 $(([datetime]$af).ToString('MM-dd HH:mm'))까지 쉼(입력 10분 없으면 절전)" '-'
+            Save-State; Wait-Until ([datetime]$af); continue
+        }
+    }
     $plan = Join-Path $Dir 'handoff-plan.json'   # 지난 회차가 HANDOFF 없이 남긴 계획은 쓰지 않는다
     if (Test-Path $plan) { Move-Item $plan (Join-Path $Dir "handoff-plan.stale-$(Get-Date -Format 'yyyyMMdd-HHmmss').json") -Force }
     Write-Status "회차 $($st.round) 진행 중" '(진행 중)'
