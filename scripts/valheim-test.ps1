@@ -141,10 +141,21 @@ if ($Min) {
     }
 }
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
-$t = 0
-while ((Test-Game) -and $t -lt 1800) { Start-Sleep 3; $t += 3 }   # 30분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
+$t = 0; $exitHang = $false
+$gameLog = Join-Path $game 'BepInEx\LogOutput.log'
+while ((Test-Game) -and $t -lt 1800) {   # 30분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
+    Start-Sleep 3; $t += 3
+    # 종료 끝 줄(Steam manager on destroy, 정상이면 1~2초 뒤 꺼짐)이 이번 실행 로그에 찍히고 2분 넘게 안 꺼지면 멈춘 것(10-26: 25분 응답 없음) → 30분 기다리지 않고 끈다.
+    $gp = Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Select-Object -First 1
+    $li = Get-Item $gameLog -ErrorAction SilentlyContinue
+    if ($gp -and $li -and $li.LastWriteTime -gt $gp.StartTime -and ((Get-Date) - $li.LastWriteTime).TotalSeconds -gt 120 -and
+        (Get-Content $gameLog -Tail 5 -Encoding UTF8 -ErrorAction SilentlyContinue | Where-Object { $_ -match 'Steam manager on destroy' })) { $exitHang = $true; break }
+}
 $runTimedOut = Test-Game
-if ($runTimedOut) { Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Stop-Process -Force -ErrorAction SilentlyContinue }
+if ($runTimedOut) {
+    Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue   # 로그 파일을 놓을 때까지
+}
 
 # 4) 결과 → 짧은 요약만 화면·클립보드에(토큰 아끼기, 2026-10-21). 자세한 건 diag.txt·LogOutput.log를 FAIL일 때만 연다.
 #    요약: diag 첫 줄, 시험별 판정·시간, FAIL 줄, 모드 로드 줄, 로그 오류 줄 수와 종류별 첫 8개.
@@ -180,6 +191,8 @@ if (Test-Path $log) {
     }
 } else { $report += '(LogOutput.log 없음: BepInEx가 로드되지 않았음)' }
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
+if ($exitHang) { $report += '게임 종료 멈춤: 종료 끝 줄 뒤 2분 넘게 안 꺼져 강제 종료(Errors.txt E038) — 시험 판정과 별개로 중단(PASS로 치지 않음)' }
+elseif ($runTimedOut) { $report += '게임이 30분 안에 안 꺼져 강제 종료 — 중단(PASS로 치지 않음)' }
 if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }
 $reports += ($report -join "`r`n")
 if ($env:VH_EVIDENCE_DIR) {
@@ -187,8 +200,9 @@ if ($env:VH_EVIDENCE_DIR) {
     . (Join-Path $env:VH_HARNESS_SCRIPTS 'vh-harness-lib.ps1')
     $evidenceDir = $env:VH_EVIDENCE_DIR
     $diagText = ''; $logText = ''
-    if (Test-Path $diag) { Copy-Item -LiteralPath $diag -Destination (Join-Path $evidenceDir 'diag.txt'); $diagText = [IO.File]::ReadAllText($diag) }
-    if (Test-Path $log) { Copy-Item -LiteralPath $log -Destination (Join-Path $evidenceDir 'LogOutput.log'); $logText = [IO.File]::ReadAllText($log) }
+    # 복사본을 읽는다: 강제로 끈 게임이 원본을 아직 쥐고 있으면 ReadAllText가 실패해 run.json이 안 생겼음(10-26)
+    if (Test-Path $diag) { Copy-Item -LiteralPath $diag -Destination (Join-Path $evidenceDir 'diag.txt'); $diagText = [IO.File]::ReadAllText((Join-Path $evidenceDir 'diag.txt')) }
+    if (Test-Path $log) { Copy-Item -LiteralPath $log -Destination (Join-Path $evidenceDir 'LogOutput.log'); $logText = [IO.File]::ReadAllText((Join-Path $evidenceDir 'LogOutput.log')) }
     $parsed = Read-VhDiag $diagText @($Run -split ';' | Where-Object { $_ })
     $status = $parsed.status
     if ($runGameProcess) { $runGameProcess.WaitForExit(); if ($runGameProcess.ExitCode -ne 0) { $status='ABORTED' } }
@@ -198,7 +212,7 @@ if ($env:VH_EVIDENCE_DIR) {
     Write-VhJson (Join-Path $evidenceDir 'run.json') ([ordered]@{
         status=$status; started=$runStarted.ToString('o'); ended=(Get-Date).ToString('o'); tests=$Run
         dll_hash=(Get-VhHash (Join-Path $plugin 'ValheimHelper.dll')); world=$World; character=$Char
-        reset=($env:VH_RESET -ne '0'); quick=($env:VH_QUICK -eq '1'); biome=$env:VH_BIOME; sections=$parsed.sections
+        reset=($env:VH_RESET -ne '0'); quick=($env:VH_QUICK -eq '1'); biome=$env:VH_BIOME; exit_hang=$exitHang; sections=$parsed.sections
     })
 }
 }   # foreach $Run

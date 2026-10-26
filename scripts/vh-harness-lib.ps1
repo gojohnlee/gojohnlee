@@ -374,5 +374,14 @@ function Invoke-VhHandoff($Repo, $Dir, $Base, [int]$TestMinutes, [scriptblock]$O
         [pscustomobject]@{ File=$file; Id=$id; Effect=$effect; Steps=$steps }
     } finally { Remove-Item -LiteralPath $pending -ErrorAction SilentlyContinue }
 }
+# Codex CLI ships inside the Codex app (bin\<build hash>\codex.exe) and is on PATH only in Codex's own shells,
+# not in this loop started by Task Scheduler (10-26: review ERROR "codex not recognized"). Newest bundled build wins.
+function Resolve-VhCodex([string]$Name='codex') {
+    $c = Get-Command $Name -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($c) { return $c.Source }
+    $b = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'OpenAI\Codex\bin') -Recurse -Filter codex.exe -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($b) { return $b.FullName }
+    throw "Codex CLI not found (PATH or $env:LOCALAPPDATA\OpenAI\Codex\bin)"
+}
 function ConvertTo-VhEncodedCommand([string]$Command) { [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($Command)) }
 function Quote-VhPS([string]$Value) { "'" + $Value.Replace("'", "''") + "'" }

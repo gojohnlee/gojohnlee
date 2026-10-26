@@ -169,7 +169,6 @@ try {
             throw 'Test evidence missing or changed'
         } }
         if ($task.review -and (Test-VhEvidence $task.review.evidence) -and $task.review.status -eq 'COMPLETE') { Write-Output 'Existing review retained; no model call'; return }
-        $reviewStarted=$true
         $task.attempt++; $reviewDir=Join-Path $dir "review-$($task.attempt)"; [IO.Directory]::CreateDirectory($reviewDir) | Out-Null
         $task.stage='REVIEW'; $task.next='Astra review in progress'; Write-VhJson "$dir\state.json" $task
         $rules=[IO.File]::ReadAllText("$PSScriptRoot\vh-verify-prompt.txt")
@@ -195,13 +194,15 @@ try {
         $prompt=$packet -join "`n`n"
         if ([Text.Encoding]::UTF8.GetByteCount($prompt) -gt 400000) { throw 'Review packet exceeds 400KB; split the implementation into a smaller review task' }
         [IO.File]::WriteAllText("$reviewDir\packet.txt",$prompt,[Text.Encoding]::UTF8)
-        $codex=(Get-Command $CodexExecutable -ErrorAction Stop).Source
+        # From here a failure means the verifier could not run (Astra unavailable). Packet errors above are not Astra failures.
+        $reviewStarted=$true
+        $codex=Resolve-VhCodex $CodexExecutable
         # Feed the prepared material on stdin; no filesystem tool permission is needed by the model.
         $args='exec --ignore-user-config -m gpt-6-astra -c model_reasoning_effort="high" --sandbox read-only --ephemeral --json --output-schema "'+$PSScriptRoot+'\vh-review.schema.json" -o "'+$reviewDir+'\review.json" -'
         $result=Invoke-VhProcess $codex $args $repo "$reviewDir\events.jsonl" "$reviewDir\stderr.log" $ReviewTimeoutSeconds $prompt
         $outcome=Get-VhModelOutcome $result.exit_code $result.timed_out ([IO.File]::ReadAllText("$reviewDir\events.jsonl")) (Test-Path "$reviewDir\review.json")
         $modelUsage=@(Get-Content "$reviewDir\events.jsonl" -Encoding UTF8 | ForEach-Object { try { $evt=$_ | ConvertFrom-Json; if ($evt.type -eq 'turn.completed') { $evt.usage } } catch { } } | Select-Object -Last 1)
-        Write-VhJson "$reviewDir\usage.json" @{ model='gpt-6-astra'; packet_bytes=[Text.Encoding]::UTF8.GetByteCount($prompt); usage=$modelUsage; process=$result }
+        Write-VhJson "$reviewDir\usage.json" @{ model='gpt-6-astra'; codex=$codex; packet_bytes=[Text.Encoding]::UTF8.GetByteCount($prompt); usage=$modelUsage; process=$result }
         if ([IO.File]::ReadAllText("$reviewDir\stderr.log") -match 'blocked by policy') { $outcome='POLICY' }
         if ((Get-VhSource $repo).hash -cne $source.hash -or (Invoke-VhGit $repo @('rev-parse','HEAD') | Select-Object -Last 1) -cne $source.commit -or (Get-VhHash $task.target.dll) -cne $task.target.dll_hash -or -not (Test-VhEvidence $task.target.game)) { $outcome='MUTATION' }
         foreach ($g in $latest) { if (-not (Test-VhEvidence $g.evidence)) { $outcome='MUTATION' } }
