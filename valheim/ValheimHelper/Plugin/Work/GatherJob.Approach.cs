@@ -274,12 +274,21 @@ namespace ValheimHelper
         /// HopToward·멀리선 이동 생략이 같이 쓰는 내려놓기: around 둘레 후보 중 안전한 첫 자리로 옮긴다.
         /// nearPlayerOk = 플레이어 64m 안이어도 됨(생략 중 플레이어가 지도상 위치에 다가와 그 근처에 내릴 때).
         /// </summary>
-        bool LandNear(Vector3 dest, out string why, bool nearPlayerOk = false, IEnumerable<StuckHop.XZ> candidates = null)
+        bool LandNear(Vector3 dest, out string why, bool nearPlayerOk = false, IEnumerable<StuckHop.XZ> candidates = null) =>
+            Land(m_npc, dest, out why, nearPlayerOk, candidates);
+
+        /// <summary>
+        /// LandNear 몸통(설비 접근 막힘 MachineStep도 씀). floorY가 있으면 그 높이 ±0.6m 바닥(지형·건물 바닥)에만 내린다 — 거점 설비 곁은 나무 바닥일 수 있고
+        /// 위에서 재면 지붕에 닿으므로 그 높이 1.5m 위에서 아래로 잰다. 없으면 지형만(위에서 잰 가장 높은 단단한 곳).
+        /// </summary>
+        internal static bool Land(WorkerNpc npc, Vector3 dest, out string why, bool nearPlayerOk = false, IEnumerable<StuckHop.XZ> candidates = null, float? floorY = null)
         {
-            ZNetView nv = m_npc.GetComponent<ZNetView>();
+            WorkerAI ai = npc.Ai;
+            ZNetView nv = npc.GetComponent<ZNetView>();
             if (nv == null || !nv.IsOwner()) { why = "소유자 아님"; return false; }
             if (s_bodyMask == 0) s_bodyMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece");
-            Vector3 from = m_npc.transform.position;
+            if (s_floorMask == 0) s_floorMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+            Vector3 from = npc.transform.position;
             int tried = 0;
             string last = "후보 없음";
             foreach (var c in candidates ?? StuckHop.Candidates(from.x, from.z, dest.x, dest.z))
@@ -288,21 +297,35 @@ namespace ValheimHelper
                 var p = new Vector3((float)c.X, dest.y, (float)c.Z);
                 if (!ZoneSystem.instance.IsZoneLoaded(p)) { last = "구역 안 불러와짐"; continue; }
                 if (!nearPlayerOk && !FarFromPlayers(p)) { last = "플레이어 근처"; continue; }
-                if (!ZoneSystem.instance.GetSolidHeight(p, out float h, out Vector3 normal, out GameObject go) || go == null) { last = "땅 없음"; continue; }
-                if (go.GetComponentInParent<Heightmap>() == null) { last = "지형 아님(" + go.name + ")"; continue; }
+                float h;
+                Vector3 normal;
+                if (floorY.HasValue)
+                {
+                    if (!Physics.Raycast(new Vector3(p.x, floorY.Value + 1.5f, p.z), Vector3.down, out RaycastHit hit, 3f, s_floorMask, QueryTriggerInteraction.Ignore)) { last = "바닥 없음"; continue; }
+                    h = hit.point.y;
+                    normal = hit.normal;
+                    if (Mathf.Abs(h - floorY.Value) > 0.6f) { last = $"바닥 높이 다름({h - floorY.Value:0.0}m)"; continue; }
+                }
+                else
+                {
+                    if (!ZoneSystem.instance.GetSolidHeight(p, out h, out normal, out GameObject go) || go == null) { last = "땅 없음"; continue; }
+                    if (go.GetComponentInParent<Heightmap>() == null) { last = "지형 아님(" + go.name + ")"; continue; }
+                }
                 if (normal.y < StuckHop.MinNormalY) { last = $"가파름({normal.y:0.00})"; continue; }
                 p.y = h;
                 if (h < ZoneSystem.instance.m_waterLevel + 0.3f || Floating.GetLiquidLevel(p) > h + 0.1f) { last = "물"; continue; }
                 if (Physics.CheckCapsule(p + Vector3.up * 0.6f, p + Vector3.up * 1.6f, 0.45f, s_bodyMask, QueryTriggerInteraction.Ignore)) { last = "몸 자리 막힘"; continue; }
-                if (m_ai.Guard != null && !m_ai.Guard.SafeAt(p)) { last = "위험"; continue; }
-                m_ai.StopMoving();
-                if (!m_npc.TeleportTo(p + Vector3.up * 0.2f, m_npc.transform.rotation, false)) { last = "옮기기 실패"; continue; }
+                if (ai.Guard != null && !ai.Guard.SafeAt(p)) { last = "위험"; continue; }
+                ai.StopMoving();
+                if (!npc.TeleportTo(p + Vector3.up * 0.2f, npc.transform.rotation, false)) { last = "옮기기 실패"; continue; }
                 why = $"{Utils.DistanceXZ(from, p):0.0}m → 목표에서 {Utils.DistanceXZ(dest, p):0.0}m (후보 {tried}번째)";
                 return true;
             }
             why = $"자리 없음(후보 {tried}개, 마지막: {last})";
             return false;
         }
+
+        static int s_floorMask;
 
         /// <summary>시험용: 대안 없이 막혀 그만둔 횟수.</summary>
         public static int Unreachable;

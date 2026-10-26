@@ -38,7 +38,7 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
-        static void Speeds(Character c, float[] saved, bool freeze)
+        internal static void Speeds(Character c, float[] saved, bool freeze)
         {
             if (freeze) { saved[0] = c.m_speed; saved[1] = c.m_walkSpeed; saved[2] = c.m_runSpeed; saved[3] = c.m_swimSpeed; saved[4] = c.m_jumpForce; saved[5] = c.m_jumpForceForward; }
             c.m_speed = freeze ? 0f : saved[0];
