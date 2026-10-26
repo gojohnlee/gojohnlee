@@ -596,10 +596,17 @@ while ($true) {
     }
     $Gate = Get-VhHandoffGate $Dir $Repo $st.astraUntil; $HandoffOn = $Gate.on
     Log "분업 $($Gate.why)"
-    if ((Test-Path $TrialFile) -and $Gate.baseline -ge 5) {
-        # 시험 운전(사용자 10-26): 기준 회차가 일찍 끝나도 ChatGPT 한도가 풀리기 전엔 분업 회차를 시작하지 않고 절전했다가 잇는다
-        $af = (Get-Content $TrialFile -Raw -Encoding UTF8 | ConvertFrom-Json).astraFrom
-        if ($af -and [datetime]$af -gt (Get-Date)) {
+    if (Test-Path $TrialFile) {
+        # 시험 운전(사용자 10-27): 앞 handoffAfter회차는 Claude만, 그 뒤는 ChatGPT 한도가 풀리는 astraFrom까지 쉬었다가(절전) 분업 회차
+        $tj = Get-Content $TrialFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        $af = $tj.astraFrom
+        $after = if ($null -ne $tj.handoffAfter) { [int]$tj.handoffAfter } else { 5 }
+        if ([int]$tj.total - [int]$tj.left -lt $after) { $HandoffOn = $false; $Gate = [pscustomobject]@{ on=$false; why="off: 시험 운전 앞 $after회차는 Claude만"; baseline=$Gate.baseline } }
+        elseif (-not ($af -and [datetime]$af -gt (Get-Date)) -and (Test-Path (Join-Path $Repo 'docs\valheim\handoff-on.txt')) -and -not ($st.astraUntil -and [datetime]$st.astraUntil -gt (Get-Date))) {
+            $HandoffOn = $true; $Gate = [pscustomobject]@{ on=$true; why='on(시험 운전)'; baseline=$Gate.baseline }
+        }
+        Log "분업 $($Gate.why)"
+        if ([int]$tj.total - [int]$tj.left -ge $after -and $af -and [datetime]$af -gt (Get-Date)) {
             $st.round--; Log "시험 운전: 기준 끝, ChatGPT 준비 $(([datetime]$af).ToString('MM-dd HH:mm'))까지 쉼"
             Write-Status "시험 운전: 기준 5회차 끝 — ChatGPT 한도가 풀리는 $(([datetime]$af).ToString('MM-dd HH:mm'))까지 쉼(입력 10분 없으면 절전)" '-'
             Save-State; Wait-Until ([datetime]$af); continue
