@@ -339,7 +339,8 @@ function Write-Status($now, $last) {
 function Start-Claude($acct, $workDir, $prompt, $tag) {
     $psi = New-Object Diagnostics.ProcessStartInfo
     $psi.FileName = $Claude
-    $psi.Arguments = "-p `"Read $prompt and follow it exactly.`" --dangerously-skip-permissions --output-format stream-json --verbose"
+    # 다이어트(사용자 10-27 "소모량이 너무 큼"): 스킬·MCP 끄고 도구를 줄이고 effort 보통 → 매 턴 다시 읽히는 기본분 4.1만 → 1.7만 토큰(실측)
+    $psi.Arguments = "-p `"Read $prompt and follow it exactly.`" --dangerously-skip-permissions --output-format stream-json --verbose --effort medium --disable-slash-commands --strict-mcp-config --tools `"Bash,PowerShell,Read,Edit,Write,Grep,Glob,Agent`""
     $psi.WorkingDirectory = $workDir
     $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
     $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
@@ -349,7 +350,7 @@ function Start-Claude($acct, $workDir, $prompt, $tag) {
     $psi.EnvironmentVariables['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'
     $psi.EnvironmentVariables['VH_LOOP_HASH'] = $SelfHash   # 회차 claude가 vh-loop-restart.ps1로 옛 루프인지 본다
     if ($GameUpdate) { $psi.EnvironmentVariables['VH_GAME_UPDATE'] = $GameUpdate } else { $psi.EnvironmentVariables.Remove('VH_GAME_UPDATE') }   # 회차 claude: 전체 회귀부터(vh-loop-prompt 1-0)
-    # 분업(vh-loop-prompt 0-1·3-1): VH_HANDOFF=1이면 게임 시험 대신 인계, VH_VERIFY = 지난 인계의 검증 결과 파일. 답 전용 세션에는 안 줌.
+    # 분업(scripts/vh-loop-handoff.txt): VH_HANDOFF=1이면 게임 시험 대신 인계, VH_VERIFY = 지난 인계의 검증 결과 파일. 답 전용 세션에는 안 줌.
     $verify = if (-not $tag -and $st.verify -and (Test-Path $st.verify)) { $st.verify } else { '' }
     if ($tag) { $psi.EnvironmentVariables.Remove('VH_HANDOFF') } else { $psi.EnvironmentVariables['VH_HANDOFF'] = $(if ($HandoffOn) { '1' } else { '0' }) }
     if ($verify) { $psi.EnvironmentVariables['VH_VERIFY'] = $verify } else { $psi.EnvironmentVariables.Remove('VH_VERIFY') }

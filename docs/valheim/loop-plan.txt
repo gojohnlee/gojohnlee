@@ -1,7 +1,7 @@
 발헤임 무인 루프 — 지금 구성 (2026-10-26 정리: 바뀐 옛 결정은 지움. 세부 동작은 scripts/vh-loop.ps1 머리 주석, 회차 지시문은 scripts/vh-loop-prompt.txt)
 
 무엇을 하나
-- 사용자 PC(호스트)를 켜 두면 회차마다 새 claude 세션(claude -p, 모든 권한)이 progress "다음"의 한 조각을 하고 커밋·푸시한다. 작업 스케줄러가 로그인 때 켬.
+- 사용자 PC(호스트)를 켜 두면 회차마다 새 claude 세션(claude -p, 모든 권한, 다이어트 10-27: effort 보통·스킬·MCP 끔·도구 8개 → 기본분 4.1만→1.6만 토큰)이 progress "다음"의 한 조각을 하고 커밋·푸시한다. 작업 스케줄러가 로그인 때 켬.
 - 시험 게임도 회차가 직접 돌린다(최소화·소리 끔). 결과는 history.md에 쉬운 말로, 상태는 docs/valheim/status.txt(스크립트가 씀, 토큰 0).
 - 사용자는 GitHub 웹(PC·휴대폰)으로 본다. 요청은 docs/valheim/UserRequest.txt에 쓰고, 답은 history.md 맨 위.
   회차 도중 요청이 바뀌면 15분 백업 때 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)가 따로 작업 트리(%USERPROFILE%\vh-loop\reply)에서 답한다

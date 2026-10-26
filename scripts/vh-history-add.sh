@@ -12,7 +12,7 @@
 #
 #   - 원인·고친 것·시험 결과(E00x면 그 ID와 새로 확인한 사실)
 #   EOF
-# 사용자 요청은 이 꼴(scripts/vh-loop-prompt.txt 0번). 끝나면 scripts/vh-history-note.sh로 같은 항목에 **끝**을 붙인다:
+# 사용자 요청은 이 꼴(scripts/vh-loop-request.txt). 끝나면 scripts/vh-history-note.sh로 같은 항목에 **끝**을 붙인다:
 #   ### 요청 · MM-dd HH:mm · <요청 이름>
 #
 #   > 요청 원문(줄마다 "> ")

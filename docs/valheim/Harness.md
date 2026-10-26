@@ -6,8 +6,8 @@ Claude가 구현한 커밋을 **스크립트가** 빌드·Core·게임 시험하
 ## 지금 상태
 
 - **꺼져 있음.** 루프가 회차마다 스위치를 봅니다. `docs/valheim/handoff-on.txt`가 있고, 분업 전 실제 회차 사용량 기록이 5개 이상이고, Astra 쉼이 아닐 때만 켜집니다. 상태는 status.txt "분업" 줄에 나옵니다.
-- 켜지면 회차에 `VH_HANDOFF=1`이 갑니다. 회차는 게임 시험을 직접 하지 않고 시험 계획(`%USERPROFILE%\vh-loop\handoff-plan.json`)을 남긴 뒤 `LOOP: HANDOFF`로 끝냅니다(지시문 3-1).
-- 그러면 루프가 `Invoke-VhHandoff`로 준비(빌드·Core·자가 시험) → 게임 시험 → Astra 리뷰 → 요약을 차례로 돌립니다. 모델 세션은 기다리지 않습니다. 요약은 다음 회차에 `VH_VERIFY`(지시문 0-1)로 넘어갑니다.
+- 켜지면 회차에 `VH_HANDOFF=1`이 갑니다. 회차는 게임 시험을 직접 하지 않고 시험 계획(`%USERPROFILE%\vh-loop\handoff-plan.json`)을 남긴 뒤 `LOOP: HANDOFF`로 끝냅니다(scripts/vh-loop-handoff.txt).
+- 그러면 루프가 `Invoke-VhHandoff`로 준비(빌드·Core·자가 시험) → 게임 시험 → Astra 리뷰 → 요약을 차례로 돌립니다. 모델 세션은 기다리지 않습니다. 요약은 다음 회차에 `VH_VERIFY`(vh-loop-handoff.txt)로 넘어갑니다.
 - **Astra 한도·오류(사용자 10-26):** 그 검증은 "Astra 못 씀"이 되고 다음 Claude 회차가 직접 리뷰합니다. 한도 문구의 "try again at" 시각까지 분업을 끕니다(문구에 없으면 3·6·12·24시간 뒤 다시 시도). 그동안은 예전처럼 Claude가 시험·리뷰를 다 합니다.
 - 셈: 구현 회차와 그 검증을 한 묶음으로 봅니다. 검증이 통과하면 다음 회차가 `[끝]`을 적을 때 진척으로 칩니다. 통과 못 하면 "끝낸 것 없음"이 됩니다. 같은 시험이 검증에서 3번 연속 FAIL이면 멈춥니다.
 - 인계 도중 루프가 꺼지면 다음 회차에 "결과 없음, PASS 아님"을 알립니다(`handoff-running.json`).

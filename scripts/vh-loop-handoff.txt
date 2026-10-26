@@ -1,0 +1,16 @@
+분업(decisions.txt 2절 "GPT 검증 분업", docs/valheim/Harness.md). VH_VERIFY가 있거나 VH_HANDOFF=1일 때만 읽음.
+
+검증 결과 받기(VH_VERIFY = 파일 경로, 0번 다음 맨 먼저): 지난 회차가 인계한 커밋을 스크립트가 빌드·Core·게임 시험, Astra가 리뷰한 결과. 원본 경로가 적혀 있다 — 필요한 부분만 grep.
+- COMPLETE(시험 PASS + 리뷰 PASS): 그 조각을 "[끝, 회차 N — 커밋 <검증한 코드 커밋> · 시험 <이름> PASS <n/n>, … · 리뷰 Astra PASS]".
+- FIX: 근거가 code·execution인 지적과 FAIL을 고친다(막음은 넘어가지 않음). 가설은 docs/valheim/review.txt에 한 줄만. 사용자 결정과 어긋나는 지적은 고치지 말고 review.txt에 반박 근거.
+  고친 뒤 VH_HANDOFF=1이면 다시 인계, 아니면 직접 시험.
+- REVIEW_UNAVAILABLE(Astra 한도·오류): 시험 결과는 쓰고 리뷰는 Claude가 직접(diff와 닿는 코드만). 문제없으면 "[끝 … · 리뷰 Claude(Astra 못 함)]".
+- 준비 실패·INTERRUPTED·INVALID·결과 누락·시험 단계 오류: PASS 아님. 원인을 고친 뒤 다시 인계하거나 직접 시험.
+- 같은 시험이 검증에서 3번 연속 FAIL이면 루프가 멈춘다.
+
+인계하기(VH_HANDOFF=1, 게임 동작을 바꾼 회차만 — 문서만·Core만은 인계 안 함):
+- 빌드·Core 통과 → 코드 커밋·푸시. 게임 시험은 직접 돌리지 않는다.
+- %USERPROFILE%\vh-loop\handoff-plan.json에 계획(꼴은 scripts/vh-harness-smoke.json): purpose 한 줄, requirements ["저장소 경로: 그 절 제목 글자"], errors 관련 Errors ID,
+  groups [{mode: "sequence"(한 번 되돌린 뒤 한 게임에서 차례로) | "solo"(시험마다 원본 복원) | "restart"(["vh_restart1","vh_restart2"]만), tests, biome, quick}] — codemap "시험 고르기"대로.
+- progress 그 조각 "[구현 완료·검증 대기, 회차 N — 커밋 <해시> · 시험: 하네스 인계]" + history 기록을 커밋·푸시, 작업 트리를 깨끗이(추적 안 되는 파일도 없게).
+- 마지막 줄 "LOOP: HANDOFF <한 일>".
