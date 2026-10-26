@@ -35,6 +35,7 @@ $Diag = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\V
 $GameDll = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll'
 $GameNote = ''   # 게임 업데이트 감지 때 status.txt에 한 줄(그 회차가 전체 회귀)
 $Utf8 = New-Object Text.UTF8Encoding($false)
+. (Join-Path $PSScriptRoot 'vh-harness-lib.ps1')
 
 $mutex = New-Object Threading.Mutex($false, 'Global\VhLoop')
 try { $own = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $own = $true }   # 강제로 끝난 루프가 남긴 것은 넘겨받음
@@ -89,6 +90,7 @@ public static class Show {
 public class Feed {
     public readonly StringBuilder Final = new StringBuilder();
     public readonly StringBuilder Err = new StringBuilder();
+    public string ResultJson = "";
     readonly string tag, root;
     readonly Dictionary<string, string> tools = new Dictionary<string, string>();
     readonly JavaScriptSerializer js = new JavaScriptSerializer();
@@ -153,6 +155,7 @@ public class Feed {
                 foreach (object b in A(V(d, "message"), "content")) if (S(b, "type") == "tool_result") Result(ind, b);
                 break;
             case "result":
+                if (ind == "") ResultJson = js.Serialize(d);
                 lock (Final) { gotResult = true; Final.Insert(0, S(d, "result") + "\n"); }
                 double ms; double.TryParse(S(d, "duration_ms"), NumberStyles.Any, CultureInfo.InvariantCulture, out ms);
                 Head(ConsoleColor.Magenta, "claude 끝: " + Math.Round(ms / 60000) + "분, " + S(d, "num_turns") + "턴" + (S(d, "is_error") == "True" ? ", 오류" : ""));
@@ -343,7 +346,7 @@ function Start-Claude($acct, $workDir, $prompt, $tag) {
     $psi.EnvironmentVariables['VH_LOOP_HASH'] = $SelfHash   # 회차 claude가 vh-loop-restart.ps1로 옛 루프인지 본다
     if ($GameUpdate) { $psi.EnvironmentVariables['VH_GAME_UPDATE'] = $GameUpdate } else { $psi.EnvironmentVariables.Remove('VH_GAME_UPDATE') }   # 회차 claude: 전체 회귀부터(vh-loop-prompt 1-0)
     $p = [Diagnostics.Process]::Start($psi)
-    @{ P = $p; F = New-Object VH.Feed($p, $tag, $workDir); Start = Get-Date }
+    @{ P = $p; F = New-Object VH.Feed($p, $tag, $workDir); Start = Get-Date; RunId = [guid]::NewGuid().ToString('N'); Account = $acct.Name; Kind = $(if ($tag) { 'reply' } else { 'implementation' }); Todo = (Get-Todo (Join-Path $workDir 'docs\valheim\progress.txt')) }
 }
 
 function End-Claude($c, $outFile) {
@@ -351,6 +354,10 @@ function End-Claude($c, $outFile) {
     $c.F.Join()
     $text = "$($c.F.Final)`n$($c.F.Err)"
     [IO.File]::WriteAllText($outFile, $text, $Utf8)
+    try {
+        $u = Write-VhUsage $Dir $c.F.ResultJson $st.round $c.Account $c.Kind $c.Todo $c.Start $c.P.ExitCode $c.RunId
+        Log ("usage {0} round={1} in={2} out={3} cache-read={4} cache-write={5} turns={6} minutes={7} result={8}" -f $u.kind,$u.round,$u.input_tokens,$u.output_tokens,$u.cache_read_tokens,$u.cache_write_tokens,$u.turns,$u.elapsed_minutes,$u.result)
+    } catch { Log "usage write failed (not zero usage): $_" }
     @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes }
 }
 

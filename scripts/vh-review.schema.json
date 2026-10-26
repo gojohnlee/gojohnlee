@@ -1,0 +1,13 @@
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["task_id", "commit", "target_hash", "verdict", "summary", "findings"],
+  "properties": {
+    "task_id": {"type":"string"}, "commit": {"type":"string"}, "target_hash": {"type":"string"},
+    "verdict": {"type":"string", "enum":["PASS","ISSUES","BLOCKED"]}, "summary": {"type":"string"},
+    "findings": {"type":"array", "items": {
+      "type":"object", "additionalProperties":false,
+      "required":["title","basis","blocking","evidence","reproduction","expected"],
+      "properties": {"title":{"type":"string"},"basis":{"type":"string","enum":["code","execution","hypothesis"]},"blocking":{"type":"boolean"},"evidence":{"type":"string"},"reproduction":{"type":"string"},"expected":{"type":"string"}}
+    }}
+  }
+}

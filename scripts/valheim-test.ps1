@@ -30,6 +30,7 @@ Write-Host "Valheim: $game"
 # Steam을 관리자로 켜 두면 게임도 관리자라 여기서 못 끈다 → 바로 알리고 멈춘다.
 $old = @(Get-Process | Where-Object { $_.ProcessName -like 'valheim*' })
 if ($old) {
+    if ($env:VH_HARNESS -eq '1') { throw 'Harness refuses to terminate an existing game.' }
     try { $old | Stop-Process -Force -ErrorAction Stop; Start-Sleep 5; Write-Host '남아 있던 게임을 껐습니다.' }
     catch { throw "남아 있던 게임(PID $($old.Id -join ','))을 끌 수 없습니다(액세스 거부 = Steam이 관리자 실행). 작업 관리자에서 끄고 Steam을 일반 권한으로 다시 켜 주세요." }
 }
@@ -63,6 +64,7 @@ $runs = if ($Solo) { @($Test -split ';' | Where-Object { $_ }) } else { @($Test)
 Remove-Item $tmp -Recurse -Force
 $reports = @()
 foreach ($Run in $runs) {
+$runStarted = Get-Date
 $w = 0   # 앞 실행의 게임 프로세스가 완전히 끝날 때까지(되돌리기 조건)
 while ((Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) -and $w -lt 60) { Start-Sleep 2; $w += 2 }
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
@@ -83,7 +85,11 @@ if ($env:VH_RESET -ne '0') {
         Copy-Item $wdir $base -Recurse
         Write-Host "시험 월드 원본을 떠 둠: $base"
     }
-    if (Test-Path $wdir) { Remove-Item $wdir -Recurse -Force }
+    # Verify recursive replacement targets before touching the test save.
+    $worldRoot = [IO.Path]::GetFullPath((Join-Path $save 'worlds_local')).TrimEnd('\') + '\'
+    $resolvedWorld = [IO.Path]::GetFullPath($wdir)
+    if (-not $resolvedWorld.StartsWith($worldRoot, [StringComparison]::OrdinalIgnoreCase) -or $World -notmatch '^[a-zA-Z0-9_-]+$' -or $Char -notmatch '^vhtest[a-z0-9_-]*$') { throw 'Unsafe test save path' }
+    if (Test-Path $wdir) { Remove-Item -LiteralPath $resolvedWorld -Recurse -Force }
     Copy-Item $base $wdir -Recurse
     Get-ChildItem (Join-Path $save 'characters_local') -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -like "$Char.fch*" -or $_.Name -like "${Char}_backup*.fch" } | Remove-Item -Force   # 게임 자동 백업도
@@ -106,8 +112,11 @@ if (Test-Path $cfg) {
 # steam://rungameid로 켜면 Steam이 "게임을 시작하는 중" 창을 잠깐 띄운다(2026-10-22 사용자) → Steam이 켜져 있으면 valheim.exe를 직접 켠다.
 # 게임 폴더의 steam_appid.txt 덕에 Steam을 거쳐 다시 켜지지 않고, BepInEx(winhttp.dll)도 그대로 올라온다. Steam이 꺼져 있으면 예전처럼 Steam으로.
 if ((Get-Process steam -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $game 'steam_appid.txt'))) {
-    Start-Process (Join-Path $game 'valheim.exe') -WorkingDirectory $game
-} else { Start-Process "steam://rungameid/$AppId" }
+    $runGameProcess = Start-Process (Join-Path $game 'valheim.exe') -WorkingDirectory $game -PassThru -WindowStyle Hidden
+} else {
+    if ($env:VH_HARNESS -eq '1') { throw 'Start Steam first; harness requires a directly observed game process.' }
+    Start-Process "steam://rungameid/$AppId"
+}
 Write-Host ''
 Write-Host "게임 실행 중... 시험 월드($World)로 저절로 들어갑니다. 손대지 않아도 됩니다."
 Write-Host '(그 월드가 없으면 직접 테스트용 월드에 들어가 주세요)'
@@ -131,7 +140,8 @@ if ($Min) {
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
 $t = 0
 while ((Test-Game) -and $t -lt 1800) { Start-Sleep 3; $t += 3 }   # 30분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
-if (Test-Game) { Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Stop-Process -Force -ErrorAction SilentlyContinue }
+$runTimedOut = Test-Game
+if ($runTimedOut) { Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Stop-Process -Force -ErrorAction SilentlyContinue }
 
 # 4) 결과 → 짧은 요약만 화면·클립보드에(토큰 아끼기, 2026-10-21). 자세한 건 diag.txt·LogOutput.log를 FAIL일 때만 연다.
 #    요약: diag 첫 줄, 시험별 판정·시간, FAIL 줄, 모드 로드 줄, 로그 오류 줄 수와 종류별 첫 8개.
@@ -169,9 +179,28 @@ if (Test-Path $log) {
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
 if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }
 $reports += ($report -join "`r`n")
+if ($env:VH_EVIDENCE_DIR) {
+    # Copy originals before any retry can clear them. Harness invokes one run per process.
+    . (Join-Path $env:VH_HARNESS_SCRIPTS 'vh-harness-lib.ps1')
+    $evidenceDir = $env:VH_EVIDENCE_DIR
+    $diagText = ''; $logText = ''
+    if (Test-Path $diag) { Copy-Item -LiteralPath $diag -Destination (Join-Path $evidenceDir 'diag.txt'); $diagText = [IO.File]::ReadAllText($diag) }
+    if (Test-Path $log) { Copy-Item -LiteralPath $log -Destination (Join-Path $evidenceDir 'LogOutput.log'); $logText = [IO.File]::ReadAllText($log) }
+    $parsed = Read-VhDiag $diagText @($Run -split ';' | Where-Object { $_ })
+    $status = $parsed.status
+    if ($runGameProcess) { $runGameProcess.WaitForExit(); if ($runGameProcess.ExitCode -ne 0) { $status='ABORTED' } }
+    if ($logText -notmatch 'Valheim Helper .* 로드됨') { $status = 'ENVIRONMENT' }
+    if ($logText -match '(?m)^.*(?:\[Error\s*:|Exception)') { $status = 'EXCEPTION' }
+    if ($runTimedOut) { $status = 'ABORTED' }
+    Write-VhJson (Join-Path $evidenceDir 'run.json') ([ordered]@{
+        status=$status; started=$runStarted.ToString('o'); ended=(Get-Date).ToString('o'); tests=$Run
+        dll_hash=(Get-VhHash (Join-Path $plugin 'ValheimHelper.dll')); world=$World; character=$Char
+        reset=($env:VH_RESET -ne '0'); quick=($env:VH_QUICK -eq '1'); biome=$env:VH_BIOME; sections=$parsed.sections
+    })
+}
 }   # foreach $Run
 $text = $reports -join "`r`n`r`n"
-Set-Clipboard $text
+if ($env:VH_HARNESS -ne '1') { Set-Clipboard $text }
 Write-Host $text
 Write-Host ''
 Write-Host '결과를 클립보드에 복사했습니다. 대화창에 붙여넣어 주세요.'
