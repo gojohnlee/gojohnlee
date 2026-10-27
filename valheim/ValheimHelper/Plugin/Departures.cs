@@ -320,7 +320,7 @@ namespace ValheimHelper
         /// 그 적이 그 바이옴에 나는가(게임 생성 표 ZoneSystem.m_zoneCtrlPrefab의 SpawnSystem.m_spawnLists — 켜진 것만).
         /// 출발 판단의 "이 장비론 평원 무리"가 떠돌다 넘어온 적(초원의 트롤)으로 그 땅 전체를 막지 않게. 표를 못 읽으면 다 셈.
         /// </summary>
-        static bool NativeTo(string kind, int biome)
+        internal static bool NativeTo(string kind, int biome)
         {
             if (s_native == null)
             {

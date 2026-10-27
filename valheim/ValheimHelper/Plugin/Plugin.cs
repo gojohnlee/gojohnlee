@@ -68,6 +68,7 @@ namespace ValheimHelper
             Step("vh_escorttest", EscortTest.Register);
             Step("vh_silvertest", SilverTest.Register);
             Step("vh_plainstest", PlainsTest.Register);
+            Step("vh_mistlandstest", MistlandsTest.Register);
             Step("vh_squitotest", SquitoTest.Register);
             Step("vh_fulingtest", FulingTest.Register);
             Step("vh_tartest", TarTest.Register);
