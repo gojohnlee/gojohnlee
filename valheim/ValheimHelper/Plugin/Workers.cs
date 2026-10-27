@@ -117,7 +117,7 @@ namespace ValheimHelper
             return created;
         }
 
-        /// <summary>새 거점: 집을 옮기고(한가하면 바로 이사), 없는 NPC는 거기에 만든다.</summary>
+        /// <summary>새 거점: 집을 옮기고(한가하거나 쉬는 일 중이면 바로 이사), 없는 NPC는 거기에 만든다.</summary>
         public static void OnBaseMoved(Vector3 center, Quaternion rot)
         {
             foreach (var zdo in AllZdos())
@@ -126,7 +126,8 @@ namespace ValheimHelper
                 zdo.Set(WorkerNpc.KeyHome, HomeSpot(center, rot, role));
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 WorkerNpc npc = view != null ? view.GetComponent<WorkerNpc>() : null;
-                if (npc != null && npc.Ai.Current == WorkerAI.Mode.Idle)
+                // 쉬는 일(상자 정리·묘비)은 새 명령처럼 자리를 내준다(WorkerAI.Yields, E039)
+                if (npc != null && (npc.Ai.Current == WorkerAI.Mode.Idle || (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Yields)))
                 {
                     npc.Say("moveBase");
                     npc.Ai.GoHome();

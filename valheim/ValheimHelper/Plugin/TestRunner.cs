@@ -72,6 +72,8 @@ namespace ValheimHelper
             s_terminal = t;
             if (!s_auto) s_report.Clear(); // 자동 시험 여러 개는 한 보고에 이어 쓴다
             s_report.Add($"=== {name} {System.DateTime.Now:yyyy-MM-dd HH:mm:ss} 게임 {Version.GetVersionString()} Unity {Application.unityVersion} 모드 {Plugin.Version} ===");
+            // 월드에 남은 "!채워" 기준치는 한가한 일꾼을 내보내 다른 시험을 흔든다(E039) — 필요한 시험은 스스로 다시 건다
+            if (Brain.Refill.Count > 0) { s_report.Add($"시작 정리: 남은 채워 기준치 {Brain.Refill.Count}개 끔"); Brain.Refill.Off(); }
             return true;
         }
 

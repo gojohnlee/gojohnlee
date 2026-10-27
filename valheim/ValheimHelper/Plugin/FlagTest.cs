@@ -122,7 +122,7 @@ namespace ValheimHelper
                 allHome = WorkerNpc.All.Count == 2 && WorkerNpc.All.TrueForAll(n => Utils.DistanceXZ(n.Home, n.transform.position) < 2.5f && Utils.DistanceXZ(n.Home, b) < 4f);
             }
             checks.Add($"둘 다 깃발 B로 이사 ({waited:0}초)", allHome);
-            foreach (var n in WorkerNpc.All) TestRunner.Log($"{n.NpcName}: 깃발 B에서 수평 {Utils.DistanceXZ(n.transform.position, b):0.0}m·높이차 {n.transform.position.y - b.y:0.0}m, 상태 {n.Ai.Current}");
+            foreach (var n in WorkerNpc.All) TestRunner.Log($"{n.NpcName}: 깃발 B에서 수평 {Utils.DistanceXZ(n.transform.position, b):0.0}m·높이차 {n.transform.position.y - b.y:0.0}m, 상태 {n.Ai.Current}{(n.Ai.Job != null ? "·" + n.Ai.Job.Label : "")}");
             checks.Add("이사 뒤 먼 상자는 안 씀(불러와져 있어도)", food != null && GatherTest.ChestAt(far) == food && !Chests.NearBase(b).Contains(food));
             checks.Add("이사 뒤 가까운 상자는 그대로 씀", equip != null && Chests.NearBase(b).Contains(equip));
             ChatNet.Heard -= onHeard;

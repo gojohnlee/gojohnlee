@@ -26,6 +26,18 @@ function Find-Valheim {
 
 $game = Find-Valheim
 Write-Host "Valheim: $game"
+# 다른 세션의 시험이 돌고 있으면 그 게임을 끄지 않고 끝날 때까지 기다린다(회차 189·190: 두 실행이 서로 게임을 꺼 시험이 끊김).
+# 잠금 = %TEMP%\valheim-test.lock 안의 PID(이 스크립트를 돌리는 PowerShell). 그 프로세스가 없으면 남은 잠금으로 보고 무시한다.
+$lock = Join-Path $env:TEMP 'valheim-test.lock'
+$lw = 0
+while ((Test-Path $lock) -and $lw -lt 2400) {
+    $lp = (Get-Content $lock -ErrorAction SilentlyContinue | Select-Object -First 1) -as [int]
+    if (-not $lp -or $lp -eq $PID -or -not (Get-Process -Id $lp -ErrorAction SilentlyContinue)) { break }
+    if ($lw -eq 0) { Write-Host "다른 시험(PID $lp)이 도는 중 — 끝날 때까지 기다림(최대 40분)" }
+    Start-Sleep 15; $lw += 15
+}
+if ($lw -ge 2400) { throw "다른 시험(PID $lp)이 40분 넘게 안 끝남 — 이번 시험 안 함" }
+Set-Content $lock $PID
 # 지난 시험에서 멈춘 게임이 남아 있으면 새 게임이 안 뜨고 아래 대기가 끝나지 않는다(2026-10-21 루프 회차 9).
 # Steam을 관리자로 켜 두면 게임도 관리자라 여기서 못 끈다 → 바로 알리고 멈춘다.
 $old = @(Get-Process | Where-Object { $_.ProcessName -like 'valheim*' })
@@ -223,3 +235,4 @@ if ($env:VH_HARNESS -ne '1') { Set-Clipboard $text }
 Write-Host $text
 Write-Host ''
 if ($env:VH_HARNESS -ne '1') { Write-Host '결과를 클립보드에 복사했습니다. 대화창에 붙여넣어 주세요.' }
+if ((Get-Content $lock -ErrorAction SilentlyContinue | Select-Object -First 1) -eq "$PID") { Remove-Item $lock -ErrorAction SilentlyContinue }
