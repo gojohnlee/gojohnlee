@@ -99,6 +99,11 @@ Check ($he.complete -and $he.fail.Count -eq 0 -and -not $he.astra_down) 'handoff
 $sum=Get-VhSummary ([pscustomobject]@{ id='t1'; base='b'; stage='FIX'; next='n'; target=[pscustomobject]@{commit='c'}; build_result=$null; review=$null
     plan=[pscustomobject]@{ purpose='p'; groups=@([pscustomobject]@{mode='sequence';tests=@('vh_a','vh_b')}) }; groups=@([pscustomobject]@{index=0;status='FAIL';directory=$hdir}) }) $hdir
 Check ($sum -match 'vh_b: FAIL' -and $sum -match '실행 판정 FAIL') 'summary lists failing section and original path'
+$sum=Get-VhSummary ([pscustomobject]@{ id='t2'; base='b'; stage='COMPLETE'; next='n'; target=[pscustomobject]@{commit='c'}; build_result=$null; review=[pscustomobject]@{status='NOT_NEEDED';directory=''}
+    plan=[pscustomobject]@{ purpose='p'; groups=@() }; groups=@() }) $hdir
+Check ($sum -match '필요 없음' -and $sum -notmatch 'review.json') 'summary: all PASS needs no GPT call'
+$he=Get-VhHandoffEffect ([pscustomobject]@{ stage='COMPLETE'; groups=@(); review=[pscustomobject]@{status='NOT_NEEDED'} })
+Check ($he.complete -and -not $he.astra_down) 'handoff effect: no GPT call is not Astra down'
 $grepo=Join-Path $OutputDirectory 'gate-repo'; $gdir=Join-Path $OutputDirectory 'gate-loop'; [IO.Directory]::CreateDirectory("$grepo\docs\valheim") | Out-Null
 Check (-not (Get-VhHandoffGate $gdir $grepo '').on) 'division of labour off without switch file'
 [IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on')

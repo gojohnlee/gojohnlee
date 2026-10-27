@@ -1,6 +1,6 @@
 # PC 검증 하네스
 
-Claude가 구현한 커밋을 **스크립트가** 빌드·Core·게임 시험하고 **Astra(gpt-6-astra, PC Codex 앱의 codex exec)** 가 리뷰하는 장치입니다. 규칙은 decisions.txt 2절 "GPT 검증 분업"을 따릅니다.
+Claude가 구현한 커밋을 **스크립트가** 빌드·Core·게임 시험하는 장치입니다. **Astra(gpt-6-astra, PC Codex 앱의 codex exec)** 는 리뷰하지 않고(사용자 10-27), FAIL이 있을 때만 실패 줄을 원문 그대로 발췌합니다. 모두 PASS면 Astra를 부르지 않습니다(`NOT_NEEDED` → COMPLETE). 규칙은 decisions.txt 2절 "GPT 검증 분업"을 따릅니다.
 처음 만든 것은 PC Codex(10-26, 커밋 553e59d~c9dfd23)이고, 루프 연결과 마무리는 PC Claude 세션(10-26)이 했습니다.
 
 ## 지금 상태
@@ -32,7 +32,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Acti
   - 중단된 묶음은 새 작업으로 처음부터 다시 합니다.
   - 알려진 무해 줄(BepInEx "Unable to start Unity log writer")은 오류로 치지 않습니다. 정확히 그 줄만입니다.
   - 저장 뒤 게임 종료가 멈추면(E038) 2분 뒤 끄고 `exit_hang`만 표시합니다.
-- **Review:** 실행 파일은 PATH에서 찾고, 없으면 `%LOCALAPPDATA%\OpenAI\Codex\bin\*\codex.exe` 중 가장 최근 것을 씁니다. 읽기 전용 고정 JSON입니다. 작업 ID·커밋·대상 해시가 다르면 무효입니다. 소스·DLL·증거가 바뀌면 MUTATION입니다.
+- **Review(이름만 남음, 실제로는 실패 발췌):** 모두 PASS면 모델 호출 없이 끝냅니다. 실행 파일은 PATH에서 찾고, 없으면 `%LOCALAPPDATA%\OpenAI\Codex\bin\*\codex.exe` 중 가장 최근 것을 씁니다. 읽기 전용 고정 JSON입니다. 작업 ID·커밋·대상 해시가 다르면 무효입니다. 소스·DLL·증거가 바뀌면 MUTATION입니다.
 - **리뷰 자료:** 대상 확인 정보, diff 앞뒤 30줄, 지정 절, 관련 Errors 항목, 같은 줄을 묶은 로그 요약만 넣습니다(10-26: 32만 → 고정분 약 9KB + diff). 모자라면 Astra가 시험한 커밋의 코드·요구사항·원본 로그를 읽기 전용으로 더 조회합니다(사용자 10-26). 코드 수정·게임 실행·커밋은 금지입니다.
 
 ## 로컬 기록 (공개 Git에 안 올림)

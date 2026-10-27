@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 클라우드 세션 · 10-27 · ChatGPT 역할 바꿈 — 리뷰 빼고 실패 줄 발췌만
+
+**요약**
+
+- GPT 리뷰 뺌(사용자: 성능 약함): 시험 모두 PASS면 GPT 안 부르고 끝, FAIL일 때만 실패 줄 원문 발췌. 리뷰는 인계 전 Claude 자체 점검으로.
+
+**자세히**
+
+- 왜: 분업 4회차에서 GPT는 리뷰 1번(입력 2.4만·출력 573)뿐이었고 그마저 INCOMPLETE → Claude가 다시 리뷰(회차 187, 캐시 읽기 81만). 약한 모델의 판단은 Claude가 다시 확인해야 해 토큰이 오히려 듦.
+- 바꾼 것: vh-harness.ps1 Review — 모두 PASS면 모델 호출 없이 COMPLETE(리뷰 상태 NOT_NEEDED). FAIL이면 Astra가 diag·로그에서 실패 줄을 경로:줄과 함께 원문 그대로 옮김(vh-verify-prompt.txt), 원인은 Claude가 정함. 요약·지시문(vh-loop-handoff.txt)·decisions·Harness.md 맞춤, 자가 시험 2개 추가.
+- 안 한 것: GPT에 게임 DLL 찾아오기·문서 일 맡기기 — 최근 커밋 73개 중 디컴파일 0번(codemap에 이미 적어 둠), 문서 일은 Claude 출력이 작아 아낄 게 적음.
+- 확인 못 함: 클라우드엔 PowerShell이 없어 실행 시험 못 함 → PC에서 vh-harness-selftest.ps1 먼저.
+
 ### 10-27 · 버그 담당(vh-debug) 노력 다시 엑스트라 하이
 
 **요약**

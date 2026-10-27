@@ -168,6 +168,13 @@ try {
             $task.stage='INVALID'; $task.next='Preserve damaged test evidence; new preparation required'; Write-VhJson "$dir\state.json" $task
             throw 'Test evidence missing or changed'
         } }
+        # GPT review dropped (user 10-27: Astra too weak to judge code): all planned groups PASS -> COMPLETE with no model call.
+        # Astra is called only on a failure, to quote the failing lines from the evidence so Claude does not read whole logs.
+        if (@($latest | Where-Object { $_.status -ne 'PASS' }).Count -eq 0 -and $latest.Count -eq @($task.plan.groups).Count) {
+            $task.review=[pscustomobject]@{ status='NOT_NEEDED'; directory=''; evidence=@(); model=''; retry_at=$null }
+            $task.stage='COMPLETE'; $task.next='Record exact commit and tests (all PASS, no GPT call)'; Write-VhJson "$dir\state.json" $task
+            Write-Output 'Review: NOT_NEEDED; stage: COMPLETE'; return
+        }
         if ($task.review -and (Test-VhEvidence $task.review.evidence) -and $task.review.status -eq 'COMPLETE') { Write-Output 'Existing review retained; no model call'; return }
         $task.attempt++; $reviewDir=Join-Path $dir "review-$($task.attempt)"; [IO.Directory]::CreateDirectory($reviewDir) | Out-Null
         $task.stage='REVIEW'; $task.next='Astra review in progress'; Write-VhJson "$dir\state.json" $task

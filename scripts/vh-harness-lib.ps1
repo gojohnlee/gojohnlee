@@ -334,8 +334,9 @@ function Get-VhSummary($Task, $Dir) {
         }
         foreach ($x in @(Get-ChildItem -LiteralPath $g[0].directory -Directory -Filter 'interrupted-*' -ErrorAction SilentlyContinue)) { $o += "  - 중단 증거: $($x.FullName)" }
     }
-    if ($Task.review) {
-        $o += "- 리뷰(Astra): $($Task.review.status) — $($Task.review.directory)"
+    if ($Task.review -and $Task.review.status -eq 'NOT_NEEDED') { $o += '- GPT 발췌: 필요 없음(모두 PASS, 리뷰 없음)' }
+    elseif ($Task.review) {
+        $o += "- GPT 발췌(Astra): $($Task.review.status) — $($Task.review.directory)"
         $rj = Join-Path "$($Task.review.directory)" 'review.json'
         if ($Task.review.status -in @('COMPLETE','INCOMPLETE') -and (Test-Path -LiteralPath $rj)) {
             try {
@@ -344,7 +345,7 @@ function Get-VhSummary($Task, $Dir) {
                 foreach ($f in @($rv.findings)) { $o += "  - [$($f.category)/$($f.basis)$(if ($f.blocking) { '/막음' })] $($f.title) | 근거: $($f.evidence) | 재현: $($f.reproduction) | 기대: $($f.expected)" }
             } catch { $o += '  - review.json 못 읽음' }
         }
-    } else { $o += '- 리뷰(Astra): 안 함' }
+    } else { $o += '- GPT 발췌(Astra): 안 함' }
     $o += "- 원본 폴더: $Dir"
     $o -join "`n"
 }
