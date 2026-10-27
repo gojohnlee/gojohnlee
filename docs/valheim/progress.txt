@@ -9,6 +9,10 @@
 - [10-27] GPT 리뷰 뺌(사용자: 성능 약함): 시험 모두 PASS면 GPT 안 부르고 끝, FAIL일 때만 실패 줄 원문 발췌. 리뷰는 인계 전 Claude 자체 점검으로.
 
 다음 (순서대로 — 안 끝난 일만)
+★ 토큰 측정 (사용자 10-27: 측정부터, 이후 건의·문의는 측정값으로 — 문서만, 그 회차의 다른 조각에 곁들여 함):
+  가) 조건: history에 회차 190 이상 기록(다이어트 뒤 회차 3개 이상). 안 되면 건너뜀.
+     할 일: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-token-report.ps1 → docs/valheim/token-report.md 커밋(읽지 말고 head -40만).
+     history에 "무엇이 대화를 키웠나" 위 3줄과 회차당 다시 읽은 합을 쉬운 말로. 끝나면 이 ★ 지움(다음 개선 결정은 사용자).
 ★ 분업 흔적 정리 (사용자 10-27: 집에서 루프를 돌려 정상이면 고정으로 읽는 곳에서 뺌 — 문서만, 그 회차의 다른 조각에 곁들여 함):
   가) 조건: history 맨 위에 회차 188 이상 기록이 있고 그 회차가 LOOP: DONE·FAIL로 끝남(status.txt·loop.log에 오류·멈춤 없음). 안 되면 이 ★는 건너뛰고 다음 ★.
      할 일: scripts/vh-loop-prompt.txt — 맨 먼저 명령의 echo에서 "H=$env:VH_HANDOFF V=$env:VH_VERIFY " 빼기, "0-1." 줄 지우기, 마지막 줄 꼴에서 "LOOP: HANDOFF <한 일>(H=1이고 인계했을 때만) | " 빼기.
