@@ -149,7 +149,9 @@ namespace ValheimHelper
             foreach (var c in foes2) if (c != null && !c.IsDead() && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
 
             // C) 부른 동료가 못 옴(발 묶음) → MateWait초 뒤 기다림을 접고 원래 판단, 60초 안엔 다시 안 부름. 회색난쟁이도 발 묶어 1호가 맞지 않게.
-            f.TeleportTo(work + Vector3.up * 0.3f, rot, false);
+            // 2호는 부르는 거리(MateCallRange 50m) 안 — 거점 옆 60m 자리는 1호까지 약 67m라 10-26 50m 규칙 뒤로 안 부름
+            Vector3 mateSpot = GatherTest.Ground(w.Home + rot * new Vector3(-30f, 0f, 0f));
+            f.TeleportTo(mateSpot + Vector3.up * 0.3f, rot, false);
             r.Ai.Guard?.Reset(); // B의 물러남(멀리 걸어감)이 남아 있으면 C 적이 30m 밖이 됨(회차 147 묶음)
             r.TeleportTo(arena + Vector3.up * 0.3f, rot, false);
             yield return new WaitForSeconds(2f);
@@ -187,7 +189,7 @@ namespace ValheimHelper
 
             // D) 혼자도 싸움인데 적 MateCallFoes 이상(목 셋) → 부르고 바로 싸움(Join)
             f.Ai.Guard?.Reset(); // C에서 부름을 받은 채(Come) 풀린 2호가 1호 곁까지 오면 D에서 안 부름
-            f.TeleportTo(work + Vector3.up * 0.3f, rot, false);
+            f.TeleportTo(mateSpot + Vector3.up * 0.3f, rot, false);
             r.Ai.Guard?.Reset();
             r.TeleportTo(arena + Vector3.up * 0.3f, rot, false);
             yield return TestKit.WaitFor(() => f.Ai.Guard != null && !f.Ai.Guard.Engaged && r.Ai.Guard != null && !r.Ai.Guard.Engaged, 45f);
