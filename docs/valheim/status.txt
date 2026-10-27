@@ -1,8 +1,8 @@
 갱신: 2026-10-27 21:47  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
-회차: 190, 계정: 2번, 한도: 없음
+지금: 회차 191 진행 중
+회차: 191, 계정: 2번, 한도: 없음
 할 일: 전투 보강 → 나) [검증 중, 회차 190 — 커밋 f14697e · vh_weaktest PASS 10/10·hunttest 9/9·싸움 회귀(가) PASS, crypttest 23/24 FAIL(E040) — …
 마지막 시험: 10-27 21:45 요약: 1/2 PASS | FAIL vh_crypttest: 고철이 거점 상자에 들어옴 (2개, 480초)
-Claude가 한 일: LOOP: DONE 방패 막기 시험 통과·토큰 측정·평원 [x], 동료 부르기 시험 배치 고침, 지하묘지 시험 실패는 E040
+Claude가 한 일: (진행 중)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
