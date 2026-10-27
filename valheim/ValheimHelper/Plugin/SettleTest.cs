@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     static class SettleTest
     {
-        static GameObject s_smelter, s_fermenter;
+        static GameObject s_smelter, s_fermenter, s_sap;
         static Core.Work.FarmField s_field;
         const string MeadBase = "MeadBasePoisonResist", Mead = "MeadPoisonResist";
 
@@ -93,6 +93,19 @@ namespace ValheimHelper
             int meadMade = fermenter.m_conversion.Find(c => c.m_from != null && c.m_from.gameObject.name == MeadBase)?.m_producedItems ?? -1;
             int meadBefore = GatherTest.CountBase(home, Mead);
             checks.Add($"발효기에 바탕 들어감 (내용 {fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode()}, 나오는 수 {meadMade})", fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode() && meadMade > 0);
+            // 수액 추출기(⑬ 마): 뿌리 없이 놓고 고인 수액 3칸 → 아침에 수액이 상자로, 칸 0
+            GameObject sapPrefab = ZNetScene.instance.m_prefabs.Find(g => g != null && g.GetComponent<SapCollector>() != null);
+            checks.Add($"수액 추출기 프리팹 있음 ({sapPrefab?.name})", sapPrefab != null && sapPrefab.GetComponent<SapCollector>().m_spawnItem != null);
+            if (sapPrefab == null || sapPrefab.GetComponent<SapCollector>().m_spawnItem == null) { End(player, god, checks, onHeard, heard); yield break; }
+            s_sap = Object.Instantiate(sapPrefab, GatherTest.Ground(home + rot * new Vector3(-4f, 0f, -6f)), rot);
+            SapCollector sapc = s_sap.GetComponent<SapCollector>();
+            string sapItem = sapc.m_spawnItem.gameObject.name;
+            yield return new WaitForSeconds(0.5f);
+            ZDO sapz = s_sap.GetComponent<ZNetView>().GetZDO();
+            sapz.Set(ZDOVars.s_level, 3);
+            int sapMade = 0;
+            for (int i = 0; i < 3; i++) sapMade += Game.instance.ScaleDrops(sapc.m_spawnItem.m_itemData, 1);
+            int sapBefore = GatherTest.CountBase(home, sapItem);
             // 밭(가4): 거점 밭에 다 자란 당근 2 + 상자에 당근 씨앗 1 → 아침에 당근이 상자로, 한 자리만 다시 심음(씨앗 1)
             Core.Work.Crop carrot = Crops.ForProduce("Carrot");
             GameObject grownPrefab = carrot != null ? ZNetScene.instance.GetPrefab(carrot.Grown) : null;
@@ -165,6 +178,11 @@ namespace ValheimHelper
             checks.Add($"발효기 다시 채움 (상자 바탕 {GatherTest.CountBase(home, MeadBase)}, 새로 익는 중 {fage:0}초)",
                 GatherTest.CountBase(home, MeadBase) == 0 && fz.GetInt(ZDOVars.s_content) == MeadBase.GetStableHashCode() && fage >= 0 && fage < fermenter.m_fermentationDuration);
 
+            // 수액 추출기: 수액이 상자로(땅·짐 아님), 칸 0
+            int sapNow = GatherTest.CountBase(home, sapItem);
+            checks.Add($"수액 → 상자 ({sapNow - sapBefore}/{sapMade}, 짐 {claude.CountItem(sapItem)}, 남은 칸 {sapz.GetInt(ZDOVars.s_level)})",
+                sapNow - sapBefore == sapMade && claude.CountItem(sapItem) == 0 && sapz.GetInt(ZDOVars.s_level) == 0);
+
             // 밭: 당근이 상자로(땅·짐 아님), 다 자란 것 없어짐, 씨앗 1로 한 자리만 다시 심음
             int carrotNow = GatherTest.CountBase(home, "Carrot");
             int sprouts = Sprouts(carrot);
@@ -211,6 +229,8 @@ namespace ValheimHelper
             s_smelter = null;
             if (s_fermenter != null) ZNetScene.instance.Destroy(s_fermenter);
             s_fermenter = null;
+            if (s_sap != null) ZNetScene.instance.Destroy(s_sap);
+            s_sap = null;
             if (s_field != null)
             {
                 // 시험 밭의 새싹·작물을 지우고 밭 기록도 지움

@@ -67,13 +67,14 @@ namespace ValheimHelper
             if (!s_machinesDone)
             {
                 s_machinesDone = true;
-                Machines(npc, out int taken, out int filled, out int tapped, out int brewed, out int picked, out int planted);
+                Machines(npc, out int taken, out int filled, out int tapped, out int brewed, out int picked, out int planted, out int sap);
                 StoreBag(npc); // 땅에서 주운 결과물
                 int tidied = Tidy.Instant(npc.Home); // 상자 정리(②): 같은 물건은 가장 많이 든 상자로
                 if (tidied > 0) parts.Add(npc.Line("settle.tidy", new Dictionary<string, string> { ["n"] = tidied.ToString() }));
                 if (taken > 0) parts.Add(npc.Line("settle.out", new Dictionary<string, string> { ["n"] = taken.ToString() }));
                 if (filled > 0) parts.Add(npc.Line("settle.fill", new Dictionary<string, string> { ["n"] = filled.ToString() }));
                 if (tapped > 0) parts.Add(npc.Line("settle.tap", new Dictionary<string, string> { ["n"] = tapped.ToString() }));
+                if (sap > 0) parts.Add(npc.Line("settle.sap", new Dictionary<string, string> { ["n"] = sap.ToString() }));
                 if (brewed > 0) parts.Add(npc.Line("settle.brew", new Dictionary<string, string> { ["n"] = brewed.ToString() }));
                 if (picked > 0) parts.Add(npc.Line("settle.harvest", new Dictionary<string, string> { ["n"] = picked.ToString() }));
                 if (planted > 0) parts.Add(npc.Line("settle.plant", new Dictionary<string, string> { ["n"] = planted.ToString() }));
@@ -90,9 +91,9 @@ namespace ValheimHelper
         /// 나무·보리·아마를 시키지 않은 데 쓰게 돼 꺼내기만(기본안). 넣은 광석은 다시 못 꺼내니 연료로 다 녹일 수 있는 만큼만 넣는다.
         /// 다른 일꾼이 일하는 중이면(설비를 쓰고 있을 수 있음) 안 건드리고, 설비 ZDO가 이 컴퓨터 것이 아니면 그 설비는 건너뜀.
         /// </summary>
-        static void Machines(WorkerNpc npc, out int taken, out int filled, out int tapped, out int brewed, out int picked, out int planted)
+        static void Machines(WorkerNpc npc, out int taken, out int filled, out int tapped, out int brewed, out int picked, out int planted, out int sap)
         {
-            taken = filled = tapped = brewed = picked = planted = 0;
+            taken = filled = tapped = brewed = picked = planted = sap = 0;
             foreach (var w in WorkerNpc.All)
                 if (w != null && w.Ai != null && w.Ai.Current == WorkerAI.Mode.Work && !(w.Ai.Job is TidyJob))
                 { Plugin.Log.LogInfo($"밤사이 정산: {w.NpcName}이 일하는 중이라 설비는 안 건드림"); return; }
@@ -110,6 +111,7 @@ namespace ValheimHelper
                 filled += put;
             }
             Fermenters(home, ref tapped, ref brewed);
+            sap = SapCollectors(home);
             Farms(home, ref picked, ref planted);
         }
 
@@ -162,6 +164,39 @@ namespace ValheimHelper
                 put++;
                 Plugin.Log.LogInfo($"밤사이 정산: 발효기 채움 {from}");
             }
+        }
+
+        /// <summary>
+        /// 수액 추출기(⑬ 마): 플레이어가 지은 것의 고인 수액(ZDO s_level)을 바닐라 RPC_Extract처럼 셈하되(한 칸에 ScaleDrops(1)개)
+        /// 땅 대신 상자에(자리가 없으면 상자 앞 땅), 기록은 s_level 0. 수액은 거기서만 나옴(ResourceCatalog에 길 없음). 꺼낸 수를 돌려준다.
+        /// </summary>
+        static int SapCollectors(Vector3 home)
+        {
+            int got = 0;
+            var seen = new HashSet<SapCollector>();
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                SapCollector c = col.GetComponentInParent<SapCollector>();
+                if (c == null || c.m_spawnItem == null || !seen.Add(c) || !c.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                if (!nv.IsOwner()) { Plugin.Log.LogInfo($"밤사이 정산: {c.name} 주인이 다른 컴퓨터라 건너뜀"); continue; }
+                ZDO zdo = nv.GetZDO();
+                int level = zdo.GetInt(ZDOVars.s_level);
+                if (level <= 0) continue;
+                int n = 0;
+                for (int i = 0; i < level; i++) n += Game.instance.ScaleDrops(c.m_spawnItem.m_itemData, 1);
+                zdo.Set(ZDOVars.s_level, 0);
+                string item = Utils.GetPrefabName(c.m_spawnItem.gameObject);
+                int rest = CraftStep.Put(home, item, n);
+                if (rest > 0)
+                {
+                    var mats = Chests.NearBase(home, ChestRole.Mats);
+                    CraftStep.DropAt(mats.Count > 0 ? mats[0] : null, home, item, rest);
+                }
+                nv.InvokeRPC(ZNetView.Everybody, "RPC_UpdateEffects");
+                got += n;
+                Plugin.Log.LogInfo($"밤사이 정산: 수액 추출기 {item} {n}");
+            }
+            return got;
         }
 
         /// <summary>
