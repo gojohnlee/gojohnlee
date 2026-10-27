@@ -5,10 +5,9 @@
 - 명령 출력은 짧게(| tail -20, grep). 빌드·테스트·게임 시험 출력 전체, diag 전체, 로그 전체, history.md·codemap·decisions 통째로 읽기 금지.
 - 서브에이전트는 쓰지 않는다. 예외: 막는 문제(복제·소실·저장 손상·복원 실패)를 직접 한 번 찾아도 원인을 모를 때만 vh-debug 하나, 결과를 기다려 받는다.
 
-맨 먼저 한 명령으로: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-loop-restart.ps1; echo "H=$env:VH_HANDOFF V=$env:VH_VERIFY G=$env:VH_GAME_UPDATE"; git status --short | head
+맨 먼저 한 명령으로: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-loop-restart.ps1; echo "G=$env:VH_GAME_UPDATE"; git status --short | head
  (restart 결과가 오류면 이번 회차 history "자세히"에 그 줄.)
 0. docs/valheim/UserRequest.txt 구분선 아래에 덩어리가 남아 있으면 scripts/vh-loop-request.txt를 읽고 그것부터(이번 회차는 요청이 "다음"보다 우선).
-0-1. V(VH_VERIFY)가 있거나 H=1이면 scripts/vh-loop-handoff.txt를 읽고 따른다(검증 결과 처리·인계). 아니면 그 파일은 읽지 않는다.
 1. docs/valheim/progress.txt "지금"·"다음"을 읽는다. Errors.txt는 제목 줄만(grep -n '^E[0-9]' docs/valheim/Errors.txt), 이번 일과 닿는 항목만 그 부분.
    지난 회차가 남긴 변경이 있으면(git status) 이어 간다.
 1-0. G(VH_GAME_UPDATE)가 있으면 "다음" 맨 앞에 "★ 게임 업데이트 <값>: 전체 회귀"(codemap "시험 고르기" 바이옴 완료 꼴 B1~B7 + 실제 재시작)를 넣고 첫 묶음부터.
@@ -33,5 +32,5 @@
 5. 새 게임플레이 결정이 꼭 필요하면 기본안으로 하고 decisions.txt에 [기본안·확인 필요]. 기본안도 없어 더 못 갈 때만 NEED_USER(질문 꼴은 vh-loop-request.txt).
 
 마지막 줄은 반드시 하나(한국어 한 줄, 120자 이내):
-LOOP: DONE <한 일> | LOOP: HANDOFF <한 일>(H=1이고 인계했을 때만) | LOOP: FAIL <시험 이름> <못 고친 이유> | LOOP: NEED_USER <물을 것>
+LOOP: DONE <한 일> | LOOP: FAIL <시험 이름> <못 고친 이유> | LOOP: NEED_USER <물을 것>
 LOOP: ALLDONE <요청·"다음"·구현 단계 ⑮까지 전부 끝·보류일 때만>
