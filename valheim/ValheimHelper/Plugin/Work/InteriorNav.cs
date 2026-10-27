@@ -15,7 +15,7 @@ namespace ValheimHelper
         public const float Cell = 1f;
         const int MaxExpand = 6000;
         /// <summary>바닥을 찾는 범위: 지금 높이에서 위로 이만큼(묘지 지붕 위 면을 바닥으로 잡지 않게 낮게), 아래로 DownRange.</summary>
-        const float UpRange = 2.6f, DownRange = 9f;
+        const float UpRange = 2.6f, DownRange = (float)StepGrid.MaxDrop + 1f;
         const float BodyRadius = 0.3f;
         /// <summary>몸 자리 검사 아래 끝(바닥 위 m).</summary>
         const float BodyBottom = 0.35f;
@@ -55,7 +55,7 @@ namespace ValheimHelper
             return level - floor.y;
         }
 
-        static readonly RaycastHit[] s_hits = new RaycastHit[16];
+        static readonly RaycastHit[] s_hits = new RaycastHit[64];
         static readonly RaycastHit[] s_line = new RaycastHit[16];
         static readonly Collider[] s_cols = new Collider[16];
         static int s_mask;
@@ -213,7 +213,7 @@ namespace ValheimHelper
                     string r;
                     double? hn = g.Height(n, hc);
                     if (hn == null) r = g.FloorWhy(n);
-                    else if (!StepGrid.CanStep(hn.Value - hc)) r = hn.Value > hc ? "턱 오름 1m 넘음" : "턱 내림 3m 넘음";
+                    else if (!StepGrid.CanStep(hn.Value - hc)) r = hn.Value > hc ? "턱 오름 1m 넘음" : "턱 내림 60m 넘음";
                     else if (!g.Open(cur, n, out Collider hit)) r = "벽 " + Name(hit);
                     else { seen.Add(n); queue.Enqueue(n); continue; }
                     if (why != null) why[r] = why.TryGetValue(r, out int c) ? c + 1 : 1;

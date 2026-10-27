@@ -16,8 +16,8 @@ namespace ValheimHelper.Core.Work
         public const double StepUp = 0.4;
         /// <summary>뛰어 오를 수 있는 턱(m). 일꾼 점프(바닐라 m_jumpForce 10)로 넉넉히 되는 높이.</summary>
         public const double MaxUp = 1.0;
-        /// <summary>뛰어내려도 되는 높이(m).</summary>
-        public const double MaxDrop = 3.0;
+        /// <summary>뛰어내려도 되는 높이(m). 일꾼은 떨어짐 피해가 없어서(게임은 IsPlayer만 깎음) 바닥을 찾는 깊이(InteriorNav DownRange)까지 다 됨(사용자 10-28).</summary>
+        public const double MaxDrop = 60.0;
         const double JumpCost = 1.5, DropCost = 0.5, Diagonal = 1.41421356;
 
         public struct Cell : IEquatable<Cell>

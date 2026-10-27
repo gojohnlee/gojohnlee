@@ -48,7 +48,8 @@ public class StepGridTests
     public void DropDownToMaxDropButNotDeeper()
     {
         Assert.NotNull(Run((x, z) => x >= 3 ? -2.5 : 0, new Cell(5, 0)));
-        Assert.Null(Run((x, z) => x >= 3 ? -3.5 : 0, new Cell(5, 0)));
+        Assert.NotNull(Run((x, z) => x >= 3 ? -7 : 0, new Cell(5, 0)));    // 광산 7m 낭떠러지
+        Assert.Null(Run((x, z) => x >= 3 ? -61 : 0, new Cell(5, 0)));
     }
 
     [Fact]
