@@ -103,7 +103,8 @@ namespace ValheimHelper
                 if (z.m_uid == m_targetId) return false; // 대상까지 가는 길에 다른 더미가 안 걸림(대상 뒤 더미는 막은 게 아님)
                 if (m_skip.Contains(z.m_uid)) continue;
                 ResourceInfo info = ResourceCatalog.Get(z.GetPrefab()) ?? ResourceCatalog.Obstacle(z.GetPrefab());
-                if (info == null || info.Tool == ToolKind.None || !m_ways.Contains(info.Tool)) return false; // 처음 걸린 것을 못 캐면 그 뒤도 못 감
+                // 처음 걸린 것을 못 캐면 그 뒤도 못 감. 일의 방법(m_ways)은 안 본다 — 맨손 수정 줍기도 가진 곡괭이로 얼음 벽을 깬다(E041)
+                if (info == null || info.Tool == ToolKind.None || info.Tool == ToolKind.Hunt) return false;
                 ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
                 if (tool == null || (info.MinToolTier > 0 && info.MinToolTier > tool.m_shared.m_toolTier)) return false;
                 pile = z;
