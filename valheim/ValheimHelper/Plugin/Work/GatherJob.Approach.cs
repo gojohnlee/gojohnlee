@@ -72,6 +72,9 @@ namespace ValheimHelper
                     StartWork(true);
                     return true;
                 }
+                // 던전 안에서 묘지 안 길이 없다고 이미 안 대상: 갇힌 게 아니라 그 대상만 못 가는 것 → 건너뛰기만(E040 — 길 없는 더미 둘에 연달아 막혀 더미 16개 남은 묘지를 버렸다)
+                // 막힘 기록(WalkFailed)에도 안 넣는다: 넣으면 던전 안 자리 4곳이 차 일 전체를 포기했다(회차 191 시험)
+                if (m_ai.InteriorNoPath(m_targetPos, m_reach)) { Skip(); return true; }
                 if (WalkFailed(m_targetPos, true, out bool keep, out _)) return keep;
                 Skip();
                 RescueIfStuckAgain();
