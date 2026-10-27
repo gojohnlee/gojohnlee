@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -9,6 +10,8 @@ namespace ValheimHelper
     /// vh_mistfoetest (⑬ 안개땅 라): 안개땅 적 판단·싸움.
     /// A) 안개땅 차림(키틴 갑옷·미스트워커·음식 셋)으로 시커 하나 → 판단이 위험 비율대로인지, 싸움이면 잡고 안 죽는지, 시커를 배우는지.
     /// B) 같은 차림으로 진드기 하나(체력 50, 위험 낮음) → 싸워서 잡음.
+    /// D) 같은 차림으로 출발 판단(⑬ 라-2): 검은 대리석을 아는 안개땅 두 곳 중 가까운 곳에 시커 셋(물러난 기록) → 그곳은 피하고 먼 곳으로
+    ///    (안개땅 전체가 장비 모자람이면 호위병과), 시커 있는 곳만 남으면 호위병과 같이(GoTogether). 판단만 보고 걷지는 않음.
     /// C) 약한 차림(몽둥이·갑옷 없음·음식 없음)으로 시커 하나 → 싸우지 않고 물러나거나 도망(결과·죽음은 기록).
     /// 평평한 시험 자리(안개땅 자리는 무거워 vh_mistlandstest만).
     /// </summary>
@@ -83,6 +86,9 @@ namespace ValheimHelper
             checks.Add($"진드기와 싸움 (상태 {Join(states)})", states.Contains("Fight"));
             if (npc.IsDead()) yield break;
 
+            // D) 출발 판단: 시커를 아는 안개땅 자리는 피하고, 거기뿐이면 호위병과
+            yield return Departs(w, checks, npc);
+
             // C) 약한 차림 + 시커 → 싸우지 않음
             foreach (var it in new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems())) { npc.UnequipItem(it, false); npc.GetInventory().RemoveItem(it); }
             npc.ResetMeals();
@@ -108,6 +114,46 @@ namespace ValheimHelper
             if (c != null && !c.IsDead()) Kill(c);
             yield return new WaitForSeconds(2f);
         }
+
+        static IEnumerator Departs(TestKit.World w, GatherTest.Checks checks, WorkerNpc npc)
+        {
+            yield return TestKit.SpawnGuard();
+            checks.Add($"호위병 생김 ({TestKit.Waited:0}초)", TestKit.Ok && WorkerNpc.TheGuard != null);
+            Give(npc, "PickaxeBlackMetal");
+            string k0 = Brain.Get().Save(), p0 = Brain.Places.Save();
+            try
+            {
+                ZoneXY hz = Senses.ZoneOf(w.Home), near = new ZoneXY(hz.X + 3, hz.Y), far = new ZoneXY(hz.X - 5, hz.Y);
+                var marble = new Core.Chat.ChatCommand { Kind = Core.Chat.CommandKind.Item, Item = "BlackMarble", Amount = 5 };
+                Brain.ReplaceForTest("", "");
+                double now = ZNet.instance.GetTimeSeconds();
+                foreach (var z in new[] { near, far })
+                {
+                    Brain.Get().Saw(new Dictionary<ZoneXY, Dictionary<string, int>> { [z] = new Dictionary<string, int> { ["BlackMarble"] = 5 } }, new List<ZoneXY> { z }, now);
+                    Brain.Get().SetBiome(z, (int)Heightmap.Biome.Mistlands);
+                }
+                Brain.Places.Record(near, new List<GroupFoe> { new GroupFoe { Kind = "Seeker", Count = 3 } }, Outcome.Back, now, Guard.Resolve);
+                DepartureResult r = Departures.JudgeFor(npc, marble);
+                TestRunner.Log($"D 두 곳: {r?.Action} 곳 {Z(r?.Place)} 대신 {Z(r?.Alternative)} 피함 {r?.Avoid.Count} — {r?.Reason}");
+                // 시커를 이긴 적이 없으면 안개땅 전체가 장비 모자람(BiomeRisk)이라 먼 곳도 위험 → 호위병과 먼 곳으로
+                bool avoided = r != null && (r.Action == DepartAction.Go || r.Action == DepartAction.GoTogether) && Same(r.Place, far) && r.Avoid.Exists(o => o.Zone.Equals(near));
+                checks.Add($"시커 셋 있던 가까운 안개땅은 피하고 먼 곳으로 ({r?.Action}, {Z(r?.Place)})", avoided);
+
+                Brain.Get().Forget(far, "BlackMarble");
+                r = Departures.JudgeFor(npc, marble);
+                TestRunner.Log($"D 시커 곳만: {r?.Action} 곳 {Z(r?.Place)} — {r?.Reason}");
+                checks.Add($"시커 있는 곳뿐이면 묻지 않고 호위병과 ({r?.Action})", r != null && r.Action == DepartAction.GoTogether && r.Question == Question.None);
+            }
+            finally
+            {
+                Brain.ReplaceForTest(k0, p0);
+                Workers.SkipGuard = true; // C는 호위병 없이(곁에 있으면 경계가 그 힘을 셈)
+                Workers.DespawnGuards();
+            }
+        }
+
+        static bool Same(PlaceOption p, ZoneXY z) => p != null && p.Zone.Equals(z);
+        static string Z(PlaceOption p) => p == null ? "-" : $"({p.Zone.X},{p.Zone.Y}) {p.Distance:0}m 비율 {p.Ratio:0.00} 장비 {p.GearRatio:0.00}";
 
         /// <summary>적 하나가 죽거나 일꾼이 죽거나 limit초까지 지켜보며 경계 상태를 모은다. 싸웠으면 잡음·안 죽음을 칸으로.</summary>
         static IEnumerator Watch(string tag, WorkerNpc npc, Character a, float limit, HashSet<string> states, System.Action<System.Tuple<string, bool>> add)

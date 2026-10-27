@@ -153,6 +153,25 @@ namespace ValheimHelper.Core.Npc
             return best;
         }
 
+        /// <summary>다 위험할 때: from보다 덜 위험한(죽은 기록 → 위험 단계 순) 곳 중 가장 덜 위험하고, 같으면 가까운 곳. 없으면 null.</summary>
+        public static PlaceOption Safer(Personality p, List<PlaceOption> places, PlaceOption from)
+        {
+            PlaceOption best = null;
+            foreach (var o in places)
+            {
+                if (o == from || o.InBase || !Worse(p, from, o)) continue;
+                if (best == null || Worse(p, best, o) || !Worse(p, o, best) && o.Distance < best.Distance) best = o;
+            }
+            return best;
+        }
+
+        /// <summary>a가 b보다 위험한가: 죽은 기록이 먼저, 그다음 위험 단계.</summary>
+        static bool Worse(Personality p, PlaceOption a, PlaceOption b)
+        {
+            bool da = DiedThere(p, a), db = DiedThere(p, b);
+            return da != db ? da : Level(p, a) > Level(p, b);
+        }
+
         public static int Trips(int amount, int carry) => carry <= 0 ? 1 : Math.Max(1, (amount + carry - 1) / carry);
 
         /// <summary>예상 소요(초): 왕복 이동 × 왕복 횟수 + 개당 초 × 수량(스킬 10 → ×1.0, 70 → ×0.7).</summary>
@@ -225,6 +244,18 @@ namespace ValheimHelper.Core.Npc
                     r.Args["minutes"] = Minutes5(r.Seconds).ToString();
                     r.Args["foe"] = alt.TopFoe ?? "";
                     r.Reason += $" → 덜 위험한 곳 {alt.Distance:0}m(위험 {alt.Ratio:0.00})";
+                }
+                else if (Risky(p, t, level) && !t.InBase && Safer(p, i.Places, t) is PlaceOption less)
+                {
+                    // 다 위험해도 호위병과 갈 곳은 그중 덜 위험한 곳(⑬ 라-2: 시커 셋 본 곳보다 아무것도 못 본 안개땅), 더 위험한 곳은 이번 일에서 피함
+                    foreach (var o in i.Places)
+                        if (o != less && !o.InBase && Worse(p, o, less)) r.Avoid.Add(o);
+                    r.Place = t = less;
+                    level = Level(p, less);
+                    r.Seconds = Estimate(i, less);
+                    r.Args["minutes"] = Minutes5(r.Seconds).ToString();
+                    r.Args["foe"] = less.TopFoe ?? "";
+                    r.Reason += $" → 그나마 덜 위험한 곳 {less.Distance:0}m(위험 {less.Ratio:0.00})";
                 }
                 if (!Risky(p, t, level)) // 덜 위험한 곳으로 가니 위험한 곳은 이번 일에서 피한다(일이 스스로 고르는 구역에서도)
                 {

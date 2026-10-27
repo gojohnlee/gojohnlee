@@ -197,6 +197,20 @@ public class DepartureTests
         Assert.Equal(3, Assert.Single(r.Avoid).Zone.X); // 거점 안 위험한 곳은 피할 곳에 안 넣음
     }
 
+    // 다 위험해도 호위병과 갈 곳은 그중 덜 위험한 곳(거리 무관), 더 위험한 곳은 피함(⑬ 라-2)
+    [Fact]
+    public void AllRiskyGoesToLeastRiskyWithGuard()
+    {
+        var i = In(P(100, 9f, x: 1), P(400, 1.3f, x: 2), P(300, 2.5f, x: 3)); i.Guard = "호위병";
+        var r = Departure.Judge(i);
+        Assert.Equal(DepartAction.GoTogether, r.Action);
+        Assert.Equal(2, r.Place.Zone.X);
+        Assert.Null(r.Alternative);
+        Assert.Equal(new[] { 1, 3 }, r.Avoid.ConvertAll(o => o.Zone.X).ToArray());
+        r = Departure.Judge(In(P(100, 1.3f, x: 1), P(400, 0.05f, death: 0.6f, x: 2))); // 죽은 곳은 위험 단계가 낮아도 더 위험
+        Assert.Equal(1, r.Place.Zone.X);
+    }
+
     // 덜 위험한 곳이 없으면 호위병을 데려간다, 바쁘면 거점에서 기다렸다 같이(사용자 결정 2026-10-26)
     [Fact]
     public void AllRiskyTakesGuardOrWaitsForIt()
