@@ -70,6 +70,7 @@ namespace ValheimHelper
             checks.Add("안개땅 적 프리팹(시커·진드기·걀) 있음",
                 ZNetScene.instance.GetPrefab("Seeker") != null && ZNetScene.instance.GetPrefab("Tick") != null && ZNetScene.instance.GetPrefab("Gjall") != null);
             checks.Add("안개땅 토박이 적에 시커가 있음", Departures.NativeTo("Seeker", (int)Heightmap.Biome.Mistlands));
+            LogPost("blackmarble_post01");
             if (TestKit.RunBiome != Heightmap.Biome.Mistlands) yield break;
             Vector3? giant = Site(w, checks);
             if (giant != null) yield return Mine(w, checks, giant.Value);
@@ -92,6 +93,7 @@ namespace ValheimHelper
                 ResourceInfo info = ResourceCatalog.Get(z.GetPrefab());
                 foreach (string item in info.Produces) { kinds.TryGetValue(item, out int n); kinds[item] = n + 1; }
                 if (!info.Produces.Contains("BlackMarble") && !info.Produces.Contains("Softtissue")) continue;
+                if (!info.Prefab.StartsWith("giant_")) continue; // 드베르그 기둥(blackmarble_post01)은 유해가 아님(E042)
                 count++;
                 float d = Utils.DistanceXZ(w.Home, z.GetPosition());
                 if (d < best) { best = d; giant = z; }
@@ -109,6 +111,22 @@ namespace ValheimHelper
             checks.Add("안개 속 30m에서 본 거인 유해가 지식에 적힘", known);
             checks.Add("가 본 곳 바이옴에 안개땅이 적힘", Brain.Get().KnowsBiome((int)Heightmap.Biome.Mistlands));
             return g;
+        }
+
+        /// <summary>E042: 드베르그 기둥이 깨질 때 무엇을 어디에 떨구는지(부품·떨굼 표·깨진 뒤 생기는 것)를 diag에.</summary>
+        static void LogPost(string name)
+        {
+            GameObject p = ZNetScene.instance.GetPrefab(name);
+            if (p == null) { TestRunner.Log($"{name}: 프리팹 없음"); return; }
+            var comps = new List<string>();
+            foreach (var c in p.GetComponents<Component>()) comps.Add(c.GetType().Name);
+            var des = p.GetComponent<Destructible>();
+            var drop = p.GetComponent<DropOnDestroyed>();
+            var items = new List<string>();
+            if (drop?.m_dropWhenDestroyed?.m_drops != null)
+                foreach (var d in drop.m_dropWhenDestroyed.m_drops) items.Add($"{d.m_item?.name} {d.m_stackMin}-{d.m_stackMax}");
+            TestRunner.Log($"{name}: 부품 {string.Join(",", comps.ToArray())} · 단계 {des?.m_minToolTier} · 떨굼 [{string.Join(", ", items.ToArray())}] " +
+                $"(번 {drop?.m_dropWhenDestroyed?.m_dropMin}-{drop?.m_dropWhenDestroyed?.m_dropMax}, 확률 {drop?.m_dropWhenDestroyed?.m_dropChance}) · 깨진 뒤 {des?.m_spawnWhenDestroyed?.name ?? "-"}");
         }
 
         static readonly string[] MineGear = { "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
