@@ -105,11 +105,50 @@ namespace ValheimHelper
             var why = new Dictionary<string, int>();
             var seen = Flood(g, why);
             float best = seen.Min(c => Utils.DistanceXZ(g.At(c, 0), to));
+            var near = seen.OrderBy(c => Utils.DistanceXZ(g.At(c, 0), to)).First();
             string walls = string.Join(", ", why.OrderByDescending(p => p.Value).Take(6).Select(p => p.Key + " ×" + p.Value));
             var piles = PilesOnWay(from, to, dist, out string passWhy);
+            var gp = new Grid(from, to, dist, true);
+            var seenP = Flood(gp, null);
+            var nearP = seenP.OrderBy(c => Utils.DistanceXZ(gp.At(c, 0), to)).First();
             string pass = piles == null ? $"더미를 지나가도 길 없음({passWhy})"
                 : $"더미를 지나가면 길 있음({passWhy}, 걸리는 더미 {piles.Count}개: {string.Join(", ", piles.Select(p => $"{Utils.GetPrefabName(p.gameObject)} {Utils.DistanceXZ(p.transform.position, from):0}m"))})";
-            return $"닿는 칸 {seen.Count}개, 목표에 가장 가까이 {best:0.0}m(닿을 거리 {dist:0.0}), 경계 [{walls}], {pass}, 목표 칸 {CellDiag(to, from.y)}";
+            return $"닿는 칸 {seen.Count}개, 목표에 가장 가까이 {best:0.0}m(닿을 거리 {dist:0.0}), 경계 [{walls}], {pass}, 목표 칸 {CellDiag(to, from.y)}, 가장 가까운 칸 {Edge(g, near, seen, from.y)}, 더미 지나면 목표까지 {Utils.DistanceXZ(gp.At(nearP, 0), to):0.0}m {Edge(gp, nearP, seenP, from.y)}";
+        }
+
+        /// <summary>진단: 닿는 칸 c(시작 기준 칸·높이)와 못 넘는 이웃마다 까닭·높이 차 — 길이 어디서 끊기는지(⑬ 바-2b 광산 아래층).</summary>
+        static string Edge(Grid g, StepGrid.Cell c, HashSet<StepGrid.Cell> seen, float yRef)
+        {
+            double hc = g.Height(c).Value;
+            var sb = new System.Text.StringBuilder($"({c.X:+0;-0},{c.Z:+0;-0}) {hc - yRef:+0.0;-0.0}m:");
+            int[] dx = { 1, -1, 0, 0 }, dz = { 0, 0, 1, -1 };
+            for (int k = 0; k < 4; k++)
+            {
+                var n = new StepGrid.Cell(c.X + dx[k], c.Z + dz[k]);
+                if (seen.Contains(n)) continue;
+                double? hn = g.Height(n, hc);
+                string r = hn == null ? g.FloorWhy(n) : !StepGrid.CanStep(hn.Value - hc) ? $"턱 {hn.Value - hc:+0.0;-0.0}m"
+                    : !g.Open(c, n, out Collider hit) ? "벽 " + Name(hit) : "?";
+                float fy = hn != null ? (float)hn.Value : g.BlockedFloor(n, out float by) ? by : float.NaN;
+                sb.Append($" [{dx[k]:+0;-0},{dz[k]:+0;-0}] {(float.IsNaN(fy) ? "" : $"{fy - hc:+0.0;-0.0}m ")}{r}" + (hn == null && !float.IsNaN(fy) ? $" 위 {(HighClear(g.At(n, fy)) ? "빔" : "막힘")}·단 {(LowStep(g.At(n, fy)) ? "됨" : "안 됨")}" + Who(g.At(n, fy)) : ""));
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>진단: 바닥 p 위 몸 자리에 걸리는 물체의 부품(문·부서짐·건물) — 막는 것이 열거나 부술 수 있는 것인지(⑬ 바-2b dvergrtown_gate).</summary>
+        static string Who(Vector3 p)
+        {
+            int m = Physics.OverlapCapsuleNonAlloc(p + Vector3.up * (BodyBottom + BodyRadius), p + Vector3.up * (2f - BodyRadius), BodyRadius, s_cols, Mask, QueryTriggerInteraction.Ignore);
+            var parts = new HashSet<string>();
+            for (int i = 0; i < m; i++)
+            {
+                var c = s_cols[i];
+                var nv = c.GetComponentInParent<ZNetView>();
+                string k = (c.GetComponentInParent<Door>() != null ? "문 " : "") + (c.GetComponentInParent<Destructible>() != null ? "부서짐 " : "") + (c.GetComponentInParent<WearNTear>() != null ? "건물 " : "")
+                    + (c.GetComponentInParent<Interactable>() != null ? "상호작용 " : "");
+                parts.Add($"{Name(c)}={(nv != null ? Utils.GetPrefabName(nv.gameObject) : "방")}{(k.Length > 0 ? " " + k.Trim() : "")}");
+            }
+            return parts.Count == 0 ? "" : " {" + string.Join("; ", parts) + "}";
         }
 
         /// <summary>진단: p 칸(yRef 기준으로 잰 바닥)의 바닥 높이(yRef 기준)·못 서는 까닭·물 깊이(바닥 한 점 / 몸 기둥).</summary>
@@ -190,16 +229,20 @@ namespace ValheimHelper
         /// 진단 지도(from 둘레 ±r칸, 위가 +z): 왼쪽 = 칸 종류(@ 시작, . 갈 수 있음, o 설 수 있지만 못 감, ~ 헤엄 칸(w 못 감), = 몸 자리가 1.05m 아래만 막힘(턱·계단 옆),
         /// # 몸 자리 막힘(벽), m 더미, r 강체, 빈칸 바닥 없음), 오른쪽 = 바닥 높이(시작 기준 0.5m 단위: 0, 1~9 위, a~i 아래, ^ v 더).
         /// </summary>
-        public static string Map(Vector3 from, int r)
+        public static string Map(Vector3 from, int r, Vector3? to = null)
         {
             var g = new Grid(from, from, 0f, false);
             var reach = Flood(g, null);
             var sb = new System.Text.StringBuilder();
-            for (int z = r; z >= -r; z--)
+            // to가 있으면 to에 가장 가까운 닿는 칸 둘레를 그리고 목표 칸은 X(⑬ 바-2b — 길이 끊기는 곳이 ±14칸 밖).
+            var mid = to == null ? new StepGrid.Cell(0, 0) : reach.OrderBy(c => Utils.DistanceXZ(g.At(c, 0), to.Value)).First();
+            var aim = to == null ? new StepGrid.Cell(int.MinValue, 0) : new StepGrid.Cell(Mathf.RoundToInt((to.Value.x - from.x) / Cell), Mathf.RoundToInt((to.Value.z - from.z) / Cell));
+            if (to != null) sb.Append($" 가운데 칸 ({mid.X:+0;-0},{mid.Z:+0;-0}), 목표 X");
+            for (int z = mid.Z + r; z >= mid.Z - r; z--)
             {
                 var kinds = new System.Text.StringBuilder();
                 var heights = new System.Text.StringBuilder();
-                for (int x = -r; x <= r; x++)
+                for (int x = mid.X - r; x <= mid.X + r; x++)
                 {
                     var c = new StepGrid.Cell(x, z);
                     double? h = g.Height(c);
@@ -208,6 +251,7 @@ namespace ValheimHelper
                     else if (g.BlockedFloor(c, out float by)) fy = by;
                     char k;
                     if (x == 0 && z == 0) k = '@';
+                    else if (x == aim.X && z == aim.Z) k = 'X';
                     else if (h != null) k = g.IsSwim(c) ? (reach.Contains(c) ? '~' : 'w') : reach.Contains(c) ? '.' : 'o';
                     else
                     {

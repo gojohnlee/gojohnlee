@@ -195,6 +195,7 @@ namespace ValheimHelper
                 TestRunner.Log($"  {s_kind.ItemKo} {Utils.DistanceXZ(v.transform.position, here):0}m 높이 {v.transform.position.y - here.y:+0.0;-0.0}: 길 {(path != null ? "있음" : "없음")} {why}"
                     + (path == null && explained++ < 3 ? " / " + InteriorNav.Explain(here, v.transform.position, reach) : ""));
                 if (path == null && explained == 1) TestRunner.Log("  가장 가까운 것 둘레 칸:" + InteriorNav.AroundDiag(here, v.transform.position, reach + 1.5f));
+                if (path == null && explained == 1) TestRunner.Log("  가장 가까운 것 쪽 지도(±14칸, 위 +z):" + InteriorNav.Map(here, 14, v.transform.position));
             }
             TestRunner.Log($"  도착 자리에서 길 있는 {s_kind.ItemKo} {ok}/{n}개");
             if (ok * 2 < n) TestRunner.Log("  도착 자리 둘레 지도(±14칸, 위 +z):" + InteriorNav.Map(here, 14));
