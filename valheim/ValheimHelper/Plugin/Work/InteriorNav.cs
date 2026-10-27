@@ -122,6 +122,23 @@ namespace ValheimHelper
             return $"바닥 {y - yRef:+0.0;-0.0}m {(h == null ? why : swim ? $"헤엄(뜬 발 {h.Value - yRef:+0.0;-0.0}m)" : "설 수 있음")}, 물 깊이 점 {Floating.GetLiquidLevel(f + Vector3.up * 0.05f) - y:0.00}·몸 {WaterDepth(f):0.00}(기준 {SwimDepth:0.00})";
         }
 
+        /// <summary>진단: 목표 to 둘레 rad m 안 칸(from 격자)마다 바닥 높이(to 기준)와 못 서는 까닭 — 목표 칸에 왜 못 닿는지(⑬ 바-2 광산).</summary>
+        public static string AroundDiag(Vector3 from, Vector3 to, float rad)
+        {
+            var sb = new System.Text.StringBuilder();
+            int cx = Mathf.RoundToInt((to.x - from.x) / Cell), cz = Mathf.RoundToInt((to.z - from.z) / Cell), r = Mathf.CeilToInt(rad);
+            for (int z = cz + r; z >= cz - r; z--)
+                for (int x = cx - r; x <= cx + r; x++)
+                {
+                    float px = from.x + x * Cell, pz = from.z + z * Cell;
+                    if (Utils.DistanceXZ(new Vector3(px, 0, pz), to) > rad) continue;
+                    double? h = Probe(px, pz, to.y, true, false, out string why, out float fy, out _);
+                    float y = h != null ? (float)h.Value : fy;
+                    sb.Append($"\n    ({x - cx:+0;-0},{z - cz:+0;-0}) {(float.IsNaN(y) ? "" : $"{y - to.y:+0.0;-0.0}m ")}{why ?? "설 수 있음"}");
+                }
+            return sb.ToString();
+        }
+
         /// <summary>진단: here 둘레 range m 안 지하묘지 안 물(WaterVolume) — 상자 높이·수면(here 기준)·크기, 가운데 바닥에서 한 점·몸 기둥 물 깊이.</summary>
         public static string WaterDiag(Vector3 here, float range)
         {
@@ -220,6 +237,18 @@ namespace ValheimHelper
         /// <summary>바닥 p 위 1.05~2m 몸 자리가 비었나(진단: 무릎 아래만 걸리는 턱·계단 옆인지).</summary>
         static bool HighClear(Vector3 p) =>
             !Physics.CheckCapsule(p + Vector3.up * (1.05f + BodyRadius), p + Vector3.up * (2f - BodyRadius), BodyRadius, Mask, QueryTriggerInteraction.Ignore);
+
+        /// <summary>바닥 p 둘레(몸 반지름) 1.05m 아래 걸리는 것의 윗면이 계단 한 단(0.6m) 안인가 — 계단 다음 단은 되고, 무릎 높이 돌(지하묘지 stone)은 안 된다.</summary>
+        static bool LowStep(Vector3 p)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                float a = i * Mathf.PI / 4f;
+                var o = p + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * BodyRadius + Vector3.up * 1.05f;
+                if (Physics.Raycast(o, Vector3.down, out RaycastHit h, 1.05f, Mask, QueryTriggerInteraction.Ignore) && h.point.y - p.y > 0.6f) return false;
+            }
+            return true;
+        }
 
         /// <summary>
         /// 진흙 더미·광맥을 지나가도 된다고 치고 찾은 길에 걸리는 더미들(가까운 순, 길이 지나는 차례). 길이 없으면 null.
@@ -427,10 +456,20 @@ namespace ValheimHelper
                 if (c.attachedRigidbody != null) { why = "강체 위 " + c.name; return null; }
                 Vector3 p = h.point;
                 int m = Physics.OverlapCapsuleNonAlloc(p + Vector3.up * (BodyBottom + BodyRadius), p + Vector3.up * (2f - BodyRadius), BodyRadius, s_cols, Mask, QueryTriggerInteraction.Ignore);
+                Collider low = null;
                 for (int i = 0; i < m; i++)
                 {
                     if (passPiles && PileOf(s_cols[i]) != null) continue;
+                    if (PileOf(s_cols[i]) == null && s_cols[i].attachedRigidbody == null) { low = low ?? s_cols[i]; continue; }
                     why = "몸 자리 " + Name(s_cols[i]);
+                    floorY = p.y;
+                    return null;
+                }
+                // 무릎 아래(1.05m 밑)만 걸리는 칸(계단 옆 다음 단·문턱)은 선다 — 오르내림은 이웃 칸 높이로 잰다. 감염된 광산 계단(dvergrtown_gate_stair 오목 메시)
+                // 칸 153개가 벽으로 잡혀 아래층 검은 핵에 못 갔다(⑬ 바-2 회차 203).
+                if (low != null && !(HighClear(p) && LowStep(p)))
+                {
+                    why = "몸 자리 " + Name(low);
                     floorY = p.y;
                     return null;
                 }
