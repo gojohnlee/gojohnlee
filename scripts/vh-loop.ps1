@@ -516,7 +516,8 @@ function Wait-UserRequest($why, $last) {
     Log "멈춤: $why → UserRequest.txt가 바뀔 때까지 기다림"
     Write-Status "답 기다림: $why — UserRequest.txt에 쓰면 5분 안에 이어 감(물은 것은 history.md 맨 위)" $last
     while ($true) {
-        Start-Sleep 300
+        # 사용자 10-28: 멈춤 대기 중엔 할 일이 없으니 잠든다 — 입력 없음 10분이면 Wait-Until이 최대 절전, 1시간 뒤 깨워 UserRequest를 본다
+        if ([VH.Power]::IdleMs() -gt 600000) { Wait-Until (Get-Date).AddMinutes(60) } else { Start-Sleep 300 }
         Prepare-Git
         if (Test-StopFile) { return $false }
         if ((G rev-parse $f | Select-Object -Last 1) -ne $h0) { Log 'UserRequest.txt 바뀜 → 다시 돎'; return $true }
