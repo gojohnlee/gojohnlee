@@ -39,6 +39,7 @@ namespace ValheimHelper
                 {
                     float a = d * Mathf.PI / 8f;
                     Vector3 p = from + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    if (new Vector2(p.x, p.z).magnitude > 10000f) continue; // 월드 밖
                     float h = wg.GetHeight(p.x, p.z);
                     if (wg.GetBiome(p) != Heightmap.Biome.Meadows || h < wl + 3f) continue;
                     bool ok = true;
@@ -108,7 +109,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// from에서 100m~5km를 바깥으로 돌며 가운데가 그 바이옴이고 15m 둘레가 평평한(3m 안) 자리 중, 가운데·둘레 가장 낮은 곳이 물보다 1m 넘는 첫 자리
+        /// from에서 100m~10km(월드 가장자리 10km 안만)를 바깥으로 돌며 가운데가 그 바이옴이고 15m 둘레가 평평한(3m 안) 자리 중, 가운데·둘레 가장 낮은 곳이 물보다 1m 넘는 첫 자리
         /// — 없으면 0.5m 넘는 것 중 가장 높은 자리(회차 138: 시험 월드 늪은 안쪽 표본 8829곳 중 가장 높아도 물 위 3.4m, 평평한 곳은 0m 이하). 생성 높이라 안 불러온 곳도 본다.
         /// </summary>
         static Vector3? FindBiomeSpot(Vector3 from, Heightmap.Biome biome)
@@ -119,13 +120,14 @@ namespace ValheimHelper
             float bestLow = 0.5f;
             int seen = 0;
             float maxH = float.MinValue, maxLow = float.MinValue; // 못 찾을 때 볼 통계: 표본 가운데 최고·평평한 자리 최저의 최고(물 위 m)
-            for (float r = 100f; r <= 5000f; r += 25f)
+            for (float r = 100f; r <= 10000f && !(r > 5000f && best != null); r += 25f) // 5km 너머는 못 찾았을 때만(회차 194: 시험 월드 안개땅은 5km 안에 표본 0곳, 늪 자리는 그대로)
             {
                 int n = Mathf.Max(32, Mathf.CeilToInt(2f * Mathf.PI * r / 25f)); // 25m 간격(회차 138: 50m·32방향은 늪 표본 131곳뿐)
                 for (int d = 0; d < n; d++)
                 {
                     float a = d * 2f * Mathf.PI / n;
                     Vector3 p = from + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    if (new Vector2(p.x, p.z).magnitude > 10000f) continue; // 월드 밖
                     if (wg.GetBiome(p) != biome) continue;
                     seen++;
                     float h = wg.GetHeight(p.x, p.z), low = h - wl;
@@ -250,9 +252,16 @@ namespace ValheimHelper
             if (!around.HasValue && SweepGround(home) > 0) yield return new WaitForSeconds(0.5f); // 앞 시험이 남긴 땅 물건·몸·통나무(개선 셋 가)
             w.Player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, w.Player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
-            w.Ragnar = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
-            w.Floki = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Floki);
-            if (w.Ragnar == null || w.Floki == null) yield break;
+            // 먼 바이옴으로 막 옮겨 FPS가 낮으면(회차 194 안개땅 8 FPS) NPC가 3초 안에 안 생김(ZNetScene이 안개땅 물건 수천 개를 프레임마다 조금씩 만듦) → 60초까지 기다림
+            for (float t = 0f; ; t += 0.5f)
+            {
+                w.Ragnar = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
+                w.Floki = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Floki);
+                if ((w.Ragnar != null && w.Floki != null) || t >= 60f) break;
+                yield return new WaitForSeconds(0.5f);
+                if (t == 4f) Plugin.Log.LogInfo($"깃발 7초 뒤 NPC 아직 없음: 일꾼 ZDO {Workers.AllZdos().Count}개, 그중 불러옴 {Workers.AllZdos().FindAll(z => Workers.Find(z) != null).Count}개, FPS {1f / Time.smoothDeltaTime:0}");
+            }
+            if (w.Ragnar == null || w.Floki == null) { Plugin.Log.LogWarning("깃발 뒤 63초 안에 NPC가 안 생김"); yield break; }
             foreach (var npc in new[] { w.Ragnar, w.Floki })
             {
                 foreach (var n in new[] { "AxeFlint", "PickaxeAntler", "ArmorLeatherChest", "ArmorLeatherLegs" })

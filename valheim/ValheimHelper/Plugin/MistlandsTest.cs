@@ -70,6 +70,42 @@ namespace ValheimHelper
             checks.Add("안개땅 적 프리팹(시커·진드기·걀) 있음",
                 ZNetScene.instance.GetPrefab("Seeker") != null && ZNetScene.instance.GetPrefab("Tick") != null && ZNetScene.instance.GetPrefab("Gjall") != null);
             checks.Add("안개땅 토박이 적에 시커가 있음", Departures.NativeTo("Seeker", (int)Heightmap.Biome.Mistlands));
+            if (TestKit.RunBiome == Heightmap.Biome.Mistlands) Site(w, checks);
+        }
+
+        /// <summary>
+        /// ⑬ 나) 안개땅 자리(VH_BIOME=mistlands): TestKit이 찾은 자리가 안개땅이고 둘레에 거인 유해가 있는지,
+        /// 시야(Senses.Look — ZDO 거리 40m라 안개와 무관)로 그 유해의 검은 대리석·부드러운 조직이 지식에 적히는지.
+        /// </summary>
+        static void Site(TestKit.World w, GatherTest.Checks checks)
+        {
+            var biome = WorldGenerator.instance.GetBiome(w.Home);
+            checks.Add($"시험 자리가 안개땅 (바이옴 {biome})", biome == Heightmap.Biome.Mistlands);
+            ZDO giant = null;
+            float best = float.MaxValue;
+            int count = 0;
+            var kinds = new Dictionary<string, int>();
+            foreach (var z in Senses.Nearby(w.Home, 150f, z => ResourceCatalog.Get(z.GetPrefab()) != null))
+            {
+                ResourceInfo info = ResourceCatalog.Get(z.GetPrefab());
+                foreach (string item in info.Produces) { kinds.TryGetValue(item, out int n); kinds[item] = n + 1; }
+                if (!info.Produces.Contains("BlackMarble") && !info.Produces.Contains("Softtissue")) continue;
+                count++;
+                float d = Utils.DistanceXZ(w.Home, z.GetPosition());
+                if (d < best) { best = d; giant = z; }
+            }
+            var parts = new List<string>();
+            foreach (var kv in kinds) parts.Add(kv.Key + " " + kv.Value);
+            TestRunner.Log($"안개땅 자리 150m 안 자원: {string.Join(", ", parts.ToArray())}");
+            checks.Add($"150m 안에 거인 유해 ({count}개, 가장 가까운 {(giant == null ? "-" : best.ToString("0") + "m")})", giant != null);
+            if (giant == null) return;
+            Vector3 g = giant.GetPosition();
+            Vector3 eye = g + (w.Home - g).normalized * 30f; // 유해에서 30m 떨어진 곳(시야 40m 안)
+            Senses.Look(eye);
+            var mem = Brain.Get().Get(Senses.ZoneOf(g));
+            bool known = mem != null && (mem.Items.ContainsKey("BlackMarble") || mem.Items.ContainsKey("Softtissue"));
+            checks.Add("안개 속 30m에서 본 거인 유해가 지식에 적힘", known);
+            checks.Add("가 본 곳 바이옴에 안개땅이 적힘", Brain.Get().KnowsBiome((int)Heightmap.Biome.Mistlands));
         }
     }
 }
