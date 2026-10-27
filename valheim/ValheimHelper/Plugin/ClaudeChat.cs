@@ -69,6 +69,12 @@ namespace ValheimHelper
             npcs[0].Say("thinking");
         }
 
+        /// <summary>기다리는 해석을 버린다(시험 시작: 앞 시험의 늦은 답이 다음 시험 일꾼을 움직이던 것, E039). 돌던 호출은 스스로 끝나고 답은 안 씀.</summary>
+        public static void Drop()
+        {
+            s_call = null; s_pending = null; s_waiting = null;
+        }
+
         public static void Tick()
         {
             if (s_call == null || !s_call.Done) return;
