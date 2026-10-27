@@ -9,6 +9,10 @@
 - [10-27] GPT 리뷰 뺌(사용자: 성능 약함): 시험 모두 PASS면 GPT 안 부르고 끝, FAIL일 때만 실패 줄 원문 발췌. 리뷰는 인계 전 Claude 자체 점검으로.
 
 다음 (순서대로 — 안 끝난 일만)
+★ 분업 흔적 정리 (사용자 10-27: 집에서 루프를 돌려 정상이면 고정으로 읽는 곳에서 뺌 — 문서만, 그 회차의 다른 조각에 곁들여 함):
+  가) 조건: history 맨 위에 회차 188 이상 기록이 있고 그 회차가 LOOP: DONE·FAIL로 끝남(status.txt·loop.log에 오류·멈춤 없음). 안 되면 이 ★는 건너뛰고 다음 ★.
+     할 일: scripts/vh-loop-prompt.txt — 맨 먼저 명령의 echo에서 "H=$env:VH_HANDOFF V=$env:VH_VERIFY " 빼기, "0-1." 줄 지우기, 마지막 줄 꼴에서 "LOOP: HANDOFF <한 일>(H=1이고 인계했을 때만) | " 빼기.
+     루프·하네스 코드(vh-loop.ps1·vh-harness*.ps1·vh-loop-handoff.txt)는 손대지 않음(꺼져 있으면 안 읽힘). 끝나면 이 ★ 지움.
 ★ 맡긴 일 끝까지 (외부 검토 + 사용자 승인 10-26, 순서대로):
   가) [끝, 회차 185 — 커밋 cb68378 · 시험 vh_restartcraft_load→2 PASS 5/5·12/12, _part→2 5/5·12/12, _carry→2 5/5·12/12, crafttest 30/30·basetest 22/22·cooktest 15/15·settest 7/7·restart1→2 6/6·14/14·escorttest 18/18, dotnet test 559/559] 제작 재시작 복원(decisions.txt 13절 "재시작"):
      계획을 다시 세우지 않고 저장한 단계·상태·진행으로 이어 감(설비 안 것은 그 작업의 기다림·꺼내기로 남아 재고·다른 작업과 안 섞임), 단계 끝마다 바로 저장, 제련소 다 돌면 기다림 일찍 끝.
