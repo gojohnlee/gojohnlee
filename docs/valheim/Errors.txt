@@ -64,8 +64,3 @@ E038 / 관찰 중 — 시험 끝난 뒤 게임 종료가 멈춤("응답 없음",
   확인된 사실: 저장·ZNet 종료까지 끝난 뒤의 멈춤. 모드 스레드는 모두 배경 스레드, 남은 자식은 UnityCrashHandler뿐. 시험 스크립트가 이제 "Game - OnApplicationQuit" 뒤 로그 2분 멈춤이면 끄고 run.json exit_hang=true, 판정은 그대로(기본안).
   다음 확인: 다시 나오면 몇 번째 실행·어떤 시험 뒤인지, 모드 스레드(일꾼 AI·Claude 호출)가 남아 있었는지 덤프 없이 로그 끝 시각으로 비교. 자주 나면 모드 종료 처리 조사.
 
-E042 / 조사 중(1회) — vh_mistlandstest(VH_BIOME=mistlands) "검은 대리석 5개가 상자에 (0개, 420초)" FAIL(같은 코드 a5cf387로 직전 실행은 19/19 PASS)
-  증상·조건: 회차 195 세 번째 실행. 이번 자리는 가장 가까운 거인 유해 146m(PASS 때는 더 가까움 — 자리 표본이 실행마다 다름). 라그나가 유해 대신 드베르그 기둥 blackmarble_post01(160m)을 쳐 Work→Collect→Search "목록에 있는 대상 없음"(떨굼 못 찾음), 다음 기둥은 건너뜀 목록, 그 뒤 위험 구역 피함 → 새 땅 탐험. 플로키는 안 나섬.
-  근거: LogOutput.log(회차 195, 실행이 백그라운드 10분 한도로 잘려 diag 없음).
-  확인된 사실: 시험이 생물을 치우는 곳은 거점과 Site가 고른 가장 가까운 유해 둘레뿐. blackmarble_post01은 깨졌는데 14m 안에 BlackMarble 떨굼이 없었음(떨굼 자리·종류 미확인).
-  다음 확인: blackmarble_post01 프리팹(Destructible? 떨굼·m_spawnWhenDestroyed)을 디컴파일 대신 diag로 적고, 시험 자리를 고정(FindBiomeSpot 결과가 실행마다 다른지)하거나 시험은 유해만 대상으로.

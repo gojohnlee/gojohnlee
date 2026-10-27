@@ -1,6 +1,7 @@
 해결된 문제 (평소엔 읽지 않는다. 새 FAIL·예외가 나면 시험 이름·FAIL 문구로 grep → 발생 순서·시작 상태까지 대조한 뒤에만 Errors.txt로 다시 연다)
 한 줄 형식: ID | 시험명 | FAIL 문구 | 원인 | 수정(회차·커밋) | 검증(원래 조건에서). 최근 → 과거. 2026-10-22 이전 것은 Errors.txt 전 기록에서 옮김(ID 없음).
 ======================================================================
+E042 | vh_mistlandstest(VH_BIOME=mistlands) | "검은 대리석 5개가 상자에 (0개, 420초)"(1번 PASS·다음 FAIL) | 시험 Site()가 검은 대리석을 내는 것 아무거나(드베르그 기둥 포함)를 "유해"로 골라 그 둘레만 생물을 치움 → 라그나가 기둥을 치고 떨굼 못 찾음·위험 구역 피해 탐험. 기둥 blackmarble_post01은 Destructible+DropOnDestroyed(BlackMarble 1개씩 3~4번, 단계 0) | 회차 196 12783be Site()는 giant_ 유해만 고름 + 기둥 떨굼 diag | vh_mistlandstest(mistlands) PASS 19/19 ×2(84·151초)
 E040 | vh_crypttest | "고철이 거점 상자에 들어옴 (2개, 480초)"(23/24) | 묘지 안 길 없는 더미 둘에 연달아 막혀 "같은 자리 2번 막힘"으로 묘지째 버림(더미 16개 남김), 막힘 기록 4곳 차면 일 포기 | 회차 191 커밋 b4833bd: 던전 안 길 없다고 안 대상은 건너뛰기만(강제 복귀·막힘 기록 안 함) | crypttest 24/24(126초, crypttest→frostcavetest 묶음)
 E039 | vh_flagtest | "둘 다 깃발 B로 이사 (30초)" FAIL(11/12, 3번 연속) | npctest가 던진 자연어 "!나무 좀 많이 가져와"의 Claude 해석 답이 늦게 와 flagtest 중 "나무 20"으로 일꾼을 내보냄 + 같은 PC 루프와 시험 겹침 | 회차 190 커밋 다음: TestRunner.Begin에서 ClaudeChat.Drop·남은 !채워 끔, 이사 때 쉬는 일(Yields)도 옮김 | npc→flag→wood→stone→basetest 5/5, flag 12/12
 E035 | vh_basetest | "같은 제련소 동시: 주괴 2 ≥ 4" FAIL(21/22) | 라그나가 제련소에 못 다가가 MachineStep 120초 한계 | 회차 187 efcba40 MachineStep.Approach 옆·뒤 접근점·곁으로 옮김 | 원래 순서 다섯째 basetest 22/22 3번(회차 190)
