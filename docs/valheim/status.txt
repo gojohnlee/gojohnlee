@@ -1,8 +1,8 @@
-갱신: 2026-10-28 00:17  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 199 진행 중
+갱신: 2026-10-28 00:18  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 199, 계정: 2번, 한도: 없음
 할 일: ⑬ 안개땅 → 마) 수액 추출기 회수(플레이어가 지은 SapCollector, 수액은 거기서만 — WaysFor 비어 있음)·검은 핵(Pickable_BlackCoreStand, 드베르그 유적 안)·위습(LuredW…
 마지막 시험: 10-28 00:16 요약: 4/4 PASS
-Claude가 한 일: (진행 중)
+Claude가 한 일: LOOP: DONE 토큰 전후 비교 — 회차당 비용 약 27만→22만, 40턴 넘는 회차 없어 지시문은 그대로(문서만)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
