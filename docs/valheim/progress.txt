@@ -9,6 +9,7 @@
 - [10-27] 서리 동굴 시험 다시 통과(E041 고침): 수정 줍기는 맨손 일이라 길 막은 얼음 벽을 안 깼음 → 가진 곡괭이로 깨고 수정까지 감. 지하묘지 시험도 통과.
 
 다음 (순서대로 — 안 끝난 일만)
+◇ 덤(회차 199 이후 한 번, 끝나면 이 줄 지움): powershell scripts/vh-token-report.ps1 → 커밋 ce5698d(vh-log.sh·큰 파일 grep 규칙) 전후 회차 비교(Bash sed·cat 누적 비율, 회차당 환산). 40턴 넘는 회차가 여전히 있으면 루프 지시문에 "60턴 넘으면 작은 단위 마치고 progress 적고 커밋 후 끝" 넣기(위험 중간 — 바로 끊지 말 것). 결과는 history에.
 ★ ⑬ 안개땅 (구상서 7-1, decisions 2절 순서):
   가) [끝, 회차 193 — 커밋 db028b6 · 시험 vh_mistlandstest PASS 11/11, dotnet test 559/559] 자료 시험: 안개땅 물건 얻는 길·적 한 방·위험 비율 diag(codemap "안개땅 자료").
   나) [끝, 회차 194 — 커밋 2f48a44 · 시험 vh_mistlandstest(VH_BIOME=mistlands) PASS 15/15 ×2, vh_squitotest(plains) PASS 9/9, dotnet test 559/559] 안개땅 자리 시험: 자리 찾기 10km·NPC 생김 기다림. 150m 안 거인 유해 2~3개뿐(다)에서 더 멀리 찾기 볼 것).
