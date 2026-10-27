@@ -39,7 +39,7 @@
 - 큰 파일(WorkerAI·Guard)은 고칠 일이 생길 때 같이 쪼갠다. 중복 정리만 하는 리팩터링은 안 한다.
 - 친구 실제 접속 시험은 완성판에서만 [사용자 10-21·10-25 유지]. 그 전엔 혼자 하는 멀티 시험(vh_peertest·가짜 손님·손님 코드 규칙 risks.txt).
 - 무인 루프·PC 설정은 loop-plan.txt(최대 절전·원격 켜기·계정 2개·창 숨김 등).
-- 검증 분업 [사용자 10-26 — 만듦(PC 10-26, 꺼져 있음): scripts/vh-harness.ps1·vh-loop.ps1, 쓰는 법 docs/valheim/Harness.md. 켜기 = docs/valheim/handoff-on.txt + 기준 5회차]: 목적은 Claude 토큰 줄이기.
+- 검증 분업 [꺼짐 — 사용자 10-27 "꺼도 돼. 리스크는 줄여": 한 쌍 실측(186+187: 47턴·141만)이 Claude 혼자(35턴·130만)보다 안 적음. 코드는 남겨 두되 켜지 않음. 사용자 10-26 — 만듦(PC 10-26): scripts/vh-harness.ps1·vh-loop.ps1, 쓰는 법 docs/valheim/Harness.md. 켜기 = docs/valheim/handoff-on.txt + 기준 5회차]: 목적은 Claude 토큰 줄이기.
   역할: Claude = 구현·시험 코드, 빌드·Core 테스트 통과 뒤 커밋. 루프 스크립트 = 정해진 게임 시험 실행·결과 모으기·FAIL이면 실패 줄 발췌(토큰 0).
   GPT는 안 씀 [사용자 10-27: 판단하기엔 약하고, 남은 발췌 일은 스크립트로 충분 — ChatGPT 채팅 무제한은 Codex(codex exec) 한도와 별개이고 채팅 자동화는 약관 위반이라 못 씀].
   실패 발췌: 시험이 모두 PASS면 COMPLETE. 아니면 스크립트가 FAIL 섹션의 diag 줄(FAIL·판정·환경 불량·Exception과 앞뒤 한 줄, 섹션당 15줄)과 로그 오류 줄(같은 줄 묶음)을 경로:줄 원문으로 옮김 → FIX. 원인은 Claude가 정한다.

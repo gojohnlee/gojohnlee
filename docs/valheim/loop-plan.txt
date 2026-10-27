@@ -6,7 +6,7 @@
 - 사용자는 GitHub 웹(PC·휴대폰)으로 본다. 요청은 docs/valheim/UserRequest.txt에 쓰고, 답은 history.md 맨 위.
   회차 도중 요청이 바뀌면 15분 백업 때 답 전용 짧은 claude(scripts/vh-reply-prompt.txt)가 따로 작업 트리(%USERPROFILE%\vh-loop\reply)에서 답한다
   (질문은 바로 답, 일은 "[받음 시각]"을 붙여 다음 회차에 넘김). history.md는 merge=union.
-- 분업 [사용자 10-26, 만듦 PC 10-26 — 꺼져 있음]: Claude 구현 → 스크립트 검증(GPT 안 씀, 10-27). docs/valheim/handoff-on.txt + 기준 5회차면 회차에 VH_HANDOFF=1, 회차가 "LOOP: HANDOFF"로 끝내면
+- 분업 [꺼짐 — 사용자 10-27, 토큰 절약 증거 없음·위험 줄임. 만듦 PC 10-26]: Claude 구현 → 스크립트 검증(GPT 안 씀, 10-27). docs/valheim/handoff-on.txt + 기준 5회차면 회차에 VH_HANDOFF=1, 회차가 "LOOP: HANDOFF"로 끝내면
   루프가 그 커밋을 scripts/vh-harness.ps1로 빌드·게임 시험·리뷰하고 결과를 다음 회차에 VH_VERIFY로. 규칙은 decisions.txt 2절, 쓰는 법은 Harness.md.
 
 멈춤·쉼
