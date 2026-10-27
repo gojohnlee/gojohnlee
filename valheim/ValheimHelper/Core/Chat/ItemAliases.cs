@@ -21,6 +21,7 @@ namespace ValheimHelper.Core.Chat
             ["철"] = "IronScrap", ["고철"] = "IronScrap", ["iron"] = "IronScrap", ["scrap iron"] = "IronScrap",
             ["은"] = "SilverOre", ["은 광석"] = "SilverOre", ["은광석"] = "SilverOre", ["silver"] = "SilverOre", ["silver ore"] = "SilverOre",
             ["수정"] = "Crystal", ["crystal"] = "Crystal",
+            ["검은 핵"] = "BlackCore", ["검은핵"] = "BlackCore", ["black core"] = "BlackCore",
             ["붉은 황마"] = "JuteRed", ["붉은황마"] = "JuteRed", ["붉은 황마 천"] = "JuteRed", ["red jute"] = "JuteRed",
             ["늑대 털"] = "WolfHairBundle", ["늑대털"] = "WolfHairBundle", ["wolf hair"] = "WolfHairBundle",
             ["구리주괴"] = "Copper", ["구리 주괴"] = "Copper", ["copper bar"] = "Copper", ["주석주괴"] = "Tin", ["주석 주괴"] = "Tin", ["tin bar"] = "Tin",

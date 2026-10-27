@@ -349,8 +349,11 @@ namespace ValheimHelper
             Component pile = PileOf(c);
             if (pile != null) return "더미 " + Utils.GetPrefabName(pile.gameObject);
             // 방 모델의 메시 충돌체는 이름이 "default"뿐이다 — 어느 물체인지 부모 이름을 붙인다(진단, E031)
+            // 감염된 광산은 "collider"·"Cube" — 부모(와 그 위) 이름(⑬ 바)
             Transform up = c.transform.parent;
-            return c.name == "default" && up != null ? $"{c.name}/{Utils.GetPrefabName(up.gameObject)}" : c.name;
+            if (up == null || !(c.name.StartsWith("default") || c.name.StartsWith("collider") || c.name.StartsWith("Cube"))) return c.name;
+            Transform top = up.parent != null && up.parent.GetComponent<ZNetView>() == null ? up.parent : null; // 방 안 묶음 이름까지
+            return $"{c.name}/{Utils.GetPrefabName(up.gameObject)}{(top != null ? "<" + Utils.GetPrefabName(top.gameObject) : "")}";
         }
 
         /// <summary>a→b 선분을 막는 첫 물체(없으면 null). passPiles면 진흙 더미·광맥은 지나간다.</summary>

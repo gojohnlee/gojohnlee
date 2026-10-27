@@ -13,7 +13,17 @@ namespace ValheimHelper
     /// </summary>
     static class FrostCaveTest
     {
-        public static void Register() => TestRunner.Register("vh_frostcavetest", "서리 동굴 내용 확인 시험", () => TestKit.Flat(Run()));
+        /// <summary>시험 종류: 서리 동굴(산) 또는 감염된 광산(⑬ 바), 안개땅 — 같은 몸, 위치·물건만 다름).</summary>
+        sealed class Kind { public string Label, Item, ItemKo; public System.Func<ZoneSystem.ZoneLocation, bool> Pick; }
+        static readonly Kind Cave = new Kind { Label = "동굴", Item = "Crystal", ItemKo = "수정", Pick = l => l.m_prefabName.Contains("Cave") && (l.m_biome & Heightmap.Biome.Mountain) != 0 };
+        static readonly Kind Mine = new Kind { Label = "광산", Item = "BlackCore", ItemKo = "검은 핵", Pick = l => l.m_prefabName.Contains("DvergrTown") };
+        static Kind s_kind = Cave;
+
+        public static void Register()
+        {
+            TestRunner.Register("vh_frostcavetest", "서리 동굴 내용 확인 시험", () => { s_kind = Cave; return TestKit.Flat(Run()); });
+            TestRunner.Register("vh_minetest", "감염된 광산(안개땅) 검은 핵 시험", () => { s_kind = Mine; return TestKit.Flat(Run()); });
+        }
 
         static IEnumerator Run()
         {
@@ -43,18 +53,20 @@ namespace ValheimHelper
             checks.Add("깃발·NPC", w.Ragnar != null);
             if (w.Ragnar == null) yield break;
 
-            var caves = ZoneSystem.instance.m_locations.Where(l => l.m_prefabName != null && l.m_prefabName.Contains("Cave")).ToList();
-            TestRunner.Log("Cave 위치 이름: " + string.Join(", ", caves.Select(l => $"{l.m_prefabName}({l.m_biome}{(l.m_enable ? "" : ",꺼짐")})").Distinct()));
-            string name = caves.Where(l => l.m_enable && (l.m_biome & Heightmap.Biome.Mountain) != 0)
+            var k = s_kind;
+            var caves = ZoneSystem.instance.m_locations.Where(l => l.m_prefabName != null &&
+                (k == Cave ? l.m_prefabName.Contains("Cave") : (l.m_biome & Heightmap.Biome.Mistlands) != 0)).ToList();
+            TestRunner.Log($"{(k == Cave ? "Cave" : "안개땅")} 위치 이름: " + string.Join(", ", caves.Select(l => $"{l.m_prefabName}({l.m_biome}{(l.m_enable ? "" : ",꺼짐")})").Distinct()));
+            string name = caves.Where(l => l.m_enable && k.Pick(l))
                 .Select(l => l.m_prefabName).OrderByDescending(n => n).FirstOrDefault();
-            checks.Add($"산 동굴 위치 이름 있음 ({name})", name != null);
+            checks.Add($"{k.Label} 위치 이름 있음 ({name})", name != null);
             if (name == null) yield break;
 
             Vector3 pos = GatherTest.Ground(w.Home + w.Player.transform.rotation * new Vector3(0f, 0f, 110f));
             spot[0] = pos;
             foreach (var z in CryptTest.Around(pos)) before.Add(z.m_uid);
             bool spawned = ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);
-            checks.Add($"동굴 세움(TestSpawnLocation, 깃발에서 {Utils.DistanceXZ(pos, w.Home):0}m)", spawned);
+            checks.Add($"{s_kind.Label} 세움(TestSpawnLocation, 깃발에서 {Utils.DistanceXZ(pos, w.Home):0}m)", spawned);
             if (!spawned) yield break;
             yield return new WaitForSeconds(4f);
 
@@ -103,31 +115,31 @@ namespace ValheimHelper
             checks.Add($"안 물체 셈 ({inside}개, {counts.Count}종)", inside > 0);
             checks.Add($"안에 캐거나 줍는 것 있음 ({resources}종)", resources > 0);
 
-            // ⑪ 4다) "!수정 3" → 열쇠 문 없는 동굴 입구로 들어가 수정을 캐고 나와 거점 상자에 넣는다(박쥐·울브 스포너, 얼음 종유석이 길을 막는지도 봄)
+            // ⑪ 4다) "!{s_kind.ItemKo} 3" → 열쇠 문 없는 동굴 입구로 들어가 수정을 캐고 나와 거점 상자에 넣는다(박쥐·울브 스포너, 얼음 종유석이 길을 막는지도 봄)
             if (gate == null) yield break;
             yield return PathDiag(w, gate);
-            bool listed =Dungeons.All("Crystal").Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Keyless && c.Left > 0);
-            checks.Add("Dungeons.All(수정)이 이 동굴을 열린 곳으로 셈", listed);
-            TestKit.ClearBaseStock(w, "Crystal");
+            bool listed =Dungeons.All(s_kind.Item).Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Keyless && c.Left > 0);
+            checks.Add($"Dungeons.All({s_kind.ItemKo})이 이 {s_kind.Label}을 열린 곳으로 셈", listed);
+            TestKit.ClearBaseStock(w, s_kind.Item);
             // 약식: 거점에서 110m 가는 길은 빼고 입구 12m 앞에서 시작(CryptTest와 같음)
             Vector3 start = TestRunner.Quick ? GatherTest.Ground(gate.transform.position + Vector3.Scale(w.Home - gate.transform.position, new Vector3(1f, 0f, 1f)).normalized * 12f) : w.Home;
             w.Ragnar.TeleportTo(start, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1.5f);
-            int stockBefore = GatherTest.CountBase(w.Home, "Crystal");
-            GatherTest.Say($"!{w.Ragnar.NpcName} 수정 3", null);
+            int stockBefore = GatherTest.CountBase(w.Home, s_kind.Item);
+            GatherTest.Say($"!{w.Ragnar.NpcName} {s_kind.ItemKo} 3", null);
             bool wasInside = false;
             float t = 0f, inAt = -1f, outAt = -1f;
-            while (t < 480f && GatherTest.CountBase(w.Home, "Crystal") - stockBefore < 3)
+            while (t < 480f && GatherTest.CountBase(w.Home, s_kind.Item) - stockBefore < 3)
             {
                 yield return new WaitForSeconds(1f);
                 t += 1f;
                 if (w.Ragnar.InInterior()) { wasInside = true; if (inAt < 0f) inAt = t; }
                 else if (wasInside && outAt < 0f) outAt = t;
             }
-            int got = GatherTest.CountBase(w.Home, "Crystal") - stockBefore;
-            TestRunner.Log($"수정 일: {t:0}초(들어감 {inAt:0}초·나옴 {outAt:0}초{(TestRunner.Quick ? ", 약식 입구 앞 시작" : "")}), 상자에 수정 {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}, 체력 {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}");
-            checks.Add("일꾼이 동굴 안으로 들어감", wasInside);
-            checks.Add($"수정이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
+            int got = GatherTest.CountBase(w.Home, s_kind.Item) - stockBefore;
+            TestRunner.Log($"{s_kind.ItemKo} 일: {t:0}초(들어감 {inAt:0}초·나옴 {outAt:0}초{(TestRunner.Quick ? ", 약식 입구 앞 시작" : "")}), 상자에 {s_kind.ItemKo} {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}, 체력 {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}");
+            checks.Add($"일꾼이 {s_kind.Label} 안으로 들어감", wasInside);
+            checks.Add($"{s_kind.ItemKo}이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
             yield return new WaitForSeconds(3f);
             checks.Add("일꾼이 안에 남지 않음", !w.Ragnar.InInterior());
         }
@@ -172,7 +184,7 @@ namespace ValheimHelper
             int ok = 0, n = 0, explained = 0;
             foreach (var v in Object.FindObjectsByType<Pickable>(FindObjectsSortMode.None).Select(p => p.GetComponent<ZNetView>())
                 .Where(v => v != null && v.IsValid() && Character.InInterior(v.transform.position) && Utils.DistanceXZ(v.transform.position, here) < 120f)
-                .Where(v => ResourceCatalog.Get(v.GetZDO().GetPrefab())?.Produces.Contains("Crystal") == true)
+                .Where(v => ResourceCatalog.Get(v.GetZDO().GetPrefab())?.Produces.Contains(s_kind.Item) == true)
                 .OrderBy(v => Utils.DistanceXZ(v.transform.position, here)))
             {
                 n++;
@@ -180,10 +192,10 @@ namespace ValheimHelper
                 float reach = 1.3f + (col != null ? Mathf.Min(1.5f, Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) * 0.6f) : 0f); // GatherJob.Aim과 같게
                 var path = InteriorNav.Plan(here, v.transform.position, reach, out string why);
                 if (path != null) ok++;
-                TestRunner.Log($"  수정 {Utils.DistanceXZ(v.transform.position, here):0}m 높이 {v.transform.position.y - here.y:+0.0;-0.0}: 길 {(path != null ? "있음" : "없음")} {why}"
+                TestRunner.Log($"  {s_kind.ItemKo} {Utils.DistanceXZ(v.transform.position, here):0}m 높이 {v.transform.position.y - here.y:+0.0;-0.0}: 길 {(path != null ? "있음" : "없음")} {why}"
                     + (path == null && explained++ < 3 ? " / " + InteriorNav.Explain(here, v.transform.position, reach) : ""));
             }
-            TestRunner.Log($"  도착 자리에서 길 있는 수정 {ok}/{n}개");
+            TestRunner.Log($"  도착 자리에서 길 있는 {s_kind.ItemKo} {ok}/{n}개");
             if (ok * 2 < n) TestRunner.Log("  도착 자리 둘레 지도(±14칸, 위 +z):" + InteriorNav.Map(here, 14));
             Teleport exit = Dungeons.Exit(here);
             if (exit != null) Dungeons.Use(w.Ragnar, exit);
