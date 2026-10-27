@@ -1,8 +1,8 @@
-갱신: 2026-10-27 01:46  (무인 루프, scripts/vh-loop.ps1)
-지금: 멈춤: 시험 운전 끝(회차 184-187, 시작 10-27 00:18) — history.md 맨 위에 결과. 다시 돌리려면 %USERPROFILE%\vh-loop\stop을 지움
+갱신: 2026-10-27 19:04  (무인 루프, scripts/vh-loop.ps1)
+지금: 다시 켜는 중: 새 루프 스크립트로(1~2분)
 회차: 187, 계정: 2번, 한도: 없음
-할 일: Claude 구현 → GPT 검증 분업 → 나) [~ 회차 186 인계 → 187 검증 받음: 시험 7개 PASS, Astra INCOMPLETE(패킷에 소스 없음) → Claude 리뷰로 복귀 확인. 남은 것: F…
+할 일: 토큰 측정 → 가) 조건: history에 회차 190 이상 기록(다이어트 뒤 회차 3개 이상). 안 되면 건너뜀.
 마지막 시험: 10-27 01:42 요약: 7/7 PASS
 Claude가 한 일: -
-분업(Claude 구현 → Astra 검증): on(시험 운전)
+분업(Claude 구현 → Astra 검증): -
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
