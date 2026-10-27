@@ -64,3 +64,8 @@ E038 / 관찰 중 — 시험 끝난 뒤 게임 종료가 멈춤("응답 없음",
   확인된 사실: 저장·ZNet 종료까지 끝난 뒤의 멈춤. 모드 스레드는 모두 배경 스레드, 남은 자식은 UnityCrashHandler뿐. 시험 스크립트가 이제 "Game - OnApplicationQuit" 뒤 로그 2분 멈춤이면 끄고 run.json exit_hang=true, 판정은 그대로(기본안).
   다음 확인: 다시 나오면 몇 번째 실행·어떤 시험 뒤인지, 모드 스레드(일꾼 AI·Claude 호출)가 남아 있었는지 덤프 없이 로그 끝 시각으로 비교. 자주 나면 모드 종료 처리 조사.
 
+
+E043 / 관찰 중 — vh_crypttest가 vh_minetest 뒤(같은 묶음)나 약식(VH_QUICK=1)이면 "문 앞 막힘"으로 못 들어감(21/24)
+  증상·조건: 회차 206. 묶음 minetest→crypttest: 묘지 문 앞에 광산의 cliff_mistlands2가 남아 막힘(광산 위치 안 치움). 단독 약식: 입구 12m 앞 시작점이 묘지 바닥 판(SunkenKit_int_floor_2x2)·stone_low에 걸려 12초 만에 포기.
+  근거: 같은 DLL로 단독 기본(VH_SOLO=1) crypttest PASS 24/24 — 본체 문제 아님(시험 환경).
+  다음 확인: 묶음이면 crypttest를 minetest 앞에 두거나 단독으로. 고치려면 FrostCaveTest 끝에 광산 위치 물체 치우기, CryptTest 약식 시작점을 바닥 판 밖으로.

@@ -425,13 +425,25 @@ namespace ValheimHelper
             m_targetId = zdo.m_uid;
             m_targetPos = zdo.GetPosition();
             m_targetInfo = info ?? ResourceCatalog.Get(zdo.GetPrefab());
-            m_reach = m_targetInfo != null && m_targetInfo.Pickable ? 1.3f : 1.7f;
-            ZNetView view = ZNetScene.instance.FindInstance(zdo);
-            if (view != null)
-            {
-                var col = view.GetComponentInChildren<Collider>();
-                if (col != null) m_reach += Mathf.Min(1.5f, Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) * 0.6f);
-            }
+            m_reach = ReachOf(ZNetScene.instance.FindInstance(zdo), m_targetInfo != null && m_targetInfo.Pickable);
+        }
+
+        /// <summary>닿을 거리: 줍기 1.3·그 밖 1.7 + 대상 충돌체 반폭×0.6(1.5까지). 던전 안 줍기는 대상 자리에 걸친 받침(반폭 2.5m 안 충돌체)까지 셈 —
+        /// 검은 핵 받침 stand는 Pickable 밖이라 닿을 거리 1.4로는 받침 둘레 칸이 목표가 못 됐다(⑬ 바-2d).</summary>
+        public static float ReachOf(ZNetView view, bool pickable)
+        {
+            float r = pickable ? 1.3f : 1.7f;
+            if (view == null) return r;
+            var col = view.GetComponentInChildren<Collider>();
+            float ext = col != null ? Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) : 0f;
+            Vector3 at = view.transform.position;
+            if (pickable && Character.InInterior(at))
+                foreach (var c in Physics.OverlapCapsule(at + Vector3.up * 0.3f, at + Vector3.down * 1.5f, 0.4f, InteriorNav.Mask, QueryTriggerInteraction.Ignore))
+                {
+                    float e = Mathf.Max(c.bounds.extents.x, c.bounds.extents.z);
+                    if (e < 2.5f && e > ext) ext = e;
+                }
+            return r + Mathf.Min(1.5f, ext * 0.6f);
         }
 
     }

@@ -59,7 +59,7 @@ namespace ValheimHelper
         static readonly RaycastHit[] s_line = new RaycastHit[16];
         static readonly Collider[] s_cols = new Collider[16];
         static int s_mask;
-        static int Mask => s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
+        internal static int Mask => s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
 
         /// <summary>
         /// 닿았는가: 수평 거리 dist 안 + 던전 안이면 높이 차 StepGrid.ReachDy 안(E032 — 서리 동굴 위층에서 아래층 수정을 "닿음"으로 봤다). 밖은 수평 거리만(비탈·나무 뿌리).

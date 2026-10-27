@@ -188,8 +188,9 @@ namespace ValheimHelper
                 .OrderBy(v => Utils.DistanceXZ(v.transform.position, here)))
             {
                 n++;
-                var col = v.GetComponentInChildren<Collider>();
-                float reach = 1.3f + (col != null ? Mathf.Min(1.5f, Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) * 0.6f) : 0f); // GatherJob.Aim과 같게
+                float reach = GatherJob.ReachOf(v, true);
+                if (n == 1) TestRunner.Log($"  가장 가까운 것 닿을 거리 {reach:0.0}m, 둘레 1.5m 충돌체: " + string.Join(", ", Physics.OverlapSphere(v.transform.position, 1.5f, InteriorNav.Mask, QueryTriggerInteraction.Ignore)
+                    .Select(c => $"{c.name}/{(c.transform.parent != null ? c.transform.parent.name : "-")}(반폭 {Mathf.Max(c.bounds.extents.x, c.bounds.extents.z):0.0}, 위 {c.bounds.max.y - v.transform.position.y:+0.0;-0.0}m)").Take(8)));
                 var path = InteriorNav.Plan(here, v.transform.position, reach, out string why);
                 if (path != null) ok++;
                 TestRunner.Log($"  {s_kind.ItemKo} {Utils.DistanceXZ(v.transform.position, here):0}m 높이 {v.transform.position.y - here.y:+0.0;-0.0}: 길 {(path != null ? "있음" : "없음")} {why}"
