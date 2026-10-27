@@ -8,7 +8,9 @@ param(
     [string[]]$Roots = @((Join-Path $env:USERPROFILE '.claude\projects'), (Join-Path $env:USERPROFILE '.claude-acct2\projects')),
     [string]$Records = (Join-Path $env:USERPROFILE 'vh-loop\usage-records'),
     [string]$Out = (Join-Path (Split-Path $PSScriptRoot -Parent) 'docs\valheim\token-report.md'),
-    [int]$Top = 15
+    [int]$Top = 15,
+    # 루프 모델 Opus 5.5(사용자 10-27) API 가격 배수, 일반 입력 = 1. 구독 한도가 이 비율인지는 모름.
+    [double]$ReadX = 0.05, [double]$WriteX = 1.25, [double]$OutX = 5
 )
 $ErrorActionPreference = 'Stop'
 $home0 = $env:USERPROFILE
@@ -48,7 +50,7 @@ function Read-Session($file) {
             if (-not $byId.ContainsKey($id)) {
                 $u = $m.usage
                 $c = [pscustomobject]@{ ctx = [double]$u.input_tokens + [double]$u.cache_read_input_tokens + [double]$u.cache_creation_input_tokens
-                    read = [double]$u.cache_read_input_tokens; write = [double]$u.cache_creation_input_tokens; out = [double]$u.output_tokens; tools = New-Object System.Collections.ArrayList }
+                    inp = [double]$u.input_tokens; read = [double]$u.cache_read_input_tokens; write = [double]$u.cache_creation_input_tokens; out = [double]$u.output_tokens; tools = New-Object System.Collections.ArrayList }
                 $byId[$id] = $c; [void]$calls.Add($c)
             }
             foreach ($b in @($m.content)) { if ($b.type -eq 'tool_use') { [void]$byId[$id].tools.Add([pscustomobject]@{ id = $b.id; key = (Key $b.name $b.input) }) } }
@@ -82,15 +84,17 @@ $files = @(foreach ($r in $Roots) { Get-ChildItem -LiteralPath $r -Directory -Er
     ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -Filter *.jsonl -ErrorAction SilentlyContinue } | Where-Object { $_.LastWriteTime -ge $since } })
 $sessions = @(foreach ($f in $files) { $s = Read-Session $f.FullName; if ($s.calls.Count) { $s } }) | Sort-Object first
 $o = @("# 토큰 측정 보고", '', "만든 때 $((Get-Date).ToString('yyyy-MM-dd HH:mm')) · 최근 ${Days}일 · 세션 $($sessions.Count)개(대화 기록 $($files.Count)개) · scripts/vh-token-report.ps1", '',
-    '읽는 법: **대화 크기** = 그 턴에 모델이 다시 읽은 양(입력+캐시 읽기+캐시 쓰기). **누적** = 도구 결과 하나가 늘린 양 × 그 뒤 턴 수 — 그 출력 때문에 회차 전체에서 더 읽은 양. 토큰은 Claude가 보고한 실측, 도구별 나눔만 결과 글자 수 비율(추정).', '',
-    '## 회차별', '', '| 시작 | 회차 | 종류 | 턴 | 첫 턴 크기 | 5턴째 크기 | 마지막 크기 | 다시 읽은 합(캐시 읽기) | 캐시 쓰기 | 출력 |', '|---|---|---|---|---|---|---|---|---|---|')
+    '읽는 법: **대화 크기** = 그 턴에 모델이 다시 읽은 양(입력+캐시 읽기+캐시 쓰기). **누적** = 도구 결과 하나가 늘린 양 × 그 뒤 턴 수 — 그 출력 때문에 회차 전체에서 더 읽은 양. 토큰은 Claude가 보고한 실측, 도구별 나눔만 결과 글자 수 비율(추정). **입력값 환산** = Opus 5.5 API 가격 배수(일반 입력 1, 캐시 읽기 $ReadX, 쓰기 $WriteX, 출력 $OutX)로 더한 것 — 구독 한도가 같은 비율인지는 모름. 출력에는 생각(effort) 토큰도 들어감.', '',
+    '## 회차별', '', '| 시작 | 회차 | 종류 | 턴 | 첫 턴 크기 | 5턴째 크기 | 마지막 크기 | 다시 읽은 합(캐시 읽기) | 캐시 쓰기 | 출력 | 입력값 환산(읽기·쓰기·출력 몫) |', '|---|---|---|---|---|---|---|---|---|---|---|')
 $all = @(); $agg = @{}
 foreach ($s in $sessions) {
     $rec = $recs | Where-Object { $_.started -and $s.first -and [math]::Abs(([datetime]$_.started - $s.first).TotalMinutes) -le 5 } | Select-Object -First 1
     $kind = if ($s.sidechain) { '서브에이전트' } elseif ($rec) { "$($rec.kind)/$($rec.mode)" } else { '-' }
     $c = $s.calls; $n = $c.Count
-    $sumRead = 0; $sumWrite = 0; $sumOut = 0; foreach ($x in $c) { $sumRead += $x.read; $sumWrite += $x.write; $sumOut += $x.out }
-    $o += "| $(if ($s.first) { $s.first.ToLocalTime().ToString('MM-dd HH:mm') }) | $(if ($rec) { $rec.round } else { '-' }) | $kind | $n | $(K $c[0].ctx) | $(if ($n -ge 5) { K $c[4].ctx } else { '-' }) | $(K $c[$n-1].ctx) | $(K $sumRead) | $(K $sumWrite) | $(K $sumOut) |"
+    $sumIn = 0; $sumRead = 0; $sumWrite = 0; $sumOut = 0; foreach ($x in $c) { $sumIn += $x.inp; $sumRead += $x.read; $sumWrite += $x.write; $sumOut += $x.out }
+    $wR = $sumRead * $ReadX; $wW = $sumWrite * $WriteX; $wO = $sumOut * $OutX; $wT = $sumIn + $wR + $wW + $wO
+    $mix = if ($wT) { '{0:N0}·{1:N0}·{2:N0}%' -f (100 * $wR / $wT), (100 * $wW / $wT), (100 * $wO / $wT) } else { '-' }
+    $o += "| $(if ($s.first) { $s.first.ToLocalTime().ToString('MM-dd HH:mm') }) | $(if ($rec) { $rec.round } else { '-' }) | $kind | $n | $(K $c[0].ctx) | $(if ($n -ge 5) { K $c[4].ctx } else { '-' }) | $(K $c[$n-1].ctx) | $(K $sumRead) | $(K $sumWrite) | $(K $sumOut) | $(K $wT) ($mix) |"
     foreach ($it in @(Measure-Session $s)) {
         $all += [pscustomobject]@{ when = $(if ($s.first) { $s.first.ToLocalTime().ToString('MM-dd HH:mm') }); round = $(if ($rec) { $rec.round } else { '-' }); key = $it.key; grow = $it.grow; cost = $it.cost; turn = $it.turn }
         $g = if ($it.key -like '(*') { $it.key } else { ($it.key -split ' ')[0] }; if ($it.key -match '^(Bash|PowerShell) (\S+)') { $g = "$($Matches[1]) $($Matches[2])" }
