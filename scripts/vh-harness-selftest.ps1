@@ -17,26 +17,6 @@ Check ((Read-VhDiag $one @('vh_flagtest')).status -eq 'MISSING') 'wrong test rej
 Check ((Read-VhDiag "=== vh_a time`nFAIL bad`n판정: PASS (1/1)" @('vh_a')).status -eq 'FAIL') 'failure cannot be overwritten by PASS'
 Check ((Read-VhDiag "=== vh_a time`n판정: 환경 불량 (setup)" @('vh_a')).status -eq 'ENVIRONMENT') 'environment is distinct'
 Check ((Read-VhDiag "=== vh_a time`nOK incomplete" @('vh_a')).status -eq 'MISSING') 'interrupted section'
-Check ((Get-VhModelOutcome 0 $false '{"type":"turn.completed"}' $true) -eq 'COMPLETE') 'structured model completion'
-Check ((Get-VhModelOutcome 0 $false '' $true) -eq 'MISSING') 'final file without completion rejected'
-Check ((Get-VhModelOutcome 0 $false '{"type":"turn.completed"}' $false) -eq 'MISSING') 'no final result'
-Check ((Get-VhModelOutcome 1 $false '{"type":"turn.failed","error":{"code":"usage_limit_reached"}}' $false) -eq 'LIMIT') 'simulated quota error'
-Check ((Get-VhModelOutcome 1 $false '{"type":"error","code":"authentication_error"}' $false) -eq 'AUTH') 'simulated auth error'
-Check ((Get-VhModelOutcome 1 $false 'network broken' $false) -eq 'ERROR') 'generic error stays generic'
-Check ((Get-VhModelOutcome 0 $true '' $true) -eq 'TIMEOUT') 'timeout is not completion'
-$fakeTask=[pscustomobject]@{id='test';target=[pscustomobject]@{commit='abc'};target_hash='fixed'}
-$review=[pscustomobject]@{task_id='wrong';commit='abc';target_hash='fixed';verdict='PASS';findings=@()}
-Reject { Assert-VhReview $review $fakeTask } 'wrong task id rejected'
-$review.task_id='test'; $review.commit='def'
-Reject { Assert-VhReview $review $fakeTask } 'wrong commit rejected'
-$review.commit='abc'; $review.target_hash='other'
-Reject { Assert-VhReview $review $fakeTask } 'wrong DLL/plan identity rejected'
-$review.target_hash='fixed'; $review.verdict='BLOCKED'; $review.findings=@([pscustomobject]@{basis='hypothesis';blocking=$true;evidence='guess'})
-Reject { Assert-VhReview $review $fakeTask } 'hypothesis cannot block'
-$review.findings[0].basis='code'; Assert-VhReview $review $fakeTask
-Check $true 'confirmed blocker retained'
-$review.findings[0] | Add-Member category environment
-Reject { Assert-VhReview $review $fakeTask } 'environment cannot become gameplay blocker'
 $taskHistory=[pscustomobject]@{groups=@([pscustomobject]@{index=0;status='RUNNING'},[pscustomobject]@{index=0;status='PASS'},[pscustomobject]@{index=1;status='FAIL'})}
 $latest=@(Get-VhLatestGroups $taskHistory)
 Check ($latest.Count -eq 2 -and $latest[0].status -eq 'PASS' -and $latest[1].status -eq 'FAIL') 'resume uses latest attempt per group, preserving first failure history'
@@ -91,32 +71,32 @@ $ex=Get-VhErrorsExcerpt $err @() @('vh_beta')
 Check ($ex -match 'E001 / 관찰' -and $ex -match '근거: y' -and $ex -notmatch '근거: x') 'errors excerpt: all headings, related entries only'
 $hdir=Join-Path $OutputDirectory 'handoff-group'; [IO.Directory]::CreateDirectory("$hdir\run-0") | Out-Null
 Write-VhJson "$hdir\run-0\run.json" @{ status='FAIL'; sections=@(@{name='vh_a';verdict='PASS'},@{name='vh_b';verdict='FAIL'}) }
-$ht=[pscustomobject]@{ stage='FIX'; groups=@([pscustomobject]@{index=0;status='FAIL';directory=$hdir}); review=[pscustomobject]@{status='LIMIT'} }
+$ht=[pscustomobject]@{ stage='FIX'; groups=@([pscustomobject]@{index=0;status='FAIL';directory=$hdir}); review=[pscustomobject]@{status='EXCERPT'} }
 $he=Get-VhHandoffEffect $ht
-Check (-not $he.complete -and ($he.fail -join ',') -eq 'vh_b' -and $he.astra_down) 'handoff effect: failing test names and Astra limit'
-$ht.stage='COMPLETE'; $ht.groups[0].status='PASS'; $ht.review.status='COMPLETE'; $he=Get-VhHandoffEffect $ht
-Check ($he.complete -and $he.fail.Count -eq 0 -and -not $he.astra_down) 'handoff effect: complete'
+Check (-not $he.complete -and ($he.fail -join ',') -eq 'vh_b' -and $he.review -eq 'EXCERPT') 'handoff effect: failing test names'
+$ht.stage='COMPLETE'; $ht.groups[0].status='PASS'; $ht.review.status='NOT_NEEDED'; $he=Get-VhHandoffEffect $ht
+Check ($he.complete -and $he.fail.Count -eq 0) 'handoff effect: complete'
 $sum=Get-VhSummary ([pscustomobject]@{ id='t1'; base='b'; stage='FIX'; next='n'; target=[pscustomobject]@{commit='c'}; build_result=$null; review=$null
     plan=[pscustomobject]@{ purpose='p'; groups=@([pscustomobject]@{mode='sequence';tests=@('vh_a','vh_b')}) }; groups=@([pscustomobject]@{index=0;status='FAIL';directory=$hdir}) }) $hdir
 Check ($sum -match 'vh_b: FAIL' -and $sum -match '실행 판정 FAIL') 'summary lists failing section and original path'
 $sum=Get-VhSummary ([pscustomobject]@{ id='t2'; base='b'; stage='COMPLETE'; next='n'; target=[pscustomobject]@{commit='c'}; build_result=$null; review=[pscustomobject]@{status='NOT_NEEDED';directory=''}
     plan=[pscustomobject]@{ purpose='p'; groups=@() }; groups=@() }) $hdir
-Check ($sum -match '필요 없음' -and $sum -notmatch 'review.json') 'summary: all PASS needs no GPT call'
-$he=Get-VhHandoffEffect ([pscustomobject]@{ stage='COMPLETE'; groups=@(); review=[pscustomobject]@{status='NOT_NEEDED'} })
-Check ($he.complete -and -not $he.astra_down) 'handoff effect: no GPT call is not Astra down'
+Check ($sum -match '필요 없음') 'summary: all PASS needs no excerpt'
+[IO.File]::WriteAllLines("$hdir\run-0\diag.txt",@('=== vh_a t','판정: PASS (1/1)','=== vh_b t','ok one','ok two','FAIL count 1 != 2','after','판정: FAIL (1/2)'),(New-Object Text.UTF8Encoding($false)))
+$fx=Get-VhFailExcerpt @([pscustomobject]@{index=0;status='FAIL';directory=$hdir})
+Check ($fx -match 'diag.txt:5: ok two' -and $fx -match 'diag.txt:6: FAIL count 1 != 2' -and $fx -match 'diag.txt:8: 판정: FAIL' -and $fx -notmatch 'diag.txt:4:' -and $fx -notmatch 'PASS \(1/1\)') 'excerpt quotes failing lines verbatim with path:line, failing section only'
 $grepo=Join-Path $OutputDirectory 'gate-repo'; $gdir=Join-Path $OutputDirectory 'gate-loop'; [IO.Directory]::CreateDirectory("$grepo\docs\valheim") | Out-Null
-Check (-not (Get-VhHandoffGate $gdir $grepo '').on) 'division of labour off without switch file'
+Check (-not (Get-VhHandoffGate $gdir $grepo).on) 'division of labour off without switch file'
 [IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on')
 [IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on — 기준 생략',[Text.Encoding]::UTF8)
-Check ((Get-VhHandoffGate $gdir $grepo '').on) 'user trial switch skips the baseline'
+Check ((Get-VhHandoffGate $gdir $grepo).on) 'user trial switch skips the baseline'
 [IO.File]::WriteAllText("$grepo\docs\valheim\handoff-on.txt",'on')
 foreach ($k in 1..4) { [void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' $k 'a' 'implementation' 't' (Get-Date) 0 "g$k") }
 [void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' 5 'a' 'implementation' 't' (Get-Date) 0 'g5' 'handoff')
 [void](Write-VhUsage $gdir '' 6 'a' 'implementation' 't' (Get-Date) 1 'g6')
-Check ((Get-VhHandoffGate $gdir $grepo '').baseline -eq 4) 'baseline counts real claude-only rounds only'
+Check ((Get-VhHandoffGate $gdir $grepo).baseline -eq 4) 'baseline counts real claude-only rounds only'
 [void](Write-VhUsage $gdir '{"type":"result","usage":{"input_tokens":1}}' 7 'a' 'implementation' 't' (Get-Date) 0 'g7')
-Check ((Get-VhHandoffGate $gdir $grepo '').on) 'division of labour on after 5 baseline rounds'
-Check (-not (Get-VhHandoffGate $gdir $grepo (Get-Date).AddHours(1).ToString('o')).on) 'Astra backoff turns it off'
+Check ((Get-VhHandoffGate $gdir $grepo).on) 'division of labour on after 5 baseline rounds'
 Check ((Get-Content "$gdir\usage.csv" -TotalCount 1) -match '"mode"') 'usage csv keeps the mode column'
 $script:waits=0
 $slow=Invoke-VhProcess 'powershell.exe' '-NoProfile -Command Start-Sleep 2' $PSScriptRoot "$OutputDirectory\slow.out" "$OutputDirectory\slow.err" 1 '' { $script:waits++ }
@@ -124,8 +104,4 @@ Check ($slow.timed_out -and $script:waits -eq 0) 'short timeout ends without wai
 $hl=Join-Path $OutputDirectory 'handoff-loop'; [IO.Directory]::CreateDirectory($hl) | Out-Null
 $hv=Invoke-VhHandoff (Split-Path $PSScriptRoot -Parent) $hl 'base' 5 $null 1
 Check ($null -eq $hv.Effect -and [IO.File]::ReadAllText($hv.File) -match 'PASS 아님' -and -not (Test-Path "$hl\handoff-running.json")) 'missing plan is a reported failure, not a pass'
-$realLimit='{"type":"error","message":"You'+[char]0x2019+'ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 27th, 2026 1:16 AM."}'
-Check ((Get-VhModelOutcome 1 $false $realLimit $false) -eq 'LIMIT') 'real Codex limit message is LIMIT'
-Check ((Get-VhLimitUntil $realLimit) -eq (New-Object DateTime(2026,10,27,1,18,0))) 'reset time read from the limit message'
-Check ($null -eq (Get-VhLimitUntil '{"type":"error","message":"hit your usage limit"}')) 'no stated reset time stays unknown'
 Write-Output "Harness self-test: $script:checks PASS; evidence: $OutputDirectory"

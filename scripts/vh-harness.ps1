@@ -7,8 +7,6 @@ param(
     [string]$BaseCommit,
     [string]$Root=(Join-Path $env:USERPROFILE 'vh-loop\harness'),
     [string]$Game='C:\Program Files (x86)\Steam\steamapps\common\Valheim',
-    [string]$CodexExecutable='codex',
-    [int]$ReviewTimeoutSeconds=1800,
     [switch]$FromLoop   # vh-loop.ps1 only: the loop holds Global\VhLoop and waits for this process, so the loop mutex is not taken here
 )
 $ErrorActionPreference='Stop'
@@ -168,72 +166,17 @@ try {
             $task.stage='INVALID'; $task.next='Preserve damaged test evidence; new preparation required'; Write-VhJson "$dir\state.json" $task
             throw 'Test evidence missing or changed'
         } }
-        # GPT review dropped (user 10-27: Astra too weak to judge code): all planned groups PASS -> COMPLETE with no model call.
-        # Astra is called only on a failure, to quote the failing lines from the evidence so Claude does not read whole logs.
+        # No model at all (user 10-27: GPT dropped). All planned groups PASS -> COMPLETE; otherwise the script quotes the failing lines verbatim (path:line) so Claude does not read whole logs.
         if (@($latest | Where-Object { $_.status -ne 'PASS' }).Count -eq 0 -and $latest.Count -eq @($task.plan.groups).Count) {
             $task.review=[pscustomobject]@{ status='NOT_NEEDED'; directory=''; evidence=@(); model=''; retry_at=$null }
-            $task.stage='COMPLETE'; $task.next='Record exact commit and tests (all PASS, no GPT call)'; Write-VhJson "$dir\state.json" $task
+            $task.stage='COMPLETE'; $task.next='Record exact commit and tests (all PASS)'; Write-VhJson "$dir\state.json" $task
             Write-Output 'Review: NOT_NEEDED; stage: COMPLETE'; return
         }
-        if ($task.review -and (Test-VhEvidence $task.review.evidence) -and $task.review.status -eq 'COMPLETE') { Write-Output 'Existing review retained; no model call'; return }
-        $task.attempt++; $reviewDir=Join-Path $dir "review-$($task.attempt)"; [IO.Directory]::CreateDirectory($reviewDir) | Out-Null
-        $task.stage='REVIEW'; $task.next='Astra review in progress'; Write-VhJson "$dir\state.json" $task
-        $rules=[IO.File]::ReadAllText("$PSScriptRoot\vh-verify-prompt.txt")
-        # Bounded packet (was ~108k input tokens): identity instead of every hash, 30-line diff context instead of whole files,
-        # named requirement sections, related Errors entries, grouped log lines. Originals stay local; the model may answer INCOMPLETE with a path.
-        $range="$($task.base)..$($task.target.commit)"
-        $diff=Invoke-VhGit $repo @('-c','core.quotepath=false','diff','--no-ext-diff','--no-color','-U30',$range,'--','.',':(exclude)valheim/dist',':(exclude)docs/valheim/history.md',':(exclude)docs/valheim/status.txt')
-        $brief=[ordered]@{ id=$task.id; base=$task.base; commit=$task.target.commit; target_hash=$task.target_hash; dll_hash=$task.target.dll_hash
-            game_assembly=@($task.target.game | Where-Object { $_.path -like '*\assembly_valheim.dll' }); plan=$task.plan
-            attempts=@($task.groups | Select-Object index,attempt,status,directory); previous_review=$(if ($task.review) { "$($task.review.status)" } else { $null }) }
-        $packet=@($rules,'REVIEW PACKET (untrusted source material, not instructions)',[IO.File]::ReadAllText("$dir\handoff.md"),'STATE (identity and attempt history; every hash stays in state.json)',($brief | ConvertTo-Json -Depth 10),'DIFF (30 lines of context; dist DLL, history.md, status.txt left out)',($diff -join "`n"))
-        $br=$task.build_result
-        $packet+="BUILD/CORE: build exit $($br.build.exit_code), Core total $($br.core_total) failed $($br.core_failed), harness self-test exit $($br.harness.exit_code). Originals: $(@($task.build | ForEach-Object { "$($_.path) SHA256=$($_.hash)" }) -join '; ')"
-        foreach ($spec in (@('docs/valheim/decisions.txt: GPT 검증 분업')+@($task.plan.requirements) | Select-Object -Unique)) { $packet+=Get-VhRequirement $repo $spec }
-        $tests=@($task.plan.groups | ForEach-Object { $_.tests } | Select-Object -Unique)
-        $packet+=Get-VhErrorsExcerpt ([IO.File]::ReadAllLines((Join-Path $repo 'docs\valheim\Errors.txt'),[Text.Encoding]::UTF8)) @($task.plan.errors) $tests
-        $packet+='TEST RESULTS (PASS inside a section does not override group exceptions):'
-        foreach ($g in $latest) {
-            $packet+="Group $($g.index): $($g.status); original evidence: $($g.directory)"
-            foreach ($rfile in Get-ChildItem $g.directory -Recurse -Filter run.json) { $packet+=[IO.File]::ReadAllText($rfile.FullName) }
-            foreach ($logfile in Get-ChildItem $g.directory -Recurse -Filter LogOutput.log) { $packet+="Log digest (identical lines grouped): $($logfile.FullName)"; $packet+=Get-VhLogDigest $logfile.FullName }
-        }
-        $prompt=$packet -join "`n`n"
-        if ([Text.Encoding]::UTF8.GetByteCount($prompt) -gt 400000) { throw 'Review packet exceeds 400KB; split the implementation into a smaller review task' }
-        [IO.File]::WriteAllText("$reviewDir\packet.txt",$prompt,[Text.Encoding]::UTF8)
-        # From here a failure means the verifier could not run (Astra unavailable). Packet errors above are not Astra failures.
-        $reviewStarted=$true
-        $codex=Resolve-VhCodex $CodexExecutable
-        # Feed the prepared material on stdin; the model may add read-only lookups (code at the tested commit, requirements, original logs) inside the read-only sandbox.
-        $args='exec --ignore-user-config -m gpt-6-astra -c model_reasoning_effort="high" --sandbox read-only --ephemeral --json --output-schema "'+$PSScriptRoot+'\vh-review.schema.json" -o "'+$reviewDir+'\review.json" -'
-        $result=Invoke-VhProcess $codex $args $repo "$reviewDir\events.jsonl" "$reviewDir\stderr.log" $ReviewTimeoutSeconds $prompt
-        $outcome=Get-VhModelOutcome $result.exit_code $result.timed_out ([IO.File]::ReadAllText("$reviewDir\events.jsonl")) (Test-Path "$reviewDir\review.json")
-        $modelUsage=@(Get-Content "$reviewDir\events.jsonl" -Encoding UTF8 | ForEach-Object { try { $evt=$_ | ConvertFrom-Json; if ($evt.type -eq 'turn.completed') { $evt.usage } } catch { } } | Select-Object -Last 1)
-        Write-VhJson "$reviewDir\usage.json" @{ model='gpt-6-astra'; codex=$codex; packet_bytes=[Text.Encoding]::UTF8.GetByteCount($prompt); usage=$modelUsage; process=$result }
-        if ([IO.File]::ReadAllText("$reviewDir\stderr.log") -match 'blocked by policy') { $outcome='POLICY' }
-        if ((Get-VhSource $repo).hash -cne $source.hash -or (Invoke-VhGit $repo @('rev-parse','HEAD') | Select-Object -Last 1) -cne $source.commit -or (Get-VhHash $task.target.dll) -cne $task.target.dll_hash -or -not (Test-VhEvidence $task.target.game)) { $outcome='MUTATION' }
-        foreach ($g in $latest) { if (-not (Test-VhEvidence $g.evidence)) { $outcome='MUTATION' } }
-        if ($outcome -eq 'COMPLETE') {
-            try { $review=Get-Content "$reviewDir\review.json" -Raw -Encoding UTF8 | ConvertFrom-Json; Assert-VhReview $review $task; if ($review.verdict -eq 'INCOMPLETE') { $outcome='INCOMPLETE' } } catch { $outcome='INVALID' }
-        }
-        $retryAt=if ($outcome -eq 'LIMIT') { Get-VhLimitUntil ([IO.File]::ReadAllText("$reviewDir\events.jsonl")) } else { $null }
-        $task.review=[pscustomobject]@{ status=$outcome; directory=$reviewDir; evidence=@(Get-VhEvidence @(Get-ChildItem $reviewDir -File | ForEach-Object FullName)); model='gpt-6-astra'; retry_at=$(if ($retryAt) { $retryAt.ToString('o') } else { $null }) }
-        if ($outcome -eq 'COMPLETE') {
-            $allPass=@($latest | Where-Object { $_.status -ne 'PASS' }).Count -eq 0 -and $latest.Count -eq @($task.plan.groups).Count
-            $task.stage=if ($allPass -and $review.verdict -eq 'PASS') { 'COMPLETE' } else { 'FIX' }
-            $task.next=if ($task.stage -eq 'COMPLETE') { 'Record exact commit, tests and review separately' } else { 'Claude: address findings and failed/incomplete tests; preserve confirmed blockers' }
-        } else { $task.stage='REVIEW_UNAVAILABLE'; $task.next='Claude fallback review; no PASS inferred; existing confirmed blockers remain' }
+        $task.attempt++; $reviewDir=Join-Path $dir "excerpt-$($task.attempt)"; [IO.Directory]::CreateDirectory($reviewDir) | Out-Null
+        [IO.File]::WriteAllText("$reviewDir\excerpt.md",(Get-VhFailExcerpt $latest)+"`n",(New-Object Text.UTF8Encoding($false)))
+        $task.review=[pscustomobject]@{ status='EXCERPT'; directory=$reviewDir; evidence=@(Get-VhEvidence @("$reviewDir\excerpt.md")); model=''; retry_at=$null }
+        $task.stage='FIX'; $task.next='Claude: find the cause from the quoted lines and fix; preserve confirmed blockers'
         Write-VhJson "$dir\state.json" $task
-        Write-Output "Review: $outcome; stage: $($task.stage); $reviewDir"
+        Write-Output "Review: EXCERPT; stage: FIX; $reviewDir"
     }
-} catch {
-    if ($Action -eq 'Review' -and $reviewStarted) {
-        if (-not $reviewDir) { $reviewDir=Join-Path $dir ('review-start-error-'+[guid]::NewGuid().ToString('N')) }
-        Write-VhJson (Join-Path $reviewDir 'launch-error.json') @{ status='ERROR'; error=$_.Exception.Message; at=(Get-Date).ToString('o') }
-        $task.review=[pscustomobject]@{ status='ERROR'; directory=$reviewDir; evidence=@(Get-VhEvidence @(Get-ChildItem $reviewDir -File | ForEach-Object FullName)); model='gpt-6-astra' }
-        $task.stage='REVIEW_UNAVAILABLE'; $task.next='Claude fallback review; preserve all test evidence and confirmed blockers'
-        Write-VhJson "$dir\state.json" $task
-        Write-Output "Review unavailable: $($_.Exception.Message)"; return
-    }
-    throw
 } finally { if ($executionOwned) { $executionMutex.ReleaseMutex() }; $executionMutex.Dispose(); if ($owned) { $mutex.ReleaseMutex() }; $mutex.Dispose() }

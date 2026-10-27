@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 10-27 · 검증에서 ChatGPT 완전히 뺌
+
+**요약**
+
+- [10-27] GPT 완전히 뺌(사용자: 채팅 무제한은 Codex 한도와 별개·채팅 자동화는 약관 위반): 시험 FAIL이면 스크립트가 실패 줄을 경로:줄 원문으로 발췌, 모델 호출·Codex 한도 처리 없음.
+
+**자세히**
+
+- 이유: ChatGPT 채팅의 무제한 사용량은 하네스가 쓰는 Codex(codex exec) 한도와 따로 셈하고, 채팅 창을 프로그램으로 돌리는 건 OpenAI 약관 위반이라 쓸 수 없음. 남은 GPT 일(실패 줄 옮기기)은 판단이 필요 없어 스크립트로 충분.
+- 바꾼 것: vh-harness.ps1 Review — 모두 PASS면 COMPLETE(NOT_NEEDED), 아니면 스크립트가 excerpt-N/excerpt.md에 FAIL 섹션 diag 줄(FAIL·판정·환경 불량·Exception과 앞뒤 한 줄, 섹션당 15줄)과 로그 오류 줄을 적고 FIX. 요약에 그대로 들어감.
+- 지운 것: Codex 호출·한도("try again at") 처리·분업 끄기, 루프의 Astra 쉼, 시험 운전의 ChatGPT 대기, vh-verify-prompt.txt·vh-review.schema.json·PC-Astra-Integration.md.
+- 시험: 클라우드 pwsh 7에서 네 스크립트 문법 오류 0, 새 발췌·요약·판정·스위치 함수 확인. Windows 자가 시험(vh-harness-selftest.ps1)은 PC에서 아직 안 돌림.
+
 ### 클라우드 세션 · 10-27 · ChatGPT 역할 바꿈 — 리뷰 빼고 실패 줄 발췌만
 
 **요약**

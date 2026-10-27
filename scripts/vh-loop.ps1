@@ -12,7 +12,7 @@
 # pull로 이 스크립트가 바뀌면 이번 회차 뒤 새 스크립트로 저절로 다시 켜진다(scripts/vh-loop-restart.ps1, PC에 사람이 없어도). 고칠 때 UTF-8 BOM을 지킨다.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
 # 분업(decisions.txt 2절, docs/valheim/Harness.md): handoff-on.txt + 기준 5회차면 회차에 VH_HANDOFF=1 → 회차가 "LOOP: HANDOFF"로 끝내면
-# vh-harness.ps1이 그 커밋을 빌드·게임 시험·Astra 리뷰(Invoke-VhHandoff), 결과 파일을 다음 회차에 VH_VERIFY로 넘긴다.
+# vh-harness.ps1이 그 커밋을 빌드·게임 시험·실패 발췌(Invoke-VhHandoff, 모델 안 씀), 결과 파일을 다음 회차에 VH_VERIFY로 넘긴다.
 param([switch]$Once)   # -Once: 한 회차만(처음 지켜보는 시험용)
 $ErrorActionPreference = 'Continue'
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
@@ -230,7 +230,7 @@ function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
     $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''
-            verify = ''; verifyFail = ''; verifyFailN = 0; astraUntil = ''; astraFails = 0 }   # 분업: 다음 회차에 넘길 검증 결과·같은 시험 연속 FAIL·Astra 쉼
+            verify = ''; verifyFail = ''; verifyFailN = 0 }   # 분업: 다음 회차에 넘길 검증 결과·같은 시험 연속 FAIL
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
     }
@@ -325,7 +325,7 @@ function Write-Status($now, $last) {
         "할 일: $todo",
         "마지막 시험: $test",
         "Claude가 한 일: $last",
-        "분업(Claude 구현 → Astra 검증): $(if ($Gate) { $Gate.why } else { '-' })",
+        "분업(Claude 구현 → 스크립트 검증): $(if ($Gate) { $Gate.why } else { '-' })",
         "요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
     ) + @(if ($StaleNote) { $StaleNote }) + @(if ($GameNote) { $GameNote }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
@@ -594,23 +594,17 @@ while ($true) {
         $GameNote = "게임 업데이트 감지: $GameUpdate (확인된 게임 사실은 1.0.20 기준) — 회차 $($st.round)이 전체 회귀부터"
         Log $GameNote
     }
-    $Gate = Get-VhHandoffGate $Dir $Repo $st.astraUntil; $HandoffOn = $Gate.on
+    $Gate = Get-VhHandoffGate $Dir $Repo; $HandoffOn = $Gate.on
     Log "분업 $($Gate.why)"
     if (Test-Path $TrialFile) {
-        # 시험 운전(사용자 10-27): 앞 handoffAfter회차는 Claude만, 그 뒤는 ChatGPT 한도가 풀리는 astraFrom까지 쉬었다가(절전) 분업 회차
+        # 시험 운전(사용자 10-27): 앞 handoffAfter회차는 Claude만, 그 뒤는 분업 회차
         $tj = Get-Content $TrialFile -Raw -Encoding UTF8 | ConvertFrom-Json
-        $af = $tj.astraFrom
         $after = if ($null -ne $tj.handoffAfter) { [int]$tj.handoffAfter } else { 5 }
         if ([int]$tj.total - [int]$tj.left -lt $after) { $HandoffOn = $false; $Gate = [pscustomobject]@{ on=$false; why="off: 시험 운전 앞 ${after}회차는 Claude만"; baseline=$Gate.baseline } }
-        elseif (-not ($af -and [datetime]$af -gt (Get-Date)) -and (Test-Path (Join-Path $Repo 'docs\valheim\handoff-on.txt')) -and -not ($st.astraUntil -and [datetime]$st.astraUntil -gt (Get-Date))) {
+        elseif (Test-Path (Join-Path $Repo 'docs\valheim\handoff-on.txt')) {
             $HandoffOn = $true; $Gate = [pscustomobject]@{ on=$true; why='on(시험 운전)'; baseline=$Gate.baseline }
         }
         Log "분업 $($Gate.why)"
-        if ([int]$tj.total - [int]$tj.left -ge $after -and $af -and [datetime]$af -gt (Get-Date)) {
-            $st.round--; Log "시험 운전: 기준 끝, ChatGPT 준비 $(([datetime]$af).ToString('MM-dd HH:mm'))까지 쉼"
-            Write-Status "시험 운전: 기준 5회차 끝 — ChatGPT 한도가 풀리는 $(([datetime]$af).ToString('MM-dd HH:mm'))까지 쉼(입력 10분 없으면 절전)" '-'
-            Save-State; Wait-Until ([datetime]$af); continue
-        }
     }
     $plan = Join-Path $Dir 'handoff-plan.json'   # 지난 회차가 HANDOFF 없이 남긴 계획은 쓰지 않는다
     if (Test-Path $plan) { Move-Item $plan (Join-Path $Dir "handoff-plan.stale-$(Get-Date -Format 'yyyyMMdd-HHmmss').json") -Force }
@@ -650,13 +644,13 @@ while ($true) {
     if ($handoff -and -not $HandoffOn) { Log "분업 꺼짐($($Gate.why))인데 HANDOFF → 인계 안 함(progress에 검증 대기로 남음)"; $handoff = $false }
     Prepare-Git
     $after = G rev-parse origin/valheim | Select-Object -Last 1
-    # 분업(decisions.txt 2절): 회차가 커밋한 것을 스크립트가 빌드·Core·게임 시험하고 Astra가 리뷰(모델 세션 없이 기다림), 결과는 다음 회차에 VH_VERIFY로.
+    # 분업(decisions.txt 2절): 회차가 커밋한 것을 스크립트가 빌드·Core·게임 시험하고 실패 줄을 발췌(모델 없음), 결과는 다음 회차에 VH_VERIFY로.
     # 구현 회차 + 그 검증이 한 논리 회차: 검증 통과면 진척은 다음 회차가 [끝]을 적을 때 세고, 아니면 끝낸 것 없음으로 센다.
     $e = $null; $vstop = $null; $vtext = ''
     if ($handoff) {
         $hb = Get-Date; $script:HandoffBk = Get-Date
         $wait = { if (((Get-Date) - $script:HandoffBk).TotalMinutes -ge $BackupMin) { Backup-Wip; Reply-Requests $acct; $script:HandoffBk = Get-Date } }
-        Write-Status "회차 $($st.round) 인계 검증 중(빌드·게임 시험·Astra 리뷰 — 스크립트가 함)" $last   # Prepare 전에 커밋(검증 중에는 HEAD를 안 바꿈)
+        Write-Status "회차 $($st.round) 인계 검증 중(빌드·게임 시험·실패 발췌 — 스크립트가 함)" $last   # Prepare 전에 커밋(검증 중에는 HEAD를 안 바꿈)
         $v = Invoke-VhHandoff $Repo $Dir $before $RoundTimeoutMin $wait $st.round   # 기준 = 회차 시작 때 커밋, 대상 = 지금 HEAD
         $st.verify = $v.File; $e = $v.Effect
         $vtext = if ($e) { "$($v.Id) $($e.stage), 리뷰 $($e.review)$(if ($e.fail.Count) { ", FAIL $($e.fail -join ',')" })" } else { '준비 실패' }
@@ -668,12 +662,6 @@ while ($true) {
             # 예전엔 회차 안에서 한 번 고쳐 다시 돌렸다: 처음 구현 FAIL + 고친 회차 두 번 FAIL = 예전 "같은 시험 2회차 연속 FAIL"
             if ($st.verifyFailN -ge 3) { $vstop = "같은 시험 검증 3번 연속 FAIL($key)" }
         } else { $st.verifyFail = ''; $st.verifyFailN = 0 }
-        if ($e -and $e.astra_down) {
-            $st.astraFails++
-            if ($e.retry_at) { $st.astraUntil = "$($e.retry_at)"; $how = 'Codex가 알려 준 해제 시각' }   # 한도 문구의 "try again at …"
-            else { $h = [math]::Min(24, 3 * [math]::Pow(2, $st.astraFails - 1)); $st.astraUntil = (Get-Date).AddHours($h).ToString('o'); $how = "${h}시간 뒤 다시 시도(해제 시각 아님)" }
-            Log "Astra 리뷰 못 함($($e.review)) → $(([datetime]$st.astraUntil).ToString('MM-dd HH:mm'))까지 분업 끔($how, 그동안 회차가 직접 시험·리뷰)"
-        } elseif ($e -and $e.review -eq 'COMPLETE') { $st.astraFails = 0 }
     }
     if (Test-RoundResult $before $after $st.round) { $st.noProg = 0 }
     elseif (-not ($e -and $e.complete)) { $st.noProg++; Log "끝낸 것 없는 회차 $($st.noProg)/3" }

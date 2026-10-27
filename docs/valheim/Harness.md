@@ -1,14 +1,13 @@
 # PC 검증 하네스
 
-Claude가 구현한 커밋을 **스크립트가** 빌드·Core·게임 시험하는 장치입니다. **Astra(gpt-6-astra, PC Codex 앱의 codex exec)** 는 리뷰하지 않고(사용자 10-27), FAIL이 있을 때만 실패 줄을 원문 그대로 발췌합니다. 모두 PASS면 Astra를 부르지 않습니다(`NOT_NEEDED` → COMPLETE). 규칙은 decisions.txt 2절 "GPT 검증 분업"을 따릅니다.
+Claude가 구현한 커밋을 **스크립트가** 빌드·Core·게임 시험하는 장치입니다. 모델은 쓰지 않습니다(사용자 10-27: GPT 뺌). 시험이 하나라도 실패하면 스크립트가 실패 줄을 원문 그대로 발췌합니다.
 처음 만든 것은 PC Codex(10-26, 커밋 553e59d~c9dfd23)이고, 루프 연결과 마무리는 PC Claude 세션(10-26)이 했습니다.
 
 ## 지금 상태
 
-- **꺼져 있음.** 루프가 회차마다 스위치를 봅니다. `docs/valheim/handoff-on.txt`가 있고, 분업 전 실제 회차 사용량 기록이 5개 이상이고, Astra 쉼이 아닐 때만 켜집니다. 상태는 status.txt "분업" 줄에 나옵니다.
+- **꺼져 있음.** 루프가 회차마다 스위치를 봅니다. `docs/valheim/handoff-on.txt`가 있고, 분업 전 실제 회차 사용량 기록이 5개 이상일 때만 켜집니다. 상태는 status.txt "분업" 줄에 나옵니다.
 - 켜지면 회차에 `VH_HANDOFF=1`이 갑니다. 회차는 게임 시험을 직접 하지 않고 시험 계획(`%USERPROFILE%\vh-loop\handoff-plan.json`)을 남긴 뒤 `LOOP: HANDOFF`로 끝냅니다(scripts/vh-loop-handoff.txt).
-- 그러면 루프가 `Invoke-VhHandoff`로 준비(빌드·Core·자가 시험) → 게임 시험 → Astra 리뷰 → 요약을 차례로 돌립니다. 모델 세션은 기다리지 않습니다. 요약은 다음 회차에 `VH_VERIFY`(vh-loop-handoff.txt)로 넘어갑니다.
-- **Astra 한도·오류(사용자 10-26):** 그 검증은 "Astra 못 씀"이 되고 다음 Claude 회차가 직접 리뷰합니다. 한도 문구의 "try again at" 시각까지 분업을 끕니다(문구에 없으면 3·6·12·24시간 뒤 다시 시도). 그동안은 예전처럼 Claude가 시험·리뷰를 다 합니다.
+- 그러면 루프가 `Invoke-VhHandoff`로 준비(빌드·Core·자가 시험) → 게임 시험 → 실패 발췌 → 요약을 차례로 돌립니다. 모델 세션은 기다리지 않습니다. 요약은 다음 회차에 `VH_VERIFY`(vh-loop-handoff.txt)로 넘어갑니다.
 - 셈: 구현 회차와 그 검증을 한 묶음으로 봅니다. 검증이 통과하면 다음 회차가 `[끝]`을 적을 때 진척으로 칩니다. 통과 못 하면 "끝낸 것 없음"이 됩니다. 같은 시험이 검증에서 3번 연속 FAIL이면 멈춥니다.
 - 인계 도중 루프가 꺼지면 다음 회차에 "결과 없음, PASS 아님"을 알립니다(`handoff-running.json`).
 
@@ -32,14 +31,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vh-harness.ps1 -Acti
   - 중단된 묶음은 새 작업으로 처음부터 다시 합니다.
   - 알려진 무해 줄(BepInEx "Unable to start Unity log writer")은 오류로 치지 않습니다. 정확히 그 줄만입니다.
   - 저장 뒤 게임 종료가 멈추면(E038) 2분 뒤 끄고 `exit_hang`만 표시합니다.
-- **Review(이름만 남음, 실제로는 실패 발췌):** 모두 PASS면 모델 호출 없이 끝냅니다. 실행 파일은 PATH에서 찾고, 없으면 `%LOCALAPPDATA%\OpenAI\Codex\bin\*\codex.exe` 중 가장 최근 것을 씁니다. 읽기 전용 고정 JSON입니다. 작업 ID·커밋·대상 해시가 다르면 무효입니다. 소스·DLL·증거가 바뀌면 MUTATION입니다.
-- **리뷰 자료:** 대상 확인 정보, diff 앞뒤 30줄, 지정 절, 관련 Errors 항목, 같은 줄을 묶은 로그 요약만 넣습니다(10-26: 32만 → 고정분 약 9KB + diff). 모자라면 Astra가 시험한 커밋의 코드·요구사항·원본 로그를 읽기 전용으로 더 조회합니다(사용자 10-26). 코드 수정·게임 실행·커밋은 금지입니다.
+- **Review(이름만 남음, 실제로는 실패 발췌):** 모델을 부르지 않습니다. 모두 PASS면 NOT_NEEDED로 COMPLETE. 아니면 `excerpt-N\excerpt.md`에 PASS 아닌 섹션의 diag 줄(FAIL·판정·환경 불량·Exception과 앞뒤 한 줄, 섹션당 15줄, 못 찾으면 끝 15줄)과 LogOutput.log 오류 줄(같은 줄 묶음)을 `경로:줄: 원문`으로 적고 FIX. 요약(result.md)에 그대로 들어갑니다.
 
 ## 로컬 기록 (공개 Git에 안 올림)
 
 - `%USERPROFILE%\vh-loop\usage-records\<실행-ID>.json` + `usage.csv`: Claude 회차·답 전용 세션의 실제 수치입니다. 없는 수치는 null입니다. `mode`는 claude-only(기준)와 handoff로 나뉩니다.
-- `%USERPROFILE%\vh-loop\harness\<작업-ID>\`: state.json, handoff.md, result.md(요약), 빌드·Core 로그, 묶음별 diag·LogOutput·run.json, review-N(packet·events·usage).
-- `%USERPROFILE%\vh-loop\handoff-records\<작업-ID>.json`: 단계별 걸린 분과 Astra 사용량입니다(분업 전후 비교용).
+- `%USERPROFILE%\vh-loop\harness\<작업-ID>\`: state.json, handoff.md, result.md(요약), 빌드·Core 로그, 묶음별 diag·LogOutput·run.json, excerpt-N(실패 발췌).
+- `%USERPROFILE%\vh-loop\handoff-records\<작업-ID>.json`: 단계별 걸린 분입니다(분업 전후 비교용).
 
 ## 남은 일
 

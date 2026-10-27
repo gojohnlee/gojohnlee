@@ -90,53 +90,6 @@ function Read-VhDiag([string]$Text, [string[]]$Expected) {
     }
     [pscustomobject]@{ status=$status; sections=@($sections) }
 }
-function Get-VhModelOutcome($ExitCode, [bool]$TimedOut, [string]$Events, [bool]$HasResult) {
-    if ($TimedOut) { return 'TIMEOUT' }
-    # Only structured errors are classified; arbitrary prose must not trigger a guessed reset time.
-    $errors = @(); $completed = $false
-    foreach ($line in ($Events -split '\r?\n')) {
-        try {
-            $e = $line | ConvertFrom-Json
-            if ($e.type -eq 'turn.completed') { $completed=$true }
-            if ($e.type -in @('error','turn.failed')) { $errors += ($e | ConvertTo-Json -Depth 15 -Compress) }
-        } catch { }
-    }
-    $errorText = $errors -join "`n"
-    if ($errorText -match '"(code|type)"\s*:\s*"(usage_limit_reached|rate_limit_exceeded)"') { return 'LIMIT' }
-    # Real Codex 0.164 output (10-26) has no code: {"type":"error","message":"You've hit your usage limit. ... try again at Oct 27th, 2026 1:16 AM."}
-    if ($errorText -match '(?i)hit your usage limit') { return 'LIMIT' }
-    if ($errorText -match '"(code|type)"\s*:\s*"(unauthorized|authentication_error|invalid_api_key)"') { return 'AUTH' }
-    if ($ExitCode -ne 0 -or $errors.Count -gt 0) { return 'ERROR' }
-    if (-not $HasResult -or -not $completed) { return 'MISSING' }
-    'COMPLETE'
-}
-# Reset time only when the structured error states it ("try again at Oct 27th, 2026 1:16 AM", local time); otherwise $null, never a guess.
-function Get-VhLimitUntil([string]$Events) {
-    foreach ($line in ($Events -split '\r?\n')) {
-        try { $e = $line | ConvertFrom-Json } catch { continue }
-        if ($e.type -notin @('error','turn.failed')) { continue }
-        $m = "$($e.message) $($e.error.message)"
-        if ($m -match '(?i)try again at ([A-Z][a-z]{2})[a-z]* (\d{1,2})(?:st|nd|rd|th)?, (\d{4}) (\d{1,2}):(\d{2}) ?([AP]M)') {
-            $mo = [array]::IndexOf(@('jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'), $Matches[1].ToLower()) + 1
-            if (-not $mo) { continue }
-            $h = [int]$Matches[4] % 12; if ($Matches[6] -ieq 'PM') { $h += 12 }
-            return (New-Object DateTime([int]$Matches[3], $mo, [int]$Matches[2], $h, [int]$Matches[5], 0)).AddMinutes(2)
-        }
-    }
-    $null
-}
-function Assert-VhReview($Review, $Task) {
-    if ($Review.task_id -cne $Task.id -or $Review.commit -cne $Task.target.commit -or $Review.target_hash -cne $Task.target_hash) { throw 'Review target mismatch' }
-    if ($Review.verdict -notin @('PASS','ISSUES','BLOCKED','INCOMPLETE')) { throw 'Invalid review verdict' }
-    foreach ($f in @($Review.findings)) {
-        if ($f.basis -notin @('code','execution','hypothesis')) { throw 'Invalid finding basis' }
-        if ($f.category -eq 'environment' -and $f.blocking) { throw 'Environment failure is not a confirmed gameplay blocker' }
-        if ($f.blocking -and ($f.basis -eq 'hypothesis' -or -not $f.evidence)) { throw 'Blocking finding lacks confirmed evidence' }
-    }
-    $blocking = @($Review.findings | Where-Object { $_.blocking })
-    if (($Review.verdict -eq 'BLOCKED') -ne ($blocking.Count -gt 0)) { throw 'Inconsistent blocker verdict' }
-    if ($Review.verdict -eq 'PASS' -and @($Review.findings).Count -gt 0) { throw 'PASS with findings' }
-}
 function Test-VhEvidence($Evidence) {
     if (@($Evidence).Count -eq 0) { return $false }
     foreach ($e in $Evidence) {
@@ -189,7 +142,7 @@ function Invoke-VhProcess($File, [string]$Arguments, $WorkingDirectory, $Out, $E
     try {
     $stdout = $p.StandardOutput.BaseStream.CopyToAsync($outStream); $stderr = $p.StandardError.BaseStream.CopyToAsync($errStream)
     if ($InputText) {
-        # Windows PowerShell 5.1's StreamWriter uses the system code page; Codex requires UTF-8.
+        # Windows PowerShell 5.1's StreamWriter uses the system code page; the child expects UTF-8.
         $bytes=[Text.Encoding]::UTF8.GetBytes($InputText)
         $p.StandardInput.BaseStream.Write($bytes,0,$bytes.Length)
         $p.StandardInput.BaseStream.Flush(); $p.StandardInput.Close()
@@ -288,6 +241,38 @@ function Get-VhErrorsExcerpt([string[]]$Lines, [string[]]$Ids, [string[]]$Tests)
     }
     $out -join "`n"
 }
+# Failing lines quoted verbatim as "path:line: text" — no model (user 10-27: GPT dropped). For each non-PASS section of diag.txt:
+# FAIL/판정/환경 불량/Exception lines with one line before and after, up to $Max per section (no hit: the last $Max lines);
+# plus the grouped Error/Exception lines of LogOutput.log when it has real problems. Picking lines is not judging the cause.
+function Get-VhFailExcerpt($Groups, [int]$Max=15) {
+    $o = @('# 실패 발췌(스크립트가 원문 그대로 옮김 — 원인 판단 아님)')
+    foreach ($g in @($Groups | Where-Object { $_.status -ne 'PASS' })) {
+        $o += "## 묶음 $($g.index): $($g.status) — $($g.directory)"
+        $fail = @()
+        foreach ($f in @(Get-ChildItem -LiteralPath $g.directory -Recurse -Filter run.json -ErrorAction SilentlyContinue)) {
+            try { $r = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $o += "- run.json 못 읽음: $($f.FullName)"; continue }
+            foreach ($s in @($r.sections | Where-Object { $_.verdict -ne 'PASS' })) { $fail += $s.name; $o += "- $($s.name): $($s.verdict)" }
+        }
+        foreach ($d in @(Get-ChildItem -LiteralPath $g.directory -Recurse -Filter diag.txt -ErrorAction SilentlyContinue)) {
+            $lines = [IO.File]::ReadAllLines($d.FullName, [Text.Encoding]::UTF8); $sec = ''; $hit = [ordered]@{}
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+                if ($lines[$i] -match '^=== (\S+)') { $sec = $Matches[1]; continue }
+                if (-not $sec -or ($fail.Count -and $fail -notcontains $sec) -or $lines[$i] -notmatch '^FAIL|^판정:|환경 불량|Exception') { continue }
+                if (-not $hit.Contains($sec)) { $hit[$sec] = New-Object Collections.Generic.List[int] }
+                foreach ($k in ($i - 1)..($i + 1)) { if ($k -ge 0 -and $k -lt $lines.Count -and -not $hit[$sec].Contains($k) -and $hit[$sec].Count -lt $Max) { $hit[$sec].Add($k) } }
+            }
+            foreach ($s in $hit.Keys) { $o += "### $s"; foreach ($k in $hit[$s]) { $o += "$($d.FullName):$($k + 1): $($lines[$k])" } }
+            if (-not $hit.Count -and $lines.Count) {
+                $o += "### $($d.FullName): 실패 줄 못 찾음 — 끝 $Max줄"
+                for ($k = [math]::Max(0, $lines.Count - $Max); $k -lt $lines.Count; $k++) { $o += "$($d.FullName):$($k + 1): $($lines[$k])" }
+            }
+        }
+        foreach ($l in @(Get-ChildItem -LiteralPath $g.directory -Recurse -Filter LogOutput.log -ErrorAction SilentlyContinue)) {
+            if (@(Get-VhLogProblems ([IO.File]::ReadAllText($l.FullName))).Count) { $o += "### 로그 오류 줄(같은 줄은 묶음): $($l.FullName)"; $o += Get-VhLogDigest $l.FullName 30 }
+        }
+    }
+    $o -join "`n"
+}
 # What one verification means to the loop. A harness FAIL counts like a round's "LOOP: FAIL <test>".
 function Get-VhHandoffEffect($Task) {
     $fail = @()
@@ -299,11 +284,10 @@ function Get-VhHandoffEffect($Task) {
         }
     }
     $review = if ($Task.review) { "$($Task.review.status)" } else { '' }
-    [pscustomobject]@{ stage="$($Task.stage)"; complete=($Task.stage -eq 'COMPLETE'); fail=@($fail | Select-Object -Unique); review=$review
-        astra_down=($review -in @('LIMIT','AUTH','ERROR','TIMEOUT','POLICY')); retry_at=$(if ($Task.review) { $Task.review.retry_at } else { $null }) }
+    [pscustomobject]@{ stage="$($Task.stage)"; complete=($Task.stage -eq 'COMPLETE'); fail=@($fail | Select-Object -Unique); review=$review }
 }
-# Division of labour is on only when the user's switch file exists, 5+ real baseline rounds are recorded and Astra is not backed off.
-function Get-VhHandoffGate($Directory, $Repo, $AstraUntil) {
+# Division of labour is on only when the user's switch file exists and 5+ real baseline rounds are recorded.
+function Get-VhHandoffGate($Directory, $Repo) {
     $sw = Join-Path $Repo 'docs\valheim\handoff-on.txt'
     $on = Test-Path -LiteralPath $sw
     # "기준 생략" in the switch file: the user asked to try division of labour before the 5-round baseline (10-26 trial run)
@@ -313,7 +297,6 @@ function Get-VhHandoffGate($Directory, $Repo, $AstraUntil) {
     } | Where-Object { $_.kind -eq 'implementation' -and $_.result -eq 'present' -and $_.mode -ne 'handoff' }).Count
     $why = if (-not $on) { 'off: docs/valheim/handoff-on.txt 없음' }
         elseif ($baseline -lt 5 -and -not $skip) { "off: 기준 회차 $baseline/5" }
-        elseif ($AstraUntil -and [datetime]$AstraUntil -gt (Get-Date)) { "off: Astra 다시 시도 $(([datetime]$AstraUntil).ToString('MM-dd HH:mm'))(한도 해제 시각 아님)" }
         else { 'on' }
     [pscustomobject]@{ on=($why -eq 'on'); why=$why; baseline=$baseline }
 }
@@ -334,18 +317,13 @@ function Get-VhSummary($Task, $Dir) {
         }
         foreach ($x in @(Get-ChildItem -LiteralPath $g[0].directory -Directory -Filter 'interrupted-*' -ErrorAction SilentlyContinue)) { $o += "  - 중단 증거: $($x.FullName)" }
     }
-    if ($Task.review -and $Task.review.status -eq 'NOT_NEEDED') { $o += '- GPT 발췌: 필요 없음(모두 PASS, 리뷰 없음)' }
-    elseif ($Task.review) {
-        $o += "- GPT 발췌(Astra): $($Task.review.status) — $($Task.review.directory)"
-        $rj = Join-Path "$($Task.review.directory)" 'review.json'
-        if ($Task.review.status -in @('COMPLETE','INCOMPLETE') -and (Test-Path -LiteralPath $rj)) {
-            try {
-                $rv = Get-Content -LiteralPath $rj -Raw -Encoding UTF8 | ConvertFrom-Json
-                $o += "  - 판정 $($rv.verdict): $($rv.summary)"
-                foreach ($f in @($rv.findings)) { $o += "  - [$($f.category)/$($f.basis)$(if ($f.blocking) { '/막음' })] $($f.title) | 근거: $($f.evidence) | 재현: $($f.reproduction) | 기대: $($f.expected)" }
-            } catch { $o += '  - review.json 못 읽음' }
-        }
-    } else { $o += '- GPT 발췌(Astra): 안 함' }
+    if ($Task.review -and $Task.review.status -eq 'NOT_NEEDED') { $o += '- 실패 발췌: 필요 없음(모두 PASS)' }
+    elseif ($Task.review -and $Task.review.status -eq 'EXCERPT') {
+        $x = Join-Path "$($Task.review.directory)" 'excerpt.md'
+        $o += "- 실패 발췌(스크립트, 원문 그대로): $x"
+        if (Test-Path -LiteralPath $x) { $o += ([IO.File]::ReadAllText($x, [Text.Encoding]::UTF8)).TrimEnd() }
+    } elseif ($Task.review) { $o += "- 발췌: $($Task.review.status) — $($Task.review.directory)" }
+    else { $o += '- 실패 발췌: 안 함' }
     $o += "- 원본 폴더: $Dir"
     $o -join "`n"
 }
@@ -384,26 +362,15 @@ function Invoke-VhHandoff($Repo, $Dir, $Base, [int]$TestMinutes, [scriptblock]$O
                 $sum = & $run 'summary' "-Action Summary -TaskId $id" 5
                 $md = if ($sum.ok) { $sum.text } else { "# 검증 결과 요약 못 만듦 $id`n$(& $tail $sum.text 10)" }
                 if (-not $test.ok) { $md += "`n- 시험 단계 오류(PASS 아님):`n$(& $tail $test.text 8)" }
-                if (-not $rev.ok) { $md += "`n- 리뷰 단계 오류:`n$(& $tail $rev.text 5)" }
+                if (-not $rev.ok) { $md += "`n- 발췌 단계 오류:`n$(& $tail $rev.text 5)" }
                 $task = Get-Content -LiteralPath (Join-Path $root "$id\state.json") -Raw -Encoding UTF8 | ConvertFrom-Json
                 $effect = Get-VhHandoffEffect $task
-                $usage = if ($task.review -and $task.review.directory) { Join-Path "$($task.review.directory)" 'usage.json' } else { '' }
-                Write-VhJson (Join-Path $Dir "handoff-records\$id.json") ([ordered]@{ round=$Round; task=$id; base=$Base; commit=$task.target.commit; stage=$task.stage; review=$effect.review; fail=$effect.fail; steps=$steps
-                    astra=$(if ($usage -and (Test-Path -LiteralPath $usage)) { Get-Content -LiteralPath $usage -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }) })
+                Write-VhJson (Join-Path $Dir "handoff-records\$id.json") ([ordered]@{ round=$Round; task=$id; base=$Base; commit=$task.target.commit; stage=$task.stage; review=$effect.review; fail=$effect.fail; steps=$steps })
             }
         }
         [IO.File]::WriteAllText($file, $md + "`n", (New-Object Text.UTF8Encoding($false)))
         [pscustomobject]@{ File=$file; Id=$id; Effect=$effect; Steps=$steps }
     } finally { Remove-Item -LiteralPath $pending -ErrorAction SilentlyContinue }
-}
-# Codex CLI ships inside the Codex app (bin\<build hash>\codex.exe) and is on PATH only in Codex's own shells,
-# not in this loop started by Task Scheduler (10-26: review ERROR "codex not recognized"). Newest bundled build wins.
-function Resolve-VhCodex([string]$Name='codex') {
-    $c = Get-Command $Name -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($c) { return $c.Source }
-    $b = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'OpenAI\Codex\bin') -Recurse -Filter codex.exe -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if ($b) { return $b.FullName }
-    throw "Codex CLI not found (PATH or $env:LOCALAPPDATA\OpenAI\Codex\bin)"
 }
 function ConvertTo-VhEncodedCommand([string]$Command) { [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($Command)) }
 function Quote-VhPS([string]$Value) { "'" + $Value.Replace("'", "''") + "'" }

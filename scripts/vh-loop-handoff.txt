@@ -1,10 +1,10 @@
-분업(decisions.txt 2절 "GPT 검증 분업", docs/valheim/Harness.md). VH_VERIFY가 있거나 VH_HANDOFF=1일 때만 읽음.
+분업(decisions.txt 2절 "검증 분업", docs/valheim/Harness.md). VH_VERIFY가 있거나 VH_HANDOFF=1일 때만 읽음.
 
-검증 결과 받기(VH_VERIFY = 파일 경로, 0번 다음 맨 먼저): 지난 회차가 인계한 커밋을 스크립트가 빌드·Core·게임 시험한 결과. GPT 리뷰는 없다(사용자 10-27) — FAIL일 때만 Astra가 실패 줄을 원문 그대로 발췌. 원본 로그는 발췌로 모자랄 때만 grep.
+검증 결과 받기(VH_VERIFY = 파일 경로, 0번 다음 맨 먼저): 지난 회차가 인계한 커밋을 스크립트가 빌드·Core·게임 시험한 결과. GPT는 안 쓴다(사용자 10-27) — FAIL이면 스크립트가 실패 줄을 원문 그대로(경로:줄) 발췌해 결과 파일에 넣음. 원본 로그는 발췌로 모자랄 때만 grep.
 - COMPLETE(시험 모두 PASS): 그 조각을 "[끝, 회차 N — 커밋 <검증한 코드 커밋> · 시험 <이름> PASS <n/n>, …]". 따로 리뷰하지 않는다.
 - FIX: 발췌(원문 줄)로 FAIL 원인을 찾아 고친다(막음은 넘어가지 않음). 발췌는 판단이 아니다 — 원인은 Claude가 정한다.
   고친 뒤 VH_HANDOFF=1이면 다시 인계, 아니면 직접 시험.
-- REVIEW_UNAVAILABLE(Astra 한도·오류·INCOMPLETE): FAIL 원본 diag·로그를 Claude가 직접 grep(실패 섹션 이름으로).
+- 발췌에 실패 줄이 없거나 모자라면: FAIL 원본 diag·로그를 Claude가 직접 grep(실패 섹션 이름으로).
 - 준비 실패·INTERRUPTED·INVALID·결과 누락·시험 단계 오류: PASS 아님. 원인을 고친 뒤 다시 인계하거나 직접 시험.
 - 같은 시험이 검증에서 3번 연속 FAIL이면 루프가 멈춘다.
 
