@@ -1,8 +1,8 @@
-갱신: 2026-10-27 23:08  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 195 진행 중
+갱신: 2026-10-27 23:37  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 195, 계정: 2번, 한도: 없음
-할 일: ⑬ 안개땅 → 다) 거인 유해 채굴: giant_skull·ribs(검은 대리석)·giant_brain(부드러운 조직) 곡괭이 캐기·깨진 조각(_frac) 줍기 → 상자. 절벽 막힘은 지금 규칙(⑬ 메모).
-마지막 시험: 10-27 23:07 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+할 일: ⑬ 안개땅 → 다) [구현 완료·검증 대기, 회차 195 — 커밋 a5cf387 · 시험 vh_mistlandstest(mistlands) PASS 19/19 1번·FAIL 2번(조직 떨굼 해골 안 → 고침·미검증,…
+마지막 시험: (없음)
+Claude가 한 일: LOOP: FAIL vh_mistlandstest 거인 유해 캐기 1/3 통과 — 조직 수정 미확인, 드베르그 기둥 떨굼 못 찾음 E042 원인 미확인
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
