@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HarmonyLib;
 using UnityEngine;
 using ValheimHelper.Core.Work;
 
@@ -17,6 +18,9 @@ namespace ValheimHelper
         static readonly HashSet<ZDOID> s_atBase = new HashSet<ZDOID>();
         /// <summary>설비 정리는 거점 것이라 한 아침에 첫 일꾼 한 명만 한다.</summary>
         static bool s_machinesDone;
+        /// <summary>넘김 시작(밤)에 잡은 위습 수 — 아침 요약에 붙이고 비움.</summary>
+        static int s_wisps;
+        static List<LuredWisp> WispList => AccessTools.StaticFieldRefAccess<List<LuredWisp>>(typeof(LuredWisp), "m_wisps");
 
         /// <summary>시험이 넘김 없이 정산을 부를 때 쓴 마지막 결과(일꾼 이름 → 요약). 시험만 읽음.</summary>
         public static readonly Dictionary<string, string> LastResult = new Dictionary<string, string>();
@@ -38,6 +42,12 @@ namespace ValheimHelper
             foreach (var npc in WorkerNpc.All)
                 if (npc != null && npc.Zdo != null && NightSettle.AtBase(Utils.DistanceXZ(npc.transform.position, npc.Home))) s_atBase.Add(npc.Zdo.m_uid);
             Plugin.Log.LogInfo($"밤사이 정산: 넘김 시작, 거점에 있는 일꾼 {s_atBase.Count}명");
+            // 위습은 낮이 되면 사라지니(LuredWisp m_despawnInDaylight) 아침이 아니라 지금 잡는다 — 쉬는 일꾼 한 명의 거점에서
+            WorkerNpc catcher = WorkerNpc.All.Find(w => w != null && w.Zdo != null && s_atBase.Contains(w.Zdo.m_uid)
+                && (w.Ai.Current == WorkerAI.Mode.Idle || w.Ai.Current == WorkerAI.Mode.Home));
+            if (catcher != null)
+                try { s_wisps += Wisps(catcher.Home); }
+                catch (System.Exception e) { Plugin.Log.LogError($"밤사이 정산 위습 오류: {e}"); }
         }
 
         public static void SettleAll(int day)
@@ -74,6 +84,8 @@ namespace ValheimHelper
                 if (taken > 0) parts.Add(npc.Line("settle.out", new Dictionary<string, string> { ["n"] = taken.ToString() }));
                 if (filled > 0) parts.Add(npc.Line("settle.fill", new Dictionary<string, string> { ["n"] = filled.ToString() }));
                 if (tapped > 0) parts.Add(npc.Line("settle.tap", new Dictionary<string, string> { ["n"] = tapped.ToString() }));
+                if (s_wisps > 0) parts.Add(npc.Line("settle.wisp", new Dictionary<string, string> { ["n"] = s_wisps.ToString() }));
+                s_wisps = 0;
                 if (sap > 0) parts.Add(npc.Line("settle.sap", new Dictionary<string, string> { ["n"] = sap.ToString() }));
                 if (brewed > 0) parts.Add(npc.Line("settle.brew", new Dictionary<string, string> { ["n"] = brewed.ToString() }));
                 if (picked > 0) parts.Add(npc.Line("settle.harvest", new Dictionary<string, string> { ["n"] = picked.ToString() }));
@@ -199,6 +211,54 @@ namespace ValheimHelper
             return got;
         }
 
+        /// <summary>바닐라 RPC_Pick이 떨굴 것(m_amount 배율 + m_extraDrops) — 떨구지 않고 셈만.</summary>
+        static List<KeyValuePair<string, int>> Drops(Pickable p)
+        {
+            var got = new List<KeyValuePair<string, int>>
+            {
+                new KeyValuePair<string, int>(p.m_itemPrefab.name,
+                    p.m_dontScale ? p.m_amount : Mathf.Max(p.m_minAmountScaled, Game.instance.ScaleDrops(p.m_itemPrefab, p.m_amount))),
+            };
+            if (!p.m_extraDrops.IsEmpty())
+                foreach (ItemDrop.ItemData d in p.m_extraDrops.GetDropListItems())
+                    if (d.m_dropPrefab != null) got.Add(new KeyValuePair<string, int>(Utils.GetPrefabName(d.m_dropPrefab), d.m_stack));
+            return got;
+        }
+
+        /// <summary>
+        /// 위습(⑬ 마-2): 거점 125m 안 위습 분수(WispSpawner)에 끌려온 위습(LuredWisp, 분수 m_spawnPoint에서 위습 m_maxLureDistance 안)을
+        /// 맨손 줍기(Pickable)처럼 셈해 상자로(자리가 없으면 상자 앞 땅), 기록은 RPC_SetPicked. 들판의 떠도는 위습은 안 건드림.
+        /// </summary>
+        static int Wisps(Vector3 home)
+        {
+            int got = 0;
+            var spawners = new List<WispSpawner>();
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                WispSpawner sp = col.GetComponentInParent<WispSpawner>();
+                if (sp != null && sp.m_spawnPoint != null && !spawners.Contains(sp)) spawners.Add(sp);
+            }
+            if (spawners.Count == 0) return 0;
+            var chests = Chests.NearBase(home, ChestRole.Mats);
+            foreach (LuredWisp w in new List<LuredWisp>(WispList))
+            {
+                if (w == null || !spawners.Exists(sp => Vector3.Distance(sp.m_spawnPoint.position, w.transform.position) <= w.m_maxLureDistance)) continue;
+                if (!w.TryGetComponent(out Pickable p) || p.m_itemPrefab == null || !w.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                if (!nv.IsOwner()) { Plugin.Log.LogInfo($"밤사이 정산: {w.name} 주인이 다른 컴퓨터라 건너뜀"); continue; }
+                if (nv.GetZDO().GetBool(ZDOVars.s_picked)) continue;
+                var drops = Drops(p);
+                nv.InvokeRPC(ZNetView.Everybody, "RPC_SetPicked", true); // 먼저 주운 것으로: 도중 오류가 나도 두 번 안 나옴
+                foreach (var kv in drops)
+                {
+                    int rest = CraftStep.Put(home, kv.Key, kv.Value);
+                    if (rest > 0) CraftStep.DropAt(chests.Count > 0 ? chests[0] : null, home, kv.Key, rest);
+                    got += kv.Value;
+                }
+            }
+            if (got > 0) Plugin.Log.LogInfo($"밤사이 정산: 위습 {got}");
+            return got;
+        }
+
         /// <summary>
         /// 밭(가4): 거점 가까운 밭(중심이 깃발 125m+반경 안 — 먼 밭은 안 함)의 다 자란 작물을 바닐라 RPC_Pick처럼 셈하되
         /// 땅에 떨구지 않고 상자에(자리가 없으면 상자 앞 땅), 기록은 RPC_SetPicked(작물은 사라짐). 그 자리에 같은 작물을 상자 씨앗으로 다시 심음
@@ -218,14 +278,7 @@ namespace ValheimHelper
                     string grown = Utils.GetPrefabName(p.gameObject);
                     Crop crop = Crops.All.Find(c => c.Grown == grown);
                     Vector3 at = p.transform.position;
-                    var got = new List<KeyValuePair<string, int>>
-                    {
-                        new KeyValuePair<string, int>(p.m_itemPrefab.name,
-                            p.m_dontScale ? p.m_amount : Mathf.Max(p.m_minAmountScaled, Game.instance.ScaleDrops(p.m_itemPrefab, p.m_amount))),
-                    };
-                    if (!p.m_extraDrops.IsEmpty())
-                        foreach (ItemDrop.ItemData d in p.m_extraDrops.GetDropListItems())
-                            if (d.m_dropPrefab != null) got.Add(new KeyValuePair<string, int>(Utils.GetPrefabName(d.m_dropPrefab), d.m_stack));
+                    var got = Drops(p);
                     nv.InvokeRPC(ZNetView.Everybody, "RPC_SetPicked", true); // 먼저 거둔 것으로: 도중 오류가 나도 두 번 안 나옴
                     foreach (var kv in got)
                     {

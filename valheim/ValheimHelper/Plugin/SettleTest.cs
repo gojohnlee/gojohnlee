@@ -12,7 +12,8 @@ namespace ValheimHelper
     /// </summary>
     static class SettleTest
     {
-        static GameObject s_smelter, s_fermenter, s_sap;
+        static GameObject s_smelter, s_fermenter, s_sap, s_lure;
+        static readonly List<GameObject> s_wilds = new List<GameObject>();
         static Core.Work.FarmField s_field;
         const string MeadBase = "MeadBasePoisonResist", Mead = "MeadPoisonResist";
 
@@ -138,6 +139,34 @@ namespace ValheimHelper
             Vector3 claudeAt = claude.transform.position;
             TestRunner.Log($"시작: 1호 나무 {claude.CountItem("Wood")}·돌 {claude.CountItem("Stone")}, 2호 거리 {Utils.DistanceXZ(alarak.transform.position, home):0}m, 하루 {EnvMan.instance.GetDay()}");
 
+            // 위습(⑬ 마-2): 위습 분수 + 끌려온 위습 2(분수 옆) + 떠도는 위습 1(분수 40m) → 넘김 시작(밤)에 끌려온 2만 상자로.
+            // 낮이면 위습이 날아가 사라지니 넘김 직전까지 밤으로 고정(DeathTest 꼴)
+            // 같은 WispSpawner를 쓰는 애쉬랜드 piece_EternalPyre(FaderEmber)가 먼저 잡혀서(회차 201) 줍는 것이 Wisp인 분수만
+            GameObject lurePrefab = ZNetScene.instance.m_prefabs.Find(g => g != null && g.GetComponentInChildren<WispSpawner>()?.m_wispPrefab?.GetComponent<Pickable>()?.m_itemPrefab?.name == "Wisp");
+            GameObject wispPrefab = lurePrefab?.GetComponentInChildren<WispSpawner>().m_wispPrefab;
+            checks.Add($"위습 분수·위습 프리팹 있음 ({lurePrefab?.name}, {wispPrefab?.name}, 줍기 {wispPrefab?.GetComponent<Pickable>()?.m_itemPrefab?.name})",
+                wispPrefab != null && wispPrefab.GetComponent<Pickable>()?.m_itemPrefab != null);
+            if (wispPrefab == null || wispPrefab.GetComponent<Pickable>()?.m_itemPrefab == null) { End(player, god, checks, onHeard, heard); yield break; }
+            EnvMan env = EnvMan.instance;
+            bool debugTime = env.m_debugTimeOfDay;
+            float debugValue = env.m_debugTime;
+            env.m_debugTimeOfDay = true;
+            env.m_debugTime = 0.9f;
+            s_lure = Object.Instantiate(lurePrefab, GatherTest.Ground(home + rot * new Vector3(-8f, 0f, -6f)), rot);
+            yield return new WaitForSeconds(0.5f);
+            Vector3 lureAt = s_lure.GetComponentInChildren<WispSpawner>().m_spawnPoint.position;
+            Pickable wp = wispPrefab.GetComponent<Pickable>();
+            string wispItem = wp.m_itemPrefab.name;
+            var lured = new List<GameObject>();
+            for (int i = 0; i < 2; i++) lured.Add(Object.Instantiate(wispPrefab, lureAt + rot * new Vector3(i * 1.5f - 0.75f, 0.5f, 0f), Quaternion.identity));
+            s_wilds.Add(Object.Instantiate(wispPrefab, lureAt + rot * new Vector3(0f, 2f, 40f), Quaternion.identity));
+            s_wilds.AddRange(lured);
+            int wispMade = 2 * (wp.m_dontScale ? wp.m_amount : Mathf.Max(wp.m_minAmountScaled, Game.instance.ScaleDrops(wp.m_itemPrefab, wp.m_amount)));
+            int wispBefore = GatherTest.CountBase(home, wispItem);
+            yield return new WaitForSeconds(1f);
+            env.m_debugTimeOfDay = debugTime;
+            env.m_debugTime = debugValue;
+
             // 실제 잠자기 넘김
             EnvMan.instance.SkipToMorning();
             float t = 0f;
@@ -182,6 +211,12 @@ namespace ValheimHelper
             int sapNow = GatherTest.CountBase(home, sapItem);
             checks.Add($"수액 → 상자 ({sapNow - sapBefore}/{sapMade}, 짐 {claude.CountItem(sapItem)}, 남은 칸 {sapz.GetInt(ZDOVars.s_level)})",
                 sapNow - sapBefore == sapMade && claude.CountItem(sapItem) == 0 && sapz.GetInt(ZDOVars.s_level) == 0);
+
+            // 위습: 끌려온 2만 상자로(떠도는 것은 안 셈), 끌려온 위습은 주운 것(사라짐 또는 s_picked)
+            int wispNow = GatherTest.CountBase(home, wispItem);
+            int luredLeft = lured.FindAll(g => g != null && g.TryGetComponent(out ZNetView lnv) && lnv.IsValid() && !lnv.GetZDO().GetBool(ZDOVars.s_picked)).Count;
+            checks.Add($"끌려온 위습 → 상자 ({wispNow - wispBefore}/{wispMade}, 짐 {claude.CountItem(wispItem)}, 안 주운 것 {luredLeft})",
+                wispNow - wispBefore == wispMade && claude.CountItem(wispItem) == 0 && luredLeft == 0);
 
             // 밭: 당근이 상자로(땅·짐 아님), 다 자란 것 없어짐, 씨앗 1로 한 자리만 다시 심음
             int carrotNow = GatherTest.CountBase(home, "Carrot");
@@ -231,6 +266,10 @@ namespace ValheimHelper
             s_fermenter = null;
             if (s_sap != null) ZNetScene.instance.Destroy(s_sap);
             s_sap = null;
+            if (s_lure != null) ZNetScene.instance.Destroy(s_lure);
+            s_lure = null;
+            foreach (var w in s_wilds) if (w != null && w.TryGetComponent(out ZNetView wnv) && wnv.IsValid()) ZNetScene.instance.Destroy(w);
+            s_wilds.Clear();
             if (s_field != null)
             {
                 // 시험 밭의 새싹·작물을 지우고 밭 기록도 지움
