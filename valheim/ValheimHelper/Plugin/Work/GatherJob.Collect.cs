@@ -40,6 +40,7 @@ namespace ValheimHelper
             ZDOID dropId = drop.TryGetComponent(out ZNetView dv) && dv.IsValid() ? dv.GetZDO().m_uid : ZDOID.None;
             bool hand = !dropId.IsNone() && dropId == m_handDrop;
             float reach = hand ? HandWalk : 1.2f;
+            if (!hand && !dropId.IsNone() && m_stepTime > WalledWait && m_wallChecked != dropId && !m_npc.InInterior() && WalledIn(drop, dropId)) return true;
             if (Walk(dt, dp, reach) || InteriorNav.Reached(m_npc.transform.position, dp, hand ? HandWalk + 0.3f : 1.6f))
             {
                 if (!hand) Pick(drop);
@@ -53,7 +54,49 @@ namespace ValheimHelper
                 if (!hand) { m_handDrop = dropId; Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼까지 묘지 안 길 없음 → 손 닿는 거리({HandWalk:0.0}m)까지만"); }
                 else { Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼 손 닿는 거리까지도 길 없음 → 건너뜀"); m_dropSkip.Add(dropId); }
             }
+            else if (hand && m_stepTime > WalledWait * 2f && !m_npc.InInterior())
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼 손 닿는 거리까지도 못 감 → 건너뜀");
+                m_dropSkip.Add(dropId);
+            }
             return true;
+        }
+
+        /// <summary>바깥에서 떨굼을 이만큼(초) 줍지 못하면 막혔는지 본다(WalledIn).</summary>
+        const float WalledWait = 10f;
+        /// <summary>막혔는지 본 떨굼(떨굼마다 한 번).</summary>
+        ZDOID m_wallChecked;
+
+        /// <summary>
+        /// ⑬ 다) 바깥 떨굼까지 걸어서 못 감(회차 195: 거인 해골 안 뇌 giant_brain_frac의 부드러운 조직이 해골 벽 안쪽 땅에 떨어져 27초씩 벽에 막힘).
+        /// 몸에서 떨굼까지 가린 것이 지금 연장으로 캘 수 있는 자원(해골 giant_skull_frac 등)이면 그것부터 캔다(대상 바꿈, 떨굼은 다음 Collect가 다시 고름).
+        /// 아니면 손 닿는 거리(HandWalk)까지만 가 보고, 그래도 안 되면 그 떨굼은 건너뜀(지하묘지 안과 같은 길). true = 이번 프레임 처리함.
+        /// </summary>
+        bool WalledIn(ItemDrop drop, ZDOID dropId)
+        {
+            m_wallChecked = dropId;
+            if (s_sightMask == 0) s_sightMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle");
+            Vector3 from = m_npc.transform.position + Vector3.up, to = drop.transform.position + Vector3.up * 0.2f;
+            string what = "없음";
+            if (Physics.Linecast(from, to, out RaycastHit h, s_sightMask, QueryTriggerInteraction.Ignore))
+            {
+                ZNetView v = h.collider.GetComponentInParent<ZNetView>();
+                ZDO z = v != null && v.IsValid() ? v.GetZDO() : null;
+                ResourceInfo info = z != null && !m_skip.Contains(z.m_uid) ? ResourceCatalog.Get(z.GetPrefab()) : null;
+                ItemDrop.ItemData tool = info != null && info.Tool != ToolKind.None && info.Tool != ToolKind.Hunt ? WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) : null;
+                what = $"{h.collider.name}({(z != null ? Utils.GetPrefabName(v.gameObject) : "-")})";
+                if (tool != null && (info.MinToolTier <= 0 || info.MinToolTier <= tool.m_shared.m_toolTier))
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼({Utils.DistanceXZ(drop.transform.position, m_npc.transform.position):0.0}m, 높이차 {drop.transform.position.y - m_npc.transform.position.y:0.0})을 {info.Prefab}가 가림 → 그것부터 캠");
+                    m_wallChecked = ZDOID.None; // 캔 뒤 같은 떨굼을 다시 보면 그 뒤에 걸린 것도 본다
+                    Aim(z, info);
+                    Go(Step.Approach);
+                    return true;
+                }
+            }
+            m_handDrop = dropId;
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼까지 {m_stepTime:0}초 못 감(높이차 {drop.transform.position.y - m_npc.transform.position.y:0.0}, 가림 {what}) → 손 닿는 거리({HandWalk:0.0}m)까지만");
+            return false;
         }
 
         /// <summary>걸어서 못 닿는 떨굼(지하묘지 안)은 이 수평 거리까지 다가가 손으로 줍는다(눈에서 HandReach 안·보일 때).</summary>

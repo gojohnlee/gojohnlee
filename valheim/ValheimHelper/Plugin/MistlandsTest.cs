@@ -13,7 +13,7 @@ namespace ValheimHelper
     /// </summary>
     static class MistlandsTest
     {
-        public static void Register() => TestRunner.Register("vh_mistlandstest", "안개땅 자료 시험", () => Run(), 90f);
+        public static void Register() => TestRunner.Register("vh_mistlandstest", "안개땅 자료 시험", () => Run(), 1200f);
 
         static IEnumerator Run()
         {
@@ -70,14 +70,16 @@ namespace ValheimHelper
             checks.Add("안개땅 적 프리팹(시커·진드기·걀) 있음",
                 ZNetScene.instance.GetPrefab("Seeker") != null && ZNetScene.instance.GetPrefab("Tick") != null && ZNetScene.instance.GetPrefab("Gjall") != null);
             checks.Add("안개땅 토박이 적에 시커가 있음", Departures.NativeTo("Seeker", (int)Heightmap.Biome.Mistlands));
-            if (TestKit.RunBiome == Heightmap.Biome.Mistlands) Site(w, checks);
+            if (TestKit.RunBiome != Heightmap.Biome.Mistlands) yield break;
+            Vector3? giant = Site(w, checks);
+            if (giant != null) yield return Mine(w, checks, giant.Value);
         }
 
         /// <summary>
         /// ⑬ 나) 안개땅 자리(VH_BIOME=mistlands): TestKit이 찾은 자리가 안개땅이고 둘레에 거인 유해가 있는지,
         /// 시야(Senses.Look — ZDO 거리 40m라 안개와 무관)로 그 유해의 검은 대리석·부드러운 조직이 지식에 적히는지.
         /// </summary>
-        static void Site(TestKit.World w, GatherTest.Checks checks)
+        static Vector3? Site(TestKit.World w, GatherTest.Checks checks)
         {
             var biome = WorldGenerator.instance.GetBiome(w.Home);
             checks.Add($"시험 자리가 안개땅 (바이옴 {biome})", biome == Heightmap.Biome.Mistlands);
@@ -98,7 +100,7 @@ namespace ValheimHelper
             foreach (var kv in kinds) parts.Add(kv.Key + " " + kv.Value);
             TestRunner.Log($"안개땅 자리 150m 안 자원: {string.Join(", ", parts.ToArray())}");
             checks.Add($"150m 안에 거인 유해 ({count}개, 가장 가까운 {(giant == null ? "-" : best.ToString("0") + "m")})", giant != null);
-            if (giant == null) return;
+            if (giant == null) return null;
             Vector3 g = giant.GetPosition();
             Vector3 eye = g + (w.Home - g).normalized * 30f; // 유해에서 30m 떨어진 곳(시야 40m 안)
             Senses.Look(eye);
@@ -106,6 +108,61 @@ namespace ValheimHelper
             bool known = mem != null && (mem.Items.ContainsKey("BlackMarble") || mem.Items.ContainsKey("Softtissue"));
             checks.Add("안개 속 30m에서 본 거인 유해가 지식에 적힘", known);
             checks.Add("가 본 곳 바이옴에 안개땅이 적힘", Brain.Get().KnowsBiome((int)Heightmap.Biome.Mistlands));
+            return g;
         }
+
+        static readonly string[] MineGear = { "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
+
+        /// <summary>
+        /// ⑬ 다) 거인 유해 채굴: 단계 맞는 곡괭이·평원 장비로 "!BlackMarble 5"·"!Softtissue 3" → 거인 유해(giant_ribs·skull·brain)를 캐고
+        /// 깨진 조각(_frac)의 떨굼을 주워 거점 상자에. 시험 동안 거점과 가장 가까운 유해 둘레 생물은 치운다(싸움은 라) 조각).
+        /// </summary>
+        static IEnumerator Mine(TestKit.World w, GatherTest.Checks checks, Vector3 giant)
+        {
+            int tier = 0;
+            foreach (var z in Senses.Nearby(w.Home, 150f, z => ResourceCatalog.Get(z.GetPrefab()) != null))
+            {
+                ResourceInfo info = ResourceCatalog.Get(z.GetPrefab());
+                if (info.Produces.Contains("BlackMarble") || info.Produces.Contains("Softtissue")) tier = Mathf.Max(tier, info.MinToolTier);
+            }
+            string pick = null;
+            foreach (string n in new[] { "PickaxeAntler", "PickaxeBronze", "PickaxeIron", "PickaxeBlackMetal" })
+                if (pick == null && (ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_toolTier ?? -1) >= tier) pick = n;
+            TestRunner.Log($"거인 유해 곡괭이 단계 {tier} → {pick ?? "없음"}");
+            checks.Add("거인 유해에 맞는 곡괭이 있음", pick != null);
+            if (pick == null || w.Floki == null || w.Chest == null) yield break;
+            foreach (var npc in new[] { w.Ragnar, w.Floki })
+            {
+                foreach (var n in MineGear) npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+                for (int i = 0; i < 2; i++) npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(pick), 1);
+                Prep.WearBest(npc);
+                var food = new Inventory("vh_test_food", null, 4, 2);
+                foreach (var n in new[] { "CookedLoxMeat", "Sausages", "SerpentStew" }) food.AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+                npc.ResetMeals();
+                npc.EatFrom(food);
+                npc.Heal(1000f, false);
+            }
+            s_keep = true;
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(w.Home, () => s_keep));
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(giant, () => s_keep));
+            try
+            {
+                TestKit.ClearBaseStock(w, "BlackMarble", "Softtissue");
+                int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths;
+                GatherTest.Say("!BlackMarble 5", null);
+                yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "BlackMarble") >= 5, 420f);
+                checks.Add($"검은 대리석 5개가 상자에 ({GatherTest.CountBase(w.Home, "BlackMarble")}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
+                GatherTest.Say("!Softtissue 3", null);
+                yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "Softtissue") >= 3, 420f);
+                checks.Add($"부드러운 조직 3개가 상자에 ({GatherTest.CountBase(w.Home, "Softtissue")}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                checks.Add("안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                TestRunner.Log($"유해 둘레 치운 생물 {TestKit.KeptClear}");
+                TestKit.ClearBaseStock(w, "BlackMarble", "Softtissue");
+            }
+            finally { s_keep = false; }
+        }
+
+        static bool s_keep;
     }
 }
