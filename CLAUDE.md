@@ -4,6 +4,7 @@
 - 사용자는 md·txt를 직접 안 읽음(history.md만 가끔) → 안내는 대화에 바로. GitHub는 웹(PC·휴대폰)으로 봄 → 사람이 읽을 파일은 휴대폰에서도 읽히는 마크다운,
   결과물은 대화에 파일로 + 링크 https://github.com/gojohnlee/gojohnlee/blob/valheim/<경로>.
 - 목표: 버그 없고 매끄럽게, **토큰 최소**(10-27: 턴마다 대화 전체를 다시 읽으니 턴 수·읽는 양을 줄임 — 명령은 묶고, 출력은 짧게, 파일은 grep으로 필요한 부분만).
+  큰 파일(codemap·decisions·concept·history·스크립트·로그)은 통째로 Read·cat·긴 sed 금지 → grep -n(-A/-B로 앞뒤), 고칠 땐 그 절만. 게임 로그는 `bash scripts/vh-log.sh [줄수] [패턴]`.
   토큰·비용 건의·문의엔 docs/valheim/token-report.md(실측, PC에서 scripts/vh-token-report.ps1)의 수치와 만든 날짜로 답하고, 측정 없는 건 추정이라 밝힌다.
   사용자는 개입하지 않음 → 스스로 진행, 새 게임플레이 결정만 묻는다.
 - 새 세션은 기억이 없음 → 상태는 docs/valheim/progress.txt, 결정은 decisions.txt 맞는 절(어긋나는 옛 줄은 지우고 구상서·설계서·codemap도 맞춤).
