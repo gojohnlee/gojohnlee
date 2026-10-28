@@ -17,9 +17,10 @@ namespace ValheimHelper
     static class FrostCaveTest
     {
         /// <summary>시험 종류: 서리 동굴(산) 또는 감염된 광산(⑬ 바), 안개땅 — 같은 몸, 위치·물건만 다름).</summary>
-        sealed class Kind { public string Label, Item, ItemKo; public System.Func<ZoneSystem.ZoneLocation, bool> Pick; }
+        sealed class Kind { public string Label, Item, ItemKo; public Heightmap.Biome Biome; public System.Func<ZoneSystem.ZoneLocation, bool> Pick; }
         static readonly Kind Cave = new Kind { Label = "동굴", Item = "Crystal", ItemKo = "수정", Pick = l => l.m_prefabName.Contains("Cave") && (l.m_biome & Heightmap.Biome.Mountain) != 0 };
-        static readonly Kind Mine = new Kind { Label = "광산", Item = "BlackCore", ItemKo = "검은 핵", Pick = l => l.m_prefabName.Contains("DvergrTown") };
+        static readonly Kind Mine = new Kind { Label = "광산", Item = "BlackCore", ItemKo = "검은 핵", Biome = Heightmap.Biome.Mistlands, Pick = l => l.m_prefabName.Contains("DvergrTown") };
+        static readonly Kind Morgen = new Kind { Label = "모르겐 굴", Item = "MoltenCore", ItemKo = "용융 핵", Biome = Heightmap.Biome.AshLands, Pick = l => l.m_prefabName.Contains("MorgenHole") };
         static Kind s_kind = Cave;
         /// <summary>⑬ 바-4: 일꾼이 광산에 들어가면 앞에 시커·진드기를 세운다(플레이어가 전에 스포너를 깨운 꼴 — 스포너는 플레이어 60m 안에서만 낳음).</summary>
         static bool s_foe;
@@ -29,6 +30,7 @@ namespace ValheimHelper
             TestRunner.Register("vh_frostcavetest", "서리 동굴 내용 확인 시험", () => { s_kind = Cave; s_foe = false; return TestKit.Flat(Run()); });
             TestRunner.Register("vh_minetest", "감염된 광산(안개땅) 검은 핵 시험", () => { s_kind = Mine; s_foe = false; return TestKit.Flat(Run()); });
             TestRunner.Register("vh_minefoetest", "감염된 광산 안 시커·진드기 만남 시험", () => { s_kind = Mine; s_foe = true; return TestKit.Flat(Run()); });
+            TestRunner.Register("vh_morgentest", "애쉬랜드 모르겐 굴 용융 핵 시험", () => { s_kind = Morgen; s_foe = false; return TestKit.Flat(Run()); });
         }
 
         static IEnumerator Run()
@@ -61,7 +63,7 @@ namespace ValheimHelper
 
             var k = s_kind;
             var caves = ZoneSystem.instance.m_locations.Where(l => l.m_prefabName != null &&
-                (k == Cave ? l.m_prefabName.Contains("Cave") : (l.m_biome & Heightmap.Biome.Mistlands) != 0)).ToList();
+                (k == Cave ? l.m_prefabName.Contains("Cave") : (l.m_biome & k.Biome) != 0)).ToList();
             TestRunner.Log($"{(k == Cave ? "Cave" : "안개땅")} 위치 이름: " + string.Join(", ", caves.Select(l => $"{l.m_prefabName}({l.m_biome}{(l.m_enable ? "" : ",꺼짐")})").Distinct()));
             string name = caves.Where(l => l.m_enable && k.Pick(l))
                 .Select(l => l.m_prefabName).OrderByDescending(n => n).FirstOrDefault();
@@ -76,9 +78,9 @@ namespace ValheimHelper
             if (!spawned) yield break;
             yield return new WaitForSeconds(4f);
             // 받침 없는 작은 배치가 나오면(회차 210: 115개 17종, 검은 핵 0) 지우고 다시 세움 — 배치는 세울 때마다 무작위
-            for (int retry = 0; retry < 3 && k == Mine && !Dungeons.All(k.Item).Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Left > 0); retry++)
+            for (int retry = 0; retry < 3 && k != Cave && !Dungeons.All(k.Item).Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Left > 0); retry++)
             {
-                TestRunner.Log($"검은 핵 없는 배치 → 지우고 다시 세움 ({retry + 1})");
+                TestRunner.Log($"{k.ItemKo} 없는 배치 → 지우고 다시 세움 ({retry + 1})");
                 CryptTest.Cleanup(before, pos);
                 yield return new WaitForSeconds(1f);
                 ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);

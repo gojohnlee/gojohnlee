@@ -20,6 +20,7 @@ namespace ValheimHelper
         /// <summary>산 서리 동굴 안 자원이 내는 물건(회차 163 vh_frostcavetest: 수정 더미·붉은 황마 천·늑대 털 걸개). 바깥 열쇠 문이 없어 늘 열림.</summary>
         static readonly string[] CaveItems = { "Crystal", "JuteRed", "WolfHairBundle" };
         static readonly string[] MineItems = { "BlackCore" }; // ⑬ 바) 안개땅 감염된 광산 안 Pickable_BlackCoreStand
+        static readonly string[] MorgenItems = { "MoltenCore" }; // ⑭ 마-2) 애쉬랜드 모르겐 굴(MorgenHole) 안 Pickable_MoltenCoreStand(회차 227: 바깥엔 없음)
         const float DoorRange = 30f;
         /// <summary>안의 물체를 이 지하묘지 것으로 세는 거리(xz). 안은 묘지 구역 한 칸(64m) 상자 안에 생긴다(DungeonGenerator m_zoneSize).</summary>
         const float InteriorRange = 100f;
@@ -43,13 +44,15 @@ namespace ValheimHelper
         static bool IsCave(string name) => name.Contains("MountainCave");
         /// <summary>안개땅 감염된 광산(드베르그 마을 입구 위치). 열쇠 문 없음으로 본다(vh_minetest가 바깥 문을 적음).</summary>
         static bool IsMine(string name) => name.Contains("DvergrTown");
-        static bool NoKey(string name) => IsCave(name) || IsMine(name);
+        /// <summary>애쉬랜드 모르겐 굴. 열쇠 문 없음으로 본다(vh_morgentest가 바깥 문을 적음).</summary>
+        static bool IsMorgen(string name) => name.Contains("MorgenHole");
+        static bool NoKey(string name) => IsCave(name) || IsMine(name) || IsMorgen(name);
 
-        /// <summary>그 물건은 던전 안에서만 난다(고철 = 늪 지하묘지, 수정·붉은 황마·늑대 털 = 산 서리 동굴, 검은 핵 = 안개땅 감염된 광산) → 일꾼은 던전으로 들어가 캔다.</summary>
-        public static bool InsideOnly(string item) => item == ScrapItem || System.Array.IndexOf(CaveItems, item) >= 0 || System.Array.IndexOf(MineItems, item) >= 0;
+        /// <summary>그 물건은 던전 안에서만 난다(고철 = 늪 지하묘지, 수정·붉은 황마·늑대 털 = 산 서리 동굴, 검은 핵 = 안개땅 감염된 광산, 용융 핵 = 애쉬랜드 모르겐 굴) → 일꾼은 던전으로 들어가 캔다.</summary>
+        public static bool InsideOnly(string item) => item == ScrapItem || System.Array.IndexOf(CaveItems, item) >= 0 || System.Array.IndexOf(MineItems, item) >= 0 || System.Array.IndexOf(MorgenItems, item) >= 0;
 
         /// <summary>그 위치 종류(이름) 안에서 그 물건이 나나.</summary>
-        static bool Yields(string name, string item) => IsCave(name) ? System.Array.IndexOf(CaveItems, item) >= 0 : IsMine(name) ? System.Array.IndexOf(MineItems, item) >= 0 : item == ScrapItem;
+        static bool Yields(string name, string item) => IsCave(name) ? System.Array.IndexOf(CaveItems, item) >= 0 : IsMine(name) ? System.Array.IndexOf(MineItems, item) >= 0 : IsMorgen(name) ? System.Array.IndexOf(MorgenItems, item) >= 0 : item == ScrapItem;
 
         /// <summary>던전 위치 이름 해시 → 이름: 늪 지하묘지("SunkenCrypt…" 또는 늪에 놓이는 "…Crypt…")와 산 서리 동굴("MountainCave…").</summary>
         static Dictionary<int, string> DungeonNames()
@@ -60,7 +63,7 @@ namespace ValheimHelper
             {
                 string n = loc.m_prefabName;
                 if (string.IsNullOrEmpty(n)) continue;
-                if (n.Contains("SunkenCrypt") || (n.Contains("Crypt") && loc.m_biome == Heightmap.Biome.Swamp) || IsCave(n) || IsMine(n))
+                if (n.Contains("SunkenCrypt") || (n.Contains("Crypt") && loc.m_biome == Heightmap.Biome.Swamp) || IsCave(n) || IsMine(n) || IsMorgen(n))
                     map[n.GetStableHashCode()] = n;
             }
             if (map.Count > 0) s_names = map;
