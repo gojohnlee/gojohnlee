@@ -40,6 +40,16 @@ public class SpeechTests
     public void UnknownKeyReturnsKey() => Assert.Equal("nope", new Speech().Say(Personality.Ragnar, "nope"));
 
     [Fact]
+    public void WorkLinesHaveThreeWays()
+    {
+        // 대사 늘리기 가)(회차 256): 자주 듣는 일 대사는 셋 이상으로 돌려 말한다
+        var keys = new[] { "bagFull", "craft.missingGather", "craft.missingDone", "setEmpty", "prepOnce", "prepKeep", "prepOff", "prepNoChest", "prepShort",
+            "craft.farm", "farmNoField", "preyWaitGuard", "depart.noCrypt", "escort.noMate" };
+        foreach (var p in new[] { Personality.Ragnar, Personality.Floki })
+            foreach (var k in keys) Assert.True(Speech.Options(p, k).Length >= 3, p + " " + k);
+    }
+
+    [Fact]
     public void BothPersonalitiesHaveSameKeys()
     {
         foreach (var key in new[] { "spawn", "escort", "escort.far", "raid", "stop", "home", "moveBase", "lost", "status", "notYet", "onlyBang", "state.idle", "state.follow", "state.home", "state.work", "gatherStart", "gatherKnown", "gatherDone", "dropJob", "searching", "noTool", "toolTooWeak", "toolBroke", "notFound", "noChest", "chestFull", "chestBusy", "chestAny", "bagFull" })

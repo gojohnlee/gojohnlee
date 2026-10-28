@@ -77,8 +77,8 @@ namespace ValheimHelper
                 t += 1f;
             }
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
-            string bagFull = claude.Line("bagFull");
-            checks.Add($"넣을 데가 없으면 알리고 끝냄 ({t:0}초)", claude.Ai.Current != WorkerAI.Mode.Work && heard.Exists(h => h.EndsWith(bagFull)));
+            var bagFull = Core.Npc.Speech.Options(claude.Personality, "bagFull");
+            checks.Add($"넣을 데가 없으면 알리고 끝냄 ({t:0}초)", claude.Ai.Current != WorkerAI.Mode.Work && heard.Exists(h => System.Array.Exists(bagFull, b => h.EndsWith(b))));
             checks.Add($"나무 그대로 (들고 {claude.CountItem("Wood")}/{carried}, 상자 {GatherTest.CountBase(home, "Wood")}/{inChest})",
                 claude.CountItem("Wood") == carried && GatherTest.CountBase(home, "Wood") == inChest);
             GatherTest.Say("!멈춰", null);
