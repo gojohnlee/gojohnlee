@@ -46,11 +46,12 @@ E034 / 관찰 중 — vh_bowtest 사슴이 비탈 위(8m 높이·23~29m)에 서 
   확인된 사실: 실제 화살 속력 35·저항(m_drag) 0 = 계산값과 같음. 바닐라는 쏠 때 ±(활+화살 m_projectileAccuracy, 당김 비율) 도 만큼 무작위로 틀어진다(Attack.cs). 고친 뒤 bowtest 단독 묶음 2번 PASS.
   다음 확인: 다시 나오면 같은 DIAG(실제 화살 속도·저항 줄)와 사라진 자리 바로 아래 땅 높이 — 비탈에 박히는 것이면 가리는지 볼 때(Linecast) 화살 궤적 몇 점을 함께 본다.
 
-E036 / 조사 중(2회) — vh_fulingtest 풀링은 잡았는데 "떨군 고철을 주워 상자에 (0개, 120초)" FAIL(12/13)
+E036 / 조사 중(3회) — vh_fulingtest 풀링은 잡았는데 "떨군 고철을 주워 상자에 (0개, 120초)" FAIL(12/13)
   증상·조건: plainstest→tartest→fulingtest 묶음 셋째, VH_BIOME=plains. 잡음(6초) → Collect 15초(LootWait) 기다려도 사냥감 자리 14m 안에 고철 없음 → 구역 찾기만 되풀이. 고철 떨굼은 시험이 100%로 맞춤.
   근거: 회차 181 1회(GatherJob 쪼개기 빌드 — 줄 내용 그대로라 무관). 같은 묶음 다시 3/3, 단독 13/13.
   확인된 사실: 떨굼은 쓰러진 몸(Ragdoll)이 m_ttl 뒤 사라질 때 나옴 → 15초 넘게 늦었거나 몸이 굴러 14m 밖에 떨궜을 수 있음. 끝 정리 때 땅 물건 2개.
         + 회차 190 2회(평원 묶음 셋째 plains→squito→fuling, VH_BIOME=plains): 20초에 잡음, 120초 0개. 끝 정리 때 BlackMetalScrap 3·Coins 5가 거점 50m에 남음(떨굼은 나왔는데 못 주움). DIAG 줄은 LogOutput이 다음 실행에 덮여 못 봄.
+        + 회차 218 3회(평원 묶음 셋째 plains→squito→fuling, VH_BIOME=plains, 14/15): 226초 걸림, 다음 실행이 LogOutput을 덮어 DIAG 줄 또 못 봄 → 다시 나오면 재실행 전에 vh-log.sh로 먼저 볼 것. 단독 15/15.
   다음 확인: 다시 나오면 "DIAG 떨굼 못 찾음" 줄(회차 181에 넣음: 40m 안 같은 물건 거리·높이, 남은 쓰러진 몸 수)로 늦음인지 멂인지 본다.
 
 E037 / 관찰 중 — vh_coppertest 기본 자리(VH_BIOME 없음)에서 "위험 알림 도망 뒤 거점 12m 광맥으로 돌아와 다시 캠" FAIL(13/14)
