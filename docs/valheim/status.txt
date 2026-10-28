@@ -1,8 +1,8 @@
-갱신: 2026-10-28 13:14  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 222 진행 중
+갱신: 2026-10-28 13:20  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 222, 계정: 2번, 한도: 없음
-할 일: ⑭ 애쉬랜드 → 나) 애쉬랜드 자리 채집: VH_BIOME=ashlands에서 !Grausten·!Blackwood(지금 GatherJob 그대로 되는지), 탄 해골 생성기(Spawner_CharredStone 60…
-마지막 시험: 10-28 13:12 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+할 일: ⑭ 애쉬랜드 → 다) 용암 피하기: 길·걸음에서 Heightmap.IsLava 칸을 피함(타르 TarAhead 꼴), 용암 있는 자리 찾기 시험(지금 자리는 100m 안 용암 0칸 — 더 찾아야 함).
+마지막 시험: 10-28 13:19 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE ⑭ 나) 애쉬랜드 채집(그라우스텐·검은나무) vh_ashlandstest PASS 16/16
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
