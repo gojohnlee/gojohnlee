@@ -98,6 +98,26 @@ namespace ValheimHelper
             checks.Add("겪은 쪽이 받음", TestKit.Ok);
             yield return new WaitForSeconds(3f);
 
+            // 2-1) 보스 쓰러짐(월드 키가 새로 켜짐) → 반응, 날씨(젖는 날씨로 강제) → 반응. 둘 다 끝에 되돌림
+            WorkerBanter.ResetForTest(false);
+            yield return new WaitForSeconds(2f); // 보스 키 첫 확인(켤 때 있던 건 셈 안 함)
+            WorkerBanter.SaidKeys.Clear();
+            string bossKey = null;
+            foreach (var kv in Unlocks.BossNames() ?? new Dictionary<string, string>())
+                if (!ZoneSystem.instance.GetGlobalKey(kv.Key)) { bossKey = kv.Key; break; }
+            if (bossKey != null) ZoneSystem.instance.SetGlobalKey(bossKey);
+            yield return TestKit.WaitFor(() => WorkerBanter.SaidKeys.Exists(k => k.EndsWith(":bt.ev.boss.react")), 8f);
+            checks.Add($"보스 쓰러짐 반응 ({bossKey}, {string.Join(", ", WorkerBanter.SaidKeys.ToArray())})", bossKey != null && TestKit.Ok);
+            if (bossKey != null) ZoneSystem.instance.RemoveGlobalKey(bossKey);
+            yield return new WaitForSeconds(5f);
+            WorkerBanter.SaidKeys.Clear();
+            var wet = EnvMan.instance.m_environments.Find(e => e != null && e.m_isWet);
+            if (wet != null) EnvMan.instance.SetForceEnvironment(wet.m_name);
+            yield return TestKit.WaitFor(() => WorkerBanter.SaidKeys.Exists(k => k.Contains(":bt.ev.weather.") && k.EndsWith(".react")), 15f);
+            checks.Add($"비 오면 날씨 반응 ({wet?.m_name}, {string.Join(", ", WorkerBanter.SaidKeys.ToArray())})", wet != null && TestKit.Ok);
+            EnvMan.instance.SetForceEnvironment("");
+            yield return new WaitForSeconds(5f);
+
             // 3) 상대가 멀리 있을 때 죽음 → 바로 반응 없음 → 돌아와 다음 잡담에 소식
             WorkerBanter.ResetForTest(false);
             WorkerBanter.SaidKeys.Clear();

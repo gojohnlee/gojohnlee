@@ -5,7 +5,7 @@ using ValheimHelper.Core.Work;
 namespace ValheimHelper.Core.Npc
 {
     /// <summary>잡담 거리가 되는 일 (사용자 결정 2026-10-23 "잡담").</summary>
-    public enum BanterEvent { Died, Failed, Haul, Rescued, SkillUp, Fled, Raid, Biome, Back }
+    public enum BanterEvent { Died, Failed, Haul, Rescued, SkillUp, Fled, Raid, Biome, Back, Boss, Weather }
 
     /// <summary>
     /// 잡담에 쓸 기억. 플러그인이 장소 기억·지식·스킬·밭에서 그때그때 채운다. 없는 칸(null)의 주제는 고르지 않는다.
@@ -115,6 +115,8 @@ namespace ValheimHelper.Core.Npc
         public const double IntervalMin = 100, IntervalMax = 140;
         public const double NewsKeep = 600;
         public const double EventCooldown = 60;
+        /// <summary>날씨 반응은 5분에 한 번(너무 자주 말하지 않게, 사용자 10-28).</summary>
+        public const double WeatherCooldown = 300;
         /// <summary>반응 바로 뒤 잡담이 겹치지 않게 미루는 시간.</summary>
         public const double AfterEvent = 30;
         const int RecentTopics = 4, MaxNews = 5;
@@ -143,6 +145,20 @@ namespace ValheimHelper.Core.Npc
 
         public static string EventKey(BanterEvent e) => "bt.ev." + e.ToString().ToLowerInvariant();
 
+        static string EventKey(BanterEvent e, IDictionary<string, string> args) =>
+            e == BanterEvent.Weather && args != null && args.TryGetValue("kind", out string k) ? EventKey(e) + "." + k : EventKey(e);
+
+        /// <summary>
+        /// 날씨 종류: 젖음(EnvSetup.m_isWet)이면 rain(이름에 storm이 있으면 storm), 눈 쌓임(m_snowBuildup &gt; 0)이면 snow,
+        /// 그 밖은 앞이 rain·storm·snow였을 때만 clear(갬). 말할 거리가 없으면 null.
+        /// </summary>
+        public static string WeatherKind(bool wet, bool snow, string name, string prev)
+        {
+            if (wet) return name != null && name.IndexOf("storm", StringComparison.OrdinalIgnoreCase) >= 0 ? "storm" : "rain";
+            if (snow) return "snow";
+            return prev == "rain" || prev == "storm" || prev == "snow" ? "clear" : null;
+        }
+
         /// <summary>
         /// 일이 생겼다. subject = 겪은 NPC 자리, args = 그 일의 인자(아래 bt.ev.* 대사가 쓰는 것: haul {item}{n}, skillup {skill}{level}, fled {foe}, biome {biome}).
         /// partnerNear면 상대가 바로 반응하고 겪은 쪽이 받는다. 아니면 소식으로 들고 있는다. 같은 종류는 60초에 한 번.
@@ -150,7 +166,9 @@ namespace ValheimHelper.Core.Npc
         public List<BanterLine> OnEvent(double now, int subject, BanterEvent e, IDictionary<string, string> args, bool partnerNear, string[] names)
         {
             var lines = new List<BanterLine>();
-            if (_lastEvent.TryGetValue(e, out double last) && now - last < EventCooldown) return lines;
+            bool weather = e == BanterEvent.Weather;
+            if (weather && !partnerNear) return lines; // 날씨는 곁에서 같이 볼 때만(지난 날씨는 소식 거리가 아님)
+            if (_lastEvent.TryGetValue(e, out double last) && now - last < (weather ? WeatherCooldown : EventCooldown)) return lines;
             _lastEvent[e] = now;
             var copy = args != null ? new Dictionary<string, string>(args) : new Dictionary<string, string>();
             if (!partnerNear)
@@ -159,7 +177,7 @@ namespace ValheimHelper.Core.Npc
                 if (_news.Count > MaxNews) _news.RemoveAt(0);
                 return lines;
             }
-            Exchange(lines, subject, EventKey(e), ".react", copy, names);
+            Exchange(lines, subject, EventKey(e, copy), ".react", copy, names);
             if (_next >= 0 && _next < now + AfterEvent) _next = now + AfterEvent;
             return lines;
         }
@@ -188,7 +206,7 @@ namespace ValheimHelper.Core.Npc
                 {
                     var n = _news[0];
                     _news.RemoveAt(0);
-                    Exchange(lines, n.Subject, EventKey(n.Event), ".news", n.Args, names);
+                    Exchange(lines, n.Subject, EventKey(n.Event, n.Args), ".news", n.Args, names);
                     return lines;
                 }
                 if (ToPlayer(lines, _rng.Next(2), true, facts, names)) return lines;

@@ -28,13 +28,15 @@ public class BanterTests
         var keys = new List<string>();
         foreach (var t in Banter.MemoryTopics.Concat(Banter.AnyTopics)) { keys.Add("bt." + t + ".open"); keys.Add("bt." + t + ".reply"); }
         foreach (BanterEvent e in Enum.GetValues(typeof(BanterEvent)))
-            foreach (var part in new[] { ".react", ".self", ".news" }) keys.Add(Banter.EventKey(e) + part);
+            if (e == BanterEvent.Weather)
+                foreach (var k in new[] { "rain", "storm", "snow", "clear" }) { keys.Add(Banter.EventKey(e) + "." + k + ".react"); keys.Add(Banter.EventKey(e) + "." + k + ".self"); }
+            else foreach (var part in new[] { ".react", ".self", ".news" }) keys.Add(Banter.EventKey(e) + part);
         keys.Add("bt.solo"); keys.Add("bt.solo.night");
         keys.Add("bt.player.open"); keys.Add("bt.player.night"); keys.Add("bt.player.reply");
         var args = new Dictionary<string, string>
         {
             ["partner"] = "플로키", ["who"] = "플로키", ["foe"] = "트롤", ["dir"] = "북쪽", ["deaths"] = "2", ["biome"] = "늪", ["item"] = "구리", ["n"] = "30",
-            ["skill"] = "벌목", ["level"] = "12", ["pskill"] = "채굴", ["plevel"] = "20", ["crop"] = "당근", ["player"] = "Erik",
+            ["skill"] = "벌목", ["level"] = "12", ["pskill"] = "채굴", ["plevel"] = "20", ["crop"] = "당근", ["player"] = "Erik", ["boss"] = "엑시르",
         };
         foreach (var p in new[] { Personality.Ragnar, Personality.Floki })
             foreach (var k in keys)
@@ -151,6 +153,31 @@ public class BanterTests
         Assert.Equal("플로키", lines[1].Args["partner"]);
         Assert.Empty(b.OnEvent(10 + Banter.EventCooldown - 1, 1, BanterEvent.Died, null, true, Names));
         Assert.NotEmpty(b.OnEvent(10 + Banter.EventCooldown + 1, 1, BanterEvent.Died, null, true, Names));
+    }
+
+    [Fact]
+    public void WeatherKindAndReactions()
+    {
+        Assert.Equal("rain", Banter.WeatherKind(true, false, "Rain", null));
+        Assert.Equal("storm", Banter.WeatherKind(true, false, "ThunderStorm", null));
+        Assert.Equal("snow", Banter.WeatherKind(false, true, "Snow", null));
+        Assert.Equal("clear", Banter.WeatherKind(false, false, "Clear", "rain"));
+        Assert.Null(Banter.WeatherKind(false, false, "Clear", null));
+        var b = new Banter(new Random(3));
+        var w = new Dictionary<string, string> { ["kind"] = "storm" };
+        Assert.Empty(b.OnEvent(1, 0, BanterEvent.Weather, w, false, Names)); // 곁에 없으면 소식도 안 됨
+        var lines = b.OnEvent(2, 0, BanterEvent.Weather, w, true, Names);
+        Assert.Equal("bt.ev.weather.storm.react", lines[0].Key);
+        Assert.Equal("bt.ev.weather.storm.self", lines[1].Key);
+        Assert.Empty(b.OnEvent(2 + Banter.WeatherCooldown - 1, 1, BanterEvent.Weather, w, true, Names));
+        Assert.NotEmpty(b.OnEvent(2 + Banter.WeatherCooldown + 1, 1, BanterEvent.Weather, w, true, Names));
+        foreach (var k in new[] { "rain", "storm", "snow", "clear" })
+            foreach (var p in new[] { Personality.Ragnar, Personality.Floki })
+                foreach (var s in new[] { ".react", ".self" })
+                    Assert.True(Speech.Has(p, "bt.ev.weather." + k + s), p + " " + k + s);
+        var boss = b.OnEvent(5, 1, BanterEvent.Boss, new Dictionary<string, string> { ["boss"] = "엑시르" }, true, Names);
+        Assert.Equal("bt.ev.boss.react", boss[0].Key);
+        foreach (var l in boss) Assert.DoesNotContain("{", Render(l));
     }
 
     [Fact]

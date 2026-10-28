@@ -42,6 +42,7 @@ namespace ValheimHelper
             s_banter = new Banter();
             s_pending.Clear();
             s_holdUntil = 0f;
+            s_bossSeen = null;
             if (!dueNow) return;
             s_banter.Tick(Now(), false, -1, null, Names()); // 첫 때를 잡게 하고
             s_banter.SetNext(Now());                          // 바로 됨
@@ -101,6 +102,8 @@ namespace ValheimHelper
             WatchBack(a);
             WatchBack(b);
             WatchRaid(a, b);
+            WatchBoss(a, b);
+            WatchWeather(a, b);
             double now = Now();
             if (!s_banter.Due(now) || s_pending.Count > 0) return;
             bool ra = Resting(a) && PlayerNear(a.transform.position, NearRange);
@@ -204,6 +207,38 @@ namespace ValheimHelper
                 Event(subject, BanterEvent.Raid, null);
             }
             s_raidWas = raid;
+        }
+
+        static HashSet<string> s_bossSeen;
+        static string s_weatherWas;
+
+        /// <summary>보스가 쓰러짐(그 보스 월드 키가 새로 켜짐, 켤 때 이미 있던 건 셈 안 함) → 잡담 반응·소식.</summary>
+        static void WatchBoss(WorkerNpc a, WorkerNpc b)
+        {
+            var names = Unlocks.BossNames();
+            if (names == null || names.Count == 0 || ZoneSystem.instance == null) return;
+            bool first = s_bossSeen == null;
+            if (first) s_bossSeen = new HashSet<string>();
+            foreach (var kv in names)
+            {
+                if (s_bossSeen.Contains(kv.Key) || !ZoneSystem.instance.GetGlobalKey(kv.Key)) continue;
+                s_bossSeen.Add(kv.Key);
+                if (first) continue;
+                int subject = a != null && !a.IsDead() ? (b != null && !b.IsDead() ? s_rng.Next(2) : 0) : 1;
+                Event(subject, BanterEvent.Boss, new Dictionary<string, string> { ["boss"] = kv.Value });
+            }
+        }
+
+        /// <summary>날씨가 바뀜(비·폭풍·눈이 옴, 그 뒤 갬) → 둘 다 쉬며 곁에 있으면 한마디(5분에 한 번, Banter.WeatherCooldown).</summary>
+        static void WatchWeather(WorkerNpc a, WorkerNpc b)
+        {
+            var env = EnvMan.instance != null ? EnvMan.instance.GetCurrentEnvironment() : null;
+            if (env == null) return;
+            string kind = Banter.WeatherKind(env.m_isWet, env.m_snowBuildup > 0f, env.m_name, s_weatherWas);
+            string was = s_weatherWas;
+            s_weatherWas = kind == "clear" ? null : kind;
+            if (kind == null || kind == was || !Resting(a) || !Resting(b)) return;
+            Event(s_rng.Next(2), BanterEvent.Weather, new Dictionary<string, string> { ["kind"] = kind });
         }
 
         // ---- 기억 모으기 (잡담 때만) ----

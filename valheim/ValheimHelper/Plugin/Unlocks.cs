@@ -11,7 +11,22 @@ namespace ValheimHelper
     /// </summary>
     public static class Unlocks
     {
-        static Dictionary<string, string> s_bossKeys;
+        static Dictionary<string, string> s_bossKeys, s_bossNames;
+
+        /// <summary>보스 월드 키 → 보스 이름(현지화). 잡담 "보스 쓰러짐" 반응용.</summary>
+        public static Dictionary<string, string> BossNames()
+        {
+            if (s_bossNames != null || ZNetScene.instance == null) return s_bossNames;
+            var map = new Dictionary<string, string>();
+            foreach (GameObject prefab in ZNetScene.instance.m_prefabs)
+            {
+                var boss = prefab != null ? prefab.GetComponent<Character>() : null;
+                if (boss == null || !boss.m_boss || string.IsNullOrEmpty(boss.m_defeatSetGlobalKey) || map.ContainsKey(boss.m_defeatSetGlobalKey)) continue;
+                map[boss.m_defeatSetGlobalKey] = Localization.instance != null ? Localization.instance.Localize(boss.m_name) : boss.m_name;
+            }
+            if (map.Count > 0) s_bossNames = map;
+            return map;
+        }
 
         public static bool Have(ItemDrop item)
         {
