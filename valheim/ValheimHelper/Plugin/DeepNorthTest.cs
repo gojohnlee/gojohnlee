@@ -95,6 +95,8 @@ namespace ValheimHelper
             checks.Add($"딥노스 물건을 얻는 길을 셈 ({ways}/{items.Count})", ways > 0);
             if (TestKit.RunBiome != DN) yield break;
             yield return Site(w, checks);
+            // 다) 자리 채집: 단계 맞는 도끼·곡괭이로 !Frostwood 5·!Ice 5 → 거점 상자(애쉬랜드 채집 꼴 그대로)
+            yield return AshlandsTest.Gather(w, checks, new[] { "Frostwood", "Ice" }, new[] { "서리나무", "얼음" });
         }
 
         /// <summary>깊은 눈 높이(m): Character가 쓰는 대로 Heightmap.GetCultivationMask × m_deepSnowSlowMaxHeight. 지형이 없으면 -1.</summary>

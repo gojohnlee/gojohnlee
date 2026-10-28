@@ -107,12 +107,16 @@ namespace ValheimHelper
         /// ⑭ 나) 애쉬랜드 자리 채집: 단계 맞는 곡괭이·도끼를 주고 "!Grausten 5"·"!Blackwood 5"를 지금 GatherJob 그대로 → 거점 상자에.
         /// 탄 해골 생성기(Spawner_CharredStone) 둘레 적은 시험 동안 거점·가장 가까운 자원 둘레에서 치운다(싸움은 바) 조각).
         /// </summary>
-        static IEnumerator Gather(TestKit.World w, GatherTest.Checks checks)
+        static IEnumerator Gather(TestKit.World w, GatherTest.Checks checks) =>
+            Gather(w, checks, new[] { "Grausten", "Blackwood" }, new[] { "그라우스텐", "검은나무" });
+
+        /// <summary>자리 채집(애쉬랜드·딥노스 같이 씀): 150m 안 출처의 도구 단계에 맞는 도구를 주고 items마다 "!이름 5" → 거점 상자에 5개.</summary>
+        internal static IEnumerator Gather(TestKit.World w, GatherTest.Checks checks, string[] items, string[] labels)
         {
             if (w.Floki == null || w.Chest == null) yield break;
             var tools = new List<string>();
             var near = new List<Vector3>();
-            foreach (string item in new[] { "Grausten", "Blackwood" })
+            foreach (string item in items)
             {
                 int tier = 0;
                 ToolKind kind = ToolKind.None;
@@ -150,18 +154,19 @@ namespace ValheimHelper
             foreach (var p in near) Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(p, () => s_keep));
             try
             {
-                TestKit.ClearBaseStock(w, "Grausten", "Blackwood");
+                TestKit.ClearBaseStock(w, items);
                 int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths;
-                GatherTest.Say("!Grausten 5", null);
-                yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "Grausten") >= 5, 420f);
-                checks.Add($"그라우스텐 5개가 상자에 ({GatherTest.CountBase(w.Home, "Grausten")}개, {TestKit.Waited:0}초)", TestKit.Ok);
-                yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
-                GatherTest.Say("!Blackwood 5", null);
-                yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "Blackwood") >= 5, 420f);
-                checks.Add($"검은나무 5개가 상자에 ({GatherTest.CountBase(w.Home, "Blackwood")}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                for (int i = 0; i < items.Length; i++)
+                {
+                    string item = items[i];
+                    if (i > 0) yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
+                    GatherTest.Say($"!{item} 5", null);
+                    yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, item) >= 5, 420f);
+                    checks.Add($"{labels[i]} 5개가 상자에 ({GatherTest.CountBase(w.Home, item)}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                }
                 checks.Add("안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
                 TestRunner.Log($"자원 둘레 치운 생물 {TestKit.KeptClear}");
-                TestKit.ClearBaseStock(w, "Grausten", "Blackwood");
+                TestKit.ClearBaseStock(w, items);
             }
             finally { s_keep = false; }
         }
