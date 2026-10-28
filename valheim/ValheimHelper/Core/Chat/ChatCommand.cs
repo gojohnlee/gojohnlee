@@ -31,16 +31,16 @@ namespace ValheimHelper.Core.Chat
         ClearQueue,
         /// <summary>!상자 &lt;종류&gt; [NPC]. Arg = "equipment" | "food" | "seeds" | 물건 이름.</summary>
         SetChest,
-        /// <summary>!채워 &lt;물건&gt; &lt;수량&gt;.</summary>
+        /// <summary>!채워 &lt;물건&gt; &lt;수량&gt;(한 번, Once) · !계속채워 &lt;물건&gt; &lt;수량&gt;(유지).</summary>
         Keep,
-        /// <summary>!채워 세트 &lt;번호&gt; &lt;수량&gt;.</summary>
+        /// <summary>!채워 세트 &lt;번호&gt; &lt;수량&gt;(한 번) · !계속채워 세트 …(유지).</summary>
         KeepSet,
         KeepOff,
-        /// <summary>!준비 &lt;물건&gt; &lt;수량&gt; — 내 개인 상자에 한 번 채움(상자 기능 ③).</summary>
+        /// <summary>!채워 개인 &lt;물건&gt; &lt;수량&gt;(별칭 !준비) — 내 개인 상자에 한 번 채움(상자 기능 ③).</summary>
         Prep,
-        /// <summary>!채워 개인 &lt;물건&gt; &lt;수량&gt; — 내 개인 상자에 그 수 유지.</summary>
+        /// <summary>!계속채워 개인 &lt;물건&gt; &lt;수량&gt; — 내 개인 상자에 그 수 유지.</summary>
         PrepKeep,
-        /// <summary>!준비 끔 [물건] · !채워 개인 끔 [물건]. Item null이면 그 사람 것 전부.</summary>
+        /// <summary>!계속채워 개인 끔 [물건](!채워 개인 끔·!준비 끔도). Item null이면 그 사람 것 전부.</summary>
         PrepOff,
         /// <summary>!세트 — 목록 보기.</summary>
         SetList,
@@ -80,6 +80,8 @@ namespace ValheimHelper.Core.Chat
         public bool Clamped;
         /// <summary>"빨리·먼저·이거부터" — 하던 일을 멈추고 이것부터(설계 B-5).</summary>
         public bool Urgent;
+        /// <summary>Keep·KeepSet: 한 번만 채움(!채워), false면 계속 유지(!계속채워).</summary>
+        public bool Once;
     }
 
     public sealed class ChatResult

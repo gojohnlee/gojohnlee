@@ -9,6 +9,21 @@ public class ClaudeReplyTests
 
     static ClaudeResult P(string json) => ClaudeReply.Parse(json, Resolve, Npcs);
 
+    [Theory] // 자연어 "꿀 10개 채워 놔"·"계속 채워 둬"·"내 상자에" → 상자 기능 ③ 명령(사용자 10-28)
+    [InlineData("fill", false, CommandKind.Keep, true)]
+    [InlineData("keep", false, CommandKind.Keep, false)]
+    [InlineData("fill", true, CommandKind.Prep, true)]
+    [InlineData("keep", true, CommandKind.PrepKeep, false)]
+    public void FillAndKeep(string kind, bool personal, CommandKind want, bool once)
+    {
+        var r = P("{\"reply\":\"응\",\"tasks\":[{\"kind\":\"" + kind + "\",\"item\":\"꿀\",\"amount\":10,\"personal\":" + (personal ? "true" : "false") + "}]}");
+        var c = Assert.Single(r.Tasks).Command;
+        Assert.Equal(want, c.Kind);
+        Assert.Equal("Honey", c.Item);
+        Assert.Equal(10, c.Amount);
+        Assert.Equal(once, c.Once);
+    }
+
     [Fact]
     public void ParsesTasksAndReply()
     {

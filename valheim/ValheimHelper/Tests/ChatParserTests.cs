@@ -183,14 +183,30 @@ public class ChatParserTests
         Assert.Equal(CommandKind.Keep, c.Kind);
         Assert.Equal("Wood", c.Item);
         Assert.Equal(200, c.Amount);
+        Assert.True(c.Once); // "!채워" = 한 번(사용자 10-28)
 
-        c = Cmd("!채워 구리주괴 20");
+        c = Cmd("!계속채워 구리주괴 20");
+        Assert.Equal(CommandKind.Keep, c.Kind);
         Assert.Equal("Copper", c.Item);
+        Assert.False(c.Once);
+
+        c = Cmd("!계속 채워 나무 30");
+        Assert.Equal(CommandKind.Keep, c.Kind);
+        Assert.Equal(30, c.Amount);
+        Assert.False(c.Once);
 
         c = Cmd("!채워 세트 1 10");
         Assert.Equal(CommandKind.KeepSet, c.Kind);
         Assert.Equal(1, c.Number);
         Assert.Equal(10, c.Amount);
+        Assert.True(c.Once);
+
+        c = Cmd("!계속채워 세트 1 10");
+        Assert.False(c.Once);
+
+        c = Cmd("!계속채워 끔 나무");
+        Assert.Equal(CommandKind.KeepOff, c.Kind);
+        Assert.Equal("Wood", c.Item);
 
         c = Cmd("!keep off wood");
         Assert.Equal(CommandKind.KeepOff, c.Kind);
@@ -205,7 +221,15 @@ public class ChatParserTests
         Assert.Equal("Wood", c.Item);
         Assert.Equal(5, c.Amount);
 
-        c = Cmd("!채워 개인 구리주괴 20");
+        c = Cmd("!채워 개인 나무 5"); // !준비의 새 이름
+        Assert.Equal(CommandKind.Prep, c.Kind);
+        Assert.Equal(5, c.Amount);
+
+        c = Cmd("!계속채워 개인 끔 나무");
+        Assert.Equal(CommandKind.PrepOff, c.Kind);
+        Assert.Equal("Wood", c.Item);
+
+        c = Cmd("!계속채워 개인 구리주괴 20");
         Assert.Equal(CommandKind.PrepKeep, c.Kind);
         Assert.Equal("Copper", c.Item);
         Assert.Equal(20, c.Amount);

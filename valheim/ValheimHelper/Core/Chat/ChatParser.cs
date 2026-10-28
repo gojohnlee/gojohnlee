@@ -96,7 +96,9 @@ namespace ValheimHelper.Core.Chat
                 case "길": case "path": return n == 1 ? Kind(CommandKind.Path) : null;
                 case "탐험": case "explore": return ParseExplore(t);
                 case "상자": case "chest": return ParseChest(t);
-                case "채워": case "keep": return ParseKeep(t);
+                case "채워": case "fill": return ParseKeep(t, true);
+                case "계속채워": case "keep": return ParseKeep(t, false);
+                case "계속": return n > 1 && Lower(t[1]) == "채워" ? ParseKeep(t.Skip(1).ToArray(), false) : null;
                 case "준비": case "prep": return ParsePrep(t, 1, CommandKind.Prep);
                 case "세트": case "set": return ParseSet(t);
                 case "밭": case "farm": return ParseRadius(CommandKind.Farm, t);
@@ -178,11 +180,12 @@ namespace ValheimHelper.Core.Chat
             return cmd;
         }
 
-        ChatCommand ParseKeep(string[] t)
+        /// <summary>상자 기능 ③(사용자 10-28): once = "!채워"(한 번), 아니면 "!계속채워"(유지). "개인"을 붙이면 내 개인 상자.</summary>
+        ChatCommand ParseKeep(string[] t, bool once)
         {
             if (t.Length < 2) return null;
             string second = Lower(t[1]);
-            if (second == "개인" || second == "private" || second == "personal") return ParsePrep(t, 2, CommandKind.PrepKeep);
+            if (second == "개인" || second == "private" || second == "personal") return ParsePrep(t, 2, once ? CommandKind.Prep : CommandKind.PrepKeep);
             if (second == "끔" || second == "off")
             {
                 var off = Kind(CommandKind.KeepOff);
@@ -193,9 +196,12 @@ namespace ValheimHelper.Core.Chat
             if ((second == "세트" || second == "set") && t.Length == 4)
             {
                 var set = ParseSetNumbers(CommandKind.KeepSet, t[2], t[3]);
+                if (set != null) set.Once = once;
                 return set;
             }
-            return ParseItemAmount(t, 1, t.Length, CommandKind.Keep);
+            var keep = ParseItemAmount(t, 1, t.Length, CommandKind.Keep);
+            if (keep != null) keep.Once = once;
+            return keep;
         }
 
         /// <summary>t[from..] = "끔 [물건]" 또는 "&lt;물건&gt; &lt;수량&gt;"(내 개인 상자 준비, 상자 기능 ③).</summary>

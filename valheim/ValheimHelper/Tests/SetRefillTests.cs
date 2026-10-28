@@ -74,6 +74,29 @@ public class RefillTests
     }
 
     [Fact]
+    public void OnceFillsWithoutSlackThenDrops()
+    {
+        var sets = new SetMenuBook();
+        sets.Save(1, new[] { "Honey", "DeerStew" }, null, null);
+        var r = new RefillBook();
+        r.Keep("Wood", 100, once: true);
+        r.KeepSet(1, 2, once: true);
+        r.Keep("Stone", 100);
+        var c = RefillBook.Load(r.Save()); // 한 번 채움 표시도 저장됨
+        Assert.True(c.IsOnce("Wood") && c.IsOnceSet(1) && !c.IsOnce("Stone"));
+        var stock = new Dictionary<string, int> { ["Wood"] = 99, ["Stone"] = 99, ["Honey"] = 2, ["DeerStew"] = 1 };
+        var due = r.Due(i => stock.TryGetValue(i, out int n) ? n : 0, sets).ToDictionary(x => x.Item, x => x.Amount);
+        Assert.Equal(1, due["Wood"]);           // 한 번 채움은 Slack 없이
+        Assert.False(due.ContainsKey("Stone")); // 유지는 Slack(10%) 안이면 안 나감
+        Assert.Equal(1, due["DeerStew"]);
+        Assert.Equal(3, r.Count);
+        stock["Wood"] = 100; stock["DeerStew"] = 2;
+        r.Due(i => stock.TryGetValue(i, out int n) ? n : 0, sets);
+        Assert.Equal(1, r.Count);               // 다 찬 한 번 채움은 지워지고 유지만 남음
+        Assert.Equal("Stone", r.Items.Single().Key);
+    }
+
+    [Fact]
     public void OffAndSaveLoad()
     {
         var r = new RefillBook();

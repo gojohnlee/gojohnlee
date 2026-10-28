@@ -134,12 +134,17 @@ namespace ValheimHelper.Core.Chat
             {
                 case "item":
                 case "keep":
-                    cmd.Kind = kind == "item" ? CommandKind.Item : CommandKind.Keep;
+                case "fill":
+                    // 상자 기능 ③(사용자 10-28): fill = "!채워"(한 번), keep = "!계속채워"(유지), personal이면 내 개인 상자
+                    bool personal = Bool(t, "personal");
+                    cmd.Kind = kind == "item" ? CommandKind.Item
+                        : personal ? (kind == "fill" ? CommandKind.Prep : CommandKind.PrepKeep) : CommandKind.Keep;
+                    cmd.Once = kind == "fill";
                     cmd.Item = Item(t, "item", resolveItem);
                     if (cmd.Item == null) return "모르는 물건 " + Str(t, "item");
                     return Amount(t, cmd, maxAmount);
                 case "keepoff":
-                    cmd.Kind = CommandKind.KeepOff;
+                    cmd.Kind = Bool(t, "personal") ? CommandKind.PrepOff : CommandKind.KeepOff;
                     if (Str(t, "item") != null && (cmd.Item = Item(t, "item", resolveItem)) == null) return "모르는 물건 " + Str(t, "item");
                     return null;
                 case "explore":

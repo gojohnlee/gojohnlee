@@ -110,7 +110,7 @@ namespace ValheimHelper
 
             // 0) 내 개인 상자가 없으면(이름 없음) 말하고 안 적음
             int h0 = w.Heard.Count;
-            Say(who, "!준비 나무 5");
+            Say(who, "!채워 개인 나무 5");
             yield return new WaitForSeconds(1f);
             checks.Add($"개인 상자 없음 → 말·안 적음 (적힘 {Brain.Personal.Find(s_owner, "Wood") != null})",
                 Brain.Personal.Find(s_owner, "Wood") == null && HeardAny(w, h0, "\"개인\""));
@@ -141,7 +141,7 @@ namespace ValheimHelper
             // 2) 유지: 플레이어 멀면 걷지 않고 바로, 빼면 다시 채움
             GatherJob.TestIgnorePlayers = true;
             GatherJob.TestFakePlayer = null;
-            Say(who, "!채워 개인 돌 4");
+            Say(who, "!계속채워 개인 돌 4");
             bool walkedJob = false;
             for (float s = 0f; s < 3f; s += 0.2f) { yield return new WaitForSeconds(0.2f); if (Filler() != null) walkedJob = true; }
             checks.Add($"유지 4개, 멀면 바로 (걸음 {walkedJob}, 내 상자 돌 {N(mine, "Stone")}/4, 거점 {N(src, "Stone")}/{stone0 - 4}, 남게 적힘 {Brain.Personal.Find(s_owner, "Stone") != null})",
@@ -155,7 +155,7 @@ namespace ValheimHelper
             // 3) 거점 상자에 모자란 한 번 준비, 구하러도 못 감(출발 판단이 막은 것처럼): 있는 만큼 넣고 "모자라"·지움
             int h3 = w.Heard.Count;
             Departures.TestSkip("Wood", true);
-            Say(who, "!준비 나무 30");
+            Say(who, "!채워 개인 나무 30");
             yield return new WaitForSeconds(5f);
             checks.Add($"있는 만큼 넣음 (내 상자 나무 {N(mine, "Wood")}/{wood0}, 거점 {N(src, "Wood")}/0)", N(mine, "Wood") == wood0 && N(src, "Wood") == 0);
             checks.Add($"모자라 말·지움 (적힘 {Brain.Personal.Find(s_owner, "Wood") != null})", Brain.Personal.Find(s_owner, "Wood") == null && HeardAny(w, h3, "모자라", "더 없어"));
@@ -182,7 +182,7 @@ namespace ValheimHelper
             int gathered = N(mine, "Wood") - mine0;
 
             // 4) 끔 → 그 사람 것 전부 지움
-            Say(who, "!채워 개인 끔");
+            Say(who, "!계속채워 개인 끔");
             yield return new WaitForSeconds(0.5f);
             int left = 0;
             foreach (var e in Brain.Personal.Entries) if (e.Owner == s_owner) left++;

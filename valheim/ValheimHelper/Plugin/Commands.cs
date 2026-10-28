@@ -153,12 +153,12 @@ namespace ValheimHelper
                         Departures.MakeSet(npc, cmd.Number, cmd.Amount);
                         break;
                     case CommandKind.Keep:
-                        Brain.Refill.Keep(cmd.Item, cmd.Amount);
-                        npc.Say("keepSet", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() });
+                        Brain.Refill.Keep(cmd.Item, cmd.Amount, cmd.Once);
+                        npc.Say(cmd.Once ? "fillOnce" : "keepSet", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() });
                         break;
                     case CommandKind.KeepSet:
-                        Brain.Refill.KeepSet(cmd.Number, cmd.Amount);
-                        npc.Say("keepSet", new Dictionary<string, string> { ["item"] = "세트 " + cmd.Number + "번", ["n"] = cmd.Amount.ToString() });
+                        Brain.Refill.KeepSet(cmd.Number, cmd.Amount, cmd.Once);
+                        npc.Say(cmd.Once ? "fillOnce" : "keepSet", new Dictionary<string, string> { ["item"] = "세트 " + cmd.Number + "번", ["n"] = cmd.Amount.ToString() });
                         break;
                     case CommandKind.KeepOff:
                         Brain.Refill.Off(cmd.Item);

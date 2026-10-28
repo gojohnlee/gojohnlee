@@ -44,7 +44,7 @@ namespace ValheimHelper
             TestKit.ClearBaseStock(w, "Wood");
             checks.Add("거점 나무 0으로 시작", Wood(w) == 0);
 
-            GatherTest.Say($"!채워 나무 20", null);
+            GatherTest.Say($"!계속채워 나무 20", null);
             yield return new WaitForSeconds(1f);
             checks.Add("기준치 등록됨", Brain.Refill.Count == 1);
 
@@ -80,7 +80,7 @@ namespace ValheimHelper
             made.Add(Object.Instantiate(ZNetScene.instance.GetPrefab("smelter"), GatherTest.Ground(w.Home - right * 7f), Quaternion.identity));
             yield return new WaitForSeconds(1f);
 
-            GatherTest.Say("!채워 구리주괴 2", null);
+            GatherTest.Say("!계속채워 구리주괴 2", null);
             yield return new WaitForSeconds(1f);
             checks.Add("만드는 물건 기준치 등록됨", Brain.Refill.Count == 1);
             Departures.TestRefillNow();
@@ -138,7 +138,7 @@ namespace ValheimHelper
             {
                 checks.Add("세트 10번 저장", Brain.Sets.Save(SetNo, SetItems, "시험 세트", "시험") == SetNo);
                 yield return new WaitForSeconds(1f);
-                GatherTest.Say($"!채워 세트 {SetNo} 1", null);
+                GatherTest.Say($"!계속채워 세트 {SetNo} 1", null);
                 yield return new WaitForSeconds(1f);
                 checks.Add("세트 기준치 등록됨", Brain.Refill.Count == 1);
                 float start = Time.time;
