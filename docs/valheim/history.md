@@ -8,6 +8,16 @@
 
 ## 회차 기록
 
+### 회차 235 · 10-28 · 애쉬랜드 회귀 4묶음 통과
+
+**요약**
+
+- 애쉬랜드 회귀 4묶음: 이름·기술·채우기·습격·도움·팀·Claude 시험 7개 모두 통과.
+
+**자세히**
+
+- 코드 그대로(d593601). vh_nametest 9/9·skilltest 8/8·refilltest 22/22·raidtest 9/9·helptest 7/7·teamtest 6/6·claudetest 6/6 PASS. 로그 오류는 "Unity log writer" 1줄뿐(늘 있는 것).
+
 ### 회차 234 · 10-28 · 애쉬랜드 회귀 3묶음 통과
 
 **요약**
