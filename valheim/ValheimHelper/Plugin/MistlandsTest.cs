@@ -72,6 +72,9 @@ namespace ValheimHelper
             checks.Add("안개땅 토박이 적에 시커가 있음", Departures.NativeTo("Seeker", (int)Heightmap.Biome.Mistlands));
             LogPost("blackmarble_post01");
             if (TestKit.RunBiome != Heightmap.Biome.Mistlands) yield break;
+            // 회차 239: 5.9km 옮긴 직후엔 둘레 구역이 덜 생겨 150m 안 유해 0개일 때가 있음 → 보일 때까지(30초)
+            yield return TestKit.WaitFor(() => Senses.Nearby(w.Home, 150f, z => z.GetPrefab() != 0 && (ResourceCatalog.Get(z.GetPrefab())?.Prefab.StartsWith("giant_") ?? false)).Count > 0, 30f);
+            TestRunner.Log($"거인 유해 기다림 {TestKit.Waited:0}초");
             Vector3? giant = Site(w, checks);
             if (giant != null) yield return Mine(w, checks, giant.Value);
         }
