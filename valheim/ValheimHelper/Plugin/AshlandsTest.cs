@@ -76,6 +76,7 @@ namespace ValheimHelper
             if (TestKit.RunBiome != Heightmap.Biome.AshLands) yield break;
             Site(w, checks);
             yield return Gather(w, checks);
+            yield return Pickups(w, checks);
             yield return LavaWalk(w, checks);
             yield return Flametal(w, checks);
         }
@@ -152,6 +153,79 @@ namespace ValheimHelper
                 checks.Add("안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
                 TestRunner.Log($"자원 둘레 치운 생물 {TestKit.KeptClear}");
                 TestKit.ClearBaseStock(w, "Grausten", "Blackwood");
+            }
+            finally { s_keep = false; }
+        }
+
+        static readonly string[] PickItems = { "SulfurStone", "MoltenCore", "VoltureEgg", "Vineberry", "Fiddleheadfern" };
+
+        /// <summary>
+        /// 마) 맨손 줍기: 유황·용융 핵·볼처 알·바인베리·고사리를 지금 GatherJob 그대로 "!이름 n"(150m 안 출처 수까지, 최대 2) → 거점 상자에.
+        /// 150m 안 출처가 없으면 300m 안 가장 가까운 출처 거리·용암 위인지만 diag에. 용암 위 시간·죽음도 본다.
+        /// </summary>
+        static IEnumerator Pickups(TestKit.World w, GatherTest.Checks checks)
+        {
+            if (w.Floki == null || w.Chest == null) yield break;
+            s_keep = true;
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(w.Home, () => s_keep));
+            try
+            {
+                foreach (string item in PickItems)
+                {
+                    var src = Senses.Nearby(w.Home, 300f, z => ResourceCatalog.Get(z.GetPrefab()) is ResourceInfo i && i.Tool == ToolKind.None && i.Produces.Contains(item));
+                    ZDO best = null;
+                    float bd = float.MaxValue;
+                    int near = 0, inside = 0;
+                    foreach (var z in src)
+                    {
+                        float d = Utils.DistanceXZ(w.Home, z.GetPosition());
+                        if (d <= 150f && !Character.InInterior(z.GetPosition())) near++;
+                        else if (d <= 150f) inside++;
+                        if (d < bd) { bd = d; best = z; }
+                    }
+                    TestRunner.Log($"{item}: 300m 안 출처 {src.Count}, 150m 안 바깥 {near}·던전 안 {inside}, 가장 가까운 " +
+                        (best == null ? "-" : $"{ZNetScene.instance.GetPrefab(best.GetPrefab())?.name} {bd:0}m 용암 {WorkerAI.Lava(best.GetPosition())}"));
+                    foreach (var z in src)
+                        if (Character.InInterior(z.GetPosition()) && Utils.DistanceXZ(w.Home, z.GetPosition()) <= 150f)
+                        {
+                            Vector3 p = z.GetPosition();
+                            float g = ZoneSystem.instance.GetGroundHeight(p);
+                            TestRunner.Log($"  {item} 출처 거점에서 ({p.x - w.Home.x:0},{p.z - w.Home.z:0}) 구역 {Senses.ZoneOf(p)} 높이 {p.y:0}(땅 {g:0}) 땀 {z.GetBool(ZDOVars.s_picked)}");
+                            ZDO loc = null;
+                            float ld = float.MaxValue;
+                            foreach (var lz in ZdoScan.All(Dungeons.ProxyPrefab))
+                            {
+                                float d = Utils.DistanceXZ(lz.GetPosition(), p);
+                                if (d < ld) { ld = d; loc = lz; }
+                            }
+                            string ln = "-";
+                            if (loc != null)
+                                foreach (var l in ZoneSystem.instance.m_locations)
+                                    if (!string.IsNullOrEmpty(l.m_prefabName) && l.m_prefabName.GetStableHashCode() == loc.GetInt(ZDOVars.s_location)) ln = l.m_prefabName;
+                            TestRunner.Log($"  가장 가까운 장소 {ln} {ld:0}m");
+                        }
+                    if (near == 0) continue;
+                    Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(best.GetPosition(), () => s_keep));
+                    int n = Mathf.Min(2, near);
+                    TestKit.ClearBaseStock(w, item);
+                    int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths;
+                    float lava0 = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime;
+                    GatherTest.Say($"!{item} {n}", null);
+                    yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, item) >= n, 300f);
+                    checks.Add($"{item} {n}개가 상자에 ({GatherTest.CountBase(w.Home, item)}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                    if (!TestKit.Ok)
+                        foreach (var npc in new[] { w.Ragnar, w.Floki })
+                        {
+                            npc.Ai.Queue.Clear();
+                            Departures.Forget(npc);
+                            npc.Ai.GoHome();
+                            npc.TeleportTo(w.Home + new Vector3(npc == w.Ragnar ? 2f : -2f, 0.5f, 2f), npc.transform.rotation, false);
+                        }
+                    float lava = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime - lava0;
+                    checks.Add($"{item}: 용암 위 {lava:0.0}초·안 죽음", lava < 1f && w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                    yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
+                    TestKit.ClearBaseStock(w, item);
+                }
             }
             finally { s_keep = false; }
         }

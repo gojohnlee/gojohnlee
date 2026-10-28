@@ -402,8 +402,8 @@ namespace ValheimHelper
                 }
                 float dist = Utils.DistanceXZ(zdo.GetPosition(), pos);
                 if (dist > range) continue;
-                // ⑭ 용암 한가운데 바위(LeviathanLava 불꽃금속)는 용암을 안 밟고 닿을 마른 땅이 없으면 못 캔다(decisions 회차 225) — 지식은 그대로
-                if (info.Tool != ToolKind.None && LavaLocked(zdo)) { m_sawSkipped = true; m_sawLava = true; continue; }
+                // ⑭ 용암 한가운데 바위(LeviathanLava 불꽃금속)·줍기 물건은 용암을 안 밟고 닿을 마른 땅이 없으면 못 캔다(decisions 회차 225) — 지식은 그대로
+                if (info.Tool != ToolKind.Hunt && LavaLocked(zdo, info.Tool == ToolKind.None)) { m_sawSkipped = true; m_sawLava = true; continue; }
                 float score = HiddenOre.Score(dist, info.Priority, info.Hidden, exposed);
                 if (score < bestScore) { bestScore = score; best = zdo; }
             }
@@ -434,7 +434,7 @@ namespace ValheimHelper
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
                     : Utils.DistanceXZ(zdo.GetPosition(), pos) > range ? "시야 밖"
-                    : info.Tool != ToolKind.None && LavaLocked(zdo) ? "용암 한가운데" : "고를 수 있음";
+                    : info.Tool != ToolKind.Hunt && LavaLocked(zdo, info.Tool == ToolKind.None) ? "용암 한가운데" : "고를 수 있음";
                 sb.Append($"[{info.Prefab} {Utils.DistanceXZ(zdo.GetPosition(), pos):0}m {why}]");
             }
             return n == 0 ? "목록에 있는 대상 없음" : sb.ToString();
@@ -456,11 +456,11 @@ namespace ValheimHelper
         /// 대상이 용암 위(WorkerAI.Lava)이고 닿을 거리(ReachOf) 안 둘레(16방향 × 닿을 거리의 0.5·0.8·1배)에 용암 아닌 땅이 없는지.
         /// 지형이 안 불러진 곳은 모름(false — 가 보면 다시 봄).
         /// </summary>
-        static bool LavaLocked(ZDO zdo)
+        static bool LavaLocked(ZDO zdo, bool pickable)
         {
             Vector3 p = zdo.GetPosition();
             if (!WorkerAI.Lava(p)) return false;
-            float reach = ReachOf(ZNetScene.instance.FindInstance(zdo), false);
+            float reach = ReachOf(ZNetScene.instance.FindInstance(zdo), pickable);
             foreach (float f in new[] { 0.5f, 0.8f, 1f })
                 for (int k = 0; k < 16; k++)
                 {
