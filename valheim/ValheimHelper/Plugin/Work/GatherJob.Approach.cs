@@ -737,7 +737,7 @@ namespace ValheimHelper
         }
 
         /// <summary>p 둘레 StuckHop.NearPlayer m(3차원) 안에 플레이어(호스트·손님 기준 위치)가 없는가. 시험이 플레이어를 무시하면 FarFromPlayers.</summary>
-        static bool NoPlayerAround(Vector3 p)
+        internal static bool NoPlayerAround(Vector3 p)
         {
             if (TestIgnorePlayers) return FarFromPlayers(p);
             float near = (float)StuckHop.NearPlayer;

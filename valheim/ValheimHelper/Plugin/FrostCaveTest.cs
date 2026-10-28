@@ -18,11 +18,14 @@ namespace ValheimHelper
         static readonly Kind Cave = new Kind { Label = "동굴", Item = "Crystal", ItemKo = "수정", Pick = l => l.m_prefabName.Contains("Cave") && (l.m_biome & Heightmap.Biome.Mountain) != 0 };
         static readonly Kind Mine = new Kind { Label = "광산", Item = "BlackCore", ItemKo = "검은 핵", Pick = l => l.m_prefabName.Contains("DvergrTown") };
         static Kind s_kind = Cave;
+        /// <summary>⑬ 바-4: 일꾼이 광산에 들어가면 앞에 시커·진드기를 세운다(플레이어가 전에 스포너를 깨운 꼴 — 스포너는 플레이어 60m 안에서만 낳음).</summary>
+        static bool s_foe;
 
         public static void Register()
         {
-            TestRunner.Register("vh_frostcavetest", "서리 동굴 내용 확인 시험", () => { s_kind = Cave; return TestKit.Flat(Run()); });
-            TestRunner.Register("vh_minetest", "감염된 광산(안개땅) 검은 핵 시험", () => { s_kind = Mine; return TestKit.Flat(Run()); });
+            TestRunner.Register("vh_frostcavetest", "서리 동굴 내용 확인 시험", () => { s_kind = Cave; s_foe = false; return TestKit.Flat(Run()); });
+            TestRunner.Register("vh_minetest", "감염된 광산(안개땅) 검은 핵 시험", () => { s_kind = Mine; s_foe = false; return TestKit.Flat(Run()); });
+            TestRunner.Register("vh_minefoetest", "감염된 광산 안 시커·진드기 만남 시험", () => { s_kind = Mine; s_foe = true; return TestKit.Flat(Run()); });
         }
 
         static IEnumerator Run()
@@ -118,7 +121,9 @@ namespace ValheimHelper
             // ⑪ 4다) "!{s_kind.ItemKo} 3" → 열쇠 문 없는 동굴 입구로 들어가 수정을 캐고 나와 거점 상자에 넣는다(박쥐·울브 스포너, 얼음 종유석이 길을 막는지도 봄)
             if (gate == null) yield break;
             yield return PathDiag(w, gate);
-            bool listed =Dungeons.All(s_kind.Item).Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Keyless && c.Left > 0);
+            int left = Dungeons.All(s_kind.Item).Where(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Keyless).Select(c => c.Left).DefaultIfEmpty(0).Max();
+            bool listed = left > 0;
+            int want = Mathf.Min(3, left); // 배치마다 핵 수가 다름(회차 209: 2개뿐인 배치) — 이 광산에 있는 만큼(3까지)
             checks.Add($"Dungeons.All({s_kind.ItemKo})이 이 {s_kind.Label}을 열린 곳으로 셈", listed);
             TestKit.ClearBaseStock(w, s_kind.Item);
             // 약식: 거점에서 110m 가는 길은 빼고 입구 12m 앞에서 시작(CryptTest와 같음)
@@ -130,17 +135,44 @@ namespace ValheimHelper
             GatherTest.Say($"!{w.Ragnar.NpcName} {s_kind.ItemKo} 3", null);
             bool wasInside = false;
             float t = 0f, inAt = -1f, outAt = -1f;
-            while (t < 480f && GatherTest.CountBase(w.Home, s_kind.Item) - stockBefore < 3)
+            int fleeExitsBefore = Guard.DungeonFleeExits, fleeHopsBefore = Guard.DungeonFleeHops;
+            var foes = new List<Character>();
+            var states = new HashSet<string>();
+            while (t < 480f && GatherTest.CountBase(w.Home, s_kind.Item) - stockBefore < want && !w.Ragnar.IsDead())
             {
                 yield return new WaitForSeconds(1f);
                 t += 1f;
                 if (w.Ragnar.InInterior()) { wasInside = true; if (inAt < 0f) inAt = t; }
                 else if (wasInside && outAt < 0f) outAt = t;
+                if (s_foe && inAt >= 0f && t - inAt >= 3f && foes.Count == 0 && w.Ragnar.InInterior())
+                {
+                    Vector3 me = w.Ragnar.transform.position;
+                    foreach (string n in new[] { "Seeker", "Tick" })
+                    {
+                        GameObject pf = ZNetScene.instance.GetPrefab(n);
+                        if (pf == null) continue;
+                        var c = Object.Instantiate(pf, me + w.Ragnar.transform.forward * (n == "Tick" ? 6f : 9f) + Vector3.up * 0.5f, Quaternion.identity).GetComponent<Character>();
+                        c.SetLevel(1);
+                        foes.Add(c);
+                    }
+                    TestRunner.Log($"광산 안 {t:0}초: 시커·진드기 세움 ({foes.Count}마리)");
+                }
+                if (w.Ragnar.Ai.Guard != null && w.Ragnar.Ai.Guard.StateName != "Calm") states.Add(w.Ragnar.Ai.Guard.StateName);
+                if (s_foe && outAt >= 0f && foes.Count > 0) break; // 만남 뒤 밖으로 나옴: 다 봄
             }
             int got = GatherTest.CountBase(w.Home, s_kind.Item) - stockBefore;
             TestRunner.Log($"{s_kind.ItemKo} 일: {t:0}초(들어감 {inAt:0}초·나옴 {outAt:0}초{(TestRunner.Quick ? ", 약식 입구 앞 시작" : "")}), 상자에 {s_kind.ItemKo} {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}, 체력 {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}, 안 이동 생략 {GatherJob.InteriorHops - hopsBefore}번·나가기 {GatherJob.ExitHops - exitHopsBefore}번·입구 {GatherJob.GateHops - gateHopsBefore}번");
             checks.Add($"일꾼이 {s_kind.Label} 안으로 들어감", wasInside);
-            checks.Add($"{s_kind.ItemKo}이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
+            if (s_foe)
+            {
+                TestRunner.Log($"만남: 상태 {string.Join(",", states.ToArray())}, 도망으로 문 씀 {Guard.DungeonFleeExits - fleeExitsBefore}번(이동 생략 {Guard.DungeonFleeHops - fleeHopsBefore}),남은 적 {foes.Count(c => c != null && !c.IsDead())}, 시커 앎 {Brain.Foes.Knows("Seeker")}");
+                checks.Add($"광산 안에 시커·진드기 세움 ({foes.Count}마리)", foes.Count == 2);
+                checks.Add($"일꾼 살아 있음 (체력 {w.Ragnar.GetHealth():0})", !w.Ragnar.IsDead());
+                checks.Add($"약한 차림은 시커를 피함(도망·물러남, 상태 {string.Join(",", states.ToArray())})", states.Contains("Flee") || states.Contains("Back") || Guard.DungeonFleeExits > fleeExitsBefore);
+                checks.Add($"일꾼이 광산 밖으로 나옴 ({outAt:0}초)", outAt >= 0f);
+                foreach (var c in foes) if (c != null && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
+            }
+            else checks.Add($"{s_kind.ItemKo}이 거점 상자에 들어옴 ({got}/{want}개 — 이 {s_kind.Label}에 있는 만큼, {t:0}초)", got >= want);
             yield return new WaitForSeconds(3f);
             checks.Add("일꾼이 안에 남지 않음", !w.Ragnar.InInterior());
         }

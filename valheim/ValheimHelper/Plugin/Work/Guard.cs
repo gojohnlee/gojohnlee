@@ -777,7 +777,8 @@ namespace ValheimHelper
         bool UpdateFlee(float dt)
         {
             m_fleeTime += dt;
-            bool there = m_ai.MoveToPoint(dt, m_backTo, 2f, true) || Utils.DistanceXZ(m_backTo, m_npc.transform.position) < 3f;
+            if (FleeOutOfDungeon(dt)) return true;
+            bool there =m_ai.MoveToPoint(dt, m_backTo, 2f, true) || Utils.DistanceXZ(m_backTo, m_npc.transform.position) < 3f;
             if (there || m_fleeTime > 40f || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 도망 끝: {(there ? "도착" : m_fleeTime > 40f ? "40초" : "물에 막힘")}");
@@ -785,6 +786,46 @@ namespace ValheimHelper
                 m_state = State.Calm;
                 return false;
             }
+            return true;
+        }
+
+        float m_fleeHopWait = -1f, m_fleeGateAt = -10f;
+
+        /// <summary>시험용: 던전 안 도망으로 나가는 문을 쓴 횟수(그중 길 끊겨 이동 생략).</summary>
+        public static int DungeonFleeExits, DungeonFleeHops;
+
+        /// <summary>
+        /// 던전 안 도망(⑬ 바-4, 회차 209 vh_minefoetest: 나가는 길이 끊긴 광산에서 40초씩 막혀 시커 앞 도망을 되풀이):
+        /// 나가는 문 앞(3m)에 닿으면 그 문을 써서 밖으로. 문까지 안 길이 끊겼고 64m 안에 플레이어가 없으면
+        /// GatherJob.ExitHop과 같은 규칙(직선 거리 ÷ 달리기 속도, 15초까지 기다림)으로 문을 바로 쓴다.
+        /// </summary>
+        bool FleeOutOfDungeon(float dt)
+        {
+            Vector3 me = m_npc.transform.position;
+            if (!Character.InInterior(me) && Character.InInterior(m_backTo)) m_backTo = AwayPoint(me, BackDistance * 1.5f); // 문으로 나왔다: 밖에서 물러날 곳
+            Teleport exit = Character.InInterior(me) ? Dungeons.Exit(me) : null;
+            if (exit == null || Vector3.Distance(exit.transform.position, m_backTo) > 1f) { m_fleeHopWait = -1f; return false; }
+            Vector3 ep = exit.transform.position;
+            bool atDoor = Utils.DistanceXZ(ep, me) < 3f && Mathf.Abs(ep.y - me.y) < 3f; // UpdateFlee "도착"(3m)과 같게
+            if (!atDoor && (GatherJob.TestNoInteriorHop || !m_ai.InteriorNoPath(ep, 2f) || !GatherJob.NoPlayerAround(me))) { m_fleeHopWait = -1f; return false; }
+            if (!atDoor)
+            {
+                if (m_fleeHopWait < 0f)
+                {
+                    m_fleeHopWait = Mathf.Min(15f, Vector3.Distance(me, ep) / Mathf.Max(1f, m_npc.m_runSpeed));
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: 나가는 문까지 던전 안 길 없음({Vector3.Distance(me, ep):0}m) → 이동 생략 {m_fleeHopWait:0}초 기다림");
+                }
+                m_ai.StopMoving();
+                if ((m_fleeHopWait -= dt) > 0f) return true;
+                DungeonFleeHops++;
+            }
+            m_fleeHopWait = -1f;
+            m_ai.StopMoving();
+            if (Time.time - m_fleeGateAt < 3f) return true;
+            m_fleeGateAt = Time.time;
+            DungeonFleeExits++;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: 던전 나가는 문 씀{(atDoor ? "" : "(이동 생략)")}");
+            Dungeons.Use(m_npc, exit);
             return true;
         }
 
