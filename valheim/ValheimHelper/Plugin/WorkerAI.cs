@@ -712,6 +712,8 @@ namespace ValheimHelper
         /// <summary>시험 기록: 타르를 비켜 간 횟수, TarWade보다 깊은 타르에 있던 시간(초).</summary>
         public int TarDetours { get; private set; }
         public float TarTime { get; private set; }
+        /// <summary>시험 기록: 진짜 용암(Heightmap.IsLava, 칠 0.6 넘음) 위에 있던 시간(초) — 가장자리(LavaEdge~0.6)는 안 셈.</summary>
+        public float LavaTime { get; private set; }
         Vector3 m_lastNoTar;
         bool m_hasNoTar, m_tarLogged;
         Vector3 m_tarTarget;
@@ -729,18 +731,35 @@ namespace ValheimHelper
             return tar < -1000f ? 0f : Mathf.Max(0f, tar - g);
         }
 
+        /// <summary>
+        /// 그 자리가 용암이거나 용암 가장자리(애쉬랜드만). 바닐라 Character.UpdateLava는 Heightmap.GetLava(땅 칠 마스크 a, 바이옴 가장자리 지형 조각은 0)가 0.05를 넘으면 열이 쌓이고
+        /// 0.7이 되면 0.2초마다 큰 불 피해. 열은 SmoothStep(0.1,1,칠) > 0.05(칠 약 0.22)에서만 쌓이고 그동안은 안 식음. 회차 223: IsLava 0.6·LavaEdge 0.3 기준으론 가장자리를 맴돌다 죽음 → 0.2. 지형이 안 불러진 곳은 false.
+        /// </summary>
+        public static bool Lava(Vector3 p)
+        {
+            if (Character.InInterior(p) || WorldGenerator.instance == null || WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.AshLands) return false;
+            Heightmap hm = Heightmap.FindHeightmap(p);
+            return hm != null && hm.GetLava(p) > LavaEdge;
+        }
+
+        /// <summary>용암은 아주 깊은 타르로 본다(비켜 가기·빠져나오기를 그대로 씀). 타르처럼 들어가는 목표는 없다(TarGoal은 타르만).</summary>
+        public const float LavaDepth = 10f, LavaEdge = 0.2f;
+        public static float Hazard(Vector3 p) => Lava(p) ? LavaDepth : TarDepth(p);
+
         /// <summary>깊은 타르에 빠졌으면 마지막 타르 밖 자리로 달려 나온다(목표가 타르 안이거나 바로 옆이면 그대로). 나오는 중이면 true.</summary>
         bool TarStep(float dt, Vector3 pos, Vector3 point, float dist)
         {
-            float here = TarDepth(pos);
+            float here = Hazard(pos);
             if (here < 0.1f) { m_lastNoTar = pos; m_hasNoTar = true; m_tarLogged = false; return false; }
             if (here <= TarWade) return false;
-            TarTime += dt;
+            bool lava = here >= LavaDepth;
+            if (!lava) TarTime += dt;
+            else if (Heightmap.FindHeightmap(pos)?.IsLava(pos) == true) LavaTime += dt;
             if (!m_hasNoTar || TarGoal(point) || Utils.DistanceXZ(point, pos) <= dist + 1f) return false;
             if (!m_tarLogged)
             {
                 m_tarLogged = true;
-                Plugin.Log.LogInfo($"{(m_character as WorkerNpc)?.NpcName}: 타르 {here:0.0}m에 빠짐 → 타르 밖 {Utils.DistanceXZ(m_lastNoTar, pos):0.0}m로 나옴");
+                Plugin.Log.LogInfo($"{(m_character as WorkerNpc)?.NpcName}: {(lava ? "용암" : $"타르 {here:0.0}m")}에 빠짐 → 밖 {Utils.DistanceXZ(m_lastNoTar, pos):0.0}m로 나옴");
             }
             MoveTowards(Flat(m_lastNoTar - pos), true);
             return true;
@@ -751,7 +770,7 @@ namespace ValheimHelper
         {
             dir = Flat(dir);
             if (dir.sqrMagnitude < 0.01f || Utils.DistanceXZ(point, pos) < 2f || TarGoal(point)) return false;
-            return TarDepth(pos + dir.normalized * 1.5f) > TarWade;
+            return Hazard(pos + dir.normalized * 1.5f) > TarWade || Lava(pos + dir.normalized * 3f); // 용암에선 느려지니(m_lavaSlowMax) 더 앞을 봄
         }
 
         Vector3 m_tarGoalAt = new Vector3(1e7f, 0f, 1e7f);
@@ -775,7 +794,7 @@ namespace ValheimHelper
             if (Utils.DistanceXZ(point, m_tarTarget) > 2f)
             {
                 m_tarTarget = point;
-                m_tarSide = TarDepth(pos + right * 3f + fwd * 1.5f) <= TarDepth(pos - right * 3f + fwd * 1.5f) ? 1f : -1f;
+                m_tarSide = Hazard(pos + right * 3f + fwd * 1.5f) <= Hazard(pos - right * 3f + fwd * 1.5f) ? 1f : -1f;
             }
             for (int flip = 0; flip < 2; flip++)
             {

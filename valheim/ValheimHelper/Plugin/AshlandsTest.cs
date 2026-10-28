@@ -76,6 +76,7 @@ namespace ValheimHelper
             if (TestKit.RunBiome != Heightmap.Biome.AshLands) yield break;
             Site(w, checks);
             yield return Gather(w, checks);
+            yield return LavaWalk(w, checks);
         }
 
         static readonly string[] GatherGear = { "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
@@ -154,6 +155,124 @@ namespace ValheimHelper
             finally { s_keep = false; }
         }
 
+
+        /// <summary>WorldGenerator 땅 마스크로 본 용암(지형이 안 불러진 먼 곳도 셈 — 불러진 Heightmap의 칠 마스크는 이 마스크에서 시작, HeightmapBuilder).</summary>
+        static bool GenLava(Vector3 p, float edge = 0.6f)
+        {
+            if (WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.AshLands) return false;
+            WorldGenerator.instance.GetHeight(p.x, p.z, out Color m);
+            return m.a > edge;
+        }
+
+        /// <summary>
+        /// 다) 용암 피하기: 거점에서 가장 가까운 용암 웅덩이(6m 둘레도 용암) 양쪽의 마른 자리 A·B(곧장 가면 용암을 지남)를 찾아,
+        /// A에 선 일꾼이 B의 플레이어를 따라올 때 용암을 밟지 않고 닿는지.
+        /// </summary>
+        static IEnumerator LavaWalk(TestKit.World w, GatherTest.Checks checks)
+        {
+            if (w.Floki == null) yield break;
+            Vector3? pool = null;
+            for (float r = 60f; r <= 900f && pool == null; r += 15f)
+                for (int k = 0; k < 48 && pool == null; k++)
+                {
+                    float a = k * Mathf.PI / 24f;
+                    Vector3 p = w.Home + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    bool ok = GenLava(p);
+                    for (int j = 0; j < 8 && ok; j++) ok = GenLava(p + new Vector3(Mathf.Cos(j * Mathf.PI / 4f), 0f, Mathf.Sin(j * Mathf.PI / 4f)) * 6f);
+                    if (ok && Spots(p, out _, out _)) pool = p;
+                }
+            checks.Add($"용암 웅덩이와 양쪽 마른 자리 찾음 ({(pool == null ? "-" : Utils.DistanceXZ(pool.Value, w.Home).ToString("0") + "m")})", pool != null);
+            if (pool == null) yield break;
+            var pairs = new List<Vector3[]>();
+            Spots(pool.Value, out _, out _, pairs);
+            Vector3 a0 = pairs[0][0], b0 = pairs[0][1];
+            Player player = Player.m_localPlayer;
+            s_keep = true;
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(pool.Value, () => s_keep));
+            try
+            {
+                yield return Tp(player, a0 + Vector3.up * 1f, player.transform.rotation, true);
+                // 부서진 건물(Ashlands_Ruins 벽·바닥) 안 자리는 뺀다 — 담 미로는 용암 피하기와 따로(회차 223: 담 안에서 시작하면 못 빠져나옴)
+                int mask = LayerMask.GetMask("piece", "piece_nonsolid");
+                Vector3[] clear = pairs.Find(ab => Physics.OverlapSphere(ab[0], 10f, mask).Length == 0 && Physics.OverlapSphere(ab[1], 10f, mask).Length == 0);
+                checks.Add($"건물 없는 양쪽 자리 ({pairs.Count}쌍 중)", clear != null);
+                if (clear == null) yield break;
+                if (Utils.DistanceXZ(clear[0], a0) > 3f) yield return Tp(player, clear[0] + Vector3.up * 1f, player.transform.rotation);
+                a0 = clear[0]; b0 = clear[1];
+                foreach (var p in new[] { a0, b0 }) Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(p, () => s_keep));
+                ZoneSystem.instance.GetGroundHeight(a0, out float ha);
+                Heightmap hm = Heightmap.FindHeightmap(pool.Value);
+                checks.Add($"불러진 지형에서도 웅덩이가 용암 (Heightmap.IsLava, 칠 {hm?.GetLava(pool.Value) ?? -1f:0.00})", WorkerAI.Lava(pool.Value));
+                Quaternion face = Quaternion.LookRotation(Flat(b0 - a0));
+                foreach (var npc in new[] { w.Ragnar, w.Floki })
+                {
+                    npc.Ai.Interrupt();
+                    npc.Ai.Queue.Clear();
+                    npc.TeleportTo(new Vector3(a0.x, ha, a0.z) + face * new Vector3(npc == w.Ragnar ? 2f : -2f, 0.5f, -2f), face, false);
+                    npc.Heal(1000f, false);
+                }
+                yield return new WaitForSeconds(2f);
+                float t0 = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime;
+                int det0 = w.Ragnar.Ai.TarDetours + w.Floki.Ai.TarDetours, deaths0 = w.Ragnar.Deaths + w.Floki.Deaths;
+                yield return Tp(player, b0 + Vector3.up * 1f, player.transform.rotation);
+                checks.Add($"플레이어가 건너편에 감 ({Utils.DistanceXZ(player.transform.position, b0):0}m, A에서 {Utils.DistanceXZ(a0, b0):0}m)", Utils.DistanceXZ(player.transform.position, b0) < 3f);
+                foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.Follow(player.GetZDOID(), player.GetPlayerName());
+                System.Func<WorkerNpc, bool> arrived = n => Utils.DistanceXZ(n.transform.position, player.transform.position) < 6f;
+                yield return TestKit.WaitFor(() => arrived(w.Ragnar) && arrived(w.Floki), 150f);
+                checks.Add($"용암 건너편 플레이어에게 닿음 ({TestKit.Waited:0}초, 라그나 {Utils.DistanceXZ(w.Ragnar.transform.position, player.transform.position):0}m·플로키 {Utils.DistanceXZ(w.Floki.transform.position, player.transform.position):0}m)", TestKit.Ok);
+                float lava = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime - t0;
+                TestRunner.Log($"다) 용암 비켜 감 {w.Ragnar.Ai.TarDetours + w.Floki.Ai.TarDetours - det0}번, 용암 위 {lava:0.0}초");
+                checks.Add($"용암을 가로지르지 않음 (용암 위 {lava:0.0}초)", lava < 1f);
+                checks.Add("용암 길에서 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.GoHome(false);
+                yield return Tp(player, w.Home + Vector3.up * 0.5f, player.transform.rotation, true);
+            }
+            finally { s_keep = false; }
+        }
+
+        /// <summary>웅덩이 가운데에서 20~45m 양쪽(150도 넘게 벌어짐)에 8m 둘레가 용암 아니고 물보다 1m 높고 평평한(2m 안) 자리, A→B 곧은 선이 용암을 지남.</summary>
+        static bool Spots(Vector3 pool, out Vector3 a0, out Vector3 b0, List<Vector3[]> all = null)
+        {
+            a0 = b0 = Vector3.zero;
+            var dry = new List<Vector3>();
+            float wl = ZoneSystem.instance.m_waterLevel;
+            for (float r = 20f; r <= 45f; r += 5f)
+                for (int k = 0; k < 24; k++)
+                {
+                    Vector3 p = pool + new Vector3(Mathf.Cos(k * Mathf.PI / 12f), 0f, Mathf.Sin(k * Mathf.PI / 12f)) * r;
+                    if (WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.AshLands) continue;
+                    float h = WorldGenerator.instance.GetHeight(p.x, p.z);
+                    if (h < wl + 1f) continue;
+                    bool ok = true;
+                    for (int j = 0; j < 9 && ok; j++)
+                    {
+                        Vector3 q = j == 0 ? p : p + new Vector3(Mathf.Cos(j * Mathf.PI / 4f), 0f, Mathf.Sin(j * Mathf.PI / 4f)) * 8f;
+                        ok = !GenLava(q, WorkerAI.LavaEdge) && Mathf.Abs(WorldGenerator.instance.GetHeight(q.x, q.z) - h) < 2f;
+                    }
+                    if (ok) { p.y = h; dry.Add(p); }
+                }
+            foreach (var a in dry)
+                foreach (var b in dry)
+                {
+                    if (Vector3.Angle(Flat(a - pool), Flat(b - pool)) < 150f) continue;
+                    bool crosses = false;
+                    for (float s = 0f; s <= 1f && !crosses; s += 0.02f) crosses = GenLava(Vector3.Lerp(a, b, s));
+                    if (!crosses) continue;
+                    if (all != null) { all.Add(new[] { a, b }); break; } // A마다 B 하나
+                    a0 = a; b0 = b; return true;
+                }
+            return all != null && all.Count > 0;
+        }
+
+        /// <summary>플레이어 순간이동(TarTest와 같음): 받아질 때까지 다시 부르고 끝날 때까지 기다림.</summary>
+        static IEnumerator Tp(Player player, Vector3 pos, Quaternion rot, bool distant = false)
+        {
+            yield return TestKit.WaitFor(() => player.TeleportTo(pos, rot, distant), 10f);
+            yield return TestKit.WaitFor(() => !player.IsTeleporting(), 60f);
+            yield return new WaitForSeconds(distant ? 5f : 1f);
+        }
+
+        static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
         static bool s_keep;
 
         /// <summary>VH_BIOME=ashlands: 자리가 애쉬랜드인지, 둘레 100m 용암 칸 비율(Heightmap.IsLava, 4m 간격)과 150m 안 자원을 diag에(나·다 조각 바탕).</summary>
