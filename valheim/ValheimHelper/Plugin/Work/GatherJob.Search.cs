@@ -391,7 +391,8 @@ namespace ValheimHelper
                 // 갈린 땅 칠(IsCultivated)이라 웅덩이 위 줍는 타르를 밭 작물로 건너뛰었다(회차 174 vh_tartest).
                 if (info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
                 // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
-                if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f)) { m_skip.Add(zdo.m_uid); continue; }
+                // 용암 위 바위는 뺌: 둘레 건물은 거기 가려고 깐 바닥(회차 250, 불꽃금속 나)).
+                if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(FloorReach && OnLava(zdo.GetPosition()))) { m_skip.Add(zdo.m_uid); continue; }
                 // 다른 나무·바위에 높이 걸린 쪼개지는 통나무는 고르지 않는다: 밑에서 쪼개면 반토막이 머리 위에 생겨 떨어진다(HungLog, E020)
                 if (HungLog(zdo, info)) continue;
                 if (info.Tool != ToolKind.None)
@@ -429,7 +430,7 @@ namespace ValheimHelper
                 string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
                     : !inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z) ? "막힘 기록으로 뺀 곳"
                     : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && StuckInTar(zdo) ? "타르에 잠김" : info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition()) ? "밭 작물"
-                    : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) ? "건축물 4m 안"
+                    : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(FloorReach && OnLava(zdo.GetPosition())) ? "건축물 4m 안"
                     : HungLog(zdo, info) ? "높이 걸린 통나무"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
@@ -452,22 +453,47 @@ namespace ValheimHelper
             return pick != null && pick.m_tarPreventsPicking && view.GetComponent<Floating>() is Floating f && f.IsInTar();
         }
 
+        /// <summary>땅 칠로 용암 위인지(애쉬랜드만, 건물 바닥은 안 봄).</summary>
+        static bool OnLava(Vector3 p) =>
+            WorldGenerator.instance != null && WorldGenerator.instance.GetBiome(p) == Heightmap.Biome.AshLands && (Heightmap.FindHeightmap(p)?.GetLava(p) ?? 0f) > WorkerAI.LavaEdge;
+
         /// <summary>
         /// 대상이 용암 위(WorkerAI.Lava)이고 닿을 거리(ReachOf) 안 둘레(16방향 × 닿을 거리의 0.5·0.8·1배)에 용암 아닌 땅이 없는지.
-        /// 지형이 안 불러진 곳은 모름(false — 가 보면 다시 봄).
+        /// 지형이 안 불러진 곳은 모름(false — 가 보면 다시 봄). 둘레는 건물 바닥(WorkerAI.Floored)이면 갈 수 있음, 큰 바위는 바위 겉 바로 밖도 봄.
         /// </summary>
-        static bool LavaLocked(ZDO zdo, bool pickable)
+        /// <summary>용암 위 건물 바닥을 설 자리로 쓰는지(불꽃금속 나), 회차 250 — 바닥 위에서 둘레 길을 못 찾고 바닥 밖 용암에 빠져 죽음, E049 풀 때까지 끔).</summary>
+        internal static readonly bool FloorReach = false;
+
+        static bool LavaLocked(ZDO zdo, bool pickable) => LavaStand(zdo, pickable, out bool lava) == null && lava;
+
+        /// <summary>
+        /// 용암 위 대상(onLava) 둘레에서 가장 가까운 설 자리(용암 아닌 땅, 건물 바닥이면 그 바닥 높이), 없으면 null. 용암 위가 아니면 null·false.
+        /// 회차 250: 대상 자신은 건너뛰고 땅 3m 위에서 봄(바위 몸은 꿰뚫어 봄, 띄운 바닥도 보게). 다가갈 땐 이 자리로 걸어감(바위 가운데로 가면 바닥 밑 땅으로 내려감).
+        /// </summary>
+        static Vector3? LavaStand(ZDO zdo, bool pickable, out bool onLava)
         {
             Vector3 p = zdo.GetPosition();
-            if (!WorkerAI.Lava(p)) return false;
-            float reach = ReachOf(ZNetScene.instance.FindInstance(zdo), pickable);
-            foreach (float f in new[] { 0.5f, 0.8f, 1f })
+            ZNetView view = ZNetScene.instance.FindInstance(zdo);
+            onLava = WorkerAI.Lava(p, 3f, view);
+            if (!onLava) return null;
+            float reach = ReachOf(view, pickable);
+            float ext = 0f; // 큰 바위(LeviathanLava)는 닿을 거리 안이 다 바위 몸 → 바위 겉 바로 밖도 봄(TouchingRock으로 닿음)
+            if (view != null)
+                foreach (var c in view.GetComponentsInChildren<Collider>())
+                    if (!c.isTrigger)
+                        ext = Mathf.Max(ext, Mathf.Abs(c.bounds.max.x - p.x), Mathf.Abs(c.bounds.min.x - p.x), Mathf.Abs(c.bounds.max.z - p.z), Mathf.Abs(c.bounds.min.z - p.z));
+            var dists = new List<float> { reach * 0.5f, reach * 0.8f, reach };
+            if (ext + 0.5f > reach) { dists.Add(ext + 0.5f); dists.Add(ext + 1.5f); }
+            foreach (float d in dists)
                 for (int k = 0; k < 16; k++)
                 {
-                    Vector3 q = p + new Vector3(Mathf.Cos(k * Mathf.PI / 8f), 0f, Mathf.Sin(k * Mathf.PI / 8f)) * reach * f;
-                    if (Heightmap.FindHeightmap(q) != null && !WorkerAI.Lava(q)) return false;
+                    Vector3 q = p + new Vector3(Mathf.Cos(k * Mathf.PI / 8f), 0f, Mathf.Sin(k * Mathf.PI / 8f)) * d;
+                    if (Heightmap.FindHeightmap(q) == null || WorkerAI.Lava(q, 3f, view)) continue;
+                    if (!FloorReach && WorkerAI.Floored(q, 3f, view)) continue;
+                    if (WorkerAI.FloorHeight(q, 3f, view, out float y) || ZoneSystem.instance.GetGroundHeight(q, out y)) q.y = y;
+                    return q;
                 }
-            return true;
+            return null;
         }
 
         /// <summary>갈린 땅이거나 적어 둔 밭(!밭) 안인지.</summary>

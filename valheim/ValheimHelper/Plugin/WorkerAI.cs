@@ -391,7 +391,12 @@ namespace ValheimHelper
                 return false;
             }
             WaterBlockedTime = 0f;
-            if (TarAhead(pos, m_character.GetMoveDir(), point)) { if (!StartHazardPath(pos, point)) StartTarDetour(pos, point); return false; }
+            if (TarAhead(pos, m_character.GetMoveDir(), point))
+            {
+                // 용암 위 건물 바닥에선 비켜 가면 바닥 밖 용암으로 떨어짐(E049) → 길 못 찾으면 멈춤(일의 시간 제한이 그만둠)
+                if (!StartHazardPath(pos, point)) { if (LavaFloored(pos)) StopMoving(); else StartTarDetour(pos, point); }
+                return false;
+            }
             // 바위·통나무·구덩이 벽 같은 턱에 걸려 섰으면 뛴다(플레이어처럼)
             m_ledgeTimer -= dt;
             if (m_ledgeTimer <= 0f)
@@ -737,12 +742,43 @@ namespace ValheimHelper
         /// <summary>
         /// 그 자리가 용암이거나 용암 가장자리(애쉬랜드만). 바닐라 Character.UpdateLava는 Heightmap.GetLava(땅 칠 마스크 a, 바이옴 가장자리 지형 조각은 0)가 0.05를 넘으면 열이 쌓이고
         /// 0.7이 되면 0.2초마다 큰 불 피해. 열은 SmoothStep(0.1,1,칠) > 0.05(칠 약 0.22)에서만 쌓이고 그동안은 안 식음. 회차 223: IsLava 0.6·LavaEdge 0.3 기준으론 가장자리를 맴돌다 죽음 → 0.2. 지형이 안 불러진 곳은 false.
+        /// 위에 건물 바닥이 있으면(Floored) 아님. above·ignore는 Floored 그대로.
         /// </summary>
-        public static bool Lava(Vector3 p)
+        public static bool Lava(Vector3 p, float above = 1f, ZNetView ignore = null)
         {
             if (Character.InInterior(p) || WorldGenerator.instance == null || WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.AshLands) return false;
             Heightmap hm = Heightmap.FindHeightmap(p);
-            return hm != null && hm.GetLava(p) > LavaEdge;
+            return hm != null && hm.GetLava(p) > LavaEdge && !Floored(p, above, ignore);
+        }
+
+        static int s_floorMask;
+        /// <summary>
+        /// 용암 위 건물 바닥: 바닐라 Character.UpdateLava는 몸 1m 위에서 50m 아래로 쏜 첫 충돌이 지형(Heightmap)이 아니면 열이 안 붙는다(회차 249).
+        /// 일꾼은 건물(Piece)만 바닥으로 세고 바위 같은 다른 것은 꿰뚫어 그 아래를 본다(회차 250: 용암 속 바위 몸을 바닥으로 세면 바위로 가다 용암에 빠짐).
+        /// 땅에 붙은 건물 바닥은 용암에 약 9초면 타니(WearNTear 피해는 최대 체력의 %) 쓸 바닥은 1.5m 넘게 띄운 것.
+        /// above: 쏘는 높이(p.y와 땅 중 높은 쪽 위, 기본 1m = 바닐라). ignore: 그 물체 충돌체는 건너뜀(용암 속 바위 둘레를 볼 때 바위 자신).
+        /// </summary>
+        public static bool Floored(Vector3 p, float above = 1f, ZNetView ignore = null) => FloorHeight(p, above, ignore, out _);
+
+        /// <summary>용암 땅 위 건물 바닥에 서 있는지(바닥이 없으면 용암인 곳).</summary>
+        public static bool LavaFloored(Vector3 p) =>
+            WorldGenerator.instance != null && WorldGenerator.instance.GetBiome(p) == Heightmap.Biome.AshLands && (Heightmap.FindHeightmap(p)?.GetLava(p) ?? 0f) > LavaEdge && Floored(p);
+
+        /// <summary>Floored와 같고, 바닥이면 그 윗면 높이.</summary>
+        public static bool FloorHeight(Vector3 p, float above, ZNetView ignore, out float y)
+        {
+            y = 0f;
+            if (s_floorMask == 0) s_floorMask = LayerMask.GetMask("piece", "Default", "static_solid", "Default_small", "terrain");
+            if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(p, out float g) && g > p.y) p.y = g;
+            var hits = Physics.RaycastAll(p + Vector3.up * above, Vector3.down, 50f + above, s_floorMask, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            foreach (var hit in hits)
+            {
+                if (ignore != null && hit.collider.transform.IsChildOf(ignore.transform)) continue;
+                if (hit.collider.GetComponentInParent<Piece>() != null) { y = hit.point.y; return true; }
+                if (hit.collider.GetComponent<Heightmap>() != null) return false;
+            }
+            return false;
         }
 
         /// <summary>용암은 아주 깊은 타르로 본다(비켜 가기·빠져나오기를 그대로 씀). 타르처럼 들어가는 목표는 없다(TarGoal은 타르만).</summary>
@@ -822,7 +858,18 @@ namespace ValheimHelper
             {
                 HazardPathFails++;
                 m_hazRetryAt = Time.time + 3f;
-                Plugin.Log.LogInfo($"{who}: 웅덩이 둘레 길 못 찾음(목표 {Utils.DistanceXZ(point, pos):0}m, 잰 곳 {seen.Count}) → 가장자리 따라 비켜 감");
+                // E049 diag: 곧은 줄 위 첫 위험 칸(바닥 위에서 왜 막혔나)
+                string first = "-";
+                for (float s = 0f, len = Utils.DistanceXZ(point, pos); s <= len; s += 1f)
+                {
+                    Vector3 q = Vector3.MoveTowards(pos, new Vector3(point.x, pos.y, point.z), s);
+                    if (!Blocked(q.x, q.z)) continue;
+                    Vector3 c = new Vector3(Mathf.Round(q.x), pos.y, Mathf.Round(q.z));
+                    ZoneSystem.instance.GetGroundHeight(c, out float g);
+                    first = $"{s:0}m 칸 위험 {Bad(q.x, q.z)} 칠 {Heightmap.FindHeightmap(c)?.GetLava(c) ?? -1f:0.00} 바닥 {Floored(c)} 높이 {pos.y:0.0} 땅 {g:0.0}";
+                    break;
+                }
+                Plugin.Log.LogInfo($"{who}: 웅덩이 둘레 길 못 찾음(목표 {Utils.DistanceXZ(point, pos):0}m, 잰 곳 {seen.Count}, 첫 막힘 {first}, 시작 {Bad(pos.x, pos.z)}·목표 {Bad(point.x, point.z)}) → {(LavaFloored(pos) ? "바닥 위라 멈춤" : "가장자리 따라 비켜 감")}");
                 return false;
             }
             m_hazPath = new List<Vector3>();

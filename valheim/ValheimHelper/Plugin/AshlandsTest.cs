@@ -455,9 +455,68 @@ namespace ValheimHelper
                 checks.Add("못 캐는 불꽃금속 일은 그만둠", TestKit.Ok);
                 checks.Add($"불꽃금속 보러 가며 용암 위 오래 안 있음 ({lava:0.0}초)", lava < 1f);
                 checks.Add("불꽃금속 보러 가며 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                if (GatherJob.FloorReach) yield return FloorWalk(w, checks, r, dry.Value);
+                else TestRunner.Log("나) 바닥 길 시험 건너뜀: GatherJob.FloorReach 꺼짐(E049)");
                 foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.GoHome(false);
             }
             finally { s_keep = false; }
+        }
+
+        /// <summary>
+        /// 불꽃금속 나) 마른 땅에서 바위까지 용암 위에 그라우스텐 4x4 바닥을 깔고 "!FlametalOreNew 3" — 일꾼이 바닥을 건물로 보고(WorkerAI.Floored)
+        /// 걸어가 캐는지(일꾼 가방에 광석 1개 이상), 용암 위(바닥 아닌) 시간·죽음. 바닥은 끝나면 치운다.
+        /// </summary>
+        static IEnumerator FloorWalk(TestKit.World w, GatherTest.Checks checks, Vector3 r, Vector3 dry)
+        {
+            GameObject prefab = ZNetScene.instance.GetPrefab("Piece_grausten_floor_4x4");
+            checks.Add("그라우스텐 4x4 바닥 프리팹 있음", prefab != null);
+            if (prefab == null) yield break;
+            var made = new List<GameObject>();
+            Vector3 dir = Flat(r - dry).normalized;
+            Quaternion rot = Quaternion.LookRotation(dir);
+            float len = Utils.DistanceXZ(dry, r);
+            // 회차 250: 땅에 붙인 바닥은 용암 열(2초마다 최대 체력의 23%)에 약 9초면 다 탐 → 용암 땅보다 1.8m 띄워 한 높이로 깐다(마른 땅보다 낮으면 마른 땅 높이)
+            var spots = new List<Vector3>();
+            for (float d = 2f; d < len + 2f; d += 4f)
+                foreach (float side in new[] { -4f, 0f, 4f })
+                {
+                    Vector3 at = GatherTest.Ground(dry + dir * d + rot * new Vector3(side, 0f, 0f));
+                    if (!WorkerAI.Lava(at) && d < len - 6f) continue; // 마른 땅엔 안 깜(바위 둘레는 다 깜)
+                    spots.Add(at);
+                }
+            spots.Insert(0, GatherTest.Ground(dry)); // 시작 칸(마른 땅) — 일꾼을 여기 바닥 위에 둠
+            float y = Mathf.Max(dry.y, spots.Max(s => s.y)) + 0.1f;
+            TestRunner.Log($"나) 바닥 높이 마른 땅 +{y - dry.y:0.0}m, 용암 땅 +{y - spots.Max(s => s.y):0.0}~{y - spots.Min(s => s.y):0.0}m");
+            foreach (Vector3 at in spots)
+            {
+                GameObject g = Object.Instantiate(prefab, new Vector3(at.x, y, at.z), rot);
+                var wnt = g.GetComponent<WearNTear>();
+                // 시험 바닥엔 기둥이 없고 땅에 붙어 용암 열에 약 9초면 탐 — 받침 닳음·용암 열을 끈다(바닥 내구가 아니라 일꾼이 바닥을 보는지 시험)
+                if (wnt != null) { wnt.m_noSupportWear = false; wnt.m_ashDamageImmune = true; }
+                made.Add(g);
+            }
+            foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.TeleportTo(new Vector3(dry.x, y + 0.5f, dry.z) + rot * new Vector3(npc == w.Ragnar ? 1f : -1f, 0f, 0f), rot, false);
+            yield return new WaitForSeconds(3f);
+            Vector3 near = dry + dir * (len * 0.5f); near.y = y + 0.1f; // 바닥 가운데, 바닥 위에 선 높이
+            checks.Add($"바닥 {made.Count}장 깐 길 가운데는 용암 아님 (칠 {Heightmap.FindHeightmap(near)?.GetLava(near) ?? -1f:0.00}, 바닥 {WorkerAI.Floored(near)})", !WorkerAI.Lava(near));
+            System.Func<int> ore = () => new[] { w.Ragnar, w.Floki }.Sum(n => n.GetInventory().GetAllItems()
+                .Where(it => it.m_dropPrefab != null && it.m_dropPrefab.name == "FlametalOreNew").Sum(it => it.m_stack));
+            try
+            {
+                float t0 = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime;
+                int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths, outs0 = GatherJob.LavaOuts, ore0 = ore();
+                GatherTest.Say("!FlametalOreNew 3", null);
+                yield return TestKit.WaitFor(() => ore() > ore0 || GatherJob.LavaOuts > outs0, 240f);
+                float lava = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime - t0;
+                int hurt = made.Count(g => g != null && g.GetComponent<WearNTear>()?.GetHealthPercentage() < 1f);
+                TestRunner.Log($"나) 바닥 {made.Count}장(남음 {made.Count(g => g != null)}·닳음 {hurt}), 광석 {ore() - ore0}, 못 가 {GatherJob.LavaOuts - outs0}, 용암 위 {lava:0.0}초, {TestKit.Waited:0}초");
+                checks.Add($"바닥 깐 불꽃금속을 걸어가 캠 (광석 {ore() - ore0}, {TestKit.Waited:0}초)", ore() > ore0);
+                checks.Add($"바닥 깔린 길에선 \"못 가\" 안 함", GatherJob.LavaOuts == outs0);
+                checks.Add($"바닥 위로 가며 용암 위 오래 안 있음 ({lava:0.0}초)", lava < 3f);
+                checks.Add("바닥 위로 가며 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                foreach (var npc in new[] { w.Ragnar, w.Floki }) { npc.Ai.Interrupt(); npc.Ai.Queue.Clear(); }
+            }
+            finally { foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g); }
         }
 
         /// <summary>r에서 가장 가까운 마른 땅(min~40m, 3m 둘레도 용암 아님, 물보다 0.5m 높음, 불러진 지형).</summary>

@@ -34,7 +34,10 @@ namespace ValheimHelper
                 Skip();
                 return true;
             }
-            if (Walk(dt, m_targetPos, m_reach) || InteriorNav.Reached(m_npc.transform.position, m_targetPos, m_reach + 0.3f) || TouchingRock(zdo))
+            // 용암 위 대상은 둘레 설 자리(건물 바닥 위)로 걸어감 — 바위 가운데로 가면 길이 띄운 바닥 밑 땅으로 내려감(회차 250)
+            if (m_standFor != m_targetId) { m_standFor = m_targetId; m_stand = FloorReach && OnLava(m_targetPos) ? LavaStand(zdo, m_targetInfo != null && m_targetInfo.Pickable, out _) : null; }
+            bool atStand = m_stand.HasValue && Utils.DistanceXZ(m_npc.transform.position, m_stand.Value) < 1f;
+            if ((m_stand.HasValue ? Walk(dt, m_stand.Value, 0.8f) || atStand : Walk(dt, m_targetPos, m_reach)) || InteriorNav.Reached(m_npc.transform.position, m_targetPos, m_reach + 0.3f) || TouchingRock(zdo))
             {
                 StartWork(false);
                 return true;
@@ -530,6 +533,12 @@ namespace ValheimHelper
         const float BelowFloorReach = 2f;
 
         /// <summary>
+        /// 맞힐 수 있는 충돌체: MineRock은 m_areaRoot 아래만 부위(1.0.20 MineRock.Awake·Damage — 밖이면 "Invalid hit area"로 안 깎임, 회차 250 용암 속 LeviathanLava 몸 Rock_4).
+        /// </summary>
+        static Collider[] HitColliders(ZNetView view) =>
+            view.GetComponent<MineRock>() is MineRock mr && mr.m_areaRoot != null ? mr.m_areaRoot.GetComponentsInChildren<Collider>() : view.GetComponentsInChildren<Collider>();
+
+        /// <summary>
         /// 곡괭이로 칠 곳: 남은 조각 중 땅 위로 드러난 가장 가까운 조각(휘두름이 땅에 먼저 닿으면 바위가 안 깎인다).
         /// 남은 게 다 땅속이면 파서 꺼낼 물건(광석, ResourceCatalog.WorthDigging)일 때만 가장 얕은 조각을 겨누고 땅 파기를 허락한다.
         /// false면 이 대상은 그만둔다(땅속 돌, 너무 깊은 광석).
@@ -542,7 +551,7 @@ namespace ValheimHelper
             float buriedTop = float.MinValue, bestD = float.MaxValue;
             bool inside = Character.InInterior(m_targetPos);
             int sunk = 0;
-            foreach (var col in view.GetComponentsInChildren<Collider>())
+            foreach (var col in HitColliders(view))
             {
                 if (col.isTrigger) continue;
                 if (inside && !DropLands(view, col, chest)) { sunk++; continue; }
@@ -649,10 +658,10 @@ namespace ValheimHelper
             if (tool == null || d == null) return;
             // 겨눈 조각, 없으면 가장 가까운 충돌체를 맞힌 것으로 한다(MineRock5는 충돌체로 부위를 찾는다).
             Vector3 me = m_npc.transform.position + Vector3.up;
-            Collider hitCol = m_aimCol;
+            Collider hitCol = m_aimCol != null && m_aimCol.gameObject.activeInHierarchy && System.Array.IndexOf(HitColliders(target), m_aimCol) >= 0 ? m_aimCol : null;
             float best = float.MaxValue;
             if (hitCol == null)
-                foreach (var col in target.GetComponentsInChildren<Collider>())
+                foreach (var col in HitColliders(target))
                 {
                     if (col.isTrigger) continue;
                     float dd = (Closest(col, me) - me).sqrMagnitude;

@@ -59,6 +59,8 @@ namespace ValheimHelper
         float m_farTickAt;     // FarWalk를 마지막으로 부른 때(Time.time) — 버려진 일의 지도 위치를 안 보이려고
         float m_farCheck;       // 생략할지 다시 보기까지(초)
         readonly HashSet<ZDOID> m_skip = new HashSet<ZDOID>();
+        ZDOID m_standFor = ZDOID.None;
+        Vector3? m_stand; // 용암 위 대상 둘레 설 자리(LavaStand)
         /// <summary>막힘 복구(사용자 결정 2026-10-23, Core StuckBook): 이번 일 동안 막힌 목적지·귀환 막힘. 작업 저장(WorkItem.Stuck)에 들어가 불러와도 이어진다.</summary>
         StuckBook m_book = new StuckBook();
         public string StuckSave => m_book.Save();
