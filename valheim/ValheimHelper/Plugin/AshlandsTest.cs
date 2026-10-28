@@ -75,7 +75,86 @@ namespace ValheimHelper
             checks.Add("애쉬랜드 토박이 적에 탄 전사가 있음", Departures.NativeTo("Charred_Melee", (int)Heightmap.Biome.AshLands));
             if (TestKit.RunBiome != Heightmap.Biome.AshLands) yield break;
             Site(w, checks);
+            yield return Gather(w, checks);
         }
+
+        static readonly string[] GatherGear = { "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
+
+        /// <summary>도구 종류·단계에 맞는 가장 낮은 도구 프리팹(없으면 null).</summary>
+        static string ToolFor(ToolKind kind, int tier)
+        {
+            string[] names = kind == ToolKind.Axe
+                ? new[] { "AxeStone", "AxeFlint", "AxeBronze", "AxeIron", "AxeBlackMetal", "AxeJotunBane" }
+                : new[] { "PickaxeAntler", "PickaxeBronze", "PickaxeIron", "PickaxeBlackMetal" };
+            foreach (string n in names)
+                if ((ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_toolTier ?? -1) >= tier) return n;
+            return null;
+        }
+
+        /// <summary>
+        /// ⑭ 나) 애쉬랜드 자리 채집: 단계 맞는 곡괭이·도끼를 주고 "!Grausten 5"·"!Blackwood 5"를 지금 GatherJob 그대로 → 거점 상자에.
+        /// 탄 해골 생성기(Spawner_CharredStone) 둘레 적은 시험 동안 거점·가장 가까운 자원 둘레에서 치운다(싸움은 바) 조각).
+        /// </summary>
+        static IEnumerator Gather(TestKit.World w, GatherTest.Checks checks)
+        {
+            if (w.Floki == null || w.Chest == null) yield break;
+            var tools = new List<string>();
+            var near = new List<Vector3>();
+            foreach (string item in new[] { "Grausten", "Blackwood" })
+            {
+                int tier = 0;
+                ToolKind kind = ToolKind.None;
+                ZDO best = null;
+                float bd = float.MaxValue;
+                foreach (var z in Senses.Nearby(w.Home, 150f, z => ResourceCatalog.Get(z.GetPrefab())?.Produces.Contains(item) == true))
+                {
+                    ResourceInfo info = ResourceCatalog.Get(z.GetPrefab());
+                    if (info.Tool == ToolKind.Hunt || info.Tool == ToolKind.None) continue;
+                    kind = info.Tool;
+                    tier = Mathf.Max(tier, info.MinToolTier);
+                    float d = Utils.DistanceXZ(w.Home, z.GetPosition());
+                    if (d < bd) { bd = d; best = z; }
+                }
+                string tool = kind == ToolKind.None ? null : ToolFor(kind, tier);
+                TestRunner.Log($"{item}: {kind} 단계 {tier} → {tool ?? "없음"}, 가장 가까운 {(best == null ? "-" : bd.ToString("0") + "m")}");
+                checks.Add($"{item}에 맞는 도구 있음 ({tool ?? "없음"})", tool != null);
+                if (tool == null) yield break;
+                tools.Add(tool);
+                near.Add(best.GetPosition());
+            }
+            foreach (var npc in new[] { w.Ragnar, w.Floki })
+            {
+                foreach (var n in GatherGear) npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+                foreach (var t in tools) npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(t), 1);
+                Prep.WearBest(npc);
+                var food = new Inventory("vh_test_food", null, 4, 2);
+                foreach (var n in new[] { "CookedLoxMeat", "Sausages", "SerpentStew" }) food.AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+                npc.ResetMeals();
+                npc.EatFrom(food);
+                npc.Heal(1000f, false);
+            }
+            s_keep = true;
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(w.Home, () => s_keep));
+            foreach (var p in near) Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(p, () => s_keep));
+            try
+            {
+                TestKit.ClearBaseStock(w, "Grausten", "Blackwood");
+                int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths;
+                GatherTest.Say("!Grausten 5", null);
+                yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "Grausten") >= 5, 420f);
+                checks.Add($"그라우스텐 5개가 상자에 ({GatherTest.CountBase(w.Home, "Grausten")}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
+                GatherTest.Say("!Blackwood 5", null);
+                yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "Blackwood") >= 5, 420f);
+                checks.Add($"검은나무 5개가 상자에 ({GatherTest.CountBase(w.Home, "Blackwood")}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                checks.Add("안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                TestRunner.Log($"자원 둘레 치운 생물 {TestKit.KeptClear}");
+                TestKit.ClearBaseStock(w, "Grausten", "Blackwood");
+            }
+            finally { s_keep = false; }
+        }
+
+        static bool s_keep;
 
         /// <summary>VH_BIOME=ashlands: 자리가 애쉬랜드인지, 둘레 100m 용암 칸 비율(Heightmap.IsLava, 4m 간격)과 150m 안 자원을 diag에(나·다 조각 바탕).</summary>
         static void Site(TestKit.World w, GatherTest.Checks checks)
