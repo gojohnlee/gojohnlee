@@ -766,7 +766,7 @@ namespace ValheimHelper
         public static bool LavaFloored(Vector3 p) =>
             WorldGenerator.instance != null && WorldGenerator.instance.GetBiome(p) == Heightmap.Biome.AshLands && (Heightmap.FindHeightmap(p)?.GetLava(p) ?? 0f) > LavaEdge && Floored(p);
 
-        /// <summary>a에서 b까지 직선(1m 간격)이 전부 건물 바닥이고 그중 용암 땅 위가 있는지(E049 바닥 길 곧장 걷기).</summary>
+        /// <summary>a에서 b까지 직선(1m 간격)이 전부 건물 바닥이나 마른 땅(바닥 높이와 0.6m 안)이고 그중 용암 땅 위 바닥이 있는지(E049 바닥 길 곧장 걷기). 회차 253: 바닥 사이 마른 땅 틈에서 끊겨 둘레 길로 용암에 빠짐 → 마른 땅도 이어짐.</summary>
         /// <summary>마지막 FloorLine 결과 까닭(진단).</summary>
         public static string FloorWhy = "";
         public static bool FloorLine(Vector3 a, Vector3 b)
@@ -781,8 +781,9 @@ namespace ValheimHelper
             {
                 Vector3 q = Vector3.Lerp(a, b, Mathf.Min(1f, s / Mathf.Max(d, 0.01f)));
                 q.y = a.y;
-                if (!Floored(q)) { FloorWhy = $"{s:0}m에서 끊김({q.x:0.0},{q.z:0.0})"; return false; }
-                if (!lava) lava = (Heightmap.FindHeightmap(q)?.GetLava(q) ?? 0f) > LavaEdge;
+                bool lavaGround = (Heightmap.FindHeightmap(q)?.GetLava(q) ?? 1f) > LavaEdge;
+                if (!Floored(q) && (lavaGround || !ZoneSystem.instance.GetGroundHeight(q, out float g) || Mathf.Abs(g - a.y) > 0.6f)) { FloorWhy = $"{s:0}m에서 끊김({q.x:0.0},{q.z:0.0})"; return false; }
+                lava |= lavaGround;
             }
             FloorWhy = lava ? "이어짐" : "용암 안 지남";
             return lava;

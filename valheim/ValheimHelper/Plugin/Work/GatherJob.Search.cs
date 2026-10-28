@@ -463,8 +463,8 @@ namespace ValheimHelper
         /// 대상이 용암 위(WorkerAI.Lava)이고 닿을 거리(ReachOf) 안 둘레(16방향 × 닿을 거리의 0.5·0.8·1배)에 용암 아닌 땅이 없는지.
         /// 지형이 안 불러진 곳은 모름(false — 가 보면 다시 봄). 둘레는 건물 바닥(WorkerAI.Floored)이면 갈 수 있음, 큰 바위는 바위 겉 바로 밖도 봄.
         /// </summary>
-        /// <summary>용암 위 건물 바닥을 설 자리로 쓰는지(불꽃금속 나), 회차 250 — 바닥 위에서 둘레 길을 못 찾고 바닥 밖 용암에 빠져 죽음, E049 풀 때까지 끔 — 시험 FloorWalk만 잠깐 켬).</summary>
-        internal static bool FloorReach;
+        /// <summary>용암 위 건물 바닥을 설 자리로 쓰는지(불꽃금속 나). 회차 250에 꺼 뒀다가 E049를 닫고(회차 252) 회차 253부터 늘 켬.</summary>
+        internal static bool FloorReach = true;
 
         static bool LavaLocked(ZDO zdo, bool pickable) => LavaStand(zdo, pickable, out bool lava) == null && lava;
 

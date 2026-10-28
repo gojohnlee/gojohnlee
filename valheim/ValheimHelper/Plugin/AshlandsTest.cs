@@ -457,8 +457,7 @@ namespace ValheimHelper
                 checks.Add("불꽃금속 보러 가며 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
                 if (TestRunner.Floor)
                 {
-                    GatherJob.FloorReach = true; // E049: 본체는 꺼 두고 VH_FLOOR=1 시험에서만 켬
-                    try { yield return FloorWalk(w, checks, r, dry.Value); } finally { GatherJob.FloorReach = false; }
+                    yield return FloorWalk(w, checks, r, dry.Value); // 바닥을 깔고 캐는 길(본체 FloorReach는 늘 켬, 회차 253)
                 }
                 else TestRunner.Log("나) 바닥 길 시험 건너뜀: VH_FLOOR=1일 때만(E049)");
                 foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.GoHome(false);
@@ -485,7 +484,7 @@ namespace ValheimHelper
                 foreach (float side in new[] { -4f, 0f, 4f })
                 {
                     Vector3 at = GatherTest.Ground(dry + dir * d + rot * new Vector3(side, 0f, 0f));
-                    if (!WorkerAI.Lava(at) && d < len - 6f) continue; // 마른 땅엔 안 깜(바위 둘레는 다 깜)
+                    if (!WorkerAI.Lava(at) && d < len - 6f && side != 0f) continue; // 마른 땅 옆줄엔 안 깜 — 가운데 줄은 시작 칸부터 끊김 없이(회차 253: 틈에서 길이 끊겨 용암에 빠짐)
                     spots.Add(at);
                 }
             spots.Insert(0, GatherTest.Ground(dry)); // 시작 칸(마른 땅) — 일꾼을 여기 바닥 위에 둠
