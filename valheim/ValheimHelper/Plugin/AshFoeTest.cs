@@ -63,26 +63,9 @@ namespace ValheimHelper
             checks.Add($"음식 먹음 ({string.Join(",", ate.ToArray())})", ate.Count == 3);
 
             // A) 적 하나씩: 판단은 위험 비율대로, 싸움이면 잡음
+            yield return EachFoe(checks, npc, Foes, prefabs, spawned);
+            if (npc.IsDead()) yield break;
             var states = new HashSet<string>();
-            for (int i = 0; i < Foes.Length; i++)
-            {
-                string kind = Foes[i];
-                npc.Heal(npc.GetMaxHealth(), false);
-                yield return new WaitForSeconds(1f);
-                float ratio = RatioOf(npc, kind);
-                Verdict expect = Danger.Judge(Personality.Ragnar, new List<Foe> { Guard.Resolve(new GroupFoe { Kind = kind, Count = 1, Level = 1 }) },
-                    npc.GetMaxHealth(), npc.GetMaxHealth(), Guard.HitOf(npc), Guard.TakenFor(npc), false);
-                TestRunner.Log($"A {kind}: 체력 {npc.GetMaxHealth():0}, 갑옷 {npc.GetBodyArmor():0}, 한 방 {Guard.HitOf(npc):0.0}, 위험 비율 {ratio:0.00} → 예상 {expect}");
-                states.Clear();
-                yield return Watch("A " + kind, kind, npc, Spawn(prefabs[i], npc, 15f, spawned), 45f, states, r => checks.Add(r.Item1, r.Item2));
-                if (expect == Verdict.Fight)
-                    checks.Add($"{kind}: 비율 {ratio:0.00}이면 싸움 (상태 {Join(states)})", states.Contains("Fight"));
-                else if (ratio <= Borderline) // 경계선: 맞붙은 순간 적 체력이 줄면 비율이 1 밑으로 → 싸움도 맞음(아스크스빈 1.19 → 0.99, 회차 231). 싸우면 Watch가 잡음·안 죽음을 봄
-                    checks.Add($"{kind}: 비율 {ratio:0.00}(경계선)이면 싸우든 물러나든 반응 (상태 {Join(states)})", states.Count > 0);
-                else
-                    checks.Add($"{kind}: 비율 {ratio:0.00}이면 싸우지 않음 (상태 {Join(states)})", !states.Contains("Fight") && states.Count > 0);
-                if (npc.IsDead()) yield break;
-            }
 
             // D) 출발 판단: 탄 전사를 아는 애쉬랜드 자리는 피하고, 거기뿐이면 호위병과
             yield return Departs(w, checks, npc);
@@ -112,9 +95,34 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
         }
 
+        /// <summary>A) 적 하나씩: 위험 비율대로 싸움이면 잡고 안 죽음, 경계선(1.25 이하)은 반응만, 넘으면 싸우지 않음. vh_deepfoetest도 씀.</summary>
+        internal static IEnumerator EachFoe(GatherTest.Checks checks, WorkerNpc npc, string[] foes, List<GameObject> prefabs, List<GameObject> spawned)
+        {
+            var states = new HashSet<string>();
+            for (int i = 0; i < foes.Length; i++)
+            {
+                string kind = foes[i];
+                npc.Heal(npc.GetMaxHealth(), false);
+                yield return new WaitForSeconds(1f);
+                float ratio = RatioOf(npc, kind);
+                Verdict expect = Danger.Judge(Personality.Ragnar, new List<Foe> { Guard.Resolve(new GroupFoe { Kind = kind, Count = 1, Level = 1 }) },
+                    npc.GetMaxHealth(), npc.GetMaxHealth(), Guard.HitOf(npc), Guard.TakenFor(npc), false);
+                TestRunner.Log($"A {kind}: 체력 {npc.GetMaxHealth():0}, 갑옷 {npc.GetBodyArmor():0}, 한 방 {Guard.HitOf(npc):0.0}, 위험 비율 {ratio:0.00} → 예상 {expect}");
+                states.Clear();
+                yield return Watch("A " + kind, kind, npc, Spawn(prefabs[i], npc, 15f, spawned), 45f, states, r => checks.Add(r.Item1, r.Item2));
+                if (expect == Verdict.Fight)
+                    checks.Add($"{kind}: 비율 {ratio:0.00}이면 싸움 (상태 {Join(states)})", states.Contains("Fight"));
+                else if (ratio <= Borderline) // 경계선: 맞붙은 순간 적 체력이 줄면 비율이 1 밑으로 → 싸움도 맞음(아스크스빈 1.19 → 0.99, 회차 231). 싸우면 Watch가 잡음·안 죽음을 봄
+                    checks.Add($"{kind}: 비율 {ratio:0.00}(경계선)이면 싸우든 물러나든 반응 (상태 {Join(states)})", states.Count > 0);
+                else
+                    checks.Add($"{kind}: 비율 {ratio:0.00}이면 싸우지 않음 (상태 {Join(states)})", !states.Contains("Fight") && states.Count > 0);
+                if (npc.IsDead()) yield break;
+            }
+        }
+
         /// <summary>애쉬랜드 차림: 불꽃금속(FlametalNew)으로 만드는 투구·갑옷·바지 중 방어 최고·한손 칼 중 피해 최고,
         /// 음식은 애쉬랜드 재료(아스크스빈·볼처 떨굼, 바인베리·고사리 줍기)가 든 것 중 체력 높은 셋. (제작법 있는 것 전체로 고르면 딥노스 물건이 섞임 — 회차 231)</summary>
-        static List<string> BestGear()
+        internal static List<string> BestGear()
         {
             var ash = new HashSet<string>();
             foreach (var n in new[] { "Asksvin", "Volture", "BonemawSerpent" })
@@ -207,7 +215,7 @@ namespace ValheimHelper
         static float RatioOf(WorkerNpc npc, string kind) =>
             Danger.Ratio(new List<Foe> { Guard.Resolve(new GroupFoe { Kind = kind, Count = 1, Level = 1 }) }, npc.GetMaxHealth(), Guard.HitOf(npc), Guard.TakenFor(npc));
 
-        static bool Give(WorkerNpc npc, string name)
+        internal static bool Give(WorkerNpc npc, string name)
         {
             GameObject p = ObjectDB.instance.GetItemPrefab(name);
             if (p == null) { TestRunner.Log($"물건 프리팹 없음: {name}"); return false; }
@@ -217,7 +225,7 @@ namespace ValheimHelper
 
         static string Join(HashSet<string> s) => string.Join(",", new List<string>(s).ToArray());
 
-        static void Cleanup(List<GameObject> spawned)
+        internal static void Cleanup(List<GameObject> spawned)
         {
             foreach (var go in spawned)
                 if (go != null && go.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
