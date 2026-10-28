@@ -81,6 +81,7 @@ namespace ValheimHelper
             var fire = ObjectDB.instance.m_items.Where(g => g != null && g.GetComponent<ItemDrop>() != null
                 && Gear.ResistOf(g.GetComponent<ItemDrop>().m_itemData) == "Fire").Select(g => g.name).ToList();
             checks.Add($"불 저항 마실 것이 있음 ({string.Join(", ", fire)})", fire.Count > 0);
+            LavaFloors(checks);
             if (TestKit.RunBiome != Heightmap.Biome.AshLands) yield break;
             Site(w, checks);
             yield return Gather(w, checks);
@@ -90,7 +91,27 @@ namespace ValheimHelper
             yield return FarSulfur(w, checks);
         }
 
-        static readonly string[] GatherGear = { "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
+        /// <summary>용암 위 바닥: 캐릭터는 아래(1m 위에서 50m 아래로) 첫 충돌이 지형이 아니면 열이 안 붙음(Character.UpdateLava).
+        /// 건물은 칠 0.2 넘고 땅 1.5m 안이면 2초마다 70×칠 피해 — m_ashDamageImmune이면 안 받고 m_ashDamageResist면 0.33배(WearNTear).</summary>
+        static void LavaFloors(GatherTest.Checks checks)
+        {
+            var immune = new List<string>(); var resist = new List<string>();
+            foreach (GameObject g in ZNetScene.instance.m_prefabs)
+            {
+                var wnt = g != null ? g.GetComponent<WearNTear>() : null;
+                var piece = g != null ? g.GetComponent<Piece>() : null;
+                if (wnt == null || piece == null || !g.name.ToLowerInvariant().Contains("floor")) continue;
+                string mats = string.Join("+", piece.m_resources.Where(r => r.m_resItem != null).Select(r => r.m_resItem.name + "×" + r.m_amount));
+                string line = $"{g.name}({mats}, 체력 {wnt.m_health:0}, 탐 {wnt.m_burnable})";
+                if (wnt.m_ashDamageImmune) immune.Add(line); else if (wnt.m_ashDamageResist) resist.Add(line);
+            }
+            TestRunner.Log($"용암 면역 바닥 {immune.Count}: {string.Join(", ", immune)}");
+            TestRunner.Log($"용암 저항(0.33배) 바닥 {resist.Count}: {string.Join(", ", resist)}");
+            // 회차 249(1.0.20): 면역 바닥 0, 저항 = 돌·그라우스텐·쇠·흑대리석 → 용암 위 바닥은 그라우스텐도 결국 탐(1.5m 넘게 띄우면 안 탐)
+            checks.Add($"용암 저항 그라우스텐 바닥이 있음 (면역 {immune.Count}·저항 {resist.Count})", resist.Any(l => l.StartsWith("Piece_grausten_floor")));
+        }
+
+        static readonly string[] GatherGear ={ "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
 
         /// <summary>도구 종류·단계에 맞는 가장 낮은 도구 프리팹(없으면 null).</summary>
         static string ToolFor(ToolKind kind, int tier)
