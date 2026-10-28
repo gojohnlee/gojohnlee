@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
@@ -67,12 +68,19 @@ namespace ValheimHelper
                 float data = Guard.DataHit(c);
                 TestRunner.Log($"{kind}: 체력 {f.Health:0}, 한 방 {f.Damage:0.0}(데이터 {data:0.0}), 날기 {c.m_flying}, 무리 {c.m_group}, " +
                     $"토박이 {Departures.NativeTo(kind, (int)Heightmap.Biome.AshLands)}, 위험 비율 {ratio:0.00}");
+                var el = c is Humanoid ? Guard.FoeElementDamage(c) : null;
+                if (el != null && el.Count > 0) TestRunner.Log($"{kind}: 속성 피해 {string.Join(", ", el.Select(e => e.Key + " " + e.Value.ToString("0")))}");
                 if (kind == "Charred_Melee" || kind == "Morgen" || kind == "Asksvin")
                     checks.Add($"{kind} 한 방을 게임 데이터로 셈 (데이터 {data:0.0})", data > 0f);
             }
             checks.Add("애쉬랜드 적 프리팹(탄 전사·모르겐) 있음",
                 ZNetScene.instance.GetPrefab("Charred_Melee") != null && ZNetScene.instance.GetPrefab("Morgen") != null);
             checks.Add("애쉬랜드 토박이 적에 탄 전사가 있음", Departures.NativeTo("Charred_Melee", (int)Heightmap.Biome.AshLands));
+            // 바) 불 저항: 애쉬랜드 출발 판단이 막을 피해(Resist.ForBiome)와 그걸 막는 물건(Gear.ResistOf)
+            checks.Add("애쉬랜드에서 막을 피해 = 불", Resist.ForBiome(Heightmap.Biome.AshLands.ToString()) == "Fire");
+            var fire = ObjectDB.instance.m_items.Where(g => g != null && g.GetComponent<ItemDrop>() != null
+                && Gear.ResistOf(g.GetComponent<ItemDrop>().m_itemData) == "Fire").Select(g => g.name).ToList();
+            checks.Add($"불 저항 마실 것이 있음 ({string.Join(", ", fire)})", fire.Count > 0);
             if (TestKit.RunBiome != Heightmap.Biome.AshLands) yield break;
             Site(w, checks);
             yield return Gather(w, checks);

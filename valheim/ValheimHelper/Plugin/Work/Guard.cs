@@ -393,7 +393,7 @@ namespace ValheimHelper
         /// 적이 주는 속성 피해 종류와 그 한 방 크기: Humanoid의 공격 물건(m_defaultItems·m_randomWeapon·m_randomSets)의 m_damages 독·냉기·불(가장 큰 값).
         /// 공격 물건이 하나도 없으면(모름) null. 프리팹 이름별로 한 번만 센다.
         /// </summary>
-        static Dictionary<string, float> FoeElementDamage(Character foe)
+        internal static Dictionary<string, float> FoeElementDamage(Character foe)
         {
             if (foe == null) return null;
             string key = Utils.GetPrefabName(foe.gameObject);
