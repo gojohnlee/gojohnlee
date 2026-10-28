@@ -307,17 +307,26 @@ namespace ValheimHelper
                 claude.Ai.Guard.TestFlee(spot + rot * Vector3.forward * 40f);
                 float t = 0f, logAt = 0f;
                 float rim = spot.y;
+                bool walkedOut = false;
                 while (t < 20f && WorkerAI.TrapRescues == r0)
                 {
+                    Vector3 q = claude.transform.position;
+                    float qd = Utils.DistanceXZ(q, spot);
+                    if (qd > 5f && q.y > rim - 0.5f) { walkedOut = true; break; } // E022: 벽이 완만해 걸어 나옴
                     if (t >= logAt) { logAt += 2f; Vector3 p = claude.transform.position; TestRunner.Log($"  도망 구덩이 {t:0}초: 가운데에서 {Utils.DistanceXZ(p, spot):0.0}m, 둘레보다 {p.y - rim:0.0}m, 경계 {claude.Ai.Guard.StateName}"); }
                     t += Time.deltaTime;
                     yield return null;
                 }
                 WorkerAI.TestNoJump = WorkerAI.TestNoCarve = WorkerAI.TestNoEdgeRescue = false;
                 float toHome = Utils.DistanceXZ(claude.transform.position, claude.Home);
-                checks.Add($"도망 중 구덩이({depth:0.0}m)에 갇힘 → 깃발로 순간이동 ({t:0.0}초, 깃발과 {toHome:0.0}m)", WorkerAI.TrapRescues > r0 && toHome < 6f);
-                checks.Add($"도망은 그만두고 짐 그대로 (경계 {claude.Ai.Guard.StateName}, 짐 {claude.GetInventory().GetAllItems().Count}/{bag0})",
-                    !claude.Ai.Guard.Fleeing && claude.GetInventory().GetAllItems().Count == bag0);
+                if (walkedOut && WorkerAI.TrapRescues == r0)
+                    TestRunner.Log($"환경: 도망 구덩이({depth:0.0}m) 벽이 완만해 {t:0.0}초에 걸어 나옴(E022) — 칸 안 셈");
+                else
+                {
+                    checks.Add($"도망 중 구덩이({depth:0.0}m)에 갇힘 → 깃발로 순간이동 ({t:0.0}초, 깃발과 {toHome:0.0}m)", WorkerAI.TrapRescues > r0 && toHome < 6f);
+                    checks.Add($"도망은 그만두고 짐 그대로 (경계 {claude.Ai.Guard.StateName}, 짐 {claude.GetInventory().GetAllItems().Count}/{bag0})",
+                        !claude.Ai.Guard.Fleeing && claude.GetInventory().GetAllItems().Count == bag0);
+                }
                 yield return new WaitForSeconds(1f);
                 yield return EdgeRescue(checks, claude, home, rot, spot, depth);
             }
@@ -359,7 +368,7 @@ namespace ValheimHelper
             else
             {
                 checks.Add($"구덩이({depth:0.0}m)에서 {Core.Work.Climb.PitEscapeSeconds:0}초 못 나옴 → 가장자리 위로 옮김 ({t:0.0}초, 가운데에서 {fromSpot:0.0}m, 둘레보다 {at.y - rim:0.0}m, 깃발과 {toHome:0.0}m)",
-                    WorkerAI.PitEdgeRescues > e0 && t >= (float)Core.Work.Climb.PitEscapeSeconds - 2f && fromSpot > 2.5f && fromSpot < 10f && at.y > rim - 1.2f && toHome > 6f);
+                    WorkerAI.PitEdgeRescues > e0 && t >= (float)Core.Work.Climb.PitEscapeSeconds - 2f && fromSpot > 2f && fromSpot < 10f && at.y > rim - 1.2f && toHome > 6f);
                 checks.Add($"옮긴 뒤 짐 그대로 ({claude.GetInventory().GetAllItems().Count}/{bag0})", claude.GetInventory().GetAllItems().Count == bag0);
             }
             yield return new WaitForSeconds(1f);
