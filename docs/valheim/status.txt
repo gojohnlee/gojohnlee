@@ -1,8 +1,8 @@
-갱신: 2026-10-28 12:52  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 219 진행 중
+갱신: 2026-10-28 13:06  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 219, 계정: 2번, 한도: 없음
 할 일: ⑬ 안개땅 → 바-1) [구현 완료·검증 대기, 회차 202 — 커밋 608bb31 · 시험 vh_minetest 10/11(위치·입구·안 물체·Dungeons.All·들어감·나옴 OK, "검은 핵이 상자에" FAI…
-마지막 시험: 10-28 12:51 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+마지막 시험: 10-28 13:06 요약: 3/3 PASS
+Claude가 한 일: LOOP: DONE ⑬ 사-B8b 안개땅 회귀 7개 시험 모두 PASS(mistlands·mistfoe·mine·minefoe·settle·block·weak)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
