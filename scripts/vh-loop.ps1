@@ -691,6 +691,21 @@ while ($true) {
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }
     if (-not $stop) { Write-Status $(if ($Once) { '한 회차 끝(시험 실행)' } else { '다음 회차 준비' }) $last }
     Save-State
+    $OffFile = Join-Path $Dir 'off-when-done'   # 사용자 10-29: 있으면 progress "다음"에 ★가 하나도 안 남은 회차 뒤 멈추고 컴퓨터 끔(한 번 쓰고 지움)
+    if (-not $stop -and (Test-Path $OffFile)) {
+        $p = Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8
+        $a = [array]::FindIndex($p, [Predicate[string]]{ param($l) $l -match '^다음' })
+        $b = [array]::FindIndex($p, [Predicate[string]]{ param($l) $l -match '^보류' })
+        if ($a -ge 0 -and $b -gt $a -and -not ($p[$a..$b] -match '^★')) {
+            Remove-Item $OffFile -Force
+            [IO.File]::WriteAllText((Join-Path $Dir 'stop'), "off-when-done $(Get-Date -Format 'MM-dd HH:mm') — 다시 돌리려면 이 파일을 지움", $Utf8)
+            Write-Status "멈춤: 할 일 다 끝남(회차 $($st.round)) → 컴퓨터 끔. 다시 돌리려면 %USERPROFILE%\vh-loop\stop을 지움" $last
+            Log '할 일 다 끝남 → 컴퓨터 끔(2분 뒤)'
+            [void][VH.Power]::SetThreadExecutionState($Release)
+            & shutdown /s /t 120 /c "발헤임 할 일 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
+            break
+        }
+    }
     if (Test-Path $TrialFile) {
         # 시험 운전(사용자 10-26): 정한 회차 수를 돌면(또는 멈춤 조건이면) 보고 세션 → 멈춤 파일 → 컴퓨터 끔
         # 회차마다 그 회차 history 항목에 토큰 줄을 바로 붙여 올린다(사용자 10-26: 한도로 중간에 멈춰도 남게). 항목이 없으면 새 항목.
