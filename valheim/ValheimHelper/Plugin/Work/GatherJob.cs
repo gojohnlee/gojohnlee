@@ -24,7 +24,7 @@ namespace ValheimHelper
         ResourceInfo m_targetInfo;
         /// <summary>지난 휘두름 끝의 대상 체력 기록(HealthMark). null이면 다음 프레임에 잰다.</summary>
         string m_lastHealth;
-        bool m_sawTooHard;
+        bool m_sawTooHard, m_sawLava;
         /// <summary>사냥감 둘레 무리가 세서 못 잡은 적 이름(preyPack 대사). 한 번 보면 이 일 동안 둔다.</summary>
         string m_packFoe;
         /// <summary>사냥감 한 마리가 혼자 상대하기엔 센 것(록스 등, SafePrey가 무리 없이 거절)의 이름(preyStrong 대사). 한 번 보면 이 일 동안 둔다.</summary>
@@ -75,6 +75,8 @@ namespace ValheimHelper
         bool m_saidTooWeak, m_saidSearching, m_saidExplore, m_saidFound, m_saidSea;
         /// <summary>시험용: 바다 건너라 안 간 구역을 말한 횟수.</summary>
         public static int SeaSkips;
+        /// <summary>시험 기록: 용암 한가운데라 못 캔다고 말한 횟수.</summary>
+        public static int LavaOuts;
         /// <summary>일꾼 포탈(R2 나): 한 몫을 들고 가는 이름표, 이번 일에서 와 본 먼 구역, 재료 모자람을 말했나.</summary>
         string m_portalTag;
         readonly HashSet<ZoneXY> m_visited = new HashSet<ZoneXY>();

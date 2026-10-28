@@ -50,6 +50,12 @@ namespace ValheimHelper
                 m_saidTooWeak = true;
                 m_npc.Say("toolTooWeak", Args());
             }
+            if (m_sawLava)
+            {
+                // 용암 한가운데라 못 닿는 것만 보였다: 말하고(Fail·GiveUp이 lavaOut을 말함) 그만둔다 — 불꽃금속 바위는 다 용암 속이라 다른 구역을 찾아 헤매지 않는다(decisions 회차 225)
+                LavaOuts++;
+                return GiveUp("lavaOut");
+            }
             if (Dungeons.InsideOnly(Item) && TryStartCrypt()) return true;
             Knowledge k = Brain.Get();
             Vector3 pos = m_npc.transform.position;
@@ -396,6 +402,8 @@ namespace ValheimHelper
                 }
                 float dist = Utils.DistanceXZ(zdo.GetPosition(), pos);
                 if (dist > range) continue;
+                // ⑭ 용암 한가운데 바위(LeviathanLava 불꽃금속)는 용암을 안 밟고 닿을 마른 땅이 없으면 못 캔다(decisions 회차 225) — 지식은 그대로
+                if (info.Tool != ToolKind.None && LavaLocked(zdo)) { m_sawSkipped = true; m_sawLava = true; continue; }
                 float score = HiddenOre.Score(dist, info.Priority, info.Hidden, exposed);
                 if (score < bestScore) { bestScore = score; best = zdo; }
             }
@@ -425,7 +433,8 @@ namespace ValheimHelper
                     : HungLog(zdo, info) ? "높이 걸린 통나무"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
-                    : Utils.DistanceXZ(zdo.GetPosition(), pos) > range ? "시야 밖" : "고를 수 있음";
+                    : Utils.DistanceXZ(zdo.GetPosition(), pos) > range ? "시야 밖"
+                    : info.Tool != ToolKind.None && LavaLocked(zdo) ? "용암 한가운데" : "고를 수 있음";
                 sb.Append($"[{info.Prefab} {Utils.DistanceXZ(zdo.GetPosition(), pos):0}m {why}]");
             }
             return n == 0 ? "목록에 있는 대상 없음" : sb.ToString();
@@ -441,6 +450,24 @@ namespace ValheimHelper
             if (view == null) return false;
             Pickable pick = view.GetComponent<Pickable>();
             return pick != null && pick.m_tarPreventsPicking && view.GetComponent<Floating>() is Floating f && f.IsInTar();
+        }
+
+        /// <summary>
+        /// 대상이 용암 위(WorkerAI.Lava)이고 닿을 거리(ReachOf) 안 둘레(16방향 × 닿을 거리의 0.5·0.8·1배)에 용암 아닌 땅이 없는지.
+        /// 지형이 안 불러진 곳은 모름(false — 가 보면 다시 봄).
+        /// </summary>
+        static bool LavaLocked(ZDO zdo)
+        {
+            Vector3 p = zdo.GetPosition();
+            if (!WorkerAI.Lava(p)) return false;
+            float reach = ReachOf(ZNetScene.instance.FindInstance(zdo), false);
+            foreach (float f in new[] { 0.5f, 0.8f, 1f })
+                for (int k = 0; k < 16; k++)
+                {
+                    Vector3 q = p + new Vector3(Mathf.Cos(k * Mathf.PI / 8f), 0f, Mathf.Sin(k * Mathf.PI / 8f)) * reach * f;
+                    if (Heightmap.FindHeightmap(q) != null && !WorkerAI.Lava(q)) return false;
+                }
+            return true;
         }
 
         /// <summary>갈린 땅이거나 적어 둔 밭(!밭) 안인지.</summary>

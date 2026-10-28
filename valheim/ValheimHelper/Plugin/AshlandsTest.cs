@@ -268,8 +268,8 @@ namespace ValheimHelper
                     yield return new WaitForSeconds(5f);
                     ZDO far = Sources(loc.Value, 100f, "그 장소 100m", out int t2);
                     checks.Add($"불꽃금속 광석 출처를 찾음 (거점 {ld:0}m 장소)", far != null);
+                    if (far != null) yield return FarFlametal(w, checks, far, t2);
                     yield return Tp(player, w.Home + Vector3.up * 0.5f, player.transform.rotation, true);
-                    TestRunner.Log("라) 거점 700m 밖이라 캐기는 다음 조각(먼 출처 가기)");
                     yield break;
                 }
             }
@@ -304,6 +304,60 @@ namespace ValheimHelper
             finally { s_keep = false; }
         }
 
+
+        /// <summary>
+        /// 라-2) 먼 불꽃금속: 바위에서 가장 가까운 마른 땅(용암 아님, 8~40m)에 플레이어·일꾼을 두고 맞는 곡괭이로 "!FlametalOreNew 3".
+        /// 바위가 용암 한가운데면 "용암 한가운데라 못 가"(lavaOut)를 말하고 그만두는지, 용암을 안 밟고 안 죽는지(decisions 회차 225).
+        /// </summary>
+        static IEnumerator FarFlametal(TestKit.World w, GatherTest.Checks checks, ZDO rock, int tier)
+        {
+            Vector3 r = rock.GetPosition();
+            Vector3? dry = null;
+            for (float d = 8f; d <= 40f && dry == null; d += 2f)
+                for (int k = 0; k < 24 && dry == null; k++)
+                {
+                    Vector3 p = r + new Vector3(Mathf.Cos(k * Mathf.PI / 12f), 0f, Mathf.Sin(k * Mathf.PI / 12f)) * d;
+                    bool ok = !WorkerAI.Lava(p) && Heightmap.FindHeightmap(p) != null;
+                    for (int j = 0; j < 8 && ok; j++) ok = !WorkerAI.Lava(p + new Vector3(Mathf.Cos(j * Mathf.PI / 4f), 0f, Mathf.Sin(j * Mathf.PI / 4f)) * 3f);
+                    if (ok && ZoneSystem.instance.GetGroundHeight(p, out float h) && h > ZoneSystem.instance.m_waterLevel + 0.5f) { p.y = h; dry = p; }
+                }
+            checks.Add($"불꽃금속 바위 둘레 마른 땅 ({(dry == null ? "-" : Utils.DistanceXZ(dry.Value, r).ToString("0") + "m")})", dry != null);
+            if (dry == null) yield break;
+            string tool = ToolFor(ToolKind.Pickaxe, tier);
+            checks.Add($"불꽃금속에 맞는 곡괭이 있음 ({tool ?? "없음"}, 단계 {tier})", tool != null);
+            if (tool == null) yield break;
+            Player player = Player.m_localPlayer;
+            yield return Tp(player, dry.Value + Vector3.up * 1f, player.transform.rotation);
+            s_keep = true;
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(dry.Value, () => s_keep));
+            try
+            {
+                Quaternion face = Quaternion.LookRotation(Flat(r - dry.Value));
+                foreach (var npc in new[] { w.Ragnar, w.Floki })
+                {
+                    npc.Ai.Interrupt();
+                    npc.Ai.Queue.Clear();
+                    npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(tool), 1);
+                    Prep.WearBest(npc);
+                    npc.TeleportTo(dry.Value + face * new Vector3(npc == w.Ragnar ? 2f : -2f, 0.5f, -2f), face, false);
+                    npc.Heal(1000f, false);
+                }
+                yield return new WaitForSeconds(2f);
+                float t0 = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime;
+                int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths, outs0 = GatherJob.LavaOuts;
+                GatherTest.Say("!FlametalOreNew 3", null);
+                yield return TestKit.WaitFor(() => GatherJob.LavaOuts > outs0, 90f);
+                checks.Add($"용암 한가운데 바위는 \"못 가\" 말함 ({TestKit.Waited:0}초)", TestKit.Ok);
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null, 30f);
+                float lava = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime - t0;
+                TestRunner.Log($"라-2) 바위 칠 {Heightmap.FindHeightmap(r)?.GetLava(r) ?? -1f:0.00}, 마른 땅 {Utils.DistanceXZ(dry.Value, r):0}m, 용암 위 {lava:0.0}초, 일 라그나 {w.Ragnar.Ai.Job?.GetType().Name ?? "-"}·플로키 {w.Floki.Ai.Job?.GetType().Name ?? "-"}");
+                checks.Add("못 캐는 불꽃금속 일은 그만둠", TestKit.Ok);
+                checks.Add($"불꽃금속 보러 가며 용암 위 오래 안 있음 ({lava:0.0}초)", lava < 1f);
+                checks.Add("불꽃금속 보러 가며 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.GoHome(false);
+            }
+            finally { s_keep = false; }
+        }
 
         /// <summary>center 둘레 불꽃금속 출처를 세어 diag에(종류·단계·용암 위·가장 가까운 것의 칠), 가장 가까운 것을 돌려줌.</summary>
         static ZDO Sources(Vector3 center, float range, string label, out int tier)
