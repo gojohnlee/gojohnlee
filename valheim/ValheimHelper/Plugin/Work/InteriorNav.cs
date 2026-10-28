@@ -223,6 +223,26 @@ namespace ValheimHelper
         }
 
         /// <summary>진단: 길이 있는가. fixedRef면 예전처럼 모든 칸을 시작 높이 기준으로 잰다(회차 136 전 — 문틀 윗면을 바닥으로 잡던 것과 견줌).</summary>
+        /// <summary>to 둘레 ±3칸 중 설 수 있고(헤엄 칸 아님) to에 닿는(Reached dist) 칸에서 to에 가장 가까운 바닥 — 던전 안 이동 생략 도착점(⑬ 바-2e). 없으면 null.</summary>
+        public static Vector3? StandNear(Vector3 to, float dist)
+        {
+            var g = new Grid(to, to, dist, false);
+            Vector3? best = null;
+            float bestD = float.MaxValue;
+            for (int x = -3; x <= 3; x++)
+                for (int z = -3; z <= 3; z++)
+                {
+                    if (x == 0 && z == 0) continue; // 시작 칸 높이는 to 자체(받침 위)
+                    var c = new StepGrid.Cell(x, z);
+                    double? h = g.Height(c);
+                    if (h == null || g.IsSwim(c)) continue;
+                    Vector3 p = g.At(c, h.Value);
+                    float d = Utils.DistanceXZ(p, to);
+                    if (d < bestD && Reached(p, to, dist)) { best = p; bestD = d; }
+                }
+            return best;
+        }
+
         public static bool CanReach(Vector3 from, Vector3 to, float dist, bool fixedRef) => new Grid(from, to, dist, false, fixedRef).Find() != null;
 
         /// <summary>

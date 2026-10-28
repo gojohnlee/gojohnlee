@@ -52,6 +52,7 @@ namespace ValheimHelper
                     return true;
                 }
             }
+            if (InteriorHop(dt)) return true;
             if (Utils.DistanceXZ(m_targetPos, m_npc.transform.position) <= m_reach + 0.3f && m_ai.InteriorNoPath(m_targetPos, m_reach))
             {
                 // 바로 위·아래 다른 층의 대상인데 그 층으로 가는 길이 없다(E032): 헤매지 말고 건너뛴다
@@ -685,6 +686,66 @@ namespace ValheimHelper
             m_npc.RaiseSkill(tool.m_shared.m_skillType);
             Plugin.Log.LogInfo($"{m_npc.NpcName}: 공격 판정이 안 닿아 직접 피해 {hit.m_damage.m_chop + hit.m_damage.m_pickaxe:0} " +
                                $"({m_targetInfo?.Prefab} {hitCol?.name}, 맞은 점까지 {Vector3.Distance(point, me):0.0}m, 방향 ({hit.m_dir.x:0.0},{hit.m_dir.y:0.0},{hit.m_dir.z:0.0}))");
+        }
+
+        /// <summary>시험용: 던전 안 이동 생략을 끝낸 횟수. TestNoInteriorHop이면 안 함.</summary>
+        public static int InteriorHops;
+        public static bool TestNoInteriorHop;
+        ZDOID m_inHopFor = ZDOID.None;
+        float m_inHopWait;
+        readonly HashSet<ZDOID> m_inHopped = new HashSet<ZDOID>();
+
+        /// <summary>
+        /// 던전 안 이동 생략(⑬ 바-2e, decisions "멀리선 이동 생략"·"⑬ 안개땅 절벽"): 던전 안 칸 길이 끊긴 대상(광산 먼 방 — 계단·낭떠러지 경계)은
+        /// 일꾼·대상 둘레 64m(3차원 — 던전은 바깥보다 수천 m 위)에 플레이어가 없으면 직선 거리 ÷ 달리기 속도(15초까지) 서서 기다렸다가
+        /// 대상 옆 설 자리(InteriorNav.StandNear)로 옮긴다. 대상마다 한 번(옮긴 뒤에도 못 닿으면 원래 막힘 처리). 기다리는 사이 길이 생기면 그만둔다.
+        /// </summary>
+        bool InteriorHop(float dt)
+        {
+            if (TestNoInteriorHop || !m_ai.InteriorNoPath(m_targetPos, m_reach) || m_inHopped.Contains(m_targetId)) { m_inHopFor = ZDOID.None; return false; }
+            Vector3 me = m_npc.transform.position;
+            if (!NoPlayerAround(me) || !NoPlayerAround(m_targetPos)) { m_inHopFor = ZDOID.None; return false; }
+            if (m_inHopFor != m_targetId)
+            {
+                m_inHopFor = m_targetId;
+                m_inHopWait = Mathf.Min(15f, Vector3.Distance(me, m_targetPos) / Mathf.Max(1f, m_npc.m_runSpeed));
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab}까지 던전 안 길 없음({Vector3.Distance(me, m_targetPos):0}m) → 이동 생략 {m_inHopWait:0}초 기다림");
+            }
+            m_ai.Hold("던전 안 이동 생략");
+            m_ai.StopMoving();
+            m_inHopWait -= dt;
+            if (m_inHopWait > 0f) return true;
+            m_inHopped.Add(m_targetId);
+            m_inHopFor = ZDOID.None;
+            Vector3? spot = InteriorNav.StandNear(m_targetPos, m_reach);
+            if (spot == null)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 옆에 설 자리 없음 → 건너뜀");
+                Skip();
+                return true;
+            }
+            Vector3 face = m_targetPos - spot.Value;
+            face.y = 0f;
+            m_npc.TeleportTo(spot.Value + Vector3.up * 0.1f, face.sqrMagnitude > 0.01f ? Quaternion.LookRotation(face) : m_npc.transform.rotation, false);
+            m_ai.StopMoving();
+            m_bestDist = float.MaxValue;
+            m_progressTimer = 0f;
+            m_stepTime = 0f;
+            InteriorHops++;
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: 던전 안 이동 생략 → {m_targetInfo?.Prefab} 옆 {Utils.DistanceXZ(spot.Value, m_targetPos):0.0}m(높이차 {m_targetPos.y - spot.Value.y:0.0})");
+            return true;
+        }
+
+        /// <summary>p 둘레 StuckHop.NearPlayer m(3차원) 안에 플레이어(호스트·손님 기준 위치)가 없는가. 시험이 플레이어를 무시하면 FarFromPlayers.</summary>
+        static bool NoPlayerAround(Vector3 p)
+        {
+            if (TestIgnorePlayers) return FarFromPlayers(p);
+            float near = (float)StuckHop.NearPlayer;
+            if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, p) <= near) return false;
+            if (ZNet.instance != null)
+                foreach (var peer in ZNet.instance.GetPeers())
+                    if (peer != null && peer.m_refPos != Vector3.zero && Vector3.Distance(peer.m_refPos, p) <= near) return false;
+            return true;
         }
 
         void Skip()
