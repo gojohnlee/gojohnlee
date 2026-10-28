@@ -358,6 +358,8 @@ namespace ValheimHelper
             Plugin.Log.LogInfo($"{m_npc.NpcName} 도망: {foeName} 등 {m_foes.Count}, 잃을 체력 비율 {LastRatio:0.00} ({LastDetail}) → {m_lastAway}");
             if (!CallHelp(pos, foeName)) m_npc.Say("flee", Args(foeName));
             Worse(Outcome.Fled);
+            // 도망친 적도 배운다(⑬ 바-5, 회차 210 vh_minefoetest: 광산 시커에게서 도망친 뒤에도 "짐작"이라 다음 출발 판단이 실제 값을 몰랐다)
+            foreach (var c in m_foes) Learn(c);
             m_ai.AvoidHere(nearest.transform.position);
             m_target = null;
             m_armed = false;

@@ -112,7 +112,10 @@ namespace ValheimHelper
         bool TryStartCrypt()
         {
             if (EnvMan.IsNight()) return false; // 밤에 늪 바깥을 걷지 않는다(들어가는 건 낮에만)
-            if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, m_cryptsDone, Item)) return false;
+            var skip = new List<Vector3>(m_cryptsDone);
+            if (m_departAvoid.Count > 0) // 출발 판단이 피하라고 한 던전(⑬ 바-5: 시커에게서 도망친 광산)
+                foreach (var d in Dungeons.All(Item)) if (m_departAvoid.Contains(Senses.ZoneOf(d.Pos))) skip.Add(d.Pos);
+            if (!Dungeons.TryChoose(m_npc.transform.position, out Dungeons.Crypt c, skip, Item)) return false;
             m_crypt = c;
             m_doorTries = 0;
             m_doorPhase = false;

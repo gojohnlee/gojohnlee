@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimHelper.Core.Chat;
+using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -72,6 +75,15 @@ namespace ValheimHelper
             checks.Add($"{s_kind.Label} 세움(TestSpawnLocation, 깃발에서 {Utils.DistanceXZ(pos, w.Home):0}m)", spawned);
             if (!spawned) yield break;
             yield return new WaitForSeconds(4f);
+            // 받침 없는 작은 배치가 나오면(회차 210: 115개 17종, 검은 핵 0) 지우고 다시 세움 — 배치는 세울 때마다 무작위
+            for (int retry = 0; retry < 3 && k == Mine && !Dungeons.All(k.Item).Any(c => Utils.DistanceXZ(c.Pos, pos) < 64f && c.Left > 0); retry++)
+            {
+                TestRunner.Log($"검은 핵 없는 배치 → 지우고 다시 세움 ({retry + 1})");
+                CryptTest.Cleanup(before, pos);
+                yield return new WaitForSeconds(1f);
+                ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);
+                yield return new WaitForSeconds(4f);
+            }
 
             // 바깥: 열쇠 문·입구 Teleport
             ZDO door = Dungeons.KeyDoor(pos);
@@ -170,7 +182,18 @@ namespace ValheimHelper
                 checks.Add($"일꾼 살아 있음 (체력 {w.Ragnar.GetHealth():0})", !w.Ragnar.IsDead());
                 checks.Add($"약한 차림은 시커를 피함(도망·물러남, 상태 {string.Join(",", states.ToArray())})", states.Contains("Flee") || states.Contains("Back") || Guard.DungeonFleeExits > fleeExitsBefore);
                 checks.Add($"일꾼이 광산 밖으로 나옴 ({outAt:0}초)", outAt >= 0f);
+                // 기다리는 동안 일꾼이 멀어져 안 구역이 내려가면 못 지워 다음 시험에 남는다(회차 210) → 먼저 지움
                 foreach (var c in foes) if (c != null && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
+                // ⑬ 바-5: 도망이 끝나면(장소 기억에 도망·시커가 쌓임) 다시 시켜도 혼자 이 광산에 들어가지 않는다(다른 곳·호위병과·기다림)
+                for (int i = 0; i < 45 && outAt >= 0f && w.Ragnar.Ai.Guard != null && w.Ragnar.Ai.Guard.StateName != "Calm"; i++) yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(3f); // 장소 기억은 Calm 뒤 다음 판단 때 닫힘(Guard CloseEncounter)
+                ZoneXY mine = Senses.ZoneOf(gate.transform.position);
+                DepartureResult again = Departures.JudgeFor(w.Ragnar, new ChatCommand { Kind = CommandKind.Item, Item = s_kind.Item, Amount = 3, Urgent = true });
+                // 호위병이 있으면 같이(GoTogether·WaitGuard — vh_departtest 꼴), 없으면 위험을 알고도 감(depart.danger, 사용자 결정 10-25)
+                bool aware = again != null && again.Place != null && (!again.Place.Zone.Equals(mine) || again.Action != DepartAction.Go || again.Key == "depart.danger");
+                TestRunner.Log($"다시 시킴: {(again == null ? "판단 없음" : $"{again.Action} {again.Key} ({again.Reason}) 곳 {(again.Place != null ? again.Place.Zone + (again.Place.Zone.Equals(mine) ? "(이 광산)" : "") : "없음")}")}, 경계 {w.Ragnar.Ai.Guard?.StateName}, 시커 앎 {Brain.Foes.Knows("Seeker")}");
+                checks.Add("도망친 시커를 배움", Brain.Foes.Knows("Seeker"));
+                checks.Add($"다시 시키면 이 광산 위험을 알고 판단 ({(again == null ? "판단 없음" : again.Action + " " + again.Key)})", aware);
             }
             else checks.Add($"{s_kind.ItemKo}이 거점 상자에 들어옴 ({got}/{want}개 — 이 {s_kind.Label}에 있는 만큼, {t:0}초)", got >= want);
             yield return new WaitForSeconds(3f);

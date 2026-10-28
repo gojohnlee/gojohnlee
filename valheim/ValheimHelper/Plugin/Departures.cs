@@ -276,7 +276,18 @@ namespace ValheimHelper
             System.Func<ZoneXY, int> biomeOf = z => biomes.TryGetValue(z, out int b) ? b : biomes[z] = known.BiomeOf(z) != 0 ? known.BiomeOf(z) : Scout.BiomeAt(Senses.ZoneCenter(z));
             var gearBy = new Dictionary<int, PlaceRisk>();
             int homeBiome = biomeOf(Senses.ZoneOf(home));
-            foreach (ZoneMemory m in Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(home)))
+            var zones = Brain.Get().ZonesWith(cmd.Item, Senses.ZoneOf(home));
+            if (Dungeons.InsideOnly(cmd.Item))
+            {
+                // 던전 안 물건(검은 핵)은 구역 지식에 안 쌓인다 → 갈 수 있는 던전 입구 구역도 후보로(⑬ 바-5: 시커에게서 도망친 광산에 혼자 다시 들어감)
+                foreach (var d in Dungeons.All(cmd.Item))
+                {
+                    ZoneXY z = Senses.ZoneOf(d.Pos);
+                    if (d.Left > 0 && (d.Open || d.CanOpen) && !zones.Exists(x => x.Zone.Equals(z))) zones.Add(new ZoneMemory { Zone = z });
+                }
+                zones.Sort((a, b) => Utils.DistanceXZ(home, Senses.ZoneCenter(a.Zone)).CompareTo(Utils.DistanceXZ(home, Senses.ZoneCenter(b.Zone))));
+            }
+            foreach (ZoneMemory m in zones)
             {
                 if (input.Places.Count >= MaxPlaces) break;
                 PlaceRisk alone = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit, taken(f)), resolve);
