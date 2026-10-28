@@ -79,6 +79,7 @@ namespace ValheimHelper
             yield return Pickups(w, checks);
             yield return LavaWalk(w, checks);
             yield return Flametal(w, checks);
+            yield return FarSulfur(w, checks);
         }
 
         static readonly string[] GatherGear = { "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
@@ -386,15 +387,7 @@ namespace ValheimHelper
         static IEnumerator FarFlametal(TestKit.World w, GatherTest.Checks checks, ZDO rock, int tier)
         {
             Vector3 r = rock.GetPosition();
-            Vector3? dry = null;
-            for (float d = 8f; d <= 40f && dry == null; d += 2f)
-                for (int k = 0; k < 24 && dry == null; k++)
-                {
-                    Vector3 p = r + new Vector3(Mathf.Cos(k * Mathf.PI / 12f), 0f, Mathf.Sin(k * Mathf.PI / 12f)) * d;
-                    bool ok = !WorkerAI.Lava(p) && Heightmap.FindHeightmap(p) != null;
-                    for (int j = 0; j < 8 && ok; j++) ok = !WorkerAI.Lava(p + new Vector3(Mathf.Cos(j * Mathf.PI / 4f), 0f, Mathf.Sin(j * Mathf.PI / 4f)) * 3f);
-                    if (ok && ZoneSystem.instance.GetGroundHeight(p, out float h) && h > ZoneSystem.instance.m_waterLevel + 0.5f) { p.y = h; dry = p; }
-                }
+            Vector3? dry = Dry(r, 8f);
             checks.Add($"불꽃금속 바위 둘레 마른 땅 ({(dry == null ? "-" : Utils.DistanceXZ(dry.Value, r).ToString("0") + "m")})", dry != null);
             if (dry == null) yield break;
             string tool = ToolFor(ToolKind.Pickaxe, tier);
@@ -431,6 +424,145 @@ namespace ValheimHelper
                 foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.GoHome(false);
             }
             finally { s_keep = false; }
+        }
+
+        /// <summary>r에서 가장 가까운 마른 땅(min~40m, 3m 둘레도 용암 아님, 물보다 0.5m 높음, 불러진 지형).</summary>
+        static Vector3? Dry(Vector3 r, float min)
+        {
+            for (float d = min; d <= 40f; d += 2f)
+                for (int k = 0; k < 24; k++)
+                {
+                    Vector3 p = r + new Vector3(Mathf.Cos(k * Mathf.PI / 12f), 0f, Mathf.Sin(k * Mathf.PI / 12f)) * d;
+                    bool ok = !WorkerAI.Lava(p) && Heightmap.FindHeightmap(p) != null;
+                    for (int j = 0; j < 8 && ok; j++) ok = !WorkerAI.Lava(p + new Vector3(Mathf.Cos(j * Mathf.PI / 4f), 0f, Mathf.Sin(j * Mathf.PI / 4f)) * 3f);
+                    if (ok && ZoneSystem.instance.GetGroundHeight(p, out float h) && h > ZoneSystem.instance.m_waterLevel + 0.5f) { p.y = h; return p; }
+                }
+            return null;
+        }
+
+        /// <summary>
+        /// 마-3) 유황: Pickable_SulfurRock 식생 조건(바이옴·높이·식생 칠 = 칠 마스크 a, ZoneSystem.PlaceVegetation)을 diag에 적고,
+        /// 거점 2km 안 그 조건에 맞는 애쉬랜드 자리(64m 격자, WorldGenerator 마스크)로 가까운 순 3곳까지 가서 100m 안 유황 바위를 센다.
+        /// 찾으면 가장 가까운 마른 땅에 일꾼을 두고 "!SulfurStone 2" — 주워 오거나(일꾼 가방+거점 상자) 용암 한가운데면 "못 가" 말하는지, 용암 위·죽음.
+        /// </summary>
+        static IEnumerator FarSulfur(TestKit.World w, GatherTest.Checks checks)
+        {
+            if (w.Floki == null) yield break;
+            var vegs = new List<ZoneSystem.ZoneVegetation>();
+            foreach (var v in ZoneSystem.instance.m_vegetation)
+                if (v.m_prefab != null && (v.m_prefab.name == "Pickable_SulfurRock" ||
+                    System.Array.Exists(v.m_prefab.GetComponentsInChildren<Pickable>(true), k => k.m_itemPrefab != null && k.m_itemPrefab.name == "SulfurStone")))
+                {
+                    TestRunner.Log($"마-3) 식생 {v.m_name}: 켜짐 {v.m_enable}, 바이옴 {v.m_biome}·{v.m_biomeArea}, 구역당 {v.m_min}~{v.m_max}, 무리 {v.m_groupSizeMin}~{v.m_groupSizeMax}, " +
+                        $"높이 {v.m_minAltitude}~{v.m_maxAltitude}, 식생 칠 {v.m_minVegetation}~{v.m_maxVegetation}, 기울기 {v.m_minTilt}~{v.m_maxTilt}, 정적 표면 {v.m_snapToStaticSolid}");
+                    if (v.m_enable) vegs.Add(v);
+                }
+            var spots = new List<Vector3>();
+            if (vegs.Count == 0)
+            {
+                // 식생에 없으면 장소에서: 이름에 sulfur가 든 장소, 없으면 종류가 다른 가까운 애쉬랜드 장소 8곳(장소 이름을 diag에).
+                var names = new Dictionary<string, int>();
+                var near = new Dictionary<string, Vector3>();
+                foreach (var li in ZoneSystem.instance.GetLocationList())
+                {
+                    if (li.m_location == null || (li.m_location.m_biome & Heightmap.Biome.AshLands) == 0) continue;
+                    string ln = li.m_location.m_prefabName ?? "";
+                    names.TryGetValue(ln, out int n); names[ln] = n + 1;
+                    if (!near.TryGetValue(ln, out Vector3 q) || Utils.DistanceXZ(w.Home, li.m_position) < Utils.DistanceXZ(w.Home, q)) near[ln] = li.m_position;
+                }
+                var np = new List<string>();
+                foreach (var kv in names) np.Add($"{kv.Key} {kv.Value}({Utils.DistanceXZ(w.Home, near[kv.Key]):0}m)");
+                TestRunner.Log($"마-3) 유황 식생 없음 — 애쉬랜드 장소 [{string.Join(", ", np.ToArray())}]");
+                foreach (var kv in near) if (kv.Key.ToLowerInvariant().Contains("sulfur")) spots.Add(kv.Value);
+                if (spots.Count == 0) spots.AddRange(near.Values);
+            }
+            else
+            for (float x = -2000f; x <= 2000f; x += 64f)
+                for (float z = -2000f; z <= 2000f; z += 64f)
+                {
+                    Vector3 p = w.Home + new Vector3(x, 0f, z);
+                    if (WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.AshLands) continue;
+                    float alt = WorldGenerator.instance.GetHeight(p.x, p.z, out Color m) - 30f;
+                    foreach (var v in vegs)
+                        if (alt >= v.m_minAltitude && alt <= v.m_maxAltitude && (v.m_minVegetation.Equals(v.m_maxVegetation) || (m.a >= v.m_minVegetation && m.a <= v.m_maxVegetation)))
+                        { p.y = alt + 30f; spots.Add(p); break; }
+                }
+            spots.Sort((a, b) => Utils.DistanceXZ(w.Home, a).CompareTo(Utils.DistanceXZ(w.Home, b)));
+            TestRunner.Log($"마-3) 조건 맞는 자리 2km 안 {spots.Count}곳, 가장 가까운 {(spots.Count == 0 ? "-" : Utils.DistanceXZ(w.Home, spots[0]).ToString("0") + "m")}");
+            Player player = Player.m_localPlayer;
+            string sname = ObjectDB.instance.GetItemPrefab("SulfurStone").GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            ZDO rock = null;
+            var tried = new List<Vector3>();
+            foreach (var p in spots)
+            {
+                if (tried.Count >= (vegs.Count > 0 ? 3 : 8) || rock != null) break;
+                if (tried.Exists(t => Utils.DistanceXZ(t, p) < 200f)) continue;
+                tried.Add(p);
+                yield return Tp(player, p + Vector3.up * 3f, player.transform.rotation, true);
+                yield return new WaitForSeconds(5f);
+                var src = Senses.Nearby(p, 100f, z => ZNetScene.instance.GetPrefab(z.GetPrefab())?.name == "Pickable_SulfurRock" && !z.GetBool(ZDOVars.s_picked));
+                int onLava = 0;
+                float bd = float.MaxValue;
+                foreach (var z in src)
+                {
+                    if (WorkerAI.Lava(z.GetPosition())) onLava++;
+                    float d = Utils.DistanceXZ(p, z.GetPosition());
+                    if (d < bd) { bd = d; rock = z; }
+                }
+                TestRunner.Log($"마-3) 거점 {Utils.DistanceXZ(w.Home, p):0}m 자리 100m 안 유황 {src.Count}개(용암 위 {onLava})" +
+                    (rock == null ? "" : $", 가장 가까운 {bd:0}m 칠 {Heightmap.FindHeightmap(rock.GetPosition())?.GetLava(rock.GetPosition()) ?? -1f:0.00} 높이 {rock.GetPosition().y:0}"));
+            }
+            checks.Add($"유황 바위를 찾음 ({tried.Count}곳 봄)", rock != null);
+            if (rock != null)
+            {
+                Vector3 r = rock.GetPosition();
+                Vector3? dry = Dry(r, 4f);
+                checks.Add($"유황 바위 둘레 마른 땅 ({(dry == null ? "-" : Utils.DistanceXZ(dry.Value, r).ToString("0") + "m")})", dry != null);
+                if (dry != null)
+                {
+                    yield return Tp(player, dry.Value + Vector3.up * 1f, player.transform.rotation);
+                    s_keep = true;
+                    Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(dry.Value, () => s_keep));
+                    try
+                    {
+                        Quaternion face = Quaternion.LookRotation(Flat(r - dry.Value));
+                        foreach (var npc in new[] { w.Ragnar, w.Floki })
+                        {
+                            npc.Ai.Interrupt();
+                            npc.Ai.Queue.Clear();
+                            npc.GetInventory().RemoveItem(sname, 999);
+                            npc.TeleportTo(dry.Value + face * new Vector3(npc == w.Ragnar ? 2f : -2f, 0.5f, -2f), face, false);
+                            npc.Heal(1000f, false);
+                        }
+                        yield return new WaitForSeconds(2f);
+                        TestKit.ClearBaseStock(w, "SulfurStone");
+                        float t0 = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime;
+                        int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths, outs0 = GatherJob.LavaOuts;
+                        System.Func<int> got = () => GatherTest.CountBase(w.Home, "SulfurStone") + w.Ragnar.GetInventory().CountItems(sname) + w.Floki.GetInventory().CountItems(sname);
+                        GatherTest.Say("!SulfurStone 2", null);
+                        yield return TestKit.WaitFor(() => got() >= 2 || GatherJob.LavaOuts > outs0, 300f);
+                        bool lavaOut = GatherJob.LavaOuts > outs0;
+                        checks.Add($"유황 2개 주움 또는 용암 한가운데라 \"못 가\" ({(lavaOut ? "못 가" : got() + "개")}, {TestKit.Waited:0}초)", TestKit.Ok);
+                        float lava = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime - t0;
+                        TestRunner.Log($"마-3) 유황 마른 땅 {Utils.DistanceXZ(dry.Value, r):0}m, 주움 {got()}, 못 가 {lavaOut}, 용암 위 {lava:0.0}초, 일 {w.Ragnar.Ai.Job?.GetType().Name ?? "-"}");
+                        checks.Add($"유황 보러 가며 용암 위 오래 안 있음 ({lava:0.0}초)", lava < 1f);
+                        checks.Add("유황 보러 가며 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                        foreach (var npc in new[] { w.Ragnar, w.Floki })
+                        {
+                            npc.Ai.Queue.Clear();
+                            npc.Ai.Interrupt();
+                            npc.GetInventory().RemoveItem(sname, 999);
+                        }
+                    }
+                    finally { s_keep = false; }
+                }
+            }
+            foreach (var npc in new[] { w.Ragnar, w.Floki })
+            {
+                npc.Ai.GoHome(false);
+                npc.TeleportTo(w.Home + new Vector3(npc == w.Ragnar ? 2f : -2f, 0.5f, 2f), npc.transform.rotation, false);
+            }
+            yield return Tp(player, w.Home + Vector3.up * 0.5f, player.transform.rotation, true);
         }
 
         /// <summary>center 둘레 불꽃금속 출처를 세어 diag에(종류·단계·용암 위·가장 가까운 것의 칠), 가장 가까운 것을 돌려줌.</summary>
