@@ -581,14 +581,15 @@ namespace ValheimHelper
         /// </summary>
         bool RescueIfTrapped(float dt, Vector3 pos)
         {
-            if (Utils.DistanceXZ(pos, m_trapAnchor) > (float)Climb.TrapRadius) { m_trapAnchor = pos; m_trapStill = 0f; return false; }
+            bool fleeing = m_guard != null && m_guard.Fleeing;
+            bool swimming = m_character.IsSwimming();
+            // 도망·헤엄 중인 시간만 센다(⑬ 사), 회차 211 vh_coppertest: 서서 캐던 시간까지 세어 도망 시작 1~2초 만에 깃발로 옮겨짐)
+            if ((!fleeing && !swimming) || Utils.DistanceXZ(pos, m_trapAnchor) > (float)Climb.TrapRadius) { m_trapAnchor = pos; m_trapStill = 0f; return false; }
             m_trapStill += dt;
             if (m_trapStill < Mathf.Min((float)Climb.FleeTrapSeconds, (float)Climb.SwimTrapSeconds)) return false;
             m_trapCheck -= dt;
             if (m_trapCheck > 0f) return false;
             m_trapCheck = 0.5f;
-            bool fleeing = m_guard != null && m_guard.Fleeing;
-            bool swimming = m_character.IsSwimming();
             Vector3 toward = Flat(m_moveTarget - pos);
             if (toward.sqrMagnitude < 0.01f) toward = Flat(transform.forward);
             bool pit = fleeing && !swimming && Climb.IsPit(Rise8(pos, toward));
