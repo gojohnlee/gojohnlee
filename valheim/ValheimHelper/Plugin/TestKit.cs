@@ -421,7 +421,7 @@ namespace ValheimHelper
             foreach (var zdo in Senses.Nearby(home, StartRadius))
             {
                 ZNetView v = ZNetScene.instance.FindInstance(zdo);
-                if (v != null && v.IsValid() && v.GetComponent<ItemDrop>() != null) list.Add(v);
+                if (v != null && v.IsValid() && v.GetComponent<ItemDrop>() != null && !list.Contains(v)) list.Add(v);
             }
             return list;
         }
@@ -436,6 +436,7 @@ namespace ValheimHelper
             int drops = 0, bodies = 0, logs = 0;
             foreach (var v in Drops(home))
             {
+                if (v == null || !v.IsValid()) continue;
                 var it = v.GetComponent<ItemDrop>();
                 string n = Utils.GetPrefabName(v.gameObject);
                 names.TryGetValue(n, out int c);
@@ -488,6 +489,7 @@ namespace ValheimHelper
             int creatures = ClearCreatures(home), drops = 0, logs = 0;
             foreach (var v in Drops(home))
             {
+                if (v == null || !v.IsValid()) continue; // 앞서 지운 것(회차 241 vh_restart2 끝 정리 NRE)
                 v.ClaimOwnership();
                 ZNetScene.instance.Destroy(v.gameObject);
                 drops++;
