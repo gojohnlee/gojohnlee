@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 219 · 10-28 · 안개땅 회귀 9묶음(안개땅 시험)
+
+**요약**
+
+- 안개땅 자료·적 싸움·광산 검은 핵·광산 도망·밤사이 정산·방패·약점 시험 모두 통과(코드 안 바뀜).
+
+**자세히**
+
+- vh_mistlandstest(VH_BIOME=mistlands) 19/19, vh_mistfoetest 13/13, vh_minetest(약식) 11/11, vh_minefoetest(약식) 16/16, vh_settletest 32/32, vh_blocktest 11/11, vh_weaktest 10/10.
+- 광산 묶음 로그의 TerrainComp.Load NullReference 3줄은 게임 쪽(codemap에 적힌 꼴).
+- 남은 것: 실제 재시작 시험(vh_restart1 → vh_restart2).
+
 ### 회차 218 · 10-28 · 안개땅 회귀 8묶음(평원 시험)
 
 **요약**
