@@ -77,6 +77,7 @@ namespace ValheimHelper
             Site(w, checks);
             yield return Gather(w, checks);
             yield return LavaWalk(w, checks);
+            yield return Flametal(w, checks);
         }
 
         static readonly string[] GatherGear = { "ArmorPaddedCuirass", "ArmorPaddedGreaves", "HelmetPadded", "CapeLinen", "SwordSilver" };
@@ -230,6 +231,104 @@ namespace ValheimHelper
             finally { s_keep = false; }
         }
 
+        /// <summary>
+        /// 라) 불꽃금속 광석: 다) 뒤(웅덩이 둘레 구역이 생긴 뒤) 거점 700m 안 LeviathanLava·MineRock_Meteorite를 세고(단계·용암 위인지),
+        /// 맞는 곡괭이로 "!FlametalOreNew 3"를 지금 GatherJob 그대로 → 거점 상자에. 용암 위 시간·죽음도 본다.
+        /// </summary>
+        static IEnumerator Flametal(TestKit.World w, GatherTest.Checks checks)
+        {
+            if (w.Floki == null) yield break; // 다) 뒤엔 거점 구역이 내려가 w.Chest가 비어 있을 수 있음 — 셈은 거점 자리로
+            foreach (var v in ZoneSystem.instance.m_vegetation)
+                if (v.m_prefab != null && (v.m_prefab.name == "LeviathanLava" || v.m_prefab.name == "MineRock_Meteorite"))
+                    TestRunner.Log($"라) 식생 {v.m_name}: {v.m_prefab.name} 켜짐 {v.m_enable}, 바이옴 {v.m_biome}·{v.m_biomeArea}, 구역당 {v.m_min}~{v.m_max}, 무리 {v.m_groupSizeMin}~{v.m_groupSizeMax}, " +
+                        $"높이 {v.m_minAltitude}~{v.m_maxAltitude}, 식생 칠 {v.m_minVegetation}~{v.m_maxVegetation}, 기울기 {v.m_minTilt}~{v.m_maxTilt}, 중심 거리 {v.m_minDistanceFromCenter}~{v.m_maxDistanceFromCenter}, 숲 {v.m_inForest}");
+            ZDO best = Sources(w.Home, 700f, "거점 700m", out int tier);
+            if (best == null)
+            {
+                // 가까운 구역에 없으면(LeviathanLava 식생은 꺼져 있음) 이름에 meteor·flametal·leviathan이 든 장소 중 가장 가까운 곳에 가서 센다.
+                var names = new Dictionary<string, int>();
+                Vector3? loc = null;
+                float ld = float.MaxValue;
+                foreach (var li in ZoneSystem.instance.GetLocationList())
+                {
+                    string ln = li.m_location?.m_prefabName ?? "";
+                    string low = ln.ToLowerInvariant();
+                    if (!low.Contains("meteor") && !low.Contains("flametal") && !low.Contains("leviathan")) continue;
+                    names.TryGetValue(ln, out int n); names[ln] = n + 1;
+                    float d = Utils.DistanceXZ(w.Home, li.m_position);
+                    if (d < ld) { ld = d; loc = li.m_position; }
+                }
+                var np = new List<string>();
+                foreach (var kv in names) np.Add(kv.Key + " " + kv.Value);
+                TestRunner.Log($"라) 장소 [{string.Join(", ", np.ToArray())}], 가장 가까운 {(loc == null ? "-" : ld.ToString("0") + "m " + loc.Value)}");
+                if (loc != null)
+                {
+                    Player player = Player.m_localPlayer;
+                    yield return Tp(player, loc.Value + Vector3.up * 3f, player.transform.rotation, true);
+                    yield return new WaitForSeconds(5f);
+                    ZDO far = Sources(loc.Value, 100f, "그 장소 100m", out int t2);
+                    checks.Add($"불꽃금속 광석 출처를 찾음 (거점 {ld:0}m 장소)", far != null);
+                    yield return Tp(player, w.Home + Vector3.up * 0.5f, player.transform.rotation, true);
+                    TestRunner.Log("라) 거점 700m 밖이라 캐기는 다음 조각(먼 출처 가기)");
+                    yield break;
+                }
+            }
+            checks.Add("불꽃금속 광석 출처를 찾음 (거점 700m)", best != null);
+            if (best == null) yield break;
+            string tool = ToolFor(ToolKind.Pickaxe, tier);
+            checks.Add($"불꽃금속에 맞는 곡괭이 있음 ({tool ?? "없음"}, 단계 {tier})", tool != null);
+            if (tool == null) yield break;
+            foreach (var npc in new[] { w.Ragnar, w.Floki })
+            {
+                npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(tool), 1);
+                Prep.WearBest(npc);
+                npc.Heal(1000f, false);
+            }
+            s_keep = true;
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(w.Home, () => s_keep));
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(best.GetPosition(), () => s_keep));
+            try
+            {
+                TestKit.ClearBaseStock(w, "FlametalOreNew");
+                float t0 = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime;
+                int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths;
+                GatherTest.Say("!FlametalOreNew 3", null);
+                yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "FlametalOreNew") >= 3, 480f);
+                checks.Add($"불꽃금속 광석 3개가 상자에 ({GatherTest.CountBase(w.Home, "FlametalOreNew")}개, {TestKit.Waited:0}초)", TestKit.Ok);
+                float lava = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime - t0;
+                TestRunner.Log($"라) 둘레 길 {w.Ragnar.Ai.HazardPaths + w.Floki.Ai.HazardPaths}번(못 찾음 {w.Ragnar.Ai.HazardPathFails + w.Floki.Ai.HazardPathFails}), 용암 위 {lava:0.0}초, 일 {w.Ragnar.Ai.Job?.GetType().Name ?? "-"}");
+                checks.Add($"광석 캐며 용암 위 오래 안 있음 ({lava:0.0}초)", lava < 3f);
+                checks.Add("불꽃금속 캐며 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                TestKit.ClearBaseStock(w, "FlametalOreNew");
+            }
+            finally { s_keep = false; }
+        }
+
+
+        /// <summary>center 둘레 불꽃금속 출처를 세어 diag에(종류·단계·용암 위·가장 가까운 것의 칠), 가장 가까운 것을 돌려줌.</summary>
+        static ZDO Sources(Vector3 center, float range, string label, out int tier)
+        {
+            var srcs = Senses.Nearby(center, range, z => ResourceCatalog.Get(z.GetPrefab())?.Produces.Contains("FlametalOreNew") == true);
+            int onLava = 0;
+            tier = 0;
+            ZDO best = null;
+            float bd = float.MaxValue;
+            var kinds = new Dictionary<string, int>();
+            foreach (var z in srcs)
+            {
+                tier = Mathf.Max(tier, ResourceCatalog.Get(z.GetPrefab()).MinToolTier);
+                string name = ZNetScene.instance.GetPrefab(z.GetPrefab())?.name ?? "?";
+                kinds.TryGetValue(name, out int n); kinds[name] = n + 1;
+                if (WorkerAI.Lava(z.GetPosition())) onLava++;
+                float d = Utils.DistanceXZ(center, z.GetPosition());
+                if (d < bd) { bd = d; best = z; }
+            }
+            var parts = new List<string>();
+            foreach (var kv in kinds) parts.Add(kv.Key + " " + kv.Value);
+            TestRunner.Log($"라) 불꽃금속 출처 {label} 안 {srcs.Count}개 [{string.Join(", ", parts.ToArray())}], 단계 {tier}, 용암 위 {onLava}, 가장 가까운 {(best == null ? "-" : bd.ToString("0") + "m")}" +
+                (best == null ? "" : $" (칠 {Heightmap.FindHeightmap(best.GetPosition())?.GetLava(best.GetPosition()) ?? -1f:0.00}, 높이 {best.GetPosition().y:0})"));
+            return best;
+        }
         /// <summary>웅덩이 가운데에서 20~45m 양쪽(150도 넘게 벌어짐)에 8m 둘레가 용암 아니고 물보다 1m 높고 평평한(2m 안) 자리, A→B 곧은 선이 용암을 지남.</summary>
         static bool Spots(Vector3 pool, out Vector3 a0, out Vector3 b0, List<Vector3[]> all = null)
         {
