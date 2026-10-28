@@ -93,6 +93,88 @@ namespace ValheimHelper
                 TestRunner.Log($"물건 {item}: 방법 [{string.Join(",", new List<ToolKind>(wl).ConvertAll(t => t.ToString()).ToArray())}], 출처 [{string.Join(", ", ResourceCatalog.SourcesOf(item).ToArray())}]");
             }
             checks.Add($"딥노스 물건을 얻는 길을 셈 ({ways}/{items.Count})", ways > 0);
+            if (TestKit.RunBiome != DN) yield break;
+            yield return Site(w, checks);
         }
+
+        /// <summary>깊은 눈 높이(m): Character가 쓰는 대로 Heightmap.GetCultivationMask × m_deepSnowSlowMaxHeight. 지형이 없으면 -1.</summary>
+        static float Snow(Vector3 at, Character c)
+        {
+            Heightmap hm = Heightmap.FindHeightmap(at);
+            return hm == null ? -1f : hm.GetCultivationMask(at) * c.m_deepSnowSlowMaxHeight;
+        }
+
+        /// <summary>
+        /// 나) VH_BIOME=deepnorth: 자리가 딥노스인지, 일꾼 눈 감속 값(Player에서 복사)·둘레 100m 깊은 눈 칸, 깊은 눈 쪽으로 플레이어를 따라 걸을 때
+        /// 눈 위·밖 속도, 추위(Freezing은 Player.UpdateEnvStatusEffects만 줌 — 일꾼에게 안 붙는지).
+        /// </summary>
+        static IEnumerator Site(TestKit.World w, GatherTest.Checks checks)
+        {
+            WorkerNpc npc = w.Ragnar;
+            var biome = WorldGenerator.instance.GetBiome(w.Home);
+            checks.Add($"시험 자리가 딥노스 (바이옴 {biome})", biome == DN);
+            Player player = Player.m_localPlayer;
+            TestRunner.Log($"눈 감속: 일꾼 최대 {npc.m_deepSnowSlowMax:0.##}·시작 {npc.m_deepSnowSlowStartHeight:0.##}m·최대 높이 {npc.m_deepSnowSlowMaxHeight:0.##}m, 플레이어 최대 {player.m_deepSnowSlowMax:0.##}, " +
+                $"걷기 {npc.m_walkSpeed:0.0}·달리기 {npc.m_runSpeed:0.0}, 얼어붙음 날씨 {EnvMan.IsFreezing()}·추움 {EnvMan.IsCold()}");
+            int all = 0, deep = 0;
+            float max = 0f;
+            Vector3? far = null;
+            for (float x = -100f; x <= 100f; x += 4f)
+                for (float z = -100f; z <= 100f; z += 4f)
+                {
+                    Vector3 at = w.Home + new Vector3(x, 0f, z);
+                    float s = Snow(at, npc);
+                    if (s < 0f) continue;
+                    all++;
+                    if (s <= npc.m_deepSnowSlowStartHeight) continue;
+                    deep++;
+                    max = Mathf.Max(max, s);
+                    float d = Utils.DistanceXZ(at, w.Home);
+                    if (s >= 1f && d >= 25f && d <= 60f && (far == null || Snow(far.Value, npc) < s)) far = at;
+                }
+            TestRunner.Log($"자리 100m 안 깊은 눈 칸 {deep}/{all}(최고 {max:0.00}m), 거점 눈 {Snow(w.Home, npc):0.00}m");
+            checks.Add($"둘레 지형을 읽음 ({all}칸)", all > 0);
+            if (far == null) { TestRunner.Log("25~60m 안 1m 넘는 깊은 눈 없음 — 걷기 재기 건너뜀"); yield break; }
+            ZoneSystem.instance.GetGroundHeight(far.Value, out float fh);
+            Vector3 goal = new Vector3(far.Value.x, fh, far.Value.z);
+            s_keep = true;
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(goal, () => s_keep));
+            Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(w.Home, () => s_keep));
+            float inT = 0f, inD = 0f, outT = 0f, outD = 0f;
+            bool cold = false;
+            try
+            {
+                npc.Ai.Interrupt();
+                npc.Ai.Queue.Clear();
+                npc.TeleportTo(w.Home + Vector3.up * 0.5f, npc.transform.rotation, false);
+                yield return new WaitForSeconds(2f);
+                yield return TestKit.WaitFor(() => player.TeleportTo(goal + Vector3.up * 1f, player.transform.rotation, false), 10f);
+                yield return TestKit.WaitFor(() => !player.IsTeleporting(), 60f);
+                npc.Ai.Follow(player.GetZDOID(), player.GetPlayerName());
+                float t0 = Time.time;
+                Vector3 last = npc.transform.position;
+                while (Time.time - t0 < 90f && Utils.DistanceXZ(npc.transform.position, player.transform.position) > 5f)
+                {
+                    yield return null;
+                    Vector3 now = npc.transform.position;
+                    float step = Utils.DistanceXZ(now, last), dt = Time.deltaTime;
+                    last = now;
+                    if (step > 2f) continue; // 순간이동 칸은 안 셈
+                    if (Snow(now, npc) > npc.m_deepSnowSlowStartHeight) { inT += dt; inD += step; } else { outT += dt; outD += step; }
+                    cold |= npc.GetSEMan().HaveStatusEffect(SEMan.s_statusEffectFreezing) || npc.GetSEMan().HaveStatusEffect(SEMan.s_statusEffectCold);
+                }
+                float took = Time.time - t0;
+                TestRunner.Log($"깊은 눈({Snow(goal, npc):0.00}m) {Utils.DistanceXZ(goal, w.Home):0}m 걷기: {took:0.0}초, 눈 위 {inD:0.0}m/{inT:0.0}초 = {(inT > 0f ? inD / inT : 0f):0.00}m/s, " +
+                    $"눈 밖 {outD:0.0}m/{outT:0.0}초 = {(outT > 0f ? outD / outT : 0f):0.00}m/s");
+                checks.Add($"깊은 눈을 지나 플레이어에게 닿음 ({took:0}초)", Utils.DistanceXZ(npc.transform.position, player.transform.position) <= 5f);
+                checks.Add("일꾼에게 추위(Cold·Freezing)가 안 붙음", !cold);
+            }
+            finally { s_keep = false; }
+            npc.Ai.GoHome(false);
+            yield return TestKit.WaitFor(() => player.TeleportTo(w.Home + Vector3.up * 0.5f, player.transform.rotation, false), 10f);
+            yield return TestKit.WaitFor(() => !player.IsTeleporting(), 60f);
+        }
+
+        static bool s_keep;
     }
 }
