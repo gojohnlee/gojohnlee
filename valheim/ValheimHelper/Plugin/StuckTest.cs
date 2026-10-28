@@ -100,7 +100,8 @@ namespace ValheimHelper
             TestRunner.Log($"근처 막힘 건너뛰기: {skipAt:0}초, {moved:0.0}m 옮김, 땅과 {after.y - gh:0.0}m, 짐 {items0} → {w.Ragnar.GetInventory().NrOfItems()}");
             checks.Add($"근처 {Core.Work.StuckHop.NearStuckSeconds:0}초 막힘 → 막힌 곳 너머로 옮김 ({skipAt:0}초, {moved:0.0}m)", skipped && skipAt >= (float)Core.Work.StuckHop.NearStuckSeconds - 5f && moved >= 2f && moved <= 9f);
             checks.Add("옮긴 자리가 땅 위", skipped && ground);
-            checks.Add($"짐 그대로 ({items0} → {w.Ragnar.GetInventory().NrOfItems()})", w.Ragnar.GetInventory().NrOfItems() == items0);
+            // 줄지만 않으면 됨: 묶인 채 팔 닿는 데 떨어진 것을 주우면 는다(회차 215: 4 → 5·6, 떨어짐 기다림 Collect)
+            checks.Add($"짐 그대로 ({items0} → {w.Ragnar.GetInventory().NrOfItems()})", w.Ragnar.GetInventory().NrOfItems() >= items0);
             yield return new WaitForSeconds(1f);
             checks.Add("구조 대사를 함", w.Heard.Exists(h => h.Contains("오딘") || h.Contains("신들") || h.Contains("빠져나왔")));
 
