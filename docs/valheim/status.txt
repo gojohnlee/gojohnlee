@@ -1,8 +1,8 @@
 갱신: 2026-10-29 06:37  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
-회차: 255, 계정: 1번, 한도: 2번 10-31 07:02까지
+지금: 회차 256 진행 중
+회차: 256, 계정: 1번, 한도: 2번 10-31 07:02까지
 할 일: ⑮ 딥노스(게임 1.0.20에 있음 → 가) 자료 시험 vh_deepnorthtest: 생성 표의 딥노스 적·식생·장소·물건 얻는 길 [끝, 회차 245 — 커밋 0e25ad1 · 시험 vh_deepnorthtest…
 마지막 시험: 10-29 06:36 요약: 2/2 PASS
-Claude가 한 일: LOOP: DONE 딥노스 마) 적 싸움 시험 vh_deepfoetest PASS 20/20, 대사 늘리기 요청 "다음"에 넣음
+Claude가 한 일: (진행 중)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
