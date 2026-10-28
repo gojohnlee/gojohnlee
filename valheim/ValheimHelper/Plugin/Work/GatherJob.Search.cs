@@ -159,7 +159,16 @@ namespace ValheimHelper
                     if (!Dungeons.Use(m_npc, gate)) return AbandonCrypt("입구 Teleport 실패");
                 }
             }
-            else if (Stuck(dt, gp)) return AbandonCrypt("입구 앞 막힘");
+            else if (Stuck(dt, gp))
+            {
+                // 입구 앞 막힘(⑬ 바-3, 막힘 규칙과 같게): 일꾼·입구 둘레에 플레이어가 없으면 그 입구를 바로 쓴다(들어가 서는 곳은 걸어 들어간 것과 같음)
+                if (TestNoInteriorHop || !NoPlayerAround(pos) || !NoPlayerAround(gp)) return AbandonCrypt("입구 앞 막힘");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 입구 앞 막힘({Vector3.Distance(gp, pos):0}m) → 플레이어 없어 입구 바로 씀");
+                m_gateUsedAt = m_stepTime;
+                m_ai.StopMoving();
+                GateHops++;
+                if (!Dungeons.Use(m_npc, gate)) return AbandonCrypt("입구 Teleport 실패");
+            }
             return true;
         }
 
@@ -223,6 +232,7 @@ namespace ValheimHelper
                 return;
             }
             Vector3 ep = exit.transform.position;
+            if (ExitHop(dt, exit)) return;
             if (Walk(dt, ep, 1.5f) || Vector3.Distance(ep, m_npc.transform.position) < 2.5f)
             {
                 if (m_stepTime - m_gateUsedAt > 3f)
@@ -232,6 +242,36 @@ namespace ValheimHelper
                     Dungeons.Use(m_npc, exit);
                 }
             }
+        }
+
+        float m_exitHopWait = -1f;
+
+        /// <summary>시험용: 나가는 길 이동 생략·입구 앞 막힘에 입구 바로 쓴 횟수.</summary>
+        public static int ExitHops, GateHops;
+
+        /// <summary>
+        /// 나가는 길 이동 생략(⑬ 바-2f, InteriorHop과 같은 규칙): 던전 안 칸 길이 나가는 Teleport까지 끊겼고 일꾼 둘레 64m에 플레이어가 없으면
+        /// 직선 거리 ÷ 달리기 속도(15초까지) 서서 기다렸다가 그 Teleport를 바로 쓴다(나가서 서는 곳은 걸어 나간 것과 같음). 기다리는 사이 길이 생기면 그만둔다.
+        /// </summary>
+        bool ExitHop(float dt, Teleport exit)
+        {
+            Vector3 ep = exit.transform.position, me = m_npc.transform.position;
+            if (TestNoInteriorHop || !m_ai.InteriorNoPath(ep, 1.5f) || !NoPlayerAround(me)) { m_exitHopWait = -1f; return false; }
+            if (m_exitHopWait < 0f)
+            {
+                m_exitHopWait = Mathf.Min(15f, Vector3.Distance(me, ep) / Mathf.Max(1f, m_npc.m_runSpeed));
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 나가는 문까지 던전 안 길 없음({Vector3.Distance(me, ep):0}m) → 이동 생략 {m_exitHopWait:0}초 기다림");
+            }
+            m_ai.Hold("던전 나가기 이동 생략");
+            m_ai.StopMoving();
+            m_exitHopWait -= dt;
+            if (m_exitHopWait > 0f) return true;
+            m_exitHopWait = -1f;
+            m_gateUsedAt = m_stepTime;
+            ExitHops++;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 던전 나가기 이동 생략 → 나가는 문 씀");
+            Dungeons.Use(m_npc, exit);
+            return true;
         }
 
         void GoZone()

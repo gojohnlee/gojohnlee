@@ -126,6 +126,7 @@ namespace ValheimHelper
             w.Ragnar.TeleportTo(start, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1.5f);
             int stockBefore = GatherTest.CountBase(w.Home, s_kind.Item);
+            int hopsBefore = GatherJob.InteriorHops, exitHopsBefore = GatherJob.ExitHops, gateHopsBefore = GatherJob.GateHops;
             GatherTest.Say($"!{w.Ragnar.NpcName} {s_kind.ItemKo} 3", null);
             bool wasInside = false;
             float t = 0f, inAt = -1f, outAt = -1f;
@@ -137,7 +138,7 @@ namespace ValheimHelper
                 else if (wasInside && outAt < 0f) outAt = t;
             }
             int got = GatherTest.CountBase(w.Home, s_kind.Item) - stockBefore;
-            TestRunner.Log($"{s_kind.ItemKo} 일: {t:0}초(들어감 {inAt:0}초·나옴 {outAt:0}초{(TestRunner.Quick ? ", 약식 입구 앞 시작" : "")}), 상자에 {s_kind.ItemKo} {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}, 체력 {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}");
+            TestRunner.Log($"{s_kind.ItemKo} 일: {t:0}초(들어감 {inAt:0}초·나옴 {outAt:0}초{(TestRunner.Quick ? ", 약식 입구 앞 시작" : "")}), 상자에 {s_kind.ItemKo} {got}개, 단계 {(w.Ragnar.Ai.Job is GatherJob g ? g.StepName : "-")}, 체력 {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}, 안 이동 생략 {GatherJob.InteriorHops - hopsBefore}번·나가기 {GatherJob.ExitHops - exitHopsBefore}번·입구 {GatherJob.GateHops - gateHopsBefore}번");
             checks.Add($"일꾼이 {s_kind.Label} 안으로 들어감", wasInside);
             checks.Add($"{s_kind.ItemKo}이 거점 상자에 들어옴 ({got}개, {t:0}초)", got >= 3);
             yield return new WaitForSeconds(3f);
