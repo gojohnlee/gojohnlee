@@ -230,7 +230,7 @@ function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
     $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''
-            verify = ''; verifyFail = ''; verifyFailN = 0 }   # 분업: 다음 회차에 넘길 검증 결과·같은 시험 연속 FAIL
+            verify = ''; verifyFail = ''; verifyFailN = 0; tokenDay = '' }   # 분업: 다음 회차에 넘길 검증 결과·같은 시험 연속 FAIL
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
     }
@@ -241,6 +241,17 @@ function Load-State {
 function Get-GameId {
     if (-not (Test-Path $GameDll)) { return '' }
     try { "$((Get-Item $GameDll).VersionInfo.FileVersion) $((Get-FileHash $GameDll).Hash.Substring(0, 12))" } catch { '' }
+}
+# 토큰 측정(사용자 10-28): 날짜가 바뀐 뒤 첫 회차 전에 한 번 scripts\vh-token-report.ps1(모델 호출 없음)을 돌려 token-report.md만 커밋·푸시.
+function Update-TokenReport {
+    $st.tokenDay = Get-Date -Format 'yyyy-MM-dd'; Save-State   # 실패해도 그날은 다시 안 함
+    $out = (& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Repo 'scripts\vh-token-report.ps1') -Out (Join-Path $Repo 'docs\valheim\token-report.md') 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE) { Log "토큰 측정 못 함: $($out.Substring(0, [Math]::Min(300, $out.Length)))"; return }
+    G add docs/valheim/token-report.md | Out-Null
+    G commit -q -m 'Valheim token report' -- docs/valheim/token-report.md | Out-Null
+    G push -q origin valheim | Out-Null
+    if ($LASTEXITCODE -ne 0) { G pull -q --rebase --autostash origin valheim | Out-Null; G push -q origin valheim | Out-Null }
+    Log '토큰 측정 올림'
 }
 function Save-State { [IO.File]::WriteAllText($StateFile, ($st | ConvertTo-Json), $Utf8) }
 
@@ -564,6 +575,7 @@ while ($true) {
         if ($LASTEXITCODE) { $StaleNote = "루프 스크립트가 바뀌었지만 옛것으로 도는 중: $out" }
         $SelfHash = (Get-FileHash $PSCommandPath).Hash   # 못 했으면 같은 것으로 다시 시도하지 않음
     }
+    if ($st.tokenDay -ne (Get-Date -Format 'yyyy-MM-dd')) { Update-TokenReport }
     if (Test-StopFile) {
         Log '멈춤 파일 → 끝'; Write-Status $(if (Test-Path $mark) { '다시 켜는 중: 새 루프 스크립트로(1~2분)' } else { '멈춤: 멈춤 파일이 있음' }) '-'
         if (Test-Path $mark) {
