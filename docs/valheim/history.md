@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 214 · 10-28 · 안개땅 회귀 4묶음 통과
+
+**요약**
+
+- [10-28] 안개땅 회귀 4묶음: 이름·기술·채우기·습격·도움·팀·Claude 명령 시험 모두 통과(코드 안 바꿈).
+
+**자세히**
+
+- 시험(커밋 25ee8b2 빌드): vh_nametest 9/9 · vh_skilltest 8/8 · vh_refilltest 22/22 · vh_raidtest 9/9(E027 꼴 안 남) · vh_helptest 7/7 · vh_teamtest 6/6 · vh_claudetest 6/6 PASS.
+- 로그 오류는 BepInEx "Unity log writer" 한 줄뿐(늘 나오는 것).
+
 ### 회차 213 · 10-28 · 안개땅 회귀 3묶음 통과
 
 **요약**
