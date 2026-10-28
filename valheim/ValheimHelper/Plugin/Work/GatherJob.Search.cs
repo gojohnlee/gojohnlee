@@ -477,7 +477,7 @@ namespace ValheimHelper
             Vector3 p = zdo.GetPosition();
             ZNetView view = ZNetScene.instance.FindInstance(zdo);
             onLava = WorkerAI.Lava(p, 3f, view);
-            if (!onLava) return null;
+            if (!onLava && !(FloorReach && OnLava(p))) return null; // 바위 밑까지 바닥이 깔려도(용암 땅) 설 자리는 둘레 바닥에서 고름(E049)
             float reach = ReachOf(view, pickable);
             float ext = 0f; // 큰 바위(LeviathanLava)는 닿을 거리 안이 다 바위 몸 → 바위 겉 바로 밖도 봄(TouchingRock으로 닿음)
             if (view != null)

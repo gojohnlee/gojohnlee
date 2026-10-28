@@ -376,7 +376,9 @@ namespace ValheimHelper
             if (!inside) ForgetInteriorPath();
             if (!inside || !InteriorWalk(pos, point, dist, run))
             {
-                if (inside || !FollowHazardPath(pos, point, run))
+                // 용암 위 건물 바닥 길: 목표까지 직선이 다 바닥이면 곧장 걷는다 — 길찾기는 띄운 바닥 옆 땅으로 내려가 용암에 빠짐(E049)
+                if (!inside && FloorLine(pos, point)) MoveTowards(Flat(point - pos), false);
+                else if (inside || !FollowHazardPath(pos, point, run))
                 {
                     bool done = MoveTo(dt, point, dist, run);
                     if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
@@ -763,6 +765,28 @@ namespace ValheimHelper
         /// <summary>용암 땅 위 건물 바닥에 서 있는지(바닥이 없으면 용암인 곳).</summary>
         public static bool LavaFloored(Vector3 p) =>
             WorldGenerator.instance != null && WorldGenerator.instance.GetBiome(p) == Heightmap.Biome.AshLands && (Heightmap.FindHeightmap(p)?.GetLava(p) ?? 0f) > LavaEdge && Floored(p);
+
+        /// <summary>a에서 b까지 직선(1m 간격)이 전부 건물 바닥이고 그중 용암 땅 위가 있는지(E049 바닥 길 곧장 걷기).</summary>
+        /// <summary>마지막 FloorLine 결과 까닭(진단).</summary>
+        public static string FloorWhy = "";
+        public static bool FloorLine(Vector3 a, Vector3 b)
+        {
+            FloorWhy = "시작 바닥 아님";
+            if (WorldGenerator.instance == null || WorldGenerator.instance.GetBiome(a) != Heightmap.Biome.AshLands || !Floored(a)) return false;
+            float d = Utils.DistanceXZ(a, b);
+            FloorWhy = "60m 넘음";
+            if (d > 60f) return false;
+            bool lava = false;
+            for (float s = 1f; s < d + 1f; s += 1f)
+            {
+                Vector3 q = Vector3.Lerp(a, b, Mathf.Min(1f, s / Mathf.Max(d, 0.01f)));
+                q.y = a.y;
+                if (!Floored(q)) { FloorWhy = $"{s:0}m에서 끊김({q.x:0.0},{q.z:0.0})"; return false; }
+                if (!lava) lava = (Heightmap.FindHeightmap(q)?.GetLava(q) ?? 0f) > LavaEdge;
+            }
+            FloorWhy = lava ? "이어짐" : "용암 안 지남";
+            return lava;
+        }
 
         /// <summary>Floored와 같고, 바닥이면 그 윗면 높이.</summary>
         public static bool FloorHeight(Vector3 p, float above, ZNetView ignore, out float y)

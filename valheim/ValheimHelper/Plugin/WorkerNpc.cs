@@ -569,8 +569,9 @@ namespace ValheimHelper
         public bool HoldTool(ToolKind kind, bool carve = false)
         {
             ItemDrop.ItemData cur = GetCurrentWeapon();
-            if (cur != null && IsTool(cur, kind) && !(carve ? Gone(cur) : WornOut(cur))) return true;
             ItemDrop.ItemData best = BestTool(m_inventory, kind, carve);
+            // 든 것보다 나은 게 있으면 바꿔 든다 — 사슴뿔 곡괭이를 든 채 흑철 곡괭이가 있어도 그대로 써 단계 3 바위가 피해를 버림(E049)
+            if (cur != null && IsTool(cur, kind) && !(carve ? Gone(cur) : WornOut(cur)) && (best == null || Score(cur, kind) >= Score(best, kind))) return true;
             return best != null && EquipItem(best);
         }
 

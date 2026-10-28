@@ -35,7 +35,8 @@ namespace ValheimHelper
                 return true;
             }
             // 용암 위 대상은 둘레 설 자리(건물 바닥 위)로 걸어감 — 바위 가운데로 가면 길이 띄운 바닥 밑 땅으로 내려감(회차 250)
-            if (m_standFor != m_targetId) { m_standFor = m_targetId; m_stand = FloorReach && OnLava(m_targetPos) ? LavaStand(zdo, m_targetInfo != null && m_targetInfo.Pickable, out _) : null; }
+            if (m_standFor != m_targetId) { m_standFor = m_targetId; m_stand = FloorReach && OnLava(m_targetPos) ? LavaStand(zdo, m_targetInfo != null && m_targetInfo.Pickable, out _) : null;
+                if (m_stand.HasValue) Plugin.Log.LogInfo($"DIAG 바닥 길 {m_npc.NpcName}: 설 자리 {m_stand.Value:F1}, 나 {m_npc.transform.position:F1} 바닥 {WorkerAI.Floored(m_npc.transform.position)}, 직선 {WorkerAI.FloorLine(m_npc.transform.position, m_stand.Value)} {WorkerAI.FloorWhy}"); }
             bool atStand = m_stand.HasValue && Utils.DistanceXZ(m_npc.transform.position, m_stand.Value) < 1f;
             if ((m_stand.HasValue ? Walk(dt, m_stand.Value, 0.8f) || atStand : Walk(dt, m_targetPos, m_reach)) || InteriorNav.Reached(m_npc.transform.position, m_targetPos, m_reach + 0.3f) || TouchingRock(zdo))
             {
