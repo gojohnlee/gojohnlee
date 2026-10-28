@@ -221,7 +221,7 @@ namespace ValheimHelper
                 yield return TestKit.WaitFor(() => arrived(w.Ragnar) && arrived(w.Floki), 150f);
                 checks.Add($"용암 건너편 플레이어에게 닿음 ({TestKit.Waited:0}초, 라그나 {Utils.DistanceXZ(w.Ragnar.transform.position, player.transform.position):0}m·플로키 {Utils.DistanceXZ(w.Floki.transform.position, player.transform.position):0}m)", TestKit.Ok);
                 float lava = w.Ragnar.Ai.LavaTime + w.Floki.Ai.LavaTime - t0;
-                TestRunner.Log($"다) 용암 비켜 감 {w.Ragnar.Ai.TarDetours + w.Floki.Ai.TarDetours - det0}번, 용암 위 {lava:0.0}초");
+                TestRunner.Log($"다) 용암 비켜 감 {w.Ragnar.Ai.TarDetours + w.Floki.Ai.TarDetours - det0}번, 둘레 길 {w.Ragnar.Ai.HazardPaths + w.Floki.Ai.HazardPaths}번(못 찾음 {w.Ragnar.Ai.HazardPathFails + w.Floki.Ai.HazardPathFails}), 용암 위 {lava:0.0}초");
                 checks.Add($"용암을 가로지르지 않음 (용암 위 {lava:0.0}초)", lava < 1f);
                 checks.Add("용암 길에서 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
                 foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.GoHome(false);

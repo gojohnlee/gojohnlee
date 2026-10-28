@@ -376,8 +376,11 @@ namespace ValheimHelper
             if (!inside) ForgetInteriorPath();
             if (!inside || !InteriorWalk(pos, point, dist, run))
             {
-                bool done = MoveTo(dt, point, dist, run);
-                if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+                if (inside || !FollowHazardPath(pos, point, run))
+                {
+                    bool done = MoveTo(dt, point, dist, run);
+                    if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+                }
             }
             if (WaterAhead(pos, m_character.GetMoveDir()))
             {
@@ -388,7 +391,7 @@ namespace ValheimHelper
                 return false;
             }
             WaterBlockedTime = 0f;
-            if (TarAhead(pos, m_character.GetMoveDir(), point)) { StartTarDetour(pos, point); return false; }
+            if (TarAhead(pos, m_character.GetMoveDir(), point)) { if (!StartHazardPath(pos, point)) StartTarDetour(pos, point); return false; }
             // 바위·통나무·구덩이 벽 같은 턱에 걸려 섰으면 뛴다(플레이어처럼)
             m_ledgeTimer -= dt;
             if (m_ledgeTimer <= 0f)
@@ -770,7 +773,7 @@ namespace ValheimHelper
         {
             dir = Flat(dir);
             if (dir.sqrMagnitude < 0.01f || Utils.DistanceXZ(point, pos) < 2f || TarGoal(point)) return false;
-            return Hazard(pos + dir.normalized * 1.5f) > TarWade || Lava(pos + dir.normalized * 3f); // 용암에선 느려지니(m_lavaSlowMax) 더 앞을 봄
+            return Hazard(pos + dir.normalized * 1.5f) > TarWade || (m_hazPath == null && Lava(pos + dir.normalized * 3f)); // 용암에선 느려지니(m_lavaSlowMax) 더 앞을 봄. 둘레 길은 2.5m 띄워 찾았으니 1.5m만
         }
 
         Vector3 m_tarGoalAt = new Vector3(1e7f, 0f, 1e7f);
@@ -784,6 +787,61 @@ namespace ValheimHelper
         {
             if (Utils.DistanceXZ(point, m_tarGoalAt) > 0.5f) { m_tarGoalAt = point; m_tarGoal = TarDepth(point) > TarWade; }
             return m_tarGoal;
+        }
+
+        List<Vector3> m_hazPath;
+        int m_hazIdx;
+        Vector3 m_hazTarget;
+        float m_hazRetryAt;
+        /// <summary>시험 기록: 웅덩이 둘레 길(HazardPath)을 찾은 횟수·못 찾은 횟수.</summary>
+        public int HazardPaths { get; private set; }
+        public int HazardPathFails { get; private set; }
+
+        /// <summary>
+        /// 앞이 용암·깊은 타르: 웅덩이 둘레 길(Core HazardPath, 2m 칸 A*)을 찾아 그 점들을 곧게 따라간다(다-2, 회차 224 — 가장자리를 더듬으면 60m에 134초).
+        /// 칸은 가운데·사방 2.5m 중 하나라도 위험이면 막힘(TarAhead가 3m 앞을 보니 그만큼 떨어져 감). 1m 격자로 잰 값을 한 번 찾는 동안 기억.
+        /// 따라가다 또 앞이 위험하거나 못 찾으면(목표가 위험 안·갇힘·너무 멂) false → 옛 비켜 가기, 3초 동안 다시 안 찾음. 지하묘지 안·줍는 타르는 안 씀.
+        /// </summary>
+        bool StartHazardPath(Vector3 pos, Vector3 point)
+        {
+            if (m_hazPath != null) { m_hazPath = null; m_hazRetryAt = Time.time + 3f; return false; } // 따라가다 또 앞이 위험
+            if (Time.time < m_hazRetryAt || Character.InInterior(pos) || TarGoal(point)) return false;
+            var seen = new Dictionary<long, bool>();
+            bool Bad(double x, double z)
+            {
+                int ix = (int)System.Math.Round(x), iz = (int)System.Math.Round(z);
+                long key = ((long)ix << 32) ^ (uint)iz;
+                if (!seen.TryGetValue(key, out bool b)) seen[key] = b = Hazard(new Vector3(ix, pos.y, iz)) > TarWade;
+                return b;
+            }
+            // 목표 4m 안은 넓히지 않음(가장자리 옆 목표도 닿게, 회차 224 "못 찾음")
+            bool Blocked(double x, double z) => Bad(x, z) || (Utils.DistanceXZ(new Vector3((float)x, 0f, (float)z), point) > 4f && (Bad(x + 2.5, z) || Bad(x - 2.5, z) || Bad(x, z + 2.5) || Bad(x, z - 2.5)));
+            var path = HazardPath.Find(new RoughPath.P(pos.x, pos.z), new RoughPath.P(point.x, point.z), Blocked, 3000);
+            string who = (m_character as WorkerNpc)?.NpcName;
+            if (path == null)
+            {
+                HazardPathFails++;
+                m_hazRetryAt = Time.time + 3f;
+                Plugin.Log.LogInfo($"{who}: 웅덩이 둘레 길 못 찾음(목표 {Utils.DistanceXZ(point, pos):0}m, 잰 곳 {seen.Count}) → 가장자리 따라 비켜 감");
+                return false;
+            }
+            m_hazPath = new List<Vector3>();
+            for (int i = 1; i < path.Count; i++) m_hazPath.Add(new Vector3((float)path[i].X, point.y, (float)path[i].Z));
+            m_hazIdx = 0;
+            m_hazTarget = point;
+            HazardPaths++;
+            Plugin.Log.LogInfo($"{who}: 웅덩이 둘레 길 {m_hazPath.Count}점(목표 {Utils.DistanceXZ(point, pos):0}m, 잰 곳 {seen.Count})");
+            return true;
+        }
+
+        /// <summary>둘레 길을 따라가는 중이면 다음 점으로 곧게 걷는다(1.5m 안이면 다음 점, 마지막은 목표 — 바닐라 길찾기는 다시 용암으로 듦). 목표가 바뀌면 버리고 false.</summary>
+        bool FollowHazardPath(Vector3 pos, Vector3 point, bool run)
+        {
+            if (m_hazPath == null) return false;
+            if (Utils.DistanceXZ(point, m_hazTarget) > 2f) { m_hazPath = null; return false; }
+            while (m_hazIdx < m_hazPath.Count - 1 && Utils.DistanceXZ(m_hazPath[m_hazIdx], pos) < 1.5f) m_hazIdx++;
+            MoveTowards(Flat(m_hazPath[m_hazIdx] - pos), run);
+            return true;
         }
 
         /// <summary>앞이 타르: 같은 목표면 같은 쪽으로(가장자리를 따라 돎) 비켜 간다. 처음엔 타르가 얕은 쪽을 고른다.</summary>

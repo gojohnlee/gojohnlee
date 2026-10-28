@@ -55,6 +55,7 @@ Claude 호출·답 검사     Core/Chat/ClaudeCall.cs(인자·출력 해석) Cla
 막힘 복구              Core/Work/StuckBook.cs(목적지별 실패·뺌·대안 없음·귀환 상한, 작업 저장 WorkItem.Stuck)·StuckHop.cs(2) 목표 쪽 순간이동 자리 후보·플레이어 64m, NearCandidates = 근처 NearStuckSeconds(15초) 막힘 → 막힌 곳 너머 4~8m, GatherJob.NearSkip) → GatherJob 다가가기 막힘이 멀리·목표 8m 안이면 StartWork(farStuck) 그 자리 직접 치기(E012), WalkFailed·HopToward·HopBlocked·Return, Guard.SafeAt(내릴 자리 위험), WorkerAI Mode.Home·TeleportHome·RestHere(사용자 결정 2026-10-23)
 도망 뒤 목표            Core/Work/FleeBook.cs(거점 125m 안 목표는 두 번째 도망부터 뺌, 거점 안 도망 3번이면 거점 안 위험 구역도 피함) → GatherJob.AvoidHere·Avoided·ZoneAvoided(사용자 결정 10-24 다), 시험 vh_coppertest "위험 알림 도망 뒤" 칸
 먼 길(멀리선 이동 생략)   Core/Work/RoughPath.cs(8m 칸 A*, 여유 160m: 깊은 물·칸 사이 1/4·1/2·3/4 점 깊은 물·45° 넘는 칸 사이 못 감(출발·도착 칸은 봐줌)·안 밝혀진 칸 1.5배, Route = 안 밝혀진 목적지·못 찾음은 직선, Length·PointAt) · Tests/RoughPathTests · Core/Work/FarSkip.cs(기다림 = 길 ÷ m_runSpeed, 2초마다 MapPos, HopAim 60m씩·목적지 20m 앞까지, LandLimit 30초) · Tests/FarSkipTests · 게임 연결 GatherJob.WalkVia → FarWalk(플레이어 64m 밖·60m 넘음·HopBlocked 아님) → FarRoute(밝혀진 목적지면 WorldGenerator.GetHeight로 RoughPath, 펼침 6000, 아니면 직선) + LandNear(HopToward와 같은 안전 확인) · 플레이어가 지도 위치 64m 안이면 FarDrop(FarSkip.DropAims: 지도 위치 → 길 앞 10m씩, LandNear nearPlayerOk) · 시험 Plugin/SkipTest.cs(vh_skiptest, GatherJob.TestReturn·TestFakePlayer, WaterRoute = 물 건너는 두 점 1500m 안)
+웅덩이 둘레 길            Core/Work/HazardPath.cs(2m 칸 A*, 여유 40m·3000칸: 칸 중심·칸 사이 가운데 막힘, 대각선은 양옆 열려야, 출발 칸 봐줌·도착 칸 막히면 null, 1m 직선으로 줄임) · WorkerAI.StartHazardPath·FollowHazardPath(앞이 용암·깊은 타르면 사방 2.5m 띄운 칸으로 찾아 곧게 따라감, 목표 4m 안은 안 띄움, 못 찾으면 옛 StartTarDetour·3초 쉼) · Tests/HazardPathTests
 거점 깃발·소환          Plugin/BaseFlag.cs Workers.cs(설정 이름, 소환·추적, AllZdos) · 거점 범위 Core/Work/BaseArea.cs(125m: Chests·Recipes.BaseRange·NightSettle)
 먼 구역 유지           Plugin/FarZones.cs(패치 3곳)
 바닐라 규칙 잇기 패치   Plugin/NpcPatches.cs(갑옷 계산, 뒤치기·비틀 치명타 빼기 LikePlayerHit, 진단 HitDiag = 일꾼 큰 피해 한 방, 땅 파기 막기 NoDig, 진단 LogSpawnDiag·ImpactDiag = 일꾼 곁 통나무 생김·일꾼에 부딪힘 로그) Buildings.cs(건축물 피해 없음)
@@ -104,6 +105,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기) vh_settled(밤사이 정산 마지막 아침 날짜)
 
 ----------------------------------------------------------------------
+- 게임 Mono엔 System.ValueTuple 4.0.2.0이 없다(회차 224 FileNotFoundException) → Core·Plugin에서 (a, b) 튜플 쓰지 말 것(구조체로).
 확인된 게임 사실 (게임 1.0.20 = assembly_valheim.dll 해시 앞 94998885B103, 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
   EnvMan 바람: SetDebugWind는 목표만 바꾸고 m_windTransitionDuration 5초에 걸쳐 섞음. FixedUpdate는 한 프레임 한 번(s_lastFrame)인데 dt = fixedDeltaTime 0.02 → 250프레임, 최소화(낮은 fps)면 40초 넘음.
 - 머리·수염 프리팹(10-23, 게임 데이터·vh_npctest 로그): HairN·BeardN 아이템 m_name = $customization_hairNN(현지화 영어: Hair24 Shaved and Braided, Hair25 Knot, Hair11 Long Braid, Hair17 Neat Braids, Beard18 Jarl Braids, Beard15 Mini Braid, Beard05 Single Braid, Beard22 Mustache). Hair1~38·Beard1~26.
