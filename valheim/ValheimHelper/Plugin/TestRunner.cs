@@ -15,6 +15,8 @@ namespace ValheimHelper
         public static bool Running { get; private set; }
         /// <summary>약식 시험(사용자 결정 10-23 "시험 정식·약식"): autotest.txt에 "quick"(스크립트 $env:VH_QUICK='1'). 긴 시험이 같은 판정 칸을 짧게 본다. 약식 FAIL이면 정식으로 다시.</summary>
         public static bool Quick;
+        /// <summary>E049 용암 위 바닥 길 시험(vh_ashlandstest 나) FloorWalk): autotest.txt에 "floor"(스크립트 $env:VH_FLOOR='1').</summary>
+        public static bool Floor;
         static readonly List<string> s_report = new List<string>();
         static readonly Queue<string> s_autoQueue = new Queue<string>();
         static readonly Dictionary<string, System.Func<IEnumerator>> s_tests = new Dictionary<string, System.Func<IEnumerator>>();
@@ -171,6 +173,7 @@ namespace ValheimHelper
                 else if (c.StartsWith("char=")) AutoStart.Character = c.Substring(5).Trim().ToLowerInvariant(); // 시험 전용 캐릭터
                 else if (c == "min") Minimized.On = true; // 창 최소화·소리 끔(시험 동안 다른 게임)
                 else if (c == "quick") Quick = true;
+                else if (c == "floor") Floor = true;
                 else if (c.StartsWith("biome=")) TestKit.SetRunBiome(c.Substring(6).Trim()); // 늪 회귀: 그 바이옴 평지에서 시험
                 else if (c.Length > 0) s_autoQueue.Enqueue(c);
             }

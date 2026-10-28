@@ -50,6 +50,8 @@ namespace ValheimHelper
                 m_saidTooWeak = true;
                 m_npc.Say("toolTooWeak", Args());
             }
+            // E049: 바닥 위에서 못 고르면 왜인지(바닥 길 시험이 바위 대신 먼 구역으로 감)
+            if (FloorReach) Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 바닥 길 켬, 못 고름(바닥 위 {WorkerAI.LavaFloored(m_npc.transform.position)}, 자리 {m_npc.transform.position:F1}) / {SightDiag(m_npc.transform.position)}");
             if (m_sawLava)
             {
                 // 용암 한가운데라 못 닿는 것만 보였다: 말하고(Fail·GiveUp이 lavaOut을 말함) 그만둔다 — 불꽃금속 바위는 다 용암 속이라 다른 구역을 찾아 헤매지 않는다(decisions 회차 225)
@@ -461,8 +463,8 @@ namespace ValheimHelper
         /// 대상이 용암 위(WorkerAI.Lava)이고 닿을 거리(ReachOf) 안 둘레(16방향 × 닿을 거리의 0.5·0.8·1배)에 용암 아닌 땅이 없는지.
         /// 지형이 안 불러진 곳은 모름(false — 가 보면 다시 봄). 둘레는 건물 바닥(WorkerAI.Floored)이면 갈 수 있음, 큰 바위는 바위 겉 바로 밖도 봄.
         /// </summary>
-        /// <summary>용암 위 건물 바닥을 설 자리로 쓰는지(불꽃금속 나), 회차 250 — 바닥 위에서 둘레 길을 못 찾고 바닥 밖 용암에 빠져 죽음, E049 풀 때까지 끔).</summary>
-        internal static readonly bool FloorReach = false;
+        /// <summary>용암 위 건물 바닥을 설 자리로 쓰는지(불꽃금속 나), 회차 250 — 바닥 위에서 둘레 길을 못 찾고 바닥 밖 용암에 빠져 죽음, E049 풀 때까지 끔 — 시험 FloorWalk만 잠깐 켬).</summary>
+        internal static bool FloorReach;
 
         static bool LavaLocked(ZDO zdo, bool pickable) => LavaStand(zdo, pickable, out bool lava) == null && lava;
 

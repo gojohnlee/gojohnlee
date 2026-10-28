@@ -455,8 +455,12 @@ namespace ValheimHelper
                 checks.Add("못 캐는 불꽃금속 일은 그만둠", TestKit.Ok);
                 checks.Add($"불꽃금속 보러 가며 용암 위 오래 안 있음 ({lava:0.0}초)", lava < 1f);
                 checks.Add("불꽃금속 보러 가며 안 죽음", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
-                if (GatherJob.FloorReach) yield return FloorWalk(w, checks, r, dry.Value);
-                else TestRunner.Log("나) 바닥 길 시험 건너뜀: GatherJob.FloorReach 꺼짐(E049)");
+                if (TestRunner.Floor)
+                {
+                    GatherJob.FloorReach = true; // E049: 본체는 꺼 두고 VH_FLOOR=1 시험에서만 켬
+                    try { yield return FloorWalk(w, checks, r, dry.Value); } finally { GatherJob.FloorReach = false; }
+                }
+                else TestRunner.Log("나) 바닥 길 시험 건너뜀: VH_FLOOR=1일 때만(E049)");
                 foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.Ai.GoHome(false);
             }
             finally { s_keep = false; }
@@ -496,7 +500,11 @@ namespace ValheimHelper
                 made.Add(g);
             }
             foreach (var npc in new[] { w.Ragnar, w.Floki }) npc.TeleportTo(new Vector3(dry.x, y + 0.5f, dry.z) + rot * new Vector3(npc == w.Ragnar ? 1f : -1f, 0f, 0f), rot, false);
-            yield return new WaitForSeconds(3f);
+            // 회차 251: 일 없는 일꾼은 3초 사이 집 쪽으로 16m 걸어 바위(26m)가 시야(40m) 밖이 됨 → 바로 명령
+            yield return new WaitForSeconds(0.3f);
+            TestRunner.Log($"나) 바위 {r:F1}, 라그나 {w.Ragnar.transform.position:F1}·플로키 {w.Floki.transform.position:F1}");
+            var mrv = Senses.Nearby(r, 1f).Select(z => ZNetScene.instance.FindInstance(z)).FirstOrDefault(v => v != null && v.GetComponent<MineRock>() != null);
+            if (mrv != null) { var mr = mrv.GetComponent<MineRock>(); var pk = w.Ragnar.GetInventory().GetAllItems().FirstOrDefault(it => it.m_shared.m_name.Contains("blackmetal") && it.m_shared.m_skillType == Skills.SkillType.Pickaxes); TestRunner.Log($"나) 바위 MineRock 단계 {mr.m_minToolTier}, 곡괭이 저항 {mr.m_damageModifiers.m_pickaxe}, 부위 체력 {mr.GetHealth()}, 세계 단계 {Game.m_worldLevel}, 곡괭이 {pk?.m_shared.m_name} 단계 {pk?.m_shared.m_toolTier} 피해 {pk?.GetDamage().m_pickaxe}"); }
             Vector3 near = dry + dir * (len * 0.5f); near.y = y + 0.1f; // 바닥 가운데, 바닥 위에 선 높이
             checks.Add($"바닥 {made.Count}장 깐 길 가운데는 용암 아님 (칠 {Heightmap.FindHeightmap(near)?.GetLava(near) ?? -1f:0.00}, 바닥 {WorkerAI.Floored(near)})", !WorkerAI.Lava(near));
             System.Func<int> ore = () => new[] { w.Ragnar, w.Floki }.Sum(n => n.GetInventory().GetAllItems()
