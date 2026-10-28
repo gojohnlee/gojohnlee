@@ -13,7 +13,7 @@ namespace ValheimHelper
     /// </summary>
     static class DeepNorthTest
     {
-        public static void Register() => TestRunner.Register("vh_deepnorthtest", "딥노스 자료 시험", () => Run(), 600f);
+        public static void Register() => TestRunner.Register("vh_deepnorthtest", "딥노스 자료 시험", () => Run(), 1200f);
 
         static IEnumerator Run()
         {
@@ -97,6 +97,83 @@ namespace ValheimHelper
             yield return Site(w, checks);
             // 다) 자리 채집: 단계 맞는 도끼·곡괭이로 !Frostwood 5·!Ice 5 → 거점 상자(애쉬랜드 채집 꼴 그대로)
             yield return AshlandsTest.Gather(w, checks, new[] { "Frostwood", "Ice" }, new[] { "서리나무", "얼음" });
+            // 라) 사냥: 바다표범(약함 → 잡아 옴)·무스(눈 감속 0.5, 센 짐승 → 차림 따라 판단)·바르카·요툰 전사(싸울 상대 아님)
+            var spawned = new List<GameObject>();
+            try { yield return Hunt(w, checks, spawned); }
+            finally { FulingTest.Cleanup(spawned); }
+        }
+
+        static readonly string[] HuntGear = { "ArmorCarapaceChest", "ArmorCarapaceLegs", "HelmetCarapace", "SwordMistwalker", "BowDraugrFang", "ArrowCarapace" };
+
+        static IEnumerator Hunt(TestKit.World w, GatherTest.Checks checks, List<GameObject> spawned)
+        {
+            foreach (var npc in new[] { w.Ragnar, w.Floki })
+            {
+                foreach (var g in HuntGear) npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(g), g.StartsWith("Arrow") ? 50 : 1);
+                Prep.WearBest(npc);
+                var food = new Inventory("vh_test_food", null, 4, 2);
+                foreach (var g in new[] { "CookedLoxMeat", "Sausages", "SerpentStew" }) food.AddItem(ObjectDB.instance.GetItemPrefab(g), 1);
+                npc.ResetMeals();
+                npc.EatFrom(food);
+                npc.Heal(1000f, false);
+            }
+            // 채집이 거점 상자(10칸)를 다 채움 → 사냥 고기 넣을 데가 없어 noChest(회차 248) — 사냥 전에 비움
+            if (w.Chest != null) Chests.TryEdit(w.Chest, inv => inv.RemoveAll());
+            yield return new WaitForSeconds(1f);
+            float hp = w.Ragnar.GetMaxHealth(), hit = Guard.HitOf(w.Ragnar);
+            var taken = Guard.TakenFor(w.Ragnar);
+            TestRunner.Log($"라) 사냥 차림: 체력 {hp:0}, 한 방 {hit:0.0}, 갑옷 {w.Ragnar.GetBodyArmor():0}");
+            foreach (string kind in new[] { "Barka", "JotunWarrior" })
+            {
+                var one = new List<Foe> { Guard.Resolve(new GroupFoe { Kind = kind, Count = 1, Level = 1 }) };
+                Verdict v = Danger.Judge(w.Ragnar.Personality, one, hp, hp, hit, taken, false);
+                checks.Add($"{kind}는 차림을 갖춰도 싸울 상대가 아님 (판단 {v}, 위험 비율 {Danger.Ratio(one, hp, hit, taken):0.0})", v != Verdict.Fight);
+            }
+            Quaternion rot = w.Player.transform.rotation;
+            // 게임 런타임엔 System.ValueTuple이 없음 — 튜플 대신 배열
+            foreach (var row in new[] { new[] { "Seal", "SealBlubber", "바다표범", "30" }, new[] { "Moose", "MooseMeat", "무스", "45" } })
+            {
+                string kind = row[0], item = row[1], label = row[2];
+                float dist = float.Parse(row[3]);
+                GameObject prefab = ZNetScene.instance.GetPrefab(kind);
+                Character c0 = prefab != null ? prefab.GetComponent<Character>() : null;
+                checks.Add($"{label}는 {item} 사냥감", c0 != null && Prey.Is(item, c0, true));
+                if (c0 == null) continue;
+                TestKit.ClearBaseStock(w, item);
+                Character prey = FulingTest.Spawn(prefab, w.Home + rot * new Vector3(0f, 0f, dist), spawned);
+                yield return new WaitForSeconds(0.5f);
+                bool safe = w.Ragnar.Ai.Guard.SafePrey(prey, out Character pack);
+                TestRunner.Log($"{label}: AI {prey.GetBaseAI()?.GetType().Name}, 활만 {Prey.NeedsBow(prey)}, 판단 {(safe ? "혼자 잡을 만함" : pack != null ? "무리 때문에 안 됨" : "혼자 잡기엔 셈")}");
+                int heard = w.Heard.Count, deaths0 = w.Ragnar.Deaths + w.Floki.Deaths;
+                var states = new HashSet<string>();
+                GatherTest.Say($"!{item} 1", null);
+                float t = 0f;
+                while (t < 180f && (t < 2f || w.Ragnar.Ai.Job is GatherJob || w.Floki.Ai.Job is GatherJob))
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    t += 0.5f;
+                    foreach (var npc in new[] { w.Ragnar, w.Floki })
+                        if (npc.Ai.Guard != null && npc.Ai.Guard.StateName != "Calm") states.Add(npc.Ai.Guard.StateName);
+                }
+                for (int i = heard; i < w.Heard.Count; i++) TestRunner.Log($"들음: {w.Heard[i]}");
+                string st = string.Join(",", new List<string>(states).ToArray());
+                string life = prey == null || prey.IsDead() ? "죽음" : "삶 " + prey.GetHealth().ToString("0");
+                if (kind == "Seal") checks.Add("바다표범은 잡을 만하다고 봄", safe);
+                if (safe)
+                {
+                    yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, item) >= 1, 60f);
+                    checks.Add($"{label}를 잡아 {item}을 상자에 ({t:0}초, {GatherTest.CountBase(w.Home, item)}개, {label} {life})", TestKit.Ok);
+                    checks.Add($"{label} 사냥에 안 죽음 (라그나 {w.Ragnar.GetHealth():0}, 플로키 {w.Floki.GetHealth():0})", w.Ragnar.Deaths + w.Floki.Deaths == deaths0);
+                }
+                else
+                {
+                    bool done = !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob);
+                    checks.Add($"센 {label}는 그만두고 덤비지 않음 ({t:0.0}초, 경계 [{st}], {label} {life})", done && !states.Contains("Fight") && prey != null && !prey.IsDead());
+                }
+                if (prey != null && !prey.IsDead()) FulingTest.Kill(prey);
+                TestKit.ClearBaseStock(w, item);
+                yield return new WaitForSeconds(2f);
+            }
         }
 
         /// <summary>깊은 눈 높이(m): Character가 쓰는 대로 Heightmap.GetCultivationMask × m_deepSnowSlowMaxHeight. 지형이 없으면 -1.</summary>
