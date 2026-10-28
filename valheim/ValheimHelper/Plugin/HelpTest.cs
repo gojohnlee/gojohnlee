@@ -65,6 +65,16 @@ namespace ValheimHelper
             checks.Add($"위급하자 도와달라고 말함 ({TestKit.Waited:0}초)", TestKit.Ok);
             checks.Add("물러남 또는 도망 상태", ai.Guard != null && (ai.Guard.StateName == "Back" || ai.Guard.StateName == "Flee"));
             checks.Add("살아 있음", !w.Ragnar.IsDead() && w.Ragnar.GetHealth() > 0f);
+
+            // 거점 안 도망 뒤 플레이어가 그 적과 싸우면 가서 돕는다(사용자 10-28, Guard.TryHelpPlayer): 도망 중에 플레이어를 트롤 곁으로
+            yield return TestKit.WaitFor(() => ai.Guard != null && ai.Guard.StateName == "Flee", 40f);
+            checks.Add($"도망 ({TestKit.Waited:0}초)", TestKit.Ok);
+            if (!TestKit.Ok || go == null) yield break;
+            Guard.LastPlayerHelp = "";
+            Vector3 tp = go.transform.position;
+            w.Player.TeleportTo(GatherTest.Ground(tp + (w.Home - tp).normalized * 6f) + Vector3.up * 0.3f, w.Player.transform.rotation, false);
+            yield return TestKit.WaitFor(() => Guard.LastPlayerHelp != "", 50f);
+            checks.Add($"도망 뒤 트롤과 싸우는 플레이어를 도우러 감 ({TestKit.Waited:0}초)", TestKit.Ok);
         }
     }
 }

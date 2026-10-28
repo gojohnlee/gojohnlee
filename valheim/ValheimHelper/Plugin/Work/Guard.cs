@@ -88,6 +88,7 @@ namespace ValheimHelper
             m_aroundSide = 0;
             m_waitMate = null;
             m_caller = null;
+            m_helpPlayer = null;
         }
 
         /// <summary>새 일을 받으면 물러난 횟수를 다시 센다.</summary>
@@ -98,6 +99,7 @@ namespace ValheimHelper
             m_target = null;
             m_waitMate = null;
             m_caller = null;
+            m_helpPlayer = null;
         }
 
         /// <returns>true면 이번 프레임은 경계가 몸을 썼다(일·따라가기는 쉰다).</returns>
@@ -310,23 +312,61 @@ namespace ValheimHelper
         /// 부름을 받고 가는 중인데 아직 부른 쪽 곁(AllyRange)이 아니고 바로 덤비는 적(CloseRange)도 없다: 혼자 판단으로 싸우거나 물러나지 않고 마저 간다
         /// (회차 147 vh_matetest: 온 동료가 혼자 싸움 판단으로 먼저 덤벼 체력 71→26).
         /// </summary>
+        /// <summary>달려가는 쪽: 부른 동료, 없으면 거점 안 도망 뒤 도우러 가는 플레이어.</summary>
+        Character ComeTo => m_caller != null ? (Character)m_caller : m_helpPlayer;
+
         bool ComingAlone()
         {
-            if (m_state != State.Come || m_caller == null || m_caller.IsDead()) return false;
-            return Vector3.Distance(m_caller.transform.position, m_npc.transform.position) > AllyRange && !Chased(CloseRange);
+            Character c = ComeTo;
+            if (m_state != State.Come || c == null || c.IsDead()) return false;
+            return Vector3.Distance(c.transform.position, m_npc.transform.position) > AllyRange && !Chased(CloseRange);
+        }
+
+        /// <summary>거점 안 도망 뒤 그 적과 싸우는 플레이어(가서 돕는다, 적마다 한 번).</summary>
+        Player m_helpPlayer;
+        Character m_fleeFoe;
+        bool m_fleeInBase;
+        readonly HashSet<Character> m_helped = new HashSet<Character>();
+        /// <summary>시험용: 마지막으로 도우러 간 플레이어 이름.</summary>
+        public static string LastPlayerHelp { get; internal set; } = "";
+
+        /// <summary>
+        /// 거점 안 도망이 끝났을 때 플레이어가 그 적과 싸우고 있으면(적이 플레이어를 노리거나 플레이어가 적 10m 안) 가서 돕는다 — 사용자 10-28(decisions 도망 뒤 목표).
+        /// 아니면 false(목표는 GatherJob.AvoidHere가 이미 버림 → 다른 일).
+        /// </summary>
+        bool TryHelpPlayer()
+        {
+            Character f = m_fleeFoe;
+            m_fleeFoe = null;
+            if (!m_fleeInBase || f == null || f.IsDead() || !m_helped.Add(f)) return false;
+            Character ft = f.GetBaseAI()?.GetTargetCreature();
+            Vector3 me = m_npc.transform.position;
+            foreach (var p in Player.GetAllPlayers())
+            {
+                if (p == null || p.IsDead() || p.InGhostMode() || p.InDebugFlyMode() || Vector3.Distance(p.transform.position, me) > HelpRange) continue;
+                if (ft != p && Vector3.Distance(p.transform.position, f.transform.position) > 10f) continue;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 도망 뒤: {p.GetPlayerName()}이(가) {Utils.GetPrefabName(f.gameObject)}와 싸움 → 도우러 감");
+                LastPlayerHelp = p.GetPlayerName();
+                m_helpPlayer = p;
+                m_comeTime = 0f;
+                m_state = State.Come;
+                return true;
+            }
+            return false;
         }
 
         bool UpdateCome(float dt)
         {
             m_comeTime += dt;
-            WorkerNpc c = m_caller;
+            Character c = ComeTo;
             float d = c != null && !c.IsDead() ? Vector3.Distance(c.transform.position, m_npc.transform.position) : -1f;
             // 부른 쪽이 죽었거나 없어졌거나, 다 왔는데 적이 없거나, 너무 오래 걸리면 하던 일로
             if (d < 0f || m_comeTime > ComeLimit || (d < 8f && m_foes.Count == 0))
             {
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 동료에게 가기 끝: {(d < 0f ? "부른 쪽 없음" : m_comeTime > ComeLimit ? "시간" : "적 없음")}");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} {(m_caller != null ? "동료" : "플레이어")}에게 가기 끝: {(d < 0f ? "부른 쪽 없음" : m_comeTime > ComeLimit ? "시간" : "적 없음")}");
                 m_ai.StopMoving();
                 m_caller = null;
+                m_helpPlayer = null;
                 m_state = State.Calm;
                 return false;
             }
@@ -361,6 +401,8 @@ namespace ValheimHelper
             // 도망친 적도 배운다(⑬ 바-5, 회차 210 vh_minefoetest: 광산 시커에게서 도망친 뒤에도 "짐작"이라 다음 출발 판단이 실제 값을 몰랐다)
             foreach (var c in m_foes) Learn(c);
             m_ai.AvoidHere(nearest.transform.position);
+            m_fleeFoe = nearest;
+            m_fleeInBase = BaseArea.Contains(Utils.DistanceXZ(pos, m_npc.Home));
             m_target = null;
             m_armed = false;
             m_fleeTime = 0f;
@@ -786,7 +828,7 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 도망 끝: {(there ? "도착" : m_fleeTime > 40f ? "40초" : "물에 막힘")}");
                 m_ai.StopMoving();
                 m_state = State.Calm;
-                return false;
+                return TryHelpPlayer();
             }
             return true;
         }

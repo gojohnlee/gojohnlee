@@ -212,7 +212,7 @@ namespace ValheimHelper
         /// <summary>위험해서 버린 구역(Guard: 도망쳤거나 두 번 물러남). 이 일 동안은 그 구역의 대상·구역을 고르지 않는다.</summary>
         readonly HashSet<ZoneXY> m_avoid = new HashSet<ZoneXY>();
 
-        /// <summary>도망 뒤 목표(Core FleeBook): 거점 안 목표는 두 번째 도망부터 뺌, 거점 안 위험 구역은 도망이 쌓인 뒤에만 피함.</summary>
+        /// <summary>도망 뒤 목표(Core FleeBook, 사용자 10-28): 도망친 목표는 뺌, 거점 안 위험 구역은 거점 안 도망 뒤부터 피함.</summary>
         readonly FleeBook<ZDOID> m_fled = new FleeBook<ZDOID>();
 
         bool InBase(Vector3 p) => BaseArea.Contains(Utils.DistanceXZ(p, m_npc.Home));
@@ -264,7 +264,7 @@ namespace ValheimHelper
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 위험 → 구역 {Senses.ZoneOf(danger).X},{Senses.ZoneOf(danger).Y} 피함" +
                                (m_fled.AvoidInBase ? "" : "(거점 안은 빼고)") +
                                (!hasTarget ? "" : $", 목표 {m_targetInfo?.Prefab}(위험에서 {Utils.DistanceXZ(m_targetPos, danger):0}m, 집에서 {Utils.DistanceXZ(m_targetPos, m_npc.Home):0}m) " +
-                                                  (drop ? "버림" : "거점 안이라 도망 뒤 다시")));
+                                                  (drop ? "버림" : "둠")));
             if (drop) m_skip.Add(m_targetId);
             if (m_prey != null) m_huntSkip[m_prey] = float.MaxValue;
             m_prey = null;
