@@ -68,6 +68,13 @@ namespace ValheimHelper
             return false;
         }
 
+        static string NearPlayerName(Vector3 p, float r)
+        {
+            foreach (var pl in Player.GetAllPlayers())
+                if (pl != null && !pl.IsDead() && Vector3.Distance(pl.transform.position, p) <= r) return pl.GetPlayerName();
+            return null;
+        }
+
         static bool Resting(WorkerNpc n) =>
             n != null && !n.IsDead() && n.Ai != null && !n.Ai.GuardBusy && (n.Ai.Current == WorkerAI.Mode.Idle || n.Ai.Current == WorkerAI.Mode.Home);
 
@@ -223,6 +230,7 @@ namespace ValheimHelper
                     f.Level[i] = (int)raised[0].Value;
                 }
                 f.Night = EnvMan.IsNight();
+                f.Player = NearPlayerName(any.transform.position, NearRange);
             }
             catch (Exception e) { Plugin.Log.LogWarning("잡담 기억 모으기 오류: " + e.Message); }
             return f;

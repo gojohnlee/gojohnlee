@@ -29,11 +29,12 @@ public class BanterTests
         foreach (var t in Banter.MemoryTopics.Concat(Banter.AnyTopics)) { keys.Add("bt." + t + ".open"); keys.Add("bt." + t + ".reply"); }
         foreach (BanterEvent e in Enum.GetValues(typeof(BanterEvent)))
             foreach (var part in new[] { ".react", ".self", ".news" }) keys.Add(Banter.EventKey(e) + part);
-        keys.Add("bt.solo");
+        keys.Add("bt.solo"); keys.Add("bt.solo.night");
+        keys.Add("bt.player.open"); keys.Add("bt.player.night"); keys.Add("bt.player.reply");
         var args = new Dictionary<string, string>
         {
             ["partner"] = "플로키", ["who"] = "플로키", ["foe"] = "트롤", ["dir"] = "북쪽", ["deaths"] = "2", ["biome"] = "늪", ["item"] = "구리", ["n"] = "30",
-            ["skill"] = "벌목", ["level"] = "12", ["pskill"] = "채굴", ["plevel"] = "20", ["crop"] = "당근",
+            ["skill"] = "벌목", ["level"] = "12", ["pskill"] = "채굴", ["plevel"] = "20", ["crop"] = "당근", ["player"] = "Erik",
         };
         foreach (var p in new[] { Personality.Ragnar, Personality.Floki })
             foreach (var k in keys)
@@ -77,6 +78,34 @@ public class BanterTests
         Assert.Equal(1, lines[0].Npc);
         Assert.Equal("bt.solo", lines[0].Key);
         Assert.Equal("라그나", lines[0].Args["partner"]);
+    }
+
+    [Fact]
+    public void SometimesTalksToPlayerAndAtNightMusesAboutNight()
+    {
+        var b = new Banter(new Random(7));
+        double now = 0;
+        b.Tick(now, true, -1, null, Names);
+        int toPlayer = 0, night = 0;
+        for (int i = 0; i < 40; i++)
+        {
+            now += Banter.IntervalMax + 1;
+            var f = new BanterFacts { Player = "Erik", Night = i % 2 == 1 };
+            bool together = i < 20;
+            var lines = b.Tick(now, together, together ? -1 : 1, f, Names);
+            if (lines[0].Key.StartsWith("bt.player."))
+            {
+                toPlayer++;
+                Assert.Equal(f.Night ? "bt.player.night" : "bt.player.open", lines[0].Key);
+                Assert.Equal(together ? 2 : 1, lines.Count);
+                if (together) Assert.Equal("bt.player.reply", lines[1].Key);
+                Assert.Contains("Erik", Render(lines[0]));
+            }
+            else if (!together) { Assert.Equal(f.Night ? "bt.solo.night" : "bt.solo", lines[0].Key); if (f.Night) night++; }
+        }
+        Assert.InRange(toPlayer, 3, 20);
+        Assert.True(night > 0);
+        Assert.Empty(new Banter(new Random(7)).Tick(0, false, -1, new BanterFacts { Player = "Erik" }, Names));
     }
 
     [Fact]

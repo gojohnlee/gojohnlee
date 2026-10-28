@@ -21,6 +21,8 @@ namespace ValheimHelper.Core.Npc
         public string Crop;
         public string PitDir;
         public bool Night;
+        /// <summary>곁에 있는 플레이어 이름(없으면 null) — 있으면 가끔 플레이어에게 말을 건다.</summary>
+        public string Player;
         /// <summary>NPC 자리(0 = 1호, 1 = 2호)마다 가장 높은 솜씨와 그 수준.</summary>
         public readonly string[] Skill = new string[2];
         public readonly int[] Level = new int[2];
@@ -119,7 +121,9 @@ namespace ValheimHelper.Core.Npc
 
         /// <summary>기억이 있어야 고르는 주제(무게 3)와 늘 고를 수 있는 주제(무게 1).</summary>
         public static readonly string[] MemoryTopics = { "death", "fled", "beaten", "biome", "item", "skill", "crop", "pit", "night" };
-        public static readonly string[] AnyTopics = { "gods", "sea", "home", "mead" };
+        public static readonly string[] AnyTopics = { "gods", "sea", "home", "mead", "work", "food", "old", "tools" };
+        /// <summary>잡담 때 플레이어에게 말 걸 확률(대사 늘리기 나), 10-29).</summary>
+        public const double PlayerChance = 0.25;
 
         sealed class News
         {
@@ -187,14 +191,25 @@ namespace ValheimHelper.Core.Npc
                     Exchange(lines, n.Subject, EventKey(n.Event), ".news", n.Args, names);
                     return lines;
                 }
+                if (ToPlayer(lines, _rng.Next(2), true, facts, names)) return lines;
                 string topic = PickTopic(facts);
                 int opener = _rng.Next(2);
                 lines.Add(Line(opener, "bt." + topic + ".open", TopicArgs(topic, facts, opener, names), 0f));
                 lines.Add(Line(1 - opener, "bt." + topic + ".reply", TopicArgs(topic, facts, 1 - opener, names), Gap()));
                 return lines;
             }
-            lines.Add(Line(alone, "bt.solo", new Dictionary<string, string> { ["partner"] = names[1 - alone] }, 0f));
+            if (ToPlayer(lines, alone, false, facts, names)) return lines;
+            lines.Add(Line(alone, facts != null && facts.Night ? "bt.solo.night" : "bt.solo", new Dictionary<string, string> { ["partner"] = names[1 - alone] }, 0f));
             return lines;
+        }
+
+        /// <summary>가끔(PlayerChance) 곁의 플레이어에게 말을 건다(밤이면 밤 대사). 둘이면 상대가 받는다.</summary>
+        bool ToPlayer(List<BanterLine> lines, int sp, bool together, BanterFacts f, string[] names)
+        {
+            if (f == null || f.Player == null || _rng.NextDouble() >= PlayerChance) return false;
+            lines.Add(Line(sp, f.Night ? "bt.player.night" : "bt.player.open", new Dictionary<string, string> { ["player"] = f.Player, ["partner"] = names[1 - sp] }, 0f));
+            if (together) lines.Add(Line(1 - sp, "bt.player.reply", new Dictionary<string, string> { ["player"] = f.Player, ["partner"] = names[sp] }, Gap()));
+            return true;
         }
 
         /// <summary>상대(1 - subject)가 먼저 말하고(react·news, {who} = 겪은 쪽), 겪은 쪽이 받는다(self, {partner} = 상대).</summary>
