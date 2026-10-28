@@ -72,6 +72,7 @@ namespace ValheimHelper
             Step("vh_ashlandstest", AshlandsTest.Register);
             Step("vh_squitotest", SquitoTest.Register);
             Step("vh_mistfoetest", MistFoeTest.Register);
+            Step("vh_ashfoetest", AshFoeTest.Register);
             Step("vh_fulingtest", FulingTest.Register);
             Step("vh_tartest", TarTest.Register);
             Step("vh_plainsfarmtest", PlainsFarmTest.Register);
