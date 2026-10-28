@@ -1,8 +1,8 @@
-갱신: 2026-10-28 16:56  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 230 진행 중
+갱신: 2026-10-28 17:00  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 230, 계정: 1번, 한도: 2번 10-31 07:02까지
-할 일: ⑭ 애쉬랜드 → 바) 적 싸움·출발 판단: 탄 무리·아스크스빈·볼처(날기)·모르겐 — 지금 위험 비율로 도망·호위병(vh_mistfoetest 꼴), 불 저항 미드(Resist AshLands→Fire) 확인.
-마지막 시험: 10-28 16:54 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+할 일: ⑭ 애쉬랜드 → 바) 적 싸움·출발 판단: 탄 무리·아스크스빈·볼처(날기)·모르겐 — 지금 위험 비율로 도망·호위병(vh_mistfoetest 꼴).
+마지막 시험: 10-28 16:59 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE ⑭ 바-1) 애쉬랜드 불 저항 확인(BarleyWine·막을 피해 불), vh_ashlandstest PASS 12/12
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
