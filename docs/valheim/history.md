@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 270 · 10-29 · 묘비 대사 늘림
+
+**요약**
+
+- [10-29] 일 대사 중 죽음·빈손 죽음·묘비 찾으러 감·다 챙김·일부만·묘비 없음·다시 감·포기·밤 미룸도 일꾼마다 15줄로 늘림(통과).
+
+**자세히**
+
+- Speech.cs 라그나르·플로키 died·diedNoGrave·graveGo·graveGot·graveGotSome·graveGone·graveRetry·graveFail·graveNight를 각 15줄로(옛 줄 그대로 두고 덧붙임). 커밋 7effd8e.
+- 시험 vh_deathtest PASS 22/22, vh_bagtest PASS 9/9, Core 578/578. speech-count.txt 없음.
+
 ### 회차 269 · 10-29 · 상자·밭일 대사 늘림
 
 **요약**
