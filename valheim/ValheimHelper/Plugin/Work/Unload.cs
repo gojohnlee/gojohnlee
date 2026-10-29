@@ -52,6 +52,7 @@ namespace ValheimHelper
             Container chest = m_chest;
             HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
             Inventory mine = m_npc.GetInventory();
+            int bagBefore = Stacks(mine);
             bool done = Chests.TryEdit(chest, inv =>
             {
                 foreach (var it in new List<ItemDrop.ItemData>(mine.GetAllItems()))
@@ -72,10 +73,20 @@ namespace ValheimHelper
                 }
             });
             if (!done && m_time < BusyLimit) return true; // 누가 열고 있다
+            int put = bagBefore - Stacks(mine);
+            // 어느 상자에 넣었나(10-29 vh_bagtest: 깃발 125m 가장자리 옛 상자에 넣은 나무를 시험이 못 세 "사라짐"으로 보임)
+            if (put > 0) Plugin.Log.LogInfo($"DIAG Unload 넣음 {put}개 → 상자 {chest.GetComponent<ZNetView>()?.GetZDO()?.m_uid} 집에서 {Utils.DistanceXZ(chest.transform.position, m_npc.Home):0.0}m");
             // 이 상자에 못 넣은 건 건너뛴다(자리가 없음)
             foreach (var it in mine.GetAllItems()) if (Storable(it, keep) && ChestFor(it) == chest) { m_skip.Add(it); Plugin.Log.LogInfo($"DIAG Unload 못 넣고 건너뜀 {it.m_dropPrefab.name}x{it.m_stack} (편집 {(done ? "됨" : "못 함")}, 상자 빈칸 {chest.GetInventory().GetEmptySlots()})"); }
             m_chest = null;
             return true;
+        }
+
+        static int Stacks(Inventory inv)
+        {
+            int n = 0;
+            foreach (var it in inv.GetAllItems()) n += it.m_stack;
+            return n;
         }
 
         string BagDump()

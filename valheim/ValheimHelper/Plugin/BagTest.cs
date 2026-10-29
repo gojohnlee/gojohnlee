@@ -54,7 +54,9 @@ namespace ValheimHelper
             player.PlacePiece(chestPiece, stonePos, rot, doAttack: false);
             yield return new WaitForSeconds(1f);
             Container woodChest = GatherTest.ChestAt(woodPos), stoneChest = GatherTest.ChestAt(stonePos);
-            checks.Add("상자 2개 놓임", woodChest != null && stoneChest != null);
+            // 일꾼의 거점 범위는 자기 집 기준(깃발에서 2.5m): 그 안 상자가 놓은 2개뿐이어야 "둘 다 꽉 참"이 성립(안 불러온 상자도 ZDO로 셈)
+            int seen = Senses.Nearby(claude.Home, Chests.BaseRange, Chests.IsBaseChest).Count;
+            checks.Add($"상자 2개 놓임 (일꾼 거점 범위 상자 {seen}개)", woodChest != null && stoneChest != null && seen == 2);
             if (woodChest == null || stoneChest == null) { End(player, god, checks, onHeard, heard); yield break; }
 
             // 가방: 곡괭이 + 나무를 운반 한도까지(무게로 참, 칸은 나무 상자에 다 들어갈 만큼만)

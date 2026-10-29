@@ -427,16 +427,17 @@ namespace ValheimHelper
 
         /// <summary>
         /// 거점 둘레의 지난 시험 상자를 없앤다(시험 월드만). 상자를 지정하지 않으니 남은 상자의 장비·음식·빈자리가 시험을 흔든다. 없앤 개수.
+        /// 일꾼의 거점 범위는 자기 집(Workers.HomeSpot, 깃발에서 2.5m) 기준이라 깃발 125m보다 조금 넓게, 안 불러온 상자(ZDO)까지 지운다
+        /// (10-29 vh_bagtest: 깃발 125~127m의 옛 상자가 남아 라그나가 나무 150·돌을 거기 넣음 → 시험은 못 세서 "사라짐"으로 보임).
         /// </summary>
         internal static int ClearOldChests(Vector3 home)
         {
             int n = 0;
-            foreach (var c in Chests.NearBase(home))
+            foreach (var zdo in Senses.Nearby(home, Chests.BaseRange + 5f, Chests.IsBaseChest))
             {
-                ZNetView nv = c.GetComponent<ZNetView>();
-                if (nv == null || !nv.IsValid()) continue;
-                nv.ClaimOwnership();
-                ZNetScene.instance.Destroy(c.gameObject);
+                ZNetView nv = ZNetScene.instance.FindInstance(zdo);
+                if (nv != null && nv.IsValid()) { nv.ClaimOwnership(); ZNetScene.instance.Destroy(nv.gameObject); }
+                else { zdo.SetOwner(ZDOMan.GetSessionID()); ZDOMan.instance.DestroyZDO(zdo); }
                 n++;
             }
             if (n > 0) TestRunner.Log($"지난 시험 상자 {n}개 치움");
