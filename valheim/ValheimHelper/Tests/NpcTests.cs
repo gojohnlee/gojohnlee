@@ -7,6 +7,26 @@ using Xunit;
 public class SpeechTests
 {
     [Fact]
+    public void EveryLineHasClosedPlaceholders()
+    {
+        // 회차 281: {biome|이}가 | 에서 쪼개져 "{biome", "이} …" 두 줄로 들어간 일
+        var f = typeof(Speech).GetField("Lines", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        foreach (var set in (Dictionary<string, string[]>[])f.GetValue(null))
+            foreach (var kv in set)
+                foreach (var line in kv.Value)
+                {
+                    int depth = 0;
+                    foreach (var c in line)
+                    {
+                        if (c == '{') depth++;
+                        else if (c == '}') depth--;
+                        Assert.True(depth == 0 || depth == 1, kv.Key + ": " + line);
+                    }
+                    Assert.True(depth == 0, kv.Key + ": " + line);
+                }
+    }
+
+    [Fact]
     public void NeverRepeatsLastLine()
     {
         var s = new Speech(new Random(1));
