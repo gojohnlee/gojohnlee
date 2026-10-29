@@ -37,6 +37,26 @@ public class SpeechTests
     }
 
     [Fact]
+    public void DealsEveryLineBeforeRepeating()
+    {
+        var s = new Speech(new Random(3));
+        int n = Speech.Options(Personality.Floki, "bt.solo").Length;
+        string prev = null;
+        for (int round = 0; round < 5; round++)
+        {
+            var seen = new HashSet<string>();
+            for (int i = 0; i < n; i++)
+            {
+                string line = s.Say(Personality.Floki, "bt.solo", new Dictionary<string, string> { ["partner"] = "R" });
+                Assert.NotEqual(prev, line);
+                seen.Add(line);
+                prev = line;
+            }
+            Assert.Equal(n, seen.Count);
+        }
+    }
+
+    [Fact]
     public void UnknownKeyReturnsKey() => Assert.Equal("nope", new Speech().Say(Personality.Ragnar, "nope"));
 
     [Fact]

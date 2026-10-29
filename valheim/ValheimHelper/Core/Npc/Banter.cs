@@ -119,7 +119,7 @@ namespace ValheimHelper.Core.Npc
         public const double WeatherCooldown = 300;
         /// <summary>반응 바로 뒤 잡담이 겹치지 않게 미루는 시간.</summary>
         public const double AfterEvent = 30;
-        const int RecentTopics = 4, MaxNews = 5;
+        const int MaxNews = 5;
 
         /// <summary>기억이 있어야 고르는 주제(무게 3)와 늘 고를 수 있는 주제(무게 1).</summary>
         public static readonly string[] MemoryTopics = { "death", "fled", "beaten", "biome", "item", "skill", "crop", "pit", "night" };
@@ -238,20 +238,30 @@ namespace ValheimHelper.Core.Npc
             lines.Add(Line(subject, key + ".self", new Dictionary<string, string>(args) { ["who"] = names[subject], ["partner"] = names[other] }, Gap()));
         }
 
+        /// <summary>주제도 카드 섞기(사용자 10-29): 지금 할 수 있는 주제를 다 쓸 때까지 같은 주제를 다시 안 고르고(기억 주제는 판 앞쪽에 나오기 쉽게), 새 판 첫 주제는 바로 전과 다르게.</summary>
         string PickTopic(BanterFacts f)
+        {
+            var pool = TopicPool(f);
+            if (pool.Count == 0)
+            {
+                string prev = _recent.Count > 0 ? _recent[_recent.Count - 1] : null;
+                _recent.Clear();
+                pool = TopicPool(f);
+                if (pool.Exists(t => t != prev)) pool.RemoveAll(t => t == prev);
+            }
+            string topic = pool[_rng.Next(pool.Count)];
+            _recent.Add(topic);
+            return topic;
+        }
+
+        List<string> TopicPool(BanterFacts f)
         {
             var pool = new List<string>();
             foreach (var t in MemoryTopics)
                 if (!_recent.Contains(t) && Has(t, f)) { pool.Add(t); pool.Add(t); pool.Add(t); }
             foreach (var t in AnyTopics)
                 if (!_recent.Contains(t)) pool.Add(t);
-            if (pool.Count == 0)
-                foreach (var t in AnyTopics)
-                    if (_recent.Count == 0 || t != _recent[_recent.Count - 1]) pool.Add(t);
-            string topic = pool[_rng.Next(pool.Count)];
-            _recent.Add(topic);
-            if (_recent.Count > RecentTopics) _recent.RemoveAt(0);
-            return topic;
+            return pool;
         }
 
         public static bool Has(string topic, BanterFacts f)

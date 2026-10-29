@@ -540,6 +540,7 @@ namespace ValheimHelper.Core.Npc
 
         readonly Random _rng;
         readonly Dictionary<string, string> _last = new Dictionary<string, string>();
+        readonly Dictionary<string, List<string>> _deck = new Dictionary<string, List<string>>();
 
         public Speech(Random rng = null) { _rng = rng ?? new Random(); }
 
@@ -551,20 +552,29 @@ namespace ValheimHelper.Core.Npc
         /// <summary>그 키의 대사 줄 전부(시험이 들은 말과 맞춰 볼 때). 없으면 빈 배열.</summary>
         public static string[] Options(Personality p, string key) => SetOf(p).TryGetValue(key, out var o) ? o : new string[0];
 
-        /// <summary>대사 하나. 같은 상황에서 바로 전에 쓴 줄은 피한다. 없는 키면 키 이름을 그대로 돌려준다.</summary>
+        /// <summary>대사 하나. 상황마다 카드 섞기: 그 상황 줄을 다 쓸 때까지 같은 줄을 다시 안 내고, 새로 섞은 첫 줄도 바로 전 줄과 다르게(사용자 10-29).
+        /// 없는 키면 키 이름을 그대로 돌려준다.</summary>
         public string Say(Personality p, string key, IDictionary<string, string> args = null)
         {
             if (!SetOf(p).TryGetValue(key, out var options) || options.Length == 0) return key;
             string memo = (int)p + "/" + key;
             _last.TryGetValue(memo, out var last);
-            string line;
-            if (options.Length == 1) line = options[0];
-            else
+            if (!_deck.TryGetValue(memo, out var deck) || deck.Count == 0)
             {
-                int i = _rng.Next(options.Length - (last != null ? 1 : 0));
-                line = options[i];
-                if (line == last) line = options[options.Length - 1];
+                deck = new List<string>(options);
+                for (int i = deck.Count - 1; i > 0; i--)
+                {
+                    int j = _rng.Next(i + 1);
+                    var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+                }
+                if (deck.Count > 1 && deck[deck.Count - 1] == last)
+                {
+                    var t = deck[0]; deck[0] = deck[deck.Count - 1]; deck[deck.Count - 1] = t;
+                }
+                _deck[memo] = deck;
             }
+            string line = deck[deck.Count - 1];
+            deck.RemoveAt(deck.Count - 1);
             _last[memo] = line;
             if (args != null)
                 foreach (var kv in args)

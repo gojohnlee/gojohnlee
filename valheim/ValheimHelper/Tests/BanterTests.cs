@@ -126,6 +126,8 @@ public class BanterTests
             seen.Add(topic);
         }
         for (int i = 1; i < seen.Count; i++) Assert.NotEqual(seen[i - 1], seen[i]);
+        Assert.Equal(8, new HashSet<string>(seen.GetRange(0, 8)).Count);
+        Assert.Equal(8, new HashSet<string>(seen.GetRange(8, 8)).Count);
     }
 
     [Fact]
