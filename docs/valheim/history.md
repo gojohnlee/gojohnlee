@@ -8,6 +8,16 @@
 
 ## 회차 기록
 
+### 회차 282 · 10-29 · 깨진 탐험 대사 고침
+
+**요약**
+
+- 지난 회차 탐험 대사 몇 줄이 자리표시({biome|이})가 쪼개져 깨진 채 들어간 것을 고치고, 다시 안 생기게 검사 시험을 붙임(통과).
+
+**자세히**
+
+- 회차 281에서 exploreBiomeUnknown·exploreBiomeFound(두 일꾼)의 "{biome|이}"가 "|"에서 잘려 "{biome" / "이} …" 두 줄로 들어감 → 이어 붙여 각 15줄. Core에 모든 대사의 중괄호 짝 검사(EveryLineHasClosedPlaceholders) 추가. 커밋 af63083 · vh_exploretest PASS 16/16(E047 이번엔 안 남), vh_bagtest PASS 9/9, Core 579/579.
+
 ### 회차 281 · 10-29 · 탐험·지식 대사 늘림
 
 **요약**
