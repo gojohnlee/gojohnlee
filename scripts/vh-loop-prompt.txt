@@ -8,7 +8,8 @@
 맨 먼저 한 명령으로: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-loop-restart.ps1; echo "G=$env:VH_GAME_UPDATE"; git status --short | head
  (restart 결과가 오류면 이번 회차 history "자세히"에 그 줄.)
 0. docs/valheim/UserRequest.txt 구분선 아래에 덩어리가 남아 있으면 scripts/vh-loop-request.txt를 읽고 그것부터(이번 회차는 요청이 "다음"보다 우선).
-1. docs/valheim/progress.txt "지금"·"다음"을 읽는다. Errors.txt는 제목 줄만(grep -n '^E[0-9]' docs/valheim/Errors.txt), 이번 일과 닿는 항목만 그 부분.
+1. docs/valheim/progress.txt "지금"·"다음"을 읽는다.
+   게임 폴더 BepInEx/plugins/ValheimHelper/speech-count.txt가 있으면 "# 늘릴 것" 줄만 grep, 키가 있으면 그 회차 history "자세히"에 알림(실플레이에 자주 나오는데 줄이 적은 상황). Errors.txt는 제목 줄만(grep -n '^E[0-9]' docs/valheim/Errors.txt), 이번 일과 닿는 항목만 그 부분.
    지난 회차가 남긴 변경이 있으면(git status) 이어 간다.
 1-0. G(VH_GAME_UPDATE)가 있으면 "다음" 맨 앞에 "★ 게임 업데이트 <값>: 전체 회귀"(codemap "시험 고르기" 바이옴 완료 꼴 B1~B7 + 실제 재시작)를 넣고 첫 묶음부터.
    FAIL이면 바뀐 게임 코드를 디컴파일해 확인하고 codemap "확인된 게임 사실"을 고친다. G가 없어도 그 덩어리가 남았으면 이어 간다.

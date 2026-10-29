@@ -35,6 +35,8 @@ namespace ValheimHelper
             });
         }
         static bool s_auto;
+        /// <summary>autotest.txt로 켠 판(시험 전용 게임) — 대사 횟수(SpeechCount)를 세지 않는다.</summary>
+        public static bool AutoSession;
         static float s_autoWait;
         static Terminal s_terminal;
         static float s_startTime;
@@ -159,6 +161,7 @@ namespace ValheimHelper
         {
             string flag = Path.Combine(PluginDir, "autotest.txt");
             if (!File.Exists(flag)) return;
+            AutoSession = true;
             string text = "";
             try
             {

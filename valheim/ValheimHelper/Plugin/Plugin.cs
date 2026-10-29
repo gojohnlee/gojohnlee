@@ -95,6 +95,8 @@ namespace ValheimHelper
 
         bool m_updateFailed;
 
+        void OnApplicationQuit() => SpeechCount.Save();
+
         void Update()
         {
             try
@@ -105,6 +107,7 @@ namespace ValheimHelper
                 Brain.Update(UnityEngine.Time.deltaTime);
                 Departures.Tick(UnityEngine.Time.deltaTime);
                 ClaudeChat.Tick();
+                SpeechCount.Tick();
                 WorkSaves.Tick(UnityEngine.Time.deltaTime);
                 MorningSettle.Tick();
                 Tidy.Tick(UnityEngine.Time.deltaTime);
