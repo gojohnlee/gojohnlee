@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 276 · 10-29 · 싸움 대사 늘림
+
+**요약**
+
+- [10-29] 일 대사 중 싸움 시작·잠깐 물러남·도망·위험해서 딴 데 감·동료 부름·동료에게 감·미드 마심·저항 미드도 일꾼마다 15줄로 늘림(통과).
+
+**자세히**
+
+- Speech.cs fightStart·backOff·flee·dangerSkip·callMate·mateComing·drink·resist를 라그나르(차분)·플로키(장난) 말투로 15줄씩. 커밋 fd1a77d.
+- 시험 vh_fighttest 17/17, vh_matetest 18/18, vh_resisttest 20/20, vh_bagtest 9/9 PASS, Core 578/578.
+- 남은 15줄 미만: 사냥·탐험·지식·제작·설정·밭·답(answer.*) 등.
+
 ### 회차 275 · 10-29 · 같이 가기·습격·집 못 감 등 일 대사 15줄로
 
 **요약**
