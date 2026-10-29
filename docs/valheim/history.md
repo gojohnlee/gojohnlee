@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 275 · 10-29 · 같이 가기·습격·집 못 감 등 일 대사 15줄로
+
+**요약**
+
+- 일 대사 중 처음 나타남·같이 갈 때 너무 멀어짐·기다림·포기·습격 귀환·집에 못 감·이사·놓침·아직 못 함·생각 중도 일꾼마다 15줄로 늘림(통과).
+
+**자세히**
+
+- 키: spawn, escort.far, escort.wait, escort.giveup, raid, homeFail, moveBase, lost, notYet, thinking (라그나르·플로키 각각 15줄). 커밋 c31346b.
+- 시험: vh_escorttest 18/18, vh_bagtest 9/9, Core 578/578. 로그 오류는 바닐라 TerrainComp NullReference뿐.
+- 남은 것: 전투·사냥·제작·설정·탐험·지식 대사 등 15줄 미만 키.
+
 ### 회차 274 · 10-29 · 되묻는 말 일곱 가지를 일꾼마다 15줄로
 
 **요약**
