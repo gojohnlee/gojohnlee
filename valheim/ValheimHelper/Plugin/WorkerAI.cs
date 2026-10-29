@@ -364,6 +364,7 @@ namespace ValheimHelper
                 MoveTowards(Flat(m_lastDry - pos), true);
                 return false;
             }
+            if (SlowSwim(dt, pos, point)) return false;
             if (TarStep(dt, pos, point, dist)) return false;
             if (m_detourTime > 0f)
             {
@@ -936,6 +937,32 @@ namespace ValheimHelper
             m_detourDir = -fwd; // 앞뒤 옆이 다 타르: 뒤로
             m_detourTime = 0.8f;
             TarDetours++;
+        }
+
+        float m_swimSlow, m_swimStraightUntil;
+        int m_swimTries;
+
+        /// <summary>바깥 좁은 강을 길 따라 헤엄치다 물속 바위에 걸려 1m/s 아래로 4초 넘으면(E047: 50초 오락가락) 처음엔 목표 쪽으로 곧장 6초,
+        /// 그래도 느리면 이번 물은 못 건넌다고 보고 마른 자리로 되돌아간다(물가에선 물에 막힘 처리로 넘어감).</summary>
+        bool SlowSwim(float dt, Vector3 pos, Vector3 point)
+        {
+            if (!m_character.IsSwimming()) { m_swimSlow = 0f; m_swimTries = 0; m_swimStraightUntil = 0f; return false; }
+            if (!m_swimOk || Character.InInterior(pos) || TarGoal(point)) return false;
+            if (Flat(m_character.GetVelocity()).magnitude < 1f) m_swimSlow += dt; else m_swimSlow = Mathf.Max(0f, m_swimSlow - dt);
+            if (m_swimSlow > 4f)
+            {
+                m_swimSlow = 0f;
+                string name = ((WorkerNpc)m_character).NpcName;
+                if (++m_swimTries == 1) { m_swimStraightUntil = Time.time + 6f; Plugin.Log.LogInfo($"{name}: 헤엄이 느림(바위에 걸림?) — 목표 쪽으로 곧장"); }
+                else
+                {
+                    m_swimStraightUntil = 0f; m_swimOk = false; m_waterDecidedUntil = Time.time + 10f;
+                    Plugin.Log.LogInfo($"{name}: 헤엄이 계속 느림 — 마른 자리로 되돌아감({(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m" : "자리 없음")})");
+                    if (m_hasDry) { MoveTowards(Flat(m_lastDry - pos), true); return true; }
+                }
+            }
+            if (Time.time < m_swimStraightUntil) { MoveTowards(Flat(point - pos), true); return true; }
+            return false;
         }
 
         /// <summary>그 방향 2.5m 앞이 깊은 물이고 건너면 안 되는 물인지. 건널 물(좁은 강)이면 m_swimOk를 켠다.</summary>
