@@ -84,7 +84,7 @@ $files = @(foreach ($r in $Roots) { Get-ChildItem -LiteralPath $r -Directory -Er
     ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -Filter *.jsonl -ErrorAction SilentlyContinue } | Where-Object { $_.LastWriteTime -ge $since } })
 $sessions = @(foreach ($f in $files) { $s = Read-Session $f.FullName; if ($s.calls.Count) { $s } }) | Sort-Object first
 $o = @("# 토큰 측정 보고", '', "만든 때 $((Get-Date).ToString('yyyy-MM-dd HH:mm')) · 최근 ${Days}일 · 세션 $($sessions.Count)개(대화 기록 $($files.Count)개) · scripts/vh-token-report.ps1", '',
-    '읽는 법: **대화 크기** = 그 턴에 모델이 다시 읽은 양(입력+캐시 읽기+캐시 쓰기). **누적** = 도구 결과 하나가 늘린 양 × 그 뒤 턴 수 — 그 출력 때문에 회차 전체에서 더 읽은 양. 토큰은 Claude가 보고한 실측, 도구별 나눔만 결과 글자 수 비율(추정). **입력값 환산** = Opus 5.5 API 가격 배수(일반 입력 1, 캐시 읽기 $ReadX, 쓰기 $WriteX, 출력 $OutX)로 더한 것 — 구독 한도가 같은 비율인지는 모름. 출력에는 생각(effort) 토큰도 들어감.', '',
+    ('읽는 법: **대화 크기** = 그 턴에 모델이 다시 읽은 양(입력+캐시 읽기+캐시 쓰기). **누적** = 도구 결과 하나가 늘린 양 × 그 뒤 턴 수 — 그 출력 때문에 회차 전체에서 더 읽은 양. 토큰은 Claude가 보고한 실측, 도구별 나눔만 결과 글자 수 비율(추정). **입력값 환산** = Opus 5.5 API 가격 배수(일반 입력 1, 캐시 읽기 ' + $ReadX + ', 쓰기 ' + $WriteX + ', 출력 ' + $OutX + ')로 더한 것 — 구독 한도가 같은 비율인지는 모름. 출력에는 생각(effort) 토큰도 들어감.'), '',
     '## 회차별', '', '| 시작 | 회차 | 종류 | 턴 | 첫 턴 크기 | 5턴째 크기 | 마지막 크기 | 다시 읽은 합(캐시 읽기) | 캐시 쓰기 | 출력 | 입력값 환산(읽기·쓰기·출력 몫) |', '|---|---|---|---|---|---|---|---|---|---|---|')
 $all = @(); $agg = @{}
 foreach ($s in $sessions) {
