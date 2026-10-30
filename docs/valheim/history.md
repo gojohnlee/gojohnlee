@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 클라우드 · 10-30 · 끝난 문서를 보관함으로 옮김
+
+**요약**
+
+- 끝난 구상서·설계서·위험 순위를 docs/valheim/archive/로 옮겨 회차가 안 읽게 함(손님 코드 규칙만 decisions로). 루프 지시도 "구현 단계 끝"으로 고침.
+
+**자세히**
+
+- 옮긴 것: concept-v1.txt, design-depart-craft.txt, risks.txt → docs/valheim/archive/(설명은 archive/README.md). 회차는 읽지도 고치지도 않음.
+- 아직 쓰는 규칙 "손님(멀티) 코드 규칙"은 decisions.txt 멀티 줄 밑으로 옮김(상자 등록 RPC 등 새 코드가 따름).
+- 루프 지시(vh-loop-prompt.txt)·decisions 2절에서 "남은 순서 ⑫ 평원 → … ⑮"와 "다음이 비면 구상서로 새 단계 만들기"를 지우고 "다음이 비면 쉰다"로.
+- progress의 "구현 단계"·risks 안내 줄을 지움. CLAUDE.md·요청 처리 지시·vh-standard 안내도 새 위치로.
+
 ### 클라우드 · 10-30 · 다듬기 시작: 오래된 오류 13건 닫고 문서를 최신으로
 
 **요약**

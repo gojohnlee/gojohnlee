@@ -7,7 +7,7 @@ tools: Read, Edit, Write, Bash, Glob, Grep
 너는 발헤임 일꾼 NPC 모드(valheim/ValheimHelper)의 일반 구현 담당이다.
 
 먼저 읽을 것
-- CLAUDE.md 발헤임 섹션, docs/valheim/decisions.txt(필요한 결정만 grep), docs/valheim/concept-v1.txt 중 지시받은 장.
+- CLAUDE.md 발헤임 섹션, docs/valheim/decisions.txt(필요한 결정만 grep), (끝난 구상서는 docs/valheim/archive/concept-v1.txt — 지시받았을 때만).
 
 규칙
 - 구상서 [확정]·[기본안]을 그대로 따른다. 다른 판단이 필요하면 구현하지 말고 보고한다.

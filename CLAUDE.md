@@ -7,13 +7,13 @@
   큰 파일(codemap·decisions·concept·history·스크립트·로그)은 통째로 Read·cat·긴 sed 금지 → grep -n(-A/-B로 앞뒤), 고칠 땐 그 절만. 게임 로그는 `bash scripts/vh-log.sh [줄수] [패턴]`.
   토큰·비용 건의·문의엔 docs/valheim/token-report.md(실측, PC 루프가 날마다 scripts/vh-token-report.ps1로 갱신)의 수치와 만든 날짜로 답하고, 측정 없는 건 추정이라 밝힌다.
   사용자는 개입하지 않음 → 스스로 진행, 새 게임플레이 결정만 묻는다.
-- 새 세션은 기억이 없음 → 상태는 docs/valheim/progress.txt, 결정은 decisions.txt 맞는 절(어긋나는 옛 줄은 지우고 구상서·설계서·codemap도 맞춤).
+- 새 세션은 기억이 없음 → 상태는 docs/valheim/progress.txt, 결정은 decisions.txt 맞는 절(어긋나는 옛 줄은 지우고 codemap도 맞춤). 끝난 구상서·설계서·위험 순위는 docs/valheim/archive/ — 읽지도 고치지도 않음.
 - 푸시는 `valheim`으로(사용자 승인).
 
 # 발헤임 일꾼 NPC
 
 - 시작: docs/valheim/UserRequest.txt 구분선 아래 요청부터(꼴은 scripts/vh-loop-request.txt) → progress.txt "지금"·"다음" → Errors.txt 제목 줄 → 코드는 codemap.txt로 찾아 그 부분만.
-  decisions.txt·concept-v1.txt·design-depart-craft.txt·history.md·Errors-resolved.txt는 필요할 때 grep. 루프는 loop-plan.txt, PC 시작·게임 시험 방법은 docs/valheim/pc-howto.txt.
+  decisions.txt·history.md·Errors-resolved.txt는 필요할 때 grep. 루프는 loop-plan.txt, PC 시작·게임 시험 방법은 docs/valheim/pc-howto.txt.
 - 게임 DLL: PC는 설치된 게임 valheim_Data\Managed(csproj 자동), 클라우드는 비공개 gojohnlee/valheim-refs를 /home/user/valheim-refs에 clone. ilspycmd로 디컴파일,
   확인한 사실은 codemap "확인된 게임 사실"에 적고 다시 디컴파일하지 않는다. 게임 파일·디컴파일 결과는 올리지 않음, 저장소 비공개 전환 금지(dll을 raw 주소로 받음).
 - 비용 0: 유료 API 없음. 위험·이동·전투는 규칙 코드, 명령 해석은 모드 → Haiku → Sonnet(호스트 PC의 Claude Code).
