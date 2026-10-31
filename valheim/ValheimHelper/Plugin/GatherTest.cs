@@ -176,8 +176,9 @@ namespace ValheimHelper
             // (검은숲: 물러났다 34m 밖에서 일이 이어져 직접 피해가 20.6m 떨어진 조각에 들어감)
             bool moveCheck = item == "CopperOre", moved = false;
             int reapproach0 = GatherJob.WorkReapproaches, longHits0 = GatherJob.LongDirectHits;
-            // 다) 도망 뒤 목표(사용자 결정 10-24): 진짜 도망처럼 위험 알림(AvoidHere)까지 준 두 번째 도망 뒤에도 거점 12m 광맥으로 돌아와 캔다(전엔 그 목표·구역을 버림)
+            // 다) 도망 뒤 목표(사용자 10-28, decisions "도망 뒤 목표"): 위험 알림(AvoidHere)까지 준 도망 뒤 그 광맥은 두고(플레이어가 안 싸우니 도우러 안 감) 다른 광맥을 캔다
             bool fled = false, backToOre = false;
+            ZDOID fledId = ZDOID.None;
             float t = 0f;
             while (t < 360f)
             {
@@ -198,6 +199,7 @@ namespace ValheimHelper
                     else if (moveCheck && moved && !fled && GatherJob.WorkReapproaches > reapproach0 && claude != null && claude.Ai.Job is GatherJob gf && gf.StepName == "Work" && claude.Ai.Guard != null && !claude.Ai.Guard.Engaged)
                     {
                         fled = true;
+                        fledId = gf.TargetId;
                         Vector3 off = claude.transform.position - depositPos;
                         off.y = 0f;
                         if (off.sqrMagnitude < 0.01f) off = rot * Vector3.back;
@@ -205,7 +207,7 @@ namespace ValheimHelper
                         claude.Ai.AvoidHere(depositPos);
                         claude.Ai.Guard.TestFlee(Ground(claude.transform.position + off.normalized * 25f));
                     }
-                    else if (fled && !backToOre && claude != null && claude.Ai.Job is GatherJob gb && gb.StepName == "Work" && !claude.Ai.Guard.Engaged && Utils.DistanceXZ(depositPos, claude.transform.position) < 12f) backToOre = true;
+                    else if (fled && !backToOre && claude != null && claude.Ai.Job is GatherJob gb && gb.StepName == "Work" && !claude.Ai.Guard.Engaged && !gb.TargetId.IsNone() && gb.TargetId != fledId) backToOre = true;
                 }
                 t += 5f;
                 count = CountBase(home, item) - count0;
@@ -222,7 +224,7 @@ namespace ValheimHelper
                 checks.Add($"캐는 중 도망으로 옮겨진 뒤 다시 다가감({(moved ? "도망시킴" : "못 시킴")}, 다시 다가감 {GatherJob.WorkReapproaches - reapproach0}번, 8m 넘는 직접 피해 {GatherJob.LongDirectHits - longHits0}번)",
                            moved && GatherJob.WorkReapproaches > reapproach0 && GatherJob.LongDirectHits == longHits0);
             if (moveCheck)
-                checks.Add($"위험 알림 도망 뒤 거점 12m 광맥으로 돌아와 다시 캠({(fled ? "도망시킴" : "못 시킴")})", fled && backToOre);
+                checks.Add($"위험 알림 도망 뒤 그 광맥은 두고 다른 광맥을 캠({(fled ? "도망시킴" : "못 시킴")})", fled && backToOre);
             if (!hungId.IsNone()) checks.Add("높이 걸린 통나무는 안 고름(쪼개면 반토막이 머리 위로 떨어짐)", !hungAimed);
             checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
             checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
