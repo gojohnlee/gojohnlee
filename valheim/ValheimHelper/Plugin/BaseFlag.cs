@@ -99,6 +99,20 @@ namespace ValheimHelper
         static void RPC_BaseSet(long sender, ZDOID id)
         {
             if (!ZNet.instance.IsServer()) return;
+            if (ZDOMan.instance.GetZDO(id) == null) { Plugin.Instance.StartCoroutine(WaitFlag(id)); return; }
+            SetBase(id);
+        }
+
+        // 손님이 세우면 깃발 ZDO보다 이 RPC가 먼저 온다(바닐라 PlacePiece가 만들자마자 OnPlaced, ZDO는 다음 전송 때) → 10초까지 기다린다.
+        static System.Collections.IEnumerator WaitFlag(ZDOID id)
+        {
+            for (int i = 0; i < 20 && ZDOMan.instance != null && ZDOMan.instance.GetZDO(id) == null; i++) yield return new WaitForSeconds(0.5f);
+            if (ZDOMan.instance?.GetZDO(id) == null) { Plugin.Log.LogWarning($"거점 깃발 {id}가 10초 안에 안 옴"); yield break; }
+            SetBase(id);
+        }
+
+        static void SetBase(ZDOID id)
+        {
             ZDO flag = ZDOMan.instance.GetZDO(id);
             if (flag == null) return;
             foreach (var other in AllFlags())
