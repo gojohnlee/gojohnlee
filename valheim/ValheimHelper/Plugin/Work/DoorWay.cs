@@ -16,7 +16,12 @@ namespace ValheimHelper
         Door m_door;
         Vector3 m_out, m_in;
         float m_t, m_limit;
-        public static int Opened, Entered;
+        public static int Opened, Entered, Closed;
+
+        /// <summary>일꾼이 연 문(회차 313): 그 일꾼이 지붕 밖으로 나와 문에서 3m 넘게(지붕 아래여도 15m 넘게) 멀어지고 문틀에 아무도 없으면 닫는다. 플레이어가 연 문은 안 건드림.</summary>
+        sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; }
+        static readonly System.Collections.Generic.List<OpenedDoor> s_opened = new System.Collections.Generic.List<OpenedDoor>();
+        static float s_next;
 
         static int Mask => s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("piece"));
 
@@ -54,7 +59,11 @@ namespace ValheimHelper
             if (m_phase == Phase.ToDoor)
             {
                 if (Utils.DistanceXZ(me, m_out) > 0.7f) { npc.Ai.MoveToPoint(dt, m_out, 0.5f, false); return true; }
-                if (Dungeons.Open(npc, m_door)) Opened++;
+                if (Dungeons.Open(npc, m_door))
+                {
+                    Opened++;
+                    s_opened.Add(new OpenedDoor { Door = m_door, By = npc, Mid = Middle(m_door) });
+                }
                 m_phase = Phase.Through; m_t = 0f;
             }
             ZNetView v = m_door != null ? m_door.GetComponent<ZNetView>() : null;
@@ -70,6 +79,50 @@ namespace ValheimHelper
             Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
             m_phase = Phase.None;
             return Blocked(npc, target) ? Retry(npc, target) : false;
+        }
+
+        /// <summary>Workers.Update에서(서버만) 0.5초마다. UseDoor는 열린 문이면 닫는 토글이라 보낸 뒤 3초는 다시 안 보냄(두 번 가면 다시 열림).</summary>
+        public static void CloseBehind()
+        {
+            if (s_opened.Count == 0 || Time.time < s_next) return;
+            s_next = Time.time + 0.5f;
+            for (int i = s_opened.Count - 1; i >= 0; i--)
+            {
+                var o = s_opened[i];
+                ZNetView v = o.Door != null ? o.Door.GetComponent<ZNetView>() : null;
+                if (v == null || !v.IsValid() || !Dungeons.IsOpen(v.GetZDO())) { s_opened.RemoveAt(i); continue; }
+                if (Time.time - o.Sent < 3f) continue;
+                if (o.By != null && !o.By.IsDead())
+                {
+                    Vector3 me = o.By.transform.position;
+                    float d = Utils.DistanceXZ(me, o.Mid);
+                    if (d < 3f || (d < 15f && Roofed(me))) continue; // 문 곁이거나 아직 지붕 아래(안) — 문 평면 반쪽으로는 못 가름: 집 뒤로 돈 일꾼도 안쪽 반에 있음(회차 313)
+                }
+                bool someone = false;
+                foreach (var c in Character.GetAllCharacters())
+                    if (c != null && !c.IsDead() && Utils.DistanceXZ(c.transform.position, o.Mid) < 1.5f && Mathf.Abs(c.transform.position.y - o.Mid.y) < 2f) { someone = true; break; }
+                if (someone) continue;
+                v.InvokeRPC("UseDoor", false); // 열린 문이면 방향 무관하게 s_state = 0
+                o.Sent = Time.time;
+                Closed++;
+                Plugin.Log.LogInfo($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나와서 문 {o.Door.name} 닫음");
+            }
+        }
+
+        static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);
+
+        public static string OpenedDiag()
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            foreach (var o in s_opened)
+            {
+                string near = "";
+                foreach (var c in Character.GetAllCharacters())
+                    if (c != null && Utils.DistanceXZ(c.transform.position, o.Mid) < 1.5f) near += c.m_name + " ";
+                Vector3 me = o.By != null ? o.By.transform.position : Vector3.zero;
+                parts.Add($"{o.By?.NpcName} 지붕 {Roofed(me)}·거리 {Utils.DistanceXZ(me, o.Mid):0.0}m·곁 [{near}]·보냄 {Time.time - o.Sent:0}초 전");
+            }
+            return $"연 문 {s_opened.Count}개: {string.Join("; ", parts)}";
         }
 
         bool Retry(WorkerNpc npc, Component target) { GiveUp(npc, target, "안에서도 가림"); return false; }

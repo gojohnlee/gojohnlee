@@ -217,7 +217,7 @@ namespace ValheimHelper
                 s_scanIndex = 0;
                 s_scanDone = false;
             }
-            if (s_scanDone) { Reclaim(); return; }
+            if (s_scanDone) { Reclaim(); DoorWay.CloseBehind(); return; }
             if (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(WorkerPrefab.Name, s_scanList, ref s_scanIndex)) return;
             s_scanDone = true;
             foreach (var zdo in s_scanList) { FarZones.Track(zdo.m_uid); Know(zdo.m_uid); }
