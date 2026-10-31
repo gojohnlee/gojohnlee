@@ -1,3 +1,4 @@
+using HarmonyLib;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -71,9 +72,37 @@ namespace ValheimHelper
             Departures.TestRefillNow();
             yield return new WaitForSeconds(2f);
             checks.Add($"채워진 뒤엔 다시 안 나감 (나무 {full})", !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob));
+            yield return Pick(w, checks);
             TestKit.ClearBaseStock(w, "Wood");
             Brain.Refill.Off();
             yield return Make(w, checks, made);
+        }
+
+        /// <summary>상자 Alt+우클릭(사용자 10-30): 상자 창 나무 칸 → "계속 채우기" 나누기 창(지금 목표 20) → 30 확인 → 기준치 30, Esc 닫기는 우리 상태 지움.</summary>
+        static IEnumerator Pick(TestKit.World w, GatherTest.Checks checks)
+        {
+            InventoryGui gui = InventoryGui.instance;
+            if (Tidy.Count(w.Chest, "Wood") == 0) TestKit.PutInChest(w.Chest, "Wood", 1);
+            gui.Show(w.Chest);
+            yield return new WaitForSeconds(0.5f);
+            ItemDrop.ItemData wood = null;
+            foreach (var it in w.Chest.GetInventory().GetAllItems())
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Wood") { wood = it; break; }
+            bool opened = RefillPick.Open(gui, wood, w.Chest);
+            var slider = gui.m_splitDialog.m_splitSlider;
+            checks.Add($"상자 Alt+우클릭: 계속 채우기 창(지금 목표 {slider.value:0}/{slider.maxValue:0})",
+                opened && gui.m_splitDialog.IsActive && RefillPick.Active == "Wood" && !RefillPick.Personal && (int)slider.value == 20 && slider.maxValue >= 100);
+            gui.m_splitDialog.SliderValue = 30;
+            Traverse.Create(gui).Method("OnSplitOk").GetValue();
+            yield return new WaitForSeconds(1f);
+            int now = 0;
+            foreach (var kv in Brain.Refill.Items) if (kv.Key == "Wood") now = kv.Value;
+            checks.Add($"확인 → 기준치 30 ({RefillPick.LastSent}, 지금 {now})", now == 30 && RefillPick.Active == null && !gui.m_splitDialog.IsActive);
+            RefillPick.Open(gui, wood, w.Chest);
+            Traverse.Create(gui).Method("HideSplitDialog").GetValue();
+            checks.Add("Esc 닫기 → 우리 상태 지움", RefillPick.Active == null && !gui.m_splitDialog.IsActive);
+            gui.Hide();
+            yield return new WaitForSeconds(0.5f);
         }
 
         /// <summary>
