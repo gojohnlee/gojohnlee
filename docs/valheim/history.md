@@ -8,6 +8,31 @@
 
 ## 회차 기록
 
+### 요청 · 10-31 12:39 · 멀티 시험 — 같은 PC 전용 서버
+
+> 방법: 같은 PC에 Valheim Dedicated Server(앱 896660)를 켜고 이 PC 게임이 127.0.0.1로 손님 접속.<br>
+> 서버에 BepInEx·플러그인을 같게, -nographics -batchmode, 공개 안 함, 손님 접속·비번은 시험 코드로 자동.<br>
+> 볼 것: 서버 쪽 null 경로 예외 0 / 손님 "!" 명령 → 일꾼 일·대답 / 말풍선·장비·애니메이션이 손님 화면에 / 상자 열기·Alt+우클릭 등록 / NPC 소유권 / 서버 다시 켠 뒤 일 복원.<br>
+> 막히면 원인·안을 history에. 둘 다 끝나면 사용자가 직접 플레이 — "직접 해 볼 것" 목록.
+
+**받음** · 10-31 12:39 회차 293
+
+- 할 만함. 전체 회귀가 끝난 뒤 시작(progress "다음" 둘째 덩어리).
+- 위험: 서버는 그래픽 없는 프로세스라 Player.m_localPlayer·Minimap·Chat이 null — 모드 쪽 null 예외가 가장 먼저 나올 곳. 서버 설치가 안 돼 있으면 직접 받지 않고 사용자에게 부탁.
+- 순서: 서버 폴더 확인 → BepInEx·플러그인 복사 → 서버 켜기 스크립트 → 손님 자동 접속(시험 코드) → 볼 것 하나씩 시험.
+
+### 요청 · 10-31 12:39 · 전체 회귀 (10-31 사용자 — 이것 먼저)
+
+> 마지막 전체 회귀는 회차 232~241(애쉬랜드). 그 뒤 딥노스·채워 명령 새 이름·대사·"!" 띄어쓰기·계속채워 목록·F7 창·상자 Alt+우클릭 숫자 창이 들어갔는데 다 같이는 안 돌려 봄.<br>
+> 애쉬랜드 때 묶음(B1~B9 + 재시작 R)에 딥노스 시험과 refilltest를 더해 다시 묶고 전부 돌린다. 약식판은 만들지 않는다.<br>
+> FAIL은 평소처럼 고치고 그 묶음 다시. E047·E051이 다시 나오면 Errors.txt 규칙대로.
+
+**받음** · 10-31 12:39 회차 293
+
+- 할 만함, 이것부터. 10묶음 + 재시작으로 나눔(애쉬랜드 9묶음에 그 뒤 생긴 시험을 끼우고 딥노스 묶음 B10을 더함).
+- B1 npc·flag·wood·stone·copper·tin / B2 prep·bag·death·fight·explore·pit / B3 far·depart·craft·peer / B4 name·skill·refill·raid·help·team·claude·banter·mate / B5 set·portal·portalbuild·stuck·hop·skip·resist·repair / B6 crypt·hunt·cook·cookwet·bow·machinestuck / B7 farm·base·escort·silver / B8 평원·안개땅·상자 정리(squito·fuling·tar·plainsfarm·plains·mistfoe·minefoe·mine·settle·block·weak·tidy·tidywalk·mychest·guest·share·stock·mistlands) / B9 ashlands·ashfoe·morgen / B10 deepnorth·deepfoe·frostcave / R restart1→2, restartcraft_load→restartcraft2.
+- 한 회차에 한 묶음씩.
+
 ### 회차 291 · 10-31 · 상자에서 Alt+우클릭으로 계속채워 등록
 
 **요약**
