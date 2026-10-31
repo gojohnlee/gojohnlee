@@ -192,6 +192,10 @@ namespace ValheimHelper
             checks.Add($"서버 다시 켠 뒤 같은 일꾼 {name} 나타남", npc != null);
             if (npc == null) { End(checks); yield break; }
             yield return new WaitForSeconds(3f);
+            // 일꾼 ZDO는 움직일 때마다 손님에게 통째로 다시 감 → 크면 서버→손님 ZDO 보내기를 다 써 상자 등이 안 옴(E052 회차 309: 기억 6KB가 들어 7.1KB)
+            var zp = new ZPackage();
+            npc.Zdo?.Serialize(zp);
+            checks.Add($"일꾼 ZDO 작음 ({zp.Size()}B ≤ 3000)", zp.Size() <= 3000);
             int now = Wood(at) - wood0;
             checks.Add($"상자 나무 그대로 (+{now}, 끄기 전 +{got0})", now >= got0);
             checks.Add($"저장된 나무 일 남음 (vh_queue \"{Queue(npc)}\")", Queue(npc).Contains("i=Wood") || now >= Want);

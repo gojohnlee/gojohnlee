@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HarmonyLib;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Storage;
@@ -79,7 +80,7 @@ namespace ValheimHelper
         }
     }
 
-    /// <summary>두 NPC가 같이 쓰는 지식. 월드를 불러오면 NPC ZDO에서 읽고, 바뀌면 30초마다 저장한다.</summary>
+    /// <summary>두 NPC가 같이 쓰는 지식. 월드를 불러오면 NPC ZDO에서 읽는다. 세트·보충·밭·개인은 바뀌면 30초마다 ZDO에, 기억(지식·장소·적)은 월드 저장 순간에만(SaveMemory).</summary>
     public static class Brain
     {
         public const string Key = "vh_knowledge";
@@ -110,7 +111,8 @@ namespace ValheimHelper
             {
                 s_for = ZDOMan.instance;
                 string best = "", foes = "", places = "", sets = "", refill = "", farms = "", personal = "";
-                foreach (var zdo in Workers.AllZdos()) // 월드 불러온 직후 한 번만
+                var zdos = Workers.AllZdos();
+                foreach (var zdo in zdos) // 월드 불러온 직후 한 번만
                 {
                     string t = zdo.GetString(Key, "");
                     if (t.Length > best.Length) best = t;
@@ -135,6 +137,10 @@ namespace ValheimHelper
                 s_refill = RefillBook.Load(refill);
                 s_farms = FarmBook.Load(farms);
                 s_personal = PersonalBook.Load(personal);
+                LoadedZones = s_k.Count;
+                if (ZNet.instance != null && ZNet.instance.IsServer())
+                    Plugin.Log.LogInfo($"일꾼 기억 불러옴: 일꾼 ZDO {zdos.Count}개, 지식 {s_k.Count}구역({best.Length}자), 장소 {places.Length}자, 적 {foes.Length}자");
+                StripMemory(zdos);
             }
             return s_k;
         }
@@ -191,9 +197,7 @@ namespace ValheimHelper
         public static void Save()
         {
             if (s_k == null) return;
-            string text = s_k.Save();
             string foes = s_foes.Save();
-            string places = s_places.Save();
             string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save(), personal = s_personal.Save();
             bool skipped = false;
             foreach (var zdo in Workers.Zdos())
@@ -201,7 +205,7 @@ namespace ValheimHelper
                 // 남(친구 컴퓨터)이 주인인 ZDO에는 안 쓴다(vh_peertest "싸우는 중": 30초 저장이 뺏긴 순간과 겹쳐 주인 아닌데 씀).
                 // Workers.Reclaim이 1초 안에 되찾으니 바뀐 표시를 남기고 2초 뒤 다시 저장한다.
                 if (zdo.HasOwner() && !zdo.IsOwner()) { skipped = true; continue; }
-                zdo.Set(Key, text); zdo.Set(KeyFoes, foes); zdo.Set(KeyPlaces, places); zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms); zdo.Set(KeyPersonal, personal);
+                zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms); zdo.Set(KeyPersonal, personal); // 기억 셋은 SaveMemory가
             }
             if (skipped) { s_saveTimer = 2f; return; }
             s_k.Dirty = false;
@@ -211,6 +215,62 @@ namespace ValheimHelper
             s_farms.Dirty = false;
             s_personal.Dirty = false;
             s_foesSaved = foes;
+        }
+
+        // ---- 일꾼 기억(지식·장소·적)은 월드 저장 순간에만 ZDO에 (E052, 회차 309) ----
+        // 서버만 쓰는 기억인데 지식은 본 구역마다 한 줄씩 늘어 커진다(시험 월드 6.2KB → 일꾼 ZDO 7.1KB).
+        // 움직이는 일꾼 ZDO는 자리가 바뀔 때마다 통째로 다시 보내지고(ZDOMan.SendZDOs: Serialize 전체, 손님마다 초당 최대 20번)
+        // 남 소유 Prioritized라 맨 앞에 서므로(ServerSendCompare) 한 번에 보낼 몫(10KB − 소켓 큐)을 일꾼 둘이 다 씀
+        // → 서버가 손님에게 상자·나뭇가지 주인 바뀜 같은 다른 ZDO를 영영 못 보냄(손님 화면에 상자 없음, 손님 주인 나뭇가지 끝없이 거두기).
+        // 그래서 평소엔 일꾼 ZDO에서 빼 두고, ZDOMan.PrepareSave(저장할 ZDO·데이터를 그 자리에서 복사) 앞에 넣었다 뒤에 뺀다.
+        // 저장 파일 꼴은 그대로(옛 저장도 같은 키로 읽음). 직접 ZDOExtraData에 써서 판(revision)은 안 올림 → 손님에게 안 감·남 주인 ZDO도 안 꼬임.
+        static readonly int[] MemoryKeys = { Key.GetStableHashCode(), KeyPlaces.GetStableHashCode(), KeyFoes.GetStableHashCode() };
+        static List<ZDO> s_savingInto;
+        /// <summary>월드 불러올 때 읽은 지식 구역 수(시험용).</summary>
+        public static int LoadedZones;
+
+        /// <summary>불러온 뒤(Get): 서버에선 일꾼 ZDO에서 기억을 뺀다(손님에게 안 보내게).</summary>
+        static void StripMemory(List<ZDO> zdos)
+        {
+            if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
+            foreach (var zdo in zdos)
+                foreach (int h in MemoryKeys) zdo.RemoveString(h);
+        }
+
+        [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.PrepareSave))]
+        static class SaveMemory
+        {
+            static void Prefix()
+            {
+                s_savingInto = null;
+                if (s_k != null && s_for != ZDOMan.instance) Plugin.Log.LogInfo("일꾼 기억 저장 건너뜀: ZDOMan 바뀜");
+                if (s_k == null || s_for != ZDOMan.instance || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 아직 안 불러왔으면 ZDO에 불러온 그대로 저장됨
+                string[] vals = { s_k.Save(), s_places.Save(), s_foes.Save() };
+                s_savingInto = Workers.AllZdos();
+                foreach (var zdo in s_savingInto)
+                {
+                    for (int i = 0; i < MemoryKeys.Length; i++) ZDOExtraData.Set(zdo.m_uid, MemoryKeys[i], vals[i]);
+                    ZDOMan.instance.SetDirtySector(zdo); // 청크 저장은 바뀐 청크만
+                }
+                Plugin.Log.LogInfo($"일꾼 기억 저장 넣음: 일꾼 ZDO {s_savingInto.Count}개, 지식 {s_k.Count}구역({vals[0].Length}자)");
+            }
+
+            static void Postfix()
+            {
+                if (s_savingInto == null) return;
+                // 저장 복사본(ZDOExtraData.s_saveStrings)의 ZDO별 표는 BinarySearchDictionary.Clone = MemberwiseClone이라 살아 있는 표와 배열을 같이 씀
+                // → 그대로 빼면 저장본에서도 기억이 사라짐(회차 309: 저장 6구역 → 불러옴 0). 빼기 전에 일꾼 것만 진짜로 복사해 바꿔 끼운다.
+                if (AccessTools.Field(typeof(ZDOExtraData), "s_saveStrings")?.GetValue(null) is Dictionary<ZDOID, BinarySearchDictionary<int, string>> save)
+                    foreach (var zdo in s_savingInto)
+                        if (save.TryGetValue(zdo.m_uid, out var d))
+                        {
+                            var copy = new BinarySearchDictionary<int, string>();
+                            foreach (var kv in d) copy.Add(kv.Key, kv.Value);
+                            save[zdo.m_uid] = copy;
+                        }
+                StripMemory(s_savingInto);
+                s_savingInto = null;
+            }
         }
     }
 }

@@ -99,7 +99,7 @@ namespace ValheimHelper
                 "left=" + (g.Target - g.Delivered), "carried=" + Carried(w.Ragnar, "Wood"),
                 "stocked=" + Base(w.Home, "Wood"), "queue=" + w.Ragnar.Ai.Queue.Count,
                 "npcs=" + Workers.AllZdos().Count, "flags=" + BaseFlag.AllFlags().Count,
-                "ptag=" + tag, "pfar=" + V(farPt), "biome=" + TestKit.RunBiome,
+                "ptag=" + tag, "pfar=" + V(farPt), "biome=" + TestKit.RunBiome, "know=" + Brain.Get().Count,
             };
             File.WriteAllLines(StatePath, st.ToArray());
             TestRunner.Log("저장한 상태: " + string.Join(", ", st.ToArray()));
@@ -155,6 +155,10 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => TestKit.Npc(Personality.Ragnar) != null && TestKit.Npc(Personality.Floki) != null, 30f);
             checks.Add($"NPC 2명 다시 나타남 ({TestKit.Waited:0}초)", TestKit.Ok);
             if (!TestKit.Ok) yield break;
+            // 일꾼 기억은 월드 저장 순간에만 ZDO에 넣음(Brain.SaveMemory, E052) → 실제 끄고 켠 뒤에도 그대로인지
+            int know = st.TryGetValue("know", out var ks) ? int.Parse(ks) : 0;
+            Brain.Get();
+            checks.Add($"일꾼 지식 그대로 (불러옴 {Brain.LoadedZones}/저장 {know}구역)", know > 0 && Brain.LoadedZones >= know);
             w.Ragnar = TestKit.Npc(Personality.Ragnar);
             w.Floki = TestKit.Npc(Personality.Floki);
             yield return new WaitForSeconds(2f); // 상자·깃발 구역도 불러오게

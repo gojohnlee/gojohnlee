@@ -103,7 +103,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 패치 NpcPatches·Buildings  vh_preptest(갑옷);vh_stonetest;vh_coppertest(NoDig);vh_fighttest
 시험 틀 TestRunner·TestKit·AutoStart·valheim-test.ps1  기본 묶음 + vh_basetest + VH_SOLO=1 단독 한 번
 
-ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh_refill / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기) vh_settled(밤사이 정산 마지막 아침 날짜)
+ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal(30초) · 기억 vh_knowledge vh_foes vh_places는 월드 저장 순간에만(Brain.SaveMemory = ZDOMan.PrepareSave 앞에 넣고 뒤에 저장본 표를 복사해 바꾼 뒤 뺌, 불러온 뒤 Get이 뺌 — E052) / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기) vh_settled(밤사이 정산 마지막 아침 날짜)
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (게임 1.0.20 = assembly_valheim.dll 해시 앞 94998885B103, 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
@@ -188,6 +188,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_knowledge vh_foes vh_places vh_sets vh
 - ZDO.Set(모든 형)은 주인 검사를 안 한다(값이 바뀌면 IncreaseDataRevision) → 주인 아닌 ZDO에 쓰는 건 부르는 쪽이 막아야 함(회차 139: Brain.Save가 남 소유 일꾼 ZDO에 씀 → 고침).
   바닐라 Character(CustomFixedUpdate·땅 기울기·SetHealth)·Humanoid(공격·막기)·ZSyncAnimation·VisEquipment·SEMan 쓰기는 IsOwner 안에서만 — 싸우는 중 35초 뺏어 둔 진단에서 쓴 건 Brain.Save뿐.
 - ZDO.DataRevision은 주인이 위치·속도를 써도 오른다(ZSyncTransform.OwnerSync → ZDO.SetPosition·Set(s_velHash)). 깨어 있는 통나무(TreeLog, Rigidbody)는
+- 서버→손님 ZDO 보내기(회차 309, E052): ZDOMan.SendZDOs는 손님마다 0.05초에 한 번, 몫 = 10240 − 소켓 큐(2048 밑이면 안 보냄; Steam 보내기 150KB/s), 바뀐 ZDO를 ServerSendCompare 순(남 소유 Prioritized 먼저 → Type 큰 것 → 거리−못 보낸 시간)으로 몫이 찰 때까지 통째로(Serialize = 모든 키) 보냄. 움직이는 ZDO는 판이 매 프레임 올라 늘 다시 감 → 큰 일꾼 ZDO(7KB) 둘이면 다른 ZDO는 영영 안 감(상자 안 보임·주인 바뀜 안 감). 일꾼 ZDO에 큰 값을 두지 말 것. 불러온 ZDO는 ZDOID(1, 불러온 순서 번호)·판 0으로 새로 매김(ZDO.Load). ZDOExtraData.Set/ZDO.RemoveString은 판을 안 올림, ZDOMan.PrepareSave는 저장할 ZDO·데이터를 그 자리에서 복사 — 단 ZDOExtraData.PrepareSave의 ZDO별 표 BinarySearchDictionary(assembly_utils).Clone은 MemberwiseClone(배열 공유) → PrepareSave 뒤 같은 프레임에 키를 빼면(Remove가 배열을 당김) 저장본도 망가짐. 빼기 전에 s_saveStrings[zid]를 새 표로 바꿔 끼울 것(Brain.SaveMemory).
   맞지 않아도 계속 오름 → 깎였는지는 체력 키로 본다: TreeBase·TreeLog·Destructible = float s_health, MineRock5 = string s_health(부위별 base64),
   MineRock = float "Health"+부위(부위 = m_areaRoot 또는 자신의 자식 충돌체). (GatherJob.HealthMark)
 - 바닐라 근접 공격(Attack.DoMeleeAttack)은 광선마다 가장 가까운 것 하나만 맞힌다(m_hitThroughWalls 아니면 break) → 앞에 바위가 있으면 뒤의 통나무는 안 맞는다.
