@@ -12,6 +12,7 @@ namespace ValheimHelper
 
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
+        DoorWay m_way; Container m_wayFor;
         /// <summary>이 물건은 넣지 않는다(채집 중인 물건: 그건 GatherJob이 세면서 넣는다).</summary>
         readonly string m_except;
         readonly HashSet<ItemDrop.ItemData> m_skip = new HashSet<ItemDrop.ItemData>();
@@ -49,6 +50,8 @@ namespace ValheimHelper
             var at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             if (!Instant && d > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); return true; } // 거점 125m: 멀면 뜀(Prep과 같음)
+            if (m_wayFor != m_chest) { m_way = new DoorWay(); m_wayFor = m_chest; }
+            if (!Instant && m_way.Steer(dt, m_npc, m_chest)) return true; // 집 안 상자: 벽이 가리면 문으로(회차 311)
             Container chest = m_chest;
             HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
             Inventory mine = m_npc.GetInventory();

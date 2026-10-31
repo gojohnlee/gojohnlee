@@ -16,6 +16,7 @@ namespace ValheimHelper
         const float Limit = 120f, BusyLimit = 30f;
 
         readonly WorkerNpc m_npc;
+        readonly DoorWay m_way = new DoorWay();
         readonly Core.Work.Recipe m_recipe;
         readonly int m_crafts;
         float m_time, m_busy;
@@ -41,6 +42,7 @@ namespace ValheimHelper
                 Vector3 at = cs.transform.position;
                 if (Utils.DistanceXZ(at, m_npc.transform.position) > cs.m_rangeBuild)
                 { m_npc.Ai.MoveToPoint(dt, at, Mathf.Max(1.5f, cs.m_rangeBuild * 0.6f), Utils.DistanceXZ(at, m_npc.transform.position) > 10f); return CraftResult.Working; }
+                if (m_way.Steer(dt, m_npc, cs)) return CraftResult.Working; // 집 안 작업대: 벽이 가리면 문으로(회차 311)
                 m_npc.Ai.StopMoving(); // 걷기 방향이 남으면 설비 한가운데로 계속 걷는다(가마솥 밑 불 등 — 회차 128 MachineStep과 같은 까닭)
             }
             var need = Needs();

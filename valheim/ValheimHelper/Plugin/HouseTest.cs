@@ -51,6 +51,7 @@ namespace ValheimHelper
                 Physics.SyncTransforms();
                 Bounds b = Box(g);
                 g.transform.position += Vector3.up * (bottom.Value - b.min.y);
+                Physics.SyncTransforms(); // 안 하면 다음 Box(g)가 옮기기 전 자리(지붕이 문보다 낮게 섬)
             }
             return g;
         }
@@ -83,7 +84,22 @@ namespace ValheimHelper
             // 집: 깃발에서 오른쪽 5~11m, 문은 깃발 쪽 벽 가운데. 바깥 시험 상자는 치우고 안 상자를 w.Chest로
             Vector3 f = w.Player.transform.forward; f.y = 0f; f.Normalize();
             Vector3 r = Vector3.Cross(Vector3.up, f).normalized;
-            Vector3 c = GatherTest.Ground(w.Home + r * 8f);
+            // 비탈이면 지붕이 낮은 쪽 문틀을 막는다(회차 311: 문 쪽 땅 2.5m 높아 지붕판이 무릎 높이) → 둘레 땅 높이 차가 가장 작은 자리
+            Vector3 c = default; float spread = float.MaxValue, floorY = 0f; // 조각은 모두 같은 지형 높이(물체 무시)에 — 문 자리가 덤불 등 위에 서면 지붕과 틈이 막힘
+            for (int a = 0; a < 360; a += 30)
+                foreach (float dist in new[] { 8f, 10f, 12f, 14f })
+                {
+                    Vector3 cc = GatherTest.Ground(w.Home + Quaternion.AngleAxis(a, Vector3.up) * r * dist);
+                    float lo = float.MaxValue, hi = float.MinValue; // 덤불 위에 설 수 있는 Ground가 아니라 지형 높이로
+                    for (int i = -1; i <= 1; i++)
+                        for (int j = -1; j <= 1; j++)
+                        {
+                            float y = ZoneSystem.instance.GetGroundHeight(cc + r * (Half * i) + f * (Half * j));
+                            lo = Mathf.Min(lo, y); hi = Mathf.Max(hi, y);
+                        }
+                    if (hi - lo < spread) { spread = hi - lo; c = cc; floorY = ZoneSystem.instance.GetGroundHeight(cc - r * Half); } // 바닥 = 문 자리 땅(가장 낮은 땅이면 문 쪽 땅이 높을 때 천장이 일꾼 키 1.85m보다 낮아 머리가 걸림)
+                }
+            Plugin.Log.LogInfo($"집 시험: 집 자리 땅 높이 차 {spread:0.00}m, 바닥 {floorY:0.0}");
             ZNetScene.instance.Destroy(w.Chest.gameObject);
             float top = float.MinValue;
             int walls = 0;
@@ -93,17 +109,22 @@ namespace ValheimHelper
                 Vector3 along = Vector3.Cross(Vector3.up, side).normalized;
                 for (int i = -1; i <= 1; i++)
                 {
-                    Vector3 at = GatherTest.Ground(c + side * Half + along * (2f * i));
+                    Vector3 at = c + side * Half + along * (2f * i); at.y = floorY;
                     bool doorSlot = side == -r && i == 0;
                     var g = Put(made, doorSlot ? "wood_door" : "woodwall", at, Quaternion.LookRotation(side), at.y - 0.05f);
                     if (g == null) continue;
-                    if (doorSlot) door = g; else { walls++; top = Mathf.Max(top, Box(g).max.y); }
+                    if (doorSlot) { door = g; top = Mathf.Max(top, Box(g).max.y); } else { walls++; top = Mathf.Max(top, Box(g).max.y); }
                 }
             }
             int roofs = 0;
             for (int i = -1; i <= 1; i++)
                 for (int j = -1; j <= 1; j++)
                     if (Put(made, "wood_floor", c + r * (2f * i) + f * (2f * j), Quaternion.LookRotation(f), top - 0.05f) != null) roofs++;
+            // wood_floor는 바닐라 지붕 판정(Cover 위 SphereCast)이 "leaky"로 지나침(회차 311 가림 0.5~0.9인데 지붕 False) → 천장 위에 wood_roof
+            int tiles = 0;
+            for (int i = -1; i <= 1; i++)
+                for (int j = -1; j <= 1; j++)
+                    if (Put(made, "wood_roof", c + r * (2f * i) + f * (2f * j), Quaternion.LookRotation(f), top + 0.2f) != null) tiles++;
             Vector3 chestAt = GatherTest.Ground(c + r * 1.5f + f * 1.5f);
             Put(made, "piece_chest_wood", chestAt, Quaternion.LookRotation(-r));
             var bench = Put(made, "piece_workbench", GatherTest.Ground(c + r * 1.2f - f * 1.5f), Quaternion.LookRotation(-r));
@@ -115,11 +136,11 @@ namespace ValheimHelper
             var layers = new List<string>();
             for (int i = 0; i < 32; i++) if ((pf.m_layers.value & (1 << i)) != 0) layers.Add(LayerMask.LayerToName(i));
             int pieceLayer = door != null ? door.layer : -1;
-            Plugin.Log.LogInfo($"집 시험: Pathfinding m_layers [{string.Join(",", layers)}], 문 층 {LayerMask.LayerToName(pieceLayer)}, 문 크기 {db.size}, 벽 위 {top - c.y:0.00}m");
+            Plugin.Log.LogInfo($"집 시험: Pathfinding m_layers [{string.Join(",", layers)}], 문 층 {LayerMask.LayerToName(pieceLayer)}, 문 크기 {db.size}, 벽 위 {top - c.y:0.00}m, 집 가운데 {c:F1}·문 {door?.transform.position:F1}");
             int alive = 0;
             foreach (var g in made) if (g != null) alive++;
-            checks.Add($"집 세움 (벽 {walls}/11·문 {(door != null ? 1 : 0)}·지붕 {roofs}/9·상자 {(w.Chest != null ? 1 : 0)}·작업대 {(bench != null ? 1 : 0)}, 남은 조각 {alive}/{made.Count})",
-                walls == 11 && door != null && roofs == 9 && w.Chest != null && bench != null && alive == made.Count);
+            checks.Add($"집 세움 (벽 {walls}/11·문 {(door != null ? 1 : 0)}·천장 {roofs}/9·지붕 {tiles}/9·상자 {(w.Chest != null ? 1 : 0)}·작업대 {(bench != null ? 1 : 0)}, 남은 조각 {alive}/{made.Count})",
+                walls == 11 && door != null && roofs == 9 && tiles == 9 && w.Chest != null && bench != null && alive == made.Count);
             if (w.Chest == null || door == null || bench == null) yield break;
             checks.Add($"문 닫힘으로 시작 (s_state {dz.GetInt(ZDOVars.s_state)})", dz.GetInt(ZDOVars.s_state) == 0);
             int wood = 0;
@@ -145,15 +166,19 @@ namespace ValheimHelper
             IEnumerator Watch()
             {
                 Vector3 last = w.Ragnar.transform.position;
+                float tick = 0f;
                 while (!done && w.Ragnar != null)
                 {
-                    yield return new WaitForSeconds(0.5f);
+                    yield return null; // 안 들어감은 매 틀(회차 311: 들어가자마자 활이 나와 0.5초 간격이 놓침), 벽 박음은 0.5초마다
+                    tick += Time.deltaTime;
                     if (w.Ragnar == null) break;
                     Vector3 p = w.Ragnar.transform.position;
                     if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) opened = true;
                     bool now = In(p);
                     if (now && !inside) innerTrips++;
                     inside = now;
+                    if (tick < 0.5f) continue;
+                    tick = 0f;
                     float near = float.MaxValue;
                     foreach (var col in pieces) if (col != null) near = Mathf.Min(near, Vector3.Distance(col.ClosestPoint(p + Vector3.up), p + Vector3.up));
                     if (w.Ragnar.Ai.Job != null && near < 1f && Utils.DistanceXZ(p, last) < 0.15f) { wallStuck += 0.5f; run += 0.5f; maxRun = Mathf.Max(maxRun, run); }
