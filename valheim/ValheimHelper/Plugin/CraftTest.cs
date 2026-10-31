@@ -85,9 +85,9 @@ namespace ValheimHelper
             checks.Add($"설비가 없어도 재료 모으기 시작 ({w.Ragnar.Ai.Job?.GetType().Name} {w.Ragnar.Ai.Job?.StepName})", w.Ragnar.Ai.Job is PlanJob);
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && Stock(w, "Wood") >= wood, 240f);
             checks.Add($"목재 {Stock(w, "Wood")}/{wood} 모아 두고 끝 ({TestKit.Waited:0}초, {w.Ragnar.Ai.Current})", TestKit.Ok);
-            string said = null;
+            string said = null, stationName = Recipes.StationName(station); // craft.missingDone 대사 15가지 모두 설비 이름을 말함
             for (int i = heard0; i < w.Heard.Count; i++)
-                if (w.Heard[i].StartsWith(w.Ragnar.NpcName) && (w.Heard[i].Contains("모았") || w.Heard[i].Contains("모아 뒀"))) said = w.Heard[i];
+                if (w.Heard[i].StartsWith(w.Ragnar.NpcName) && w.Heard[i].Contains(stationName)) said = w.Heard[i];
             checks.Add($"끝에 설비를 지어 달라고 함 ({said ?? "못 들음"})", said != null);
             bool kept = Stock(w, "Bow") == 0;
             foreach (var p in others) kept &= Stock(w, p) == Need(bow, p);
