@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ValheimHelper
 {
@@ -24,6 +25,15 @@ namespace ValheimHelper
         public IEnumerable<ItemDrop.ItemData> Skipped => m_skip;
         Container m_chest;
         float m_time;
+        /// <summary>
+        /// 손 거리 넣기(사용자 10-31 ③): 상자 Reach m 안에서 0.5초(StillSeconds) 더 못 다가가면(통나무·동료·설비에 막힘) 사이를 건축물이 안 가리고
+        /// 높이 차가 작을 때 그 자리에서 넣는다(플레이어 손 거리 Player.m_maxInteractDistance 5 — 눈 높이 차를 빼고 4m).
+        /// </summary>
+        const float Reach = 4f, StillSeconds = 0.5f;
+        float m_best = float.MaxValue, m_still;
+        /// <summary>시험용: 손 거리 넣기 끔(고치기 전 비교)·한 수.</summary>
+        internal static bool TestNoReach;
+        internal static int Reached;
 
         public Unload(WorkerNpc npc, string except = null)
         {
@@ -49,7 +59,8 @@ namespace ValheimHelper
             }
             var at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
-            if (!Instant && d > 2.5f && !(m_wayFor == m_chest && m_way.Busy)) { m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); return true; } // 거점 125m: 멀면 뜀(Prep과 같음)
+            if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
+            if (!Instant && d > 2.5f && !(m_wayFor == m_chest && m_way.Busy) && !CanReach(at, d)) { m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); return true; } // 거점 125m: 멀면 뜀(Prep과 같음)
             if (m_wayFor != m_chest) { m_way = new DoorWay(); m_wayFor = m_chest; }
             if (!Instant && m_way.Steer(dt, m_npc, m_chest)) return true; // 집 안 상자: 벽이 가리면 문으로(회차 311)
             Container chest = m_chest;
@@ -82,6 +93,15 @@ namespace ValheimHelper
             // 이 상자에 못 넣은 건 건너뛴다(자리가 없음)
             foreach (var it in mine.GetAllItems()) if (Storable(it, keep) && ChestFor(it) == chest) { m_skip.Add(it); Plugin.Log.LogInfo($"DIAG Unload 못 넣고 건너뜀 {it.m_dropPrefab.name}x{it.m_stack} (편집 {(done ? "됨" : "못 함")}, 상자 빈칸 {chest.GetInventory().GetEmptySlots()})"); }
             m_chest = null;
+            m_best = float.MaxValue; m_still = 0f;
+            return true;
+        }
+
+        bool CanReach(Vector3 at, float d)
+        {
+            if (TestNoReach || d > Reach || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || DoorWay.Blocked(m_npc, m_chest)) return false;
+            Reached++;
+            Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Unload 손 거리 넣기: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
             return true;
         }
 
