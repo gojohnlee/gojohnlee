@@ -53,8 +53,8 @@ namespace ValheimHelper.Core.Work
             return null;
         }
 
-        /// <summary>걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 이만큼(초) 못 나오면 가장 가까운 가장자리 위로 옮긴다(사용자 결정 2026-10-23, E018 · 30 → 15초 10-26).</summary>
-        public const double PitEscapeSeconds = 15;
+        /// <summary>걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 이만큼(초) 못 나오면 가장 가까운 가장자리 위로 옮긴다(사용자 결정 2026-10-23, E018 · 30 → 15초 10-26, → 5초 사용자 10-31).</summary>
+        public const double PitEscapeSeconds = 5;
         /// <summary>구덩이 기록 자리에서 이만큼(m) 넘게 벗어나면 나온 것으로 본다.</summary>
         public const double PitLeftRadius = 6;
         /// <summary>가장자리 찾기: 8방향으로 EdgeStep(m)마다 EdgeSteps번 잰다.</summary>

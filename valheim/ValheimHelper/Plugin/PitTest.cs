@@ -148,7 +148,7 @@ namespace ValheimHelper
                         foreach (var it in claude.GetInventory().GetAllItems())
                             if (WorkerNpc.IsTool(it, ToolKind.Pickaxe)) { it.m_durability = WorkerNpc.WornFloor; worn = it; }
                     int j0 = claude.Ai.Jumps, c0 = claude.Ai.CarveSwings, d0 = NpcPatches.NoDig.Dug;
-                    // 얕은 1·경사로만 7은 점프·경사로만 본다. 2~6은 15초(Climb.PitEscapeSeconds) 가장자리 옮기기도 탈출로 친다(사용자 결정 2026-10-23, E018 — 회차 122 구덩이 5: 24번 깎고도 못 나옴)
+                    // 얕은 1·경사로만 7은 점프·경사로만 본다. 2~6은 5초(Climb.PitEscapeSeconds) 가장자리 옮기기도 탈출로 친다(사용자 결정 2026-10-23, E018 — 회차 122 구덩이 5: 24번 깎고도 못 나옴)
                     WorkerAI.TestNoEdgeRescue = i == 0 || CarveOnly[i];
                     int edge0 = WorkerAI.PitEdgeRescues;
                     var walk = new ExploreTest.WalkJob(claude.Ai, home);
@@ -334,7 +334,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 점프·경사로를 끄고 깃발로 걸어가게 두면 15초(Climb.PitEscapeSeconds) 뒤 가장자리 위로 옮겨진다.
+        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 점프·경사로를 끄고 깃발로 걸어가게 두면 5초(Climb.PitEscapeSeconds) 뒤 가장자리 위로 옮겨진다.
         /// 깃발까지 가지 않고(가장자리 몇 m), 둘레 높이쯤, 짐 그대로. 벽이 완만해 걸어 나오면(E022) 환경 탓으로 칸을 세지 않는다.
         /// </summary>
         static IEnumerator EdgeRescue(GatherTest.Checks checks, WorkerNpc claude, Vector3 home, Quaternion rot, Vector3 spot, float depth)

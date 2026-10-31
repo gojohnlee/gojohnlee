@@ -641,7 +641,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 15초(Climb.PitEscapeSeconds) 안에 못 나오면
+        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 5초(Climb.PitEscapeSeconds) 안에 못 나오면
         /// 가장 가까운 가장자리 위(Climb.EdgeSpots — 단단한 지형·물 아님·몸 자리 빔·위험 판단 통과)로 옮긴다. 플레이어 근처라도. 짐·체력·일은 그대로.
         /// 자리가 없으면 깃발로. 도망 구덩이(6초 → 깃발)는 RescueIfTrapped가 먼저 맡는다. true면 옮겼다.
         /// </summary>
@@ -649,6 +649,7 @@ namespace ValheimHelper
         {
             if (m_pitSince <= 0f) return false;
             if (TestNoEdgeRescue) { m_pitSince = 0f; return false; } // 꺼 둔 동안 시간을 쌓지 않는다(켜자마자 옮기지 않게)
+            if (m_guard != null && m_guard.Fleeing) return false; // 도망 구덩이는 RescueIfTrapped(6초 → 깃발)가 맡는다 — 5초(10-31)라 먼저 옮기지 않게
             if (Time.time - m_pitSeen > 5f || Utils.DistanceXZ(pos, m_pitPos) > (float)Climb.PitLeftRadius) { m_pitSince = 0f; return false; }
             m_pitSeen = Time.time;
             if (Time.time - m_pitSince < (float)Climb.PitEscapeSeconds || m_character.IsSwimming()) return false;
