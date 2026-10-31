@@ -35,12 +35,12 @@ namespace ValheimHelper
             return guest;
         }
 
-        /// <summary>깃발 근처 상자 전부의 나무(일꾼은 거점 범위 아무 상자에나 넣음 — 손님 화면 상자는 서버 ZDO로 맞음).</summary>
+        /// <summary>거점 범위(일꾼 집 125m) 상자 전부의 나무(일꾼은 범위 아무 상자에나 넣음 — 앞 시험이 남긴 먼 상자일 수도, 회차 309. 손님 화면 상자는 서버 ZDO로 맞음).</summary>
         static int Wood(Vector3 flag)
         {
             int n = 0;
             foreach (Container c in Object.FindObjectsByType<Container>(FindObjectsSortMode.None))
-                if (c.GetInventory() != null && Vector3.Distance(c.transform.position, flag) < 40f) n += c.GetInventory().CountItems(W);
+                if (c.GetInventory() != null && Vector3.Distance(c.transform.position, flag) < 130f) n += c.GetInventory().CountItems(W);
             return n;
         }
 
@@ -141,6 +141,13 @@ namespace ValheimHelper
             Say($"!{npc.NpcName} 나무 {Want}");
             until = Time.time + 10f;
             while (Time.time < until && !Queue(npc).Contains("i=Wood")) yield return new WaitForSeconds(0.5f);
+            if (!Queue(npc).Contains("i=Wood") && s_heard.Exists(s => s.StartsWith(npc.NpcName)))
+            {
+                // 서버 월드는 안 되돌림 → 앞 시험이 남긴 상자 나무가 거점 범위에 있으면 "더 캘까?"를 묻는다(회차 309) → 응
+                Say("응"); // 대답은 "!" 없는 그냥 말(ChatParser: "!"로 시작하면 명령으로만 읽음)
+                until = Time.time + 10f;
+                while (Time.time < until && !Queue(npc).Contains("i=Wood")) yield return new WaitForSeconds(0.5f);
+            }
             checks.Add($"서버가 일 저장(vh_queue \"{Queue(npc)}\")", Queue(npc).Contains("i=Wood"));
             checks.Add($"일꾼 대답 {s_heard.Count}개", s_heard.Exists(s => s.StartsWith(npc.NpcName)));
             foreach (var s in s_heard) TestRunner.Log("  들음 " + s);
@@ -203,6 +210,16 @@ namespace ValheimHelper
                 {
                     next = Time.time + 30f;
                     TestRunner.Log($"  {npc?.NpcName} 위치 {npc?.Zdo?.GetPosition()} 주인 {npc?.Zdo?.GetOwner()} (서버 {ZNet.instance.GetServerPeer()?.m_uid}, 나 {ZDOMan.GetSessionID()}) 짐 {Carried(npc)} 상자 +{Wood(at) - wood0}");
+                    foreach (Container c in Object.FindObjectsByType<Container>(FindObjectsSortMode.None))
+                        if (c.GetInventory() != null && Vector3.Distance(c.transform.position, at) < 125f) TestRunner.Log($"    상자 {c.transform.position:F1} ({Vector3.Distance(c.transform.position, at):0}m) 나무 {c.GetInventory().CountItems(W)} 주인 {c.GetComponent<ZNetView>()?.GetZDO()?.GetOwner()}");
+                    {
+                        // 진단(회차 309): 손님이 상자 인스턴스를 못 보면 ZDO(서버가 보낸 것)는 있는지
+                        var zl = new List<ZDO>();
+                        ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(at), ZNet.instance.GetSyncedSimulationDistance(), zl, null);
+                        int ch = 0, chw = 0; int hash = "piece_chest_wood".GetStableHashCode();
+                        foreach (var z in zl) if (z.GetPrefab() == hash) { ch++; if (ZNetScene.instance.FindInstance(z) != null) chw++; }
+                        TestRunner.Log($"    상자 ZDO {ch}개(인스턴스 {chw}), 장면 Container {Object.FindObjectsByType<Container>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length}개");
+                    }
                 }
                 Clear(at);
                 yield return new WaitForSeconds(1f);

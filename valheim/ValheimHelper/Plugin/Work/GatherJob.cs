@@ -454,7 +454,7 @@ namespace ValheimHelper
                 return true; // 누가 열고 있다
             }
             Delivered += moved;
-            Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} {moved}개 넣음 ({Delivered}/{Target})");
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} {moved}개 넣음 ({Delivered}/{Target}) 상자 {m_chest.transform.position:F1} 집에서 {Utils.DistanceXZ(m_npc.Home, m_chest.transform.position):0}m");
             if (Delivered >= Target)
             {
                 m_npc.Say("gatherDone", Args(Delivered));

@@ -373,7 +373,7 @@ namespace ValheimHelper
         /// <summary>진단: 걷다 막힌 자리(앞에 걸린 것·발밑·걷기 상태).</summary>
         void LogStuck(string what, Vector3 goal) =>
             Plugin.Log.LogInfo($"{m_npc.NpcName}: {what} 막힘({m_stepTime:0}초, 남은 {Utils.DistanceXZ(goal, m_npc.transform.position):0.0}m, 집에서 {Utils.DistanceXZ(m_npc.Home, m_npc.transform.position):0.0}m) " +
-                               $"{m_ai.BlockerAhead(goal)} / {m_ai.MoveState} / {m_npc.MoveDebug} / 목표 {m_targetInfo?.Prefab}({goal.x:0.0},{goal.y:0.0},{goal.z:0.0}) {m_ai.PathDiag(goal)}");
+                               $"{m_ai.BlockerAhead(goal)} / {m_ai.MoveState} / {m_npc.MoveDebug} / 목표 {m_targetInfo?.Prefab}({goal.x:0.0},{goal.y:0.0},{goal.z:0.0}) {m_ai.PathDiag(goal)} fps {1f / Mathf.Max(Time.smoothDeltaTime, 1e-4f):0}");
 
         bool UpdateWork()
         {
