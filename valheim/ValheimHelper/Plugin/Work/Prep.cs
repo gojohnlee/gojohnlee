@@ -40,6 +40,23 @@ namespace ValheimHelper
 
         bool Steering(Component c) => m_wayFor == c && m_way.Busy;
 
+        /// <summary>손 거리 꺼내기(사용자 10-31 ③, Unload와 같음): 상자 Reach m 안에서 0.5초 더 못 다가가면 사이를 건축물이 안 가릴 때 그 자리에서.</summary>
+        const float Reach = 4f, StillSeconds = 0.5f;
+        float m_best = float.MaxValue, m_still; Container m_bestFor;
+        /// <summary>시험용: 손 거리 꺼내기 끔(고치기 전 비교)·한 수.</summary>
+        internal static bool TestNoReach;
+        internal static int Reached;
+
+        bool CanReach(Vector3 at, float d, float dt)
+        {
+            if (m_bestFor != m_chest) { m_bestFor = m_chest; m_best = float.MaxValue; m_still = 0f; }
+            if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
+            if (TestNoReach || d > Reach || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || DoorWay.Blocked(m_npc, m_chest)) return false;
+            Reached++;
+            Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Prep 손 거리 꺼내기: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
+            return true;
+        }
+
         public Prep(WorkerNpc npc)
         {
             m_npc = npc;
@@ -57,9 +74,10 @@ namespace ValheimHelper
             if (m_station != null) return UpdateRepair(dt);
             if (m_time > WalkLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 준비: 상자에 못 닿아 건너뜀"); m_chest = null; return true; }
             Vector3 at = m_chest.transform.position;
-            if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f && !Steering(m_chest))
+            float d = Utils.DistanceXZ(at, m_npc.transform.position);
+            if (d > 2.5f && !Steering(m_chest) && !CanReach(at, d, dt))
             {
-                m_ai.MoveToPoint(dt, at, 1.8f, Utils.DistanceXZ(at, m_npc.transform.position) > 10f);
+                m_ai.MoveToPoint(dt, at, 1.8f, d > 10f);
                 return true;
             }
             if (Through(dt, m_chest)) return true;
