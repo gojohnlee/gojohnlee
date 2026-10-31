@@ -337,4 +337,36 @@ public class ChatParserTests
     [Fact]
     public void BangCommandWinsOverAnswer() =>
         Assert.Equal(CommandKind.GoAnyway, P.Parse("!그냥 가", awaitingAnswer: true).Command.Kind);
+
+    // 사용자 10-31: 띄어쓰기가 달라도 같은 명령
+    [Theory]
+    [InlineData("!라그나계속채워나무50", "라그나", CommandKind.Keep, "Wood", 50, false)]
+    [InlineData("!라그나 계속 채워 나무50", "라그나", CommandKind.Keep, "Wood", 50, false)]
+    [InlineData("!라그나계속채워 나무 50", "라그나", CommandKind.Keep, "Wood", 50, false)]
+    [InlineData("!라그나르채워나무50개", "라그나", CommandKind.Keep, "Wood", 50, true)]
+    [InlineData("!플로키나무50", "플로키", CommandKind.Item, "Wood", 50, false)]
+    [InlineData("!나무50", null, CommandKind.Item, "Wood", 50, false)]
+    [InlineData("!구리주괴4", null, CommandKind.Item, "Copper", 4, false)]
+    [InlineData("!계속채워개인나무30", null, CommandKind.PrepKeep, "Wood", 30, false)]
+    [InlineData("!계속채워끔나무", null, CommandKind.KeepOff, "Wood", 0, false)]
+    public void Spacing_Ignored(string line, string target, CommandKind kind, string item, int amount, bool once)
+    {
+        var c = Cmd(line);
+        Assert.Equal(kind, c.Kind);
+        Assert.Equal(target, c.Target);
+        Assert.Equal(item, c.Item);
+        Assert.Equal(amount, c.Amount);
+        Assert.Equal(once, c.Once);
+    }
+
+    [Fact]
+    public void Spacing_Ignored_Others()
+    {
+        Assert.Equal(CommandKind.Status, Cmd("!라그나상태").Kind);
+        Assert.True(Cmd("!라그나빨리나무50").Urgent);
+        var farm = Cmd("!밭5");
+        Assert.Equal(CommandKind.Farm, farm.Kind);
+        Assert.Equal(5, farm.Number);
+        Assert.Equal(ChatRoute.Haiku, P.Parse("!라그나아무말이나해봐").Route);
+    }
 }

@@ -39,24 +39,17 @@ namespace ValheimHelper.Core.Chat
             {
                 string body = text.TrimStart('!', '！').Trim();
                 if (body.Length == 0) return Ignore();
-                string[] tokens = Split(body);
-                string target = null;
-                if (tokens.Length > 1 && _npcNames.TryGetValue(tokens[0], out var name))
+                string[] spaced = Split(body);
+                var result = ParseTokens(spaced, text);
+                if (result.Route == ChatRoute.Command) return result;
+                // 사용자 10-31: 띄어쓰기가 달라도("!라그나계속채워나무50") 공백을 빼고 다시 읽는다. 그래도 안 되면 Haiku.
+                string[] respaced = Respace(string.Concat(spaced));
+                if (respaced != null && !respaced.SequenceEqual(spaced))
                 {
-                    target = name;
-                    tokens = tokens.Skip(1).ToArray();
+                    var again = ParseTokens(respaced, text);
+                    if (again.Route == ChatRoute.Command) return again;
                 }
-                bool urgent = false;
-                if (tokens.Length > 1)
-                {
-                    var rest = tokens.Where(x => !Urgent.Contains(Lower(x).TrimEnd('!', '！'))).ToArray();
-                    if (rest.Length > 0 && rest.Length < tokens.Length) { urgent = true; tokens = rest; }
-                }
-                var cmd = ParseCommand(tokens);
-                if (cmd != null) cmd.Urgent = urgent;
-                if (cmd == null) return new ChatResult { Route = ChatRoute.Haiku, Text = text, Target = target };
-                if (cmd.Kind != CommandKind.SetChest || cmd.Target == null) cmd.Target = target;
-                return new ChatResult { Route = ChatRoute.Command, Command = cmd };
+                return result;
             }
 
             if (awaitingAnswer && TryAnswer(text, out var answer))
@@ -64,6 +57,61 @@ namespace ValheimHelper.Core.Chat
 
             if (IsChatter(text)) return Ignore();
             return new ChatResult { Route = ChatRoute.Sonnet, Text = text, Target = LeadingName(text) };
+        }
+
+        ChatResult ParseTokens(string[] tokens, string text)
+        {
+            string target = null;
+            if (tokens.Length > 1 && _npcNames.TryGetValue(tokens[0], out var name))
+            {
+                target = name;
+                tokens = tokens.Skip(1).ToArray();
+            }
+            bool urgent = false;
+            if (tokens.Length > 1)
+            {
+                var rest = tokens.Where(x => !Urgent.Contains(Lower(x).TrimEnd('!', '！'))).ToArray();
+                if (rest.Length > 0 && rest.Length < tokens.Length) { urgent = true; tokens = rest; }
+            }
+            var cmd = ParseCommand(tokens);
+            if (cmd == null) return new ChatResult { Route = ChatRoute.Haiku, Text = text, Target = target };
+            cmd.Urgent = urgent;
+            if (cmd.Kind != CommandKind.SetChest || cmd.Target == null) cmd.Target = target;
+            return new ChatResult { Route = ChatRoute.Command, Command = cmd };
+        }
+
+        /// <summary>명령어·부속어(앞에서부터 가장 긴 것을 떼어 냄). 물건 이름은 남은 덩어리 하나로 둔다(ResolveItem이 붙여 쓴 이름도 찾음).</summary>
+        static readonly string[] Keywords =
+        {
+            "계속채워", "계속", "채워", "개인", "끔", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "평탄화",
+            "상태", "스킬", "기억", "지식", "멈춰", "길", "같이가자", "그냥가", "전부취소", "취소전부",
+        };
+
+        /// <summary>공백 없는 몸통 → [일꾼 이름] [명령어·부속어…] [물건 이름] [끝 숫자]. 나눌 게 없으면 null.</summary>
+        string[] Respace(string compact)
+        {
+            var tokens = new List<string>();
+            string s = compact;
+            string name = _npcNames.Keys.Where(k => k.Length < s.Length && s.StartsWith(k, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(k => k.Length).FirstOrDefault();
+            if (name != null) { tokens.Add(name); s = s.Substring(name.Length); }
+            for (int guard = 0; guard < 4 && s.Length > 0; guard++)
+            {
+                string word = Keywords.Concat(Urgent).Where(k => s.StartsWith(k, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(k => k.Length).FirstOrDefault();
+                if (word == null) break;
+                tokens.Add(word); s = s.Substring(word.Length);
+            }
+            if (s.Length > 0)
+            {
+                int end = s.Length;
+                if (s.EndsWith("개") || s.EndsWith("x", StringComparison.OrdinalIgnoreCase)) end--;
+                int start = end;
+                while (start > 0 && s[start - 1] >= '0' && s[start - 1] <= '9') start--;
+                if (start > 0 && start < end) { tokens.Add(s.Substring(0, start)); tokens.Add(s.Substring(start)); }
+                else tokens.Add(s);
+            }
+            return tokens.Count > 1 ? tokens.ToArray() : null;
         }
 
         static ChatResult Ignore() => new ChatResult { Route = ChatRoute.Ignore };
