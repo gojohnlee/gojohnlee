@@ -759,7 +759,7 @@ namespace ValheimHelper
         }
 
         /// <summary>자동 보충 재고: 채집 물건은 채집이 넣는 재료 상자(Stock), 만드는 물건은 만든 것이 놓이는 역할 상자(음식 → 음식, 장비 → 장비, 나머지 → 재료).</summary>
-        static int RefillStock(string prefab, Vector3 home)
+        internal static int RefillStock(string prefab, Vector3 home)
         {
             if (ResourceCatalog.WaysFor(prefab).Count > 0) return Stock(prefab, home);
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);

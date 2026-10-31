@@ -47,6 +47,24 @@ public class SetMenuTests
 public class RefillTests
 {
     [Fact]
+    public void StatusLinesWithBar()
+    {
+        Assert.Equal("■■■■■■□□□□", RefillBook.Bar(32, 50));
+        Assert.Equal("□□□□□□□□□□", RefillBook.Bar(0, 50));
+        Assert.Equal("■■■■■■■■■■", RefillBook.Bar(80, 50));
+        var sets = new SetMenuBook();
+        sets.Save(1, new[] { "Wood", "Stone" }, null, null);
+        var r = new RefillBook();
+        r.Keep("Wood", 50);
+        r.Keep("Stone", 10, once: true);
+        r.KeepSet(1, 20);
+        var stock = new Dictionary<string, int> { ["Wood"] = 32, ["Stone"] = 5 };
+        var lines = r.Status(i => stock.TryGetValue(i, out int n) ? n : 0, sets, i => i == "Wood" ? "나무" : "돌");
+        Assert.Equal(new[] { "돌 5/10 ■■■■■□□□□□ (한 번)", "나무 32/50 ■■■■■■□□□□", "세트 1번 5/20 ■■□□□□□□□□" }, lines);
+        Assert.Equal(3, r.Count); // 목록은 지우지 않음
+    }
+
+    [Fact]
     public void DueBelowThresholdWithSlack()
     {
         var r = new RefillBook();

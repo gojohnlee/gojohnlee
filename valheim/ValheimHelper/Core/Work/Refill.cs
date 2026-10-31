@@ -110,6 +110,36 @@ namespace ValheimHelper.Core.Work
 
         // ---- 저장: "i:물건=수;s:번호=수;…" — 한 번 채움은 대문자 I·S ----
 
+        /// <summary>막대 10칸(■ 찬 몫, □ 빈 몫). want 0 이하면 다 참.</summary>
+        public static string Bar(int have, int want)
+        {
+            int f = want <= 0 ? 10 : (int)Math.Min(10L, Math.Max(0L, (long)have * 10 / want));
+            return new string('■', f) + new string('□', 10 - f);
+        }
+
+        /// <summary>"나무 32/50 ■■■■■■□□□□" 꼴 한 줄. once면 "(한 번)"을 붙인다.</summary>
+        public static string Line(string label, int have, int want, bool once) =>
+            label + " " + have + "/" + want + " " + Bar(have, want) + (once ? " (한 번)" : "");
+
+        /// <summary>!계속채워 목록(사용자 10-31): 물건마다 한 줄, 세트는 세트 안 가장 적은 물건 수로. 지우는 일은 없다(Due 몫).</summary>
+        public List<string> Status(Func<string, int> stock, SetMenuBook sets, Func<string, string> label)
+        {
+            var lines = new List<string>();
+            foreach (var kv in _items) lines.Add(Line(label(kv.Key), stock(kv.Key), kv.Value, IsOnce(kv.Key)));
+            foreach (var kv in _sets)
+            {
+                var s = sets != null ? sets.Get(kv.Key) : null;
+                int have = 0;
+                if (s != null && s.Items.Count > 0)
+                {
+                    have = int.MaxValue;
+                    foreach (var it in s.Items) have = Math.Min(have, stock(it));
+                }
+                lines.Add(Line("세트 " + kv.Key + "번", have, kv.Value, IsOnceSet(kv.Key)));
+            }
+            return lines;
+        }
+
         public string Save()
         {
             var parts = new List<string>();

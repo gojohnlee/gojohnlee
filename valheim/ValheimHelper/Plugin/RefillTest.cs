@@ -47,6 +47,11 @@ namespace ValheimHelper
             GatherTest.Say($"!계속채워 나무 20", null);
             yield return new WaitForSeconds(1f);
             checks.Add("기준치 등록됨", Brain.Refill.Count == 1);
+            GatherTest.Say("!계속채워 목록", null);
+            yield return new WaitForSeconds(1f);
+            var status = Brain.Refill.Status(it => Departures.RefillStock(it, w.Ragnar.Home), Brain.Sets, GatherJob.ItemLabel);
+            checks.Add($"!계속채워 목록: 기준치 그대로·현황 줄 ({string.Join(", ", status.ToArray())})",
+                Brain.Refill.Count == 1 && status.Count == 1 && status[0].Contains("0/20 □□□□□□□□□□"));
 
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);

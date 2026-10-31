@@ -83,7 +83,7 @@ namespace ValheimHelper.Core.Chat
         /// <summary>명령어·부속어(앞에서부터 가장 긴 것을 떼어 냄). 물건 이름은 남은 덩어리 하나로 둔다(ResolveItem이 붙여 쓴 이름도 찾음).</summary>
         static readonly string[] Keywords =
         {
-            "계속채워", "계속", "채워", "개인", "끔", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "평탄화",
+            "계속채워", "계속", "채워", "개인", "끔", "목록", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "평탄화",
             "상태", "스킬", "기억", "지식", "멈춰", "길", "같이가자", "그냥가", "전부취소", "취소전부",
         };
 
@@ -231,8 +231,9 @@ namespace ValheimHelper.Core.Chat
         /// <summary>상자 기능 ③(사용자 10-28): once = "!채워"(한 번), 아니면 "!계속채워"(유지). "개인"을 붙이면 내 개인 상자.</summary>
         ChatCommand ParseKeep(string[] t, bool once)
         {
-            if (t.Length < 2) return null;
+            if (t.Length < 2) return once ? null : Kind(CommandKind.KeepList);
             string second = Lower(t[1]);
+            if (t.Length == 2 && (second == "목록" || second == "list")) return Kind(CommandKind.KeepList);
             if (second == "개인" || second == "private" || second == "personal") return ParsePrep(t, 2, once ? CommandKind.Prep : CommandKind.PrepKeep);
             if (second == "끔" || second == "off")
             {

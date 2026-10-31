@@ -113,6 +113,11 @@ public class ChatParserTests
     [InlineData("!길", CommandKind.Path)]
     [InlineData("!세트", CommandKind.SetList)]
     [InlineData("!채워 끔", CommandKind.KeepOff)]
+    [InlineData("!계속채워", CommandKind.KeepList)]
+    [InlineData("!계속채워 목록", CommandKind.KeepList)]
+    [InlineData("!계속 채워", CommandKind.KeepList)]
+    [InlineData("!계속채워목록", CommandKind.KeepList)]
+    [InlineData("!채워 목록", CommandKind.KeepList)]
     [InlineData("!탐험", CommandKind.Explore)]
     public void Simple(string line, CommandKind kind) => Assert.Equal(kind, Cmd(line).Kind);
 

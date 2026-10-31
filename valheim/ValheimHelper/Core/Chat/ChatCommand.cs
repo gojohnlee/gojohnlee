@@ -36,6 +36,8 @@ namespace ValheimHelper.Core.Chat
         /// <summary>!채워 세트 &lt;번호&gt; &lt;수량&gt;(한 번) · !계속채워 세트 …(유지).</summary>
         KeepSet,
         KeepOff,
+        /// <summary>!계속채워 [목록](!채워 목록도) — 거점·내 개인 상자 채우기 현황.</summary>
+        KeepList,
         /// <summary>!채워 개인 &lt;물건&gt; &lt;수량&gt;(별칭 !준비) — 내 개인 상자에 한 번 채움(상자 기능 ③).</summary>
         Prep,
         /// <summary>!계속채워 개인 &lt;물건&gt; &lt;수량&gt; — 내 개인 상자에 그 수 유지.</summary>

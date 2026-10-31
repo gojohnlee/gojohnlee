@@ -52,6 +52,16 @@ namespace ValheimHelper
             return list;
         }
 
+        /// <summary>!계속채워 목록의 개인 몫: 그 사람 것만 "물건 수/목표 막대" 줄로.</summary>
+        internal static List<string> StatusLines(long owner, Vector3 home)
+        {
+            var lines = new List<string>();
+            if (owner == 0) return lines;
+            foreach (var e in Brain.Personal.Entries)
+                if (e.Owner == owner) lines.Add(RefillBook.Line(GatherJob.ItemLabel(e.Item), Stock(owner, e.Item, home), e.Amount, e.Once));
+            return lines;
+        }
+
         static int Stock(long owner, string item, Vector3 home)
         {
             int n = 0;
