@@ -42,8 +42,11 @@ namespace ValheimHelper
         /// 설비 접근 막힘(E035, 외부 검토 + 사용자 승인 10-26): 2.5m 밖에서 걷기만 되풀이(동료·상자·설비에 막힘)하면 SideSeconds마다 다가갈 자리(0.5m)에
         /// 못 다가간 것으로 보고 옆 둘·뒤 접근점(StuckHop.Side, 설비에서 2.2m)으로 차례로 돌아 본다. 다 안 되면 설비 곁 빈 자리(2.2~2.4m, 같은 바닥 높이)로
         /// 한 번 옮기고 "rescue"(근처 막힘 건너뛰기와 같은 규칙, 사용자 결정 10-23). 그래도 안 되면 곧장 걷기로 시간 한계(Limit)까지.
+        /// 사용자 10-31: 거의 제자리(1.5m 안)면 옆 비키기 2.5초·곁으로 옮기기 5초, 굽은 길을 돌아 걷는 중은 옆 비키기 5초.
         /// </summary>
-        const float SideSeconds = 5f;
+        const float SideSeconds = 5f, StillSideSeconds = 2.5f, StillHopSeconds = 5f;
+        Vector3 m_stillFrom;
+        float m_still = -1f; // 거의 제자리로 버틴 시간(옆 접근점을 바꿔도 이어 셈), -1 = 재기 전
         Vector3? m_sideGoal;
         float m_goalBest = float.MaxValue, m_noProgress;
         int m_side = -1;
@@ -58,8 +61,11 @@ namespace ValheimHelper
             float g = Utils.DistanceXZ(goal, me);
             if (g < m_goalBest - 0.5f) { m_goalBest = g; m_noProgress = 0f; }
             else m_noProgress += dt;
+            if (m_still < 0f || Utils.DistanceXZ(m_stillFrom, me) > 1.5f) { m_stillFrom = me; m_still = 0f; }
+            else m_still += dt;
             if (m_sideGoal.HasValue && g < 0.4f) { m_sideGoal = null; ResetProgress(); } // 옆 접근점에 닿음 → 거기서 곧장
-            else if (m_noProgress > SideSeconds)
+            else if (!m_hopped && m_still > StillHopSeconds) Hop(at, me, $"{m_still:0}초 거의 제자리, 설비까지 {d:0.0}m / {m_npc.Ai.BlockerAhead(goal)}");
+            else if (m_noProgress > SideSeconds || m_still > StillSideSeconds && m_noProgress > StillSideSeconds)
             {
                 string diag = $"{m_noProgress:0}초 못 다가감, 설비까지 {d:0.0}m / {m_npc.Ai.BlockerAhead(goal)}";
                 m_sideGoal = null;
@@ -71,17 +77,22 @@ namespace ValheimHelper
                     m_sideGoal = new Vector3((float)p.X, at.y, (float)p.Z);
                     Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → 다른 쪽({StuckHop.SideAngles[m_side]:0}°)으로");
                 }
-                else if (!m_hopped)
-                {
-                    m_hopped = true;
-                    bool ok = GatherJob.Land(m_npc, at, out string why, true, StuckHop.Candidates(me.x, me.z, at.x, at.z, StuckHop.MachineRadii), at.y);
-                    Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → {(ok ? "곁으로 옮김" : "못 옮김")} {why}");
-                    if (ok) { Hops++; WorkerAI.StuckTeleports++; m_npc.Say("rescue"); }
-                }
+                else if (!m_hopped) Hop(at, me, diag);
                 ResetProgress();
             }
             m_npc.Ai.MoveToPoint(dt, m_sideGoal ?? at, m_sideGoal.HasValue ? 0.3f : 1.8f, d > 10f);
             return CraftResult.Working;
+        }
+
+        void Hop(Vector3 at, Vector3 me, string diag)
+        {
+            m_hopped = true;
+            m_sideGoal = null;
+            bool ok = GatherJob.Land(m_npc, at, out string why, true, StuckHop.Candidates(me.x, me.z, at.x, at.z, StuckHop.MachineRadii), at.y);
+            Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → {(ok ? "곁으로 옮김" : "못 옮김")} {why}");
+            if (ok) { Hops++; WorkerAI.StuckTeleports++; m_npc.Say("rescue"); }
+            ResetProgress();
+            m_still = -1f;
         }
 
         void ResetProgress() { m_goalBest = float.MaxValue; m_noProgress = 0f; }

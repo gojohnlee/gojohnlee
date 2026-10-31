@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 설비 접근 막힘 복구 시험(E035, 10-26): "!구리주괴 1" 뒤 제련소로 가는 라그나르 발을 묶어(vh_hoptest처럼 걷기·점프 힘 0) 못 다가가게 한다.
-    /// 5초마다 옆·옆·뒤로 돌아 본 뒤(MachineStep.SideTries 3) 제련소 곁 2.5m 안으로 한 번 옮겨(Hops 1, 플레이어 곁이라 "rescue") 넣기를 마치는지.
+    /// 거의 제자리 2.5초에 옆으로 돌아 본 뒤(MachineStep.SideTries 1 이상) 5초에 제련소 곁 2.5m 안으로 한 번 옮겨(Hops 1, 플레이어 곁이라 "rescue") 넣기를 마치는지.
     /// 발을 풀면 끝까지(상자 주괴 1, 광석 0).
     /// </summary>
     static class MachineStuckTest
@@ -67,8 +67,8 @@ namespace ValheimHelper
             hold(w.Ragnar);
             Plugin.Instance.StartCoroutine(TestKit.ClearWhileHeld(w, held, running));
             yield return TestKit.WaitFor(() => MachineStep.Hops > hops0, 45f);
-            checks.Add($"옆·옆·뒤로 돌아 본 뒤 곁으로 옮김 (돌아 봄 {MachineStep.SideTries - sides0}, 옮김 {MachineStep.Hops - hops0}, {TestKit.Waited:0}초)",
-                TestKit.Ok && MachineStep.SideTries - sides0 == 3 && MachineStep.Hops - hops0 == 1);
+            checks.Add($"옆으로 돌아 본 뒤 5초에 곁으로 옮김 (돌아 봄 {MachineStep.SideTries - sides0}, 옮김 {MachineStep.Hops - hops0}, {TestKit.Waited:0}초)",
+                TestKit.Ok && MachineStep.SideTries - sides0 >= 1 && MachineStep.Hops - hops0 == 1 && TestKit.Waited < 15f);
             checks.Add($"옮긴 자리는 설비 앞 일 거리 안 ({Dist():0.0}m ≤ 2.5)", Dist() <= 2.5f);
             yield return TestKit.WaitFor(() => z.GetInt(ZDOVars.s_queued) > 0 || GatherTest.CountBase(w.Home, "Copper") > 0, 10f);
             checks.Add($"묶인 채로 넣기 마침 (제련소 안 {z.GetInt(ZDOVars.s_queued)}, {TestKit.Waited:0}초)", TestKit.Ok);
