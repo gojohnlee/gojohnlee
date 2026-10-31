@@ -287,6 +287,43 @@ namespace ValheimHelper
             checks.Add($"나가서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
 
+            // 4-2) 문 두 개(④): 상자 쪽 벽 가운데를 뒷문으로. 일꾼을 집 뒤에 두면 앞문으로 돌지 않고 뒷문으로 들어가 미드를 챙기고 뒷문을 닫는지
+            yield return new WaitForSeconds(1f);
+            foreach (var g in made)
+                if (g != null && Utils.GetPrefabName(g) == "woodwall" && Utils.DistanceXZ(g.transform.position, c + r * Half) < 0.5f) { ZNetScene.instance.Destroy(g); break; }
+            Vector3 backAt = c + r * Half; backAt.y = floorY;
+            var back = Put(made, "wood_door", backAt, Quaternion.LookRotation(r), floorY - 0.05f);
+            ZDO bz = back != null ? back.GetComponent<ZNetView>().GetZDO() : null;
+            if (bz == null) { checks.Add("뒷문 세움", false); yield break; }
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
+            foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
+            TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
+            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            w.Ragnar.TeleportTo(GatherTest.Ground(c + r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(7f); // 새 문·닫은 문 navmesh
+            checks.Add($"문 두 개 단계: 두 문 닫힘·일꾼 집 뒤 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 뒷문까지 {Utils.DistanceXZ(w.Ragnar.transform.position, backAt):0.0}m)",
+                dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
+            tele0 = Teleports(); entered0 = DoorWay.Entered;
+            bool frontOpened = false, backOpened = false;
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
+            yield return TestKit.WaitFor(() =>
+            {
+                if (dz.GetInt(ZDOVars.s_state) != 0) frontOpened = true;
+                if (bz.GetInt(ZDOVars.s_state) != 0) backOpened = true;
+                return w.Ragnar.CountItem("MeadHealthMinor") >= 3;
+            }, 90f);
+            took = TestKit.Waited;
+            tele = Teleports() - tele0;
+            checks.Add($"뒷문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 뒷문 열림 {backOpened}·앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele})",
+                w.Ragnar.CountItem("MeadHealthMinor") >= 3 && backOpened && !frontOpened && tele == 0);
+            closed0 = DoorWay.Closed;
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0, 40f);
+            checks.Add($"나와서 두 문 다 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
+                dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            GatherTest.Say("!멈춰", null);
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
+
             // 5) 지붕 없는 작업대(③-1): 지붕(wood_roof)을 걷으면 바닐라처럼 못 쓰니 일꾼도 안 만들고 재료가 그대로
             yield return new WaitForSeconds(2f);
             int removed = 0;

@@ -48,7 +48,7 @@ namespace ValheimHelper
             if (m_phase == Phase.None)
             {
                 if (!Blocked(npc, target)) return false;
-                m_door = Nearest(target.transform.position, DoorSearch);
+                m_door = Nearest(target.transform.position, DoorSearch, me);
                 if (m_door == null) { GiveUp(npc, target.name, "곁에 문 없음"); return false; }
                 Vector3 n = m_door.transform.forward; n.y = 0f; n.Normalize();
                 Vector3 mid = Middle(m_door);
@@ -85,7 +85,7 @@ namespace ValheimHelper
                 if (Utils.DistanceXZ(me, point) < 3f || !Roofed(me) || Roofed(point)) return false;
                 Vector3 from = me + Vector3.up * 1.2f, to = point + Vector3.up * 1.2f;
                 if (!Physics.Raycast(from, to - from, Vector3.Distance(from, to), Mask)) return false;
-                Door d = Nearest(me, ExitSearch);
+                Door d = Nearest(me, ExitSearch, point);
                 ZNetView dv = d != null ? d.GetComponent<ZNetView>() : null;
                 if (dv == null || !dv.IsValid()) return false; // 열린 문도 곧장 지나감 — 연 뒤 navmesh가 늦게 바뀌어 바닐라 길은 벽에 박힘(회차 315 시험)
                 m_door = d;
@@ -133,7 +133,10 @@ namespace ValheimHelper
             ZNetView v = m_door != null ? m_door.GetComponent<ZNetView>() : null;
             if (v == null || !v.IsValid()) { GiveUp(npc, what, "문 사라짐"); return 0; }
             if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); return 1; } // 열리는 중(주인 RPC 기다림)
-            Vector3 go = m_in - me; go.y = 0f; // 높이 성분이 있으면 smooth 이동의 moveDir.y로 새어 거의 안 걸음(회차 311)
+            // 문틀 가운데를 지나기 전엔 가운데를 겨눔(회차 317: 문 앞 0.56m 옆에서 곧장 가다 열린 문짝에 8초 박힘)
+            Vector3 mid = Middle(m_door), dirIn = m_in - mid; dirIn.y = 0f; dirIn.Normalize();
+            Vector3 aim = Vector3.Dot(me - mid, dirIn) < -0.2f ? mid : m_in;
+            Vector3 go = aim - me; go.y = 0f; // 높이 성분이 있으면 smooth 이동의 moveDir.y로 새어 거의 안 걸음(회차 311)
             if (Utils.DistanceXZ(me, m_in) > 0.5f)
             {
                 npc.Ai.MoveTowards(go.normalized, false);
@@ -216,14 +219,15 @@ namespace ValheimHelper
             return m;
         }
 
-        static Door Nearest(Vector3 at, float range)
+        /// <summary>at에서 range 안 문 중 at·other까지 거리 합이 가장 짧은 것(문 둘이면 일꾼 쪽 문 — 회차 317, ④).</summary>
+        static Door Nearest(Vector3 at, float range, Vector3 other)
         {
             Door best = null; float bd = float.MaxValue;
             foreach (var c in Physics.OverlapSphere(at, range, Mask))
             {
                 Door d = c.GetComponentInParent<Door>();
                 if (d == null || d.m_keyItem != null) continue;
-                float dd = Utils.DistanceXZ(at, d.transform.position);
+                float dd = Utils.DistanceXZ(at, d.transform.position) + Utils.DistanceXZ(other, d.transform.position);
                 if (dd < bd) { bd = dd; best = d; }
             }
             return best;
