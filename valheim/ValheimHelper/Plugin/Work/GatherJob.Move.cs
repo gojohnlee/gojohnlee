@@ -289,9 +289,9 @@ namespace ValheimHelper
             if (m_ai.OnInteriorPath) { m_progressTimer = 0f; return false; } // 지하묘지 안 길을 따라 도는 중(목표에서 잠시 멀어질 수 있음)
             m_progressTimer += dt;
             if (m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp) return true;
-            if (m_progressTimer <= MoveStuckLimit) return false;
-            // 근처에서 막힘 건너뛰기를 할 걷기는 30초까지 더 해 본다(사용자 결정 10-23 "근처 막힘 건너뛰기")
-            return m_progressTimer > (float)StuckHop.NearStuckSeconds || HopBlocked() != NearWhy;
+            if (m_progressTimer <= (float)StuckHop.NearStuckSeconds) return false;
+            // 근처 막힘 건너뛰기를 할 걷기는 5초에 막힘으로 본다(사용자 10-31), 그 밖은 MoveStuckLimit까지 해 본다
+            return m_progressTimer > MoveStuckLimit || HopBlocked() == NearWhy;
         }
     }
 }
