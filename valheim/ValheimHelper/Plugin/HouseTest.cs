@@ -366,6 +366,97 @@ namespace ValheimHelper
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
 
+            // 4-4) 2층 상자(④-3): 집 앞(f쪽) 밖에 기둥 4개 위 바닥(2×2m)과 계단, 그 위 상자에만 미드. 일꾼을 계단 아래 옆에 두면 계단으로 올라가 챙기는지
+            yield return new WaitForSeconds(1f);
+            Vector3 lp = c + f * (Half + 3f);
+            foreach (var col in Physics.OverlapSphere(lp + f * 2f, 5f))
+            {
+                ZNetView nv = col.GetComponentInParent<ZNetView>();
+                if (nv == null || !nv.IsValid() || nv.GetComponent<Piece>() != null || nv.GetComponent<Character>() != null) continue;
+                if (nv.GetComponent<TreeBase>() != null || nv.GetComponent<Destructible>() != null || nv.GetComponent<Pickable>() != null) ZNetScene.instance.Destroy(nv.gameObject);
+            }
+            float lg = ZoneSystem.instance.GetGroundHeight(lp), floorTop = lg + 2f; // 기둥 wood_pole2 2m 위
+            // 계단 한 칸(wood_stair)은 2m 가며 1m 오름(회차 319 잼) → 바닥 가장자리부터 f쪽으로 땅에 닿을 때까지 잇는다.
+            // 모양은 재 봄: f 축을 따라 위에서 아래로 쏴 높은 끝·낮은 끝 → 높은 끝이 바닥 쪽
+            bool Profile(GameObject st, out Vector3 hi, out Vector3 lo)
+            {
+                hi = lo = Vector3.zero; bool any = false;
+                Physics.SyncTransforms();
+                float sy = Box(st).max.y + 0.5f;
+                for (float s = -2.5f; s <= 2.5f; s += 0.125f)
+                {
+                    Vector3 o = st.transform.position + f * s; o.y = sy;
+                    foreach (var h in Physics.RaycastAll(o, Vector3.down, 6f, LayerMask.GetMask("piece")))
+                    {
+                        if (!h.collider.transform.IsChildOf(st.transform)) continue;
+                        if (!any || h.point.y > hi.y) hi = h.point;
+                        if (!any || h.point.y < lo.y) lo = h.point;
+                        any = true;
+                    }
+                }
+                return any;
+            }
+            var stairs = new List<GameObject>();
+            GameObject stair = null;
+            Quaternion srot = Quaternion.LookRotation(-f);
+            Vector3 edge = lp + f * 1f; edge.y = floorTop; // 바닥 판 가장자리, 다음 칸 높은 끝이 갈 곳
+            Vector3 shi = default, slo = default;
+            for (int k = 0; k < 4; k++)
+            {
+                var st = Put(made, "wood_stair", edge + f * 1f, srot, edge.y - 1f);
+                if (st == null || !Profile(st, out shi, out slo)) { stair = null; break; }
+                if (Vector3.Dot(shi - slo, f) > 0f) { srot = Quaternion.LookRotation(f); st.transform.rotation = srot; Profile(st, out shi, out slo); }
+                st.transform.position += edge - shi; // 높은 끝을 edge에
+                Profile(st, out shi, out slo);
+                stairs.Add(st); stair = st;
+                Plugin.Log.LogInfo($"집 시험: 계단 {k + 1}칸 높은 끝 {shi:F1}·낮은 끝 {slo:F1}(오름 {shi.y - slo.y:0.00}m·길이 {Utils.DistanceXZ(shi, slo):0.00}m), 밑 {Box(st).min.y - ZoneSystem.instance.GetGroundHeight(slo):0.00}m 땅 위");
+                if (slo.y <= ZoneSystem.instance.GetGroundHeight(slo) + 0.35f) break;
+                edge = slo + f * 0.15f; edge.y = slo.y - 0.2f; // 맨 아래 디딤판 다음 칸(디딤 높이 ≈ 0.2m)
+            }
+            var lfloor = Put(made, "wood_floor", lp, Quaternion.LookRotation(f), floorTop - 0.1f);
+            Bounds lfb = lfloor != null ? Box(lfloor) : default;
+            if (lfloor != null) { lfloor.transform.position += Vector3.up * (floorTop - lfb.max.y); Physics.SyncTransforms(); lfb = Box(lfloor); }
+            int poles = 0;
+            foreach (float a in new[] { -0.9f, 0.9f })
+                foreach (float b in new[] { -0.9f, 0.9f })
+                {
+                    var pole = Put(made, "wood_pole2", lp + r * a + f * b, Quaternion.LookRotation(f), lfb.min.y - 2f);
+                    if (pole != null) poles++;
+                }
+            var loft = Put(made, "piece_chest_wood", lp, Quaternion.LookRotation(-f), lfb.max.y);
+            yield return new WaitForSeconds(2f);
+            Container lc = loft != null ? loft.GetComponent<Container>() : null;
+            bool loftAlive = lfloor != null && stair != null && lc != null;
+            if (lc != null) TestKit.PutInChest(lc, "MeadHealthMinor", 3);
+            w.Ragnar.TeleportTo(GatherTest.Ground(lp + f * 3f + r * 3f) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(7f); // 새 바닥·계단 navmesh
+            int had = w.Ragnar.CountItem("MeadHealthMinor"); // 회차 319 첫 실행: 기다리는 7초 사이 이미 3개 들고 있었음 → 말하기 바로 앞에서 비움
+            foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
+            float chestUp = lc != null ? lc.transform.position.y - lg : 0f;
+            checks.Add($"2층 단계: 기둥 {poles}/4·바닥·계단·상자 (계단 {stairs.Count}칸, 남음 {loftAlive}, 들고 있던 미드 {had}, 상자 높이 {chestUp:0.0}m, 상자 미드 {Count(lc, "MeadHealthMinor")})",
+                poles == 4 && loftAlive && chestUp > 1.5f && Count(lc, "MeadHealthMinor") == 3);
+            if (lfloor != null && stair != null && loft != null && lc != null)
+            {
+                tele0 = Teleports();
+                float topY = float.MinValue;
+                GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
+                yield return TestKit.WaitFor(() =>
+                {
+                    Vector3 rp = w.Ragnar.transform.position; // 땅 위 높이(비탈) — 계단 중간에서 바닥 너머로 손을 뻗어 꺼내도 됨(바닥에 안 가림, 회차 319)
+                    topY = Mathf.Max(topY, rp.y - ZoneSystem.instance.GetGroundHeight(rp));
+                    return w.Ragnar.CountItem("MeadHealthMinor") >= 3;
+                }, 90f);
+                took = TestKit.Waited;
+                tele = Teleports() - tele0;
+                checks.Add($"계단 올라 2층 상자에서 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 땅 위 최고 {topY:0.0}m·바닥 {lfb.max.y - lg:0.0}m, 순간이동 {tele}, {w.Ragnar.Ai.Job?.StepName})",
+                    w.Ragnar.CountItem("MeadHealthMinor") >= 3 && topY > 0.8f && tele == 0);
+                GatherTest.Say("!멈춰", null);
+            }
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
+            foreach (var g in stairs) if (g != null) ZNetScene.instance.Destroy(g);
+            foreach (var g in new[] { loft, lfloor }) if (g != null) ZNetScene.instance.Destroy(g);
+
             // 5) 지붕 없는 작업대(③-1): 지붕(wood_roof)을 걷으면 바닐라처럼 못 쓰니 일꾼도 안 만들고 재료가 그대로
             yield return new WaitForSeconds(2f);
             int removed = 0;
