@@ -29,6 +29,16 @@ namespace ValheimHelper
         /// <summary>장비 수리(Repair): 지금 가는 설비, 이미 들른 설비.</summary>
         CraftingStation m_station;
         readonly HashSet<CraftingStation> m_repairDone = new HashSet<CraftingStation>();
+        /// <summary>집 안 상자·설비: 벽이 가리면 문으로(회차 314, Unload와 같음).</summary>
+        DoorWay m_way; Component m_wayFor;
+
+        bool Through(float dt, Component c)
+        {
+            if (m_wayFor != c) { m_way = new DoorWay(); m_wayFor = c; }
+            return m_way.Steer(dt, m_npc, c);
+        }
+
+        bool Steering(Component c) => m_wayFor == c && m_way.Busy;
 
         public Prep(WorkerNpc npc)
         {
@@ -47,11 +57,12 @@ namespace ValheimHelper
             if (m_station != null) return UpdateRepair(dt);
             if (m_time > WalkLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 준비: 상자에 못 닿아 건너뜀"); m_chest = null; return true; }
             Vector3 at = m_chest.transform.position;
-            if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f)
+            if (Utils.DistanceXZ(at, m_npc.transform.position) > 2.5f && !Steering(m_chest))
             {
                 m_ai.MoveToPoint(dt, at, 1.8f, Utils.DistanceXZ(at, m_npc.transform.position) > 10f);
                 return true;
             }
+            if (Through(dt, m_chest)) return true;
             m_ai.StopMoving();
             m_ai.Face(at);
             bool forFood = m_forFood, takeGear = m_takeGear, takeMeads = m_takeMeads;
@@ -77,11 +88,12 @@ namespace ValheimHelper
             Vector3 at = cs.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             if (m_time > WalkLimit) Plugin.Log.LogInfo($"{m_npc.NpcName} 수리: 설비에 못 닿아 건너뜀");
-            else if (d > Mathf.Min(RepairReach, cs.m_rangeBuild))
+            else if (d > Mathf.Min(RepairReach, cs.m_rangeBuild) && !Steering(cs))
             {
                 m_ai.MoveToPoint(dt, at, RepairReach - 1f, d > 10f);
                 return true;
             }
+            else if (Through(dt, cs)) return true;
             else
             {
                 m_ai.StopMoving();

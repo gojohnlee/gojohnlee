@@ -23,7 +23,10 @@ namespace ValheimHelper
         static readonly System.Collections.Generic.List<OpenedDoor> s_opened = new System.Collections.Generic.List<OpenedDoor>();
         static float s_next;
 
-        static int Mask => s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("piece"));
+        /// <summary>문 쪽으로 가는 중 — 부른 쪽은 "대상까지 멀면 걷기"를 건너뛴다(문으로 돌다 대상 2.5m 밖으로 나가면 다시 대상 쪽으로 당겨 오락가락, 회차 314).</summary>
+        public bool Busy => m_phase == Phase.ToDoor || m_phase == Phase.Through;
+
+        static int Mask =>s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("piece"));
 
         /// <summary>사이를 건축물이 가리나(대상 자신·대상의 자식 충돌체는 뺌).</summary>
         public static bool Blocked(Character me, Component target)

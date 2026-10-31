@@ -87,6 +87,8 @@ namespace ValheimHelper
             return true;
         }
 
+        DoorWay m_way; Container m_wayFor;
+
         /// <summary>상자 앞까지 걷는다. 닿았으면 true, 못 닿으면(WalkLimit초) 그 물건 건너뜀.</summary>
         bool Reach(float dt, Container c, out bool failed)
         {
@@ -94,7 +96,12 @@ namespace ValheimHelper
             if (c == null) { failed = true; return false; }
             Vector3 at = c.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
-            if (d <= 2.5f) { m_ai.StopMoving(); m_ai.Face(at); return true; }
+            if (d <= 2.5f || m_wayFor == c && m_way.Busy)
+            {
+                if (m_wayFor != c) { m_way = new DoorWay(); m_wayFor = c; }
+                if (m_way.Steer(dt, m_npc, c)) return false; // 집 안 상자: 벽이 가리면 문으로(회차 314)
+                m_ai.StopMoving(); m_ai.Face(at); return true;
+            }
             m_ai.MoveToPoint(dt, at, 1.8f, false);
             if (m_stepTime > WalkLimit) failed = true;
             return false;

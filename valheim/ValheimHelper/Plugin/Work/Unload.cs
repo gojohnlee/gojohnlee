@@ -49,7 +49,7 @@ namespace ValheimHelper
             }
             var at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
-            if (!Instant && d > 2.5f) { m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); return true; } // 거점 125m: 멀면 뜀(Prep과 같음)
+            if (!Instant && d > 2.5f && !(m_wayFor == m_chest && m_way.Busy)) { m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); return true; } // 거점 125m: 멀면 뜀(Prep과 같음)
             if (m_wayFor != m_chest) { m_way = new DoorWay(); m_wayFor = m_chest; }
             if (!Instant && m_way.Steer(dt, m_npc, m_chest)) return true; // 집 안 상자: 벽이 가리면 문으로(회차 311)
             Container chest = m_chest;

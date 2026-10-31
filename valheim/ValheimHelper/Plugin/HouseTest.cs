@@ -242,6 +242,32 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
             checks.Add($"제련 끝나고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, 일꾼 안 {In(w.Ragnar.transform.position)}, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
+
+            // 3) 집 안 상자에서 꺼내기(③-4, Prep): 체력 미드는 안 상자에만, 일꾼 짐엔 없음. 일 시키면 나가기 전 준비로 문 지나 들어가 챙기는지
+            GatherTest.Say("!멈춰", null);
+            yield return new WaitForSeconds(1f);
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
+            foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
+            TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
+            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            yield return new WaitForSeconds(6f);
+            w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(1f);
+            checks.Add($"꺼내기 단계: 문 닫힘·일꾼 밖·미드 없음 (s_state {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 미드 {w.Ragnar.CountItem("MeadHealthMinor")})",
+                dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position) && w.Ragnar.CountItem("MeadHealthMinor") == 0);
+            tele0 = Teleports(); entered0 = DoorWay.Entered;
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
+            yield return TestKit.WaitFor(() => w.Ragnar.CountItem("MeadHealthMinor") >= 3, 90f);
+            took = TestKit.Waited;
+            tele = Teleports() - tele0;
+            checks.Add($"안 상자에서 체력 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, 상자 {Count(w.Chest, "MeadHealthMinor")}, {took:0}초, {w.Ragnar.Ai.Job?.StepName})", w.Ragnar.CountItem("MeadHealthMinor") >= 3);
+            checks.Add($"꺼내러 문 지나 들어감 ({DoorWay.Entered - entered0}번, 순간이동 {tele})", DoorWay.Entered - entered0 > 0 && tele == 0);
+            closed0 = DoorWay.Closed;
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            checks.Add($"꺼내고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            GatherTest.Say("!멈춰", null);
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
         }
 
         static int Teleports() => WorkerAI.StuckTeleports + WorkerAI.TrapRescues + WorkerAI.PitEdgeRescues
