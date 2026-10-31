@@ -1,8 +1,8 @@
 갱신: 2026-10-31 19:56  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
-회차: 310, 계정: 2번, 한도: 1번 10-31 20:42까지
+지금: 회차 311 진행 중
+회차: 311, 계정: 2번, 한도: 1번 10-31 20:42까지
 할 일: (없음)
 마지막 시험: 10-31 19:54 요약: 0/1 PASS | FAIL vh_housetest: 작업대가 지붕 아래라 쓸 수 있음 (바닐라 CheckUsable 안 됨, 지붕 False·가림 0.88 ≥ 0.7)
-Claude가 한 일: LOOP: DONE 집 시험 vh_housetest 만듦(FAIL 9/11: 일꾼이 집에 안 들어가고 벽 너머로 넣고 제작), 다음은 문 열고 들어가기
+Claude가 한 일: (진행 중)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
