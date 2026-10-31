@@ -29,14 +29,18 @@ namespace ValheimHelper
             finally
             {
                 Unload.TestNoReach = false;
+                Prep.TestNoReach = false;
                 if (held != null) HopTest.Speeds(held, saved, false);
                 foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
-                if (w.Ragnar != null) w.Ragnar.GetInventory().RemoveItem("$item_wood", 999);
+                if (w.Ragnar != null) { w.Ragnar.GetInventory().RemoveItem("$item_wood", 999); DropMeads(w.Ragnar.GetInventory()); }
+                if (w.Chest != null) Chests.TryEdit(w.Chest, DropMeads);
                 TestKit.ClearBaseStock(w, "Wood");
                 TestKit.Restore(w);
             }
             TestKit.End(w, checks);
         }
+
+        static void DropMeads(Inventory inv) { foreach (var it in new List<ItemDrop.ItemData>(inv.GetAllItems())) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") inv.RemoveItem(it); }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made, float[] saved, System.Action<Character> hold)
         {
@@ -73,6 +77,25 @@ namespace ValheimHelper
                 took <= 2f && Unload.Reached - reached0 >= 1);
             checks.Add($"나무 10 모두 상자로 (들고 {BaseTest.Carried(w.Ragnar, "Wood")}, 상자 {GatherTest.CountBase(w.Home, "Wood")})",
                 BaseTest.Carried(w.Ragnar, "Wood") == 0 && GatherTest.CountBase(w.Home, "Wood") == 10);
+
+            // 꺼내기(Prep)도 같은 자리에서: 상자에 체력 미드 5, 일꾼은 0
+            GameObject mead = ObjectDB.instance.GetItemPrefab("MeadHealthMinor");
+            if (mead == null) { checks.Add("미드 프리팹 있음", false); yield break; }
+            DropMeads(w.Ragnar.GetInventory());
+            Chests.TryEdit(w.Chest, inv => inv.AddItem(mead, 5));
+            int Meads() => BaseTest.Carried(w.Ragnar, "MeadHealthMinor");
+            Prep.TestNoReach = true;
+            var pBefore = new Prep(w.Ragnar);
+            for (float t = 0f; t < 4f; t += Time.deltaTime) { pBefore.Update(Time.deltaTime); yield return null; }
+            checks.Add($"꺼내기 고치기 전: 4초 동안 못 챙김 (들고 {Meads()}, 상자까지 {Dist():0.0}m)", Meads() == 0);
+
+            Prep.TestNoReach = false;
+            int pReached0 = Prep.Reached;
+            var pAfter = new Prep(w.Ragnar);
+            float pTook = 0f;
+            while (pTook < 10f && Meads() == 0 && pAfter.Update(Time.deltaTime)) { pTook += Time.deltaTime; yield return null; }
+            checks.Add($"꺼내기 고친 뒤: 그 자리에서 미드 챙김 ({pTook:0.0}초 ≤ 2, 들고 {Meads()}, 손 거리 꺼내기 {Prep.Reached - pReached0})",
+                pTook <= 2f && Meads() > 0 && Prep.Reached - pReached0 >= 1);
         }
     }
 }
