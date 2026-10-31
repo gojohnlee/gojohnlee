@@ -12,7 +12,7 @@ namespace ValheimHelper
     public sealed class GraveJob : IWorkerJob
     {
         public const int MaxTries = 2;
-        const float GoStuckLimit = 15f, TotalLimit = 20f * 60f; // 막힘 30 → 15초(사용자 결정 2026-10-26)
+        const float GoStuckLimit = 15f, StillLimit = 5f, TotalLimit = 20f * 60f; // 막힘 30 → 15초(사용자 결정 2026-10-26), 거의 제자리면 5초(사용자 10-31)
 
         enum Step { Prep, Go, Loot, Home, Store }
 
@@ -22,6 +22,7 @@ namespace ValheimHelper
         Step m_step = Step.Prep;
         Prep m_prep;
         float m_time, m_stepTime, m_bestDist = float.MaxValue, m_progress;
+        Vector3 m_stuckFrom; // 진척 없음을 재기 시작한 자리
         Unload m_unload;
 
         public string StepName => "Grave" + m_step;
@@ -89,8 +90,10 @@ namespace ValheimHelper
             float d = Utils.DistanceXZ(pos, m_npc.transform.position);
             if (m_ai.MoveToPoint(dt, pos, 1.5f, d > 10f) || d < 2f) { Go(Step.Loot); return true; }
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progress = 0f; }
-            else m_progress += dt;
-            if (m_progress > GoStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp) return Failed();
+            else { if (m_progress == 0f) m_stuckFrom = m_npc.transform.position; m_progress += dt; }
+            // 진척 없이 5초 거의 제자리면 막힘(굽은 길을 돌아 걷는 중은 15초까지 — 상자 가기와 같음, 회차 325)
+            bool still = m_progress > StillLimit && Utils.DistanceXZ(m_stuckFrom, m_npc.transform.position) < 1.5f;
+            if (still || m_progress > GoStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp) return Failed();
             return true;
         }
 
