@@ -242,6 +242,25 @@ namespace ValheimHelper
             return $"앞 발 {Hit(0.4f)} / 가슴 {Hit(1.4f)}, 땅 {pos.y - ZoneSystem.instance.GetGroundHeight(pos):0.0}m, 앞 1m 땅 {ZoneSystem.instance.GetGroundHeight(pos + dir) - pos.y:0.0}m, 둘레 {Around()}";
         }
 
+        /// <summary>
+        /// 앞 1m에 닿은 것(사용자 10-31 — 원인을 보고 0.5초 안 반응): 발·가슴 높이 광선이 맞은 충돌체가 움직이는 Rigidbody(통나무 등)면 그 이름,
+        /// 문(Door)이면 door에 담는다. 둘 다 아니면 null.
+        /// </summary>
+        public string BumpAhead(Vector3 point, out Door door)
+        {
+            door = null;
+            Vector3 pos = transform.position, dir = Flat(point - pos).normalized;
+            foreach (float h in new[] { 0.4f, 1.4f })
+            {
+                if (!Physics.Raycast(pos + Vector3.up * h, dir, out RaycastHit hit, 1f, SolidMask, QueryTriggerInteraction.Ignore)) continue;
+                door = hit.collider.GetComponentInParent<Door>();
+                if (door != null) return null;
+                Rigidbody rb = hit.collider.attachedRigidbody;
+                if (rb != null && !rb.isKinematic) return hit.collider.transform.root.name;
+            }
+            return null;
+        }
+
         /// <summary>진단: 몸 둘레 1.3m 안 단단한 충돌체(이름·종류·루트와의 거리·몸 기준 높이 범위).</summary>
         string Around()
         {

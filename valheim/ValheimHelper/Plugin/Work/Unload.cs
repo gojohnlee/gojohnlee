@@ -146,17 +146,20 @@ namespace ValheimHelper
     /// 상자 가기 막힘(사용자 10-31): 상자에 가까워지지 않고 거의 제자리(1.5m 안)로 2.5초면 상자 옆 접근점(StuckHop.Side 90°, 다음엔 -90°)으로 돌아 보고
     /// (MachineStep.Approach와 같음), NearStuckSeconds(5초)면 상자 앞으로 옮긴다(GatherJob 넣기와 같음). 굽은 길을 돌아 걷는 중은 아님.
     /// 사이를 건축물이 가리면(집 안 상자, DoorWay.Blocked) 벽 너머라 돌지도 옮기지도 않는다. Unload·Prep이 씀.
+    /// 원인이 보이면 0.5초에(사용자 10-31): 앞 1m가 움직이는 Rigidbody(통나무 등)면 바로 옆으로, 닫힌 문이면 바로 연다(WorkerAI.BumpAhead).
     /// </summary>
     internal sealed class ChestHop
     {
-        const float SideSeconds = 2.5f, SideRadius = 1.5f;
+        const float SideSeconds = 2.5f, SideRadius = 1.5f, BumpSeconds = 0.5f;
         Container m_for;
         Vector3 m_from;
         Vector3? m_side;
         int m_sides;
         float m_best = float.MaxValue, m_time;
         /// <summary>시험용: 옮긴 수, 옆으로 돈 수.</summary>
-        internal static int Hops, Sides;
+        internal static int Hops, Sides, Bumps, Doors;
+        /// <summary>시험용: 닿은 것 보고 일찍 반응하기를 끔(고치기 전 비교).</summary>
+        internal static bool TestNoBump;
 
         /// <summary>걸어갈 곳: 옆 접근점을 도는 중이면 거기, 아니면 상자.</summary>
         public Vector3 Goal(Container chest) => m_side ?? chest.transform.position;
@@ -169,15 +172,28 @@ namespace ValheimHelper
             if (m_side.HasValue && Utils.DistanceXZ(m_side.Value, pos) < 0.4f) m_side = null; // 옆 접근점에 닿음 → 거기서 곧장
             if (d < m_best - 0.3f || Utils.DistanceXZ(m_from, pos) >= 1.5f) { m_best = Mathf.Min(m_best, d); m_from = pos; m_time = 0f; return false; }
             m_time += dt;
-            if (m_time < SideSeconds || DoorWay.Blocked(npc, chest)) return false;
             Vector3 at = chest.transform.position;
+            string bump = null;
+            if (m_time >= BumpSeconds && !TestNoBump)
+            {
+                bump = npc.Ai.BumpAhead(Goal(chest), out Door door);
+                if (door != null && Dungeons.Open(npc, door))
+                {
+                    Doors++;
+                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기: {m_time:0.0}초 닫힌 문 {door.name}에 막힘 → 열기");
+                    m_time = 0f;
+                    return false;
+                }
+            }
+            if ((m_time < SideSeconds && bump == null) || DoorWay.Blocked(npc, chest)) return false;
             if (m_time < (float)Core.Work.StuckHop.NearStuckSeconds)
             {
                 if (m_side.HasValue || m_sides >= 2) return false;
+                if (bump != null && m_time < SideSeconds) Bumps++;
                 var p = Core.Work.StuckHop.Side(pos.x, pos.z, at.x, at.z, SideRadius, m_sides++);
                 m_side = new Vector3((float)p.X, at.y, (float)p.Z);
                 Sides++;
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(at)} → 옆({Core.Work.StuckHop.SideAngles[m_sides - 1]:0}°)으로");
+                Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리{(bump != null ? $", {bump}에 닿음" : "")}, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(at)} → 옆({Core.Work.StuckHop.SideAngles[m_sides - 1]:0}°)으로");
                 return false;
             }
             Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(Goal(chest))} → 상자 앞으로");

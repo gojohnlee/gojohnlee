@@ -31,6 +31,7 @@ namespace ValheimHelper
                 Unload.TestNoReach = false;
                 Prep.TestNoReach = false;
                 TidyJob.TestNoReach = false;
+                ChestHop.TestNoBump = false;
                 if (held != null) HopTest.Speeds(held, saved, false);
                 foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
                 if (w.Ragnar != null) { w.Ragnar.GetInventory().RemoveItem("$item_wood", 999); DropMeads(w.Ragnar.GetInventory()); }
@@ -141,6 +142,33 @@ namespace ValheimHelper
             while (phTook < 12f && Meads() == 0 && pFar.Update(Time.deltaTime)) { phTook += Time.deltaTime; yield return null; }
             checks.Add($"8m 묶임 꺼내기: 5초에 상자 앞으로 옮겨 미드 챙김 ({phTook:0.0}초, 옆 {ChestHop.Sides - sides0}, 옮김 {ChestHop.Hops - hops0}, 들고 {Meads()})",
                 phTook >= 4.5f && phTook <= 8f && ChestHop.Sides - sides0 >= 1 && ChestHop.Hops - hops0 == 1 && Meads() > 0);
+
+            // 묶지 않고 8m 앞 상자, 일꾼 1.5m 앞에 통나무(beech_log)를 가로로: 닿으면 0.5초에 옆으로(ChestHop.Bumps) — 고치기 전(TestNoBump)·후 넣기까지 시간 비교
+            HopTest.Speeds(w.Ragnar, saved, false);
+            hold(null);
+            GameObject big = ZNetScene.instance.GetPrefab("beech_log") ?? lp;
+            float[] took2 = new float[2];
+            int[] bumps2 = new int[2];
+            for (int i = 0; i < 2; i++)
+            {
+                ChestHop.TestNoBump = i == 0;
+                w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
+                GameObject log = Object.Instantiate(big, GatherTest.Ground(c + dir * 6.5f) + Vector3.up * 0.5f, Quaternion.FromToRotation(Vector3.up, side));
+                made.Add(log);
+                yield return new WaitForSeconds(1.5f);
+                w.Ragnar.GetInventory().AddItem(wood, 10);
+                int b0 = ChestHop.Bumps;
+                var u = new Unload(w.Ragnar);
+                float t2 = 0f;
+                while (t2 < 15f && u.Update(Time.deltaTime)) { t2 += Time.deltaTime; yield return null; }
+                took2[i] = t2; bumps2[i] = ChestHop.Bumps - b0;
+                if (log != null) ZNetScene.instance.Destroy(log);
+                TestKit.ClearBaseStock(w, "Wood");
+                yield return new WaitForSeconds(0.5f);
+            }
+            ChestHop.TestNoBump = false;
+            checks.Add($"통나무 닿음(묶지 않음): 고치기 전 {took2[0]:0.0}초 → 고친 뒤 {took2[1]:0.0}초, 일찍 옆으로 {bumps2[1]}, 달리기 {w.Ragnar.m_runSpeed:0.0} (들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
+                took2[1] < 15f && took2[1] <= took2[0] + 0.5f && bumps2[0] == 0 && BaseTest.Carried(w.Ragnar, "Wood") == 0);
         }
     }
 }
