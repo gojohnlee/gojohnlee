@@ -433,6 +433,9 @@ namespace ValheimHelper
             int had = w.Ragnar.CountItem("MeadHealthMinor"); // 회차 319 첫 실행: 기다리는 7초 사이 이미 3개 들고 있었음 → 말하기 바로 앞에서 비움
             foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
                 if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
+            // 회차 329: 기다리는 사이 일꾼이 집 안 상자에 미드를 넣어 두어 2층 대신 집 안 상자에서 챙김 → 거점 미드를 다 비우고 2층 상자에만 다시 3
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
+            if (lc != null) TestKit.PutInChest(lc, "MeadHealthMinor", 3);
             float chestUp = lc != null ? lc.transform.position.y - lg : 0f;
             checks.Add($"2층 단계: 기둥 {poles}/4·바닥·계단·상자 (계단 {stairs.Count}칸, 남음 {loftAlive}, 들고 있던 미드 {had}, 상자 높이 {chestUp:0.0}m, 상자 미드 {Count(lc, "MeadHealthMinor")})",
                 poles == 4 && loftAlive && chestUp > 1.5f && Count(lc, "MeadHealthMinor") == 3);

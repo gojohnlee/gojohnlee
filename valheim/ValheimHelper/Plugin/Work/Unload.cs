@@ -31,6 +31,7 @@ namespace ValheimHelper
         /// </summary>
         const float Reach = 4f, StillSeconds = 0.5f;
         float m_best = float.MaxValue, m_still;
+        readonly ChestHop m_hop = new ChestHop();
         /// <summary>시험용: 손 거리 넣기 끔(고치기 전 비교)·한 수.</summary>
         internal static bool TestNoReach;
         internal static int Reached;
@@ -60,7 +61,11 @@ namespace ValheimHelper
             var at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
-            if (!Instant && d > 2.5f && !(m_wayFor == m_chest && m_way.Busy) && !CanReach(at, d)) { m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); return true; } // 거점 125m: 멀면 뜀(Prep과 같음)
+            if (!Instant && d > 2.5f && !(m_wayFor == m_chest && m_way.Busy) && !CanReach(at, d))
+            {
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Unload")) m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); // 거점 125m: 멀면 뜀(Prep과 같음), 5초 거의 제자리면 상자 앞으로
+                return true;
+            }
             if (m_wayFor != m_chest) { m_way = new DoorWay(); m_wayFor = m_chest; }
             if (!Instant && m_way.Steer(dt, m_npc, m_chest)) return true; // 집 안 상자: 벽이 가리면 문으로(회차 311)
             Container chest = m_chest;
@@ -134,6 +139,35 @@ namespace ValheimHelper
             foreach (var it in m_npc.GetInventory().GetAllItems())
                 if (Storable(it, keep)) return it;
             return null;
+        }
+    }
+
+    /// <summary>
+    /// 상자 가기 막힘(사용자 10-31): 상자에 가까워지지 않고 거의 제자리(1.5m 안)로 NearStuckSeconds(5초)면 상자 앞으로 옮긴다(GatherJob 넣기와 같음).
+    /// 굽은 길을 돌아 걷는 중은 아님. 사이를 건축물이 가리면(집 안 상자, DoorWay.Blocked) 벽 너머라 옮기지 않는다. Unload·Prep이 씀.
+    /// </summary>
+    internal sealed class ChestHop
+    {
+        Container m_for;
+        Vector3 m_from;
+        float m_best = float.MaxValue, m_time;
+        /// <summary>시험용: 옮긴 수.</summary>
+        internal static int Hops;
+
+        /// <returns>true = 이번에 옮김.</returns>
+        public bool Update(float dt, WorkerNpc npc, Container chest, float d, string what)
+        {
+            Vector3 pos = npc.transform.position;
+            if (m_for != chest) { m_for = chest; m_best = float.MaxValue; }
+            if (d < m_best - 0.3f || Utils.DistanceXZ(m_from, pos) >= 1.5f) { m_best = Mathf.Min(m_best, d); m_from = pos; m_time = 0f; return false; }
+            m_time += dt;
+            if (m_time < (float)Core.Work.StuckHop.NearStuckSeconds || DoorWay.Blocked(npc, chest)) return false;
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(chest.transform.position)} → 상자 앞으로");
+            npc.TeleportTo(chest.transform.position + chest.transform.forward * 1.5f, npc.transform.rotation, false);
+            WorkerAI.StuckTeleports++;
+            Hops++;
+            m_time = 0f; m_best = float.MaxValue;
+            return true;
         }
     }
 }

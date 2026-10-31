@@ -43,6 +43,7 @@ namespace ValheimHelper
         /// <summary>손 거리 꺼내기(사용자 10-31 ③, Unload와 같음): 상자 Reach m 안에서 0.5초 더 못 다가가면 사이를 건축물이 안 가릴 때 그 자리에서.</summary>
         const float Reach = 4f, StillSeconds = 0.5f;
         float m_best = float.MaxValue, m_still; Container m_bestFor;
+        readonly ChestHop m_hop = new ChestHop();
         /// <summary>시험용: 손 거리 꺼내기 끔(고치기 전 비교)·한 수.</summary>
         internal static bool TestNoReach;
         internal static int Reached;
@@ -77,7 +78,7 @@ namespace ValheimHelper
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             if (d > 2.5f && !Steering(m_chest) && !CanReach(at, d, dt))
             {
-                m_ai.MoveToPoint(dt, at, 1.8f, d > 10f);
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); // 5초 거의 제자리면 상자 앞으로(Unload와 같음)
                 return true;
             }
             if (Through(dt, m_chest)) return true;

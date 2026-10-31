@@ -118,6 +118,29 @@ namespace ValheimHelper
             while (tTook < 10f && tAfter.Moved == 0 && tAfter.Update(Time.deltaTime)) { tTook += Time.deltaTime; yield return null; }
             checks.Add($"정리 고친 뒤: 그 자리에서 꺼내고 넣음 ({tTook:0.0}초 ≤ 3, 옮김 {tAfter.Moved}, 손 거리 {TidyJob.Reached - tReached0})",
                 tTook <= 3f && tAfter.Moved > 0 && TidyJob.Reached - tReached0 >= 2);
+
+            // 손 거리 밖 8m에서 묶여 거의 제자리: 5초에 상자 앞으로 옮겨 넣기·꺼내기(ChestHop, 사용자 10-31 — 전엔 90·60초 한도까지 섬)
+            DropMeads(w.Ragnar.GetInventory());
+            Chests.TryEdit(w.Chest, DropMeads);
+            w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
+            yield return new WaitForSeconds(1f);
+            w.Ragnar.GetInventory().AddItem(wood, 10);
+            int hops0 = ChestHop.Hops;
+            var far = new Unload(w.Ragnar);
+            float hTook = 0f;
+            while (hTook < 12f && far.Update(Time.deltaTime)) { hTook += Time.deltaTime; yield return null; }
+            checks.Add($"8m 묶임 넣기: 5초에 상자 앞으로 옮겨 넣음 ({hTook:0.0}초, 옮김 {ChestHop.Hops - hops0}, 들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
+                hTook >= 4.5f && hTook <= 8f && ChestHop.Hops - hops0 == 1 && BaseTest.Carried(w.Ragnar, "Wood") == 0);
+
+            Chests.TryEdit(w.Chest, inv => inv.AddItem(mead, 5));
+            w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
+            yield return new WaitForSeconds(1f);
+            hops0 = ChestHop.Hops;
+            var pFar = new Prep(w.Ragnar);
+            float phTook = 0f;
+            while (phTook < 12f && Meads() == 0 && pFar.Update(Time.deltaTime)) { phTook += Time.deltaTime; yield return null; }
+            checks.Add($"8m 묶임 꺼내기: 5초에 상자 앞으로 옮겨 미드 챙김 ({phTook:0.0}초, 옮김 {ChestHop.Hops - hops0}, 들고 {Meads()})",
+                phTook >= 4.5f && phTook <= 8f && ChestHop.Hops - hops0 == 1 && Meads() > 0);
         }
     }
 }
