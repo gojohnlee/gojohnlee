@@ -85,6 +85,7 @@ namespace ValheimHelper
             Step("vh_restart1·2", RestartTest.Register);
             Step("vh_restartcraft", RestartCraftTest.Register);
             Step("vh_machinestucktest", MachineStuckTest.Register);
+            Step("vh_housetest", HouseTest.Register);
             Step("vh_blocktest", BlockTest.Register);
             Step("vh_weaktest", WeakTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);

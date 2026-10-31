@@ -1,0 +1,192 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace ValheimHelper
+{
+    /// <summary>
+    /// 실제 집 안 상자·설비 시험(사용자 요청 10-31): 깃발 곁에 나무 벽·문 하나·평지붕 집(6m×6m)을 세우고 안에 상자·작업대.
+    /// 문은 닫힌 채 "!활 1"(가죽 조각·사슴 가죽만 안 상자에) → 나무를 캐 와 안 상자에 넣고 안 작업대에서 활을 만드는지.
+    /// diag: 벽에 박은 시간(집 충돌체 1m 안에서 0.5초에 0.15m도 못 감), 순간이동 수(막힘·rescue·옆 옮김 카운터 합), 문 열림 여부, 문 쪽 Pathfinding 층.
+    /// 바닐라 Pathfinding: 타일은 m_layers 물리 충돌체로 굽고(층 이름은 프리팹 값이라 여기서 찍음), 길을 물을 때마다 찌르며
+    /// 찔린 시각이 마지막 굽기보다 5초(m_updateInterval) 넘게 뒤면 한 번에 한 타일씩 다시 굽는다. BaseAI는 문을 열지 않는다.
+    /// </summary>
+    static class HouseTest
+    {
+        public static void Register() => TestRunner.Register("vh_housetest", "실제 집(벽·지붕·문) 안 상자·작업대", () => TestKit.Flat(Run()));
+
+        const float Half = 3f;
+
+        static IEnumerator Run()
+        {
+            var checks = new GatherTest.Checks();
+            if (Player.m_localPlayer == null || !ZNet.instance.IsServer())
+            {
+                TestRunner.Log("FAIL: 월드에 들어간 뒤(싱글 또는 서버 시작) 실행해야 합니다.");
+                TestRunner.Finish();
+                yield break;
+            }
+            var w = new TestKit.World();
+            var made = new List<GameObject>();
+            try { yield return Body(w, checks, made); }
+            finally
+            {
+                foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
+                TestKit.ClearBaseStock(w, "Wood", "LeatherScraps", "DeerHide", "Bow");
+                TestKit.Restore(w);
+            }
+            GatherTest.Say("!멈춰", null);
+            yield return new WaitForSeconds(1f);
+            TestKit.End(w, checks);
+        }
+
+        static GameObject Put(List<GameObject> made, string prefab, Vector3 at, Quaternion rot, float? bottom = null)
+        {
+            GameObject p = ZNetScene.instance.GetPrefab(prefab);
+            if (p == null) { Plugin.Log.LogWarning($"집 시험: 프리팹 {prefab} 없음"); return null; }
+            var g = Object.Instantiate(p, at, rot);
+            made.Add(g);
+            if (bottom.HasValue)
+            {
+                Physics.SyncTransforms();
+                Bounds b = Box(g);
+                g.transform.position += Vector3.up * (bottom.Value - b.min.y);
+            }
+            return g;
+        }
+
+        static Bounds Box(GameObject g)
+        {
+            var cs = g.GetComponentsInChildren<Collider>();
+            Bounds b = new Bounds(g.transform.position, Vector3.zero);
+            bool any = false;
+            foreach (var c in cs)
+            {
+                if (c.isTrigger) continue;
+                if (!any) { b = c.bounds; any = true; } else b.Encapsulate(c.bounds);
+            }
+            return b;
+        }
+
+        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
+        {
+            yield return TestKit.Setup(w);
+            checks.Add("깃발·NPC 2명·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
+            if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
+            Recipe bow = null;
+            foreach (var rc in ObjectDB.instance.m_recipes)
+                if (rc.m_item != null && Utils.GetPrefabName(rc.m_item.gameObject) == "Bow") bow = rc;
+            checks.Add("활 레시피 있음", bow != null);
+            if (bow == null) yield break;
+            TestKit.ClearBaseStock(w, "Wood", "LeatherScraps", "DeerHide", "Bow");
+
+            // 집: 깃발에서 오른쪽 5~11m, 문은 깃발 쪽 벽 가운데. 바깥 시험 상자는 치우고 안 상자를 w.Chest로
+            Vector3 f = w.Player.transform.forward; f.y = 0f; f.Normalize();
+            Vector3 r = Vector3.Cross(Vector3.up, f).normalized;
+            Vector3 c = GatherTest.Ground(w.Home + r * 8f);
+            ZNetScene.instance.Destroy(w.Chest.gameObject);
+            float top = float.MinValue;
+            int walls = 0;
+            GameObject door = null;
+            foreach (var side in new[] { r, -r, f, -f })
+            {
+                Vector3 along = Vector3.Cross(Vector3.up, side).normalized;
+                for (int i = -1; i <= 1; i++)
+                {
+                    Vector3 at = GatherTest.Ground(c + side * Half + along * (2f * i));
+                    bool doorSlot = side == -r && i == 0;
+                    var g = Put(made, doorSlot ? "wood_door" : "woodwall", at, Quaternion.LookRotation(side), at.y - 0.05f);
+                    if (g == null) continue;
+                    if (doorSlot) door = g; else { walls++; top = Mathf.Max(top, Box(g).max.y); }
+                }
+            }
+            int roofs = 0;
+            for (int i = -1; i <= 1; i++)
+                for (int j = -1; j <= 1; j++)
+                    if (Put(made, "wood_floor", c + r * (2f * i) + f * (2f * j), Quaternion.LookRotation(f), top - 0.05f) != null) roofs++;
+            Vector3 chestAt = GatherTest.Ground(c + r * 1.5f + f * 1.5f);
+            Put(made, "piece_chest_wood", chestAt, Quaternion.LookRotation(-r));
+            var bench = Put(made, "piece_workbench", GatherTest.Ground(c + r * 1.2f - f * 1.5f), Quaternion.LookRotation(-r));
+            yield return new WaitForSeconds(2f);
+            w.Chest = GatherTest.ChestAt(chestAt);
+            ZDO dz = door != null ? door.GetComponent<ZNetView>().GetZDO() : null;
+            Bounds db = door != null ? Box(door) : default;
+            var pf = Pathfinding.instance;
+            var layers = new List<string>();
+            for (int i = 0; i < 32; i++) if ((pf.m_layers.value & (1 << i)) != 0) layers.Add(LayerMask.LayerToName(i));
+            int pieceLayer = door != null ? door.layer : -1;
+            Plugin.Log.LogInfo($"집 시험: Pathfinding m_layers [{string.Join(",", layers)}], 문 층 {LayerMask.LayerToName(pieceLayer)}, 문 크기 {db.size}, 벽 위 {top - c.y:0.00}m");
+            int alive = 0;
+            foreach (var g in made) if (g != null) alive++;
+            checks.Add($"집 세움 (벽 {walls}/11·문 {(door != null ? 1 : 0)}·지붕 {roofs}/9·상자 {(w.Chest != null ? 1 : 0)}·작업대 {(bench != null ? 1 : 0)}, 남은 조각 {alive}/{made.Count})",
+                walls == 11 && door != null && roofs == 9 && w.Chest != null && bench != null && alive == made.Count);
+            if (w.Chest == null || door == null || bench == null) yield break;
+            checks.Add($"문 닫힘으로 시작 (s_state {dz.GetInt(ZDOVars.s_state)})", dz.GetInt(ZDOVars.s_state) == 0);
+            int wood = 0;
+            foreach (var req in bow.m_resources)
+            {
+                string p = Utils.GetPrefabName(req.m_resItem.gameObject);
+                if (p == "Wood") wood = req.m_amount; else TestKit.PutInChest(w.Chest, p, req.m_amount);
+            }
+            var cs = bench.GetComponent<CraftingStation>();
+            float cover = 0f; bool under = false;
+            if (cs != null && cs.m_roofCheckPoint != null) Cover.GetCoverForPoint(cs.m_roofCheckPoint.position, out cover, out under);
+            checks.Add($"작업대가 지붕 아래라 쓸 수 있음 (바닐라 CheckUsable {(cs != null && cs.CheckUsable(w.Player, false) ? "됨" : "안 됨")}, 지붕 {under}·가림 {cover:0.00} ≥ 0.7)", cs != null && cs.CheckUsable(w.Player, false));
+
+            // 지켜보기: 벽 박음·순간이동·문 열림·안에 들어감
+            int tele0 = Teleports();
+            float wallStuck = 0f, maxRun = 0f, run = 0f;
+            bool opened = false, inside = false;
+            int innerTrips = 0;
+            var pieces = new List<Collider>();
+            foreach (var g in made) if (g != null) foreach (var col in g.GetComponentsInChildren<Collider>()) if (!col.isTrigger) pieces.Add(col);
+            bool In(Vector3 p) => Mathf.Abs(Vector3.Dot(p - c, r)) < Half - 0.3f && Mathf.Abs(Vector3.Dot(p - c, f)) < Half - 0.3f;
+            bool done = false;
+            IEnumerator Watch()
+            {
+                Vector3 last = w.Ragnar.transform.position;
+                while (!done && w.Ragnar != null)
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    if (w.Ragnar == null) break;
+                    Vector3 p = w.Ragnar.transform.position;
+                    if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) opened = true;
+                    bool now = In(p);
+                    if (now && !inside) innerTrips++;
+                    inside = now;
+                    float near = float.MaxValue;
+                    foreach (var col in pieces) if (col != null) near = Mathf.Min(near, Vector3.Distance(col.ClosestPoint(p + Vector3.up), p + Vector3.up));
+                    if (w.Ragnar.Ai.Job != null && near < 1f && Utils.DistanceXZ(p, last) < 0.15f) { wallStuck += 0.5f; run += 0.5f; maxRun = Mathf.Max(maxRun, run); }
+                    else run = 0f;
+                    last = p;
+                }
+            }
+            Plugin.Instance.StartCoroutine(Watch());
+            string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
+            GatherTest.Say($"!{w.Ragnar.NpcName} {bowName} 1", null);
+            yield return new WaitForSeconds(2f);
+            checks.Add($"활 계획 시작 ({w.Ragnar.Ai.Job?.GetType().Name} {w.Ragnar.Ai.Job?.StepName})", w.Ragnar.Ai.Job is PlanJob);
+            yield return TestKit.WaitFor(() => Stock(w, "Bow") >= 1 || (w.Ragnar.Ai.Job == null && Stock(w, "Wood") >= wood), 420f);
+            float took = TestKit.Waited;
+            done = true;
+            int tele = Teleports() - tele0;
+            Plugin.Log.LogInfo($"집 시험: {took:0}초, 벽 박음 {wallStuck:0.0}초(최장 연속 {maxRun:0.0}초), 순간이동 {tele}, 문 열림 {opened}, 안에 들어감 {innerTrips}번, 상자 나무 {Count(w.Chest, "Wood")}");
+            checks.Add($"안 작업대에서 활 만듦 (활 {Stock(w, "Bow")}, {took:0}초, {w.Ragnar.Ai.Current})", Stock(w, "Bow") >= 1);
+            checks.Add($"나무를 안 상자로 (안 상자 나무 {Count(w.Chest, "Wood")}·활 재료로 씀, 안에 들어감 {innerTrips}번)", innerTrips > 0);
+            checks.Add($"벽에 박은 시간 짧음 ({wallStuck:0.0}초, 최장 연속 {maxRun:0.0}초 ≤ 5)", maxRun <= 5f);
+            checks.Add($"순간이동 없음 ({tele}, 문 열림 {opened})", tele == 0);
+        }
+
+        static int Teleports() => WorkerAI.StuckTeleports + WorkerAI.TrapRescues + WorkerAI.PitEdgeRescues
+            + GatherJob.Hops + GatherJob.Rescues + GatherJob.InteriorHops + MachineStep.Hops;
+
+        static int Count(Container c, string prefab) => c != null ? GatherTest.Count(c, prefab) : 0;
+
+        static int Stock(TestKit.World w, string prefab)
+        {
+            int n = 0;
+            foreach (var ch in Chests.NearBase(w.Home)) n += GatherTest.Count(ch, prefab);
+            return n;
+        }
+    }
+}
