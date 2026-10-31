@@ -70,6 +70,19 @@ namespace ValheimHelper
         static void RPC_Open(long uid, ZDOID id, long playerID)
         {
             if (!ZNet.instance.IsServer()) return;
+            if (Find(id) == null) { Plugin.Instance.StartCoroutine(WaitOpen(uid, id, playerID)); return; }
+            ReplyOpen(uid, id, playerID);
+        }
+
+        // 손님이 상자를 놓자마자 누르면 상자 ZDO·물체보다 이 RPC가 먼저 온다(회차 307, 깃발과 같은 꼴) → 손님 3초 대체 전에 2초까지 기다린다.
+        static System.Collections.IEnumerator WaitOpen(long uid, ZDOID id, long playerID)
+        {
+            for (int i = 0; i < 8 && ZNet.instance != null && Find(id) == null; i++) yield return new WaitForSeconds(0.25f);
+            if (ZNet.instance != null) ReplyOpen(uid, id, playerID);
+        }
+
+        static void ReplyOpen(long uid, ZDOID id, long playerID)
+        {
             bool ok = false;
             try { ok = Open(uid, id, playerID); }
             catch (Exception e) { Plugin.Log.LogWarning($"[ValheimHelper] 손님 상자 열기 오류: {e}"); }
