@@ -1,8 +1,8 @@
 갱신: 2026-11-01 04:11  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
-회차: 331, 계정: 2번, 한도: 없음
+지금: 회차 332 진행 중
+회차: 332, 계정: 2번, 한도: 없음
 할 일: (없음)
 마지막 시험: 11-01 04:10 요약: 0/1 PASS | FAIL vh_housetest: 안에서 문 열고 나감 (40초, 나감 0번, 순간이동 1, Collect)
-Claude가 한 일: LOOP: DONE 상자 가기 0.5초 반응(통나무 닿으면 바로 옆, 닫힌 문 바로 열기) — vh_unloadreachtest 13/13
+Claude가 한 일: (진행 중)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
