@@ -9,6 +9,7 @@
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
 # 쉬기: docs/valheim/loop-pause.txt에 다시 시작할 시각("yyyy-MM-dd HH:mm")을 쓴다(아래 Get-PauseUntil).
 # 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 history.md 맨 위, 가져간 요청은 지움). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
+# 할 일 없음(ALLDONE)이면 자리 비울 때 컴퓨터를 끄고 끝(최대 절전·깨우기 예약 없음). 다음에 켜지면 회차 없이 그 파일만 기다린다(Wait-Done).
 # pull로 이 스크립트가 바뀌면 이번 회차 뒤 새 스크립트로 저절로 다시 켜진다(scripts/vh-loop-restart.ps1, PC에 사람이 없어도). 고칠 때 UTF-8 BOM을 지킨다.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
 # 분업(decisions.txt 2절, docs/valheim/Harness.md): handoff-on.txt + 기준 5회차면 회차에 VH_HANDOFF=1 → 회차가 "LOOP: HANDOFF"로 끝내면
@@ -492,7 +493,7 @@ function Wait-Until($t) {
     Log '기다림 끝'
 }
 
-# 멈춤 조건(사용자 확인 필요·할 일 없음·같은 FAIL·진척 없음)이면 끝내지 않고 사용자 요청을 기다린다: 밖에서 GitHub으로
+# 멈춤 조건(사용자 확인 필요·같은 FAIL·진척 없음)이면 끝내지 않고 사용자 요청을 기다린다: 밖에서 GitHub으로
 # docs/valheim/UserRequest.txt를 고치면 다시 돈다(5분마다 pull해서 그 파일이 바뀌었나 봄). 기다리는 동안 PC는 깨어 있다. 멈춤 파일이면 $false.
 # 회차 결과(사용자 결정 2026-10-23): 진척은 근거가 붙은 "끝낸 것"이 새로 생겼을 때만 센다. [끝] 표시·푸시·문구 고침·시험 실행·코드 변경만으로는 안 셈.
 # 끝낸 것 = $before..$after에서 새로 들어온 줄 중
@@ -532,6 +533,44 @@ function Wait-UserRequest($why, $last) {
         Prepare-Git
         if (Test-StopFile) { return $false }
         if ((G rev-parse $f | Select-Object -Last 1) -ne $h0) { Log 'UserRequest.txt 바뀜 → 다시 돎'; return $true }
+    }
+}
+
+# UserRequest.txt(origin) 구분선(= 줄) 아래 빈 줄 아닌 줄 수. 10-30 회차 287이 '-----' 아래를 보고 "요청 없음" ALLDONE → 요청 3개를 놓침.
+function Get-PendingRequests {
+    $l = @(G show 'origin/valheim:docs/valheim/UserRequest.txt'); $i = 0
+    while ($i -lt $l.Count -and $l[$i] -notmatch '^={10,}') { $i++ }
+    @($l | Select-Object -Skip ($i + 1) | Where-Object { $_.Trim() }).Count
+}
+
+# 할 일 없음(사용자 10-31: 다 끝났으면 최대 절전 말고 끄고, 그 뒤엔 안 건드림). $off: 깨우기 예약을 지우고 입력 없음 10분이면 컴퓨터를 끈다.
+# done 파일(그때 UserRequest.txt 판)이 남아 다음에 켜지면 $off 없이 불림: 회차·절전·끄기 없이 그 파일이 바뀌기만 기다린다.
+# 바뀌면 $true(다시 돎), 멈춤 파일이거나 껐으면 $false.
+$DoneFile = Join-Path $Dir 'done'
+function Wait-Done($off, $last) {
+    $f = 'origin/valheim:docs/valheim/UserRequest.txt'
+    $h0 = if (Test-Path $DoneFile) { (Get-Content $DoneFile -Raw).Trim() } else { G rev-parse $f | Select-Object -Last 1 }
+    [IO.File]::WriteAllText($DoneFile, $h0, $Utf8)
+    Unregister-ScheduledTask -TaskName 'VH loop wake' -Confirm:$false -ErrorAction SilentlyContinue   # 남은 깨우기 예약이 PC를 켜지 않게
+    [void][VH.Power]::SetThreadExecutionState($Release)
+    $how = if ($off) { '자리 비우면(입력 없음 10분) 컴퓨터 끔, 깨우기 예약 없음' } else { '켜진 PC는 안 건드림' }
+    Log "할 일 없음 → $how, UserRequest.txt가 바뀔 때까지 기다림"
+    Write-Status "할 일 다 끝남 — $how. UserRequest.txt에 쓰면 5분 안에 다시 돎" $last
+    $chk = Get-Date
+    while ($true) {
+        if ($off -and [VH.Power]::IdleMs() -gt 600000) {
+            Log '할 일 다 끝남 → 컴퓨터 끔(2분 뒤)'
+            & shutdown /s /t 120 /c "발헤임 할 일 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
+            return $false
+        }
+        Start-Sleep 30
+        if (((Get-Date) - $chk).TotalMinutes -lt 5) { continue }
+        $chk = Get-Date; Prepare-Git
+        if (Test-StopFile) { Log '멈춤 파일 → 끝'; return $false }
+        if ((G rev-parse $f | Select-Object -Last 1) -ne $h0) {
+            Remove-Item $DoneFile -Force; [void][VH.Power]::SetThreadExecutionState($Awake)
+            Log 'UserRequest.txt 바뀜 → 다시 돎'; return $true
+        }
     }
 }
 
@@ -586,6 +625,7 @@ while ($true) {
         }
         break
     }
+    if (Test-Path $DoneFile) { if (-not (Wait-Done $false '-')) { break }; continue }   # 다 끝나 끈 뒤 다시 켜짐
     $pause = Get-PauseUntil
     if ($pause) {
         Log "쉼 파일 → $($pause.ToString('MM-dd HH:mm'))까지 새 회차 안 함"
@@ -680,7 +720,10 @@ while ($true) {
     elseif (-not ($e -and $e.complete)) { $st.noProg++; Log "끝낸 것 없는 회차 $($st.noProg)/3" }
     $stop = $null
     if ($last -match '^LOOP: NEED_USER') { $stop = '사용자 확인 필요' }
-    elseif ($last -match '^LOOP: ALLDONE') { $stop = '할 일 없음' }
+    elseif ($last -match '^LOOP: ALLDONE') {
+        $n = Get-PendingRequests
+        if ($n) { Log "ALLDONE인데 UserRequest.txt 구분선 아래 ${n}줄 남음 → 할 일 있음(다음 회차)" } else { $stop = '할 일 없음' }
+    }
     elseif ($last -match '^LOOP: FAIL (\S+)') {
         if ($st.lastFail -eq $Matches[1]) { $stop = "같은 시험 2회차 연속 FAIL($($Matches[1]))" }
         $st.lastFail = $Matches[1]
@@ -691,21 +734,6 @@ while ($true) {
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }
     if (-not $stop) { Write-Status $(if ($Once) { '한 회차 끝(시험 실행)' } else { '다음 회차 준비' }) $last }
     Save-State
-    $OffFile = Join-Path $Dir 'off-when-done'   # 사용자 10-29: 있으면 progress "다음"에 ★가 하나도 안 남은 회차 뒤 멈추고 컴퓨터 끔(한 번 쓰고 지움)
-    if (-not $stop -and (Test-Path $OffFile)) {
-        $p = Get-Content (Join-Path $Repo 'docs\valheim\progress.txt') -Encoding UTF8
-        $a = [array]::FindIndex($p, [Predicate[string]]{ param($l) $l -match '^다음' })
-        $b = [array]::FindIndex($p, [Predicate[string]]{ param($l) $l -match '^보류' })
-        if ($a -ge 0 -and $b -gt $a -and -not ($p[$a..$b] -match '^★')) {
-            Remove-Item $OffFile -Force
-            [IO.File]::WriteAllText((Join-Path $Dir 'stop'), "off-when-done $(Get-Date -Format 'MM-dd HH:mm') — 다시 돌리려면 이 파일을 지움", $Utf8)
-            Write-Status "멈춤: 할 일 다 끝남(회차 $($st.round)) → 컴퓨터 끔. 다시 돌리려면 %USERPROFILE%\vh-loop\stop을 지움" $last
-            Log '할 일 다 끝남 → 컴퓨터 끔(2분 뒤)'
-            [void][VH.Power]::SetThreadExecutionState($Release)
-            & shutdown /s /t 120 /c "발헤임 할 일 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
-            break
-        }
-    }
     if (Test-Path $TrialFile) {
         # 시험 운전(사용자 10-26): 정한 회차 수를 돌면(또는 멈춤 조건이면) 보고 세션 → 멈춤 파일 → 컴퓨터 끔
         # 회차마다 그 회차 history 항목에 토큰 줄을 바로 붙여 올린다(사용자 10-26: 한도로 중간에 멈춰도 남게). 항목이 없으면 새 항목.
@@ -727,6 +755,10 @@ while ($true) {
         $tr.left = [int]$tr.left - 1; [IO.File]::WriteAllText($TrialFile, ($tr | ConvertTo-Json), $Utf8)
         Log "시험 운전: 남은 회차 $($tr.left)"
         if ($tr.left -le 0 -or $stop) { End-Trial $tr $stop; break }
+    }
+    if ($stop -eq '할 일 없음') {
+        if (-not (Wait-Done $true $last)) { break }
+        $st.noProg = 0; $st.lastFail = ''; Save-State; continue
     }
     if ($stop) {
         if (-not (Wait-UserRequest $stop $last)) { Log '멈춤 파일 → 끝'; Write-Status '멈춤: 멈춤 파일이 있음' '-'; break }

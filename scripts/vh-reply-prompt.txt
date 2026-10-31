@@ -2,7 +2,7 @@
 (사용자 결정 2026-10-22: 회차 끝을 기다리지 말고 답부터, 답은 history.md에). 다른 회차 세션이 저장소 작업 트리와 게임을 쓰는 중이다.
 이 세션은 따로 작업 트리(지금 폴더, origin/valheim)에서 답만 쓰고 빨리 끝낸다. 사용자는 자리에 없다. 묻지 않는다.
 
-1. docs/valheim/UserRequest.txt(구분선 아래만)를 읽는다. 요청 나누기·이름·history 기록 꼴은 scripts/vh-loop-request.txt(그것만 읽는다).
+1. docs/valheim/UserRequest.txt(구분선 = 줄 아래만: sed '1,/^=====/d' docs/valheim/UserRequest.txt)를 읽는다. 요청 나누기·이름·history 기록 꼴은 scripts/vh-loop-request.txt(그것만 읽는다).
 2. "[받음"으로 시작하지 않는 덩어리에만 답한다. 그런 덩어리가 없으면 아무것도 고치지 않는다. N은 docs/valheim/status.txt "회차:" 숫자.
    - 질문: 문서(docs/valheim/progress.txt "지금"·"다음", Errors.txt, decisions.txt·history.md·codemap.txt는 grep)와 코드(grep, 필요한 부분만)로 답할 수 있으면 다 답한다
      → history.md 맨 위에 bash scripts/vh-history-add.sh로 "### 요청 · MM-dd HH:mm · <이름>"(원문 "> " · "**답** · 시각 회차 N 중 답", vh-loop-request.txt 꼴) → 그 덩어리를 UserRequest.txt에서 지운다.
