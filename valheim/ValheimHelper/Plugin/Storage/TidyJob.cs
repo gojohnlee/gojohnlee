@@ -88,6 +88,22 @@ namespace ValheimHelper
         }
 
         DoorWay m_way; Container m_wayFor;
+        /// <summary>손 거리 넣기·꺼내기(사용자 10-31 ③, Unload·Prep와 같음): 상자 ReachDist m 안에서 0.5초 더 못 다가가면 사이를 건축물이 안 가릴 때 그 자리에서.</summary>
+        const float ReachDist = 4f, StillSeconds = 0.5f;
+        float m_best = float.MaxValue, m_still; Container m_bestFor;
+        /// <summary>시험용: 손 거리 끔(고치기 전 비교)·한 수.</summary>
+        internal static bool TestNoReach;
+        internal static int Reached;
+
+        bool CanReach(Container c, Vector3 at, float d, float dt)
+        {
+            if (m_bestFor != c) { m_bestFor = c; m_best = float.MaxValue; m_still = 0f; }
+            if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
+            if (TestNoReach || d > ReachDist || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || DoorWay.Blocked(m_npc, c)) return false;
+            Reached++;
+            Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Tidy 손 거리: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
+            return true;
+        }
 
         /// <summary>상자 앞까지 걷는다. 닿았으면 true, 못 닿으면(WalkLimit초) 그 물건 건너뜀.</summary>
         bool Reach(float dt, Container c, out bool failed)
@@ -102,6 +118,7 @@ namespace ValheimHelper
                 if (m_way.Steer(dt, m_npc, c)) return false; // 집 안 상자: 벽이 가리면 문으로(회차 314)
                 m_ai.StopMoving(); m_ai.Face(at); return true;
             }
+            if (CanReach(c, at, d, dt)) { m_ai.StopMoving(); m_ai.Face(at); return true; }
             m_ai.MoveToPoint(dt, at, 1.8f, false);
             if (m_stepTime > WalkLimit) failed = true;
             return false;

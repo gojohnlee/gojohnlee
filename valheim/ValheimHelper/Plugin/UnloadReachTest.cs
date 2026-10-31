@@ -30,6 +30,7 @@ namespace ValheimHelper
             {
                 Unload.TestNoReach = false;
                 Prep.TestNoReach = false;
+                TidyJob.TestNoReach = false;
                 if (held != null) HopTest.Speeds(held, saved, false);
                 foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
                 if (w.Ragnar != null) { w.Ragnar.GetInventory().RemoveItem("$item_wood", 999); DropMeads(w.Ragnar.GetInventory()); }
@@ -96,6 +97,27 @@ namespace ValheimHelper
             while (pTook < 10f && Meads() == 0 && pAfter.Update(Time.deltaTime)) { pTook += Time.deltaTime; yield return null; }
             checks.Add($"꺼내기 고친 뒤: 그 자리에서 미드 챙김 ({pTook:0.0}초 ≤ 2, 들고 {Meads()}, 손 거리 꺼내기 {Prep.Reached - pReached0})",
                 pTook <= 2f && Meads() > 0 && Prep.Reached - pReached0 >= 1);
+
+            // 정리(TidyJob)도 같은 자리에서: 상자 미드 5를 꺼내 같은 상자에 다시 넣는 한 번짜리 계획
+            DropMeads(w.Ragnar.GetInventory());
+            Chests.TryEdit(w.Chest, inv => { DropMeads(inv); inv.AddItem(mead, 5); });
+            System.Func<Vector3, List<Tidy.Move>> Once()
+            {
+                bool used = false;
+                return _ => { if (used) return new List<Tidy.Move>(); used = true; return new List<Tidy.Move> { new Tidy.Move { From = w.Chest, To = w.Chest, Name = "MeadHealthMinor" } }; };
+            }
+            TidyJob.TestNoReach = true;
+            var tBefore = new TidyJob(w.Ragnar, Once());
+            for (float t = 0f; t < 4f; t += Time.deltaTime) { tBefore.Update(Time.deltaTime); yield return null; }
+            checks.Add($"정리 고치기 전: 4초 동안 못 꺼냄 (들고 {Meads()}, 옮김 {tBefore.Moved})", Meads() == 0 && tBefore.Moved == 0);
+
+            TidyJob.TestNoReach = false;
+            int tReached0 = TidyJob.Reached;
+            var tAfter = new TidyJob(w.Ragnar, Once());
+            float tTook = 0f;
+            while (tTook < 10f && tAfter.Moved == 0 && tAfter.Update(Time.deltaTime)) { tTook += Time.deltaTime; yield return null; }
+            checks.Add($"정리 고친 뒤: 그 자리에서 꺼내고 넣음 ({tTook:0.0}초 ≤ 3, 옮김 {tAfter.Moved}, 손 거리 {TidyJob.Reached - tReached0})",
+                tTook <= 3f && tAfter.Moved > 0 && TidyJob.Reached - tReached0 >= 2);
         }
     }
 }
