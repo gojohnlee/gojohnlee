@@ -1,8 +1,8 @@
-갱신: 2026-10-31 15:14  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 302 진행 중
+갱신: 2026-10-31 15:25  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 302, 계정: 1번, 한도: 없음
 할 일: 요청 전체 회귀 → 가) B1 npc·flag·wood·stone·copper·tin [끝, 회차 293 — 커밋 9ad53c8 · 시험 npc 17/17·flag 12/12·wood 13/13·stone 11/11…
-마지막 시험: 10-31 15:13 요약: 2/2 PASS
-Claude가 한 일: (진행 중)
+마지막 시험: 10-31 15:25 요약: 2/2 PASS
+Claude가 한 일: LOOP: DONE 전체 회귀 B10(딥노스) deepnorth 23/23·deepfoe 20/20·frostcave 11/11 PASS 기록
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
