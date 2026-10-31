@@ -28,6 +28,7 @@ namespace ValheimHelper
         readonly PlanStep m_step;
         readonly bool m_load;
         Smelter m_smelter;
+        readonly DoorWay m_way = new DoorWay();
         Fermenter m_fermenter;
         CookingStation m_cook;
         bool m_cookLoaded;
@@ -124,6 +125,7 @@ namespace ValheimHelper
             if (m_cook != null && !m_load && CookSlotsOf(nview.GetZDO(), m_cook, false) == 0 && Drops().Count == 0) return CraftResult.Done; // 조리대는 Load가 다 꺼냄 — 남은 게 없으면 끝
             Vector3 at = Machine.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
+            if (d < 10f && m_way.Steer(dt, m_npc, Machine)) return CraftResult.Working; // 집 안 설비: 벽이 가리면 문으로 — 2.5m보다 멀리서도(가운데 설비는 벽 밖 2.5m에 못 닿아 옆 돌기로 벽과 나무 사이에 끼었음, 회차 312)
             if (d > 2.5f) return Approach(dt, at, d);
             // 바닐라 BaseAI.MoveTo가 정한 걷는 방향(Character.m_moveDir)은 StopMoving 전까지 남는다 → 안 멈추면 설비 한가운데로 계속 달려
             // 조리대 밑 화로 불(FireBurn) 속에서 불붙어 죽었다(회차 128 cooktest: 0.9m까지 들어감·불붙음).

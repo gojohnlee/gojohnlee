@@ -101,6 +101,15 @@ namespace ValheimHelper
                 }
             Plugin.Log.LogInfo($"집 시험: 집 자리 땅 높이 차 {spread:0.00}m, 바닥 {floorY:0.0}");
             ZNetScene.instance.Destroy(w.Chest.gameObject);
+            // 집 둘레 나무·덤불은 치우고 짓는다(회차 312: 옆벽 곁 작은 너도밤나무와 벽 사이에 일꾼이 끼어 문까지 못 감)
+            var cleared = new HashSet<ZNetView>();
+            foreach (var col in Physics.OverlapSphere(c, Half * 1.42f + 2.5f))
+            {
+                ZNetView nv = col.GetComponentInParent<ZNetView>();
+                if (nv == null || !nv.IsValid() || nv.GetComponent<Piece>() != null || nv.GetComponent<Character>() != null) continue;
+                if ((nv.GetComponent<TreeBase>() != null || nv.GetComponent<Destructible>() != null || nv.GetComponent<Pickable>() != null) && cleared.Add(nv)) ZNetScene.instance.Destroy(nv.gameObject);
+            }
+            Plugin.Log.LogInfo($"집 시험: 집 둘레 나무·덤불 {cleared.Count}개 치움");
             float top = float.MinValue;
             int walls = 0;
             GameObject door = null;
@@ -200,6 +209,32 @@ namespace ValheimHelper
             checks.Add($"나무를 안 상자로 (안 상자 나무 {Count(w.Chest, "Wood")}·활 재료로 씀, 안에 들어감 {innerTrips}번)", innerTrips > 0);
             checks.Add($"벽에 박은 시간 짧음 ({wallStuck:0.0}초, 최장 연속 {maxRun:0.0}초 ≤ 5)", maxRun <= 5f);
             checks.Add($"순간이동 없음 ({tele}, 문 열림 {opened})", tele == 0);
+
+            // 2) 집 안 제련소(③-2): 작업대 자리에 제련소, 광석·석탄은 안 상자. 일꾼은 밖에서 시작, 플레이어는 25m 밖(5m 안이면 보충 안 함)
+            GatherTest.Say("!멈춰", null);
+            yield return new WaitForSeconds(1f);
+            if (ZNetScene.instance.GetPrefab("smelter") == null) { checks.Add("제련소 프리팹 있음", false); yield break; }
+            ZNetScene.instance.Destroy(bench);
+            TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
+            TestKit.PutInChest(w.Chest, "CopperOre", 2);
+            TestKit.PutInChest(w.Chest, "Coal", 10);
+            var smelter = Put(made, "smelter", GatherTest.Ground(c + r * 1f - f * 1.2f), Quaternion.LookRotation(-r));
+            w.Player.TeleportTo(GatherTest.Ground(w.Home - r * 25f) + Vector3.up * 0.3f, w.Player.transform.rotation, false);
+            yield return new WaitForSeconds(2f);
+            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); yield return new WaitForSeconds(6f); } // 첫 단계에서 연 문(나올 때 닫기는 아직) — 닫힌 문 navmesh 벽이 다시 생길 때까지
+            w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(1f); // 옮긴 뒤 열린 문으로 다시 들어가던 것(회차 312 두 번째 실행: 집 가운데서 시작)
+            checks.Add($"제련 단계: 문 닫힘·일꾼 밖에서 시작 (s_state {dz.GetInt(ZDOVars.s_state)}, 일꾼 집 가운데서 {Utils.DistanceXZ(w.Ragnar.transform.position, c):0.0}m, 안 {In(w.Ragnar.transform.position)})", dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
+            tele0 = Teleports(); int hops0 = MachineStep.Hops, side0 = MachineStep.SideTries, entered0 = DoorWay.Entered;
+            GatherTest.Say($"!{w.Ragnar.NpcName} 구리주괴 1", null); // 게임 이름 "구리"는 광석으로 풀림(vh_crafttest와 같은 말)
+            yield return TestKit.WaitFor(() => Stock(w, "Copper") >= 1, 300f);
+            took = TestKit.Waited;
+            tele = Teleports() - tele0;
+            Plugin.Log.LogInfo($"집 시험 제련: {took:0}초, 문 들어감 {DoorWay.Entered - entered0}, 옆 돌기 {MachineStep.SideTries - side0}, 순간이동 {tele}(설비 {MachineStep.Hops - hops0})");
+            checks.Add($"집 안 제련소에서 구리 주괴 (주괴 {Stock(w, "Copper")}, {took:0}초, {w.Ragnar.Ai.Current})", Stock(w, "Copper") >= 1);
+            checks.Add($"제련소로 문 지나 들어감 ({DoorWay.Entered - entered0}번, 옆 돌기 {MachineStep.SideTries - side0})", DoorWay.Entered - entered0 > 0);
+            checks.Add($"제련 중 순간이동 없음 ({tele})", tele == 0);
+            TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
         }
 
         static int Teleports() => WorkerAI.StuckTeleports + WorkerAI.TrapRescues + WorkerAI.PitEdgeRescues
