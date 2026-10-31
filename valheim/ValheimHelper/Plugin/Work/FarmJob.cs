@@ -15,7 +15,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class FarmJob : IWorkerJob
     {
-        const float TotalLimit = 15f * 60f, BusyLimit = 30f, GoStuckLimit = 15f /* 막힘 30 → 15초, 사용자 결정 2026-10-26 */, SpotLimit = 15f, HomeLimit = 180f, PickWait = 4f;
+        const float TotalLimit = 15f * 60f, BusyLimit = 30f, GoStuckLimit = 15f /* 막힘 30 → 15초, 사용자 결정 2026-10-26 */, StillLimit = 5f /* 거의 제자리면 5초, 사용자 10-31 */, SpotLimit = 15f, HomeLimit = 180f, PickWait = 4f;
 
         enum Step { Fetch, Go, Harvest, Plant, Home, Store }
 
@@ -26,6 +26,7 @@ namespace ValheimHelper
         readonly List<Ingredient> m_todo = new List<Ingredient>();
         Step m_step = Step.Fetch;
         float m_time, m_stepTime, m_bestDist = float.MaxValue, m_progress;
+        Vector3 m_stuckFrom; // 진척 없음을 재기 시작한 자리
         List<SpotXZ> m_spots;
         int m_spot, m_total;
         Unload m_unload;
@@ -242,8 +243,10 @@ namespace ValheimHelper
                 return true;
             }
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progress = 0f; }
-            else m_progress += dt;
-            if (m_progress > GoStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp)
+            else { if (m_progress == 0f) m_stuckFrom = m_npc.transform.position; m_progress += dt; }
+            // 진척 없이 5초 거의 제자리면 막힘(굽은 길을 돌아 걷는 중은 15초까지 — 묘비 가기와 같음, 회차 326)
+            bool still = m_progress > StillLimit && Utils.DistanceXZ(m_stuckFrom, m_npc.transform.position) < 1.5f;
+            if (still || m_progress > GoStuckLimit || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 밭까지 못 감({d:0}m)");
                 TellDone();
