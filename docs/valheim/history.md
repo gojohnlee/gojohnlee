@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 303 · 10-31 · 전체 회귀 마지막 묶음(실제 재시작) 통과
+
+**요약**
+
+- [10-31] 전체 회귀 마지막 묶음(실제 재시작 2가지) 통과 — 회귀 11묶음 전부 끝, 다음은 멀티 시험.
+
+**자세히**
+
+- 게임을 끄고 다시 켜서 일을 이어 가는 시험: restart1 6/6 → restart2 14/14, 제작 재시작 restartcraft_load 5/5 → restartcraft2 12/12 모두 PASS. 코드는 안 바꿈.
+- 로그 오류는 늘 나오는 BepInEx "Unity log writer" 한 줄뿐.
+
 ### 회차 302 · 10-31 · 전체 회귀 10묶음(딥노스)
 
 **요약**
@@ -142,6 +153,10 @@
 - 할 만함, 이것부터. 10묶음 + 재시작으로 나눔(애쉬랜드 9묶음에 그 뒤 생긴 시험을 끼우고 딥노스 묶음 B10을 더함).
 - B1 npc·flag·wood·stone·copper·tin / B2 prep·bag·death·fight·explore·pit / B3 far·depart·craft·peer / B4 name·skill·refill·raid·help·team·claude·banter·mate / B5 set·portal·portalbuild·stuck·hop·skip·resist·repair / B6 crypt·hunt·cook·cookwet·bow·machinestuck / B7 farm·base·escort·silver / B8 평원·안개땅·상자 정리(squito·fuling·tar·plainsfarm·plains·mistfoe·minefoe·mine·settle·block·weak·tidy·tidywalk·mychest·guest·share·stock·mistlands) / B9 ashlands·ashfoe·morgen / B10 deepnorth·deepfoe·frostcave / R restart1→2, restartcraft_load→restartcraft2.
 - 한 회차에 한 묶음씩.
+
+**끝** · 10-31 15:33 회차 303
+
+- 11묶음(B1~B10 + 실제 재시작) 모두 PASS. 고친 것: 개인 상자 시험 대사 인식(회차 300). 남은 것 없음.
 
 ### 회차 291 · 10-31 · 상자에서 Alt+우클릭으로 계속채워 등록
 
