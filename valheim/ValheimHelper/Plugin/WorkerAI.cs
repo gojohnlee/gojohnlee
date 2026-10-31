@@ -271,6 +271,7 @@ namespace ValheimHelper
         public float WaterBlockedTime { get; private set; }
         public const float WaterGiveUp = 3f;
         Vector3 m_moveTarget;
+        readonly DoorWay m_exitWay = new DoorWay(); // 안에서 닫힌 문으로 나가기(회차 315)
         Vector3 m_lastDry;
         bool m_hasDry;
         /// <summary>지금 앞의 물은 건너기로 했다(좁은 강, WaterRule). 물에서 나오면 풀린다.</summary>
@@ -374,6 +375,7 @@ namespace ValheimHelper
                 return false;
             }
             bool inside = Character.InInterior(pos);
+            if (!inside && m_exitWay.Exit(dt, m_character as WorkerNpc, point)) return false;
             if (!inside) ForgetInteriorPath();
             if (!inside || !InteriorWalk(pos, point, dist, run))
             {

@@ -268,6 +268,24 @@ namespace ValheimHelper
             checks.Add($"꺼내고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
+
+            // 4) 안에서 닫힌 문으로 나가기(③-5): 일꾼을 안에 두고 문을 닫은 채 바깥 일(나무)을 시키면 문을 열고 나가는지
+            yield return new WaitForSeconds(1f);
+            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            yield return new WaitForSeconds(6f); // 닫힌 문 navmesh 벽이 다시 생길 때까지(일꾼은 밖 — 안에 두고 기다리면 집으로 가며 먼저 나가 버림)
+            tele0 = Teleports(); int exited0 = DoorWay.Exited;
+            Vector3 inAt = GatherTest.Ground(c + f * 1.2f) + Vector3.up * 0.3f; // TeleportTo는 가장 위 면(지붕) 위에 올림 → 몸을 직접
+            w.Ragnar.transform.position = inAt; w.Ragnar.GetComponent<Rigidbody>().position = inAt; w.Ragnar.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+            checks.Add($"나가기 단계: 문 닫힘·일꾼 안 (s_state {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)})", dz.GetInt(ZDOVars.s_state) == 0 && In(w.Ragnar.transform.position));
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
+            yield return TestKit.WaitFor(() => DoorWay.Exited > exited0, 40f); // 안 판정(벽에서 0.3m 안)은 문틀을 지나는 중에 끝남
+            took = TestKit.Waited;
+            tele = Teleports() - tele0;
+            checks.Add($"안에서 문 열고 나감 ({took:0}초, 나감 {DoorWay.Exited - exited0}번, 순간이동 {tele}, {w.Ragnar.Ai.Job?.StepName})", !In(w.Ragnar.transform.position) && DoorWay.Exited > exited0 && tele == 0);
+            closed0 = DoorWay.Closed;
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            checks.Add($"나가서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            GatherTest.Say("!멈춰", null);
         }
 
         static int Teleports() => WorkerAI.StuckTeleports + WorkerAI.TrapRescues + WorkerAI.PitEdgeRescues

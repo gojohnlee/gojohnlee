@@ -9,14 +9,16 @@ namespace ValheimHelper
     /// </summary>
     public sealed class DoorWay
     {
-        const float PhaseLimit = 8f, DoorSearch = 15f, Step = 1.3f;
+        const float PhaseLimit = 8f, DoorSearch = 15f, ExitSearch = 10f, Step = 1.3f;
         static int s_mask;
         enum Phase { None, ToDoor, Through, GaveUp }
         Phase m_phase;
         Door m_door;
         Vector3 m_out, m_in;
-        float m_t, m_limit;
-        public static int Opened, Entered, Closed;
+        float m_t, m_limit, m_check;
+        Vector3 m_for;
+        bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
+        public static int Opened, Entered, Exited, Closed;
 
         /// <summary>일꾼이 연 문(회차 313): 그 일꾼이 지붕 밖으로 나와 문에서 3m 넘게(지붕 아래여도 15m 넘게) 멀어지고 문틀에 아무도 없으면 닫는다. 플레이어가 연 문은 안 건드림.</summary>
         sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; }
@@ -46,8 +48,8 @@ namespace ValheimHelper
             if (m_phase == Phase.None)
             {
                 if (!Blocked(npc, target)) return false;
-                m_door = Nearest(target.transform.position);
-                if (m_door == null) { GiveUp(npc, target, "곁에 문 없음"); return false; }
+                m_door = Nearest(target.transform.position, DoorSearch);
+                if (m_door == null) { GiveUp(npc, target.name, "곁에 문 없음"); return false; }
                 Vector3 n = m_door.transform.forward; n.y = 0f; n.Normalize();
                 Vector3 mid = Middle(m_door);
                 if (Vector3.Dot(n, target.transform.position - mid) > 0f) n = -n; // n = 대상 반대쪽(일꾼이 벽 옆줄에 서면 일꾼 쪽은 모호)
@@ -57,11 +59,70 @@ namespace ValheimHelper
                 m_phase = Phase.ToDoor; m_t = 0f;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} {target.name} 앞 벽 → 문 {m_door.name}({Utils.DistanceXZ(me, m_door.transform.position):0.0}m)으로");
             }
+            int r = Walk(dt, npc, target.name);
+            if (r != 2) return r == 1;
+            Entered++;
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
+            m_phase = Phase.None;
+            return Blocked(npc, target) ? Retry(npc, target.name) : false;
+        }
+
+        /// <summary>
+        /// 안에서 나가기(회차 315, ③-5): 지붕 아래에서 지붕 밖 목표로 걷는데 사이를 건축물이 가리면 10m 안 문으로 가서(닫혔으면 열고 — 플레이어가 닫음) 나간다.
+        /// WorkerAI.MoveToPoint가 부름. 목표가 2m 넘게 바뀌면 포기를 잊는다.
+        /// </summary>
+        /// <returns>true = 이번 틀은 문 쪽으로 움직였음.</returns>
+        public bool Exit(float dt, WorkerNpc npc, Vector3 point)
+        {
+            if (npc == null || m_walking) return false;
+            if (Utils.DistanceXZ(point, m_for) > 2f) { m_for = point; if (m_phase == Phase.GaveUp) m_phase = Phase.None; }
+            if (m_phase == Phase.GaveUp) return false;
+            Vector3 me = npc.transform.position;
+            if (m_phase == Phase.None)
+            {
+                if (Time.time < m_check) return false;
+                m_check = Time.time + 0.5f;
+                if (Utils.DistanceXZ(me, point) < 3f || !Roofed(me) || Roofed(point)) return false;
+                Vector3 from = me + Vector3.up * 1.2f, to = point + Vector3.up * 1.2f;
+                if (!Physics.Raycast(from, to - from, Vector3.Distance(from, to), Mask)) return false;
+                Door d = Nearest(me, ExitSearch);
+                ZNetView dv = d != null ? d.GetComponent<ZNetView>() : null;
+                if (dv == null || !dv.IsValid()) return false; // 열린 문도 곧장 지나감 — 연 뒤 navmesh가 늦게 바뀌어 바닐라 길은 벽에 박힘(회차 315 시험)
+                m_door = d;
+                Vector3 n = d.transform.forward; n.y = 0f; n.Normalize();
+                Vector3 mid = Middle(d), a = mid + n * Step, b = mid - n * Step;
+                bool ra = Roofed(a), rb = Roofed(b);
+                bool aIn = ra != rb ? ra : Utils.DistanceXZ(me, a) < Utils.DistanceXZ(me, b); // 지붕 아래 쪽이 안, 모호하면 가까운 쪽
+                m_out = aIn ? a : b; m_in = aIn ? b : a; // 이름은 들어갈 때 기준: m_out = 다가갈 곳, m_in = 지나갈 곳
+                m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
+                m_phase = Phase.ToDoor; m_t = 0f;
+                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감");
+            }
+            m_walking = m_exiting = true;
+            int r;
+            try { r = Walk(dt, npc, "나가기"); } finally { m_walking = false; }
+            if (r != 2) return r == 1;
+            Exited++;
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 밖으로 ({m_t:0.0}초, 지붕 {Roofed(me)})");
+            m_phase = Phase.None;
+            return false;
+        }
+
+        /// <summary>문 앞 → 열기 → 문틀 지나기. 0 = 포기(하던 대로), 1 = 움직이는 중, 2 = 지나감.</summary>
+        int Walk(float dt, WorkerNpc npc, string what)
+        {
+            Vector3 me = npc.transform.position;
             m_t += dt;
-            if (m_t > (m_phase == Phase.ToDoor ? m_limit : PhaseLimit)) { GiveUp(npc, target, $"{m_phase} {m_t:0}초, 문 앞까지 {Utils.DistanceXZ(me, m_out):0.0}m·안쪽까지 {Utils.DistanceXZ(me, m_in):0.0}m"); return false; }
+            if (m_t > (m_phase == Phase.ToDoor ? m_limit : PhaseLimit)) { GiveUp(npc, what, $"{m_phase} {m_t:0}초, 문 앞까지 {Utils.DistanceXZ(me, m_out):0.0}m·안쪽까지 {Utils.DistanceXZ(me, m_in):0.0}m"); return 0; }
             if (m_phase == Phase.ToDoor)
             {
-                if (Utils.DistanceXZ(me, m_out) > 0.7f) { npc.Ai.MoveToPoint(dt, m_out, 0.5f, false); return true; }
+                if (Utils.DistanceXZ(me, m_out) > 0.7f)
+                {
+                    // 안에서 나갈 땐 곧장(닫힌 집 안은 바닐라 길찾기가 10초 제자리, 회차 315 시험)
+                    if (m_exiting) { Vector3 to = m_out - me; to.y = 0f; npc.Ai.MoveTowards(to.normalized, false); }
+                    else npc.Ai.MoveToPoint(dt, m_out, 0.5f, false);
+                    return 1;
+                }
                 if (Dungeons.Open(npc, m_door))
                 {
                     Opened++;
@@ -70,18 +131,15 @@ namespace ValheimHelper
                 m_phase = Phase.Through; m_t = 0f;
             }
             ZNetView v = m_door != null ? m_door.GetComponent<ZNetView>() : null;
-            if (v == null || !v.IsValid()) { GiveUp(npc, target, "문 사라짐"); return false; }
-            if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); return true; } // 열리는 중(주인 RPC 기다림)
+            if (v == null || !v.IsValid()) { GiveUp(npc, what, "문 사라짐"); return 0; }
+            if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); return 1; } // 열리는 중(주인 RPC 기다림)
             Vector3 go = m_in - me; go.y = 0f; // 높이 성분이 있으면 smooth 이동의 moveDir.y로 새어 거의 안 걸음(회차 311)
             if (Utils.DistanceXZ(me, m_in) > 0.5f)
             {
                 npc.Ai.MoveTowards(go.normalized, false);
-                return true;
+                return 1;
             }
-            Entered++;
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
-            m_phase = Phase.None;
-            return Blocked(npc, target) ? Retry(npc, target) : false;
+            return 2;
         }
 
         /// <summary>Workers.Update에서(서버만) 0.5초마다. UseDoor는 열린 문이면 닫는 토글이라 보낸 뒤 3초는 다시 안 보냄(두 번 가면 다시 열림).</summary>
@@ -128,9 +186,9 @@ namespace ValheimHelper
             return $"연 문 {s_opened.Count}개: {string.Join("; ", parts)}";
         }
 
-        bool Retry(WorkerNpc npc, Component target) { GiveUp(npc, target, "안에서도 가림"); return false; }
+        bool Retry(WorkerNpc npc, string what) { GiveUp(npc, what, "안에서도 가림"); return false; }
 
-        void GiveUp(WorkerNpc npc, Component target, string why)
+        void GiveUp(WorkerNpc npc, string what, string why)
         {
             m_phase = Phase.GaveUp;
             if (m_door != null)
@@ -141,7 +199,7 @@ namespace ValheimHelper
                 foreach (var h in Physics.CapsuleCastAll(me + Vector3.up * 0.5f, me + Vector3.up * 1.4f, 0.45f, flat.normalized, 2f, ~0, QueryTriggerInteraction.Ignore)) if (!h.collider.transform.IsChildOf(npc.transform)) hits.Add($"{h.collider.name}/{h.collider.transform.root.name} {h.distance:0.0}m");
                 why += $", 문틀 옆으로 {Vector3.Dot(me - Middle(m_door), along):0.00}m·문 옆으로 {Vector3.Dot(me - m_door.transform.position, along):0.00}m, 안쪽으로 [{string.Join(", ", hits)}], 문 s_state {m_door.GetComponent<ZNetView>()?.GetZDO()?.GetInt(ZDOVars.s_state)}·속도 {npc.GetVelocity().magnitude:0.00}·앞 {Vector3.Angle(npc.transform.forward, m_in - m_out):0}°·{npc.Ai.HoldWhy}";
             }
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {target.name} 문 길 포기: {why} → 그 자리에서");
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문 길 포기: {why} → 그 자리에서");
         }
 
         /// <summary>문틀 가운데(문 transform은 경첩 쪽일 수 있어 닫힌 문 충돌체 가운데).</summary>
@@ -158,10 +216,10 @@ namespace ValheimHelper
             return m;
         }
 
-        static Door Nearest(Vector3 at)
+        static Door Nearest(Vector3 at, float range)
         {
             Door best = null; float bd = float.MaxValue;
-            foreach (var c in Physics.OverlapSphere(at, DoorSearch, Mask))
+            foreach (var c in Physics.OverlapSphere(at, range, Mask))
             {
                 Door d = c.GetComponentInParent<Door>();
                 if (d == null || d.m_keyItem != null) continue;
