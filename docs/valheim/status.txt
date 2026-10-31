@@ -1,8 +1,8 @@
-갱신: 2026-11-01 02:00  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 321 진행 중
+갱신: 2026-11-01 02:17  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 321, 계정: 2번, 한도: 없음
 할 일: (없음)
-마지막 시험: 11-01 01:59 요약: 3/3 PASS
-Claude가 한 일: (진행 중)
+마지막 시험: 11-01 02:16 요약: 4/4 PASS
+Claude가 한 일: LOOP: DONE 꺼내기(Prep) 손 거리 — 상자 4m 안 막히면 0.5초에 그 자리에서 꺼냄, 시험 4개 PASS
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
