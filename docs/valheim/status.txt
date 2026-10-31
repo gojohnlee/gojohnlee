@@ -1,8 +1,8 @@
-갱신: 2026-10-31 15:56  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 306 진행 중
+갱신: 2026-10-31 16:06  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 306, 계정: 1번, 한도: 없음
 할 일: 요청 멀티 시험 → 다)~마) 방법: vh-server.ps1 install -Dll …·start → $env:VH_JOIN="127.0.0.1:2456"으로 시험 스크립트(손님 자동 접속, 요약에 서버 로그 오류…
-마지막 시험: 10-31 15:55 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+마지막 시험: 10-31 16:05 요약: 2/2 PASS
+Claude가 한 일: LOOP: DONE 멀티 다) 손님 명령·대답·말풍선·외모·걷기 시험 8/8, 손님 깃발을 서버가 무시하던 버그 고침
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
