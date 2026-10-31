@@ -279,18 +279,22 @@ namespace ValheimHelper
         bool Walk(float dt, Vector3 point, float dist) =>
             m_ai.MoveToPoint(dt, point, dist, Utils.DistanceXZ(point, m_npc.transform.position) > 10f);
 
-        /// <summary>MoveStuckLimit초 동안 목표에 1m도 가까워지지 않거나 깊은 물 앞에서 섰으면 막힌 것.</summary>
-        bool Stuck(float dt, Vector3 point)
+        /// <summary>MoveStuckLimit초 동안 목표에 1m도 가까워지지 않거나 깊은 물 앞에서 섰으면 막힌 것.
+        /// teleport: 막히면 바로 순간이동할 걷기 — 진척 없이 5초 거의 제자리면 막힘(사용자 10-31).</summary>
+        bool Stuck(float dt, Vector3 point, bool teleport = false)
         {
             float d = Utils.DistanceXZ(point, m_npc.transform.position);
             if (d < m_bestDist - 1f) { m_bestDist = d; m_progressTimer = 0f; return false; }
             if (m_far != null) { m_progressTimer = 0f; return false; } // 멀리선 이동 생략 중: 서서 기다리는 것이지 막힌 게 아니다
             if (m_ai.Carving) return false; // 구덩이에서 경사로를 깎는 중: 막힌 게 아니다
             if (m_ai.OnInteriorPath) { m_progressTimer = 0f; return false; } // 지하묘지 안 길을 따라 도는 중(목표에서 잠시 멀어질 수 있음)
+            if (m_progressTimer == 0f) m_stuckFrom = m_npc.transform.position;
             m_progressTimer += dt;
             if (m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp) return true;
             if (m_progressTimer <= (float)StuckHop.NearStuckSeconds) return false;
             // 근처 막힘 건너뛰기를 할 걷기는 5초에 막힘으로 본다(사용자 10-31), 그 밖은 MoveStuckLimit까지 해 본다
+            // 순간이동 걷기는 5초 동안 거의 제자리일 때만(굽은 길을 돌아 걷는 중은 아님 — 나무 시험 회차 325), 그 밖은 MoveStuckLimit까지
+            if (teleport && Utils.DistanceXZ(m_stuckFrom, m_npc.transform.position) < 1.5f) return true;
             return m_progressTimer > MoveStuckLimit || HopBlocked() == NearWhy;
         }
     }

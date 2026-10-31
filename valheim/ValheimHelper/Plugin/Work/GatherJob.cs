@@ -74,6 +74,7 @@ namespace ValheimHelper
         bool m_wasAttacking;
         float m_bestDist;
         float m_progressTimer;
+        Vector3 m_stuckFrom; // 막힘 시간을 재기 시작한 자리(순간이동 걷기: 거의 제자리일 때만 5초 막힘)
         bool m_saidTooWeak, m_saidSearching, m_saidExplore, m_saidFound, m_saidSea;
         /// <summary>시험용: 바다 건너라 안 간 구역을 말한 횟수.</summary>
         public static int SeaSkips;
@@ -427,8 +428,8 @@ namespace ValheimHelper
             if (m_chest == null) return Fail("noChest");
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
             {
-                // 상자 가기 막힘: 진척 없이 MoveStuckLimit(근처 15초)이면 상자 앞으로(예전 단계 30초 — 막힘 시간 절반, 사용자 결정 2026-10-26). 먼 상자로 그냥 오래 걷는 건 60초까지
-                if (Stuck(dt, m_chest.transform.position) || m_stepTime > 60f)
+                // 상자 가기 막힘: 진척 없이 5초면 상자 앞으로(30 → 15 → 5초, 사용자 10-31). 먼 상자로 그냥 오래 걷는 건 60초까지
+                if (Stuck(dt, m_chest.transform.position, true) || m_stepTime > 60f)
                 {
                     LogStuck("넣기", m_chest.transform.position);
                     m_npc.TeleportTo(m_chest.transform.position + m_chest.transform.forward * 1.5f, m_npc.transform.rotation, false);
