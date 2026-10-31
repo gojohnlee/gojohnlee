@@ -324,6 +324,48 @@ namespace ValheimHelper
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
 
+            // 4-3) 좁은 복도(④-2): 앞문 앞에 폭 2m·길이 4m 벽 복도. 일꾼을 복도 입구 옆에 두면 복도로 들어가 앞문을 열고 미드를 챙긴 뒤 복도로 나와 문을 닫는지
+            yield return new WaitForSeconds(1f);
+            int hall = 0;
+            foreach (float s in new[] { -1f, 1f })
+                for (int k = 0; k < 2; k++)
+                {
+                    Vector3 at = c - r * (Half + 1f + 2f * k) + f * s; at.y = floorY;
+                    if (Put(made, "woodwall", at, Quaternion.LookRotation(f * s), Mathf.Min(floorY, ZoneSystem.instance.GetGroundHeight(at)) - 0.05f) != null) hall++;
+                }
+            foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
+            TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
+            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            ZNetScene.instance.Destroy(back); // 뒷문은 다시 벽으로(회차 318: 상자가 뒷벽 곁이라 상자 앞까지 걸은 일꾼이 뒷문을 고름 → 복도를 안 지남)
+            bool wallBack = Put(made, "woodwall", backAt, Quaternion.LookRotation(r), floorY - 0.05f) != null;
+            w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 6f) + f * 3f) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(7f); // 새 벽·닫은 문 navmesh
+            checks.Add($"복도 단계: 복도 벽 {hall}/4·뒷벽 {wallBack}·앞문 닫힘·일꾼 밖 (앞 {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)})",
+                hall == 4 && wallBack && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
+            tele0 = Teleports(); entered0 = DoorWay.Entered;
+            frontOpened = false;
+            float hallRun = 0f, hallMax = 0f; Vector3 hallLast = w.Ragnar.transform.position;
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
+            yield return TestKit.WaitFor(() =>
+            {
+                if (dz.GetInt(ZDOVars.s_state) != 0) frontOpened = true;
+                Vector3 p = w.Ragnar.transform.position; // 매 틀 → 틀 사이 0.02m 아래면 멈춤으로(0.5초 간격 근사)
+                if (Utils.DistanceXZ(p, hallLast) < 0.004f) { hallRun += Time.deltaTime; hallMax = Mathf.Max(hallMax, hallRun); } else hallRun = 0f;
+                hallLast = p;
+                return w.Ragnar.CountItem("MeadHealthMinor") >= 3;
+            }, 90f);
+            took = TestKit.Waited;
+            tele = Teleports() - tele0;
+            checks.Add($"복도 지나 앞문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele}, 멈춤 최장 {hallMax:0.0}초)",
+                w.Ragnar.CountItem("MeadHealthMinor") >= 3 && frontOpened && tele == 0);
+            closed0 = DoorWay.Closed;
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            checks.Add($"복도로 나와서 문 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
+                dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            GatherTest.Say("!멈춰", null);
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
+
             // 5) 지붕 없는 작업대(③-1): 지붕(wood_roof)을 걷으면 바닐라처럼 못 쓰니 일꾼도 안 만들고 재료가 그대로
             yield return new WaitForSeconds(2f);
             int removed = 0;
