@@ -125,22 +125,22 @@ namespace ValheimHelper
             w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
             yield return new WaitForSeconds(1f);
             w.Ragnar.GetInventory().AddItem(wood, 10);
-            int hops0 = ChestHop.Hops;
+            int hops0 = ChestHop.Hops, sides0 = ChestHop.Sides;
             var far = new Unload(w.Ragnar);
             float hTook = 0f;
             while (hTook < 12f && far.Update(Time.deltaTime)) { hTook += Time.deltaTime; yield return null; }
-            checks.Add($"8m 묶임 넣기: 5초에 상자 앞으로 옮겨 넣음 ({hTook:0.0}초, 옮김 {ChestHop.Hops - hops0}, 들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
-                hTook >= 4.5f && hTook <= 8f && ChestHop.Hops - hops0 == 1 && BaseTest.Carried(w.Ragnar, "Wood") == 0);
+            checks.Add($"8m 묶임 넣기: 5초에 상자 앞으로 옮겨 넣음 ({hTook:0.0}초, 옆 {ChestHop.Sides - sides0}, 옮김 {ChestHop.Hops - hops0}, 들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
+                hTook >= 4.5f && hTook <= 8f && ChestHop.Sides - sides0 >= 1 && ChestHop.Hops - hops0 == 1 && BaseTest.Carried(w.Ragnar, "Wood") == 0);
 
             Chests.TryEdit(w.Chest, inv => inv.AddItem(mead, 5));
             w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
             yield return new WaitForSeconds(1f);
-            hops0 = ChestHop.Hops;
+            hops0 = ChestHop.Hops; sides0 = ChestHop.Sides;
             var pFar = new Prep(w.Ragnar);
             float phTook = 0f;
             while (phTook < 12f && Meads() == 0 && pFar.Update(Time.deltaTime)) { phTook += Time.deltaTime; yield return null; }
-            checks.Add($"8m 묶임 꺼내기: 5초에 상자 앞으로 옮겨 미드 챙김 ({phTook:0.0}초, 옮김 {ChestHop.Hops - hops0}, 들고 {Meads()})",
-                phTook >= 4.5f && phTook <= 8f && ChestHop.Hops - hops0 == 1 && Meads() > 0);
+            checks.Add($"8m 묶임 꺼내기: 5초에 상자 앞으로 옮겨 미드 챙김 ({phTook:0.0}초, 옆 {ChestHop.Sides - sides0}, 옮김 {ChestHop.Hops - hops0}, 들고 {Meads()})",
+                phTook >= 4.5f && phTook <= 8f && ChestHop.Sides - sides0 >= 1 && ChestHop.Hops - hops0 == 1 && Meads() > 0);
         }
     }
 }

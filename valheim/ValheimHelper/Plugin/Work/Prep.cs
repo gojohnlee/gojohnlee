@@ -78,7 +78,7 @@ namespace ValheimHelper
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             if (d > 2.5f && !Steering(m_chest) && !CanReach(at, d, dt))
             {
-                if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); // 5초 거의 제자리면 상자 앞으로(Unload와 같음)
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) m_ai.MoveToPoint(dt, m_hop.Goal(m_chest), 1.8f, d > 10f); // 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
                 return true;
             }
             if (Through(dt, m_chest)) return true;

@@ -63,7 +63,7 @@ namespace ValheimHelper
             if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
             if (!Instant && d > 2.5f && !(m_wayFor == m_chest && m_way.Busy) && !CanReach(at, d))
             {
-                if (!m_hop.Update(dt, m_npc, m_chest, d, "Unload")) m_ai.MoveToPoint(dt, at, 1.8f, d > 10f); // 거점 125m: 멀면 뜀(Prep과 같음), 5초 거의 제자리면 상자 앞으로
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Unload")) m_ai.MoveToPoint(dt, m_hop.Goal(m_chest), 1.8f, d > 10f); // 거점 125m: 멀면 뜀(Prep과 같음), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로
                 return true;
             }
             if (m_wayFor != m_chest) { m_way = new DoorWay(); m_wayFor = m_chest; }
@@ -143,30 +143,48 @@ namespace ValheimHelper
     }
 
     /// <summary>
-    /// 상자 가기 막힘(사용자 10-31): 상자에 가까워지지 않고 거의 제자리(1.5m 안)로 NearStuckSeconds(5초)면 상자 앞으로 옮긴다(GatherJob 넣기와 같음).
-    /// 굽은 길을 돌아 걷는 중은 아님. 사이를 건축물이 가리면(집 안 상자, DoorWay.Blocked) 벽 너머라 옮기지 않는다. Unload·Prep이 씀.
+    /// 상자 가기 막힘(사용자 10-31): 상자에 가까워지지 않고 거의 제자리(1.5m 안)로 2.5초면 상자 옆 접근점(StuckHop.Side 90°, 다음엔 -90°)으로 돌아 보고
+    /// (MachineStep.Approach와 같음), NearStuckSeconds(5초)면 상자 앞으로 옮긴다(GatherJob 넣기와 같음). 굽은 길을 돌아 걷는 중은 아님.
+    /// 사이를 건축물이 가리면(집 안 상자, DoorWay.Blocked) 벽 너머라 돌지도 옮기지도 않는다. Unload·Prep이 씀.
     /// </summary>
     internal sealed class ChestHop
     {
+        const float SideSeconds = 2.5f, SideRadius = 1.5f;
         Container m_for;
         Vector3 m_from;
+        Vector3? m_side;
+        int m_sides;
         float m_best = float.MaxValue, m_time;
-        /// <summary>시험용: 옮긴 수.</summary>
-        internal static int Hops;
+        /// <summary>시험용: 옮긴 수, 옆으로 돈 수.</summary>
+        internal static int Hops, Sides;
+
+        /// <summary>걸어갈 곳: 옆 접근점을 도는 중이면 거기, 아니면 상자.</summary>
+        public Vector3 Goal(Container chest) => m_side ?? chest.transform.position;
 
         /// <returns>true = 이번에 옮김.</returns>
         public bool Update(float dt, WorkerNpc npc, Container chest, float d, string what)
         {
             Vector3 pos = npc.transform.position;
-            if (m_for != chest) { m_for = chest; m_best = float.MaxValue; }
+            if (m_for != chest) { m_for = chest; m_best = float.MaxValue; m_side = null; m_sides = 0; }
+            if (m_side.HasValue && Utils.DistanceXZ(m_side.Value, pos) < 0.4f) m_side = null; // 옆 접근점에 닿음 → 거기서 곧장
             if (d < m_best - 0.3f || Utils.DistanceXZ(m_from, pos) >= 1.5f) { m_best = Mathf.Min(m_best, d); m_from = pos; m_time = 0f; return false; }
             m_time += dt;
-            if (m_time < (float)Core.Work.StuckHop.NearStuckSeconds || DoorWay.Blocked(npc, chest)) return false;
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(chest.transform.position)} → 상자 앞으로");
-            npc.TeleportTo(chest.transform.position + chest.transform.forward * 1.5f, npc.transform.rotation, false);
+            if (m_time < SideSeconds || DoorWay.Blocked(npc, chest)) return false;
+            Vector3 at = chest.transform.position;
+            if (m_time < (float)Core.Work.StuckHop.NearStuckSeconds)
+            {
+                if (m_side.HasValue || m_sides >= 2) return false;
+                var p = Core.Work.StuckHop.Side(pos.x, pos.z, at.x, at.z, SideRadius, m_sides++);
+                m_side = new Vector3((float)p.X, at.y, (float)p.Z);
+                Sides++;
+                Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(at)} → 옆({Core.Work.StuckHop.SideAngles[m_sides - 1]:0}°)으로");
+                return false;
+            }
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(Goal(chest))} → 상자 앞으로");
+            npc.TeleportTo(at + chest.transform.forward * 1.5f, npc.transform.rotation, false);
             WorkerAI.StuckTeleports++;
             Hops++;
-            m_time = 0f; m_best = float.MaxValue;
+            m_time = 0f; m_best = float.MaxValue; m_side = null;
             return true;
         }
     }
