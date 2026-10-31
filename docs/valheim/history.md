@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 304 · 10-31 · 멀티 시험용 전용 서버 켜기·끄기 스크립트
+
+**요약**
+
+- 멀티 시험 첫 조각: 같은 PC 전용 서버를 켜고 끄는 스크립트(scripts/vh-server.ps1) — 모드가 서버에서 오류 없이 켜지고 끌 때 월드 저장됨.
+
+**자세히**
+
+- 전용 서버는 이미 설치돼 있었음(Steam 공통 폴더 "Valheim dedicated server"). install이 게임 폴더의 BepInEx·doorstop과 dist DLL을 복사.
+- start: 그래픽 없이, 공개 안 함, 월드 VhTest는 %TEMP%\vh-server에 따로(평소 월드와 안 섞임), 127.0.0.1:2456 비번 vhtest1. Unity 로그는 -logFile로 server.log에.
+- 확인: 모드 로드·NPC 프리팹 준비·월드 생성·"Game server connected", 예외 0. stop(창 닫기 신호)으로 월드가 저장됨(_main.1.ok). 커밋 12a1c50.
+- 다음: 손님 자동 접속(시험 코드) + 서버 쪽 null 예외 확인.
+
 ### 회차 303 · 10-31 · 전체 회귀 마지막 묶음(실제 재시작) 통과
 
 **요약**
