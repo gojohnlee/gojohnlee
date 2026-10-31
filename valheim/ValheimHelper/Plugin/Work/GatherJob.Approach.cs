@@ -220,6 +220,8 @@ namespace ValheimHelper
 
         /// <summary>시험용: 막힘 복구로 목표 쪽 순간이동한 횟수.</summary>
         public static int Hops;
+        /// <summary>시험용: 마지막 목표 쪽 순간이동의 목표 자리.</summary>
+        public static Vector3 LastHopDest;
         /// <summary>시험용: 거점 근처 시험에서 2)를 실제로 돌려 보려고 플레이어 64m 판정을 끈다. 평소 false.</summary>
         public static bool TestIgnorePlayers;
         /// <summary>시험용: TestIgnorePlayers 동안 이 자리에 플레이어가 있는 것으로 본다(멀리선 이동 생략 중 다가옴 흉내). 평소 null.</summary>
@@ -257,6 +259,7 @@ namespace ValheimHelper
         {
             if (!LandNear(dest, out why)) return false;
             Hops++;
+            LastHopDest = dest;
             WorkerAI.StuckTeleports++;
             return true;
         }

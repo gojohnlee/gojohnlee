@@ -106,7 +106,9 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             Vector3 p = w.Ragnar.transform.position;
             GatherJob.TestNoFarStuck = false;
-            checks.Add($"자리를 옮김 ({Utils.DistanceXZ(before, p):0.0}m)", Utils.DistanceXZ(before, p) > 1f);
+            // 12m를 치워도 묶인 채 3.4m 앞 목표에 막히면 0.4m만 옮겨 목표 3m 자리에 선다(회차 297) → 그것도 옮긴 것
+            float toDest = Utils.DistanceXZ(p, GatherJob.LastHopDest);
+            checks.Add($"자리를 옮김 ({Utils.DistanceXZ(before, p):0.0}m, 목표까지 {toDest:0.0}m)", Utils.DistanceXZ(before, p) > 1f || toDest < 3.6f);
             bool ground = ZoneSystem.instance.GetSolidHeight(p, out float h);
             checks.Add($"단단한 땅 위 (높이 {p.y:0.0}/땅 {h:0.0}, 물 {Floating.GetLiquidLevel(p):0.0})", ground && Mathf.Abs(p.y - h) < 1.5f && Floating.GetLiquidLevel(p) < h + 0.1f);
             checks.Add("깃발 강제 복귀 아님", GatherJob.Rescues == rescues0);
@@ -223,7 +225,7 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => !(ai.Job is GatherJob), 60f);
             checks.Add($"넣고 일을 끝냄 ({ai.Current}/{ai.Job?.StepName})", TestKit.Ok);
             bool said = false;
-            for (int i = heard0; i < w.Heard.Count; i++) said |= w.Heard[i].Contains("갈 수가 없") || w.Heard[i].Contains("못 가겠");
+            for (int i = heard0; i < w.Heard.Count; i++) said |= TestKit.SaidKey(w.Heard[i], w.Ragnar.Personality, "cantReach");
             checks.Add("\"갈 수가 없어요\" 말함", said);
             int after = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
             checks.Add($"나무 개수 그대로 (짐 {Wood(w.Ragnar)}, 그만둘 때 합 {total} → 지금 합 {after})", after == total && Wood(w.Ragnar) == 0);

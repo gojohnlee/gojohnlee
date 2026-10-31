@@ -876,6 +876,20 @@ namespace ValheimHelper
         /// <summary>NPC 인스턴스(이름으로, 다시 만들어진 것도).</summary>
         public static WorkerNpc Npc(Core.Npc.Personality p) => WorkerNpc.All.Find(n => n != null && n.Personality == p);
 
+        /// <summary>들은 말이 그 키들의 대사 중 하나인지({자리표시자}는 빼고 나머지 조각이 모두 들어 있으면). 대사를 늘려도 낱말 찾기처럼 깨지지 않는다.</summary>
+        public static bool SaidKey(string heard, Core.Npc.Personality p, params string[] keys)
+        {
+            foreach (var key in keys)
+                foreach (var line in Core.Npc.Speech.Options(p, key))
+                {
+                    bool all = true;
+                    foreach (var part in System.Text.RegularExpressions.Regex.Split(line, @"\{[^}]*\}"))
+                        if (part.Trim().Length > 0 && !heard.Contains(part.Trim())) { all = false; break; }
+                    if (all) return true;
+                }
+            return false;
+        }
+
         public static string Name(WorkerNpc npc) => npc != null ? npc.NpcName : "?";
     }
 }

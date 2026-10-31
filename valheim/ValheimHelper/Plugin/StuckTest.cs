@@ -103,7 +103,7 @@ namespace ValheimHelper
             // 줄지만 않으면 됨: 묶인 채 팔 닿는 데 떨어진 것을 주우면 는다(회차 215: 4 → 5·6, 떨어짐 기다림 Collect)
             checks.Add($"짐 그대로 ({items0} → {w.Ragnar.GetInventory().NrOfItems()})", w.Ragnar.GetInventory().NrOfItems() >= items0);
             yield return new WaitForSeconds(1f);
-            checks.Add("구조 대사를 함", w.Heard.Exists(h => h.Contains("오딘") || h.Contains("신들") || h.Contains("빠져나왔")));
+            checks.Add("구조 대사를 함", w.Heard.Exists(h => TestKit.SaidKey(h, w.Ragnar.Personality, "rescue")));
 
             float waited = skipAt;
             for (; waited < 300f && GatherJob.Rescues == rescues0; waited += 10f)
@@ -121,7 +121,7 @@ namespace ValheimHelper
             checks.Add($"거점에 있음 ({d1:0.0}m)", d1 < 5f);
             // 음식이 떨어지면 최대 체력이 줄어 그만큼 줄 수 있다(회차 72: 71 → 69, 최대도 69) → 최대보다 낮아졌을 때만 다친 것
             checks.Add($"체력 그대로 ({hp0:0} → {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0})", Mathf.Abs(w.Ragnar.GetHealth() - hp0) < 1f || w.Ragnar.GetHealth() >= w.Ragnar.GetMaxHealth() - 0.5f);
-            checks.Add("막힘 대사를 함", w.Heard.Exists(h => h.Contains("막") || h.Contains("꼼짝")));
+            checks.Add("막힘 대사를 함", w.Heard.Exists(h => TestKit.SaidKey(h, w.Ragnar.Personality, "stuck", "rescue")));
             yield return new WaitForSeconds(3f);
             checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);
         }
