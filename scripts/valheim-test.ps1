@@ -40,7 +40,7 @@ if ($lw -ge 2400) { throw "다른 시험(PID $lp)이 40분 넘게 안 끝남 —
 Set-Content $lock $PID
 # 지난 시험에서 멈춘 게임이 남아 있으면 새 게임이 안 뜨고 아래 대기가 끝나지 않는다(2026-10-21 루프 회차 9).
 # Steam을 관리자로 켜 두면 게임도 관리자라 여기서 못 끈다 → 바로 알리고 멈춘다.
-$old = @(Get-Process | Where-Object { $_.ProcessName -like 'valheim*' })
+$old = @(Get-Process | Where-Object { $_.ProcessName -eq 'valheim' })
 if ($old) {
     if ($env:VH_HARNESS -eq '1') { throw 'Harness refuses to terminate an existing game.' }
     try { $old | Stop-Process -Force -ErrorAction Stop; Start-Sleep 5; Write-Host '남아 있던 게임을 껐습니다.' }
@@ -81,7 +81,7 @@ $reports = @()
 foreach ($Run in $runs) {
 $runStarted = Get-Date
 $w = 0   # 앞 실행의 게임 프로세스가 완전히 끝날 때까지(되돌리기 조건)
-while ((Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) -and $w -lt 60) { Start-Sleep 2; $w += 2 }
+while ((Get-Process | Where-Object { $_.ProcessName -eq 'valheim' }) -and $w -lt 60) { Start-Sleep 2; $w += 2 }
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
 
 # 시험 월드·캐릭터 원본 되돌리기(사용자 결정 2026-10-22): 실행마다 한 번, 게임이 완전히 꺼진 뒤, 시험 전용 경로일 때만.
@@ -91,7 +91,7 @@ if ($env:VH_RESET -ne '0') {
     $save = Join-Path $env:USERPROFILE 'AppData\LocalLow\IronGate\Valheim'
     $okWorlds = @('te4st41') + @(($env:VH_TEST_WORLDS -split ';') | Where-Object { $_ })   # 시험 월드로 확인된 이름만
     if ($okWorlds -notcontains $World -or $Char -notmatch '^vhtest') { throw "원본 되돌리기 중단: 시험 전용 월드·캐릭터가 아님(월드 $World, 캐릭터 $Char). 되돌리지 않으려면 VH_RESET=0" }
-    if (Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) { throw '원본 되돌리기 중단: 게임이 아직 켜져 있음' }
+    if (Get-Process | Where-Object { $_.ProcessName -eq 'valheim' }) { throw '원본 되돌리기 중단: 게임이 아직 켜져 있음' }
     $wdir = Join-Path $save "worlds_local\$World"
     $base = Join-Path $env:USERPROFILE "vh-test-base\worlds_local\$World"
     if (-not (Test-Path $base)) {
@@ -110,7 +110,9 @@ if ($env:VH_RESET -ne '0') {
         Where-Object { $_.Name -like "$Char.fch*" -or $_.Name -like "${Char}_backup*.fch" } | Remove-Item -Force   # 게임 자동 백업도
     Write-Host "시험 월드 $World 원본으로 되돌림, 시험 캐릭터 $Char 새로"
 }
-Set-Content "$plugin\autotest.txt" ("world=$World;char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $(if ($env:VH_QUICK -eq '1') { 'quick;' } else { '' }) + $(if ($env:VH_FLOOR -eq '1') { 'floor;' } else { '' }) + $(if ($env:VH_BIOME) { "biome=$($env:VH_BIOME);" } else { '' }) + $Run)   # 늪 회귀 $env:VH_BIOME='swamp'(밭 시험 등은 원래 자리). 약식 시험 $env:VH_QUICK='1'(긴 시험만 짧게, FAIL이면 정식으로 다시). 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
+# 멀티 시험: $env:VH_JOIN='127.0.0.1:2456'(+ $env:VH_JOINPASS, 기본 vhtest1)이면 월드 대신 전용 서버(scripts/vh-server.ps1 start)에 손님으로 들어간다.
+$Enter = if ($env:VH_JOIN) { "join=$($env:VH_JOIN);pass=$(if ($env:VH_JOINPASS) { $env:VH_JOINPASS } else { 'vhtest1' });" } else { "world=$World;" }
+Set-Content "$plugin\autotest.txt" ("${Enter}char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $(if ($env:VH_QUICK -eq '1') { 'quick;' } else { '' }) + $(if ($env:VH_FLOOR -eq '1') { 'floor;' } else { '' }) + $(if ($env:VH_BIOME) { "biome=$($env:VH_BIOME);" } else { '' }) + $Run)   # 늪 회귀 $env:VH_BIOME='swamp'(밭 시험 등은 원래 자리). 약식 시험 $env:VH_QUICK='1'(긴 시험만 짧게, FAIL이면 정식으로 다시). 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
 Write-Host 'Valheim Helper 설치됨'
 
 # BepInEx 콘솔(검은 창)이 게임과 같이 뜨지 않게 끈다(로그는 LogOutput.log에 그대로 남는다). 설정 파일은 첫 실행 뒤에 생긴다.
@@ -137,7 +139,7 @@ Write-Host "게임 실행 중... 시험 월드($World)로 저절로 들어갑니
 Write-Host '(그 월드가 없으면 직접 테스트용 월드에 들어가 주세요)'
 Write-Host "3초 뒤 시험($Run)이 저절로 시작되고, 시험이 끝나면(최대 15분) 게임이 저절로 꺼집니다."
 Write-Host "(20분이 지나도 안 꺼지면 직접 꺼 주세요)"
-function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -like 'valheim*' }) }
+function Test-Game { [bool](Get-Process | Where-Object { $_.ProcessName -eq 'valheim' }) }
 $t = 0
 if ($Min) {
     # 모드가 올라오기 전(유니티 시작 화면)에도 창을 바로 내린다. 그 뒤는 모드가 첫 시험 전까지 내려 둔다.
@@ -147,7 +149,7 @@ if ($Min) {
 '@
     $seen = 0
     while ($t -lt 180 -and $seen -lt 20) {
-        $p = Get-Process | Where-Object { $_.ProcessName -like 'valheim*' -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+        $p = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
         if ($p) { $seen++; if (-not [VH.Win]::IsIconic($p.MainWindowHandle)) { [void][VH.Win]::ShowWindowAsync($p.MainWindowHandle, 6) } }
         Start-Sleep -Milliseconds 250; $t += 0.25
     }
@@ -159,15 +161,15 @@ while ((Test-Game) -and $t -lt 1800) {   # 30분 넘으면 멈춘 것으로 보�
     Start-Sleep 3; $t += 3
     # 종료 시작("Game - OnApplicationQuit", 6번 다 있음 — ZNet OnDestroy는 없는 실행도 있었음)이 이번 실행 로그에 찍힌 뒤 로그가 2분 넘게 멈춰 있으면
     # 종료 멈춤(10-26 세 번, 응답 없음) → 30분 기다리지 않고 끈다(E038). 멈춘 게임이 로그를 쥐고 있어 Select-String은 못 읽음 → Get-Content.
-    $gp = Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Select-Object -First 1
+    $gp = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Select-Object -First 1
     $li = Get-Item $gameLog -ErrorAction SilentlyContinue
     if ($gp -and $li -and $li.LastWriteTime -gt $gp.StartTime -and ((Get-Date) - $li.LastWriteTime).TotalSeconds -gt 120 -and
         @((Get-Content $gameLog -Encoding UTF8 -ErrorAction SilentlyContinue) -match 'Game - OnApplicationQuit').Count) { $exitHang = $true; break }
 }
 $runTimedOut = Test-Game
 if ($runTimedOut) {
-    Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Stop-Process -Force -ErrorAction SilentlyContinue
-    Get-Process | Where-Object { $_.ProcessName -like 'valheim*' } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue   # 로그 파일을 놓을 때까지
+    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue   # 로그 파일을 놓을 때까지
 }
 
 # 4) 결과 → 짧은 요약만 화면·클립보드에(토큰 아끼기, 2026-10-21). 자세한 건 diag.txt·LogOutput.log를 FAIL일 때만 연다.
@@ -203,6 +205,14 @@ if (Test-Path $log) {
         $report += "  $e"
     }
 } else { $report += '(LogOutput.log 없음: BepInEx가 로드되지 않았음)' }
+if ($env:VH_JOIN) {   # 멀티 시험: 서버 쪽 모드 로그의 오류도(손님이 들어온 동안 서버 null 예외 0인지)
+    $slog = Join-Path ${env:ProgramFiles(x86)} 'Steam\steamapps\common\Valheim dedicated server\BepInEx\LogOutput.log'
+    if (Test-Path $slog) {
+        $serrs = @(Get-Content $slog -Encoding UTF8 | Where-Object { $_ -match 'Error|Exception' } | ForEach-Object { $_.Trim() })
+        $report += "서버 로그 오류 $($serrs.Count)줄"
+        foreach ($e in ($serrs | Select-Object -Unique -First 5)) { $report += "  $(if ($e.Length -gt 200) { $e.Substring(0, 200) + '...' } else { $e })" }
+    } else { $report += "(서버 LogOutput.log 없음: $slog)" }
+}
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
 if ($exitHang) { $report += '게임 종료 멈춤: 종료 시작(OnApplicationQuit) 뒤 로그가 2분 멈춰 안 꺼져 강제 종료(Errors.txt E038 — 발생 횟수 더하기). 시험 판정은 그대로' }
 elseif ($runTimedOut) { $report += '게임이 30분 안에 안 꺼져 강제 종료 — 중단(PASS로 치지 않음)' }
