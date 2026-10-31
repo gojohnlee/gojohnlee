@@ -286,6 +286,33 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
             checks.Add($"나가서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
+
+            // 5) 지붕 없는 작업대(③-1): 지붕(wood_roof)을 걷으면 바닐라처럼 못 쓰니 일꾼도 안 만들고 재료가 그대로
+            yield return new WaitForSeconds(2f);
+            int removed = 0;
+            foreach (var g in made)
+            {
+                if (g == null) continue;
+                string p = Utils.GetPrefabName(g);
+                if (p == "smelter") ZNetScene.instance.Destroy(g); // 2단계가 작업대 자리에 놓은 것
+                else if (p == "wood_roof") { ZNetScene.instance.Destroy(g); removed++; }
+            }
+            yield return new WaitForSeconds(1f);
+            bench = Put(made, "piece_workbench", GatherTest.Ground(c + r * 1.2f - f * 1.5f), Quaternion.LookRotation(-r));
+            cs = bench != null ? bench.GetComponent<CraftingStation>() : null;
+            yield return new WaitForSeconds(2f);
+            foreach (var req in bow.m_resources) TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount);
+            int bows0 = Stock(w, "Bow"), fails0 = CraftStep.RoofFails;
+            CraftStep.TestCheckRoof = true;
+            try
+            {
+                GatherTest.Say($"!{w.Ragnar.NpcName} {bowName} 1", null);
+                yield return TestKit.WaitFor(() => CraftStep.RoofFails > fails0 || Stock(w, "Bow") > bows0, 120f);
+                bool usable = cs != null && cs.CheckUsable(w.Player, false);
+                checks.Add($"지붕 걷은 작업대에선 활 안 만듦 (지붕 {removed}/9 걷음, 활 {Stock(w, "Bow")}, 바닐라 CheckUsable {(usable ? "됨" : "안 됨")}, 실패 {CraftStep.RoofFails - fails0}, {TestKit.Waited:0}초)",
+                    removed == 9 && !usable && Stock(w, "Bow") == bows0 && CraftStep.RoofFails > fails0);
+            }
+            finally { CraftStep.TestCheckRoof = false; GatherTest.Say("!멈춰", null); }
         }
 
         static int Teleports() => WorkerAI.StuckTeleports + WorkerAI.TrapRescues + WorkerAI.PitEdgeRescues
