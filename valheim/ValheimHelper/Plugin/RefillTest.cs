@@ -52,6 +52,11 @@ namespace ValheimHelper
             var status = Brain.Refill.Status(it => Departures.RefillStock(it, w.Ragnar.Home), Brain.Sets, GatherJob.ItemLabel);
             checks.Add($"!계속채워 목록: 기준치 그대로·현황 줄 ({string.Join(", ", status.ToArray())})",
                 Brain.Refill.Count == 1 && status.Count == 1 && status[0].Contains("0/20 □□□□□□□□□□"));
+            RefillWindow.Toggle();
+            bool shown = RefillWindow.Open && RefillWindow.Shown.Count == 1 && RefillWindow.Shown[0].Contains("0/20 □□□□□□□□□□");
+            string shownText = string.Join(", ", new List<string>(RefillWindow.Shown).ToArray());
+            RefillWindow.Toggle();
+            checks.Add($"F7 창: 같은 줄 ({shownText})", shown && !RefillWindow.Open);
 
             Departures.TestRefillNow();
             yield return new WaitForSeconds(1f);

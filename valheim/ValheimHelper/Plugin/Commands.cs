@@ -207,10 +207,7 @@ namespace ValheimHelper
         /// <summary>!계속채워 목록(사용자 10-31): 거점 채우기 줄 + "개인:" 말한 사람 것. 없으면 keepNone.</summary>
         static void TellRefill(Speaker who, WorkerNpc npc)
         {
-            Vector3 home = npc.Home;
-            var parts = Brain.Refill.Status(it => Departures.RefillStock(it, home), Brain.Sets, GatherJob.ItemLabel);
-            var mine = PersonalChests.StatusLines(PersonalChests.OwnerOf(who), home);
-            if (mine.Count > 0) parts.Add("개인: " + string.Join(", ", mine.ToArray()));
+            var parts = RefillWindow.Lines(npc.Home, PersonalChests.OwnerOf(who), false);
             if (parts.Count == 0) { npc.Say("keepNone"); return; }
             npc.Say("keepList", new Dictionary<string, string> { ["list"] = string.Join(", ", parts.ToArray()) });
         }

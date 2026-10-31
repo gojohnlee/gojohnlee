@@ -95,6 +95,18 @@ namespace ValheimHelper
 
         bool m_updateFailed;
 
+        bool m_guiFailed;
+
+        void OnGUI()
+        {
+            try { RefillWindow.OnGUI(); }
+            catch (Exception e)
+            {
+                if (!m_guiFailed) Log.LogError("OnGUI 오류(같은 오류는 다시 적지 않음): " + e);
+                m_guiFailed = true;
+            }
+        }
+
         void OnApplicationQuit() => SpeechCount.Save();
 
         void Update()
@@ -117,6 +129,7 @@ namespace ValheimHelper
                 SharedCraft.Tick();
                 MapSense.Tick(UnityEngine.Time.deltaTime);
                 MapIcons.Update(UnityEngine.Time.deltaTime);
+                RefillWindow.Update(UnityEngine.Time.deltaTime);
                 TestRunner.UpdateAutoRun();
             }
             catch (Exception e)
