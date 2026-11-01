@@ -722,7 +722,10 @@ while ($true) {
     if ($last -match '^LOOP: NEED_USER') { $stop = '사용자 확인 필요' }
     elseif ($last -match '^LOOP: ALLDONE') {
         $n = Get-PendingRequests
-        if ($n) { Log "ALLDONE인데 UserRequest.txt 구분선 아래 ${n}줄 남음 → 할 일 있음(다음 회차)" } else { $stop = '할 일 없음' }
+        $o = @(G show 'origin/valheim:docs/valheim/Errors.txt' | Where-Object { $_ -match '^E\d+ / (관찰 중|조사 중)' }).Count
+        if ($n) { Log "ALLDONE인데 UserRequest.txt 구분선 아래 ${n}줄 남음 → 할 일 있음(다음 회차)" }
+        elseif ($o) { Log "ALLDONE인데 Errors.txt 관찰 중·조사 중 ${o}개 → 할 일 있음(사용자 11-01, 다음 회차)" }
+        else { $stop = '할 일 없음' }
     }
     elseif ($last -match '^LOOP: FAIL (\S+)') {
         if ($st.lastFail -eq $Matches[1]) { $stop = "같은 시험 2회차 연속 FAIL($($Matches[1]))" }
