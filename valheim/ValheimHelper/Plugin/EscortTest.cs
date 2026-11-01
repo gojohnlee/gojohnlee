@@ -129,10 +129,11 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => ai.Current == WorkerAI.Mode.Work && ai.Job != null, 10f);
             IWorkerJob job = ai.Job;
             checks.Add($"안전한 나무는 혼자 ({ai.EscortName ?? "동행 없음"})", ai.EscortName == null);
+            string before = $"호위병 전 {guard.Ai.Current}·{guard.Ai.Job?.Label ?? "-"}·대기열 {guard.Ai.Queue.Count}·쉼 {Departures.GuardIdle()}";
             GatherTest.Say($"!{npc.NpcName} 같이 가자", null);
             yield return new WaitForSeconds(1f);
             string state = Commands.StateOf(npc);
-            checks.Add($"일하는 중 \"!같이 가자\" → 같은 일 + 호위병 동행 ({ai.Current}, {ai.EscortName ?? "동행 없음"})", ai.Job == job && Together(npc, guard));
+            checks.Add($"일하는 중 \"!같이 가자\" → 같은 일 + 호위병 동행 ({ai.Current}, {ai.EscortName ?? "동행 없음"}, 같은 일 {ai.Job == job}, {before}, 호위병 후 {guard.Ai.Current}·따라감 {guard.Ai.FollowTarget == npc.GetZDOID()})", ai.Job == job && Together(npc, guard));
             checks.Add($"!상태에 동행 이름 ({state})", state.Contains(guard.NpcName));
             yield return TestKit.WaitFor(() => ai.EscortPhase == Escort.Phase.Leading, 30f);
 
