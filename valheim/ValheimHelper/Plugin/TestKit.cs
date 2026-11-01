@@ -73,6 +73,27 @@ namespace ValheimHelper
         static readonly HashSet<string> s_stayHome = new HashSet<string> { "vh_farmtest", "vh_settletest", "vh_pittest" };
         static Vector3? s_origin, s_biomeSpot;
 
+        static Vector3? s_firstPos;
+        static Quaternion s_firstRot;
+        static bool s_movedBack;
+
+        /// <summary>
+        /// 자동 시험마다(GoSite 앞, E055 회차 343): 첫 시험 자리·방향을 기억했다가 앞 시험이 플레이어를 옮기거나 돌려 두었으면(1m·5° 넘게, 30m 안) 되돌린다.
+        /// 거점·상자·시험 물건이 플레이어 자리와 앞 방향으로 놓여, 앞 시험 뒤엔 혼자 돌릴 때와 다른 땅(나무·비탈)이 걸렸다.
+        /// 옮겼으면 true(텔레포트가 끝날 때까지 기다린다). 바이옴 회귀는 GoSite가 옮긴다.
+        /// </summary>
+        public static bool GoFirstSpot(Player player)
+        {
+            if (s_firstPos == null) { s_firstPos = player.transform.position; s_firstRot = player.transform.rotation; return false; }
+            if (RunBiome != Heightmap.Biome.None || s_movedBack) { s_movedBack = false; return false; } // 한 시험에 한 번(방향이 덜 맞아도 돌지 않게)
+            float d = Utils.DistanceXZ(player.transform.position, s_firstPos.Value), a = Quaternion.Angle(player.transform.rotation, s_firstRot);
+            if ((d <= 1f && a <= 5f) || d > 30f) return false;
+            Plugin.Log.LogInfo($"시험 캐릭터를 첫 시험 자리로 되돌림: {d:0.0}m·{a:0}° 어긋남");
+            player.TeleportTo(s_firstPos.Value, s_firstRot, false);
+            s_movedBack = true;
+            return true;
+        }
+
         public static void SetRunBiome(string name)
         {
             try { RunBiome = (Heightmap.Biome)System.Enum.Parse(typeof(Heightmap.Biome), name, true); }

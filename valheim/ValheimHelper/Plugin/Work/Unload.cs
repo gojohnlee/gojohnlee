@@ -110,6 +110,14 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>시험용(E055): 손 거리 넣기를 건너뛴 까닭.</summary>
+        internal string Why()
+        {
+            if (m_chest == null) return "상자 안 고름";
+            var at = m_chest.transform.position;
+            return $"상자까지 {Utils.DistanceXZ(at, m_npc.transform.position):0.0}m(최소 {m_best:0.0}) 높이 차 {at.y - m_npc.transform.position.y:0.0} 제자리 {m_still:0.0}초 문막힘 {DoorWay.Blocked(m_npc, m_chest)} 문길 {(m_wayFor == m_chest && m_way.Busy)} 목표 {m_hop.Goal(m_chest)}";
+        }
+
         static int Stacks(Inventory inv)
         {
             int n = 0;

@@ -55,12 +55,16 @@ namespace ValheimHelper
             Vector3 c = w.Chest.transform.position, dir = w.Player.transform.forward;
             dir.y = 0f; dir.Normalize();
             Vector3 side = Vector3.Cross(Vector3.up, dir);
+            // 상자 앞 0~8m 길의 나무·통나무(앞 시험이 남긴 것 포함)를 치운다: 처음 자리마다 땅이 달라 8m 자리가 나무 위면 일꾼이 우듬지에 올라 막힘(E055 회차 343)
+            if (GatherTest.ClearWood(c + dir * 5f, 6f) > 0) yield return new WaitForSeconds(0.5f);
             HopTest.Speeds(w.Ragnar, saved, true);
             hold(w.Ragnar);
-            w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 3.5f), Quaternion.LookRotation(-dir), false);
+            Back();
             made.Add(Object.Instantiate(lp, GatherTest.Ground(c + dir * 1.7f) + Vector3.up * 0.4f, Quaternion.FromToRotation(Vector3.up, side)));
             yield return new WaitForSeconds(2f);
             float Dist() => Utils.DistanceXZ(c, w.Ragnar.transform.position);
+            // 단계마다 3.5m 자리로 다시 세운다: 묶여도 통나무에 밀려 손 거리(4m) 밖으로 나가면 다음 단계가 상자 앞 옮기기로 넘어가 FAIL(E055 회차 343 — 4.4m)
+            void Back() => w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 3.5f), Quaternion.LookRotation(-dir), false);
             w.Ragnar.GetInventory().AddItem(wood, 10);
             checks.Add($"상자 앞 3.5m·나무 10 들고 묶임 ({Dist():0.0}m, 들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
                 Dist() > 2.5f && Dist() <= 4f && BaseTest.Carried(w.Ragnar, "Wood") == 10);
@@ -70,11 +74,14 @@ namespace ValheimHelper
             for (float t = 0f; t < 4f; t += Time.deltaTime) { before.Update(Time.deltaTime); yield return null; }
             checks.Add($"고치기 전: 4초 동안 못 넣음 (들고 {BaseTest.Carried(w.Ragnar, "Wood")}, 상자 {GatherTest.CountBase(w.Home, "Wood")})", BaseTest.Carried(w.Ragnar, "Wood") == 10);
 
+            Back();
+            yield return new WaitForSeconds(1f);
             Unload.TestNoReach = false;
             int reached0 = Unload.Reached;
             var after = new Unload(w.Ragnar);
             float took = 0f;
             while (took < 10f && after.Update(Time.deltaTime)) { took += Time.deltaTime; yield return null; }
+            if (took > 2f) TestRunner.Log($"  E055 손 거리 넣기 건너뛴 까닭: {after.Why()}");
             checks.Add($"고친 뒤: 그 자리에서 넣음 ({took:0.0}초 ≤ 2, 손 거리 넣기 {Unload.Reached - reached0}, 상자까지 {Dist():0.0}m)",
                 took <= 2f && Unload.Reached - reached0 >= 1);
             checks.Add($"나무 10 모두 상자로 (들고 {BaseTest.Carried(w.Ragnar, "Wood")}, 상자 {GatherTest.CountBase(w.Home, "Wood")})",
@@ -86,11 +93,15 @@ namespace ValheimHelper
             DropMeads(w.Ragnar.GetInventory());
             Chests.TryEdit(w.Chest, inv => inv.AddItem(mead, 5));
             int Meads() => BaseTest.Carried(w.Ragnar, "MeadHealthMinor");
+            Back();
+            yield return new WaitForSeconds(1f);
             Prep.TestNoReach = true;
             var pBefore = new Prep(w.Ragnar);
             for (float t = 0f; t < 4f; t += Time.deltaTime) { pBefore.Update(Time.deltaTime); yield return null; }
             checks.Add($"꺼내기 고치기 전: 4초 동안 못 챙김 (들고 {Meads()}, 상자까지 {Dist():0.0}m)", Meads() == 0);
 
+            Back();
+            yield return new WaitForSeconds(1f);
             Prep.TestNoReach = false;
             int pReached0 = Prep.Reached;
             var pAfter = new Prep(w.Ragnar);
@@ -107,11 +118,15 @@ namespace ValheimHelper
                 bool used = false;
                 return _ => { if (used) return new List<Tidy.Move>(); used = true; return new List<Tidy.Move> { new Tidy.Move { From = w.Chest, To = w.Chest, Name = "MeadHealthMinor" } }; };
             }
+            Back();
+            yield return new WaitForSeconds(1f);
             TidyJob.TestNoReach = true;
             var tBefore = new TidyJob(w.Ragnar, Once());
             for (float t = 0f; t < 4f; t += Time.deltaTime) { tBefore.Update(Time.deltaTime); yield return null; }
             checks.Add($"정리 고치기 전: 4초 동안 못 꺼냄 (들고 {Meads()}, 옮김 {tBefore.Moved})", Meads() == 0 && tBefore.Moved == 0);
 
+            Back();
+            yield return new WaitForSeconds(1f);
             TidyJob.TestNoReach = false;
             int tReached0 = TidyJob.Reached;
             var tAfter = new TidyJob(w.Ragnar, Once());

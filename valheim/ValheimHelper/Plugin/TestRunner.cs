@@ -212,6 +212,7 @@ namespace ValheimHelper
             s_autoWait += Time.deltaTime;
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
             if (!s_leftNoBuild) { s_leftNoBuild = true; if (TestKit.LeaveNoBuild(player)) { s_autoWait = -3f; return; } } // 시작 제단 밖으로 한 번
+            if (TestKit.GoFirstSpot(player)) { s_autoWait = -3f; return; } // 앞 시험이 옮기거나 돌린 플레이어를 첫 자리·방향으로(E055)
             if (TestKit.GoSite(player, s_autoQueue.Peek())) { s_autoWait = -3f; return; } // 늪 회귀면 늪 평지로(원래 자리 시험은 돌아옴)
             string cmd = s_autoQueue.Dequeue();
             if (s_halt != null && Begin(null, cmd))
