@@ -262,13 +262,14 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             checks.Add($"꺼내기 단계: 문 닫힘·일꾼 밖·미드 없음 (s_state {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 미드 {w.Ragnar.CountItem("MeadHealthMinor")})",
                 dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position) && w.Ragnar.CountItem("MeadHealthMinor") == 0);
-            tele0 = Teleports(); entered0 = DoorWay.Entered;
+            tele0 = Teleports(); entered0 = DoorWay.Entered; int doors0 = ChestHop.Doors;
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() => w.Ragnar.CountItem("MeadHealthMinor") >= 3, 90f);
             took = TestKit.Waited;
             tele = Teleports() - tele0;
             checks.Add($"안 상자에서 체력 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, 상자 {Count(w.Chest, "MeadHealthMinor")}, {took:0}초, {w.Ragnar.Ai.Job?.StepName})", w.Ragnar.CountItem("MeadHealthMinor") >= 3);
-            checks.Add($"꺼내러 문 지나 들어감 ({DoorWay.Entered - entered0}번, 순간이동 {tele})", DoorWay.Entered - entered0 > 0 && tele == 0);
+            // 문 앞에서 막혀 상자 가기가 문을 열고 문간에서 손 거리로 꺼내도 됨(회차 345 — 문 지나기 없이 5초)
+            checks.Add($"꺼내러 문 지나 들어감 ({DoorWay.Entered - entered0}번, 상자 가기 문 열기 {ChestHop.Doors - doors0}번, 순간이동 {tele})", DoorWay.Entered - entered0 + ChestHop.Doors - doors0 > 0 && tele == 0);
             closed0 = DoorWay.Closed;
             yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
             checks.Add($"꺼내고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);

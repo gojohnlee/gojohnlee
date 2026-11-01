@@ -16,6 +16,7 @@ namespace ValheimHelper
         Door m_door;
         Vector3 m_out, m_in;
         float m_t, m_limit, m_check;
+        float m_best, m_stall, m_side; Vector3 m_sideDir; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴(E061)
         Vector3 m_for;
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
         public static int Opened, Entered, Exited, Closed;
@@ -103,6 +104,7 @@ namespace ValheimHelper
                 m_out = aIn ? a : b; m_in = aIn ? b : a; // 이름은 들어갈 때 기준: m_out = 다가갈 곳, m_in = 지나갈 곳
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
                 m_phase = Phase.ToDoor; m_t = 0f;
+                m_best = float.MaxValue; m_stall = m_side = 0f;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감");
             }
             m_walking = m_exiting = true;
@@ -126,7 +128,7 @@ namespace ValheimHelper
                 if (Utils.DistanceXZ(me, m_out) > 0.7f)
                 {
                     // 안에서 나갈 땐 곧장(닫힌 집 안은 바닐라 길찾기가 10초 제자리, 회차 315 시험)
-                    if (m_exiting) { Vector3 to = m_out - me; to.y = 0f; npc.Ai.MoveTowards(to.normalized, false); }
+                    if (m_exiting) ExitToward(dt, npc, me);
                     else npc.Ai.MoveToPoint(dt, m_out, 0.5f, false);
                     return 1;
                 }
@@ -150,6 +152,38 @@ namespace ValheimHelper
                 return 1;
             }
             return 2;
+        }
+
+        /// <summary>
+        /// 안에서 문 앞으로 곧장 걷기. 1초 동안 0.2m도 안 가까워지면(E061: 사이에 제련로) 옆 두 쪽 중 1.5m 비고 문 앞에 더 가까운 쪽으로 1초 비킨다.
+        /// </summary>
+        void ExitToward(float dt, WorkerNpc npc, Vector3 me)
+        {
+            Vector3 to = m_out - me; to.y = 0f;
+            if (m_side > 0f) { m_side -= dt; npc.Ai.MoveTowards(m_sideDir, false); return; }
+            float d = to.magnitude;
+            if (d < m_best - 0.2f) { m_best = d; m_stall = 0f; }
+            else if ((m_stall += dt) > 1f)
+            {
+                Vector3 l = Vector3.Cross(Vector3.up, to).normalized, pick = Vector3.zero;
+                float bestEnd = float.MaxValue;
+                foreach (Vector3 s in new[] { l, -l })
+                {
+                    // 캡슐 위끝 1.4m — 다락 바닥(1.6m)에 걸리지 않게
+                    if (Physics.CapsuleCast(me + Vector3.up * 0.6f, me + Vector3.up * 1.0f, 0.4f, s, 1.5f, Mask, QueryTriggerInteraction.Ignore)) continue;
+                    float end = Utils.DistanceXZ(me + s * 1.5f, m_out);
+                    if (end < bestEnd) { bestEnd = end; pick = s; }
+                }
+                m_stall = 0f; m_best = d;
+                if (pick != Vector3.zero)
+                {
+                    m_sideDir = pick; m_side = 1f;
+                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 길 막힘({d:0.0}m) → 옆으로 비킴");
+                    npc.Ai.MoveTowards(pick, false);
+                    return;
+                }
+            }
+            npc.Ai.MoveTowards(to.normalized, false);
         }
 
         /// <summary>Workers.Update에서(서버만) 0.5초마다. UseDoor는 열린 문이면 닫는 토글이라 보낸 뒤 3초는 다시 안 보냄(두 번 가면 다시 열림).</summary>
