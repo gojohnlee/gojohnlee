@@ -15,7 +15,7 @@ namespace ValheimHelper
         Phase m_phase;
         Door m_door;
         Vector3 m_out, m_in, m_mouth; bool m_hall, m_lined; Vector3 m_hallN; float m_hallEnd; float m_lineCheck; // m_mouth: 문 앞이 복도면 복도 입구(들어갈 때 거기부터 곧장, E059)
-        float m_t, m_limit, m_check, m_swingNext, m_diagNext;
+        float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN;
         int m_swing; // 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064)
         float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for;
@@ -97,6 +97,7 @@ namespace ValheimHelper
                 Vector3 from = me + Vector3.up * 1.2f, to = point + Vector3.up * 1.2f;
                 if (!Physics.Raycast(from, to - from, Vector3.Distance(from, to), Mask)) return false;
                 Door d = Nearest(me, ExitSearch, point);
+                if (d != null && d == m_outDoor && Time.time - m_outT < 60f && (Vector3.Dot(me - Middle(d), m_outN) > 0f || Hidden(from, Middle(d) - m_outN * Step + Vector3.up * 0.2f, d))) return false; // 회차 348: 방금 이 문으로 나와 아직 문 바깥 — 처마·옆 건물에 지붕·벽 판정이 "안"으로 나와도 안 돌아감
                 ZNetView dv = d != null ? d.GetComponent<ZNetView>() : null;
                 if (dv == null || !dv.IsValid()) return false; // 열린 문도 곧장 지나감 — 연 뒤 navmesh가 늦게 바뀌어 바닐라 길은 벽에 박힘(회차 315 시험)
                 m_door = d;
@@ -109,14 +110,17 @@ namespace ValheimHelper
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
                 m_phase = Phase.ToDoor; m_t = 0f;
                 m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false;
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감");
+                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감 (나 {me:F1}·벽 {WallHits(me, n)}/4·방금 나온 문 {d == m_outDoor}·목표 {point:F1})");
             }
             m_walking = m_exiting = true;
             int r;
             try { r = Walk(dt, npc, "나가기"); } finally { m_walking = false; }
             if (r != 2) return r == 1;
             Exited++;
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 밖으로 ({m_t:0.0}초, 지붕 {Roofed(me)})");
+            npc.Ai.ForgetPath();
+            CloseIfSwungAtMe(npc, me);
+            m_outDoor = m_door; m_outT = Time.time; m_outN = m_in - Middle(m_door); m_outN.y = 0f; m_outN.Normalize();
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 밖으로 ({m_t:0.0}초, 지붕 {Roofed(me)}, 나 {me:F1}·목표 {m_for:F1})");
             m_phase = Phase.None;
             return false;
         }
@@ -248,6 +252,22 @@ namespace ValheimHelper
         }
 
         /// <summary>Workers.Update에서(서버만) 0.5초마다. UseDoor는 열린 문이면 닫는 토글이라 보낸 뒤 3초는 다시 안 보냄(두 번 가면 다시 열림).</summary>
+        /// <summary>회차 348: 막 나왔는데 내가 연 문짝이 바깥(내 쪽)에 열려 있으면 바로 닫는다 — 문짝이 문 앞 1.5m를 막아 5초 제자리, 3m를 못 멀어져 CloseBehind도 안 닫음 → 비켜 가다 집 안으로 되돌아감.</summary>
+        void CloseIfSwungAtMe(WorkerNpc npc, Vector3 me)
+        {
+            var o = s_opened.Find(x => x.Door == m_door);
+            ZNetView v = m_door != null ? m_door.GetComponent<ZNetView>() : null;
+            if (o == null || v == null || !v.IsValid()) return;
+            int state = v.GetZDO().GetInt(ZDOVars.s_state), mine = Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
+            if (state == 0 || state != -mine) return;
+            foreach (var c in Character.GetAllCharacters())
+                if (c != null && c != npc && !c.IsDead() && Utils.DistanceXZ(c.transform.position, o.Mid) < 1.5f && Mathf.Abs(c.transform.position.y - o.Mid.y) < 2f) return;
+            v.InvokeRPC("UseDoor", false);
+            o.Sent = Time.time;
+            Closed++;
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나와서 문 {m_door.name} 바로 닫음(문짝이 내 쪽 s_state {state})");
+        }
+
         public static void CloseBehind()
         {
             if (s_opened.Count == 0 || Time.time < s_next) return;
@@ -276,14 +296,23 @@ namespace ValheimHelper
         }
 
         static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);
+        /// <summary>두 점 사이를 건축물이 가리나(그 문 자신은 뺌 — 열린 문짝).</summary>
+        static bool Hidden(Vector3 from, Vector3 to, Door d)
+        {
+            foreach (var hit in Physics.RaycastAll(from, to - from, Vector3.Distance(from, to), Mask, QueryTriggerInteraction.Ignore))
+                if (hit.collider != null && !hit.collider.transform.IsChildOf(d.transform)) return true;
+            return false;
+        }
+
         /// <summary>둘레를 벽이 감쌌나: 문 축 네 방향(1.2m 높이, 10m) 중 셋 이상이 건축물에 닿음 — 열린 문 쪽 하나는 빠질 수 있음.</summary>
-        static bool Walled(Vector3 me, Vector3 n)
+        static bool Walled(Vector3 me, Vector3 n) => WallHits(me, n) >= 3;
+        static int WallHits(Vector3 me, Vector3 n)
         {
             Vector3 l = Vector3.Cross(Vector3.up, n), from = me + Vector3.up * 1.2f;
             int hits = 0;
             foreach (Vector3 dir in new[] { n, -n, l, -l })
                 if (Physics.Raycast(from, dir, 10f, Mask, QueryTriggerInteraction.Ignore)) hits++;
-            return hits >= 3;
+            return hits;
         }
 
         public static string OpenedDiag()

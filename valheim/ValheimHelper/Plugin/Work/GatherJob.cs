@@ -47,6 +47,7 @@ namespace ValheimHelper
         float m_stepTime;
         float m_searchTime;
         Container m_chest;
+        DoorWay m_depWay; Container m_depWayFor; // 집 안 상자에 넣기: 벽이 가리면 문으로(회차 348 — 벽 너머 2.6m에서 11초 박혀 순간이동)
         ZDOID m_targetId = ZDOID.None;
         Vector3 m_targetPos;
         float m_reach;
@@ -365,6 +366,8 @@ namespace ValheimHelper
         {
             if (m_chest == null) { Go(Step.Tool); return true; }
             // Prep처럼 2.5m 안이면 닿은 것(옆 상자·깃발에 막혀 1.8m까지 못 가던 것, coppertest). 못 닿으면 모은 것부터 넣는다.
+            if (m_depWayFor != m_chest) { m_depWay = new DoorWay(); m_depWayFor = m_chest; }
+            if (Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) < 8f && m_depWay.Steer(dt, m_npc, m_chest)) return true;
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
                 return m_stepTime < 60f || GiveUp("noTool");
             bool took = Chests.TryEdit(m_chest, inv =>
@@ -426,6 +429,8 @@ namespace ValheimHelper
             }
             if (m_chest == null) m_chest = DepositChest();
             if (m_chest == null) return Fail("noChest");
+            if (m_depWayFor != m_chest) { m_depWay = new DoorWay(); m_depWayFor = m_chest; }
+            if (Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) < 8f && m_depWay.Steer(dt, m_npc, m_chest)) return true;
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
             {
                 // 상자 가기 막힘: 진척 없이 5초면 상자 앞으로(30 → 15 → 5초, 사용자 10-31). 먼 상자로 그냥 오래 걷는 건 60초까지

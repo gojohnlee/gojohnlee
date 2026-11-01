@@ -56,6 +56,27 @@ namespace ValheimHelper
             return g;
         }
 
+        /// <summary>회차 348: 비탈이면 문간 안쪽 땅이 바닥보다 솟아 머리가 문틀에 걸림(안쪽으로 Terrain 0.0m) → 플레이어가 땅 고르듯 집 자리(벽 밖 1.5m까지)를 바닥 높이로.</summary>
+        static string s_levelWhy = "";
+        static int LevelGround(Vector3 c, Vector3 r, Vector3 f, float y)
+        {
+            // 바닐라 RPC_ApplyOperation → TerrainComp.DoOperation(비공개)에 고르기 설정을 바로 줌(괭이 조각표엔 m_level 켠 것이 없음 — mud_road_v2·raise_v2·path_v2·paved_road_v2 모두 False, 회차 348 시험)
+            var settings = new TerrainOp.Settings { m_level = true, m_levelRadius = (Half + 1.5f) * 1.42f, m_square = true, m_raise = false, m_smooth = false, m_paintCleared = false };
+            var doOp = HarmonyLib.AccessTools.Method(typeof(TerrainComp), "DoOperation");
+            var maps = new List<Heightmap>();
+            Heightmap.FindHeightmap(c, settings.m_levelRadius, maps);
+            int n = 0;
+            foreach (var hm in maps)
+            {
+                TerrainComp tc = hm.GetAndCreateTerrainCompiler();
+                if (tc == null || doOp == null) continue;
+                doOp.Invoke(tc, new object[] { new Vector3(c.x, y, c.z), Vector3.zero, settings });
+                n++;
+            }
+            s_levelWhy = doOp == null ? "DoOperation 없음" : $"지형 {maps.Count}";
+            return n;
+        }
+
         static Bounds Box(GameObject g)
         {
             var cs = g.GetComponentsInChildren<Collider>();
@@ -86,8 +107,8 @@ namespace ValheimHelper
             Vector3 r = Vector3.Cross(Vector3.up, f).normalized;
             // 비탈이면 지붕이 낮은 쪽 문틀을 막는다(회차 311: 문 쪽 땅 2.5m 높아 지붕판이 무릎 높이) → 둘레 땅 높이 차가 가장 작은 자리
             Vector3 c = default; float spread = float.MaxValue, floorY = 0f; // 조각은 모두 같은 지형 높이(물체 무시)에 — 문 자리가 덤불 등 위에 서면 지붕과 틈이 막힘
-            for (int a = 0; a < 360; a += 30)
-                foreach (float dist in new[] { 8f, 10f, 12f, 14f })
+            for (int a = 0; a < 360; a += 15)
+                foreach (float dist in new[] { 8f, 10f, 12f, 14f, 16f, 18f, 20f })
                 {
                     Vector3 cc = GatherTest.Ground(w.Home + Quaternion.AngleAxis(a, Vector3.up) * r * dist);
                     float lo = float.MaxValue, hi = float.MinValue; // 덤불 위에 설 수 있는 Ground가 아니라 지형 높이로
@@ -97,9 +118,12 @@ namespace ValheimHelper
                             float y = ZoneSystem.instance.GetGroundHeight(cc + r * (Half * i) + f * (Half * j));
                             lo = Mathf.Min(lo, y); hi = Mathf.Max(hi, y);
                         }
-                    if (hi - lo < spread) { spread = hi - lo; c = cc; floorY = ZoneSystem.instance.GetGroundHeight(cc - r * Half); } // 바닥 = 문 자리 땅(가장 낮은 땅이면 문 쪽 땅이 높을 때 천장이 일꾼 키 1.85m보다 낮아 머리가 걸림)
+                    float doorY = ZoneSystem.instance.GetGroundHeight(cc - r * Half), score = hi - lo + 2f * Mathf.Max(0f, hi - doorY); // 회차 348: 안 땅이 문 자리 바닥보다 0.5m 높으면 문간에서 머리가 문틀에 걸림 → 벌점
+                    if (score < spread) { spread = score; c = cc; floorY = doorY; } // 바닥 = 문 자리 땅(가장 낮은 땅이면 문 쪽 땅이 높을 때 천장이 일꾼 키 1.85m보다 낮아 머리가 걸림)
                 }
-            Plugin.Log.LogInfo($"집 시험: 집 자리 땅 높이 차 {spread:0.00}m, 바닥 {floorY:0.0}");
+            Plugin.Log.LogInfo($"집 시험: 집 자리 점수(땅 높이 차 + 안이 문보다 높은 만큼×2) {spread:0.00}, 바닥 {floorY:0.0}");
+            Plugin.Log.LogInfo($"집 시험: 집 자리 땅 고르기 {LevelGround(c, r, f, floorY)}번(바닐라 지형 고르기, 바닥 높이로, {s_levelWhy})");
+            yield return new WaitForSeconds(1f);
             ZNetScene.instance.Destroy(w.Chest.gameObject);
             // 집 둘레 나무·덤불은 치우고 짓는다(회차 312: 옆벽 곁 작은 너도밤나무와 벽 사이에 일꾼이 끼어 문까지 못 감)
             var cleared = new HashSet<ZNetView>();
@@ -216,7 +240,7 @@ namespace ValheimHelper
             checks.Add($"벽에 박은 시간 짧음 ({wallStuck:0.0}초, 최장 연속 {maxRun:0.0}초 ≤ 5)", maxRun <= 5f);
             checks.Add($"순간이동 없음 ({tele}, 문 열림 {opened})", tele == 0);
             int closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
+            yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"일 끝나고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, 일꾼 안 {In(w.Ragnar.transform.position)}, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
 
             // 2) 집 안 제련소(③-2): 작업대 자리에 제련소, 광석·석탄은 안 상자. 일꾼은 밖에서 시작, 플레이어는 25m 밖(5m 안이면 보충 안 함)
@@ -245,7 +269,7 @@ namespace ValheimHelper
             checks.Add($"제련소로 문 지나 들어감 ({DoorWay.Entered - entered0}번, 옆 돌기 {MachineStep.SideTries - side0})", DoorWay.Entered - entered0 > 0);
             checks.Add($"제련 중 순간이동 없음 ({tele})", tele == 0);
             closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
+            yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"제련 끝나고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, 일꾼 안 {In(w.Ragnar.transform.position)}, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
 
@@ -271,7 +295,7 @@ namespace ValheimHelper
             // 문 앞에서 막혀 상자 가기가 문을 열고 문간에서 손 거리로 꺼내도 됨(회차 345 — 문 지나기 없이 5초)
             checks.Add($"꺼내러 문 지나 들어감 ({DoorWay.Entered - entered0}번, 상자 가기 문 열기 {ChestHop.Doors - doors0}번, 순간이동 {tele})", DoorWay.Entered - entered0 + ChestHop.Doors - doors0 > 0 && tele == 0);
             closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
+            yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"꺼내고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
@@ -280,7 +304,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
             yield return new WaitForSeconds(6f); // 닫힌 문 navmesh 벽이 다시 생길 때까지(일꾼은 밖 — 안에 두고 기다리면 집으로 가며 먼저 나가 버림)
-            tele0 = Teleports(); int exited0 = DoorWay.Exited;
+            tele0 = Teleports(); int exited0 = DoorWay.Exited; closed0 = DoorWay.Closed;
             Vector3 inAt = GatherTest.Ground(c + f * 1.2f) + Vector3.up * 0.3f; // TeleportTo는 가장 위 면(지붕) 위에 올림 → 몸을 직접
             w.Ragnar.transform.position = inAt; w.Ragnar.GetComponent<Rigidbody>().position = inAt; w.Ragnar.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
             checks.Add($"나가기 단계: 문 닫힘·일꾼 안 (s_state {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)})", dz.GetInt(ZDOVars.s_state) == 0 && In(w.Ragnar.transform.position));
@@ -289,8 +313,8 @@ namespace ValheimHelper
             took = TestKit.Waited;
             tele = Teleports() - tele0;
             checks.Add($"안에서 문 열고 나감 ({took:0}초, 나감 {DoorWay.Exited - exited0}번, 순간이동 {tele}, {w.Ragnar.Ai.Job?.StepName})", !In(w.Ragnar.transform.position) && DoorWay.Exited > exited0 && tele == 0);
-            closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
+            // closed0은 단계 시작에서 — 나올 때 문짝이 내 쪽이면 바로 닫음(회차 348)
+            yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"나가서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
 
@@ -311,7 +335,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(7f); // 새 문·닫은 문 navmesh
             checks.Add($"문 두 개 단계: 두 문 닫힘·일꾼 집 뒤 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 뒷문까지 {Utils.DistanceXZ(w.Ragnar.transform.position, backAt):0.0}m)",
                 dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
-            tele0 = Teleports(); entered0 = DoorWay.Entered;
+            tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
             bool frontOpened = false, backOpened = false;
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() =>
@@ -324,8 +348,8 @@ namespace ValheimHelper
             tele = Teleports() - tele0;
             checks.Add($"뒷문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 뒷문 열림 {backOpened}·앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele})",
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && backOpened && !frontOpened && tele == 0);
-            closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
+            // closed0은 단계 시작에서 — 나올 때 문짝이 내 쪽이면 바로 닫음(회차 348)
+            yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
             checks.Add($"나와서 두 문 다 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
                 dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
@@ -350,7 +374,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(7f); // 새 벽·닫은 문 navmesh
             checks.Add($"복도 단계: 복도 벽 {hall}/4·뒷벽 {wallBack}·앞문 닫힘·일꾼 밖 (앞 {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)})",
                 hall == 4 && wallBack && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
-            tele0 = Teleports(); entered0 = DoorWay.Entered;
+            tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
             frontOpened = false;
             float hallRun = 0f, hallMax = 0f; Vector3 hallLast = w.Ragnar.transform.position;
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
@@ -366,8 +390,8 @@ namespace ValheimHelper
             tele = Teleports() - tele0;
             checks.Add($"복도 지나 앞문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele}, 멈춤 최장 {hallMax:0.0}초)",
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && frontOpened && tele == 0);
-            closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
+            // closed0은 단계 시작에서 — 나올 때 문짝이 내 쪽이면 바로 닫음(회차 348)
+            yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
             checks.Add($"복도로 나와서 문 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
                 dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);

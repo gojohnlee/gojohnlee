@@ -77,7 +77,8 @@ namespace ValheimHelper
             Vector3 at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             // 높이도 봄(E056): 2층 상자 바로 밑 2.5m 안을 "닿음"으로 보면 바닥에 가려 문으로 돌다 포기하고 그 자리(아래층)에서 꺼냈음
-            if ((d > 2.5f || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f) && !Steering(m_chest) && !CanReach(at, d, dt))
+            // 회차 348(E063): 비탈 위쪽에서 2층 상자가 1.5m 안이면 2층 바닥 너머로 꺼냄(땅 위 0.2m, 4초) → 위에 있고 건축물이 가리면 닿음 아님(계단으로)
+            if ((d > 2.5f || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || (at.y - m_npc.transform.position.y > 1f && DoorWay.Blocked(m_npc, m_chest))) && !Steering(m_chest) && !CanReach(at, d, dt))
             {
                 if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) m_ai.MoveToPoint(dt, m_hop.Goal(m_chest), 1.8f, d > 10f); // 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
                 return true;

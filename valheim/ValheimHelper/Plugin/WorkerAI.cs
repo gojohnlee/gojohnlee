@@ -307,6 +307,9 @@ namespace ValheimHelper
         bool m_inSwimLogged;
 
         void ForgetInteriorPath() { m_inPath = null; m_inGoal = NoGoal; }
+        static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, float> LastFindPathTime = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, float>("m_lastFindPathTime");
+        /// <summary>바닐라 FindPath는 같은 목표(1m 안)면 5초 동안 옛 길을 씀 → 문으로 나온 직후 안에서 구한 길을 따라 되돌아감(회차 348). 다음 틀에 새로 구하게.</summary>
+        public void ForgetPath() => LastFindPathTime(this) = -999f;
 
         /// <summary>지하묘지 안 길(InteriorNav)을 따라 걷는 중이고 최근 3초 안에 다음 점에 다가갔다(막힘 판단이 길을 도는 걸음을 막힘으로 안 보게).</summary>
         public bool OnInteriorPath => m_inPath != null && Time.time - m_inProgressAt < 3f;
