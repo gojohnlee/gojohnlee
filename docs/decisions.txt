@@ -1,0 +1,14 @@
+# 결정 (어긋나는 옛 줄은 지운다)
+
+## 폰트
+- 게임 파일을 바꾸지 않고 런타임에 대체 폰트를 붙인다(업데이트에 강함). 폰트는 Windows 맑은 고딕 → 없으면 Noto Sans KR, 굴림.
+  TMP_FontAsset.CreateFontAsset(familyName, style) = DynamicOS. 전역 TMP_Settings.fallbackFontAssets + 폰트마다 fallbackFontAssetTable(중간 null 제거, TMP는 null에서 멈춤).
+  2초마다 새 폰트 에셋을 찾아 붙인다(장면 바뀔 때 즉시).
+
+## 로더
+- BepInEx 5 불가(GetPEKind 없음) → Doorstop 직접. AssemblyLoad에서 Assembly-CSharp가 보이면 SceneManager.sceneLoaded에 붙고 첫 장면에서 GameObject 생성.
+
+## 확인된 게임 사실
+- 번역: LocalizationManager가 persistentDataPath/Languages/*.csv 첫 파일을 찾아 매번 "Localization file found … use this?" 창(AlertDialog)을 띄움. Yes여야 적용.
+- 글꼴: 대사·메뉴 TMP(PERTILI SDF 등). 책은 BookReadingManager.defaultFontAsset / Book.fontAssetOverride.
+- 해상도는 HKCU\Software\Psychic Software\TheNecromancer "Screenmanager *"에 저장(기본 1920x1080, Fullscreen mode 1).
