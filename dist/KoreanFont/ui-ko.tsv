@@ -269,6 +269,31 @@ Your current Trust ratings are:\n	지금 신뢰 수준:\n
 =quite trusting	꽤 신뢰함
 =quite distrusting	꽤 불신함
 =very distrusting	매우 불신함
+=Workers	노동자
+=Educated	지식층
+=Outsiders	이방인
+=Gentry	상류층
+=Kids	아이들
+Workers: <pos=	노동자: <pos=
+Educated: <pos=	지식층: <pos=
+Outsiders: <pos=	이방인: <pos=
+Military: <pos=	군인: <pos=
+Gentry: <pos=	상류층: <pos=
+Kids: <pos=	아이들: <pos=
+Trust: very trusting (	신뢰: 매우 신뢰함 (
+<i>very trusting</i>	<i>매우 신뢰함</i>
+Trust: quite trusting (	신뢰: 꽤 신뢰함 (
+<i>quite trusting</i>	<i>꽤 신뢰함</i>
+Trust: neutral (	신뢰: 보통 (
+<i>neutral</i>	<i>보통</i>
+Trust: quite distrusting (	신뢰: 꽤 불신함 (
+<i>quite distrusting</i>	<i>꽤 불신함</i>
+Trust: very distrusting (	신뢰: 매우 불신함 (
+<i>very distrusting</i>	<i>매우 불신함</i>
+<i>calm</i>	<i>평온함</i>
+<i>concerned</i>	<i>우려함</i>
+<i>worried</i>	<i>불안함</i>
+<i>panicked</i>	<i>공포에 질림</i>
 's trust decreased (-	의 신뢰가 떨어졌다 (-
 's trust increased (+	의 신뢰가 올랐다 (+
 : trust decreased (-	: 신뢰 하락 (-

@@ -185,7 +185,20 @@ namespace NecroKoreanFont
             }
         }
 
-        void LateUpdate() { try { Ui.Reapply(); } catch { } }
+        // 대화 초상 툴팁(신뢰: …)은 SetText(StringBuilder)로 넣어 TEXT_CHANGED에서 놓친다 → 30프레임마다 찾아 Reapply 목록에 넣고, 신뢰 집단 이름도 바꾼다
+        void LateUpdate()
+        {
+            try
+            {
+                if (Time.frameCount % 30 == 0)
+                {
+                    foreach (var o in UnityEngine.Object.FindObjectsByType(typeof(ChatMugshot), FindObjectsSortMode.None)) { var m = o as ChatMugshot; if (m != null && m.overlayText != null) Ui.Track(m.overlayText); }
+                    Ui.PatchList(TrustManager.trustGroupName);
+                }
+                Ui.Reapply();
+            }
+            catch { }
+        }
 
         void Update()
         {
@@ -253,7 +266,7 @@ namespace NecroKoreanFont
         static readonly List<TMP_Text> tracked = new List<TMP_Text>();
         static readonly HashSet<int> trackedIds = new HashSet<int>();
         static readonly Dictionary<int, string> lastOut = new Dictionary<int, string>();
-        static void Track(TMP_Text t) { if (tracked.Count < 2000 && trackedIds.Add(t.GetInstanceID())) tracked.Add(t); }
+        public static void Track(TMP_Text t) { if (tracked.Count < 2000 && trackedIds.Add(t.GetInstanceID())) tracked.Add(t); }
         public static void Reapply()
         {
             for (int i = tracked.Count - 1; i >= 0; i--)
@@ -356,6 +369,12 @@ namespace NecroKoreanFont
         }
 
         // 하수인 명령 메뉴는 정적 배열이라 직접 바꾼다
+        public static void PatchList(System.Collections.Generic.List<string> l)
+        {
+            if (l == null) return;
+            for (int i = 0; i < l.Count; i++) if (l[i] != null && exact.TryGetValue(l[i], out var ko)) l[i] = ko;
+        }
+
         public static void PatchMenu()
         {
             var m = SamsContextMenu.menuText;
