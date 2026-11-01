@@ -39,11 +39,23 @@ namespace ValheimHelper
 
         static int Mask =>s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("piece"));
 
-        /// <summary>사이를 건축물이 가리나(대상 자신·대상의 자식 충돌체는 뺌).</summary>
+        /// <summary>사이를 건축물이 가리나(대상 자신·대상의 자식 충돌체는 뺌). 가운데 줄이 문 옆 좁은 틈(사람 못 지남)을 지나도
+        /// 좌우 0.35m 두 줄이 다 막히면 가림(회차 357: 뒷문 옆 틈으로 안 가린다고 봐 앞문으로 돌아감).</summary>
         public static bool Blocked(Character me, Component target)
         {
             if (me == null || target == null) return false;
             Vector3 from = me.transform.position + Vector3.up * 1.2f, to = target.transform.position + Vector3.up * 0.6f;
+            if (Ray(from, to, target)) return true;
+            Vector3 side = Vector3.Cross(Vector3.up, to - from); side.y = 0f;
+            if (side.sqrMagnitude < 0.01f) return false;
+            side = side.normalized * SideRay;
+            return Ray(from + side, to + side, target) && Ray(from - side, to - side, target);
+        }
+
+        const float SideRay = 0.35f;
+
+        static bool Ray(Vector3 from, Vector3 to, Component target)
+        {
             foreach (var hit in Physics.RaycastAll(from, to - from, Vector3.Distance(from, to), Mask))
                 if (hit.collider != null && !hit.collider.transform.IsChildOf(target.transform)) return true;
             return false;
