@@ -404,8 +404,6 @@ namespace ValheimHelper
                 // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
                 // 용암 위 바위는 뺌: 둘레 건물은 거기 가려고 깐 바닥(회차 250, 불꽃금속 나)).
                 if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(FloorReach && OnLava(zdo.GetPosition()))) { m_skip.Add(zdo.m_uid); continue; }
-                // 다른 나무·바위에 높이 걸린 쪼개지는 통나무는 고르지 않는다: 밑에서 쪼개면 반토막이 머리 위에 생겨 떨어진다(HungLog, E020)
-                if (HungLog(zdo, info)) continue;
                 if (info.Tool != ToolKind.None)
                 {
                     ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
@@ -442,7 +440,6 @@ namespace ValheimHelper
                     : !inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z) ? "막힘 기록으로 뺀 곳"
                     : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && StuckInTar(zdo) ? "타르에 잠김" : info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition()) ? "밭 작물"
                     : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(FloorReach && OnLava(zdo.GetPosition())) ? "건축물 4m 안"
-                    : HungLog(zdo, info) ? "높이 걸린 통나무"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
                     : Utils.DistanceXZ(zdo.GetPosition(), pos) > range ? "시야 밖"

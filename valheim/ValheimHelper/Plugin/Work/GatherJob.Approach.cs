@@ -28,12 +28,8 @@ namespace ValheimHelper
             ZDO zdo = ZDOMan.instance.GetZDO(m_targetId);
             if (zdo == null) { Go(Step.Collect); return true; }
             m_targetPos = zdo.GetPosition();
-            if (HungLog(zdo, m_targetInfo))
-            {
-                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 높이 걸린 통나무(뿌리 높이 {m_targetPos.y:0.0}) → 안 쪼갬");
-                Skip();
-                return true;
-            }
+            if (m_standFor != m_targetId && HungLog(zdo, m_targetInfo))
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 높이 걸린 통나무(뿌리 높이 {m_targetPos.y:0.0}) → 밑에서 쪼갬(나무 피해 안 받음)");
             // 용암 위 대상은 둘레 설 자리(건물 바닥 위)로 걸어감 — 바위 가운데로 가면 길이 띄운 바닥 밑 땅으로 내려감(회차 250)
             if (m_standFor != m_targetId) { m_standFor = m_targetId; m_stand = FloorReach && OnLava(m_targetPos) ? LavaStand(zdo, m_targetInfo != null && m_targetInfo.Pickable, out _) : null;
                 if (m_stand.HasValue) Plugin.Log.LogInfo($"DIAG 바닥 길 {m_npc.NpcName}: 설 자리 {m_stand.Value:F1}, 나 {m_npc.transform.position:F1} 바닥 {WorkerAI.Floored(m_npc.transform.position)}, 직선 {WorkerAI.FloorLine(m_npc.transform.position, m_stand.Value)} {WorkerAI.FloorWhy}"); }

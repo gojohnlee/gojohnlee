@@ -200,7 +200,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal(30
   (일꾼이 실제 받은 피해: 1.8m/s에 10, 2.8m/s에 살고 4.0·4.1m/s에 죽음 → 약 50 기준, 체력 25면 약 3m/s에 죽음). 쓰러뜨리기 TreeBase.SpawnLog: m_logSpawnPoint에 선 통나무 + 꼭대기(4m×크기)에 hitDir×0.2×질량 → 맞은 방향으로 넘어감.
   쪼개기 TreeLog.Destroy: m_subLogPoints마다 반토막(m_subLogPrefab, 부모 회전)이 정지 상태로 생김 → 비탈·받침 위면 바로 구름(beech_log → beech_log_half 2개). 떨굼은 transform.up(통나무 길이) ±m_spawnDistance.
   일꾼 대응: 일꾼은 나무·통나무 피해를 안 받음(NpcPatches.NoTreeHurt, 10-23) → 통나무 멈춤 기다림·비키기(RollingLogs·DodgeLog, 최대 12초)는 회차 178에 뺌(사용자 결정 10-25). 떨굼 흩어짐 1.2초만 기다림.
-  쓰러진 통나무가 옆 나무에 걸려 높이 뜨기도 함(뿌리 8.5m 위) → 밑에서 쪼개면 반토막이 머리 위에 생겨 떨어짐: GatherJob.HungLog(쪼개지는 통나무 뿌리가 땅에서 2m 넘게 뜸)는 안 고름.
+  쓰러진 통나무가 옆 나무에 걸려 높이 뜨기도 함(뿌리 8.5m 위) → 밑에서 쪼개면 반토막이 머리 위에 생겨 떨어짐: GatherJob.HungLog(뿌리가 땅에서 2m 넘게 뜸)도 이제 고름 — 일꾼은 HitType.Tree 피해 안 받음(NoTreeHurt), HungLog는 기록·시험용(회차 337).
 - 나무 충돌체 Lod0(Beech1 등)는 가지까지 덮는 오목한 MeshCollider → Collider.bounds로 가장 가까운 점을 재면 3.5m 떨어진 일꾼도 경계 안(점 = 가슴, 방향 0).
   GatherJob.DirectHit는 서 있는 나무(TreeBase)면 뿌리 1m 위를 수평으로 친다(쓰러지는 방향 = 일꾼 반대, E020).
 - ZNetView.InvokeRPC는 주인이 자기면 그 자리에서 처리된다(ZRoutedRpc.InvokeRoutedRPC: target == 자기 id → HandleRoutedRPC) → 직접 피해는 같은 프레임에 체력에 반영.

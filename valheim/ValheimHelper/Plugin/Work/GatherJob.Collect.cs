@@ -184,8 +184,8 @@ namespace ValheimHelper
 
         /// <summary>
         /// 쪼개지는 통나무(Splits)가 다른 나무·바위에 걸려 높이 떠 있는지. 바닐라 휘두름은 거기까지 안 닿고 직접 피해(DirectHit)만 닿는데,
-        /// 밑에서 쪼개면 반토막(TreeLog.Destroy)이 머리 위에 생겨 바로 떨어진다(E020 진단: 8.5m 위에 걸린 beech_log를 밑에서 직접 피해 5번 →
-        /// 4m 위에 생긴 반토막이 4.2m/s로 떨어져 일꾼 죽음, 같은 자리에서 두 번). 반토막(더 안 쪼개짐)은 쪼개도 나무만 떨어져 괜찮다.
+        /// 밑에서 쪼개면 반토막(TreeLog.Destroy)이 머리 위에 생겨 바로 떨어진다(E020 진단: 8.5m 위 beech_log → 반토막에 맞아 일꾼 죽음).
+        /// 일꾼은 나무 피해를 안 받으므로(NoTreeHurt, 회차 121) 이제 걸린 것도 밑에서 쪼갠다(사용자 11-01 "통나무 끝까지" 다) — 기록·시험용.
         /// </summary>
         internal static bool HungLog(ZDO zdo, ResourceInfo info)
         {
@@ -240,7 +240,7 @@ namespace ValheimHelper
                     Vector3 p = zdo.GetPosition();
                     if (info == null || !info.Log || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                     if (Utils.DistanceXZ(p, m_felled[i]) > OwnLogRange || Character.InInterior(p)) continue;
-                    if (m_skip.Contains(zdo.m_uid) || Avoided(p) || m_book.Excluded(p.x, p.z) || HungLog(zdo, info) || NearAny(p, pieces, 4f)) continue;
+                    if (m_skip.Contains(zdo.m_uid) || Avoided(p) || m_book.Excluded(p.x, p.z) || NearAny(p, pieces, 4f)) continue;
                     ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
                     if (tool == null || info.MinToolTier > tool.m_shared.m_toolTier) continue;
                     any = true;

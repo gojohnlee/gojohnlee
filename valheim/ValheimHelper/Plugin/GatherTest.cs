@@ -150,8 +150,8 @@ namespace ValheimHelper
                 TestRunner.Log($"  광맥 구조: {DescribeDeposit(dep, 0)}");
                 TestRunner.Log($"  광맥 조각 퍼짐: {RockSpread(firstDep, Workers.HomeSpot(home, rot, 0), eqPos, resPos)}");
             }
-            // E020: 옆 나무에 높이 걸린 통나무(밑에서 쪼개면 반토막이 머리 위로 떨어짐)는 안 고르는지. 거점 9m 앞에 땅에서 6m 뜬 채 선 통나무를
-            // 움직이지 않게(kinematic) 둔다 — 통나무 가산점(30m)으로 가장 먼저 고를 자리라 안 거르면 바로 다가간다.
+            // 옆 나무에 높이 걸린 통나무도 밑에서 쪼개 치우는지(사용자 11-01 "통나무 끝까지" 다 — 일꾼은 나무 피해 안 받음). 거점 9m 앞에
+            // 땅에서 6m 뜬 채 선 통나무를 움직이지 않게(kinematic) 둔다 — 통나무 가산점(30m)으로 가장 먼저 고를 자리.
             ZDOID hungId = ZDOID.None;
             bool hungAimed = false;
             if (item == "Wood")
@@ -227,7 +227,7 @@ namespace ValheimHelper
                 float t2 = 0f;
                 while (t2 < 180f && claude != null && claude.Ai.Current == WorkerAI.Mode.Work) { yield return new WaitForSeconds(1f); t2 += 1f; }
                 var spots = GatherJob.FelledLog.GetRange(felled0, GatherJob.FelledLog.Count - felled0);
-                // 높이 걸린 통나무(HungLog)는 아직 안 고르므로(조각 다) 따로 셈
+                // 높이 걸린 통나무(HungLog)도 쪼개므로 남은 것에 같이 셈(걸린 건 표시만)
                 var left = new HashSet<ZDOID>();
                 var hung = new HashSet<ZDOID>();
                 var leftDesc = new List<string>();
@@ -241,14 +241,14 @@ namespace ValheimHelper
                             leftDesc.Add($"{li.Prefab} 땅 위 {z.GetPosition().y - gy:0.0}m{(h ? " 걸림" : "")}");
                         }
                 checks.Add($"쓰러뜨린 나무의 통나무 다 치우고 끝냄(쓰러뜨리거나 쪼갠 곳 {spots.Count}, 남은 통나무 {left.Count}개·걸린 것 {hung.Count}개 [{string.Join(", ", leftDesc)}], 개수 채운 뒤 {t2:0}초, 상자 {CountBase(home, item) - count0})",
-                           spots.Count > 0 && left.Count == 0 && claude != null && claude.Ai.Current != WorkerAI.Mode.Work);
+                           spots.Count > 0 && left.Count + hung.Count == 0 && claude != null && claude.Ai.Current != WorkerAI.Mode.Work);
             }
             if (moveCheck)
                 checks.Add($"캐는 중 도망으로 옮겨진 뒤 다시 다가감({(moved ? "도망시킴" : "못 시킴")}, 다시 다가감 {GatherJob.WorkReapproaches - reapproach0}번, 8m 넘는 직접 피해 {GatherJob.LongDirectHits - longHits0}번)",
                            moved && GatherJob.WorkReapproaches > reapproach0 && GatherJob.LongDirectHits == longHits0);
             if (moveCheck)
                 checks.Add($"위험 알림 도망 뒤 그 광맥은 두고 다른 광맥을 캠({(fled ? "도망시킴" : "못 시킴")})", fled && backToOre);
-            if (!hungId.IsNone()) checks.Add("높이 걸린 통나무는 안 고름(쪼개면 반토막이 머리 위로 떨어짐)", !hungAimed);
+            if (!hungId.IsNone()) checks.Add($"높이 걸린 통나무도 밑에서 쪼갬(고름 {hungAimed}, 남음 {ZDOMan.instance.GetZDO(hungId) != null})", hungAimed && ZDOMan.instance.GetZDO(hungId) == null);
             checks.Add("상자 2개 멀쩡함(일꾼 도구질에 안 부서짐)", eq != null && res != null && eq.GetComponent<ZNetView>().IsValid() && res.GetComponent<ZNetView>().IsValid());
             checks.Add($"일하다 죽지 않음(쓰러지는 나무 등, 죽은 횟수 {(claude ? claude.Deaths : -1)})", claude != null && claude.Deaths == 0);
             if (claude != null && !claude.IsDead())
