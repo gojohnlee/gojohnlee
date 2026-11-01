@@ -163,7 +163,7 @@ namespace ValheimHelper
         Vector3 m_from;
         Vector3? m_side;
         int m_sides;
-        float m_best = float.MaxValue, m_time, m_far, m_farMark = float.MaxValue, m_age, m_farAt; int m_farResets; // E069 진단: 기준 갱신 횟수·마지막 시각
+        float m_best = float.MaxValue, m_time, m_far, m_farMark = float.MaxValue, m_age, m_farAt, m_slow, m_win; Vector3 m_winAt; int m_farResets; // E069 진단: 기준 갱신 횟수·마지막 시각
         Vector3 m_last;
         /// <summary>시험용: 옮긴 수, 옆으로 돈 수.</summary>
         internal static int Hops, Sides, Bumps, Doors;
@@ -177,13 +177,17 @@ namespace ValheimHelper
         public bool Update(float dt, WorkerNpc npc, Container chest, float d, string what)
         {
             Vector3 pos = npc.transform.position;
-            if (m_for != chest) { m_for = chest; m_best = m_farMark = float.MaxValue; m_far = 0f; m_side = null; m_sides = 0; m_age = 0f; m_farResets = 0; }
+            if (m_for != chest) { m_for = chest; m_best = m_farMark = float.MaxValue; m_far = 0f; m_side = null; m_sides = 0; m_age = 0f; m_farResets = 0; m_slow = m_win = 0f; m_winAt = pos; }
             m_age += dt;
             if (m_side.HasValue && Utils.DistanceXZ(m_side.Value, pos) < 0.4f) m_side = null; // 옆 접근점에 닿음 → 거기서 곧장
             // 옆으로 돌거나 통나무를 밀며 느리게 가면 "거의 제자리" 시간이 0부터라, 1m 넘게 안 가까워진 시간도 따로 센다(E060) — 5초면 상자 앞으로.
             // 옆으로 돌아 본 뒤나 느리게(1.5m/s 밑) 움직일 때만 셈: 계단을 오를 때처럼 제 속도로 걷는데 수평 거리만 안 줄 때·상자가 1.5m 넘게 위(다른 층)일 때는 아님. 일꾼이 위면 셈(통나무 더미에 올라탐, E067)
             bool slow = dt > 0f && Utils.DistanceXZ(pos, m_last) < SlowSpeed * dt; m_last = pos;
             if (d < m_farMark - FarStep) { m_farMark = d; m_far = 0f; m_farResets++; m_farAt = m_age; } else if ((m_sides > 0 || slow) && chest.transform.position.y - pos.y < 1.5f) m_far += dt;
+            // 상자 10m 안에서 0.5초씩 재어 느린(1.5m/s 밑) 시간을 합쳐 5초면 상자 앞으로: 통나무 사이·위로 1m씩 기어가면 위 두 셈이 거듭 0부터라 7~13초 걸렸음(E069).
+            m_win += dt;
+            if (m_win >= 0.5f) { if (d < 10f && Utils.DistanceXZ(pos, m_winAt) < SlowSpeed * m_win && chest.transform.position.y - pos.y < 1.5f) m_slow += m_win; m_win = 0f; m_winAt = pos; }
+            if (m_slow >= (float)Core.Work.StuckHop.NearStuckSeconds && !TestNoBump && !DoorWay.Blocked(npc, chest)) return Hop(npc, chest, d, what, $"느린 시간 합 {m_slow:0.0}초");
             if (m_far >= (float)Core.Work.StuckHop.NearStuckSeconds && !DoorWay.Blocked(npc, chest)) return Hop(npc, chest, d, what, $"{m_far:0.0}초 안 가까워짐");
             if (d < m_best - 0.3f || Utils.DistanceXZ(m_from, pos) >= 1.5f) { m_best = Mathf.Min(m_best, d); m_from = pos; m_time = 0f; return false; }
             m_time += dt;
@@ -215,7 +219,7 @@ namespace ValheimHelper
         }
 
         /// <summary>시험용(E067): 상자 앞 옮기기 셈 상태.</summary>
-        internal string State(WorkerNpc npc, Container chest) => $"안 가까워짐 {m_far:0.0}초(기준 {m_farMark:0.0}m, 갱신 {m_farResets}번 마지막 {m_farAt:0.0}/{m_age:0.0}초) 제자리 {m_time:0.0}초 옆 {m_sides}{(m_side.HasValue ? $"(남은 {Utils.DistanceXZ(m_side.Value, npc.transform.position):0.0}m)" : "")} 높이 차 {chest.transform.position.y - npc.transform.position.y:0.0}";
+        internal string State(WorkerNpc npc, Container chest) => $"안 가까워짐 {m_far:0.0}초(기준 {m_farMark:0.0}m, 갱신 {m_farResets}번 마지막 {m_farAt:0.0}/{m_age:0.0}초) 느린 합 {m_slow:0.0}초 제자리 {m_time:0.0}초 옆 {m_sides}{(m_side.HasValue ? $"(남은 {Utils.DistanceXZ(m_side.Value, npc.transform.position):0.0}m)" : "")} 높이 차 {chest.transform.position.y - npc.transform.position.y:0.0}";
 
         bool Hop(WorkerNpc npc, Container chest, float d, string what, string why)
         {
@@ -223,7 +227,7 @@ namespace ValheimHelper
             npc.TeleportTo(chest.transform.position + chest.transform.forward * 1.5f, npc.transform.rotation, false);
             WorkerAI.StuckTeleports++;
             Hops++;
-            m_time = 0f; m_far = 0f; m_farMark = float.MaxValue; m_best = float.MaxValue; m_side = null;
+            m_time = 0f; m_far = 0f; m_farMark = float.MaxValue; m_best = float.MaxValue; m_side = null; m_slow = m_win = 0f; m_winAt = npc.transform.position;
             return true;
         }
     }
