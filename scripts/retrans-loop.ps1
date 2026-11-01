@@ -46,7 +46,7 @@ while ($true) {
   # claude는 루프 폴더 안에서 읽기·쓰기만(권한 건너뛰기 없이 acceptEdits + Read,Write 도구만)
   Copy-Item "$Repo\docs\translate-guide.md", "$Repo\dist\KoreanFont\names-ko.tsv" $L -Force
   $prompt = "Read translate-guide.md and follow it. Names table: names-ko.tsv. Input: chunk.txt. Write Korean translations for every line not marked [완료] to out.tsv (UTF-8, one 'ID<TAB>문장' per line, paragraph count exactly as given). Do nothing else."
-  $round++; Log "덩어리 $round 시작: $first번째부터 $($want.Count)줄 ($fid)"
+  $round++; Log "덩어리 $round 시작: ${first}번째부터 $($want.Count)줄 ($fid)"
   $psi = New-Object Diagnostics.ProcessStartInfo $Claude
   $psi.Arguments = "-p `"$prompt`" --model $Model --effort low --permission-mode acceptEdits --disable-slash-commands --strict-mcp-config --tools `"Read,Write`""
   $psi.WorkingDirectory = $L; $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
@@ -73,7 +73,7 @@ while ($true) {
   try { Copy-Item "$W\Korean-fixed.csv" $Lang -Force } catch { Log "게임에 넣기 실패: $_" }
   if ($round % 10 -eq 0) {
     $all = $order.Count; $d = @($order | ? { $done[$_] }).Count + $ok.Count
-    $md = "# 재번역 진행`n`n- $(Get-Date -f 'yyyy-MM-dd HH:mm') 기준 $d / $all 줄 ($([Math]::Round(100 * $d / $all))%)`n- 이번 실행 덩어리 $round개, 마지막 덩어리 $first번째 줄부터`n"
+    $md = "# 재번역 진행`n`n- $(Get-Date -f 'yyyy-MM-dd HH:mm') 기준 $d / $all 줄 ($([Math]::Round(100 * $d / $all))%)`n- 이번 실행 덩어리 $round개, 마지막 덩어리 ${first}번째 줄부터`n"
     [IO.File]::WriteAllText("$Repo\docs\retrans-status.md", $md, (New-Object Text.UTF8Encoding($false)))
     git -C $Repo add docs/retrans-status.md 2>$null; git -C $Repo commit -q -m "재번역 진행 $d/$all" 2>$null; git -C $Repo push -q 2>$null
   }
