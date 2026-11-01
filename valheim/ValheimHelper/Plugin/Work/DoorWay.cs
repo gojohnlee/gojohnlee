@@ -14,8 +14,8 @@ namespace ValheimHelper
         enum Phase { None, ToDoor, Through, GaveUp }
         Phase m_phase;
         Door m_door;
-        Vector3 m_out, m_in;
-        float m_t, m_limit, m_check, m_swingNext;
+        Vector3 m_out, m_in, m_mouth; bool m_hall, m_lined; Vector3 m_hallN; float m_hallEnd; float m_lineCheck; // m_mouth: 문 앞이 복도면 복도 입구(들어갈 때 거기부터 곧장, E059)
+        float m_t, m_limit, m_check, m_swingNext, m_diagNext;
         int m_swing; // 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064)
         float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for;
@@ -65,7 +65,9 @@ namespace ValheimHelper
                 m_out = mid + n * Step;
                 m_in = mid - n * Step;
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
-                m_phase = Phase.ToDoor; m_t = 0f;
+                m_phase = Phase.ToDoor; m_t = 0f; m_diagNext = 0f; m_lineCheck = 0f;
+                m_hall = Mouth(mid, n, out m_mouth); m_lined = false; m_hallN = n; m_hallEnd = Vector3.Dot(m_mouth - mid, n) - 0.8f;
+                if (m_hall) m_limit = PhaseLimit + (Utils.DistanceXZ(me, m_mouth) + Utils.DistanceXZ(m_mouth, m_out)) / 1.5f;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} {target.name} 앞 벽 → 문 {m_door.name}({Utils.DistanceXZ(me, m_door.transform.position):0.0}m)으로");
             }
             int r = Walk(dt, npc, target.name);
@@ -99,6 +101,7 @@ namespace ValheimHelper
                 if (dv == null || !dv.IsValid()) return false; // 열린 문도 곧장 지나감 — 연 뒤 navmesh가 늦게 바뀌어 바닐라 길은 벽에 박힘(회차 315 시험)
                 m_door = d;
                 Vector3 n = d.transform.forward; n.y = 0f; n.Normalize();
+                if (!Walled(me, n)) { m_check = Time.time + 1f; return false; } // 회차 348: 막 나온 집 옆 처마 밑(지붕 True)을 안으로 읽어 문으로 되돌아감 → 사방 벽까지 봄
                 Vector3 mid = Middle(d), a = mid + n * Step, b = mid - n * Step;
                 bool ra = Roofed(a), rb = Roofed(b);
                 bool aIn = ra != rb ? ra : Utils.DistanceXZ(me, a) < Utils.DistanceXZ(me, b); // 지붕 아래 쪽이 안, 모호하면 가까운 쪽
@@ -130,7 +133,27 @@ namespace ValheimHelper
                 {
                     // 안에서 나갈 땐 곧장(닫힌 집 안은 바닐라 길찾기가 10초 제자리, 회차 315 시험)
                     if (m_exiting) ExitToward(dt, npc, me);
-                    else npc.Ai.MoveToPoint(dt, m_out, 0.5f, false);
+                    else
+                    {
+                        // E059: 문 앞이 좁은 복도면 바닐라 길(새 벽 navmesh 늦음)이 복도 바깥 벽 옆에서 섬 → 입구로 가서, 문 앞이 트이면 곧장
+                        if (m_hall && Time.time >= m_lineCheck)
+                        {
+                            m_lineCheck = Time.time + 0.25f;
+                            Vector3 to = m_out - me; to.y = 0f;
+                            m_lined = !Physics.CapsuleCast(me + Vector3.up * 0.6f, me + Vector3.up * 1.0f, 0.4f, to.normalized, to.magnitude, Mask, QueryTriggerInteraction.Ignore);
+                        }
+                        if (!m_hall) npc.Ai.MoveToPoint(dt, m_out, 0.5f, false);
+                        else if (m_lined) npc.Ai.MoveTowards(Vector3.ProjectOnPlane(m_out - me, Vector3.up), false);
+                        else
+                        {
+                            // 복도 바깥 벽 옆이면 벽 따라 곧장 밖으로(바닐라 길은 벽 끝 모서리에 걸림, 회차 348 시험) → 지나면 입구로
+                            Vector3 rel = me - Middle(m_door); rel.y = 0f;
+                            float along = Vector3.Dot(rel, m_hallN), side = Mathf.Abs(Vector3.Dot(rel, Vector3.Cross(Vector3.up, m_hallN)));
+                            if (along > 0f && along < m_hallEnd + 0.4f && side < 2.4f) npc.Ai.MoveTowards(m_hallN, false);
+                            else npc.Ai.MoveToPoint(dt, m_mouth, 0.5f, false);
+                        }
+                        if (m_t >= m_diagNext) { m_diagNext = m_t + 3f; Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문 앞으로 {m_t:0.0}초: 나 {me:F1}·문 앞 {m_out:F1}({Utils.DistanceXZ(me, m_out):0.0}m)·복도 {(m_hall ? $"입구 {m_mouth:F1} 트임 {m_lined}" : "없음")}·길 {npc.Ai.PathFound}·속도 {npc.GetVelocity().magnitude:0.0}"); }
+                    }
                     return 1;
                 }
                 m_swing = 0;
@@ -253,6 +276,15 @@ namespace ValheimHelper
         }
 
         static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);
+        /// <summary>둘레를 벽이 감쌌나: 문 축 네 방향(1.2m 높이, 10m) 중 셋 이상이 건축물에 닿음 — 열린 문 쪽 하나는 빠질 수 있음.</summary>
+        static bool Walled(Vector3 me, Vector3 n)
+        {
+            Vector3 l = Vector3.Cross(Vector3.up, n), from = me + Vector3.up * 1.2f;
+            int hits = 0;
+            foreach (Vector3 dir in new[] { n, -n, l, -l })
+                if (Physics.Raycast(from, dir, 10f, Mask, QueryTriggerInteraction.Ignore)) hits++;
+            return hits >= 3;
+        }
 
         public static string OpenedDiag()
         {
@@ -282,6 +314,22 @@ namespace ValheimHelper
                 why += $", 문틀 옆으로 {Vector3.Dot(me - Middle(m_door), along):0.00}m·문 옆으로 {Vector3.Dot(me - m_door.transform.position, along):0.00}m, 안쪽으로 [{string.Join(", ", hits)}], 문 s_state {m_door.GetComponent<ZNetView>()?.GetZDO()?.GetInt(ZDOVars.s_state)}·속도 {npc.GetVelocity().magnitude:0.00}·앞 {Vector3.Angle(npc.transform.forward, m_in - m_out):0}°·{npc.Ai.HoldWhy}";
             }
             Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문 길 포기: {why} → 그 자리에서");
+        }
+
+        /// <summary>문 앞(바깥 n쪽)이 양옆 벽 좁은 복도인지(E059). 그렇다면 입구 = 양옆이 트이는 첫 자리에서 0.8m 더 밖.</summary>
+        static bool Mouth(Vector3 mid, Vector3 n, out Vector3 mouth)
+        {
+            Vector3 l = Vector3.Cross(Vector3.up, n).normalized;
+            mouth = mid;
+            for (float s = Step; s <= Step + 8f; s += 0.5f)
+            {
+                Vector3 p = mid + n * s;
+                bool walls = Physics.Raycast(p, l, 1.6f, Mask, QueryTriggerInteraction.Ignore) && Physics.Raycast(p, -l, 1.6f, Mask, QueryTriggerInteraction.Ignore);
+                if (walls) continue;
+                mouth = mid + n * (s + 0.8f);
+                return s > Step;
+            }
+            return false; // 8m 넘는 복도 — 바닐라 길에 맡김
         }
 
         /// <summary>문틀 가운데(문 transform은 경첩 쪽일 수 있어 닫힌 문 충돌체 가운데).</summary>

@@ -325,7 +325,7 @@ namespace ValheimHelper
             checks.Add($"뒷문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 뒷문 열림 {backOpened}·앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele})",
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && backOpened && !frontOpened && tele == 0);
             closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0, 40f);
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
             checks.Add($"나와서 두 문 다 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
                 dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
@@ -367,7 +367,7 @@ namespace ValheimHelper
             checks.Add($"복도 지나 앞문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele}, 멈춤 최장 {hallMax:0.0}초)",
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && frontOpened && tele == 0);
             closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
             checks.Add($"복도로 나와서 문 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
                 dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
