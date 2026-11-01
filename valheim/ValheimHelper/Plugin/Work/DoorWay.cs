@@ -176,6 +176,7 @@ namespace ValheimHelper
             if (m_swing == 0 && state != 0)
             {
                 int mine = Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
+                if (state == -mine && SomeoneAt(Middle(m_door), npc)) { npc.Ai.StopMoving(); return 1; } // 회차 352: 문간에 플레이어가 서 있으면 닫지 않고 비킬 때까지 기다림(바꿔 열기가 문간의 플레이어 앞에서 문을 닫음)
                 if (state == -mine)
                 {
                     v.InvokeRPC("UseDoor", false);
@@ -292,15 +293,20 @@ namespace ValheimHelper
                     float d = Utils.DistanceXZ(me, o.Mid);
                     if (d < 3f || (d < 15f && Roofed(me))) continue; // 문 곁이거나 아직 지붕 아래(안) — 문 평면 반쪽으로는 못 가름: 집 뒤로 돈 일꾼도 안쪽 반에 있음(회차 313)
                 }
-                bool someone = false;
-                foreach (var c in Character.GetAllCharacters())
-                    if (c != null && !c.IsDead() && Utils.DistanceXZ(c.transform.position, o.Mid) < 1.5f && Mathf.Abs(c.transform.position.y - o.Mid.y) < 2f) { someone = true; break; }
-                if (someone) continue;
+                if (SomeoneAt(o.Mid, null)) continue;
                 v.InvokeRPC("UseDoor", false); // 열린 문이면 방향 무관하게 s_state = 0
                 o.Sent = Time.time; o.Shut = true;
                 Closed++;
                 Plugin.Log.LogInfo($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나와서 문 {o.Door.name} 닫음");
             }
+        }
+
+        /// <summary>문틀 가운데 1.5m 안에 누가 서 있나(except는 뺌).</summary>
+        static bool SomeoneAt(Vector3 mid, Character except)
+        {
+            foreach (var c in Character.GetAllCharacters())
+                if (c != null && c != except && !c.IsDead() && Utils.DistanceXZ(c.transform.position, mid) < 1.5f && Mathf.Abs(c.transform.position.y - mid.y) < 2f) return true;
+            return false;
         }
 
         static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);

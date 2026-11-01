@@ -58,10 +58,10 @@ namespace ValheimHelper
 
         /// <summary>회차 348: 비탈이면 문간 안쪽 땅이 바닥보다 솟아 머리가 문틀에 걸림(안쪽으로 Terrain 0.0m) → 플레이어가 땅 고르듯 집 자리(벽 밖 1.5m까지)를 바닥 높이로.</summary>
         static string s_levelWhy = "";
-        static int LevelGround(Vector3 c, Vector3 r, Vector3 f, float y)
+        static int LevelGround(Vector3 c, Vector3 r, Vector3 f, float y, float half = Half + 1.5f)
         {
             // 바닐라 RPC_ApplyOperation → TerrainComp.DoOperation(비공개)에 고르기 설정을 바로 줌(괭이 조각표엔 m_level 켠 것이 없음 — mud_road_v2·raise_v2·path_v2·paved_road_v2 모두 False, 회차 348 시험)
-            var settings = new TerrainOp.Settings { m_level = true, m_levelRadius = (Half + 1.5f) * 1.42f, m_square = true, m_raise = false, m_smooth = false, m_paintCleared = false };
+            var settings = new TerrainOp.Settings { m_level = true, m_levelRadius = half * 1.42f, m_square = true, m_raise = false, m_smooth = false, m_paintCleared = false };
             var doOp = HarmonyLib.AccessTools.Method(typeof(TerrainComp), "DoOperation");
             var maps = new List<Heightmap>();
             Heightmap.FindHeightmap(c, settings.m_levelRadius, maps);
@@ -475,6 +475,9 @@ namespace ValheimHelper
                 if (nv == null || !nv.IsValid() || nv.GetComponent<Piece>() != null || nv.GetComponent<Character>() != null) continue;
                 if (nv.GetComponent<TreeBase>() != null || nv.GetComponent<Destructible>() != null || nv.GetComponent<Pickable>() != null) ZNetScene.instance.Destroy(nv.gameObject);
             }
+            // 회차 352(E063): 2층 자리가 비탈이면 계단 1칸에 땅이 닿고 언덕 쪽 땅에서 2층 상자에 손이 닿음(땅 위 0.3m, 5초) → 2층·계단 자리도 고름
+            Plugin.Log.LogInfo($"집 시험: 2층 자리 땅 고르기 {LevelGround(lp + f * 2.5f, r, f, ZoneSystem.instance.GetGroundHeight(lp), 4f)}번");
+            yield return new WaitForSeconds(1f);
             float lg = ZoneSystem.instance.GetGroundHeight(lp), floorTop = lg + 2f; // 기둥 wood_pole2 2m 위
             // 계단 한 칸(wood_stair)은 2m 가며 1m 오름(회차 319 잼) → 바닥 가장자리부터 f쪽으로 땅에 닿을 때까지 잇는다.
             // 모양은 재 봄: f 축을 따라 위에서 아래로 쏴 높은 끝·낮은 끝 → 높은 끝이 바닥 쪽
@@ -538,7 +541,7 @@ namespace ValheimHelper
             if (lc != null) TestKit.PutInChest(lc, "MeadHealthMinor", 3);
             float chestUp = lc != null ? lc.transform.position.y - lg : 0f;
             checks.Add($"2층 단계: 기둥 {poles}/4·바닥·계단·상자 (계단 {stairs.Count}칸, 남음 {loftAlive}, 들고 있던 미드 {had}, 상자 높이 {chestUp:0.0}m, 상자 미드 {Count(lc, "MeadHealthMinor")})",
-                poles == 4 && loftAlive && chestUp > 1.5f && Count(lc, "MeadHealthMinor") == 3);
+                poles == 4 && loftAlive && stairs.Count >= 2 && chestUp > 1.5f && Count(lc, "MeadHealthMinor") == 3); // 계단 1칸이면 땅이 바닥 가까이 — 언덕에서 손이 닿음(회차 352)
             if (lfloor != null && stair != null && loft != null && lc != null)
             {
                 tele0 = Teleports();

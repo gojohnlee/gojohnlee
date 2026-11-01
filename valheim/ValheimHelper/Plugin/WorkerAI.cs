@@ -233,6 +233,26 @@ namespace ValheimHelper
             return $"길 {(full ? "완전" : "부분")}(모퉁이 {s_diagPath.Count}, 끝이 목표에서 {Utils.DistanceXZ(end, to):0.0}m·높이 {end.y - to.y:0.0})";
         }
 
+        /// <summary>
+        /// 다른 층 목표로 걸을 곳: 바닐라 BaseAI.MoveTo는 수평 거리만 봐 0.5m 안이면 도착으로 침 → 2층 상자 바로 밑에서 길(계단)이 있어도 섬(회차 352, E063).
+        /// 길의 모퉁이 중 수평 0.6m 넘는 첫 점을 준다(0.5초마다 새로). 길이 없으면 목표 그대로.
+        /// </summary>
+        public Vector3 FloorStep(Vector3 to)
+        {
+            Vector3 pos = transform.position;
+            if (Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || Utils.DistanceXZ(m_step, pos) < 0.6f)
+            {
+                m_stepAt = Time.time + 0.5f; m_stepTo = to; m_step = to;
+                if (Pathfinding.instance != null && Pathfinding.instance.GetPath(pos, to, s_stepPath, m_pathAgentType))
+                    for (int i = 1; i < s_stepPath.Count; i++)
+                        if (Utils.DistanceXZ(s_stepPath[i], pos) > 0.6f) { m_step = s_stepPath[i]; break; }
+            }
+            return m_step;
+        }
+        static readonly List<Vector3> s_stepPath = new List<Vector3>();
+        Vector3 m_step, m_stepTo;
+        float m_stepAt;
+
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
         public string BlockerAhead(Vector3 point)
         {

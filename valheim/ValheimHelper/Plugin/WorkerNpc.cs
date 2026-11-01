@@ -630,6 +630,8 @@ namespace ValheimHelper
             // 지하묘지 안(y>3000)은 위가 막힌 방이라 그게 묘지 지붕이다(도착점보다 6.5m 위에 서서 지붕 위를 걸었다, vh_crypttest 2026-10-23).
             // 안에서는 바닐라 Player.UpdateTeleport처럼 도착점 1m 위에서 아래로 바닥을 찾는다(ZoneSystem.FindFloor).
             bool floor = Character.InInterior(pos) ? ZoneSystem.instance.FindFloor(pos, out float h) : ZoneSystem.instance.GetSolidHeight(pos, out h);
+            // 회차 352: 바깥에서 가장 위 면은 지붕일 수 있음(상자 앞으로 옮기기가 집 지붕 위 3.1m에 내려 40초 섬) → 도착점 높이 근처에 바닥이 있으면 그 바닥
+            if (floor && !Character.InInterior(pos) && h > pos.y + 1.5f && ZoneSystem.instance.FindFloor(pos, out float fh) && fh > pos.y - 1.5f && fh < pos.y + 1f) h = fh;
             if (floor) pos.y = Mathf.Max(pos.y, h + 0.2f);
             transform.position = pos;
             m_body.position = pos; // 몸(Rigidbody)도 같이: 안 그러면 보간이 원래 자리로 되돌린다(0.3.7 시험: 40m 옮겼는데 그 자리에서 죽음)

@@ -63,7 +63,7 @@ namespace ValheimHelper
             if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
             if (!Instant && (d > 2.5f || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f) && !(m_wayFor == m_chest && m_way.Busy) && !CanReach(at, d))
             {
-                if (!m_hop.Update(dt, m_npc, m_chest, d, "Unload")) m_ai.MoveToPoint(dt, m_hop.Goal(m_chest), 1.8f, d > 10f); // 거점 125m: 멀면 뜀(Prep과 같음), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Unload")) { bool floor = Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f; m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_hop.Goal(m_chest)) : m_hop.Goal(m_chest), floor ? 0f : 1.8f, d > 10f); } // 다른 층 상자면 길 모퉁이를 따라감(E063, Prep과 같음), 거점 125m: 멀면 뜀(Prep과 같음), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로
                 return true;
             }
             if (m_wayFor != m_chest) { m_way = new DoorWay(); m_wayFor = m_chest; }

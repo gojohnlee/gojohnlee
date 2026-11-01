@@ -77,13 +77,13 @@ namespace ValheimHelper
             Vector3 at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             // 높이도 봄(E056): 2층 상자 바로 밑 2.5m 안을 "닿음"으로 보면 바닥에 가려 문으로 돌다 포기하고 그 자리(아래층)에서 꺼냈음
-            // 회차 348(E063): 비탈 위쪽에서 2층 상자가 1.5m 안이면 2층 바닥 너머로 꺼냄(땅 위 0.2m, 4초) → 위에 있고 건축물이 가리면 닿음 아님(계단으로)
-            if ((d > 2.5f || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || (at.y - m_npc.transform.position.y > 1f && DoorWay.Blocked(m_npc, m_chest))) && !Steering(m_chest) && !CanReach(at, d, dt))
+            // 회차 348(E063): 비탈 위쪽에서 2층 상자가 1.5m 안이면 2층 바닥 너머로 꺼냄(땅 위 0.2m, 4초) → 위에 있고 건축물이 가리면 닿음 아님(계단으로). 회차 352: 위로는 1.2m까지만(계단 중간 땅 위 0.7m에서 꺼냄)
+            if ((d > 2.5f || at.y - m_npc.transform.position.y > 1.2f || m_npc.transform.position.y - at.y > 1.5f || (at.y - m_npc.transform.position.y > 1f && DoorWay.Blocked(m_npc, m_chest))) && !Steering(m_chest) && !CanReach(at, d, dt))
             {
                 // E063 ② 진단: 다른 층 상자로 60초 걷기만 하던 꼴 — 10초마다 자리·높이·길
                 if ((int)(m_time / 10f) != (int)((m_time - dt) / 10f))
                     Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Prep 걷기 {m_time:0}초: 상자까지 {d:0.0}m·높이 {at.y - m_npc.transform.position.y:0.0}, 자리 {m_npc.transform.position:F1}, 목표 {m_hop.Goal(m_chest):F1}, {m_ai.PathDiag(m_hop.Goal(m_chest))}, 문길 {Steering(m_chest)}, {m_ai.BlockerAhead(at)}");
-                if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) m_ai.MoveToPoint(dt, m_hop.Goal(m_chest), 1.8f, d > 10f); // 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) { bool floor = Mathf.Abs(at.y - m_npc.transform.position.y) > 1.2f; m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_hop.Goal(m_chest)) : m_hop.Goal(m_chest), floor ? 0f : 1.8f, d > 10f); } // 다른 층 상자면 길 모퉁이를 따라감(E063: 도착 판정이 수평만 봐 2층 바닥 밑 1.4m·0.1m에서 "닿음"으로 60초 섬 — 닿음은 위 조건이 정함), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
                 return true;
             }
             if (Through(dt, m_chest)) return true;
