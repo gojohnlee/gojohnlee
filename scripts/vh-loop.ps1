@@ -8,7 +8,7 @@
 # 자리 비움(입력 없음 10분)일 때 깨우기 예약 후 최대 절전(30초 예약은 못 깨움 → 10분 넘게 남았을 때만).
 # 멈추기: 저장소에 docs/valheim/loop-stop.txt를 만든다(GitHub 앱에서도 됨) 또는 %USERPROFILE%\vh-loop\stop 파일.
 # 쉬기: docs/valheim/loop-pause.txt에 다시 시작할 시각("yyyy-MM-dd HH:mm")을 쓴다(아래 Get-PauseUntil).
-# 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 history.md 맨 위, 가져간 요청은 지움). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다.
+# 밖에서 요청: docs/valheim/UserRequest.txt(회차가 먼저 처리, 답은 history.md 맨 위, 가져간 요청은 지움). 멈춤 조건이면 끝내지 않고 그 파일이 바뀔 때까지 기다린다(자리 비우면 컴퓨터를 끄고 다음에 켜지면 이어 기다림, 최대 절전 없음).
 # 할 일 없음(ALLDONE)이면 자리 비울 때 컴퓨터를 끄고 끝(최대 절전·깨우기 예약 없음). 다음에 켜지면 회차 없이 그 파일만 기다린다(Wait-Done).
 # pull로 이 스크립트가 바뀌면 이번 회차 뒤 새 스크립트로 저절로 다시 켜진다(scripts/vh-loop-restart.ps1, PC에 사람이 없어도). 고칠 때 UTF-8 BOM을 지킨다.
 # 기록: %USERPROFILE%\vh-loop\loop.log, 회차별 claude 출력 round-N.txt, 상태 state.json.
@@ -494,7 +494,9 @@ function Wait-Until($t) {
 }
 
 # 멈춤 조건(사용자 확인 필요·같은 FAIL·진척 없음)이면 끝내지 않고 사용자 요청을 기다린다: 밖에서 GitHub으로
-# docs/valheim/UserRequest.txt를 고치면 다시 돈다(5분마다 pull해서 그 파일이 바뀌었나 봄). 기다리는 동안 PC는 깨어 있다. 멈춤 파일이면 $false.
+# docs/valheim/UserRequest.txt를 고치면 다시 돈다(5분마다 pull해서 그 파일이 바뀌었나 봄). 바뀌면 $true, 멈춤 파일이거나 껐으면 $false.
+# 사용자 11-01: 기다리는 동안 최대 절전·1시간 깨우기 없음 → 자리 비우면(입력 없음 10분) 컴퓨터를 끈다(할 일 없음과 같은 꼴).
+# 끄기 전에 done 파일에 그때 UserRequest.txt 판과 멈춘 까닭을 남겨, 다음에 켜지면 회차 없이 Wait-Done으로 이어 기다린다.
 # 회차 결과(사용자 결정 2026-10-23): 진척은 근거가 붙은 "끝낸 것"이 새로 생겼을 때만 센다. [끝] 표시·푸시·문구 고침·시험 실행·코드 변경만으로는 안 셈.
 # 끝낸 것 = $before..$after에서 새로 들어온 줄 중
 #  progress "[끝, 회차 N"(이번 회차 번호)이면서 근거: 실제 있는 커밋 해시 + 시험 PASS, 또는 "문서만"(문서 항목은 변경 내용으로 확인)
@@ -527,11 +529,19 @@ function Wait-UserRequest($why, $last) {
     $h0 = G rev-parse $f | Select-Object -Last 1
     Log "멈춤: $why → UserRequest.txt가 바뀔 때까지 기다림"
     Write-Status "답 기다림: $why — UserRequest.txt에 쓰면 5분 안에 이어 감(물은 것은 history.md 맨 위)" $last
+    $chk = Get-Date
     while ($true) {
-        # 사용자 10-28: 멈춤 대기 중엔 할 일이 없으니 잠든다 — 입력 없음 10분이면 Wait-Until이 최대 절전, 1시간 뒤 깨워 UserRequest를 본다
-        if ([VH.Power]::IdleMs() -gt 600000) { Wait-Until (Get-Date).AddMinutes(60) } else { Start-Sleep 300 }
-        Prepare-Git
-        if (Test-StopFile) { return $false }
+        if ([VH.Power]::IdleMs() -gt 600000) {
+            [IO.File]::WriteAllText($DoneFile, "$h0`n$why", $Utf8)
+            Log '답 기다림 → 자리 비움, 컴퓨터 끔(2분 뒤)'
+            Write-Status "답 기다림: $why — 자리 비워 컴퓨터 끔. UserRequest.txt에 쓰고 PC를 켜면 이어 감(물은 것은 history.md 맨 위)" $last
+            & shutdown /s /t 120 /c "발헤임 답 기다림 - 2분 뒤 꺼짐(취소: shutdown /a)"
+            return $false
+        }
+        Start-Sleep 30
+        if (((Get-Date) - $chk).TotalMinutes -lt 5) { continue }
+        $chk = Get-Date; Prepare-Git
+        if (Test-StopFile) { Log '멈춤 파일 → 끝'; Write-Status '멈춤: 멈춤 파일이 있음' '-'; return $false }
         if ((G rev-parse $f | Select-Object -Last 1) -ne $h0) { Log 'UserRequest.txt 바뀜 → 다시 돎'; return $true }
     }
 }
@@ -545,17 +555,24 @@ function Get-PendingRequests {
 
 # 할 일 없음(사용자 10-31: 다 끝났으면 최대 절전 말고 끄고, 그 뒤엔 안 건드림). $off: 깨우기 예약을 지우고 입력 없음 10분이면 컴퓨터를 끈다.
 # done 파일(그때 UserRequest.txt 판)이 남아 다음에 켜지면 $off 없이 불림: 회차·절전·끄기 없이 그 파일이 바뀌기만 기다린다.
+# 답 기다림(Wait-UserRequest)에서 끈 것이면 done 파일 둘째 줄이 멈춘 까닭 → 다시 켜져도 "답 기다림"으로 알린다.
 # 바뀌면 $true(다시 돎), 멈춤 파일이거나 껐으면 $false.
 $DoneFile = Join-Path $Dir 'done'
 function Wait-Done($off, $last) {
     $f = 'origin/valheim:docs/valheim/UserRequest.txt'
-    $h0 = if (Test-Path $DoneFile) { (Get-Content $DoneFile -Raw).Trim() } else { G rev-parse $f | Select-Object -Last 1 }
-    [IO.File]::WriteAllText($DoneFile, $h0, $Utf8)
+    $d = if (Test-Path $DoneFile) { @(Get-Content $DoneFile -Encoding UTF8) } else { @(G rev-parse $f | Select-Object -Last 1) }
+    $h0 = "$($d[0])".Trim(); $why = if ($d.Count -gt 1) { "$($d[1])".Trim() } else { '' }
+    [IO.File]::WriteAllText($DoneFile, $(if ($why) { "$h0`n$why" } else { $h0 }), $Utf8)
     Unregister-ScheduledTask -TaskName 'VH loop wake' -Confirm:$false -ErrorAction SilentlyContinue   # 남은 깨우기 예약이 PC를 켜지 않게
     [void][VH.Power]::SetThreadExecutionState($Release)
     $how = if ($off) { '자리 비우면(입력 없음 10분) 컴퓨터 끔, 깨우기 예약 없음' } else { '켜진 PC는 안 건드림' }
-    Log "할 일 없음 → $how, UserRequest.txt가 바뀔 때까지 기다림"
-    Write-Status "할 일 다 끝남 — $how. UserRequest.txt에 쓰면 5분 안에 다시 돎" $last
+    if ($why) {
+        Log "답 기다림($why) → $how, UserRequest.txt가 바뀔 때까지 기다림"
+        Write-Status "답 기다림: $why — $how. UserRequest.txt에 쓰면 5분 안에 이어 감(물은 것은 history.md 맨 위)" $last
+    } else {
+        Log "할 일 없음 → $how, UserRequest.txt가 바뀔 때까지 기다림"
+        Write-Status "할 일 다 끝남 — $how. UserRequest.txt에 쓰면 5분 안에 다시 돎" $last
+    }
     $chk = Get-Date
     while ($true) {
         if ($off -and [VH.Power]::IdleMs() -gt 600000) {
@@ -764,7 +781,7 @@ while ($true) {
         $st.noProg = 0; $st.lastFail = ''; Save-State; continue
     }
     if ($stop) {
-        if (-not (Wait-UserRequest $stop $last)) { Log '멈춤 파일 → 끝'; Write-Status '멈춤: 멈춤 파일이 있음' '-'; break }
+        if (-not (Wait-UserRequest $stop $last)) { break }
         $st.noProg = 0; $st.lastFail = ''; Save-State; continue
     }
     if ($Once) { break }
