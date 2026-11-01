@@ -97,7 +97,7 @@ namespace NecroKoreanFont
         TMP_FontAsset korean;
         readonly HashSet<int> done = new HashSet<int>();
         float nextScan;
-        bool menuDone;
+        bool menuDone, langYes;
 
         void Awake()
         {
@@ -215,6 +215,10 @@ namespace NecroKoreanFont
                 {
                     foreach (var o in UnityEngine.Object.FindObjectsByType(typeof(ChatMugshot), FindObjectsSortMode.None)) { var m = o as ChatMugshot; if (m != null && m.overlayText != null) Ui.Track(m.overlayText); }
                     Ui.PatchList(TrustManager.trustGroupName);
+                    // 게임이 켤 때마다 묻는 "Localization file found: Korean.csv — 쓸까요?" 창은 자동으로 예
+                    var ad = AlertDialog.instance;
+                    if (!langYes && ad != null && ad.gameObject.activeInHierarchy && ad.txtMsg != null && ad.txtMsg.text != null && ad.txtMsg.text.Contains("Localization file found"))
+                    { langYes = true; ad.OnClickedOK(); Log.Write("언어 창 자동 예"); }
                 }
                 Ui.Reapply();
             }
