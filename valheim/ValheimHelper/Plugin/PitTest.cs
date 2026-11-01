@@ -181,6 +181,7 @@ namespace ValheimHelper
                     WorkerAI.TestNoJump = WorkerAI.TestNoCarve = WorkerAI.TestNoEdgeRescue = false;
                     TestRunner.Log($"구덩이 {i + 1}({kind} {depth:0.0}m): {(outBy != null ? outBy + "(으)로 나옴" : "못 나옴")} {total:0.0}초, " +
                                    $"점프 {claude.Ai.Jumps - j0}번, 경사로 곡괭이질 {claude.Ai.CarveSwings - c0}번, 가장자리 옮김 {WorkerAI.PitEdgeRescues - edge0}번, 흙 파기 {NpcPatches.NoDig.Dug - d0}번, 지금 {claude.MoveDebug}");
+                    if (outBy == null || CarveOnly[i]) TestRunner.Log($"  경사로 깎기(E054): {claude.Ai.CarveDebug}, 깎는 중 {claude.Ai.Carving}, {claude.Ai.MoveState}");
                     if (i == 0) checks.Add($"얕은 구덩이({depth:0.0}m)는 점프까지로 나옴", outBy == Phases[0] || outBy == Phases[1]);
                     else if (CarveOnly[i]) checks.Add($"점프 없이 경사로를 깎아 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy == Phases[2] && claude.Ai.CarveSwings > c0);
                     else checks.Add($"{kind} 구덩이 {i + 1}({depth:0.0}m)에서 나옴", outBy != null);

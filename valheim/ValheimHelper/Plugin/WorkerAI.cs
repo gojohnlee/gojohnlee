@@ -519,6 +519,8 @@ namespace ValheimHelper
         float m_carveStart;
         float m_noCarveUntil;
         const int CarveMax = 30;
+        /// <summary>시험 진단(E054): 마지막 경사로 깎기의 시작 둘레·방향, 곡괭이질마다 발 높이, 끝 이유.</summary>
+        public string CarveDebug { get; private set; } = "";
 
         /// <summary>8방향(0 = toward, 45°씩) 둘레 땅이 발보다 얼마나 높은지: 1.5·3·4.5m 중 가장 높은 값.</summary>
         static double[] Rise8(Vector3 pos, Vector3 toward)
@@ -554,6 +556,7 @@ namespace ValheimHelper
             m_carveStart = m_carveSeen = Time.time;
             MarkPit(pos);
             Brain.Places.AddFeature(Senses.ZoneOf(pos), PlaceFeature.Pit, ZNet.instance.GetTimeSeconds()); // 장소 기억: 구덩이
+            CarveDebug = $"시작 둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))} 방향 {k}·{Mathf.Atan2(m_carveDir.x, m_carveDir.z) * Mathf.Rad2Deg:0}° 발 {pos.y:0.0}, 높이";
             Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 구덩이에 갇힘(둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))}) → 경사로 깎기");
             return true;
         }
@@ -574,6 +577,7 @@ namespace ValheimHelper
                 double[] rise = Rise8(pos, m_carveDir);
                 if (!Climb.IsPit(rise) || m_carveCount >= CarveMax)
                 {
+                    CarveDebug += $" → 끝 {(Climb.IsPit(rise) ? "못 나옴" : "나옴")} 둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))}";
                     Plugin.Log.LogInfo($"{npc.NpcName}: 경사로 깎기 끝({(Climb.IsPit(rise) ? "못 나옴" : "나옴")}, 곡괭이질 {m_carveCount}번, {Time.time - m_carveStart:0}초)");
                     m_carving = false;
                     m_stuckJumps = 0;
@@ -593,6 +597,7 @@ namespace ValheimHelper
                 m_carveCount++;
                 CarveSwings++;
                 m_carveWalk = 1.2f; // 깎인 데로 올라가 본다
+                if (m_carveCount <= 40) CarveDebug += $" {pos.y:0.0}";
                 return true;
             }
             if (!attacking && IsLookingAt(aim, 20f))
