@@ -80,8 +80,9 @@ namespace ValheimHelper
             int reached0 = Unload.Reached;
             var after = new Unload(w.Ragnar);
             float took = 0f;
-            while (took < 10f && after.Update(Time.deltaTime)) { took += Time.deltaTime; yield return null; }
-            if (took > 2f) TestRunner.Log($"  E055 손 거리 넣기 건너뛴 까닭: {after.Why()}");
+            string at2 = null; // E066: 끝난 뒤엔 m_chest가 비어 "상자 안 고름"만 보임 → 2초 때 상태를 잡음
+            while (took < 10f && after.Update(Time.deltaTime)) { took += Time.deltaTime; if (at2 == null && took > 2f) at2 = $"{after.Why()} 거리 {Dist():0.0}m 속도 {w.Ragnar.GetVelocity().magnitude:0.0}"; yield return null; }
+            if (took > 2f) TestRunner.Log($"  E055 손 거리 넣기 건너뛴 까닭(2초 때): {at2}");
             checks.Add($"고친 뒤: 그 자리에서 넣음 ({took:0.0}초 ≤ 2, 손 거리 넣기 {Unload.Reached - reached0}, 상자까지 {Dist():0.0}m)",
                 took <= 2f && Unload.Reached - reached0 >= 1);
             checks.Add($"나무 10 모두 상자로 (들고 {BaseTest.Carried(w.Ragnar, "Wood")}, 상자 {GatherTest.CountBase(w.Home, "Wood")})",
