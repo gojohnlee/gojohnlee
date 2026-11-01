@@ -158,12 +158,13 @@ namespace ValheimHelper
     /// </summary>
     internal sealed class ChestHop
     {
-        const float SideSeconds = 2.5f, SideRadius = 1.5f, BumpSeconds = 0.5f;
+        const float SideSeconds = 2.5f, SideRadius = 1.5f, BumpSeconds = 0.5f, FarStep = 1f, SlowSpeed = 1.5f;
         Container m_for;
         Vector3 m_from;
         Vector3? m_side;
         int m_sides;
-        float m_best = float.MaxValue, m_time;
+        float m_best = float.MaxValue, m_time, m_far, m_farMark = float.MaxValue;
+        Vector3 m_last;
         /// <summary>시험용: 옮긴 수, 옆으로 돈 수.</summary>
         internal static int Hops, Sides, Bumps, Doors;
         /// <summary>시험용: 닿은 것 보고 일찍 반응하기를 끔(고치기 전 비교).</summary>
@@ -176,8 +177,13 @@ namespace ValheimHelper
         public bool Update(float dt, WorkerNpc npc, Container chest, float d, string what)
         {
             Vector3 pos = npc.transform.position;
-            if (m_for != chest) { m_for = chest; m_best = float.MaxValue; m_side = null; m_sides = 0; }
+            if (m_for != chest) { m_for = chest; m_best = m_farMark = float.MaxValue; m_far = 0f; m_side = null; m_sides = 0; }
             if (m_side.HasValue && Utils.DistanceXZ(m_side.Value, pos) < 0.4f) m_side = null; // 옆 접근점에 닿음 → 거기서 곧장
+            // 옆으로 돌거나 통나무를 밀며 느리게 가면 "거의 제자리" 시간이 0부터라, 1m 넘게 안 가까워진 시간도 따로 센다(E060) — 5초면 상자 앞으로.
+            // 옆으로 돌아 본 뒤나 느리게(1.5m/s 밑) 움직일 때만 셈: 계단을 오를 때처럼 제 속도로 걷는데 수평 거리만 안 줄 때·높이 차 1.5m 넘을 때(다른 층)는 아님
+            bool slow = dt > 0f && Utils.DistanceXZ(pos, m_last) < SlowSpeed * dt; m_last = pos;
+            if (d < m_farMark - FarStep) { m_farMark = d; m_far = 0f; } else if ((m_sides > 0 || slow) && Mathf.Abs(chest.transform.position.y - pos.y) < 1.5f) m_far += dt;
+            if (m_far >= (float)Core.Work.StuckHop.NearStuckSeconds && !DoorWay.Blocked(npc, chest)) return Hop(npc, chest, d, what, $"{m_far:0.0}초 안 가까워짐");
             if (d < m_best - 0.3f || Utils.DistanceXZ(m_from, pos) >= 1.5f) { m_best = Mathf.Min(m_best, d); m_from = pos; m_time = 0f; return false; }
             m_time += dt;
             Vector3 at = chest.transform.position;
@@ -204,11 +210,16 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리{(bump != null ? $", {bump}에 닿음" : "")}, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(at)} → 옆({Core.Work.StuckHop.SideAngles[m_sides - 1]:0}°)으로");
                 return false;
             }
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(Goal(chest))} → 상자 앞으로");
-            npc.TeleportTo(at + chest.transform.forward * 1.5f, npc.transform.rotation, false);
+            return Hop(npc, chest, d, what, $"{m_time:0.0}초 거의 제자리");
+        }
+
+        bool Hop(WorkerNpc npc, Container chest, float d, string what, string why)
+        {
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {why}, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(Goal(chest))} → 상자 앞으로");
+            npc.TeleportTo(chest.transform.position + chest.transform.forward * 1.5f, npc.transform.rotation, false);
             WorkerAI.StuckTeleports++;
             Hops++;
-            m_time = 0f; m_best = float.MaxValue; m_side = null;
+            m_time = 0f; m_far = 0f; m_farMark = float.MaxValue; m_best = float.MaxValue; m_side = null;
             return true;
         }
     }
