@@ -963,21 +963,28 @@ namespace ValheimHelper
             TarDetours++;
         }
 
-        float m_swimSlow, m_swimStraightUntil;
+        float m_swimSlow, m_swimStraightUntil, m_swimCheckTime;
         int m_swimTries;
+        Vector3 m_swimCheckPos;
 
-        /// <summary>바깥 좁은 강을 길 따라 헤엄치다 물속 바위에 걸려 1m/s 아래로 4초 넘으면(E047: 50초 오락가락) 처음엔 목표 쪽으로 곧장 6초,
-        /// 그래도 느리면 이번 물은 못 건넌다고 보고 마른 자리로 되돌아간다(물가에선 물에 막힘 처리로 넘어감).</summary>
+        /// <summary>바깥 좁은 강을 길 따라 헤엄치다 물속 바위에 걸려 2초마다 2m도 못 나아가는 게 4초 넘으면(E047: 50초 오락가락) 처음엔 목표 쪽으로 곧장 5초,
+        /// 그래도 느리면 이번 물은 못 건넌다고 보고 마른 자리로 되돌아간다(물가에선 물에 막힘 처리로 넘어감).
+        /// 속도가 아니라 실제로 옮긴 거리로 잰다 — 바위를 밀면 속도는 1.1~1.6m/s로 나와도 제자리다(회차 335).</summary>
         bool SlowSwim(float dt, Vector3 pos, Vector3 point)
         {
-            if (!m_character.IsSwimming()) { m_swimSlow = 0f; m_swimTries = 0; m_swimStraightUntil = 0f; return false; }
+            if (!m_character.IsSwimming()) { m_swimSlow = 0f; m_swimTries = 0; m_swimStraightUntil = 0f; m_swimCheckTime = 0f; return false; }
             if (!m_swimOk || Character.InInterior(pos) || TarGoal(point)) return false;
-            if (Flat(m_character.GetVelocity()).magnitude < 1f) m_swimSlow += dt; else m_swimSlow = Mathf.Max(0f, m_swimSlow - dt);
-            if (m_swimSlow > 4f)
+            if (m_swimCheckTime == 0f) { m_swimCheckTime = Time.time; m_swimCheckPos = pos; }
+            else if (Time.time - m_swimCheckTime >= 2f)
+            {
+                if (Utils.DistanceXZ(pos, m_swimCheckPos) < 2f) m_swimSlow += 2f; else m_swimSlow = Mathf.Max(0f, m_swimSlow - 2f);
+                m_swimCheckTime = Time.time; m_swimCheckPos = pos;
+            }
+            if (m_swimSlow >= 4f)
             {
                 m_swimSlow = 0f;
                 string name = ((WorkerNpc)m_character).NpcName;
-                if (++m_swimTries == 1) { m_swimStraightUntil = Time.time + 6f; Plugin.Log.LogInfo($"{name}: 헤엄이 느림(바위에 걸림?) — 목표 쪽으로 곧장"); }
+                if (++m_swimTries == 1) { m_swimStraightUntil = Time.time + 5f; Plugin.Log.LogInfo($"{name}: 헤엄이 느림(바위에 걸림?) — 목표 쪽으로 곧장"); }
                 else
                 {
                     m_swimStraightUntil = 0f; m_swimOk = false; m_waterDecidedUntil = Time.time + 10f;
