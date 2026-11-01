@@ -216,7 +216,7 @@ namespace ValheimHelper
             checks.Add($"벽에 박은 시간 짧음 ({wallStuck:0.0}초, 최장 연속 {maxRun:0.0}초 ≤ 5)", maxRun <= 5f);
             checks.Add($"순간이동 없음 ({tele}, 문 열림 {opened})", tele == 0);
             int closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"일 끝나고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, 일꾼 안 {In(w.Ragnar.transform.position)}, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
 
             // 2) 집 안 제련소(③-2): 작업대 자리에 제련소, 광석·석탄은 안 상자. 일꾼은 밖에서 시작, 플레이어는 25m 밖(5m 안이면 보충 안 함)
@@ -245,7 +245,7 @@ namespace ValheimHelper
             checks.Add($"제련소로 문 지나 들어감 ({DoorWay.Entered - entered0}번, 옆 돌기 {MachineStep.SideTries - side0})", DoorWay.Entered - entered0 > 0);
             checks.Add($"제련 중 순간이동 없음 ({tele})", tele == 0);
             closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"제련 끝나고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, 일꾼 안 {In(w.Ragnar.transform.position)}, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
 
@@ -271,7 +271,7 @@ namespace ValheimHelper
             // 문 앞에서 막혀 상자 가기가 문을 열고 문간에서 손 거리로 꺼내도 됨(회차 345 — 문 지나기 없이 5초)
             checks.Add($"꺼내러 문 지나 들어감 ({DoorWay.Entered - entered0}번, 상자 가기 문 열기 {ChestHop.Doors - doors0}번, 순간이동 {tele})", DoorWay.Entered - entered0 + ChestHop.Doors - doors0 > 0 && tele == 0);
             closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"꺼내고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
@@ -290,7 +290,7 @@ namespace ValheimHelper
             tele = Teleports() - tele0;
             checks.Add($"안에서 문 열고 나감 ({took:0}초, 나감 {DoorWay.Exited - exited0}번, 순간이동 {tele}, {w.Ragnar.Ai.Job?.StepName})", !In(w.Ragnar.transform.position) && DoorWay.Exited > exited0 && tele == 0);
             closed0 = DoorWay.Closed;
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0, 40f);
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"나가서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
             GatherTest.Say("!멈춰", null);
 

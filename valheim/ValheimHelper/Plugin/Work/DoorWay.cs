@@ -15,7 +15,8 @@ namespace ValheimHelper
         Phase m_phase;
         Door m_door;
         Vector3 m_out, m_in;
-        float m_t, m_limit, m_check;
+        float m_t, m_limit, m_check, m_swingNext;
+        int m_swing; // 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064)
         float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for;
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
@@ -132,15 +133,36 @@ namespace ValheimHelper
                     else npc.Ai.MoveToPoint(dt, m_out, 0.5f, false);
                     return 1;
                 }
+                m_swing = 0;
                 if (Dungeons.Open(npc, m_door))
                 {
                     Opened++;
                     Track(m_door, npc);
+                    m_swing = 2; // 방금 내가 엶 — 바꿔 열기 안 함(회차 347: 연 직후 s_state가 반대로 읽혀 들어갈 때도 닫음)
                 }
                 m_phase = Phase.Through; m_t = 0f;
             }
             ZNetView v = m_door != null ? m_door.GetComponent<ZNetView>() : null;
             if (v == null || !v.IsValid()) { GiveUp(npc, what, "문 사라짐"); return 0; }
+            // E064: 반대쪽에서 연 문(들어갈 때 바깥에서 엶)은 문짝이 내 쪽에 있어 박힘 → 닫고 내 쪽에서 다시 엶(바닐라 RPC_UseDoor: forward면 s_state 1, 연 문이면 0)
+            int state = v.GetZDO().GetInt(ZDOVars.s_state);
+            if (m_swing == 0 && state != 0)
+            {
+                int mine = Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
+                if (state == -mine)
+                {
+                    v.InvokeRPC("UseDoor", false);
+                    m_swing = 1; m_t = 0f; m_swingNext = Time.time + 0.3f;
+                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문짝이 내 쪽으로 열림(s_state {state}) → 닫고 반대로 다시 엶");
+                    npc.Ai.StopMoving();
+                    return 1;
+                }
+            }
+            if (m_swing == 1 && state == 0 && Time.time >= m_swingNext)
+            {
+                m_swingNext = Time.time + 0.3f; // 닫히는 애니메이션 중엔 바닐라 CanInteract가 거절 → 될 때까지
+                if (Dungeons.Open(npc, m_door)) Track(m_door, npc);
+            }
             if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); return 1; } // 열리는 중(주인 RPC 기다림)
             // 문틀 가운데를 지나기 전엔 가운데를 겨눔(회차 317: 문 앞 0.56m 옆에서 곧장 가다 열린 문짝에 8초 박힘)
             Vector3 mid = Middle(m_door), dirIn = m_in - mid; dirIn.y = 0f; dirIn.Normalize();
