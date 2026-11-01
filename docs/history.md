@@ -1,5 +1,9 @@
 # 한 일 (최근이 위)
 
+## 2026-11-02 재번역 루프를 발헤임 루프처럼 손봄(자동 시작 없음)
+- **요약**: 한도에 걸리면 30분 쉬던 것을 2번 계정으로 바꿔 이어 하게 함. 덩어리마다 쓴 토큰을 기록, 진행 상태를 더 자주 올림, GitHub에서 멈출 수 있게 함. 시작·멈춤은 scripts\retrans-start.bat·retrans-stop.bat 더블클릭.
+- **자세히**: claude -p --output-format json으로 usage를 읽어 loop.log·retrans-status.md에 평균을 적음. 둘 다 한도면 가장 먼저 풀리는 계정 시각까지 쉼. 덩어리마다 git pull(멈춤 파일 docs/retrans-stop.txt 확인), 10덩어리·멈춤·한도·끝에 상태 푸시와 비공개 refs 백업. 같은 루프가 둘 켜지지 않게 막음. PC가 꺼졌을 때(11-01 밤) 5768/26745에서 멈춤 — 끝난 줄은 건너뛰므로 그대로 이어 감.
+
 ## 2026-11-01 집사 말투 통일, 대사 속 네모 지움, 인물 이름 한글
 - **요약**: 집사가 반말·존댓말을 오가던 것을 존댓말로 맞추고 어순을 다듬음(312줄). 대사 앞 네모(□1□) 58곳을 지움. 인물 이름·책 제목을 한글로.
 - **자세히**: 화자는 게임 데이터(ArticyPlayer.models)에서 뽑음. 다시 옮긴 줄은 로컬 retrans\*.tsv, fix-csv.ps1이 원본 꼴(align·br·i 태그)을 지켜 적용. 이름은 names-ko.tsv로 characterName·NAMEOVERRIDE·Book.bookTitle을 바꿈.
