@@ -167,7 +167,7 @@ namespace ValheimHelper
             int tele0 = Teleports();
             float wallStuck = 0f, maxRun = 0f, run = 0f;
             bool opened = false, inside = false;
-            int innerTrips = 0;
+            int innerTrips = 0, farSkips = 0, skipsSeen = GatherJob.NearSkips;
             var pieces = new List<Collider>();
             foreach (var g in made) if (g != null) foreach (var col in g.GetComponentsInChildren<Collider>()) if (!col.isTrigger) pieces.Add(col);
             bool In(Vector3 p) => Mathf.Abs(Vector3.Dot(p - c, r)) < Half - 0.3f && Mathf.Abs(Vector3.Dot(p - c, f)) < Half - 0.3f;
@@ -186,6 +186,12 @@ namespace ValheimHelper
                     bool now = In(p);
                     if (now && !inside) innerTrips++;
                     inside = now;
+                    // 집에서 먼 근처 막힘 건너뛰기(나무 베다 굴러온 통나무 등, E057)는 집 벽 탓이 아니라 빼고 셈
+                    if (GatherJob.NearSkips != skipsSeen)
+                    {
+                        skipsSeen = GatherJob.NearSkips;
+                        if (Utils.DistanceXZ(GatherJob.LastNearSkipFrom, c) > Half + 4f) farSkips++;
+                    }
                     if (tick < 0.5f) continue;
                     tick = 0f;
                     float near = float.MaxValue;
@@ -203,8 +209,8 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => Stock(w, "Bow") >= 1 || (w.Ragnar.Ai.Job == null && Stock(w, "Wood") >= wood), 420f);
             float took = TestKit.Waited;
             done = true;
-            int tele = Teleports() - tele0;
-            Plugin.Log.LogInfo($"집 시험: {took:0}초, 벽 박음 {wallStuck:0.0}초(최장 연속 {maxRun:0.0}초), 순간이동 {tele}, 문 열림 {opened}, 안에 들어감 {innerTrips}번, 상자 나무 {Count(w.Chest, "Wood")}");
+            int tele = Teleports() - tele0 - farSkips;
+            Plugin.Log.LogInfo($"집 시험: {took:0}초, 벽 박음 {wallStuck:0.0}초(최장 연속 {maxRun:0.0}초), 순간이동 {tele}(집에서 먼 건너뛰기 {farSkips} 뺌), 문 열림 {opened}, 안에 들어감 {innerTrips}번, 상자 나무 {Count(w.Chest, "Wood")}");
             checks.Add($"안 작업대에서 활 만듦 (활 {Stock(w, "Bow")}, {took:0}초, {w.Ragnar.Ai.Current})", Stock(w, "Bow") >= 1);
             checks.Add($"나무를 안 상자로 (안 상자 나무 {Count(w.Chest, "Wood")}·활 재료로 씀, 안에 들어감 {innerTrips}번)", innerTrips > 0);
             checks.Add($"벽에 박은 시간 짧음 ({wallStuck:0.0}초, 최장 연속 {maxRun:0.0}초 ≤ 5)", maxRun <= 5f);

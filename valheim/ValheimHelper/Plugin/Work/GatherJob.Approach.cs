@@ -267,6 +267,8 @@ namespace ValheimHelper
         const string NearWhy = "플레이어 근처";
         /// <summary>시험용: 근처 막힘 건너뛰기 횟수.</summary>
         public static int NearSkips;
+        /// <summary>시험용: 마지막 근처 막힘 건너뛰기를 한 자리(집 시험이 집과 무관한 건너뛰기를 가름, E057).</summary>
+        public static Vector3 LastNearSkipFrom;
 
         /// <summary>
         /// 근처 막힘 건너뛰기(사용자 결정 2026-10-23): 플레이어 64m 안에서 30초 넘게 못 가면(비켜 가기·점프·경사로는 걷기가 이미 해 봄)
@@ -277,6 +279,7 @@ namespace ValheimHelper
             Vector3 from = m_npc.transform.position;
             if (!LandNear(dest, out why, true, StuckHop.NearCandidates(from.x, from.z, dest.x, dest.z))) return false;
             NearSkips++;
+            LastNearSkipFrom = from;
             WorkerAI.StuckTeleports++;
             m_npc.Say("rescue");
             return true;

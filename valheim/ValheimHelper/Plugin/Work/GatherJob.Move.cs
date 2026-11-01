@@ -288,6 +288,7 @@ namespace ValheimHelper
             if (m_far != null) { m_progressTimer = 0f; return false; } // 멀리선 이동 생략 중: 서서 기다리는 것이지 막힌 게 아니다
             if (m_ai.Carving) return false; // 구덩이에서 경사로를 깎는 중: 막힌 게 아니다
             if (m_ai.OnInteriorPath) { m_progressTimer = 0f; return false; } // 지하묘지 안 길을 따라 도는 중(목표에서 잠시 멀어질 수 있음)
+            if (m_ai.ExitingDoor) { m_progressTimer = 0f; return false; } // 집 안에서 문으로 나가는 중(E058)
             if (m_progressTimer == 0f) m_stuckFrom = m_npc.transform.position;
             m_progressTimer += dt;
             if (m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp) return true;

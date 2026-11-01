@@ -310,6 +310,8 @@ namespace ValheimHelper
 
         /// <summary>지하묘지 안 길(InteriorNav)을 따라 걷는 중이고 최근 3초 안에 다음 점에 다가갔다(막힘 판단이 길을 도는 걸음을 막힘으로 안 보게).</summary>
         public bool OnInteriorPath => m_inPath != null && Time.time - m_inProgressAt < 3f;
+        /// <summary>안에서 문으로 나가는 중(회차 333 E058: 목표에서 멀어지는 문 쪽 걷기를 일의 막힘 감지가 막힘으로 보고 4m 옮겼음). 문 길은 자체 시간 한계가 있다.</summary>
+        public bool ExitingDoor => m_exitWay.Busy;
 
         /// <summary>지하묘지 안에서 그 점(2m 안)·닿을 거리(0.3m 안)로 마지막에 찾은 묘지 안 길이 없었다(바닐라 걷기로 헤매는 중).</summary>
         public bool InteriorNoPath(Vector3 point, float dist) =>
