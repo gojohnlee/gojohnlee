@@ -1,4 +1,4 @@
-﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"가 로그인 때 conhost 창으로 실행한다.
+﻿# 발헤임 무인 루프 (설계: docs/valheim/loop-plan.txt). 작업 스케줄러 "VH loop"로 conhost 창에서 실행한다(로그인 때 자동 시작은 11-02에 끔 — 손으로 Start-ScheduledTask 'VH loop').
 # claude가 하는 일(고친 코드·명령·결과)을 그 창에 찍는다. 창은 $ShowWindow가 $false면 켜자마자 숨긴다(사용자 요청 2026-10-22 저녁:
 # 보이게 했다가 다시 숨김, 다시 보려면 $true). 보이는 창을 닫으면 루프도 끝난다.
 # 회차: pull → 멈춤 파일 확인 → 계정 고르기 → claude -p 새 세션(scripts/vh-loop-prompt.txt) → 결과 판정 → status.txt 푸시.
@@ -613,6 +613,20 @@ function End-Trial($tr, $why) {
 }
 $st = Load-State
 Log "루프 시작$(if ($Once) { ' (한 회차만)' })"
+# 사용자 11-02: 컴퓨터를 켤 때 루프가 저절로 켜지지 않게 한다. 작업 "VH loop"는 남기고(다시 켜기·손으로 켜기에 씀) 로그인 트리거만 끈다.
+# 이번에 처음 끈 것이면 이번 실행도 로그인으로 켜진 것이라 여기서 끝낸다. 손으로 켜기: PC PowerShell에서 Start-ScheduledTask 'VH loop'.
+$lt = Get-ScheduledTask -TaskName 'VH loop' -ErrorAction SilentlyContinue
+if ($lt -and @($lt.Triggers | Where-Object { $_.Enabled }).Count) {
+    try {
+        foreach ($t in $lt.Triggers) { $t.Enabled = $false }
+        Set-ScheduledTask -InputObject $lt -ErrorAction Stop | Out-Null
+        Log '자동 시작 끔(작업 VH loop의 로그인 트리거)'
+        if (-not $Once) {
+            Write-Status "멈춤: 컴퓨터 켤 때 자동 시작을 끔(사용자 11-02). 다시 돌리려면 PC PowerShell에서 Start-ScheduledTask 'VH loop'" '-'
+            Log '자동 시작을 끈 첫 실행 → 끝'; exit
+        }
+    } catch { Log "자동 시작 못 끔: $_" }
+}
 $Gate = $null; $HandoffOn = $false
 $hr = Join-Path $Dir 'handoff-running.json'
 if (Test-Path $hr) {

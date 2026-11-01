@@ -1,5 +1,5 @@
 # Installs the Valheim unattended loop (scripts/vh-loop.ps1) as the scheduled task "VH loop".
-# Runs at logon in a visible console window (plain conhost, not Windows Terminal: the loop places it on the right half
+# No trigger (user 11-02: do not start at logon); start by hand: Start-ScheduledTask "VH loop". Runs in a visible console window (plain conhost, not Windows Terminal: the loop places it on the right half
 # and turns off quick edit). Does not start it now: first run is vh-loop.ps1 -Once in front of the user.
 # ASCII only on purpose: Windows PowerShell 5.1 -File misreads BOM-less UTF-8, so this also re-saves vh-loop.ps1 with a BOM.
 $ErrorActionPreference = 'Stop'
@@ -12,9 +12,8 @@ $errs = $null
 if ($errs) { $errs | ForEach-Object { "line $($_.Extent.StartLineNumber): $($_.Message)" }; throw 'vh-loop.ps1 has syntax errors' }
 
 $act = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$loop`""
-$trg = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
 $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 $prn = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
-Register-ScheduledTask -TaskName 'VH loop' -Action $act -Trigger $trg -Settings $set -Principal $prn -Force | Out-Null
+Register-ScheduledTask -TaskName 'VH loop' -Action $act -Settings $set -Principal $prn -Force | Out-Null
 Get-ScheduledTask -TaskName 'VH loop' | Select-Object TaskName, State | Format-List
 'Installed. Start now: Start-ScheduledTask "VH loop". Stop: create docs/valheim/loop-stop.txt. Remove: Unregister-ScheduledTask "VH loop"'
