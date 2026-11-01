@@ -82,6 +82,22 @@ namespace ValheimHelper
             checks.Add($"회색난쟁이 잡음 ({t:0}초)", a == null || a.IsDead());
             checks.Add($"살아 있음 (체력 {claude.GetHealth():0})", claude != null && !claude.IsDead() && claude.GetHealth() > 0f);
             checks.Add("회색난쟁이를 배움", Brain.Foes.Knows("Greydwarf"));
+            // A-2) 잡은 몬스터 떨굼 줍기(사용자 11-01): 쓰러진 몸이 사라지면 떨굼이 생기고 일꾼이 주워 가방에
+            var names = new HashSet<string>();
+            foreach (var dr in gd.GetComponent<CharacterDrop>().m_drops) if (dr.m_prefab != null) names.Add(dr.m_prefab.name);
+            int bag0 = 0; foreach (var n in names) bag0 += claude.CountItem(n);
+            Vector3 killAt = claude.transform.position;
+            int ground = 0, seen = 0;
+            for (t = 0f; t < 20f; t += 0.5f)
+            {
+                yield return new WaitForSeconds(0.5f);
+                ground = 0;
+                foreach (var zdo in Senses.Nearby(killAt, 15f)) { var v = ZNetScene.instance.FindInstance(zdo); var it = v != null ? v.GetComponent<ItemDrop>() : null; if (it != null && names.Contains(Utils.GetPrefabName(it.gameObject))) ground++; }
+                seen = System.Math.Max(seen, ground);
+                if (t >= 8f && ground == 0 && claude.Ai.Guard.LootsWaiting == 0) break;
+            }
+            int got = -bag0; foreach (var n in names) got += claude.CountItem(n);
+            checks.Add($"잡은 회색난쟁이 떨굼 주움 (가방 +{got}, 땅에 남음 {ground}, 본 떨굼 {seen}, {t:0}초)", ground == 0 && (got > 0 || seen == 0));
             yield return new WaitForSeconds(2f);
 
             // C) 체력 25% → 미드

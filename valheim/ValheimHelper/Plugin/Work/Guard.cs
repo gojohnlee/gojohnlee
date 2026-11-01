@@ -13,7 +13,7 @@ namespace ValheimHelper
     ///   잃을 체력 ≤ 60%(플로키 80%) → 가까운 적부터 싸움, 그 이상 → 온 길로 40m 물러나 30초 뒤 다시(2번 실패하면 그곳은 버림).
     /// - 처음 보는 적은 겉모습(크기·별)으로 짐작하고, 싸워 보면(맞거나 때리면) 게임 데이터의 실제 체력·공격력을 배운다(Brain.Foes).
     /// </summary>
-    public sealed class Guard
+    public sealed partial class Guard
     {
         public const float SenseRange = 30f, CloseRange = 8f, AllyRange = 20f, HelpRange = 60f, EngageRange = 15f;
         const float JudgeEvery = 0.5f, BackDistance = 40f, BackWait = 30f;
@@ -111,6 +111,7 @@ namespace ValheimHelper
                 m_judgeTimer = JudgeEvery;
                 Judge();
             }
+            if (m_target != null) m_targetAt = m_target.transform.position; // 죽어 지워지면 마지막 자리(떨굼 줍기)
             switch (m_state)
             {
                 case State.Fight: return UpdateFight(dt);
@@ -118,7 +119,7 @@ namespace ValheimHelper
                 case State.Flee: return UpdateFlee(dt);
                 case State.Come: return UpdateCome(dt);
             }
-            return false;
+            return UpdateLoot(dt);
         }
 
         // ---- 판단 ----
@@ -227,6 +228,7 @@ namespace ValheimHelper
                     if (m_waitMate != null) { Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 옴 → 같이 싸움"); m_waitMate = null; }
                     if (t != m_target) { DrinkResist(pos, t); m_missStreak = 0; m_diagSwings = 0; }
                     if (!m_saidFight) { m_saidFight = true; m_npc.Say("fightStart", Args(Localization.instance.Localize(t.m_name))); }
+                    if (t != m_target) RememberDrops(t);
                     m_target = t;
                     m_state = State.Fight;
                     break;
@@ -677,6 +679,7 @@ namespace ValheimHelper
         {
             if (m_target == null || m_target.IsDead() || !IsFoe(m_target) || Ignored(m_target))
             {
+                NoteKill();
                 if (m_target != null) Learn(m_target);
                 EndFight();
                 m_judgeTimer = 0f; // 다음 적을 바로 고른다
