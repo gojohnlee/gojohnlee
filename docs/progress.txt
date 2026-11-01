@@ -1,11 +1,12 @@
 지금
+- 2026-11-02 재번역을 클라우드로 옮김: Routine이 덩어리(120줄)마다 새 세션을 켜 Sonnet으로 번역하고 비공개 valheim-refs(necromancer) translation/retrans에 쌓음. 절차 cloud/routine.md, 진행 cloud/status.md. PC 루프는 docs/retrans-stop.txt로 막음.
 - 2026-11-02 재번역 루프 손봄: 계정 2개 번갈아, 덩어리별 토큰 기록, GitHub 멈춤 파일(docs/retrans-stop.txt), 시작·멈춤 bat(scripts\retrans-start.bat·retrans-stop.bat). 자동 시작 없음.
 - 2026-11-01 재번역 루프 켬: scripts/retrans-loop.ps1이 백그라운드에서 대사를 게임 흐름 순서로 120줄씩 Sonnet(claude -p, 루프 폴더 읽기·쓰기만)에 맡겨 영어 원문 기준으로 다시 옮기고, 덩어리마다 Korean.csv를 만들어 게임에 넣음. 지침 docs/translate-guide.md, 진행 docs/retrans-status.md(10덩어리마다 푸시). 오만 159줄 말투 통일, 신뢰 툴팁 한글, 낱개 ⟨⟩·깨진 자모 지움, fix-csv 3초로.
 - 2026-11-01 코너 295·애니 340·디드리크 502·집사 312줄 말투 통일 + 대사 속 네모 지움.
 - 2026-11-01 인물 이름·책 제목 한글(names-ko.tsv 214개), 남은 영어는 KoreanFont\untranslated.txt에 모음.
 
 다음
-- 재번역 이어 하기: PC를 켜고 scripts\retrans-start.bat(11-01 밤 PC가 꺼져 5768/26745에서 멈춤). 진행은 docs/retrans-status.md, 기록 C:\vh\necro-kr\loop\loop.log. 약 220덩어리 중 48 끝. 끝나면 retrans를 비공개 valheim-refs necromancer 가지에 올림. 지침에 없는 인물 말투가 뒤섞이면 translate-guide.md 표에 더함.
+- 재번역은 클라우드가 함(valheim-refs necromancer cloud/status.md). 다 끝나면 PC에서 scripts\cloud-apply.bat로 게임에 넣음(중간에 넣어 봐도 됨). 끝나면 retrans를 비공개 valheim-refs necromancer 가지에 올림. 지침에 없는 인물 말투가 뒤섞이면 translate-guide.md 표에 더함.
 - 게임이 플레이 중 저절로 꺼진 일 있음(2026-11-01) — 다음 시험 때 KoreanFont.log·Player.log로 원인 확인.
 - 책 제목: 로그의 "책 제목(표에 없음)" 줄을 names-ko.tsv에 더함. 툴팁 등 남은 영어: untranslated.txt를 ui-ko.tsv에 더함.
 - 캐릭터 창 치수(level1)는 아직 안 함. 남은 작은 것: 줄바꿈 빠진 4줄, "조궁국" 표기.
