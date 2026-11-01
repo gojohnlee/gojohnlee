@@ -97,7 +97,7 @@ namespace NecroKoreanFont
         TMP_FontAsset korean;
         readonly HashSet<int> done = new HashSet<int>();
         float nextScan;
-        bool menuDone, langYes;
+        bool menuDone, langYes, langOk;
 
         void Awake()
         {
@@ -219,6 +219,9 @@ namespace NecroKoreanFont
                     var ad = AlertDialog.instance;
                     if (!langYes && ad != null && ad.gameObject.activeInHierarchy && ad.txtMsg != null && ad.txtMsg.text != null && ad.txtMsg.text.Contains("Localization file found"))
                     { langYes = true; ad.OnClickedOK(); Log.Write("언어 창 자동 예"); }
+                    // 이어서 뜨는 "Loaded Community Language File …" 알림도 자동 확인
+                    else if (!langOk && ad != null && ad.gameObject.activeInHierarchy && ad.txtMsg != null && ad.txtMsg.text != null && ad.txtMsg.text.Contains("Loaded Community Language File"))
+                    { langOk = true; ad.OnClickedOK(); Log.Write("언어 불러옴 창 자동 확인"); }
                 }
                 Ui.Reapply();
             }
