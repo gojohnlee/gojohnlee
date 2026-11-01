@@ -80,6 +80,9 @@ namespace ValheimHelper
             // 회차 348(E063): 비탈 위쪽에서 2층 상자가 1.5m 안이면 2층 바닥 너머로 꺼냄(땅 위 0.2m, 4초) → 위에 있고 건축물이 가리면 닿음 아님(계단으로)
             if ((d > 2.5f || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || (at.y - m_npc.transform.position.y > 1f && DoorWay.Blocked(m_npc, m_chest))) && !Steering(m_chest) && !CanReach(at, d, dt))
             {
+                // E063 ② 진단: 다른 층 상자로 60초 걷기만 하던 꼴 — 10초마다 자리·높이·길
+                if ((int)(m_time / 10f) != (int)((m_time - dt) / 10f))
+                    Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Prep 걷기 {m_time:0}초: 상자까지 {d:0.0}m·높이 {at.y - m_npc.transform.position.y:0.0}, 자리 {m_npc.transform.position:F1}, 목표 {m_hop.Goal(m_chest):F1}, {m_ai.PathDiag(m_hop.Goal(m_chest))}, 문길 {Steering(m_chest)}, {m_ai.BlockerAhead(at)}");
                 if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) m_ai.MoveToPoint(dt, m_hop.Goal(m_chest), 1.8f, d > 10f); // 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
                 return true;
             }
