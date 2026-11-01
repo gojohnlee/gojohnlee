@@ -16,7 +16,7 @@ namespace ValheimHelper
         Door m_door;
         Vector3 m_out, m_in;
         float m_t, m_limit, m_check;
-        float m_best, m_stall, m_side; Vector3 m_sideDir; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴(E061)
+        float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for;
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
         public static int Opened, Entered, Exited, Closed;
@@ -104,7 +104,7 @@ namespace ValheimHelper
                 m_out = aIn ? a : b; m_in = aIn ? b : a; // 이름은 들어갈 때 기준: m_out = 다가갈 곳, m_in = 지나갈 곳
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
                 m_phase = Phase.ToDoor; m_t = 0f;
-                m_best = float.MaxValue; m_stall = m_side = 0f;
+                m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감");
             }
             m_walking = m_exiting = true;
@@ -125,7 +125,7 @@ namespace ValheimHelper
             if (m_t > (m_phase == Phase.ToDoor ? m_limit : PhaseLimit)) { GiveUp(npc, what, $"{m_phase} {m_t:0}초, 문 앞까지 {Utils.DistanceXZ(me, m_out):0.0}m·안쪽까지 {Utils.DistanceXZ(me, m_in):0.0}m"); return 0; }
             if (m_phase == Phase.ToDoor)
             {
-                if (Utils.DistanceXZ(me, m_out) > 0.7f)
+                if (Utils.DistanceXZ(me, m_out) > 0.7f && !m_near)
                 {
                     // 안에서 나갈 땐 곧장(닫힌 집 안은 바닐라 길찾기가 10초 제자리, 회차 315 시험)
                     if (m_exiting) ExitToward(dt, npc, me);
@@ -155,15 +155,29 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 안에서 문 앞으로 곧장 걷기. 1초 동안 0.2m도 안 가까워지면(E061: 사이에 제련로) 옆 두 쪽 중 1.5m 비고 문 앞에 더 가까운 쪽으로 1초 비킨다.
+        /// 안에서 문 앞으로 곧장 걷기. 1초 동안 0.2m도 안 가까워지면(E061: 사이에 제련로) 옆 두 쪽 중 1.5m 빈 쪽으로 비킨다 —
+        /// 문 앞 가는 곧은 길이 트이면(0.5초 뒤부터) 또는 2.5초면 그침. 지난번 비킴으로도 못 가까워졌으면 반대쪽부터(회차 346: 같은 쪽 1초 비킴 5번, 1.8m에 머묾).
         /// </summary>
         void ExitToward(float dt, WorkerNpc npc, Vector3 me)
         {
             Vector3 to = m_out - me; to.y = 0f;
-            if (m_side > 0f) { m_side -= dt; npc.Ai.MoveTowards(m_sideDir, false); return; }
             float d = to.magnitude;
+            if (m_side > 0f)
+            {
+                m_side -= dt;
+                if (m_side > 2f || !Physics.CapsuleCast(me + Vector3.up * 0.6f, me + Vector3.up * 1.0f, 0.4f, to.normalized, d, Mask, QueryTriggerInteraction.Ignore))
+                { npc.Ai.MoveTowards(m_sideDir, false); return; }
+                m_side = 0f;
+            }
             if (d < m_best - 0.2f) { m_best = d; m_stall = 0f; }
-            else if ((m_stall += dt) > 1f)
+            else if ((m_stall += dt) > 1f && d < 1.6f)
+            {
+                // 회차 346: 문 앞 1.0m(문틀 1.7m)에서 막은 것 없이 속도 0 — 문 쓰는 거리라 거기서 열고 문틀로
+                m_near = true;
+                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 {d:0.0}m에서 막힘 → 거기서 엶");
+                return;
+            }
+            else if (m_stall > 1f)
             {
                 Vector3 l = Vector3.Cross(Vector3.up, to).normalized, pick = Vector3.zero;
                 float bestEnd = float.MaxValue;
@@ -172,13 +186,15 @@ namespace ValheimHelper
                     // 캡슐 위끝 1.4m — 다락 바닥(1.6m)에 걸리지 않게
                     if (Physics.CapsuleCast(me + Vector3.up * 0.6f, me + Vector3.up * 1.0f, 0.4f, s, 1.5f, Mask, QueryTriggerInteraction.Ignore)) continue;
                     float end = Utils.DistanceXZ(me + s * 1.5f, m_out);
+                    if (m_sideDir != Vector3.zero && Vector3.Dot(s, m_sideDir) > 0.7f) end += 10f; // 지난 쪽은 효과 없었음 → 뒤로
                     if (end < bestEnd) { bestEnd = end; pick = s; }
                 }
                 m_stall = 0f; m_best = d;
                 if (pick != Vector3.zero)
                 {
-                    m_sideDir = pick; m_side = 1f;
-                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 길 막힘({d:0.0}m) → 옆으로 비킴");
+                    string block = Physics.Raycast(me + Vector3.up * 0.8f, to.normalized, out RaycastHit h, d, Mask, QueryTriggerInteraction.Ignore) ? $"{h.collider.transform.root.name} {h.distance:0.0}m" : "없음";
+                    m_sideDir = pick; m_side = 2.5f;
+                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 길 막힘({d:0.0}m, 나 {me:F1}·문 앞 {m_out:F1}·막은 것 {block}) → 옆으로 비킴 {pick:F1}");
                     npc.Ai.MoveTowards(pick, false);
                     return;
                 }
