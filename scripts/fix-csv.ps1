@@ -22,7 +22,8 @@ $fix = [ordered]@{
   '0x0100000000015A63' = @(,@('크라운다', '크라운이다'))
   '0x010000000002A379' = @(,@('크라운다', '크라운이다'))
   '0x0100000000023E51' = @(,@('제가 노력했어요, 주인님. 그녀는 꼭 당신과 이야기해야 한다고 고집했거든요.[title]<br>', '돌려보내려 했습니다, [title]. 꼭 직접 뵈어야 한다고 막무가내였습니다.'))
-  '0x0100000000010B8F' =@(,@('저녁에 </align> 장례식이 열린다.<align=left></align>', '저녁에 장례식이 열린다.</align><br><align=left></align>'))
+  '0x010000000003AA0A' = @(,@('알고 있느냐, </align>?', '알고 있느냐?</align>'))
+  '0x0100000000010B8F' = @(,@('저녁에 </align> 장례식이 열린다.<align=left></align>', '저녁에 장례식이 열린다.</align><br><align=left></align>'))
 }
 function Q($s) { '"' + $s.Replace('"', '""') + '"' }   # CSV 칸 꼴
 $n = 0; $miss = @()
@@ -36,7 +37,7 @@ foreach ($id in $fix.Keys) {
   $cands = @((Q $old), $old)
   $done = $false
   foreach ($c in $cands) { $k = $raw.IndexOf($c, $line0); if ($k -gt 0) { $raw = $raw.Substring(0, $k) + (Q $new) + $raw.Substring($k + $c.Length); $done = $true; break } }
-  if ($done) { $n++ } else { $miss += "$id(칸)" }
+  if ($done) { $n++; $r.Korean = $new } else { $miss += "$id(칸)" }
 }
 # 다시 옮긴 대사(retrans\*.tsv: ID<TAB>문장, 단락은 " / ")로 한국어 칸을 통째로 바꾼다. 원래 칸이 <align=left>단락</align>을 <br>로 이은 꼴이고 단락 수가 같을 때만.
 $ov = 0; $skip = @()
