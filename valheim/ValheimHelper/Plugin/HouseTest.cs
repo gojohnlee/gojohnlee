@@ -325,6 +325,48 @@ namespace ValheimHelper
                 dz.GetInt(ZDOVars.s_state) == openSt);
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
+
+            // 3-3) 플레이어가 열린 문간에 서 있음(8초 뒤 비킴): 순간이동·포기 없이 기다렸다 지나 들어가 꺼내고, 플레이어 곁에서 문을 닫지 않음
+            yield return new WaitForSeconds(1f);
+            foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
+            TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
+            if (dz.IsValid()) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, openSt); }
+            Vector3 park = w.Player.transform.position;
+            Vector3 gap = door.transform.position; gap.y = floorY + 0.1f; // 문틀 가운데(TeleportTo는 문틀 위에 올림 → 몸을 직접)
+            var prb = w.Player.GetComponent<Rigidbody>();
+            w.Player.transform.position = gap; prb.position = gap; prb.linearVelocity = Vector3.zero;
+            yield return new WaitForSeconds(6f);
+            var rrb = w.Ragnar.GetComponent<Rigidbody>(); // TeleportTo로는 집 안에 남은 적 있음(회차 351) → 몸을 직접
+            w.Ragnar.transform.position = outAt; rrb.position = outAt; rrb.linearVelocity = Vector3.zero;
+            yield return new WaitForSeconds(1f);
+            checks.Add($"문간 단계: 문 열림·플레이어 문간·일꾼 밖 (s_state {dz.GetInt(ZDOVars.s_state)}, 플레이어 문에서 {Utils.DistanceXZ(w.Player.transform.position, gap):0.0}m, 일꾼 안 {In(w.Ragnar.transform.position)})",
+                dz.GetInt(ZDOVars.s_state) == openSt && !In(w.Ragnar.transform.position));
+            tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
+            bool shutOnPlayer = false;
+            float blockEnd = Time.time + 8f;
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
+            yield return TestKit.WaitFor(() =>
+            {
+                if (Time.time < blockEnd)
+                {
+                    if (Utils.DistanceXZ(w.Player.transform.position, gap) > 0.4f) { w.Player.transform.position = gap; prb.position = gap; prb.linearVelocity = Vector3.zero; } // 일꾼이 밀어도 그 자리
+                    if (dz.GetInt(ZDOVars.s_state) == 0) shutOnPlayer = true;
+                }
+                else if (Utils.DistanceXZ(w.Player.transform.position, park) > 1f) w.Player.TeleportTo(park, w.Player.transform.rotation, false);
+                return w.Ragnar.CountItem("MeadHealthMinor") >= 3;
+            }, 90f);
+            took = TestKit.Waited;
+            if (Utils.DistanceXZ(w.Player.transform.position, park) > 1f) w.Player.TeleportTo(park, w.Player.transform.rotation, false);
+            yield return TestKit.WaitFor(() => !In(w.Ragnar.transform.position), 30f);
+            yield return new WaitForSeconds(4f); // 나오며 문짝 바꿔 열기로 닫았으면 CloseBehind가 다시 엶 — 끝난 뒤에 닫아야 다음 단계 문이 다시 열리지 않음
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == openSt, 10f);
+            tele = Teleports() - tele0;
+            checks.Add($"문간의 플레이어가 비킨 뒤 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 순간이동 {tele}, 들어감 {DoorWay.Entered - entered0}번, 일꾼 안 {In(w.Ragnar.transform.position)}, {w.Ragnar.Ai.Job?.StepName})",
+                w.Ragnar.CountItem("MeadHealthMinor") >= 3 && tele == 0 && !In(w.Ragnar.transform.position));
+            checks.Add($"문간에 플레이어 있는 동안 문 안 닫음 (닫힘 {shutOnPlayer})", !shutOnPlayer);
+            GatherTest.Say("!멈춰", null);
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
             if (dz.IsValid()) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
 
             // 4) 안에서 닫힌 문으로 나가기(③-5): 일꾼을 안에 두고 문을 닫은 채 바깥 일(나무)을 시키면 문을 열고 나가는지
