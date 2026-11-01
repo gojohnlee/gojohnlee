@@ -762,9 +762,10 @@ namespace ValheimHelper
             return true;
         }
 
-        void Skip()
+        void Skip([System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
         {
             if (!m_targetId.IsNone()) m_skip.Add(m_targetId);
+            if (!m_targetId.IsNone() && m_targetInfo != null && m_targetInfo.Log) SkippedLogs[m_targetId] = $"{m_step} 줄{line}";
             m_targetId = ZDOID.None;
             Go(Step.Search);
         }

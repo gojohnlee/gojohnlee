@@ -202,11 +202,16 @@ namespace ValheimHelper
         readonly List<Vector3> m_felled = new List<Vector3>();
         /// <summary>시험용: 일꾼들이 쓰러뜨리거나 쪼갠 자리(지우지 않음).</summary>
         public static readonly List<Vector3> FelledLog = new List<Vector3>();
+        /// <summary>시험용(E065): 기억 한도로 잊은 자리 수, 건너뛴 통나무(id → 단계·부른 줄).</summary>
+        public static int FelledForgot;
+        public static readonly Dictionary<ZDOID, string> SkippedLogs = new Dictionary<ZDOID, string>();
+        /// <summary>기억하는 자리 수. 8이면 나무 서넛(쓰러뜨림·쪼갬마다 한 자리)에 먼저 쓰러뜨린 나무의 통나무를 잊을 수 있었다(E065) — 빈 자리는 OwnLog가 지우니 넉넉히.</summary>
+        const int FelledMax = 32;
 
         void NoteFelled(Vector3 p)
         {
             m_felled.Add(p);
-            if (m_felled.Count > 8) m_felled.RemoveAt(0);
+            if (m_felled.Count > FelledMax) { m_felled.RemoveAt(0); FelledForgot++; }
             FelledLog.Add(p);
         }
 

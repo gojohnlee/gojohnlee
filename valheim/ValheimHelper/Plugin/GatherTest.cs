@@ -172,7 +172,8 @@ namespace ValheimHelper
             if (keepClear) Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(home, () => keepClear));
             Say($"!{Workers.Name1} {word} 10", null);
             int count = 0, count0 = CountBase(home, item); // 지난 시험이 거점 상자에 남긴 것은 뺀다
-            int felled0 = GatherJob.FelledLog.Count;
+            int felled0 = GatherJob.FelledLog.Count, forgot0 = GatherJob.FelledForgot;
+            GatherJob.SkippedLogs.Clear();
             // 회차 142: 경계가 몸을 옮긴 뒤(물러나기·도망) 캐기가 이어지면 그 자리에서 휘두르지 않고 다시 다가가는지 — 캐는 중 한 번 25m 도망시킨다
             // (검은숲: 물러났다 34m 밖에서 일이 이어져 직접 피해가 20.6m 떨어진 조각에 들어감)
             bool moveCheck = item == "CopperOre", moved = false;
@@ -238,7 +239,9 @@ namespace ValheimHelper
                             bool h = GatherJob.HungLog(z, li);
                             if (!(h ? hung : left).Add(z.m_uid)) continue;
                             ZoneSystem.instance.GetGroundHeight(z.GetPosition(), out float gy);
-                            leftDesc.Add($"{li.Prefab} 땅 위 {z.GetPosition().y - gy:0.0}m{(h ? " 걸림" : "")}");
+                            leftDesc.Add($"{li.Prefab} 땅 위 {z.GetPosition().y - gy:0.0}m{(h ? " 걸림" : "")}" +
+                                         (GatherJob.SkippedLogs.TryGetValue(z.m_uid, out string why) ? $" 건너뜀({why})" : "") +
+                                         (GatherJob.FelledForgot > forgot0 ? $" 잊은 자리 {GatherJob.FelledForgot - forgot0}" : ""));
                         }
                 checks.Add($"쓰러뜨린 나무의 통나무 다 치우고 끝냄(쓰러뜨리거나 쪼갠 곳 {spots.Count}, 남은 통나무 {left.Count}개·걸린 것 {hung.Count}개 [{string.Join(", ", leftDesc)}], 개수 채운 뒤 {t2:0}초, 상자 {CountBase(home, item) - count0})",
                            spots.Count > 0 && left.Count + hung.Count == 0 && claude != null && claude.Ai.Current != WorkerAI.Mode.Work);
