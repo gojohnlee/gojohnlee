@@ -18,3 +18,5 @@
 - dist/KoreanFont/ui-ko.tsv: `영어<TAB>한국어`, `=`로 시작하면 통째 일치만, 아니면 부분 바꾸기(긴 것부터). \n은 줄바꿈. 모드는 TMPro_EventManager.TEXT_CHANGED_EVENT에서 바꾼다.
 - 하수인 명령 메뉴는 SamsContextMenu.menuText(정적 배열)를 직접 바꾼다.
 - 이 게임 mscorlib엔 string.Replace(string,string)도 없음 → IndexOf(…, Ordinal)+Substring으로 직접.
+- 게임이 매 프레임 영어를 다시 넣는 글(빠른 설정 창 등)은 이벤트로 바꿔도 다음 프레임에 덮임 → 한 번 바꾼 TMP 글을 기억해 Runner.LateUpdate에서 그리기 전에 다시 바꾼다(글이 그대로면 건너뜀).
+- 능력치 이름은 Korean.csv 설명과 같게: 힘·민첩·체질·통찰·지식·관찰(Investigate)·분석·매력(Impress)·설득. Van Elstrik = 반 엘스트릭.

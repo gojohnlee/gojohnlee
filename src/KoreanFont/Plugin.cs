@@ -162,7 +162,7 @@ namespace NecroKoreanFont
                 }
                 if (ko && texts++ < 6) Log.Write("보기: [" + t.font.name + "] " + (t.text.Length > 40 ? t.text.Substring(0, 40) : t.text));
             }
-            Log.Write("검사: 한글 글 " + texts + "개, 글자 " + chars + "개, 없는 글자 " + miss + "개, UI 바꿈 누적 " + Ui.Replaced);
+            Log.Write("검사: 한글 글 " + texts + "개, 글자 " + chars + "개, 없는 글자 " + miss + "개, UI 바꿈 누적 " + Ui.Replaced + ", 이벤트 " + Ui.Events);
             int en = 0;   // 아직 영어로 남은 글(번역 표에 넣을 후보)
             foreach (var t in Resources.FindObjectsOfTypeAll<TMP_Text>())
             {
@@ -184,6 +184,8 @@ namespace NecroKoreanFont
                 if (pid == me && !IsIconic(h)) ShowWindowAsync(h, 6);
             }
         }
+
+        void LateUpdate() { try { Ui.Reapply(); } catch { } }
 
         void Update()
         {
@@ -245,7 +247,26 @@ namespace NecroKoreanFont
         static readonly Dictionary<string, string> exact = new Dictionary<string, string>();
         static readonly List<string> fromList = new List<string>(), toList = new List<string>();   // 부분 바꾸기, 긴 것부터
         static bool busy;
-        public static int Replaced;
+        public static int Replaced, Events;
+        // 게임이 매 프레임 영어를 다시 넣는 글(빠른 설정 창 등) → 기억해 두고 LateUpdate에서 그리기 전에 다시 바꾼다
+        static readonly List<TMP_Text> tracked = new List<TMP_Text>();
+        static readonly HashSet<int> trackedIds = new HashSet<int>();
+        static readonly Dictionary<int, string> lastOut = new Dictionary<int, string>();
+        static void Track(TMP_Text t) { if (tracked.Count < 2000 && trackedIds.Add(t.GetInstanceID())) tracked.Add(t); }
+        public static void Reapply()
+        {
+            for (int i = tracked.Count - 1; i >= 0; i--)
+            {
+                var t = tracked[i];
+                if (t == null) { tracked.RemoveAt(i); continue; }
+                if (!t.isActiveAndEnabled) continue;
+                var cur = t.text;
+                if (lastOut.TryGetValue(t.GetInstanceID(), out var lo) && ReferenceEquals(lo, cur)) continue;   // 그대로면 건너뜀(매 프레임 비용 줄이기)
+                var n = Translate(t.text);
+                if (n != null && n != cur) { busy = true; try { t.text = n; } finally { busy = false; } }
+                lastOut[t.GetInstanceID()] = t.text;
+            }
+        }
 
         public static void Load()
         {
@@ -300,13 +321,14 @@ namespace NecroKoreanFont
 
         public static void OnTextChanged(UnityEngine.Object o)
         {
+            Events++;
             if (busy) return;
             var t = o as TMP_Text;
             if (t == null) return;
             try
             {
                 var n = Translate(t.text);
-                if (n != null && n != t.text) { busy = true; t.text = n; Replaced++; }
+                if (n != null && n != t.text) { busy = true; t.text = n; Replaced++; Track(t); }
             }
             catch (Exception e) { Log.Write("UI 바꾸기 실패: " + e.Message); }
             finally { busy = false; }
