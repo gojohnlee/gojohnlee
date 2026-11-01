@@ -1,8 +1,8 @@
 갱신: 2026-11-02 01:31  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
-회차: 359, 계정: 2번, 한도: 없음
+지금: 회차 360 진행 중
+회차: 360, 계정: 2번, 한도: 없음
 할 일: (없음)
 마지막 시험: 11-02 01:30 요약: 6/6 PASS
-Claude가 한 일: LOOP: DONE E069 상자 10m 안 느린 시간 합 5초면 상자 앞으로·E070 집 시험 복도 입구 나무 치움 — unloadreach ×5·house PASS
+Claude가 한 일: (진행 중)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
