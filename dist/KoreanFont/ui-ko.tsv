@@ -150,7 +150,7 @@ This demo does not allow you to leave the dungeon.	이 체험판에서는 던전
 =Delete Entry	항목 삭제
 Delete Journal Entry?\n\n<color=#FFFFFF>	일지 항목을 삭제할까요?\n\n<color=#FFFFFF>
 =Edit Description	설명 고치기
-=Notes - To Do List	메모 - 할 일
+Notes - To Do List	메모 - 할 일
 =To Do note added in Journal	일지에 할 일이 추가됐다
 =Crimes and Misdemeanours	범죄와 경범죄
 You can view your active tasks by using the Journal icon in your task-bar. This icon flashes when there is unread content.	작업 표시줄의 일지 아이콘으로 진행 중인 일을 볼 수 있습니다. 읽지 않은 내용이 있으면 아이콘이 깜박입니다.
@@ -657,3 +657,5 @@ Career: 	경력:
 =Autoplay	자동 진행
 You can skip the interactive prologue if you wish	원하면 인터랙티브 프롤로그를 건너뛸 수 있습니다
 SKILL POINTS REMAINING: 	남은 스킬 포인트: 
+=Rosario	로사리오
+You can make your own entries in the journal by hovering over the last entry and using 	마지막 항목에 마우스를 올리고 다음을 누르면 일지에 직접 항목을 쓸 수 있습니다: 

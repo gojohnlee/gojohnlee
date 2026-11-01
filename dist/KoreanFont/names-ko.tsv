@@ -1,0 +1,216 @@
+# 인물 이름·책 제목 한글 표 (게임 데이터의 이름을 통째로 바꿈). 형식: 영어<TAB>한국어
+# 표기는 Korean.csv 대사에서 쓴 것에 맞춤(2026-11-01 자동 집계 + 빈 것은 새로 정함).
+Whisper	속삭임
+The witch	마녀
+Zelig	젤리그
+Spirit	영혼
+Nobleman	귀족
+Woman	여자
+Willard	윌러드
+The bear	곰
+Bodysnatcher	시체 도굴꾼
+Albrecht	알브레히트
+Voice	목소리
+Old woman	노파
+Doppelgänger	도플갱어
+Young woman	젊은 여자
+Gruff man	퉁명스러운 남자
+Nervous man	초조한 남자
+Venetian sailor	베네치아 선원
+Arne	아르네
+Battista	바티스타
+Soft voice	부드러운 목소리
+Harsh voice	거친 목소리
+Channing (injured)	채닝 (부상)
+Sherman (injured)	셔먼 (부상)
+Leopold (injured)	레오폴드 (부상)
+Ancient spirit	고대의 영혼
+Heavenly voice	천상의 목소리
+Jervase	제르베스
+Zelig VanElstrik	젤리그 반 엘스트릭
+Aldis	알디스
+Young Woman	젊은 여자
+Diedrik	디드리크
+Juliana	줄리아나
+Sybil	시빌
+Ibrahim	이브라힘
+Besina	베시나
+Isak	이사크
+Haelan	헤일란
+Svit	스빗
+Irving	어빙
+Annie	애니
+Connor	코너
+Garnet	가넷
+Albrecht Hoffman	알브레히트 호프만
+Lucus	루커스
+Gerhardht Oman	게르하르트 오만
+Hana	하나
+Karla	카를라
+Marc	마르크
+Lord Richard Carnell	리처드 카넬 경
+Jokob	요코브
+Konrad Von Saalfelden	콘라드 폰 잘펠덴
+Father Oliwier	올리비에 신부
+Boerhaaven	보어하벤
+The Ferryman	뱃사공
+Klaus	클라우스
+Nikos	니코스
+Andras	안드라스
+Jonas	요나스
+Mortain	모르탱
+Emil	에밀
+Angelina	안젤리나
+Maja	마야
+Hospital Night Guard	병원 야간 경비병
+Castle Night Guard	성 야간 경비병
+East Gate Night Guard	동문 야간 경비병
+North Gate Night Guard	북문 야간 경비병
+Mojca	모이차
+Barracks Night Guard	막사 야간 경비병
+Tahir	타히르
+Fakir	파키르
+Fridolf	프리돌프
+Jannik	야닉
+Eric	에릭
+Ludwig	루트비히
+Ursula	우르술라
+Arnold	아르놀트
+Luka	루카
+Ivana	이바나
+Anja	아냐
+Paul	파울
+Darius	다리우스
+Ramón	라몬
+Rebeka	레베카
+Alfonz	알폰스
+Drago	드라고
+Jietang	지에탕
+Aziz	아지즈
+Ekrem	에크렘
+Hamide	하미데
+Merchant4	상인
+Merchant5	상인
+Merchant6	상인
+Sülen	쉴렌
+Carlotte	카를로트
+Dorothea Becker	도로테아 베커
+Bozhena	보제나
+Wolfgang	볼프강
+Bence	벤체
+Father Konstantin	콘스탄틴 신부
+Male Voice	남자 목소리
+Indeterminate Voice	알 수 없는 목소리
+Female Voice	여자 목소리
+Zala	잘라
+Lilathe	릴라테
+Ha’anthu	하안투
+Ghost Bride	유령 신부
+Ghost Groom	유령 신랑
+Ghost Ghoul	유령 구울
+Boerhaaven's Creature	보어하벤의 피조물
+Wraith	망령
+Veneti Spirit	베네티 영혼
+Scavenger	넝마주이
+Mandrake	만드레이크
+Mary Magdalene	막달라 마리아
+Spirit 2	영혼 2
+Spirit 1	영혼 1
+Rustling Forest	바스락거리는 숲
+AnnieZombie	좀비 애니
+ConnorZombie	좀비 코너
+Lodovico	로도비코
+Salvador	살바도르
+Claudio	클라우디오
+Marco	마르코
+Tommaso	톰마소
+Judge Seveer	세베르 판사
+Mirabel Van Elstrik	미라벨 반 엘스트릭
+Sofia	소피아
+Hend	헨드
+Mendoz	멘도스
+Flip	플립
+Sherman	셔먼
+Channing	채닝
+Leopold	레오폴드
+Wymer	와이머
+Janko	얀코
+Adrijana	아드리야나
+Arald Tailor	재단사 아랄드
+Chandler	챈들러
+Giovanni	조반니
+Gunther	군터
+Henning	헤닝
+Marijan	마리얀
+Cristyne Pfeiffer	크리스틴 파이퍼
+Brina	브리나
+Rosa Dal Farra	로사 달 파라
+Tomaz	토마즈
+Zandros Moser	잔드로스 모저
+Old Woman	노파
+Florijan	플로리얀
+Ludvik	루드비크
+Nicc	니크
+Ida	이다
+Lelon	레론
+Peta	페타
+Robyn	로빈
+Vila	빌라
+Mina	미나
+First Twin	첫째 쌍둥이
+Second Twin	둘째 쌍둥이
+Sister Benedicta	베네딕타 수녀
+Sister Jutte	유테 수녀
+Merlyn	멀린
+Gustav	구스타프
+Strange Boy	이상한 소년
+Gentleman	신사
+Lady Agnes Carnell	아그네스 카넬 부인
+Donald	도널드
+Katherine	캐서린
+Guerina	게리나
+Hermann	헤르만
+Yaroslav	야로슬라프
+Fen	펜
+Varenth	바렌스
+Ilona	일로나
+Balaban	발라반
+Elias	엘리아스
+Djinn	지니
+Ali Mustafa Pasha	알리 무스타파 파샤
+Bayram	바이람
+Tosun	토순
+Muhammet	무함메트
+Rosario	로사리오
+Young Boy	어린 소년
+Jervase (Young)	제르베스 (어린 시절)
+My Father	아버지
+My Mother	어머니
+The Great Marconi	위대한 마르코니
+Reynard	레이너드
+The Crow	까마귀
+Kathy	캐시
+Alexander Pope	알렉산더 포프
+Doorman	문지기
+Stanislav	스타니슬라브
+Marija	마리야
+Vilim	빌림
+Ana	아나
+Javad	자바드
+Barbara	바르바라
+Janez	야네즈
+Vittoria	비토리아
+Leonardo	레오나르도
+Stefano di Gradi	스테파노 디 그라디
+Cederic	세데릭
+Bush Creature	덤불 괴물
+Hamm	함
+Mirabel	미라벨
+Zombie Sybil	좀비 시빌
+Temerity	테메리티
+Von Saalfelden	폰 잘펠덴
+Aniela	아니엘라
+Sherzod	셰르조드
+Isabella	이사벨라
+My Zombie Father	좀비가 된 아버지
+The Fishwife	생선 장수 여인

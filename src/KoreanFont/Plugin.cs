@@ -102,7 +102,7 @@ namespace NecroKoreanFont
         void Awake()
         {
             SceneManager.sceneLoaded += (s, m) => nextScan = 0f;
-            try { Ui.Load(); TMPro_EventManager.TEXT_CHANGED_EVENT.Add(Ui.OnTextChanged); }
+            try { Ui.Load(); Names.Load(); TMPro_EventManager.TEXT_CHANGED_EVENT.Add(Ui.OnTextChanged); }
             catch (Exception e) { Log.Write("UI 표 실패: " + e); }
         }
 
@@ -199,6 +199,7 @@ namespace NecroKoreanFont
             }
             if (Time.unscaledTime < nextScan) return;
             nextScan = Time.unscaledTime + 2f;
+            try { Names.Tick(KeepMin); } catch (Exception e) { Log.Write("이름 실패: " + e.Message); }
             try { Scan(); }
             catch (Exception e) { Log.Write("오류: " + e); nextScan = Time.unscaledTime + 30f; }
         }
@@ -319,6 +320,25 @@ namespace NecroKoreanFont
             return changed ? cur : null;
         }
 
+        // 번역 안 된 영어 글을 untranslated.txt에 모은다(한 번씩, 최대 3000개) → 다음 번역 표 후보
+        static readonly HashSet<string> seenEn = new HashSet<string>();
+        static void Untranslated(string s)
+        {
+            if (string.IsNullOrEmpty(s) || s.Length < 3 || s.Length > 600 || seenEn.Count >= 3000) return;
+            int lat = 0;
+            foreach (var c in s) { if (c >= 0xAC00 && c <= 0xD7A3) return; if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) lat++; }
+            if (lat < 3 || !seenEn.Add(s)) return;
+            try { File.AppendAllText(Path.Combine(Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH") ?? "") ?? ".", "untranslated.txt"), EscNl(s) + "\n"); } catch { }
+        }
+
+        // 줄바꿈을 표 형식의 \n 두 글자로(이 게임 mscorlib엔 string.Replace(string,string)이 없음)
+        static string EscNl(string s)
+        {
+            var sb = new System.Text.StringBuilder(s.Length + 8);
+            foreach (var c in s) { if (c == '\n') sb.Append("\\n"); else if (c != '\r') sb.Append(c); }
+            return sb.ToString();
+        }
+
         public static void OnTextChanged(UnityEngine.Object o)
         {
             Events++;
@@ -329,6 +349,7 @@ namespace NecroKoreanFont
             {
                 var n = Translate(t.text);
                 if (n != null && n != t.text) { busy = true; t.text = n; Replaced++; Track(t); }
+                else if (n == null) Untranslated(t.text);
             }
             catch (Exception e) { Log.Write("UI 바꾸기 실패: " + e.Message); }
             finally { busy = false; }
@@ -342,6 +363,79 @@ namespace NecroKoreanFont
             int n = 0;
             for (int i = 0; i < m.Length; i++) if (m[i] != null && exact.TryGetValue(m[i], out var ko)) { m[i] = ko; n++; }
             if (n > 0) Log.Write("명령 메뉴 " + n + "개 바꿈");
+        }
+    }
+}
+
+namespace NecroKoreanFont
+{
+    // 인물 이름·책 제목은 게임 데이터(Articy 모델, Book 컴포넌트)에서 직접 바꾼다(글 속 부분 바꾸기는 "Mark"→"Marked" 같은 사고가 남).
+    // names-ko.tsv: 영어<TAB>한국어(통째 일치). 시험 모드면 articy-dump.tsv(대사 ID·화자)와 이름·책 제목 목록을 남긴다.
+    static class Names
+    {
+        static readonly Dictionary<string, string> map = new Dictionary<string, string>();
+        static bool modelsDone;
+        static readonly HashSet<string> seenTitles = new HashSet<string>();
+        static string Dir => Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH") ?? "") ?? ".";
+
+        public static void Load()
+        {
+            var path = Path.Combine(Dir, "names-ko.tsv");
+            if (!File.Exists(path)) return;
+            foreach (var raw in File.ReadAllText(path).Split('\n'))
+            {
+                var line = raw.Length > 0 && raw[raw.Length - 1] == '\r' ? raw.Substring(0, raw.Length - 1) : raw;
+                int tab = line.IndexOf('\t');
+                if (line.Length == 0 || line[0] == '#' || tab <= 0) continue;
+                map[line.Substring(0, tab)] = line.Substring(tab + 1);
+            }
+            Log.Write("이름 표: " + map.Count + "개");
+        }
+
+        static string Ko(string s) => s != null && map.TryGetValue(s, out var k) ? k : null;
+
+        // 2초마다 부름
+        public static void Tick(bool dump)
+        {
+            if (!modelsDone && ArticyPlayer.articySetupComplete && ArticyPlayer.models.Count > 0)
+            {
+                modelsDone = true;
+                if (dump) Dump();
+                int n = 0;
+                foreach (var m in ArticyPlayer.models.Values)
+                {
+                    var k = Ko(m.characterName); if (k != null) { m.characterName = k; n++; }
+                    k = Ko(m.NAMEOVERRIDE); if (k != null) { m.NAMEOVERRIDE = k; n++; }
+                }
+                Log.Write("이름 바꿈: " + n + "개");
+            }
+            foreach (var b in Resources.FindObjectsOfTypeAll<Book>())
+            {
+                if (b == null || string.IsNullOrEmpty(b.bookTitle)) continue;
+                var k = Ko(b.bookTitle);
+                if (k != null) b.bookTitle = k;
+                else if (seenTitles.Add(b.bookTitle)) Log.Write("책 제목(표에 없음): " + b.bookTitle);
+            }
+        }
+
+        static void Dump()
+        {
+            var sb = new System.Text.StringBuilder();
+            var names = new HashSet<string>();
+            foreach (var m in ArticyPlayer.models.Values)
+            {
+                string spk = "";
+                if (m.speaker != 0 && ArticyPlayer.models.TryGetValue(m.speaker, out var s)) spk = s.characterName ?? "";
+                if (!string.IsNullOrEmpty(m.characterName)) names.Add(m.characterName);
+                if (!string.IsNullOrEmpty(m.NAMEOVERRIDE)) names.Add(m.NAMEOVERRIDE);
+                sb.Append(ArticyPlayer.LongToHex(m.id)).Append('\t').Append(m.type.ToString()).Append('\t').Append(spk).Append('\t')
+                  .Append(m.inChapter).Append('\t').Append(m.type == ArticyModelType.DialogueFragment ? "" : (m.displayName ?? "")).Append('\n');
+            }
+            File.WriteAllText(Path.Combine(Dir, "articy-dump.tsv"), sb.ToString());
+            var nb = new System.Text.StringBuilder();
+            foreach (var n in names) nb.Append(n).Append('\n');
+            File.WriteAllText(Path.Combine(Dir, "names-dump.txt"), nb.ToString());
+            Log.Write("덤프: 모델 " + ArticyPlayer.models.Count + ", 이름 " + names.Count);
         }
     }
 }
