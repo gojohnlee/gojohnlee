@@ -52,7 +52,7 @@ namespace ValheimHelper
         {
             if (m_bestFor != m_chest) { m_bestFor = m_chest; m_best = float.MaxValue; m_still = 0f; }
             if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
-            if (TestNoReach || d > Reach || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || DoorWay.Blocked(m_npc, m_chest)) return false;
+            if (TestNoReach || d > Reach || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1f || DoorWay.Blocked(m_npc, m_chest)) return false;
             Reached++;
             Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Prep 손 거리 꺼내기: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
             return true;
@@ -76,7 +76,8 @@ namespace ValheimHelper
             if (m_time > WalkLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 준비: 상자에 못 닿아 건너뜀"); m_chest = null; return true; }
             Vector3 at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
-            if (d > 2.5f && !Steering(m_chest) && !CanReach(at, d, dt))
+            // 높이도 봄(E056): 2층 상자 바로 밑 2.5m 안을 "닿음"으로 보면 바닥에 가려 문으로 돌다 포기하고 그 자리(아래층)에서 꺼냈음
+            if ((d > 2.5f || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f) && !Steering(m_chest) && !CanReach(at, d, dt))
             {
                 if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) m_ai.MoveToPoint(dt, m_hop.Goal(m_chest), 1.8f, d > 10f); // 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
                 return true;

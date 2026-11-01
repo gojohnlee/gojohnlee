@@ -25,6 +25,13 @@ namespace ValheimHelper
         static readonly System.Collections.Generic.List<OpenedDoor> s_opened = new System.Collections.Generic.List<OpenedDoor>();
         static float s_next;
 
+        /// <summary>일꾼이 연 문으로 적어 둠 — 나중에 닫는다(상자 가기에서 바로 연 문도, E059·회차 334).</summary>
+        public static void Track(Door door, WorkerNpc npc)
+        {
+            if (door == null || s_opened.Exists(o => o.Door == door)) return;
+            s_opened.Add(new OpenedDoor { Door = door, By = npc, Mid = Middle(door) });
+        }
+
         /// <summary>문 쪽으로 가는 중 — 부른 쪽은 "대상까지 멀면 걷기"를 건너뛴다(문으로 돌다 대상 2.5m 밖으로 나가면 다시 대상 쪽으로 당겨 오락가락, 회차 314).</summary>
         public bool Busy => m_phase == Phase.ToDoor || m_phase == Phase.Through;
 
@@ -126,7 +133,7 @@ namespace ValheimHelper
                 if (Dungeons.Open(npc, m_door))
                 {
                     Opened++;
-                    s_opened.Add(new OpenedDoor { Door = m_door, By = npc, Mid = Middle(m_door) });
+                    Track(m_door, npc);
                 }
                 m_phase = Phase.Through; m_t = 0f;
             }
