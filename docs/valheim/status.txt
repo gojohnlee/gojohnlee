@@ -1,8 +1,8 @@
-갱신: 2026-11-01 14:20  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 344 진행 중
+갱신: 2026-11-01 15:06  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 344, 계정: 2번, 한도: 없음
 할 일: (없음)
-마지막 시험: 11-01 14:19 요약: 2/3 PASS | FAIL vh_unloadreachtest: 통나무 닿음(묶지 않음): 고치기 전 9.8초 → 고친 뒤 15.0초, 일찍 옆으로 0, 달리기 7.0 (들고 10)
-Claude가 한 일: (진행 중)
+마지막 시험: 11-01 15:05 요약: 3/4 PASS | FAIL vh_housetest: 안에서 문 열고 나감 (40초, 나감 0번, 순간이동 1, Work)
+Claude가 한 일: LOOP: DONE E060 상자 가기 통나무 밀림 고침(unloadreach 3연속 PASS), 새 E061 집 나가기 조사 중
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
