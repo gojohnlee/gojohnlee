@@ -456,7 +456,7 @@ namespace ValheimHelper
             }
             Delivered += moved;
             Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} {moved}개 넣음 ({Delivered}/{Target}) 상자 {m_chest.transform.position:F1} 집에서 {Utils.DistanceXZ(m_npc.Home, m_chest.transform.position):0}m");
-            if (Delivered >= Target)
+            if (Delivered >= Target && !OwnLog(out _)) // 자기 통나무가 남았으면 다시 나가 마저 쪼갠다(사용자 11-01)
             {
                 m_npc.Say("gatherDone", Args(Delivered));
                 return false;

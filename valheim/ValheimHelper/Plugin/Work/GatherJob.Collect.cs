@@ -187,11 +187,69 @@ namespace ValheimHelper
         /// 밑에서 쪼개면 반토막(TreeLog.Destroy)이 머리 위에 생겨 바로 떨어진다(E020 진단: 8.5m 위에 걸린 beech_log를 밑에서 직접 피해 5번 →
         /// 4m 위에 생긴 반토막이 4.2m/s로 떨어져 일꾼 죽음, 같은 자리에서 두 번). 반토막(더 안 쪼개짐)은 쪼개도 나무만 떨어져 괜찮다.
         /// </summary>
-        static bool HungLog(ZDO zdo, ResourceInfo info)
+        internal static bool HungLog(ZDO zdo, ResourceInfo info)
         {
             if (info == null || !info.Splits) return false;
             Vector3 p = zdo.GetPosition();
             return ZoneSystem.instance.GetGroundHeight(p, out float ground) && p.y - ground > HungHeight;
+        }
+
+        // ---- 자기가 쓰러뜨린 나무의 통나무(사용자 11-01 "통나무 끝까지") ----
+
+        /// <summary>쓰러뜨린 나무·쪼갠 통나무 자리에서 이만큼(xz) 안의 통나무를 "자기 통나무"로 본다(넘어진 통나무·구른 반토막).</summary>
+        const float OwnLogRange = 15f;
+        /// <summary>이 일에서 쓰러뜨리거나 쪼갠 자리. 둘레에 쪼갤 통나무가 안 남으면 OwnLog가 지운다.</summary>
+        readonly List<Vector3> m_felled = new List<Vector3>();
+        /// <summary>시험용: 일꾼들이 쓰러뜨리거나 쪼갠 자리(지우지 않음).</summary>
+        public static readonly List<Vector3> FelledLog = new List<Vector3>();
+
+        void NoteFelled(Vector3 p)
+        {
+            m_felled.Add(p);
+            if (m_felled.Count > 8) m_felled.RemoveAt(0);
+            FelledLog.Add(p);
+        }
+
+        bool NearFelled(Vector3 p)
+        {
+            foreach (var s in m_felled)
+                if (Utils.DistanceXZ(s, p) < OwnLogRange) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// 자기 통나무 중 지금 쪼갤 수 있는 가장 가까운 것. 다음 나무·바위보다 먼저, 시킨 개수를 채워도 끝까지 쪼갠다.
+        /// 거르는 것은 FindInSight와 같다(건너뜀·위험 구역·막힘 기록·높이 걸림·도구·건축물 4m). 쪼갤 것이 안 남은 자리는 지운다.
+        /// </summary>
+        bool OwnLog(out ZDO best)
+        {
+            best = null;
+            if (m_felled.Count == 0 || m_hunt) return false;
+            Vector3 pos = m_npc.transform.position;
+            float bestDist = float.MaxValue;
+            for (int i = m_felled.Count - 1; i >= 0; i--)
+            {
+                bool any = false;
+                var nearby = Senses.Nearby(m_felled[i], OwnLogRange + 4f);
+                var pieces = new List<Vector3>();
+                foreach (var zdo in nearby)
+                    if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
+                foreach (var zdo in nearby)
+                {
+                    ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
+                    Vector3 p = zdo.GetPosition();
+                    if (info == null || !info.Log || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
+                    if (Utils.DistanceXZ(p, m_felled[i]) > OwnLogRange || Character.InInterior(p)) continue;
+                    if (m_skip.Contains(zdo.m_uid) || Avoided(p) || m_book.Excluded(p.x, p.z) || HungLog(zdo, info) || NearAny(p, pieces, 4f)) continue;
+                    ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
+                    if (tool == null || info.MinToolTier > tool.m_shared.m_toolTier) continue;
+                    any = true;
+                    float d = Utils.DistanceXZ(p, pos);
+                    if (d < bestDist) { bestDist = d; best = zdo; }
+                }
+                if (!any) m_felled.RemoveAt(i);
+            }
+            return best != null;
         }
 
     }

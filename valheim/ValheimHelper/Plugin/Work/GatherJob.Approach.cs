@@ -385,7 +385,8 @@ namespace ValheimHelper
             ZNetView view = zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
             if (zdo == null || view == null || !view.IsValid())
             {
-                // 쓰러졌다(또는 부서졌다): 떨어진 것을 줍는다.
+                // 쓰러졌다(또는 부서졌다): 떨어진 것을 줍는다. 쓰러뜨린 나무·쪼갠 통나무 자리는 기억해 둘레 통나무를 끝까지 치운다
+                if (m_targetInfo != null && (m_targetInfo.Falls || m_targetInfo.Log)) NoteFelled(m_targetPos);
                 Go(Step.Collect);
                 return true;
             }
@@ -419,7 +420,8 @@ namespace ValheimHelper
             if (!m_npc.HoldTool(m_targetInfo.Tool)) { Go(Step.Tool); return true; }
             if (m_lastHealth == null) m_lastHealth = HealthMark(zdo, view);
             // 큰 광맥은 다 캐기 전에 목표만큼 모일 수 있다(0.3.8 구리 시험: 10개 시켰는데 18개를 들고 계속 캠)
-            if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
+            // 자기 통나무는 개수를 채워도 끝까지 쪼갠다(사용자 11-01)
+            if (Full() || Carried() >= Remaining() && !(m_targetInfo.Log && NearFelled(m_targetPos))) { Go(Step.Return); return true; }
             // 진척(대상이 깎이거나 땅을 팜) 없이 30초면 다른 것으로. 큰 광맥은 오래 걸려도 계속 캔다.
             m_workIdle += Time.deltaTime;
             if (m_workIdle > WorkIdleLimit || m_stepTime > ChopLimit)

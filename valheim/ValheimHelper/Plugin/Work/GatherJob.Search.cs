@@ -11,7 +11,16 @@ namespace ValheimHelper
 
         bool UpdateSearch(float dt)
         {
-            if (Carried() >= Remaining() || Full()) { Go(Step.Return); return true; }
+            if (Full()) { Go(Step.Return); return true; }
+            // 자기가 쓰러뜨린 나무의 통나무부터 다 쪼갠다 — 다음 나무 전에, 시킨 개수를 채웠어도(사용자 11-01)
+            if (!m_npc.InInterior() && OwnLog(out ZDO own)) { Found(own); return true; }
+            if (Carried() >= Remaining())
+            {
+                // 다 넣었는데 자기 통나무가 남아 다시 나왔다가 다 치움: 그만둔다
+                if (Carried() == 0) { m_npc.Say("gatherDone", Args(Delivered)); return false; }
+                Go(Step.Return);
+                return true;
+            }
             if (m_npc.InInterior()) return UpdateInside();
             if (m_leftDrops is Vector3 left)
             {

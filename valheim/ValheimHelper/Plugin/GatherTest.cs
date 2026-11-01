@@ -172,6 +172,7 @@ namespace ValheimHelper
             if (keepClear) Plugin.Instance.StartCoroutine(TestKit.KeepSiteClear(home, () => keepClear));
             Say($"!{Workers.Name1} {word} 10", null);
             int count = 0, count0 = CountBase(home, item); // 지난 시험이 거점 상자에 남긴 것은 뺀다
+            int felled0 = GatherJob.FelledLog.Count;
             // 회차 142: 경계가 몸을 옮긴 뒤(물러나기·도망) 캐기가 이어지면 그 자리에서 휘두르지 않고 다시 다가가는지 — 캐는 중 한 번 25m 도망시킨다
             // (검은숲: 물러났다 34m 밖에서 일이 이어져 직접 피해가 20.6m 떨어진 조각에 들어감)
             bool moveCheck = item == "CopperOre", moved = false;
@@ -220,6 +221,28 @@ namespace ValheimHelper
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
             checks.Add($"거점 상자에 {word} {count}개 더 ({t:0}초)", count >= 10);
+            if (item == "Wood")
+            {
+                // 통나무 끝까지(사용자 11-01): 시킨 개수를 채워도 자기가 쓰러뜨린 나무의 통나무를 다 쪼개 가져오고 그만둔다
+                float t2 = 0f;
+                while (t2 < 180f && claude != null && claude.Ai.Current == WorkerAI.Mode.Work) { yield return new WaitForSeconds(1f); t2 += 1f; }
+                var spots = GatherJob.FelledLog.GetRange(felled0, GatherJob.FelledLog.Count - felled0);
+                // 높이 걸린 통나무(HungLog)는 아직 안 고르므로(조각 다) 따로 셈
+                var left = new HashSet<ZDOID>();
+                var hung = new HashSet<ZDOID>();
+                var leftDesc = new List<string>();
+                foreach (var spot in spots)
+                    foreach (var z in Senses.Nearby(spot, 15f))
+                        if (z.m_uid != hungId && Utils.DistanceXZ(z.GetPosition(), spot) <= 15f && ResourceCatalog.Get(z.GetPrefab()) is ResourceInfo li && li.Log)
+                        {
+                            bool h = GatherJob.HungLog(z, li);
+                            if (!(h ? hung : left).Add(z.m_uid)) continue;
+                            ZoneSystem.instance.GetGroundHeight(z.GetPosition(), out float gy);
+                            leftDesc.Add($"{li.Prefab} 땅 위 {z.GetPosition().y - gy:0.0}m{(h ? " 걸림" : "")}");
+                        }
+                checks.Add($"쓰러뜨린 나무의 통나무 다 치우고 끝냄(쓰러뜨리거나 쪼갠 곳 {spots.Count}, 남은 통나무 {left.Count}개·걸린 것 {hung.Count}개 [{string.Join(", ", leftDesc)}], 개수 채운 뒤 {t2:0}초, 상자 {CountBase(home, item) - count0})",
+                           spots.Count > 0 && left.Count == 0 && claude != null && claude.Ai.Current != WorkerAI.Mode.Work);
+            }
             if (moveCheck)
                 checks.Add($"캐는 중 도망으로 옮겨진 뒤 다시 다가감({(moved ? "도망시킴" : "못 시킴")}, 다시 다가감 {GatherJob.WorkReapproaches - reapproach0}번, 8m 넘는 직접 피해 {GatherJob.LongDirectHits - longHits0}번)",
                            moved && GatherJob.WorkReapproaches > reapproach0 && GatherJob.LongDirectHits == longHits0);
