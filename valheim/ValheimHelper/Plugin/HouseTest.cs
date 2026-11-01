@@ -300,6 +300,33 @@ namespace ValheimHelper
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
 
+            // 3-2) 플레이어가 열어 둔 문(밖에서 엶 — 문짝이 안쪽): 그대로 지나 들어가 꺼내고, 나올 때 문짝 바꿔 열기로 닫았으면 원래 쪽으로 다시 열어 둠(남이 연 문)
+            yield return new WaitForSeconds(1f);
+            foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
+                if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
+            TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
+            Vector3 outAt = GatherTest.Ground(c - r * (Half + 3f)) + Vector3.up * 0.3f;
+            int openSt = Vector3.Dot(door.transform.forward, door.transform.position - c) < 0f ? 1 : -1; // 문 바깥에서 Dungeons.Open이 열 때와 같은 쪽(문짝이 안쪽)
+            if (dz.IsValid()) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, openSt); }
+            yield return new WaitForSeconds(6f); // 열린 문 navmesh
+            w.Ragnar.TeleportTo(outAt, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(1f);
+            tele0 = Teleports(); entered0 = DoorWay.Entered; doors0 = ChestHop.Doors; closed0 = DoorWay.Closed; int opened0 = DoorWay.Opened;
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
+            yield return TestKit.WaitFor(() => w.Ragnar.CountItem("MeadHealthMinor") >= 3, 90f);
+            took = TestKit.Waited;
+            yield return TestKit.WaitFor(() => !In(w.Ragnar.transform.position), 30f);
+            yield return new WaitForSeconds(4f); // 나오며 문짝 바꿔 열기(E064)로 닫았으면 CloseBehind가 원래대로 다시 엶
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == openSt, 10f);
+            tele = Teleports() - tele0;
+            checks.Add($"열어 둔 문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 순간이동 {tele}, 일꾼 안 {In(w.Ragnar.transform.position)})",
+                w.Ragnar.CountItem("MeadHealthMinor") >= 3 && tele == 0 && !In(w.Ragnar.transform.position));
+            checks.Add($"열어 둔 문은 열린 채 둠 (s_state {dz.GetInt(ZDOVars.s_state)}/{openSt}, 엶 {DoorWay.Opened - opened0}·닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)",
+                dz.GetInt(ZDOVars.s_state) == openSt);
+            GatherTest.Say("!멈춰", null);
+            TestKit.ClearBaseStock(w, "MeadHealthMinor");
+            if (dz.IsValid()) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+
             // 4) 안에서 닫힌 문으로 나가기(③-5): 일꾼을 안에 두고 문을 닫은 채 바깥 일(나무)을 시키면 문을 열고 나가는지
             yield return new WaitForSeconds(1f);
             if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
