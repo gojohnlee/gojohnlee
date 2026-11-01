@@ -131,8 +131,8 @@ namespace NecroKoreanFont
                 if (fa != null)
                 {
                     fa.name = "Korean Fallback (" + f + ")";
-                    // 한글이 게임 글꼴보다 커 보임 → 크기 비율(font-scale.txt, 없으면 0.85)
-                    float sc = 0.85f;
+                    // 한글 크기 비율(font-scale.txt, 없으면 1)
+                    float sc = 1f;
                     try { sc = ReadScale(sc); } catch { }
                     try { SetScale(fa, sc); } catch (Exception e) { Log.Write("크기 비율 실패: " + e.Message); }
                     Log.Write("한글 크기 비율: " + sc);
