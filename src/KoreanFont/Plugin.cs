@@ -106,6 +106,22 @@ namespace NecroKoreanFont
             catch (Exception e) { Log.Write("UI 표 실패: " + e); }
         }
 
+        // 이 게임 mscorlib는 줄어 있어 float.Parse 대신 손으로 읽는다(따로 메서드: 없는 API면 이 메서드만 실패)
+        static float ReadScale(float def)
+        {
+            var sp = Path.Combine(Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH") ?? "") ?? ".", "font-scale.txt");
+            if (!File.Exists(sp)) return def;
+            float v = 0, d = 0; bool any = false;
+            foreach (var c in File.ReadAllText(sp))
+            {
+                if (c >= '0' && c <= '9') { any = true; if (d == 0) v = v * 10 + (c - '0'); else { v += (c - '0') / d; d *= 10; } }
+                else if (c == '.' && d == 0) d = 10;
+                else if (any) break;
+            }
+            return any && v > 0.3f && v < 2f ? v : def;
+        }
+        static void SetScale(TMP_FontAsset fa, float sc) { var fi = fa.faceInfo; fi.scale = sc; fa.faceInfo = fi; }
+
         TMP_FontAsset MakeKorean()
         {
             foreach (var f in Families)
@@ -115,6 +131,11 @@ namespace NecroKoreanFont
                 if (fa != null)
                 {
                     fa.name = "Korean Fallback (" + f + ")";
+                    // 한글이 게임 글꼴보다 커 보임 → 크기 비율(font-scale.txt, 없으면 0.85)
+                    float sc = 0.85f;
+                    try { sc = ReadScale(sc); } catch { }
+                    try { SetScale(fa, sc); } catch (Exception e) { Log.Write("크기 비율 실패: " + e.Message); }
+                    Log.Write("한글 크기 비율: " + sc);
                     DontDestroyOnLoad(fa);
                     Log.Write("한글 대체 폰트: " + f);
                     return fa;
