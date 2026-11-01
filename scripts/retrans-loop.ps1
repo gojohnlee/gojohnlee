@@ -76,5 +76,12 @@ while ($true) {
     $md = "# 재번역 진행`n`n- $(Get-Date -f 'yyyy-MM-dd HH:mm') 기준 $d / $all 줄 ($([Math]::Round(100 * $d / $all))%)`n- 이번 실행 덩어리 $round개, 마지막 덩어리 ${first}번째 줄부터`n"
     [IO.File]::WriteAllText("$Repo\docs\retrans-status.md", $md, (New-Object Text.UTF8Encoding($false)))
     git -C $Repo add docs/retrans-status.md 2>$null; git -C $Repo commit -q -m "재번역 진행 $d/$all" 2>$null; git -C $Repo push -q 2>$null
+    # 번역본 백업: 비공개 gojohnlee/valheim-refs의 necromancer 가지(공개 저장소엔 게임 글을 안 올림)
+    $Refs = "$W\refs"
+    if (Test-Path "$Refs\.git") {
+      Copy-Item "$Rt\*.tsv" "$Refs\translation\retrans\" -Force; Copy-Item "$W\Korean-fixed.csv" "$Refs\translation\" -Force
+      git -C $Refs add -A translation 2>$null; git -C $Refs commit -q -m "재번역 백업 $d/$all" 2>$null; git -C $Refs push -q origin necromancer 2>$null
+      Log "백업 푸시 $d/$all"
+    }
   }
 }
