@@ -74,8 +74,7 @@ namespace ValheimHelper
             for (float t = 0f; t < 4f; t += Time.deltaTime) { before.Update(Time.deltaTime); yield return null; }
             checks.Add($"고치기 전: 4초 동안 못 넣음 (들고 {BaseTest.Carried(w.Ragnar, "Wood")}, 상자 {GatherTest.CountBase(w.Home, "Wood")})", BaseTest.Carried(w.Ragnar, "Wood") == 10);
 
-            Back();
-            yield return new WaitForSeconds(1f);
+            for (int i = 0; i < 3; i++) { Back(); yield return new WaitForSeconds(1f); if (Dist() <= 3.8f) break; } // E066: 손 거리(4m) 밖으로 밀린 채 시작하면 상자 앞으로 가는 게 맞음(회차 356 꺼내기 4.1m) → 안으로 다시 세움
             Unload.TestNoReach = false;
             int reached0 = Unload.Reached;
             var after = new Unload(w.Ragnar);
@@ -101,8 +100,7 @@ namespace ValheimHelper
             for (float t = 0f; t < 4f; t += Time.deltaTime) { pBefore.Update(Time.deltaTime); yield return null; }
             checks.Add($"꺼내기 고치기 전: 4초 동안 못 챙김 (들고 {Meads()}, 상자까지 {Dist():0.0}m)", Meads() == 0);
 
-            Back();
-            yield return new WaitForSeconds(1f);
+            for (int i = 0; i < 3; i++) { Back(); yield return new WaitForSeconds(1f); if (Dist() <= 3.8f) break; } // E066: 손 거리(4m) 밖으로 밀린 채 시작하면 상자 앞으로 가는 게 맞음(회차 356 꺼내기 4.1m) → 안으로 다시 세움
             Prep.TestNoReach = false;
             int pReached0 = Prep.Reached;
             var pAfter = new Prep(w.Ragnar);
@@ -128,8 +126,7 @@ namespace ValheimHelper
             for (float t = 0f; t < 4f; t += Time.deltaTime) { tBefore.Update(Time.deltaTime); yield return null; }
             checks.Add($"정리 고치기 전: 4초 동안 못 꺼냄 (들고 {Meads()}, 옮김 {tBefore.Moved})", Meads() == 0 && tBefore.Moved == 0);
 
-            Back();
-            yield return new WaitForSeconds(1f);
+            for (int i = 0; i < 3; i++) { Back(); yield return new WaitForSeconds(1f); if (Dist() <= 3.8f) break; } // E066: 손 거리(4m) 밖으로 밀린 채 시작하면 상자 앞으로 가는 게 맞음(회차 356 꺼내기 4.1m) → 안으로 다시 세움
             TidyJob.TestNoReach = false;
             int tReached0 = TidyJob.Reached;
             var tAfter = new TidyJob(w.Ragnar, Once());
