@@ -1,0 +1,584 @@
+# 네크로맨서 테일 UI 문자열 한글 표 (모드가 화면 글자에서 찾아 바꿈)
+# 형식: 영어<TAB>한국어. \n = 줄바꿈. 영어 앞에 = 를 붙이면 글 전체가 똑같을 때만 바꿈(짧은 단어용), 아니면 글 안의 그 부분을 바꿈.
+# 앞뒤 공백도 그대로 맞춰야 함. 같은 글에 여러 줄이 걸리면 긴 것부터 바꿈.
+
+# --- 하수인 명령 메뉴(SamsContextMenu.menuText)
+=Rename	이름 바꾸기
+=Stay There	거기 있어
+=All Stay There	모두 거기 있어
+=Follow Me	따라와
+=All Nearby Follow Me	근처 모두 따라와
+=Move To ...	이동 ...
+=All Followers Move To ...	따르는 하수인 모두 이동 ...
+=Equip	장비
+=Repair	수리
+=Rejuvenate	회복
+=Come Here	이리 와
+=Pick Up Nearby Body	근처 시체 들기
+=Drop Body	시체 내려놓기
+=Give Me Body	시체 넘겨
+=Take Equipment	장비 가져오기
+=Take Money	돈 가져오기
+=Take Both	둘 다 가져오기
+=Pick Up	줍기
+=Dig Some Soil	흙 조금 파기
+=Dig For Body	시체 파내기
+=(Already Dug For Body)	(이미 시체를 파냄)
+=Take Some Flesh	살점 떼어내기
+=Awaken Ritual	각성 의식
+=Legions of the Dead	죽은 자들의 군대
+=Cut Out Brain	뇌 꺼내기
+=Talk	대화
+
+# --- 메뉴·저장·불러오기
+=Cancel	취소
+=Quit	종료
+=Load	불러오기
+=Language	언어
+=Adult Content	성인 콘텐츠
+=Error	오류
+=Feedback	의견 보내기
+=Quick Set	빠른 설정
+=Cannot Load	불러올 수 없음
+=Cannot Save	저장할 수 없음
+=Cannot Quick Save (F8)	빠른 저장 불가 (F8)
+=LOAD GAME	게임 불러오기
+=SAVE GAME	게임 저장
+=Save As New File	새 파일로 저장
+=Save as New File Name	새 파일 이름으로 저장
+=Save New	새로 저장
+=Overwrite File	덮어쓰기
+=Overwrite Selected File?	선택한 파일에 덮어쓸까요?
+=Delete Save File	저장 파일 삭제
+=Delete the selected file?	선택한 파일을 삭제할까요?
+=Send Save File	저장 파일 보내기
+=Exit to Menu	메뉴로 나가기
+=Quit to Desktop?	바탕화면으로 나갈까요?
+=Quit to Menu?	메뉴로 나갈까요?
+Quit to Menu?\n\nYou will lose unsaved progress.\nIt is 	메뉴로 나갈까요?\n\n저장하지 않은 진행은 사라집니다.\n
+Load a save-game?\n\nYou will lose unsaved progress in the current game. It is 	저장된 게임을 불러올까요?\n\n지금 게임에서 저장하지 않은 진행은 사라집니다.
+\n\nYou will lose unsaved progress in the current game. It is 	\n\n지금 게임에서 저장하지 않은 진행은 사라집니다.
+ minutes since you last saved.	분 전에 마지막으로 저장했습니다.
+ seconds since you last saved.	초 전에 마지막으로 저장했습니다.
+=Quick Load	빠른 불러오기
+Quick Load (	빠른 불러오기 (
+=Quick Save	빠른 저장
+=Quick Load from your most recent Quick Save?	가장 최근 빠른 저장에서 불러올까요?
+=You have no Quick Save file to load.	불러올 빠른 저장 파일이 없습니다.
+=You cannot overwrite a Quicksave or Autosave slot with a regular save.	빠른 저장·자동 저장 칸에는 일반 저장을 덮어쓸 수 없습니다.
+You cannot save as you have a courtcase scheduled to happen the next time you move time forward.	다음에 시간을 넘기면 재판이 열릴 예정이라 저장할 수 없습니다.
+You cannot save while the Conversation Window is open, or during a ritual, cutscene or combat.	대화 창이 열려 있거나 의식·컷신·전투 중에는 저장할 수 없습니다.
+Cannot load a non-demo save-game file into demo version of the game.	체험판에서는 정식판 저장 파일을 불러올 수 없습니다.
+<color=#C7B59C>Autosave 	<color=#C7B59C>자동 저장
+<color=#C7B59C>Chapter 	<color=#C7B59C>챕터
+<color=#C7B59C>Quicksave	<color=#C7B59C>빠른 저장
+<color=#ff6666>Obsolete File Format	<color=#ff6666>옛 파일 형식
+ (quicksave)	 (빠른 저장)
+ (autosave 	 (자동 저장
+Autosaved to slot 	자동 저장한 칸:
+Manual saved to slot 	저장한 칸:
+Loaded from autosave slot 	자동 저장 칸에서 불러옴:
+Loaded from slot 	불러온 칸:
+Game Saved: 	게임 저장됨:
+Error loading file.	파일을 불러오지 못했습니다.
+Error sending file.	파일을 보내지 못했습니다.
+=File Uploaded	파일 올림
+By right-clicking a save file you can upload it to our server to diagnose problems. Is that what you want to do?	저장 파일을 우클릭하면 문제 진단을 위해 개발사 서버로 올릴 수 있습니다. 올릴까요?
+=Yes->Upload	예 → 올리기
+=No->Just Play	아니요 → 그냥 하기
+This will take some time and is therefore risky. Are you sure you want to proceed?	시간이 좀 걸려 위험할 수 있습니다. 계속할까요?
+Please type your feedback in the text area provided (minimum 8 characters).	입력란에 의견을 적어 주세요(8자 이상).
+Feedback successfully sent. Thank you!	의견을 보냈습니다. 감사합니다!
+Feedback not sent. Error message: 	의견을 보내지 못했습니다. 오류:
+If you are experiencing bugs, please update to the latest game build.	버그가 있다면 게임을 최신 버전으로 업데이트해 주세요.
+\nRemember to backup your data!	\n데이터를 꼭 백업해 두세요!
+=Change Difficulty	난이도 바꾸기
+=Choose Difficulty	난이도 선택
+Difficulty:\nBalanced	난이도:\n균형
+Difficulty:\nStory Mode	난이도:\n스토리 모드
+Difficulty:\nStrategy	난이도:\n전략
+=Enter Your Name	이름을 입력하세요
+=What were you named?	당신의 이름은 무엇이었나?
+You were named 	당신의 이름은
+New name for 	새 이름:
+=Rename Minion	하수인 이름 바꾸기
+=Custom Portrait	사용자 초상화
+You can use custom portraits in the game by storing them in the CustomPortraits folder using specific filenames.	CustomPortraits 폴더에 정해진 파일 이름으로 넣으면 게임에서 사용자 초상화를 쓸 수 있습니다.
+=Show Me	보여 줘
+=Game Over	게임 오버
+=Play again	다시 하기
+Returning to menu in 5 seconds	5초 뒤 메뉴로 돌아갑니다
+=You have died.	당신은 죽었다.
+=You have been sent away to a penal colony.	당신은 유형지로 보내졌다.
+=Close painting and exit to menu?	그림을 닫고 메뉴로 나갈까요?
+=Return to the interactive fiction?	인터랙티브 픽션으로 돌아갈까요?
+=Mouse Inactive	마우스 꺼짐
+=Analytics (off)	분석 (끔)
+=Analytics (on)	분석 (켬)
+=Beta Test	베타 테스트
+Connected: xbox controller (F2 to disable)	연결됨: Xbox 컨트롤러 (F2로 끄기)
+DISABLED game controller (F2 to enable)	게임 컨트롤러 꺼짐 (F2로 켜기)
+Press F1 to hide help\n	F1: 도움말 숨기기\n
+=Press F1 to show help	F1: 도움말 보기
+=Word Count	글자 수
+\nWords: 	\n단어:
+=Zoom In	확대
+=Zoom Out	축소
+Toggle with 'Tab' key.	Tab 키로 켜고 끕니다.
+You can use community translations in the game by storing them in the Languages folder:\n\n<color=#baa791>	Languages 폴더에 넣으면 게임에서 커뮤니티 번역을 쓸 수 있습니다:\n\n<color=#baa791>
+Localization of in-game text is a community feature, not an official feature of the game. Use at your own discretion.	게임 글 번역은 공식 기능이 아닌 커뮤니티 기능입니다. 각자 판단해서 사용하세요.
+
+# --- 체험판·안내
+=Combat Demo	전투 체험판
+=Combat Demo Ended	전투 체험판 끝
+=Dungeon Crawl	던전 탐험
+=Dungeon Crawl Demo	던전 탐험 체험판
+=Dungeon Crawl Demo Ended	던전 탐험 체험판 끝
+=From The Start Demo	처음부터 체험판
+=From The Start Demo Ended	처음부터 체험판 끝
+=Homecoming Demo	귀향 체험판
+=Hospital Demo	병원 체험판
+=Hospital Demo Ended	병원 체험판 끝
+This demo does not allow you to leave the dungeon.	이 체험판에서는 던전을 떠날 수 없습니다.
+\n\nThank you for playing the demo.	\n\n체험판을 플레이해 주셔서 감사합니다.
+
+# --- 일지
+=Add Entry	항목 추가
+=Add Journal Entry	일지 항목 추가
+=Edit Entry	항목 고치기
+=Edit Journal Entry	일지 항목 고치기
+=Delete Entry	항목 삭제
+Delete Journal Entry?\n\n<color=#FFFFFF>	일지 항목을 삭제할까요?\n\n<color=#FFFFFF>
+=Edit Description	설명 고치기
+=Notes - To Do List	메모 - 할 일
+=To Do note added in Journal	일지에 할 일이 추가됐다
+=Crimes and Misdemeanours	범죄와 경범죄
+You can view your active tasks by using the Journal icon in your task-bar. This icon flashes when there is unread content.	작업 표시줄의 일지 아이콘으로 진행 중인 일을 볼 수 있습니다. 읽지 않은 내용이 있으면 아이콘이 깜박입니다.
+
+# --- 시간·이동
+=Time of Day	시간대
+=Fast Travel	빠른 이동
+=Teleport home?	집으로 순간이동할까요?
+: do you wish to fast travel there?	: 그곳으로 빠르게 이동할까요?
+=You cannot fast travel yet.	아직 빠른 이동을 할 수 없다.
+=You cannot fast travel to there.	그곳으로는 빠르게 이동할 수 없다.
+=You cannot fast travel while committing a crime.	범죄를 저지르는 중에는 빠르게 이동할 수 없다.
+=You cannot fast travel while indoors or underground.	실내나 지하에서는 빠르게 이동할 수 없다.
+=You cannot fast travel while leading minions.	하수인을 이끄는 중에는 빠르게 이동할 수 없다.
+=You cannot fast travel while outside the city, until chapter 14.	14장 전까지는 도시 밖에서 빠르게 이동할 수 없다.
+=You cannot fast travel while the Conversation Window is open.	대화 창이 열려 있으면 빠르게 이동할 수 없다.
+.\nDo you wish to advance time?	.\n시간을 넘길까요?
+.\nYou cannot advance time while the Conversation Window is open.	.\n대화 창이 열려 있으면 시간을 넘길 수 없다.
+.\nYou cannot currently advance time.	.\n지금은 시간을 넘길 수 없다.
+.\nYou must be inside a building, tunnel, cave or crypt to advance time.	.\n시간을 넘기려면 건물·터널·동굴·지하 묘지 안에 있어야 한다.
+.\nYou must be inside your house or within the city limits to advance time.	.\n시간을 넘기려면 집 안이나 도시 안에 있어야 한다.
+.\nYou must be inside your house, within the city limits, or in a tunnel, cave or crypt to advance time.	.\n시간을 넘기려면 집 안, 도시 안, 또는 터널·동굴·지하 묘지에 있어야 한다.
+=Advancing Time	시간을 넘기는 중
+=in the morning	아침에
+=this afternoon	오늘 오후
+=this evening	오늘 저녁
+=later tonight	오늘 밤늦게
+It is 	지금은
+ on day 	, 날짜
+Starting from chapter 3, you can click the Time Of Day icon in the control bar to advance time between morning, afternoon, evening and night.	3장부터는 조작 막대의 시간대 아이콘을 눌러 아침·오후·저녁·밤으로 시간을 넘길 수 있습니다.
+You can click the Time Of Day icon in the control bar to advance time between morning, afternoon, evening and night. You must be inside your house or the city limits to do so.	조작 막대의 시간대 아이콘을 눌러 아침·오후·저녁·밤으로 시간을 넘길 수 있습니다. 집 안이나 도시 안에 있어야 합니다.
+From chapter 7, you can also advance the time of day from within caves, tunnels and crypts.	7장부터는 동굴·터널·지하 묘지 안에서도 시간을 넘길 수 있습니다.
+When you're ready to attend the funeral, just advance time to evening.	장례식에 갈 준비가 되면 시간을 저녁으로 넘기세요.
+The funeral had not started yet; it was due in the evening.	장례식은 아직 시작하지 않았다. 저녁에 열릴 예정이었다.
+It was not yet midnight, and thus too early for my meeting with the witch.	아직 자정이 아니라 마녀를 만나기엔 일렀다.
+You can now fast travel by clicking named locations on the wilderness map.	이제 황무지 지도에서 이름이 있는 장소를 눌러 빠르게 이동할 수 있다.
+You can double-click to run, or use WASD with Shift.	더블클릭하거나 Shift와 WASD로 달릴 수 있습니다.
+You can use the right mouse button or the CTRL key to see additional interaction icons in the world. Use LT on a controller.	마우스 오른쪽 버튼이나 CTRL 키로 주변의 다른 상호작용 아이콘을 볼 수 있습니다. 컨트롤러는 LT.
+At this point in the game, you can venture outside your home gates and explore the city of Marns.\n\nYour immediate goals are to find a job and to see what you can uncover about your father's demise.	이제 집 대문 밖으로 나가 마른스 시를 둘러볼 수 있습니다.\n\n당장의 목표는 일자리를 찾고, 아버지의 죽음에 대해 무엇을 알아낼 수 있는지 살피는 것입니다.
+
+# --- 능력치·스킬
+=Skill Check	기술 판정
+Skill Points Remaining: 	남은 스킬 포인트:
+You still have skill points to allocate.	아직 나눌 스킬 포인트가 남아 있습니다.
+ in your skill pool.	 (스킬 포인트 저장소)
+(Your current skill pool: 	(현재 스킬 포인트:
+You are making a skill check - it's a level 	기술 판정 중입니다 - 레벨
+ check. This means that you need 	 판정입니다. 통과하려면
+ to pass it. If your skill is less than 	 이(가) 필요합니다. 기술이
+, then you can spend points from your skill pool to make up the balance. Your skill pool refills at the start of each chapter.	보다 낮으면 스킬 포인트를 써서 모자란 만큼 채울 수 있습니다. 스킬 포인트는 챕터마다 다시 찹니다.
+If you have insufficient skill to pass a skillcheck, you can spend points from your <b>Skill Pool</b> to make up the deficit. Your Skill Pool refills at the start of each chapter in the story.	기술 판정을 통과할 기술이 모자라면 <b>스킬 포인트</b>를 써서 채울 수 있습니다. 스킬 포인트는 이야기의 챕터마다 다시 찹니다.
+\n\nAt various times in the game, you will need a certain level in one of the above skills in order to achieve a task. If you have insufficient skill, you can spend points from your Skill Pool to make up the deficit. You have a limited amount of points in your Skill Pool, but it is replenished at the start of each chapter in the story.	\n\n게임 중 여러 순간에 일을 해내려면 위 기술 중 하나가 일정 레벨 이상이어야 합니다. 기술이 모자라면 스킬 포인트를 써서 채울 수 있습니다. 스킬 포인트는 한정돼 있지만 이야기의 챕터마다 다시 찹니다.
+Your character has 10 skills, grouped into four categories:	당신의 캐릭터는 네 갈래로 나뉜 10가지 기술을 가집니다:
+Rather than defining your character through this interactive fiction, you can quick-set your skills instead.\n\nDo you wish to quick-set?	이 인터랙티브 픽션으로 캐릭터를 정하는 대신 기술을 빠르게 설정할 수도 있습니다.\n\n빠르게 설정할까요?
+\n<link="GUI_SkillPool">SKILL POOL: 	\n<link="GUI_SkillPool">스킬 포인트:
+Skill Pool Spend: 	스킬 포인트 사용:
+which is too few to spend on this.	(여기에 쓰기엔 모자랍니다.)
+Agility decreased to 	민첩이 다음으로 내려갔다:
+Agility increased to 	민첩이 다음으로 올랐다:
+Constitution decreased to 	체질이 다음으로 내려갔다:
+Constitution increased to 	체질이 다음으로 올랐다:
+Strength decreased to 	힘이 다음으로 내려갔다:
+Strength increased to 	힘이 다음으로 올랐다:
+Mana decreased to 	마나가 다음으로 내려갔다:
+Mana increased to 	마나가 다음으로 올랐다:
++2 Agility and +2 Constitution.	민첩 +2, 체질 +2.
++2 Strength and +2 Impress.	힘 +2, 감화 +2.
++3 Impress and +1 Convince.	감화 +3, 설득 +1.
++3 Mana and +2 Acuity.	마나 +3, 통찰 +2.
++3 Mana, and secret knowledge of the undead.	마나 +3, 언데드에 관한 비밀 지식.
++4 Investigate.	조사 +4.
+Career: academic\n	경력: 학자\n
+Career: diplomat\n	경력: 외교관\n
+Career: military\n	경력: 군인\n
+Career: <color=	경력: <color=
+Gender: female\n	성별: 여성\n
+Gender: male\n	성별: 남성\n
+\nCharacter name: 	\n캐릭터 이름:
+=A diplomat	외교관
+=A soldier	군인
+=An academic	학자
+=a diplomat	외교관
+=a soldier	군인
+=a docker	부두 노동자
+=a tavernier	선술집 주인
+=a teacher	교사
+=an academic	학자
+=the diplomatic service	외교부
+=the military	군대
+<b>Energy</b> refers to the amount of stamina which a character has left. When energy hits zero, a character falls unconscious.	<b>기력</b>은 캐릭터에게 남은 체력입니다. 기력이 0이 되면 의식을 잃습니다.
+<b>Mana</b> reflects your attunement to the world's magical energy and to the Realm of the Dead.	<b>마나</b>는 세상의 마법 기운과 죽은 자들의 영역에 얼마나 맞닿아 있는지를 나타냅니다.
+<link="GUI_Energy">Energy: 	<link="GUI_Energy">기력:
+Energy: 	기력:
+<link="GUISkill_9">Mana: 	<link="GUISkill_9">마나:
+  Mana: 	  마나:
+   Magic Points: 	   마법 점수:
+ Magic Points.	 마법 점수.
+Mana Boost when worn or held: 	착용하거나 들면 마나 증가:
+=Mana Boost when worn or held	착용하거나 들면 마나 증가
+Money: 	돈:
+Action Points: 	행동 점수:
+\nAction Points (APs): 	\n행동 점수(AP):
+Armour: 	방어구:
+Weapon: 	무기:
+
+# --- 신뢰·긴장
+=TRUST and TENSION	신뢰와 긴장
+\n<link="GUI_CityTrust">Trust: 	\n<link="GUI_CityTrust">신뢰:
+Trust: 	신뢰:
+\n\nCurrent Tension in the City: 	\n\n지금 도시의 긴장:
+\nCurrent overall Trust in the City: <i>	\n지금 도시 전체의 신뢰: <i>
+\nTension: 	\n긴장:
+Your current Trust ratings are:\n	지금 신뢰 수준:\n
+\n    (This is not a list of all characters)	\n    (모든 인물의 목록은 아닙니다)
+=very trusting	매우 신뢰함
+=quite trusting	꽤 신뢰함
+=quite distrusting	꽤 불신함
+=very distrusting	매우 불신함
+'s trust decreased (-	의 신뢰가 떨어졌다 (-
+'s trust increased (+	의 신뢰가 올랐다 (+
+: trust decreased (-	: 신뢰 하락 (-
+: trust increased (+	: 신뢰 상승 (+
+: trust decreased 	: 신뢰 하락
+=trust decreased	신뢰 하락
+=trust increased	신뢰 상승
+ has decreased.	 이(가) 떨어졌다.
+ has increased.	 이(가) 올랐다.
+ caught me attempting to cut some of her hair: trust decreased 	 이(가) 내가 그녀의 머리카락을 자르려는 걸 봤다: 신뢰 하락
+ caught me attempting to cut some of his hair: trust decreased 	 이(가) 내가 그의 머리카락을 자르려는 걸 봤다: 신뢰 하락
+ escaped my attack: trust decreased 	 이(가) 내 공격을 피했다: 신뢰 하락
+New Chapter: Town Tension decreased to {0} ({1})	새 챕터: 도시 긴장이 {0}(으)로 내려갔다 ({1})
+\n\nWhen characters in the city distrust you, they may behave differently towards you. If your overall Trust rating drops too low, you will be brought to the town hall to face criminal charges. If it drops lower again, you will surely be lynched by the townsfolk.	\n\n도시 사람들이 당신을 불신하면 당신을 대하는 태도가 달라질 수 있습니다. 전체 신뢰가 너무 낮아지면 시청에 끌려가 형사 재판을 받습니다. 거기서 더 떨어지면 틀림없이 마을 사람들에게 사형(私刑)을 당합니다.
+While trading with a merchant, double-click/shift-click does not equip weapons as it normally would. This is to avoid accidental Trust depletion. To sell, drag your item to an empty slot in the merchant's window.	상인과 거래하는 동안에는 더블클릭/Shift+클릭으로 무기를 장비하지 않습니다. 실수로 신뢰를 잃지 않게 하려는 것입니다. 팔려면 물건을 상인 창의 빈칸으로 끌어다 놓으세요.
+
+# --- 범죄
+=Steal Item?	물건을 훔칠까요?
+Are you sure you want to steal this 	정말 이것을 훔칠까요:
+Do you want to attack or steal hair from 	공격할까요, 머리카락을 훔칠까요:
+Do you want to attack 	공격할까요:
+=Attack/Take Hair	공격/머리카락 가져오기
+=Take Hair	머리카락 가져오기
+=Attack	공격
+You must have a knife or (even better) a pair of scissors in order to steal hair from someone.	남의 머리카락을 훔치려면 칼이나 (더 좋게는) 가위가 있어야 한다.
+While commiting a crime or misdemeanour, you will see blue arcs in front of other characters. If you move inside an arc it will turn red, indicating that you have been witnessed.	범죄나 경범죄를 저지르는 동안 다른 인물 앞에 파란 부채꼴이 보입니다. 그 안에 들어가면 빨갛게 바뀌며, 목격됐다는 뜻입니다.
+If you're not out of the city when the timer bar has filled, you will be arrested.	시간 막대가 다 차기 전에 도시를 벗어나지 못하면 체포됩니다.
+\nIf you are witnessed attacking someone, you will probably be arrested!	\n누군가를 공격하다 목격되면 체포될 가능성이 큽니다!
+=Escape Marns!	마른스를 탈출하라!
+=Attacking an animal within the city is not allowed	도시 안에서 동물을 공격하면 안 된다
+=Carrying a weapon openly within the city is not allowed	도시 안에서 무기를 드러내고 다니면 안 된다
+=Trespassing in the Keep is not allowed	성채 무단 침입은 금지돼 있다
+=Wearing a mask is suspicious	가면을 쓰면 수상해 보인다
+=I was seen carrying a weapon	무기를 든 모습을 들켰다
+=I was seen wearing a mask	가면을 쓴 모습을 들켰다
+=I was witnessed attacking a defenseless animal	무방비한 동물을 공격하다 목격됐다
+=I was witnessed attacking someone	누군가를 공격하다 목격됐다
+=I was witnessed attempting burglary	도둑질하려다 목격됐다
+=I was witnessed committing murder	살인하다 목격됐다
+=I was witnessed cutting up a body	시체를 자르다 목격됐다
+=I was witnessed digging up a grave	무덤을 파헤치다 목격됐다
+=I was witnessed leading undead minions	언데드 하수인을 이끌다 목격됐다
+=I was witnessed moving a body	시체를 옮기다 목격됐다
+=I was witnessed performing a black magic ritual	흑마법 의식을 하다 목격됐다
+=I was witnessed stealing	훔치다 목격됐다
+=I was witnessed trespassing in the keep	성채에 무단 침입하다 목격됐다
+=Dead body witnessed	시체가 목격됐다
+=Undead minion witnessed	언데드 하수인이 목격됐다
+=Leading undead minions	언데드 하수인 이끌기
+=Moving a body	시체 옮기기
+=Cutting up a body	시체 자르기
+=Performing black magic	흑마법 행하기
+=Raising the dead	죽은 자 일으키기
+=Researching black magic	흑마법 연구
+=Exploring crypts	지하 묘지 탐험
+=Plotting revenge	복수 계획
+=Deciphering Pages	페이지 해독
+=attacking Rulsthen soldiers	룰스텐 군인 공격
+=attempted murder	살인 미수
+=killing a child	아이 살해
+ protected by ritual from being witnessed	 (의식으로 목격되지 않게 보호됨)
+To use the Dominion of Phobos ritual and protect your work from interlopers, use the Ritual hotspot at the entrance to the cemetery.	포보스의 지배 의식으로 침입자에게서 작업을 지키려면 묘지 입구의 의식 지점을 쓰세요.
+
+# --- 인벤토리·물건
+ added to inventory.	 을(를) 얻었다.
+ removed from inventory.	 을(를) 잃었다.
+=Small Key added to inventory.	작은 열쇠를 얻었다.
+=Items taken from body	시체에서 물건을 가져왔다
+ taken from body	 을(를) 시체에서 가져왔다
+Took 1 item from 	물건 1개를 가져왔다:
+=Took jar of Devil's Wood smoke	악마의 나무 연기 단지를 가져왔다
+=My bag was full.	가방이 가득 찼다.
+=My inventory was full!	소지품이 가득 찼다!
+=I did not have space in my bag.	가방에 자리가 없었다.
+=Equip Item	아이템 장비
+ (equipped weapon)	 (장비한 무기)
+ (worn on face)	 (얼굴에 씀)
+ (buy for 	 (살 값:
+ (sell for 	 (팔 값:
+ (too expensive)	 (너무 비쌈)
+ bought for 	 구입가:
+ sold for 	 판매가:
+\n(Click to drop)	\n(눌러서 내려놓기)
+\n(unavailable)	\n(쓸 수 없음)
+=It was locked.	잠겨 있었다.
+=Locked Drawer	잠긴 서랍
+=The key did not fit	열쇠가 맞지 않았다
+=The key fitted the lock	열쇠가 자물쇠에 맞았다
+You already have the key in your inventory. Drag it into the Key slot in the drawer.	열쇠는 이미 소지품에 있습니다. 서랍의 열쇠 칸으로 끌어다 놓으세요.
+=Dig Up Body	시체 파내기
+=Log Pile	통나무 더미
+Logs carried: 	가진 통나무:
+ in this pile.	 (이 더미에 남음)
+, exhausting the pile.	, 더미가 바닥났다.
+=There were no more usable logs here.	여기엔 더 쓸 만한 통나무가 없었다.
+=I could not carry any more logs. I needed to return to the cart.	통나무를 더 들 수 없었다. 수레로 돌아가야 했다.
+ to the cart.	 을(를) 수레에 실었다.
+Search for hidden caches of logs in the forest, and bring them back to the cart. Gerhardht wants 15 logs. Due to your strength, you can carry 	숲에서 숨겨진 통나무 더미를 찾아 수레로 가져오세요. 게르하르트는 통나무 15개를 원합니다. 당신의 힘으로는 한 번에
+=found something	무언가를 찾았다
+=I put away my spade	삽을 집어넣었다
+=I put away my weapon	무기를 집어넣었다
+=I dug some grave soil	무덤 흙을 조금 팠다
+=I was not holding a spade	삽을 들고 있지 않았다
+=I was not holding a spade.	삽을 들고 있지 않았다.
+=I was not holding a cleaver or knife.	식칼이나 칼을 들고 있지 않았다.
+I was not holding a 	들고 있지 않았다:
+=I carefully removed the brain.	조심스럽게 뇌를 꺼냈다.
+=I removed a chunk of flesh.	살점을 한 덩이 떼어냈다.
+=I bandaged myself with the cloth.	천으로 상처를 감쌌다.
+=I began to feel ill as soon as I stepped inside.	들어서자마자 속이 메스꺼워졌다.
+=I placed a bucket under the leak.	새는 곳 아래에 양동이를 놓았다.
+=I did not have Jokob's permission to use the forge.	용광로를 쓰려면 요코브의 허락이 필요했는데, 나는 받지 못했다.
+=I cut my arm and drained some of my own blood into the mix, then baked it into a flat, dark cake.	팔을 베어 내 피를 반죽에 조금 섞은 뒤, 납작하고 검은 케이크로 구웠다.
+=I had mixed a cake batter by Dorothea's recipe. It now just needed baking with yeast.	도로테아의 조리법대로 케이크 반죽을 섞었다. 이제 효모를 넣고 굽기만 하면 됐다.
+=Nothing much happened. This stove was not hot enough.	별일 없었다. 화덕이 충분히 뜨겁지 않았다.
+I did not have a vessel in my hand to fill with 	채울 그릇을 손에 들고 있지 않았다:
+The vessel in my hand already held 	손에 든 그릇에는 이미 들어 있었다:
+My armour was now: Leather 	이제 내 방어구: 가죽
+I could not speak with 	대화할 수 없었다:
+I could not stir with 	이걸로는 저을 수 없었다:
+=Gisela's blood	기젤라의 피
+=Karla's blood	카를라의 피
+=Lucus' blood	루쿠스의 피
+=Mark's blood	마르크의 피
+=Svit's blood	스비트의 피
+=Plague of the Crypt potion	지하 묘지의 역병 물약
+=Rejuvenate potion	회복 물약
+=Exilir of Defilation	더럽힘의 영약
+=Fire Root vapours	불뿌리 증기
+=an inscribed hazel wand	글귀가 새겨진 개암나무 지팡이
+=my athame	내 아타메
+=holy water	성수
+=some holy water	성수 조금
+=some sulfur	유황 조금
+=bottle of port	포트와인 한 병
+=torpor-spiked bottle of port	마비제를 탄 포트와인 한 병
+=cow's milk	소젖
+=goat's milk	염소젖
+=fried fish	생선 튀김
+=roast pork	돼지고기 구이
+=wood alcohol	메탄올
+=acrid fumes	매캐한 연기
+=evil-smelling fumes	역한 냄새의 연기
+=pungent fumes	코를 찌르는 연기
+=sweet-smelling fumes	달콤한 냄새의 연기
+=alcohol still	증류기
+=Alcohol Still	증류기
+=cooking pot	요리 냄비
+=Cooking Pot	요리 냄비
+
+# --- 일(선술집)
+=Serve Customer	손님 응대
+=Assist Customer	손님 돕기
+=Clean Spillage	엎지른 것 닦기
+=Prepare Room	방 준비
+Serve customers downstairs, mop up spills, and help customers upstairs. Alert icons will appear, showing you where to interact. To succeed, fill the Completed Tasks bar before the Discontent bar fills.	아래층 손님을 응대하고, 엎지른 것을 닦고, 위층 손님을 도우세요. 알림 아이콘이 할 곳을 보여 줍니다. 불만 막대가 차기 전에 완료 막대를 채우면 성공입니다.
+You can only work for pay once per chapter. You have already done so in the current chapter.	돈을 받는 일은 챕터마다 한 번만 할 수 있습니다. 이번 챕터에서는 이미 했습니다.
+You will be due pay after asking for, and completing, work at your job. You can only do this once per chapter.	일자리에서 일을 청해 끝내면 품삯을 받습니다. 챕터마다 한 번만 할 수 있습니다.
+
+# --- 전투
+=Combat Ended	전투 끝
+=End Turn	턴 끝내기
+=End Attack	공격 끝내기
+=Next Step	다음 단계
+Combat Round #	전투 라운드 #
+Combat Round 	전투 라운드
+All enemies are unconscious or running away. End this combat?	적이 모두 기절했거나 달아나고 있습니다. 전투를 끝낼까요?
+=Breach!	돌파!
+=Frenzy!	광란!
+\nFrenzy!	\n광란!
+=Fit to Burst!	터질 듯하다!
+. Critical Hit (	. 치명타 (
+. Missed!	. 빗나감!
+\nAlready moved this turn.	\n이번 턴에 이미 움직임.
+\nNot yet moved this turn.	\n이번 턴에 아직 안 움직임.
+\nCannot attack while you are reloading.	\n재장전 중에는 공격할 수 없다.
+\nCannot attack: your weapon needs reloading.	\n공격 불가: 무기를 재장전해야 한다.
+\nYou cannot attack: line of sight is blocked.	\n공격 불가: 시야가 막혔다.
+\nYou cannot attack: requires 	\n공격 불가: 필요
+\nYou cannot melee attack at this distance.	\n이 거리에서는 근접 공격을 할 수 없다.
+\nReload Needed! (	\n재장전 필요! (
+\nReloading (	\n재장전 중 (
+<color=red>Cannot cast magic while moving.</color>	<color=red>움직이는 중에는 마법을 쓸 수 없다.</color>
+<color=red>Cannot cast magic while reloading.</color>	<color=red>재장전 중에는 마법을 쓸 수 없다.</color>
+<color=red>Cannot move while reloading.</color>	<color=red>재장전 중에는 움직일 수 없다.</color>
+\nIt costs 1 AP (Action Point) per tile moved.	\n한 칸 움직일 때마다 1 AP(행동 점수)가 든다.
+You have insufficient APs to cast 	AP가 모자라 시전할 수 없다:
+You have insufficient Energy to cast 	기력이 모자라 시전할 수 없다:
+You have insufficient MPs to cast 	마법 점수가 모자라 시전할 수 없다:
+  You also have insufficient APs.	  AP도 모자란다.
+  You also have insufficient Energy.	  기력도 모자란다.
+  Energy cost: 	  기력 소모:
+  MP cost: 	  MP 소모:
+\n\n<color=#8888ff>Click to cast 	\n\n<color=#8888ff>눌러서 시전:
+Not enough Action Points left to equip a weapon this turn.	이번 턴에 무기를 장비할 행동 점수가 모자란다.
+During combat, you can only equip weapons when it's your own character's turn.	전투 중에는 내 캐릭터의 턴에만 무기를 장비할 수 있다.
+Weapons should be equipped in the other hand.	무기는 다른 손에 장비해야 한다.
+You must get close enough first.	먼저 충분히 가까이 가야 한다.
+You cannot carry/drag two bodies at once!	시체 두 구를 한꺼번에 들거나 끌 수 없다!
+Attack: melee (range 	공격: 근접 (사거리
+=Attack: melee	공격: 근접
+ (fast strike)	 (신속한 타격)
+ (slow strike)	 (느린 타격)
+ - Reload APs: 	 - 재장전 AP:
+\nBase Dmg: 	\n기본 피해량:
+ leather 100%	 가죽 100%
+ metal 100%	 금속 100%
+%, metal 	%, 금속
+%, Metal 	%, 금속
+, metal: 	, 금속:
+ due to clear line of sight	 (시야가 트임)
+ only works on mortal targets.	 은(는) 필멸자에게만 통한다.
+\nDrugs mortal targets	\n필멸자를 약에 취하게 함
+\nStunned x 	\n기절 x
+, stun x 	, 기절 x
+\nStuns: +	\n기절: +
+\nStuns: -	\n기절: -
+\nFacing: +	\n방향: +
+\nDistance: -	\n거리: -
+\nBody Size: +	\n몸집: +
+\nBody Size: -	\n몸집: -
+\nAttacker and Defender Agility: +	\n공격자와 방어자 민첩: +
+\nAttacker and Defender Agility: -	\n공격자와 방어자 민첩: -
+To-hit bonus applied: 	명중 보너스 적용:
+Total Combat Rating: 	총 전투 점수:
+Strength x Weapon	힘 x 무기
+\nCombatants: 	\n전투원:
+\nNumber of available minions: 	\n쓸 수 있는 하수인 수:
+\nUse the slider to choose how many minions to activate.	\n슬라이더로 움직일 하수인 수를 고르세요.
+=Select Target\nBody	대상 선택\n시체
+=Select Target\nEnemy	대상 선택\n적
+=Select Target\nMinion	대상 선택\n하수인
+\nClick on a body to target it. The further away it is, the less chance of success.	\n시체를 눌러 대상으로 고르세요. 멀수록 성공 확률이 낮습니다.
+\nClick on a mortal enemy to target it. The further away it is, the less chance of success.	\n필멸자 적을 눌러 대상으로 고르세요. 멀수록 성공 확률이 낮습니다.
+=Blood Lust Failed	피의 갈망 실패
+=Poison Blast Failed	독 폭발 실패
+ hit with Blood Lust (	 이(가) 피의 갈망에 맞았다 (
+ hit with Poison Blast (	 이(가) 독 폭발에 맞았다 (
+You cast <i>Death Focus</i> and gained 	<i>죽음의 집중</i>을 시전해 얻었다:
+Battle Magic spell acquired: <i>	전투 마법 주문을 얻었다: <i>
+ battle spell	 전투 주문
+=Activate Minion	하수인 움직이기
+=Mass Activate Minions	하수인 한꺼번에 움직이기
+=Blood Lust	피의 갈망
+=Poison Blast	독 폭발
+=Chilling Mist	서늘한 안개
+=Undead Rage	언데드의 분노
+=Death Focus	죽음의 집중
+=Dominion of Phobos	포보스의 지배
+=Summon Ha'anthu	하안투 소환
+=Summon Lilathe	릴라테 소환
+=Summon Wraith	망령 소환
+=Scare All	모두 겁주기
+Attempt to activate multiple minions that have not already moved this turn, and have them move and attack automatically.	이번 턴에 아직 움직이지 않은 하수인 여럿을 깨워 자동으로 움직이고 공격하게 합니다.
+Attempt to drain some of the life force of a mortal enemy, and take it for yourself.	필멸자 적의 생명력을 조금 빨아들여 자신의 것으로 만듭니다.
+Attempt to raise a dead body as a zombie.	시체를 좀비로 일으킵니다.
+Call upon the daemon Ha'anthu to join you in battle.	악마 하안투를 불러 함께 싸웁니다.
+Call upon the daemon Lilathe to join you in battle.	악마 릴라테를 불러 함께 싸웁니다.
+Call upon the wraith Clarence Pew to join you in battle.	망령 클래런스 퓨를 불러 함께 싸웁니다.
+Commune with the Realm of the Dead, and gain Magic Points.	죽은 자들의 영역과 교감해 마법 점수를 얻습니다.
+Envelop an area with a cold graveyard mist, which drains the resolve of all mortals within, reducing their Action Points.	차가운 묘지 안개로 한 지역을 덮어, 그 안의 모든 필멸자의 의지를 꺾고 행동 점수를 줄입니다.
+Strike an enemy with a blast of poisonous energy.	독 기운의 폭발로 적을 칩니다.
+Surround yourself with a mist of blood from the Realm of the Dead. Undead minions within it will be infused with battle rage.	죽은 자들의 영역에서 온 피의 안개로 자신을 감쌉니다. 그 안의 언데드 하수인은 전투의 분노로 가득 찹니다.
+If you have undead minions in your control, and some magical ability, then you can activate and move a minion by casting the Activate Minion spell.	언데드 하수인을 거느리고 마법 능력이 조금 있다면, 하수인 움직이기 주문으로 하수인을 깨워 움직일 수 있습니다.
+To the left of the screen are the portraits of your main character and your allies. Characters take turns in sequence.	화면 왼쪽은 주인공과 아군의 초상화입니다. 인물들은 차례대로 턴을 가집니다.
+\nTo the right of the screen are your enemies' portraits.	\n화면 오른쪽은 적의 초상화입니다.
+After firing a missile weapon you will need to reload it. Reloading costs Action Points. Muskets have an especially high reload cost.	투사 무기는 쏜 뒤 재장전해야 합니다. 재장전에는 행동 점수가 들며, 머스킷은 특히 많이 듭니다.
+ When a combat starts, all ranged weapons are considered to be loaded. After firing in combat, they must be reloaded. The time taken to reload depends on the type of weapon. The game does not track ammunition: a character never runs out of it.	 전투가 시작되면 모든 원거리 무기는 장전된 것으로 칩니다. 전투에서 쏜 뒤에는 재장전해야 하며, 걸리는 시간은 무기 종류에 따라 다릅니다. 탄약은 따로 세지 않아 떨어지는 일이 없습니다.
+\nWhile reloading, you cannot move, attack, or cast battle magic. You can cancel reloading at any time. Ending your turn while reloading will use your remaining APs on that.	\n재장전 중에는 움직이거나 공격하거나 전투 마법을 쓸 수 없습니다. 재장전은 언제든 취소할 수 있습니다. 재장전 중에 턴을 끝내면 남은 AP를 재장전에 씁니다.
+You can open your Inventory and double-click a weapon to equip it. For more detailed control, open both your Character Sheet and Inventory and drag items between the slots in them.	소지품을 열고 무기를 더블클릭하면 장비합니다. 더 세밀하게 하려면 캐릭터 정보와 소지품을 함께 열고 칸 사이로 끌어다 놓으세요.
+You can open your Inventory and double-tap A on a weapon to equip it. For more detailed control, open both your Character Sheet and Inventory and drag items between the slots in them.	소지품을 열고 무기에서 A를 두 번 누르면 장비합니다. 더 세밀하게 하려면 캐릭터 정보와 소지품을 함께 열고 칸 사이로 끌어다 놓으세요.
+\nHover over a weapon icon in your Character Sheet or Inventory to see its stats. This includes how many Action Points it takes to use, and its effectiveness against unarmoured, leather armoured, and metal armoured foes.	\n캐릭터 정보나 소지품에서 무기 아이콘에 마우스를 올리면 능력치가 보입니다. 쓰는 데 드는 행동 점수와, 방어구 없는 적·가죽 방어구·금속 방어구 적에 대한 효과가 나옵니다.
+\n\nEach weapon is classified by its relative effectiveness against unarmoured opponents or those wearing leather or metal armour. For example, edged weapons are good against leather but less good against metal, while blunt weapons are moderately good against each.	\n\n무기마다 방어구 없는 적, 가죽 방어구, 금속 방어구를 입은 적에 대한 효과가 다릅니다. 예를 들어 날붙이는 가죽에 강하지만 금속에는 약하고, 둔기는 둘 다에 적당히 통합니다.
+\n\nMelee weapons (such as swords and halberds) are those which are used to physically hit an opponent, while ranged weapons (such as crossbows and muskets) are used to injure from a distance.	\n\n근접 무기(검, 미늘창 등)는 상대를 직접 치는 무기이고, 원거리 무기(석궁, 머스킷 등)는 멀리서 다치게 하는 무기입니다.
+\n\nSome weapons have unusually fast or slow strike times; this affects how easily they can be dodged by a high-agility target (see below).	\n\n어떤 무기는 타격이 유난히 빠르거나 느립니다. 민첩이 높은 대상이 얼마나 쉽게 피하는지에 영향을 줍니다(아래 참고).
+\n\nMost mortal characters have a Courage stat, and many have an inherent fear of the undead. Each round of combat, mortal characters have their courage tested, to see if they stay fighting or break ranks and flee.	\n\n대부분의 필멸자에게는 용기 능력치가 있고, 많은 이가 언데드를 본능적으로 두려워합니다. 매 전투 라운드마다 필멸자는 용기 판정을 받아 계속 싸울지, 대열을 이탈해 달아날지 정합니다.
+\n\nThis courage test is based on the character's Courage stat, plus the presence of undead, whether the character is injured, and whether the battle is going in their favour or not. If all of your remaining enemies are running away, you can end a combat early - or you may choose to try to chase them down.	\n\n용기 판정은 그 인물의 용기 능력치에 더해 언데드가 있는지, 다쳤는지, 전세가 유리한지에 따라 정해집니다. 남은 적이 모두 달아나면 전투를 일찍 끝낼 수도, 쫓아가 볼 수도 있습니다.
+\n\nThe result of an auto-resolved combat may be:	\n\n자동 전투의 결과는 다음 중 하나입니다:
+\n- victory with no injuries - if your total combat rating is 150%+ of the enemy's.	\n- 부상 없는 승리 - 총 전투 점수가 적의 150% 이상일 때.
+\n- victory with minor injuries - if your total combat rating is 100%+ of the enemy's.	\n- 가벼운 부상을 입은 승리 - 총 전투 점수가 적의 100% 이상일 때.
+\n- defeat (game over) - if your total combat rating is below 75% of the enemy's.	\n- 패배(게임 오버) - 총 전투 점수가 적의 75% 미만일 때.
+=victory with minor injuries.	가벼운 부상을 입은 승리.
+=victory with no injuries.	부상 없는 승리.
+\n\nYou can hover over a portrait in the auto-combat screen to see how a character's combat rating was calculated.	\n\n자동 전투 화면에서 초상화에 마우스를 올리면 그 인물의 전투 점수가 어떻게 계산됐는지 볼 수 있습니다.
+\n- Constitution and Agility directly affect the score.	\n- 체질과 민첩이 점수에 바로 영향을 줍니다.
+\n- Strength has a multiplier effect on the weapon's combat rating, and is more useful with certain melee weapons.	\n- 힘은 무기의 전투 점수에 곱해지며, 일부 근접 무기에서 더 쓸모 있습니다.
+\n- The character's highest rated weapon is selected.	\n- 그 인물의 가장 점수가 높은 무기가 쓰입니다.
+\n- Worn armour is added to the score.	\n- 입은 방어구가 점수에 더해집니다.
+\n- The base 'to hit' chance of the weapon.	\n- 무기의 기본 명중 확률.
+\n- The body size of the defender (i.e. a tiny creature is harder to hit than a huge one).	\n- 방어자의 몸집(작은 생물은 큰 생물보다 맞히기 어렵습니다).
+\n- The direction of the attack (there's a large bonus for being directly behind your target, and a lesser bonus for being to their side).	\n- 공격 방향(대상 바로 뒤에서는 큰 보너스, 옆에서는 작은 보너스).
+\n- The distance between attacker and defender (ranged weapon only). This is moderated by the distance accuracy of the weapon: some weapons are excellent at short range but terrible at long range, while others retain their accuracy at distance better.	\n- 공격자와 방어자 사이 거리(원거리 무기만). 무기의 거리별 정확도에 따라 달라집니다. 가까이선 훌륭하지만 멀리선 형편없는 무기도 있고, 멀리서도 정확도를 잘 지키는 무기도 있습니다.
+\n- If the attacker or defender are currently stunned, then the to-hit chance is modified by a large amount.	\n- 공격자나 방어자가 기절해 있으면 명중 확률이 크게 바뀝니다.
+In the game, you will have combats with various mortal and supernatural enemies as you further your political and necromantic ambitions.\n\nYou will sometimes have human allies, but as the game progresses you will rely increasingly on undead creatures and demons that you have raised or summoned.	게임에서는 정치적·강령술적 야망을 키워 가며 여러 필멸자와 초자연적 적과 싸우게 됩니다.\n\n때로는 인간 동료도 있지만, 게임이 진행될수록 당신이 일으키거나 불러낸 언데드와 악마에게 점점 더 기대게 됩니다.
+=Game Description?	게임 설명?
+
+# --- 인물·장소 이름표(sharedassets1 인물 이름 대신)
+=Old Woman	노파
+=Young Woman	젊은 여자
+=The Fishwife	생선 장수 여인
+=The Witch	마녀
+=Witch as Hag	노파 모습의 마녀
+=Witch as Maiden	처녀 모습의 마녀
+=Witch as Mother	어머니 모습의 마녀
+=Royal Skeleton	왕실 해골
+=Boerhaaven's Creature	보어하벤의 피조물
+=Boerhaaven's Creature (dead)	보어하벤의 피조물 (죽음)
+ (dead)	 (죽음)
+=Fritz Carnell's Funeral	프리츠 카넬의 장례식
+=Some guards have a strange illness	경비병 몇이 이상한 병에 걸렸다
+=The barracks are infested with a plague	막사에 역병이 퍼졌다
+<color=#00FF00>Poisoned\n	<color=#00FF00>중독됨\n
+<color=#00FF00>Spreading the Plague\n	<color=#00FF00>역병 퍼뜨리는 중\n

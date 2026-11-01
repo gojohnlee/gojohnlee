@@ -12,3 +12,9 @@
 - 번역: LocalizationManager가 persistentDataPath/Languages/*.csv 첫 파일을 찾아 매번 "Localization file found … use this?" 창(AlertDialog)을 띄움. Yes여야 적용.
 - 글꼴: 대사·메뉴 TMP(PERTILI SDF 등). 책은 BookReadingManager.defaultFontAsset / Book.fontAssetOverride.
 - 해상도는 HKCU\Software\Psychic Software\TheNecromancer "Screenmanager *"에 저장(기본 1920x1080, Fullscreen mode 1).
+
+## UI 문자열
+- 한글 패치 1.0의 Assembly-CSharp.hdiff는 같은 크기 제자리 덮기(SHDiff)인데, 0으로 채운 옛 파일에 적용해도 한글이 조각나 복원 불가 → 새 게임 코드에서 화면 문자열을 골라 다시 번역.
+- dist/KoreanFont/ui-ko.tsv: `영어<TAB>한국어`, `=`로 시작하면 통째 일치만, 아니면 부분 바꾸기(긴 것부터). \n은 줄바꿈. 모드는 TMPro_EventManager.TEXT_CHANGED_EVENT에서 바꾼다.
+- 하수인 명령 메뉴는 SamsContextMenu.menuText(정적 배열)를 직접 바꾼다.
+- 이 게임 mscorlib엔 string.Replace(string,string)도 없음 → IndexOf(…, Ordinal)+Substring으로 직접.

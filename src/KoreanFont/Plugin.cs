@@ -97,10 +97,13 @@ namespace NecroKoreanFont
         TMP_FontAsset korean;
         readonly HashSet<int> done = new HashSet<int>();
         float nextScan;
+        bool menuDone;
 
         void Awake()
         {
             SceneManager.sceneLoaded += (s, m) => nextScan = 0f;
+            try { Ui.Load(); TMPro_EventManager.TEXT_CHANGED_EVENT.Add(Ui.OnTextChanged); }
+            catch (Exception e) { Log.Write("UI 표 실패: " + e); }
         }
 
         TMP_FontAsset MakeKorean()
@@ -159,7 +162,15 @@ namespace NecroKoreanFont
                 }
                 if (ko && texts++ < 6) Log.Write("보기: [" + t.font.name + "] " + (t.text.Length > 40 ? t.text.Substring(0, 40) : t.text));
             }
-            Log.Write("검사: 한글 글 " + texts + "개, 글자 " + chars + "개, 없는 글자 " + miss + "개");
+            Log.Write("검사: 한글 글 " + texts + "개, 글자 " + chars + "개, 없는 글자 " + miss + "개, UI 바꿈 누적 " + Ui.Replaced);
+            int en = 0;   // 아직 영어로 남은 글(번역 표에 넣을 후보)
+            foreach (var t in Resources.FindObjectsOfTypeAll<TMP_Text>())
+            {
+                if (t == null || !t.isActiveAndEnabled || string.IsNullOrEmpty(t.text) || en >= 12) continue;
+                bool han = false, lat = false;
+                foreach (var c in t.text) { if (c >= 0xAC00 && c <= 0xD7A3) han = true; else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) lat = true; }
+                if (lat && !han) { en++; Log.Write("영어 남음: " + (t.text.Length > 60 ? t.text.Substring(0, 60) : t.text)); }
+            }
         }
 
         // Process.MainWindowHandle도 이 게임 System.dll에서 잘려 있음 → 내 프로세스의 Unity 창을 user32로 찾는다
@@ -218,8 +229,97 @@ namespace NecroKoreanFont
             {
                 Log.Write("대체 폰트 붙임: " + added + "개");
                 foreach (var t in Resources.FindObjectsOfTypeAll<TMP_Text>())
-                    if (t != null && t.isActiveAndEnabled) t.SetAllDirty();
+                    if (t != null && t.isActiveAndEnabled) { Ui.OnTextChanged(t); t.SetAllDirty(); }
             }
+            if (!menuDone) { menuDone = true; try { Ui.PatchMenu(); } catch (Exception e) { Log.Write("메뉴 실패: " + e.Message); } }
+        }
+    }
+}
+
+namespace NecroKoreanFont
+{
+    // 게임 업데이트로 한글 패치의 Assembly-CSharp(코드 속 UI 문자열)가 빠짐 → ui-ko.tsv 표로 화면 글자를 바꾼다.
+    // TMP가 글을 새로 그릴 때마다(TEXT_CHANGED_EVENT) 검사. 이 게임 mscorlib엔 string.Replace(string,string)이 없어 직접 바꾼다.
+    static class Ui
+    {
+        static readonly Dictionary<string, string> exact = new Dictionary<string, string>();
+        static readonly List<string> fromList = new List<string>(), toList = new List<string>();   // 부분 바꾸기, 긴 것부터
+        static bool busy;
+        public static int Replaced;
+
+        public static void Load()
+        {
+            var dir = Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH") ?? "");
+            var path = Path.Combine(string.IsNullOrEmpty(dir) ? "." : dir, "ui-ko.tsv");
+            if (!File.Exists(path)) { Log.Write("ui-ko.tsv 없음"); return; }
+            var pairs = new List<KeyValuePair<string, string>>();
+            foreach (var raw in File.ReadAllText(path).Split('\n'))
+            {
+                var line = raw.Length > 0 && raw[raw.Length - 1] == '\r' ? raw.Substring(0, raw.Length - 1) : raw;
+                if (line.Length == 0 || line[0] == '#') continue;
+                int tab = line.IndexOf('\t');
+                if (tab <= 0) continue;
+                var en = Unesc(line.Substring(0, tab)); var ko = Unesc(line.Substring(tab + 1));
+                if (en[0] == '=') exact[en.Substring(1)] = ko;
+                else pairs.Add(new KeyValuePair<string, string>(en, ko));
+            }
+            pairs.Sort((x, y) => y.Key.Length - x.Key.Length);
+            foreach (var p in pairs) { fromList.Add(p.Key); toList.Add(p.Value); }
+            Log.Write("UI 표: 통째 " + exact.Count + "개, 부분 " + fromList.Count + "개");
+        }
+
+        static string Unesc(string s)
+        {
+            const string esc = "\\n";   // 표 파일의 글자 그대로 백슬래시+n
+            if (!s.Contains(esc)) return s;
+            var r = ""; int i = 0, j;
+            while ((j = s.IndexOf(esc, i, StringComparison.Ordinal)) >= 0) { r = string.Concat(r, s.Substring(i, j - i), "\n"); i = j + 2; }
+            return r + s.Substring(i);
+        }
+
+        // 바꿀 게 있으면 바뀐 글, 없으면 null
+        public static string Translate(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return null;
+            if (exact.TryGetValue(s, out var e)) return e;
+            bool letters = false;
+            for (int i = 0; i < s.Length && !letters; i++) { char c = s[i]; letters = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); }
+            if (!letters) return null;
+            string cur = s; bool changed = false;
+            for (int k = 0; k < fromList.Count; k++)
+            {
+                var f = fromList[k];
+                if (f.Length > cur.Length || !cur.Contains(f)) continue;
+                // 바꾼 뒤 글에서 다시 찾지 않게 왼쪽부터 쌓는다
+                string done = "", rest = cur; int j;
+                while ((j = rest.IndexOf(f, StringComparison.Ordinal)) >= 0) { done = string.Concat(done, rest.Substring(0, j), toList[k]); rest = rest.Substring(j + f.Length); }
+                cur = done + rest; changed = true;
+            }
+            return changed ? cur : null;
+        }
+
+        public static void OnTextChanged(UnityEngine.Object o)
+        {
+            if (busy) return;
+            var t = o as TMP_Text;
+            if (t == null) return;
+            try
+            {
+                var n = Translate(t.text);
+                if (n != null && n != t.text) { busy = true; t.text = n; Replaced++; }
+            }
+            catch (Exception e) { Log.Write("UI 바꾸기 실패: " + e.Message); }
+            finally { busy = false; }
+        }
+
+        // 하수인 명령 메뉴는 정적 배열이라 직접 바꾼다
+        public static void PatchMenu()
+        {
+            var m = SamsContextMenu.menuText;
+            if (m == null) return;
+            int n = 0;
+            for (int i = 0; i < m.Length; i++) if (m[i] != null && exact.TryGetValue(m[i], out var ko)) { m[i] = ko; n++; }
+            if (n > 0) Log.Write("명령 메뉴 " + n + "개 바꿈");
         }
     }
 }

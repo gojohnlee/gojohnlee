@@ -23,6 +23,7 @@ copy /y "%HERE%dist\winhttp.dll" "%GAME%\" >nul || goto :fail
 copy /y "%HERE%dist\doorstop_config.ini" "%GAME%\" >nul || goto :fail
 if not exist "%GAME%\KoreanFont" mkdir "%GAME%\KoreanFont"
 copy /y "%HERE%dist\KoreanFont\NecroKoreanFont.dll" "%GAME%\KoreanFont\" >nul || goto :fail
+copy /y "%HERE%dist\KoreanFont\ui-ko.tsv" "%GAME%\KoreanFont\" >nul || goto :fail
 echo 설치 끝. 게임을 켜고 "Localization file found ... Korean.csv" 창에서 Yes를 누르세요.
 goto :end
 :fail

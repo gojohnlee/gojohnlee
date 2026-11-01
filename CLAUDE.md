@@ -14,7 +14,7 @@
   없는 API를 부르면 그 메서드 JIT가 통째로 실패한다 → 새 API는 ilspycmd로 게임 DLL에 있는지 먼저 확인, 위험한 코드는 별도 메서드+try.
 - 로더: BepInEx 5는 이 게임에서 못 씀(Module.GetPEKind 없음). Doorstop(winhttp.dll, BepInEx 5.4.23.6 동봉본)이 `KoreanFont\NecroKoreanFont.dll`의
   `Doorstop.Entrypoint.Start()`를 직접 부른다. 대상 프레임워크 net472(netstandard면 게임이 꺼짐).
-- 코드: src/KoreanFont/Plugin.cs 하나. 빌드 `dotnet build src/KoreanFont -c Release` → bin/Release/net472/NecroKoreanFont.dll을 dist/KoreanFont와 게임 폴더에 복사.
+- 코드: src/KoreanFont/Plugin.cs 하나(폰트·UI 표·시험 동작). UI 번역 표는 dist/KoreanFont/ui-ko.tsv. 빌드 `dotnet build src/KoreanFont -c Release` → bin/Release/net472/NecroKoreanFont.dll을 dist/KoreanFont와 게임 폴더에 복사.
 - 게임 DLL 디컴파일은 C:\vh\necro-kr\decomp\acs(로컬, 올리지 않음). 확인한 사실은 decisions.txt "확인된 게임 사실"에.
 - 시험: `powershell -File scripts/run-min.ps1 -Wait 100` — Steam 창 없이 숨겨 켜고 최소화·음소거(끝나면 해제), 언어 창 자동 OK,
   30초마다 화면의 한글 글자가 폰트에 다 있는지 검사해 KoreanFont.log에 적는다. 시험 전용 동작은 환경변수 NECRO_MIN=1일 때만.
