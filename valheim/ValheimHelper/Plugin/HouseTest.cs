@@ -77,6 +77,19 @@ namespace ValheimHelper
             return n;
         }
 
+        /// <summary>둘레 나무·덤불·채집물 치우기(건축물·생물은 남김), 치운 수.</summary>
+        static int ClearPlants(Vector3 at, float radius)
+        {
+            var cleared = new HashSet<ZNetView>();
+            foreach (var col in Physics.OverlapSphere(at, radius))
+            {
+                ZNetView nv = col.GetComponentInParent<ZNetView>();
+                if (nv == null || !nv.IsValid() || nv.GetComponent<Piece>() != null || nv.GetComponent<Character>() != null) continue;
+                if ((nv.GetComponent<TreeBase>() != null || nv.GetComponent<Destructible>() != null || nv.GetComponent<Pickable>() != null) && cleared.Add(nv)) ZNetScene.instance.Destroy(nv.gameObject);
+            }
+            return cleared.Count;
+        }
+
         static Bounds Box(GameObject g)
         {
             var cs = g.GetComponentsInChildren<Collider>();
@@ -126,14 +139,8 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             ZNetScene.instance.Destroy(w.Chest.gameObject);
             // 집 둘레 나무·덤불은 치우고 짓는다(회차 312: 옆벽 곁 작은 너도밤나무와 벽 사이에 일꾼이 끼어 문까지 못 감)
-            var cleared = new HashSet<ZNetView>();
-            foreach (var col in Physics.OverlapSphere(c, Half * 1.42f + 2.5f))
-            {
-                ZNetView nv = col.GetComponentInParent<ZNetView>();
-                if (nv == null || !nv.IsValid() || nv.GetComponent<Piece>() != null || nv.GetComponent<Character>() != null) continue;
-                if ((nv.GetComponent<TreeBase>() != null || nv.GetComponent<Destructible>() != null || nv.GetComponent<Pickable>() != null) && cleared.Add(nv)) ZNetScene.instance.Destroy(nv.gameObject);
-            }
-            Plugin.Log.LogInfo($"집 시험: 집 둘레 나무·덤불 {cleared.Count}개 치움");
+            int cleared = ClearPlants(c, Half * 1.42f + 2.5f);
+            Plugin.Log.LogInfo($"집 시험: 집 둘레 나무·덤불 {cleared}개 치움");
             float top = float.MinValue;
             int walls = 0;
             GameObject door = null;
@@ -426,6 +433,8 @@ namespace ValheimHelper
 
             // 4-3) 좁은 복도(④-2): 앞문 앞에 폭 2m·길이 4m 벽 복도. 일꾼을 복도 입구 옆에 두면 복도로 들어가 앞문을 열고 미드를 챙긴 뒤 복도로 나와 문을 닫는지
             yield return new WaitForSeconds(1f);
+            int hallCleared = ClearPlants(c - r * (Half + 4f), 3.5f); // 복도 입구 둘레도(E070: 집 둘레 치우기 밖 자작나무에 복도 입구에서 막혀 19초 섬)
+            if (hallCleared > 0) Plugin.Log.LogInfo($"집 시험: 복도 입구 둘레 나무·덤불 {hallCleared}개 치움");
             int hall = 0;
             foreach (float s in new[] { -1f, 1f })
                 for (int k = 0; k < 2; k++)
