@@ -115,7 +115,7 @@ namespace ValheimHelper
         {
             if (m_chest == null) return "상자 안 고름";
             var at = m_chest.transform.position;
-            return $"상자까지 {Utils.DistanceXZ(at, m_npc.transform.position):0.0}m(최소 {m_best:0.0}) 높이 차 {at.y - m_npc.transform.position.y:0.0} 제자리 {m_still:0.0}초 문막힘 {DoorWay.Blocked(m_npc, m_chest)} 문길 {(m_wayFor == m_chest && m_way.Busy)} 목표 {m_hop.Goal(m_chest)}";
+            return $"상자까지 {Utils.DistanceXZ(at, m_npc.transform.position):0.0}m(최소 {m_best:0.0}) 높이 차 {at.y - m_npc.transform.position.y:0.0} 제자리 {m_still:0.0}초 문막힘 {DoorWay.Blocked(m_npc, m_chest)} 문길 {(m_wayFor == m_chest && m_way.Busy)} 목표 {m_hop.Goal(m_chest)} / {m_hop.State(m_npc, m_chest)}";
         }
 
         static int Stacks(Inventory inv)
@@ -180,9 +180,9 @@ namespace ValheimHelper
             if (m_for != chest) { m_for = chest; m_best = m_farMark = float.MaxValue; m_far = 0f; m_side = null; m_sides = 0; }
             if (m_side.HasValue && Utils.DistanceXZ(m_side.Value, pos) < 0.4f) m_side = null; // 옆 접근점에 닿음 → 거기서 곧장
             // 옆으로 돌거나 통나무를 밀며 느리게 가면 "거의 제자리" 시간이 0부터라, 1m 넘게 안 가까워진 시간도 따로 센다(E060) — 5초면 상자 앞으로.
-            // 옆으로 돌아 본 뒤나 느리게(1.5m/s 밑) 움직일 때만 셈: 계단을 오를 때처럼 제 속도로 걷는데 수평 거리만 안 줄 때·높이 차 1.5m 넘을 때(다른 층)는 아님
+            // 옆으로 돌아 본 뒤나 느리게(1.5m/s 밑) 움직일 때만 셈: 계단을 오를 때처럼 제 속도로 걷는데 수평 거리만 안 줄 때·상자가 1.5m 넘게 위(다른 층)일 때는 아님. 일꾼이 위면 셈(통나무 더미에 올라탐, E067)
             bool slow = dt > 0f && Utils.DistanceXZ(pos, m_last) < SlowSpeed * dt; m_last = pos;
-            if (d < m_farMark - FarStep) { m_farMark = d; m_far = 0f; } else if ((m_sides > 0 || slow) && Mathf.Abs(chest.transform.position.y - pos.y) < 1.5f) m_far += dt;
+            if (d < m_farMark - FarStep) { m_farMark = d; m_far = 0f; } else if ((m_sides > 0 || slow) && chest.transform.position.y - pos.y < 1.5f) m_far += dt;
             if (m_far >= (float)Core.Work.StuckHop.NearStuckSeconds && !DoorWay.Blocked(npc, chest)) return Hop(npc, chest, d, what, $"{m_far:0.0}초 안 가까워짐");
             if (d < m_best - 0.3f || Utils.DistanceXZ(m_from, pos) >= 1.5f) { m_best = Mathf.Min(m_best, d); m_from = pos; m_time = 0f; return false; }
             m_time += dt;
@@ -212,6 +212,9 @@ namespace ValheimHelper
             }
             return Hop(npc, chest, d, what, $"{m_time:0.0}초 거의 제자리");
         }
+
+        /// <summary>시험용(E067): 상자 앞 옮기기 셈 상태.</summary>
+        internal string State(WorkerNpc npc, Container chest) => $"안 가까워짐 {m_far:0.0}초(기준 {m_farMark:0.0}m) 제자리 {m_time:0.0}초 옆 {m_sides}{(m_side.HasValue ? $"(남은 {Utils.DistanceXZ(m_side.Value, npc.transform.position):0.0}m)" : "")} 높이 차 {chest.transform.position.y - npc.transform.position.y:0.0}";
 
         bool Hop(WorkerNpc npc, Container chest, float d, string what, string why)
         {

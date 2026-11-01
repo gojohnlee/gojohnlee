@@ -48,6 +48,14 @@ namespace ValheimHelper
         internal static bool TestNoReach;
         internal static int Reached;
 
+        /// <summary>시험용(E066 꺼내기): 손 거리 꺼내기를 건너뛴 까닭.</summary>
+        internal string Why()
+        {
+            if (m_chest == null) return "상자 안 고름";
+            var at = m_chest.transform.position;
+            return $"상자까지 {Utils.DistanceXZ(at, m_npc.transform.position):0.0}m(최소 {m_best:0.0}) 높이 차 {at.y - m_npc.transform.position.y:0.0} 제자리 {m_still:0.0}초 문막힘 {DoorWay.Blocked(m_npc, m_chest)} 문길 {Steering(m_chest)} 목표 {m_hop.Goal(m_chest)} / {m_hop.State(m_npc, m_chest)}";
+        }
+
         bool CanReach(Vector3 at, float d, float dt)
         {
             if (m_bestFor != m_chest) { m_bestFor = m_chest; m_best = float.MaxValue; m_still = 0f; }

@@ -79,10 +79,10 @@ namespace ValheimHelper
             Unload.TestNoReach = false;
             int reached0 = Unload.Reached;
             var after = new Unload(w.Ragnar);
-            float took = 0f;
+            float took = 0f, d0 = Dist();
             string at2 = null; // E066: 끝난 뒤엔 m_chest가 비어 "상자 안 고름"만 보임 → 2초 때 상태를 잡음
             while (took < 10f && after.Update(Time.deltaTime)) { took += Time.deltaTime; if (at2 == null && took > 2f) at2 = $"{after.Why()} 거리 {Dist():0.0}m 속도 {w.Ragnar.GetVelocity().magnitude:0.0}"; yield return null; }
-            if (took > 2f) TestRunner.Log($"  E055 손 거리 넣기 건너뛴 까닭(2초 때): {at2}");
+            if (took > 2f) TestRunner.Log($"  E055 손 거리 넣기 건너뛴 까닭(시작 {d0:0.0}m, 2초 때): {at2}");
             checks.Add($"고친 뒤: 그 자리에서 넣음 ({took:0.0}초 ≤ 2, 손 거리 넣기 {Unload.Reached - reached0}, 상자까지 {Dist():0.0}m)",
                 took <= 2f && Unload.Reached - reached0 >= 1);
             checks.Add($"나무 10 모두 상자로 (들고 {BaseTest.Carried(w.Ragnar, "Wood")}, 상자 {GatherTest.CountBase(w.Home, "Wood")})",
@@ -106,8 +106,10 @@ namespace ValheimHelper
             Prep.TestNoReach = false;
             int pReached0 = Prep.Reached;
             var pAfter = new Prep(w.Ragnar);
-            float pTook = 0f;
-            while (pTook < 10f && Meads() == 0 && pAfter.Update(Time.deltaTime)) { pTook += Time.deltaTime; yield return null; }
+            float pTook = 0f, pd0 = Dist();
+            string pAt2 = null; // E066 꺼내기: 2초 때 상태
+            while (pTook < 10f && Meads() == 0 && pAfter.Update(Time.deltaTime)) { pTook += Time.deltaTime; if (pAt2 == null && pTook > 2f) pAt2 = $"{pAfter.Why()} 거리 {Dist():0.0}m 속도 {w.Ragnar.GetVelocity().magnitude:0.0}"; yield return null; }
+            if (pTook > 2f) TestRunner.Log($"  E066 손 거리 꺼내기 건너뛴 까닭(시작 {pd0:0.0}m, 2초 때): {pAt2}");
             checks.Add($"꺼내기 고친 뒤: 그 자리에서 미드 챙김 ({pTook:0.0}초 ≤ 2, 들고 {Meads()}, 손 거리 꺼내기 {Prep.Reached - pReached0})",
                 pTook <= 2f && Meads() > 0 && Prep.Reached - pReached0 >= 1);
 
@@ -176,7 +178,9 @@ namespace ValheimHelper
                 int b0 = ChestHop.Bumps;
                 var u = new Unload(w.Ragnar);
                 float t2 = 0f;
-                while (t2 < 15f && u.Update(Time.deltaTime)) { t2 += Time.deltaTime; yield return null; }
+                string at8 = null; // E067: 8초 때 ChestHop 상태(5초 상자 앞 옮기기가 왜 안 걸렸나)
+                while (t2 < 15f && u.Update(Time.deltaTime)) { t2 += Time.deltaTime; if (at8 == null && t2 > 8f) at8 = $"{u.Why()} 거리 {Dist():0.0}m 속도 {w.Ragnar.GetVelocity().magnitude:0.0}"; yield return null; }
+                if (at8 != null) TestRunner.Log($"  E067 {i}번째 8초 때: {at8}");
                 took2[i] = t2; bumps2[i] = ChestHop.Bumps - b0;
                 if (log != null) ZNetScene.instance.Destroy(log);
                 TestKit.ClearBaseStock(w, "Wood");
