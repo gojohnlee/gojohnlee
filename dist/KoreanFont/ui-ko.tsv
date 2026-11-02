@@ -1058,3 +1058,87 @@ You cannot save as you have a courtcase scheduled to happen the next time you mo
 You must be inside a building, tunnel, cave or crypt to advance time.	시간을 보내려면 건물, 굴, 동굴, 지하 묘지 안에 있어야 합니다.
 You must be inside your house, within the city limits, or in a tunnel, cave or crypt to advance time.	시간을 보내려면 성벽 안의 우리 집, 또는 굴, 동굴, 지하 묘지 안에 있어야 합니다.
 Do you wish to advance time?	시간을 보낼까요?
+
+# --- 생물 이름(뒤에 " (죽음)"·색 태그가 붙어 부분 바꾸기). 이름표·전투 창
+Forest Guardian (Claws)	숲의 수호자(발톱)
+Forest Guardian	숲의 수호자
+Skeleton	해골
+Gūl (Claws)	구울(발톱)
+Bear (Claws)	곰(발톱)
+=Bear	곰
+=Lizard	도마뱀
+=Cow	소
+=Goat	염소
+=Pig	돼지
+=Gūl	구울
+
+# --- 장소·물건 이름(2026-11-02 둘째 묶음)
+=(Hat/Helmet/Mask)	(모자/투구/가면)
+=Adventurers	모험가들
+=Animate	되살리기
+=Apothecary Shop	약재상
+=Barbara's House	바르바라의 집
+=Basin	대야
+=Bones	뼈
+=Books on Desk	책상 위 책
+=Box	상자
+=Bushes	덤불
+=Cave	동굴
+=Chapter 4	4장
+=Chapter 5	5장
+=Condolence Cards	조의 카드
+=Crate	나무 상자
+=Dead Man's\nGate	망자의\n문
+=Devil's Wood processed into Devil's Wood Smoke by forge	대장간 화덕에서 악마의 나무가 악마의 나무 연기가 되었다
+=Diedrik's Home	디드리크의 집
+=Don't show this message again (for this spell).	이 메시지를 다시 보지 않기(이 주문).
+=Drunken Couple	술 취한 부부
+=Dungeon	지하 감옥
+=Farmhouse	농가
+=Flour	밀가루
+=General Store	잡화점
+=Grave	무덤
+=Harbourmaster's Office	항구장 사무실
+=Hole	구멍
+=Human Flesh processed into Black Candle by stove	화덕에서 사람 살이 검은 양초가 되었다
+=I decanted the salve  into a jar.	연고를 단지에 옮겨 담았다.
+=I decanted the salve into a jar.	연고를 단지에 옮겨 담았다.
+=Jar	단지
+=Marns Cemetery	마른스 묘지
+=Mausoleum	영묘
+=Men	남자들
+=Merchants	상인들
+=Miller Farm (East Fields)	밀러 농장(동쪽 밭)
+=Miller Farm (West Fields)	밀러 농장(서쪽 밭)
+=Miller Farm\nEast Fields	밀러 농장\n동쪽 밭
+=Mortar and Pestle	절구와 공이
+=Necklace	목걸이
+=North Eastern\nForest	북동쪽\n숲
+=North Gate Tavern	북문 선술집
+=North Gate Tavern (Varenth's)	북문 선술집(바렌트네)
+=North Road	북쪽 큰길
+=North Wall	북쪽 성벽
+=North-Eastern Forest	북동쪽 숲
+=Northern Forest	북쪽 숲
+=Nux Vomica Seeds	마전자 씨앗
+=Old Chapel	옛 예배당
+=Ornamental Box	장식 상자
+=Patrons	손님들
+=Ruffians	불량배들
+=Scattered Books	흩어진 책
+=Sea-Cliffs	바닷가 절벽
+=Sea\nCliffs	바닷가\n절벽
+=Skulls on Spikes	창에 꽂힌 해골
+=Steps leading down	아래로 내려가는 계단
+=Stop Reload	장전 멈추기
+=Straw	짚
+=Séance Ritual	강령회 의식
+=The forge emitted pungent fumes	대장간 화덕에서 매운 연기가 났다
+=Van Elstrik Crypt	반 엘스트릭가 지하 묘지
+=Zelig's Tunnel	젤리그의 땅굴
+=Zelig's Urn	젤리그의 유골함
+=Auto Move<size=85%> (Tab /    )	자동 이동<size=85%> (Tab /    )
+=End Turn <size=85%>(Space /    )\n	차례 끝내기 <size=85%>(Space /    )\n
+<i>An option was unavailable due to a failed Trust test.	<i>신뢰 시험에 실패해 고를 수 없는 선택지가 있었습니다.
+Armor:	갑옷: 
+% leather	% 가죽
