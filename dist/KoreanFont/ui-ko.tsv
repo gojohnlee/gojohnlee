@@ -908,3 +908,78 @@ You can make your own entries in the journal by hovering over the last entry and
 =Yes	예
 =low	낮음
 =vsync	수직 동기화
+
+# --- 물건 조합·행동 문구(게임 코드·데이터, 2026-11-02)
+=I squeezed the nightshade gease through the linen bag, producing a more potent salve.	벨라돈나 기름을 아마포 자루에 넣고 짜서 더 강한 연고를 만들었다.
+=I squeezed the nightshade grease through the linen bag, producing a more potent salve.	벨라돈나 기름을 아마포 자루에 넣고 짜서 더 강한 연고를 만들었다.
+=I stirred the Cooking Pot with the Ladle	국자로 냄비를 저었다
+=Nightshade processed into Nightshade Grease by stove	화덕에서 벨라돈나가 벨라돈나 기름이 되었다
+=The stove emitted evil-smelling fumes	화덕에서 고약한 냄새가 나는 연기가 났다
+=I carefully removed the brain.	조심스럽게 뇌를 꺼냈다.
+=I could not carry any more logs. I needed to return to the cart.	통나무를 더는 들 수 없었다. 수레로 돌아가야 했다.
+=I cut my arm and drained some of my own blood into the mix, then baked it into a flat, dark cake.	팔을 그어 내 피를 섞은 반죽에 흘려 넣고, 납작하고 검은 떡으로 구웠다.
+=I did not have anything in my hand to set alight.	손에 불붙일 것이 없었다.
+=I did not have Jokob's permission to use the forge.	야코프에게 대장간 화덕을 써도 된다는 허락을 받지 않았다.
+=I placed a bucket under the leak.	새는 곳 아래에 양동이를 놓았다.
+=I removed a chunk of flesh.	살점을 한 덩이 떼어 냈다.
+=I was not holding a spade	손에 삽이 없었다
+=Cleaver	고기 칼
+=Dog	개
+=Fire wood	장작
+=Harbormaster	항구장
+=Combined Objects	합친 물건
+=Someone triggered a Grave Myst trap	누군가 무덤 안개 덫을 밟았다
+
+# --- 마력의 바람·전투·안내(게임 코드)
+=The Winds of Magic are still	마력의 바람이 잠잠하다
+=The Winds of Magic blow calmly	마력의 바람이 잔잔히 분다
+=The Winds of Magic blow strongly	마력의 바람이 거세게 분다
+=The Winds of Magic howl	마력의 바람이 울부짖는다
+=The Winds of Magic are a raging gale	마력의 바람이 미친 듯한 폭풍이다
+=There are no available minions who have not already moved this turn.	이번 차례에 아직 움직이지 않은 하수인이 없다.
+=Don't forget to bring your spellbook with you! - you do not currently have it in your possession.	주문서를 꼭 챙기세요! 지금은 가지고 있지 않습니다.
+=During combat, your camera can move freely (using the arrow keys, or right joystick on a controller).	전투 중에는 카메라를 자유롭게 움직일 수 있습니다(방향키, 또는 컨트롤러의 오른쪽 스틱).
+=During combat, your camera can move freely (using the right joystick).	전투 중에는 카메라를 자유롭게 움직일 수 있습니다(오른쪽 스틱).
+=Melee weapons (swords, halberds) have a range of 1 or 2 hexes, while missile weapons (crossbows, muskets) can fire a lot further - however they can be slow to reload.	근접 무기(검, 미늘창)는 사거리가 1~2칸이고, 원거리 무기(석궁, 머스킷)는 훨씬 멀리 쏠 수 있지만 다시 장전하는 데 오래 걸릴 수 있습니다.
+=If the player's Mana is too low to effectively control all of their minions, then the combat rating of the minions is scaled down.	마나가 너무 낮아 하수인을 모두 제대로 부릴 수 없으면 하수인의 전투력이 낮아집니다.
+=The Combat Speedup slider controls the speed of action.	전투 빠르게 막대로 행동 속도를 바꿀 수 있습니다.
+=The following factors determine how likely an attack is to strike its target:	공격이 명중할 확률은 다음에 따라 정해집니다:
+=Once per chapter, you should ask Garnet what work she needs doing. Afterwards, ask her for pay.	장마다 한 번씩 가넷에게 할 일이 있는지 물어보세요. 일을 마치면 삯을 달라고 하세요.
+=Once per chapter, you should ask Lucus what work he needs doing. Afterwards, ask him for pay.	장마다 한 번씩 루커스에게 할 일이 있는지 물어보세요. 일을 마치면 삯을 달라고 하세요.
+=Ramon sits upstairs on the balcony. Go and talk to him, and buy him 3 drinks. Then you can take him home.	라몬은 위층 발코니에 앉아 있습니다. 가서 말을 걸고 술을 세 잔 사 주면 집에 데려갈 수 있습니다.
+=Use mouse wheel to zoom, click and hold to rotate	마우스 휠로 확대·축소, 누른 채 끌면 회전
+=Closed during the storm."	폭풍 동안 닫음."
+=Game Saved and synced to Steam Cloud: 	저장하고 스팀 클라우드에 올림: 
+=Game Saved locally but could not sync to Steam Cloud: 	이 컴퓨터에 저장했지만 스팀 클라우드에는 못 올림: 
+=THIS SAVE FILE IS FROM AN OLDER VERSION: 	예전 버전의 저장 파일입니다: 
+=Warning: this save file used a different version of the Articy export file.	주의: 이 저장 파일은 다른 버전의 대사 데이터로 만들어졌습니다.
+
+# --- 시작 화면 이야기 소개(게임 코드)
+=Having just received news of your father's death, you now hurry home.	아버지의 부고를 받고, 서둘러 집으로 향합니다.
+=With the ancient spellbook in your possession, great power beckons.	오래된 주문서를 손에 넣자, 거대한 힘이 손짓합니다.
+=Escaping from the hospital, you're now ready to track down your lost spellbook and try out the newly deciphered Dominion of Phobos ritual.	병원에서 빠져나온 당신은 잃어버린 주문서를 찾아 나서고, 새로 풀어낸 포보스의 지배 의식을 시험해 보려 합니다.
+=It's mid-game and you need to spread a magical plague in the barracks. You seduce Mojca the guard, to get inside the barracks.	이야기 중반, 병영에 마법 역병을 퍼뜨려야 합니다. 병영에 들어가려고 경비병 모이차를 유혹합니다.
+=At first you use the book to help your mother, but as the plot moves forward it offers you a means to investigate your enemies, manipulate people and raise the dead.	처음에는 어머니를 돕고자 책을 쓰지만, 이야기가 흐를수록 책은 적을 캐고, 사람을 조종하고, 죽은 자를 일으킬 수단이 됩니다.
+
+# --- 인물 소개(게임 코드)
+=A barfly who drinks in Garnet's.	가넷네에서 술을 마시는 단골 술꾼.
+=A doctor who frequents the library in the Academy.	아카데미 도서관에 자주 오는 의사.
+=A guard at the Dead Man's Gate.	망자의 문 경비병.
+=A maid who works in the keep.	성채에서 일하는 하녀.
+=A sailor in the Docks tavern.	부두 선술집의 선원.
+=A silk merchant with a stall in the market.	시장에 노점을 낸 비단 상인.
+=A smuggler. Drinks in the docks tavern.	밀수꾼. 부두 선술집에서 술을 마신다.
+=A tailor. Drinks in the north gate tavern.	재단사. 북문 선술집에서 술을 마신다.
+=A young priest.	젊은 사제.
+=An old man in the Docks tavern.	부두 선술집의 노인.
+=Lives in the slums.	빈민가에 산다.
+=Owner of the tavern at the marketplace.	시장 선술집 주인.
+=The baron. Lives in the keep.	남작. 성채에 산다.
+=The carriage driver.	마부.
+=The guard at the keep.	성채 경비병.
+=The guard at the north gate.	북문 경비병.
+=The head librarian in the Academy.	아카데미 수석 사서.
+=The herbalist. Drinks in Garnet's.	약초상. 가넷네에서 술을 마신다.
+=The old woman who helps out in the cathedral.	대성당 일을 돕는 노부인.
+=The undertaker. Drinks in Garnet's.	장의사. 가넷네에서 술을 마신다.
+=Your childhood friend. Drinks in the docks tavern.	어릴 적 친구. 부두 선술집에서 술을 마신다.
