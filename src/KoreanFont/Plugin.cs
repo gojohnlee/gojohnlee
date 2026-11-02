@@ -224,6 +224,7 @@ namespace NecroKoreanFont
                     { langOk = true; ad.OnClickedOK(); Log.Write("언어 불러옴 창 자동 확인"); }
                 }
                 Ui.Reapply();
+                Ui.Redraw();
             }
             catch { }
         }
@@ -295,6 +296,16 @@ namespace NecroKoreanFont
         static readonly HashSet<int> trackedIds = new HashSet<int>();
         static readonly Dictionary<int, string> lastOut = new Dictionary<int, string>();
         public static void Track(TMP_Text t) { if (tracked.Count < 2000 && trackedIds.Add(t.GetInstanceID())) tracked.Add(t); }
+        // TEXT_CHANGED는 캔버스가 다시 그리는 도중에 와서, 거기서 바꾼 글은 다시 그리기 요청이 무시됨(지도 이름표가 마우스를 대야 한글로 바뀜) → 다음 LateUpdate에서 다시 그린다
+        static readonly List<TMP_Text> redraw = new List<TMP_Text>();
+        public static void Redraw()
+        {
+            if (redraw.Count == 0) return;
+            var l = redraw.ToArray(); redraw.Clear();
+            busy = true;
+            try { foreach (var t in l) if (t != null && t.isActiveAndEnabled) t.SetAllDirty(); }
+            finally { busy = false; }
+        }
         public static void Reapply()
         {
             for (int i = tracked.Count - 1; i >= 0; i--)
@@ -389,7 +400,7 @@ namespace NecroKoreanFont
             try
             {
                 var n = Translate(t.text);
-                if (n != null && n != t.text) { busy = true; t.text = n; Replaced++; Track(t); }
+                if (n != null && n != t.text) { busy = true; t.text = n; Replaced++; Track(t); redraw.Add(t); }
                 else if (n == null) Untranslated(t.text);
             }
             catch (Exception e) { Log.Write("UI 바꾸기 실패: " + e.Message); }
