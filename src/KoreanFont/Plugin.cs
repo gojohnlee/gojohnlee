@@ -292,6 +292,27 @@ namespace NecroKoreanFont
         static bool busy;
         public static int Replaced, Events;
         public static void AddExact(string en, string ko) { if (!exact.ContainsKey(en)) exact[en] = ko; }
+
+        // 손글씨 글꼴(주문서 등)은 줄 높이가 낮거나 줄 간격이 음수라 키 큰 한글이 겹침 → 한글이 든 글 중 줄 높이가 1em 미만(확실히 겹침)인 것만 1.3em으로. 괜찮던 대사·메뉴는 그대로
+        const float MinLineEm = 1.3f;
+        static readonly HashSet<int> spaced = new HashSet<int>();
+        static void FixLineSpacing(TMP_Text t)
+        {
+            var fa = t.font;
+            if (fa == null || spaced.Contains(t.GetInstanceID())) return;
+            var s = t.text; bool ko = false;
+            if (s != null) foreach (var c in s) if (c >= 0xAC00 && c <= 0xD7A3) { ko = true; break; }
+            if (!ko) return;
+            spaced.Add(t.GetInstanceID());
+            var fi = fa.faceInfo;
+            if (fi.pointSize <= 0) return;
+            float em = fi.lineHeight / fi.pointSize * fi.scale + t.lineSpacing / 100f;
+            if (em >= 1f) return;
+            float before = t.lineSpacing;
+            t.lineSpacing = before + (MinLineEm - em) * 100f;
+            redraw.Add(t);
+            Log.Write("줄 간격 넓힘: " + fa.name + " " + before.ToString("0") + " → " + t.lineSpacing.ToString("0") + " (" + t.name + ")");
+        }
         // 게임이 매 프레임 영어를 다시 넣는 글(빠른 설정 창 등) → 기억해 두고 LateUpdate에서 그리기 전에 다시 바꾼다
         static readonly List<TMP_Text> tracked = new List<TMP_Text>();
         static readonly HashSet<int> trackedIds = new HashSet<int>();
@@ -398,6 +419,7 @@ namespace NecroKoreanFont
             if (busy) return;
             var t = o as TMP_Text;
             if (t == null) return;
+            try { FixLineSpacing(t); } catch { }
             try
             {
                 var n = Translate(t.text);
