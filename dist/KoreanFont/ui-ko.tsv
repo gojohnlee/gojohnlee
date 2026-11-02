@@ -983,3 +983,78 @@ You can make your own entries in the journal by hovering over the last entry and
 =The old woman who helps out in the cathedral.	대성당 일을 돕는 노부인.
 =The undertaker. Drinks in Garnet's.	장의사. 가넷네에서 술을 마신다.
 =Your childhood friend. Drinks in the docks tavern.	어릴 적 친구. 부두 선술집에서 술을 마신다.
+
+# --- 전투 요령 창(게임 코드에서 문장을 이어 붙임 → 부분 바꾸기). PC는 Press A 대신 Click 계열
+=TIP 1 of 8	요령 1/8
+=TIP 1 OF 8	요령 1/8
+=TIP 1 of 10	요령 1/10
+=TIP 1 OF 10	요령 1/10
+=TIP 2 of 8	요령 2/8
+=TIP 2 OF 8	요령 2/8
+=TIP 2 of 10	요령 2/10
+=TIP 2 OF 10	요령 2/10
+=TIP 3 of 8	요령 3/8
+=TIP 3 OF 8	요령 3/8
+=TIP 3 of 10	요령 3/10
+=TIP 3 OF 10	요령 3/10
+=TIP 4 of 8	요령 4/8
+=TIP 4 OF 8	요령 4/8
+=TIP 4 of 10	요령 4/10
+=TIP 4 OF 10	요령 4/10
+=TIP 5 of 8	요령 5/8
+=TIP 5 OF 8	요령 5/8
+=TIP 5 of 10	요령 5/10
+=TIP 5 OF 10	요령 5/10
+=TIP 6 of 8	요령 6/8
+=TIP 6 OF 8	요령 6/8
+=TIP 6 of 10	요령 6/10
+=TIP 6 OF 10	요령 6/10
+=TIP 7 of 8	요령 7/8
+=TIP 7 OF 8	요령 7/8
+=TIP 7 of 10	요령 7/10
+=TIP 7 OF 10	요령 7/10
+=TIP 8 of 8	요령 8/8
+=TIP 8 OF 8	요령 8/8
+=TIP 8 of 10	요령 8/10
+=TIP 8 OF 10	요령 8/10
+=TIP 9 of 8	요령 9/8
+=TIP 9 OF 8	요령 9/8
+=TIP 9 of 10	요령 9/10
+=TIP 9 OF 10	요령 9/10
+=TIP 10 of 8	요령 10/8
+=TIP 10 OF 8	요령 10/8
+=TIP 10 of 10	요령 10/10
+=TIP 10 OF 10	요령 10/10
+To the left of the screen are the portraits of your main character and your allies. Characters take turns in sequence.	화면 왼쪽에는 주인공과 아군의 초상화가 있습니다. 인물들은 차례대로 행동합니다.
+To the right of the screen are your enemies' portraits.	화면 오른쪽에는 적의 초상화가 있습니다.
+Click on a portrait to zoom the camera to that character.	초상화를 클릭하면 카메라가 그 인물에게 다가갑니다.
+Press A on a portrait to zoom the camera to that character.	초상화에서 A를 누르면 카메라가 그 인물에게 다가갑니다.
+Action Points</color> (APs) are used to move, attack, reload, equip weapons, and cast spells.	행동력</color>(AP)은 이동, 공격, 재장전, 무기 장착, 주문 시전에 쓰입니다.
+Press A on the terrain to move your active character</color> towards that spot. The hexagonal tiles light up to show you the route that will be taken.	땅에서 A를 누르면 지금 차례인 인물이 그곳으로 움직입니다</color>. 지나갈 길이 육각 칸에 불빛으로 표시됩니다.
+Click on the terrain to move your active character</color> towards that spot. The hexagonal tiles light up to show you the route that will be taken.	땅을 클릭하면 지금 차례인 인물이 그곳으로 움직입니다</color>. 지나갈 길이 육각 칸에 불빛으로 표시됩니다.
+Left-click on the terrain to move your active character</color> towards that spot. The hexagonal tiles light up to show you the route that will be taken.	땅을 왼쪽 클릭하면 지금 차례인 인물이 그곳으로 움직입니다</color>. 지나갈 길이 육각 칸에 불빛으로 표시됩니다.
+Press A on an enemy character to attack them with your active character</color>. You must be close enough to them to strike, and have enough Action Points left.	적에게서 A를 누르면 지금 차례인 인물이 그 적을 공격합니다</color>. 공격이 닿을 만큼 가까이 있어야 하고, 행동력도 넉넉히 남아 있어야 합니다.
+Click on an enemy character to attack them with your active character</color>. You must be close enough to them to strike, and have enough Action Points left.	적을 클릭하면 지금 차례인 인물이 그 적을 공격합니다</color>. 공격이 닿을 만큼 가까이 있어야 하고, 행동력도 넉넉히 남아 있어야 합니다.
+Left-click on an enemy character to attack them with your active character</color>. You must be close enough to them to strike, and have enough Action Points left.	적을 왼쪽 클릭하면 지금 차례인 인물이 그 적을 공격합니다</color>. 공격이 닿을 만큼 가까이 있어야 하고, 행동력도 넉넉히 남아 있어야 합니다.
+Melee weapons (swords, halberds) have a range of 1 or 2 hexes, while missile weapons (crossbows, muskets) can fire a lot further - however they can be slow to reload.	근접 무기(검, 미늘창)는 사거리가 1~2칸이고, 원거리 무기(석궁, 머스킷)는 훨씬 멀리 쏠 수 있지만 다시 장전하는 데 오래 걸릴 수 있습니다.
+You can open your Inventory and double-tap A on a weapon to equip it. For more detailed control, open both your Character Sheet and Inventory and drag items between the slots in them.	소지품을 열고 무기에서 A를 두 번 누르면 장착합니다. 더 세밀하게 하려면 캐릭터 창과 소지품을 함께 열고 칸 사이로 물건을 끌어 옮기세요.
+You can open your Inventory and double-click on a weapon to equip it. For more detailed control, open both your Character Sheet and Inventory and drag items between the slots in them.	소지품을 열고 무기를 두 번 클릭하면 장착합니다. 더 세밀하게 하려면 캐릭터 창과 소지품을 함께 열고 칸 사이로 물건을 끌어 옮기세요.
+Hover over a weapon icon in your Character Sheet or Inventory to see its stats. This includes how many Action Points it takes to use, and its effectiveness against unarmoured, leather armoured, and metal armoured foes.	캐릭터 창이나 소지품에서 무기 그림에 마우스를 올리면 능력치가 보입니다. 쓰는 데 드는 행동력과, 갑옷 없는 적·가죽 갑옷 적·금속 갑옷 적에게 얼마나 잘 듣는지가 나옵니다.
+Control passes back to your main character when you tap A on <color=#dddddd>End Turn</color> for the minion.	하수인 차례에서 <color=#dddddd>차례 끝내기</color>에 A를 누르면 주인공에게 조작이 돌아옵니다.
+Control passes back to your main character when you click on <color=#dddddd>End Turn</color> for the minion.	하수인 차례에서 <color=#dddddd>차례 끝내기</color>를 클릭하면 주인공에게 조작이 돌아옵니다.
+Control passes back to your main character when you click <color=#dddddd>End Turn</color> for the minion.	하수인 차례에서 <color=#dddddd>차례 끝내기</color>를 클릭하면 주인공에게 조작이 돌아옵니다.
+After firing a missile weapon you will need to reload it. Reloading costs Action Points. Muskets have an especially high reload cost.	원거리 무기는 쏜 뒤 다시 장전해야 합니다. 장전에는 행동력이 들고, 머스킷은 특히 많이 듭니다.
+During combat, your camera can move freely (using the right joystick).	전투 중에는 카메라를 자유롭게 움직일 수 있습니다(오른쪽 스틱).
+During combat, your camera can move freely (using the arrow keys, or right joystick on a controller).	전투 중에는 카메라를 자유롭게 움직일 수 있습니다(방향키, 또는 컨트롤러의 오른쪽 스틱).
+The Combat Speedup slider controls the speed of action.	전투 빠르게 막대로 행동 속도를 바꿀 수 있습니다.
+You cannot save while the Conversation Window is open, or during a ritual, cutscene or combat.	대화 창이 열려 있거나 의식·장면 연출·전투 중에는 저장할 수 없습니다.
+You have no Quick Save file to load.	불러올 빠른 저장 파일이 없습니다.
+Quick Load from your most recent Quick Save?	가장 최근의 빠른 저장을 불러올까요?
+You will lose unsaved progress in the current game.	지금 게임에서 저장하지 않은 진행은 사라집니다.
+Cannot move while reloading.	장전 중에는 움직일 수 없습니다.
+Quit to Menu?	메뉴로 나갈까요?
+You will lose unsaved progress.	저장하지 않은 진행은 사라집니다.
+You cannot save as you have a courtcase scheduled to happen the next time you move time forward.	다음에 시간을 보내면 재판이 열리게 되어 있어 지금은 저장할 수 없습니다.
+You must be inside a building, tunnel, cave or crypt to advance time.	시간을 보내려면 건물, 굴, 동굴, 지하 묘지 안에 있어야 합니다.
+You must be inside your house, within the city limits, or in a tunnel, cave or crypt to advance time.	시간을 보내려면 성벽 안의 우리 집, 또는 굴, 동굴, 지하 묘지 안에 있어야 합니다.
+Do you wish to advance time?	시간을 보낼까요?
