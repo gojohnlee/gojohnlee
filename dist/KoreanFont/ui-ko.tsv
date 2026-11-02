@@ -789,8 +789,8 @@ You can make your own entries in the journal by hovering over the last entry and
 =Food	음식
 =Vegetables	채소
 =Lavender	라벤더
-=Nightshade	벨라돈나
-=Nightshade Salve:	벨라돈나 연고:
+=Nightshade	벨라도나
+=Nightshade Salve:	벨라도나 연고:
 =Fire Root	불뿌리
 =Purple Bloom	보라 꽃
 =Hekate’s Dream Pillow	헤카테의 꿈 베개
@@ -816,11 +816,11 @@ You can make your own entries in the journal by hovering over the last entry and
 =Cases	상자
 
 # --- 주문·의식
-=Astral Walk	영체 보행
+=Astral Walk	아스트랄 걷기
 =Awaken	깨우기
 =Grave Myst	무덤 안개
-=Fever Wing	열병 날개
-=Torpor	토퍼
+=Fever Wing	열병 병동
+=Torpor	혼수
 =Walk in Shadows	그림자 걷기
 =Séance	강령회
 =- SPIRIT SLAVE -	- 영혼 노예 -
@@ -910,10 +910,10 @@ You can make your own entries in the journal by hovering over the last entry and
 =vsync	수직 동기화
 
 # --- 물건 조합·행동 문구(게임 코드·데이터, 2026-11-02)
-=I squeezed the nightshade gease through the linen bag, producing a more potent salve.	벨라돈나 기름을 아마포 자루에 넣고 짜서 더 강한 연고를 만들었다.
-=I squeezed the nightshade grease through the linen bag, producing a more potent salve.	벨라돈나 기름을 아마포 자루에 넣고 짜서 더 강한 연고를 만들었다.
+=I squeezed the nightshade gease through the linen bag, producing a more potent salve.	벨라도나 기름을 아마포 자루에 넣고 짜서 더 강한 연고를 만들었다.
+=I squeezed the nightshade grease through the linen bag, producing a more potent salve.	벨라도나 기름을 아마포 자루에 넣고 짜서 더 강한 연고를 만들었다.
 =I stirred the Cooking Pot with the Ladle	국자로 냄비를 저었다
-=Nightshade processed into Nightshade Grease by stove	화덕에서 벨라돈나가 벨라돈나 기름이 되었다
+=Nightshade processed into Nightshade Grease by stove	화덕에서 벨라도나가 벨라도나 기름이 되었다
 =The stove emitted evil-smelling fumes	화덕에서 고약한 냄새가 나는 연기가 났다
 =I carefully removed the brain.	조심스럽게 뇌를 꺼냈다.
 =I could not carry any more logs. I needed to return to the cart.	통나무를 더는 들 수 없었다. 수레로 돌아가야 했다.
