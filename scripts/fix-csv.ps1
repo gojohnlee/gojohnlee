@@ -44,7 +44,9 @@ foreach ($f in Get-ChildItem $Over -Filter *.tsv -ErrorAction SilentlyContinue) 
     $paras = @($r.Korean -split '<br>')
     $parts = @($txt -split '\s+/(?:\s+|$)')
     if ($parts.Count -ne $paras.Count) { $skip += "$id(단락)"; continue }
-    SetKo $r (@($parts | % { "<align=left>$($_.Trim())</align>" }) -join '<br>'); $ov++
+    # 원래 단락에 <align=left>가 있던 것만 감싼다(메뉴 단추는 가운데 정렬이라 감싸면 글이 왼쪽으로 밀림)
+    $newParas = for ($i = 0; $i -lt $parts.Count; $i++) { $t = $parts[$i].Trim(); if ($paras[$i] -match '<align=left>') { "<align=left>$t</align>" } else { $t } }
+    SetKo $r (@($newParas) -join '<br>'); $ov++
   }
 }
 # 바뀐 줄을 원문 위치 순으로 한 번에 바꾼다(따옴표 있는/없는 칸 꼴 둘 다)
