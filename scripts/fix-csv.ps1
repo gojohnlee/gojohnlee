@@ -42,7 +42,7 @@ foreach ($f in Get-ChildItem $Over -Filter *.tsv -ErrorAction SilentlyContinue) 
     if ($ln.StartsWith('#') -or -not $ln.Contains("`t")) { continue }
     $id, $txt = $ln.Split("`t", 2); $r = $byId[$id]; if (-not $r) { continue }
     $paras = @($r.Korean -split '<br>')
-    $parts = @($txt -split '\s+/(?:\s+|$)')
+    $parts = @($txt -split '\s/(?:\s|$)')
     if ($parts.Count -ne $paras.Count) { $skip += "$id(단락)"; continue }
     # 원래 단락에 <align=left>가 있던 것만 감싼다(메뉴 단추는 가운데 정렬이라 감싸면 글이 왼쪽으로 밀림)
     $newParas = for ($i = 0; $i -lt $parts.Count; $i++) { $t = $parts[$i].Trim(); if ($paras[$i] -match '<align=left>') { "<align=left>$t</align>" } else { $t } }
