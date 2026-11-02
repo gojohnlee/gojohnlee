@@ -9,6 +9,8 @@
 
 # 네크로맨서 테일 한글 모드
 
+- 대사 재번역·검수 자료는 비공개 gojohnlee/valheim-refs의 necromancer 브랜치 cloud/(진행 status.md, 검수 작업서 review-plan.md). 세션에 없으면 add_repo로 붙인다.
+
 - 게임: Steam 1315320, Unity 6000.3.6f1 Mono. **mscorlib·System이 잘려 있음** → 흔한 API도 없을 수 있다
   (확인된 것: DateTime.ToString(string), AssemblyLoadEventArgs.LoadedAssembly 게터, Process.MainWindowHandle, AudioListener.volume, netstandard.dll).
   없는 API를 부르면 그 메서드 JIT가 통째로 실패한다 → 새 API는 ilspycmd로 게임 DLL에 있는지 먼저 확인, 위험한 코드는 별도 메서드+try.
