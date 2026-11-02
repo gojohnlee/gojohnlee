@@ -49,6 +49,8 @@ foreach ($f in Get-ChildItem $Over -Filter *.tsv -ErrorAction SilentlyContinue) 
     SetKo $r (@($newParas) -join '<br>'); $ov++
   }
 }
+# 번역문에 남은 영어 "M'[title]"(My Lord 줄임) → "[title]"만(한국어 칸만)
+foreach ($r in $rows) { if ($r.Korean -and $r.Korean.Contains("'[title]")) { $k = [regex]::Replace($r.Korean, "[Mm]'\[title\]", '[title]'); if ($k -ne $r.Korean) { SetKo $r $k } } }
 # 바뀐 줄을 원문 위치 순으로 한 번에 바꾼다(따옴표 있는/없는 칸 꼴 둘 다)
 function Q($s) { '"' + $s.Replace('"', '""') + '"' }
 $Ord = [StringComparison]::Ordinal
