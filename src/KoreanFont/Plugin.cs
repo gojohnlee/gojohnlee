@@ -293,6 +293,40 @@ namespace NecroKoreanFont
         public static int Replaced, Events;
         public static void AddExact(string en, string ko) { if (!exact.ContainsKey(en)) exact[en] = ko; }
 
+        // 번역문의 "[he]은(는)"은 게임이 [he]를 "그"로 바꿔도 조사가 "은(는)"으로 남음 → 앞 글자 받침을 보고 고른다(태그 <…>는 건너뜀)
+        static readonly string[][] josaPats = {
+            new[] { "은(는)", "은", "는" }, new[] { "는(은)", "은", "는" }, new[] { "이(가)", "이", "가" }, new[] { "가(이)", "이", "가" },
+            new[] { "을(를)", "을", "를" }, new[] { "를(을)", "을", "를" }, new[] { "과(와)", "과", "와" }, new[] { "와(과)", "과", "와" },
+            new[] { "아(야)", "아", "야" }, new[] { "(으)로", "으로", "로" }, new[] { "(이)", "이", "" } };
+        public static string Josa(string s)
+        {
+            if (string.IsNullOrEmpty(s) || s.IndexOf('(') < 0) return s;
+            var sb = new System.Text.StringBuilder(s.Length);
+            int i = 0;
+            while (i < s.Length)
+            {
+                string[] hit = null;
+                if (s[i] == '(' || (i + 1 < s.Length && s[i + 1] == '('))
+                    foreach (var p in josaPats) if (string.CompareOrdinal(s, i, p[0], 0, p[0].Length) == 0) { hit = p; break; }
+                char prev = hit == null ? '\0' : PrevSyllable(sb);
+                if (prev == '\0') { sb.Append(s[i]); i++; continue; }
+                int jong = (prev - 0xAC00) % 28;
+                bool bat = jong != 0;
+                if (hit[0] == "(으)로" && jong == 8) bat = false;   // ㄹ 받침은 "로"
+                sb.Append(bat ? hit[1] : hit[2]);
+                i += hit[0].Length;
+            }
+            return sb.ToString();
+        }
+        static char PrevSyllable(System.Text.StringBuilder sb)
+        {
+            int k = sb.Length - 1;
+            while (k >= 0 && sb[k] == '>') { int lt = k; while (lt >= 0 && sb[lt] != '<') lt--; if (lt < 0) return '\0'; k = lt - 1; }
+            if (k < 0) return '\0';
+            var c = sb[k];
+            return c >= 0xAC00 && c <= 0xD7A3 ? c : '\0';
+        }
+
         // 손글씨 글꼴(주문서 등)은 줄 높이가 낮거나 줄 간격이 음수라 키 큰 한글이 겹침 → 한글이 든 글 중 줄 높이가 1em 미만(확실히 겹침)인 것만 1.3em으로. 괜찮던 대사·메뉴는 그대로
         const float MinLineEm = 1.3f;
         static readonly HashSet<int> spaced = new HashSet<int>();
@@ -422,9 +456,15 @@ namespace NecroKoreanFont
             try { FixLineSpacing(t); } catch { }
             try
             {
-                var n = Translate(t.text);
-                if (n != null && n != t.text) { busy = true; t.text = n; Replaced++; Track(t); redraw.Add(t); }
-                else if (n == null) Untranslated(t.text);
+                var cur = t.text;
+                var n = Translate(cur);
+                if (n == null) Untranslated(cur);
+                var j = Josa(n ?? cur);
+                if (j != null && j != cur)
+                {
+                    busy = true; t.text = j; redraw.Add(t);
+                    if (n != null && n != cur) { Replaced++; Track(t); }
+                }
             }
             catch (Exception e) { Log.Write("UI 바꾸기 실패: " + e.Message); }
             finally { busy = false; }
