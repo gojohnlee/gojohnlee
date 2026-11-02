@@ -291,6 +291,7 @@ namespace NecroKoreanFont
         static readonly List<string> fromList = new List<string>(), toList = new List<string>();   // 부분 바꾸기, 긴 것부터
         static bool busy;
         public static int Replaced, Events;
+        public static void AddExact(string en, string ko) { if (!exact.ContainsKey(en)) exact[en] = ko; }
         // 게임이 매 프레임 영어를 다시 넣는 글(빠른 설정 창 등) → 기억해 두고 LateUpdate에서 그리기 전에 다시 바꾼다
         static readonly List<TMP_Text> tracked = new List<TMP_Text>();
         static readonly HashSet<int> trackedIds = new HashSet<int>();
@@ -446,6 +447,8 @@ namespace NecroKoreanFont
                 int tab = line.IndexOf('\t');
                 if (line.Length == 0 || line[0] == '#' || tab <= 0) continue;
                 map[line.Substring(0, tab)] = line.Substring(tab + 1);
+                // 머리 위 이름표 등 이름을 바꾸기 전에 만들어진 화면 글도 바꾸도록 UI 통째 표에도 넣는다
+                Ui.AddExact(line.Substring(0, tab), line.Substring(tab + 1));
             }
             Log.Write("이름 표: " + map.Count + "개");
         }
