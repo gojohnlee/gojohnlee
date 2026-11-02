@@ -246,6 +246,7 @@ namespace NecroKoreanFont
             catch (Exception e) { Log.Write("오류: " + e); nextScan = Time.unscaledTime + 30f; }
         }
 
+        static bool hangulWrap;
         void Scan()
         {
             if (korean == null)
@@ -258,6 +259,13 @@ namespace NecroKoreanFont
             {
                 var g = TMP_Settings.fallbackFontAssets ?? new List<TMP_FontAsset>();
                 if (!g.Contains(korean)) { g.RemoveAll(x => x == null); g.Add(korean); TMP_Settings.fallbackFontAssets = g; }
+                // 한글을 글자마다가 아니라 띄어쓰기에서 줄바꿈(꺼져 있으면 "갚으/라고"처럼 낱말 중간에서 끊김)
+                if (!hangulWrap)
+                {
+                    hangulWrap = true;
+                    var f = typeof(TMP_Settings).GetField("m_UseModernHangulLineBreakingRules", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                    if (f != null) { f.SetValue(TMP_Settings.instance, true); Log.Write("한글 낱말 줄바꿈 켬"); } else Log.Write("한글 줄바꿈 설정 없음");
+                }
             }
             // 폰트마다 대체 목록 — TMP는 목록 중간에 null이 있으면 거기서 멈추므로 null을 지움
             int added = 0;
