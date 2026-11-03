@@ -355,6 +355,18 @@ namespace NecroKoreanFont
             redraw.Add(t);
             Log.Write("줄 간격 넓힘: " + fa.name + " " + before.ToString("0") + " → " + t.lineSpacing.ToString("0") + " (" + t.name + ")");
         }
+        // 명령 메뉴(무덤·하수인·시체) 한 줄은 높이 30으로 꽉 맞춘 칸 → 키 큰 한글 대체 폰트가 칸을 넘으면 잘라내기 모드에서 글이 통째로 사라짐 → 넘쳐도 보이게
+        static readonly HashSet<int> menuChecked = new HashSet<int>();
+        static void FixMenuLine(TMP_Text t)
+        {
+            if (!menuChecked.Add(t.GetInstanceID())) return;
+            var p = t.transform;
+            while (p != null && p.GetComponent<SamsContextMenuLine>() == null) p = p.parent;
+            if (p == null) return;
+            var rt = t.rectTransform;
+            Log.Write("명령 메뉴 줄: \"" + t.text + "\" 넘침=" + t.overflowMode + " 높이=" + rt.rect.height.ToString("0") + " 글높이=" + t.preferredHeight.ToString("0") + " 크기=" + t.fontSize.ToString("0") + " 색a=" + t.color.a.ToString("0.0"));
+            if (t.overflowMode != TextOverflowModes.Overflow) { t.overflowMode = TextOverflowModes.Overflow; redraw.Add(t); }
+        }
         // 게임이 매 프레임 영어를 다시 넣는 글(빠른 설정 창 등) → 기억해 두고 LateUpdate에서 그리기 전에 다시 바꾼다
         static readonly List<TMP_Text> tracked = new List<TMP_Text>();
         static readonly HashSet<int> trackedIds = new HashSet<int>();
@@ -462,6 +474,7 @@ namespace NecroKoreanFont
             var t = o as TMP_Text;
             if (t == null) return;
             try { FixLineSpacing(t); } catch { }
+            try { FixMenuLine(t); } catch { }
             try
             {
                 var cur = t.text;
