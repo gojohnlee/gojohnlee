@@ -1,1013 +1,858 @@
-네크로맨서 테일 번역 불일치 인덱스 (다시 만듦)
-만든 날: 2026-11-03. 옛 인덱스(ChatGPT 작성, 388묶음)를 이 파일로 바꿈.
-기준: translation/template.csv + translation/retrans/*.tsv 이름순 적용(뒤 파일이 이김), 화면 글 표는 이 저장소 dist/KoreanFont/ui-ko.tsv.
+네크로맨서 테일 — 같은 영어 문장, 다른 한국어 (현황)
+만든 날: 2026-11-03. 기준: 최신본(translation/template.csv + translation/retrans/*.tsv 이름순)을 scripts/fix-csv.ps1로 만든 결과.
 
-== 이번에 고친 것 (translation/retrans/zz-unify.tsv, 327줄) ==
-- 용어 141줄: 13개 용어(표는 docs/translate-guide.md "용어 통일")와 조사 맞춤.
-- 같은 영어·같은 화자·같은 말투인 문장 190줄을 한 번역으로 통일(가장 많이 쓰인 번역, 같으면 인물 검수본).
-- 게임 적용 스크립트(fix-csv.ps1)가 빈 단락이 있는 번역 37줄을 단락 수 오류로 버리던 버그 고침.
-- 화면 글 표(ui-ko.tsv): Awaken Ritual 각성 의식→깨우기 의식, torpor-spiked port 마비제→혼수, 이름 오기 3개(루쿠스→루커스, 스비트→스빗, 야코프→요코브), 같은 영어가 두 번 들어 있던 13줄 지움.
-- 앞으로 번역 지침: docs/translate-guide.md "용어 통일"에 위 용어 추가.
+== 처리 내역 ==
+- ChatGPT 인덱스(388묶음·용어 8개·화면 글 차이 122건)를 받아 정리: 용어 통일(표는 docs/translate-guide.md "용어 통일"), 같은 화자·같은 말투 문장 통일, 남은 묶음은 한 줄씩 읽고 오류만 고침(translation/retrans/zz-unify.tsv).
+- 남은 238묶음은 오류가 아님: 말하는 사람이 다르거나, 듣는 상대에 따라 존댓말·반말이 다르거나, 앞 질문에 따라 뜻이 갈리는 짧은 대답(예: "I do not." = 몰라요 / 안 줄 거예요).
+- 읽는 법: [번호] 영어 / 그 아래 줄마다 "한국어 ‖ 화자:ID 끝 6자리".
 
-== 남은 차이: 240묶음 — 대부분 정상 ==
-가. 말하는 사람이 다름 94묶음: 인물마다 말투가 달라 정상 (예: Of course = 물론이죠 / 물론이오 / 물론입니다).
-나. 같은 사람인데 존댓말·반말이 다름 68묶음: 듣는 상대가 달라 정상인 경우가 대부분.
-다. 짧은 대답이나 he/she가 든 문장 78묶음: 앞 질문·가리키는 사람이 달라 뜻이 갈림 (예: I do not. = 몰라요 / 안 줄 거예요). 일부러 안 합침.
-라. 그 밖 0묶음: 아래에서 확인.
-화면 글 표와 본문이 다른 줄 126개: 표는 메뉴·이름표용이라 짧게 쓴 경우가 대부분(맨 아래).
-
-읽는 법: [영어] 다음 줄마다 "번역 (줄 수, 화자, 첫 ID)".
-
-
-==== 라. 그 밖 ====
-
-==== 나. 같은 사람, 존댓말·반말 다름 ====
-[I'm afraid not.]
-  안 계세요.  (1줄, Mandel, 0x010000000000DAFD)
-  아쉽게도 없어요.  (1줄, Mandel, 0x010000000000EA73)
-  안타깝지만 그래.  (1줄, Mandel, 0x010000000003BB16)
-[What should we do?]
-  어떻게 해야 할까요?  (1줄, Mandel, 0x010000000003CA3D)
-  우리 어떻게 해야 하지?  (1줄, Mandel, 0x01000000000290EA)
-[I am [name] Van Elstrik.]
-  저는 [name] 반 엘스트릭이에요.  (1줄, Mandel, 0x0100000000008E33)
-  나는 [name] 반 엘스트릭이야.  (1줄, Mandel, 0x0100000000017BDC)
-[What's happened?]
-  무슨 일이 있었어요?  (1줄, Mandel, 0x0100000000005995)
-  무슨 일이야?  (1줄, Mandel, 0x010000000002F62D)
-[I'm looking for some sulfur, do you know where I could get some?]
-  유황을 좀 구하는데, 어디서 구할 수 있는지 아세요?  (1줄, Mandel, 0x0100000000013977)
-  유황을 찾고 있는데, 어디서 구할 수 있는지 아세요?  (1줄, Mandel, 0x0100000000013961)
-  유황을 구하고 있는데, 어디서 구할 수 있는지 아세요?  (2줄, Mandel, 0x0100000000013986)
-  유황을 좀 찾고 있는데, 어디서 구할 수 있는지 알아?  (1줄, Mandel, 0x01000000000139FD)
-  유황이 필요한데, 어디서 구할 수 있는지 알아요?  (1줄, Mandel, 0x010000000001394B)
-[Where might I find him?]
-  어디로 가면 만날 수 있을까요?  (1줄, Mandel, 0x010000000003FA1F)
-  그분은 어디서 찾을 수 있죠?  (1줄, Mandel, 0x010000000003F9F0)
-[Where could I find him?]
-  어디로 가면 만날 수 있을까요?  (1줄, Mandel, 0x010000000003F8A2)
-  그분을 어디서 찾을 수 있죠?  (1줄, Mandel, 0x01000000000277B9)
-[Good [time].]
-  좋은 [time]이에요.  (1줄, Mandel, 0x010000000001225F)
-  좋은 [time] 보내렴.  (1줄, Mandel, 0x010000000001249E)
-[I'll see what I can do.]
-  제가 어떻게든 해 볼게요.  (2줄, Mandel, 0x010000000003F689)
-  내가 어떻게든 해 볼게.  (1줄, Mandel, 0x0100000000002993)
-  제가 어떻게 해 볼게요.  (1줄, Mandel, 0x010000000003285F)
-[Alright.]
-  알겠어요.  (1줄, Mandel, 0x0100000000019948)
-  그러렴.  (1줄, Mandel, 0x010000000001BA62)
-[What's this talk of graverobbing?]
-  무덤 도굴 얘기는 무슨 소리예요?  (1줄, Mandel, 0x010000000001F63A)
-  도굴 소문은 무슨 얘기예요?  (1줄, Mandel, 0x010000000001F66C)
-  무덤을 도굴했다는 건 무슨 얘기야?  (2줄, Mandel, 0x010000000001F687)
-  무덤을 도굴했다는 게 무슨 얘기야?  (1줄, Mandel, 0x010000000001F627)
-  무덤 도굴이라니 무슨 얘기예요?  (2줄, Mandel, 0x010000000001F5D9)
-[And...?]
-  그래서요…?  (1줄, Mandel, 0x01000000000182A6)
-  그래서?  (1줄, Mandel, 0x010000000004444A)
-[I'm trying to find an instruction book to assist me with some Latin; do you know of one?]
-  라틴어 공부에 도움이 될 만한 입문서를 찾고 있는데, 아시는 책이 있나요?  (1줄, Mandel, 0x010000000001EE68)
-  라틴어 공부에 도움이 될 만한 입문서를 찾고 있는데, 아는 책 있어?  (1줄, Mandel, 0x010000000001EE54)
-  라틴어 공부에 도움이 될 교본을 찾고 있는데, 아는 책 있어?  (1줄, Mandel, 0x010000000001EE22)
-  라틴어를 읽는 데 도움이 될 학습서를 찾고 있어요. 아시는 책이 있나요?  (1줄, Mandel, 0x010000000001EE31)
-[What do you need from me?]
-  내가 뭘 해 주면 되는데?  (1줄, Mandel, 0x010000000001FCF8)
-  제게 바라시는 건 뭔가요?  (1줄, Mandel, 0x01000000000198A9)
-[I'd like to collect my pay.]
-  품삯을 받으러 왔어.  (1줄, Mandel, 0x01000000000116FA)
-  품삯을 받고 싶어요.  (1줄, Mandel, 0x01000000000116D2)
-  품삯을 받으러 왔어요.  (1줄, Mandel, 0x0100000000011727)
-[What do you make of the hangings?]
-  이번 교수형에 대해 어떻게 생각해?  (1줄, Mandel, 0x01000000000371A4)
-  교수형에 대해 어떻게 생각하세요?  (1줄, Mandel, 0x0100000000037172)
-[What work needs doing today?]
-  오늘은 무슨 일을 하면 돼?  (1줄, Mandel, 0x0100000000041592)
-  오늘은 무슨 일을 하면 될까요?  (1줄, Mandel, 0x01000000000415A3)
-  오늘은 무슨 일을 하면 되나요?  (1줄, Mandel, 0x01000000000415B4)
-  오늘은 무슨 일을 해야 해요?  (1줄, Mandel, 0x01000000000415C5)
-[Now, about the trial for tavern ownership...]
-  그럼 술집을 넘겨받는 시험 얘긴데요…  (1줄, Mandel, 0x010000000003618A)
-  그럼, 술집 주인을 정하는 시험 말인데…  (1줄, Mandel, 0x01000000000360C3)
-[I seek a holy book called The Book of Zechariah . Could you search the cathedral for it?]
-  즈가리야서 라는 성서를 찾고 있어. 대성당에서 찾아봐 줄래?  (1줄, Mandel, 0x0100000000015709)
-  즈가리야서 라는 성서를 찾고 있어. 성당에 있는지 찾아봐 줄래?  (1줄, Mandel, 0x0100000000015682)
-  즈가리야서 라는 성서를 찾고 있어. 대성당을 뒤져 줄 수 있겠어?  (1줄, Mandel, 0x0100000000015725)
-  즈가리야서 라는 성서를 찾고 있어요. 대성당에서 찾아봐 줄 수 있어요?  (1줄, Mandel, 0x01000000000156D1)
-  즈가리야서 라는 성서를 찾고 있어요. 대성당에서 좀 찾아봐 주시겠어요?  (1줄, Mandel, 0x010000000003CC60)
-[Did you find T he Book of Zechariah ?]
-  스 가랴서 는 찾았어?  (1줄, Mandel, 0x010000000001570F)
-  즈가리야서 는 찾았어?  (1줄, Mandel, 0x010000000001572B)
-  즈가리야서 찾았어요?  (2줄, Mandel, 0x01000000000156D7)
-[I thought we agreed to meet at my family crypt?]
-  우리 가문 납골당에서 만나기로 하지 않았어?  (1줄, Mandel, 0x0100000000021118)
-  우리 집안 납골당에서 만나기로 한 거 아니었어?  (1줄, Mandel, 0x0100000000021108)
-  우리 가족 납골당에서 만나기로 하지 않았나요?  (1줄, Mandel, 0x01000000000210EA)
-  우리 가문 납골당에서 만나기로 하지 않았나요?  (1줄, Mandel, 0x01000000000210F9)
-[I'm not sure if I have the time.]
-  그럴 시간이 있을지 모르겠네.  (1줄, Mandel, 0x010000000003FB55)
-  시간이 날지 모르겠어.  (1줄, Mandel, 0x010000000003FAE5)
-[Can you show me that secret knock again?]
-  그 비밀 노크를 다시 알려 주실래요?  (1줄, Mandel, 0x0100000000027AF4)
-  그 비밀 노크 다시 알려 줄래?  (1줄, Mandel, 0x0100000000027AE6)
-[What do you do here?]
-  여기서 무슨 일을 하세요?  (1줄, Mandel, 0x0100000000005D8D)
-  여기서 무슨 일을 하죠?  (1줄, Mandel, 0x01000000000100A9)
-[I do.]
-  응.  (1줄, Mandel, 0x0100000000006D01)
-  그래요.  (1줄, Mandel, 0x010000000004104E)
-  그래.  (1줄, Mandel, 0x0100000000012192)
-[Thank you for your time.]
-  시간 내 주셔서 고마워요.  (1줄, Mandel, 0x01000000000050E0)
-  시간 내 주셔서 고맙습니다.  (1줄, Mandel, 0x010000000000734C)
-[Nevermind.]
-  됐어요.  (3줄, Mandel, 0x0100000000041056)
-  아니에요, 됐어요.  (1줄, Mandel, 0x0100000000044036)
-  아니에요.  (1줄, Mandel, 0x010000000002B7AB)
-  아냐, 됐어.  (4줄, Mandel, 0x010000000000FDC7)
-[No, of course not.]
-  아니요, 안 돼요.  (1줄, Mandel, 0x0100000000020653)
-  아니, 그럴 리가 있겠니.  (1줄, Mandel, 0x01000000000120B0)
-[I seek tuberose, mullein and lavender. Can you help?]
-  월하향, 우단초, 라벤더를 찾고 있어요. 도와주실 수 있나요?  (1줄, Mandel, 0x010000000003CF76)
-  튜베로즈, 우단담배풀, 라벤더를 찾고 있어. 도와줄 수 있어?  (1줄, Mandel, 0x010000000003D289)
-[Tell me something about yourself.]
-  본인 얘기를 좀 들려주세요.  (1줄, Mandel, 0x010000000001916B)
-  네 얘기 좀 해 줘.  (1줄, Mandel, 0x01000000000358E4)
-[Who are you?]
-  누구시죠?  (1줄, Mandel, 0x010000000000D50D)
-  누구야?  (1줄, Mandel, 0x010000000003C8ED)
-  누구세요?  (6줄, Mandel, 0x0100000000016950)
-  누구더라?  (1줄, Mandel, 0x0100000000035772)
-  넌 누구지?  (1줄, Mandel, 0x010000000003B590)
-[I saw skulls mounted on poles nearby. Do you know anything about them?]
-  근처에 장대에 꽂힌 해골이 보였어요. 뭐 아는 거 있나요?  (2줄, Mandel, 0x010000000003B11B)
-  근처에 장대에 꽂힌 해골이 보였어. 뭐 아는 거 있니?  (1줄, Mandel, 0x010000000003B130)
-[Goodbye.]
-  잘 있어.  (2줄, Mandel, 0x01000000000146F5)
-  잘 있어요.  (1줄, Mandel, 0x01000000000130FB)
-[Five crowns.]
-  5크라운.  (1줄, Mandel, 0x010000000002E399)
-  5크라운이요.  (1줄, Mandel, 0x010000000004329C)
-[I need a trusted friend to visit my father's remains in his crypt.]
-  아버지의 유해가 있는 납골당에 대신 가 줄 믿을 만한 친구가 필요해.  (1줄, Mandel, 0x010000000004172D)
-  아버지의 묘실에 있는 유해를 찾아가 줄 믿을 만한 친구가 필요해요.  (1줄, Mandel, 0x010000000001531E)
-  아버지의 유해가 있는 납골당에 대신 가 줄 믿을 만한 친구가 필요해요.  (1줄, Mandel, 0x010000000001538A)
-[Do you know much about the Fishguard?]
-  피시가드에 대해 좀 아세요?  (3줄, Mandel, 0x010000000002A015)
-  피시가드에 대해 좀 아시나요?  (1줄, Mandel, 0x0100000000029AA8)
-  피시가드에 대해 좀 알아요?  (1줄, Mandel, 0x010000000002A075)
-  피시가드에 대해 잘 아세요?  (5줄, Mandel, 0x0100000000029FAF)
-  피시가드에 대해 잘 알아?  (1줄, Mandel, 0x0100000000029D88)
-[Who are the Fishguard?]
-  피시가드가 누구예요?  (2줄, Mandel, 0x010000000002A029)
-  피시가드가 누구죠?  (2줄, Mandel, 0x0100000000029B4D)
-  피시가드는 어떤 사람들이에요?  (1줄, Mandel, 0x0100000000029E28)
-  피시가드는 누구예요?  (1줄, Mandel, 0x0100000000029EA0)
-[Of course not.]
-  그럴 리가.  (1줄, Mandel, 0x0100000000027CCF)
-  물론 아니죠.  (1줄, Mandel, 0x0100000000022481)
-  물론이지.  (1줄, Mandel, 0x01000000000430F5)
-[What is all this?]
-  이게 다 뭐야?  (1줄, Mandel, 0x0100000000027D44)
-  이게 다 뭐예요?  (1줄, Mandel, 0x0100000000027EB3)
-  여긴 다 뭘 하는 곳이에요?  (1줄, Mandel, 0x0100000000028157)
-[Why did you join the Resistance?]
-  왜 레지스탕스에 들어갔어?  (1줄, Mandel, 0x0100000000027D4B)
-  왜 저항군에 들어왔어요?  (1줄, Mandel, 0x0100000000027EC2)
-  저항군에는 왜 들어왔어?  (1줄, Mandel, 0x0100000000028026)
-  저항군에는 왜 들어오셨어요?  (1줄, Mandel, 0x010000000002815E)
-[What are your thoughts on Jervase?]
-  제르베스를 어떻게 생각해?  (2줄, Mandel, 0x0100000000027D59)
-  제르베스에 대해 어떻게 생각해요?  (1줄, Mandel, 0x0100000000027F09)
-  제르베스를 어떻게 생각하세요?  (1줄, Mandel, 0x0100000000028173)
-[That's all for now.]
-  지금은 이걸로 됐어.  (1줄, Mandel, 0x0100000000027D8B)
-  지금은 이게 전부예요.  (1줄, Mandel, 0x010000000002F5D3)
-  지금은 이 정도면 됐어요.  (1줄, Mandel, 0x0100000000029E63)
-  오늘은 이만할게요.  (1줄, Mandel, 0x0100000000029F3B)
-  지금은 이만하면 됐어.  (1줄, Mandel, 0x0100000000029DD2)
-  지금은 이만할게요.  (2줄, Mandel, 0x0100000000027FD0)
-  지금은 그게 다예요.  (1줄, Mandel, 0x01000000000196E6)
-  일단은 됐다.  (1줄, Mandel, 0x010000000003A256)
-[What do you think needs to be done about Jervase?]
-  제르베스를 어떻게 해야 한다고 생각해?  (1줄, Mandel, 0x0100000000027DF4)
-  제르베스를 어떻게 해야 한다고 생각하세요?  (1줄, Mandel, 0x0100000000028260)
-[There is information I want to share about Jervase.]
-  제르베스에 대해 알려 주고 싶은 정보가 있어.  (1줄, Mandel, 0x0100000000027E5F)
-  제르베스에 관해 알려 드릴 게 있어요.  (1줄, Mandel, 0x0100000000027FB8)
-  제르베스에 관해 알려 줄 게 있어.  (1줄, Mandel, 0x01000000000280F3)
-[I seek to hire some muscle to help on a perilous mission. Are you interested?]
-  위험한 임무에 힘 좀 쓸 사람이 필요해. 관심 있어?  (1줄, Mandel, 0x0100000000043312)
-  위험한 임무에 도와줄 힘센 사람을 구하고 있어요. 관심 있어요?  (1줄, Mandel, 0x0100000000043302)
-  위험한 일을 도와줄 힘센 사람을 구하고 있어요. 관심 있으세요?  (1줄, Mandel, 0x0100000000043279)
-  위험한 일을 도와줄 힘 좋은 사람을 구하고 있어요. 관심 있으세요?  (1줄, Mandel, 0x010000000004326B)
-  위험한 임무를 도와줄 힘센 사람을 고용하려고 해. 관심 있어?  (1줄, Mandel, 0x01000000000432C0)
-[How can I get in contact with them?]
-  어떻게 하면 그들과 연락할 수 있죠?  (1줄, Mandel, 0x0100000000029B61)
-  그들과 어떻게 연락할 수 있죠?  (1줄, Mandel, 0x0100000000029CBA)
-  어떻게 연락할 수 있을까요?  (1줄, Mandel, 0x0100000000029E37)
-  그들과 연락하려면 어떻게 해야 해요?  (1줄, Mandel, 0x0100000000029EAF)
-  어떻게 연락할 수 있어?  (1줄, Mandel, 0x0100000000029DC4)
-[I'll think about it.]
-  생각해 볼게요.  (2줄, Mandel, 0x0100000000042A21)
-  생각해 볼게.  (1줄, Mandel, 0x0100000000043681)
-[Is that all?]
-  그게 다예요?  (1줄, Mandel, 0x010000000001253A)
-  그게 다야?  (1줄, Mandel, 0x0100000000021E58)
-[We should meet for a drink at Garnet's... sometime.]
-  언제 한번 가넷의 주점에서 한잔해요.  (1줄, Mandel, 0x010000000001EC60)
-  가넷의 주점에서 한잔해요… 언제 한번.  (1줄, Mandel, 0x010000000003C7D8)
-[Is there somewhere more private around here? I could show you what I mean.]
-  이 근처에 좀 더 은밀한 곳이 있나요? 무슨 뜻인지 보여 드릴 수 있을 텐데요.  (1줄, Mandel, 0x010000000001EC84)
-  이 근처에 좀 더 조용한 곳이 없을까요? 내 말뜻을 보여 줄 수 있을 텐데.  (1줄, Mandel, 0x010000000003C6E7)
-[What is your name?]
-  이름이 뭐예요?  (1줄, Mandel, 0x0100000000021B09)
-  이름이 뭐야?  (1줄, Mandel, 0x0100000000022809)
-[I am speaking of those two. They have recently been wed, have they not?]
-  저 두 사람을 말한 거예요. 최근에 혼인하지 않았나요?  (1줄, Mandel, 0x0100000000026191)
-  저 두 사람을 말한 거야. 최근에 혼인하지 않았어?  (1줄, Mandel, 0x01000000000261AF)
-[I don’t know.]
-  모르겠어.  (1줄, Mandel, 0x0100000000022BC7)
-  모르겠어요.  (1줄, Mandel, 0x0100000000019F5C)
-[Who is she?]
-  누구인데요?  (1줄, Mandel, 0x0100000000018AF0)
-  그분은 누구죠?  (1줄, Mandel, 0x0100000000043DA2)
-[I require some herbs: lavender, mullein, and blue tuberose.]
-  약초가 좀 필요해요. 라벤더, 우단담배풀, 푸른 월하향이요.  (1줄, Mandel, 0x0100000000038AEE)
-  약초가 필요해요. 라벤더와 멀레인, 푸른 월하향이요.  (1줄, Mandel, 0x0100000000038ACF)
-  약초가 좀 필요하다. 라벤더와 멀레인, 푸른 월하향이다.  (1줄, Mandel, 0x0100000000038A70)
-[I need your help.]
-  도움이 필요해요.  (4줄, Mandel, 0x0100000000019FE7)
-  네 도움이 필요해.  (1줄, Mandel, 0x0100000000019E0C)
-[Tomorrow morning, a ship is coming in to offload some smuggled goods.]
-  내일 아침 밀수품을 내리러 배 한 척이 들어와요.  (1줄, Mandel, 0x0100000000019FF5)
-  내일 아침에 밀수품을 내릴 배가 들어와요.  (1줄, Mandel, 0x0100000000019E92)
-  내일 아침에 밀수품을 내릴 배가 한 척 들어와.  (1줄, Mandel, 0x0100000000019E1A)
-[Let me explain about these buttons...]
-  이 번호 단추에 대해 설명해 드릴게요…  (2줄, Mandel, 0x0100000000035BE2)
-  이 단추에 대해 설명해 드릴게요…  (1줄, Mandel, 0x0100000000035ACE)
-  이 단추에 관해 설명해 드릴게요…  (2줄, Mandel, 0x0100000000035591)
-  이 단추에 관해 설명해 줄게…  (2줄, Mandel, 0x0100000000035809)
-[The harbourmaster has discharged me.]
-  항구장이 날 해고했어요.  (1줄, Mandel, 0x0100000000035C8D)
-  항구장이 절 해고했어요.  (1줄, Mandel, 0x0100000000035BD3)
-  항구장이 저를 해고했어요.  (1줄, Mandel, 0x0100000000035B63)
-  항구장이 날 해고했어.  (1줄, Mandel, 0x01000000000354C3)
-[Seems like if we’re doing the work to offload it, we deserve a cut.]
-  우리가 짐을 내리는 일을 한다면 몫을 좀 받아야 할 것 같아서요.  (1줄, Mandel, 0x0100000000019F27)
-  우리가 짐 내리는 일을 하는 거니까 몫을 받아야겠죠.  (1줄, Mandel, 0x0100000000019FB1)
-  물건 내리는 일을 우리가 한다면 몫을 좀 받아도 되지 않겠어요?  (1줄, Mandel, 0x0100000000019EC4)
-  짐을 내리는 수고를 우리가 하니까 한몫 챙길 자격은 있겠지.  (1줄, Mandel, 0x0100000000019E5A)
-[This place is getting busy lately. Lots of new workers.]
-  요즘 여기가 바빠졌네요. 새 일꾼도 많고요.  (1줄, Mandel, 0x0100000000035EC7)
-  요즘 여기가 바빠지네요. 새 일꾼도 많이 오고요.  (1줄, Mandel, 0x0100000000035EA4)
-  요즘 여기가 바빠지네. 새 일꾼도 많고.  (1줄, Mandel, 0x0100000000035E95)
-[I know what's been happening to the Fishguard money.]
-  피시가드에 줄 돈이 어떻게 된 건지 알아냈어요.  (1줄, Mandel, 0x010000000002A8E1)
-  피시가드 상납금이 어떻게 됐는지 알아냈어.  (1줄, Mandel, 0x010000000002A83D)
-[Actually, nevermind.]
-  아니에요, 됐어요.  (1줄, Mandel, 0x010000000004328E)
-  아니, 신경 쓰지 마.  (1줄, Mandel, 0x01000000000432DD)
-[Who's the leader here?]
-  여기 대장은 누구예요?  (1줄, Mandel, 0x0100000000027EFA)
-  여긴 누가 이끌어?  (1줄, Mandel, 0x010000000002807E)
-  여긴 누가 이끄나요?  (1줄, Mandel, 0x0100000000028165)
-[I need this page to be translated. See what you can find in the library.]
-  이 페이지를 번역해야 해요. 도서관에서 방법을 찾아봐요.  (1줄, Mandel, 0x01000000000196CA)
-  이 페이지를 번역해야겠다. 도서관에서 단서를 찾아봐라.  (1줄, Mandel, 0x01000000000389BA)
-[I am ready to face the army.]
-  군대와 맞설 준비가 됐어.  (1줄, Mandel, 0x010000000003A066)
-  군대와 맞설 준비가 됐어요.  (1줄, Mandel, 0x010000000003A2E1)
-[A crown I found in a crypt.]
-  납골당에서 찾은 크라운 동전 한 닢.  (1줄, -, OBJLCROWN)
-  납골당에서 찾은 크라운 동전 하나.  (1줄, -, 0x0100000000018E02)
-[A love potion, allegedly.]
-  사랑의 묘약이라고 한다.  (1줄, -, OBJLLOVE_POTION)
-  사랑의 묘약이라나.  (1줄, -, 0x0100000000018FAF)
-
-==== 다. 짧은 대답·대명사 문장 ====
-[No whisky to be found. Was he really a whisky drinker at all?]
-  위스키는 코빼기도 안 보이네. 그분이 정말 위스키를 드시긴 했던 걸까?  (2줄, Sofia, 0x0100000000017556)
-  위스키는 코빼기도 안 보이네. 아버지가 정말 위스키를 드시긴 했던 거야?  (1줄, Sofia, 0x010000000001755D)
-[move on.]
-  다음으로 넘어갔다.  (2줄, -, 0x0200000000011090)
-  그냥 넘어갔다.  (2줄, -, 0x020000000003676B)
-[He nodded solemnly.]
-  그는 무거운 표정으로 고개를 끄덕였다.  (1줄, Narration, 0x010000000000021A)
-  그가 진지한 얼굴로 고개를 끄덕였다.  (1줄, Narration, 0x01000000000019FC)
-[Have you seen the herbalist?]
-  약초상을 보셨어요?  (1줄, Mandel, 0x0100000000001C3A)
-  약초상을 본 적 있어요?  (1줄, Mandel, 0x0100000000001F8A)
-[I seek the forester, Svit. Do you know where to find him?]
-  숲지기 스빗을 찾고 있어요. 어디에 있는지 아세요?  (1줄, Mandel, 0x010000000003817D)
-  숲지기 스빗을 찾고 있어요. 어디로 가면 만날 수 있을까요?  (2줄, Mandel, 0x0100000000038192)
-  숲지기 스빗을 찾고 있어요. 어디 있는지 아세요?  (1줄, Mandel, 0x01000000000381BC)
-  숲지기 스빗을 찾고 있어요. 어디 가면 만날 수 있는지 알아요?  (1줄, Mandel, 0x01000000000381D1)
-  숲지기 스빗을 찾고 있어요. 어디 가면 만날 수 있나요?  (3줄, Mandel, 0x01000000000381DF)
-[Any news from the barracks?]
-  막사 쪽에 별일 없어요?  (1줄, Mandel, 0x010000000003E676)
-  막사에 별다른 소식은 없어요?  (2줄, Mandel, 0x010000000003E658)
-  막사에서 들려온 소식이 있나요?  (1줄, Mandel, 0x010000000003E68C)
-[Okay, thank you.]
-  네, 고마워요.  (1줄, Mandel, 0x010000000003FA19)
-  알겠어요, 고마워요.  (1줄, Mandel, 0x010000000003F9E9)
-[I do not.]
-  몰라요.  (2줄, Mandel, 0x010000000000A496)
-  안 줄 거예요.  (1줄, Mandel, 0x01000000000288A1)
-[Sure, why not.]
-  좋아요, 한번 보죠.  (1줄, Mandel, 0x0100000000033515)
-  그래, 좋지.  (1줄, Mandel, 0x01000000000019B1)
-[Have you seen Tomaz? He's a farmhand.]
-  토마즈를 보셨나요? 농장에서 일하는 사람이에요.  (1줄, Mandel, 0x0100000000036B95)
-  토마즈 보셨어요? 농장 일꾼인데요.  (2줄, Mandel, 0x0100000000036BB1)
-[I look forward to it.]
-  기대할게.  (1줄, Mandel, 0x0100000000001713)
-  기대하고 있을게.  (1줄, Mandel, 0x01000000000324C3)
-[Did you know my father?]
-  저희 아버지를 아셨어요?  (3줄, Mandel, 0x0100000000005A60)
-  제 아버지를 아셨나요?  (2줄, Mandel, 0x0100000000025982)
-[I let him go.]
-  나는 그를 보내 주었다.  (1줄, Narration, 0x01000000000216C7)
-  그냥 보내 주었다.  (1줄, Narration, 0x0100000000031076)
-[I did not.]
-  못 구했어.  (1줄, Mandel, 0x0100000000002937)
-  안 했어.  (1줄, Mandel, 0x010000000000E7B7)
-[I swung my fist at him.]
-  나는 소년에게 주먹을 휘둘렀다.  (1줄, Narration, 0x0100000000015899)
-  나는 그에게 주먹을 휘둘렀다.  (1줄, Narration, 0x010000000001A88F)
-[I am to meet my friend Diedrik here, do you know him?]
-  친구 디드리크와 여기서 만나기로 했는데, 아세요?  (1줄, Mandel, 0x0100000000014803)
-  여기서 친구 디드리크를 만나기로 했는데, 아세요?  (1줄, Mandel, 0x0100000000014827)
-[I can't afford that.]
-  그만한 돈은 없어요.  (3줄, Mandel, 0x010000000003CE4F)
-  그건 못 사요.  (1줄, Mandel, 0x010000000003CE70)
-[I took the opportunity to cut a piece of his hair, for use in the Awaken ritual.]
-  기회를 틈타 깨우기 의식에 쓸 그의 머리카락을 조금 잘랐다.  (1줄, Narration, 0x01000000000180C9)
-  나는 이 틈에 깨우기 의식에 쓸 머리카락을 한 가닥 잘랐다.  (1줄, Narration, 0x01000000000180FF)
-[I left him there.]
-  그를 그대로 두었다.  (1줄, Narration, 0x01000000000180D1)
-  나는 그를 그대로 두고 나왔다.  (1줄, Narration, 0x0100000000018106)
-[I left him to his drink.]
-  혼자 술을 마시게 내버려 두었다.  (1줄, Narration, 0x010000000000E671)
-  그가 술을 마시도록 자리를 비켜 주었다.  (1줄, Narration, 0x0100000000014AB4)
-[convince him to open up.]
-  그를 설득해 속내를 털어놓게 했다.  (1줄, -, 0x020000000000E84C)
-  남자가 속내를 털어놓도록 설득했다.  (1줄, -, 0x020000000000EE5B)
-[He laughed.]
-  그는 웃었다.  (1줄, Narration, 0x0100000000003FCB)
-  그가 웃었다.  (1줄, Narration, 0x010000000002D58D)
-[Consider it done.]
-  제가 가져올게요.  (1줄, Mandel, 0x010000000001F138)
-  맡겨 두세요.  (1줄, Mandel, 0x0100000000023571)
-[You knew my father?]
-  저희 아버지를 아셨어요?  (1줄, Mandel, 0x010000000000818C)
-  제 아버지를 아셨어요?  (1줄, Mandel, 0x0100000000038C6F)
-[She hesitated.]
-  약제상은 망설였다.  (1줄, Narration, 0x010000000000BF9B)
-  그녀가 머뭇거렸다.  (1줄, Narration, 0x0100000000043EC1)
-[A big black boil, like some kind of contagion I think. The edges are crumbling away in their decay.]
-  크고 검은 종기예요. 무슨 전염병 같아요. 가장자리가 썩어서 부스러지고 있어요.  (1줄, Mandel, 0x010000000002F2B3)
-  손에 커다랗고 검은 종기가 났어요. 무슨 전염병 같아요. 가장자리가 썩어서 부스러지고 있어요.  (1줄, Mandel, 0x010000000002F207)
-[I might return.]
-  다시 올지도 몰라요.  (1줄, Mandel, 0x010000000002F2D6)
-  또 올지도 몰라요.  (1줄, Mandel, 0x010000000002F430)
-[I left.]
-  나는 자리를 떠났다.  (1줄, Narration, 0x0100000000019AD2)
-  나는 자리를 떴다.  (1줄, Narration, 0x01000000000418B0)
-[turn away.]
-  돌아서서 떠났다.  (1줄, -, 0x020000000003CD20)
-  고개를 돌렸다.  (2줄, -, 0x020000000001479B)
-[Never mind.]
-  아니, 됐어요.  (1줄, Mandel, 0x0100000000011439)
-  아니에요, 됐어요.  (3줄, Mandel, 0x0100000000028A27)
-[notice something in her movement.]
-  여자의 움직임에서 무언가를 알아챘다.  (1줄, -, 0x0200000000015C4F)
-  움직임에서 뭔가를 알아챘다.  (1줄, -, 0x0200000000042D03)
-[Take me to your bed.]
-  침대로 데려가 줘요.  (1줄, Mandel, 0x0100000000029A2E)
-  나를 침대로 데려가 줘요.  (1줄, Mandel, 0x0100000000041B9D)
-[I will.]
-  그렇게 할게요.  (1줄, Mandel, 0x0100000000024111)
-  그럴게요.  (2줄, Mandel, 0x01000000000198F2)
-[remain conscious.]
-  의식을 잃지 않았다.  (1줄, -, 0x0200000000021814)
-  의식을 잃지 않고 버텼다.  (1줄, -, 0x020000000002454A)
-[Just the farm children. I thought they would enjoy a new toy.]
-  농장 아이들에게요. 새 장난감이 있으면 좋아할 것 같아서요.  (1줄, Mandel, 0x0100000000018182)
-  그냥 농장 아이들한테요. 새 장난감을 좋아할 것 같아서요.  (1줄, Mandel, 0x0100000000028A71)
-[overpower her.]
-  여자를 힘으로 제압했다.  (1줄, -, 0x0200000000034E7F)
-  그 여자를 힘으로 제압했다.  (1줄, -, 0x020000000002DF8A)
-[What of it?]
-  그게 어때서요?  (1줄, Mandel, 0x0100000000042B75)
-  그래서요?  (1줄, Mandel, 0x0100000000032590)
-[I paid him a crown and he poured me a glass.]
-  나는 크라운 한 닢을 치렀고 그가 한 잔을 따라 주었다.  (1줄, Narration, 0x010000000001E6ED)
-  나는 그에게 크라운 한 닢을 내고 한 잔을 받았다.  (1줄, Narration, 0x010000000002B1E9)
-[He ignored my outstretched hand.]
-  그는 내민 내 손을 못 본 척했다.  (1줄, Narration, 0x010000000000D79B)
-  그는 내가 내민 손을 무시했다.  (1줄, Narration, 0x010000000002B1B2)
-[He shrugged.]
-  그는 어깨를 으쓱했다.  (2줄, Narration, 0x010000000000D8F9)
-  그가 어깨를 으쓱했다.  (1줄, Narration, 0x0100000000037FE0)
-[Enough about my uncle.]
-  삼촌 얘기는 이제 그만하자.  (1줄, Mandel, 0x0100000000027E6E)
-  삼촌 얘기는 이쯤 하자.  (1줄, Mandel, 0x0100000000028102)
-  삼촌 얘기는 이쯤 하죠.  (1줄, Mandel, 0x01000000000282BD)
-[Perhaps I was mistaken.]
-  제가 잘못 생각했나 보네요.  (1줄, Mandel, 0x0100000000029B45)
-  제가 잘못 들었나 보네요.  (1줄, Mandel, 0x0100000000029C05)
-[They may have ransacked my home.]
-  제 집이 털렸을지도 몰라요.  (1줄, Mandel, 0x0100000000029BBC)
-  그들이 제 집을 쑥대밭으로 만들었을지도 몰라요.  (1줄, Mandel, 0x0100000000029F2C)
-[No deal.]
-  거래 안 해요.  (1줄, Mandel, 0x0100000000029CFB)
-  안 되겠어요.  (1줄, Mandel, 0x010000000002046C)
-[I am afraid not.]
-  기억나지 않아요.  (1줄, Mandel, 0x01000000000126F2)
-  아쉽지만 못 읽어 봤어요.  (1줄, Mandel, 0x01000000000251F2)
-[Can I ask why?]
-  이유를 물어봐도 될까요?  (1줄, Mandel, 0x0100000000001EB0)
-  이유를 물어도 될까요?  (1줄, Mandel, 0x0100000000042BF5)
-[appeal to his good nature.]
-  그의 선한 마음에 호소했다.  (2줄, -, 0x02000000000132AB)
-  선한 마음에 호소했다.  (1줄, -, 0x020000000001F9EE)
-[Tell me about yourself.]
-  본인 이야기를 들려주세요.  (1줄, Mandel, 0x01000000000100B8)
-  당신에 대해 들려주세요.  (1줄, Mandel, 0x0100000000028658)
-[A sad smile crossed her lips.]
-  그녀의 입가에 슬픈 미소가 스쳤다.  (1줄, Narration, 0x01000000000209FD)
-  애니의 입가에 쓸쓸한 미소가 스쳤다.  (1줄, Narration, 0x010000000001BC8E)
-[Goodbye for now.]
-  그럼 다음에 봐요.  (1줄, Mandel, 0x0100000000015408)
-  일단 안녕히 가요.  (1줄, Mandel, 0x01000000000153EB)
-  그럼 이만 가 볼게요.  (2줄, Mandel, 0x010000000001631C)
-[No, sorry.]
-  아뇨, 미안해요.  (1줄, Mandel, 0x010000000003E6A9)
-  아니요, 미안해요.  (1줄, Mandel, 0x010000000004419D)
-[You look unwell, my love?]
-  안색이 안 좋아요, 내 사랑?  (1줄, Mandel, 0x0100000000043A33)
-  아파 보여요, 내 사랑?  (1줄, Mandel, 0x0100000000043A58)
-[What must I do?]
-  뭘 하면 되죠?  (1줄, Mandel, 0x010000000003D48D)
-  제가 뭘 해야 하죠?  (1줄, Mandel, 0x0100000000037279)
-[I wrapped my hands around his throat.]
-  나는 두 손으로 그의 목을 감쌌다.  (1줄, Narration, 0x010000000002443D)
-  나는 두 손으로 삼촌의 목을 감쌌다.  (1줄, Narration, 0x010000000003A4EE)
-[From my time as a diplomat, I knew Turkish to a fair standard. Though it would raise suspicion, I spoke now to the vizier in his own language.]
-  외교관으로 지낸 덕에 나는 튀르크어를 꽤 한다. 의심을 사겠지만, 이제 재상에게 그의 언어로 말을 건넸다.  (1줄, Narration, 0x010000000002560E)
-  외교관으로 지낸 덕에 튀르크어를 꽤 한다. 의심을 사겠지만, 나는 재상에게 그의 언어로 말을 걸었다.  (1줄, Narration, 0x01000000000259A7)
-[He turned on his heel and marched back into the grounds of the keep.]
-  그는 휙 돌아서서 성 안뜰로 성큼성큼 되돌아갔다.  (1줄, Narration, 0x010000000002706C)
-  그는 휙 돌아서서 성 안뜰로 성큼성큼 걸어갔다.  (1줄, Narration, 0x0100000000023D9E)
-[I left him alone.]
-  나는 그를 그냥 두었다.  (1줄, Narration, 0x01000000000273DA)
-  나는 그를 혼자 내버려 두었다.  (1줄, Narration, 0x010000000000213C)
-[Hell.]
-  헬.  (2줄, Boerhaaven's Creature, 0x01000000000176EA)
-  지옥.  (2줄, Boerhaaven's Creature, 0x0100000000022919)
-[What about... us ....?]
-  그럼… 우리 는…?  (1줄, Mandel, 0x01000000000443FE)
-  그럼… 우리 사이 는…?  (1줄, Mandel, 0x01000000000443E0)
-[What is this place?]
-  여긴 어디죠?  (1줄, Mandel, 0x0100000000038BC5)
-  여기는 어디죠?  (1줄, Mandel, 0x010000000000F334)
-[Okay, nevermind.]
-  알겠어요. 신경 쓰지 마세요.  (1줄, Mandel, 0x0100000000029FDF)
-  아, 됐어요. 관둘게요.  (1줄, Mandel, 0x010000000003DC62)
-[convince him to hire you.]
-  상대를 설득해 일자리를 얻었다.  (1줄, -, 0x0200000000002650)
-  나를 고용하도록 설득했다.  (1줄, -, 0x02000000000025DB)
-[Extra muscle.]
-  힘을 보태 줄 사람이 필요해서요.  (1줄, Mandel, 0x0100000000019F0A)
-  힘 좀 보태 주셨으면 해서요.  (1줄, Mandel, 0x0100000000019F8D)
-  힘을 보태 주셨으면 해서요.  (1줄, Mandel, 0x0100000000019EA0)
-[Let me explain these buttons...]
-  이 단추가 뭔지 설명해 드릴게요…  (1줄, Mandel, 0x0100000000035E40)
-  이 단추에 대해 설명해 드릴게요…  (1줄, Mandel, 0x0100000000035E2E)
-[Did we not already speak of this? Baron Jervase had reason to believe the Shroud may attempt to interfere, and though it pained him, asked me to hurry the process.]
-  그 얘기는 이미 하지 않았던가요? 제르베스 남작은 검은 베일이 방해하려 들지도 모른다고 믿을 만한 이유가 있었고, 가슴 아파하면서도 내게 서둘러 달라고 부탁했어요.  (1줄, Father Oliwier, 0x010000000000FCF3)
-  그 얘기는 이미 하지 않았던가요? 제르베스 남작께서 검은 베일이 방해를 시도할지 모른다고 여기셨고, 마음이 아프셨지만 서둘러 달라고 내게 청하셨어요.  (1줄, Father Oliwier, 0x0100000000010014)
-[The others nodded in agreement, putting the same trust they had in me, in their new leader.]
-  다른 아이들도 고개를 끄덕였다. 나를 믿듯 새 우두머리를 믿고 따르기로 한 것이다.  (1줄, Narration, 0x010000000000C952)
-  다른 아이들도 고개를 끄덕였다. 나를 믿듯 새 우두머리를 믿고 따르기로 했다.  (1줄, Narration, 0x010000000000CA41)
-[I brought you some Saffron.]
-  사프란을 좀 사 왔어요. 받아요.  (1줄, Mandel, 0x010000000001BF1C)
-  사프란을 좀 가져왔어요.  (1줄, Mandel, 0x010000000001C009)
-[It has been difficult.]
-  힘들기는 했어요.  (1줄, Mandel, 0x010000000001C3AC)
-  힘들었어요.  (1줄, Mandel, 0x010000000001C62F)
-[I stayed.]
-  나는 남았다.  (1줄, Narration, 0x010000000001DA92)
-  나는 그 자리에 남았다.  (1줄, Narration, 0x010000000002F119)
-[I'll talk to you later.]
-  나중에 또 얘기하자.  (2줄, Mandel, 0x010000000002C89F)
-  나중에 얘기하자.  (1줄, Mandel, 0x010000000002F046)
-[Aldis' power surged across the void and into me; he clawed at my mind as he attempted to take control. Already his angry suggestions began to take root, and seemed as if they were my own thoughts.]
-  알디스의 힘이 공허를 가로질러 내 안으로 밀려들었다. 그는 내 정신을 할퀴며 지배하려 들었다. 벌써 분노에 찬 속삭임이 뿌리내리기 시작했고, 마치 내 생각처럼 느껴졌다.  (1줄, Narration, 0x010000000003B859)
-  알디스의 힘이 공허를 가로질러 내 안으로 밀려들었다. 그는 내 정신을 할퀴며 지배권을 빼앗으려 했다. 벌써 그의 분노 어린 속삭임이 뿌리를 내리기 시작해, 내 생각처럼 느껴졌다.  (2줄, Narration, 0x0100000000043C6D)
-[Human Flesh]
-  사람의 살점  (1줄, -, OBJSHUMAN_FLESH)
-  인간의 살점  (1줄, -, 0x010000000001131F)
-[Human Hair]
-  사람의 머리카락  (1줄, -, OBJSHUMAN_HAIR)
-  인간의 머리카락  (1줄, -, 0x0100000000018098)
-[Medical Supplies]
-  의료 물품  (1줄, -, OBJSMEDICAL_SUPPLIES)
-  의료용품  (1줄, -, 0x0100000000004EF6)
-[Club]
-  몽둥이  (1줄, -, OBJSCLUB)
-  곤봉  (1줄, -, WEAPSCLUB)
-[Ale-yeast]
-  에일 양조용 효모.  (1줄, -, OBJLYEAST)
-  에일 효모  (1줄, -, 0x010000000002ED8C)
-[Repair]
-    (1줄, -, SCM_8)
-  수리  (1줄, -, 0x001000000000500B)
-[Rejuvenate]
-    (1줄, -, SCM_9)
-  회복  (1줄, -, 0x0010000000005013)
-
-==== 가. 말하는 사람이 다름 ====
-[Indeed.]
-  그렇습니다.  (1줄, Albrecht Hoffman, 0x0100000000003A5B)
-  왔습니다.  (1줄, Albrecht Hoffman, 0x0100000000021650)
-  그렇군요.  (3줄, Mandel, 0x0100000000005B53)
-  네, 안녕하세요.  (1줄, Mandel, 0x0100000000014B3C)
-  그러네요.  (1줄, Mandel, 0x0100000000023A54)
-  그렇지.  (1줄, Aldis, 0x010000000003728E)
-  맞아요.  (1줄, Mandel, 0x0100000000019805)
-  그렇고말고.  (1줄, Aldis, 0x010000000003C456)
-[As you wish.]
-  분부대로 하겠습니다.  (3줄, Albrecht Hoffman, 0x0100000000006E25)
-  좋을 대로 해.  (1줄, Mandel, 0x010000000000E83E)
-  그러세요.  (1줄, Bozhena, 0x0100000000004F09)
-  알겠어요.  (1줄, Fen, 0x0100000000016411)
-  좋을 대로 하시오.  (1줄, Alexander Pope, 0x0100000000025BE0)
-  네 뜻대로.  (1줄, Boerhaaven's Creature, 0x0100000000022E06)
-[Yes, of course.]
-  네, 물론이죠.  (3줄, Mandel, 0x0100000000007063)
-  예, 물론입니다.  (1줄, Albrecht Hoffman, 0x01000000000059BD)
-  그렇소, 물론.  (2줄, Lady Agnes Carnell, 0x0100000000024DEF)
-[Of course.]
-  물론이죠.  (2줄, Mandel, 0x010000000000B9E3)
-  물론이에요.  (1줄, Mandel, 0x0100000000009038)
-  물론이지.  (6줄, Angelina,Lucus,Mandel, 0x01000000000099DF)
-  그럼요.  (2줄, Mandel, 0x0100000000009970)
-  물론이오.  (2줄, Alexander Pope,Ha’anthu, 0x0100000000017267)
-  물론입니다.  (1줄, Leopold, 0x0100000000044443)
-  그러시겠죠.  (1줄, Mandel, 0x0100000000022257)
-[Good [time], [formal].]
-  좋은 [time] 되시게, [formal].  (1줄, Balaban, 0x010000000002E60D)
-  좋은 [time]입니다, [formal].  (1줄, Eric, 0x010000000001014A)
-[M'[title].]
-  말씀하십시오, [title].  (1줄, Albrecht Hoffman, 0x01000000000413E9)
-  [title]님.  (1줄, Emil, 0x0100000000001F83)
-[I understand.]
-  알겠어요.  (4줄, Mandel,Sofia, 0x0100000000044DF8)
-  알아요.  (1줄, Mandel, 0x01000000000311E6)
-  이해해요.  (1줄, Mandel, 0x010000000000FAFA)
-[Yes.]
-  네.  (6줄, Female Voice,Mandel, 0x0100000000009E00)
-  응.  (2줄, Mandel, 0x0100000000031CD0)
-  그렇소.  (1줄, Channing, 0x010000000000D005)
-  그래.  (1줄, Mandel, 0x01000000000385E6)
-[Yes, what?]
-  그래서, 무슨 일이오?  (1줄, Angelina, 0x0100000000001BE0)
-  그래, 뭔데?  (1줄, Haelan, 0x010000000000BFB6)
-[Good day.]
-  안녕히 계세요.  (1줄, Mandel, 0x0100000000001C4F)
-  안녕하시오.  (1줄, Gerhardht Oman, 0x01000000000025E9)
-[Aye.]
-  봤소.  (1줄, Angelina, 0x0100000000001C90)
-  그렇다네.  (1줄, Leopold, 0x010000000000CEA4)
-  그래.  (3줄, Drago,Svit, 0x010000000000D7D3)
-  네.  (1줄, Mandel, 0x010000000001AD8B)
-[Very well.]
-  그러시오.  (1줄, Angelina, 0x010000000000E184)
-  알겠어요.  (8줄, Mandel, 0x010000000003818B)
-  좋소.  (1줄, Sülen, 0x01000000000151B1)
-  좋아요.  (5줄, Mandel,Merlyn, 0x010000000002FBAE)
-  좋네.  (2줄, Aldis, 0x0100000000038CCB)
-  알겠습니다.  (1줄, Ekrem, 0x010000000001C0C0)
-  좋다.  (1줄, Jervase, 0x010000000003AE61)
-[No.]
-  모르오.  (1줄, Angelina, 0x010000000001397E)
-  아니요.  (7줄, Mandel, 0x01000000000113BA)
-  싫어.  (2줄, Boerhaaven's Creature,Mandel, 0x010000000001FE70)
-  아니.  (4줄, Gustav,Mandel,Nicc, 0x010000000000E761)
-  안 돼.  (1줄, Mandel, 0x01000000000218E2)
-[Thank you.]
-  고마워요.  (7줄, Mandel, 0x010000000001C9C6)
-  고마워.  (2줄, Boerhaaven's Creature,Diedrik, 0x0100000000022BA8)
-[Fuck off.]
-  씨발, 꺼져.  (1줄, Angelina, 0x010000000003E684)
-  꺼져.  (1줄, Ilona, 0x010000000003DC44)
-[For hired protection, you might talk to some of the mercenaries stationed in the city. Their captain is Mendoz.]
-  호위가 필요하면 도시에 주둔한 용병들한테도 물어보시오. 대장 이름은 멘도스요.  (1줄, Angelina, 0x010000000003FA31)
-  호위가 필요하시면 시내에 주둔한 용병들에게 말해 보십시오. 대장은 멘도스입니다.  (1줄, Andras, 0x010000000003FA06)
-[I see.]
-  그렇군요.  (2줄, Mandel, 0x0100000000001F1E)
-  그렇군.  (2줄, Leopold,Mendoz, 0x0100000000043207)
-  그렇구나.  (1줄, Jervase, 0x0100000000012707)
-  알겠어요.  (2줄, Mandel,Stanislav, 0x01000000000308EC)
-[No!]
-  몰라요!  (1줄, Jonas, 0x01000000000381B5)
-  안 돼요!  (1줄, Barbara, 0x010000000002DC13)
-[Okay.]
-  알겠어요.  (6줄, Mandel, 0x010000000003B008)
-  알았어.  (1줄, Mandel, 0x0100000000013A1D)
-  좋아요.  (3줄, Mandel,Wymer, 0x010000000003CE65)
-  네.  (1줄, Lelon, 0x010000000000FE68)
-[Nothing.]
-  아무 기척도 없다.  (1줄, Narration, 0x0100000000041926)
-  아무 일도 없었다.  (1줄, Narration, 0x0100000000022797)
-  없어요.  (1줄, Mandel, 0x0100000000019FCD)
-  없어.  (1줄, Mandel, 0x0100000000019E68)
-  아무것도 안 해요.  (1줄, Mandel, 0x010000000002AC87)
-[What's going on here?]
-  무슨 일이에요?  (2줄, Mandel, 0x0100000000002EF9)
-  여기 무슨 일이야?  (1줄, Mandel, 0x010000000002C339)
-  여기서 무슨 일이 벌어지는 거요?  (1줄, Willard, 0x0100000000034602)
-[Yes?]
-  무슨 일이오?  (1줄, Sülen, 0x010000000003CD7E)
-  무슨 일이십니까?  (1줄, Father Konstantin, 0x0100000000013D7F)
-  왜?  (1줄, Wolfgang, 0x010000000001477D)
-  네?  (2줄, Aniela,Narration, 0x010000000003E55C)
-  그래서?  (2줄, Boerhaaven,Woman, 0x0100000000013C1D)
-  뭐요?  (1줄, Temerity, 0x010000000002B17F)
-[A shame.]
-  아쉽네요.  (2줄, Barbara,Mandel, 0x010000000001560D)
-  아쉽구나.  (1줄, Jervase, 0x01000000000126F9)
-[Please...]
-  자, 보세요…  (1줄, Dorothea Becker, 0x010000000001561B)
-  제발…  (1줄, Mandel, 0x01000000000430A6)
-[Certainly.]
-  물론이죠.  (1줄, Chandler, 0x0100000000011359)
-  물론이지.  (1줄, Mandel, 0x010000000000C4CB)
-  그럼요.  (1줄, Mandel, 0x010000000001C08A)
-  알았어.  (1줄, Mandel, 0x01000000000305B1)
-[I did.]
-  그랬죠.  (1줄, Nikos, 0x01000000000017C6)
-  그랬지.  (1줄, Aldis, 0x0100000000038CDE)
-[Why are you telling me this?]
-  제게 이런 얘기를 하는 이유가 뭐예요?  (1줄, Mandel, 0x0100000000043524)
-  왜 그런 얘기를 저한테 하시는 거예요?  (1줄, Rosa Dal Farra, 0x01000000000066D3)
-[It was locked.]
-  문은 잠겨 있었다.  (1줄, Narration, 0x010000000001AFD9)
-  잠겨 있었다.  (2줄, -,Narration, 0x01000000000186A9)
-[I am.]
-  맞아요.  (1줄, Mandel, 0x0100000000005A35)
-  네, 그래요.  (1줄, Mandel, 0x0100000000008446)
-  확신해요.  (1줄, Mandel, 0x0100000000020C4F)
-  나는.  (1줄, Boerhaaven's Creature, 0x0100000000017702)
-[What? No.]
-  뭐? 몰라.  (1줄, Haelan, 0x010000000000BFCE)
-  뭐라고요? 싫어요.  (1줄, Rosa Dal Farra, 0x010000000002DF60)
-[Hmmm...]
-  흐음…  (5줄, Alfonz,Jokob,Lucus,Mandel, 0x0100000000007220)
-  으음…  (1줄, Mandel, 0x010000000002FB1A)
-[On?]
-  뭘 봐 가면서?  (1줄, Mandel, 0x01000000000072C1)
-  뭐에 따라서?  (1줄, Haelan, 0x0100000000008757)
-[Hello, [formal].]
-  안녕, [formal].  (1줄, Lelon, 0x0100000000014E71)
-  안녕하세요, [formal].  (2줄, Lelon,Rosa Dal Farra, 0x0100000000011428)
-[Certainly. It's 3 crowns for a bottle of port.]
-  그럼. 포트와인 한 병에 3크라운이야.  (1줄, Garnet, 0x010000000003CE33)
-  물론이죠. 포트와인 한 병에 3크라운이에요.  (1줄, Wymer, 0x010000000003CE76)
-[Suit yourself.]
-  좋을 대로 해.  (2줄, Garnet,Vittoria, 0x010000000003CE48)
-  맘대로 해.  (1줄, Tomaz, 0x010000000000E8A7)
-  맘대로 해요.  (1줄, Varenth, 0x010000000003D7AE)
-  마음대로 해.  (1줄, Mandel, 0x0100000000022D36)
-  마음대로 하게.  (1줄, Jokob, 0x01000000000440F2)
-  마음대로 하세요.  (1줄, Mandel, 0x010000000001E00D)
-  마음대로 해요.  (1줄, Mandel, 0x010000000003A2A9)
-[Pfft, suit yourself.]
-  쳇, 마음대로 해.  (1줄, Hend, 0x0100000000006428)
-  흥, 맘대로 하세요.  (1줄, Fen, 0x01000000000324D9)
-[Hello, [name]!]
-  안녕, [name]!  (2줄, Sofia, 0x0100000000010FD5)
-  안녕하세요, [name]!  (1줄, Connor, 0x0100000000015400)
-[I agreed to meet you there in the morning. I feel a bit safer at that time, you understand.]
-  아침에 거기서 만나자고 했지. 그때가 좀 더 안심되잖아. 이해하지?  (1줄, Sofia, 0x010000000002111E)
-  아침에 거기서 만나기로 했잖아. 그때가 좀 더 안전할 것 같아서 그래. 이해하지?  (1줄, Diedrik, 0x010000000002110E)
-  아침에 거기서 만나기로 했잖아요. 그 시간이 좀 더 안전한 것 같아서요. 아시죠?  (2줄, Annie,Connor, 0x01000000000210F1)
-[Oh [name]... [lover] was asking me about you again.]
-  아, [name]… [lover]이(가) 또 네 얘기를 물어보더라.  (1줄, Sofia, 0x010000000003FB71)
-  아, [name]… [lover]이(가) 또 네 소식을 묻더라.  (1줄, Diedrik, 0x010000000003FB07)
-[He said you had a date the other evening, but that you haven't looked him up since?]
-  얼마 전 저녁에 데이트했는데 그 뒤로 찾아오질 않는다면서?  (1줄, Sofia, 0x010000000003FB7D)
-  그 사람 말이, 며칠 전 저녁에 너랑 데이트했는데 그 뒤로 네가 통 찾아오질 않는다던데?  (1줄, Diedrik, 0x010000000003FB14)
-[Please.]
-  듣고 싶어요.  (1줄, Mandel, 0x01000000000084CD)
-  부탁하네.  (1줄, Jokob, 0x010000000000BB9F)
-  부탁해.  (1줄, Mandel, 0x010000000003D8E3)
-[Seeds?]
-  씨앗?  (1줄, Mandel, 0x010000000000E8D1)
-  씨앗입니까?  (1줄, Andras, 0x0100000000010116)
-[I have not.]
-  못 들어 봤어요.  (1줄, Mandel, 0x0100000000014ACA)
-  안 해 봤어.  (1줄, Irving, 0x010000000001EFA8)
-  아니요, 그런 적 없어요.  (1줄, Mandel, 0x010000000002700D)
-[Well...]
-  그러니까…  (1줄, Mandel, 0x0100000000003E6E)
-  글쎄요…  (1줄, Merlyn, 0x010000000001FC35)
-[And?]
-  그래서?  (2줄, Diedrik,Irving, 0x0100000000001882)
-  또?  (1줄, Mandel, 0x010000000001AE2B)
-[Glad to hear it.]
-  반가운 말이군.  (1줄, Irving, 0x010000000001F13F)
-  다행이네요.  (1줄, Annie, 0x010000000002F81C)
-[Not yet.]
-  아직요.  (1줄, Mandel, 0x010000000001F30C)
-  아직은 안 돼.  (1줄, Mandel, 0x0100000000029756)
-  아직.  (1줄, Lelon, 0x010000000002E77E)
-[Hello there.]
-  안녕.  (1줄, Diedrik, 0x0100000000031CE3)
-  안녕하세요.  (1줄, Mandel, 0x010000000003FA47)
-[Thank you, [name].]
-  고마워요, [name].  (1줄, Besina, 0x0100000000031B58)
-  고맙네, [name].  (1줄, Arald Tailor, 0x010000000003CFA6)
-[Oh!]
-  아!  (1줄, Barbara, 0x01000000000193AE)
-  어머!  (1줄, Mirabel Van Elstrik, 0x010000000002699D)
-[Ahem!]
-  어흠!  (1줄, Mandel, 0x01000000000419E2)
-  크흠!  (1줄, Drago, 0x01000000000200A7)
-[Goodbye, for now. I need a rest.]
-  일단은 잘 가. 난 좀 쉬어야겠어.  (2줄, Diedrik,Sofia, 0x01000000000154F0)
-  일단 이만 헤어져요. 저는 좀 쉬어야겠어요.  (1줄, Connor, 0x0100000000015503)
-  일단 안녕히 가세요. 저는 좀 쉬어야겠어요.  (1줄, Annie, 0x0100000000015516)
-[I'll meet you back at the crypt when you're ready to do the ritual.]
-  의식 치를 준비가 되면 묘소에서 다시 만나자.  (1줄, Diedrik, 0x01000000000154F7)
-  의식 치를 준비가 되면 묘소에서 다시 만나요.  (2줄, Annie,Connor, 0x0100000000015509)
-  의식 치를 준비가 되면 납골당에서 다시 만나자.  (1줄, Sofia, 0x010000000001552F)
-[Yes, I made it last night. We agreed on 3 crowns?]
-  네, 어젯밤에 만들었어요. 3크라운으로 하기로 했죠?  (1줄, Besina, 0x0100000000028A39)
-  네, 어젯밤에 만들어 뒀어요. 3크라운으로 하기로 했지요?  (1줄, Javad, 0x0100000000028AA1)
-[Go away!]
-  저리 가요!  (1줄, Mojca, 0x0100000000019994)
-  나가!  (1줄, Sybil, 0x01000000000417E0)
-[Yes, [formal].]
-  네, [formal].  (3줄, Annie,Mojca,Peta, 0x010000000003D31F)
-  그래, [formal].  (1줄, Diedrik, 0x0100000000020D09)
-[Hey there!]
-  어이, 거기!  (1줄, Narration, 0x010000000001153E)
-  왔어!  (1줄, Rebeka, 0x0100000000043185)
-[What's going on?]
-  무슨 일이니?  (1줄, Juliana, 0x010000000001161E)
-  왜 그래?  (1줄, Ida, 0x010000000002941C)
-[Excellent.]
-  훌륭하오.  (1줄, Channing, 0x010000000000D086)
-  좋아.  (1줄, Sofia, 0x0100000000032C74)
-  훌륭하군.  (1줄, Aldis, 0x010000000003730F)
-  잘됐네요.  (1줄, Mandel, 0x010000000003B4FB)
-[I’m afraid not.]
-  유감이지만 안 되네.  (1줄, Leopold, 0x010000000000D274)
-  아무래도 안 되겠어요.  (1줄, Mandel, 0x010000000001C0EA)
-  안타깝지만 안 돼요.  (1줄, Mandel, 0x0100000000033E70)
-[What?]
-  뭐?  (4줄, Gustav,Lelon,Lucus,Mandel, 0x010000000001A857)
-  왜?  (1줄, Robyn, 0x010000000002C31E)
-[I...]
-  그게…  (1줄, Merlyn, 0x010000000001FBFC)
-  나, 나는…  (1줄, Tomaz, 0x010000000000EAEA)
-[What is it?]
-  왜?  (1줄, Vittoria, 0x0100000000017B86)
-  이게 뭔데?  (1줄, Mandel, 0x010000000002366B)
-  무슨 일인가?  (1줄, Gerhardht Oman, 0x0100000000002431)
-  무슨 일이야?  (1줄, Leonardo, 0x0100000000035898)
-[Very good.]
-  좋아요.  (1줄, Mandel, 0x01000000000100D4)
-  잘됐소.  (1줄, Cederic, 0x0100000000018AFE)
-[Very well. Thank you.]
-  알겠어요. 고마워요.  (1줄, Mandel, 0x010000000002A0F6)
-  알겠습니다. 감사합니다.  (1줄, Isabella, 0x0100000000033F8E)
-[There you are. Well, let's get on with it.]
-  왔구나. 자, 시작하자.  (2줄, Diedrik,Sofia, 0x01000000000154C7)
-  오셨네요. 자, 시작하죠.  (1줄, Connor, 0x01000000000154D5)
-  오셨네요. 자, 시작해요.  (1줄, Annie, 0x01000000000154DC)
-[Help!]
-  살려 줘!  (1줄, Narration, 0x0100000000014D9E)
-  살려 줘요!  (1줄, Ramón, 0x01000000000345DF)
-[Grrr!]
-  으르렁!  (1줄, Young Boy, 0x0100000000015F95)
-  으르릉!  (1줄, Darius, 0x010000000002A929)
-[I'm sorry.]
-  미안해요.  (2줄, Annie,Connor, 0x0100000000015382)
-  죄송해요.  (1줄, Mandel, 0x010000000003CF98)
-  안됐네.  (1줄, Mandel, 0x0100000000042D79)
-[Why m'[title], whatever could you mean?]
-  어머, [title], 그게 무슨 말씀이세요?  (1줄, Annie, 0x010000000001EBFD)
-  아이고, [title], 대체 무슨 말씀이세요?  (1줄, Connor, 0x010000000003C6DA)
-[Oh [name]!]
-  어머, [name]!  (1줄, Annie, 0x010000000003C687)
-  아, [name]!  (1줄, Connor, 0x010000000003C76F)
-[Oh, mmm... [name]!]
-  어머, 음… [name]!  (1줄, Annie, 0x01000000000439D2)
-  어, 음… [name]!  (1줄, Connor, 0x0100000000043A04)
-[There you are!]
-  거기 있었구나!  (1줄, Sofia, 0x0100000000032B8D)
-  여기 있었군!  (1줄, Varenth, 0x010000000003DB78)
-[What do you want?]
-  원하는 게 뭐죠?  (1줄, Mandel, 0x0100000000016965)
-  왜요? 뭐 시킬 거예요?  (1줄, Nicc, 0x010000000000FDBB)
-  무슨 볼일이야?  (1줄, Henning, 0x010000000002DDFA)
-[Well?]
-  그래서?  (1줄, Lady Agnes Carnell, 0x0100000000016A2E)
-  그래서요?  (1줄, Father Oliwier, 0x010000000003EB6B)
-[Quite.]
-  그렇소.  (1줄, Lord Richard Carnell, 0x01000000000248D7)
-  아주.  (1줄, Boerhaaven's Creature, 0x010000000001771A)
-[Deal.]
-  거래해요.  (1줄, Mandel, 0x010000000002587E)
-  좋아요.  (1줄, Mandel, 0x0100000000020419)
-  좋아.  (1줄, Rebeka, 0x010000000002B2F9)
-[A pity.]
-  안타깝구려.  (1줄, Alexander Pope, 0x0100000000025F0A)
-  안됐군.  (1줄, Mandel, 0x01000000000262DD)
-[If you say so.]
-  네가 그렇다면야.  (1줄, Mirabel Van Elstrik, 0x0100000000026D4F)
-  그렇다면 그런 거겠죠.  (1줄, Stanislav, 0x010000000002CBEE)
-[What happened?]
-  무슨 일이 있었어요?  (1줄, Mandel, 0x010000000001E9C6)
-  무슨 일이 있었는데요?  (1줄, Stanislav, 0x010000000002D079)
-[Hello.]
-  헬로.  (1줄, Boerhaaven's Creature, 0x01000000000176F6)
-  안녕하세요.  (1줄, Mandel, 0x010000000003ECCA)
-[Good.]
-  좋아.  (1줄, Boerhaaven's Creature, 0x0100000000017708)
-  좋아요.  (1줄, Mandel, 0x0100000000037231)
-  잘했어.  (1줄, Garnet, 0x01000000000361AD)
-[Sorry.]
-  미안.  (1줄, Boerhaaven's Creature, 0x0100000000017738)
-  미안해요.  (1줄, Mandel, 0x010000000000E405)
-  죄송해요.  (1줄, Mandel, 0x010000000000E46D)
-  죄송합니다.  (1줄, Isabella, 0x010000000003ECF7)
-[That’s it?]
-  그게 다예요?  (1줄, Mandel, 0x0100000000023644)
-  그게 다야?  (1줄, Robyn, 0x010000000000C301)
-[Who?]
-  누구요?  (1줄, Mandel, 0x0100000000038C2B)
-  누가?  (1줄, Mandel, 0x0100000000020120)
-  누구 말씀이십니까?  (1줄, Sherman, 0x0100000000037872)
-[Why should I help you?]
-  제가 왜 도와야 하죠?  (1줄, Mandel, 0x0100000000038C41)
-  내가 널 왜 도와야 하지?  (1줄, Alfonz, 0x0100000000019EBC)
-[Perhaps not.]
-  안 되겠어요.  (1줄, Mandel, 0x0100000000014DE9)
-  그건 안 되겠네.  (1줄, Lucus, 0x010000000000C31D)
-[Fine by me.]
-  그러든가.  (1줄, Darius, 0x010000000002A8B0)
-  그러지 뭐.  (1줄, Ilona, 0x010000000002F48B)
-[Thank you for telling me.]
-  말해 줘서 고마워요.  (1줄, Mandel, 0x010000000002AC6F)
-  알려 줘서 고마워요.  (1줄, Isak, 0x010000000001E846)
-[Huh?]
-  네?  (2줄, Peta, 0x010000000000FF20)
-  응?  (4줄, Nicc,Peta, 0x010000000000C411)
-  어?  (1줄, Narration, 0x0100000000034ECA)
-[What?!]
-  뭐야?!  (1줄, -, 0x010000000001DE60)
-  뭐?!  (1줄, Diedrik, 0x0100000000029239)
-  뭐라고요?!  (3줄, Annie,Connor,Ramón, 0x010000000002FF9B)
-[What a mess!]
-  아주 난장판이네!  (1줄, Darius, 0x010000000002B052)
-  엉망진창이군!  (1줄, Narration, 0x010000000003243E)
-[Tell me!]
-  말해 줘!  (1줄, Lelon, 0x010000000002E9C4)
-  말해요!  (1줄, Mandel, 0x010000000003A406)
-[A holy amulet.]
-  성스러운 부적이다.  (1줄, Mandel, 0x010000000003756F)
-  성스러운 부적.  (2줄, -, OBJLHOLY_AMULET)
-
-==== 화면 글 표(ui-ko.tsv)와 본문이 다른 줄 ====
-  6행 [Rename] 표: 이름 바꾸기 / 본문: 
-  7행 [Stay There] 표: 거기 있어 / 본문: 
-  8행 [All Stay There] 표: 모두 거기 있어 / 본문: 
-  9행 [Follow Me] 표: 따라와 / 본문: 
-  10행 [All Nearby Follow Me] 표: 근처 모두 따라와 / 본문: 
-  11행 [Move To ...] 표: 이동 ... / 본문: 
-  12행 [All Followers Move To ...] 표: 따르는 하수인 모두 이동 ... / 본문: 
-  13행 [Equip] 표: 장비 / 본문: 
-  16행 [Come Here] 표: 이리 와 / 본문: 
-  17행 [Pick Up Nearby Body] 표: 근처 시체 들기 / 본문: 
-  18행 [Drop Body] 표: 시체 내려놓기 / 본문: 
-  19행 [Give Me Body] 표: 시체 넘겨 / 본문: 
-  20행 [Take Equipment] 표: 장비 가져오기 / 본문: 
-  21행 [Take Money] 표: 돈 가져오기 / 본문: 
-  22행 [Take Both] 표: 둘 다 가져오기 / 본문: 
-  23행 [Pick Up] 표: 줍기 / 본문: 
-  24행 [Dig Some Soil] 표: 흙 조금 파기 / 본문: 
-  25행 [Dig For Body] 표: 시체 파내기 / 본문: 
-  26행 [(Already Dug For Body)] 표: (이미 시체를 파냄) / 본문: 
-  27행 [Take Some Flesh] 표: 살점 떼어내기 / 본문: 
-  28행 [Awaken Ritual] 표: 깨우기 의식 / 본문: 
-  30행 [Cut Out Brain] 표: 뇌 꺼내기 / 본문: 
-  31행 [Talk] 표: 대화 / 본문: 
-  51행 [Overwrite Selected File?] 표: 선택한 파일에 덮어쓸까요? / 본문: 선택한 파일을 덮어쓸까요?
-  56행 [Quit to Desktop?] 표: 바탕화면으로 나갈까요? / 본문: 바탕 화면으로 나갈까요?
-  66행 [Quick Load from your most recent Quick Save?] 표: 가장 최근 빠른 저장에서 불러올까요? / 본문: 가장 최근의 빠른 저장을 불러올까요?
-  68행 [You cannot overwrite a Quicksave or Autosave slot with a regular save.] 표: 빠른 저장·자동 저장 칸에는 일반 저장을 덮어쓸 수 없습니다. / 본문: 일반 저장으로 빠른 저장이나 자동 저장 칸을 덮어쓸 수 없습니다.
-  82행 [Error sending file.] 표: 파일을 보내지 못했습니다. / 본문: 파일 전송 중 오류가 발생했습니다.
-  84행 [By right-clicking a save file you can upload it to our server to diagnose proble] 표: 저장 파일을 우클릭하면 문제 진단을 위해 개발사 서버로 올릴 수 있습니다. 올릴까요? / 본문: 저장 파일을 우클릭하면 문제 진단을 위해 저희 서버에 업로드할 수 있습니
-  99행 [What were you named?] 표: 당신의 이름은 무엇이었나? / 본문: 어떤 이름을 받았나요?
-  104행 [You can use custom portraits in the game by storing them in the CustomPortraits ] 표: CustomPortraits 폴더에 정해진 파일 이름으로 넣으면 게임에서 사용자 초상화를 쓸 수 있습니다. / 본문: 지정된 파일 이름으로 CustomPortraits 폴더에 초상화를 넣으면
-  106행 [Game Over] 표: 게임 오버 / 본문: 게임 종료
-  112행 [Return to the interactive fiction?] 표: 인터랙티브 픽션으로 돌아갈까요? / 본문: 선택형 이야기로 돌아갈까요?
-  147행 [Edit Journal Entry] 표: 일지 항목 고치기 / 본문: 일지 항목 수정
-  152행 [To Do note added in Journal] 표: 일지에 할 일이 추가됐다 / 본문: 일지에 할 일 메모 추가됨
-  154행 [You can view your active tasks by using the Journal icon in your task-bar. This ] 표: 작업 표시줄의 일지 아이콘으로 진행 중인 일을 볼 수 있습니다. 읽지 않은 내용이 있으면 아이콘이 깜박입니다 / 본문: 작업 표시줄의 일지 아이콘을 누르면 진행 중인 과제를 볼 수 있습니다. 
-  161행 [You cannot fast travel yet.] 표: 아직 빠른 이동을 할 수 없다. / 본문: 아직 빠른 이동을 할 수 없습니다.
-  162행 [You cannot fast travel to there.] 표: 그곳으로는 빠르게 이동할 수 없다. / 본문: 그곳으로는 빠른 이동을 할 수 없습니다.
-  163행 [You cannot fast travel while committing a crime.] 표: 범죄를 저지르는 중에는 빠르게 이동할 수 없다. / 본문: 범죄를 저지르는 중에는 빠른 이동을 할 수 없습니다.
-  164행 [You cannot fast travel while indoors or underground.] 표: 실내나 지하에서는 빠르게 이동할 수 없다. / 본문: 실내나 지하에서는 빠른 이동을 할 수 없습니다.
-  165행 [You cannot fast travel while leading minions.] 표: 하수인을 이끄는 중에는 빠르게 이동할 수 없다. / 본문: 하수인을 데리고 있을 때는 빠른 이동을 할 수 없습니다.
-  166행 [You cannot fast travel while outside the city, until chapter 14.] 표: 14장 전까지는 도시 밖에서 빠르게 이동할 수 없다. / 본문: 14장 전에는 도시 밖에서 빠른 이동을 할 수 없습니다.
-  167행 [You cannot fast travel while the Conversation Window is open.] 표: 대화 창이 열려 있으면 빠르게 이동할 수 없다. / 본문: 대화 창이 열려 있을 때는 빠른 이동을 할 수 없습니다.
-  174행 [Advancing Time] 표: 시간을 넘기는 중 / 본문: 시간 넘기는 중
-  181행 [Starting from chapter 3, you can click the Time Of Day icon in the control bar t] 표: 3장부터는 조작 막대의 시간대 아이콘을 눌러 아침·오후·저녁·밤으로 시간을 넘길 수 있습니다. / 본문: 3장부터 조작 표시줄의 시간대 아이콘을 클릭하면 아침, 오후, 저녁, 밤
-  182행 [You can click the Time Of Day icon in the control bar to advance time between mo] 표: 조작 막대의 시간대 아이콘을 눌러 아침·오후·저녁·밤으로 시간을 넘길 수 있습니다. 집 안이나 도시 안에 있 / 본문: 조작 표시줄의 시간대 아이콘을 클릭하면 아침, 오후, 저녁, 밤 순으로 
-  183행 [From chapter 7, you can also advance the time of day from within caves, tunnels ] 표: 7장부터는 동굴·터널·지하 묘지 안에서도 시간을 넘길 수 있습니다. / 본문: 7장부터는 동굴과 지하 통로, 납골당 안에서도 시간을 넘길 수 있습니다.
-  185행 [The funeral had not started yet; it was due in the evening.] 표: 장례식은 아직 시작하지 않았다. 저녁에 열릴 예정이었다. / 본문: 장례는 아직 시작하지 않았다. 저녁에 열릴 예정이었다.
-  186행 [It was not yet midnight, and thus too early for my meeting with the witch.] 표: 아직 자정이 아니라 마녀를 만나기엔 일렀다. / 본문: 아직 자정이 되지 않아 마녀를 만나기에는 일렀다.
-  187행 [You can now fast travel by clicking named locations on the wilderness map.] 표: 이제 황무지 지도에서 이름이 있는 장소를 눌러 빠르게 이동할 수 있다. / 본문: 이제 야외 지도에서 이름이 표시된 장소를 클릭하면 빠르게 이동할 수 있습
-  188행 [You can double-click to run, or use WASD with Shift.] 표: 더블클릭하거나 Shift와 WASD로 달릴 수 있습니다. / 본문: 두 번 클릭하면 달릴 수 있습니다. Shift를 누른 채 WASD로 움직
-  189행 [You can use the right mouse button or the CTRL key to see additional interaction] 표: 마우스 오른쪽 버튼이나 CTRL 키로 주변의 다른 상호작용 아이콘을 볼 수 있습니다. 컨트롤러는 LT. / 본문: 마우스 오른쪽 버튼이나 CTRL 키를 누르면 주변의 추가 상호작용 아이콘
-  193행 [Skill Check] 표: 기술 판정 / 본문: 능력 판정
-  195행 [You still have skill points to allocate.] 표: 아직 나눌 스킬 포인트가 남아 있습니다. / 본문: 아직 배분하지 않은 능력 점수가 있습니다.
-  205행 [Rather than defining your character through this interactive fiction, you can qu] 표: 이 인터랙티브 픽션으로 캐릭터를 정하는 대신 기술을 빠르게 설정할 수도 있습니다. 빠르게 설정할까요? / 본문: 선택형 이야기로 인물을 만들어 가는 대신 능력을 빠르게 설정할 수 있습니
-  300행 [trust decreased] 표: 신뢰 하락 / 본문: 신뢰 감소
-  301행 [trust increased] 표: 신뢰 상승 / 본문: 신뢰 증가
-  304행 [caught me attempting to cut some of her hair: trust decreased] 표: 이(가) 내가 그녀의 머리카락을 자르려는 걸 봤다: 신뢰 하락 / 본문: 머리카락을 조금 자르려다 들켰다: 신뢰 감소
-  305행 [caught me attempting to cut some of his hair: trust decreased] 표: 이(가) 내가 그의 머리카락을 자르려는 걸 봤다: 신뢰 하락 / 본문: 머리카락을 조금 자르려다 들켰다: 신뢰 감소
-  306행 [escaped my attack: trust decreased] 표: 이(가) 내 공격을 피했다: 신뢰 하락 / 본문: 내 공격을 피했다: 신뢰 감소
-  320행 [While commiting a crime or misdemeanour, you will see blue arcs in front of othe] 표: 범죄나 경범죄를 저지르는 동안 다른 인물 앞에 파란 부채꼴이 보입니다. 그 안에 들어가면 빨갛게 바뀌며, 목 / 본문: 범죄나 경범죄를 저지르는 동안 다른 인물들 앞에 파란 부채꼴이 표시됩니다
-  321행 [If you're not out of the city when the timer bar has filled, you will be arreste] 표: 시간 막대가 다 차기 전에 도시를 벗어나지 못하면 체포됩니다. / 본문: 시간 막대가 가득 차기 전에 도시를 벗어나지 못하면 체포됩니다.
-  324행 [Attacking an animal within the city is not allowed] 표: 도시 안에서 동물을 공격하면 안 된다 / 본문: 도시 안에서는 동물을 공격할 수 없습니다.
-  325행 [Carrying a weapon openly within the city is not allowed] 표: 도시 안에서 무기를 드러내고 다니면 안 된다 / 본문: 도시 안에서는 무기를 드러내고 다닐 수 없습니다.
-  326행 [Trespassing in the Keep is not allowed] 표: 성채 무단 침입은 금지돼 있다 / 본문: 성에 무단으로 들어갈 수 없습니다.
-  327행 [Wearing a mask is suspicious] 표: 가면을 쓰면 수상해 보인다 / 본문: 가면을 쓰면 의심을 삽니다.
-  328행 [I was seen carrying a weapon] 표: 무기를 든 모습을 들켰다 / 본문: 무기를 들고 다니는 모습을 들켰다.
-  329행 [I was seen wearing a mask] 표: 가면을 쓴 모습을 들켰다 / 본문: 가면을 쓴 모습을 들켰다.
-  330행 [I was witnessed attacking a defenseless animal] 표: 무방비한 동물을 공격하다 목격됐다 / 본문: 무방비한 동물을 공격하는 모습을 들켰다.
-  331행 [I was witnessed attacking someone] 표: 누군가를 공격하다 목격됐다 / 본문: 사람을 공격하는 모습을 들켰다.
-  332행 [I was witnessed attempting burglary] 표: 도둑질하려다 목격됐다 / 본문: 가택 침입을 시도하는 모습을 들켰다.
-  333행 [I was witnessed committing murder] 표: 살인하다 목격됐다 / 본문: 살인하는 모습을 들켰다
-  334행 [I was witnessed cutting up a body] 표: 시체를 자르다 목격됐다 / 본문: 시체를 토막 내는 모습을 들켰다
-  335행 [I was witnessed digging up a grave] 표: 무덤을 파헤치다 목격됐다 / 본문: 무덤을 파헤치는 모습을 들켰다.
-  336행 [I was witnessed leading undead minions] 표: 언데드 하수인을 이끌다 목격됐다 / 본문: 언데드 부하를 이끄는 모습을 들켰다
-  337행 [I was witnessed moving a body] 표: 시체를 옮기다 목격됐다 / 본문: 시체를 옮기는 모습을 들켰다.
-  338행 [I was witnessed performing a black magic ritual] 표: 흑마법 의식을 하다 목격됐다 / 본문: 흑마술 의식을 치르는 모습을 들켰다
-  339행 [I was witnessed stealing] 표: 훔치다 목격됐다 / 본문: 훔치는 모습을 들켰다.
-  340행 [I was witnessed trespassing in the keep] 표: 성채에 무단 침입하다 목격됐다 / 본문: 성에 무단으로 들어간 사실을 들켰다.
-  343행 [Leading undead minions] 표: 언데드 하수인 이끌기 / 본문: 언데드 부하 인솔
-  345행 [Cutting up a body] 표: 시체 자르기 / 본문: 시체 훼손
-  346행 [Performing black magic] 표: 흑마법 행하기 / 본문: 흑마술 시전
-  356행 [To use the Dominion of Phobos ritual and protect your work from interlopers, use] 표: 포보스의 지배 의식으로 침입자에게서 작업을 지키려면 묘지 입구의 의식 지점을 쓰세요. / 본문: 포보스의 지배 의식으로 침입자를 막고 작업을 지키려면 공동묘지 입구의 의
-  381행 [The key did not fit] 표: 열쇠가 맞지 않았다 / 본문: 열쇠가 맞지 않았다.
-  382행 [The key fitted the lock] 표: 열쇠가 자물쇠에 맞았다 / 본문: 열쇠가 자물쇠에 맞았다.
-  389행 [There were no more usable logs here.] 표: 여기엔 더 쓸 만한 통나무가 없었다. / 본문: 이곳에는 쓸 만한 통나무가 더 없었다.
-  390행 [I could not carry any more logs. I needed to return to the cart.] 표: 통나무를 더 들 수 없었다. 수레로 돌아가야 했다. / 본문: 통나무를 더는 들 수 없었다. 수레로 돌아가야 했다.
-  394행 [I put away my spade] 표: 삽을 집어넣었다 / 본문: 삽을 집어넣었다.
-  395행 [I put away my weapon] 표: 무기를 집어넣었다 / 본문: 무기를 집어넣었다.
-  396행 [I dug some grave soil] 표: 무덤 흙을 조금 팠다 / 본문: 무덤 흙을 조금 팠다.
-  399행 [I was not holding a cleaver or knife.] 표: 식칼이나 칼을 들고 있지 않았다. / 본문: 고기칼이나 칼을 들고 있지 않았다.
-  402행 [I removed a chunk of flesh.] 표: 살점을 한 덩이 떼어 냈다. / 본문: 살점을 떼어 냈다.
-  403행 [I bandaged myself with the cloth.] 표: 천으로 상처를 감쌌다. / 본문: 천으로 몸에 붕대를 감았다.
-  404행 [I began to feel ill as soon as I stepped inside.] 표: 들어서자마자 속이 메스꺼워졌다. / 본문: 안에 발을 들이자마자 속이 메스꺼워졌다.
-  405행 [I placed a bucket under the leak.] 표: 새는 곳 아래에 양동이를 놓았다. / 본문: 물이 새는 곳 아래에 양동이를 놓았다.
-  406행 [I did not have Jokob's permission to use the forge.] 표: 요코브에게 대장간 화덕을 써도 된다는 허락을 받지 않았다. / 본문: 요코브에게 대장간을 써도 된다는 허락을 받지 못했다.
-  407행 [I cut my arm and drained some of my own blood into the mix, then baked it into a] 표: 팔을 베어 내 피를 반죽에 조금 섞은 뒤, 납작하고 검은 케이크로 구웠다. / 본문: 팔을 베어 반죽에 내 피를 조금 흘려 넣은 다음, 납작하고 검은 케이크로
-  408행 [I had mixed a cake batter by Dorothea's recipe. It now just needed baking with y] 표: 도로테아의 조리법대로 케이크 반죽을 섞었다. 이제 효모를 넣고 굽기만 하면 됐다. / 본문: 도로테아의 조리법대로 케이크 반죽을 만들었다. 이제 효모를 넣고 굽기만 
-  409행 [Nothing much happened. This stove was not hot enough.] 표: 별일 없었다. 화덕이 충분히 뜨겁지 않았다. / 본문: 별일은 일어나지 않았다. 이 화덕은 충분히 뜨겁지 않았다.
-  431행 [cow's milk] 표: 소젖 / 본문: 우유
-  443행 [Cooking Pot] 표: 요리 냄비 / 본문: 냄비
-  450행 [Serve customers downstairs, mop up spills, and help customers upstairs. Alert ic] 표: 아래층 손님을 응대하고, 엎지른 것을 닦고, 위층 손님을 도우세요. 알림 아이콘이 할 곳을 보여 줍니다. 불 / 본문: 아래층 손님에게 음식을 나르고, 엎질러진 것을 닦고, 위층 손님을 도우세
-  451행 [You can only work for pay once per chapter. You have already done so in the curr] 표: 돈을 받는 일은 챕터마다 한 번만 할 수 있습니다. 이번 챕터에서는 이미 했습니다. / 본문: 품삯을 받는 일은 장마다 한 번만 할 수 있습니다. 이번 장에서는 이미 
-  452행 [You will be due pay after asking for, and completing, work at your job. You can ] 표: 일자리에서 일을 청해 끝내면 품삯을 받습니다. 챕터마다 한 번만 할 수 있습니다. / 본문: 일터에서 일감을 받아 마치면 품삯을 받을 수 있습니다. 장마다 한 번만 
-  461행 [All enemies are unconscious or running away. End this combat?] 표: 적이 모두 기절했거나 달아나고 있습니다. 전투를 끝낼까요? / 본문: 모든 적이 의식을 잃거나 달아나고 있습니다. 전투를 끝낼까요?
-  481행 [You have insufficient APs to cast] 표: AP가 모자라 시전할 수 없다: / 본문: 주문을 쓰기에 행동력(AP)이 부족합니다.
-  482행 [You have insufficient Energy to cast] 표: 기력이 모자라 시전할 수 없다: / 본문: 주문을 쓰기에 기력이 부족합니다.
-  483행 [You have insufficient MPs to cast] 표: 마법 점수가 모자라 시전할 수 없다: / 본문: 주문을 쓰기에 마력(MP)이 부족합니다.
-  492행 [You must get close enough first.] 표: 먼저 충분히 가까이 가야 한다. / 본문: 먼저 충분히 가까이 가야 합니다.
-  551행 [Call upon the daemon Ha'anthu to join you in battle.] 표: 악마 하안투를 불러 함께 싸웁니다. / 본문: 악마 하안투를 불러 함께 싸우게 합니다.
-  552행 [Call upon the daemon Lilathe to join you in battle.] 표: 악마 릴라테를 불러 함께 싸웁니다. / 본문: 악마 릴라테를 불러 함께 싸우게 합니다.
-  553행 [Call upon the wraith Clarence Pew to join you in battle.] 표: 망령 클래런스 퓨를 불러 함께 싸웁니다. / 본문: 망령 클래런스 퓨를 불러 함께 싸우게 합니다.
-  554행 [Commune with the Realm of the Dead, and gain Magic Points.] 표: 죽은 자들의 영역과 교감해 마법 점수를 얻습니다. / 본문: 죽은 자의 세계와 교감해 마력을 얻습니다.
-  557행 [Surround yourself with a mist of blood from the Realm of the Dead. Undead minion] 표: 죽은 자들의 영역에서 온 피의 안개로 자신을 감쌉니다. 그 안의 언데드 하수인은 전투의 분노로 가득 찹니다. / 본문: 죽은 자의 세계에서 온 피의 안개로 몸 주변을 감쌉니다. 안개 속 언데드
-  586행 [Game Description?] 표: 게임 설명? / 본문: 게임 설명을 입력할까요?
-  847행 [The black candles should be made of human fat.] 표: 검은 양초는 사람의 기름으로 만들어야 한다. / 본문: 검은 양초는 사람의 지방으로 만들어야 한다.
-  868행 [Delete] 표: 지우기 / 본문: 삭제
-  900행 [Unstuck] 표: 끼임 풀기 / 본문: 끼임 탈출
-  913행 [I did not have anything in my hand to set alight.] 표: 손에 불붙일 것이 없었다. / 본문: 손에 불붙일 만한 것을 들고 있지 않았다.
-  914행 [Cleaver] 표: 고기 칼 / 본문: 고기칼
-  935행 [Once per chapter, you should ask Garnet what work she needs doing. Afterwards, a] 표: 장마다 한 번씩 가넷에게 할 일이 있는지 물어보세요. 일을 마치면 삯을 달라고 하세요. / 본문: 장마다 한 번씩 가넷에게 할 일이 있는지 물어보세요. 일을 마친 뒤에는 
-  936행 [Once per chapter, you should ask Lucus what work he needs doing. Afterwards, ask] 표: 장마다 한 번씩 루커스에게 할 일이 있는지 물어보세요. 일을 마치면 삯을 달라고 하세요. / 본문: 장마다 한 번씩 루커스에게 할 일이 있는지 물어보세요. 일을 마친 뒤에는
-  1037행 [You cannot save while the Conversation Window is open, or during a ritual, cutsc] 표: 대화 창이 열려 있거나 의식·장면 연출·전투 중에는 저장할 수 없습니다. / 본문: 대화 창이 열려 있거나 의식, 연출 장면, 전투가 진행 중일 때는 저장할
-  1045행 [You must be inside a building, tunnel, cave or crypt to advance time.] 표: 시간을 보내려면 건물, 굴, 동굴, 지하 묘지 안에 있어야 합니다. / 본문: 건물, 터널, 동굴이나 지하 묘지 안에 있어야 시간을 넘길 수 있습니다.
-  1046행 [You must be inside your house, within the city limits, or in a tunnel, cave or c] 표: 시간을 보내려면 성벽 안의 우리 집, 또는 굴, 동굴, 지하 묘지 안에 있어야 합니다. / 본문: 집 안이나 도시 안, 또는 터널, 동굴, 지하 묘지 안에 있어야 시간을 
-  1047행 [Do you wish to advance time?] 표: 시간을 보낼까요? / 본문: 시간을 넘길까요?
+[1] No whisky to be found. Was he really a whisky drinker at all?
+  위스키는 코빼기도 안 보이네. 그분이 정말 위스키를 드시긴 했던 걸까? ‖ Sofia:017556, Sofia:017564
+  위스키는 코빼기도 안 보이네. 아버지가 정말 위스키를 드시긴 했던 거야? ‖ Sofia:01755D
+[2] Indeed.
+  그렇습니다. ‖ Albrecht Hoffman:003A5B
+  왔습니다. ‖ Albrecht Hoffman:021650
+  그렇군요. ‖ Mandel:005B53, Mandel:032A74, Mandel:03D9A1
+  네, 안녕하세요. ‖ Mandel:014B3C
+  그러네요. ‖ Mandel:023A54
+  그렇지. ‖ Aldis:03728E
+  맞아요. ‖ Mandel:019805
+  그렇고말고. ‖ Aldis:03C456
+[3] As you wish.
+  분부대로 하겠습니다. ‖ Albrecht Hoffman:006E25, Albrecht Hoffman:000672, Albrecht Hoffman:041549
+  좋을 대로 해. ‖ Mandel:00E83E
+  그러세요. ‖ Bozhena:004F09
+  알겠어요. ‖ Fen:016411
+  좋을 대로 하시오. ‖ Alexander Pope:025BE0
+  네 뜻대로. ‖ Boerhaaven's Creature:022E06
+[4] Yes, of course.
+  네, 물론이죠. ‖ Mandel:007063, Mandel:014AC3, Mandel:026D41
+  예, 물론입니다. ‖ Albrecht Hoffman:0059BD
+  그렇소, 물론. ‖ Lady Agnes Carnell:024DEF, Lady Agnes Carnell:024E4A
+[5] Of course.
+  물론이죠. ‖ Mandel:00B9E3, Mandel:013019
+  물론이에요. ‖ Mandel:009038
+  물론이지. ‖ Lucus:0099DF, Mandel:00E752, Mandel:03D8F9, Angelina:012510 외 2
+  그럼요. ‖ Mandel:009970, Mandel:030B9C
+  물론이오. ‖ Ha’anthu:017267, Alexander Pope:025CB8
+  물론입니다. ‖ Leopold:044443
+  그러시겠죠. ‖ Mandel:022257
+[6] I'm afraid not.
+  안 계세요. ‖ Mandel:00DAFD
+  아쉽게도 없어요. ‖ Mandel:00EA73
+  안타깝지만 그래. ‖ Mandel:03BB16
+[7] move on.
+  다음으로 넘어갔다. ‖ -:011090, -:007BA4
+  그냥 넘어갔다. ‖ -:03676B, -:0367A5
+[8] He nodded solemnly.
+  그는 무거운 표정으로 고개를 끄덕였다. ‖ Narration:00021A
+  그가 진지한 얼굴로 고개를 끄덕였다. ‖ Narration:0019FC
+[9] What should we do?
+  어떻게 해야 할까요? ‖ Mandel:03CA3D
+  우리 어떻게 해야 하지? ‖ Mandel:0290EA
+[10] Good [time], [formal].
+  좋은 [time] 되시게, [formal]. ‖ Balaban:02E60D
+  좋은 [time]입니다, [formal]. ‖ Eric:01014A
+[11] M'[title].
+  말씀하십시오, [title]. ‖ Albrecht Hoffman:0413E9
+  [title]. ‖ Emil:001F83
+[12] I understand.
+  알겠어요. ‖ Mandel:044DF8, Mandel:01FB89, Mandel:00EAB7, Sofia:0363BE
+  알아요. ‖ Mandel:0311E6
+  이해해요. ‖ Mandel:00FAFA
+[13] I am [name] Van Elstrik.
+  저는 [name] 반 엘스트릭이에요. ‖ Mandel:008E33
+  나는 [name] 반 엘스트릭이야. ‖ Mandel:017BDC
+[14] Yes.
+  네. ‖ Female Voice:009E00, Mandel:0113B3, Mandel:01F33D, Mandel:01A1A5 외 2
+  응. ‖ Mandel:031CD0, Mandel:00C308
+  그렇소. ‖ Channing:00D005
+  그래. ‖ Mandel:0385E6
+[15] What's happened?
+  무슨 일이 있었어요? ‖ Mandel:005995
+  무슨 일이야? ‖ Mandel:02F62D
+[16] Yes, what?
+  그래서, 무슨 일이오? ‖ Angelina:001BE0
+  그래, 뭔데? ‖ Haelan:00BFB6
+[17] Have you seen the herbalist?
+  약초상을 보셨어요? ‖ Mandel:001C3A
+  약초상을 본 적 있어요? ‖ Mandel:001F8A
+[18] Good day.
+  안녕히 계세요. ‖ Mandel:001C4F
+  안녕하시오. ‖ Gerhardht Oman:0025E9
+[19] Aye.
+  봤소. ‖ Angelina:001C90
+  그렇다네. ‖ Leopold:00CEA4
+  그래. ‖ Svit:00D7D3, Drago:020275, Drago:02081D
+  네. ‖ Mandel:01AD8B
+[20] Very well.
+  그러시오. ‖ Angelina:00E184
+  알겠어요. ‖ Mandel:03818B, Mandel:038198, Mandel:0381AD, Mandel:0381C2 외 4
+  좋소. ‖ Sülen:0151B1
+  좋아요. ‖ Mandel:02FBAE, Merlyn:029C41, Mandel:012F42, Mandel:01FA6D 외 1
+  좋네. ‖ Aldis:038CCB, Aldis:038D52
+  알겠습니다. ‖ Ekrem:01C0C0
+  좋다. ‖ Jervase:03AE61
+[21] I'm looking for some sulfur, do you know where I could get some?
+  유황을 좀 구하는데, 어디서 구할 수 있는지 아세요? ‖ Mandel:013977
+  유황을 찾고 있는데, 어디서 구할 수 있는지 아세요? ‖ Mandel:013961
+  유황을 구하고 있는데, 어디서 구할 수 있는지 아세요? ‖ Mandel:013986, Mandel:0137E0
+  유황을 좀 찾고 있는데, 어디서 구할 수 있는지 알아? ‖ Mandel:0139FD
+  유황이 필요한데, 어디서 구할 수 있는지 알아요? ‖ Mandel:01394B
+[22] No.
+  모르오. ‖ Angelina:01397E
+  아니요. ‖ Mandel:0113BA, Mandel:01A1AC, Mandel:012FAE, Mandel:028630 외 3
+  싫어. ‖ Mandel:01FE70, Boerhaaven's Creature:022BE9
+  아니. ‖ Mandel:00E761, Mandel:039A6C, Gustav:01A7D5, Nicc:00C3A1
+  안 돼. ‖ Mandel:0218E2
+[23] Thank you.
+  고마워요. ‖ Mandel:01C9C6, Mandel:009D52, Mandel:02887E, Mandel:020996 외 3
+  고마워. ‖ Boerhaaven's Creature:022BA8, Diedrik:03BC5E
+[24] I seek the forester, Svit. Do you know where to find him?
+  숲지기 스빗을 찾고 있어요. 어디에 있는지 아세요? ‖ Mandel:03817D
+  숲지기 스빗을 찾고 있어요. 어디로 가면 만날 수 있을까요? ‖ Mandel:038192, Mandel:0381A7
+  숲지기 스빗을 찾고 있어요. 어디 있는지 아세요? ‖ Mandel:0381BC
+  숲지기 스빗을 찾고 있어요. 어디 가면 만날 수 있는지 알아요? ‖ Mandel:0381D1
+  숲지기 스빗을 찾고 있어요. 어디 가면 만날 수 있나요? ‖ Mandel:0381DF, Mandel:0381EE, Mandel:0381FD
+[25] Any news from the barracks?
+  막사 쪽에 별일 없어요? ‖ Mandel:03E676
+  막사에 별다른 소식은 없어요? ‖ Mandel:03E658, Mandel:03E667
+  막사에서 들려온 소식이 있나요? ‖ Mandel:03E68C
+[26] Fuck off.
+  씨발, 꺼져. ‖ Angelina:03E684
+  꺼져. ‖ Ilona:03DC44
+[27] Okay, thank you.
+  네, 고마워요. ‖ Mandel:03FA19
+  알겠어요, 고마워요. ‖ Mandel:03F9E9
+[28] Where might I find him?
+  어디로 가면 만날 수 있을까요? ‖ Mandel:03FA1F
+  그분은 어디서 찾을 수 있죠? ‖ Mandel:03F9F0
+[29] For hired protection, you might talk to some of the mercenaries stationed in the city. Their captain is Mendoz.
+  호위가 필요하면 도시에 주둔한 용병들한테도 물어보시오. 대장 이름은 멘도스요. ‖ Angelina:03FA31
+  호위가 필요하시면 시내에 주둔한 용병들에게 말해 보십시오. 대장은 멘도스입니다. ‖ Andras:03FA06
+[30] Where could I find him?
+  어디로 가면 만날 수 있을까요? ‖ Mandel:03F8A2
+  그분을 어디서 찾을 수 있죠? ‖ Mandel:0277B9
+[31] I see.
+  그렇군요. ‖ Mandel:001F1E, Mandel:043590
+  그렇군. ‖ Mendoz:043207, Leopold:00D368
+  그렇구나. ‖ Jervase:012707
+  알겠어요. ‖ Mandel:0308EC, Stanislav:02C7F7
+[32] Good [time].
+  좋은 [time]이에요. ‖ Mandel:01225F
+  좋은 [time] 보내렴. ‖ Mandel:01249E
+[33] No!
+  몰라요! ‖ Jonas:0381B5
+  안 돼요! ‖ Barbara:02DC13
+[34] Okay.
+  알겠어요. ‖ Mandel:03B008, Mandel:03F8E2, Mandel:0139EE, Mandel:032747 외 2
+  알았어. ‖ Mandel:013A1D
+  좋아요. ‖ Wymer:03CE65, Mandel:02FB13, Mandel:02FB3F
+  네. ‖ Lelon:00FE68
+[35] I'll see what I can do.
+  제가 어떻게든 해 볼게요. ‖ Mandel:03F689, Mandel:03656D
+  내가 어떻게든 해 볼게. ‖ Mandel:002993
+  제가 어떻게 해 볼게요. ‖ Mandel:03285F
+[36] Nothing.
+  아무 기척도 없다. ‖ Narration:041926
+  아무 일도 없었다. ‖ Narration:022797
+  없어요. ‖ Mandel:019FCD
+  없어. ‖ Mandel:019E68
+  아무것도 안 해요. ‖ Mandel:02AC87
+[37] What's going on here?
+  무슨 일이에요? ‖ Mandel:002EF9, Mandel:001AD2
+  여기 무슨 일이야? ‖ Mandel:02C339
+  여기서 무슨 일이 벌어지는 거요? ‖ Willard:034602
+[38] Alright.
+  알겠어요. ‖ Mandel:019948
+  그러렴. ‖ Mandel:01BA62
+[39] I do not.
+  몰라요. ‖ Mandel:00A496, Mandel:02AD15
+  안 줄 거예요. ‖ Mandel:0288A1
+[40] Sure, why not.
+  좋아요, 한번 보죠. ‖ Mandel:033515
+  그래, 좋지. ‖ Mandel:0019B1
+[41] Yes?
+  무슨 일이오? ‖ Sülen:03CD7E
+  무슨 일이십니까? ‖ Father Konstantin:013D7F
+  왜? ‖ Wolfgang:01477D
+  네? ‖ Aniela:03E55C, Narration:034EC3
+  그래서? ‖ Woman:013C1D, Boerhaaven:022EB6
+  뭐요? ‖ Temerity:02B17F
+[42] What's this talk of graverobbing?
+  무덤 도굴 얘기는 무슨 소리예요? ‖ Mandel:01F63A
+  도굴 소문은 무슨 얘기예요? ‖ Mandel:01F66C
+  무덤을 도굴했다는 건 무슨 얘기야? ‖ Mandel:01F687, Mandel:01F614
+  무덤을 도굴했다는 게 무슨 얘기야? ‖ Mandel:01F627
+  무덤 도굴이라니 무슨 얘기예요? ‖ Mandel:01F5D9, Mandel:01F602
+[43] Have you seen Tomaz? He's a farmhand.
+  토마즈를 보셨나요? 농장에서 일하는 사람이에요. ‖ Mandel:036B95
+  토마즈 보셨어요? 농장 일꾼인데요. ‖ Mandel:036BB1, Mandel:036BA3
+[44] A shame.
+  아쉽네요. ‖ Mandel:01560D, Barbara:019430
+  아쉽구나. ‖ Jervase:0126F9
+[45] Please...
+  자, 보세요… ‖ Dorothea Becker:01561B
+  제발… ‖ Mandel:0430A6
+[46] Certainly.
+  물론이죠. ‖ Chandler:011359
+  물론이지. ‖ Mandel:00C4CB
+  그럼요. ‖ Mandel:01C08A
+  알았어. ‖ Mandel:0305B1
+[47] I look forward to it.
+  기대할게. ‖ Mandel:001713
+  기대하고 있을게. ‖ Mandel:0324C3
+[48] I did.
+  그랬죠. ‖ Nikos:0017C6
+  그랬지. ‖ Aldis:038CDE
+[49] Why are you telling me this?
+  제게 이런 얘기를 하는 이유가 뭐예요? ‖ Mandel:043524
+  왜 그런 얘기를 저한테 하시는 거예요? ‖ Rosa Dal Farra:0066D3
+[50] It was locked.
+  문은 잠겨 있었다. ‖ Narration:01AFD9
+  잠겨 있었다. ‖ Narration:0186A9, -:04C3BF
+[51] I am.
+  맞아요. ‖ Mandel:005A35
+  네, 그래요. ‖ Mandel:008446
+  확신해요. ‖ Mandel:020C4F
+  나는. ‖ Boerhaaven's Creature:017702
+[52] Did you know my father?
+  저희 아버지를 아셨어요? ‖ Mandel:005A60, Mandel:01468C, Mandel:0050D2
+  제 아버지를 아셨나요? ‖ Mandel:025982, Mandel:02501E
+[53] What? No.
+  뭐? 몰라. ‖ Haelan:00BFCE
+  뭐라고요? 싫어요. ‖ Rosa Dal Farra:02DF60
+[54] And...?
+  그래서요…? ‖ Mandel:0182A6
+  그래서? ‖ Mandel:04444A
+[55] I'm trying to find an instruction book to assist me with some Latin; do you know of one?
+  라틴어 공부에 도움이 될 만한 입문서를 찾고 있는데, 아시는 책이 있나요? ‖ Mandel:01EE68
+  라틴어 공부에 도움이 될 만한 입문서를 찾고 있는데, 아는 책 있어? ‖ Mandel:01EE54
+  라틴어 공부에 도움이 될 교본을 찾고 있는데, 아는 책 있어? ‖ Mandel:01EE22
+  라틴어를 읽는 데 도움이 될 학습서를 찾고 있어요. 아시는 책이 있나요? ‖ Mandel:01EE31
+[56] I let him go.
+  나는 그를 보내 주었다. ‖ Narration:0216C7
+  그냥 보내 주었다. ‖ Narration:031076
+[57] I did not.
+  못 구했어. ‖ Mandel:002937
+  안 했어. ‖ Mandel:00E7B7
+[58] Hmmm...
+  흐음… ‖ Mandel:007220, Jokob:007522, Alfonz:01B5B9, Alfonz:023BB5 외 1
+  으음… ‖ Mandel:02FB1A
+[59] On?
+  뭘 봐 가면서? ‖ Mandel:0072C1
+  뭐에 따라서? ‖ Haelan:008757
+[60] Hello, [formal].
+  안녕, [formal]. ‖ Lelon:014E71
+  안녕하세요, [formal]. ‖ Rosa Dal Farra:011428, Lelon:00FE4E
+[61] I swung my fist at him.
+  나는 소년에게 주먹을 휘둘렀다. ‖ Narration:015899
+  나는 그에게 주먹을 휘둘렀다. ‖ Narration:01A88F
+[62] What do you need from me?
+  내가 뭘 해 주면 되는데? ‖ Mandel:01FCF8
+  제게 바라시는 건 뭔가요? ‖ Mandel:0198A9
+[63] I'd like to collect my pay.
+  품삯을 받으러 왔어. ‖ Mandel:0116FA
+  품삯을 받고 싶어요. ‖ Mandel:0116D2
+  품삯을 받으러 왔어요. ‖ Mandel:011727
+[64] What do you make of the hangings?
+  이번 교수형에 대해 어떻게 생각해? ‖ Mandel:0371A4
+  교수형에 대해 어떻게 생각하세요? ‖ Mandel:037172
+[65] What work needs doing today?
+  오늘은 무슨 일을 하면 돼? ‖ Mandel:041592
+  오늘은 무슨 일을 하면 될까요? ‖ Mandel:0415A3
+  오늘은 무슨 일을 하면 되나요? ‖ Mandel:0415B4
+  오늘은 무슨 일을 해야 해요? ‖ Mandel:0415C5
+[66] I am to meet my friend Diedrik here, do you know him?
+  친구 디드리크와 여기서 만나기로 했는데, 아세요? ‖ Mandel:014803
+  여기서 친구 디드리크를 만나기로 했는데, 아세요? ‖ Mandel:014827
+[67] Now, about the trial for tavern ownership...
+  그럼 술집을 넘겨받는 시험 얘긴데요… ‖ Mandel:03618A
+  그럼, 술집 주인을 정하는 시험 말인데… ‖ Mandel:0360C3
+[68] Certainly. It's 3 crowns for a bottle of port.
+  그럼. 포트와인 한 병에 3크라운이야. ‖ Garnet:03CE33
+  물론이죠. 포트와인 한 병에 3크라운이에요. ‖ Wymer:03CE76
+[69] Suit yourself.
+  좋을 대로 해. ‖ Garnet:03CE48, Vittoria:0190B7
+  맘대로 해. ‖ Tomaz:00E8A7
+  맘대로 해요. ‖ Varenth:03D7AE
+  마음대로 해. ‖ Mandel:022D36
+  마음대로 하게. ‖ Jokob:0440F2
+  마음대로 하세요. ‖ Mandel:01E00D
+  마음대로 해요. ‖ Mandel:03A2A9
+[70] I can't afford that.
+  그만한 돈은 없어요. ‖ Mandel:03CE4F, Mandel:0235D8, Mandel:023624
+  그건 못 사요. ‖ Mandel:03CE70
+[71] Pfft, suit yourself.
+  쳇, 마음대로 해. ‖ Hend:006428
+  흥, 맘대로 하세요. ‖ Fen:0324D9
+[72] Hello, [name]!
+  안녕, [name]! ‖ Sofia:010FD5, Sofia:015425
+  안녕하세요, [name]! ‖ Connor:015400
+[73] I seek a holy book called The Book of Zechariah . Could you search the cathedral for it?
+  즈가리야서 라는 성서를 찾고 있어. 대성당에서 찾아봐 줄래? ‖ Mandel:015709
+  즈가리야서 라는 성서를 찾고 있어. 성당에 있는지 찾아봐 줄래? ‖ Mandel:015682
+  즈가리야서 라는 성서를 찾고 있어. 대성당을 뒤져 줄 수 있겠어? ‖ Mandel:015725
+  즈가리야서 라는 성서를 찾고 있어요. 대성당에서 찾아봐 줄 수 있어요? ‖ Mandel:0156D1
+  즈가리야서 라는 성서를 찾고 있어요. 대성당에서 좀 찾아봐 주시겠어요? ‖ Mandel:03CC60
+[74] Did you find T he Book of Zechariah ?
+  즈가리야서 는 찾았어? ‖ Mandel:01570F, Mandel:01572B
+  즈가리야서 찾았어요? ‖ Mandel:0156D7, Mandel:03CC66
+[75] I thought we agreed to meet at my family crypt?
+  우리 가문 납골당에서 만나기로 하지 않았어? ‖ Mandel:021118
+  우리 집안 납골당에서 만나기로 한 거 아니었어? ‖ Mandel:021108
+  우리 가족 납골당에서 만나기로 하지 않았나요? ‖ Mandel:0210EA
+  우리 가문 납골당에서 만나기로 하지 않았나요? ‖ Mandel:0210F9
+[76] I agreed to meet you there in the morning. I feel a bit safer at that time, you understand.
+  아침에 거기서 만나자고 했지. 그때가 좀 더 안심되잖아. 이해하지? ‖ Sofia:02111E
+  아침에 거기서 만나기로 했잖아. 그때가 좀 더 안전할 것 같아서 그래. 이해하지? ‖ Diedrik:02110E
+  아침에 거기서 만나기로 했잖아요. 그 시간이 좀 더 안전한 것 같아서요. 아시죠? ‖ Annie:0210F1, Connor:0210FF
+[77] I'm not sure if I have the time.
+  그럴 시간이 있을지 모르겠네. ‖ Mandel:03FB55
+  시간이 날지 모르겠어. ‖ Mandel:03FAE5
+[78] Oh [name]... [lover] was asking me about you again.
+  아, [name]… [lover]이(가) 또 네 얘기를 물어보더라. ‖ Sofia:03FB71
+  아, [name]… [lover]이(가) 또 네 소식을 묻더라. ‖ Diedrik:03FB07
+[79] He said you had a date the other evening, but that you haven't looked him up since?
+  얼마 전 저녁에 데이트했는데 그 뒤로 찾아오질 않는다면서? ‖ Sofia:03FB7D
+  그 사람 말이, 며칠 전 저녁에 너랑 데이트했는데 그 뒤로 네가 통 찾아오질 않는다던데? ‖ Diedrik:03FB14
+[80] Please.
+  듣고 싶어요. ‖ Mandel:0084CD
+  부탁하네. ‖ Jokob:00BB9F
+  부탁해. ‖ Mandel:03D8E3
+[81] Can you show me that secret knock again?
+  그 비밀 노크를 다시 알려 주실래요? ‖ Mandel:027AF4
+  그 비밀 노크 다시 알려 줄래? ‖ Mandel:027AE6
+[82] I took the opportunity to cut a piece of his hair, for use in the Awaken ritual.
+  기회를 틈타 깨우기 의식에 쓸 그의 머리카락을 조금 잘랐다. ‖ Narration:0180C9
+  나는 이 틈에 깨우기 의식에 쓸 머리카락을 한 가닥 잘랐다. ‖ Narration:0180FF
+[83] I left him there.
+  그를 그대로 두었다. ‖ Narration:0180D1
+  나는 그를 그대로 두고 나왔다. ‖ Narration:018106
+[84] I left him to his drink.
+  혼자 술을 마시게 내버려 두었다. ‖ Narration:00E671
+  그가 술을 마시도록 자리를 비켜 주었다. ‖ Narration:014AB4
+[85] convince him to open up.
+  그를 설득해 속내를 털어놓게 했다. ‖ -:00E84C
+  남자가 속내를 털어놓도록 설득했다. ‖ -:00EE5B
+[86] Seeds?
+  씨앗? ‖ Mandel:00E8D1
+  씨앗입니까? ‖ Andras:010116
+[87] I have not.
+  못 들어 봤어요. ‖ Mandel:014ACA
+  안 해 봤어. ‖ Irving:01EFA8
+  아니요, 그런 적 없어요. ‖ Mandel:02700D
+[88] Well...
+  그러니까… ‖ Mandel:003E6E
+  글쎄요… ‖ Merlyn:01FC35
+[89] He laughed.
+  그는 웃었다. ‖ Narration:003FCB
+  그가 웃었다. ‖ Narration:02D58D
+[90] What do you do here?
+  여기서 무슨 일을 하세요? ‖ Mandel:005D8D
+  여기서 무슨 일을 하죠? ‖ Mandel:0100A9
+[91] And?
+  그래서? ‖ Irving:001882, Diedrik:0291B1
+  또? ‖ Mandel:01AE2B
+[92] Consider it done.
+  제가 가져올게요. ‖ Mandel:01F138
+  맡겨 두세요. ‖ Mandel:023571
+[93] Glad to hear it.
+  반가운 말이군. ‖ Irving:01F13F
+  다행이네요. ‖ Annie:02F81C
+[94] Not yet.
+  아직요. ‖ Mandel:01F30C
+  아직은 안 돼. ‖ Mandel:029756
+  아직. ‖ Lelon:02E77E
+[95] I do.
+  응. ‖ Mandel:006D01
+  그래요. ‖ Mandel:04104E
+  그래. ‖ Mandel:012192
+[96] Hello there.
+  안녕. ‖ Diedrik:031CE3
+  안녕하세요. ‖ Mandel:03FA47
+[97] Thank you for your time.
+  시간 내 주셔서 고마워요. ‖ Mandel:0050E0
+  시간 내 주셔서 고맙습니다. ‖ Mandel:00734C
+[98] Nevermind.
+  됐어요. ‖ Mandel:041056, Mandel:033EF4, Mandel:033F39
+  아니에요, 됐어요. ‖ Mandel:044036
+  아니에요. ‖ Mandel:02B7AB
+  아냐, 됐어. ‖ Mandel:00FDC7, Mandel:00FE5A, Mandel:00FF26, Mandel:00FFB1
+[99] You knew my father?
+  저희 아버지를 아셨어요? ‖ Mandel:00818C
+  제 아버지를 아셨어요? ‖ Mandel:038C6F
+[100] Thank you, [name].
+  고마워요, [name]. ‖ Besina:031B58
+  고맙네, [name]. ‖ Arald Tailor:03CFA6
+[101] She hesitated.
+  약재상은 망설였다. ‖ Narration:00BF9B
+  그녀가 머뭇거렸다. ‖ Narration:043EC1
+[102] No, of course not.
+  아니요, 안 돼요. ‖ Mandel:020653
+  아니, 그럴 리가 있겠니. ‖ Mandel:0120B0
+[103] A big black boil, like some kind of contagion I think. The edges are crumbling away in their decay.
+  크고 검은 종기예요. 무슨 전염병 같아요. 가장자리가 썩어서 부스러지고 있어요. ‖ Mandel:02F2B3
+  손에 커다랗고 검은 종기가 났어요. 무슨 전염병 같아요. 가장자리가 썩어서 부스러지고 있어요. ‖ Mandel:02F207
+[104] I might return.
+  다시 올지도 몰라요. ‖ Mandel:02F2D6
+  또 올지도 몰라요. ‖ Mandel:02F430
+[105] I seek tuberose, mullein and lavender. Can you help?
+  월하향, 우단초, 라벤더를 찾고 있어요. 도와주실 수 있나요? ‖ Mandel:03CF76
+  튜베로즈, 우단담배풀, 라벤더를 찾고 있어. 도와줄 수 있어? ‖ Mandel:03D289
+[106] I left.
+  나는 자리를 떠났다. ‖ Narration:019AD2
+  나는 자리를 떴다. ‖ Narration:0418B0
+[107] turn away.
+  돌아서서 떠났다. ‖ -:03CD20
+  고개를 돌렸다. ‖ -:01479B, -:01E615
+[108] Never mind.
+  아니, 됐어요. ‖ Mandel:011439
+  아니에요, 됐어요. ‖ Mandel:028A27, Mandel:014F46, Mandel:028A95
+[109] notice something in her movement.
+  여자의 움직임에서 무언가를 알아챘다. ‖ -:015C4F
+  움직임에서 뭔가를 알아챘다. ‖ -:042D03
+[110] Tell me something about yourself.
+  본인 얘기를 좀 들려주세요. ‖ Mandel:01916B
+  네 얘기 좀 해 줘. ‖ Mandel:0358E4
+[111] Oh!
+  아! ‖ Barbara:0193AE
+  어머! ‖ Mirabel Van Elstrik:02699D
+[112] Take me to your bed.
+  침대로 데려가 줘요. ‖ Mandel:029A2E
+  나를 침대로 데려가 줘요. ‖ Mandel:041B9D
+[113] Ahem!
+  어흠! ‖ Mandel:0419E2
+  크흠! ‖ Drago:0200A7
+[114] Who are you?
+  누구시죠? ‖ Mandel:00D50D
+  누구야? ‖ Mandel:03C8ED
+  누구세요? ‖ Mandel:016950, Mandel:0170D0, Mandel:01C25A, Mandel:0142B1 외 2
+  누구더라? ‖ Mandel:035772
+  넌 누구지? ‖ Mandel:03B590
+[115] Goodbye, for now. I need a rest.
+  일단은 잘 가. 난 좀 쉬어야겠어. ‖ Diedrik:0154F0, Sofia:015529
+  일단 이만 헤어져요. 저는 좀 쉬어야겠어요. ‖ Connor:015503
+  일단 안녕히 가세요. 저는 좀 쉬어야겠어요. ‖ Annie:015516
+[116] I'll meet you back at the crypt when you're ready to do the ritual.
+  의식 치를 준비가 되면 묘소에서 다시 만나자. ‖ Diedrik:0154F7
+  의식 치를 준비가 되면 묘소에서 다시 만나요. ‖ Connor:015509, Annie:01551C
+  의식 치를 준비가 되면 납골당에서 다시 만나자. ‖ Sofia:01552F
+[117] I will.
+  그렇게 할게요. ‖ Mandel:024111
+  그럴게요. ‖ Mandel:0198F2, Mandel:02BDE6
+[118] remain conscious.
+  의식을 잃지 않았다. ‖ -:021814
+  의식을 잃지 않고 버텼다. ‖ -:02454A
+[119] I saw skulls mounted on poles nearby. Do you know anything about them?
+  근처에 장대에 꽂힌 해골이 보였어요. 뭐 아는 거 있나요? ‖ Mandel:03B11B, Mandel:03B140
+  근처에 장대에 꽂힌 해골이 보였어. 뭐 아는 거 있니? ‖ Mandel:03B130
+[120] Just the farm children. I thought they would enjoy a new toy.
+  농장 아이들에게요. 새 장난감이 있으면 좋아할 것 같아서요. ‖ Mandel:018182
+  그냥 농장 아이들한테요. 새 장난감을 좋아할 것 같아서요. ‖ Mandel:028A71
+[121] Yes, I made it last night. We agreed on 3 crowns?
+  네, 어젯밤에 만들었어요. 3크라운으로 하기로 했죠? ‖ Besina:028A39
+  네, 어젯밤에 만들어 뒀어요. 3크라운으로 하기로 했지요? ‖ Javad:028AA1
+[122] Go away!
+  저리 가요! ‖ Mojca:019994
+  나가! ‖ Sybil:0417E0
+[123] overpower her.
+  여자를 힘으로 제압했다. ‖ -:034E7F
+  그 여자를 힘으로 제압했다. ‖ -:02DF8A
+[124] Yes, [formal].
+  네, [formal]. ‖ Mojca:03D31F, Annie:020BD2, Peta:021E8B
+  그래, [formal]. ‖ Diedrik:020D09
+[125] Goodbye.
+  잘 있어. ‖ Mandel:0146F5, Mandel:02810B
+  잘 있어요. ‖ Mandel:0130FB
+[126] Hey there!
+  어이, 거기! ‖ Narration:01153E
+  왔어! ‖ Rebeka:043185
+[127] What's going on?
+  무슨 일이니? ‖ Juliana:01161E
+  왜 그래? ‖ Ida:02941C
+[128] What of it?
+  그게 어때서요? ‖ Mandel:042B75
+  그래서요? ‖ Mandel:032590
+[129] Five crowns.
+  5크라운. ‖ Mandel:02E399
+  5크라운이요. ‖ Mandel:04329C
+[130] I need a trusted friend to visit my father's remains in his crypt.
+  아버지의 유해가 있는 납골당에 대신 가 줄 믿을 만한 친구가 필요해. ‖ Mandel:04172D
+  아버지의 묘실에 있는 유해를 찾아가 줄 믿을 만한 친구가 필요해요. ‖ Mandel:01531E
+  아버지의 유해가 있는 납골당에 대신 가 줄 믿을 만한 친구가 필요해요. ‖ Mandel:01538A
+[131] I paid him a crown and he poured me a glass.
+  나는 크라운 한 닢을 치렀고 그가 한 잔을 따라 주었다. ‖ Narration:01E6ED
+  나는 그에게 크라운 한 닢을 내고 한 잔을 받았다. ‖ Narration:02B1E9
+[132] Do you know much about the Fishguard?
+  피시가드에 대해 좀 아세요? ‖ Mandel:02A015, Mandel:029BD5, Mandel:02B205
+  피시가드에 대해 좀 아시나요? ‖ Mandel:029AA8
+  피시가드에 대해 좀 알아요? ‖ Mandel:02A075
+  피시가드에 대해 잘 아세요? ‖ Mandel:029FAF, Mandel:029D22, Mandel:029DF9, Mandel:029E6B 외 1
+  피시가드에 대해 잘 알아? ‖ Mandel:029D88
+[133] Who are the Fishguard?
+  피시가드가 누구예요? ‖ Mandel:02A029, Mandel:029F6B
+  피시가드가 누구죠? ‖ Mandel:029B4D, Mandel:029C49
+  피시가드는 어떤 사람들이에요? ‖ Mandel:029E28
+  피시가드는 누구예요? ‖ Mandel:029EA0
+[134] Excellent.
+  훌륭하오. ‖ Channing:00D086
+  좋아. ‖ Sofia:032C74
+  훌륭하군. ‖ Aldis:03730F
+  잘됐네요. ‖ Mandel:03B4FB
+[135] I’m afraid not.
+  유감이지만 안 되네. ‖ Leopold:00D274
+  아무래도 안 되겠어요. ‖ Mandel:01C0EA
+  안타깝지만 안 돼요. ‖ Mandel:033E70
+[136] He ignored my outstretched hand.
+  그는 내민 내 손을 못 본 척했다. ‖ Narration:00D79B
+  그는 내가 내민 손을 무시했다. ‖ Narration:02B1B2
+[137] He shrugged.
+  그는 어깨를 으쓱했다. ‖ Narration:00D8F9, Narration:0025F1
+  그가 어깨를 으쓱했다. ‖ Narration:037FE0
+[138] Of course not.
+  그럴 리가. ‖ Mandel:027CCF
+  물론 아니죠. ‖ Mandel:022481
+  물론이지. ‖ Mandel:0430F5
+[139] What is all this?
+  이게 다 뭐야? ‖ Mandel:027D44
+  이게 다 뭐예요? ‖ Mandel:027EB3
+  여긴 다 뭘 하는 곳이에요? ‖ Mandel:028157
+[140] Why did you join the Resistance?
+  왜 레지스탕스에 들어갔어? ‖ Mandel:027D4B
+  왜 저항군에 들어왔어요? ‖ Mandel:027EC2
+  저항군에는 왜 들어왔어? ‖ Mandel:028026
+  저항군에는 왜 들어오셨어요? ‖ Mandel:02815E
+[141] What are your thoughts on Jervase?
+  제르베스를 어떻게 생각해? ‖ Mandel:027D59, Mandel:02808D
+  제르베스에 대해 어떻게 생각해요? ‖ Mandel:027F09
+  제르베스를 어떻게 생각하세요? ‖ Mandel:028173
+[142] That's all for now.
+  지금은 이걸로 됐어. ‖ Mandel:027D8B
+  지금은 이게 전부예요. ‖ Mandel:02F5D3
+  지금은 이 정도면 됐어요. ‖ Mandel:029E63
+  오늘은 이만할게요. ‖ Mandel:029F3B
+  지금은 이만하면 됐어. ‖ Mandel:029DD2
+  지금은 이만할게요. ‖ Mandel:027FD0, Mandel:02817A
+  지금은 그게 다예요. ‖ Mandel:0196E6
+  일단은 됐다. ‖ Mandel:03A256
+[143] What do you think needs to be done about Jervase?
+  제르베스를 어떻게 해야 한다고 생각해? ‖ Mandel:027DF4
+  제르베스를 어떻게 해야 한다고 생각하세요? ‖ Mandel:028260
+[144] There is information I want to share about Jervase.
+  제르베스에 대해 알려 주고 싶은 정보가 있어. ‖ Mandel:027E5F
+  제르베스에 관해 알려 드릴 게 있어요. ‖ Mandel:027FB8
+  제르베스에 관해 알려 줄 게 있어. ‖ Mandel:0280F3
+[145] Enough about my uncle.
+  삼촌 얘기는 이제 그만하자. ‖ Mandel:027E6E
+  삼촌 얘기는 이쯤 하자. ‖ Mandel:028102
+  삼촌 얘기는 이쯤 하죠. ‖ Mandel:0282BD
+[146] I seek to hire some muscle to help on a perilous mission. Are you interested?
+  위험한 임무에 힘 좀 쓸 사람이 필요해. 관심 있어? ‖ Mandel:043312
+  위험한 임무에 도와줄 힘센 사람을 구하고 있어요. 관심 있어요? ‖ Mandel:043302
+  위험한 일을 도와줄 힘센 사람을 구하고 있어요. 관심 있으세요? ‖ Mandel:043279
+  위험한 일을 도와줄 힘 좋은 사람을 구하고 있어요. 관심 있으세요? ‖ Mandel:04326B
+  위험한 임무를 도와줄 힘센 사람을 고용하려고 해. 관심 있어? ‖ Mandel:0432C0
+[147] What?
+  뭐? ‖ Gustav:01A857, Lucus:00C41F, Lelon:01D4F4, Mandel:03B746
+  왜? ‖ Robyn:02C31E
+[148] Perhaps I was mistaken.
+  제가 잘못 생각했나 보네요. ‖ Mandel:029B45
+  제가 잘못 들었나 보네요. ‖ Mandel:029C05
+[149] How can I get in contact with them?
+  어떻게 하면 그들과 연락할 수 있죠? ‖ Mandel:029B61
+  그들과 어떻게 연락할 수 있죠? ‖ Mandel:029CBA
+  어떻게 연락할 수 있을까요? ‖ Mandel:029E37
+  그들과 연락하려면 어떻게 해야 해요? ‖ Mandel:029EAF
+  어떻게 연락할 수 있어? ‖ Mandel:029DC4
+[150] They may have ransacked my home.
+  제 집이 털렸을지도 몰라요. ‖ Mandel:029BBC
+  그들이 제 집을 쑥대밭으로 만들었을지도 몰라요. ‖ Mandel:029F2C
+[151] I'll think about it.
+  생각해 볼게요. ‖ Mandel:042A21, Mandel:02F492
+  생각해 볼게. ‖ Mandel:043681
+[152] I...
+  그게… ‖ Merlyn:01FBFC
+  나, 나는… ‖ Tomaz:00EAEA
+[153] No deal.
+  거래 안 해요. ‖ Mandel:029CFB
+  안 되겠어요. ‖ Mandel:02046C
+[154] What is it?
+  왜? ‖ Vittoria:017B86
+  이게 뭔데? ‖ Mandel:02366B
+  무슨 일인가? ‖ Gerhardht Oman:002431
+  무슨 일이야? ‖ Leonardo:035898
+[155] Is that all?
+  그게 다예요? ‖ Mandel:01253A
+  그게 다야? ‖ Mandel:021E58
+[156] I am afraid not.
+  기억나지 않아요. ‖ Mandel:0126F2
+  아쉽지만 못 읽어 봤어요. ‖ Mandel:0251F2
+[157] Can I ask why?
+  이유를 물어봐도 될까요? ‖ Mandel:001EB0
+  이유를 물어도 될까요? ‖ Mandel:042BF5
+[158] appeal to his good nature.
+  그의 선한 마음에 호소했다. ‖ -:0132AB, -:0132D9
+  선한 마음에 호소했다. ‖ -:01F9EE
+[159] Tell me about yourself.
+  본인 이야기를 들려주세요. ‖ Mandel:0100B8
+  당신에 대해 들려주세요. ‖ Mandel:028658
+[160] Very good.
+  좋아요. ‖ Mandel:0100D4
+  잘됐소. ‖ Cederic:018AFE
+[161] Very well. Thank you.
+  알겠어요. 고마워요. ‖ Mandel:02A0F6
+  알겠습니다. 감사합니다. ‖ Isabella:033F8E
+[162] A sad smile crossed her lips.
+  그녀의 입가에 슬픈 미소가 스쳤다. ‖ Narration:0209FD
+  애니의 입가에 쓸쓸한 미소가 스쳤다. ‖ Narration:01BC8E
+[163] There you are. Well, let's get on with it.
+  왔구나. 자, 시작하자. ‖ Diedrik:0154C7, Sofia:0154CE
+  오셨네요. 자, 시작하죠. ‖ Connor:0154D5
+  오셨네요. 자, 시작해요. ‖ Annie:0154DC
+[164] Help!
+  살려 줘! ‖ Narration:014D9E
+  살려 줘요! ‖ Ramón:0345DF
+[165] Grrr!
+  으르렁! ‖ Young Boy:015F95
+  으르릉! ‖ Darius:02A929
+[166] I'm sorry.
+  미안해요. ‖ Annie:015382, Connor:0153CD
+  죄송해요. ‖ Mandel:03CF98
+  안됐네. ‖ Mandel:042D79
+[167] Goodbye for now.
+  그럼 다음에 봐요. ‖ Mandel:015408
+  일단 안녕히 가요. ‖ Mandel:0153EB
+  그럼 이만 가 볼게요. ‖ Mandel:01631C, Mandel:016341
+[168] Why m'[title], whatever could you mean?
+  어머, [title], 그게 무슨 말씀이세요? ‖ Annie:01EBFD
+  아이고, [title], 대체 무슨 말씀이세요? ‖ Connor:03C6DA
+[169] We should meet for a drink at Garnet's... sometime.
+  언제 한번 가넷의 주점에서 한잔해요. ‖ Mandel:01EC60
+  가넷의 주점에서 한잔해요… 언제 한번. ‖ Mandel:03C7D8
+[170] Is there somewhere more private around here? I could show you what I mean.
+  이 근처에 좀 더 은밀한 곳이 있나요? 무슨 뜻인지 보여 드릴 수 있을 텐데요. ‖ Mandel:01EC84
+  이 근처에 좀 더 조용한 곳이 없을까요? 내 말뜻을 보여 줄 수 있을 텐데. ‖ Mandel:03C6E7
+[171] Oh [name]!
+  어머, [name]! ‖ Annie:03C687
+  아, [name]! ‖ Connor:03C76F
+[172] No, sorry.
+  아뇨, 미안해요. ‖ Mandel:03E6A9
+  아니요, 미안해요. ‖ Mandel:04419D
+[173] Oh, mmm... [name]!
+  어머, 음… [name]! ‖ Annie:0439D2
+  어, 음… [name]! ‖ Connor:043A04
+[174] You look unwell, my love?
+  안색이 안 좋아요, 내 사랑? ‖ Mandel:043A33
+  아파 보여요, 내 사랑? ‖ Mandel:043A58
+[175] There you are!
+  거기 있었구나! ‖ Sofia:032B8D
+  여기 있었군! ‖ Varenth:03DB78
+[176] What must I do?
+  뭘 하면 되죠? ‖ Mandel:03D48D
+  제가 뭘 해야 하죠? ‖ Mandel:037279
+[177] What is your name?
+  이름이 뭐예요? ‖ Mandel:021B09
+  이름이 뭐야? ‖ Mandel:022809
+[178] What do you want?
+  원하는 게 뭐죠? ‖ Mandel:016965
+  왜요? 뭐 시킬 거예요? ‖ Nicc:00FDBB
+  무슨 볼일이야? ‖ Henning:02DDFA
+[179] Well?
+  그래서? ‖ Lady Agnes Carnell:016A2E
+  그래서요? ‖ Father Oliwier:03EB6B
+[180] I wrapped my hands around his throat.
+  나는 두 손으로 그의 목을 감쌌다. ‖ Narration:02443D
+  나는 두 손으로 삼촌의 목을 감쌌다. ‖ Narration:03A4EE
+[181] Quite.
+  그렇소. ‖ Lord Richard Carnell:0248D7
+  아주. ‖ Boerhaaven's Creature:01771A
+[182] From my time as a diplomat, I knew Turkish to a fair standard. Though it would raise suspicion, I spoke now to the vizier in his own language.
+  외교관으로 지낸 덕에 나는 튀르크어를 꽤 한다. 의심을 사겠지만, 이제 재상에게 그의 언어로 말을 건넸다. ‖ Narration:02560E
+  외교관으로 지낸 덕에 튀르크어를 꽤 한다. 의심을 사겠지만, 나는 재상에게 그의 언어로 말을 걸었다. ‖ Narration:0259A7
+[183] Deal.
+  거래해요. ‖ Mandel:02587E
+  좋아요. ‖ Mandel:020419
+  좋아. ‖ Rebeka:02B2F9
+[184] A pity.
+  안타깝구려. ‖ Alexander Pope:025F0A
+  안됐군. ‖ Mandel:0262DD
+[185] I am speaking of those two. They have recently been wed, have they not?
+  저 두 사람을 말한 거예요. 최근에 혼인하지 않았나요? ‖ Mandel:026191
+  저 두 사람을 말한 거야. 최근에 혼인하지 않았어? ‖ Mandel:0261AF
+[186] If you say so.
+  네가 그렇다면야. ‖ Mirabel Van Elstrik:026D4F
+  그렇다면 그런 거겠죠. ‖ Stanislav:02CBEE
+[187] He turned on his heel and marched back into the grounds of the keep.
+  그는 휙 돌아서서 성 안뜰로 성큼성큼 되돌아갔다. ‖ Narration:02706C
+  그는 휙 돌아서서 성 안뜰로 성큼성큼 걸어갔다. ‖ Narration:023D9E
+[188] I left him alone.
+  나는 그를 그냥 두었다. ‖ Narration:0273DA
+  나는 그를 혼자 내버려 두었다. ‖ Narration:00213C
+[189] What happened?
+  무슨 일이 있었어요? ‖ Mandel:01E9C6
+  무슨 일이 있었는데요? ‖ Stanislav:02D079
+[190] Hell.
+  헬. ‖ Boerhaaven's Creature:0176EA, Boerhaaven's Creature:0228F6
+  지옥. ‖ Boerhaaven's Creature:022919, Boerhaaven's Creature:02294B
+[191] Hello.
+  헬로. ‖ Boerhaaven's Creature:0176F6
+  안녕하세요. ‖ Mandel:03ECCA
+[192] Good.
+  좋아. ‖ Boerhaaven's Creature:017708
+  좋아요. ‖ Mandel:037231
+  잘했어. ‖ Garnet:0361AD
+[193] Sorry.
+  미안. ‖ Boerhaaven's Creature:017738
+  미안해요. ‖ Mandel:00E405
+  죄송해요. ‖ Mandel:00E46D
+  죄송합니다. ‖ Isabella:03ECF7
+[194] I don’t know.
+  모르겠어. ‖ Mandel:022BC7
+  모르겠어요. ‖ Mandel:019F5C
+[195] That’s it?
+  그게 다예요? ‖ Mandel:023644
+  그게 다야? ‖ Robyn:00C301
+[196] What about... us ....?
+  그럼… 우리 는…? ‖ Mandel:0443FE
+  그럼… 우리 사이 는…? ‖ Mandel:0443E0
+[197] Who is she?
+  누구인데요? ‖ Mandel:018AF0
+  그분은 누구죠? ‖ Mandel:043DA2
+[198] What is this place?
+  여긴 어디죠? ‖ Mandel:038BC5
+  여기는 어디죠? ‖ Mandel:00F334
+[199] Who?
+  누구요? ‖ Mandel:038C2B
+  누가? ‖ Mandel:020120
+  누구 말씀이십니까? ‖ Sherman:037872
+[200] Why should I help you?
+  제가 왜 도와야 하죠? ‖ Mandel:038C41
+  내가 널 왜 도와야 하지? ‖ Alfonz:019EBC
+[201] I require some herbs: lavender, mullein, and blue tuberose.
+  약초가 좀 필요해요. 라벤더, 우단담배풀, 푸른 월하향이요. ‖ Mandel:038AEE
+  약초가 필요해요. 라벤더와 멀레인, 푸른 월하향이요. ‖ Mandel:038ACF
+  약초가 좀 필요하다. 라벤더와 멀레인, 푸른 월하향이다. ‖ Mandel:038A70
+[202] Perhaps not.
+  안 되겠어요. ‖ Mandel:014DE9
+  그건 안 되겠네. ‖ Lucus:00C31D
+[203] I need your help.
+  도움이 필요해요. ‖ Mandel:019FE7, Mandel:019EEE, Mandel:019F71, Mandel:019E84
+  네 도움이 필요해. ‖ Mandel:019E0C
+[204] Tomorrow morning, a ship is coming in to offload some smuggled goods.
+  내일 아침 밀수품을 내리러 배 한 척이 들어와요. ‖ Mandel:019FF5
+  내일 아침에 밀수품을 내릴 배가 들어와요. ‖ Mandel:019E92
+  내일 아침에 밀수품을 내릴 배가 한 척 들어와. ‖ Mandel:019E1A
+[205] Okay, nevermind.
+  알겠어요. 신경 쓰지 마세요. ‖ Mandel:029FDF
+  아, 됐어요. 관둘게요. ‖ Mandel:03DC62
+[206] Let me explain about these buttons...
+  이 번호 단추에 대해 설명해 드릴게요… ‖ Mandel:035BE2, Mandel:035BAE
+  이 단추에 대해 설명해 드릴게요… ‖ Mandel:035ACE
+  이 단추에 관해 설명해 드릴게요… ‖ Mandel:035591, Mandel:0356BF
+  이 단추에 관해 설명해 줄게… ‖ Mandel:035809, Mandel:035A7C
+[207] The harbourmaster has discharged me.
+  항구장이 날 해고했어요. ‖ Mandel:035C8D
+  항구장이 절 해고했어요. ‖ Mandel:035BD3
+  항구장이 저를 해고했어요. ‖ Mandel:035B63
+  항구장이 날 해고했어. ‖ Mandel:0354C3
+[208] convince him to hire you.
+  상대를 설득해 일자리를 얻었다. ‖ -:002650
+  나를 고용하도록 설득했다. ‖ -:0025DB
+[209] Extra muscle.
+  힘을 보태 줄 사람이 필요해서요. ‖ Mandel:019F0A
+  힘 좀 보태 주셨으면 해서요. ‖ Mandel:019F8D
+  힘을 보태 주셨으면 해서요. ‖ Mandel:019EA0
+[210] Seems like if we’re doing the work to offload it, we deserve a cut.
+  우리가 짐을 내리는 일을 한다면 몫을 좀 받아야 할 것 같아서요. ‖ Mandel:019F27
+  우리가 짐 내리는 일을 하는 거니까 몫을 받아야겠죠. ‖ Mandel:019FB1
+  물건 내리는 일을 우리가 한다면 몫을 좀 받아도 되지 않겠어요? ‖ Mandel:019EC4
+  짐을 내리는 수고를 우리가 하니까 한몫 챙길 자격은 있겠지. ‖ Mandel:019E5A
+[211] This place is getting busy lately. Lots of new workers.
+  요즘 여기가 바빠졌네요. 새 일꾼도 많고요. ‖ Mandel:035EC7
+  요즘 여기가 바빠지네요. 새 일꾼도 많이 오고요. ‖ Mandel:035EA4
+  요즘 여기가 바빠지네. 새 일꾼도 많고. ‖ Mandel:035E95
+[212] Fine by me.
+  그러든가. ‖ Darius:02A8B0
+  그러지 뭐. ‖ Ilona:02F48B
+[213] I know what's been happening to the Fishguard money.
+  피시가드에 줄 돈이 어떻게 된 건지 알아냈어요. ‖ Mandel:02A8E1
+  피시가드 상납금이 어떻게 됐는지 알아냈어. ‖ Mandel:02A83D
+[214] Let me explain these buttons...
+  이 단추가 뭔지 설명해 드릴게요… ‖ Mandel:035E40
+  이 단추에 대해 설명해 드릴게요… ‖ Mandel:035E2E
+[215] Actually, nevermind.
+  아니에요, 됐어요. ‖ Mandel:04328E
+  아니, 신경 쓰지 마. ‖ Mandel:0432DD
+[216] Thank you for telling me.
+  말해 줘서 고마워요. ‖ Mandel:02AC6F
+  알려 줘서 고마워요. ‖ Isak:01E846
+[217] Did we not already speak of this? Baron Jervase had reason to believe the Shroud may attempt to interfere, and though it pained him, asked me to hurry the process.
+  그 얘기는 이미 하지 않았던가요? 제르베스 남작은 검은 베일이 방해하려 들지도 모른다고 믿을 만한 이유가 있었고, 가슴 아파하면서도 내게 서둘러 달라고 부탁했어요. ‖ Father Oliwier:00FCF3
+  그 얘기는 이미 하지 않았던가요? 제르베스 남작께서 검은 베일이 방해를 시도할지 모른다고 여기셨고, 마음이 아프셨지만 서둘러 달라고 내게 청하셨어요. ‖ Father Oliwier:010014
+[218] Huh?
+  네? ‖ Peta:00FF20, Peta:00FF95
+  응? ‖ Nicc:00C411, Peta:00C493, Peta:01B60E, Peta:01BABD
+  어? ‖ Narration:034ECA
+[219] The others nodded in agreement, putting the same trust they had in me, in their new leader.
+  다른 아이들도 고개를 끄덕였다. 나를 믿듯 새 우두머리를 믿고 따르기로 한 것이다. ‖ Narration:00C952
+  다른 아이들도 고개를 끄덕였다. 나를 믿듯 새 우두머리를 믿고 따르기로 했다. ‖ Narration:00CA41
+[220] I brought you some Saffron.
+  사프란을 좀 사 왔어요. 받아요. ‖ Mandel:01BF1C
+  사프란을 좀 가져왔어요. ‖ Mandel:01C009
+[221] It has been difficult.
+  힘들기는 했어요. ‖ Mandel:01C3AC
+  힘들었어요. ‖ Mandel:01C62F
+[222] I stayed.
+  나는 남았다. ‖ Narration:01DA92
+  나는 그 자리에 남았다. ‖ Narration:02F119
+[223] What?!
+  뭐야?! ‖ -:01DE60
+  뭐?! ‖ Diedrik:029239
+  뭐라고요?! ‖ Annie:02FF9B, Connor:02FFDD, Ramón:0340FE
+[224] Who's the leader here?
+  여기 대장은 누구예요? ‖ Mandel:027EFA
+  여긴 누가 이끌어? ‖ Mandel:02807E
+  여긴 누가 이끄나요? ‖ Mandel:028165
+[225] What a mess!
+  아주 난장판이네! ‖ Darius:02B052
+  엉망진창이군! ‖ Narration:03243E
+[226] I'll talk to you later.
+  나중에 또 얘기하자. ‖ Mandel:02C89F, Mandel:02C9B5
+  나중에 얘기하자. ‖ Mandel:02F046
+[227] Tell me!
+  말해 줘! ‖ Lelon:02E9C4
+  말해요! ‖ Mandel:03A406
+[228] I need this page to be translated. See what you can find in the library.
+  이 페이지를 번역해야 해요. 도서관에서 방법을 찾아봐요. ‖ Mandel:0196CA
+  이 페이지를 번역해야겠다. 도서관에서 단서를 찾아봐라. ‖ Mandel:0389BA
+[229] A holy amulet.
+  성스러운 부적이다. ‖ Mandel:03756F
+  성스러운 부적. ‖ -:AMULET, -:018DFC
+[230] I am ready to face the army.
+  군대와 맞설 준비가 됐어. ‖ Mandel:03A066
+  군대와 맞설 준비가 됐어요. ‖ Mandel:03A2E1
+[231] Aldis' power surged across the void and into me; he clawed at my mind as he attempted to take control. Already his angry suggestions began to take root, and seemed as if they were my own thoughts.
+  알디스의 힘이 공허를 가로질러 내 안으로 밀려들었다. 그는 내 정신을 할퀴며 지배하려 들었다. 벌써 분노에 찬 속삭임이 뿌리내리기 시작했고, 마치 내 생각처럼 느껴졌다. ‖ Narration:03B859
+  알디스의 힘이 공허를 가로질러 내 안으로 밀려들었다. 그는 내 정신을 할퀴며 지배권을 빼앗으려 했다. 벌써 그의 분노 어린 속삭임이 뿌리를 내리기 시작해, 내 생각처럼 느껴졌다. ‖ Narration:043C6D, Narration:043C97
+[232] A crown I found in a crypt.
+  납골당에서 찾은 크라운 동전 한 닢. ‖ -:LCROWN
+  납골당에서 찾은 크라운 동전 하나. ‖ -:018E02
+[233] Human Flesh
+  사람의 살점 ‖ -:_FLESH
+  인간의 살점 ‖ -:01131F
+[234] Human Hair
+  사람의 머리카락 ‖ -:N_HAIR
+  인간의 머리카락 ‖ -:018098
+[235] A love potion, allegedly.
+  사랑의 묘약이라고 한다. ‖ -:POTION
+  사랑의 묘약이라나. ‖ -:018FAF
+[236] Medical Supplies
+  의료 물품 ‖ -:PPLIES
+  의료용품 ‖ -:004EF6
+[237] Club
+  몽둥이 ‖ -:JSCLUB
+  곤봉 ‖ -:PSCLUB
+[238] Ale-yeast
+  에일 양조용 효모. ‖ -:LYEAST
+  에일 효모 ‖ -:02ED8C

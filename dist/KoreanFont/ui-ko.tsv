@@ -323,7 +323,7 @@ If you're not out of the city when the timer bar has filled, you will be arreste
 =Escape Marns!	마른스를 탈출하라!
 =Attacking an animal within the city is not allowed	도시 안에서 동물을 공격하면 안 된다
 =Carrying a weapon openly within the city is not allowed	도시 안에서 무기를 드러내고 다니면 안 된다
-=Trespassing in the Keep is not allowed	성채 무단 침입은 금지돼 있다
+=Trespassing in the Keep is not allowed	성 무단 침입은 금지돼 있다
 =Wearing a mask is suspicious	가면을 쓰면 수상해 보인다
 =I was seen carrying a weapon	무기를 든 모습을 들켰다
 =I was seen wearing a mask	가면을 쓴 모습을 들켰다
@@ -337,7 +337,7 @@ If you're not out of the city when the timer bar has filled, you will be arreste
 =I was witnessed moving a body	시체를 옮기다 목격됐다
 =I was witnessed performing a black magic ritual	흑마법 의식을 하다 목격됐다
 =I was witnessed stealing	훔치다 목격됐다
-=I was witnessed trespassing in the keep	성채에 무단 침입하다 목격됐다
+=I was witnessed trespassing in the keep	성에 무단 침입하다 목격됐다
 =Dead body witnessed	시체가 목격됐다
 =Undead minion witnessed	언데드 하수인이 목격됐다
 =Leading undead minions	언데드 하수인 이끌기
@@ -710,7 +710,7 @@ You can make your own entries in the journal by hovering over the last entry and
 =Herbalist Shop	약초 가게
 =Hospital	병원
 =Irving's House	어빙의 집
-=Jervase's Keep	제르베스의 성채
+=Jervase's Keep	제르베스의 성
 =Jetty	선창
 =Market	시장
 =Marketplace Tavern (Garnet's)	시장 선술집(가넷네)
@@ -953,7 +953,7 @@ You can make your own entries in the journal by hovering over the last entry and
 =A barfly who drinks in Garnet's.	가넷네에서 술을 마시는 단골 술꾼.
 =A doctor who frequents the library in the Academy.	아카데미 도서관에 자주 오는 의사.
 =A guard at the Dead Man's Gate.	망자의 문 경비병.
-=A maid who works in the keep.	성채에서 일하는 하녀.
+=A maid who works in the keep.	성에서 일하는 하녀.
 =A sailor in the Docks tavern.	부두 선술집의 선원.
 =A silk merchant with a stall in the market.	시장에 노점을 낸 비단 상인.
 =A smuggler. Drinks in the docks tavern.	밀수꾼. 부두 선술집에서 술을 마신다.
@@ -962,9 +962,9 @@ You can make your own entries in the journal by hovering over the last entry and
 =An old man in the Docks tavern.	부두 선술집의 노인.
 =Lives in the slums.	빈민가에 산다.
 =Owner of the tavern at the marketplace.	시장 선술집 주인.
-=The baron. Lives in the keep.	남작. 성채에 산다.
+=The baron. Lives in the keep.	남작. 성에 산다.
 =The carriage driver.	마부.
-=The guard at the keep.	성채 경비병.
+=The guard at the keep.	성 경비병.
 =The guard at the north gate.	북문 경비병.
 =The head librarian in the Academy.	아카데미 수석 사서.
 =The herbalist. Drinks in Garnet's.	약초상. 가넷네에서 술을 마신다.
