@@ -190,16 +190,16 @@ You can use the right mouse button or the CTRL key to see additional interaction
 At this point in the game, you can venture outside your home gates and explore the city of Marns.\n\nYour immediate goals are to find a job and to see what you can uncover about your father's demise.	이제 집 대문 밖으로 나가 마른스 시를 둘러볼 수 있습니다.\n\n당장의 목표는 일자리를 찾고, 아버지의 죽음에 대해 무엇을 알아낼 수 있는지 살피는 것입니다.
 
 # --- 능력치·스킬
-=Skill Check	기술 판정
+=Skill Check	능력 판정
 Skill Points Remaining: 	남은 스킬 포인트:
 You still have skill points to allocate.	아직 나눌 스킬 포인트가 남아 있습니다.
  in your skill pool.	 (스킬 포인트 저장소)
 (Your current skill pool: 	(현재 스킬 포인트:
-You are making a skill check - it's a level 	기술 판정 중입니다 - 레벨
+You are making a skill check - it's a level 	능력 판정 중입니다 - 레벨
  check. This means that you need 	 판정입니다. 통과하려면
  to pass it. If your skill is less than 	 이(가) 필요합니다. 기술이
 , then you can spend points from your skill pool to make up the balance. Your skill pool refills at the start of each chapter.	보다 낮으면 스킬 포인트를 써서 모자란 만큼 채울 수 있습니다. 스킬 포인트는 챕터마다 다시 찹니다.
-If you have insufficient skill to pass a skillcheck, you can spend points from your <b>Skill Pool</b> to make up the deficit. Your Skill Pool refills at the start of each chapter in the story.	기술 판정을 통과할 기술이 모자라면 <b>스킬 포인트</b>를 써서 채울 수 있습니다. 스킬 포인트는 이야기의 챕터마다 다시 찹니다.
+If you have insufficient skill to pass a skillcheck, you can spend points from your <b>Skill Pool</b> to make up the deficit. Your Skill Pool refills at the start of each chapter in the story.	능력 판정을 통과할 능력치가 모자라면 <b>스킬 포인트</b>를 써서 채울 수 있습니다. 스킬 포인트는 이야기의 챕터마다 다시 찹니다.
 \n\nAt various times in the game, you will need a certain level in one of the above skills in order to achieve a task. If you have insufficient skill, you can spend points from your Skill Pool to make up the deficit. You have a limited amount of points in your Skill Pool, but it is replenished at the start of each chapter in the story.	\n\n게임 중 여러 순간에 일을 해내려면 위 기술 중 하나가 일정 레벨 이상이어야 합니다. 기술이 모자라면 스킬 포인트를 써서 채울 수 있습니다. 스킬 포인트는 한정돼 있지만 이야기의 챕터마다 다시 찹니다.
 Your character has 10 skills, grouped into four categories:	당신의 캐릭터는 네 갈래로 나뉜 10가지 기술을 가집니다:
 Rather than defining your character through this interactive fiction, you can quick-set your skills instead.\n\nDo you wish to quick-set?	이 인터랙티브 픽션으로 캐릭터를 정하는 대신 기술을 빠르게 설정할 수도 있습니다.\n\n빠르게 설정할까요?

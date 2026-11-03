@@ -299,10 +299,10 @@
   즈가리야서 는 찾았어? ‖ Mandel:01570F, Mandel:01572B
   즈가리야서 찾았어요? ‖ Mandel:0156D7, Mandel:03CC66
 [75] I thought we agreed to meet at my family crypt?
-  우리 가문 납골당에서 만나기로 하지 않았어? ‖ Mandel:021118
-  우리 집안 납골당에서 만나기로 한 거 아니었어? ‖ Mandel:021108
-  우리 가족 납골당에서 만나기로 하지 않았나요? ‖ Mandel:0210EA
-  우리 가문 납골당에서 만나기로 하지 않았나요? ‖ Mandel:0210F9
+  우리 가문 지하 묘지에서 만나기로 하지 않았어? ‖ Mandel:021118
+  우리 집안 지하 묘지에서 만나기로 한 거 아니었어? ‖ Mandel:021108
+  우리 가족 지하 묘지에서 만나기로 하지 않았나요? ‖ Mandel:0210EA
+  우리 가문 지하 묘지에서 만나기로 하지 않았나요? ‖ Mandel:0210F9
 [76] I agreed to meet you there in the morning. I feel a bit safer at that time, you understand.
   아침에 거기서 만나자고 했지. 그때가 좀 더 안심되잖아. 이해하지? ‖ Sofia:02111E
   아침에 거기서 만나기로 했잖아. 그때가 좀 더 안전할 것 같아서 그래. 이해하지? ‖ Diedrik:02110E
@@ -398,8 +398,8 @@
   다시 올지도 몰라요. ‖ Mandel:02F2D6
   또 올지도 몰라요. ‖ Mandel:02F430
 [105] I seek tuberose, mullein and lavender. Can you help?
-  월하향, 우단초, 라벤더를 찾고 있어요. 도와주실 수 있나요? ‖ Mandel:03CF76
-  튜베로즈, 우단담배풀, 라벤더를 찾고 있어. 도와줄 수 있어? ‖ Mandel:03D289
+  월하향, 우단담배풀, 라벤더를 찾고 있어요. 도와주실 수 있나요? ‖ Mandel:03CF76
+  월하향, 우단담배풀, 라벤더를 찾고 있어. 도와줄 수 있어? ‖ Mandel:03D289
 [106] I left.
   나는 자리를 떠났다. ‖ Narration:019AD2
   나는 자리를 떴다. ‖ Narration:0418B0
@@ -435,9 +435,8 @@
   일단 이만 헤어져요. 저는 좀 쉬어야겠어요. ‖ Connor:015503
   일단 안녕히 가세요. 저는 좀 쉬어야겠어요. ‖ Annie:015516
 [116] I'll meet you back at the crypt when you're ready to do the ritual.
-  의식 치를 준비가 되면 묘소에서 다시 만나자. ‖ Diedrik:0154F7
-  의식 치를 준비가 되면 묘소에서 다시 만나요. ‖ Connor:015509, Annie:01551C
-  의식 치를 준비가 되면 납골당에서 다시 만나자. ‖ Sofia:01552F
+  의식 치를 준비가 되면 지하 묘지에서 다시 만나자. ‖ Diedrik:0154F7, Sofia:01552F
+  의식 치를 준비가 되면 지하 묘지에서 다시 만나요. ‖ Connor:015509, Annie:01551C
 [117] I will.
   그렇게 할게요. ‖ Mandel:024111
   그럴게요. ‖ Mandel:0198F2, Mandel:02BDE6
@@ -478,9 +477,9 @@
   5크라운. ‖ Mandel:02E399
   5크라운이요. ‖ Mandel:04329C
 [130] I need a trusted friend to visit my father's remains in his crypt.
-  아버지의 유해가 있는 납골당에 대신 가 줄 믿을 만한 친구가 필요해. ‖ Mandel:04172D
-  아버지의 묘실에 있는 유해를 찾아가 줄 믿을 만한 친구가 필요해요. ‖ Mandel:01531E
-  아버지의 유해가 있는 납골당에 대신 가 줄 믿을 만한 친구가 필요해요. ‖ Mandel:01538A
+  아버지의 유해가 있는 지하 묘지에 대신 가 줄 믿을 만한 친구가 필요해. ‖ Mandel:04172D
+  아버지의 지하 묘지에 있는 유해를 찾아가 줄 믿을 만한 친구가 필요해요. ‖ Mandel:01531E
+  아버지의 유해가 있는 지하 묘지에 대신 가 줄 믿을 만한 친구가 필요해요. ‖ Mandel:01538A
 [131] I paid him a crown and he poured me a glass.
   나는 크라운 한 닢을 치렀고 그가 한 잔을 따라 주었다. ‖ Narration:01E6ED
   나는 그에게 크라운 한 닢을 내고 한 잔을 받았다. ‖ Narration:02B1E9
@@ -519,7 +518,7 @@
   이게 다 뭐예요? ‖ Mandel:027EB3
   여긴 다 뭘 하는 곳이에요? ‖ Mandel:028157
 [140] Why did you join the Resistance?
-  왜 레지스탕스에 들어갔어? ‖ Mandel:027D4B
+  왜 저항군에 들어갔어? ‖ Mandel:027D4B
   왜 저항군에 들어왔어요? ‖ Mandel:027EC2
   저항군에는 왜 들어왔어? ‖ Mandel:028026
   저항군에는 왜 들어오셨어요? ‖ Mandel:02815E
@@ -731,8 +730,8 @@
   내가 널 왜 도와야 하지? ‖ Alfonz:019EBC
 [201] I require some herbs: lavender, mullein, and blue tuberose.
   약초가 좀 필요해요. 라벤더, 우단담배풀, 푸른 월하향이요. ‖ Mandel:038AEE
-  약초가 필요해요. 라벤더와 멀레인, 푸른 월하향이요. ‖ Mandel:038ACF
-  약초가 좀 필요하다. 라벤더와 멀레인, 푸른 월하향이다. ‖ Mandel:038A70
+  약초가 필요해요. 라벤더와 우단담배풀, 푸른 월하향이요. ‖ Mandel:038ACF
+  약초가 좀 필요하다. 라벤더와 우단담배풀, 푸른 월하향이다. ‖ Mandel:038A70
 [202] Perhaps not.
   안 되겠어요. ‖ Mandel:014DE9
   그건 안 되겠네. ‖ Lucus:00C31D
@@ -836,8 +835,8 @@
   알디스의 힘이 공허를 가로질러 내 안으로 밀려들었다. 그는 내 정신을 할퀴며 지배하려 들었다. 벌써 분노에 찬 속삭임이 뿌리내리기 시작했고, 마치 내 생각처럼 느껴졌다. ‖ Narration:03B859
   알디스의 힘이 공허를 가로질러 내 안으로 밀려들었다. 그는 내 정신을 할퀴며 지배권을 빼앗으려 했다. 벌써 그의 분노 어린 속삭임이 뿌리를 내리기 시작해, 내 생각처럼 느껴졌다. ‖ Narration:043C6D, Narration:043C97
 [232] A crown I found in a crypt.
-  납골당에서 찾은 크라운 동전 한 닢. ‖ -:LCROWN
-  납골당에서 찾은 크라운 동전 하나. ‖ -:018E02
+  지하 묘지에서 찾은 크라운 동전 한 닢. ‖ -:LCROWN
+  지하 묘지에서 찾은 크라운 동전 하나. ‖ -:018E02
 [233] Human Flesh
   사람의 살점 ‖ -:_FLESH
   인간의 살점 ‖ -:01131F

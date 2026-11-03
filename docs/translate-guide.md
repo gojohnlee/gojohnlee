@@ -45,5 +45,6 @@
 - Grave Myst = 무덤 안개(그레이브 미스트 아님). Torpor = 혼수(토퍼 아님). Nightshade = 벨라도나(벨라돈나·나이트셰이드 아님). Astral Walk = 아스트랄 걷기.
 - the Shroud = 검은 베일(수의단·수의회·슈라우드 아님). 저승 경계 the veil = 장막(베일은 얼굴 가리개에만). Vizier(오스만 관리) = 재상(대신 아님). the Golden Ones = 황금회. Bernice = 베르니스. The Book of Zechariah = 즈가리야서. (Deadly) Nightshade = 벨라도나. Senegalia Senegal = 세네갈리아 세네갈.
 - 의식·물건 이름(11-03 통일, 화면 글 표 ui-ko.tsv와 같게): Awaken = 깨우기(각성 아님, Awaken Ritual = 깨우기 의식). Animate = 되살리기(애니메이트·소생 아님). Rejuvenate = 회복(회춘·되살리기 아님). Repair = 수리(수복 아님). Legions of the Dead = 죽은 자들의 군대. Plague of the Crypt = 지하 묘지의 역병(납골당 아님). Torpor 물건: 혼수 물약·혼수 기름·혼수 연고·혼수 약병, torpor-spiked ~ = 혼수를 탄 ~(마비제·토르포르 아님). wood alcohol = 메탄올(목정 아님). forester = 숲지기(산림지기·산지기·나무꾼 아님). herbalist = 약초상. apothecary(사람) = 약재상(약제사·약제상·약사 아님), 가게는 약방도 됨.
+- 11-03 추가: crypt = 지하 묘지(납골당·묘실·묘소·납골묘 아님, graveyard·cemetery = 묘지). Resistance = 저항군(레지스탕스 아님). mullein = 우단담배풀. tuberose = 월하향(튜베로즈 아님). Skill Check = 능력 판정. interactive fiction = 인터랙티브 픽션. the keep = 성(성채 아님). black magic = 흑마법. undead minion = 언데드 하수인.
 - 같은 영어 문장·같은 화자·같은 말투면 같은 한국어로(11-03). 짧은 대답·대명사(he/she) 문장은 문맥 따라 달라도 됨.
 - 제르베스 호칭: 누가 말하든 "삼촌"(숙부·백부 쓰지 않음, 게이머 혼동 방지). 뉘우치는 갈래(화해 뒤)는 대사·서술 모두 다시 높임(사용자 11-02).
