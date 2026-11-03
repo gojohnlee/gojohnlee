@@ -1,13 +1,13 @@
 네크로맨서 테일 번역 불일치 인덱스 (다시 만듦)
 만든 날: 2026-11-03. 옛 인덱스(ChatGPT 작성, 388묶음)를 이 파일로 바꿈.
-기준: 만든 때(11-03 오전) 비공개 저장소의 1.0 바탕 csv + translation/retrans/*.tsv 이름순 적용(뒤 파일이 이김), 화면 글 표는 이 저장소 dist/KoreanFont/ui-ko.tsv.
+기준: translation/template.csv + translation/retrans/*.tsv 이름순 적용(뒤 파일이 이김), 화면 글 표는 이 저장소 dist/KoreanFont/ui-ko.tsv.
 
 == 이번에 고친 것 (translation/retrans/zz-unify.tsv, 327줄) ==
 - 용어 141줄: Torpor=혼수, Astral Walk=아스트랄 걷기, Awaken=깨우기, Animate=되살리기, Rejuvenate=회복, Repair=수리, Legions of the Dead=죽은 자들의 군대, Plague of the Crypt=지하 묘지의 역병, wood alcohol=메탄올, forester=숲지기, herbalist=약초상, apothecary=약재상, Vizier=재상(대신→재상 17줄 남아 있던 것). 조사(은/는·을/를)도 맞춤.
 - 같은 영어·같은 화자·같은 말투인 문장 190줄을 한 번역으로 통일(가장 많이 쓰인 번역, 같으면 인물 검수본).
 - 게임 적용 스크립트(fix-csv.ps1)가 빈 단락이 있는 번역 37줄을 단락 수 오류로 버리던 버그 고침.
 - 화면 글 표(ui-ko.tsv): Awaken Ritual 각성 의식→깨우기 의식, torpor-spiked port 마비제→혼수, 이름 오기 3개(루쿠스→루커스, 스비트→스빗, 야코프→요코브), 같은 영어가 두 번 들어 있던 13줄 지움.
-- 앞으로 번역 지침: cloud/translate-guide.md "용어 통일"에 위 용어 추가.
+- 앞으로 번역 지침: docs/translate-guide.md "용어 통일"에 위 용어 추가.
 
 == 남은 차이: 240묶음 — 대부분 정상 ==
 가. 말하는 사람이 다름 94묶음: 인물마다 말투가 달라 정상 (예: Of course = 물론이죠 / 물론이오 / 물론입니다).

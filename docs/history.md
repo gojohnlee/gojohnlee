@@ -2,9 +2,9 @@
 
 ## 2026-11-03 공개 저장소로 옮김, 한글 패치 1.0 원본 안 씀
 - **요약**: 게임 DLL만 비공개에 두고 나머지(번역·모드·지침)는 공개 저장소 necromancer로 옮김. 재번역이 모든 한국어 줄을 덮으므로 1.0 원본 번역 파일은 지우고, 영어 원문·단락 틀만 있는 template.csv로 바꿈.
-- **자세히**: fix-csv.ps1을 틀 위에 retrans를 덮어 새로 쓰는 방식으로 다시 짬(1.0 전용 고침 지움, ID 대소문자 구분). pwsh로 돌려 예전 방식 결과와 대조: 다른 줄은 M'[title] 정리·[master] 대소문자 고침뿐. 1.0 한국어가 든 *-src.txt도 지움.
+- **자세히**: 같은 날 끝난 재번역·검수 도구(cloud/ 아래 chunk.py·review/·routine 등)도 지우고, 남길 자료(번역 지침·인물·줄거리)는 docs/로 옮김. fix-csv.ps1을 틀 위에 retrans를 덮어 새로 쓰는 방식으로 다시 짬(1.0 전용 고침 지움, ID 대소문자 구분). pwsh로 돌려 예전 방식 결과와 대조: 다른 줄은 M'[title] 정리·[master] 대소문자 고침뿐. 1.0 한국어가 든 *-src.txt도 지움.
 
-## 2026-11-03 네크로맨서를 비공개 저장소 한 곳으로 모음
+## 2026-11-03 네크로맨서를 비공개 저장소 한 곳으로 모음(같은 날 공개로 다시 옮김 — 위 항목)
 - **요약**: 공개 저장소에 있던 한글 글꼴 모드·화면 글 표·스크립트·지침을 이 저장소로 옮김. 두 벌이던 번역 지침·이름표를 한 벌로, 끝난 PC 재번역 루프와 낡은 진행 문서는 지움. 새 세션용 CLAUDE.md를 만듦.
 - **자세히**: 지운 것 — scripts/retrans-loop.ps1·retrans-start/stop.bat·extract-speaker.ps1, docs/translate-guide.md(cloud/translate-guide.md가 최신), docs/retrans-status.md·retrans-stop.txt·translation-review.md, cloud/names-ko.tsv(dist/KoreanFont/names-ko.tsv가 최신). 게임에 넣기를 설치.bat 하나로 합침(git pull → 모드 설치 → 번역 합쳐 넣기), cloud-apply.bat·ps1은 지우고 제거.bat는 scripts/로. 공개 저장소 necromancer에는 안내만 남김.
 

@@ -1,7 +1,7 @@
 지금
-- 2026-11-03 공개 저장소 necromancer로 옮김(게임 DLL만 비공개 valheim-refs). 1.0 원본 안 씀 → translation/template.csv 틀 + retrans. 게임에 넣기는 설치.bat 하나.
-- 2026-11-03 공개 저장소의 네크로맨서 모드·스크립트·지침을 이 저장소로 모아 한 곳으로 만듦. 지침 중복(번역 지침·이름표 두 벌)·끝난 PC 재번역 루프·낡은 진행 문서를 지움. 게임에 넣기는 설치.bat 하나.
-- 2026-11-03 같은 원문 다른 번역 정리: 용어 13개·같은 문장 통일 327줄(translation/retrans/zz-unify.tsv), fix-csv 빈 단락 버그, ui-ko.tsv 이름·겹친 키 정리.
+- 2026-11-03 공개 저장소 necromancer 한 곳으로 정리(게임 DLL만 비공개 valheim-refs). 1.0 원본 안 씀 → translation/template.csv 틀 + retrans, 게임에 넣기는 설치.bat 하나. 끝난 재번역·검수 도구 지움, 지침은 docs/.
+- 2026-11-03 같은 원문 다른 번역 정리: 용어 13개·같은 문장 통일 327줄(translation/retrans/zz-unify.tsv), ui-ko.tsv 이름·겹친 키 정리.
+- 2026-11-02 ChatGPT Sol 재번역 끝(26752줄) → 인물별 말투 검수 → 용어·호칭 정리(review-zzzz-*).
 
 다음
 - 게임이 플레이 중 저절로 꺼진 일 있음(2026-11-01) — 다음 시험 때 KoreanFont.log·Player.log로 원인 확인.

@@ -23,12 +23,11 @@
 - 화면 글: `dist/KoreanFont/ui-ko.tsv`(메뉴·주문 이름 등), 이름: `dist/KoreanFont/names-ko.tsv`. 모드 DLL은 `dist/`.
 - 게임에 넣기(사용자 PC): 맨 위 `설치.bat` **하나** — git pull로 최신본 받기 → 모드 설치 → fix-csv.ps1이 template.csv 위에 retrans를 이름순으로 덮어 게임 Languages\Korean.csv로 씀(클라우드 시험: dotnet tool로 pwsh 설치 후 실행).
   bat는 CP949: scripts/install.utf8.bat를 고치고 `iconv -f utf-8 -t cp949`로 설치.bat를 만든다. 모드 지우기는 scripts/제거.bat(거의 안 씀).
-- 번역을 고칠 땐 새 tsv를 retrans에 더한다(이름순으로 맨 뒤에 오게). 기준: `cloud/translate-guide.md`(지침·말투 표·**용어 통일 표 — 유일본**), 이름은 names-ko.tsv.
+- 번역을 고칠 땐 새 tsv를 retrans에 더한다(이름순으로 맨 뒤에 오게). 기준: `docs/translate-guide.md`(지침·말투 표·**용어 통일 표 — 유일본**), 이름은 names-ko.tsv, 배경은 docs/characters.md·docs/story/.
   같은 원문 다른 번역 현황: `인덱스.txt`.
 
-## 끝난 기록 (읽지도 고치지도 않음)
-- cloud/routine.md·status.md·chunk.py·tries.json·chatgpt-*·compare/·context/·review/·review-plan.md: 11-02에 끝난 재번역·검수 작업서와 도구.
-- translation/dump/(화자표 — 화자 찾을 때만 grep).
+## 참고 자료
+- translation/dump/(articy-dump.tsv 화자·순서표, speakers.txt 화자별 줄 수 — 필요할 때만 grep). 끝난 재번역·검수 도구는 11-03에 지움(git 기록에 있음).
 
 ## 모드 (dist/·src/)
 - 게임: Steam 1315320, Unity 6000.3.6f1 Mono. **mscorlib·System이 잘려 있음** → 흔한 API도 없을 수 있다
