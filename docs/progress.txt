@@ -4,6 +4,7 @@
 - 2026-11-02 ChatGPT Sol 재번역 끝(26752줄) → 인물별 말투 검수 → 용어·호칭 정리(review-zzzz-*).
 
 다음
+- 용어 결정 대기(사용자): crypt(납골당 49·지하 묘지 14·묘지·묘실·묘소), Resistance(저항군 38·레지스탕스 14), mullein(우단담배풀 13·우단초 2·멀레인 2), tuberose(월하향 11·튜베로즈 9), Skill Check(화면 기술 판정·본문 능력 판정), interactive fiction(화면 인터랙티브 픽션·본문 선택형 이야기).
 - 게임이 플레이 중 저절로 꺼진 일 있음(2026-11-01) — 다음 시험 때 KoreanFont.log·Player.log로 원인 확인.
 - 책 제목: 로그의 "책 제목(표에 없음)" 줄을 dist/KoreanFont/names-ko.tsv에 더함. 툴팁 등 남은 영어는 ui-ko.tsv에 더함.
 - 캐릭터 창 치수(level1)는 아직 안 함. 남은 작은 것: 줄바꿈 빠진 4줄, "조궁국" 표기.
