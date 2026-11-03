@@ -1,0 +1,131 @@
+7477	Narration
+6990	Mandel
+507	Diedrik
+345	Annie
+315	Albrecht Hoffman
+299	Connor
+250	Sofia
+246	Rebeka
+221	PrologueMain
+217	Garnet
+203	Jervase
+198	Lelon
+180	Marija
+176	Lucus
+166	Aldis
+159	Gerhardht Oman
+155	Ilona
+154	Stanislav
+148	Juliana
+146	Gustav
+145	Sherman
+144	Svit
+135	Drago
+134	Flip
+132	Ramón
+129	AnnieOrConnor
+128	Robyn
+127	Woman
+127	Channing
+126	Leopold
+115	Willard
+111	Boerhaaven
+107	Haelan
+106	Nicc
+105	Tomaz
+104	Barbara
+103	Irving
+101	Father Oliwier
+101	Bozhena
+101	Alfonz
+96	Sybil
+94	Peta
+93	Jokob
+93	Boerhaaven's Creature
+91	Klaus
+87	Andras
+85	Merlyn
+82	Lady Agnes Carnell
+80	Leonardo
+77	Mirabel Van Elstrik
+75	Vittoria
+69	Young Woman
+69	Ibrahim
+69	Darius
+68	Hana
+68	Fen
+68	Alexander Pope
+65	Rosa Dal Farra
+62	Wymer
+61	Bence
+57	Nikos
+57	Ali Mustafa Pasha
+54	Voice
+54	Mojca
+52	Vilim
+52	Ida
+51	Lord Richard Carnell
+51	Janez
+48	Ghost Ghoul
+47	Sülen
+47	Elias
+45	Maja
+43	Anja
+42	Ana
+41	Isak
+40	Besina
+38	Varenth
+37	Father Konstantin
+36	Javad
+36	Angelina
+35	Ghost Bride
+34	Jonas
+33	Paul
+33	Hamide
+32	Konrad Von Saalfelden
+32	Ekrem
+31	Tosun
+30	Zala
+30	Hend
+30	Cristyne Pfeiffer
+29	Gentleman
+29	Cederic
+27	Von Saalfelden
+27	Sister Jutte
+27	Ghost Groom
+26	Zandros Moser
+26	Djinn
+26	Carlotte
+25	Reynard
+25	Adrijana
+24	Wolfgang
+24	Salvador
+24	Karla
+23	My Father
+23	Mendoz
+23	Arald Tailor
+22	Old Woman
+22	Muhammet
+22	Judge Seveer
+22	Ha’anthu
+22	Giovanni
+22	Dorothea Becker
+21	Vila
+21	Bush Creature
+20	The Ferryman
+19	Eric
+19	Emil
+18	Stefano di Gradi
+18	Mary Magdalene
+18	Indeterminate Voice
+17	Wraith
+17	Henning
+16	The Crow
+16	Marco
+16	Lilathe
+16	Female Voice
+16	Donald
+15	Male Voice
+15	Ludvik
+15	Florijan
+15	Bayram

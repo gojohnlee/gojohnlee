@@ -1,0 +1,120 @@
+OBJSKEY_CONTAGION_WING	작은 열쇠
+OBJLKEY_CONTAGION_WING	수녀에게 받은 작은 열쇠.
+OBJSKEY_HAELANS_HOUSE	헤일란의 열쇠
+OBJLKEY_HAELANS_HOUSE	헤일란의 집 열쇠.
+OBJSKEY_HOSPITAL	묵직한 열쇠 꾸러미
+OBJLKEY_HOSPITAL	폰 잘펠덴의 책상에서 가져온 열쇠들.
+OBJSKEY_ZELIGS_DESK	작은 열쇠
+OBJLKEY_ZELIGS_DESK	작은 열쇠.
+OBJSKEYS_DIEDRIK	디드리크의 열쇠
+OBJSLAVENDER	라벤더
+OBJSLEGIONS_OF_THE_DEAD_CRYSTAL	망자의 군단 수정
+OBJLLEGIONS_OF_THE_DEAD_CRYSTAL	망자의 군단 의식으로 마법을 불어넣은 고대 호박 조각. 손에 쥐면 시체를 즉시 좀비로 일으킬 수 있다. / 착용하거나 손에 들 때 마나 증가: 2
+OBJSLEGIONS_OF_THE_DEAD_NECKLACE	망자의 군단 목걸이
+OBJLLEGIONS_OF_THE_DEAD_NECKLACE	망자의 군단 의식으로 마법을 불어넣은 고대 호박 목걸이. 착용하면 시체를 즉시 좀비로 일으킬 수 있다. / 착용하거나 손에 들 때 마나 증가: 6
+OBJSLETTER_BESINA	잡화점에 전할 편지
+OBJLLETTER_BESINA	동문 근처 잡화점의 베시나에게 전할 항구장의 편지.
+OBJSLETTER_BOZHENA	약제상에게 전할 편지
+OBJLLETTER_BOZHENA	약제상 보제나에게 전할 항구장의 편지.
+OBJSLETTER_FEN	북문 선술집에 전할 편지
+OBJLLETTER_FEN	북문 선술집의 펜에게 전할 항구장의 편지.
+OBJSLETTER_GARNET	시장 선술집에 전할 편지
+OBJLLETTER_GARNET	시장 선술집의 가넷에게 전할 항구장의 편지.
+OBJSLETTER_JERVASE	성에 전할 편지
+OBJLLETTER_JERVASE	성에 전할 항구장의 편지.
+OBJSLETTER_JOKOB	대장장이에게 전할 편지
+OBJLLETTER_JOKOB	대장장이 요코브에게 전할 항구장의 편지.
+OBJSLETTER_WOLFGANG	바퀴장이에게 전할 편지
+OBJLLETTER_WOLFGANG	바퀴장이 볼프강에게 전할 항구장의 편지.
+OBJSLETTER_WYMER	부두 선술집에 전할 편지
+OBJLLETTER_WYMER	부두 선술집에 전할 항구장의 편지.
+OBJSLINEN_BAG	아마포 자루
+OBJSLIQUID_SOURCE	액체 공급원
+OBJSLIVE_CHICKEN	살아 있는 닭
+OBJSLOVE_LETTER	연애편지
+OBJLLOVE_LETTER	펜이 바렌스에게 보내려고 쓴 가짜 연애편지.
+OBJSLOVE_POTION	사랑의 묘약
+OBJLLOVE_POTION	사랑의 묘약이라고 한다.
+OBJSMANDRAKE_ROOT	의식이 있는 만드레이크 뿌리
+OBJLMANDRAKE_ROOT	의식이 있는 만드레이크 뿌리. 망자의 군단 마법 의식에 필요하다.
+OBJSMEDICAL_SUPPLIES	의료 물품
+OBJSMISTLETOE	겨우살이
+OBJSMUG_OF_BEER	맥주
+OBJLMUG_OF_BEER	가넷의 선술집에서 파는 최상급 에일.
+OBJSMULLEIN_LEAVES	멀린 잎
+OBJLMULLEIN_LEAVES	멀린에서 딴 잎.
+OBJSMUSTACHE	가짜 콧수염
+OBJSMYSTICS_SCROLL	두루마리
+OBJLMYSTICS_SCROLL	점술가 쉴렌이 이브라힘에게 보내는 두루마리. 내용은커녕 무슨 글자인지도 알 수 없었다.
+OBJSNECKLACE_BARBARA	목걸이
+OBJLNECKLACE_BARBARA	바르바라가 걸고 있던 펜던트. / 착용하거나 손에 들 때 마나 증가: 1
+OBJSNECKLACE_BLUESTONE	청석 목걸이
+OBJLNECKLACE_BLUESTONE	준보석으로 만든 목걸이.
+OBJSNECKLACE_BUTTON_SKULL	마법 목걸이
+OBJLNECKLACE_BUTTON_SKULL	이상한 장신구로 만든 목걸이. / 착용하거나 손에 들 때 마나 증가: 1
+OBJSNECKLACE_EMERALD	에메랄드 목걸이
+OBJLNECKLACE_EMERALD	값비싼 목걸이.
+OBJSNECKLACE_RUBY	루비 목걸이
+OBJLNECKLACE_RUBY	값비싼 목걸이.
+OBJSNECKLACE_WISP	마법 목걸이
+OBJLNECKLACE_WISP	도깨비불이 내게 알려 준 빛나는 목걸이. / 착용하거나 손에 들 때 마나 증가: 1
+OBJSNEEDLE_AND_THREAD	바늘과 실
+OBJSNIGHTSHADE_FLOWERS	가지풀
+OBJSNOTES_ON_POISONS	혼수에 관한 메모가 적힌 종이
+OBJLNOTES_ON_POISONS	조로아스터교 문자로 어떤 독에 관해 적어 둔 종이. 혼수와 무언가 관련이 있다.
+OBJSNUX_VOMICA_SEEDS	마전자 씨앗
+OBJLNUX_VOMICA_SEEDS	마전자 씨앗이 든 주머니.
+OBJSCRUSHED_NUX_VOMICA_SEEDS	으깬 마전자 씨앗
+OBJLCRUSHED_NUX_VOMICA_SEEDS	곱게 으깬 마전자 씨앗이 든 주머니.
+OBJSOBSIDIAN	흑요석
+OBJLOBSIDIAN	유리 같은 작은 돌. 마법의 빛이 희미하게 감돈다.
+OBJSOBSIDIAN_AND_CATSKIN	고양이 가죽으로 감싼 흑요석
+OBJLOBSIDIAN_AND_CATSKIN	고양이 가죽으로 감싼 마법의 돌.
+OBJSDOMINION_OF_PHOBOS_PAGE	의사의 일지 한 쪽
+OBJLDOMINION_OF_PHOBOS_PAGE	역병 의사 콘라드 폰 잘펠덴의 수첩에서 뜯어낸 종이 한 장.
+OBJSPANTS	바지
+OBJSPAPERS	별것 아닌 듯한 서류
+OBJSPARTY_DRESS	연회용 드레스
+OBJLPARTY_DRESS	어머니의 연회용 드레스.
+OBJSPILLOW	베개
+OBJSHEKATES_DREAM_PILLOW	헤카테의 꿈 베개
+OBJLHEKATES_DREAM_PILLOW	<i>영체 보행</i>을 시도하려고 주문 제작한 약초 베개.
+OBJSPLAGUE_RAGS	역병 환자의 누더기
+OBJSUNKNOWN_POTION	정체불명의 액체
+OBJLUNKNOWN_POTION	성의 주방에 가져다 달라는 부탁을 받은 물약.
+OBJSQUICKSILVER	수은
+OBJSQUICKSILVER_CURE	수은 치료제
+OBJLQUICKSILVER_CURE	로사리오가 만든 마법의 역병 치료제.
+OBJSBOW	활
+OBJLBOW	사냥꾼의 활
+OBJSCROSSBOW	석궁
+OBJLCROSSBOW	군용 석궁 / 공격: 원거리 (m당 명중률 감소: 2) (빠른 공격) / 행동력(AP): 2 - 재장전 AP: 5 (군인 3) / 기본 피해: 30 (가죽: 27, 금속: 15)
+OBJSMUSKET_PISTOL	머스킷 권총
+OBJLMUSKET_PISTOL	명중률이 낮고 재장전이 오래 걸리는 위험한 무기 / 공격: 원거리 (m당 명중률 감소: 2.5) (빠른 공격) / 행동력(AP): 2 - 재장전 AP: 8 (군인 5) / 기본 피해: 60 (가죽: 48, 금속: 30)
+OBJSMUSKET_RIFLE	머스킷 소총
+OBJLMUSKET_RIFLE	재장전이 오래 걸리는 위험한 무기 / 공격: 원거리 (m당 명중률 감소: 2) (빠른 공격) / 행동력(AP): 2 - 재장전 AP: 12 (군인 8) / 기본 피해: 85 (가죽: 68, 금속: 42)
+OBJSRING_BLUESTONE	청석 반지
+OBJSRING_CARNELIAN	홍옥수 반지
+OBJSRING_GOLD	금반지
+OBJSRING_ZELIGS	아버지의 반지
+OBJLRING_ZELIGS	아버지의 유골과 함께 놓여 있던 반지. / 착용하거나 손에 들 때 마나 증가: 1
+OBJSSHIELD	나무 방패
+OBJSWHITE_SHIRT	셔츠
+OBJLWHITE_SHIRT	정장용 셔츠.
+OBJSDYED_SILK	물들인 비단
+OBJSDYED_SILK2	물들인 비단
+OBJSSILK_RIBBON	비단 리본
+OBJSSILK_RIBBON2	비단 리본
+OBJSSILVER_SHAVINGS	은 부스러기
+OBJSBLACK_SKIRT	치마
+OBJSBLUE_SKIRT	치마
+OBJSSPIDER_VENOM_GLANDS	거대 거미의 독샘
+OBJSSTRING	끈
+OBJSSULFUR	유황
+OBJSTALISMAN_STONE	이상한 돌
+OBJSTINDER_BOX	부싯깃 통
+OBJLTINDER_BOX	횃불과 양초에 불을 붙일 때 쓰는 부싯깃 통.
+OBJSBONE_SAW	뼈톱
+OBJLBONE_SAW	뇌를 구해 오라며 에거 보어하벤이 내게 준 뼈톱
+OBJSCOMPASS	나침반
+OBJLCOMPASS	자기 나침반.

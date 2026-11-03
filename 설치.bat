@@ -1,8 +1,13 @@
 @echo off
-rem 이 파일은 CP949로 저장한다(cmd가 UTF-8 한글을 깨뜨림). 고칠 땐 UTF-8로 쓰고 iconv -t cp949로 바꿀 것.
+rem 이 파일은 CP949로 저장한다(cmd가 UTF-8 한글을 깨뜨림). 고칠 땐 scripts\install.utf8.bat를 고치고 iconv -f utf-8 -t cp949로 설치.bat를 만든다.
+rem 하는 일: 최신본 받기(git pull) → 한글 글꼴 모드 설치 → 대사 번역 최신본을 합쳐 게임에 넣기. 이 bat 하나로 끝.
 setlocal EnableDelayedExpansion
-title 네크로맨서 테일 한글 폰트 설치
+title 네크로맨서 테일 한글 설치
 set "HERE=%~dp0"
+if exist "%HERE%.git" (
+  echo 최신본 받는 중...
+  git -C "%HERE%." pull -q origin necromancer || echo [경고] 최신본을 받지 못했습니다. 지금 있는 파일로 계속합니다.
+)
 set "GAME="
 if exist "%HERE%gamepath.txt" for /f "usebackq delims=" %%P in ("%HERE%gamepath.txt") do if not defined GAME if exist "%%P\TheNecromancer.exe" set "GAME=%%P"
 if not defined GAME for /f "tokens=2,*" %%A in ('reg query "HKCU\Software\Valve\Steam" /v SteamPath 2^>nul ^| findstr /i SteamPath') do set "STEAM=%%B"
@@ -25,10 +30,14 @@ if not exist "%GAME%\KoreanFont" mkdir "%GAME%\KoreanFont"
 copy /y "%HERE%dist\KoreanFont\NecroKoreanFont.dll" "%GAME%\KoreanFont\" >nul || goto :fail
 copy /y "%HERE%dist\KoreanFont\ui-ko.tsv" "%GAME%\KoreanFont\" >nul || goto :fail
 copy /y "%HERE%dist\KoreanFont\names-ko.tsv" "%GAME%\KoreanFont\" >nul || goto :fail
+set "LANG=%USERPROFILE%\AppData\LocalLow\Psychic Software\TheNecromancer\Languages"
+if not exist "%LANG%" mkdir "%LANG%"
+echo 대사 번역 합치는 중...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%scripts\fix-csv.ps1" -Out "%LANG%\Korean.csv" || goto :fail
 echo 설치 끝. 게임을 켜고 "Localization file found ... Korean.csv" 창에서 Yes를 누르세요.
 goto :end
 :fail
-echo [실패] 파일을 복사하지 못했습니다. 게임을 끄고 다시 실행하세요.
+echo [실패] 설치하지 못했습니다. 게임을 끄고 다시 실행하세요.
 :end
 echo.
 pause

@@ -20,3 +20,10 @@
 - 이 게임 mscorlib엔 string.Replace(string,string)도 없음 → IndexOf(…, Ordinal)+Substring으로 직접.
 - 게임이 매 프레임 영어를 다시 넣는 글(빠른 설정 창 등)은 이벤트로 바꿔도 다음 프레임에 덮임 → 한 번 바꾼 TMP 글을 기억해 Runner.LateUpdate에서 그리기 전에 다시 바꾼다(글이 그대로면 건너뜀).
 - 능력치 이름은 Korean.csv 설명과 같게: 힘·민첩·체질·통찰·지식·관찰(Investigate)·분석·매력(Impress)·설득. Van Elstrik = 반 엘스트릭.
+
+## 저장소·번역 (11-03)
+- 네크로맨서는 공개 gojohnlee/gojohnlee `necromancer` 한 곳. 게임 DLL만 비공개 valheim-refs `necromancer` dll/(사용자 결정 11-03).
+- 한글 패치 1.0 원본은 쓰지 않음(재번역이 한국어 줄 26,752개를 전부 덮음). 최신본 = translation/template.csv(영어·단락 틀) + translation/retrans/*.tsv 이름순 덮기. 게임에 넣기는 맨 위 설치.bat 하나(받기·모드·번역). 번역 지침·용어 표는 cloud/translate-guide.md 한 벌, 이름표는 dist/KoreanFont/names-ko.tsv 한 벌.
+- fix-csv.ps1 단락 나누기는 `\s/(?:\s|$)`(빈 단락 ` /  / ` 보존). `\s+/(?:\s+|$)`는 빈 단락을 먹어 37줄을 버렸음.
+- 같은 원문 통일 규칙: 같은 영어·같은 화자·같은 말투면 같은 번역. 짧은 대답(대사 5단어 이하)·he/she 문장은 문맥 따라 달라도 됨.
+- fix-csv.ps1의 ID 표는 대소문자를 가린다([master]·[Master]가 따로 있음, PowerShell @{}는 안 가려 한쪽이 번역 안 됐었음).

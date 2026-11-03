@@ -1,12 +1,13 @@
-# 네크로맨서 테일 한글 폰트 모드
+# 네크로맨서 테일 한글화
 
-한글 패치(Korean.csv)를 넣었는데 글자가 **네모(□)** 로 나올 때 쓰는 모드예요.
-게임 파일은 건드리지 않고, 게임이 켜질 때 Windows의 **맑은 고딕**을 한글 글꼴로 붙여요.
-업데이트로 빠진 UI 글(저장·전투 안내, 하수인 명령 메뉴 등)도 번역 표(`dist/KoreanFont/ui-ko.tsv`)로 한글로 바꿔요. 게임이 업데이트돼도 대부분 그대로 돼요.
+## 무엇이 어디에
+- **대사 번역(최신본)**: `translation/template.csv`(영어 원문 틀) + `translation/retrans/` 파일들을 이름순으로 덮은 것
+- **화면 글·이름 표, 한글 글꼴 모드**: `dist/`
+- **번역 지침·용어 표**: `cloud/translate-guide.md`
+- **같은 원문 다른 번역 현황**: `인덱스.txt`
+- **진행·결정·한 일**: `docs/progress.txt`, `docs/decisions.txt`, `docs/history.md`
+- 게임 DLL(모드 빌드용)만 비공개 저장소에 따로 있음.
 
-## 설치
-1. 이 브랜치를 내려받아 압축을 풀어요.
-2. `설치.bat`을 더블클릭해요(게임 폴더를 자동으로 찾아요).
-3. 게임을 켜고 "Localization file found … Korean.csv" 창에서 **Yes**.
-
-지우기는 `제거.bat`.
+## 게임에 넣기 (PC)
+1. `설치.bat` 더블클릭 — 최신본 받기, 한글 글꼴 모드 설치, 대사 번역 넣기를 한 번에 합니다.
+2. 게임을 켜고 "Localization file found … Korean.csv" 창에서 **Yes**.

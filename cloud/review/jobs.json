@@ -1,0 +1,517 @@
+[
+{
+"name": "diedrik-1",
+"chars": [
+"Diedrik"
+],
+"file": "rv/in-diedrik-1.txt",
+"n": 439
+},
+{
+"name": "diedrik-2",
+"chars": [
+"Diedrik"
+],
+"file": "rv/in-diedrik-2.txt",
+"n": 438
+},
+{
+"name": "albrecht-hoffman",
+"chars": [
+"Albrecht Hoffman"
+],
+"file": "rv/in-albrecht-hoffman.txt",
+"n": 559
+},
+{
+"name": "annie",
+"chars": [
+"Annie"
+],
+"file": "rv/in-annie.txt",
+"n": 527
+},
+{
+"name": "connor",
+"chars": [
+"Connor"
+],
+"file": "rv/in-connor.txt",
+"n": 436
+},
+{
+"name": "rebeka",
+"chars": [
+"Rebeka"
+],
+"file": "rv/in-rebeka.txt",
+"n": 392
+},
+{
+"name": "garnet",
+"chars": [
+"Garnet"
+],
+"file": "rv/in-garnet.txt",
+"n": 371
+},
+{
+"name": "sofia",
+"chars": [
+"Sofia"
+],
+"file": "rv/in-sofia.txt",
+"n": 366
+},
+{
+"chars": [
+"Woman",
+"Lelon",
+"Karla"
+],
+"name": "group01",
+"file": "rv/in-group01.txt",
+"n": 700
+},
+{
+"chars": [
+"Jervase",
+"Aldis",
+"Bence",
+"Ursula"
+],
+"name": "group02",
+"file": "rv/in-group02.txt",
+"n": 700
+},
+{
+"chars": [
+"Ilona",
+"Lucus",
+"Robyn",
+"Fridolf"
+],
+"name": "group03",
+"file": "rv/in-group03.txt",
+"n": 700
+},
+{
+"chars": [
+"Gustav",
+"Marija",
+"Boerhaaven",
+"Balaban"
+],
+"name": "group04",
+"file": "rv/in-group04.txt",
+"n": 700
+},
+{
+"chars": [
+"Gerhardht Oman",
+"AnnieOrConnor",
+"Flip",
+"Brina"
+],
+"name": "group05",
+"file": "rv/in-group05.txt",
+"n": 700
+},
+{
+"chars": [
+"Svit",
+"Boerhaaven's Creature",
+"Drago",
+"Cristyne Pfeiffer",
+"Jannik"
+],
+"name": "group06",
+"file": "rv/in-group06.txt",
+"n": 700
+},
+{
+"chars": [
+"Sherman",
+"Juliana",
+"Ramón",
+"Ali Mustafa Pasha",
+"RobynOrLelon"
+],
+"name": "group07",
+"file": "rv/in-group07.txt",
+"n": 700
+},
+{
+"chars": [
+"Bozhena",
+"Stanislav",
+"Leopold",
+"Mirabel Van Elstrik",
+"Guerina"
+],
+"name": "group08",
+"file": "rv/in-group08.txt",
+"n": 700
+},
+{
+"chars": [
+"Tomaz",
+"Barbara",
+"Irving",
+"Channing",
+"PrologueSectionHeader",
+"Fakir"
+],
+"name": "group09",
+"file": "rv/in-group09.txt",
+"n": 700
+},
+{
+"chars": [
+"Merlyn",
+"Willard",
+"Alfonz",
+"Haelan",
+"Wolfgang"
+],
+"name": "group10",
+"file": "rv/in-group10.txt",
+"n": 700
+},
+{
+"chars": [
+"Father Oliwier",
+"Nicc",
+"Peta",
+"Andras",
+"Vilim",
+"Mandel (Young)"
+],
+"name": "group11",
+"file": "rv/in-group11.txt",
+"n": 700
+},
+{
+"chars": [
+"Jokob",
+"Sybil",
+"Klaus",
+"Lady Agnes Carnell",
+"Fen",
+"Yaroslav"
+],
+"name": "group12",
+"file": "rv/in-group12.txt",
+"n": 700
+},
+{
+"chars": [
+"Alexander Pope",
+"Leonardo",
+"Vittoria",
+"Rosa Dal Farra",
+"Ibrahim",
+"Hana",
+"Chandler"
+],
+"name": "group13",
+"file": "rv/in-group13.txt",
+"n": 700
+},
+{
+"chars": [
+"Darius",
+"Wymer",
+"Mojca",
+"Nikos",
+"Besina",
+"Lord Richard Carnell",
+"Konrad Von Saalfelden",
+"Dorothea Becker"
+],
+"name": "group14",
+"file": "rv/in-group14.txt",
+"n": 700
+},
+{
+"chars": [
+"Sülen",
+"Maja",
+"Ghost Ghoul",
+"Voice",
+"Javad",
+"Janez",
+"Elias",
+"Anja",
+"Angelina",
+"Ghost Bride"
+],
+"name": "group15",
+"file": "rv/in-group15.txt",
+"n": 700
+},
+{
+"chars": [
+"Father Konstantin",
+"Ida",
+"Varenth",
+"Jonas",
+"Hamide",
+"Hend",
+"Ana",
+"Ekrem",
+"Isak",
+"Ghost Groom",
+"Zala",
+"Carlotte",
+"Indeterminate Voice",
+"Tahir"
+],
+"name": "group16",
+"file": "rv/in-group16.txt",
+"n": 700
+},
+{
+"chars": [
+"Tosun",
+"Paul",
+"Bush Creature",
+"Sister Jutte",
+"Gentleman",
+"Reynard",
+"Arald Tailor",
+"Zandros Moser",
+"The Ferryman",
+"My Father",
+"Giovanni",
+"Djinn",
+"Cederic",
+"Emil",
+"Mendoz",
+"Eric",
+"Male Voice",
+"Salvador",
+"Donald"
+],
+"name": "group17",
+"file": "rv/in-group17.txt",
+"n": 700
+},
+{
+"chars": [
+"Muhammet",
+"Adrijana",
+"Lilathe",
+"Ha’anthu",
+"Henning",
+"Female Voice",
+"The Crow",
+"Ivana",
+"Sherzod",
+"Vila",
+"Mandrake",
+"Judge Seveer",
+"Wraith",
+"Marco",
+"Stefano di Gradi",
+"Florijan",
+"AnnieOrConnorZombie",
+"Marijan",
+"Isabella",
+"Ludvik",
+"Bayram",
+"Mina",
+"Mary Magdalene",
+"Veneti Spirit",
+"Rustling Forest",
+"Janko",
+"Temerity",
+"Sister Benedicta",
+"Gunther",
+"Jietang",
+"Hamm",
+"Mortain",
+"Strange Boy",
+"The Great Marconi",
+"Lodovico",
+"Aniela",
+"Claudio"
+],
+"name": "group18",
+"file": "rv/in-group18.txt",
+"n": 700
+},
+{
+"chars": [
+"Zombie Sybil",
+"Mirabel",
+"Kathy",
+"Ludwig",
+"Spirit 1",
+"Luka",
+"Katherine",
+"Marc",
+"Spirit 2",
+"Tommaso",
+"Aziz",
+"Rosario",
+"Young Boy",
+"Arnold",
+"Jervase (Young)",
+"Zelig VanElstrik",
+"First Twin",
+"Second Twin",
+"Hermann",
+"My Mother"
+],
+"name": "group19",
+"file": "rv/in-group19.txt",
+"n": 79
+},
+{
+"chars": [
+"#N00",
+"#N01"
+],
+"name": "narration-00-01",
+"file": "rv/in-narration-00-01.txt",
+"n": 691
+},
+{
+"chars": [
+"#N02",
+"#N03"
+],
+"name": "narration-02-03",
+"file": "rv/in-narration-02-03.txt",
+"n": 575
+},
+{
+"chars": [
+"#N04"
+],
+"name": "narration-04-04",
+"file": "rv/in-narration-04-04.txt",
+"n": 335
+},
+{
+"chars": [
+"#N05"
+],
+"name": "narration-05-05",
+"file": "rv/in-narration-05-05.txt",
+"n": 501
+},
+{
+"chars": [
+"#N06",
+"#N07"
+],
+"name": "narration-06-07",
+"file": "rv/in-narration-06-07.txt",
+"n": 576
+},
+{
+"chars": [
+"#N08",
+"#N09"
+],
+"name": "narration-08-09",
+"file": "rv/in-narration-08-09.txt",
+"n": 633
+},
+{
+"chars": [
+"#N10"
+],
+"name": "narration-10-10",
+"file": "rv/in-narration-10-10.txt",
+"n": 482
+},
+{
+"chars": [
+"#N11",
+"#N12"
+],
+"name": "narration-11-12",
+"file": "rv/in-narration-11-12.txt",
+"n": 696
+},
+{
+"chars": [
+"#N13",
+"#N14"
+],
+"name": "narration-13-14",
+"file": "rv/in-narration-13-14.txt",
+"n": 742
+},
+{
+"chars": [
+"#N15",
+"#N16"
+],
+"name": "narration-15-16",
+"file": "rv/in-narration-15-16.txt",
+"n": 519
+},
+{
+"chars": [
+"#N17"
+],
+"name": "narration-17-17",
+"file": "rv/in-narration-17-17.txt",
+"n": 398
+},
+{
+"chars": [
+"#N18"
+],
+"name": "narration-18-18",
+"file": "rv/in-narration-18-18.txt",
+"n": 433
+},
+{
+"chars": [
+"#N19",
+"#N20"
+],
+"name": "narration-19-20",
+"file": "rv/in-narration-19-20.txt",
+"n": 788
+},
+{
+"chars": [
+"#N21",
+"#N22"
+],
+"name": "narration-21-22",
+"file": "rv/in-narration-21-22.txt",
+"n": 774
+},
+{
+"chars": [
+"#N23",
+"#N24"
+],
+"name": "narration-23-24",
+"file": "rv/in-narration-23-24.txt",
+"n": 650
+},
+{
+"chars": [
+"#N25"
+],
+"name": "narration-25-25",
+"file": "rv/in-narration-25-25.txt",
+"n": 1000
+},
+{
+"chars": [
+"#N26"
+],
+"name": "narration-26-26",
+"file": "rv/in-narration-26-26.txt",
+"n": 752
+}
+]

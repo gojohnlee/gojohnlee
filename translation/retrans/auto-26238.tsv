@@ -1,0 +1,120 @@
+OBJSFORK	포크
+OBJSHAMMER	망치
+OBJLHAMMER	작업용 작은 망치.
+OBJSLADLE	국자
+OBJSLOCKPICK	자물쇠 따개
+OBJSMARBLES	구슬
+OBJLMARBLES	디드리크가 어릴 적 가지고 놀던 소박한 돌구슬.
+OBJSNAILS	못
+OBJSPAINTBRUSH	붓
+OBJLPAINTBRUSH	소피아가 가장 아끼는 붓.
+OBJSPESTLE_AND_MORTAR	막자와 사발
+OBJSPIN	핀
+OBJSSCISSORS	가위
+OBJLSCISSORS	가위 한 자루.
+OBJSSCRAPER	긁개
+OBJSTELESCOPE	망원경
+OBJLTELESCOPE	잘 만든 망원경. 살 사람만 잘 찾으면 더 비싸게 팔 수 있을 듯했다.
+OBJSTORCH	횃불
+OBJLTORCH	부싯깃 상자와 함께 '조합' 칸에 넣으면 불을 붙일 수 있다.
+OBJSTORPOR_GREASE	가지풀 기름
+OBJLTORPOR_GREASE	전투에서 무기로 사용하면 약한 혼수 효과를 낸다. / 공격: 근접 / 인간 대상을 약물로 무력화 / 행동력(AP): 2
+OBJSTORPOR_POTION	혼수 물약
+OBJLTORPOR_POTION	전투에서 무기로 사용하면 약한 혼수 효과를 낸다. / 공격: 근접 / 인간 대상을 약물로 무력화 / 행동력(AP): 2
+OBJSTORPOR_SALVE	가지풀 연고
+OBJLTORPOR_SALVE	전투에서 무기로 사용하면 강한 혼수 효과를 낸다. / 공격: 근접 / 인간 대상을 약물로 무력화 / 행동력(AP): 2
+OBJSTORPOR_SPIKED_ASSORTED_FOOD	혼수 약물을 탄 음식
+OBJSTORPOR_SPIKED_BOTTLE	혼수 약물을 탄 술
+OBJSTORPOR_SPIKED_DRINK	혼수 약물을 탄 맥주
+OBJSTORPOR_SPIKED_JUG_OF_MILK	혼수 약물을 탄 염소젖 주전자
+OBJSTORPOR_SPIKED_MEAT	혼수 약물을 넣은 고기
+OBJSLEATHER_TROUSERS	가죽 바지
+OBJSTUBEROSE_FLOWERS	튜베로즈 꽃
+OBJLTUBEROSE_FLOWERS	푸른 튜베로즈에서 딴 꽃.
+OBJSUNGUENT	신부의 물약
+OBJLUNGUENT	갈색 액체가 든 단지. 올리비에 신부님은 동문 밖 빈민가에 사는 젊은 여자 로사 달 파라에게 전해 달라고 하셨다.
+OBJSUNION_BOZHENA_EVIDENCE	쪽지
+OBJLUNION_BOZHENA_EVIDENCE	부두에서 싸움이 벌어진 뒤 발견한 쪽지.
+OBJSUNION_GERHARDHT_EVIDENCE	쪽지
+OBJLUNION_GERHARDHT_EVIDENCE	부두에서 싸움이 벌어진 뒤 발견한 쪽지.
+OBJSUNPOSTED_LETTER	편지
+OBJSVERSES_OF_SICKNESS	병의 시
+OBJLVERSES_OF_SICKNESS	<i>지하 묘지의 역병</i> 주문에 필요한 책.
+OBJSBLADDER	방광
+OBJSBOWL	그릇
+OBJSBUCKET	양동이
+OBJSHOLY_PHIAL	성유병
+OBJLHOLY_PHIAL	의식으로 축복한 기름이 담긴 용기.
+OBJSJAR	단지
+OBJSJUG	주전자
+OBJSMUG	머그잔
+OBJSPHIAL	작은 병
+OBJSPOT	냄비
+OBJSVINEGAR	식초
+OBJLVINEGAR	식초가 든 작은 병.
+OBJSVOODOO_DOLL	헝겊 인형
+OBJLVOODOO_DOLL	주술용 인형. 살아 있는 사람의 머리카락을 넣어야 한다.
+OBJSVOODOO_DOLL_STUFFED	준비된 주술 인형
+OBJLVOODOO_DOLL_STUFFED	살아 있는 사람의 머리카락을 채워 넣은 주술용 인형.
+OBJSWAR_MEDAL	무공훈장
+OBJLWAR_MEDAL	아버지의 무공훈장.
+OBJSWART_REMOVER	사마귀 제거제
+OBJSAXE	도끼
+OBJLAXE	튼튼한 손도끼 / 공격: 근접 (느린 공격) / 행동력(AP): 3 / 기본 피해: 35 (가죽: 28, 금속: 18)
+OBJSCLAWS	발톱
+OBJLCLAWS	날카로운 발톱 / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 10 (가죽: 4, 금속: 1)
+OBJSCLEAVER	고기칼
+OBJLCLEAVER	임시방편으로 쓰는 무기. 위력은 별로다 / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 8 (가죽: 6, 금속: 4)
+OBJSCLUB	몽둥이
+OBJLCLUB	임시방편으로 쓰는 무기. 위력은 별로다. / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 5 (가죽: 3, 금속: 3)
+OBJSFISTS	주먹
+OBJLFISTS	맨손 싸움의 진수 (위력은 최하) / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 0 (가죽: 0, 금속: 0)
+OBJSHALBERD	미늘창
+OBJLHALBERD	사거리가 긴 장병기 / 공격: 근접 (사거리 2칸) (느린 공격) / 행동력(AP): 3 / 기본 피해: 40 (가죽: 32, 금속: 24)
+OBJSJERVASES_DAGGER	고급 단검
+OBJLJERVASES_DAGGER	숙부님 집무실에서 가져온 정교한 단검. 살인 흉기일까? / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 15 (가죽: 15, 금속: 8)
+OBJSKNIFE	칼
+OBJLKNIFE	찌르는 데 쓰는 작은 칼 / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 10 (가죽: 8, 금속: 4)
+OBJSWITCHS_KNIFE	아다메
+OBJLWITCHS_KNIFE	마법이 깃든 마녀의 검은 손잡이 칼. / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 10 (가죽: 8, 금속: 4) / 착용하거나 들고 있을 때 마나 증가: 3
+OBJSRIGGING_KNIFE	화려한 밧줄칼
+OBJLRIGGING_KNIFE	플립이 선원들에게서 훔친 밧줄칼. 화려한 장식과 살벌한 톱니 날이 달려 있다. / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 20 (가죽: 20, 금속: 12)
+OBJSSCYTHE	큰낫
+OBJLSCYTHE	농기구지만 무기로 써도 제법이다 / 공격: 근접 (사거리 2칸) (느린 공격) / 행동력(AP): 3 / 기본 피해: 35 (가죽: 28, 금속: 24)
+OBJSSHORTSWORD	소검
+OBJLSHORTSWORD	강철로 만든 짧은 검 / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 25 (가죽: 20, 금속: 10)
+OBJSSPADE	삽
+OBJLSPADE	땅을 파는 도구. 임시방편으로 무기로 쓸 수 있지만 위력은 별로다. / 공격: 근접 (느린 공격) / 행동력(AP): 3 / 기본 피해: 8 (가죽: 4, 금속: 1)
+OBJSSPEAR	창
+OBJLSPEAR	사거리가 긴 장병기 / 공격: 근접 (사거리 2칸) (느린 공격) / 행동력(AP): 3 / 기본 피해: 25 (가죽: 20, 금속: 12)
+OBJSSWORD	검
+OBJLSWORD	강철로 만든 긴 검 / 공격: 근접 / 행동력(AP): 2 / 기본 피해: 30 (가죽: 24, 금속: 12)
+OBJSTEETH	이빨
+OBJLTEETH	물어뜯기 / 공격: 근접 (빠른 공격) / 행동력(AP): 2 / 기본 피해: 1 (가죽: 1, 금속: 0)
+OBJSYEAST	효모
+OBJLYEAST	에일 양조용 효모.
+OBJSZAATAR	자타르
+OBJLZAATAR	혼합 향신료.
+OBJSZALAS_NECKLACE	호박 목걸이
+OBJLZALAS_NECKLACE	환상열석에 묻혀 있던 고대 유물. / 착용하거나 들고 있을 때 마나 증가: 4
+OBJSZELIGS_BELT	허리띠
+OBJLZELIGS_BELT	아버지께서 나를 매질하실 때 쓰시던 낡은 허리띠.
+[title]	경/부인
+[master]	도련님/아가씨
+[Master]	도련님/아가씨
+[mistress]	주인님/안주인님
+[he]	그/그녀
+[He]	그/그녀
+[his]	그의/그녀의
+[His]	그의/그녀의
+[him]	그/그녀
+[relation]	조카/조카딸
+[son]	아들/딸
+[sibling]	형제/자매
+[formal]	선생님/부인
+[friendly]	친구/자기
+[informal]	아저씨/아주머니
+[Informal]	아저씨/아주머니
+[polite]	나리/마님
+[child]	소년/소녀
+[Child]	소년/소녀

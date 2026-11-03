@@ -25,7 +25,7 @@
 =Dig For Body	시체 파내기
 =(Already Dug For Body)	(이미 시체를 파냄)
 =Take Some Flesh	살점 떼어내기
-=Awaken Ritual	각성 의식
+=Awaken Ritual	깨우기 의식
 =Legions of the Dead	죽은 자들의 군대
 =Cut Out Brain	뇌 꺼내기
 =Talk	대화
@@ -66,8 +66,6 @@ Quick Load (	빠른 불러오기 (
 =Quick Load from your most recent Quick Save?	가장 최근 빠른 저장에서 불러올까요?
 =You have no Quick Save file to load.	불러올 빠른 저장 파일이 없습니다.
 =You cannot overwrite a Quicksave or Autosave slot with a regular save.	빠른 저장·자동 저장 칸에는 일반 저장을 덮어쓸 수 없습니다.
-You cannot save as you have a courtcase scheduled to happen the next time you move time forward.	다음에 시간을 넘기면 재판이 열릴 예정이라 저장할 수 없습니다.
-You cannot save while the Conversation Window is open, or during a ritual, cutscene or combat.	대화 창이 열려 있거나 의식·컷신·전투 중에는 저장할 수 없습니다.
 Cannot load a non-demo save-game file into demo version of the game.	체험판에서는 정식판 저장 파일을 불러올 수 없습니다.
 <color=#C7B59C>Autosave 	<color=#C7B59C>자동 저장
 <color=#C7B59C>Chapter 	<color=#C7B59C>챕터
@@ -401,11 +399,11 @@ Search for hidden caches of logs in the forest, and bring them back to the cart.
 =I was not holding a cleaver or knife.	식칼이나 칼을 들고 있지 않았다.
 I was not holding a 	들고 있지 않았다:
 =I carefully removed the brain.	조심스럽게 뇌를 꺼냈다.
-=I removed a chunk of flesh.	살점을 한 덩이 떼어냈다.
+=I removed a chunk of flesh.	살점을 한 덩이 떼어 냈다.
 =I bandaged myself with the cloth.	천으로 상처를 감쌌다.
 =I began to feel ill as soon as I stepped inside.	들어서자마자 속이 메스꺼워졌다.
 =I placed a bucket under the leak.	새는 곳 아래에 양동이를 놓았다.
-=I did not have Jokob's permission to use the forge.	용광로를 쓰려면 요코브의 허락이 필요했는데, 나는 받지 못했다.
+=I did not have Jokob's permission to use the forge.	요코브에게 대장간 화덕을 써도 된다는 허락을 받지 않았다.
 =I cut my arm and drained some of my own blood into the mix, then baked it into a flat, dark cake.	팔을 베어 내 피를 반죽에 조금 섞은 뒤, 납작하고 검은 케이크로 구웠다.
 =I had mixed a cake batter by Dorothea's recipe. It now just needed baking with yeast.	도로테아의 조리법대로 케이크 반죽을 섞었다. 이제 효모를 넣고 굽기만 하면 됐다.
 =Nothing much happened. This stove was not hot enough.	별일 없었다. 화덕이 충분히 뜨겁지 않았다.
@@ -416,9 +414,9 @@ I could not speak with 	대화할 수 없었다:
 I could not stir with 	이걸로는 저을 수 없었다:
 =Gisela's blood	기젤라의 피
 =Karla's blood	카를라의 피
-=Lucus' blood	루쿠스의 피
+=Lucus' blood	루커스의 피
 =Mark's blood	마르크의 피
-=Svit's blood	스비트의 피
+=Svit's blood	스빗의 피
 =Plague of the Crypt potion	지하 묘지의 역병 물약
 =Rejuvenate potion	회복 물약
 =Exilir of Defilation	더럽힘의 영약
@@ -429,7 +427,7 @@ I could not stir with 	이걸로는 저을 수 없었다:
 =some holy water	성수 조금
 =some sulfur	유황 조금
 =bottle of port	포트와인 한 병
-=torpor-spiked bottle of port	마비제를 탄 포트와인 한 병
+=torpor-spiked bottle of port	혼수를 탄 포트와인 한 병
 =cow's milk	소젖
 =goat's milk	염소젖
 =fried fish	생선 튀김
@@ -558,13 +556,10 @@ Envelop an area with a cold graveyard mist, which drains the resolve of all mort
 Strike an enemy with a blast of poisonous energy.	독 기운의 폭발로 적을 칩니다.
 Surround yourself with a mist of blood from the Realm of the Dead. Undead minions within it will be infused with battle rage.	죽은 자들의 영역에서 온 피의 안개로 자신을 감쌉니다. 그 안의 언데드 하수인은 전투의 분노로 가득 찹니다.
 If you have undead minions in your control, and some magical ability, then you can activate and move a minion by casting the Activate Minion spell.	언데드 하수인을 거느리고 마법 능력이 조금 있다면, 하수인 움직이기 주문으로 하수인을 깨워 움직일 수 있습니다.
-To the left of the screen are the portraits of your main character and your allies. Characters take turns in sequence.	화면 왼쪽은 주인공과 아군의 초상화입니다. 인물들은 차례대로 턴을 가집니다.
 \nTo the right of the screen are your enemies' portraits.	\n화면 오른쪽은 적의 초상화입니다.
-After firing a missile weapon you will need to reload it. Reloading costs Action Points. Muskets have an especially high reload cost.	투사 무기는 쏜 뒤 재장전해야 합니다. 재장전에는 행동 점수가 들며, 머스킷은 특히 많이 듭니다.
  When a combat starts, all ranged weapons are considered to be loaded. After firing in combat, they must be reloaded. The time taken to reload depends on the type of weapon. The game does not track ammunition: a character never runs out of it.	 전투가 시작되면 모든 원거리 무기는 장전된 것으로 칩니다. 전투에서 쏜 뒤에는 재장전해야 하며, 걸리는 시간은 무기 종류에 따라 다릅니다. 탄약은 따로 세지 않아 떨어지는 일이 없습니다.
 \nWhile reloading, you cannot move, attack, or cast battle magic. You can cancel reloading at any time. Ending your turn while reloading will use your remaining APs on that.	\n재장전 중에는 움직이거나 공격하거나 전투 마법을 쓸 수 없습니다. 재장전은 언제든 취소할 수 있습니다. 재장전 중에 턴을 끝내면 남은 AP를 재장전에 씁니다.
 You can open your Inventory and double-click a weapon to equip it. For more detailed control, open both your Character Sheet and Inventory and drag items between the slots in them.	소지품을 열고 무기를 더블클릭하면 장비합니다. 더 세밀하게 하려면 캐릭터 정보와 소지품을 함께 열고 칸 사이로 끌어다 놓으세요.
-You can open your Inventory and double-tap A on a weapon to equip it. For more detailed control, open both your Character Sheet and Inventory and drag items between the slots in them.	소지품을 열고 무기에서 A를 두 번 누르면 장비합니다. 더 세밀하게 하려면 캐릭터 정보와 소지품을 함께 열고 칸 사이로 끌어다 놓으세요.
 \nHover over a weapon icon in your Character Sheet or Inventory to see its stats. This includes how many Action Points it takes to use, and its effectiveness against unarmoured, leather armoured, and metal armoured foes.	\n캐릭터 정보나 소지품에서 무기 아이콘에 마우스를 올리면 능력치가 보입니다. 쓰는 데 드는 행동 점수와, 방어구 없는 적·가죽 방어구·금속 방어구 적에 대한 효과가 나옵니다.
 \n\nEach weapon is classified by its relative effectiveness against unarmoured opponents or those wearing leather or metal armour. For example, edged weapons are good against leather but less good against metal, while blunt weapons are moderately good against each.	\n\n무기마다 방어구 없는 적, 가죽 방어구, 금속 방어구를 입은 적에 대한 효과가 다릅니다. 예를 들어 날붙이는 가죽에 강하지만 금속에는 약하고, 둔기는 둘 다에 적당히 통합니다.
 \n\nMelee weapons (such as swords and halberds) are those which are used to physically hit an opponent, while ranged weapons (such as crossbows and muskets) are used to injure from a distance.	\n\n근접 무기(검, 미늘창 등)는 상대를 직접 치는 무기이고, 원거리 무기(석궁, 머스킷 등)는 멀리서 다치게 하는 무기입니다.
@@ -915,14 +910,7 @@ You can make your own entries in the journal by hovering over the last entry and
 =I stirred the Cooking Pot with the Ladle	국자로 냄비를 저었다
 =Nightshade processed into Nightshade Grease by stove	화덕에서 벨라도나가 벨라도나 기름이 되었다
 =The stove emitted evil-smelling fumes	화덕에서 고약한 냄새가 나는 연기가 났다
-=I carefully removed the brain.	조심스럽게 뇌를 꺼냈다.
-=I could not carry any more logs. I needed to return to the cart.	통나무를 더는 들 수 없었다. 수레로 돌아가야 했다.
-=I cut my arm and drained some of my own blood into the mix, then baked it into a flat, dark cake.	팔을 그어 내 피를 섞은 반죽에 흘려 넣고, 납작하고 검은 떡으로 구웠다.
 =I did not have anything in my hand to set alight.	손에 불붙일 것이 없었다.
-=I did not have Jokob's permission to use the forge.	야코프에게 대장간 화덕을 써도 된다는 허락을 받지 않았다.
-=I placed a bucket under the leak.	새는 곳 아래에 양동이를 놓았다.
-=I removed a chunk of flesh.	살점을 한 덩이 떼어 냈다.
-=I was not holding a spade	손에 삽이 없었다
 =Cleaver	고기 칼
 =Dog	개
 =Fire wood	장작
@@ -987,7 +975,6 @@ You can make your own entries in the journal by hovering over the last entry and
 # --- 전투 요령 창(게임 코드에서 문장을 이어 붙임 → 부분 바꾸기). PC는 Press A 대신 Click 계열
 =TIP 1 of 8	요령 1/8
 =TIP 1 OF 8	요령 1/8
-=TIP 1 of 10	요령 1/10
 =TIP 1 OF 10	요령 1/10
 =TIP 2 of 8	요령 2/8
 =TIP 2 OF 8	요령 2/8

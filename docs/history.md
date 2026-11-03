@@ -1,5 +1,17 @@
 # 한 일 (최근이 위)
 
+## 2026-11-03 공개 저장소로 옮김, 한글 패치 1.0 원본 안 씀
+- **요약**: 게임 DLL만 비공개에 두고 나머지(번역·모드·지침)는 공개 저장소 necromancer로 옮김. 재번역이 모든 한국어 줄을 덮으므로 1.0 원본 번역 파일은 지우고, 영어 원문·단락 틀만 있는 template.csv로 바꿈.
+- **자세히**: fix-csv.ps1을 틀 위에 retrans를 덮어 새로 쓰는 방식으로 다시 짬(1.0 전용 고침 지움, ID 대소문자 구분). pwsh로 돌려 예전 방식 결과와 대조: 다른 줄은 M'[title] 정리·[master] 대소문자 고침뿐. 1.0 한국어가 든 *-src.txt도 지움.
+
+## 2026-11-03 네크로맨서를 비공개 저장소 한 곳으로 모음
+- **요약**: 공개 저장소에 있던 한글 글꼴 모드·화면 글 표·스크립트·지침을 이 저장소로 옮김. 두 벌이던 번역 지침·이름표를 한 벌로, 끝난 PC 재번역 루프와 낡은 진행 문서는 지움. 새 세션용 CLAUDE.md를 만듦.
+- **자세히**: 지운 것 — scripts/retrans-loop.ps1·retrans-start/stop.bat·extract-speaker.ps1, docs/translate-guide.md(cloud/translate-guide.md가 최신), docs/retrans-status.md·retrans-stop.txt·translation-review.md, cloud/names-ko.tsv(dist/KoreanFont/names-ko.tsv가 최신). 게임에 넣기를 설치.bat 하나로 합침(git pull → 모드 설치 → 번역 합쳐 넣기), cloud-apply.bat·ps1은 지우고 제거.bat는 scripts/로. 공개 저장소 necromancer에는 안내만 남김.
+
+## 2026-11-03 같은 원문 다른 번역 정리(용어 통일)
+- **요약**: 같은 영어가 다르게 옮겨진 것 중 진짜 문제(의식·물건 이름 12개, 재상, 같은 화자 같은 문장)를 327줄 고침. 게임에 넣는 스크립트가 빈 단락 있는 번역 37줄을 버리던 버그도 고침.
+- **자세히**: 고친 줄은 비공개 valheim-refs necromancer translation/retrans/zz-unify.tsv(맨 마지막 적용). 용어는 cloud/translate-guide.md "용어 통일"에 더함. ui-ko.tsv: 깨우기 의식·혼수, 이름 3개, 겹친 키 13줄 지움. fix-csv.ps1 단락 나누기 `\s/(?:\s|$)`. 인덱스.txt를 새로 만듦(남은 240묶음은 화자·말투·문맥 차이로 정상). 낡은 docs/retrans-status.md·translation-review.md 지움.
+
 ## 2026-11-02 재번역을 클라우드로 옮김
 - **요약**: PC를 켜 두지 않아도 번역이 이어지게, 클라우드 예약 작업이 덩어리마다 새 세션을 켜 번역함. 게임에 넣기는 PC에서 scripts\cloud-apply.bat 한 번.
 - **자세히**: PC 루프 로직을 비공개 valheim-refs의 cloud/chunk.py로 옮김(순서·검사·3번 실패 건너뛰기 같음). 세션은 잠금 파일로 하나만 돌고, Sonnet 서브에이전트가 번역, 끝나면 다음 세션을 켬. 끊기면 매시 예약이 이어 감. PC 루프는 docs/retrans-stop.txt로 막음.

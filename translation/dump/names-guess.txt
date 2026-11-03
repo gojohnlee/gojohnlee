@@ -1,0 +1,223 @@
+﻿Whisper	속삭임(1/)
+The witch	아버지(6/60) 이제(5/60)
+Zelig	젤리그(59/60) 그런(7/60)
+Spirit	영혼(3/3) 노예(3/3)
+Me	?
+Nobleman	?
+Woman	?
+Willard	윌러드(57/60) 그들(8/60)
+The bear	아버지(6/60) 이제(5/60)
+Off	어디(1/) 새로운(1/)
+Bodysnatcher	?
+Albrecht	알브레히트(59/60) 아버지(6/60)
+Voice	?
+Old woman	게르하르트(5/11) 뿐이지만(1/11)
+Doppelgänger	?
+Young woman	엘스트릭(3/11) 어린(3/11)
+Gruff man	?
+Nervous man	바닥으로(1/) 밖으로(1/)
+Venetian sailor	베네치(33/53) 전쟁(13/53)
+Arne	?
+Battista	잦아들었다(1/) 채운(1/)
+Soft voice	쓰다듬었다(1/) 부드럽고(1/)
+Harsh voice	?
+Channing (injured)	채닝(29/32) 그들(5/32)
+Sherman (injured)	셔먼(27/28) 레오폴드(7/28)
+Leopold (injured)	레오폴드(25/25) 셔먼(6/25)
+Ancient spirit	고대(4/4) 여러(2/4)
+Heavenly voice	?
+Mandel	?
+Jervase	제르베스(60/60) 삼촌(9/60)
+Zelig VanElstrik	젤리그(59/60) 그런(7/60)
+Aldis	알디스(58/60) 다시(7/60)
+Young Woman	엘스트릭(3/11) 어린(3/11)
+Diedrik	디드리크(59/60) 친구(7/60)
+Juliana	줄리아나(35/35) 젤리그(13/35)
+Sybil	시빌(44/45) 디드리크(13/45)
+Ibrahim	이브라힘(40/40) 디드리크(5/40)
+Besina	베시나(20/22) 만들거나(2/22)
+Isak	이사크(44/45) 농부(8/45)
+Haelan	헤일란(59/60) 바라보았다(5/60)
+Svit	스빗(55/60) 산림(16/60)
+Irving	어빙(18/18) 얼굴(3/18)
+Annie	애니(56/60) 그녀(13/60)
+Connor	코너(58/60) 애니(7/60)
+Garnet	가넷(52/60) 그녀(8/60)
+Albrecht Hoffman	알브레히트(59/60) 아버지(6/60)
+Lucus	루커스(56/60) 아이들(10/60)
+Gerhardht Oman	게르하르트(60/60) 오만(18/60)
+Hana	하나(27/29) 이사크(9/29)
+Karla	카를라(23/24) 그녀(7/24)
+Marc	마르크(10/10) 카를라(6/10)
+Lord Richard Carnell	카넬(17/60) 엘스트릭(11/60)
+Jokob	요코브(41/44) 대해(5/44)
+Konrad Von Saalfelden	콘라드(7/9) 잘펠덴(5/9)
+Father Oliwier	신부(33/60) 신부님(19/60)
+Boerhaaven	보어하벤(20/20) 에거(6/20)
+The Ferryman	아버지(6/60) 이제(5/60)
+Klaus	클라우스(9/11) 오랫동안(2/11)
+Narration	?
+Nikos	니코스(19/20) 대해서(2/20)
+Andras	안드라스(41/43) 도움(6/43)
+Jonas	요나스(7/9) 조나스(2/9)
+Mortain	성벽(1/) 주었다(1/)
+Emil	지도에서(1/) 이렇게(1/)
+Angelina	안젤리나(7/10) 그녀(3/10)
+Maja	마야(3/4) 부스(2/4)
+Hospital Night Guard	?
+Castle Night Guard	?
+East Gate Night Guard	동쪽(12/33) 동문(11/33)
+North Gate Night Guard	북문(14/26) 북문에서(6/26)
+Mojca	모이차(23/24) 그녀(4/24)
+Barracks Night Guard	모릅니다(1/) 요새(1/)
+Tahir	?
+Fakir	?
+Fridolf	받게(1/) 디드리크(1/)
+Jannik	받게(1/) 디드리크(1/)
+Eric	에릭(10/10) 당황한(2/10)
+Ludwig	?
+Ursula	잠시(1/) 우르술라(1/)
+Arnold	모두(1/) 필요한(1/)
+Luka	자신(1/) 웃긴지(1/)
+Ivana	?
+Anja	?
+Paul	성인이었지만(1/2) 이건(1/2)
+Darius	다리우스(41/45) 레베카(8/45)
+Ramón	라몬(56/60) 아지즈(6/60)
+Rebeka	레베카(57/60) 그녀(18/60)
+Alfonz	알폰스(45/46) 잠시(4/46)
+Drago	드라고(54/59) 한다(5/59)
+Jietang	지에탕(2/2) 일했다(1/2)
+Aziz	아지즈(19/19) 들어(5/19)
+Ekrem	에크렘(8/8) 향신료(3/8)
+Hamide	하미데(12/12) 그녀(3/12)
+Merchant4	똑같(1/) 사람(1/)
+Merchant5	똑같(1/) 사람(1/)
+Merchant6	똑같(1/) 사람(1/)
+Sülen	쉴렌(4/5) 없었다(2/5)
+Carlotte	카를로트(4/8) 그녀(3/8)
+Dorothea Becker	도로테아(6/9) 케이크(4/9)
+Bozhena	보제나(23/28) 약사(7/28)
+Wolfgang	볼프강(14/18) 벤체(5/18)
+Bence	벤체(33/33) 볼프강(5/33)
+PrologueMain	?
+PrologueSectionHeader	?
+Father Konstantin	신부(33/60) 신부님(19/60)
+Male Voice	?
+Indeterminate Voice	?
+Female Voice	?
+Zala	잘라(55/57) 그녀(28/57)
+Lilathe	릴라테(3/4) 악마(2/4)
+Ha’anthu	?
+Ghost Bride	?
+Ghost Groom	?
+Ghost Ghoul	?
+Boerhaaven's Creature	?
+Wraith	?
+Veneti Spirit	?
+Scavenger	?
+Mandrake	만드레이크(4/4) 뿌리(4/4)
+Mary Magdalene	성모(2/2) 강하게(1/2)
+Spirit 2	영혼(3/3) 노예(3/3)
+Spirit 1	영혼(3/3) 노예(3/3)
+Rustling Forest	?
+AnnieOrConnorZombie	?
+AnnieZombie	?
+ConnorZombie	?
+Lodovico	말해주겠다(1/) 원래(1/)
+Salvador	일이지(1/) 도시(1/)
+Claudio	즐길(1/) 마을(1/)
+Marco	즐길(1/) 마을(1/)
+Tommaso	?
+Judge Seveer	?
+Mirabel Van Elstrik	미라벨(20/21) 그녀(6/21)
+Sofia	소피아(38/60) 그녀(15/60)
+Hend	헨드(11/12) 헤일란(4/12)
+Mendoz	용병들(2/2) 원한다면(2/2)
+Flip	플립(57/60) 미소(7/60)
+Sherman	셔먼(27/28) 레오폴드(7/28)
+Channing	채닝(29/32) 그들(5/32)
+Leopold	레오폴드(25/25) 셔먼(6/25)
+Wymer	와이머(29/29) 부두(6/29)
+Janko	얀코(21/22) 칼날(5/22)
+Adrijana	아드리야나(19/21) 제르베스(6/21)
+Arald Tailor	아랄드(15/16) 재단사(6/16)
+Chandler	?
+Giovanni	조반니(5/7) 그들(2/7)
+Gunther	군터(5/5) 헤닝(2/5)
+Henning	헤닝(4/4) 군터(2/4)
+Marijan	마리얀(7/7) 바닥(2/7)
+Cristyne Pfeiffer	크리스틴(5/5) 파이퍼(2/5)
+Brina	?
+Rosa Dal Farra	로사(36/38) 파라(12/38)
+Tomaz	토마즈(55/60) 무슨(5/60)
+Zandros Moser	잔드로스(2/3) 사람(2/3)
+Old Woman	게르하르트(5/11) 뿐이지만(1/11)
+Florijan	?
+Ludvik	?
+Nicc	니크(58/60) 아이들(9/60)
+Ida	이다(55/60) 그녀(9/60)
+Lelon	레론(57/60) 아이들(8/60)
+Peta	페타(54/60) 니크(7/60)
+Robyn	로빈(54/60) 그녀(13/60)
+RobynOrLelon	?
+Vila	미나(9/17) 빌라(8/17)
+Mina	미나(14/15) 빌라(5/15)
+First Twin	우선(8/20) 그녀(5/20)
+Second Twin	지켜볼(1/2) 것이었다(1/2)
+Sister Benedicta	언니(2/6) 빌려줄지(1/6)
+Sister Jutte	언니(2/6) 빌려줄지(1/6)
+Merlyn	멀린(19/25) 그녀(10/25)
+Gustav	구스타프(39/42) 발라반(4/42)
+Strange Boy	이상한(20/24) 어떻게(2/24)
+Gentleman	?
+Lady Agnes Carnell	부인(39/52) 카넬(29/52)
+Donald	도널드(2/2) 포기한(1/2)
+Katherine	?
+Guerina	?
+Hermann	?
+Yaroslav	선원이었다(1/) 이름(1/)
+Fen	그녀(8/46) 주점(4/46)
+Varenth	바렌스(32/33) 이곳(4/33)
+Ilona	일로나(20/23) 그녀(6/23)
+Balaban	발라반(5/6) 구스타프(4/6)
+Elias	엘리아스(13/13) 군중(3/13)
+Djinn	않았다(2/4) 지니(2/4)
+Ali Mustafa Pasha	알리(2/2) 부르셔(1/2)
+Bayram	위해(3/4) 바이람(2/4)
+Tosun	토순(6/7) 위해(2/7)
+Muhammet	무함메트(2/2) 도시(1/2)
+Rosario	로사리오(57/60) 그녀(24/60)
+Young Boy	엘스트릭(3/11) 어린(3/11)
+Jervase (Young)	제르베스(60/60) 삼촌(9/60)
+My Father	?
+Mandel (Young)	?
+My Mother	?
+The Great Marconi	아버지(6/60) 이제(5/60)
+Reynard	레이너드(6/8) 행운(2/8)
+The Crow	아버지(6/60) 이제(5/60)
+Kathy	탈출한(1/) 무슨(1/)
+Alexander Pope	알렉산더(5/5) 포프(3/5)
+Doorman	?
+Stanislav	스타니슬라브(24/24) 마리야(9/24)
+Marija	마리야(23/32) 스타니슬라브(11/32)
+Vilim	빌림(12/16) 바샤니(4/16)
+Ana	아나(9/13) 빌림(6/13)
+Javad	자바드(12/13) 고개(3/13)
+Barbara	바르바라(59/60) 야네즈(22/60)
+Janez	야네즈(59/60) 바르바라(21/60)
+Vittoria	비토리아(24/31) 그녀(11/31)
+Leonardo	레오나르도(11/15) 비토리아(3/15)
+Stefano di Gradi	스테파노(10/10) 제르베스(3/10)
+Cederic	세데릭(15/15) 표정(2/15)
+Bush Creature	?
+Hamm	?
+Mirabel	미라벨(20/21) 그녀(6/21)
+Zombie Sybil	?
+Temerity	테메리티(1/)
+Von Saalfelden	잘펠덴(51/56) 의사(15/56)
+Aniela	아니엘라(3/4) 여성인(1/4)
+AnnieOrConnor	?
+Sherzod	?
+Isabella	이사벨라(8/8) 지하실(2/8)
+My Zombie Father	?

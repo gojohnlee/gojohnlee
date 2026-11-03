@@ -1,0 +1,120 @@
+OBJSBRICKS	벽돌
+OBJSBURNS_SALVE	화상 연고
+OBJSBUTTERCREAM	버터크림
+OBJSBUTTON_SKULL	이상한 장신구
+OBJLBUTTON_SKULL	착용하거나 들고 있을 때 마나 증가: 1
+OBJSCAKE	이다의 케이크
+OBJLCAKE	어린 이다를 위한 생일 케이크.
+OBJSCAKE_BATTER	케이크 반죽
+OBJLCAKE_BATTER	효모를 넣어 구울 준비를 마친 달콤한 반죽.
+OBJSCANDLE	양초
+OBJLCANDLE	부싯깃 상자와 함께 '조합' 칸에 넣으면 불을 붙일 수 있다.
+OBJSBLACK_CANDLE	검은 양초
+OBJLBLACK_CANDLE	사람의 지방으로 만든 양초.
+OBJSCAT_SKIN	고양이 가죽
+OBJLCAT_SKIN	고양이 가죽.
+OBJSCAVE_MUSHROOM	보라색 동굴버섯
+OBJSCAYENNE	카옌 고추
+OBJSCLOTH	천
+OBJLCLOTH	붕대로 감아 피를 멎게 하거나 얼굴에 마스크처럼 쓸 수 있다.
+OBJSCLOTH_LAVENDER	라벤더 마스크
+OBJLCLOTH_LAVENDER	얼굴에 마스크로 쓸 수 있도록 라벤더를 스며들게 한 천.
+OBJSCOAT	외투
+OBJSBARREL	통
+OBJSGENERIC_CONTAINER	용기
+OBJSSTOVE	화덕
+OBJSCREMATED_ASHES	유골 재
+OBJLCREMATED_ASHES	화장하고 남은 재.
+OBJSCROWN	크라운
+OBJLCROWN	납골당에서 찾은 크라운 동전 한 닢.
+OBJSDEATH_SHROUD	수의
+OBJLDEATH_SHROUD	얼마 전에 죽은 남자에게 입혔던 수의.
+OBJSDEMONIC_WAND	악마의 지팡이
+OBJLDEMONIC_WAND	지하 감옥의 악마들이 있는 방에서 찾은 강력한 지팡이. / 착용하거나 들고 있을 때 마나 증가: 10
+OBJSDEVILS_WOOD	악마의 나무
+OBJLDEVILS_WOOD	악마의 나무에서 떼어 낸 작고 뒤틀린 나무껍질 조각.
+OBJSJAR_OF_DEVILS_WOOD_SMOKE	악마의 나무 연기
+OBJSDISH	접시
+OBJSDOCKS_MONEY_POUCH	돈주머니
+OBJLDOCKS_MONEY_POUCH	피시가드에게 전해 줄 동전 주머니.
+OBJSDOOR	문
+OBJSFANCY_DRESS	화려한 드레스
+OBJSKNOCKOFF_DRESS	싸구려 드레스
+OBJSGOTH_DRESS	검은 드레스
+OBJSRED_DRESS	붉은 드레스
+OBJSEGGS	달걀
+OBJSFATHERS_NOTES	아버지의 쪽지
+OBJLFATHERS_NOTES	아버지의 책장 위에서 찾은 쪽지.
+OBJSFIRE_ROOT	불뿌리
+OBJSFIRE_SOURCE	불씨
+OBJSFIREWOOD	장작
+OBJSFLOUR	밀가루
+OBJSFLY_AGARIC	광대버섯
+OBJSAPPLE	사과
+OBJSASSORTED_FOOD	모둠 음식
+OBJLASSORTED_FOOD	여러 가지 음식.
+OBJSBAKLAVA	바클라바
+OBJLBAKLAVA	견과와 꿀을 넣어 만든 달콤한 페이스트리.
+OBJSBIEROCK	비어로크
+OBJLBIEROCK	고기소를 채운 짭짤한 빵.
+OBJSCARROT	당근
+OBJSGARLIC	마늘
+OBJSLARD	기름
+OBJSMEAT	생고기
+OBJSCOOKED_MEAT	익힌 고기
+OBJSPUMPKIN	호박
+OBJSTOMATO	토마토
+OBJSBOOTS	가죽 장화
+OBJSFORMAL_COAT	예복 외투
+OBJLFORMAL_COAT	왕실 무도회에 어울리는 예복 외투.
+OBJSFORMAL_COAT_RED	예복 외투
+OBJLFORMAL_COAT_RED	왕실 무도회에 어울리는 예복 외투.
+OBJSBEAR_PAW_GLOVE	곰발 장갑
+OBJLBEAR_PAW_GLOVE	프랑스 모험가 레이너드가 준 행운의 곰발 장갑. / 착용하거나 들고 있을 때 마나 증가: 2
+OBJSSCARRED_GLOVE	흉터 무늬 장갑
+OBJLSCARRED_GLOVE	이상한 흉터 무늬가 있는 가죽 장갑.
+OBJSLEATHER_GLOVES	가죽 장갑
+OBJLLEATHER_GLOVES	조금 낡은 가죽 장갑 한 켤레.
+OBJSGRAVE_SOIL	무덤 흙
+OBJLGRAVE_SOIL	무덤에서 파낸 흙.
+OBJSGUM_ARABIC	세네갈리아 세네갈(아라비아고무)
+OBJLGUM_ARABIC	달콤한 향이 나는 수지 조각이 든 주머니
+OBJSFEATHERED_HAT	깃털 모자
+OBJSLEATHER_HAT	가죽 모자
+OBJLLEATHER_HAT	낡고 해진 가죽 모자
+OBJSSIMPLE_HAT	수수한 모자
+OBJLSIMPLE_HAT	별다른 특징 없는 모자.
+OBJSTRICORN_HAT	삼각모
+OBJLTRICORN_HAT	단연 18세기 최고의 유행품.
+OBJSHAZEL_ROD	개암나무 막대
+OBJLHAZEL_ROD	개암나무에서 잘라 낸 막대.
+OBJSHAZEL_ROD_MAGICAL	마법 깃든 개암나무 지팡이
+OBJLHAZEL_ROD_MAGICAL	의식으로 마법을 불어넣은 개암나무 지팡이. 보호 의식인 <i>포보스의 지배</i>에 필요하다. / 착용하거나 들고 있을 때 마나 증가: 2
+OBJSHAZEL_ROD_INSCRIBED	문양 새긴 개암나무 지팡이
+OBJLHAZEL_ROD_INSCRIBED	마법 기호를 새긴 개암나무 지팡이.
+OBJSHEKATE_STATUE	헤카테 조각상
+OBJLHEKATE_STATUE	헤카테 여신의 작은 나무 조각상.
+OBJSLEATHER_HELMET	가죽 투구
+OBJSSTEEL_HELMET	강철 투구
+OBJSHERBAL_REMEDY	약초 치료제
+OBJSHOLY_AMULET	성스러운 부적
+OBJLHOLY_AMULET	성스러운 부적.
+OBJSHONEY	꿀
+OBJSHUBERS_MASK	가면
+OBJLHUBERS_MASK	신부에게서 훔친 가면. 수상할 만큼 현대적인 모습이다.
+OBJSHUMAN_BRAIN	뇌
+OBJLHUMAN_BRAIN	에거 보어하벤의 걸작을 위해 구한 사람의 뇌.
+OBJSHUMAN_EAR	사람의 귀
+OBJLHUMAN_EAR	사람의 귀.
+OBJSHUMAN_FLESH	사람의 살점
+OBJSHUMAN_HAIR	사람의 머리카락
+OBJSHUMAN_TOOTH	이빨
+OBJLHUMAN_TOOTH	교수형에 처해진 남자의 이빨.
+OBJSINSECT_REPELLENT	벌레 기피제
+OBJSLEATHER_JACKET	가죽 외투
+OBJSJERVASE_GRIM_SPEECH	제르베스의 연설문
+OBJLJERVASE_GRIM_SPEECH	아버지 장례식에서 제르베스가 할 연설문.
+OBJSJUG_OF_MILK	염소젖 주전자
+OBJSJULIANAS_CHARM	줄리아나의 로켓 목걸이
+OBJLJULIANAS_CHARM	로켓 안에는 줄리아나와 젤리그의 젊은 시절을 그린 그림이 있었다.
+OBJSJULIANAS_PENDANT	줄리아나의 펜던트
