@@ -9,6 +9,7 @@
 - (불가 이유·Doorstop은 CLAUDE.md 모드 절) AssemblyLoad에서 Assembly-CSharp가 보이면 SceneManager.sceneLoaded에 붙고 첫 장면에서 GameObject 생성.
 
 ## 확인된 게임 사실
+- 마우스 올림 아이콘(11-04): 무덤(DiggableGrave)은 이름 글 없이 OverObjectIcon(DIG_TO_TAKE 삽)만 뜸. 아이콘 색은 OverObjectIcon.image.color(평소 흰색 a=180, 마우스 올리면 a=255)를 게임이 Init·OnPointerEnter/Exit·Update에서 되돌림 → 모드는 LateUpdate에서 칠함. 지금 장: GameManager.CurrentChapter().
 - 상자·무덤 이름(11-04): 마우스 올리면 InteractiveObject.overheadTextOnMouseOver를 OverObjectText(TMP 하나)가 띄움, 올라간 것은 InteractiveObject.mouseIsOverMe. Container.GetContents()는 칸 수만큼, 빈 칸은 stackSize 0(sharedData 남을 수 있음), Init 전엔 0칸. 무덤은 시체 파면 DiggableGrave.dugByPlayer(저장됨), 흙 파기는 상관없음. 모드 EmptyGrey가 빈 상자·판 무덤·처음부터 빈 무덤(!hasSkeleton·!hasCorpse, 사용자 결정 11-04) 이름을 회색으로(글은 그대로, 색만). Ctrl(또는 오른쪽 버튼)을 누르면 주변 아이콘·이름: OverObjectIconManager.LateUpdate가 Input.GetKey를 직접 봄(private ProcessList) → 반대로 동작은 Harmony 없이 반사로 private 호출해야 해 보류(사용자 '복잡하면 첫째만').
 - 모드 나눔(11-04, 사용자 결정): 한글 패치(KoreanFont)와 편의 기능(NecroHelper: WideCam·WildMap·QuestMap·MapDump·GraphDump)을 별도 DLL·폴더로. Doorstop은 대상 하나뿐이라 한글 패치가 NecroHelper.dll을 Assembly.LoadFrom(안 되면 바이트 Load)으로 불러 Entry.Init 호출(게임 mscorlib에서 이 반사 API가 되는지는 PC 시험으로 확인 필요).
 - 대화 속 아이템(11-04): 퀘스트 표·보상 표는 없음. 대화 흐름의 Item 노드(linkToInventoryItem, isItemDrop=1이면 플레이어가 건넴)가 주고받기, 조건 핀(ArticyPin.expressions unparsedExpression)이 '가졌나'를 봄. 전부 ArticyPlayer.models(Dictionary<long,ArticyModel>, hasBeenVisited 저장됨)·pins에 실행 중 들어 있음. 원본 JSON은 게임 에셋(TextAsset)이라 클라우드엔 없음 → 모드 GraphDump가 NecroHelper\\dialogue-graph.tsv로 한 번 저장(게임 회사 자료: 공개 저장소에 올리지 않음).
