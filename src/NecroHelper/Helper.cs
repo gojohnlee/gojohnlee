@@ -46,10 +46,51 @@ namespace NecroHelper
         void Update()
         {
             try { WideCam.Tick(); } catch { }
+            try { EmptyGrey.Tick(); } catch (Exception e) { EmptyGrey.Fail(e); }
             try { WildMap.Tick(); } catch { }
             try { MapDump.Tick(); } catch { }
             try { QuestMap.Tick(); } catch (Exception e) { QuestMap.Fail(e); }
             if (!GraphDump.done) { try { GraphDump.Tick(); } catch (Exception e) { GraphDump.done = true; Log.Write("대화 자료 저장 실패: " + e); } }
+        }
+    }
+
+    // 빈 상자(Container 모든 칸 비어 있음, 가게·하수인·플레이어 가방 제외)와 이미 시체를 파낸 무덤(DiggableGrave.dugByPlayer)은 마우스를 올렸을 때 이름(OverObjectText)을 회색으로.
+    // 글자 대신 색만 바꿈(글을 감싸면 한글 패치의 화면 글 표가 못 알아봄). 1초마다 목록 갱신, 매 프레임 마우스가 올라간 것(InteractiveObject.mouseIsOverMe)만 봄.
+    static class EmptyGrey
+    {
+        static readonly List<InteractiveObject> empty = new List<InteractiveObject>();
+        static float next; static TMP_Text txt; static Color normal; static bool grey, failed;
+        static readonly Color Grey = new Color(0.55f, 0.55f, 0.55f, 1f);
+        public static void Fail(Exception e) { if (!failed) { failed = true; Log.Write("빈 상자 회색 실패: " + e); } }
+        public static void Tick()
+        {
+            if (GameManager.gameState != GameStates.PLAYING || OverObjectText.instance == null) return;
+            if (Time.unscaledTime >= next) { next = Time.unscaledTime + 1f; Rebuild(); }
+            if (txt == null) { txt = OverObjectText.instance.GetComponent<TMP_Text>(); if (txt == null) return; normal = txt.color; }
+            bool over = false;
+            if (OverObjectText.isShown) foreach (var io in empty) if (io != null && io.mouseIsOverMe) { over = true; break; }
+            if (over) { if (!grey) { normal = txt.color; grey = true; } txt.color = Grey; }
+            else if (grey) { txt.color = normal; grey = false; }
+        }
+        static void Rebuild()
+        {
+            empty.Clear();
+            foreach (var o in UnityEngine.Object.FindObjectsByType(typeof(Container), FindObjectsSortMode.None))
+            {
+                var c = o as Container;
+                if (c == null || c.isShop || c.isMinion || c.isPlayerEquipmentContainer || c.isPlayerInventoryContainer) continue;
+                // contents는 칸 수만큼 있고 빈 칸은 stackSize 0(sharedData가 남을 수 있음). 아직 안 채워진(칸 0개) 상자는 빈 걸로 치지 않음
+                var l = c.GetContents(); if (l == null || l.Count == 0) continue;
+                bool any = false; foreach (var r in l) if (r != null && r.stackSize > 0 && r.sharedData != null) { any = true; break; }
+                if (any) continue;
+                var io = c.GetComponent<InteractiveObject>(); if (io != null) empty.Add(io);
+            }
+            foreach (var o in UnityEngine.Object.FindObjectsByType(typeof(DiggableGrave), FindObjectsSortMode.None))
+            {
+                var g = o as DiggableGrave;
+                if (g == null || !g.dugByPlayer) continue;
+                var io = g.GetComponent<InteractiveObject>(); if (io != null) empty.Add(io);
+            }
         }
     }
 
