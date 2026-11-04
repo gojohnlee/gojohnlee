@@ -231,6 +231,7 @@ namespace NecroKoreanFont
 
         void Update()
         {
+            try { WideCam.Tick(); } catch { }
             if (KeepMin && Time.unscaledTime >= nextMin)
             {
                 nextMin = Time.unscaledTime + 0.5f;
@@ -293,6 +294,42 @@ namespace NecroKoreanFont
 {
     // 게임 업데이트로 한글 패치의 Assembly-CSharp(코드 속 UI 문자열)가 빠짐 → ui-ko.tsv 표로 화면 글자를 바꾼다.
     // TMP가 글을 새로 그릴 때마다(TEXT_CHANGED_EVENT) 검사. 이 게임 mscorlib엔 string.Replace(string,string)이 없어 직접 바꾼다.
+    // 성문 밖 들판에서 카메라를 더 눕히고(지평선이 보이게) 더 멀리 뺄 수 있게 한다. 성 안·실내로 돌아가면 게임 값으로 되돌림.
+    // 게임 RtsCamera: Tilt 90=수직, LateUpdate가 Tilt를 MinTilt~MaxTilt로, 거리를 MinDistance~MaxDistance로 자른다(값은 장면에 저장, 코드엔 기본 30~85·8~32).
+    static class WideCam
+    {
+        const float OutMinTilt = 15f, OutStartTilt = 35f, DistMult = 1.6f;
+        static RtsCamera cam; static bool on; static float minTilt, maxDist, tiltBefore, nextLog;
+        public static void Tick()
+        {
+            var c = RtsCamera.instance;
+            if (c == null || GameManager.gameState != GameStates.PLAYING) return;
+            if (c != cam) { cam = c; on = false; }
+            bool outside = !TownGatesTrigger.playerIsInsideTown && Character.thePlayer != null && !Character.thePlayer.IsIndoors();
+            if (outside && !on)
+            {
+                minTilt = c.MinTilt; maxDist = c.MaxDistance; tiltBefore = c.Tilt; on = true;
+                Note(c, "성 밖 카메라 켬(게임 값)");
+                if (!ConversationWindow.isVisible && c.Tilt > OutStartTilt) c.Tilt = OutStartTilt;
+            }
+            else if (!outside && on)
+            {
+                c.MinTilt = minTilt; c.MaxDistance = maxDist; on = false;
+                if (!ConversationWindow.isVisible && c.Tilt < minTilt) c.Tilt = tiltBefore;
+                Log.Write("성 밖 카메라 끔");
+            }
+            if (!on) return;
+            if (c.MinTilt > OutMinTilt) c.MinTilt = OutMinTilt;
+            if (c.MaxDistance < maxDist * DistMult) c.MaxDistance = maxDist * DistMult;
+            if (Time.unscaledTime > nextLog) { nextLog = Time.unscaledTime + 20f; Note(c, "성 밖 카메라"); }
+        }
+        // 기록은 따로(없는 API로 JIT가 실패해도 카메라 보정은 살게)
+        static void Note(RtsCamera c, string what)
+        {
+            try { Log.Write(what + ": 기울기 " + c.Tilt.ToString("0") + " (범위 " + c.MinTilt.ToString("0") + "~" + c.MaxTilt.ToString("0") + "), 거리 " + c.Distance.ToString("0.0") + "/최대 " + c.MaxDistance.ToString("0.0") + ", 잠김 " + (c.tiltIsLocked ? "예" : "아니오")); } catch { }
+        }
+    }
+
     static class Ui
     {
         static readonly Dictionary<string, string> exact = new Dictionary<string, string>();
