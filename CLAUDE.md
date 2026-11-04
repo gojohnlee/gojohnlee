@@ -35,8 +35,9 @@
   없는 API를 부르면 그 메서드 JIT가 통째로 실패한다 → 새 API는 ilspycmd로 게임 DLL(PC는 게임 폴더, 클라우드는 비공개 valheim-refs dll/)에 있는지 먼저 확인, 위험한 코드는 별도 메서드+try.
 - 로더: BepInEx 5는 못 씀(Module.GetPEKind 없음). Doorstop(winhttp.dll, BepInEx 5.4.23.6 동봉본)이 `KoreanFont\NecroKoreanFont.dll`의
   `Doorstop.Entrypoint.Start()`를 직접 부른다. 대상 프레임워크 net472(netstandard면 게임이 꺼짐).
-- 코드: src/KoreanFont/Plugin.cs 하나(폰트·UI 표·시험 동작). 빌드 `dotnet build src/KoreanFont -c Release -p:Managed=<dll 폴더>`
-  (PC는 GameDir 자동, 클라우드는 비공개 valheim-refs dll/) → bin/Release/net472/NecroKoreanFont.dll을 dist/KoreanFont에 복사.
+- 코드: 한글 패치 = src/KoreanFont/Plugin.cs(폰트·UI 표·시험 동작). **편의 기능은 별도 모드** src/NecroHelper/Helper.cs → dist/NecroHelper/(NecroHelper.dll·todo-map.tsv, 게임폴더\NecroHelper, 로그 NecroHelper.log)
+  — 카메라·지도·퀘스트처럼 번역이 아닌 기능은 여기에. 한글 패치가 시작할 때 NecroHelper.dll이 있으면 불러 Entry.Init(폴더)를 부른다(없으면 한글 패치만). 빌드 `dotnet build src/KoreanFont -c Release -p:Managed=<dll 폴더>`
+  (PC는 GameDir 자동, 클라우드는 비공개 valheim-refs dll/) → bin/Release/net472/NecroKoreanFont.dll을 dist/KoreanFont에 복사(편의 기능은 src/NecroHelper를 같은 식으로 빌드 → dist/NecroHelper).
 - 확인한 게임 사실은 docs/decisions.txt "확인된 게임 사실"에 적고 다시 디컴파일하지 않는다.
 - 시험(PC): `powershell -File scripts/run-min.ps1 -Wait 100` — 숨겨 켜고 최소화·음소거, 언어 창 자동 OK, 30초마다 한글 글자가 폰트에 있는지 KoreanFont.log에.
   시험 전용 동작은 환경변수 NECRO_MIN=1일 때만. -screen-* 인자 금지(해상도 설정이 바뀜).

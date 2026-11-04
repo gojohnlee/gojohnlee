@@ -30,7 +30,11 @@ if not exist "%GAME%\KoreanFont" mkdir "%GAME%\KoreanFont"
 copy /y "%HERE%dist\KoreanFont\NecroKoreanFont.dll" "%GAME%\KoreanFont\" >nul || goto :fail
 copy /y "%HERE%dist\KoreanFont\ui-ko.tsv" "%GAME%\KoreanFont\" >nul || goto :fail
 copy /y "%HERE%dist\KoreanFont\names-ko.tsv" "%GAME%\KoreanFont\" >nul || goto :fail
-copy /y "%HERE%dist\KoreanFont\todo-map.tsv" "%GAME%\KoreanFont\" >nul || goto :fail
+rem 편의 기능 모드(카메라·지도·퀘스트) - 한글 패치와 별개, 게임폴더\NecroHelper
+if not exist "%GAME%\NecroHelper" mkdir "%GAME%\NecroHelper"
+copy /y "%HERE%dist\NecroHelper\NecroHelper.dll" "%GAME%\NecroHelper\" >nul || goto :fail
+copy /y "%HERE%dist\NecroHelper\todo-map.tsv" "%GAME%\NecroHelper\" >nul || goto :fail
+if exist "%GAME%\KoreanFont\todo-map.tsv" del "%GAME%\KoreanFont\todo-map.tsv"
 set "LANG=%USERPROFILE%\AppData\LocalLow\Psychic Software\TheNecromancer\Languages"
 if not exist "%LANG%" mkdir "%LANG%"
 echo 대사 번역 합치는 중...

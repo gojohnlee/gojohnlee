@@ -8,5 +8,6 @@ if not defined GAME for /f "tokens=2,*" %%A in ('reg query "HKCU\Software\Valve\
 set "GAME=!GAME:/=\!"
 del /f /q "%GAME%\winhttp.dll" "%GAME%\doorstop_config.ini" >nul 2>&1
 rmdir /s /q "%GAME%\KoreanFont" >nul 2>&1
+rmdir /s /q "%GAME%\NecroHelper" >nul 2>&1
 echo 지웠습니다: %GAME%
 pause
