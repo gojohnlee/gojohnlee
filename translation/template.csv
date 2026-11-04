@@ -1,6 +1,6 @@
 The Necromancer's Tale Localization File. This community produced file is used as-is and is neither produced by nor endorsed by Psychic Software. Use at your own discretion.,,
 The Necromancer's Tale - all rights reserved (c) Psychic Software 2025-26.,,
-26803,,
+26870,,
 ID,EN,Korean
 0x0100000000000237,"<align=left>The place hasn't changed. Feels different, though.</align>",<align=left></align>
 0x01000000000006AB,<align=left>I travelled all this way and they had already had the funeral?</align>,<align=left></align>
@@ -31700,3 +31700,71 @@ Of aid from them—She was the Universe.",<br><br><br><br><br><br><br><br><br><b
 0x010000000004C42F,Overwrite,
 0x010000000004C430,Delete,
 0x010000000004C431,Advancing Time,
+0x0100000000044E34,<align=left>The lock had been changed. Diedrik's key didn't fit.</align>,<align=left></align>
+0x0100000000044E3C,<align=left>What's the recipe?</align>,<align=left></align>
+0x0100000000044E44,<align=left>It's soup. It isn't complex. Just boil some vegetables or meat in water.</align>,<align=left></align>
+0x0100000000044E5A,"<align=left>I helped her. She is not dead, Willard. Changed, certainly, but not dead.</align>",<align=left></align>
+0x0100000000044E62,"<align=left>He hesitated, clearly not believing me.</align>",<align=left></align>
+0x0100000000044E6A,<align=left>Can we talk about the séance?</align>,<align=left></align>
+0x0100000000044E72,"<align=left>We should, [name]. It's been on my mind.</align>",<align=left></align>
+0x0100000000044E7F,<align=left>What did you think of it?</align>,<align=left></align>
+0x0100000000044E86,<align=left>Was my father telling the truth?</align>,<align=left></align>
+0x0100000000044E8D,<align=left>I've had trouble sleeping. Seeing you possessed... his voice coming from your mouth...</align>,<align=left></align>
+0x0100000000044E94,<align=left>Please tell me that it wasn't you at the end. That it was Zelig who dismissed me so callously...</align>,<align=left></align>
+0x0100000000044E9B,"<align=left>Yes, of course it was him. I wouldn't speak like that to you.</align>",<align=left></align>
+0x0100000000044EA2,"<align=left>He smiled weakly, but seemed unsure.</align>",<align=left></align>
+0x0100000000044EA9,<align=left>I don't remember that part.</align>,<align=left></align>
+0x0100000000044EB0,<align=left>Who knows? I don't know the baron or whether he'd stab his own brother.</align>,<align=left></align>
+0x0100000000044EBA,<align=left>I'm sorry for the way I behaved.</align>,<align=left></align>
+0x0100000000044EC1,"<align=left>Thank you for that. I can't say I understand it, though.</align>",<align=left></align>
+0x0100000000044EC9,<align=left>That's enough about matter.</align>,<align=left></align>
+0x0100000000044ED1,<align=left>Can we talk about the séance?</align>,<align=left></align>
+0x0100000000044ED8,"<align=left>I'm surprised you have the nerve to bring that up! It's clear you're up to no good, [name].</align>",<align=left></align>
+0x0100000000044EEC,<align=left>What did you think of it?</align>,<align=left></align>
+0x0100000000044EF2,<align=left>Was my father telling the truth?</align>,<align=left></align>
+0x0100000000044EF8,<align=left>I'm sorry for the way I behaved.</align>,<align=left></align>
+0x0100000000044EFE,<align=left>That's enough about matter.</align>,<align=left></align>
+0x0100000000044F0A,<align=left>I think you and your father both acted like pigs. And you know what I think about necromancy.</align>,<align=left></align>
+0x0100000000044F12,"<align=left>Look, [name], it's obvious he's very manipulative. He wants to use you for his own means.</align>",<align=left></align>
+0x0100000000044F19,<align=left>She shrugged.</align>,<align=left></align>
+0x0100000000044F20,<align=left>Telling the truth? I have no idea.</align>,<align=left></align>
+0x0100000000044F28,"<align=left>Yes, well you should be.</align>",<align=left></align>
+0x0100000000044F2F,"<align=left>She looked sternly at me, and then smiled faintly.</align>",<align=left></align>
+0x0100000000044F38,<align=left>Can we talk about the séance?</align>,<align=left></align>
+0x0100000000044F3E,"<align=left>I'm surprised you have the nerve to bring that up! It's clear you're up to no good, [name].</align>",<align=left></align>
+0x0100000000044F49,<align=left>What did you think of it?</align>,<align=left></align>
+0x0100000000044F4F,<align=left>Was my father telling the truth?</align>,<align=left></align>
+0x0100000000044F55,<align=left>I'm sorry for the way I behaved.</align>,<align=left></align>
+0x0100000000044F5B,<align=left>That's enough about matter.</align>,<align=left></align>
+0x0100000000044F69,<align=left>What do I know of black magic? What do you know of it? You're meddling in dangerous matters.</align>,<align=left></align>
+0x0100000000044F71,"<align=left>I don't know the man. He seemed very angry, and uncaring of you.</align>",<align=left></align>
+0x0100000000044F79,<align=left>Hmmm. That's something at least.</align>,<align=left></align>
+0x0100000000044F80,"<align=left>Connor made as if to say more, but decided not to.</align>",<align=left></align>
+0x0100000000044F89,<align=left>Can we talk about the séance?</align>,<align=left></align>
+0x0100000000044F8F,"<align=left>Y... yes, we should.</align>",<align=left></align>
+0x0100000000044F9A,<align=left>What did you think of it?</align>,<align=left></align>
+0x0100000000044FA0,<align=left>Was my father telling the truth?</align>,<align=left></align>
+0x0100000000044FA6,<align=left>I'm sorry for the way I behaved.</align>,<align=left></align>
+0x0100000000044FAC,<align=left>That's enough about matter.</align>,<align=left></align>
+0x0100000000044FBB,"<align=left>Terrifying, of course. And hurt by the way you acted.</align>",<align=left></align>
+0x0100000000044FC2,<align=left>Her eyes had welled up.</align>,<align=left></align>
+0x0100000000044FC9,"<align=left>I was possessed by him, Annie. That wasn't me.</align>",<align=left></align>
+0x0100000000044FD0,<align=left>At the end? Maybe. But you were a total shit at the start too.</align>,<align=left></align>
+0x0100000000044FD8,<align=left>Maybe I went too far.</align>,<align=left></align>
+0x0100000000044FDF,"<align=left>She just nodded, wiping away a tear.</align>",<align=left></align>
+0x0100000000044FE7,<align=left>Why are you asking me that? I thought you wanted to apologise. I have no idea about his motives or his truth.</align>,<align=left></align>
+0x0100000000044FEF,"<align=left>Well, thank you for that.</align>",<align=left></align>
+0x0100000000044FF6,"<align=left>She made as if to say more, but in the end said nothing.</align>",<align=left></align>
+0x0100000000044FFE,<align=left>You lied about my father's autopsy.</align>,<align=left></align>
+0x0100000000045006,"<align=left>He went pale, looking around as if he might make a run for it at any moment.</align>",<align=left></align>
+0x010000000004500D,<align=left>How so?</align>,<align=left></align>
+0x010000000004501A,<align=left>He was stabbed. It wasn't alcohol at all.</align>,<align=left></align>
+0x0100000000045021,<align=left>Says who?</align>,<align=left></align>
+0x0100000000045028,<align=left>He told me himself. In a séance.</align>,<align=left></align>
+0x010000000004502F,"<align=left>I've heard it, that's all.</align>",<align=left></align>
+0x0100000000045036,"<align=left>Are you mad? Christ.</align>
+<align=left>Get away from me!</align>",<align=left></align><br><align=left></align>
+0x010000000004503D,<align=left>That's a very convincing argument.</align>,<align=left></align>
+0x0100000000045045,<align=left>Who paid you?</align>,<align=left></align>
+0x010000000004504C,<align=left>That's no secret. The head surgeon.</align>,<align=left></align>
+0x0100000000045054,<align=left>I left it at that.</align>,<align=left></align>
