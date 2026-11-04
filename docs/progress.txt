@@ -5,7 +5,7 @@
 
 다음
 - 빈 상자 회색 확인: 비운 상자·판 무덤·시체 없는 무덤은 회색, 안 연 상자·물건 남은 상자는 원래 색인지.
-- 숨은 퀘스트(사용자 11-04): 일지에 없는 대화 속 부탁(예: 잡화상 물건). 사용자가 NecroHelper\dialogue-graph.tsv를 보내면 → 부탁 대화·건네기(Item drop)·보상 노드를 이어 숨은 퀘스트 표를 만들고, 진행 중(부탁 노드 visited, 건네기 미visited)을 지도·목록에 표시. 원본은 비공개 valheim-refs necromancer에만.
+- 숨은 퀘스트(사용자 11-04): 일지에 없는 대화 속 부탁(예: 잡화상 물건). 11-04 시험 실행으로 PC 게임폴더 NecroHelper\dialogue-graph.tsv(9MB) 생김 → 부탁 대화·건네기(Item drop)·보상 노드를 이어 숨은 퀘스트 표를 만들고, 진행 중(부탁 노드 visited, 건네기 미visited)을 지도·목록에 표시. 원본은 비공개 valheim-refs necromancer에만.
 - 퀘스트 지도 확인: 점이 맞는 곳에 뜨는지 사용자 확인, NecroHelper.log "퀘스트 지도" 줄(실패·없는 이름). 틀린 짝은 todo-map.tsv에서 고침.
 - 성 밖 지도 내 위치 확인: 표시 위치가 맞는지 사용자 확인, NecroHelper.log "성 밖 지도" 줄(기준점 수·오차).
 - 성 밖 카메라 확인: 사용자 플레이 소감과 NecroHelper.log "성 밖 카메라" 줄(기울기·범위·잠김). 여전히 수직이면 잠김/장면 값 원인 다시 봄.
