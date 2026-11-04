@@ -54,7 +54,7 @@ namespace NecroHelper
         }
     }
 
-    // 빈 상자(Container 모든 칸 비어 있음, 가게·하수인·플레이어 가방 제외)와 이미 시체를 파낸 무덤(DiggableGrave.dugByPlayer)은 마우스를 올렸을 때 이름(OverObjectText)을 회색으로.
+    // 빈 상자(Container 모든 칸 비어 있음, 가게·하수인·플레이어 가방 제외)와 이미 시체를 파냈거나 시체가 없는 무덤(DiggableGrave.dugByPlayer / !hasSkeleton·!hasCorpse)은 마우스를 올렸을 때 이름(OverObjectText)을 회색으로.
     // 글자 대신 색만 바꿈(글을 감싸면 한글 패치의 화면 글 표가 못 알아봄). 1초마다 목록 갱신, 매 프레임 마우스가 올라간 것(InteractiveObject.mouseIsOverMe)만 봄.
     static class EmptyGrey
     {
@@ -88,7 +88,8 @@ namespace NecroHelper
             foreach (var o in UnityEngine.Object.FindObjectsByType(typeof(DiggableGrave), FindObjectsSortMode.None))
             {
                 var g = o as DiggableGrave;
-                if (g == null || !g.dugByPlayer) continue;
+                // 이미 시체를 파냈거나, 처음부터 해골·시체가 없는 무덤(사용자 11-04 결정). 잘라의 무덤은 특별 이야기라 제외
+                if (g == null || g.isZalasGrave || !(g.dugByPlayer || (!g.hasSkeleton && !g.hasCorpse))) continue;
                 var io = g.GetComponent<InteractiveObject>(); if (io != null) empty.Add(io);
             }
         }
