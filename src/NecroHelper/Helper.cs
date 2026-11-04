@@ -52,13 +52,28 @@ namespace NecroHelper
             try { QuestMap.Tick(); } catch (Exception e) { QuestMap.Fail(e); }
             if (!GraphDump.done) { try { GraphDump.Tick(); } catch (Exception e) { GraphDump.done = true; Log.Write("대화 자료 저장 실패: " + e); } }
         }
+        // 게임 OverObjectIcon이 Update·마우스 들어옴에서 색을 흰색으로 되돌리므로 그 뒤에 칠한다
+        void LateUpdate()
+        {
+            try { EmptyGrey.Icons(); } catch (Exception e) { EmptyGrey.Fail(e); }
+        }
     }
 
     // 빈 상자(Container 모든 칸 비어 있음, 가게·하수인·플레이어 가방 제외)와 이미 시체를 파냈거나 시체가 없는 무덤(DiggableGrave.dugByPlayer / !hasSkeleton·!hasCorpse)은 마우스를 올렸을 때 이름(OverObjectText)을 회색으로.
     // 글자 대신 색만 바꿈(글을 감싸면 한글 패치의 화면 글 표가 못 알아봄). 1초마다 목록 갱신, 매 프레임 마우스가 올라간 것(InteractiveObject.mouseIsOverMe)만 봄.
+    // 무덤은 이름 글 없이 삽 아이콘(OverObjectIcon)만 뜸(사용자 11-04) → 빈 것의 아이콘도 회색(투명도는 게임 값 그대로).
     static class EmptyGrey
     {
         static readonly List<InteractiveObject> empty = new List<InteractiveObject>();
+        static readonly List<OverObjectIcon> icons = new List<OverObjectIcon>(); static bool iconsLogged;
+        public static void Icons()
+        {
+            foreach (var ic in icons)
+            {
+                if (ic == null || ic.image == null || !ic.gameObject.activeInHierarchy) continue;
+                var c = ic.image.color; if (c.r != Grey.r) ic.image.color = new Color(Grey.r, Grey.g, Grey.b, c.a);
+            }
+        }
         static float next; static TMP_Text txt; static Color normal; static bool grey, failed;
         static readonly Color Grey = new Color(0.55f, 0.55f, 0.55f, 1f);
         public static void Fail(Exception e) { if (!failed) { failed = true; Log.Write("빈 상자 회색 실패: " + e); } }
@@ -92,6 +107,16 @@ namespace NecroHelper
                 if (g == null || g.isZalasGrave || !(g.dugByPlayer || (!g.hasSkeleton && !g.hasCorpse))) continue;
                 var io = g.GetComponent<InteractiveObject>(); if (io != null) empty.Add(io);
             }
+            // 빈 것에서 빠진 아이콘은 흰색으로 되돌리고 새 목록을 만든다(아이콘은 꺼져 있을 때가 많아 꺼진 것도 찾음)
+            var set = new HashSet<InteractiveObject>(empty);
+            foreach (var ic in icons) if (ic != null && ic.image != null && (ic.interactiveObject == null || !set.Contains(ic.interactiveObject))) { var c = ic.image.color; ic.image.color = new Color(1f, 1f, 1f, c.a); }
+            icons.Clear();
+            foreach (var o in UnityEngine.Object.FindObjectsByType(typeof(OverObjectIcon), FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                var ic = o as OverObjectIcon;
+                if (ic != null && ic.interactiveObject != null && set.Contains(ic.interactiveObject)) icons.Add(ic);
+            }
+            if (!iconsLogged && icons.Count > 0) { iconsLogged = true; Log.Write("빈 것 아이콘 회색: " + icons.Count + "개"); }
         }
     }
 
@@ -260,7 +285,7 @@ namespace NecroHelper
             if (open)
             {
                 if (table == null) Load();
-                if (built != mm) { built = mm; tw = null; dots.Clear(); }
+                if (built != mm) { built = mm; tw = null; dots.Clear(); dotColor.Clear(); list = null; }
                 if (tw == null) BuildTown(mm);
                 var todo = JournalManager.GetJournalEntry(0);
                 if (todo != null && todo.opened)
@@ -269,9 +294,21 @@ namespace NecroHelper
                         if (v == null || v.name == null || !v.name.StartsWith("JournalToDo.")) continue;
                         string[] ts; if (!table.TryGetValue(v.name.Substring(12), out ts)) continue;
                         Vector2 at;
-                        if (Place(mm, ts, out at)) Dot(mm, used++, at);
+                        if (Place(mm, ts, out at)) Dot(mm, used++, at, Gold);
                     }
+                // 숨은 퀘스트(hidden-quests.tsv): 진행 중이면 하늘색 점 + 지도 왼쪽 위 목록
+                var sb = new System.Text.StringBuilder();
+                int ch = GameManager.CurrentChapter();
+                foreach (var h in hidden)
+                {
+                    if (ch < h.from || ch > h.to || !Any(h.start) || Any(h.end)) continue;
+                    sb.Append(sb.Length == 0 ? "숨은 퀘스트\n" : "\n").Append("· ").Append(h.name).Append(" — ").Append(h.todo);
+                    Vector2 at;
+                    if (Place(mm, h.targets, out at)) Dot(mm, used++, at, Blue);
+                }
+                List(mm, sb.ToString());
             }
+            else if (list != null && list.gameObject.activeSelf) list.gameObject.SetActive(false);
             for (int i = used; i < dots.Count; i++) if (dots[i] != null && dots[i].gameObject.activeSelf) dots[i].gameObject.SetActive(false);
         }
         static bool Place(MapManager mm, string[] ts, out Vector2 at)
@@ -350,17 +387,20 @@ namespace NecroHelper
             }
             float px = (maxX - minX) * 0.05f, pz = (maxZ - minZ) * 0.05f; minX -= px; maxX += px; minZ -= pz; maxZ += pz;
         }
-        static void Dot(MapManager mm, int i, Vector2 at)
+        static readonly Color Gold = new Color(1f, 0.78f, 0.15f, 1f), Blue = new Color(0.45f, 0.8f, 1f, 1f);
+        static readonly List<Color> dotColor = new List<Color>();
+        static void Dot(MapManager mm, int i, Vector2 at, Color col)
         {
             while (dots.Count <= i)
             {
                 var go = UnityEngine.Object.Instantiate(mm.rtIAmHere.gameObject, mm.rtIAmHere.parent);
                 go.name = "QuestDot";
-                foreach (var g in go.GetComponentsInChildren<UnityEngine.UI.Graphic>(true)) { g.color = new Color(1f, 0.78f, 0.15f, 1f); g.raycastTarget = false; }
+                foreach (var g in go.GetComponentsInChildren<UnityEngine.UI.Graphic>(true)) g.raycastTarget = false;
                 var rt = go.GetComponent<RectTransform>(); rt.localScale = mm.rtIAmHere.localScale * 0.8f;
-                dots.Add(rt);
+                dots.Add(rt); dotColor.Add(Color.clear);
             }
             var d = dots[i];
+            if (dotColor[i] != col) { dotColor[i] = col; foreach (var g in d.GetComponentsInChildren<UnityEngine.UI.Graphic>(true)) g.color = col; }
             if (!d.gameObject.activeSelf) d.gameObject.SetActive(true);
             d.anchoredPosition = at;
             d.SetSiblingIndex(Math.Max(0, mm.rtIAmHere.GetSiblingIndex()));
@@ -381,6 +421,64 @@ namespace NecroHelper
                 Log.Write("퀘스트 지도: 짝 " + table.Count + "줄");
             }
             catch (Exception e) { Log.Write("퀘스트 지도 표 읽기 실패: " + e.Message); }
+            try
+            {
+                var path = Path.Combine(Entry.Dir, "hidden-quests.tsv");
+                if (!File.Exists(path)) { Log.Write("숨은 퀘스트: hidden-quests.tsv 없음"); return; }
+                int bad = 0;
+                foreach (var raw in File.ReadAllText(path).Split('\n'))
+                {
+                    var line = raw.TrimEnd('\r'); if (line.Length == 0 || line[0] == '#') continue;
+                    var f = line.Split('\t'); if (f.Length < 6) continue;
+                    var h = new Hidden { name = f[0], start = Ids(f[1], ref bad), end = Ids(f[2], ref bad), targets = f[4].Split(','), todo = f[5] };
+                    int dash = f[3].IndexOf('-');
+                    if (dash > 0) { h.from = Num(f[3].Substring(0, dash)); h.to = Num(f[3].Substring(dash + 1)); }
+                    hidden.Add(h);
+                }
+                Log.Write("숨은 퀘스트: " + hidden.Count + "개" + (bad > 0 ? ", 게임에 없는 노드 " + bad + "개" : ""));
+            }
+            catch (Exception e) { Log.Write("숨은 퀘스트 표 읽기 실패: " + e.Message); }
+        }
+
+        class Hidden { public string name, todo; public long[] start, end; public string[] targets; public int from = 0, to = 999; }
+        static readonly List<Hidden> hidden = new List<Hidden>();
+        static TextMeshProUGUI list;
+        static bool Any(long[] ids)
+        {
+            foreach (var id in ids) { ArticyModel m; if (ArticyPlayer.models.TryGetValue(id, out m) && m != null && m.hasBeenVisited) return true; }
+            return false;
+        }
+        // 이 게임 mscorlib이 잘려 있어 16진 읽기는 손으로
+        static long[] Ids(string s, ref int bad)
+        {
+            var r = new List<long>();
+            foreach (var part in s.Split(','))
+            {
+                if (part.Length == 0) continue;
+                long v = 0; foreach (var c in part) v = v * 16 + (c <= '9' ? c - '0' : (c | 0x20) - 'a' + 10);
+                if (!ArticyPlayer.models.ContainsKey(v)) bad++;
+                r.Add(v);
+            }
+            return r.ToArray();
+        }
+        static int Num(string s) { int v = 0; foreach (var c in s) if (c >= '0' && c <= '9') v = v * 10 + (c - '0'); return v; }
+        static void List(MapManager mm, string text)
+        {
+            if (list == null)
+            {
+                if (text.Length == 0) return;
+                TMP_Text font = null;
+                foreach (var t in mm.mapFrame.GetComponentsInChildren<TMP_Text>(true)) if (t != null && t.font != null) { font = t; break; }
+                if (font == null) return;
+                var go = new GameObject("HiddenQuestList", typeof(RectTransform));
+                go.transform.SetParent(mm.mapFrame.transform, false);
+                list = go.AddComponent<TextMeshProUGUI>();
+                list.font = font.font; list.fontSize = 22; list.color = Blue; list.raycastTarget = false; list.textWrappingMode = TextWrappingModes.NoWrap;
+                var rt = list.rectTransform; rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f); rt.anchoredPosition = new Vector2(40f, -40f); rt.sizeDelta = new Vector2(900f, 400f);
+                Log.Write("숨은 퀘스트 목록 만듦(글꼴 " + font.font.name + ")");
+            }
+            if (list.text != text) list.text = text;
+            bool on = text.Length > 0; if (list.gameObject.activeSelf != on) list.gameObject.SetActive(on);
         }
     }
 

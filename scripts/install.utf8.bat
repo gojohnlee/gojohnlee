@@ -34,6 +34,7 @@ rem 편의 기능 모드(카메라·지도·퀘스트) - 한글 패치와 별개
 if not exist "%GAME%\NecroHelper" mkdir "%GAME%\NecroHelper"
 copy /y "%HERE%dist\NecroHelper\NecroHelper.dll" "%GAME%\NecroHelper\" >nul || goto :fail
 copy /y "%HERE%dist\NecroHelper\todo-map.tsv" "%GAME%\NecroHelper\" >nul || goto :fail
+copy /y "%HERE%dist\NecroHelper\hidden-quests.tsv" "%GAME%\NecroHelper\" >nul || goto :fail
 if exist "%GAME%\KoreanFont\todo-map.tsv" del "%GAME%\KoreanFont\todo-map.tsv"
 set "LANG=%USERPROFILE%\AppData\LocalLow\Psychic Software\TheNecromancer\Languages"
 if not exist "%LANG%" mkdir "%LANG%"
