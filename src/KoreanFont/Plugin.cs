@@ -603,14 +603,14 @@ namespace NecroKoreanFont
             var path = Path.Combine(dir, "dialogue-graph.tsv");
             if (File.Exists(path)) return;
             var sb = new System.Text.StringBuilder(8 << 20);
-            sb.Append("# M id type speaker name text item drop var visited in out custom | P id type owner targets expr\n");
+            sb.Append("# M id type speaker name text item drop var visited in out custom chapter | P id type owner targets expr\n");
             foreach (var kv in ArticyPlayer.models)
             {
                 var m = kv.Value; if (m == null) continue;
                 sb.Append("M\t").Append(m.id.ToString("X")).Append('\t').Append(m.type.ToString()).Append('\t').Append(m.speaker.ToString("X")).Append('\t')
                   .Append(Clean(m.displayName)).Append('\t').Append(Clean(m.text)).Append('\t').Append(m.linkToInventoryItem.ToString("X")).Append('\t')
                   .Append(m.isItemDrop ? "1" : "0").Append('\t').Append(m.linkedArticyVariable != null ? m.linkedArticyVariable.name : "").Append('\t')
-                  .Append(m.hasBeenVisited ? "1" : "0").Append('\t').Append(Ids(m.myInputPins)).Append('\t').Append(Ids(m.myOutputPins)).Append('\t').Append(Clean(m.CUSTOMCODE)).Append('\n');
+                  .Append(m.hasBeenVisited ? "1" : "0").Append('\t').Append(Ids(m.myInputPins)).Append('\t').Append(Ids(m.myOutputPins)).Append('\t').Append(Clean(m.CUSTOMCODE)).Append('\t').Append(m.inChapter.ToString()).Append('\n');
             }
             foreach (var kv in ArticyPlayer.pins)
             {
