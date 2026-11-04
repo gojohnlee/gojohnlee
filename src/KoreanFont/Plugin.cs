@@ -233,6 +233,7 @@ namespace NecroKoreanFont
         {
             try { WideCam.Tick(); } catch { }
             try { WildMap.Tick(); } catch { }
+            try { MapDump.Tick(); } catch { }
             if (KeepMin && Time.unscaledTime >= nextMin)
             {
                 nextMin = Time.unscaledTime + 0.5f;
@@ -404,6 +405,35 @@ namespace NecroKoreanFont
             }
             return new[] { M[0, 3] / M[0, 0], M[1, 3] / M[1, 1], M[2, 3] / M[2, 2] };
         }
+    }
+
+    // 퀘스트 위치 표시 준비: 지도를 처음 열 때 지도 지점(이름·성 안/밖·지도 좌표·월드 좌표)과 NPC 이름·위치를 KoreanFont.log에 한 번 남긴다.
+    static class MapDump
+    {
+        static bool done;
+        public static void Tick()
+        {
+            if (done) return;
+            var mm = MapManager.instance;
+            if (mm == null || mm.mapFrame == null || !mm.mapFrame.activeInHierarchy || mm.mapImage == null) return;
+            done = true;
+            foreach (Transform t in mm.mapImage.transform)
+            {
+                try
+                {
+                    var tmp = t.GetComponentInChildren<TextMeshProUGUI>();
+                    string label = tmp != null && tmp.text != null ? tmp.text.Replace("\n", " ") : "";
+                    var a = t.GetComponent<MapArrow>(); var tp = t.GetComponent<MapTiePoint>(); var il = t.GetComponent<MapInteriorLocation>();
+                    string kind = a != null ? "지점" : tp != null ? "기준" : il != null ? "실내" : "기타";
+                    string town = a != null ? (a.isInTown ? "성안" : "성밖") : tp != null ? (tp.inTown ? "성안" : "성밖") : "";
+                    string extra = a != null ? " 변수=" + a.articyVariableName + " 월드=" + V(a.worldPos) : tp != null ? " 월드=" + V(tp.worldPos) : il != null ? " 실내=" + il.interiorName : "";
+                    Log.Write("지도목록\t" + kind + "\t" + town + "\t" + t.name + "\t" + label + "\t" + extra);
+                }
+                catch { }
+            }
+            try { foreach (var c in CharactersManager.checkForNearestCharactersList) if (c != null) Log.Write("인물목록\t" + c.myName + "\t" + c.name + "\t" + V(c.transform.position)); } catch { }
+        }
+        static string V(Vector3 v) { return v.x.ToString("0") + "," + v.z.ToString("0"); }
     }
 
     static class Ui
