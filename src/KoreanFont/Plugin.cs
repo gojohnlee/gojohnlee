@@ -232,6 +232,7 @@ namespace NecroKoreanFont
         void Update()
         {
             try { WideCam.Tick(); } catch { }
+            try { WildMap.Tick(); } catch { }
             if (KeepMin && Time.unscaledTime >= nextMin)
             {
                 nextMin = Time.unscaledTime + 0.5f;
@@ -327,6 +328,81 @@ namespace NecroKoreanFont
         static void Note(RtsCamera c, string what)
         {
             try { Log.Write(what + ": 기울기 " + c.Tilt.ToString("0") + " (범위 " + c.MinTilt.ToString("0") + "~" + c.MaxTilt.ToString("0") + "), 거리 " + c.Distance.ToString("0.0") + "/최대 " + c.MaxDistance.ToString("0.0") + ", 잠김 " + (c.tiltIsLocked ? "예" : "아니오")); } catch { }
+        }
+    }
+
+    // 성 밖 지도에도 "내 위치" 표시. 게임(MapManager.RecalcArrowPositionsAndIAmHereMarker)은 성 안에서만 rtIAmHere를 켜고 성 밖은 끈다.
+    // 성 밖 기준점 = 지도 그림의 자식 중 성 밖 MapArrow(빠른 이동 지점, worldPos)와 inTown=false인 MapTiePoint(worldPos).
+    // 월드 x·z → 지도 좌표를 최소제곱 1차식으로 맞추고, 기준점에서 남는 오차는 거리 가중으로 보정(기준점에선 정확히 맞음).
+    static class WildMap
+    {
+        static List<Vector3> w; static List<Vector2> m; static double[] ax, ay; static Vector2[] res; static bool logged; static MapManager built;
+        public static void Tick()
+        {
+            var mm = MapManager.instance;
+            if (mm == null || mm.mapFrame == null || !mm.mapFrame.activeInHierarchy || TownGatesTrigger.playerIsInsideTown) return;
+            var p = Character.thePlayer;
+            if (p == null || p.IsIndoors() || mm.rtIAmHere == null || mm.mapImage == null || mm.mapImage.mainTexture == null) return;
+            if (built != mm) { w = null; built = mm; }
+            if (w == null && !Build(mm)) return;
+            var size = mm.mapImage.GetComponent<RectTransform>().sizeDelta;
+            float sx = size.x / mm.mapImage.mainTexture.width, sy = size.y / mm.mapImage.mainTexture.height;
+            var pos = p.transform.position;
+            double x = ax[0] * pos.x + ax[1] * pos.z + ax[2], y = ay[0] * pos.x + ay[1] * pos.z + ay[2];
+            double ws = 0, rx = 0, ry = 0;
+            for (int i = 0; i < w.Count; i++)
+            {
+                double dx = w[i].x - pos.x, dz = w[i].z - pos.z, d2 = dx * dx + dz * dz;
+                if (d2 < 0.01) { ws = 1; rx = res[i].x; ry = res[i].y; break; }
+                double f = 1.0 / d2; ws += f; rx += res[i].x * f; ry += res[i].y * f;
+            }
+            if (ws > 0) { x += rx / ws; y += ry / ws; }
+            var rt = mm.rtIAmHere;
+            if (!rt.gameObject.activeSelf) rt.gameObject.SetActive(true);
+            rt.anchoredPosition = new Vector2((float)x * sx, (float)y * sy);
+            rt.SetAsLastSibling();
+        }
+        static bool Build(MapManager mm)
+        {
+            w = new List<Vector3>(); m = new List<Vector2>();
+            foreach (Transform t in mm.mapImage.transform)
+            {
+                var a = t.GetComponent<MapArrow>();
+                if (a != null && !a.isInTown && a.worldPos != Vector3.zero) { w.Add(a.worldPos); m.Add(a.nominalPos); continue; }
+                var tp = t.GetComponent<MapTiePoint>();
+                if (tp != null && !tp.inTown) { w.Add(tp.worldPos); m.Add(tp.nominalPos); }
+            }
+            if (w.Count < 3) { Log.Write("성 밖 지도: 기준점 " + w.Count + "개라 내 위치 못 띄움"); w = null; return false; }
+            // 정규방정식 (X^T X) a = X^T b, X 행 = [wx, wz, 1]
+            double[,] A = new double[3, 3]; double[] bx = new double[3], by = new double[3];
+            for (int i = 0; i < w.Count; i++)
+            {
+                double[] r = { w[i].x, w[i].z, 1 };
+                for (int j = 0; j < 3; j++) { for (int k = 0; k < 3; k++) A[j, k] += r[j] * r[k]; bx[j] += r[j] * m[i].x; by[j] += r[j] * m[i].y; }
+            }
+            ax = Solve(A, bx); ay = Solve(A, by);
+            if (ax == null || ay == null) { Log.Write("성 밖 지도: 기준점이 한 줄로 늘어서 계산 못 함"); w = null; return false; }
+            res = new Vector2[w.Count]; double worst = 0;
+            for (int i = 0; i < w.Count; i++)
+            {
+                double ex = m[i].x - (ax[0] * w[i].x + ax[1] * w[i].z + ax[2]), ey = m[i].y - (ay[0] * w[i].x + ay[1] * w[i].z + ay[2]);
+                res[i] = new Vector2((float)ex, (float)ey); worst = Math.Max(worst, Math.Sqrt(ex * ex + ey * ey));
+            }
+            if (!logged) { logged = true; Log.Write("성 밖 지도: 기준점 " + w.Count + "개, 1차식 최대 오차 " + worst.ToString("0") + "px(그림 기준, 보정 전)"); }
+            return true;
+        }
+        static double[] Solve(double[,] A, double[] b)
+        {
+            double[,] M = new double[3, 4];
+            for (int i = 0; i < 3; i++) { for (int j = 0; j < 3; j++) M[i, j] = A[i, j]; M[i, 3] = b[i]; }
+            for (int c = 0; c < 3; c++)
+            {
+                int piv = c; for (int r = c + 1; r < 3; r++) if (Math.Abs(M[r, c]) > Math.Abs(M[piv, c])) piv = r;
+                if (Math.Abs(M[piv, c]) < 1e-9) return null;
+                for (int k = 0; k < 4; k++) { var t = M[c, k]; M[c, k] = M[piv, k]; M[piv, k] = t; }
+                for (int r = 0; r < 3; r++) if (r != c) { double f = M[r, c] / M[c, c]; for (int k = 0; k < 4; k++) M[r, k] -= f * M[c, k]; }
+            }
+            return new[] { M[0, 3] / M[0, 0], M[1, 3] / M[1, 1], M[2, 3] / M[2, 2] };
         }
     }
 
