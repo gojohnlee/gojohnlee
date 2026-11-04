@@ -235,6 +235,7 @@ namespace NecroKoreanFont
             try { WildMap.Tick(); } catch { }
             try { MapDump.Tick(); } catch { }
             try { QuestMap.Tick(); } catch (Exception e) { QuestMap.Fail(e); }
+            if (!GraphDump.done) { try { GraphDump.Tick(); } catch (Exception e) { GraphDump.done = true; Log.Write("대화 자료 저장 실패: " + e); } }
             if (KeepMin && Time.unscaledTime >= nextMin)
             {
                 nextMin = Time.unscaledTime + 0.5f;
@@ -584,6 +585,43 @@ namespace NecroKoreanFont
                 Log.Write("퀘스트 지도: 짝 " + table.Count + "줄");
             }
             catch (Exception e) { Log.Write("퀘스트 지도 표 읽기 실패: " + e.Message); }
+        }
+    }
+
+    // 숨은 퀘스트 분석용: 게임이 불러온 대화 자료(ArticyPlayer.models·pins)를 KoreanFont\\dialogue-graph.tsv로 한 번 저장(이미 있으면 안 함).
+    // 게임 회사 자료라 공개 저장소에 올리지 않는다(사용자가 대화로 보내 줌).
+    static class GraphDump
+    {
+        public static bool done;
+        static string Clean(string t) { return t == null ? "" : t.Replace("\t", " ").Replace("\r", " ").Replace("\n", " / "); }
+        static string Ids(List<long> l) { var sb = new System.Text.StringBuilder(); if (l != null) foreach (var x in l) { if (sb.Length > 0) sb.Append(','); sb.Append(x.ToString("X")); } return sb.ToString(); }
+        public static void Tick()
+        {
+            if (!ArticyPlayer.articySetupComplete) return;
+            done = true;
+            var dir = Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH") ?? "") ?? ".";
+            var path = Path.Combine(dir, "dialogue-graph.tsv");
+            if (File.Exists(path)) return;
+            var sb = new System.Text.StringBuilder(8 << 20);
+            sb.Append("# M id type speaker name text item drop var visited in out custom | P id type owner targets expr\n");
+            foreach (var kv in ArticyPlayer.models)
+            {
+                var m = kv.Value; if (m == null) continue;
+                sb.Append("M\t").Append(m.id.ToString("X")).Append('\t').Append(m.type.ToString()).Append('\t').Append(m.speaker.ToString("X")).Append('\t')
+                  .Append(Clean(m.displayName)).Append('\t').Append(Clean(m.text)).Append('\t').Append(m.linkToInventoryItem.ToString("X")).Append('\t')
+                  .Append(m.isItemDrop ? "1" : "0").Append('\t').Append(m.linkedArticyVariable != null ? m.linkedArticyVariable.name : "").Append('\t')
+                  .Append(m.hasBeenVisited ? "1" : "0").Append('\t').Append(Ids(m.myInputPins)).Append('\t').Append(Ids(m.myOutputPins)).Append('\t').Append(Clean(m.CUSTOMCODE)).Append('\n');
+            }
+            foreach (var kv in ArticyPlayer.pins)
+            {
+                var p = kv.Value; if (p == null) continue;
+                var ex = new System.Text.StringBuilder();
+                if (p.expressions != null) foreach (var e in p.expressions) { if (e == null) continue; if (ex.Length > 0) ex.Append(" ;; "); ex.Append(Clean(e.unparsedExpression)); }
+                sb.Append("P\t").Append(p.id.ToString("X")).Append('\t').Append(p.type.ToString()).Append('\t').Append(p.attachedToModel != null ? p.attachedToModel.id.ToString("X") : "").Append('\t')
+                  .Append(Ids(p.targetPins)).Append('\t').Append(ex.ToString()).Append('\n');
+            }
+            File.WriteAllText(path, sb.ToString());
+            Log.Write("대화 자료 저장: " + path + " (" + ArticyPlayer.models.Count + "개 + 핀 " + ArticyPlayer.pins.Count + "개)");
         }
     }
 
