@@ -234,6 +234,7 @@ namespace NecroKoreanFont
             try { WideCam.Tick(); } catch { }
             try { WildMap.Tick(); } catch { }
             try { MapDump.Tick(); } catch { }
+            try { QuestMap.Tick(); } catch (Exception e) { QuestMap.Fail(e); }
             if (KeepMin && Time.unscaledTime >= nextMin)
             {
                 nextMin = Time.unscaledTime + 0.5f;
@@ -343,12 +344,23 @@ namespace NecroKoreanFont
             var mm = MapManager.instance;
             if (mm == null || mm.mapFrame == null || !mm.mapFrame.activeInHierarchy || TownGatesTrigger.playerIsInsideTown) return;
             var p = Character.thePlayer;
-            if (p == null || p.IsIndoors() || mm.rtIAmHere == null || mm.mapImage == null || mm.mapImage.mainTexture == null) return;
+            if (p == null || p.IsIndoors() || mm.rtIAmHere == null) return;
+            Vector2 at;
+            if (!ToMap(mm, p.transform.position, out at)) return;
+            var rt = mm.rtIAmHere;
+            if (!rt.gameObject.activeSelf) rt.gameObject.SetActive(true);
+            rt.anchoredPosition = at;
+            rt.SetAsLastSibling();
+        }
+        // 월드 좌표 → 성 밖 지도 위 좌표(anchoredPosition)
+        public static bool ToMap(MapManager mm, Vector3 pos, out Vector2 at)
+        {
+            at = Vector2.zero;
+            if (mm.mapImage == null || mm.mapImage.mainTexture == null) return false;
             if (built != mm) { w = null; built = mm; }
-            if (w == null && !Build(mm)) return;
+            if (w == null && !Build(mm)) return false;
             var size = mm.mapImage.GetComponent<RectTransform>().sizeDelta;
             float sx = size.x / mm.mapImage.mainTexture.width, sy = size.y / mm.mapImage.mainTexture.height;
-            var pos = p.transform.position;
             double x = ax[0] * pos.x + ax[1] * pos.z + ax[2], y = ay[0] * pos.x + ay[1] * pos.z + ay[2];
             double ws = 0, rx = 0, ry = 0;
             for (int i = 0; i < w.Count; i++)
@@ -358,10 +370,8 @@ namespace NecroKoreanFont
                 double f = 1.0 / d2; ws += f; rx += res[i].x * f; ry += res[i].y * f;
             }
             if (ws > 0) { x += rx / ws; y += ry / ws; }
-            var rt = mm.rtIAmHere;
-            if (!rt.gameObject.activeSelf) rt.gameObject.SetActive(true);
-            rt.anchoredPosition = new Vector2((float)x * sx, (float)y * sy);
-            rt.SetAsLastSibling();
+            at = new Vector2((float)x * sx, (float)y * sy);
+            return true;
         }
         static bool Build(MapManager mm)
         {
@@ -434,6 +444,147 @@ namespace NecroKoreanFont
             try { foreach (var c in CharactersManager.checkForNearestCharactersList) if (c != null) Log.Write("인물목록\t" + c.myName + "\t" + c.name + "\t" + V(c.transform.position)); } catch { }
         }
         static string V(Vector3 v) { return v.x.ToString("0") + "," + v.z.ToString("0"); }
+    }
+
+    // 지도에 지금 일지 '할 일'의 위치를 금색 점으로 표시. 짝 표 = todo-map.tsv(L:GameLocation, N:CharacterName, 앞에서부터 찾아지는 것 하나).
+    // 성 안 지도: 성 안 MapTiePoint 거리 가중(게임과 같은 식), 실내면 MapInteriorLocation. 성 밖 지도: WildMap.ToMap. 다른 쪽 지도에 속한 곳은 안 그림.
+    static class QuestMap
+    {
+        static Dictionary<string, string[]> table; static readonly List<RectTransform> dots = new List<RectTransform>();
+        static readonly HashSet<string> warned = new HashSet<string>(); static bool failed; static MapManager built;
+        static List<Vector3> tw; static List<Vector2> tm; static Dictionary<string, Vector2> interiors; static float minX, maxX, minZ, maxZ;
+        public static void Fail(Exception e) { if (!failed) { failed = true; Log.Write("퀘스트 지도 실패: " + e); } }
+        public static void Tick()
+        {
+            var mm = MapManager.instance;
+            bool open = mm != null && mm.mapFrame != null && mm.mapFrame.activeInHierarchy && mm.rtIAmHere != null;
+            int used = 0;
+            if (open)
+            {
+                if (table == null) Load();
+                if (built != mm) { built = mm; tw = null; dots.Clear(); }
+                if (tw == null) BuildTown(mm);
+                var todo = JournalManager.GetJournalEntry(0);
+                if (todo != null && todo.opened)
+                    foreach (var v in todo.addedParts)
+                    {
+                        if (v == null || v.name == null || !v.name.StartsWith("JournalToDo.")) continue;
+                        string[] ts; if (!table.TryGetValue(v.name.Substring(12), out ts)) continue;
+                        Vector2 at;
+                        if (Place(mm, ts, out at)) Dot(mm, used++, at);
+                    }
+            }
+            for (int i = used; i < dots.Count; i++) if (dots[i] != null && dots[i].gameObject.activeSelf) dots[i].gameObject.SetActive(false);
+        }
+        static bool Place(MapManager mm, string[] ts, out Vector2 at)
+        {
+            at = Vector2.zero;
+            foreach (var t in ts)
+            {
+                Vector3 pos; string inside;
+                if (!Resolve(t, out pos, out inside)) continue;
+                bool townMap = TownGatesTrigger.playerIsInsideTown;
+                if (!string.IsNullOrEmpty(inside))
+                {
+                    Vector2 il;
+                    if (townMap && interiors.TryGetValue(inside, out il)) { at = Scale(mm, il); return true; }
+                    continue; // 성 밖 건물·지하는 지도 위 자리를 모름
+                }
+                bool inTown = tw.Count > 0 && pos.x >= minX && pos.x <= maxX && pos.z >= minZ && pos.z <= maxZ;
+                if (townMap) { if (inTown && TownPos(mm, pos, out at)) return true; continue; }
+                if (WildMap.ToMap(mm, pos, out at)) return true;
+            }
+            return false;
+        }
+        static bool Resolve(string t, out Vector3 pos, out string inside)
+        {
+            pos = Vector3.zero; inside = "";
+            if (t.StartsWith("L:"))
+            {
+                GameLocation gl;
+                if (!LocationMarker.gameLocationsLookup.TryGetValue(t.Substring(2), out gl)) { Warn(t); return false; }
+                var lm = GameManager.GetLocation(gl, showError: false);
+                if (lm == null) return false;
+                pos = lm.transform.position; inside = lm.insideInteriorPrefab ?? ""; return true;
+            }
+            if (t.StartsWith("N:"))
+            {
+                CharacterName cn;
+                if (!Character.characterNamesLookup.TryGetValue(t.Substring(2), out cn)) { Warn(t); return false; }
+                var c = CharactersManager.GetCharacterScriptIfInstantiated(cn);
+                if (c == null || !c.gameObject.activeInHierarchy) return false;
+                pos = c.transform.position; inside = c.currentlyInsideInteriorPrefabName ?? ""; return true;
+            }
+            return false;
+        }
+        static void Warn(string t) { if (warned.Add(t)) Log.Write("퀘스트 지도: 게임에 없는 이름 " + t); }
+        static Vector2 Scale(MapManager mm, Vector2 nominal)
+        {
+            var size = mm.mapImage.GetComponent<RectTransform>().sizeDelta;
+            return new Vector2(nominal.x * size.x / mm.mapImage.mainTexture.width, nominal.y * size.y / mm.mapImage.mainTexture.height);
+        }
+        static bool TownPos(MapManager mm, Vector3 pos, out Vector2 at)
+        {
+            at = Vector2.zero; pos.y = 0f; double ws = 0, x = 0, y = 0;
+            for (int i = 0; i < tw.Count; i++)
+            {
+                var d = pos - tw[i]; double d2 = d.x * d.x + d.z * d.z; if (d2 < 0.01) d2 = 0.01;
+                double f = 10000.0 / d2; ws += f; x += tm[i].x * f; y += tm[i].y * f;
+            }
+            if (ws <= 0) return false;
+            at = Scale(mm, new Vector2((float)(x / ws), (float)(y / ws))); return true;
+        }
+        static void BuildTown(MapManager mm)
+        {
+            tw = new List<Vector3>(); tm = new List<Vector2>(); interiors = new Dictionary<string, Vector2>();
+            minX = minZ = float.MaxValue; maxX = maxZ = float.MinValue;
+            foreach (Transform t in mm.mapImage.transform)
+            {
+                var tp = t.GetComponent<MapTiePoint>();
+                if (tp != null && tp.inTown)
+                {
+                    tw.Add(tp.worldPos); tm.Add(tp.nominalPos);
+                    minX = Math.Min(minX, tp.worldPos.x); maxX = Math.Max(maxX, tp.worldPos.x); minZ = Math.Min(minZ, tp.worldPos.z); maxZ = Math.Max(maxZ, tp.worldPos.z);
+                    continue;
+                }
+                var il = t.GetComponent<MapInteriorLocation>();
+                if (il != null && il.interiorName != null && !interiors.ContainsKey(il.interiorName)) interiors.Add(il.interiorName, il.nominalPos);
+            }
+            float px = (maxX - minX) * 0.05f, pz = (maxZ - minZ) * 0.05f; minX -= px; maxX += px; minZ -= pz; maxZ += pz;
+        }
+        static void Dot(MapManager mm, int i, Vector2 at)
+        {
+            while (dots.Count <= i)
+            {
+                var go = UnityEngine.Object.Instantiate(mm.rtIAmHere.gameObject, mm.rtIAmHere.parent);
+                go.name = "QuestDot";
+                foreach (var g in go.GetComponentsInChildren<UnityEngine.UI.Graphic>(true)) { g.color = new Color(1f, 0.78f, 0.15f, 1f); g.raycastTarget = false; }
+                var rt = go.GetComponent<RectTransform>(); rt.localScale = mm.rtIAmHere.localScale * 0.8f;
+                dots.Add(rt);
+            }
+            var d = dots[i];
+            if (!d.gameObject.activeSelf) d.gameObject.SetActive(true);
+            d.anchoredPosition = at;
+            d.SetSiblingIndex(Math.Max(0, mm.rtIAmHere.GetSiblingIndex()));
+        }
+        static void Load()
+        {
+            table = new Dictionary<string, string[]>();
+            try
+            {
+                var dir = Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH") ?? "") ?? ".";
+                var path = Path.Combine(dir, "todo-map.tsv");
+                if (!File.Exists(path)) { Log.Write("퀘스트 지도: todo-map.tsv 없음"); return; }
+                foreach (var raw in File.ReadAllText(path).Split('\n'))
+                {
+                    var line = raw.TrimEnd('\r'); if (line.Length == 0 || line[0] == '#') continue;
+                    int tab = line.IndexOf('\t'); if (tab <= 0) continue;
+                    table[line.Substring(0, tab)] = line.Substring(tab + 1).Split(',');
+                }
+                Log.Write("퀘스트 지도: 짝 " + table.Count + "줄");
+            }
+            catch (Exception e) { Log.Write("퀘스트 지도 표 읽기 실패: " + e.Message); }
+        }
     }
 
     static class Ui
