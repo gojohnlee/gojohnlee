@@ -1129,3 +1129,43 @@ Bear (Claws)	곰(발톱)
 <i>An option was unavailable due to a failed Trust test.	<i>신뢰 시험에 실패해 고를 수 없는 선택지가 있었습니다.
 Armor:	갑옷: 
 % leather	% 가죽
+
+# --- 11-04 로그(untranslated.txt)에서 남은 화면 글
+=(Gloves)	(장갑)
+=(Jacket/Armor)	(윗옷/갑옷)
+=(Shoes/Boots)	(신발/장화)
+ options were unavailable due to failed Trust tests.	개의 선택지는 신뢰 시험에 실패해 고를 수 없었습니다.
+=Activate Minion\nDeath Focus	하수인 움직이기\n죽음의 집중
+Activate Minion (	하수인 움직이기 (
+Death Focus (	죽음의 집중 (
+Str: 	힘: 
+Agi: 	민첩: 
+Con: 	체질: 
+Cou: 	용기: 
+Health: 	체력: 
+Success\n	성공률\n
+=NAME\nWeapon\nEnergy\nActivity\nBleeding+Crits	이름\n무기\n기력\n활동\n출혈+치명타
+=Enemy	적
+=Your Party	내 일행
+=Minion Equipment	하수인 장비
+=Reload	장전
+=Chapter 6	6장
+=Warning!\nWarning!	경고!\n경고!
+=Books	책
+=Bookshelf	책꽂이
+=Notebook	공책
+=Crypt	지하 묘지
+=Forge	화덕
+=Hut	오두막
+=Pot	냄비
+=Mushroom	버섯
+=Stag	수사슴
+=Chicken	닭
+=Cluck cluck!	꼬꼬댁!
+=Hazel Tree	개암나무
+=Metal Door	철문
+=Pile of Rags	넝마 더미
+=Patient	환자
+=Slums Tavern	빈민가 선술집
+=Marns	마른스
+=Northern\nForest	북쪽\n숲
