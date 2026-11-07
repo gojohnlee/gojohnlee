@@ -59,6 +59,13 @@ namespace ValheimHelper
                 HitData.DamageTypes dm = d.m_itemData.GetDamage();
                 Plugin.Log.LogInfo($"[vh_refilltest] 무기 점수 {p}: {Gear.WeaponScore(d.m_itemData):0.#} (베기 {dm.m_slash} 둔기 {dm.m_blunt} 찌르기 {dm.m_pierce}, 근접 {Gear.IsMelee(d.m_itemData)})");
             }
+            GameObject boar = ZNetScene.instance.GetPrefab("Boar");
+            if (boar != null && boar.GetComponent<Humanoid>() is Humanoid h)
+            {
+                var atk = new List<string>();
+                foreach (var g in h.m_defaultItems) if (g != null && g.GetComponent<ItemDrop>() is ItemDrop gd) atk.Add($"{g.name} {Gear.WeaponScore(gd.m_itemData):0.#}");
+                Plugin.Log.LogInfo($"[vh_refilltest] 멧돼지: 체력 {h.m_health}, 공격 [{string.Join(", ", atk.ToArray())}], 적 피해 배율 {Game.instance.GetDifficultyDamageScalePlayer(w.Ragnar.transform.position) * Game.m_enemyDamageRate:0.##}, 라그나 한 방 {Guard.HitOf(w.Ragnar):0.#}, 체력 {w.Ragnar.GetMaxHealth():0}");
+            }
         }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
