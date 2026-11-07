@@ -52,6 +52,13 @@ namespace ValheimHelper
             var tool = GatherJob.ToolFor(w.Ragnar, ways, "LeatherScraps");
             Plugin.Log.LogInfo($"[vh_refilltest] 가죽 조각 출처 {string.Join(", ", ResourceCatalog.SourcesOf("LeatherScraps").ToArray())} / 사냥감 {Prey.Any("LeatherScraps")} / 방법 {string.Join(",", ways)} / 연장 {tool}");
             checks.Add($"가죽 조각: 구할 방법이 있음(방법 {string.Join(",", ways)}, 연장 {tool})", ways.Count > 0 && tool != ValheimHelper.Core.Npc.ToolState.None);
+            foreach (string p in new[] { "AxeStone", "Club", "AxeFlint", "KnifeFlint", "SpearFlint" })
+            {
+                ItemDrop d = ObjectDB.instance.GetItemPrefab(p)?.GetComponent<ItemDrop>();
+                if (d == null) continue;
+                HitData.DamageTypes dm = d.m_itemData.GetDamage();
+                Plugin.Log.LogInfo($"[vh_refilltest] 무기 점수 {p}: {Gear.WeaponScore(d.m_itemData):0.#} (베기 {dm.m_slash} 둔기 {dm.m_blunt} 찌르기 {dm.m_pierce}, 근접 {Gear.IsMelee(d.m_itemData)})");
+            }
         }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
