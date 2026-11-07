@@ -147,6 +147,18 @@ namespace ValheimHelper
         /// 나서기 전 연장 판단(⑪ 3): 맨손·사냥이거나 짐·장비 상자에 그 물건을 캘 단계(ResourceCatalog.MinTier)의 연장이 있으면 Ok,
         /// 연장은 있는데 다 단계가 모자라면 Weak(청동 곡괭이로 은), 아무것도 없으면 None.
         /// </summary>
+        /// <summary>
+        /// 이 일꾼이 그 물건을 구할 방법: 캐는·줍는 곳이 있어도 지금 연장이 하나도 없고(ToolFor None) 사냥감이 떨구면 사냥으로(사용자 11-07:
+        /// 가죽 조각이 다른 출처 때문에 Hunt가 빠져 "연장 없음"으로 조용히 거절됨). 연장이 있으면 원래대로(뼈·돌을 사냥하러 가지 않게).
+        /// </summary>
+        public static HashSet<ToolKind> WaysFor(WorkerNpc npc, string item)
+        {
+            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(item);
+            if (npc == null || ways.Count == 0 || ways.Contains(ToolKind.Hunt) || !Prey.Any(item)) return ways;
+            if (ToolFor(npc, ways, item) != ToolState.None) return ways;
+            return new HashSet<ToolKind> { ToolKind.Hunt };
+        }
+
         public static ToolState ToolFor(WorkerNpc npc, HashSet<ToolKind> ways, string item)
         {
             bool any = false;

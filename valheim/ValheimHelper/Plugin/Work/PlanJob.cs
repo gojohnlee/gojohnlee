@@ -76,7 +76,7 @@ namespace ValheimHelper
             if (m_gather != null)
             {
                 int left = Mathf.Max(1, m_gather.Target - m_gather.Delivered);
-                m_gather = new GatherJob(m_npc, m_gather.Item, left, ResourceCatalog.WaysFor(m_gather.Item)) { InPlan = true };
+                m_gather = new GatherJob(m_npc, m_gather.Item, left, GatherJob.WaysFor(m_npc, m_gather.Item)) { InPlan = true };
             }
             m_machine?.OnDied();
         }
@@ -149,7 +149,7 @@ namespace ValheimHelper
                 {
                     case StepKind.Gather:
                     case StepKind.Hunt:
-                        HashSet<ToolKind> ways = ResourceCatalog.WaysFor(s.Item);
+                        HashSet<ToolKind> ways = GatherJob.WaysFor(m_npc, s.Item);
                         if (ways.Count == 0 || s.Amount <= 0) { m_runner.Fail(s.Id); continue; }
                         if (m_waitGuard && m_now < m_guardCheckAt) return false;
                         DepartureResult j = Departures.JudgeStep(m_npc, s.Item, s.Amount);

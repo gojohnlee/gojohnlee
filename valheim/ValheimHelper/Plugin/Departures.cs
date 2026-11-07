@@ -79,7 +79,7 @@ namespace ValheimHelper
         public static void Gather(Speaker who, ChatCommand cmd, WorkerNpc npc, bool fromQueue = false)
         {
             if (Farming(npc, cmd)) return;
-            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(cmd.Item);
+            HashSet<ToolKind> ways = GatherJob.WaysFor(npc, cmd.Item);
             if (ways.Count == 0) { Craft(npc, cmd); return; }
             s_pending.Remove(npc);
             DepartureInput input = Input(npc, cmd, ways, fromQueue);
@@ -181,7 +181,7 @@ namespace ValheimHelper
         /// <summary>시험용: 지금 그 명령을 받으면 어떻게 판단할지(말하거나 움직이지 않음).</summary>
         internal static DepartureResult JudgeFor(WorkerNpc npc, ChatCommand cmd)
         {
-            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(cmd.Item);
+            HashSet<ToolKind> ways = GatherJob.WaysFor(npc, cmd.Item);
             return ways.Count == 0 ? null : Departure.Judge(Input(npc, cmd, ways, false));
         }
 
@@ -226,7 +226,7 @@ namespace ValheimHelper
         /// <summary>제작 계획의 채집 단계 출발 판단(재고·밤 질문 없이 위험만 — 직접 명령과 같은 규칙, 외부 검토 10-26). 채집으로 안 나면 null.</summary>
         internal static DepartureResult JudgeStep(WorkerNpc npc, string item, int amount)
         {
-            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(item);
+            HashSet<ToolKind> ways = GatherJob.WaysFor(npc, item);
             if (ways.Count == 0) return null;
             DepartureInput input = Input(npc, new ChatCommand { Kind = CommandKind.Item, Item = item, Amount = amount }, ways, true);
             input.Stock = 0;
@@ -588,7 +588,7 @@ namespace ValheimHelper
             ReplyAction act = Replies.Resolve(r.Question, r.Alternative != null, a);
             Plugin.Log.LogInfo($"{npc.NpcName} 대답 {a} → {act} (질문 {r.Question})");
             if (act == ReplyAction.NotApplicable) return true;
-            HashSet<ToolKind> ways = ResourceCatalog.WaysFor(p.Cmd.Item);
+            HashSet<ToolKind> ways = GatherJob.WaysFor(npc, p.Cmd.Item);
             var args = Args(npc, r);
             switch (act)
             {
@@ -638,7 +638,7 @@ namespace ValheimHelper
             string condition = p.Result.Condition;
             if (condition == "gear") // 상자의 더 좋은 장비까지 넣어 그 곳(없으면 가장 가까운 곳)을 다시 셈
             {
-                DepartureInput input = Input(npc, p.Cmd, ResourceCatalog.WaysFor(p.Cmd.Item), true);
+                DepartureInput input = Input(npc, p.Cmd, GatherJob.WaysFor(npc, p.Cmd.Item), true);
                 PlaceOption at = p.Result.Place != null ? input.Places.Find(o => o.Zone.Equals(p.Result.Place.Zone)) : null;
                 if (at == null && input.Places.Count > 0) at = input.Places[0];
                 return at == null || !at.GearShort;
@@ -670,7 +670,7 @@ namespace ValheimHelper
                         if (ConditionMet(npc, p))
                         {
                             s_pending.Remove(npc);
-                            Start(npc, p.Cmd, ResourceCatalog.WaysFor(p.Cmd.Item), null);
+                            Start(npc, p.Cmd, GatherJob.WaysFor(npc, p.Cmd.Item), null);
                             npc.Say(p.Result.Condition == "gear" ? "answer.gearMet" : "answer.conditionMet", Args(npc, p.Result));
                             continue;
                         }
@@ -741,6 +741,8 @@ namespace ValheimHelper
 
         /// <summary>혼자 사냥하기엔 약했던 물건 → 그때 전력(Strength). 지금 전력이 그보다 높아지면(장비·음식) 잊는다.</summary>
         static readonly Dictionary<string, float> s_huntWeak = new Dictionary<string, float>();
+
+        internal static void TestForgetWeak(string item) => s_huntWeak.Remove(item);
 
         /// <summary>밤이라 못 구한 자동 보충 물건(해가 뜨면 비움).</summary>
         static readonly HashSet<string> s_refillNight = new HashSet<string>();
@@ -826,7 +828,7 @@ namespace ValheimHelper
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
                 if (NightSkipped(due.Item)) continue;
-                HashSet<ToolKind> ways = ResourceCatalog.WaysFor(due.Item);
+                HashSet<ToolKind> ways = GatherJob.WaysFor(npc, due.Item);
                 if (ways.Count == 0 || RefillBusy(due.Item) || FarmOnly(due.Item)) continue; // 밭 물건은 StartRefillMake → RefillFarm
                 int amount = maxAmount > 0 ? System.Math.Min(due.Amount, maxAmount) : due.Amount;
                 var cmd = new ChatCommand { Kind = CommandKind.Item, Item = due.Item, Amount = amount };

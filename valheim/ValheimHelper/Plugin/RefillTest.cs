@@ -37,9 +37,27 @@ namespace ValheimHelper
 
         static int Wood(TestKit.World w) => GatherTest.CountBase(w.Home, "Wood");
 
+        /// <summary>
+        /// 0) 사용자 11-07 무한 반복: 자동 보충 일이 실패하면 쉼·사냥 약함 기억, 가죽 조각은 연장이 없어도 사냥으로 구함.
+        /// </summary>
+        static void Failures(TestKit.World w, GatherTest.Checks checks)
+        {
+            Departures.TestSkip("RawMeat", false);
+            Departures.RefillJobFailed(w.Ragnar, "RawMeat", "preyPack");
+            checks.Add("자동 보충 실패(preyPack) → 그 물건 쉼", Departures.RefillSkipped("RawMeat"));
+            checks.Add("혼자 약함 기억(같은 전력이면 약함)", Departures.HuntWeak(w.Ragnar, "RawMeat"));
+            Departures.TestSkip("RawMeat", false);
+            Departures.TestForgetWeak("RawMeat");
+            var ways = GatherJob.WaysFor(w.Ragnar, "LeatherScraps");
+            var tool = GatherJob.ToolFor(w.Ragnar, ways, "LeatherScraps");
+            Plugin.Log.LogInfo($"[vh_refilltest] 가죽 조각 출처 {string.Join(", ", ResourceCatalog.SourcesOf("LeatherScraps").ToArray())} / 사냥감 {Prey.Any("LeatherScraps")} / 방법 {string.Join(",", ways)} / 연장 {tool}");
+            checks.Add($"가죽 조각: 구할 방법이 있음(방법 {string.Join(",", ways)}, 연장 {tool})", ways.Count > 0 && tool != ValheimHelper.Core.Npc.ToolState.None);
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
             yield return TestKit.Setup(w);
+            Failures(w, checks);
             checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
             if (w.Ragnar == null || w.Chest == null) yield break;
             TestKit.ClearBaseStock(w, "Wood");
