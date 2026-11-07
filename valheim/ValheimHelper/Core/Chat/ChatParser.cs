@@ -43,8 +43,9 @@ namespace ValheimHelper.Core.Chat
                 var result = ParseTokens(spaced, text);
                 if (result.Route == ChatRoute.Command) return result;
                 // 사용자 10-31: 띄어쓰기가 달라도("!라그나계속채워나무50") 공백을 빼고 다시 읽는다. 그래도 안 되면 Haiku.
-                string[] respaced = Respace(string.Concat(spaced));
-                if (respaced != null && !respaced.SequenceEqual(spaced))
+                string compact = string.Concat(spaced);
+                string[] respaced = Respace(compact) ?? new[] { compact }; // 한 낱말 명령("!상 태"·"!명 령 어")은 붙인 그대로(사용자 11-07)
+                if (!respaced.SequenceEqual(spaced))
                 {
                     var again = ParseTokens(respaced, text);
                     if (again.Route == ChatRoute.Command) return again;
@@ -84,7 +85,7 @@ namespace ValheimHelper.Core.Chat
         static readonly string[] Keywords =
         {
             "계속채워", "계속", "채워", "개인", "끔", "목록", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "평탄화",
-            "상태", "스킬", "기억", "지식", "멈춰", "길", "같이가자", "그냥가", "전부취소", "취소전부",
+            "상태", "스킬", "기억", "지식", "멈춰", "길", "같이가자", "그냥가", "전부취소", "취소전부", "명령어", "명령", "도움말", "도움",
         };
 
         /// <summary>공백 없는 몸통 → [일꾼 이름] [명령어·부속어…] [물건 이름] [끝 숫자]. 나눌 게 없으면 null.</summary>
@@ -131,7 +132,7 @@ namespace ValheimHelper.Core.Chat
             {
                 case "같이 가자": case "같이가자": case "escort": return Kind(CommandKind.Escort);
                 case "그냥 가": case "그냥가": case "go anyway": case "goanyway": return Kind(CommandKind.GoAnyway);
-                case "취소 전부": case "전부 취소": case "clear": return Kind(CommandKind.ClearQueue);
+                case "취소 전부": case "전부 취소": case "취소전부": case "전부취소": case "clear": return Kind(CommandKind.ClearQueue);
             }
 
             switch (head)
@@ -142,6 +143,7 @@ namespace ValheimHelper.Core.Chat
                 case "지식": case "knowledge": return n == 1 ? Kind(CommandKind.Knowledge) : null;
                 case "멈춰": case "stop": return n == 1 ? Kind(CommandKind.Stop) : null;
                 case "길": case "path": return n == 1 ? Kind(CommandKind.Path) : null;
+                case "명령어": case "명령": case "도움말": case "도움": case "help": case "commands": return n == 1 ? Kind(CommandKind.Help) : null;
                 case "탐험": case "explore": return ParseExplore(t);
                 case "상자": case "chest": return ParseChest(t);
                 case "채워": case "fill": return ParseKeep(t, true);

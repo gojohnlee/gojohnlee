@@ -44,6 +44,7 @@ namespace ValheimHelper
                     // 질문을 기다리는 중이면 "!그냥 가"·"!같이 가자"는 대답(설계 B-7)
                     if (Departures.Awaiting && (r.Command.Kind == CommandKind.GoAnyway || r.Command.Kind == CommandKind.Escort)
                         && Departures.Answer(who, r.Command.Kind == CommandKind.GoAnyway ? Reply.GoAnyway : Reply.Escort, r.Command.Target)) break;
+                    if (r.Command.Kind == CommandKind.Help) { TellHelp(r.Command.Target, npcs); break; }
                     Run(who, r.Command, npcs);
                     break;
                 case ChatRoute.Haiku:
@@ -61,6 +62,14 @@ namespace ValheimHelper
         }
 
         internal static string StateOf(WorkerNpc npc) => State(npc);
+
+        /// <summary>!명령어(사용자 11-07): 일꾼 하나가 명령 목록·상자 이름 바꾸는 법을 줄마다 말한다(Claude 없이).</summary>
+        static void TellHelp(string target, List<WorkerNpc> npcs)
+        {
+            WorkerNpc npc = target != null ? npcs.Find(n => n.NpcName == target) : null;
+            npc = npc ?? npcs[0];
+            foreach (string line in HelpText.Lines) npc.SayText(line);
+        }
 
         /// <summary>검사를 통과한 Claude 작업 하나를 실행. 세트 저장·고치기는 여기서 직접, 나머지는 !명령과 같은 길.</summary>
         internal static void RunClaudeTask(Speaker who, ClaudeTask t, List<WorkerNpc> npcs)

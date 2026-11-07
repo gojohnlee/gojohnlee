@@ -739,6 +739,48 @@ namespace ValheimHelper
         /// <summary>자동 보충이 그 물건을 쉬는 중(출발 판단이 막음·계획이 안 됨 등, 10분).</summary>
         internal static bool RefillSkipped(string item) => s_refillSkipUntil.TryGetValue(item, out float until) && Time.time < until;
 
+        /// <summary>혼자 사냥하기엔 약했던 물건 → 그때 전력(Strength). 지금 전력이 그보다 높아지면(장비·음식) 잊는다.</summary>
+        static readonly Dictionary<string, float> s_huntWeak = new Dictionary<string, float>();
+
+        /// <summary>밤이라 못 구한 자동 보충 물건(해가 뜨면 비움).</summary>
+        static readonly HashSet<string> s_refillNight = new HashSet<string>();
+
+        static bool NightSkipped(string item)
+        {
+            if (!EnvMan.IsNight()) { s_refillNight.Clear(); return false; }
+            return s_refillNight.Contains(item);
+        }
+
+        /// <summary>일꾼 전력: 최대 체력 + 갑옷×2 + 한 방×3(장비·음식이 좋아지면 오른다).</summary>
+        internal static float Strength(WorkerNpc npc) => npc.GetMaxHealth() + npc.GetBodyArmor() * 2f + Guard.HitOf(npc) * 3f;
+
+        internal static void NoteHuntWeak(WorkerNpc npc, string item)
+        {
+            float s = Strength(npc);
+            if (s_huntWeak.TryGetValue(item, out float old) && old >= s) return;
+            s_huntWeak[item] = s;
+            Plugin.Log.LogInfo($"{npc.NpcName} 사냥 {item}: 혼자는 약함 기억(전력 {s:0})");
+        }
+
+        internal static bool HuntWeak(WorkerNpc npc, string item)
+        {
+            if (!s_huntWeak.TryGetValue(item, out float at)) return false;
+            if (Strength(npc) <= at + 0.5f) return true;
+            s_huntWeak.Remove(item); // 강해졌다: 다시 혼자 해 본다
+            return false;
+        }
+
+        /// <summary>
+        /// 자동 보충 일이 실패로 끝남(사용자 11-07 무한 반복): 그 물건은 10분 쉰다. 사냥감이 세서(무리·센 것·호위병 바쁨) 그만뒀으면 약함도 기억.
+        /// </summary>
+        internal static void RefillJobFailed(WorkerNpc npc, string item, string key)
+        {
+            s_refillSkipUntil[item] = Time.time + 600f;
+            if (key == "nightNoExplore" || key == "nightBack") s_refillNight.Add(item); // 밤에 못 감: 아침까지 쉼(그동안 요리 같은 제작 보충이 차례를 받음)
+            if (key == "preyPack" || key == "preyStrong" || key == "preyWaitGuard") NoteHuntWeak(npc, item);
+            Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {item}: 실패({key}) → 10분 쉼");
+        }
+
         /// <summary>시험용: 출발 판단이 막은 것처럼 그 물건을 쉬게 하거나 풀기.</summary>
         internal static void TestSkip(string item, bool on)
         {
@@ -783,6 +825,7 @@ namespace ValheimHelper
             foreach (Ingredient due in RefillDue(home))
             {
                 if (s_refillSkipUntil.TryGetValue(due.Item, out float until) && Time.time < until) continue;
+                if (NightSkipped(due.Item)) continue;
                 HashSet<ToolKind> ways = ResourceCatalog.WaysFor(due.Item);
                 if (ways.Count == 0 || RefillBusy(due.Item) || FarmOnly(due.Item)) continue; // 밭 물건은 StartRefillMake → RefillFarm
                 int amount = maxAmount > 0 ? System.Math.Min(due.Amount, maxAmount) : due.Amount;
@@ -794,7 +837,14 @@ namespace ValheimHelper
                 // 자동 보충도 같은 판단: 덜 위험한 곳으로 바꿔 가고, 다 위험하면 호위병과(바쁘면 기다리지 않고 그 물건은 10분 뒤로 — 사용자 10-26)
                 bool together = r.Action == DepartAction.GoTogether && canEscort && GuardIdle();
                 if (r.Action != DepartAction.Go && !together) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
-                var job = new GatherJob(npc, due.Item, amount, ways) { WantGuard = together };
+                // 출발 전 전력 판단(사용자 11-07): 이 사냥감을 혼자 못 잡았고 그 뒤로 강해지지 않았으면 처음부터 쉬는 호위병과, 호위병이 바쁘면 10분 뒤로
+                if (!together && ways.Contains(ToolKind.Hunt) && HuntWeak(npc, due.Item))
+                {
+                    if (!canEscort || !GuardIdle()) { s_refillSkipUntil[due.Item] = Time.time + 600f; Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {due.Item}: 혼자는 약함·호위병 못 데려감 → 10분 뒤"); continue; }
+                    together = true;
+                    Plugin.Log.LogInfo($"{npc.NpcName} 자동 보충 {due.Item}: 혼자는 약함(전력 {Strength(npc):0}) → 처음부터 호위병과");
+                }
+                var job = new GatherJob(npc, due.Item, amount, ways) { WantGuard = together, FromRefill = true };
                 foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
                 return job;
             }

@@ -34,6 +34,8 @@ namespace ValheimHelper
         bool m_mateCalled, m_guardQueued;
         /// <summary>자동 보충: 시작하면 호위병을 붙인다(남은 곳이 다 위험, Departures.NextRefillJob).</summary>
         public bool WantGuard;
+        /// <summary>자동 보충(!계속채워)이 낸 일 — 실패하면 그 물건을 쉬게 한다(사용자 11-07: 실패 → 1분 뒤 또 출발 무한 반복).</summary>
+        public bool FromRefill;
         /// <summary>제작 계획의 채집 단계(PlanJob)인지 — 호위병이 바빠도 대기열에 따로 미루지 않는다(계획이 그 단계를 다룸).</summary>
         public bool InPlan;
         /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
@@ -199,6 +201,7 @@ namespace ValheimHelper
             args["partner"] = WorkerNpc.TheGuard?.NpcName ?? "";
             m_npc.Say(key, args);
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item} 실패: {key} ({Delivered}/{Target})");
+            if (FromRefill) Departures.RefillJobFailed(m_npc, Item, key);
             return false;
         }
 

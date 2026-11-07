@@ -56,6 +56,7 @@ namespace ValheimHelper
         /// </summary>
         bool CallGuardForPrey()
         {
+            Departures.NoteHuntWeak(m_npc, Item); // 혼자면 약했다: 다음 자동 보충은 처음부터 호위병과(사용자 11-07)
             if (m_mateCalled || m_ai.EscortName != null) return false;
             m_mateCalled = true;
             WorkerNpc guard = Departures.GuardOf();

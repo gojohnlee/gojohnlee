@@ -111,6 +111,9 @@ public class ChatParserTests
     [InlineData("!멈춰", CommandKind.Stop)]
     [InlineData("!취소 전부", CommandKind.ClearQueue)]
     [InlineData("!길", CommandKind.Path)]
+    [InlineData("!명령어", CommandKind.Help)]
+    [InlineData("!도움말", CommandKind.Help)]
+    [InlineData("!help", CommandKind.Help)]
     [InlineData("!세트", CommandKind.SetList)]
     [InlineData("!채워 끔", CommandKind.KeepOff)]
     [InlineData("!계속채워", CommandKind.KeepList)]
@@ -354,6 +357,11 @@ public class ChatParserTests
     [InlineData("!구리주괴4", null, CommandKind.Item, "Copper", 4, false)]
     [InlineData("!계속채워개인나무30", null, CommandKind.PrepKeep, "Wood", 30, false)]
     [InlineData("!계속채워끔나무", null, CommandKind.KeepOff, "Wood", 0, false)]
+    // 사용자 11-07: 띄어쓰기 아무렇게나
+    [InlineData("!계속채워 구리 주괴 4개", null, CommandKind.Keep, "Copper", 4, false)]
+    [InlineData("!계속 채워 구리주괴 4 개", null, CommandKind.Keep, "Copper", 4, false)]
+    [InlineData("!계속채 워 구리주괴 4", null, CommandKind.Keep, "Copper", 4, false)]
+    [InlineData("! 라그나 계 속 채 워 나 무 5 0", "라그나", CommandKind.Keep, "Wood", 50, false)]
     public void Spacing_Ignored(string line, string target, CommandKind kind, string item, int amount, bool once)
     {
         var c = Cmd(line);
@@ -368,6 +376,13 @@ public class ChatParserTests
     public void Spacing_Ignored_Others()
     {
         Assert.Equal(CommandKind.Status, Cmd("!라그나상태").Kind);
+        Assert.Equal(CommandKind.Status, Cmd("!상 태").Kind);
+        Assert.Equal(CommandKind.Help, Cmd("!명 령 어").Kind);
+        Assert.Equal(CommandKind.Help, Cmd("!라그나명령어").Kind);
+        Assert.Equal(CommandKind.ClearQueue, Cmd("!전부취 소").Kind);
+        Assert.Equal(CommandKind.Escort, Cmd("!같이 가 자").Kind);
+        Assert.Equal(CommandKind.GoAnyway, Cmd("!그 냥가").Kind);
+        Assert.Equal(CommandKind.KeepList, Cmd("!계속 채워 목 록").Kind);
         Assert.True(Cmd("!라그나빨리나무50").Urgent);
         var farm = Cmd("!밭5");
         Assert.Equal(CommandKind.Farm, farm.Kind);

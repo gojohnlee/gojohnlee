@@ -57,6 +57,8 @@ namespace ValheimHelper.Core.Chat
         /// <summary>!평탄화 &lt;반경&gt;. Number = 반경(m).</summary>
         Level,
         Path,
+        /// <summary>!명령어·!도움말 — 명령 목록과 상자 이름 바꾸는 법(HelpText).</summary>
+        Help,
     }
 
     /// <summary>질문 뒤 짧은 대답 (8-1장, 설계 B-7).</summary>
