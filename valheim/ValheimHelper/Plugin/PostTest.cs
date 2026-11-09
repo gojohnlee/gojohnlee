@@ -79,6 +79,22 @@ namespace ValheimHelper
             checks.Add($"순찰하며 몬스터 처리 ({TestKit.Waited:0.0}초)", TestKit.Ok);
             yield return TestKit.WaitFor(() => WorkerAI.PatrolRounds > rounds && Utils.DistanceXZ(guard.transform.position, ai.Post) < 1.5f, 180f);
             checks.Add($"순찰 끝나고 문 옆으로 ({TestKit.Waited:0.0}초, 순찰 {WorkerAI.PatrolRounds - rounds}번, 자리까지 {Utils.DistanceXZ(guard.transform.position, ai.Post):0.0}m)", TestKit.Ok);
+
+            // 4) 플레이어가 3m 앞을 지나가면 경례, 같은 사람은 60초 안에 다시 안 함(요청 11-09)
+            Vector3 back = w.Player.transform.position;
+            int salutes = WorkerAI.Salutes;
+            yield return new WaitForSeconds(1f);
+            w.Player.TeleportTo(GatherTest.Ground(guard.transform.position + f * 3f) + Vector3.up * 0.3f, w.Player.transform.rotation, false);
+            yield return TestKit.WaitFor(() => WorkerAI.Salutes > salutes, 5f);
+            Vector3 toMe = w.Player.transform.position - guard.transform.position; toMe.y = 0f;
+            float face = Vector3.Angle(guard.transform.forward, toMe);
+            checks.Add($"옆을 지나가면 경례 ({WorkerAI.LastSalute ?? "고개만"}, {TestKit.Waited:0.0}초, 나를 보는 각 {face:0}°)", TestKit.Ok && WorkerAI.LastSalute != null && face < 30f);
+            w.Player.TeleportTo(back, w.Player.transform.rotation, false);
+            yield return new WaitForSeconds(3f);
+            w.Player.TeleportTo(GatherTest.Ground(guard.transform.position + f * 3f) + Vector3.up * 0.3f, w.Player.transform.rotation, false);
+            yield return new WaitForSeconds(4f);
+            checks.Add($"60초 안 다시 지나가면 안 함 (경례 {WorkerAI.Salutes - salutes}번)", WorkerAI.Salutes - salutes == 1);
+            w.Player.TeleportTo(back, w.Player.transform.rotation, false);
         }
     }
 }

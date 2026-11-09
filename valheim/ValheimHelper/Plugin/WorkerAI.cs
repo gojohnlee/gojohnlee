@@ -1248,6 +1248,10 @@ namespace ValheimHelper
         Vector3 m_post, m_postOut, m_postHome;
         /// <summary>시험: 끝까지 돈 순찰 수(호위병들 합).</summary>
         public static int PatrolRounds;
+        readonly Salute m_salute = new Salute();
+        /// <summary>시험: 경례 수(호위병들 합)와 마지막 경례 꼴.</summary>
+        public static int Salutes;
+        public static string LastSalute;
         public Patrol GuardPatrol => m_patrol;
         public bool HasPost => m_hasPost;
         public Vector3 Post => m_post;
@@ -1281,7 +1285,7 @@ namespace ValheimHelper
             {
                 case PatrolGoal.Stand:
                     StopMoving();
-                    LookAt(m_post + m_postOut * 10f + Vector3.up * 1.5f);
+                    if (!SaluteTick(npc)) LookAt(m_post + m_postOut * 10f + Vector3.up * 1.5f);
                     break;
                 case PatrolGoal.Post:
                     MoveToPoint(dt, m_post, 1f, Utils.DistanceXZ(pos, m_post) > 15f);
@@ -1290,6 +1294,35 @@ namespace ValheimHelper
                     MoveToPoint(dt, PatrolPoint(m_patrol.Point), 1.5f, false);
                     break;
             }
+        }
+
+        /// <summary>문 옆에 선 호위병: 플레이어가 4m 안을 지나가면 그쪽을 보고 경례(같은 사람 60초 한 번, 적이 보이면 안 함, Core Salute). 경례 중이면 참.</summary>
+        bool SaluteTick(WorkerNpc npc)
+        {
+            bool foe = m_guard != null && (m_guard.Engaged || m_guard.Target != null);
+            if (foe) m_salute.Stop();
+            Player who = null;
+            if (m_salute.Busy(Time.time))
+            {
+                foreach (var pl in Player.GetAllPlayers()) if (pl.GetPlayerID() == m_salute.Who) who = pl;
+            }
+            else if (!foe)
+            {
+                foreach (var pl in Player.GetAllPlayers())
+                {
+                    if (pl.IsDead() || !m_salute.Try(pl.GetPlayerID(), Utils.DistanceXZ(pl.transform.position, transform.position), Time.time, false)) continue;
+                    who = pl;
+                    LookAt(pl.GetHeadPoint());
+                    string how = npc.Salute();
+                    Salutes++;
+                    LastSalute = how;
+                    Plugin.Log.LogInfo($"{npc.NpcName}: {pl.GetPlayerName()}에게 경례({how ?? "고개만"})");
+                    break;
+                }
+            }
+            if (who == null) return false;
+            LookAt(who.GetHeadPoint());
+            return true;
         }
 
         Vector3 PatrolPoint(int i)

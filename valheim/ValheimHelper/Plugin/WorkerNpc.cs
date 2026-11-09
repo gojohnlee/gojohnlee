@@ -400,6 +400,24 @@ namespace ValheimHelper
 
         public void DropBlock() => m_blockUntil = 0f;
 
+        static bool? s_wave;
+
+        /// <summary>
+        /// 호위병 경례: Player 애니메이터의 손 흔들기 감정 표현(emote_wave 트리거 — Player.UpdateEmote가 한 번짜리 감정을 트는 꼴, ZSyncAnimation으로 모두에게).
+        /// 그 트리거가 없으면 방패 막기 자세 Salute.Hold초. 한 꼴 이름(없으면 null).
+        /// </summary>
+        public string Salute()
+        {
+            if (s_wave == null)
+            {
+                s_wave = false;
+                foreach (var p in m_animator.parameters) if (p.name == "emote_wave") s_wave = true;
+            }
+            if (s_wave.Value) { m_zanim.SetTrigger("emote_wave"); return "손 흔들기"; }
+            if (HoldingShield) { m_blockUntil = Time.time + Core.Npc.Salute.Hold; return "방패 막기"; }
+            return null;
+        }
+
         public override void CustomFixedUpdate(float fixedDeltaTime)
         {
             // 바닐라 IsBlocking = m_blocking && 공격·구르기 중 아님 → 휘두르는 동안은 저절로 안 막는다. 스태미나는 안 씀(Character.HaveStamina가 늘 참).
