@@ -106,9 +106,10 @@ public class MealsTests
     {
         float[] food = { 40f, 30f }, time = { 300f, 1500f }, burn = { 1500f, 1500f };
         // 바닐라: 25 + 40×0.2^0.3 + 30 ≈ 25 + 24.6 + 30
-        Assert.True(Meals.LooksNoDecay(25f, 95f, food, time, burn));
-        Assert.False(Meals.LooksNoDecay(25f, 79.7f, food, time, burn));
-        // 줄어든 음식이 없으면 알 수 없음
-        Assert.False(Meals.LooksNoDecay(25f, 95f, food, new[] { 1500f, 1500f }, burn));
+        Assert.True(Meals.DecayVerdict(25f, 95f, food, time, burn) == true);
+        float vanilla = 25f + 40f * (float)System.Math.Pow(0.2, 0.3) + 30f;
+        Assert.True(Meals.DecayVerdict(25f, vanilla, food, time, burn) == false);
+        Assert.Null(Meals.DecayVerdict(25f, 87f, food, time, burn)); // 둘 다 아님(다른 효과): 다시 봄
+        Assert.Null(Meals.DecayVerdict(25f, 95f, food, new[] { 1500f, 1500f }, burn)); // 덜 지남: 알 수 없음
     }
 }

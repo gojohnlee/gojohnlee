@@ -31,10 +31,10 @@ namespace ValheimHelper.Core.Npc
         public static bool NoDecay;
 
         /// <summary>
-        /// 플레이어 최대 체력이 바닐라식(남은 시간 비율^0.3)보다 뚜렷이 크고 온전한 합에 닿아 있으면 음식 효과가 안 주는 모드.
-        /// 줄어든 음식이 하나도 없으면(바닐라식과 온전한 합이 2 미만 차이) 알 수 없어 false.
+        /// 음식 모드 판정(한 판에 한 번이면 됨): 바닐라라면 줄었을 음식이 있을 때(바닐라식과 온전한 합이 2 이상 차이)
+        /// 최대 체력이 온전한 합이면 true(모드 있음), 바닐라식이면 false(없음). 아직 덜 지났거나 둘 다 아니면(다른 효과) null = 다시 봄.
         /// </summary>
-        public static bool LooksNoDecay(float baseHp, float maxHealth, float[] food, float[] time, float[] burn)
+        public static bool? DecayVerdict(float baseHp, float maxHealth, float[] food, float[] time, float[] burn)
         {
             float full = baseHp, vanilla = baseHp;
             for (int i = 0; i < food.Length; i++)
@@ -42,7 +42,10 @@ namespace ValheimHelper.Core.Npc
                 full += food[i];
                 vanilla += food[i] * (float)Math.Pow(Clamp01(burn[i] > 0f ? time[i] / burn[i] : 0f), 0.3);
             }
-            return full - vanilla >= 2f && maxHealth >= full - 1f;
+            if (full - vanilla < 2f) return null;
+            if (Math.Abs(maxHealth - full) < 1f) return true;
+            if (Math.Abs(maxHealth - vanilla) < 1f) return false;
+            return null;
         }
 
         sealed class Eaten
