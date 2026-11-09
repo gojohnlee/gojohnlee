@@ -9,10 +9,10 @@ namespace ValheimHelper
     public static class Workers
     {
         static ConfigEntry<string> s_name1, s_name2, s_name3;
-        public const string Default1 = "라그나", Default2 = "플로키", Default3 = "호위병";
+        public const string Default1 = "라그나", Default2 = "플로키", Default3 = "비욘";
         public static string Name1 => s_name1?.Value ?? Default1;
         public static string Name2 => s_name2?.Value ?? Default2;
-        /// <summary>호위병 이름(사용자 10-26: 이름·성격은 나중에 정함).</summary>
+        /// <summary>호위병 이름. 사용자가 정한 이름은 보존한다.</summary>
         public static string Name3 => s_name3?.Value ?? Default3;
         /// <summary>시험 중엔 호위병을 만들지 않는다(그 힘이 위험 판단에 끼어 기존 시험 기대값이 바뀜). 호위병 시험만 켠다(TestKit.WithGuard).</summary>
         public static bool SkipGuard;
@@ -20,11 +20,12 @@ namespace ValheimHelper
         public static void Init(ConfigFile cfg)
         {
             s_name1 = cfg.Bind("NPC", "Name1", Default1, "1호(라그나 — 침착·신중) 이름");
-            s_name2 = cfg.Bind("NPC", "Name2", Default2, "2호(플로키 — 들뜬 장난꾸러기·공격적) 이름");
+            s_name2 = cfg.Bind("NPC", "Name2", Default2, "2호(플로키 — 독특한 신앙·배 목수) 이름");
             s_name3 = cfg.Bind("NPC", "Name3", Default3, "호위병(일은 안 하고 위험한 곳에 따라가 싸움) 이름");
             // 옛 기본값(Claude·Alarak)이 남은 설정은 한 번 새 이름으로. 사용자가 고른 다른 이름은 그대로.
             if (s_name1.Value == Old1) s_name1.Value = Default1;
             if (s_name2.Value == Old2) s_name2.Value = Default2;
+            if (s_name3.Value == Old3) s_name3.Value = Default3;
             new Terminal.ConsoleCommand("vh_spawn", "[Valheim Helper] 일꾼 2명·호위병을 내 옆에 부른다(없는 쪽만)", args => args.Context.AddString(Spawn(out _)));
             new Terminal.ConsoleCommand("vh_despawn", "[Valheim Helper] 일꾼 NPC를 모두 없앤다", args => args.Context.AddString($"NPC {DespawnAll()}명 없앰"));
         }
@@ -45,7 +46,7 @@ namespace ValheimHelper
 
         internal static void Know(ZDOID id) { if (!id.IsNone()) s_known.Add(id); }
 
-        const string Old1 = "Claude", Old2 = "Alarak";
+        const string Old1 = "Claude", Old2 = "Alarak", Old3 = "호위병";
 
         /// <summary>옛 기본 이름(Claude·Alarak)으로 저장된 NPC는 지금 설정 이름으로 바꾼다(소유자가 Start 때 한 번).</summary>
         public static void RenameOld(ZDO zdo)
@@ -55,6 +56,7 @@ namespace ValheimHelper
             string name = zdo.GetString(WorkerNpc.KeyName, "");
             if (role == 0 && name == Old1 && Name1 != Old1) zdo.Set(WorkerNpc.KeyName, Name1);
             else if (role == 1 && name == Old2 && Name2 != Old2) zdo.Set(WorkerNpc.KeyName, Name2);
+            else if (role == WorkerNpc.GuardRole && name == Old3 && Name3 != Old3) zdo.Set(WorkerNpc.KeyName, Name3);
         }
 
         /// <summary>월드에 있는 NPC ZDO 전부를 직접 찾는다(느림: 소환·삭제 같은 드문 일에만). 호스트에서만 의미 있다.</summary>
