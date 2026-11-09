@@ -390,7 +390,7 @@ public class DepartureSpeechTests
         "ask.alternative", "ask.escort", "ask.diedThere", "ask.condition", "ask.gear", "answer.gearMet", "answer.gearMissing", "depart.noResist", "ask.night", "ask.stock", "note.stock", "note.night",
         "craftChestFull", "answer.grumble", "answer.escort", "answer.alternative", "answer.conditionMet", "answer.conditionMissing", "answer.morning",
         "answer.go", "answer.hold", "answer.cancel", "answer.timeout", "skillUp", "skills", "skillsNone", "craft.plan", "craft.inStock", "craft.missing", "craft.tooLong", "craft.unknown", "setList", "setEmpty", "setNone", "keepSet", "keepOff", "prepOnce", "prepKeep", "prepOff", "prepNoChest", "prepShort", "state.prep", "refillGo", "refillMake", "refillFarm",
-        "farmSet", "farmMoved", "farmFull", "farmNoGrow", "farmWhere", "farmNoTool", "farmNoSeed", "farmGo", "farmDone", "farmNoRoom", "state.farm", "farmHarvest", "farmPlantFor", "farmHarvestFor", "farmNoField", "farmNoSeedFor", "craft.farm",
+        "farmSet", "farmMoved", "farmFull", "farmNoGrow", "farmWhere", "farmNoTool", "farmNoSeed", "farmGo", "farmDone", "farmNoRoom", "state.farm", "farmHarvest", "idleHoney", "honeyDone", "job.honey", "state.honey", "farmPlantFor", "farmHarvestFor", "farmNoField", "farmNoSeedFor", "craft.farm",
     };
 
     [Fact]

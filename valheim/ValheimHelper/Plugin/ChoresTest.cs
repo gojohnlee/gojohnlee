@@ -15,7 +15,7 @@ namespace ValheimHelper
     /// </summary>
     static class ChoresTest
     {
-        public static void Register() => TestRunner.Register("vh_chorestest", "같이 캐기·바로 보충·쉴 때 먹거리 시험", () => TestKit.Flat(Run()));
+        public static void Register() => TestRunner.Register("vh_chorestest", "같이 캐기·바로 보충·쉴 때 먹거리·밭일·꿀 시험", () => TestKit.Flat(Run()), 900f);
 
         static readonly string[] Foods = { "Raspberry", "Blueberries", "Mushroom", "MushroomYellow", "Cloudberry", "Honey", "CookedMeat" };
 
@@ -44,6 +44,7 @@ namespace ValheimHelper
         }
 
         static int Count(TestKit.World w, string prefab) => GatherTest.CountBase(w.Home, prefab);
+        static int HoneyAll(TestKit.World w) => Count(w, "Honey") + w.Ragnar.GetInventory().CountItems("$item_honey") + w.Floki.GetInventory().CountItems("$item_honey");
         static bool Idle(WorkerNpc n) => n.Ai.Job == null && n.Ai.Current == WorkerAI.Mode.Idle;
         static bool Gathering(WorkerNpc n, string item) => n.Ai.Job is GatherJob g && g.Item == item;
         static int TargetOf(WorkerNpc n) => n.Ai.Job is GatherJob g ? g.Target : 0;
@@ -105,6 +106,31 @@ namespace ValheimHelper
             // 5) 쉴 때 밭일
             yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 180f);
             yield return Farm(w, checks);
+            yield return Honey(w, checks, made);
+        }
+
+        /// <summary>6) 쉴 때 꿀: 거점 안 벌통 꿀 4 → 쉬던 일꾼이 거둬 상자에 넣음.</summary>
+        static IEnumerator Honey(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
+        {
+            GameObject prefab = ZNetScene.instance.GetPrefab("piece_beehive");
+            checks.Add("벌통 프리팹", prefab != null);
+            if (prefab == null) yield break;
+            yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 180f);
+            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+            GameObject hive = Object.Instantiate(prefab, GatherTest.Ground(w.Home + right * 8f), Quaternion.identity);
+            made.Add(hive);
+            yield return null;
+            hive.GetComponent<ZNetView>().GetZDO().Set(ZDOVars.s_level, 4);
+            int before = HoneyAll(w);
+            Departures.TestHoneyNow();
+            float t0 = Time.time;
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job is HoneyJob || w.Floki.Ai.Job is HoneyJob, 70f);
+            checks.Add($"꿀 찬 벌통 → 쉬던 일꾼이 꿀 거두러 감 ({Time.time - t0:0}초)", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is HoneyJob) && !(w.Floki.Ai.Job is HoneyJob), 120f);
+            checks.Add($"꿀 거두기 끝 ({TestKit.Waited:0}초)", TestKit.Ok);
+            checks.Add($"벌통 비고 꿀 4개가 상자·짐에 들어옴(음식 들고 감 몫은 짐에) (벌통 {HoneyJob.Level(hive.GetComponent<Beehive>())}, 꿀 {before} → {HoneyAll(w)})",
+                HoneyJob.Level(hive.GetComponent<Beehive>()) == 0 && HoneyAll(w) >= before + 4);
         }
 
         static IEnumerator Farm(TestKit.World w, GatherTest.Checks checks)

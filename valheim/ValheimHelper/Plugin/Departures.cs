@@ -748,7 +748,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !Repay(npc)) IdleFarm(npc);
+                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !Repay(npc) && !IdleFarm(npc)) IdleHoney(npc);
             }
         }
 
@@ -955,6 +955,29 @@ namespace ValheimHelper
                 return true;
             }
             return false;
+        }
+
+        // ---- 쉴 때 꿀 거두기 (사용자 11-09 요청 가 "벌통 꿀") ----
+
+        /// <summary>일꾼 집마다 다음에 볼 때(Time.time). 밭과 같게 10분 간격.</summary>
+        static readonly Dictionary<string, float> s_honeyNext = new Dictionary<string, float>();
+
+        internal static void TestHoneyNow() => s_honeyNext.Clear();
+
+        /// <summary>쉬는 일꾼(낮): 거점 안 벌통에 꿀이 HoneyJob.MinHoney 이상이면 거두러 간다. 다른 일꾼이 꿀 거두기 중이면 건너뜀. 시작했으면 true.</summary>
+        internal static bool IdleHoney(WorkerNpc npc)
+        {
+            if (EnvMan.IsNight()) return false;
+            string key = $"{npc.Home.x:0},{npc.Home.z:0}";
+            if (s_honeyNext.TryGetValue(key, out float next) && Time.time < next) return false;
+            foreach (var n in WorkerNpc.All) if (n.Ai.Job is HoneyJob) return false;
+            s_honeyNext[key] = Time.time + IdleFarmEvery;
+            List<Beehive> hives = HoneyJob.Ready(npc.Home);
+            Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 벌통: 꿀 찬 것 {hives.Count}");
+            if (hives.Count == 0) return false;
+            npc.Ai.StartJob(new HoneyJob(npc, hives));
+            npc.Say("idleHoney", new Dictionary<string, string>());
+            return true;
         }
 
         // ---- 같이 캐기 (사용자 11-09: "나무 캐 와" 하면 한 명만 가고 하나는 멍하니 → 둘이 출발하면 합쳐서 목표면 복귀) ----

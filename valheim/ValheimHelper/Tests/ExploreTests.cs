@@ -28,9 +28,12 @@ public class JosaTests
     public void SpeechAppliesJosa()
     {
         string line = new Speech().Say(Personality.Floki, "notFound", new Dictionary<string, string> { ["item"] = "철" });
-        Assert.StartsWith("철은 ", line);
+        // 플로키 대사는 여러 꼴(11-09 사용자가 바꿈) — 조사가 받침에 맞는지만 본다
+        Assert.Contains("철", line);
+        foreach (string bad in new[] { "철는", "철를", "철가", "(" }) Assert.DoesNotContain(bad, line);
         line = new Speech().Say(Personality.Floki, "notFound", new Dictionary<string, string> { ["item"] = "나무" });
-        Assert.StartsWith("나무는 ", line);
+        Assert.Contains("나무", line);
+        foreach (string bad in new[] { "나무은", "나무을", "나무이 ", "(" }) Assert.DoesNotContain(bad, line);
     }
 }
 
