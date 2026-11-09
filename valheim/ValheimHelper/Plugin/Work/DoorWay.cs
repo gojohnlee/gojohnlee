@@ -401,6 +401,31 @@ namespace ValheimHelper
             return m;
         }
 
+
+        /// <summary>
+        /// 호위병 경계 자리(사용자 11-09): 거점 range 안 열쇠 없는 문 중 거점에서 가장 가까운 것의 바깥(지붕 없는 쪽, 모호하면 거점 반대쪽) 1.8m·옆 1.2m.
+        /// 문이 없으면 false.
+        /// </summary>
+        public static bool PostBy(Vector3 home, float range, out Vector3 post, out Vector3 outward)
+        {
+            post = home; outward = Vector3.forward;
+            Door best = null; float bd = float.MaxValue;
+            foreach (var c in Physics.OverlapSphere(home, range, Mask))
+            {
+                Door d = c.GetComponentInParent<Door>();
+                if (d == null || d.m_keyItem != null) continue;
+                float dd = Utils.DistanceXZ(home, d.transform.position);
+                if (dd < bd) { bd = dd; best = d; }
+            }
+            if (best == null) return false;
+            Vector3 mid = Middle(best), n = best.transform.forward; n.y = 0f; n.Normalize();
+            bool ra = Roofed(mid + n * Step), rb = Roofed(mid - n * Step);
+            Vector3 away = mid - home; away.y = 0f;
+            outward = ra != rb ? (ra ? -n : n) : (Vector3.Dot(n, away) >= 0f ? n : -n);
+            post = mid + outward * 1.8f + Vector3.Cross(Vector3.up, outward) * 1.2f;
+            if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(post, out float h)) post.y = h;
+            return true;
+        }
         /// <summary>at에서 range 안 문 중 at·other까지 거리 합이 가장 짧은 것(문 둘이면 일꾼 쪽 문 — 회차 317, ④).</summary>
         static Door Nearest(Vector3 at, float range, Vector3 other)
         {

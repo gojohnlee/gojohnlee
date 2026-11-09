@@ -71,6 +71,7 @@ namespace ValheimHelper
             Step("vh_bowtest", BowTest.Register);
             Step("vh_basetest", BaseTest.Register);
             Step("vh_escorttest", EscortTest.Register);
+            Step("vh_posttest", PostTest.Register);
             Step("vh_silvertest", SilverTest.Register);
             Step("vh_plainstest", PlainsTest.Register);
             Step("vh_mistlandstest", MistlandsTest.Register);

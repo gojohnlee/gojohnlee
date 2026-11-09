@@ -1130,16 +1130,17 @@ namespace ValheimHelper
                 }
             }
             GuardBusy = m_guard.Update(dt);
-            if (GuardBusy) return true; // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다
+            if (GuardBusy) { m_patrolTick = Time.time; return true; } // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다(호위병 순찰은 싸운 뒤 이어 감)
             switch (Current)
             {
                 case Mode.Work:
                     if (Job != null && m_escort != null && EscortHolds(npc, dt)) break;
                     if (Job == null || !Job.Update(dt))
                     {
+                        bool ready = Job is GuardReadyJob; // 호위병 장비 챙기기 끝: 집(깃발)으로 가지 않고 쉬며 문 옆 경계 자리로(GuardPostTick)
                         Job = null;
                         m_escort = null;
-                        if (!NextQueued()) GoHome(false);
+                        if (!NextQueued()) { if (ready) Current = Mode.Idle; else GoHome(false); }
                     }
                     break;
                 case Mode.Follow:
@@ -1228,16 +1229,80 @@ namespace ValheimHelper
                     break;
                 }
                 default:
-                    StopMoving();
+                    if (!npc.IsGuard) StopMoving(); // 호위병은 GuardPostTick이 걷거나 멈춤
                     if (WorkerBanter.Facing(npc, out Vector3 faceTo)) LookAt(faceTo);
                     if (Queue.Count > 0 && NextQueued()) break; // 직접 명령 > 묘비 회수(구상서 11장 우선순위)
                     Chores(npc, dt);
-                    if (npc.IsGuard && Current == Mode.Idle) GuardReady(npc, dt);
+                    if (npc.IsGuard && Current == Mode.Idle) { GuardReady(npc, dt); if (Current == Mode.Idle) GuardPostTick(npc, dt); }
                     break;
             }
             return true;
         }
 
+
+        // ---- 호위병 경계(사용자 11-09) ----
+
+        readonly Patrol m_patrol = new Patrol();
+        float m_patrolTick, m_postFindAt;
+        bool m_hasPost;
+        Vector3 m_post, m_postOut, m_postHome;
+        /// <summary>시험: 끝까지 돈 순찰 수(호위병들 합).</summary>
+        public static int PatrolRounds;
+        public Patrol GuardPatrol => m_patrol;
+        public bool HasPost => m_hasPost;
+        public Vector3 Post => m_post;
+
+        /// <summary>
+        /// 쉬는 호위병: 거점 집 문 옆에 서서 바깥을 보고, 10분마다 집 둘레(거점 반경 20m, 문 쪽부터 4점)를 돌고 문 옆으로(Core Patrol).
+        /// 보이는 적은 경계(Guard)가 싸우고 그 뒤 순찰을 이어 감, 다른 일(따라가기·장비 챙기기)로 끊긴 뒤 다시 쉬면 문 옆부터. 25m 안 문이 없으면 거점(깃발 옆)을 자리로.
+        /// </summary>
+        void GuardPostTick(WorkerNpc npc, float dt)
+        {
+            if (m_choresHeld) { StopMoving(); return; } // "멈춰"로 쉬라 함
+            if (Time.time - m_patrolTick > 2f) m_patrol.Reset();
+            m_patrolTick = Time.time;
+            if (Time.time >= m_postFindAt || Utils.DistanceXZ(m_postHome, npc.Home) > 1f)
+            {
+                m_postFindAt = Time.time + 30f;
+                m_postHome = npc.Home;
+                bool had = m_hasPost;
+                m_hasPost = DoorWay.PostBy(m_postHome, 25f, out m_post, out m_postOut);
+                if (!m_hasPost) { m_post = m_postHome; m_postOut = transform.forward; m_postOut.y = 0f; }
+                if (m_hasPost && !had) Plugin.Log.LogInfo($"{npc.NpcName}: 경계 자리 = 문 옆 {m_post:F1}(거점에서 {Utils.DistanceXZ(m_post, m_postHome):0.0}m)");
+            }
+            Vector3 pos = transform.position;
+            Vector3 goal = m_patrol.Walking ? PatrolPoint(m_patrol.Point) : m_post;
+            bool skip = m_patrol.Walking && !PointOk(goal);
+            int was = m_patrol.Point;
+            PatrolGoal g = m_patrol.Tick(dt, Utils.DistanceXZ(pos, goal) < (m_patrol.Walking ? 2f : 1.2f), skip);
+            if (g == PatrolGoal.Point && was < 0) Plugin.Log.LogInfo($"{npc.NpcName}: 집 둘레 순찰 시작");
+            if (g == PatrolGoal.Post && was >= 0 && !m_patrol.Walking) { PatrolRounds++; Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 끝 → 문 옆으로"); }
+            switch (g)
+            {
+                case PatrolGoal.Stand:
+                    StopMoving();
+                    LookAt(m_post + m_postOut * 10f + Vector3.up * 1.5f);
+                    break;
+                case PatrolGoal.Post:
+                    MoveToPoint(dt, m_post, 1f, Utils.DistanceXZ(pos, m_post) > 15f);
+                    break;
+                default:
+                    MoveToPoint(dt, PatrolPoint(m_patrol.Point), 1.5f, false);
+                    break;
+            }
+        }
+
+        Vector3 PatrolPoint(int i)
+        {
+            Vector3 dir = m_post - m_postHome;
+            float r = Mathf.Max(Patrol.Radius, Utils.DistanceXZ(m_post, m_postHome) + 8f);
+            Patrol.PointAt(m_postHome.x, m_postHome.z, dir.x, dir.z, i, r, out double x, out double z);
+            var p = new Vector3((float)x, m_postHome.y, (float)z);
+            if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(p, out float h)) p.y = h;
+            return p;
+        }
+
+        static bool PointOk(Vector3 p) => ZoneSystem.instance == null || p.y > ZoneSystem.instance.m_waterLevel - 0.5f; // 물속 점은 건너뜀
         // ---- 죽은 뒤 (구상서 9장) ----
 
         /// <summary>!멈춰로 쉬라고 했다: 다음 명령이나 다음 죽음 전까지 묘비 회수를 스스로 시작하지 않는다.</summary>
