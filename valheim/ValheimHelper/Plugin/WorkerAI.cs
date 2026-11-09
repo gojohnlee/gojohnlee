@@ -1254,6 +1254,9 @@ namespace ValheimHelper
 
         public void HoldChores() => m_choresHeld = true;
 
+        /// <summary>"멈춰"로 쉬라고 한 뒤(다음 명령 전까지): 쉴 때 먹거리 같은 스스로 하는 일을 시작하지 않는다.</summary>
+        public bool Resting => m_choresHeld;
+
         /// <summary>회수할 묘비가 있다(자동 보충보다 먼저, 구상서 11장).</summary>
         public bool HasChores => !m_choresHeld && ((WorkerNpc)m_character).Graves().Count > 0;
 

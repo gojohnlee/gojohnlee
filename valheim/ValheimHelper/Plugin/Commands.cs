@@ -139,6 +139,7 @@ namespace ValheimHelper
                         break;
                     case CommandKind.Item:
                         Departures.Gather(who, cmd, npc);
+                        if (cmd.Target == null) Departures.ShareGather(cmd, npc); // 쉬는 동료도 나눠 맡음(사용자 11-09)
                         break;
                     case CommandKind.SetChest:
                         SetChest(who, cmd, npc);
@@ -163,10 +164,12 @@ namespace ValheimHelper
                         break;
                     case CommandKind.Keep:
                         Brain.Refill.Keep(cmd.Item, cmd.Amount, cmd.Once);
+                        Departures.RefillSoon(cmd.Item);
                         npc.Say(cmd.Once ? "fillOnce" : "keepSet", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString() });
                         break;
                     case CommandKind.KeepSet:
                         Brain.Refill.KeepSet(cmd.Number, cmd.Amount, cmd.Once);
+                        Departures.RefillSoon(null);
                         npc.Say(cmd.Once ? "fillOnce" : "keepSet", new Dictionary<string, string> { ["item"] = "세트 " + cmd.Number + "번", ["n"] = cmd.Amount.ToString() });
                         break;
                     case CommandKind.KeepOff:

@@ -15,7 +15,7 @@ namespace ValheimHelper
         enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, GoCrypt, Approach, Work, Hunt, Collect, Return, Deposit }
 
         public readonly string Item;
-        public readonly int Target;
+        public int Target; // 쉬는 동료가 나눠 가면 줄어듦(Departures.ShareGather)
         public int Delivered { get; private set; }
         public string StepName => m_step.ToString();
         /// <summary>시험용: 가려고 고른 구역.</summary>

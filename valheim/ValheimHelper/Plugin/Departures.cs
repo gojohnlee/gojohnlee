@@ -36,6 +36,9 @@ namespace ValheimHelper
         /// 쌓인 재고·죽은 기록·밤 때문에 질문에서 멈추지 않게. 출발 전 판단 시험은 이걸 끄고 돈다.
         /// </summary>
         public static bool TestAutoGo = true;
+        /// <summary>시험 중에도 쉴 때 먹거리·같이 캐기를 할지(사용자 11-09 기능). 옛 시험이 흔들리지 않게 기본은 끔 — 그 기능을 보는 시험만 켬.</summary>
+        public static bool TestIdleChores;
+        static bool ChoresOn => !TestRunner.Running || TestIdleChores;
 
         public static double AskedAt(WorkerNpc npc) => s_pending.TryGetValue(npc, out var p) ? p.AskedAt : -1;
 
@@ -696,22 +699,136 @@ namespace ValheimHelper
         /// </summary>
         internal static void TestRefillNow() { s_refillTimer = 0f; TickRefill(0f); }
 
+        /// <summary>!계속채워를 받으면 곧바로(2초 안) 확인한다(사용자 11-09: 대답만 하고 한참 뒤에 움직이던 것).</summary>
+        internal static void RefillSoon(string item)
+        {
+            if (item != null) s_refillSkipUntil.Remove(item); // 다시 시켰으니 전에 실패해 쉬던 것도 바로 해 본다
+            if (s_refillTimer > 2f) s_refillTimer = 2f;
+        }
+
+        /// <summary>새로 쉬게 된 일꾼을 5초마다 본다 — 일 끝나고 돌아오면 1분을 기다리지 않고 바로 다음 보충·먹거리.</summary>
+        static float s_idlePoll;
+        static readonly HashSet<WorkerNpc> s_idleSeen = new HashSet<WorkerNpc>();
+
+        /// <summary>스스로 일을 받을 수 있게 쉬는 중: 거점에서 쉼, 대기열·질문·묘비 회수 없음.</summary>
+        static bool FreeForChores(WorkerNpc n) => n != null && !n.IsDead() && n.Ai.Current == WorkerAI.Mode.Idle && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n) && !n.Ai.HasChores;
+
         static void TickRefill(float dt)
         {
             s_refillTimer -= dt;
+            s_idlePoll -= dt;
+            if (s_idlePoll <= 0f)
+            {
+                s_idlePoll = 5f;
+                bool fresh = false;
+                foreach (var n in WorkerNpc.All)
+                {
+                    if (!FreeForChores(n)) { s_idleSeen.Remove(n); continue; }
+                    if (s_idleSeen.Add(n) && !n.Ai.Resting) fresh = true;
+                }
+                s_idleSeen.RemoveWhere(n => n == null);
+                if (fresh && s_refillTimer > 1f) s_refillTimer = 1f;
+            }
             if (s_refillTimer > 0f) return;
             s_refillTimer = (float)RefillBook.CheckEvery;
-            RefillBook refill = Brain.Refill;
-            if ((refill.Count == 0 && Brain.Personal.Count == 0) || WorkerNpc.All.Count == 0) return;
-            WorkerNpc npc = null;
-            foreach (var n in WorkerNpc.All)
-                if (n.Ai.Current == WorkerAI.Mode.Idle && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n) && !n.Ai.HasChores) { npc = n; break; }
-            if (npc == null) return;
-            GatherJob job = NextRefillJob(npc, 0, true);
-            if (job == null) { StartRefillMake(npc); return; }
-            npc.Ai.StartJob(job);
-            if (job.WantGuard) GoWithGuard(npc);
-            npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString() });
+            if (WorkerNpc.All.Count == 0) return;
+            // 쉬는 일꾼 모두 차례로(사용자 11-09): 같은 물건은 RefillBusy가 막으니 각자 다른 것을 맡는다
+            foreach (var npc in new List<WorkerNpc>(WorkerNpc.All))
+            {
+                if (!FreeForChores(npc)) continue;
+                if (Brain.Refill.Count > 0 || Brain.Personal.Count > 0)
+                {
+                    GatherJob job = NextRefillJob(npc, 0, true);
+                    if (job != null)
+                    {
+                        npc.Ai.StartJob(job);
+                        if (job.WantGuard) GoWithGuard(npc);
+                        npc.Say("refillGo", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(job.Item), ["n"] = job.Target.ToString() });
+                        continue;
+                    }
+                    if (StartRefillMake(npc)) continue;
+                }
+                if (!npc.Ai.Resting && ChoresOn) IdleFood(npc);
+            }
+        }
+
+        // ---- 쉴 때 먹거리 (사용자 11-09: "당장 음식 없으면 베리라도") ----
+
+        /// <summary>거점 음식 상자의 먹을 것 합이 이보다 적으면 쉬는 일꾼이 따 온다.</summary>
+        internal const int IdleFoodBelow = 10;
+        /// <summary>한 번에 따 올 수.</summary>
+        internal const int IdleFoodAmount = 10;
+        /// <summary>따 올 먹거리(앞에서부터, 나는 곳·연장·출발 판단이 되는 첫 것). 버섯·라즈베리는 초원, 블루베리는 검은 숲, 클라우드베리는 평원.</summary>
+        internal static readonly string[] IdleFoods = { "Raspberry", "Mushroom", "Blueberries", "MushroomYellow", "Cloudberry" };
+
+        static int BaseFood(Vector3 home)
+        {
+            int n = 0;
+            foreach (var c in Chests.NearBase(home, ChestRole.Food))
+                foreach (var it in c.GetInventory().GetAllItems())
+                    if (Gear.IsFood(it)) n += it.m_stack;
+            return n;
+        }
+
+        /// <summary>
+        /// 쉬는 일꾼: 거점 음식 상자에 먹을 것이 IdleFoodBelow 밑이면 그 시대 먹거리를 따러 간다(묻지 않음 — 출발 판단이 Go일 때만, 실패하면 그 물건은 10분 쉼).
+        /// 시작했으면 true.
+        /// </summary>
+        internal static bool IdleFood(WorkerNpc npc)
+        {
+            int have = BaseFood(npc.Home);
+            if (have >= IdleFoodBelow) return false;
+            foreach (string item in IdleFoods)
+            {
+                if (RefillSkipped(item) || NightSkipped(item) || RefillBusy(item)) continue;
+                if (ObjectDB.instance == null || ObjectDB.instance.GetItemPrefab(item) == null) continue;
+                HashSet<ToolKind> ways = GatherJob.WaysFor(npc, item);
+                if (ways.Count == 0 || ways.Contains(ToolKind.Hunt)) continue;
+                var cmd = new ChatCommand { Kind = CommandKind.Item, Item = item, Amount = IdleFoodAmount };
+                DepartureInput input = Input(npc, cmd, ways, true);
+                input.Stock = 0;
+                DepartureResult r = Departure.Judge(input);
+                Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 먹거리 {item} {IdleFoodAmount}(상자 음식 {have}): {r.Action} {r.Question} ({r.Reason})");
+                if (r.Action != DepartAction.Go) { s_refillSkipUntil[item] = Time.time + 600f; continue; }
+                var job = new GatherJob(npc, item, IdleFoodAmount, ways) { FromRefill = true };
+                foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
+                npc.Ai.StartJob(job);
+                npc.Say("idleFood", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(item), ["n"] = IdleFoodAmount.ToString() });
+                return true;
+            }
+            return false;
+        }
+
+        // ---- 같이 캐기 (사용자 11-09: "나무 캐 와" 하면 한 명만 가고 하나는 멍하니) ----
+
+        /// <summary>
+        /// 이름 없이 시킨 채집: 그 일을 맡은 일꾼(lead)이 바로 떠났으면 쉬는 다른 일꾼도 같은 물건을 나눠 맡는다(각자 따로 — 일꾼끼리 같이 가지는 않음, 6절).
+        /// 동료는 묻지 않고 출발 판단이 Go일 때만 간다. 나눈 몫만큼 lead의 목표가 준다.
+        /// </summary>
+        internal static void ShareGather(ChatCommand cmd, WorkerNpc lead)
+        {
+            if (!ChoresOn || !(lead.Ai.Job is GatherJob g) || g.Item != cmd.Item || g.FromRefill || g.Delivered > 0) return;
+            var helpers = new List<WorkerNpc>();
+            foreach (var n in WorkerNpc.All) if (n != lead && FreeForChores(n)) helpers.Add(n);
+            if (helpers.Count == 0 || g.Target < 2) return;
+            int share = g.Target / (helpers.Count + 1);
+            if (share < 1) { helpers.RemoveRange(g.Target - 1, helpers.Count - (g.Target - 1)); share = 1; }
+            foreach (var n in helpers)
+            {
+                HashSet<ToolKind> ways = GatherJob.WaysFor(n, cmd.Item);
+                if (ways.Count == 0) continue;
+                var c = new ChatCommand { Kind = CommandKind.Item, Item = cmd.Item, Amount = share };
+                DepartureInput input = Input(n, c, ways, true);
+                input.Stock = 0;
+                DepartureResult r = Departure.Judge(input);
+                Plugin.Log.LogInfo($"{n.NpcName} 같이 캐기 {cmd.Item} {share} ({lead.NpcName} 몫 {g.Target}): {r.Action} {r.Question} ({r.Reason})");
+                if (r.Action != DepartAction.Go) continue;
+                var job = new GatherJob(n, cmd.Item, share, ways);
+                foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
+                g.Target -= share;
+                n.Ai.StartJob(job);
+                n.Say("gatherHelp", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = share.ToString() });
+            }
         }
 
         /// <summary>자동 보충할 것: !채워 기준치 아래인 것 + 개인 상자 준비(상자 기능 ③ 나-2)에서 거점 상자로도 모자란 몫(같은 물건이면 더함).</summary>
