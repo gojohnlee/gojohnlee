@@ -758,9 +758,6 @@ namespace ValheimHelper
         internal const int IdleFoodBelow = 10;
         /// <summary>한 번에 따 올 수.</summary>
         internal const int IdleFoodAmount = 10;
-        /// <summary>따 올 먹거리(앞에서부터, 나는 곳·연장·출발 판단이 되는 첫 것). 버섯·라즈베리는 초원, 블루베리는 검은 숲, 클라우드베리는 평원.</summary>
-        internal static readonly string[] IdleFoods = { "Raspberry", "Mushroom", "Blueberries", "MushroomYellow", "Cloudberry" };
-
         static int BaseFood(Vector3 home)
         {
             int n = 0;
@@ -771,20 +768,63 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 쉬는 일꾼: 거점 음식 상자에 먹을 것이 IdleFoodBelow 밑이면 그 시대 먹거리를 따러 간다(묻지 않음 — 출발 판단이 Go일 때만, 실패하면 그 물건은 10분 쉼).
-        /// 시작했으면 true.
+        /// 쉴 때 먹거리 후보(사용자 11-09 "진행도에 따라"): 게임 음식 중 구할 길(채집·제작법·가공)이 있는 것, 체력 높은 순.
+        /// 진행도는 따로 세지 않음 — 설비·재료 나는 곳·안전한 길이 갖춰져야 계획·출발 판단이 서므로 진행할수록 위쪽 음식이 저절로 됨.
+        /// 10분마다 다시 셈(채집 목록·제작법이 늘어남).
+        /// </summary>
+        static List<string> s_foodRank;
+        static float s_foodRankAt = -1e9f;
+
+        internal static List<string> FoodRank()
+        {
+            if (s_foodRank != null && Time.time - s_foodRankAt < 600f) return s_foodRank;
+            s_foodRankAt = Time.time;
+            var list = new List<KeyValuePair<string, float>>();
+            RecipeBook book = Features.RunPlans ? Recipes.Book() : null;
+            if (ObjectDB.instance != null)
+                foreach (GameObject go in ObjectDB.instance.m_items)
+                {
+                    ItemDrop d = go != null ? go.GetComponent<ItemDrop>() : null;
+                    if (d == null || !Gear.IsFood(d.m_itemData) || d.m_itemData.m_shared.m_food <= 0f) continue;
+                    string name = go.name;
+                    bool gather = ResourceCatalog.WaysFor(name).Count > 0;
+                    bool make = book != null && (book.RecipesFor(name).Count > 0 || book.ProcessesFor(name).Count > 0);
+                    if (gather || make) list.Add(new KeyValuePair<string, float>(name, d.m_itemData.m_shared.m_food));
+                }
+            list.Sort((x, y) => y.Value.CompareTo(x.Value));
+            s_foodRank = new List<string>();
+            foreach (var kv in list) s_foodRank.Add(kv.Key);
+            Plugin.Log.LogInfo($"쉴 때 먹거리 후보 {s_foodRank.Count}개(체력순): {string.Join(", ", s_foodRank.ToArray())}");
+            return s_foodRank;
+        }
+
+        /// <summary>쉴 때 만들 음식 수(모자라면 반으로 다시)와 계획 길이 상한(쉬는 틈에 할 일이라 짧게).</summary>
+        internal const int IdleCookAmount = 6;
+        internal const float IdleCookMaxSeconds = 20 * 60f;
+        /// <summary>한 번 확인에 세워 볼 제작 계획 수(무겁지 않게 — 안 된 것은 10분 쉬니 다음 확인 때 다음 후보).</summary>
+        const int IdlePlansPerCheck = 4;
+
+        /// <summary>
+        /// 쉬는 일꾼: 거점 음식 상자에 먹을 것이 IdleFoodBelow 밑이면 FoodRank 위에서부터 되는 첫 음식을 구한다(묻지 않음).
+        /// 채집 음식(베리·버섯)은 출발 판단 Go면 IdleFoodAmount개, 만드는 음식은 TryCook. 안 되면 그 물건은 10분 쉼. 시작했으면 true.
         /// </summary>
         internal static bool IdleFood(WorkerNpc npc)
         {
             int have = BaseFood(npc.Home);
             if (have >= IdleFoodBelow) return false;
-            if (IdleMeat(npc, have)) return true;
-            foreach (string item in IdleFoods)
+            int plans = 0;
+            foreach (string item in FoodRank())
             {
-                if (RefillSkipped(item) || NightSkipped(item) || RefillBusy(item)) continue;
-                if (ObjectDB.instance == null || ObjectDB.instance.GetItemPrefab(item) == null) continue;
+                if (RefillSkipped(item) || NightSkipped(item) || RefillBusy(item) || FarmOnly(item)) continue;
+                if (ResourceCatalog.WaysFor(item).Count == 0)
+                {
+                    if (EnvMan.IsNight() || plans >= IdlePlansPerCheck) continue;
+                    plans++;
+                    if (TryCook(npc, item, have)) return true;
+                    continue;
+                }
                 HashSet<ToolKind> ways = GatherJob.WaysFor(npc, item);
-                if (ways.Count == 0 || ways.Contains(ToolKind.Hunt)) continue;
+                if (ways.Count == 0 || ways.Contains(ToolKind.Hunt)) { s_refillSkipUntil[item] = Time.time + 600f; continue; }
                 var cmd = new ChatCommand { Kind = CommandKind.Item, Item = item, Amount = IdleFoodAmount };
                 DepartureInput input = Input(npc, cmd, ways, true);
                 input.Stock = 0;
@@ -800,42 +840,37 @@ namespace ValheimHelper
             return false;
         }
 
-        /// <summary>쉴 때 고기(사용자 11-09 ㄴ): 사냥해서 구워 둘 것(앞에서부터)과 한 번에 만들 수.</summary>
-        internal static readonly string[] IdleMeats = { "CookedMeat", "CookedDeerMeat" };
-        internal const int IdleMeatAmount = 6;
-
         /// <summary>
-        /// 쉬는 일꾼: 낮이고 제작 계획이 끝까지 되면(조리대·화로가 거점에 있음 — 없으면 Partial) 사냥해서 구워 둔다.
-        /// 사냥·채집 단계마다 출발 판단이 Go이고 혼자 약했던 사냥감이 아닐 때만(무기가 안 맞으면 안 감, 묻지 않음). 안 되면 그 물건은 10분 쉬고, 계획이 실패로 끝나도 10분 쉼.
+        /// 만드는 음식 하나: 제작 계획이 끝까지 되고(설비·재료 나는 곳 앎, 밭 재료 없음) IdleCookMaxSeconds 안이며(6개가 길면 3개),
+        /// 사냥·채집 단계마다 출발 판단이 Go이고 혼자 약했던 사냥감이 아닐 때만. 안 되면 10분 쉼, 계획이 실패로 끝나도 10분 쉼(PlanJob.FromIdle).
         /// </summary>
-        static bool IdleMeat(WorkerNpc npc, int have)
+        static bool TryCook(WorkerNpc npc, string item, int have)
         {
-            if (!Features.RunPlans || EnvMan.IsNight()) return false;
-            RecipeBook book = Recipes.Book();
-            foreach (string item in IdleMeats)
+            Plan plan = null;
+            int amount = 0;
+            string why = null;
+            foreach (int n in new[] { IdleCookAmount, IdleCookAmount / 2 })
             {
-                if (RefillSkipped(item) || RefillBusy(item)) continue;
-                if (ObjectDB.instance == null || ObjectDB.instance.GetItemPrefab(item) == null) continue;
-                if (book.RecipesFor(item).Count == 0 && book.ProcessesFor(item).Count == 0) continue;
-                Plan plan = PlanFor(npc, new List<Ingredient> { new Ingredient(item, IdleMeatAmount) });
-                string why = plan.Steps.Count == 0 ? "단계 없음" : plan.Partial ? "설비·출처 없음" : plan.TooLong ? "너무 김" : null;
-                if (why == null)
-                    foreach (var st in plan.Steps)
-                    {
-                        if (st.Kind == StepKind.Farm) { why = "밭 재료"; break; }
-                        if (st.Kind != StepKind.Gather && st.Kind != StepKind.Hunt) continue;
-                        DepartureResult j = JudgeStep(npc, st.Item, st.Amount);
-                        if (j == null || j.Action != DepartAction.Go) { why = $"{st.Item} 판단 {(j != null ? j.Action.ToString() : "방법 없음")}"; break; }
-                        if (GatherJob.WaysFor(npc, st.Item).Contains(ToolKind.Hunt) && HuntWeak(npc, st.Item)) { why = $"{st.Item} 혼자 약함"; break; }
-                    }
-                Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 고기 {item} {IdleMeatAmount}(상자 음식 {have}): 단계 {plan.Steps.Count}, {plan.Seconds:0}초 → {why ?? "감"}");
-                if (why != null) { s_refillSkipUntil[item] = Time.time + 600f; continue; }
-                string label = GatherJob.ItemLabel(item);
-                npc.Ai.StartJob(new PlanJob(npc, plan, label) { FromIdle = true, Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = item, Amount = IdleMeatAmount } });
-                npc.Say("idleMeat", new Dictionary<string, string> { ["item"] = label, ["n"] = IdleMeatAmount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString() });
-                return true;
+                amount = n;
+                plan = PlanFor(npc, new List<Ingredient> { new Ingredient(item, n) });
+                why = plan.Steps.Count == 0 ? "단계 없음" : plan.Partial ? "설비·출처 없음" : plan.TooLong || plan.Seconds > IdleCookMaxSeconds ? $"너무 김 {plan.Seconds:0}초" : null;
+                if (why == null || !why.StartsWith("너무 김")) break;
             }
-            return false;
+            if (why == null)
+                foreach (var st in plan.Steps)
+                {
+                    if (st.Kind == StepKind.Farm) { why = "밭 재료"; break; }
+                    if (st.Kind != StepKind.Gather && st.Kind != StepKind.Hunt) continue;
+                    DepartureResult j = JudgeStep(npc, st.Item, st.Amount);
+                    if (j == null || j.Action != DepartAction.Go) { why = $"{st.Item} 판단 {(j != null ? j.Action.ToString() : "방법 없음")}"; break; }
+                    if (GatherJob.WaysFor(npc, st.Item).Contains(ToolKind.Hunt) && HuntWeak(npc, st.Item)) { why = $"{st.Item} 혼자 약함"; break; }
+                }
+            Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 만들기 {item} {amount}(상자 음식 {have}): 단계 {plan.Steps.Count}, {plan.Seconds:0}초 → {why ?? "감"}");
+            if (why != null) { s_refillSkipUntil[item] = Time.time + 600f; return false; }
+            string label = GatherJob.ItemLabel(item);
+            npc.Ai.StartJob(new PlanJob(npc, plan, label) { FromIdle = true, Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = item, Amount = amount } });
+            npc.Say("idleCook", new Dictionary<string, string> { ["item"] = label, ["n"] = amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString() });
+            return true;
         }
 
         // ---- 쉴 때 밭일 (사용자 11-09 "밭도 알아서") ----

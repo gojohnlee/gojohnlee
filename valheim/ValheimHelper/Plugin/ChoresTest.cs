@@ -10,7 +10,7 @@ namespace ValheimHelper
     /// 1) 이름 없이 "!나무 10" → 쉬던 두 일꾼이 같이 출발, 둘이 합쳐 10개면 둘 다 복귀(나무 10~ 조금 넘게).
     /// 2) "!계속채워 나무 n" → 대답하고 몇 초 안에 실제로 출발(1분 기다리지 않음).
     /// 3) 음식이 없고 조리대·화로가 있으면 쉬는 일꾼이 멧돼지를 사냥해 구워 둔다.
-    /// 4) 조리대가 없으면 라즈베리를 따 온다.
+    /// 4) 조리대가 없으면 채집 음식(이 단계는 라즈베리만 남김)을 따 온다.
     /// 5) 음식이 넉넉해도 !밭으로 정한 밭에 빈자리·씨앗이 있으면 쉬는 일꾼이 스스로 심는다.
     /// </summary>
     static class ChoresTest
@@ -35,6 +35,7 @@ namespace ValheimHelper
             finally
             {
                 Departures.TestIdleChores = false;
+                OnlyFood(null, false);
                 foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
                 Brain.Refill.Off();
                 TestKit.Restore(w);
@@ -47,7 +48,8 @@ namespace ValheimHelper
         static bool Gathering(WorkerNpc n, string item) => n.Ai.Job is GatherJob g && g.Item == item;
         static int TargetOf(WorkerNpc n) => n.Ai.Job is GatherJob g ? g.Target : 0;
         static bool Cooking(WorkerNpc n) => n.Ai.Job is PlanJob p && p.Goal != null && p.Goal.Item == "CookedMeat";
-        static void SkipBerries(bool on) { foreach (string f in Departures.IdleFoods) Departures.TestSkip(f, on); }
+        /// <summary>쉴 때 먹거리 후보(체력순) 중 keep 말고는 쉬게(on) 또는 풀기 — 단계마다 보려는 음식만 고르게.</summary>
+        static void OnlyFood(string keep, bool on) { foreach (string f in Departures.FoodRank()) Departures.TestSkip(f, on && f != keep); }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
@@ -92,7 +94,7 @@ namespace ValheimHelper
                 made.Add(Object.Instantiate(ZNetScene.instance.GetPrefab("RaspberryBush"), GatherTest.Ground(at), Quaternion.identity));
             }
             TestKit.ClearBaseStock(w, Foods);
-            SkipBerries(false);
+            OnlyFood("Raspberry", true);
             yield return new WaitForSeconds(1f);
             t0 = Time.time;
             yield return TestKit.WaitFor(() => Gathering(w.Ragnar, "Raspberry") || Gathering(w.Floki, "Raspberry"), 70f);
@@ -142,7 +144,7 @@ namespace ValheimHelper
             GameObject pit = ZNetScene.instance.GetPrefab("fire_pit"), stand = ZNetScene.instance.GetPrefab("piece_cookingstation"), boar = ZNetScene.instance.GetPrefab("Boar");
             checks.Add("화로·조리대·멧돼지 프리팹", pit != null && stand != null && boar != null);
             if (pit == null || stand == null || boar == null) yield break;
-            SkipBerries(true);
+            OnlyFood("CookedMeat", true);
             Departures.TestSkip("CookedMeat", false);
             Departures.TestForgetWeak("RawMeat");
             TestKit.ClearBaseStock(w, "RawMeat", "CookedMeat", "Wood");
@@ -158,7 +160,7 @@ namespace ValheimHelper
             float t0 = Time.time;
             yield return TestKit.WaitFor(() => Cooking(w.Ragnar) || Cooking(w.Floki), 70f);
             checks.Add($"음식 없음·조리대 있음 → 쉬던 일꾼이 사냥해 구우러 감 ({Time.time - t0:0}초)", TestKit.Ok);
-            if (!TestKit.Ok) { SkipBerries(false); yield break; }
+            if (!TestKit.Ok) { OnlyFood(null, false); yield break; }
             yield return TestKit.WaitFor(() => Count(w, "CookedMeat") >= 2, 480f);
             checks.Add($"구운 고기가 거점 상자에 들어옴 ({Count(w, "CookedMeat")}, {TestKit.Waited:0}초)", TestKit.Ok);
             yield return TestKit.WaitFor(() => !Cooking(w.Ragnar) && !Cooking(w.Floki), 300f);
