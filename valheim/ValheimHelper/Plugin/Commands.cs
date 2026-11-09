@@ -104,7 +104,7 @@ namespace ValheimHelper
         {
             var infos = new List<NpcInfo>(npcs.Count);
             foreach (var n in npcs)
-                infos.Add(new NpcInfo { Name = n.NpcName, Personality = n.Personality, Busy = n.Ai.Current != WorkerAI.Mode.Idle || n.Ai.Queue.Count > 0 });
+                infos.Add(new NpcInfo { Name = n.NpcName, Personality = n.Personality, Busy = !(n.Ai.Current == WorkerAI.Mode.Idle || n.Ai.Current == WorkerAI.Mode.Work && n.Ai.Yields) || n.Ai.Queue.Count > 0 });
             return infos;
         }
 

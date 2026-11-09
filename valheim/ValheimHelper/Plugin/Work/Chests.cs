@@ -12,7 +12,8 @@ namespace ValheimHelper
     /// 상자를 고칠 때는 누가 열고 있지 않을 때만, 소유권을 가져와 한 프레임 안에 읽고-고치고-저장한다(물건 복사·증발 방지).
     /// </summary>
     /// <summary>상자 역할(I-1): 장비·음식/미드·재료. Any = 역할 구분 없이 거점 상자 전부.</summary>
-    public enum ChestRole { Any, Gear, Food, Mats }
+    /// <summary>Ingredients = 재료 + 음식 상자(제작 재료 — 거둔 당근처럼 음식 상자에 들어간 것도 씀, 사용자 11-09).</summary>
+    public enum ChestRole { Any, Gear, Food, Mats, Ingredients }
 
     public static class Chests
     {
@@ -50,8 +51,18 @@ namespace ValheimHelper
             if (provider == null) return all;
             var tags = new ChestTags[all.Count];
             for (int i = 0; i < tags.Length; i++) tags[i] = provider(all[i]);
-            ChestTags want = role == ChestRole.Gear ? ChestTags.Gear : role == ChestRole.Food ? ChestTags.Food : role == ChestRole.Mats ? ChestTags.Mats : ChestTags.None;
-            bool[] ok = ChestNames.Select(tags, want);
+            bool[] ok;
+            if (role == ChestRole.Ingredients)
+            {
+                bool[] mats = ChestNames.Select(tags, ChestTags.Mats), food = ChestNames.Select(tags, ChestTags.Food);
+                ok = new bool[tags.Length];
+                for (int i = 0; i < ok.Length; i++) ok[i] = mats[i] || food[i];
+            }
+            else
+            {
+                ChestTags want = role == ChestRole.Gear ? ChestTags.Gear : role == ChestRole.Food ? ChestTags.Food : role == ChestRole.Mats ? ChestTags.Mats : ChestTags.None;
+                ok = ChestNames.Select(tags, want);
+            }
             var list = new List<ZDO>();
             for (int i = 0; i < ok.Length; i++) if (ok[i]) list.Add(all[i]);
             return list;

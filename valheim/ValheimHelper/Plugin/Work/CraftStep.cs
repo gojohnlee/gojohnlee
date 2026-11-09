@@ -53,7 +53,7 @@ namespace ValheimHelper
             var need = Needs();
             foreach (var kv in need)
                 if (Have(home, kv.Key) < kv.Value) return CraftResult.Failed;
-            var chests = Chests.NearBase(home, ChestRole.Mats);
+            var chests = Chests.NearBase(home, ChestRole.Ingredients);
             foreach (var c in chests)
                 if (Chests.InUse(c)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
             foreach (var kv in need) // 사람 제작 막대가 예약한 몫을 빼면 모자라면 막대가 끝날 때까지 기다림(① 라)
@@ -115,7 +115,7 @@ namespace ValheimHelper
         internal static int Have(Vector3 home, string prefab)
         {
             string name = SharedName(prefab);
-            return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name), ChestRole.Mats);
+            return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name), ChestRole.Ingredients);
         }
 
         /// <summary>상자들에서 뺀다. 실제로 뺀 개수를 돌려준다(상자가 그새 열렸거나 개수 확인 뒤 줄었거나 사람 제작이 예약했으면 amount보다 적음).</summary>

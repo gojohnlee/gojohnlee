@@ -516,7 +516,7 @@ namespace ValheimHelper
             RecipeBook book = Recipes.Book();
             Vector3 home = npc.Home;
             var stock = new Dictionary<string, int>();
-            foreach (var c in Chests.NearBase(home, ChestRole.Mats))
+            foreach (var c in Chests.NearBase(home, ChestRole.Ingredients))
                 foreach (var it in c.GetInventory().GetAllItems())
                 {
                     if (it.m_dropPrefab == null) continue;
@@ -748,7 +748,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc)) IdleFarm(npc);
+                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !Repay(npc)) IdleFarm(npc);
             }
         }
 
@@ -873,6 +873,53 @@ namespace ValheimHelper
             return true;
         }
 
+        // ---- 쓴 재료 다시 캐기 (사용자 11-09 "지가 쓴 재료는 다시 캐면") ----
+
+        /// <summary>쉴 때 만들기가 상자에서 쓴 캘 수 있는 재료 → 아직 안 채운 수. 저장 안 함(다시 켜면 잊음).</summary>
+        static readonly Dictionary<string, int> s_debt = new Dictionary<string, int>();
+
+        internal static void AddDebt(WorkerNpc npc, Dictionary<string, int> used)
+        {
+            foreach (var kv in used)
+            {
+                if (kv.Value <= 0 || ResourceCatalog.WaysFor(kv.Key).Count == 0 || FarmOnly(kv.Key)) continue; // 캘 수 있는 것만(밭 작물은 밭일이 채움)
+                s_debt.TryGetValue(kv.Key, out int n);
+                s_debt[kv.Key] = n + kv.Value;
+                Plugin.Log.LogInfo($"{npc.NpcName} 쓴 재료 다시 캘 몫: {kv.Key} +{kv.Value} → {s_debt[kv.Key]}");
+            }
+        }
+
+        internal static void Repaid(string item, int n)
+        {
+            if (!s_debt.TryGetValue(item, out int d)) return;
+            d -= n;
+            if (d <= 0) s_debt.Remove(item); else s_debt[item] = d;
+        }
+
+        /// <summary>쉬는 일꾼: 갚을 재료가 있으면 그것부터 캐러 감(출발 판단 Go일 때만, 안 되면 그 물건 10분 쉼 — 몫은 남음). 시작했으면 true.</summary>
+        internal static bool Repay(WorkerNpc npc)
+        {
+            foreach (var kv in new List<KeyValuePair<string, int>>(s_debt))
+            {
+                string item = kv.Key;
+                if (RefillSkipped(item) || NightSkipped(item) || RefillBusy(item)) continue;
+                HashSet<ToolKind> ways = GatherJob.WaysFor(npc, item);
+                if (ways.Count == 0 || ways.Contains(ToolKind.Hunt) && HuntWeak(npc, item)) { s_refillSkipUntil[item] = Time.time + 600f; continue; }
+                var cmd = new ChatCommand { Kind = CommandKind.Item, Item = item, Amount = kv.Value };
+                DepartureInput input = Input(npc, cmd, ways, true);
+                input.Stock = 0;
+                DepartureResult r = Departure.Judge(input);
+                Plugin.Log.LogInfo($"{npc.NpcName} 쓴 재료 다시 캐기 {item} {kv.Value}: {r.Action} {r.Question} ({r.Reason})");
+                if (r.Action != DepartAction.Go) { s_refillSkipUntil[item] = Time.time + 600f; continue; }
+                var job = new GatherJob(npc, item, kv.Value, ways) { FromRefill = true, Repay = true };
+                foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
+                npc.Ai.StartJob(job);
+                npc.Say("repay", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(item), ["n"] = kv.Value.ToString() });
+                return true;
+            }
+            return false;
+        }
+
         // ---- 쉴 때 밭일 (사용자 11-09 "밭도 알아서") ----
 
         /// <summary>밭마다 다음에 볼 때(Time.time). 볼 게 없었어도 10분은 다시 안 봄 — 거둘 것·빈자리 세기가 무겁지 않게, 헛걸음 되풀이 없게.</summary>
@@ -922,7 +969,7 @@ namespace ValheimHelper
             if (!ChoresOn || !(lead.Ai.Job is GatherJob g) || g.Item != cmd.Item || g.FromRefill || g.Delivered > 0 || g.Target < 2) return;
             foreach (var n in new List<WorkerNpc>(WorkerNpc.All))
             {
-                if (n == lead || !FreeForChores(n)) continue;
+                if (n == lead || !(FreeForChores(n) || n.Ai.Current == WorkerAI.Mode.Work && n.Ai.Yields && n.Ai.Queue.Count == 0 && !s_pending.ContainsKey(n))) continue; // 스스로 하던 일은 접고 같이 감
                 HashSet<ToolKind> ways = GatherJob.WaysFor(n, cmd.Item);
                 if (ways.Count == 0) continue;
                 var c = new ChatCommand { Kind = CommandKind.Item, Item = cmd.Item, Amount = g.Target };

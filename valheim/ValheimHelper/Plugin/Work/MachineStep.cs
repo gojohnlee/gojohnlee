@@ -194,7 +194,7 @@ namespace ValheimHelper
         /// <summary>열린 상자가 있으면 기다리고(BusyLimit 넘으면 Failed) false, 없으면 한 프레임에 빼고 true.</summary>
         bool TakeFromChests(Vector3 home, string item, int amount, string fuelPrefab, int fuel, out CraftResult wait)
         {
-            var chests = Chests.NearBase(home, ChestRole.Mats);
+            var chests = Chests.NearBase(home, ChestRole.Ingredients);
             foreach (var c in chests)
                 if (Chests.InUse(c))
                 {
@@ -426,7 +426,7 @@ namespace ValheimHelper
             string fuel = Utils.GetPrefabName(fuelItem.gameObject);
             n = Mathf.Min(n, CraftStep.Have(home, fuel));
             if (n <= 0) return;
-            var chests = Chests.NearBase(home, ChestRole.Mats);
+            var chests = Chests.NearBase(home, ChestRole.Ingredients);
             foreach (var c in chests) if (Chests.InUse(c)) return; // 열린 상자가 있으면 이번엔 안 지핌(10초 뒤 실패)
             n = CraftStep.Take(chests, fuel, n); // 그새 줄었으면 뺀 만큼만 지핌
             if (n <= 0) return;

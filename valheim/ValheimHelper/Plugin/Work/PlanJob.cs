@@ -227,6 +227,7 @@ namespace ValheimHelper
             // 설비만 없던 계획(StationsOnly): 할 수 있는 단계를 다 했으면 "재료는 모았는데 ○○이 없어"(구상서 6-1, 10-26)
             if (FromIdle && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
                 Departures.RefillJobFailed(m_npc, Goal.Item, "idlePlan");
+            else if (FromIdle) Departures.AddDebt(m_npc, m_runner.Plan.UsedStock); // 상자에서 쓴 재료는 다시 캐 둠(사용자 11-09)
             var missing = m_runner.Plan.MissingStations;
             if (missing.Count > 0 && m_runner.Finished)
                 m_npc.Say("craft.missingDone", new Dictionary<string, string> { ["item"] = m_goal, ["station"] = Recipes.StationName(missing[0]) });

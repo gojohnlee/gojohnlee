@@ -38,6 +38,8 @@ namespace ValheimHelper
         public bool WantGuard;
         /// <summary>자동 보충(!계속채워)이 낸 일 — 실패하면 그 물건을 쉬게 한다(사용자 11-07: 실패 → 1분 뒤 또 출발 무한 반복).</summary>
         public bool FromRefill;
+        /// <summary>쉴 때 만들기에 쓴 재료를 다시 캐는 일(Departures.Repay): 넣은 만큼 갚음.</summary>
+        public bool Repay;
         /// <summary>제작 계획의 채집 단계(PlanJob)인지 — 호위병이 바빠도 대기열에 따로 미루지 않는다(계획이 그 단계를 다룸).</summary>
         public bool InPlan;
         /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
@@ -486,6 +488,7 @@ namespace ValheimHelper
                 return true; // 누가 열고 있다
             }
             Delivered += moved;
+            if (Repay) Departures.Repaid(Item, moved);
             Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} {moved}개 넣음 ({Delivered}/{Target}) 상자 {m_chest.transform.position:F1} 집에서 {Utils.DistanceXZ(m_npc.Home, m_chest.transform.position):0}m");
             if (Remaining() <= 0 && !OwnLog(out _)) // 자기 통나무가 남았으면 다시 나가 마저 쪼갠다(사용자 11-01). 같이 출발했으면 둘이 넣은 합으로
             {
