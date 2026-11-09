@@ -84,4 +84,31 @@ public class MealsTests
         Assert.Equal(1, m2.Count);
         Assert.Equal(m.MaxHealth, m2.MaxHealth, 3);
     }
+
+    [Fact]
+    public void NoDecayKeepsFullStatsUntilGone()
+    {
+        var m = new Meals();
+        m.Eat(F("a", 40, 20, burn: 100f));
+        m.Tick(80f);
+        try
+        {
+            Meals.NoDecay = true;
+            Assert.Equal(Meals.BaseHealth + 40f, m.MaxHealth, 3);
+            m.Tick(30f);
+            Assert.Equal(Meals.BaseHealth, m.MaxHealth, 3);
+        }
+        finally { Meals.NoDecay = false; }
+    }
+
+    [Fact]
+    public void DetectsNoDecayFromPlayer()
+    {
+        float[] food = { 40f, 30f }, time = { 300f, 1500f }, burn = { 1500f, 1500f };
+        // 바닐라: 25 + 40×0.2^0.3 + 30 ≈ 25 + 24.6 + 30
+        Assert.True(Meals.LooksNoDecay(25f, 95f, food, time, burn));
+        Assert.False(Meals.LooksNoDecay(25f, 79.7f, food, time, burn));
+        // 줄어든 음식이 없으면 알 수 없음
+        Assert.False(Meals.LooksNoDecay(25f, 95f, food, new[] { 1500f, 1500f }, burn));
+    }
 }

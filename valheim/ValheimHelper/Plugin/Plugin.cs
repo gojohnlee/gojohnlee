@@ -125,6 +125,7 @@ namespace ValheimHelper
                 WorkerBanter.Update();
                 Brain.Update(UnityEngine.Time.deltaTime);
                 Departures.Tick(UnityEngine.Time.deltaTime);
+                FoodModWatch.Tick(UnityEngine.Time.deltaTime);
                 ClaudeChat.Tick();
                 SpeechCount.Tick();
                 WorkSaves.Tick(UnityEngine.Time.deltaTime);

@@ -24,12 +24,33 @@ namespace ValheimHelper.Core.Npc
         /// <summary>플레이어 기본값(Player.m_baseHP, m_baseStamina).</summary>
         public const float BaseHealth = 25f, BaseStamina = 75f;
 
+        /// <summary>
+        /// 음식 효과가 끝날 때까지 줄지 않는 모드(사용자 11-09 "음식 모드"): 켜지면 일꾼도 남은 시간과 상관없이 온전한 효과(먹는 때 규칙은 그대로).
+        /// 플러그인이 플레이어 상태로 알아챈다(LooksNoDecay).
+        /// </summary>
+        public static bool NoDecay;
+
+        /// <summary>
+        /// 플레이어 최대 체력이 바닐라식(남은 시간 비율^0.3)보다 뚜렷이 크고 온전한 합에 닿아 있으면 음식 효과가 안 주는 모드.
+        /// 줄어든 음식이 하나도 없으면(바닐라식과 온전한 합이 2 미만 차이) 알 수 없어 false.
+        /// </summary>
+        public static bool LooksNoDecay(float baseHp, float maxHealth, float[] food, float[] time, float[] burn)
+        {
+            float full = baseHp, vanilla = baseHp;
+            for (int i = 0; i < food.Length; i++)
+            {
+                full += food[i];
+                vanilla += food[i] * (float)Math.Pow(Clamp01(burn[i] > 0f ? time[i] / burn[i] : 0f), 0.3);
+            }
+            return full - vanilla >= 2f && maxHealth >= full - 1f;
+        }
+
         sealed class Eaten
         {
             public FoodInfo Info;
             public float Time;
             public bool CanEatAgain => Time < Info.BurnTime / 2f;
-            public float Factor => (float)Math.Pow(Clamp01(Time / Info.BurnTime), 0.3);
+            public float Factor => NoDecay ? (Time > 0f ? 1f : 0f) : (float)Math.Pow(Clamp01(Time / Info.BurnTime), 0.3);
         }
 
         readonly List<Eaten> m_eaten = new List<Eaten>();
