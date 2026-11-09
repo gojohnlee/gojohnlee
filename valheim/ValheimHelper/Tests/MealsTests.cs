@@ -66,10 +66,8 @@ public class MealsTests
     {
         var m = new Meals();
         var picked = m.EatBest(new[] { F("berry", 7, 20), F("meat", 30, 10), F("meat", 30, 10), F("soup", 20, 20), F("honey", 8, 35) });
-        Assert.Equal(3, picked.Count); // 꿀 43, 고기 40, 수프 40 > 베리 27
-        Assert.Equal("honey", picked[0]);
-        Assert.Contains("meat", picked);
-        Assert.Contains("soup", picked);
+        Assert.Equal(3, picked.Count); // 체력만(사용자 11-09): 고기 30 > 수프 20 > 꿀 8 > 베리 7
+        Assert.Equal(new[] { "meat", "soup", "honey" }, picked.ToArray());
         Assert.Empty(m.EatBest(new[] { F("berry", 7, 20) })); // 배부름
     }
 

@@ -10,7 +10,8 @@ namespace ValheimHelper.Core.Npc
     {
         public string Name;
         public float Health, Stamina, Eitr, Regen, BurnTime;
-        public float Value => Health + Stamina;
+        /// <summary>음식 고르는 점수 = 체력만(사용자 11-09: 일꾼은 스태미나 무제한이라 스태미나는 쓸모없음).</summary>
+        public float Value => Health;
     }
 
     /// <summary>
@@ -138,7 +139,7 @@ namespace ValheimHelper.Core.Npc
         }
 
         /// <summary>
-        /// 있는 음식(이름 → 수치, 개수)에서 지금 먹을 것을 고른다: 좋은 것(체력+스태미나)부터, 같은 음식은 한 번.
+        /// 있는 음식(이름 → 수치, 개수)에서 지금 먹을 것을 고른다: 체력 높은 것부터, 같은 음식은 한 번.
         /// 먹은 것으로 치고 고른 이름을 돌려준다(호출하는 쪽이 상자에서 하나씩 뺀다).
         /// </summary>
         public List<string> EatBest(IEnumerable<FoodInfo> available)

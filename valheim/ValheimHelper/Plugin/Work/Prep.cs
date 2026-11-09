@@ -15,7 +15,7 @@ namespace ValheimHelper
     public sealed class Prep
     {
         public const int MeadsToCarry = 3;
-        /// <summary>들고 다닐 음식 수(사용자 11-09): 밖에서 음식이 끝나면 꺼내 먹음. 좋은 음식부터 종류를 섞어서.</summary>
+        /// <summary>들고 다닐 음식 수(사용자 11-09): 밖에서 음식이 끝나면 꺼내 먹음. 체력 높은 음식부터 종류를 섞어서.</summary>
         public const int FoodToCarry = 3;
         const float WalkLimit = 60f, BusyLimit = 20f, RepairReach = 3.5f;
 
@@ -372,14 +372,14 @@ namespace ValheimHelper
 
         static bool NeedsFoodToCarry(Inventory mine, Container c) => CountFood(mine) < FoodToCarry && WorkerNpc.HasFood(c.GetInventory());
 
-        /// <summary>들고 다닐 음식을 FoodToCarry까지: 좋은 음식(체력+스태미나)부터 한 종류에 하나씩 돌아가며(사람 제작 막대 예약분은 안 가져감).</summary>
+        /// <summary>들고 다닐 음식을 FoodToCarry까지: 체력 높은 음식부터 한 종류에 하나씩 돌아가며(사람 제작 막대 예약분은 안 가져감).</summary>
         static void TakeFood(Container from, Inventory mine, Inventory chest, List<string> taken)
         {
             int need = FoodToCarry - CountFood(mine);
             var kinds = new List<ItemDrop.ItemData>();
             foreach (var it in chest.GetAllItems())
                 if (Gear.IsFood(it) && !kinds.Exists(k => k.m_shared.m_name == it.m_shared.m_name)) kinds.Add(it);
-            kinds.Sort((a, b) => (b.m_shared.m_food + b.m_shared.m_foodStamina).CompareTo(a.m_shared.m_food + a.m_shared.m_foodStamina));
+            kinds.Sort((a, b) => b.m_shared.m_food.CompareTo(a.m_shared.m_food)); // 체력만(사용자 11-09)
             bool any = true;
             while (need > 0 && any)
             {
