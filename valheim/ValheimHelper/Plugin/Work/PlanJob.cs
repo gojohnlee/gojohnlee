@@ -64,7 +64,8 @@ namespace ValheimHelper
         public PlanRunner Runner => m_runner;
         public string StepName => m_step != null ? m_step.Kind.ToString() : "Wait";
         public string Label => m_goal;
-        public string StateLine() => m_goal + " 만드는 중(" + m_runner.Count(StepState.Done) + "/" + m_runner.Plan.Steps.Count + ")";
+        public string StateLine() => "제작 " + m_goal + " " + m_runner.Count(StepState.Done) + "/" + m_runner.Plan.Steps.Count + "단계"
+            + (m_step != null && m_gather != null ? " · " + m_gather.StateLine() : "");
 
         public void AvoidHere(Vector3 danger) { m_gather?.AvoidHere(danger); m_filler?.AvoidHere(danger); }
 

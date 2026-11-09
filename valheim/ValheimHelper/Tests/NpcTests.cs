@@ -52,8 +52,8 @@ public class SpeechTests
     public void FillsArguments()
     {
         var s = new Speech();
-        string line = s.Say(Personality.Floki, "status", new Dictionary<string, string> { ["state"] = "노는 중", ["hp"] = "25", ["max"] = "25" });
-        Assert.Equal("노는 중! 체력 25/25, 히히.", line);
+        string line = s.Say(Personality.Floki, "state.work", new Dictionary<string, string> { ["verb"] = "벌목", ["item"] = "나무", ["done"] = "3", ["n"] = "50" });
+        Assert.Equal("벌목 나무 3/50", line);
     }
 
     [Fact]

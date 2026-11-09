@@ -294,10 +294,19 @@ namespace ValheimHelper
 
         public string Label => ItemLabel(Item) + " " + Target;
 
-        public string StateLine() => m_npc.Line(m_exploring ? "state.workExplore" : "state.work", new Dictionary<string, string>
+        /// <summary>!상태 한 줄(사용자 11-09 "벌목 1/50"처럼): 하는 일 + 물건 + 넣은 수/목표. 같이 출발했으면 둘이 넣은 합.</summary>
+        public string StateLine()
         {
-            ["item"] = ItemLabel(Item), ["n"] = Target.ToString(), ["done"] = Delivered.ToString(),
-        });
+            int done = Delivered;
+            if (Team != null) { done = 0; foreach (var o in Team) done += o.Delivered; }
+            ToolKind tool = m_targetInfo != null ? m_targetInfo.Tool : m_ways.Contains(ToolKind.Axe) ? ToolKind.Axe : m_ways.Contains(ToolKind.Pickaxe) ? ToolKind.Pickaxe : m_ways.Contains(ToolKind.Hunt) ? ToolKind.Hunt : ToolKind.None;
+            if (m_hunt) tool = ToolKind.Hunt;
+            string verb = tool == ToolKind.Axe ? "벌목" : tool == ToolKind.Pickaxe ? "채광" : tool == ToolKind.Hunt ? "사냥" : "채집";
+            return m_npc.Line(m_exploring ? "state.workExplore" : "state.work", new Dictionary<string, string>
+            {
+                ["verb"] = verb, ["item"] = ItemLabel(Item), ["n"] = Target.ToString(), ["done"] = done.ToString(),
+            });
+        }
 
         float m_autoPickTimer;
 
