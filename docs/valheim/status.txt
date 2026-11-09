@@ -1,8 +1,8 @@
-갱신: 2026-11-09 23:58  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 379 진행 중
+갱신: 2026-11-09 23:59  (무인 루프, scripts/vh-loop.ps1)
+지금: 할 일 다 끝남 — 자리 비우면(입력 없음 10분) 컴퓨터 끔, 깨우기 예약 없음. UserRequest.txt에 쓰면 5분 안에 다시 돎
 회차: 379, 계정: 1번, 한도: 2번 11-10 00:22까지
 할 일: (없음)
 마지막 시험: 11-09 23:57 요약: 3/3 PASS
-Claude가 한 일: (진행 중)
+Claude가 한 일: LOOP: ALLDONE 요청·다음 전부 끝·보류, Errors.txt에 관찰 중·조사 중 없음(E054·E065는 멈춤)
 분업(Claude 구현 → 스크립트 검증): off: docs/valheim/handoff-on.txt 없음
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
