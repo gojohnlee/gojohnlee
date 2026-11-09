@@ -247,12 +247,15 @@ namespace ValheimHelper
 
         // ── 우리 상자까지 걸어감(짐승이 따라옴, 8m 넘게 처지면 기다림) → 다 오면 그 자리를 순찰 지점으로 풀어 둠(바닐라 "머물러" 꼴) ──
         static System.Action<BaseAI, Vector3> s_setPatrol;
+        static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, float> s_moveTimer = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, float>("m_randomMoveUpdateTimer");
 
-        /// <summary>순찰 지점을 그 점으로(바닐라 private BaseAI.SetPatrolPoint(Vector3) — ZDO s_patrol·s_patrolPoint). 떠도는 범위는 m_randomMoveRange(4m) 둘레.</summary>
+        /// <summary>순찰 지점을 그 점으로(바닐라 private BaseAI.SetPatrolPoint(Vector3) — ZDO s_patrol·s_patrolPoint). 떠도는 범위는 m_randomMoveRange(멧돼지 10m) 둘레, 그 두 배 넘으면 돌아옴.</summary>
         internal static void PenAt(BaseAI ai, Vector3 at)
         {
             if (s_setPatrol == null) s_setPatrol = HarmonyLib.AccessTools.MethodDelegate<System.Action<BaseAI, Vector3>>(HarmonyLib.AccessTools.Method(typeof(BaseAI), "SetPatrolPoint", new[] { typeof(Vector3) }));
             s_setPatrol(ai, at);
+            // 바닐라는 떠돌기 목표를 타이머(멧돼지 30초)가 끝날 때만 새로 고름 → 풀기 전 목표(회차 378: 순찰점에서 46m)로 계속 걸어감(E071). 바로 다시 고르게
+            s_moveTimer(ai) = 0f;
         }
 
         bool UpdateLead(float dt)

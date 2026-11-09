@@ -73,7 +73,7 @@ namespace ValheimHelper
                 foreach (var a in Character.GetAllCharacters())
                 {
                     if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer()
-                        || Utils.DistanceXZ(a.transform.position, pen) > LivestockJob.PenRange || !seen.Add(a)) continue;
+                        || !LivestockJob.InPen(a, pen) || !seen.Add(a)) continue;
                     here.Add(a);
                 }
                 if (here.Count <= PenMax) continue;

@@ -15,6 +15,14 @@ namespace ValheimHelper
         /// <summary>"가축" 상자에서 이 거리 안 가축이 그 우리 것.</summary>
         internal const float PenRange = 10f;
 
+        /// <summary>그 우리 가축: 상자 PenRange 안이거나 순찰점(풀어 둔 자리)이 PenRange 안 — 멧돼지는 떠돌기 범위 10m라 순찰점 둘레 20m까지 떠돎(회차 378 E071).</summary>
+        internal static bool InPen(Character a, Vector3 pen)
+        {
+            if (Utils.DistanceXZ(a.transform.position, pen) <= PenRange) return true;
+            ZDO zdo = a.GetComponent<ZNetView>()?.GetZDO();
+            return zdo != null && zdo.GetBool(ZDOVars.s_patrol) && Utils.DistanceXZ(zdo.GetVec3(ZDOVars.s_patrolPoint, a.transform.position), pen) <= PenRange;
+        }
+
         internal sealed class Feed
         {
             public Character Animal;
@@ -89,7 +97,7 @@ namespace ValheimHelper
                 pens++;
                 foreach (var a in Character.GetAllCharacters())
                 {
-                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || Utils.DistanceXZ(a.transform.position, c.transform.position) > PenRange) continue;
+                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !InPen(a, c.transform.position)) continue;
                     Tameable t = a.GetComponent<Tameable>();
                     if (t == null || list.Exists(f => f.Animal == a)) continue;
                     tame++;
