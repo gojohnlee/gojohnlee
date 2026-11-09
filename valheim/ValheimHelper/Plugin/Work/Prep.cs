@@ -72,7 +72,7 @@ namespace ValheimHelper
         {
             m_npc = npc;
             m_ai = npc.Ai;
-            m_noBow = npc.IsGuard; // 호위병은 활(사냥)을 안 챙긴다 — 일꾼 몫(사용자 10-26)
+            m_noBow = npc.IsGuard; // 호위병은 사냥 활 대신 싸움용 활·석궁을 챙긴다(Pick — 사용자 11-09)
         }
 
         readonly bool m_noBow;
@@ -223,7 +223,7 @@ namespace ValheimHelper
             if (gear)
                 foreach (var it in Plan(mine, chest))
                     if (chest.ContainsItem(it)) return true;
-            if (gear && !m_noBow && NeedsBow(mine, chest)) return true;
+            if (gear && NeedsBow(mine, chest, m_noBow)) return true;
             if (!meads) return false;
             if (CountMeads(mine) < MeadsToCarry && CountMeads(chest) > 0) return true;
             foreach (var k in Resist.Kinds)
@@ -249,7 +249,7 @@ namespace ValheimHelper
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Axe));
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Pickaxe));
             foreach (var it in mine.GetAllItems()) if (Gear.IsHealthMead(it) || Gear.ResistOf(it) != null || Gear.IsFood(it)) keep.Add(it);
-            ItemDrop.ItemData bow = Gear.BestBow(mine.GetAllItems());
+            ItemDrop.ItemData bow = Gear.Best(mine.GetAllItems(), Gear.IsRanged, Gear.WeaponScore);
             keep.Add(bow);
             foreach (var it in mine.GetAllItems()) if (Gear.IsArrowFor(it, bow)) keep.Add(it);
             keep.Remove(null);
@@ -258,21 +258,46 @@ namespace ValheimHelper
 
         /// <summary>
         /// 사냥용 활(⑧, 사슴·토끼): 상자에 더 좋은 활이 있거나, 활이 있는데 화살이 몫(Archery.ArrowsToCarry)보다 적고 상자에 맞는 화살이 있다.
-        /// 활은 싸움에 안 쓰고 사냥에만 쓴다(구상서 6-2).
+        /// 일꾼은 활을 사냥에만 쓴다(구상서 6-2). 호위병(guard)은 싸움용 활·석궁(사용자 11-09, Pick·Carry).
         /// </summary>
-        static bool NeedsBow(Inventory mine, Inventory chest)
+        static bool NeedsBow(Inventory mine, Inventory chest, bool guard)
         {
-            ItemDrop.ItemData have = Gear.BestBow(mine.GetAllItems()), there = Gear.BestBow(chest.GetAllItems());
-            if (there != null && (have == null || Gear.WeaponScore(there) > Gear.WeaponScore(have))) return true;
-            ItemDrop.ItemData bow = have ?? there;
-            return bow != null && Gear.CountArrows(mine, bow) < Archery.ArrowsToCarry && Gear.CountArrows(chest, bow) > 0;
+            ItemDrop.ItemData have = MyRanged(mine, guard), there = Pick(mine, chest, guard);
+            if (there != null) return true;
+            ItemDrop.ItemData bow = have ?? (guard ? null : Gear.BestBow(chest.GetAllItems()));
+            return bow != null && Gear.CountArrows(mine, bow) < Carry(bow, guard) && Gear.CountArrows(chest, bow) > 0;
         }
+
+        static ItemDrop.ItemData MyRanged(Inventory mine, bool guard) =>
+            guard ? Gear.Best(mine.GetAllItems(), Gear.IsRanged, Gear.WeaponScore) : Gear.BestBow(mine.GetAllItems());
+
+        /// <summary>
+        /// 상자에서 가져올 더 좋은 활(호위병은 활·석궁). 호위병은 활을 상자에 활이 하나 더 남을 때만(일꾼 사냥 몫),
+        /// 맞는 화살·볼트가 상자나 가방에 있을 때만 가져간다 [기본안 11-09].
+        /// </summary>
+        static ItemDrop.ItemData Pick(Inventory mine, Inventory chest, bool guard)
+        {
+            ItemDrop.ItemData have = MyRanged(mine, guard), pick = null;
+            if (!guard) pick = Gear.BestBow(chest.GetAllItems());
+            else
+            {
+                int bows = 0;
+                foreach (var it in chest.GetAllItems()) if (Gear.IsBow(it)) bows++;
+                foreach (var it in chest.GetAllItems())
+                    if ((Gear.IsCrossbow(it) || Gear.IsBow(it) && bows >= 2) && Gear.CountArrows(chest, it) + Gear.CountArrows(mine, it) > 0
+                        && (pick == null || Gear.WeaponScore(it) > Gear.WeaponScore(pick))) pick = it;
+            }
+            return pick != null && (have == null || Gear.WeaponScore(pick) > Gear.WeaponScore(have)) ? pick : null;
+        }
+
+        /// <summary>들고 다닐 화살·볼트 수: 몫(ArrowsToCarry), 호위병의 화살은 그 절반(일꾼 사냥 몫).</summary>
+        static int Carry(ItemDrop.ItemData w, bool guard) => guard && Gear.IsBow(w) ? Archery.ArrowsToCarry / 2 : Archery.ArrowsToCarry;
 
         void TakeBow(Container from, Inventory mine, Inventory chest, List<string> taken)
         {
-            ItemDrop.ItemData have = Gear.BestBow(mine.GetAllItems()), there = Gear.BestBow(chest.GetAllItems());
-            if (there != null && (have == null || Gear.WeaponScore(there) > Gear.WeaponScore(have)) && mine.CanAddItem(there)
-                && BaseStock.Allow(from, there.m_shared.m_name, 1) > 0)
+            bool guard = m_noBow;
+            ItemDrop.ItemData have = MyRanged(mine, guard), there = Pick(mine, chest, guard);
+            if (there != null && mine.CanAddItem(there) && BaseStock.Allow(from, there.m_shared.m_name, 1) > 0)
             {
                 mine.MoveItemToThis(chest, there);
                 if (!chest.ContainsItem(there))
@@ -287,9 +312,9 @@ namespace ValheimHelper
                     }
                 }
             }
-            ItemDrop.ItemData bow = Gear.BestBow(mine.GetAllItems());
+            ItemDrop.ItemData bow = MyRanged(mine, guard);
             if (bow != null)
-                TakeMeads(from, mine, chest, Archery.ArrowsToCarry - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken);
+                TakeMeads(from, mine, chest, Carry(bow, guard) - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken);
         }
 
         /// <summary>
@@ -351,7 +376,7 @@ namespace ValheimHelper
                 if (m_npc.IsWearing(it)) m_npc.UnequipItem(it, false);
                 chest.MoveItemToThis(mine, it);
             }
-            if (takeGear && !m_noBow) TakeBow(from, mine, chest, taken);
+            if (takeGear) TakeBow(from, mine, chest, taken);
             if (takeMeads)
             {
                 // 체력 미드

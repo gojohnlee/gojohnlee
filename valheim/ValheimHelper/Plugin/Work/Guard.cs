@@ -685,8 +685,11 @@ namespace ValheimHelper
                 m_judgeTimer = 0f; // 다음 적을 바로 고른다
                 return true;
             }
-            // 없으면 맨손으로. 활은 사냥에만. 그 적의 약점·저항에 가장 세게 들어가는 무기(전투 보강 나) — 적이 바뀌면 다시 고름
-            if (!m_armed || m_npc.HoldingBow() || m_armedFor != m_target) { m_armed = true; m_armedFor = m_target; m_fightIdle = 0f; m_npc.StopDraw(); m_npc.HoldWeapon(Mults(m_target.GetDamageModifiers())); }
+            // 호위병 원거리(사용자 11-09): 활·석궁과 화살·볼트가 있으면 ShootMin 밖 적은 쏜다(가리면 근접처럼 다가감), 붙으면 근접.
+            // 플레이어 64m 밖(m_far)은 멀리선 단순화 그대로 근접·직접 피해.
+            if (m_npc.IsGuard && !m_far && !m_rangedOff && Time.time >= m_meleeUntil && Shoot(dt)) return true;
+            // 없으면 맨손으로. 그 적의 약점·저항에 가장 세게 들어가는 무기(전투 보강 나) — 적이 바뀌면 다시 고름
+            if (!m_armed || m_npc.HoldingRanged() || m_armedFor != m_target) { m_armed = true; m_armedFor = m_target; m_fightIdle = 0f; m_npc.StopDraw(); m_npc.HoldWeapon(Mults(m_target.GetDamageModifiers())); }
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
             float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
             Vector3 tp = m_target.transform.position;
@@ -754,6 +757,68 @@ namespace ValheimHelper
         float m_farCheck, m_farHitTimer;
         const float FarHitRange = 6f, FarHitEvery = 1.5f;
         float m_lastFoeHealth;
+
+        // ---- 호위병 원거리(활·석궁, 사용자 11-09 — 겨눔은 사냥 GatherJob.UpdateShoot과 같음) ----
+        public const float ShootMin = 5f;
+        public static int Shots; // 시험용: 호위병이 싸움에서 쏜 수
+        bool m_rangedOff, m_shotCheck;
+        float m_meleeUntil, m_shotAt;
+        int m_shotAmmo, m_dryShots;
+
+        /// <returns>true = 이번 틱은 쏘기(겨눔·당김·장전), false = 근접으로.</returns>
+        bool Shoot(float dt)
+        {
+            m_farCheck -= dt;
+            if (m_farCheck <= 0f) { m_farCheck = 1f; m_far = GatherJob.FarFromPlayers(m_npc.transform.position); }
+            float d = Utils.DistanceXZ(m_target.transform.position, m_npc.transform.position) - m_target.GetRadius();
+            ItemDrop.ItemData best = m_npc.FightingRanged();
+            if (m_far || d <= ShootMin || d > Archery.ShootRange || best == null) { m_npc.StopDraw(); return false; }
+            Vector3 eye = m_npc.GetEyePoint(), center = m_target.GetCenterPoint();
+            if (Physics.Linecast(eye, center, GatherJob.ShotMask)) { m_npc.StopDraw(); m_meleeUntil = Time.time + 2f; return false; } // 가리면 근접처럼 다가가다 2초 뒤 다시 봄
+            if (m_npc.GetCurrentWeapon() != best)
+            {
+                m_npc.DropBlock();
+                m_npc.StopDraw();
+                if (!m_npc.HoldRanged()) { m_meleeUntil = Time.time + 2f; return false; }
+                m_armed = false; // 근접으로 돌아가면 무기를 다시 고름
+            }
+            ItemDrop.ItemData w = m_npc.GetCurrentWeapon();
+            m_ai.StopMoving();
+            Vector3 aim = center;
+            if (m_npc.ProjectileFlight(w, out float speed, out float gravity))
+            {
+                Vector3 rel = center - eye, v = m_target.GetVelocity();
+                if (Archery.Aim(rel.x, rel.y, rel.z, v.x, v.y, v.z, speed, gravity, out float ax, out float ay, out float az))
+                    aim = eye + new Vector3(ax, ay, az);
+            }
+            m_ai.Face(aim);
+            if (m_shotCheck && Time.time - m_shotAt > 2f)
+            {
+                // 쐈는데 화살·볼트가 안 나갔다(공격 애니메이션의 발사 순간이 안 옴): 세 번 잇달면 원거리는 접는다
+                m_shotCheck = false;
+                if (Gear.CountArrows(m_npc.GetInventory(), w) >= m_shotAmmo)
+                {
+                    m_dryShots++;
+                    Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 원거리 안 나감 {m_dryShots}번째: {w.m_shared.m_name} 손 {m_npc.HandsDiag()} 장전 {m_npc.IsWeaponLoaded()}");
+                    if (m_dryShots >= 3) { m_rangedOff = true; m_npc.StopDraw(); Plugin.Log.LogInfo($"{m_npc.NpcName}: 활·석궁이 안 나가 근접만"); return false; }
+                }
+                else m_dryShots = 0;
+            }
+            if (m_npc.InAttack()) return true;
+            bool crossbow = Gear.IsCrossbow(w);
+            bool ready = crossbow ? m_npc.LoadCrossbow(dt) : m_npc.DrawBow(dt) >= 1f;
+            if (!ready || !m_ai.IsLookingAt(aim, 10f)) return true;
+            m_shotAmmo = Gear.CountArrows(m_npc.GetInventory(), w);
+            if (!(crossbow ? m_npc.StartAttack(null, false) : m_npc.ReleaseBow())) return true;
+            Shots++;
+            m_fightIdle = 0f;
+            m_diagSwings++;
+            m_shotCheck = true;
+            m_shotAt = Time.time;
+            Learn(m_target);
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_target.m_name}에 {w.m_shared.m_name} 쏨 {d:0}m, 남은 {m_shotAmmo - 1}개, 적 체력 {m_target.GetHealth():0}/{m_target.GetMaxHealth():0}");
+            return true;
+        }
 
         /// <summary>바닐라 Attack 판정이 못 닿을 때 무기 피해를 직접 준다(GatherJob.DirectHit와 같은 방식, 스킬 반영).</summary>
         void DirectHit(ItemDrop.ItemData weapon, string why)

@@ -136,7 +136,7 @@ namespace ValheimHelper
                                          ?? Gear.Best(items, Gear.IsMelee, Gear.WeaponScore);
             if (weapon == null)
             {
-                if (HoldingBow()) { StopDraw(); UnequipItem(GetCurrentWeapon(), false); } // 활은 사냥에만: 싸울 땐 맨손이 낫다
+                if (HoldingRanged()) { StopDraw(); UnequipItem(GetCurrentWeapon(), false); } // 활·석궁은 쏠 때만: 붙어 싸울 땐 맨손이 낫다
                 return false;
             }
             if (weapon.IsTwoHanded()) shield = null;
@@ -165,6 +165,70 @@ namespace ValheimHelper
         }
 
         public bool HoldingBow() => Gear.IsBow(GetCurrentWeapon());
+
+        // ---- 호위병 원거리(활·석궁, 사용자 11-09) ----
+
+        /// <summary>싸울 때 쏠 것: 가장 좋은 활·석궁(맞는 화살·볼트가 있을 때만). 없으면 null.</summary>
+        public ItemDrop.ItemData FightingRanged()
+        {
+            ItemDrop.ItemData best = null;
+            foreach (var it in m_inventory.GetAllItems())
+                if (Gear.IsRanged(it) && Gear.CountArrows(m_inventory, it) > 0 && (best == null || Gear.WeaponScore(it) > Gear.WeaponScore(best))) best = it;
+            return best;
+        }
+
+        public bool HoldRanged()
+        {
+            ItemDrop.ItemData w = FightingRanged();
+            if (w == null) return false;
+            if (!IsItemEquiped(w)) EquipItem(w);
+            return GetCurrentWeapon() == w;
+        }
+
+        public bool HoldingRanged() => Gear.IsRanged(GetCurrentWeapon());
+
+        ItemDrop.ItemData m_loaded;
+        float m_loadTime;
+
+        // 석궁 장전: 바닐라는 Player만 한다(Player.UpdateWeaponLoading → 장전 동작 → SetWeaponLoaded). Humanoid.IsWeaponLoaded는 늘 false라 Attack.Start가 거절
+        public override bool IsWeaponLoaded() => m_loaded != null && m_loaded == GetCurrentWeapon();
+        public override void ResetLoadedWeapon() { m_loaded = null; m_loadTime = 0f; }
+
+        /// <summary>든 석궁을 장전한다(걸리는 시간은 ItemData.GetWeaponLoadingTime 식 — 그쪽은 로컬 플레이어 스킬을 봐서 내 스킬로). 장전됐으면 true.</summary>
+        public bool LoadCrossbow(float dt)
+        {
+            ItemDrop.ItemData w = GetCurrentWeapon();
+            if (!Gear.IsCrossbow(w)) return false;
+            if (IsWeaponLoaded()) return true;
+            if (m_loaded != null) { m_loaded = null; m_loadTime = 0f; } // 다른 무기에 걸린 장전은 버림
+            m_loadTime += dt;
+            float t = w.m_shared.m_attack.m_reloadTime;
+            if (m_loadTime < Mathf.Lerp(t, t * 0.5f, GetSkillFactor(w.m_shared.m_skillType))) return false;
+            m_loaded = w;
+            m_loadTime = 0f;
+            return true;
+        }
+
+        /// <summary>끝까지 당겼을 때(석궁은 늘) 화살·볼트 속력과 중력(바닐라 Attack.ProjectileAttackTriggered: 무기 값 + 화살 값, 화살의 Projectile.m_gravity).</summary>
+        public bool ProjectileFlight(ItemDrop.ItemData bow, out float speed, out float gravity)
+        {
+            speed = 0f;
+            gravity = 0f;
+            if (bow == null) return false;
+            ItemDrop.ItemData ammo = GetAmmoItem();
+            if (!Gear.IsArrowFor(ammo, bow)) ammo = m_inventory.GetAmmoItem(bow.m_shared.m_ammoType);
+            Attack a = bow.m_shared.m_attack;
+            speed = a.m_projectileVel;
+            GameObject proj = a.m_attackProjectile;
+            if (ammo != null)
+            {
+                speed += ammo.m_shared.m_attack.m_projectileVel;
+                if (ammo.m_shared.m_attack.m_attackProjectile != null) proj = ammo.m_shared.m_attack.m_attackProjectile;
+            }
+            Projectile p = proj != null ? proj.GetComponent<Projectile>() : null;
+            if (p != null) gravity = p.m_gravity;
+            return speed > 0f;
+        }
 
         /// <summary>진단용: 오른손·왼손에 든 것, 당긴 시간.</summary>
         public string HandsDiag() => $"{m_rightItem?.m_shared.m_name}/{m_leftItem?.m_shared.m_name} 당김 {m_attackDrawTime:0.0}";

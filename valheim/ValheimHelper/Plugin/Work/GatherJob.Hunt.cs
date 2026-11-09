@@ -146,6 +146,7 @@ namespace ValheimHelper
 
         int m_shots, m_preyShots;
         static int s_shotMask;
+        internal static int ShotMask => s_shotMask != 0 ? s_shotMask : (s_shotMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
 
         /// <summary>사냥감의 실제 움직임(0.25초마다 자리 차이). GetVelocity는 가려는 속도라 비탈·막힘에 서 있어도 달리는 값이 나와 앞질러 쏜 화살이 땅에 박혔다(회차 175 vh_bowtest).</summary>
         Character m_velOf;
@@ -189,7 +190,7 @@ namespace ValheimHelper
             m_ai.StopMoving();
             Vector3 aim = center;
             ItemDrop.ItemData bow = m_npc.GetCurrentWeapon();
-            if (ArrowFlight(bow, out float speed, out float gravity))
+            if (m_npc.ProjectileFlight(bow, out float speed, out float gravity))
             {
                 Vector3 rel = center - eye, v = PreyVelocity();
                 if (Archery.Aim(rel.x, rel.y, rel.z, v.x, v.y, v.z, speed, gravity, out float ax, out float ay, out float az))
@@ -259,26 +260,6 @@ namespace ValheimHelper
         Vector3 m_diagLast;
         GameObject m_diagArrow, m_diagPrev;
 
-        /// <summary>끝까지 당겼을 때 화살 속력과 중력(바닐라 Attack.ProjectileAttackTriggered: 활 값 + 화살 값, 화살의 Projectile.m_gravity).</summary>
-        bool ArrowFlight(ItemDrop.ItemData bow, out float speed, out float gravity)
-        {
-            speed = 0f;
-            gravity = 0f;
-            if (bow == null) return false;
-            ItemDrop.ItemData ammo = m_npc.GetAmmoItem();
-            if (!Gear.IsArrowFor(ammo, bow)) ammo = m_npc.GetInventory().GetAmmoItem(bow.m_shared.m_ammoType);
-            Attack a = bow.m_shared.m_attack;
-            speed = a.m_projectileVel;
-            GameObject proj = a.m_attackProjectile;
-            if (ammo != null)
-            {
-                speed += ammo.m_shared.m_attack.m_projectileVel;
-                if (ammo.m_shared.m_attack.m_attackProjectile != null) proj = ammo.m_shared.m_attack.m_attackProjectile;
-            }
-            Projectile p = proj != null ? proj.GetComponent<Projectile>() : null;
-            if (p != null) gravity = p.m_gravity;
-            return speed > 0f;
-        }
 
     }
 }

@@ -44,6 +44,14 @@ namespace ValheimHelper
 
         public static ItemDrop.ItemData BestBow(IEnumerable<ItemDrop.ItemData> items) => Best(items, IsBow, WeaponScore);
 
+        /// <summary>석궁(장전해 쏘는 것, 볼트를 씀 — Attack.m_requiresReload). 사냥엔 안 쓰고 호위병 싸움에만(사용자 11-09).</summary>
+        public static bool IsCrossbow(ItemDrop.ItemData it) =>
+            it != null && it.m_shared.m_attack.m_requiresReload && it.m_shared.m_attack.m_attackType == Attack.AttackType.Projectile
+            && !string.IsNullOrEmpty(it.m_shared.m_ammoType);
+
+        /// <summary>활 또는 석궁(호위병이 멀리 있는 적을 쏘는 것).</summary>
+        public static bool IsRanged(ItemDrop.ItemData it) => IsBow(it) || IsCrossbow(it);
+
         public static int CountArrows(Inventory inv, ItemDrop.ItemData bow)
         {
             int n = 0;
