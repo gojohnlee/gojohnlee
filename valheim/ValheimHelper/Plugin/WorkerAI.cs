@@ -54,7 +54,7 @@ namespace ValheimHelper
         /// 지금 일이 새 명령에 바로 자리를 내주는 일(묘비 회수·쉴 때 상자 정리, 스스로 한 일 — 자동 보충·쉴 때 먹거리·만들기·밭일·쓴 재료 다시 캐기)
         /// — 대기열에 안 넣고 "~부터 하고 갈게요"도 안 함(사용자 11-09 "시켰으면 바로 출발").
         /// </summary>
-        public bool Yields => Job is GraveJob || Job is TidyJob || Job is GatherJob g && g.FromRefill || Job is PlanJob p && p.FromIdle || Job is FarmJob f && f.Quiet;
+        public bool Yields => Job is GraveJob || Job is TidyJob || Job is GatherJob g && g.FromRefill || Job is PlanJob p && p.FromIdle; // 밭일은 하고 감(사용자 11-09)
         float m_senseTimer;
 
         public Mode Current { get; private set; } = Mode.Idle;
