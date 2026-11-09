@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -11,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     static class FishTest
     {
-        public static void Register() => TestRunner.Register("vh_fishtest", "쉴 때 낚시 시험", () => TestKit.Flat(Run()), 600f);
+        public static void Register() => TestRunner.Register("vh_fishtest", "쉴 때 낚시 시험", () => TestKit.Flat(Run()), 1200f);
 
         static readonly string[] Foods = { "Raspberry", "Blueberries", "Mushroom", "MushroomYellow", "Cloudberry", "Honey", "CookedMeat" };
 
@@ -119,6 +120,50 @@ namespace ValheimHelper
             checks.Add($"물고기가 상자·짐에 들어옴 (농어 {fish0} → {fish1}, 낚은 수 {job.Got})", job.Got >= 1 && fish1 >= fish0 + job.Got);
             checks.Add($"낚은 만큼만 미끼를 씀 (미끼 {bait0} → {bait1})", bait1 == bait0 - job.Got);
             checks.Add($"낚싯대는 상자로 돌아옴 (상자 {GatherTest.CountBase(w.Home, "FishingRod")})", GatherTest.CountBase(w.Home, "FishingRod") == 1);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && w.Floki.Ai.Job == null, 120f);
+            yield return Cook(w, checks, made);
+        }
+
+        static bool Cooking(TestKit.World w) => w.Ragnar.Ai.Job is PlanJob a && a.Goal != null && a.Goal.Item == "FishCooked"
+            || w.Floki.Ai.Job is PlanJob b && b.Goal != null && b.Goal.Item == "FishCooked";
+
+        /// <summary>요청 나-2: 상자에 농어가 있고 화로·조리대(+손질 제작대)가 있으면 쉴 때 먹거리가 손질(FishRaw)·굽기(FishCooked)를 계획해 상자에 넣는다.</summary>
+        static IEnumerator Cook(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
+        {
+            RecipeBook book = Recipes.Book();
+            foreach (var r in book.RecipesFor("FishRaw"))
+                TestRunner.Log($"FishRaw 제작법: {r.OutputAmount}개 ← {string.Join(", ", r.Inputs.ConvertAll(i => i.Item + " " + i.Amount).ToArray())} @ {r.Station ?? "손"}");
+            foreach (var r in book.ProcessesFor("FishCooked")) TestRunner.Log($"FishCooked 가공: {r.Input} @ {r.Station}");
+            var station = new List<GameObject>();
+            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+            Vector3 at = GatherTest.Ground(w.Home + right * 6f);
+            foreach (string pre in new[] { "fire_pit", "piece_cookingstation" }) station.Add(Object.Instantiate(ZNetScene.instance.GetPrefab(pre), at, Quaternion.identity));
+            foreach (var r in book.RecipesFor("FishRaw"))
+                if (r.Station != null)
+                    foreach (GameObject go in ZNetScene.instance.m_prefabs)
+                    {
+                        CraftingStation cs = go != null ? go.GetComponent<CraftingStation>() : null;
+                        if (cs == null || cs.m_name != r.Station) continue;
+                        station.Add(Object.Instantiate(go, GatherTest.Ground(w.Home - right * 6f), Quaternion.identity));
+                        break;
+                    }
+            made.AddRange(station);
+            TestKit.ClearBaseStock(w, "FishRaw", "FishCooked", "Wood");
+            TestKit.PutInChest(w.Chest, "Fish1", 6);
+            TestKit.PutInChest(w.Chest, "Wood", 20);
+            foreach (string f in Departures.FoodRank()) Departures.TestSkip(f, f != "FishCooked");
+            yield return new WaitForSeconds(2f);
+            TestKit.ClearBaseStock(w, Foods);
+            int fish0 = All(w, "Fish1");
+            float t0 = Time.time;
+            yield return TestKit.WaitFor(() => Cooking(w), 70f);
+            checks.Add($"상자에 농어·조리대 → 쉬던 일꾼이 물고기 구우러 감 ({Time.time - t0:0}초)", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "FishCooked") >= 2, 400f);
+            checks.Add($"구운 물고기가 상자에 들어옴 ({GatherTest.CountBase(w.Home, "FishCooked")}, {TestKit.Waited:0}초)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => !Cooking(w), 200f);
+            checks.Add($"상자 농어를 씀 (농어 {fish0} → {All(w, "Fish1")})", All(w, "Fish1") < fish0);
+            foreach (var g in station) if (g != null) ZNetScene.instance.Destroy(g);
         }
     }
 }
