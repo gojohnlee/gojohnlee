@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
@@ -10,6 +11,7 @@ namespace ValheimHelper
     /// 2) "!계속채워 나무 n" → 대답하고 몇 초 안에 실제로 출발(1분 기다리지 않음).
     /// 3) 음식이 없고 조리대·화로가 있으면 쉬는 일꾼이 멧돼지를 사냥해 구워 둔다.
     /// 4) 조리대가 없으면 라즈베리를 따 온다.
+    /// 5) 음식이 넉넉해도 !밭으로 정한 밭에 빈자리·씨앗이 있으면 쉬는 일꾼이 스스로 심는다.
     /// </summary>
     static class ChoresTest
     {
@@ -97,6 +99,42 @@ namespace ValheimHelper
             checks.Add($"음식 없음 → 쉬던 일꾼이 라즈베리 따러 감 ({Time.time - t0:0}초)", TestKit.Ok);
             yield return TestKit.WaitFor(() => Count(w, "Raspberry") >= 5, 180f);
             checks.Add($"라즈베리가 거점 상자에 들어옴 ({Count(w, "Raspberry")}, {TestKit.Waited:0}초)", TestKit.Ok);
+
+            // 5) 쉴 때 밭일
+            yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 180f);
+            yield return Farm(w, checks);
+        }
+
+        static IEnumerator Farm(TestKit.World w, GatherTest.Checks checks)
+        {
+            TestKit.PutInChest(w.Chest, "Honey", 20); // 먹거리 말고 밭일이 고르게
+            TestKit.ClearBaseStock(w, Crops.Cultivator, "CarrotSeeds", "Carrot");
+            TestKit.PutInChest(w.Chest, "CarrotSeeds", 6);
+            TestKit.PutInChest(w.Chest, Crops.Cultivator, 1);
+            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+            Vector3 at = GatherTest.Ground(w.Home - right * 12f);
+            var field = new FarmField(at.x, at.z, 3);
+            FarmTest.Clean(field);
+            Brain.Farms.Set(field.X, field.Z, field.Radius);
+            FarmField booked = Brain.Farms.At(field.X, field.Z);
+            try
+            {
+                Departures.TestFarmNow();
+                float t0 = Time.time;
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job is FarmJob || w.Floki.Ai.Job is FarmJob, 70f);
+                checks.Add($"쉬던 일꾼이 스스로 밭일 시작 ({Time.time - t0:0}초)", TestKit.Ok);
+                if (!TestKit.Ok) yield break;
+                FarmJob job = (w.Ragnar.Ai.Job as FarmJob) ?? (w.Floki.Ai.Job as FarmJob);
+                yield return TestKit.WaitFor(() => job.Planted >= 3, 150f);
+                checks.Add($"밭에 심음 ({job.Planted}, {TestKit.Waited:0}초)", TestKit.Ok);
+                yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is FarmJob) && !(w.Floki.Ai.Job is FarmJob), 120f);
+                checks.Add($"밭일 끝나고 돌아옴 ({TestKit.Waited:0}초)", TestKit.Ok);
+            }
+            finally
+            {
+                FarmTest.Clean(field);
+                if (booked != null) Brain.Farms.Remove(booked.X, booked.Z);
+            }
         }
 
         static IEnumerator Meat(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)

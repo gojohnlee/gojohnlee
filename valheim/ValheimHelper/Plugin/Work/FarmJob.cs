@@ -59,6 +59,29 @@ namespace ValheimHelper
         /// </summary>
         public static FarmJob ForField(WorkerNpc npc, FarmField field) => new FarmJob(npc, field, PlanFor(npc, field, null), true);
 
+        /// <summary>심을 것이 있나(씨앗이 있어 계획에 든 작물).</summary>
+        public bool HasPlanting => m_todo.Count > 0;
+
+        /// <summary>쉴 때 스스로 한 밭일(Departures.IdleFarm): 거두기만일 때 "씨앗 없어"를 말하지 않음.</summary>
+        public bool Quiet;
+
+        /// <summary>그 밭의 지금 빈 자리 수(그 바이옴에서 자라는 가장 넓은 작물 간격·자라기 판정 Unusable 기준). 쉴 때 밭일이 헛걸음하지 않게.</summary>
+        internal static int FreeSpots(FarmField field)
+        {
+            int biome = Scout.BiomeAt(new Vector3(field.X, 0f, field.Z));
+            Crop widest = null;
+            foreach (var c in Crops.All) if (Farm.CanGrow(c, biome) && (widest == null || c.GrowRadius > widest.GrowRadius)) widest = c;
+            if (widest == null) return 0;
+            int free = 0;
+            foreach (var s in Farm.Spots(field.X, field.Z, field.Radius, Farm.Spacing(widest.GrowRadius)))
+            {
+                Vector3 p = new Vector3(s.X, 0f, s.Z);
+                p.y = ZoneSystem.instance.GetGroundHeight(p);
+                if (Unusable(p, widest) == null) free++;
+            }
+            return free;
+        }
+
         /// <summary>"!당근 10"(출발 판단 농사 연결): 거두기 + 그 물건이 나오는 작물을 Farm.Plan으로(씨앗 유지 포함).</summary>
         public static FarmJob ForWant(WorkerNpc npc, FarmField field, string item, int amount, out FarmPlan plan)
         {
@@ -164,7 +187,7 @@ namespace ValheimHelper
             }
             if (m_total == 0)
             {
-                m_npc.Say("farmNoSeed");
+                if (!Quiet || !m_harvest) m_npc.Say("farmNoSeed"); // 쉴 때 거두기만 하러 가면 씨앗 없다는 말은 안 함
                 Go(m_harvest ? Step.Go : Step.Store); // 경작기는 도로 넣는다(거두기는 그대로 간다)
                 return true;
             }

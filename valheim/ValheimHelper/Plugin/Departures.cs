@@ -748,7 +748,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn) IdleFood(npc);
+                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc)) IdleFarm(npc);
             }
         }
 
@@ -833,6 +833,43 @@ namespace ValheimHelper
                 string label = GatherJob.ItemLabel(item);
                 npc.Ai.StartJob(new PlanJob(npc, plan, label) { FromIdle = true, Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = item, Amount = IdleMeatAmount } });
                 npc.Say("idleMeat", new Dictionary<string, string> { ["item"] = label, ["n"] = IdleMeatAmount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString() });
+                return true;
+            }
+            return false;
+        }
+
+        // ---- 쉴 때 밭일 (사용자 11-09 "밭도 알아서") ----
+
+        /// <summary>밭마다 다음에 볼 때(Time.time). 볼 게 없었어도 10분은 다시 안 봄 — 거둘 것·빈자리 세기가 무겁지 않게, 헛걸음 되풀이 없게.</summary>
+        static readonly Dictionary<string, float> s_farmNext = new Dictionary<string, float>();
+        internal const float IdleFarmEvery = 600f;
+
+        internal static void TestFarmNow() => s_farmNext.Clear();
+
+        /// <summary>
+        /// 쉬는 일꾼(낮): !밭으로 정한 밭에 다 자란 것이 있거나, 빈자리가 있고 상자에 심을 씨앗이 있으면 "!밭"과 같은 일(거두고 Farm.Fill만큼 심기)을 한다.
+        /// 다른 일꾼이 그 밭일 중이면 건너뜀. 시작했으면 true.
+        /// </summary>
+        internal static bool IdleFarm(WorkerNpc npc)
+        {
+            if (EnvMan.IsNight() || Brain.Farms.Fields.Count == 0) return false;
+            foreach (var field in new List<FarmField>(Brain.Farms.Fields))
+            {
+                string key = $"{field.X:0},{field.Z:0}";
+                if (s_farmNext.TryGetValue(key, out float next) && Time.time < next) continue;
+                bool taken = false;
+                foreach (var n in WorkerNpc.All) if (n.Ai.Job is FarmJob fj && fj.Field.Contains(field.X, field.Z)) taken = true;
+                if (taken) continue;
+                s_farmNext[key] = Time.time + IdleFarmEvery;
+                int ripe = FarmJob.Ripe(field).Count;
+                int free = FarmJob.FreeSpots(field);
+                FarmJob job = FarmJob.ForField(npc, field);
+                job.Quiet = true;
+                bool plant = free > 0 && job.HasPlanting;
+                Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 밭 ({field.X:0},{field.Z:0}): 다 자람 {ripe}, 빈자리 {free}, 씨앗 계획 {job.HasPlanting} → {(ripe > 0 || plant ? "감" : "볼 것 없음")}");
+                if (ripe == 0 && !plant) continue;
+                if (!Commands.StartFarm(npc, field, false, job)) continue;
+                npc.Say("idleFarm", new Dictionary<string, string> { ["ripe"] = ripe.ToString(), ["free"] = free.ToString() });
                 return true;
             }
             return false;

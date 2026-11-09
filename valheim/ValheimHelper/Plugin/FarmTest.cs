@@ -221,7 +221,7 @@ namespace ValheimHelper
         }
 
         /// <summary>밭(반경 +1m)의 새싹·당근을 지운다(시험 전·후).</summary>
-        static void Clean(FarmField f)
+        internal static void Clean(FarmField f)
         {
             var big = new FarmField(f.X, f.Z, f.Radius + 1);
             foreach (var p in Plants(big)) ZNetScene.instance.Destroy(p.gameObject);
