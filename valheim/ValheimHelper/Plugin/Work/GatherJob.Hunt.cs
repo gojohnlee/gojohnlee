@@ -18,7 +18,7 @@ namespace ValheimHelper
             bool canShoot = !m_bowFailed && m_npc.ShootingBow() != null;
             foreach (Character c in Character.GetAllCharacters())
             {
-                if (c == null || c.IsDead() || c.IsTamed() || c is WorkerNpc || !Prey.Is(Item, c, canShoot)) continue;
+                if (c == null || c.IsDead() || c.IsTamed() || TameJob.Taming(c) || c is WorkerNpc || !Prey.Is(Item, c, canShoot)) continue;
                 if (m_huntSkip.TryGetValue(c, out float until) && Time.time < until) continue;
                 Vector3 p = c.transform.position;
                 float d = Utils.DistanceXZ(p, me);

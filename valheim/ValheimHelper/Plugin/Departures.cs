@@ -748,7 +748,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc) && !IdleHoney(npc)) IdleFeed(npc);
+                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc) && !IdleHoney(npc) && !IdleFeed(npc)) IdleTame(npc);
             }
         }
 
@@ -1000,6 +1000,28 @@ namespace ValheimHelper
             if (job == null) return false;
             npc.Ai.StartJob(job);
             npc.Say("idleFeed", new Dictionary<string, string>());
+            return true;
+        }
+
+        // ---- 쉴 때 야생 가축 길들이기 (사용자 11-09 요청 다-3) ----
+
+        /// <summary>일꾼 집마다 다음에 볼 때(Time.time). 우리 먹이와 같게 1분 간격(배부름 600초 — 배고파지면 다시 줌).</summary>
+        static readonly Dictionary<string, float> s_tameNext = new Dictionary<string, float>();
+
+        internal static void TestTameNow() => s_tameNext.Clear();
+
+        /// <summary>쉬는 일꾼(낮): 집 TameJob.TameFar 안 배고픈 야생 짐승에게 "가축" 상자 먹이를 떨궈 길들이러 간다. 다른 일꾼이 길들이는 중이면 건너뜀. 시작했으면 true.</summary>
+        internal static bool IdleTame(WorkerNpc npc)
+        {
+            if (EnvMan.IsNight()) return false;
+            string key = $"{npc.Home.x:0},{npc.Home.z:0}";
+            if (s_tameNext.TryGetValue(key, out float next) && Time.time < next) return false;
+            foreach (var n in WorkerNpc.All) if (n.Ai.Job is TameJob) return false;
+            s_tameNext[key] = Time.time + IdleFeedEvery;
+            TameJob job = TameJob.For(npc);
+            if (job == null) return false;
+            npc.Ai.StartJob(job);
+            npc.Say("idleTame", new Dictionary<string, string>());
             return true;
         }
 

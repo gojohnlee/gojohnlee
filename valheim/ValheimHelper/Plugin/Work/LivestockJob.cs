@@ -49,7 +49,7 @@ namespace ValheimHelper
 
         internal static LivestockJob For(WorkerNpc npc) { var f = Plan(npc.Home); return f.Count > 0 ? new LivestockJob(npc, f) : null; }
 
-        static HashSet<string> FoodsOf(Character c)
+        internal static HashSet<string> FoodsOf(Character c)
         {
             var set = new HashSet<string>();
             MonsterAI ai = c.GetComponent<MonsterAI>();
@@ -57,7 +57,7 @@ namespace ValheimHelper
             return set;
         }
 
-        static bool FoodOnGround(Vector3 at, HashSet<string> foods)
+        internal static bool FoodOnGround(Vector3 at, HashSet<string> foods)
         {
             foreach (Collider col in Physics.OverlapSphere(at, 10f, LayerMask.GetMask("item")))
             {
@@ -67,7 +67,7 @@ namespace ValheimHelper
             return false;
         }
 
-        static ItemDrop.ItemData FoodIn(Inventory inv, HashSet<string> foods)
+        internal static ItemDrop.ItemData FoodIn(Inventory inv, HashSet<string> foods)
         {
             foreach (var it in inv.GetAllItems()) if (it.m_dropPrefab != null && foods.Contains(it.m_dropPrefab.name)) return it;
             return null;

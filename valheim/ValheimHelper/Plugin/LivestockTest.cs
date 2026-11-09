@@ -142,6 +142,29 @@ namespace ValheimHelper
             int left = 0;
             foreach (var it in pen.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Raspberry") left += it.m_stack;
             checks.Add($"먹이 주기 끝, 가축 상자 산딸기 5→{left}", TestKit.Ok && left == 4);
+
+            // 5) 길들이기(요청 다-3): 집 30m 야생 멧돼지 → 쉬던 일꾼이 가축 상자 산딸기를 곁에 떨구고 시야 밖에서 지켜봄 → 먹고 길들이기가 줄고, 일꾼이 안 잡음
+            var wildPig = Spawn("Boar", home + side * 30f, made);
+            var wtm = wildPig.GetComponent<Tameable>();
+            yield return new WaitForSeconds(1f);
+            float wl0 = TameLeft(wildPig);
+            checks.Add("야생 멧돼지 배고프고 아직 안 길들임", !wildPig.IsTamed() && wtm.IsHungry() && !TameJob.Taming(wildPig));
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 30f);
+            Departures.TestTameNow();
+            checks.Add("쉬던 일꾼이 길들이러 감", Departures.IdleTame(w.Ragnar) && w.Ragnar.Ai.Job is TameJob);
+            yield return TestKit.WaitFor(() => wildPig == null || !wtm.IsHungry(), 90f);
+            checks.Add($"야생 멧돼지가 떨군 먹이를 먹음 ({TestKit.Waited:0}초)", wildPig != null && !wtm.IsHungry());
+            yield return new WaitForSeconds(7f);
+            if (wildPig == null) { checks.Add("길들이는 멧돼지 살아 있음", false); yield break; }
+            float wl1 = TameLeft(wildPig);
+            TestRunner.Log($"길들이기 남은 시간 {wl0:0}→{wl1:0}초, 경보 {wildPig.GetComponent<MonsterAI>().IsAlerted()}, 일꾼까지 {Vector3.Distance(wildPig.transform.position, w.Ragnar.transform.position):0}m");
+            checks.Add("길들이기 시간이 줄어듦(Taming)", wl1 < wl0 && TameJob.Taming(wildPig));
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is TameJob), 90f);
+            int left2 = 0;
+            foreach (var it in pen.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Raspberry") left2 += it.m_stack;
+            checks.Add($"길들이기 끝, 상자 산딸기 4→{left2}", TestKit.Ok && left2 == 3);
+            Departures.TestTameNow();
+            checks.Add("배부른 길들이는 멧돼지는 다시 안 감, 살아 있음", wildPig != null && !wildPig.IsDead() && !Departures.IdleTame(w.Ragnar));
         }
     }
 }

@@ -525,6 +525,7 @@ namespace ValheimHelper
         bool IsFoe(Character c)
         {
             if (c == null || c == m_npc || c.IsDead() || c.IsPlayer() || c is WorkerNpc || c.IsTamed()) return false;
+            if (TameJob.Taming(c) && c.GetComponent<MonsterAI>()?.GetTargetCreature() != m_npc) return false; // 길들이는 중(요청 다-3): 덤빌 때만 맞섬
             if (c.GetFaction() == Character.Faction.AnimalsVeg) return false; // 멧돼지 등: 사냥은 ⑧
             if (c.GetBaseAI() is AnimalAI) return false; // 사슴·토끼: AnimalAI는 도망만 하고 공격 없음(사슴 진영이 AnimalsVeg가 아니라 도망치던 것)
             if (!BaseAI.IsEnemy(m_npc, c)) return false;
