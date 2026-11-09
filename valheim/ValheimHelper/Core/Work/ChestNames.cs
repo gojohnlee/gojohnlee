@@ -4,7 +4,7 @@ namespace ValheimHelper.Core.Work
 {
     /// <summary>상자 이름이 가리키는 것(I-2, 사용자 결정 2026-10-22). 역할은 겹칠 수 있다.</summary>
     [Flags]
-    public enum ChestTags { None = 0, Gear = 1, Food = 2, Mats = 4, Private = 8 }
+    public enum ChestTags { None = 0, Gear = 1, Food = 2, Mats = 4, Private = 8, Livestock = 16 }
 
     /// <summary>
     /// 상자 이름(ChestTag) → 역할. 이름 안에 글자가 어디든 들어 있으면 맞음(부분 문자열, 대소문자 무시, 낱말 단위 아님).
@@ -15,6 +15,8 @@ namespace ValheimHelper.Core.Work
         static readonly string[] PrivateWords = { "개인", "보물", "private", "personal" };
         static readonly string[] GearWords = { "장비", "도구", "gear", "equipment", "tool" };
         static readonly string[] FoodWords = { "음식", "미드", "food", "mead" };
+        /// <summary>가축 우리 먹이 상자(사용자 11-09 요청 다): 일반 일엔 손대지 않고 우리 먹이 주기(LivestockJob)만 꺼냄.</summary>
+        static readonly string[] LivestockWords = { "가축", "livestock" };
         static readonly string[] MatsWords = { "재료", "material", "mats" };
 
         static bool Has(string name, string[] words)
@@ -27,6 +29,7 @@ namespace ValheimHelper.Core.Work
         {
             if (string.IsNullOrEmpty(name)) return ChestTags.None;
             if (Has(name, PrivateWords)) return ChestTags.Private;
+            if (Has(name, LivestockWords)) return ChestTags.Livestock;
             var t = ChestTags.None;
             if (Has(name, GearWords)) t |= ChestTags.Gear;
             if (Has(name, FoodWords)) t |= ChestTags.Food;
@@ -38,19 +41,22 @@ namespace ValheimHelper.Core.Work
         /// 거점 상자들의 태그로 그 역할에 쓸 상자 고르기. role이 None이면 역할 구분 없이(손대지 않는 것만 뺌).
         /// 그 역할 상자가 하나라도 있으면 그것들만, 없으면 일반(이름 없음·안 맞음) 상자, 일반도 없으면 손대지 않는 것 빼고 전부.
         /// </summary>
+        /// <summary>일반 일(꺼내기·넣기·정리)에 손대지 않는 상자.</summary>
+        public const ChestTags Untouched = ChestTags.Private | ChestTags.Livestock;
+
         public static bool[] Select(ChestTags[] tags, ChestTags role)
         {
             var ok = new bool[tags.Length];
             bool anyRole = false, anyGeneral = false;
             for (int i = 0; i < tags.Length; i++)
             {
-                if ((tags[i] & ChestTags.Private) != 0) continue;
+                if ((tags[i] & Untouched) != 0) continue;
                 if (role != ChestTags.None && (tags[i] & role) != 0) anyRole = true;
                 if (tags[i] == ChestTags.None) anyGeneral = true;
             }
             for (int i = 0; i < tags.Length; i++)
             {
-                if ((tags[i] & ChestTags.Private) != 0) continue;
+                if ((tags[i] & Untouched) != 0) continue;
                 if (role == ChestTags.None) ok[i] = true;
                 else if (anyRole) ok[i] = (tags[i] & role) != 0;
                 else if (anyGeneral) ok[i] = tags[i] == ChestTags.None;

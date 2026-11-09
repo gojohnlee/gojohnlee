@@ -748,7 +748,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc)) IdleHoney(npc);
+                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc) && !IdleHoney(npc)) IdleFeed(npc);
             }
         }
 
@@ -977,6 +977,29 @@ namespace ValheimHelper
             if (hives.Count == 0) return false;
             npc.Ai.StartJob(new HoneyJob(npc, hives));
             npc.Say("idleHoney", new Dictionary<string, string>());
+            return true;
+        }
+
+        // ---- 쉴 때 우리 먹이 (사용자 11-09 요청 다-2) ----
+
+        /// <summary>일꾼 집마다 다음에 볼 때(Time.time). 배고파지는 600초보다 짧게 1분 간격.</summary>
+        static readonly Dictionary<string, float> s_feedNext = new Dictionary<string, float>();
+        const float IdleFeedEvery = 60f;
+
+        internal static void TestFeedNow() => s_feedNext.Clear();
+
+        /// <summary>쉬는 일꾼(낮): "가축" 상자 둘레의 배고픈 길들인 가축에게 상자 먹이를 떨궈 주러 간다(LivestockJob). 다른 일꾼이 먹이 주는 중이면 건너뜀. 시작했으면 true.</summary>
+        internal static bool IdleFeed(WorkerNpc npc)
+        {
+            if (EnvMan.IsNight()) return false;
+            string key = $"{npc.Home.x:0},{npc.Home.z:0}";
+            if (s_feedNext.TryGetValue(key, out float next) && Time.time < next) return false;
+            foreach (var n in WorkerNpc.All) if (n.Ai.Job is LivestockJob) return false;
+            s_feedNext[key] = Time.time + IdleFeedEvery;
+            LivestockJob job = LivestockJob.For(npc);
+            if (job == null) return false;
+            npc.Ai.StartJob(job);
+            npc.Say("idleFeed", new Dictionary<string, string>());
             return true;
         }
 

@@ -54,7 +54,9 @@ namespace ValheimHelper
         /// <summary>남이 지은 개인·보물 상자(내 제작에 안 씀, 기본안).</summary>
         static bool OthersPrivate(ZDO zdo, long playerID)
         {
-            if ((ChestTagReader.Read(zdo) & ChestTags.Private) == 0) return false;
+            ChestTags tag = ChestTagReader.Read(zdo);
+            if ((tag & ChestTags.Livestock) != 0) return true; // 가축 먹이는 제작에 안 씀
+            if ((tag & ChestTags.Private) == 0) return false;
             long creator = zdo.GetLong(ZDOVars.s_creator);
             return creator != 0 && creator != playerID;
         }

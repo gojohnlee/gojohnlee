@@ -76,7 +76,7 @@ namespace ValheimHelper
             var provider = Chests.TagProvider;
             foreach (var zdo in Senses.Nearby(home, Chests.BaseRange, Chests.IsBaseChest))
             {
-                if (provider != null && (provider(zdo) & ChestTags.Private) != 0) continue;
+                if (provider != null && (provider(zdo) & ChestNames.Untouched) != 0) continue;
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 Container c = view != null ? view.GetComponent<Container>() : null;
                 if (c != null && !Chests.InUse(c) && Tidy.Count(c, item) > 0) list.Add(c);
@@ -92,7 +92,7 @@ namespace ValheimHelper
             var provider = Chests.TagProvider;
             foreach (var zdo in Senses.Nearby(home, Chests.BaseRange, Chests.IsBaseChest))
             {
-                if (provider != null && (provider(zdo) & ChestTags.Private) != 0) continue;
+                if (provider != null && (provider(zdo) & ChestNames.Untouched) != 0) continue;
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 Container c = view != null ? view.GetComponent<Container>() : null;
                 if (c != null) n += Tidy.Count(c, item);

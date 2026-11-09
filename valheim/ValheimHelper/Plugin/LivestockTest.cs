@@ -118,6 +118,30 @@ namespace ValheimHelper
             TestRunner.Log($"따라오기: {d0:0}m → {d1:0.0}m");
             checks.Add("SetFollowTarget(일꾼)으로 따라옴(5m 안)", d1 < 5f);
             mai.SetFollowTarget(null);
+
+            // 4) 우리 먹이(요청 다-2): "가축" 상자 둘레 배고픈 길들인 멧돼지 → 쉬던 일꾼이 상자 산딸기 1개를 곁에 떨궈 먹임
+            Vector3 penAt = GatherTest.Ground(home - side * 8f);
+            w.Player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), penAt, w.Player.transform.rotation, doAttack: false);
+            Container pen = GatherTest.ChestAt(penAt);
+            checks.Add("가축 상자 지음", pen != null);
+            if (pen == null) yield break;
+            made.Add(pen.gameObject);
+            pen.GetComponent<ZNetView>().GetZDO().Set("ChestName", "가축");
+            TestKit.PutInChest(pen, "Raspberry", 5);
+            var pig = Spawn("Boar", penAt - side * 4f, made);
+            var ptm = pig.GetComponent<Tameable>();
+            pig.GetComponent<MonsterAI>().MakeTame();
+            yield return new WaitForSeconds(1f);
+            checks.Add("우리 멧돼지 길들고 배고픔", pig.IsTamed() && ptm.IsHungry());
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 30f);
+            Departures.TestFeedNow();
+            checks.Add("쉬던 일꾼이 우리 먹이 주러 감", Departures.IdleFeed(w.Ragnar) && w.Ragnar.Ai.Job is LivestockJob);
+            yield return TestKit.WaitFor(() => pig == null || !ptm.IsHungry(), 60f);
+            checks.Add($"우리 멧돼지가 먹이를 먹음 ({TestKit.Waited:0}초)", pig != null && !ptm.IsHungry());
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is LivestockJob), 60f);
+            int left = 0;
+            foreach (var it in pen.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Raspberry") left += it.m_stack;
+            checks.Add($"먹이 주기 끝, 가축 상자 산딸기 5→{left}", TestKit.Ok && left == 4);
         }
     }
 }

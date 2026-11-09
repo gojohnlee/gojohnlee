@@ -37,7 +37,7 @@ namespace ValheimHelper
                 Container c = view != null ? view.GetComponent<Container>() : null;
                 if (c == null || Chests.InUse(c)) continue;
                 ChestTags tag = provider != null ? provider(zdo) : ChestTags.None;
-                if ((tag & ChestTags.Private) != 0) continue;
+                if ((tag & ChestNames.Untouched) != 0) continue;
                 chests.Add(c);
                 tags.Add(tag);
             }

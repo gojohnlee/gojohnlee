@@ -12,6 +12,8 @@ namespace ValheimHelper.Tests
         [InlineData("Food-Mats", ChestTags.Food | ChestTags.Mats)]
         [InlineData("재료", ChestTags.Mats)]
         [InlineData("개인_백산수", ChestTags.Private)]
+        [InlineData("가축 먹이", ChestTags.Livestock)]
+        [InlineData("Livestock", ChestTags.Livestock)]
         [InlineData("백산수개인", ChestTags.Private)]
         [InlineData("개인 장비", ChestTags.Private)]
         [InlineData("private food", ChestTags.Private)]
