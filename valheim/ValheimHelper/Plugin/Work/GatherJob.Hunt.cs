@@ -77,7 +77,7 @@ namespace ValheimHelper
                 return true;
             }
             if (InPlan) return false;
-            int left = Mathf.Max(1, Target - Delivered);
+            int left = Mathf.Max(1, Remaining());
             var cmd = new Core.Chat.ChatCommand { Kind = Core.Chat.CommandKind.Item, Item = Item, Amount = left };
             m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, WorkSaves.GatherItem(new Speaker("", ZDOID.None, ZDOID.None), cmd, ItemLabel(Item) + " " + left, ReadyWhen.GuardIdle)));
             m_guardQueued = true;

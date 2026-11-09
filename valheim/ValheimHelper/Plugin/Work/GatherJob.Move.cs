@@ -75,7 +75,19 @@ namespace ValheimHelper
         // ---- 공통 ----
 
         int Carried() => m_npc.CountItem(Item);
-        int Remaining() => Target - Delivered;
+        /// <summary>더 모을 수(들고 있는 것 포함 전). 같이 출발한 동료(Team)가 넣은 것·지금 들고 있는 것도 뺀다 — 합쳐 목표면 둘 다 복귀(사용자 11-09).</summary>
+        internal int Remaining()
+        {
+            int n = Target - Delivered;
+            if (Team != null)
+                foreach (var o in Team)
+                {
+                    if (o == this) continue;
+                    n -= o.Delivered;
+                    if (o.m_npc != null && !o.m_npc.IsDead() && o.m_npc.Ai.Job == o) n -= o.Carried();
+                }
+            return n;
+        }
         bool Full()
         {
             if (m_itemPrefab == null) m_itemPrefab = ObjectDB.instance.GetItemPrefab(Item);

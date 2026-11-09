@@ -49,6 +49,9 @@ namespace ValheimHelper
         /// </summary>
         public WorkItem Goal;
 
+        /// <summary>쉴 때 고기(Departures.IdleMeat)로 시작: 실패·막힌 단계가 있으면 그 물건은 10분 쉼(같은 실패를 되풀이하지 않게). 저장 안 함.</summary>
+        public bool FromIdle;
+
         public WorkItem ToWork() => new WorkItem
         {
             Kind = Goal.Kind, Resume = Goal.Resume, Label = Goal.Label, Item = Goal.Item, Amount = Goal.Amount, SetNo = Goal.SetNo,
@@ -221,6 +224,8 @@ namespace ValheimHelper
         {
             Plugin.Log.LogInfo($"{m_npc.NpcName} 계획 끝: 완료 {m_runner.Count(StepState.Done)}, 실패 {m_runner.Count(StepState.Failed)}, 막힘 {m_runner.Count(StepState.Blocked)}");
             // 설비만 없던 계획(StationsOnly): 할 수 있는 단계를 다 했으면 "재료는 모았는데 ○○이 없어"(구상서 6-1, 10-26)
+            if (FromIdle && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
+                Departures.RefillJobFailed(m_npc, Goal.Item, "idlePlan");
             var missing = m_runner.Plan.MissingStations;
             if (missing.Count > 0 && m_runner.Finished)
                 m_npc.Say("craft.missingDone", new Dictionary<string, string> { ["item"] = m_goal, ["station"] = Recipes.StationName(missing[0]) });

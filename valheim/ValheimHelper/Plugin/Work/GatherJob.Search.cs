@@ -17,7 +17,7 @@ namespace ValheimHelper
             if (Carried() >= Remaining())
             {
                 // 다 넣었는데 자기 통나무가 남아 다시 나왔다가 다 치움: 그만둔다
-                if (Carried() == 0) { m_npc.Say("gatherDone", Args(Delivered)); return false; }
+                if (Carried() == 0) { if (Team == null || Delivered > 0) m_npc.Say("gatherDone", Args(Delivered)); return false; } // 동료가 다 채워 빈손이면 말 없이
                 Go(Step.Return);
                 return true;
             }

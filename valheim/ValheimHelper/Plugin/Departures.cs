@@ -778,6 +778,7 @@ namespace ValheimHelper
         {
             int have = BaseFood(npc.Home);
             if (have >= IdleFoodBelow) return false;
+            if (IdleMeat(npc, have)) return true;
             foreach (string item in IdleFoods)
             {
                 if (RefillSkipped(item) || NightSkipped(item) || RefillBusy(item)) continue;
@@ -799,35 +800,72 @@ namespace ValheimHelper
             return false;
         }
 
-        // ---- 같이 캐기 (사용자 11-09: "나무 캐 와" 하면 한 명만 가고 하나는 멍하니) ----
+        /// <summary>쉴 때 고기(사용자 11-09 ㄴ): 사냥해서 구워 둘 것(앞에서부터)과 한 번에 만들 수.</summary>
+        internal static readonly string[] IdleMeats = { "CookedMeat", "CookedDeerMeat" };
+        internal const int IdleMeatAmount = 6;
 
         /// <summary>
-        /// 이름 없이 시킨 채집: 그 일을 맡은 일꾼(lead)이 바로 떠났으면 쉬는 다른 일꾼도 같은 물건을 나눠 맡는다(각자 따로 — 일꾼끼리 같이 가지는 않음, 6절).
-        /// 동료는 묻지 않고 출발 판단이 Go일 때만 간다. 나눈 몫만큼 lead의 목표가 준다.
+        /// 쉬는 일꾼: 낮이고 제작 계획이 끝까지 되면(조리대·화로가 거점에 있음 — 없으면 Partial) 사냥해서 구워 둔다.
+        /// 사냥·채집 단계마다 출발 판단이 Go이고 혼자 약했던 사냥감이 아닐 때만(무기가 안 맞으면 안 감, 묻지 않음). 안 되면 그 물건은 10분 쉬고, 계획이 실패로 끝나도 10분 쉼.
+        /// </summary>
+        static bool IdleMeat(WorkerNpc npc, int have)
+        {
+            if (!Features.RunPlans || EnvMan.IsNight()) return false;
+            RecipeBook book = Recipes.Book();
+            foreach (string item in IdleMeats)
+            {
+                if (RefillSkipped(item) || RefillBusy(item)) continue;
+                if (ObjectDB.instance == null || ObjectDB.instance.GetItemPrefab(item) == null) continue;
+                if (book.RecipesFor(item).Count == 0 && book.ProcessesFor(item).Count == 0) continue;
+                Plan plan = PlanFor(npc, new List<Ingredient> { new Ingredient(item, IdleMeatAmount) });
+                string why = plan.Steps.Count == 0 ? "단계 없음" : plan.Partial ? "설비·출처 없음" : plan.TooLong ? "너무 김" : null;
+                if (why == null)
+                    foreach (var st in plan.Steps)
+                    {
+                        if (st.Kind == StepKind.Farm) { why = "밭 재료"; break; }
+                        if (st.Kind != StepKind.Gather && st.Kind != StepKind.Hunt) continue;
+                        DepartureResult j = JudgeStep(npc, st.Item, st.Amount);
+                        if (j == null || j.Action != DepartAction.Go) { why = $"{st.Item} 판단 {(j != null ? j.Action.ToString() : "방법 없음")}"; break; }
+                        if (GatherJob.WaysFor(npc, st.Item).Contains(ToolKind.Hunt) && HuntWeak(npc, st.Item)) { why = $"{st.Item} 혼자 약함"; break; }
+                    }
+                Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 고기 {item} {IdleMeatAmount}(상자 음식 {have}): 단계 {plan.Steps.Count}, {plan.Seconds:0}초 → {why ?? "감"}");
+                if (why != null) { s_refillSkipUntil[item] = Time.time + 600f; continue; }
+                string label = GatherJob.ItemLabel(item);
+                npc.Ai.StartJob(new PlanJob(npc, plan, label) { FromIdle = true, Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = item, Amount = IdleMeatAmount } });
+                npc.Say("idleMeat", new Dictionary<string, string> { ["item"] = label, ["n"] = IdleMeatAmount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString() });
+                return true;
+            }
+            return false;
+        }
+
+        // ---- 같이 캐기 (사용자 11-09: "나무 캐 와" 하면 한 명만 가고 하나는 멍하니 → 둘이 출발하면 합쳐서 목표면 복귀) ----
+
+        /// <summary>
+        /// 이름 없이 시킨 채집: 그 일을 맡은 일꾼(lead)이 바로 떠났으면 그 순간 쉬던 다른 일꾼도 같은 물건을 캐러 간다(각자 따로 다님 — 일꾼끼리 같이 가지는 않음, 9절).
+        /// 목표는 나누지 않고 같이 센다(GatherJob.Team): 둘이 넣은 것 + 들고 있는 것이 목표면 둘 다 복귀. 나중에 쉬게 된 일꾼은 끼지 않음(자기 할 일).
+        /// 동료는 묻지 않고 출발 판단이 Go일 때만 간다.
         /// </summary>
         internal static void ShareGather(ChatCommand cmd, WorkerNpc lead)
         {
-            if (!ChoresOn || !(lead.Ai.Job is GatherJob g) || g.Item != cmd.Item || g.FromRefill || g.Delivered > 0) return;
-            var helpers = new List<WorkerNpc>();
-            foreach (var n in WorkerNpc.All) if (n != lead && FreeForChores(n)) helpers.Add(n);
-            if (helpers.Count == 0 || g.Target < 2) return;
-            int share = g.Target / (helpers.Count + 1);
-            if (share < 1) { helpers.RemoveRange(g.Target - 1, helpers.Count - (g.Target - 1)); share = 1; }
-            foreach (var n in helpers)
+            if (!ChoresOn || !(lead.Ai.Job is GatherJob g) || g.Item != cmd.Item || g.FromRefill || g.Delivered > 0 || g.Target < 2) return;
+            foreach (var n in new List<WorkerNpc>(WorkerNpc.All))
             {
+                if (n == lead || !FreeForChores(n)) continue;
                 HashSet<ToolKind> ways = GatherJob.WaysFor(n, cmd.Item);
                 if (ways.Count == 0) continue;
-                var c = new ChatCommand { Kind = CommandKind.Item, Item = cmd.Item, Amount = share };
+                var c = new ChatCommand { Kind = CommandKind.Item, Item = cmd.Item, Amount = g.Target };
                 DepartureInput input = Input(n, c, ways, true);
                 input.Stock = 0;
                 DepartureResult r = Departure.Judge(input);
-                Plugin.Log.LogInfo($"{n.NpcName} 같이 캐기 {cmd.Item} {share} ({lead.NpcName} 몫 {g.Target}): {r.Action} {r.Question} ({r.Reason})");
+                Plugin.Log.LogInfo($"{n.NpcName} 같이 캐기 {cmd.Item} {g.Target} ({lead.NpcName}와 합쳐서): {r.Action} {r.Question} ({r.Reason})");
                 if (r.Action != DepartAction.Go) continue;
-                var job = new GatherJob(n, cmd.Item, share, ways);
+                var job = new GatherJob(n, cmd.Item, g.Target, ways);
                 foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
-                g.Target -= share;
+                if (g.Team == null) g.Team = new List<GatherJob> { g };
+                g.Team.Add(job);
+                job.Team = g.Team;
                 n.Ai.StartJob(job);
-                n.Say("gatherHelp", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = share.ToString() });
+                n.Say("gatherHelp", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = g.Target.ToString(), ["partner"] = lead.NpcName });
             }
         }
 

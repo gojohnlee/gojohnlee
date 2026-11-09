@@ -15,7 +15,9 @@ namespace ValheimHelper
         enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, GoCrypt, Approach, Work, Hunt, Collect, Return, Deposit }
 
         public readonly string Item;
-        public int Target; // 쉬는 동료가 나눠 가면 줄어듦(Departures.ShareGather)
+        public readonly int Target;
+        /// <summary>같이 출발한 일꾼들의 같은 물건 일(자기 포함, Departures.ShareGather). 목표는 모두 같은 수, 합쳐서 채우면 끝. 혼자면 null. 저장 안 함.</summary>
+        public List<GatherJob> Team;
         public int Delivered { get; private set; }
         public string StepName => m_step.ToString();
         /// <summary>시험용: 가려고 고른 구역.</summary>
@@ -476,9 +478,15 @@ namespace ValheimHelper
             }
             Delivered += moved;
             Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} {moved}개 넣음 ({Delivered}/{Target}) 상자 {m_chest.transform.position:F1} 집에서 {Utils.DistanceXZ(m_npc.Home, m_chest.transform.position):0}m");
-            if (Delivered >= Target && !OwnLog(out _)) // 자기 통나무가 남았으면 다시 나가 마저 쪼갠다(사용자 11-01)
+            if (Remaining() <= 0 && !OwnLog(out _)) // 자기 통나무가 남았으면 다시 나가 마저 쪼갠다(사용자 11-01). 같이 출발했으면 둘이 넣은 합으로
             {
-                m_npc.Say("gatherDone", Args(Delivered));
+                if (Team == null) m_npc.Say("gatherDone", Args(Delivered));
+                else if (!Team.Exists(o => o != this && o.m_npc != null && !o.m_npc.IsDead() && o.m_npc.Ai.Job == o))
+                {
+                    int all = 0;
+                    foreach (var o in Team) all += o.Delivered;
+                    m_npc.Say("gatherDone", Args(all)); // 같이 출발: 마지막에 넣은 쪽이 합을 말함
+                }
                 return false;
             }
             if (Carried() > 0) return Fail("chestFull");

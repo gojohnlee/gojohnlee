@@ -78,7 +78,7 @@ namespace ValheimHelper
         {
             if (job is GatherJob g)
             {
-                int left = Mathf.Max(1, g.Target - g.Delivered);
+                int left = Mathf.Max(1, g.Remaining()); // 같이 출발한 동료 몫은 빼고(사용자 11-09)
                 var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = g.Item, Amount = left, Label = GatherJob.ItemLabel(g.Item) + " " + left, Stuck = g.StuckSave, PortalTag = g.PortalCarryTag };
                 if (GoalPos(g) != Vector3.zero) { w.HasZone = true; w.Zone = GoalZone(g); }
                 return w;

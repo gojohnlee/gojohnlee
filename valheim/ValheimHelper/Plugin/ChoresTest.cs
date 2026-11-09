@@ -6,9 +6,10 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_chorestest (사용자 11-09 "극초반 좀 더 자유롭게"):
-    /// 1) 이름 없이 "!나무 10" → 쉬는 두 일꾼이 나눠 캔다(목표 합 10).
+    /// 1) 이름 없이 "!나무 10" → 쉬던 두 일꾼이 같이 출발, 둘이 합쳐 10개면 둘 다 복귀(나무 10~ 조금 넘게).
     /// 2) "!계속채워 나무 n" → 대답하고 몇 초 안에 실제로 출발(1분 기다리지 않음).
-    /// 3) 거점 음식 상자에 먹을 것이 없으면 쉬는 일꾼이 스스로 라즈베리를 따 온다.
+    /// 3) 음식이 없고 조리대·화로가 있으면 쉬는 일꾼이 멧돼지를 사냥해 구워 둔다.
+    /// 4) 조리대가 없으면 라즈베리를 따 온다.
     /// </summary>
     static class ChoresTest
     {
@@ -43,6 +44,8 @@ namespace ValheimHelper
         static bool Idle(WorkerNpc n) => n.Ai.Job == null && n.Ai.Current == WorkerAI.Mode.Idle;
         static bool Gathering(WorkerNpc n, string item) => n.Ai.Job is GatherJob g && g.Item == item;
         static int TargetOf(WorkerNpc n) => n.Ai.Job is GatherJob g ? g.Target : 0;
+        static bool Cooking(WorkerNpc n) => n.Ai.Job is PlanJob p && p.Goal != null && p.Goal.Item == "CookedMeat";
+        static void SkipBerries(bool on) { foreach (string f in Departures.IdleFoods) Departures.TestSkip(f, on); }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
@@ -59,10 +62,11 @@ namespace ValheimHelper
             GatherTest.Say("!나무 10", null);
             yield return new WaitForSeconds(2f);
             bool both = Gathering(w.Ragnar, "Wood") && Gathering(w.Floki, "Wood");
-            int sum = TargetOf(w.Ragnar) + TargetOf(w.Floki);
-            checks.Add($"!나무 10 → 둘 다 나무 캐러 감(라그나 {TargetOf(w.Ragnar)}·플로키 {TargetOf(w.Floki)})", both && sum == 10);
+            bool team = both && ((GatherJob)w.Ragnar.Ai.Job).Team != null && ((GatherJob)w.Ragnar.Ai.Job).Team == ((GatherJob)w.Floki.Ai.Job).Team;
+            checks.Add($"!나무 10 → 둘 다 나무 캐러 감, 같이 셈(목표 라그나 {TargetOf(w.Ragnar)}·플로키 {TargetOf(w.Floki)})", team && TargetOf(w.Ragnar) == 10 && TargetOf(w.Floki) == 10);
             yield return TestKit.WaitFor(() => Count(w, "Wood") >= 10 && Idle(w.Ragnar) && Idle(w.Floki), 240f);
-            checks.Add($"나무 10개 넘게 들어오고 둘 다 쉼 (나무 {Count(w, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
+            // 쓰러뜨린 자기 통나무는 목표를 채워도 끝까지 쪼개므로(사용자 11-01) 넘는 수는 판정하지 않고 기록만
+            checks.Add($"합쳐 10개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
 
             // 2) 계속채워 → 바로 출발
             int wood = Count(w, "Wood");
@@ -74,7 +78,10 @@ namespace ValheimHelper
             checks.Add($"보충 끝 (나무 {Count(w, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
             Brain.Refill.Off();
 
-            // 3) 쉴 때 먹거리: 음식 비우고 둘레에 라즈베리 덤불
+            // 3) 쉴 때 고기: 불 붙은 화로·조리대, 나무 연료, 둘레 멧돼지 — 베리는 이 단계 동안 쉬게 함
+            yield return Meat(w, checks, made);
+
+            // 4) 쉴 때 먹거리: 음식 비우고 둘레에 라즈베리 덤불
             Vector3 right = Vector3.Cross(Vector3.up, (w.Chest.transform.position - w.Home).normalized);
             if (right.sqrMagnitude < 0.01f) right = Vector3.right;
             for (int i = 0; i < 6; i++)
@@ -83,12 +90,42 @@ namespace ValheimHelper
                 made.Add(Object.Instantiate(ZNetScene.instance.GetPrefab("RaspberryBush"), GatherTest.Ground(at), Quaternion.identity));
             }
             TestKit.ClearBaseStock(w, Foods);
+            SkipBerries(false);
             yield return new WaitForSeconds(1f);
             t0 = Time.time;
             yield return TestKit.WaitFor(() => Gathering(w.Ragnar, "Raspberry") || Gathering(w.Floki, "Raspberry"), 70f);
             checks.Add($"음식 없음 → 쉬던 일꾼이 라즈베리 따러 감 ({Time.time - t0:0}초)", TestKit.Ok);
             yield return TestKit.WaitFor(() => Count(w, "Raspberry") >= 5, 180f);
             checks.Add($"라즈베리가 거점 상자에 들어옴 ({Count(w, "Raspberry")}, {TestKit.Waited:0}초)", TestKit.Ok);
+        }
+
+        static IEnumerator Meat(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
+        {
+            GameObject pit = ZNetScene.instance.GetPrefab("fire_pit"), stand = ZNetScene.instance.GetPrefab("piece_cookingstation"), boar = ZNetScene.instance.GetPrefab("Boar");
+            checks.Add("화로·조리대·멧돼지 프리팹", pit != null && stand != null && boar != null);
+            if (pit == null || stand == null || boar == null) yield break;
+            SkipBerries(true);
+            Departures.TestSkip("CookedMeat", false);
+            Departures.TestForgetWeak("RawMeat");
+            TestKit.ClearBaseStock(w, "RawMeat", "CookedMeat", "Wood");
+            TestKit.PutInChest(w.Chest, "Wood", 20);
+            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+            Vector3 at = GatherTest.Ground(w.Home + right * 6f);
+            var station = new List<GameObject> { Object.Instantiate(pit, at, Quaternion.identity), Object.Instantiate(stand, at, Quaternion.identity) };
+            made.AddRange(station);
+            for (int i = 0; i < 5; i++)
+                made.Add(Object.Instantiate(boar, GatherTest.Ground(w.Home - right * (25f + i * 3f) + Vector3.forward * (i * 2f)), Quaternion.identity));
+            yield return new WaitForSeconds(2f);
+            TestKit.ClearBaseStock(w, Foods);
+            float t0 = Time.time;
+            yield return TestKit.WaitFor(() => Cooking(w.Ragnar) || Cooking(w.Floki), 70f);
+            checks.Add($"음식 없음·조리대 있음 → 쉬던 일꾼이 사냥해 구우러 감 ({Time.time - t0:0}초)", TestKit.Ok);
+            if (!TestKit.Ok) { SkipBerries(false); yield break; }
+            yield return TestKit.WaitFor(() => Count(w, "CookedMeat") >= 2, 480f);
+            checks.Add($"구운 고기가 거점 상자에 들어옴 ({Count(w, "CookedMeat")}, {TestKit.Waited:0}초)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => !Cooking(w.Ragnar) && !Cooking(w.Floki), 300f);
+            foreach (var g in station) if (g != null) ZNetScene.instance.Destroy(g);
+            yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 120f);
         }
     }
 }
