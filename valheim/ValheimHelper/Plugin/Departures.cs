@@ -748,7 +748,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc) && !IdleHoney(npc) && !IdleFeed(npc)) IdleTame(npc);
+                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc) && !IdleHoney(npc) && !IdleFeed(npc) && !IdleCull(npc)) IdleTame(npc);
             }
         }
 
@@ -1000,6 +1000,27 @@ namespace ValheimHelper
             if (job == null) return false;
             npc.Ai.StartJob(job);
             npc.Say("idleFeed", new Dictionary<string, string>());
+            return true;
+        }
+
+        // ---- 쉴 때 우리 솎기 (사용자 11-09 요청 다-4) ----
+
+        static readonly Dictionary<string, float> s_cullNext = new Dictionary<string, float>();
+
+        internal static void TestCullNow() => s_cullNext.Clear();
+
+        /// <summary>쉬는 일꾼(낮): "가축" 상자 둘레 길들인 것이 CullJob.PenMax를 넘으면 다 자란 것을 잡아 고기를 거점 상자로(CullJob). 1분 간격. 시작했으면 true.</summary>
+        internal static bool IdleCull(WorkerNpc npc)
+        {
+            if (EnvMan.IsNight()) return false;
+            string key = $"{npc.Home.x:0},{npc.Home.z:0}";
+            if (s_cullNext.TryGetValue(key, out float next) && Time.time < next) return false;
+            foreach (var n in WorkerNpc.All) if (n.Ai.Job is CullJob) return false;
+            s_cullNext[key] = Time.time + IdleFeedEvery;
+            CullJob job = CullJob.For(npc);
+            if (job == null) return false;
+            npc.Ai.StartJob(job);
+            npc.Say("idleCull", new Dictionary<string, string>());
             return true;
         }
 

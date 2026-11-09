@@ -199,11 +199,50 @@ namespace ValheimHelper
             TestRunner.Log($"데려오기: 우리까지 {pd0:0}m → {pd1:0.0}m ({TestKit.Waited:0}초), 따라감 {wmai.GetFollowTarget() != null}, 순찰 {pzdo.GetBool(ZDOVars.s_patrol)}");
             checks.Add("길든 멧돼지가 우리 상자 10m 안에 옴", pd1 < LivestockJob.PenRange);
             checks.Add("우리에 풀어 둠(안 따라감·순찰 지점)", wmai.GetFollowTarget() == null && pzdo.GetBool(ZDOVars.s_patrol));
-            yield return new WaitForSeconds(10f);
+            for (int i = 0; i < 5; i++)
+            {
+                yield return new WaitForSeconds(2f);
+                if (wildPig == null) break;
+                TestRunner.Log($"풀어 둔 멧돼지 {i * 2 + 2}초: 우리까지 {Utils.DistanceXZ(wildPig.transform.position, pen.transform.position):0.0}m, 순찰점까지 {Utils.DistanceXZ(wildPig.transform.position, pzdo.GetVec3(ZDOVars.s_patrolPoint, Vector3.zero)):0.0}m, 경보 {wmai.IsAlerted()}, 배고픔 {wildPig.GetComponent<Tameable>().IsHungry()}, 따라감 {wmai.GetFollowTarget()?.name}, 표적 {wmai.GetTargetCreature()?.m_name}, 달림 {wildPig.IsRunning()}");
+            }
             float pd2 = Utils.DistanceXZ(wildPig.transform.position, pen.transform.position);
             checks.Add($"10초 뒤에도 우리에 있음({pd2:0.0}m)", pd2 < LivestockJob.PenRange + 2f);
             Departures.TestTameNow();
             checks.Add("머물러 둔 멧돼지·우리 멧돼지는 안 데리러 감", !Departures.IdleTame(w.Ragnar));
+
+            // 7) 우리 솎기(요청 다-4): 우리에 8마리(다 자란 것 + 새끼 1 + 이름 붙인 것 1) → 쉬던 일꾼이 다 자란 것 2마리를 잡아 떨굼을 주워 거점 상자에 넣음
+            ClearOthers(home, made);
+            var penPigs = new List<Character>();
+            for (int i = 0; i < 6; i++)
+            {
+                var p = Spawn(i == 4 ? "Boar_piggy" : "Boar", penAt + Quaternion.Euler(0f, i * 60f, 0f) * Vector3.forward * 3f, made);
+                p.SetTamed(true);   // Boar_piggy는 MonsterAI가 없을 수 있음(회차 375 NRE)
+                p.GetComponent<BaseAI>()?.SetPatrolPoint();
+                TestRunner.Log($"우리에 {p.m_name}: AI {p.GetComponent<BaseAI>()?.GetType().Name}, 자람 {p.GetComponent<Growup>() != null}");
+                penPigs.Add(p);
+            }
+            Character piggy = penPigs[4], named = penPigs[5];
+            named.GetComponent<ZNetView>().GetZDO().Set(ZDOVars.s_tamedName, "Bacon");
+            yield return new WaitForSeconds(1f);
+            int penCount = 0;
+            foreach (var c in Character.GetAllCharacters())
+                if (c != null && !c.IsDead() && c.IsTamed() && !(c is WorkerNpc) && Utils.DistanceXZ(c.transform.position, pen.transform.position) <= LivestockJob.PenRange) penCount++;
+            checks.Add($"우리에 길든 것 {penCount}마리(6 넘음)", penCount == 8);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
+            Departures.TestCullNow();
+            bool culling = Departures.IdleCull(w.Ragnar) && w.Ragnar.Ai.Job is CullJob;
+            checks.Add("쉬던 일꾼이 우리 솎으러 감", culling);
+            if (!culling) yield break;
+            var cull = (CullJob)w.Ragnar.Ai.Job;
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is CullJob), 240f);
+            int meatLeft = 0;
+            foreach (var it in w.Ragnar.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && (it.m_dropPrefab.name == "RawMeat" || it.m_dropPrefab.name == "LeatherScraps")) meatLeft += it.m_stack;
+            TestRunner.Log($"솎기: 잡음 {cull.Culled}, 주움 {cull.Got} ({TestKit.Waited:0}초), 일꾼 짐 고기 {meatLeft}");
+            checks.Add($"다 자란 것 2마리 잡음({cull.Culled})", TestKit.Ok && cull.Culled == 2);
+            checks.Add($"떨군 것을 주워 상자에 넣음(주움 {cull.Got}, 짐에 고기 {meatLeft})", cull.Got > 0 && meatLeft == 0);
+            checks.Add("새끼·이름 붙인 것은 살아 있음", piggy != null && !piggy.IsDead() && named != null && !named.IsDead());
+            Departures.TestCullNow();
+            checks.Add("6마리면 다시 안 감", !Departures.IdleCull(w.Ragnar));
         }
     }
 }

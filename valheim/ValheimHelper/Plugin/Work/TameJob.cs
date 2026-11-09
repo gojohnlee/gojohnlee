@@ -246,6 +246,15 @@ namespace ValheimHelper
         }
 
         // ── 우리 상자까지 걸어감(짐승이 따라옴, 8m 넘게 처지면 기다림) → 다 오면 그 자리를 순찰 지점으로 풀어 둠(바닐라 "머물러" 꼴) ──
+        static System.Action<BaseAI, Vector3> s_setPatrol;
+
+        /// <summary>순찰 지점을 그 점으로(바닐라 private BaseAI.SetPatrolPoint(Vector3) — ZDO s_patrol·s_patrolPoint). 떠도는 범위는 m_randomMoveRange(4m) 둘레.</summary>
+        internal static void PenAt(BaseAI ai, Vector3 at)
+        {
+            if (s_setPatrol == null) s_setPatrol = HarmonyLib.AccessTools.MethodDelegate<System.Action<BaseAI, Vector3>>(HarmonyLib.AccessTools.Method(typeof(BaseAI), "SetPatrolPoint", new[] { typeof(Vector3) }));
+            s_setPatrol(ai, at);
+        }
+
         bool UpdateLead(float dt)
         {
             if (m_pen == null) { Go(Step.Home); return true; }
@@ -254,7 +263,7 @@ namespace ValheimHelper
             {
                 MonsterAI mai = m_animal.GetComponent<MonsterAI>();
                 mai.SetFollowTarget(null);
-                mai.SetPatrolPoint();
+                PenAt(mai, pen);   // 짐승 자리 말고 상자 자리 둘레를 떠돌게(자리 기준이면 10m 밖으로 떠냄, 회차 375)
                 m_following = false;
                 Fed = 1;
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name}을 우리에 데려옴 {at}");
