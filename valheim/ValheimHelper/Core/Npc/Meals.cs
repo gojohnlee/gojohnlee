@@ -74,9 +74,34 @@ namespace ValheimHelper.Core.Npc
 
         public bool CanEat(FoodInfo f)
         {
-            foreach (var e in m_eaten) if (e.Info.Name == f.Name) return e.CanEatAgain;
+            // 음식 모드(효과가 안 줆)면 빈 칸에만 — 절반 지난 것을 새로 먹어도 효과는 같고 음식만 듦(사용자 11-09 "절약"). 끊기면 들고 간 걸 먹음(FillEmpty)
+            foreach (var e in m_eaten) if (e.Info.Name == f.Name) return !NoDecay && e.CanEatAgain;
+            if (m_eaten.Count < Max) return true;
+            if (NoDecay) return false;
             foreach (var e in m_eaten) if (e.CanEatAgain) return true;
-            return m_eaten.Count < Max;
+            return false;
+        }
+
+        /// <summary>빈 칸이 있나(음식이 끝나 칸이 빔).</summary>
+        public bool HasEmptySlot => m_eaten.Count < Max;
+
+        /// <summary>
+        /// 빈 칸만 채운다(길에서 들고 간 음식 먹기, 사용자 11-09): 아직 안 먹은 음식 중 좋은 것부터, 칸이 찰 때까지. 먹은 이름들.
+        /// 이미 먹은 음식은 다시 먹지 않음(바닐라에서도 절반 지난 걸 길에서 새로 먹어 들고 간 걸 써 버리지 않게).
+        /// </summary>
+        public List<string> FillEmpty(IEnumerable<FoodInfo> available)
+        {
+            var list = new List<FoodInfo>(available);
+            list.Sort((a, b) => b.Value.CompareTo(a.Value));
+            var picked = new List<string>();
+            foreach (var f in list)
+            {
+                if (m_eaten.Count >= Max) break;
+                if (picked.Contains(f.Name) || m_eaten.Exists(e => e.Info.Name == f.Name)) continue;
+                m_eaten.Add(new Eaten { Info = f, Time = f.BurnTime });
+                picked.Add(f.Name);
+            }
+            return picked;
         }
 
         public bool Eat(FoodInfo f)

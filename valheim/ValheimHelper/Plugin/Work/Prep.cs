@@ -15,6 +15,8 @@ namespace ValheimHelper
     public sealed class Prep
     {
         public const int MeadsToCarry = 3;
+        /// <summary>들고 다닐 음식 수(사용자 11-09): 밖에서 음식이 끝나면 꺼내 먹음. 좋은 음식부터 종류를 섞어서.</summary>
+        public const int FoodToCarry = 3;
         const float WalkLimit = 60f, BusyLimit = 20f, RepairReach = 3.5f;
 
         readonly WorkerNpc m_npc;
@@ -104,7 +106,9 @@ namespace ValheimHelper
                 if (forFood)
                 {
                     var eaten = m_npc.EatFrom(inv, from);
-                    Plugin.Log.LogInfo($"{m_npc.NpcName} 먹음: {string.Join(", ", eaten.ToArray())} → 최대 체력 {m_npc.Meals.MaxHealth:0}");
+                    var carried = new List<string>();
+                    TakeFood(from, m_npc.GetInventory(), inv, carried);
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 먹음: {string.Join(", ", eaten.ToArray())} → 최대 체력 {m_npc.Meals.MaxHealth:0}, 들고 감: {string.Join(", ", carried.ToArray())} (음식 {CountFood(m_npc.GetInventory())}개)");
                 }
                 else TakeGear(from, inv, takeGear, takeMeads);
             });
@@ -162,7 +166,7 @@ namespace ValheimHelper
                 { m_chest = c; m_forFood = false; m_takeGear = gear; m_takeMeads = meads; return true; }
             }
             foreach (var c in chests)
-                if (m_foodDone.Add(c) && m_npc.CanEatFrom(c.GetInventory())) { m_chest = c; m_forFood = true; return true; }
+                if (m_foodDone.Add(c) && (m_npc.CanEatFrom(c.GetInventory()) || NeedsFoodToCarry(m_npc.GetInventory(), c))) { m_chest = c; m_forFood = true; return true; }
             if (m_npc.Meals.Count == 0 && !chests.Exists(c => WorkerNpc.HasFood(c.GetInventory()))) m_npc.SayNoFoodOnce();
             return false;
         }
@@ -244,7 +248,7 @@ namespace ValheimHelper
             var keep = new HashSet<ItemDrop.ItemData>(Plan(mine, null));
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Axe));
             keep.Add(WorkerNpc.BestTool(mine, ToolKind.Pickaxe));
-            foreach (var it in mine.GetAllItems()) if (Gear.IsHealthMead(it) || Gear.ResistOf(it) != null) keep.Add(it);
+            foreach (var it in mine.GetAllItems()) if (Gear.IsHealthMead(it) || Gear.ResistOf(it) != null || Gear.IsFood(it)) keep.Add(it);
             ItemDrop.ItemData bow = Gear.BestBow(mine.GetAllItems());
             keep.Add(bow);
             foreach (var it in mine.GetAllItems()) if (Gear.IsArrowFor(it, bow)) keep.Add(it);
@@ -299,6 +303,7 @@ namespace ValheimHelper
             int total, carry;
             if (kind != null) { total = CountResist(mine, kind); carry = Resist.ToCarry; }
             else if (Gear.IsHealthMead(it)) { total = CountMeads(mine); carry = MeadsToCarry; }
+            else if (Gear.IsFood(it)) { total = CountFood(mine); carry = FoodToCarry; }
             else return 0;
             return Mathf.Clamp(total - carry, 0, it.m_stack);
         }
@@ -356,6 +361,45 @@ namespace ValheimHelper
                     TakeMeads(from, mine, chest, Resist.ToCarry - CountResist(mine, k), it => Gear.ResistOf(it) == k, taken);
             }
             Plugin.Log.LogInfo($"{m_npc.NpcName} 장비 챙김: {string.Join(", ", taken.ToArray())}, 방어력 {m_npc.GetBodyArmor():0}");
+        }
+
+        internal static int CountFood(Inventory inv)
+        {
+            int n = 0;
+            foreach (var it in inv.GetAllItems()) if (Gear.IsFood(it)) n += it.m_stack;
+            return n;
+        }
+
+        static bool NeedsFoodToCarry(Inventory mine, Container c) => CountFood(mine) < FoodToCarry && WorkerNpc.HasFood(c.GetInventory());
+
+        /// <summary>들고 다닐 음식을 FoodToCarry까지: 좋은 음식(체력+스태미나)부터 한 종류에 하나씩 돌아가며(사람 제작 막대 예약분은 안 가져감).</summary>
+        static void TakeFood(Container from, Inventory mine, Inventory chest, List<string> taken)
+        {
+            int need = FoodToCarry - CountFood(mine);
+            var kinds = new List<ItemDrop.ItemData>();
+            foreach (var it in chest.GetAllItems())
+                if (Gear.IsFood(it) && !kinds.Exists(k => k.m_shared.m_name == it.m_shared.m_name)) kinds.Add(it);
+            kinds.Sort((a, b) => (b.m_shared.m_food + b.m_shared.m_foodStamina).CompareTo(a.m_shared.m_food + a.m_shared.m_foodStamina));
+            bool any = true;
+            while (need > 0 && any)
+            {
+                any = false;
+                foreach (var k in kinds)
+                {
+                    if (need <= 0) break;
+                    ItemDrop.ItemData it = null;
+                    foreach (var c in chest.GetAllItems()) if (c.m_shared.m_name == k.m_shared.m_name) { it = c; break; }
+                    if (it == null || BaseStock.Allow(from, it.m_shared.m_name, 1) < 1) continue;
+                    ItemDrop.ItemData copy = it.Clone();
+                    copy.m_stack = 1;
+                    if (!mine.AddItem(copy)) return;
+                    chest.RemoveItem(it, 1);
+                    BaseStock.Changed();
+                    need--;
+                    any = true;
+                    taken.Add(it.m_shared.m_name);
+                }
+            }
         }
 
         static void TakeMeads(Container from, Inventory mine, Inventory chest, int need, System.Predicate<ItemDrop.ItemData> kind, List<string> taken)

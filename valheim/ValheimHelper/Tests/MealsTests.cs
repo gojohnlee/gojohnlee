@@ -112,4 +112,33 @@ public class MealsTests
         Assert.Null(Meals.DecayVerdict(25f, 87f, food, time, burn)); // 둘 다 아님(다른 효과): 다시 봄
         Assert.Null(Meals.DecayVerdict(25f, 95f, food, new[] { 1500f, 1500f }, burn)); // 덜 지남: 알 수 없음
     }
+
+    [Fact]
+    public void NoDecayEatsOnlyIntoEmptySlots()
+    {
+        var m = new Meals();
+        m.Eat(F("a", 10, 10, burn: 100f));
+        m.Tick(60f); // 절반 넘게 지남
+        try
+        {
+            Meals.NoDecay = true;
+            Assert.False(m.CanEat(F("a", 10, 10)));   // 같은 음식 다시: 안 먹음(효과 같고 음식만 듦)
+            Assert.True(m.CanEat(F("b", 10, 10)));    // 빈 칸: 먹음
+            m.Eat(F("b", 10, 10)); m.Eat(F("c", 10, 10));
+            Assert.False(m.CanEat(F("d", 50, 50)));   // 칸이 다 참: 갈아 먹지 않음
+        }
+        finally { Meals.NoDecay = false; }
+        Assert.True(m.CanEat(F("a", 10, 10)));        // 바닐라: 절반 지나면 다시
+    }
+
+    [Fact]
+    public void FillEmptyOnlyNewFoods()
+    {
+        var m = new Meals();
+        m.Eat(F("a", 10, 10, burn: 100f));
+        var got = m.FillEmpty(new[] { F("a", 10, 10), F("b", 5, 5), F("c", 30, 30), F("d", 1, 1) });
+        Assert.Equal(new[] { "c", "b" }, got.ToArray());
+        Assert.Equal(3, m.Count);
+        Assert.Empty(m.FillEmpty(new[] { F("e", 99, 99) }));
+    }
 }

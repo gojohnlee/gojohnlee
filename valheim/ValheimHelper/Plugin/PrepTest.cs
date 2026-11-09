@@ -109,8 +109,9 @@ namespace ValheimHelper
                 claude.CountItem("MeadHealthMinor") == 3 && GatherTest.Count(eq, "MeadHealthMinor") == 2);
             int left = 0;
             foreach (var n in FoodItems) left += GatherTest.Count(food, n);
-            checks.Add($"음식 3종 먹음 ({string.Join(", ", new List<string>(claude.Meals.Names).ToArray())}, 상자에 {left}개 남음)",
-                claude.Meals.Count == 3 && left == FoodItems.Length * 3 - 3);
+            int carried = Prep.CountFood(claude.GetInventory());
+            checks.Add($"음식 3종 먹고 {Prep.FoodToCarry}개 들고 감 ({string.Join(", ", new List<string>(claude.Meals.Names).ToArray())}, 가방 {carried}, 상자에 {left}개 남음)",
+                claude.Meals.Count == 3 && carried == Prep.FoodToCarry && left == FoodItems.Length * 3 - 3 - Prep.FoodToCarry);
             checks.Add($"최대 체력 오름 ({hpBefore:0} → {claude.GetMaxHealth():0})", claude.GetMaxHealth() > hpBefore + 20f);
             checks.Add("음식 저장됨", !string.IsNullOrEmpty(claude.GetComponent<ZNetView>().GetZDO().GetString(WorkerNpc.KeyFoods)));
 

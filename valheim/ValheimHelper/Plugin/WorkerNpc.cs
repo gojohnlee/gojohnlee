@@ -234,6 +234,12 @@ namespace ValheimHelper
             SetMaxHealth(Meals.MaxHealth);
             if (heal > 0f && GetHealth() < GetMaxHealth()) Heal(heal, false);
             if (++m_foodSaveTimer >= 10f) { m_foodSaveTimer = 0f; SaveFoods(); }
+            // 음식이 끝나 칸이 비면 들고 다니는 음식을 그 자리에서 먹는다(사용자 11-09 "들고 가게", Prep.FoodToCarry)
+            if (Meals.HasEmptySlot && !IsDead() && HasFood(GetInventory()))
+            {
+                var eaten = EatFrom(GetInventory(), null, true);
+                if (eaten.Count > 0) Plugin.Log.LogInfo($"{NpcName} 들고 간 음식 먹음: {string.Join(", ", eaten.ToArray())} → 최대 체력 {Meals.MaxHealth:0}");
+            }
         }
 
         void SaveFoods()
@@ -256,7 +262,7 @@ namespace ValheimHelper
 
         /// <summary>그 상자(인벤토리)에서 지금 먹을 수 있는 가장 좋은 음식들을 하나씩 꺼내 먹는다. 먹은 프리팹 이름들.
         /// from(그 인벤토리의 상자)을 주면 사람 제작 막대가 예약한 음식은 건너뜀(BaseStock.Allow).</summary>
-        public List<string> EatFrom(Inventory inv, Container from = null)
+        public List<string> EatFrom(Inventory inv, Container from = null, bool emptyOnly = false)
         {
             var foods = new List<FoodInfo>();
             var byName = new Dictionary<string, ItemDrop.ItemData>();
@@ -269,7 +275,7 @@ namespace ValheimHelper
                 byName[f.Name] = it;
                 foods.Add(f);
             }
-            List<string> eaten = Meals.EatBest(foods);
+            List<string> eaten = emptyOnly ? Meals.FillEmpty(foods) : Meals.EatBest(foods);
             foreach (var n in eaten) inv.RemoveOneItem(byName[n]);
             if (eaten.Count > 0 && from != null) BaseStock.Changed();
             if (eaten.Count > 0)
