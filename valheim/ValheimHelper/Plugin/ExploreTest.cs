@@ -228,7 +228,7 @@ namespace ValheimHelper
         /// 거점에서 16방향으로 300m까지 보며 가장 가까운 넓은 물(3m보다 깊고 그 뒤 60m가 다 깊은 물)을 찾는다.
         /// shore = 깊어지기 시작하는 곳, sea = 그 60m 안쪽(걷게 할 목표).
         /// </summary>
-        static bool FindSea(Vector3 home, out Vector3 shore, out Vector3 sea)
+        internal static bool FindSea(Vector3 home, out Vector3 shore, out Vector3 sea)
         {
             shore = sea = home;
             WorldGenerator wg = WorldGenerator.instance;

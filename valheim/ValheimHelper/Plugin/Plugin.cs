@@ -51,6 +51,7 @@ namespace ValheimHelper
             Step("vh_skilltest", SkillTest.Register);
             Step("vh_refilltest", RefillTest.Register);
             Step("vh_chorestest", ChoresTest.Register);
+            Step("vh_fishtest", FishTest.Register);
             Step("vh_raidtest", RaidTest.Register);
             Step("vh_helptest", HelpTest.Register);
             Step("vh_teamtest", TeamTest.Register);

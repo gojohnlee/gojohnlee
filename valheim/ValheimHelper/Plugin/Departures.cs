@@ -748,7 +748,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !Repay(npc) && !IdleFarm(npc)) IdleHoney(npc);
+                if (!npc.Ai.Resting && ChoresOn && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc)) IdleHoney(npc);
             }
         }
 
@@ -977,6 +977,35 @@ namespace ValheimHelper
             if (hives.Count == 0) return false;
             npc.Ai.StartJob(new HoneyJob(npc, hives));
             npc.Say("idleHoney", new Dictionary<string, string>());
+            return true;
+        }
+
+        // ---- 쉴 때 낚시 (사용자 11-09 요청 나 "사냥이 위험할 때 대신") ----
+
+        /// <summary>일꾼 집마다 다음에 볼 때(Time.time). 10분 간격.</summary>
+        static readonly Dictionary<string, float> s_fishNext = new Dictionary<string, float>();
+
+        internal static void TestFishNow() => s_fishNext.Clear();
+
+        /// <summary>
+        /// 쉬는 일꾼(낮): 상자 음식이 IdleFoodBelow 밑인데 쉴 때 먹거리가 못 떠났으면(IdleFood false — 사냥감이 위험·약함·멀거나 채집거리 없음)
+        /// 낚싯대·둘레 물고기가 무는 미끼가 있고 집 FishJob.FishFar 안에 물고기가 보이면 낚으러 간다. 다른 일꾼이 낚시 중이면 건너뜀. 시작했으면 true.
+        /// </summary>
+        internal static bool IdleFish(WorkerNpc npc)
+        {
+            if (EnvMan.IsNight()) return false;
+            string key = $"{npc.Home.x:0},{npc.Home.z:0}";
+            if (s_fishNext.TryGetValue(key, out float next) && Time.time < next) return false;
+            foreach (var n in WorkerNpc.All) if (n.Ai.Job is FishJob) return false;
+            int have = BaseFood(npc.Home);
+            if (have >= IdleFoodBelow) return false;
+            s_fishNext[key] = Time.time + IdleFarmEvery;
+            HashSet<string> baits = FishJob.BaitsNear(npc.Home);
+            bool can = FishJob.CanFish(npc, baits);
+            Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 낚시(상자 음식 {have}): 둘레 물고기 미끼 {baits.Count}종, 낚싯대·미끼 {(can ? "있음" : "없음")}");
+            if (!can) return false;
+            npc.Ai.StartJob(new FishJob(npc));
+            npc.Say("idleFish", new Dictionary<string, string>());
             return true;
         }
 
