@@ -560,7 +560,7 @@ function Get-PendingRequests {
 $DoneFile = Join-Path $Dir 'done'
 function Wait-Done($off, $last) {
     $f = 'origin/valheim:docs/valheim/UserRequest.txt'
-    $d = if (Test-Path $DoneFile) { @(Get-Content $DoneFile -Encoding UTF8) } else { @(G rev-parse $f | Select-Object -Last 1) }
+    $d = @(if (Test-Path $DoneFile) { Get-Content $DoneFile -Encoding UTF8 } else { G rev-parse $f | Select-Object -Last 1 })   # @()를 밖에: if 결과는 풀려서 한 줄이면 문자열이 되고 $d[0]이 첫 글자만 됨(11-09 5분마다 헛회차)
     $h0 = "$($d[0])".Trim(); $why = if ($d.Count -gt 1) { "$($d[1])".Trim() } else { '' }
     [IO.File]::WriteAllText($DoneFile, $(if ($why) { "$h0`n$why" } else { $h0 }), $Utf8)
     Unregister-ScheduledTask -TaskName 'VH loop wake' -Confirm:$false -ErrorAction SilentlyContinue   # 남은 깨우기 예약이 PC를 켜지 않게
