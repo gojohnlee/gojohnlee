@@ -194,6 +194,8 @@ namespace ValheimHelper
                             ["hp"] = npc.GetHealth().ToString("0"),
                             ["max"] = npc.GetMaxHealth().ToString("0"),
                         });
+                        TellSkills(npc); // !상태 하나로(사용자 11-09: 스킬·기억·지식 합침)
+                        if (npc == targets[0]) { Departures.TellMemory(npc); TellKnowledge(npc); } // 기억·지식은 둘이 같이 씀 → 한 번만
                         break;
                     default:
                         npc.Say("notYet");

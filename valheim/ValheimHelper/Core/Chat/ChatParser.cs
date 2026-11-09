@@ -142,7 +142,6 @@ namespace ValheimHelper.Core.Chat
                 case "기억": case "memory": return n == 1 ? Kind(CommandKind.Memory) : null;
                 case "지식": case "knowledge": return n == 1 ? Kind(CommandKind.Knowledge) : null;
                 case "멈춰": case "stop": return n == 1 ? Kind(CommandKind.Stop) : null;
-                case "길": case "path": return n == 1 ? Kind(CommandKind.Path) : null;
                 case "명령어": case "명령": case "도움말": case "도움": case "help": case "commands": return n == 1 ? Kind(CommandKind.Help) : null;
                 case "탐험": case "explore": return ParseExplore(t);
                 case "상자": case "chest": return ParseChest(t);
@@ -152,7 +151,6 @@ namespace ValheimHelper.Core.Chat
                 case "준비": case "prep": return ParsePrep(t, 1, CommandKind.Prep);
                 case "세트": case "set": return ParseSet(t);
                 case "밭": case "farm": return ParseRadius(CommandKind.Farm, t);
-                case "평탄화": case "level": return ParseRadius(CommandKind.Level, t);
             }
             return ParseItemAmount(t, 0, t.Length);
         }
@@ -250,6 +248,12 @@ namespace ValheimHelper.Core.Chat
                 if (set != null) set.Once = once;
                 return set;
             }
+            if (IsZero(t[t.Length - 1]) && t.Length >= 3) // "!계속채워 나무 0" = 끄기(사용자 11-09: 끔 명령 대신)
+            {
+                var zero = Kind(CommandKind.KeepOff);
+                zero.Item = ResolveItem(t, 1, t.Length - 1);
+                return zero.Item == null ? null : zero;
+            }
             var keep = ParseItemAmount(t, 1, t.Length, CommandKind.Keep);
             if (keep != null) keep.Once = once;
             return keep;
@@ -267,7 +271,20 @@ namespace ValheimHelper.Core.Chat
                 off.Item = ResolveItem(t, from + 1, t.Length);
                 return off.Item == null ? null : off;
             }
+            if (IsZero(t[t.Length - 1]) && t.Length >= from + 2) // "!계속채워 개인 미드 0" = 끄기
+            {
+                var zero = Kind(CommandKind.PrepOff);
+                zero.Item = ResolveItem(t, from, t.Length - 1);
+                return zero.Item == null ? null : zero;
+            }
             return ParseItemAmount(t, from, t.Length, kind);
+        }
+
+        static bool IsZero(string s)
+        {
+            s = Lower(s);
+            if (s.EndsWith("개")) s = s.Substring(0, s.Length - 1);
+            return s == "0";
         }
 
         ChatCommand ParseSet(string[] t)

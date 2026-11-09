@@ -110,7 +110,6 @@ public class ChatParserTests
     [InlineData("!Go Anyway", CommandKind.GoAnyway)]
     [InlineData("!멈춰", CommandKind.Stop)]
     [InlineData("!취소 전부", CommandKind.ClearQueue)]
-    [InlineData("!길", CommandKind.Path)]
     [InlineData("!명령어", CommandKind.Help)]
     [InlineData("!도움말", CommandKind.Help)]
     [InlineData("!help", CommandKind.Help)]
@@ -183,6 +182,23 @@ public class ChatParserTests
     [InlineData("!상자 나무 Ragnar")] // 자원 상자는 같이 쓴다
     [InlineData("!상자 모르는것")]
     public void BadChestGoesToHaiku(string line) => Assert.Equal(ChatRoute.Haiku, P.Parse(line).Route);
+
+    [Theory]
+    [InlineData("!계속채워 나무 0", CommandKind.KeepOff, "Wood")]
+    [InlineData("!계속채워 나무 0개", CommandKind.KeepOff, "Wood")]
+    [InlineData("!채워 나무 0", CommandKind.KeepOff, "Wood")]
+    [InlineData("!계속채워 개인 나무 0", CommandKind.PrepOff, "Wood")]
+    public void ZeroTurnsOff(string line, CommandKind kind, string item)
+    {
+        var c = Cmd(line);
+        Assert.Equal(kind, c.Kind);
+        Assert.Equal(item, c.Item);
+    }
+
+    [Theory]
+    [InlineData("!길")]
+    [InlineData("!평탄화 30")]
+    public void RemovedCommandsAreNotCommands(string line) => Assert.NotEqual(ChatRoute.Command, P.Parse(line).Route);
 
     [Fact]
     public void Keep()
@@ -272,8 +288,6 @@ public class ChatParserTests
     [InlineData("!밭", CommandKind.Farm, 10, false)]
     [InlineData("!밭 10", CommandKind.Farm, 10, false)]
     [InlineData("!farm 5m", CommandKind.Farm, 5, false)]
-    [InlineData("!평탄화 30", CommandKind.Level, 20, true)]
-    [InlineData("!level 20", CommandKind.Level, 20, false)]
     public void Radius(string line, CommandKind kind, int r, bool clamped)
     {
         var c = Cmd(line);
