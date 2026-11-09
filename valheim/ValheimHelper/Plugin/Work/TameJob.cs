@@ -17,7 +17,10 @@ namespace ValheimHelper
         /// <summary>짐승 시야(m_viewRange, 멧돼지 20m) 밖 이만큼에서 먹이를 곁에 던지고 그 자리에서 지켜봄 — 다가가면 덤벼 길들이기가 깨짐(회차 373 첫 시험).</summary>
         const float OutOfSight = 2f;
 
-        enum Step { Fetch, Approach, Watch, Home }
+        /// <summary>데려오기: 짐승이 이만큼 안에 오면 우리에 다 왔다고 보고 풀어 둠.</summary>
+        const float PenNear = 6f, LeadLimit = 120f;
+
+        enum Step { Fetch, Approach, Watch, Reach, Lead, Home }
 
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
@@ -29,11 +32,14 @@ namespace ValheimHelper
         float m_dropFrom;
         Step m_step = Step.Fetch;
         float m_time, m_stepTime;
-        bool m_abort, m_told;
+        bool m_abort, m_told, m_following;
+        /// <summary>데려오기 모드(요청 다-3b): 길든 짐승을 이 우리 상자까지 따라오게 해 풀어 둠.</summary>
+        readonly Container m_pen;
 
         /// <summary>떨군 먹이를 먹었으면 1.</summary>
         public int Fed { get; private set; }
         public string StepName => "Tame" + m_step;
+        internal Character Animal => m_animal;
         public string Label => m_npc.Line("job.tame");
         public string StateLine() => m_npc.Line("state.feed", new Dictionary<string, string> { ["n"] = Fed.ToString() });
         public void AvoidHere(Vector3 danger) => m_abort = true;
@@ -47,6 +53,28 @@ namespace ValheimHelper
             m_foods = foods;
             MonsterAI mai = animal.GetComponent<MonsterAI>();
             m_dropFrom = (mai != null ? mai.m_viewRange : 20f) + OutOfSight;
+        }
+
+        TameJob(WorkerNpc npc, Character animal, Container pen) : this(npc, animal, null, new HashSet<string>())
+        {
+            m_pen = pen;
+            m_step = Step.Reach;
+        }
+
+        /// <summary>우리로 데려올 길든 짐승: 우리 상자 PenRange 밖이고, 플레이어가 따르게 하거나 세워 둔 것(s_follow·s_patrol, 바닐라 Command)이 아닌 것.</summary>
+        static bool Stray(Character a, MonsterAI mai, List<Container> pens, out Container pen)
+        {
+            pen = null;
+            ZDO zdo = a.GetComponent<ZNetView>().GetZDO();
+            if (zdo == null || mai.GetFollowTarget() != null || zdo.GetBool(ZDOVars.s_patrol) || zdo.GetString(ZDOVars.s_follow) != "") return false;
+            float best = float.MaxValue;
+            foreach (var p in pens)
+            {
+                float d = Utils.DistanceXZ(p.transform.position, a.transform.position);
+                if (d <= LivestockJob.PenRange) return false;
+                if (d < best) { best = d; pen = p; }
+            }
+            return pen != null;
         }
 
         /// <summary>길들이기가 시작된(남은 시간이 줄어든) 야생 짐승 — 일꾼이 사냥·싸움에서 뺀다.</summary>
@@ -82,12 +110,21 @@ namespace ValheimHelper
             int wild = 0;
             foreach (var a in Character.GetAllCharacters())
             {
-                if (a == null || a.IsDead() || a.IsTamed() || a is WorkerNpc || a.IsPlayer()) continue;
+                if (a == null || a.IsDead() || a is WorkerNpc || a.IsPlayer()) continue;
                 Tameable t = a.GetComponent<Tameable>();
                 MonsterAI mai = a.GetComponent<MonsterAI>();
                 if (t == null || mai == null || t.m_tamingTime <= 0f) continue;
                 float d = Utils.DistanceXZ(a.transform.position, npc.Home);
                 if (d > TameFar) continue;
+                if (a.IsTamed())
+                {
+                    if (Stray(a, mai, pens, out Container pen))
+                    {
+                        Plugin.Log.LogInfo($"길들이기(집 {npc.Home}): 길든 {a.m_name}을 우리 {pen.transform.position}로 데려옴");
+                        return new TameJob(npc, a, pen);
+                    }
+                    continue;
+                }
                 wild++;
                 if (!t.IsHungry() || mai.IsAlerted()) continue;
                 HashSet<string> foods = LivestockJob.FoodsOf(a);
@@ -119,6 +156,8 @@ namespace ValheimHelper
                 case Step.Fetch: return UpdateFetch();
                 case Step.Approach: return UpdateApproach(dt);
                 case Step.Watch: return UpdateWatch(dt);
+                case Step.Reach: return UpdateReach(dt);
+                case Step.Lead: return UpdateLead(dt);
                 case Step.Home: return UpdateHome(dt);
             }
             return false;
@@ -191,6 +230,44 @@ namespace ValheimHelper
             return true;
         }
 
+        // ── 데려오기: 길든 짐승 곁(4m)까지 가서 따라오게 함 ──
+        bool UpdateReach(float dt)
+        {
+            Vector3 at = m_animal.transform.position;
+            if (Utils.DistanceXZ(at, m_npc.transform.position) > 4f && !m_ai.MoveToPoint(dt, at, 3f, true))
+            {
+                if (m_stepTime > ReachLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name} 못 닿음 {at}"); Go(Step.Home); }
+                return true;
+            }
+            m_animal.GetComponent<MonsterAI>().SetFollowTarget(m_npc.gameObject);
+            m_following = true;
+            Go(Step.Lead);
+            return true;
+        }
+
+        // ── 우리 상자까지 걸어감(짐승이 따라옴, 8m 넘게 처지면 기다림) → 다 오면 그 자리를 순찰 지점으로 풀어 둠(바닐라 "머물러" 꼴) ──
+        bool UpdateLead(float dt)
+        {
+            if (m_pen == null) { Go(Step.Home); return true; }
+            Vector3 pen = m_pen.transform.position, me = m_npc.transform.position, at = m_animal.transform.position;
+            if (Utils.DistanceXZ(at, pen) < PenNear)
+            {
+                MonsterAI mai = m_animal.GetComponent<MonsterAI>();
+                mai.SetFollowTarget(null);
+                mai.SetPatrolPoint();
+                m_following = false;
+                Fed = 1;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name}을 우리에 데려옴 {at}");
+                Go(Step.Home);
+                return true;
+            }
+            if (Utils.DistanceXZ(at, me) > 8f) { m_ai.StopMoving(); m_ai.Face(at); }
+            else if (Utils.DistanceXZ(pen, me) > 2.5f) m_ai.MoveToPoint(dt, pen, 2f, false);
+            else m_ai.Face(at);
+            if (m_stepTime > LeadLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name} 우리까지 못 옴 {at}"); Go(Step.Home); }
+            return true;
+        }
+
         bool UpdateHome(float dt)
         {
             Vector3 home = m_npc.Home;
@@ -206,6 +283,8 @@ namespace ValheimHelper
         /// <summary>못 떨군 먹이는 그 상자에 되돌림(가득 차면 짐에 남음 — 다음 짐 내리기가 넣음).</summary>
         bool Done()
         {
+            if (m_following && m_animal != null) m_animal.GetComponent<MonsterAI>().SetFollowTarget(null);
+            m_following = false;
             if (m_taken != null && m_chest != null && !Chests.InUse(m_chest))
             {
                 Inventory mine = m_npc.GetInventory();

@@ -66,6 +66,17 @@ namespace ValheimHelper
             return g.GetComponent<Character>();
         }
 
+        /// <summary>월드가 낳은 길들일 짐승(집 TameFar+20m 안)을 치움 — 회차 374: 80m 밖 야생 멧돼지를 일꾼이 길들이러 가 시험이 어긋남.</summary>
+        static void ClearOthers(Vector3 home, List<GameObject> made)
+        {
+            foreach (var c in new List<Character>(Character.GetAllCharacters()))
+                if (c != null && !made.Contains(c.gameObject) && c.GetComponent<Tameable>() != null && Utils.DistanceXZ(c.transform.position, home) < TameJob.TameFar + 20f)
+                {
+                    TestRunner.Log($"시험 밖 짐승 치움: {c.m_name} {Utils.DistanceXZ(c.transform.position, home):0}m");
+                    ZNetScene.instance.Destroy(c.gameObject);
+                }
+        }
+
         static float TameLeft(Character c) => c.GetComponent<ZNetView>().GetZDO().GetFloat(ZDOVars.s_tameTimeLeft, c.GetComponent<Tameable>().m_tamingTime);
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
@@ -75,6 +86,7 @@ namespace ValheimHelper
             checks.Add("깃발·두 일꾼·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
             if (w.Ragnar == null || w.Floki == null) yield break;
             Vector3 home = w.Home;
+            ClearOthers(home, made);
             Vector3 side = Vector3.Cross(Vector3.up, (w.Ragnar.transform.position - home).sqrMagnitude > 1f ? (w.Ragnar.transform.position - home).normalized : Vector3.forward);
 
             // 1) 야생 멧돼지 — 일꾼(진영 Players)을 적으로 보는지, 6m 옆에서 경보·목표가 되는지
@@ -118,6 +130,7 @@ namespace ValheimHelper
             TestRunner.Log($"따라오기: {d0:0}m → {d1:0.0}m");
             checks.Add("SetFollowTarget(일꾼)으로 따라옴(5m 안)", d1 < 5f);
             mai.SetFollowTarget(null);
+            mai.SetPatrolPoint();   // 플레이어가 "머물러" 둔 꼴 — 6) 데려오기가 건드리지 않아야 함
 
             // 4) 우리 먹이(요청 다-2): "가축" 상자 둘레 배고픈 길들인 멧돼지 → 쉬던 일꾼이 상자 산딸기 1개를 곁에 떨궈 먹임
             Vector3 penAt = GatherTest.Ground(home - side * 8f);
@@ -142,8 +155,10 @@ namespace ValheimHelper
             int left = 0;
             foreach (var it in pen.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Raspberry") left += it.m_stack;
             checks.Add($"먹이 주기 끝, 가축 상자 산딸기 5→{left}", TestKit.Ok && left == 4);
+            if (pig != null) pig.GetComponent<MonsterAI>().SetPatrolPoint();   // 우리에 세워 둠 — 안 그러면 떠돌다 10m 밖에서 6) 데려오기 대상이 됨(회차 374)
 
             // 5) 길들이기(요청 다-3): 집 30m 야생 멧돼지 → 쉬던 일꾼이 가축 상자 산딸기를 곁에 떨구고 시야 밖에서 지켜봄 → 먹고 길들이기가 줄고, 일꾼이 안 잡음
+            ClearOthers(home, made);
             var wildPig = Spawn("Boar", home + side * 30f, made);
             var wtm = wildPig.GetComponent<Tameable>();
             yield return new WaitForSeconds(1f);
@@ -164,7 +179,31 @@ namespace ValheimHelper
             foreach (var it in pen.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Raspberry") left2 += it.m_stack;
             checks.Add($"길들이기 끝, 상자 산딸기 4→{left2}", TestKit.Ok && left2 == 3);
             Departures.TestTameNow();
-            checks.Add("배부른 길들이는 멧돼지는 다시 안 감, 살아 있음", wildPig != null && !wildPig.IsDead() && !Departures.IdleTame(w.Ragnar));
+            checks.Add("배부른 길들이는 멧돼지는 다시 안 감, 살아 있음", wildPig != null && !wildPig.IsDead() && !(Departures.IdleTame(w.Ragnar) && w.Ragnar.Ai.Job is TameJob tj && tj.Animal == wildPig));
+
+            // 6) 데려오기(요청 다-3b): 남은 시간을 줄여 길들게 한 뒤 → 쉬던 일꾼이 우리 상자까지 따라오게 해 풀어 둠(순찰 지점), 머물러 둔 3)의 멧돼지는 그대로
+            wildPig.GetComponent<ZNetView>().GetZDO().Set(ZDOVars.s_tameTimeLeft, 1f);
+            yield return TestKit.WaitFor(() => wildPig == null || wildPig.IsTamed(), 15f);
+            checks.Add($"멧돼지 길듦 ({TestKit.Waited:0}초)", wildPig != null && wildPig.IsTamed());
+            if (wildPig == null || !wildPig.IsTamed()) yield break;
+            var wmai = wildPig.GetComponent<MonsterAI>();
+            float pd0 = Utils.DistanceXZ(wildPig.transform.position, pen.transform.position);
+            ClearOthers(home, made);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
+            Departures.TestTameNow();
+            checks.Add($"쉬던 일꾼이 길든 멧돼지 데리러 감(우리까지 {pd0:0}m)", Departures.IdleTame(w.Ragnar) && w.Ragnar.Ai.Job is TameJob);
+            yield return TestKit.WaitFor(() => wildPig == null || !(w.Ragnar.Ai.Job is TameJob), 200f);
+            if (wildPig == null) { checks.Add("데려온 멧돼지 살아 있음", false); yield break; }
+            float pd1 = Utils.DistanceXZ(wildPig.transform.position, pen.transform.position);
+            var pzdo = wildPig.GetComponent<ZNetView>().GetZDO();
+            TestRunner.Log($"데려오기: 우리까지 {pd0:0}m → {pd1:0.0}m ({TestKit.Waited:0}초), 따라감 {wmai.GetFollowTarget() != null}, 순찰 {pzdo.GetBool(ZDOVars.s_patrol)}");
+            checks.Add("길든 멧돼지가 우리 상자 10m 안에 옴", pd1 < LivestockJob.PenRange);
+            checks.Add("우리에 풀어 둠(안 따라감·순찰 지점)", wmai.GetFollowTarget() == null && pzdo.GetBool(ZDOVars.s_patrol));
+            yield return new WaitForSeconds(10f);
+            float pd2 = Utils.DistanceXZ(wildPig.transform.position, pen.transform.position);
+            checks.Add($"10초 뒤에도 우리에 있음({pd2:0.0}m)", pd2 < LivestockJob.PenRange + 2f);
+            Departures.TestTameNow();
+            checks.Add("머물러 둔 멧돼지·우리 멧돼지는 안 데리러 감", !Departures.IdleTame(w.Ragnar));
         }
     }
 }
