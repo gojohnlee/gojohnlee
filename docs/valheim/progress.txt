@@ -4,9 +4,9 @@
 덩어리 머리 "★ 이름 (근거)", 조각 "  가) …"(status.txt "할 일"이 읽음). PC 시작 순서·게임 시험 방법은 docs/valheim/pc-howto.txt.
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+$L
 - [11-09] 우리 먹이: 이름에 "가축"이 든 상자 10m 둘레의 길들인 가축이 배고프면, 쉬던 일꾼이 그 상자에서 그 동물 먹이 1개를 꺼내 곁에 떨궈 먹임(그 상자는 다른 일·요리엔 안 씀). [끝, 회차 372 — 커밋 380a85a · 시험 vh_livestocktest PASS 12/12, vh_nametest PASS 9/9]
 - [11-09] 가축 확인: 멧돼지·늑대·록스·닭·아스크스빈의 길들이기·먹이·번식 수치를 게임에서 읽고, 떨군 먹이로 길들이기가 줄고 길들인 멧돼지가 일꾼을 따라옴을 확인. [끝, 회차 371 — 커밋 2b7c107 · 시험 vh_livestocktest PASS 7/7]
-- [11-09] 물고기 요리: 상자에 낚은 농어가 있고 손질대·조리대가 있으면, 쉴 때 먹거리가 손질(FishRaw)·굽기(FishCooked)를 계획해 구운 물고기를 상자에 넣음(고칠 것 없었음, 시험만 더함). [끝, 회차 370 — 커밋 cf0ed4b · 시험 vh_fishtest PASS 12/12]
 다음 (순서대로 — 안 끝난 일만)
 ★ 요청 꿀·낚시·가축 (사용자 11-09 — 막히면 3회차 끌지 말고 질문)
   가) 벌통 꿀 [끝, 회차 368 — 커밋 4ebd175 · 시험 vh_chorestest PASS 18/18]
@@ -14,7 +14,8 @@
   나-2) 낚은 물고기 요리 [끝, 회차 370 — 커밋 cf0ed4b · 시험 vh_fishtest PASS 12/12]
   다-1) 가축 확인 [끝, 회차 371 — 커밋 2b7c107 · 시험 vh_livestocktest PASS 7/7] (수치는 codemap 확인된 게임 사실 [11-09 vh_livestocktest]). 남은 조각:
   다-2) 우리 먹이 [끝, 회차 372 — 커밋 380a85a · 시험 vh_livestocktest PASS 12/12]
-  다-3) 길들이기·데려오기: 집 100m 안 야생(멧돼지 우선) 곁에 먹이 떨구고 20m 밖(시야 20)에서 기다림, 배고파지면 다시(길들이기 1800초) → 길들면 SetFollowTarget(일꾼)으로 우리까지 → 풀어 둠(SetFollowTarget null·SetPatrolPoint). 길들이는 중(야생) 가축은 일꾼이 사냥·싸움에서 치지 않게(길들인 것은 이미 IsTamed로 뺌 — 다-2 때 확인).
+  다-3) 길들이기 먹이 [끝, 회차 373 — 커밋 0dd8e55 · 시험 vh_livestocktest PASS 18/18] (TameJob: 시야+2m 밖에서 던짐 — 다가가면 덤빔, 배고파지면 다음 쉴 때 다시)
+  다-3b) 데려오기: 길들면(IsTamed, 우리 상자 10m 밖) SetFollowTarget(일꾼)으로 우리까지 → 풀어 둠(SetFollowTarget null·SetPatrolPoint). 시험은 남은 시간을 줄여(ZDO s_tameTimeLeft) 길든 뒤 우리까지 오는지.
   다-4) 우리에 6마리 넘으면 새끼(Boar_piggy 등) 아닌 다 자란 것만 잡아 고기를 상자에.
 요청 집 찐빠 없게 [끝, 회차 354 — 문서만: E061·E062 닫음, 시험 house 38/38 (352 ×3 연속)] → 나머지(요청 "집이 끝나면"): E065 다시 나오면 새 진단 줄로 원인, E054는 pittest 때만. 집 시험 FAIL이 새로 나오면 3회차로 넘기지 않음(못 찾으면 vh-debug).
 요청 남은 문제 고치기 (사용자 11-01): Errors.txt 관찰 중을 조사 중으로 올려 고치고 원래 시험으로 검증해 닫기 — E058·E057 [끝, 회차 333 — 커밋 933a353 · 시험 vh_housetest 나가기 PASS] → E056 [끝, 회차 334 — 커밋 56d9464 · 시험 vh_housetest PASS 33/33] → E047 [끝, 회차 335 — 커밋 002782c · 시험 vh_exploretest PASS 16/16] → E051 [끝, 회차 339 — 커밋 e8c3fd2 · 시험 vh_escorttest PASS 18/18] → E054 [멈춤(3회차), 회차 342 — 시험 vh_pittest PASS 17/17·vh_stucktest PASS 14/14 세 번 재현 안 됨] → E055 [끝, 회차 343 — 커밋 7634d35 · 시험 vh_unloadreachtest E055 칸 PASS(12/13, 남은 칸은 E060)] → E060 [끝, 회차 344 — 커밋 ad5f000 · 시험 vh_unloadreachtest PASS 13/13 ×3] → E061·E062 [끝, 회차 354 — 문서만: 땅 고르기(0332301)로 닫음] → E063 [끝, 회차 352] → E064 [끝, 회차 347 — 커밋 3ef13b3 · 시험 vh_housetest 제련 끝나고 나와서 문 닫음 PASS] → E059 [끝, 회차 348] → E067 [끝, 회차 356 — 커밋 6b66d4c · 시험 vh_unloadreachtest PASS 13/13 ×4] → E065 [멈춤(3회차), 회차 357 — 나무 시험 14판 PASS 재현 안 됨] → E068 [끝, 회차 357 — 커밋 66bd9bb · 시험 vh_housetest PASS 38/38 ×3] → E066 [끝, 회차 358 — 커밋 2d2b617 · 시험 vh_unloadreachtest PASS 13/13 ×3(시작 자리 다시 세움)] → E069 [끝, 회차 359 — 커밋 622ef9a · 시험 vh_unloadreachtest PASS 13/13 ×5(5.0초)] → E070 [끝, 회차 359 — 커밋 622ef9a · 시험 vh_housetest PASS 38/38]. 한 항목 3회차 못 풀면 "멈춤(3회차)"로 두고 다음. 규칙 바꿈 [끝, 회차 333 — 문서만: Errors.txt·decisions.txt·loop-plan.txt·vh-loop-prompt.txt·vh-loop.ps1 ALLDONE 막기]
