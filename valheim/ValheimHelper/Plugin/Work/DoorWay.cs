@@ -403,19 +403,21 @@ namespace ValheimHelper
 
 
         /// <summary>
-        /// 호위병 경계 자리(사용자 11-09): 거점 range 안 열쇠 없는 문 중 거점에서 가장 가까운 것의 바깥(지붕 없는 쪽, 모호하면 거점 반대쪽) 1.8m·옆 1.2m.
-        /// 문이 없으면 false.
+        /// 호위병 경계 자리(사용자 11-09): 거점 range 안 열쇠 없는 문 중 바깥문(한쪽만 지붕 — 집 안 방문은 걸리적거림, 11-09)을 먼저, 그중 거점에서 가장 가까운 것.
+        /// 바깥문이 없으면 가장 가까운 문. 자리는 바깥(지붕 없는 쪽, 모호하면 거점 반대쪽) 1.8m·옆 1.2m, 지붕 아래면 4m까지 더 밖으로. 문이 없으면 false.
         /// </summary>
         public static bool PostBy(Vector3 home, float range, out Vector3 post, out Vector3 outward)
         {
             post = home; outward = Vector3.forward;
-            Door best = null; float bd = float.MaxValue;
+            Door best = null; float bd = float.MaxValue; bool bestOuter = false;
             foreach (var c in Physics.OverlapSphere(home, range, Mask))
             {
                 Door d = c.GetComponentInParent<Door>();
-                if (d == null || d.m_keyItem != null) continue;
+                if (d == null || d.m_keyItem != null || d == best) continue;
+                Vector3 m = Middle(d), dn = d.transform.forward; dn.y = 0f; dn.Normalize();
+                bool outer = Roofed(m + dn * Step) != Roofed(m - dn * Step);
                 float dd = Utils.DistanceXZ(home, d.transform.position);
-                if (dd < bd) { bd = dd; best = d; }
+                if (outer && !bestOuter || outer == bestOuter && dd < bd) { bd = dd; best = d; bestOuter = outer; }
             }
             if (best == null) return false;
             Vector3 mid = Middle(best), n = best.transform.forward; n.y = 0f; n.Normalize();
@@ -423,6 +425,7 @@ namespace ValheimHelper
             Vector3 away = mid - home; away.y = 0f;
             outward = ra != rb ? (ra ? -n : n) : (Vector3.Dot(n, away) >= 0f ? n : -n);
             post = mid + outward * 1.8f + Vector3.Cross(Vector3.up, outward) * 1.2f;
+            for (int i = 0; i < 4 && Roofed(post); i++) post += outward;
             if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(post, out float h)) post.y = h;
             return true;
         }

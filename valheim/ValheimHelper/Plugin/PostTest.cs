@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_posttest (호위병 경계 — 사용자 11-09): 거점 8m 앞 문 → 쉬는 호위병이 문 바깥 옆 자리로 가서 섬 → 집 반대편 35m 밖 그레일링(멈춤)은 문 옆에선 안 보임
+    /// vh_posttest (호위병 경계 — 사용자 11-09): 거점 4m 앞 방문(양쪽 지붕)·8m 앞 바깥문 → 쉬는 호위병이 바깥문 바깥 옆 자리로 가서 섬 → 집 반대편 35m 밖 그레일링(멈춤)은 문 옆에선 안 보임
     /// → 순찰(바로 시작)하며 집 둘레를 돌다 만나 처리 → 순찰 끝나면 문 옆으로. 순찰 순서·시간 한도는 Core PatrolTests.
     /// </summary>
     static class PostTest
@@ -44,15 +44,23 @@ namespace ValheimHelper
             checks.Add($"호위병 생김 ({guard?.NpcName ?? "없음"}, {TestKit.Waited:0}초)", TestKit.Ok && guard != null);
             if (guard == null) yield break;
 
-            // 1) 거점 8m 앞 문(벽 없이 문만) → 바깥(거점 반대쪽) 옆에 섬
+            // 1) 거점 4m 앞 집 안 방문(양쪽 지붕) + 8m 앞 바깥문(거점 쪽만 지붕, 11-09) → 바깥문 바깥(거점 반대쪽) 옆에 섬
             Vector3 f = w.Player.transform.forward; f.y = 0f; f.Normalize();
-            Vector3 doorAt = GatherTest.Ground(w.Home + f * 8f);
+            Vector3 doorAt = GatherTest.Ground(w.Home + f * 8f), inner = GatherTest.Ground(w.Home + f * 4f);
             GameObject dp = ZNetScene.instance.GetPrefab("wood_door");
+            made.Add(Object.Instantiate(dp, inner, Quaternion.LookRotation(f)));
             made.Add(Object.Instantiate(dp, doorAt, Quaternion.LookRotation(f)));
+            foreach (Vector3 r in new[] { inner - f * 1.3f, inner + f * 1.3f, doorAt - f * 1.3f })
+            {
+                var g = Object.Instantiate(ZNetScene.instance.GetPrefab("wood_floor"), r + Vector3.up * 3f, Quaternion.LookRotation(f));
+                var wnt = g.GetComponent<WearNTear>();
+                if (wnt != null) wnt.m_noSupportWear = false; // 받침 없이 떠 있는 지붕
+                made.Add(g);
+            }
             WorkerAI ai = guard.Ai;
             yield return TestKit.WaitFor(() => ai.HasPost && ai.Current == WorkerAI.Mode.Idle && !ai.GuardPatrol.Walking && Utils.DistanceXZ(guard.transform.position, ai.Post) < 1.5f, 70f);
             float side = Vector3.Dot(ai.Post - doorAt, f);
-            checks.Add($"문 바깥 옆에 섬 ({TestKit.Waited:0.0}초, 문에서 {Utils.DistanceXZ(ai.Post, doorAt):0.0}m·바깥쪽 {side:0.0}m, 호위병 자리까지 {Utils.DistanceXZ(guard.transform.position, ai.Post):0.0}m)",
+            checks.Add($"방문 말고 바깥문 바깥 옆에 섬 (방문까지 {Utils.DistanceXZ(ai.Post, inner):0.0}m, {TestKit.Waited:0.0}초, 문에서 {Utils.DistanceXZ(ai.Post, doorAt):0.0}m·바깥쪽 {side:0.0}m, 호위병 자리까지 {Utils.DistanceXZ(guard.transform.position, ai.Post):0.0}m)",
                 TestKit.Ok && side > 1f && Utils.DistanceXZ(ai.Post, doorAt) < 3f);
 
             // 2) 집 반대편(거점 뒤 25m) 그레일링 — 문 옆(35m)에선 경계 밖
