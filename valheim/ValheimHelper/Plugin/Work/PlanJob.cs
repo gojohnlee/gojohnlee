@@ -52,6 +52,22 @@ namespace ValheimHelper
         /// <summary>쉴 때 고기(Departures.IdleMeat)로 시작: 실패·막힌 단계가 있으면 그 물건은 10분 쉼(같은 실패를 되풀이하지 않게). 저장 안 함.</summary>
         public bool FromIdle;
 
+        /// <summary>설비(조리대·제련소 등)에 이미 올렸고 아직 다 꺼내지 않음 — 쉴 때 만들기라도 명령에 양보하지 않고 끝까지 함(사용자 11-09 "올린 건 다 끝날 때까지").</summary>
+        public bool Committed
+        {
+            get
+            {
+                bool loaded = false, unloadLeft = false;
+                foreach (var s in m_runner.Plan.Steps)
+                {
+                    StepState st = m_runner.StateOf(s.Id);
+                    if (s.Kind == StepKind.Load && (st == StepState.Done || st == StepState.Running)) loaded = true;
+                    if (s.Kind == StepKind.Unload && st != StepState.Done && st != StepState.Failed && st != StepState.Blocked) unloadLeft = true;
+                }
+                return loaded && unloadLeft;
+            }
+        }
+
         public WorkItem ToWork() => new WorkItem
         {
             Kind = Goal.Kind, Resume = Goal.Resume, Label = Goal.Label, Item = Goal.Item, Amount = Goal.Amount, SetNo = Goal.SetNo,
