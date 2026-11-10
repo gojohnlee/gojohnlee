@@ -131,6 +131,8 @@ namespace ValheimHelper
             Vector3 farAway = GatherTest.Ground(w.Home + rot * new Vector3(-150f, 0f, 0f));
             f.TeleportTo(farAway + Vector3.up * 0.3f, rot, false);
             float[] fSaved = new float[6];
+            // 2호는 B·C 동안 서 있기만(시험 걷기 제자리): 발 묶인 채 나무 일·짐 내리기가 막히면 막힘 구조가 거점 쪽으로 옮겨 1호 곁까지 옴(회차 380)
+            f.Ai.StartJob(new ExploreTest.WalkJob(f.Ai, farAway));
             Speeds(f, fSaved, true); // B·C 동안 2호 발 묶음(안 그러면 나무를 상자에 넣으러 거점 쪽으로 걸어와 1호 곁까지 옴 — 회차 147 묶음 실행)
             // 1호도 제자리로(회차 166 묶음: A 물러남으로 거점 61m에 있던 1호가 2호를 89m로 보고 Wait로 부름), 둘이 다 옮겨질 때까지
             r.Ai.Guard?.Reset();
@@ -185,6 +187,7 @@ namespace ValheimHelper
             checks.Add($"C 그 뒤 원래 판단({r.Ai.Guard?.LastVerdict} — 체력·남은 적에 따라 싸움도 맞음), 다시 안 부름 ({Guard.LastMateCall})",
                 r.Ai.Guard != null && !r.Ai.Guard.WaitingMate && Guard.LastMateCall.EndsWith("Wait") && r.Deaths == deaths);
             Speeds(f, fSaved, false);
+            f.Ai.StartJob(job); // B 앞에 멈춘 나무 일로 되돌림(D가 같은 일을 봄)
             foreach (var c in foes3) if (c != null && !c.IsDead() && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
 
             // D) 혼자도 싸움인데 적 MateCallFoes 이상(목 셋) → 부르고 바로 싸움(Join)
