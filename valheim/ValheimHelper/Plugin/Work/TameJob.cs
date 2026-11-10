@@ -11,16 +11,16 @@ namespace ValheimHelper
     /// </summary>
     public sealed class TameJob : IWorkerJob
     {
-        const float TotalLimit = 5f * 60f, ReachLimit = 90f, WatchLimit = 40f, HomeLimit = 180f, BusyLimit = 10f;
+        const float TotalLimit = 5f * 60f, ReachLimit = 90f, HomeLimit = 180f, BusyLimit = 10f;
         /// <summary>집에서 이 거리 안 야생만 길들인다.</summary>
         internal const float TameFar = 100f;
-        /// <summary>짐승 시야(m_viewRange, 멧돼지 20m) 밖 이만큼에서 먹이를 곁에 던지고 그 자리에서 지켜봄 — 다가가면 덤벼 길들이기가 깨짐(회차 373 첫 시험).</summary>
+        /// <summary>짐승 시야(m_viewRange, 멧돼지 20m) 밖 이만큼에서 먹이를 곁에 던지고 바로 떠남 — 다가가면 덤벼 길들이기가 깨짐(회차 373 첫 시험), 서서 지켜보면 헛기다림(사용자 11-11 ②) → 먹었는지는 다음 For가 Checked로 확인.</summary>
         const float OutOfSight = 2f;
 
         /// <summary>데려오기: 짐승이 이만큼 안에 오면 우리에 다 왔다고 보고 풀어 둠.</summary>
         const float PenNear = 6f, LeadLimit = 120f;
 
-        enum Step { Fetch, Approach, Watch, Reach, Lead, Home }
+        enum Step { Fetch, Approach, Reach, Lead, Home }
 
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
@@ -28,7 +28,6 @@ namespace ValheimHelper
         readonly Container m_chest;
         readonly HashSet<string> m_foods;
         string m_taken;
-        Vector3 m_watch;
         float m_dropFrom;
         Step m_step = Step.Fetch;
         float m_time, m_stepTime;
@@ -38,6 +37,23 @@ namespace ValheimHelper
 
         /// <summary>떨군 먹이를 먹었으면 1.</summary>
         public int Fed { get; private set; }
+        /// <summary>먹이를 던지고 떠난 짐승 — 다음 For(1분마다)에서 먹었는지 보고 그 일꾼이 알림.</summary>
+        static readonly List<KeyValuePair<Character, WorkerNpc>> s_dropped = new List<KeyValuePair<Character, WorkerNpc>>();
+
+        static void Checked(WorkerNpc npc)
+        {
+            for (int i = s_dropped.Count - 1; i >= 0; i--)
+            {
+                Character a = s_dropped[i].Key;
+                if (s_dropped[i].Value != npc && s_dropped[i].Value != null) continue;
+                Tameable t = a != null && !a.IsDead() ? a.GetComponent<Tameable>() : null;
+                if (t != null && t.IsHungry() && LivestockJob.FoodOnGround(a.transform.position, LivestockJob.FoodsOf(a))) continue;   // 아직 안 먹음
+                s_dropped.RemoveAt(i);
+                if (t == null || t.IsHungry()) continue;
+                Plugin.Log.LogInfo($"{npc.NpcName} 길들이기 확인: {a.m_name} 먹음, 남은 시간 {TameLeft(a, t):0}초, 길듦 {a.IsTamed()}");
+                npc.Say("tameDone", new Dictionary<string, string>());
+            }
+        }
         public string StepName => "Tame" + m_step;
         internal Character Animal => m_animal;
         public string Label => m_npc.Line("job.tame");
@@ -120,6 +136,7 @@ namespace ValheimHelper
         /// <summary>거점 가축 상자(그 종을 받는 우리 — Pens)에 먹이가 있는 배고픈 야생 짐승 하나(없으면 null). 이유는 로그로.</summary>
         internal static TameJob For(WorkerNpc npc)
         {
+            Checked(npc);
             List<Container> pens = Pens.Near(npc.Home);
             if (pens.Count == 0) return null;
             var species = Pens.SpeciesMap(pens);
@@ -175,7 +192,6 @@ namespace ValheimHelper
             {
                 case Step.Fetch: return UpdateFetch();
                 case Step.Approach: return UpdateApproach(dt);
-                case Step.Watch: return UpdateWatch(dt);
                 case Step.Reach: return UpdateReach(dt);
                 case Step.Lead: return UpdateLead(dt);
                 case Step.Home: return UpdateHome(dt);
@@ -227,26 +243,9 @@ namespace ValheimHelper
                 mine.RemoveItem(it, 1);
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: {m_animal.m_name}에게 {m_taken} 떨굼 {drop}");
                 m_taken = null;
-                m_watch = at + away * (m_dropFrom + 1f);
+                s_dropped.Add(new KeyValuePair<Character, WorkerNpc>(m_animal, m_npc));
             }
-            Go(it != null ? Step.Watch : Step.Home);
-            return true;
-        }
-
-        // ── 지켜보기: 시야 밖에서 먹을 때까지(경보면 길들이기가 안 줄어듦) ──
-        bool UpdateWatch(float dt)
-        {
-            Tameable t = m_animal.GetComponent<Tameable>();
-            if (t != null && !t.IsHungry())
-            {
-                Fed = 1;
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: {m_animal.m_name} 먹음, 남은 시간 {TameLeft(m_animal, t):0}초, 길듦 {m_animal.IsTamed()}");
-                Go(Step.Home);
-                return true;
-            }
-            if (Utils.DistanceXZ(m_watch, m_npc.transform.position) > 2f) m_ai.MoveToPoint(dt, m_watch, 1.5f, true);
-            else m_ai.Face(m_animal.transform.position);
-            if (m_stepTime > WatchLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: {m_animal.m_name} 안 먹음({WatchLimit:0}초)"); Go(Step.Home); }
+            Go(Step.Home);   // 지켜보지 않음 — 집 쪽(짐승 반대)으로 떠나 경보 범위 밖에서 다른 일, 먹었는지는 Checked
             return true;
         }
 
