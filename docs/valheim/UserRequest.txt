@@ -24,3 +24,9 @@
 4. 일 그만둘 때 정리: IWorkerJob에 정리(Cancel)와 잠깐 멈춤·이어 하기를 두고, WorkerAI의 Job 바뀌는 한 곳에서 늘 부름(Job = null 6곳·TidyJob 예외 처리 대신). 일마다 자기 것 정리 — TameJob 따라오기 풀기(가축 요청 2번은 이걸로), TidyJob 든 것 되돌리기, LivestockJob 꺼낸 먹이 되돌리기. 다른 일도 남기는 것이 있는지 하나씩 확인.
 5. 채팅 "!" 없애기(사용자 결정: 인게임 채팅은 일꾼 명령 전용, 사람끼리는 디스코드): "!"가 없어도 정해진 명령은 모드가 먼저 바로 해석(Claude 안 거침), 못 알아들은 말만 Claude로. 일꾼 이름을 안 불러도 명령으로 봄. "!"를 붙인 옛 방식도 그대로 됨. 도움말·대사의 "!" 안내 고침. ChatParser 테스트 추가.
 6. "그래도 가" 걷어내기(사용자: 그 시나리오는 이제 없음): 출발 전 질문 → "그래도 가" 대답 흐름이 실제 플레이에서 아직 나올 수 있는지 코드로 확인. 안 나오면 관련 코드(Departures.TestAutoGo와 시험 중 자동 대답, GoAnyway 명령·대사, 그 시험 칸)를 지움. 아직 나오는 질문이 있으면 지우지 말고 어떤 질문인지 history.md 답에 적음.
+
+플레이용 빌드 표시 valheim-stable(사용자 11-10)
+1. 태그 valheim-stable = 사용자가 직접 플레이할 빌드. 전체 게임 시험(회귀 묶음 전부)이 PASS한 커밋에만 옮긴다(git tag -f → push -f origin valheim-stable). 그 커밋의 valheim/dist DLL이 시험한 DLL과 같아야 함.
+2. 언제: 요청·"다음"이 다 끝나 ALLDONE으로 끝내기 직전에 전체 회귀를 한 번 돌려 전부 PASS면 옮김. 하나라도 FAIL이면 옮기지 않고 Errors.txt 규칙대로. 회차마다 돌리지 않음(시간·토큰).
+3. status.txt에 "플레이용 빌드: <커밋 해시7> <날짜> (전체 회귀 n/n)" 한 줄. 규칙은 loop-plan.txt·vh-loop-prompt.txt에, 받는 법(https://github.com/gojohnlee/gojohnlee/blob/valheim-stable/valheim/dist/ValheimHelper.dll)은 pc-howto.txt에.
+4. 처음 한 번: 지금 valheim 맨 위로 전체 회귀를 돌려 PASS면 첫 태그.
