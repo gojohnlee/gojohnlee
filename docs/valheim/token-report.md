@@ -1,6 +1,6 @@
 # 토큰 측정 보고
 
-만든 때 2026-11-10 20:25 · 최근 7일 · 세션 30개(대화 기록 30개) · scripts/vh-token-report.ps1
+만든 때 2026-11-11 01:00 · 최근 7일 · 세션 34개(대화 기록 34개) · scripts/vh-token-report.ps1
 
 읽는 법: **대화 크기** = 그 턴에 모델이 다시 읽은 양(입력+캐시 읽기+캐시 쓰기). **누적** = 도구 결과 하나가 늘린 양 × 그 뒤 턴 수 — 그 출력 때문에 회차 전체에서 더 읽은 양. 토큰은 Claude가 보고한 실측, 도구별 나눔만 결과 글자 수 비율(추정). **입력값 환산** = Opus 5.5 API 가격 배수(일반 입력 1, 캐시 읽기 0.05, 쓰기 1.25, 출력 5)로 더한 것 — 구독 한도가 같은 비율인지는 모름. 출력에는 생각(effort) 토큰도 들어감.
 
@@ -38,43 +38,47 @@
 | 11-09 23:06 | 377 | implementation/claude-only | 32 | 1.6만 | 2.6만 | 5.7만 | 124.1만 | 4.5만 | 1.6만 | 20.1만 (31·28·41%) |
 | 11-09 23:13 | 378 | implementation/claude-only | 44 | 1.6만 | 3.2만 | 8.5만 | 244.5만 | 7.4만 | 2.4만 | 33.6만 (36·27·36%) |
 | 11-09 23:58 | 379 | implementation/claude-only | 4 | 1.6만 | - | 2.4만 | 6.9만 | 1.2만 | 1,315 | 2.5만 (14·60·26%) |
+| 11-10 20:30 | 380 | implementation/claude-only | 294 | 1.6만 | 2.7만 | 33.7만 | 5,400.0만 | 33.7만 | 15.2만 | 388.4만 (70·11·20%) |
+| 11-10 23:16 | 381 | implementation/claude-only | 35 | 1.6만 | 3.2만 | 0 | 173.8만 | 6.5만 | 1.7만 | 25.2만 (35·32·33%) |
+| 11-10 23:31 | 381 | implementation/claude-only | 35 | 1.6만 | 2.9만 | 5.9만 | 144.0만 | 4.9만 | 1.5만 | 20.9만 (34·29·36%) |
+| 11-10 23:53 | 382 | implementation/claude-only | 33 | 1.6만 | 2.9만 | 5.2만 | 120.3만 | 4.0만 | 9,883 | 16.0만 (38·31·31%) |
 
 ## 무엇이 대화를 키웠나(종류별 합, 누적 큰 순)
 
 | 종류 | 호출 수 | 늘린 양 합 | 누적 | 누적 비율 |
 |---|---|---|---|---|
-| Bash sed | 204 | 33.9만 | 1,566.3만 | 19% |
-| Bash grep | 225 | 32.0만 | 1,354.0만 | 16% |
-| (도구 없음: 출력·알림) | 111 | 14.6만 | 861.1만 | 10% |
-| Bash git | 76 | 8.4만 | 529.2만 | 6% |
-| Read | 69 | 9.3만 | 463.1만 | 6% |
-| Bash cat | 45 | 11.1만 | 328.2만 | 4% |
-| Edit | 135 | 7.2만 | 266.6만 | 3% |
-| Bash G="/c/Program | 21 | 3.8만 | 223.9만 | 3% |
-| Bash powershell | 23 | 7.3만 | 207.9만 | 2% |
-| Bash wc | 18 | 4.2만 | 198.5만 | 2% |
-| Bash python | 12 | 2.9만 | 144.0만 | 2% |
-| PowerShell $new | 7 | 1.6만 | 122.9만 | 1% |
-| mcp__ccd_turn__wrap_up | 54 | 2.4만 | 116.0만 | 1% |
-| Write | 10 | 3.7만 | 108.6만 | 1% |
-| Bash ls | 13 | 1.9만 | 107.8만 | 1% |
+| Bash sed | 277 | 42.5만 | 2,344.5만 | 17% |
+| Bash grep | 302 | 40.3만 | 2,211.2만 | 16% |
+| (도구 없음: 출력·알림) | 117 | 15.0만 | 865.9만 | 6% |
+| Read | 92 | 11.5만 | 835.6만 | 6% |
+| Bash cat | 61 | 13.8만 | 667.7만 | 5% |
+| Bash git | 89 | 9.6만 | 642.2만 | 5% |
+| Edit | 167 | 8.8만 | 582.9만 | 4% |
+| Bash powershell | 27 | 10.2만 | 448.6만 | 3% |
+| Bash wc | 19 | 4.4만 | 235.6만 | 2% |
+| Bash G="/c/Program | 21 | 3.8만 | 223.9만 | 2% |
+| Bash P=valheim/ValheimHelper/Plugin; | 8 | 8,864 | 218.2만 | 2% |
+| Bash dotnet | 31 | 2.3만 | 192.8만 | 1% |
+| Bash python | 14 | 3.2만 | 182.7만 | 1% |
+| Bash bash | 34 | 4.6만 | 169.7만 | 1% |
+| Bash ls | 19 | 2.3만 | 157.9만 | 1% |
 
 ## 비싼 호출 15개(누적 큰 순)
 
 | 시작 | 회차 | 턴 | 호출 | 늘린 양 | 누적 |
 |---|---|---|---|---|---|
+| 11-10 20:30 | 380 | 2 | Bash powershell -NoProfile -ExecutionPolicy Bypass… | 5,668 | 165.5만 |
 | 11-09 19:15 | - | 37 | Bash sed -n 19,285p Speech.cs / grep -E '\["(spawn… | 1.3만 | 147.4만 |
+| 11-10 20:30 | 380 | 8 | Bash sed -n 10,19p docs/valheim/pc-howto.txt; sed … | 4,290 | 122.7만 |
+| 11-10 20:30 | 380 | 1 | Bash cat scripts/vh-loop-prompt.txt | 2,992 | 87.7만 |
 | 10-31 10:44 | - | 12 | Bash ls CLAUDE.md docs/valheim/CLAUDE.md 2>/dev/nu… | 8,829 | 77.7만 |
 | 11-09 19:15 | - | 44 | Bash python - <<'EOF' import re,io p='Core/Npc/Spe… | 6,424 | 70.7만 |
 | 10-31 10:44 | - | 23 | Bash sed -n 1,25p scripts/vh-loop-restart.ps1; ech… | 8,462 | 65.2만 |
+| 11-10 20:30 | 380 | 34 | Bash P=valheim/ValheimHelper/Plugin; grep -rln ': … | 2,503 | 65.1만 |
 | 10-21 21:50 | - | 8 | Read scripts/vh-loop.ps1 | 7,201 | 64.8만 |
+| 11-10 20:30 | 380 | 32 | Bash W=valheim/ValheimHelper/Plugin/WorkerAI.cs; g… | 2,448 | 64.1만 |
 | 11-07 12:39 | - | 10 | Bash sed -n 25,60p Work/GatherJob.Search.cs; echo … | 5,675 | 63.6만 |
 | 10-31 10:44 | - | 22 | Read scripts/vh-loop.ps1 | 7,991 | 62.3만 |
 | 11-07 12:39 | - | 8 | Bash wc -l Core/Work/Refill.cs Plugin/RefillWindow… | 5,225 | 59.6만 |
-| 11-02 19:12 | - | 11 | (도구 없음: 출력·알림) | 4,495 | 54.4만 |
-| 11-02 19:12 | - | 70 | PowerShell $A="C:\Program Files (x86)\Steam\steamapps\co… | 8,686 | 53.9만 |
-| 11-02 19:12 | - | 66 | Bash G="/c/program files (x86)/steam/steamapps/com… | 7,832 | 51.7만 |
-| 10-31 10:44 | - | 1 | mcp__ccd_turn__update_plan | 5,023 | 49.7만 |
-| 11-09 20:42 | 367 | 3 | Bash grep -n -i '호위\/escort\/활\/bow' docs/valheim/… | 8,665 | 49.4만 |
-| 11-02 19:12 | - | 38 | Bash sed 's/ / /\t/' >> ui-ko.tsv <<'EOF' # --- 지도… | 5,121 | 48.1만 |
-| 11-09 19:15 | - | 67 | PowerShell $new = Get-Content "$env:USERPROFILE\vh-check… | 5,008 | 43.6만 |
+| 11-10 20:30 | 380 | 6 | Bash T='11-10 20:31' q(){ sed -n "$1,$2p" docs/val… | 2,017 | 58.1만 |
+| 11-10 20:30 | 380 | 88 | Bash grep -noE '"[^"]*![가-힣A-Za-z][^"]*"' valheim/… | 2,752 | 56.7만 |
