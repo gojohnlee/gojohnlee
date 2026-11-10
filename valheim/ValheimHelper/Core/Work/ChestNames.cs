@@ -30,13 +30,13 @@ namespace ValheimHelper.Core.Work
         /// 종 우리(사용자 11-10 가축 4): 상자 이름이 종 이름이면(띄어쓰기·대소문자 무시, 뒤에 "우리"·"pen" 붙어도) 그 종 프리팹 이름.
         /// "늑대 가죽"처럼 다른 말이 붙으면 아님(재료 상자를 우리로 잘못 보지 않게).
         /// </summary>
-        static readonly (string Prefab, string[] Words)[] SpeciesWords =
+        static readonly string[][] SpeciesWords = // 첫 칸 = 프리팹 이름(ValueTuple은 게임 런타임에 없을 수 있어 안 씀)
         {
-            ("Boar", new[] { "돼지", "멧돼지", "boar", "pig" }),
-            ("Wolf", new[] { "늑대", "wolf" }),
-            ("Lox", new[] { "록스", "lox" }),
-            ("Hen", new[] { "닭", "chicken", "hen" }),
-            ("Asksvin", new[] { "아스크스빈", "asksvin" }),
+            new[] { "Boar", "돼지", "멧돼지", "boar", "pig" },
+            new[] { "Wolf", "늑대", "wolf" },
+            new[] { "Lox", "록스", "lox" },
+            new[] { "Hen", "닭", "chicken", "hen" },
+            new[] { "Asksvin", "아스크스빈", "asksvin" },
         };
 
         public static string PenSpecies(string name)
@@ -45,8 +45,8 @@ namespace ValheimHelper.Core.Work
             string s = name.Replace(" ", "").ToLowerInvariant();
             foreach (var suffix in new[] { "우리", "pen" })
                 if (s.Length > suffix.Length && s.EndsWith(suffix, StringComparison.Ordinal)) { s = s.Substring(0, s.Length - suffix.Length); break; }
-            foreach (var (prefab, words) in SpeciesWords)
-                foreach (var w in words) if (s == w) return prefab;
+            foreach (var row in SpeciesWords)
+                for (int i = 1; i < row.Length; i++) if (s == row[i]) return row[0];
             return null;
         }
         public static ChestTags Parse(string name)
