@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 쉴 때 우리 솎기(사용자 11-09 요청 다-4): "가축" 상자 PenRange 둘레 길들인 것이 PenMax를 넘으면 넘는 수만큼 다 자란 것(Growup 없는 것)을 잡아
+    /// 쉴 때 우리 솎기(사용자 11-09 요청 다-4): "가축" 상자 PenRange 둘레 길들인 것이 종별로 PenMax를 넘으면 넘는 수만큼 다 자란 것(Growup 없는 것, 성체 짝은 남김)을 잡아
     /// 떨군 것(고기·가죽)을 주워 돌아와 거점 상자에 넣는다(Unload — 요리에 쓰이게). 이름 붙인 것·따라가는 것은 안 잡는다.
     /// 일꾼 공격은 길든 짐승에 안 맞으므로(Attack: 비플레이어는 IsEnemy만 맞음 — codemap) 곁에서 휘두르며 HitData로 직접 피해를 준다.
     /// 떨굼은 쓰러진 몸(Ragdoll)이 사라질 때 생김(Ragdoll.m_ttl 뒤).
@@ -13,7 +13,7 @@ namespace ValheimHelper
     public sealed class CullJob : IWorkerJob
     {
         const float TotalLimit = 4f * 60f, SpotLimit = 20f, HomeLimit = 180f, PickLimit = 20f;
-        /// <summary>우리 하나에 둘 길든 짐승 수(새끼 포함). 넘으면 다 자란 것을 잡음.</summary>
+        /// <summary>우리 하나에 한 종을 둘 수(새끼 포함). 넘으면 다 자란 것을 잡되 성체 짝은 남김(Herd).</summary>
         internal const int PenMax = 6;
 
         enum Step { Kill, Pick, Home, Store }
@@ -27,6 +27,7 @@ namespace ValheimHelper
         Vector3 m_deadAt;
         HashSet<string> m_drops;
         Unload m_unload;
+        Dictionary<Character, Vector3> m_pens;
 
         /// <summary>잡은 수, 주운 것 수.</summary>
         public int Culled { get; private set; }
@@ -45,7 +46,12 @@ namespace ValheimHelper
             m_targets = targets;
         }
 
-        internal static CullJob For(WorkerNpc npc) { var t = Plan(npc.Home); return t.Count > 0 ? new CullJob(npc, t) : null; }
+        internal static CullJob For(WorkerNpc npc)
+        {
+            var pens = new Dictionary<Character, Vector3>();
+            var t = Plan(npc.Home, pens);
+            return t.Count > 0 ? new CullJob(npc, t) { m_pens = pens } : null;
+        }
 
         /// <summary>잡아도 되는 것: 다 자람(Growup 없음), 이름 없음, 따라가는 대상 없음.</summary>
         internal static bool Cullable(Character a)
@@ -58,37 +64,63 @@ namespace ValheimHelper
             return mai == null || mai.GetFollowTarget() == null;
         }
 
-        /// <summary>우리마다 길들인 것(새끼 포함)이 PenMax를 넘는 수만큼 잡을 것. 이유는 로그로.</summary>
-        internal static List<Character> Plan(Vector3 home)
+        /// <summary>종 = 프리팹 이름, 새끼는 자라서 될 것(Growup.m_grownPrefab — Boar_piggy → Boar).</summary>
+        internal static string Species(Character a)
+        {
+            Growup g = a.GetComponent<Growup>();
+            return Utils.GetPrefabName(g != null && g.m_grownPrefab != null ? g.m_grownPrefab : a.gameObject);
+        }
+
+        /// <summary>그 우리(상자 pen) 둘레 길든 그 종 수(새끼 포함)와 잡아도 되는 성체.</summary>
+        static List<Character> InPen(Vector3 pen, string species, out int total)
+        {
+            var adults = new List<Character>();
+            total = 0;
+            foreach (var a in Character.GetAllCharacters())
+            {
+                if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !LivestockJob.InPen(a, pen) || Species(a) != species) continue;
+                total++;
+                if (Cullable(a)) adults.Add(a);
+            }
+            return adults;
+        }
+
+        /// <summary>
+        /// 우리마다 종별로(사용자 11-10 가축 1) 그 종이 PenMax를 넘는 수만큼 잡을 것 — 성체 짝(Herd.MinAdults)은 늘 남김(Core Herd.ToCull).
+        /// 잡을 것마다 그 우리 자리를 pens에(잡기 직전 다시 셈). 이유는 로그로.
+        /// </summary>
+        internal static List<Character> Plan(Vector3 home, Dictionary<Character, Vector3> pens)
         {
             var list = new List<Character>();
             var provider = Chests.TagProvider;
             if (provider == null) return list;
-            var seen = new HashSet<Character>();
+            var done = new HashSet<string>();
             foreach (var zdo in Senses.Nearby(home, Chests.BaseRange, Chests.IsBaseChest))
             {
                 if ((provider(zdo) & ChestTags.Livestock) == 0) continue;
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view == null) continue;
                 Vector3 pen = view.transform.position;
-                var here = new List<Character>();
                 foreach (var a in Character.GetAllCharacters())
                 {
-                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer()
-                        || !LivestockJob.InPen(a, pen) || !seen.Add(a)) continue;
-                    here.Add(a);
+                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !LivestockJob.InPen(a, pen)) continue;
+                    string sp = Species(a);
+                    if (!done.Add(sp + "@" + pen)) continue; // 우리·종마다 한 번
+                    List<Character> adults = InPen(pen, sp, out int total);
+                    int n = Herd.ToCull(total, adults.Count, PenMax);
+                    for (int i = 0; i < n; i++) { if (pens.ContainsKey(adults[i])) continue; list.Add(adults[i]); pens[adults[i]] = pen; }
+                    if (total > PenMax) Plugin.Log.LogInfo($"우리 솎기(집 {home}): 상자 {pen} 둘레 {sp} {total}마리, 잡아도 되는 성체 {adults.Count}(짝 {Herd.MinAdults} 남김), 잡을 것 {n}");
                 }
-                if (here.Count <= PenMax) continue;
-                int over = here.Count - PenMax, adults = 0;
-                foreach (var a in here)
-                {
-                    if (!Cullable(a)) continue;
-                    adults++;
-                    if (over > 0) { list.Add(a); over--; }
-                }
-                Plugin.Log.LogInfo($"우리 솎기(집 {home}): 상자 {pen} 둘레 {here.Count}마리, 잡아도 되는 것 {adults}, 잡을 것 {here.Count - PenMax - over}");
             }
             return list;
+        }
+
+        /// <summary>잡기 직전 다시 셈: 그 사이 죽거나 데려가거나 새끼가 줄었으면 넘는 수·짝 남김을 다시 봄.</summary>
+        bool StillOver(Character t)
+        {
+            if (m_pens == null || !m_pens.TryGetValue(t, out Vector3 pen)) return true;
+            List<Character> adults = InPen(pen, Species(t), out int total);
+            return adults.Contains(t) && Herd.ToCull(total, adults.Count, PenMax) > 0;
         }
 
         void Go(Step s)
@@ -139,6 +171,7 @@ namespace ValheimHelper
             }
             m_ai.StopMoving();
             m_ai.Face(t.GetCenterPoint());
+            if (m_swing <= 0f && !StillOver(t)) { Plugin.Log.LogInfo($"{m_npc.NpcName} 우리 솎기 그만: {t.m_name} 다시 세니 넘지 않음(짝 남김)"); m_targets.Remove(t); return true; }
             if (m_swing <= 0f) { m_npc.HoldWeapon(Guard.Mults(t.GetDamageModifiers())); if (!m_npc.InAttack()) m_npc.StartAttack(t, false); }
             m_swing += dt;
             if (m_swing < 0.6f) return true;

@@ -246,6 +246,22 @@ namespace ValheimHelper
             checks.Add("새끼·이름 붙인 것은 살아 있음", piggy != null && !piggy.IsDead() && named != null && !named.IsDead());
             Departures.TestCullNow();
             checks.Add("6마리면 다시 안 감", !Departures.IdleCull(w.Ragnar));
+
+            // 8) 짝 남김(사용자 11-10 가축 1): 성체 2 + 새끼 6 = 8마리여도 짝은 남기니 지금은 안 잡음(새끼가 자란 뒤 잡음)
+            foreach (var p in penPigs) if (p != null && !p.IsDead()) ZNetScene.instance.Destroy(p.gameObject);
+            var pair = new List<Character>();
+            for (int i = 0; i < 8; i++)
+            {
+                var p = Spawn(i < 2 ? "Boar" : "Boar_piggy", penAt + Quaternion.Euler(0f, i * 45f, 0f) * Vector3.forward * 3f, made);
+                p.SetTamed(true);
+                p.GetComponent<BaseAI>()?.SetPatrolPoint();
+                pair.Add(p);
+            }
+            yield return new WaitForSeconds(1f);
+            Departures.TestCullNow();
+            bool culled = Departures.IdleCull(w.Ragnar);
+            checks.Add($"성체 2+새끼 6이면 안 잡음(종 {CullJob.Species(pair[2])})", !culled && CullJob.Species(pair[2]) == "Boar");
+            if (culled) w.Ragnar.Ai.GoHome(false);
         }
     }
 }
