@@ -130,7 +130,7 @@ namespace ValheimHelper
             m_stepTime = 0f;
             m_bestDist = float.MaxValue;
             m_progress = 0f;
-            if (s == Step.Store) m_unload = new Unload(m_npc);
+            if (s == Step.Store) m_unload = new Unload(m_npc) { Deliver = Crops.IsProduce }; // 거둔 작물은 들고 다닐 음식이어도 다 넣음
             m_ai.StopMoving();
         }
 

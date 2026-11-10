@@ -445,7 +445,7 @@ namespace ValheimHelper
         /// </summary>
         void BeginStore()
         {
-            m_store = new Unload(m_npc);
+            m_store = new Unload(m_npc) { Deliver = n => n == OutItem }; // 만든 음식은 들고 다닐 음식이어도 다 넣음
             string name = CraftStep.SharedName(OutItem);
             if (name == null) return;
             Chests.Watch(name);
@@ -506,14 +506,13 @@ namespace ValheimHelper
         int LeaveSkipped()
         {
             int total = 0;
-            HashSet<ItemDrop.ItemData> keep = Prep.Kept(m_npc);
             Inventory mine = m_npc.GetInventory();
             foreach (var it in new List<ItemDrop.ItemData>(m_store.Skipped))
             {
                 if (it.m_dropPrefab == null || it.m_dropPrefab.name != OutItem || !mine.ContainsItem(it)) continue;
                 ChestRole role = Chests.RoleFor(it);
                 if (Chests.NearBase(m_npc.Home, role).Count == 0) continue; // 상자가 아예 없으면 들고 있음(예전대로)
-                int n = keep.Contains(it) ? Prep.ExtraMeads(m_npc, it) : it.m_stack;
+                int n = it.m_stack; // 결과물은 들고 다닐 음식이어도 다(Unload.Deliver와 같음)
                 if (n <= 0) continue;
                 mine.RemoveItem(it, n);
                 CraftStep.LeaveAtChest(m_npc, OutItem, n, role);

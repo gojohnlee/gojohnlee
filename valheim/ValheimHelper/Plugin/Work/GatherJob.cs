@@ -129,7 +129,7 @@ namespace ValheimHelper
         bool m_huntArmed;
         /// <summary>이 일 동안 안 잡을 사냥감과 그 시각(Time.time까지): 위험해 보이거나 못 닿은 것.</summary>
         readonly Dictionary<Character, float> m_huntSkip = new Dictionary<Character, float>();
-        const float PreySight = 60f, HuntLimit = 120f, HuntHurt = 0.4f, LootWait = 15f;
+        const float PreySight = 60f, HuntLimit = 120f, HuntHurt = 0.4f, LootWait = 15f, LootWaitBody = 60f;
         /// <summary>활로 이만큼 쏘았는데 체력이 그대로면(안 맞거나 피해가 안 드는 것) 그 짐승은 그만둔다.</summary>
         const int MissLimit = 10;
 

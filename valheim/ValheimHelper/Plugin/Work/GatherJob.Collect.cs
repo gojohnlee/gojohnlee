@@ -24,7 +24,7 @@ namespace ValheimHelper
                 return true;
             }
             ItemDrop drop = NearestDrop(m_targetPos);
-            if (drop == null && m_hunt && m_stepTime < LootWait)
+            if (drop == null && m_hunt && (m_stepTime < LootWait || m_stepTime < LootWaitBody && BodyNear(m_targetPos)))
             {
                 // 사냥감의 떨굼은 쓰러진 몸(Ragdoll)이 사라질 때 나온다 → 그 자리로 가서 기다린다(활로 잡으면 멀다)
                 Walk(dt, m_targetPos, 1.5f);
@@ -157,6 +157,21 @@ namespace ValheimHelper
             }
             return best;
         }
+
+        /// <summary>쓰러진 몸이 아직 있으면 떨굼은 곧 나옴(Ragdoll.m_ttl 뒤 SpawnLoot) — LootWait 넘어도 LootWaitBody까지 기다림(회차 380: 게임 1.0.21 hunttest 15초에 떠나 고기를 남김). 1초마다 봄.</summary>
+        bool BodyNear(Vector3 at)
+        {
+            if (Time.time < m_bodyCheckAt) return m_bodyNear;
+            m_bodyCheckAt = Time.time + 1f;
+            m_bodyNear = false;
+            foreach (var zdo in Senses.Nearby(at, 8f))
+            {
+                ZNetView view = ZNetScene.instance.FindInstance(zdo);
+                if (view != null && view.GetComponent<Ragdoll>() != null) { m_bodyNear = true; break; }
+            }
+            return m_bodyNear;
+        }
+        float m_bodyCheckAt; bool m_bodyNear;
 
         /// <summary>E036 진단: 사냥감 자리 14m 안에 떨굼이 없을 때 40m 안의 같은 물건(가장 가까운 거리·높이)과 남은 쓰러진 몸 수.</summary>
         void LogNoLoot()

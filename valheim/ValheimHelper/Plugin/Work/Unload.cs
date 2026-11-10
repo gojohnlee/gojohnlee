@@ -19,6 +19,9 @@ namespace ValheimHelper
         readonly HashSet<ItemDrop.ItemData> m_skip = new HashSet<ItemDrop.ItemData>();
         /// <summary>이 프리팹들도 넣지 않는다(GatherJob: 일터로 들고 가는 포탈 한 몫 — 불러온 뒤 첫 짐 정리에서 상자로 가지 않게).</summary>
         public HashSet<string> Hold;
+        /// <summary>이 프리팹들은 들고 다닐 음식이어도 다 넣는다(일의 결과물 — 밭에서 거둔 작물·설비에서 만든 음식. 회차 380: 음식 3개 들고 다니기가 거둔 당근·구운 고기를 붙잡음).</summary>
+        public System.Predicate<string> Deliver;
+        bool Delivers(ItemDrop.ItemData it) => Deliver != null && it.m_dropPrefab != null && Deliver(it.m_dropPrefab.name);
         /// <summary>걷지 않고 바로 넣는다(밤사이 정산 — 보는 사람이 없을 때만).</summary>
         public bool Instant;
         /// <summary>넣을 상자가 꽉 차(또는 없어) 못 넣고 건너뛴 것.</summary>
@@ -77,7 +80,7 @@ namespace ValheimHelper
                 foreach (var it in new List<ItemDrop.ItemData>(mine.GetAllItems()))
                 {
                     if (!Storable(it, keep) || ChestFor(it) != chest || !inv.CanAddItem(it)) continue;
-                    if (keep.Contains(it)) // 들고 다닐 미드 더미: 몫을 넘는 만큼만
+                    if (keep.Contains(it) && !Delivers(it)) // 들고 다닐 미드·음식 더미: 몫을 넘는 만큼만
                     {
                         int extra = Prep.ExtraMeads(m_npc, it);
                         ItemDrop.ItemData part = it.Clone();
@@ -137,7 +140,7 @@ namespace ValheimHelper
 
         // 거점에서 고칠 수 있는 닳은 장비는 지닌다(다음 출발 준비가 고침, 상자에 넣으면 부러진 채 남던 것)
         bool Storable(ItemDrop.ItemData it, HashSet<ItemDrop.ItemData> keep) =>
-            it.m_dropPrefab != null && (!keep.Contains(it) || Prep.ExtraMeads(m_npc, it) > 0) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except
+            it.m_dropPrefab != null && (!keep.Contains(it) || Delivers(it) || Prep.ExtraMeads(m_npc, it) > 0) && !m_skip.Contains(it) && it.m_dropPrefab.name != m_except
             && (Hold == null || !Hold.Contains(it.m_dropPrefab.name))
             && Repair.StationFor(it, m_npc.Home) == null;
 

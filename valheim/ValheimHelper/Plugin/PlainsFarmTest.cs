@@ -143,8 +143,8 @@ namespace ValheimHelper
                 foreach (var npc in new[] { w.Ragnar, w.Floki })
                     if (npc.Ai.Guard != null && npc.Ai.Guard.StateName != "Calm") states.Add(npc.Ai.Guard.StateName);
             }
-            bool said = false;
-            for (int i = heard; i < w.Heard.Count; i++) { TestRunner.Log($"들음: {w.Heard[i]}"); if (w.Heard[i].Contains("장비") || w.Heard[i].Contains("무기")) said = true; }
+            bool said = false; // preyStrong 말투에 "갑옷"만 있는 줄도 있음(회차 380)
+            for (int i = heard; i < w.Heard.Count; i++) { TestRunner.Log($"들음: {w.Heard[i]}"); if (w.Heard[i].Contains("장비") || w.Heard[i].Contains("무기") || w.Heard[i].Contains("갑옷")) said = true; }
             bool done = !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob);
             string st = string.Join(",", new List<string>(states).ToArray());
             if (safe)

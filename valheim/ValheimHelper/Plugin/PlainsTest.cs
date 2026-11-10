@@ -113,9 +113,11 @@ namespace ValheimHelper
                 bool together = weak != null && weak.Action == DepartAction.GoTogether;
                 checks.Add($"약한 장비 → 위험한 곳으로 쳐서 동료와 같이·장비 경고하고 출발 ({weak?.Action} {weak?.Key})", weak != null && (together || weak.Action == DepartAction.Go && weak.Key == "depart.gear"));
 
+                // 앞서 스스로 한 일(쉴 때 먹거리 등)이 있으면 비움: 있으면 Work가 바로 참이라 출발 말 전에 봄(회차 380 — 0.0초)
+                if (w.Ragnar.Ai.Job != null) { w.Ragnar.Ai.Queue.Clear(); w.Ragnar.Ai.GoHome(false); }
                 int heard0 = w.Heard.Count;
                 Departures.Gather(new Speaker(Player.m_localPlayer.GetPlayerName(), ZDOID.None, ZDOID.None), cmd, w.Ragnar);
-                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job is GatherJob cg && cg.Item == "Cloudberry", 8f);
                 string n1 = w.Ragnar.NpcName;
                 bool said = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains(together ? "같이" : "평원")) >= 0;
                 checks.Add($"{(together ? "\"같이\"" : "\"평원\" 장비")} 말하고 묻지 않고 출발 (말 {said}, {TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0 && said);
