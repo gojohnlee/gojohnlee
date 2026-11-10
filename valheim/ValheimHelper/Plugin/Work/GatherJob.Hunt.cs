@@ -111,6 +111,7 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 잡음({m_stepTime:0}초)");
                 m_prey = null;
                 m_targetPos = m_preyPos;
+                m_loot = new LootWatch($"{m_npc.NpcName} 사냥 {Item}", m_preyPos);
                 m_targetInfo = null;
                 Go(Step.Collect);
                 return true;

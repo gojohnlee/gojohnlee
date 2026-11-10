@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class CullJob : IWorkerJob
     {
-        const float TotalLimit = 4f * 60f, SpotLimit = 20f, HomeLimit = 180f, PickLimit = 20f;
+        const float TotalLimit = 4f * 60f, SpotLimit = 20f, HomeLimit = 180f;
         /// <summary>우리 하나에 한 종을 둘 수(새끼 포함). 넘으면 다 자란 것을 잡되 성체 짝은 남김(Herd).</summary>
         internal const int PenMax = 6;
 
@@ -25,6 +25,7 @@ namespace ValheimHelper
         float m_time, m_stepTime, m_swing;
         bool m_abort, m_told;
         Vector3 m_deadAt;
+        LootWatch m_loot; // 떨굼 기다림(죽은 순간부터, 몸 자리)
         HashSet<string> m_drops;
         Unload m_unload;
         Dictionary<Character, Vector3> m_pens;
@@ -179,6 +180,7 @@ namespace ValheimHelper
             hit.m_dir = (at - me).normalized;
             hit.SetAttacker(m_npc);
             m_deadAt = at;
+            m_loot = new LootWatch($"{m_npc.NpcName} 우리 솎기 {t.m_name}", at);
             m_drops = DropsOf(t);
             t.Damage(hit);
             Culled++;
@@ -196,21 +198,23 @@ namespace ValheimHelper
             return set;
         }
 
-        /// <summary>쓰러진 자리 둘레의 그 짐승 떨굼을 줍는다. 하나라도 주운 뒤 1초 더 없으면, 또는 PickLimit이 지나면 다음.</summary>
+        /// <summary>쓰러진 자리 둘레의 그 짐승 떨굼을 줍는다. 하나라도 주운 뒤 1초 더 없으면, 또는 떨굼이 더 나올 수 없으면(LootWatch: 몸 m_ttl·사라진 뒤 여유) 다음.</summary>
         bool UpdatePick()
         {
             bool any = false;
-            foreach (Collider col in Physics.OverlapSphere(m_deadAt, 5f, LayerMask.GetMask("item")))
+            foreach (Collider col in Physics.OverlapSphere(m_loot.Pos, 5f, LayerMask.GetMask("item")))
             {
                 ItemDrop d = col.GetComponentInParent<ItemDrop>();
                 if (d == null || !d.TryGetComponent(out ZNetView v) || !v.IsValid() || !m_drops.Contains(Utils.GetPrefabName(d.gameObject))) continue;
                 any = true;
                 int n = d.m_itemData.m_stack;
+                m_loot.Seen(d.transform.position);
                 if (m_npc.PickDrop(d)) { Got += n; m_pickedAt = m_stepTime; }
             }
-            if (m_stepTime > PickLimit || !any && m_pickedAt > 0f && m_stepTime - m_pickedAt > 1f)
+            bool waiting = m_loot.Waiting();
+            if (!any && (!waiting || m_pickedAt > 0f && m_stepTime - m_pickedAt > 1f) || any && !waiting && m_stepTime - m_pickedAt > 3f) // 뒤: 못 줍는 떨굼(가방 참)만 남음
             {
-                if (m_pickedAt <= 0f) Plugin.Log.LogInfo($"{m_npc.NpcName} 우리 솎기: {PickLimit:0}초 안에 떨굼 못 주움 {m_deadAt}");
+                if (m_pickedAt <= 0f) Plugin.Log.LogInfo($"{m_npc.NpcName} 우리 솎기: 죽고 {m_loot.SinceDeath:0}초 안에 떨굼 못 주움 {m_loot.Pos}");
                 m_pickedAt = 0f;
                 Go(Step.Kill);
             }
