@@ -106,19 +106,21 @@ namespace ValheimHelper
         }
 
         /// <summary>그 물건을 넣을 상자: 이미 같은 게 있는 상자 → 빈자리 있는 상자(가까운 것부터).</summary>
-        public static Container ForItem(string prefab, Vector3 home, ChestRole role = ChestRole.Any)
+        /// <param name="avoidInUse">누가 연 상자는 맨 뒤(헛기다림 ①, 사용자 11-11 — 다른 상자에 넣고 TidyJob이 나중에 모음). 열린 상자뿐이면 그것(기다림).</param>
+        public static Container ForItem(string prefab, Vector3 home, ChestRole role = ChestRole.Any, bool avoidInUse = false)
         {
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
             if (go == null) return null;
             ItemDrop.ItemData sample = go.GetComponent<ItemDrop>().m_itemData;
-            Container fallback = null;
+            Container fallback = null, busy = null;
             foreach (var c in NearBase(home, role))
             {
                 if (!c.GetInventory().CanAddItem(sample, 1)) continue;
+                if (avoidInUse && InUse(c)) { if (busy == null) busy = c; continue; }
                 if (c.GetInventory().HaveItem(sample.m_shared.m_name)) return c;
                 if (fallback == null) fallback = c;
             }
-            return fallback;
+            return fallback ?? busy;
         }
 
         /// <summary>

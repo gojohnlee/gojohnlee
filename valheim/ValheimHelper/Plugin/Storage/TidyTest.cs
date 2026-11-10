@@ -110,6 +110,30 @@ namespace ValheimHelper
             checks.Add("다시 하면 옮길 것 없음", Tidy.Instant(w.Home) == 0);
 
             foreach (var c in made) foreach (var p in new[] { "Wood", "Stone", "AxeFlint" }) TestKit.TakeFromChest(c, p);
+
+            // 4) 헛기다림 ①(사용자 11-11): 같은 물건 든 상자가 열려 있으면 기다리지 않고 다른 상자에 넣음 → 닫힌 뒤 정리가 한 상자로
+            TestKit.ClearBaseStock(w, "Resin");
+            a.GetComponent<ZNetView>().GetZDO().Set("ChestName", ""); // 이름표 상자가 있으면 열린 상자는 처음부터 후보가 아님
+            TestKit.PutInChest(open, "Resin", 5);
+            open.SetInUse(true);
+            w.Ragnar.TeleportTo(GatherTest.Ground(open.transform.position - f * 2f), w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(1.2f);
+            w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("Resin"), 4);
+            var u = new Unload(w.Ragnar);
+            float t = 0f;
+            while (t < 30f && u.Update(Time.deltaTime)) { t += Time.deltaTime; yield return null; }
+            int resinOpen = N(open, "Resin"), resinAll = GatherTest.CountBase(w.Home, "Resin");
+            checks.Add($"열린 상자 대신 다른 상자에 넣음 ({t:0.0}초, 열린 상자 {resinOpen}/5, 거점 합 {resinAll}/9, 들고 {BaseTest.Carried(w.Ragnar, "Resin")})",
+                t < 20f && resinOpen == 5 && resinAll == 9 && BaseTest.Carried(w.Ragnar, "Resin") == 0);
+            open.SetInUse(false);
+            yield return new WaitForSeconds(1.2f);
+            Tidy.Instant(w.Home);
+            int most = 0;
+            foreach (var c in made) most = Mathf.Max(most, N(c, "Resin"));
+            most = Mathf.Max(most, N(w.Chest, "Resin"));
+            checks.Add($"닫힌 뒤 정리가 한 상자로 모음 (가장 많은 상자 {most}/9)", most == 9);
+            foreach (var c in made) TestKit.TakeFromChest(c, "Resin");
+            TestKit.ClearBaseStock(w, "Resin");
         }
     }
 }

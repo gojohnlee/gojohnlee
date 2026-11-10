@@ -94,7 +94,12 @@ namespace ValheimHelper
                     inv.MoveItemToThis(mine, it);
                 }
             });
-            if (!done && m_time < BusyLimit) return true; // 누가 열고 있다
+            if (!done && m_time < BusyLimit) // 누가 열고 있다
+            {
+                // 다른 상자에 넣을 수 있으면 그리로(헛기다림 ①, 사용자 11-11), 1초마다 봄
+                if ((m_recheck += dt) >= 1f) { m_recheck = 0f; if (OtherChest(chest, keep)) { Plugin.Log.LogInfo($"DIAG Unload 열린 상자 대신 다른 상자로 ({m_time:0.0}초)"); m_chest = null; m_best = float.MaxValue; m_still = 0f; } }
+                return true;
+            }
             int put = bagBefore - Stacks(mine);
             // 어느 상자에 넣었나(10-29 vh_bagtest: 깃발 125m 가장자리 옛 상자에 넣은 나무를 시험이 못 세 "사라짐"으로 보임)
             if (put > 0) Plugin.Log.LogInfo($"DIAG Unload 넣음 {put}개 → 상자 {chest.GetComponent<ZNetView>()?.GetZDO()?.m_uid} 집에서 {Utils.DistanceXZ(chest.transform.position, m_npc.Home):0.0}m");
@@ -103,6 +108,20 @@ namespace ValheimHelper
             m_chest = null;
             m_best = float.MaxValue; m_still = 0f;
             return true;
+        }
+
+        float m_recheck;
+
+        bool OtherChest(Container busy, HashSet<ItemDrop.ItemData> keep)
+        {
+            if (!Chests.InUse(busy)) return false;
+            foreach (var it in m_npc.GetInventory().GetAllItems())
+            {
+                if (!Storable(it, keep)) continue;
+                Container c = ChestFor(it);
+                if (c != null && c != busy && !Chests.InUse(c)) return true;
+            }
+            return false;
         }
 
         bool CanReach(Vector3 at, float d)
@@ -136,7 +155,7 @@ namespace ValheimHelper
             return string.Join(", ", parts);
         }
 
-        Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home, Chests.RoleFor(it));
+        Container ChestFor(ItemDrop.ItemData it) => Chests.ForItem(it.m_dropPrefab.name, m_npc.Home, Chests.RoleFor(it), true);
 
         // 거점에서 고칠 수 있는 닳은 장비는 지닌다(다음 출발 준비가 고침, 상자에 넣으면 부러진 채 남던 것)
         bool Storable(ItemDrop.ItemData it, HashSet<ItemDrop.ItemData> keep) =>
