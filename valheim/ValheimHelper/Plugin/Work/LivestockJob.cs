@@ -46,7 +46,24 @@ namespace ValheimHelper
         public string StepName => "Feed" + m_step;
         public string Label => m_npc.Line("job.feed");
         public string StateLine() => m_npc.Line("state.feed", new Dictionary<string, string> { ["n"] = Fed.ToString() });
+        /// <summary>취소·쉬기면 꺼낸 먹이를 상자에 되돌림. 급한 명령으로 잠깐 멈춤이면 들고 있다가 이어서 줌.</summary>
+        public void Stop(bool pause) { if (!pause) ReturnFood(); }
+        public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
+
+        void ReturnFood()
+        {
+            Inventory mine = m_npc.GetInventory();
+            foreach (var f in m_feeds)
+            {
+                if (f.Taken == null || f.Chest == null || Chests.InUse(f.Chest)) continue;
+                Chests.TryEdit(f.Chest, inv =>
+                {
+                    ItemDrop.ItemData it = FoodIn(mine, new HashSet<string> { f.Taken });
+                    if (it != null && inv.CanAddItem(it.m_dropPrefab, 1)) { inv.AddItem(it.m_dropPrefab, 1); mine.RemoveItem(it, 1); f.Taken = null; }
+                });
+            }
+        }
 
         LivestockJob(WorkerNpc npc, List<Feed> feeds)
         {
@@ -214,16 +231,7 @@ namespace ValheimHelper
         /// <summary>못 준 먹이는 꺼낸 우리 상자에 되돌림(가득 차면 짐에 남음 — 다음 짐 내리기가 넣음).</summary>
         bool Done()
         {
-            Inventory mine = m_npc.GetInventory();
-            foreach (var f in m_feeds)
-            {
-                if (f.Taken == null || f.Chest == null || Chests.InUse(f.Chest)) continue;
-                Chests.TryEdit(f.Chest, inv =>
-                {
-                    ItemDrop.ItemData it = FoodIn(mine, new HashSet<string> { f.Taken });
-                    if (it != null && inv.CanAddItem(it.m_dropPrefab, 1)) { inv.AddItem(it.m_dropPrefab, 1); mine.RemoveItem(it, 1); }
-                });
-            }
+            ReturnFood();
             if (!m_told && Fed > 0)
             {
                 m_told = true;

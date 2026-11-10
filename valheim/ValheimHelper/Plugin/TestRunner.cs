@@ -31,8 +31,22 @@ namespace ValheimHelper
             s_timeouts[name] = timeout;
             new Terminal.ConsoleCommand(name, "[Valheim Helper] " + description, args =>
             {
-                if (Begin(args.Context, name)) Plugin.Instance.StartCoroutine(Safe(run()));
+                if (TestWorldOnly(args.Context) && Begin(args.Context, name)) Plugin.Instance.StartCoroutine(Safe(run()));
             });
+        }
+
+        /// <summary>
+        /// 시험 명령(vh_*test·vh_despawn)은 시험 전용 판에서만(사용자 11-10): autotest.txt로 켠 판, 시험 월드 te4st41, 시험 캐릭터 vhtest*.
+        /// 실제 플레이 월드에서 시험이 일꾼·상자·땅을 바꾸지 않게. 거절하면 이유를 콘솔에.
+        /// </summary>
+        public static bool TestWorldOnly(Terminal t)
+        {
+            if (AutoSession) return true;
+            string world = ZNet.instance != null ? ZNet.instance.GetWorldName() : "";
+            string who = Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerName() : "";
+            if (world == "te4st41" || who.ToLowerInvariant().StartsWith("vhtest")) return true;
+            t?.AddString($"[Valheim Helper] 시험 명령은 시험 전용 판에서만 됩니다(지금 월드 {world}, 캐릭터 {who}). 실제 플레이 월드를 바꾸지 않게 거절했습니다.");
+            return false;
         }
         static bool s_auto;
         /// <summary>autotest.txt로 켠 판(시험 전용 게임) — 대사 횟수(SpeechCount)를 세지 않는다.</summary>

@@ -17,6 +17,13 @@ namespace ValheimHelper
         void AvoidHere(Vector3 danger);
         /// <summary>대기열·"~부터 하고 갈게요"에 쓰는 짧은 이름("나무 50").</summary>
         string Label { get; }
+        /// <summary>
+        /// 일을 놓을 때 WorkerAI.Job 한 곳에서 늘 부름(사용자 11-10): 끝났을 때·취소·쉬기·죽음 모두. pause면 대기열에 들어가 나중에 Resume.
+        /// 일이 남긴 것(짐승 따라오기·든 물건·꺼낸 먹이)을 정리. 여러 번 불려도 안전하게.
+        /// </summary>
+        void Stop(bool pause);
+        /// <summary>대기열에서 다시 시작할 때(Stop(true) 뒤). 멈출 때 푼 것을 다시 건다.</summary>
+        void Resume();
     }
 
     /// <summary>
@@ -45,8 +52,21 @@ namespace ValheimHelper
         public IWorkerJob Job
         {
             get => m_job;
-            // 쉴 때 상자 정리(TidyJob)를 다른 일·명령·쉬기로 바꾸면 든 물건을 바로 상자에 되돌린다
-            private set { if (m_job is TidyJob t && !ReferenceEquals(value, t)) t.PutBack(); m_job = value; }
+            // 일이 바뀌는 한 곳: 놓는 일은 Stop(대기열에 Resume으로 들어갔으면 잠깐 멈춤), 새 일은 Resume(멈췄던 일이면 다시 걸게)
+            private set
+            {
+                IWorkerJob old = m_job;
+                if (ReferenceEquals(old, value)) return;
+                m_job = value;
+                if (old != null) SafeJob(old, () => old.Stop(Queue.Exists(q => ReferenceEquals(q.Resume, old))), "Stop");
+                if (value != null) SafeJob(value, value.Resume, "Resume");
+            }
+        }
+
+        static void SafeJob(IWorkerJob job, System.Action a, string what)
+        {
+            try { a(); }
+            catch (System.Exception e) { Plugin.Log.LogError($"{job.GetType().Name}.{what} 오류: {e}"); }
         }
         IWorkerJob m_job;
 

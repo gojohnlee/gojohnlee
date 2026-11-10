@@ -104,7 +104,7 @@ namespace ValheimHelper
             catch (Exception e) { Log.LogError($"{what} 실패: {e}"); }
         }
 
-        bool m_updateFailed;
+        readonly System.Collections.Generic.HashSet<string> m_updateFailed = new System.Collections.Generic.HashSet<string>();
 
         bool m_guiFailed;
 
@@ -122,32 +122,35 @@ namespace ValheimHelper
 
         void Update()
         {
-            try
-            {
-                Minimized.Update(); // 먼저: 다른 오류가 나도 창은 내려 둔다
-                Workers.Update();
-                WorkerBanter.Update();
-                Brain.Update(UnityEngine.Time.deltaTime);
-                Departures.Tick(UnityEngine.Time.deltaTime);
-                FoodModWatch.Tick(UnityEngine.Time.deltaTime);
-                ClaudeChat.Tick();
-                SpeechCount.Tick();
-                WorkSaves.Tick(UnityEngine.Time.deltaTime);
-                MorningSettle.Tick();
-                Tidy.Tick(UnityEngine.Time.deltaTime);
-                PersonalChests.Tick(UnityEngine.Time.deltaTime);
-                SharedChests.Tick();
-                SharedGuest.Tick();
-                SharedCraft.Tick();
-                MapSense.Tick(UnityEngine.Time.deltaTime);
-                MapIcons.Update(UnityEngine.Time.deltaTime);
-                RefillWindow.Update(UnityEngine.Time.deltaTime);
-                TestRunner.UpdateAutoRun();
-            }
+            // 기능마다 따로 try: 한 기능 오류가 뒤 기능(WorkSaves·MorningSettle 등)을 멈추지 않게(사용자 11-10)
+            Run("Minimized", () => Minimized.Update()); // 먼저: 다른 오류가 나도 창은 내려 둔다
+            Run("Workers", () => Workers.Update());
+            Run("WorkerBanter", () => WorkerBanter.Update());
+            Run("Brain", () => Brain.Update(UnityEngine.Time.deltaTime));
+            Run("Departures", () => Departures.Tick(UnityEngine.Time.deltaTime));
+            Run("FoodModWatch", () => FoodModWatch.Tick(UnityEngine.Time.deltaTime));
+            Run("ClaudeChat", () => ClaudeChat.Tick());
+            Run("SpeechCount", () => SpeechCount.Tick());
+            Run("WorkSaves", () => WorkSaves.Tick(UnityEngine.Time.deltaTime));
+            Run("MorningSettle", () => MorningSettle.Tick());
+            Run("Tidy", () => Tidy.Tick(UnityEngine.Time.deltaTime));
+            Run("PersonalChests", () => PersonalChests.Tick(UnityEngine.Time.deltaTime));
+            Run("SharedChests", () => SharedChests.Tick());
+            Run("SharedGuest", () => SharedGuest.Tick());
+            Run("SharedCraft", () => SharedCraft.Tick());
+            Run("MapSense", () => MapSense.Tick(UnityEngine.Time.deltaTime));
+            Run("MapIcons", () => MapIcons.Update(UnityEngine.Time.deltaTime));
+            Run("RefillWindow", () => RefillWindow.Update(UnityEngine.Time.deltaTime));
+            Run("TestRunner", () => TestRunner.UpdateAutoRun());
+        }
+
+        // 캡처 없는 람다라 프레임마다 할당 없음. 오류 로그는 기능별로 처음 한 번.
+        void Run(string name, Action a)
+        {
+            try { a(); }
             catch (Exception e)
             {
-                if (!m_updateFailed) Log.LogError("Update 오류(같은 오류는 다시 적지 않음): " + e);
-                m_updateFailed = true;
+                if (m_updateFailed.Add(name)) Log.LogError("Update 오류 " + name + "(같은 기능 오류는 다시 적지 않음): " + e);
             }
         }
     }

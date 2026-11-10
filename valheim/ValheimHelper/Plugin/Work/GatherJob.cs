@@ -265,6 +265,8 @@ namespace ValheimHelper
         bool m_doorPhase;
 
         /// <summary>Guard: 거기는 위험하다. 그 구역(과 지금 목표)을 버리고 다른 데를 찾는다. 들고 있는 건 그대로.</summary>
+        public void Stop(bool pause) { } // 남기는 것 없음(11-10 확인)
+        public void Resume() { }
         public void AvoidHere(Vector3 danger)
         {
             if (m_npc.InInterior())

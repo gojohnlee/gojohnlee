@@ -39,25 +39,35 @@ namespace ValheimHelper.Core.Chat
             {
                 string body = text.TrimStart('!', '！').Trim();
                 if (body.Length == 0) return Ignore();
-                string[] spaced = Split(body);
-                var result = ParseTokens(spaced, text);
-                if (result.Route == ChatRoute.Command) return result;
-                // 사용자 10-31: 띄어쓰기가 달라도("!라그나계속채워나무50") 공백을 빼고 다시 읽는다. 그래도 안 되면 Haiku.
-                string compact = string.Concat(spaced);
-                string[] respaced = Respace(compact) ?? new[] { compact }; // 한 낱말 명령("!상 태"·"!명 령 어")은 붙인 그대로(사용자 11-07)
-                if (!respaced.SequenceEqual(spaced))
-                {
-                    var again = ParseTokens(respaced, text);
-                    if (again.Route == ChatRoute.Command) return again;
-                }
-                return result;
+                return ParseBody(body, text);
             }
 
             if (awaitingAnswer && TryAnswer(text, out var answer))
                 return new ChatResult { Route = ChatRoute.Answer, Answer = answer };
 
+            // 사용자 11-10: 인게임 채팅은 일꾼 명령 전용(사람끼리는 디스코드) → "!"가 없어도 정해진 명령이면 모드가 바로(이름 안 불러도). 못 알아들은 말만 Claude.
+            var plain = ParseBody(text, text);
+            if (plain.Route == ChatRoute.Command) return plain;
+
             if (IsChatter(text)) return Ignore();
             return new ChatResult { Route = ChatRoute.Sonnet, Text = text, Target = LeadingName(text) };
+        }
+
+        /// <summary>명령 본문 해석. 정해진 명령이면 Command, 아니면 ParseTokens가 준 것("!" 줄이면 Haiku).</summary>
+        ChatResult ParseBody(string body, string text)
+        {
+            string[] spaced = Split(body);
+            var result = ParseTokens(spaced, text);
+            if (result.Route == ChatRoute.Command) return result;
+            // 사용자 10-31: 띄어쓰기가 달라도("!라그나계속채워나무50") 공백을 빼고 다시 읽는다. 그래도 안 되면 Haiku.
+            string compact = string.Concat(spaced);
+            string[] respaced = Respace(compact) ?? new[] { compact }; // 한 낱말 명령("!상 태"·"!명 령 어")은 붙인 그대로(사용자 11-07)
+            if (!respaced.SequenceEqual(spaced))
+            {
+                var again = ParseTokens(respaced, text);
+                if (again.Route == ChatRoute.Command) return again;
+            }
+            return result;
         }
 
         ChatResult ParseTokens(string[] tokens, string text)

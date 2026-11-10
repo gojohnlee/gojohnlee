@@ -58,6 +58,8 @@ namespace ValheimHelper
         };
 
         /// <summary>Guard: 지금 목표 경계는 위험하다 → 둘러본 셈 치고 다음 경계로.</summary>
+        public void Stop(bool pause) { } // 남기는 것 없음(11-10 확인)
+        public void Resume() { }
         public void AvoidHere(Vector3 danger)
         {
             Brain.Get().MarkLooked(Senses.ZoneOf(danger));

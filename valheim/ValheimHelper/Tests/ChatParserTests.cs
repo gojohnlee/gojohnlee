@@ -308,6 +308,33 @@ public class ChatParserTests
         Assert.Null(r.Target);
     }
 
+    // 사용자 11-10: 채팅은 일꾼 명령 전용 → "!" 없어도 정해진 명령은 모드가 바로, 이름 안 불러도 명령
+    [Theory]
+    [InlineData("나무 50", null, "Wood", 50)]
+    [InlineData("라그나 나무 50", "라그나", "Wood", 50)]
+    [InlineData("플로키 구리주괴 4", "플로키", "Copper", 4)]
+    [InlineData("라그나나무50", "라그나", "Wood", 50)]
+    [InlineData("!나무 50", null, "Wood", 50)] // 옛 방식도 그대로
+    public void PlainCommandWithoutBang(string line, string target, string item, int amount)
+    {
+        var r = P.Parse(line);
+        Assert.Equal(ChatRoute.Command, r.Route);
+        Assert.Equal(target, r.Command.Target);
+        Assert.Equal(item, r.Command.Item);
+        Assert.Equal(amount, r.Command.Amount);
+    }
+
+    [Theory]
+    [InlineData("상태", CommandKind.Status)]
+    [InlineData("멈춰", CommandKind.Stop)]
+    [InlineData("명령어", CommandKind.Help)]
+    [InlineData("그냥 가", CommandKind.GoAnyway)]
+    public void PlainWordCommand(string line, CommandKind kind) => Assert.Equal(kind, Cmd(line).Kind);
+
+    [Fact]
+    public void PlainAnswerStillAnswerWhenAsked() =>
+        Assert.Equal(ChatRoute.Answer, P.Parse("응", awaitingAnswer: true).Route);
+
     [Theory]
     [InlineData("라그나야 나무 좀", "라그나")]
     [InlineData("ragnar, 나무 좀", "라그나")]

@@ -42,7 +42,35 @@ namespace ValheimHelper
         internal Character Animal => m_animal;
         public string Label => m_npc.Line("job.tame");
         public string StateLine() => m_npc.Line("state.feed", new Dictionary<string, string> { ["n"] = Fed.ToString() });
+        /// <summary>
+        /// 데려오다 그만두면(그만·집으로·따라와·급한 명령·쉬기·죽음) 짐승 따라오기를 풂 — 안 풀면 영영 일꾼을 따라다니고 우리 가축(Cullable)에서도 빠짐.
+        /// 취소면 꺼낸 먹이도 상자에. 잠깐 멈춤이면 이어 할 때(Resume) 짐승 곁으로 다시 가서 따라오게 함.
+        /// </summary>
+        public void Stop(bool pause)
+        {
+            if (m_following && m_animal != null) m_animal.GetComponent<MonsterAI>().SetFollowTarget(null);
+            m_following = false;
+            if (!pause) ReturnFood();
+        }
+
+        public void Resume()
+        {
+            if (m_step == Step.Lead && !m_following && m_animal != null) Go(Step.Reach);
+        }
+
         public void AvoidHere(Vector3 danger) => m_abort = true;
+
+        void ReturnFood()
+        {
+            if (m_taken == null || m_chest == null || Chests.InUse(m_chest)) return;
+            Inventory mine = m_npc.GetInventory();
+            Chests.TryEdit(m_chest, inv =>
+            {
+                ItemDrop.ItemData it = LivestockJob.FoodIn(mine, new HashSet<string> { m_taken });
+                if (it != null && inv.CanAddItem(it.m_dropPrefab, 1)) { inv.AddItem(it.m_dropPrefab, 1); mine.RemoveItem(it, 1); }
+            });
+            m_taken = null;
+        }
 
         TameJob(WorkerNpc npc, Character animal, Container chest, HashSet<string> foods)
         {
@@ -295,18 +323,7 @@ namespace ValheimHelper
         /// <summary>못 떨군 먹이는 그 상자에 되돌림(가득 차면 짐에 남음 — 다음 짐 내리기가 넣음).</summary>
         bool Done()
         {
-            if (m_following && m_animal != null) m_animal.GetComponent<MonsterAI>().SetFollowTarget(null);
-            m_following = false;
-            if (m_taken != null && m_chest != null && !Chests.InUse(m_chest))
-            {
-                Inventory mine = m_npc.GetInventory();
-                Chests.TryEdit(m_chest, inv =>
-                {
-                    ItemDrop.ItemData it = LivestockJob.FoodIn(mine, new HashSet<string> { m_taken });
-                    if (it != null && inv.CanAddItem(it.m_dropPrefab, 1)) { inv.AddItem(it.m_dropPrefab, 1); mine.RemoveItem(it, 1); }
-                });
-                m_taken = null;
-            }
+            Stop(false);
             if (!m_told && Fed > 0)
             {
                 m_told = true;

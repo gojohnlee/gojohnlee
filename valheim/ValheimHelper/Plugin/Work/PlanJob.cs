@@ -83,6 +83,8 @@ namespace ValheimHelper
         public string StateLine() => "제작 " + m_goal + " " + m_runner.Count(StepState.Done) + "/" + m_runner.Plan.Steps.Count + "단계"
             + (m_step != null && m_gather != null ? " · " + m_gather.StateLine() : "");
 
+        public void Stop(bool pause) { m_gather?.Stop(pause); m_filler?.Stop(pause); }
+        public void Resume() { m_gather?.Resume(); m_filler?.Resume(); }
         public void AvoidHere(Vector3 danger) { m_gather?.AvoidHere(danger); m_filler?.AvoidHere(danger); }
 
         /// <summary>

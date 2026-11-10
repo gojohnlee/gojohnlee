@@ -27,7 +27,7 @@ namespace ValheimHelper
             if (s_name2.Value == Old2) s_name2.Value = Default2;
             if (s_name3.Value == Old3) s_name3.Value = Default3;
             new Terminal.ConsoleCommand("vh_spawn", "[Valheim Helper] 일꾼 2명·호위병을 내 옆에 부른다(없는 쪽만)", args => args.Context.AddString(Spawn(out _)));
-            new Terminal.ConsoleCommand("vh_despawn", "[Valheim Helper] 일꾼 NPC를 모두 없앤다", args => args.Context.AddString($"NPC {DespawnAll()}명 없앰"));
+            new Terminal.ConsoleCommand("vh_despawn", "[Valheim Helper] 일꾼 NPC를 모두 없앤다", args => { if (TestRunner.TestWorldOnly(args.Context)) args.Context.AddString($"NPC {DespawnAll()}명 없앰"); });
         }
 
         static readonly HashSet<ZDOID> s_known = new HashSet<ZDOID>();

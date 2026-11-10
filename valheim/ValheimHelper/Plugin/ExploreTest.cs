@@ -92,7 +92,7 @@ namespace ValheimHelper
                     nearest = Mathf.Min(nearest, Utils.DistanceXZ(shore, claude.transform.position));
                     if (blocked && w > 10f) break;
                 }
-                walk.Stop = true;
+                walk.Halt = true;
                 if (claude != null) TestRunner.Log($"물가: 거점에서 {Utils.DistanceXZ(home, shore):0}m, {claude.MoveDebug}");
                 Check($"바다 앞에서 멈춤 (막힘 {blocked}, 수영 {swim:0.0}초, 물가까지 최소 {nearest:0}m)", blocked && swim <= 3f && nearest < 20f);
                 yield return new WaitForSeconds(1f);
@@ -210,15 +210,17 @@ namespace ValheimHelper
         {
             readonly WorkerAI m_ai;
             readonly Vector3 m_to;
-            public bool Stop;
+            public bool Halt;
             public WalkJob(WorkerAI ai, Vector3 to) { m_ai = ai; m_to = to; }
             public string StepName => "TestWalk";
             public string StateLine() => "시험 걷기";
             public string Label => "시험 걷기";
+            public void Stop(bool pause) { }
+            public void Resume() { }
             public void AvoidHere(Vector3 danger) { }
             public bool Update(float dt)
             {
-                if (Stop) return false;
+                if (Halt) return false;
                 m_ai.MoveToPoint(dt, m_to, 2f, true);
                 return true;
             }

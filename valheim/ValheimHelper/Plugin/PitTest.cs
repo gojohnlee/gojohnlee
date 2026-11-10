@@ -177,7 +177,7 @@ namespace ValheimHelper
                             yield return null;
                         }
                     }
-                    walk.Stop = true;
+                    walk.Halt = true;
                     WorkerAI.TestNoJump = WorkerAI.TestNoCarve = WorkerAI.TestNoEdgeRescue = false;
                     TestRunner.Log($"구덩이 {i + 1}({kind} {depth:0.0}m): {(outBy != null ? outBy + "(으)로 나옴" : "못 나옴")} {total:0.0}초, " +
                                    $"점프 {claude.Ai.Jumps - j0}번, 경사로 곡괭이질 {claude.Ai.CarveSwings - c0}번, 가장자리 옮김 {WorkerAI.PitEdgeRescues - edge0}번, 흙 파기 {NpcPatches.NoDig.Dug - d0}번, 지금 {claude.MoveDebug}");
@@ -360,7 +360,7 @@ namespace ValheimHelper
                 t += Time.deltaTime;
                 yield return null;
             }
-            walk.Stop = true;
+            walk.Halt = true;
             WorkerAI.TestNoJump = WorkerAI.TestNoCarve = false;
             Vector3 at = claude.transform.position;
             float fromSpot = Utils.DistanceXZ(spot, at), toHome = Utils.DistanceXZ(at, claude.Home);

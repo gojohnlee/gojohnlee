@@ -37,6 +37,8 @@ namespace ValheimHelper
         public string StepName => "Tidy" + m_step;
         public string Label => m_npc.Line(m_label);
         public string StateLine() => m_npc.Line(m_label);
+        public void Stop(bool pause) => PutBack(); // 든 물건은 상자에(쉬는 일이라 멈춤 없음)
+        public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
 
         public TidyJob(WorkerNpc npc, Func<Vector3, List<Tidy.Move>> plan = null, string label = "state.tidy")

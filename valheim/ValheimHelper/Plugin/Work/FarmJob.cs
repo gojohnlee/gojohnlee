@@ -117,6 +117,8 @@ namespace ValheimHelper
         Dictionary<string, string> Args() => new Dictionary<string, string> { ["n"] = Planted.ToString(), ["total"] = m_total.ToString() };
 
         /// <summary>Guard: 밭 쪽이 위험하다 → 심기를 접고 돌아간다.</summary>
+        public void Stop(bool pause) { } // 챙긴 도구·미끼/씨앗은 짐에 남음(다음 짐 내리기가 넣는지 확인 남음, 11-10)
+        public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
 
         Vector3 Center => new Vector3(Field.X, ZoneSystem.instance.GetGroundHeight(new Vector3(Field.X, 0f, Field.Z)), Field.Z);

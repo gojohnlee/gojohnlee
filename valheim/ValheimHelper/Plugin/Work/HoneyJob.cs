@@ -30,6 +30,8 @@ namespace ValheimHelper
         public string StepName => "Honey" + m_step;
         public string Label => m_npc.Line("job.honey");
         public string StateLine() => m_npc.Line("state.honey", new Dictionary<string, string> { ["n"] = Got.ToString() });
+        public void Stop(bool pause) { } // 남기는 것 없음(11-10 확인)
+        public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
 
         public HoneyJob(WorkerNpc npc, List<Beehive> hives)

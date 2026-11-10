@@ -875,31 +875,24 @@ namespace ValheimHelper
 
         // ---- 쓴 재료 다시 캐기 (사용자 11-09 "지가 쓴 재료는 다시 캐면") ----
 
-        /// <summary>쉴 때 만들기가 상자에서 쓴 캘 수 있는 재료 → 아직 안 채운 수. 저장 안 함(다시 켜면 잊음).</summary>
-        static readonly Dictionary<string, int> s_debt = new Dictionary<string, int>();
+        // 쉴 때 만들기가 상자에서 쓴 캘 수 있는 재료 → 아직 안 채운 수: Brain.Debt(일꾼 ZDO vh_debt에 저장, 사용자 11-10 — 다시 켜도 기억, 월드마다 따로)
 
         internal static void AddDebt(WorkerNpc npc, Dictionary<string, int> used)
         {
             foreach (var kv in used)
             {
                 if (kv.Value <= 0 || ResourceCatalog.WaysFor(kv.Key).Count == 0 || FarmOnly(kv.Key)) continue; // 캘 수 있는 것만(밭 작물은 밭일이 채움)
-                s_debt.TryGetValue(kv.Key, out int n);
-                s_debt[kv.Key] = n + kv.Value;
-                Plugin.Log.LogInfo($"{npc.NpcName} 쓴 재료 다시 캘 몫: {kv.Key} +{kv.Value} → {s_debt[kv.Key]}");
+                int now = Brain.Debt.Add(kv.Key, kv.Value);
+                Plugin.Log.LogInfo($"{npc.NpcName} 쓴 재료 다시 캘 몫: {kv.Key} +{kv.Value} → {now}");
             }
         }
 
-        internal static void Repaid(string item, int n)
-        {
-            if (!s_debt.TryGetValue(item, out int d)) return;
-            d -= n;
-            if (d <= 0) s_debt.Remove(item); else s_debt[item] = d;
-        }
+        internal static void Repaid(string item, int n) => Brain.Debt.Repaid(item, n);
 
         /// <summary>쉬는 일꾼: 갚을 재료가 있으면 그것부터 캐러 감(출발 판단 Go일 때만, 안 되면 그 물건 10분 쉼 — 몫은 남음). 시작했으면 true.</summary>
         internal static bool Repay(WorkerNpc npc)
         {
-            foreach (var kv in new List<KeyValuePair<string, int>>(s_debt))
+            foreach (var kv in new List<KeyValuePair<string, int>>(Brain.Debt.Items))
             {
                 string item = kv.Key;
                 if (RefillSkipped(item) || NightSkipped(item) || RefillBusy(item)) continue;

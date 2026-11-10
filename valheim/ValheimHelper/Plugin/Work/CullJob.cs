@@ -34,6 +34,8 @@ namespace ValheimHelper
         public string StepName => "Cull" + m_step;
         public string Label => m_npc.Line("job.cull");
         public string StateLine() => m_npc.Line("state.cull", new Dictionary<string, string> { ["n"] = Culled.ToString() });
+        public void Stop(bool pause) { } // 남기는 것 없음(11-10 확인)
+        public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
 
         CullJob(WorkerNpc npc, List<Character> targets)

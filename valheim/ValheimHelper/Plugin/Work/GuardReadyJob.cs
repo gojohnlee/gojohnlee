@@ -15,6 +15,8 @@ namespace ValheimHelper
         public bool Update(float dt) => m_prep.Update(dt);
         public string StepName => "Prep";
         public string StateLine() => "장비 챙기기";
+        public void Stop(bool pause) { } // 남기는 것 없음(11-10 확인)
+        public void Resume() { }
         public void AvoidHere(Vector3 danger) { }
         public string Label => "장비 챙기기";
     }

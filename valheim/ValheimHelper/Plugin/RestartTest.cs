@@ -91,6 +91,9 @@ namespace ValheimHelper
             g.LoadPortal(tag);
             checks.Add($"거점 쪽 포탈 놓고 한 몫 듦 ({why}, 포탈 {PortalBuilder.MineWithTag(tag)}개)",
                 placed && g.PortalCarryTag == tag && PortalBuilder.MineWithTag(tag) == 1 && PortalBuilder.Carrying(inv));
+            // 쓴 재료 다시 캐기 몫도 ZDO에 남는지(사용자 11-10): 캘 길 없는 가짜 이름이라 Repay는 건너뜀, restart2가 지움
+            Brain.Debt.Add("vh_test_debt", 7);
+            Brain.Save();
             WorkSaves.SaveNow(w.Ragnar);
             WorkSaves.SaveNow(w.Floki);
             var st = new List<string>
@@ -159,6 +162,9 @@ namespace ValheimHelper
             int know = st.TryGetValue("know", out var ks) ? int.Parse(ks) : 0;
             Brain.Get();
             checks.Add($"일꾼 지식 그대로 (불러옴 {Brain.LoadedZones}/저장 {know}구역)", know > 0 && Brain.LoadedZones >= know);
+            int debt = Brain.Debt.Get("vh_test_debt");
+            checks.Add($"쓴 재료 다시 캘 몫 그대로 ({debt}/7)", debt == 7);
+            Brain.Debt.Repaid("vh_test_debt", debt);
             w.Ragnar = TestKit.Npc(Personality.Ragnar);
             w.Floki = TestKit.Npc(Personality.Floki);
             yield return new WaitForSeconds(2f); // 상자·깃발 구역도 불러오게
