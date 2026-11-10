@@ -32,6 +32,22 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
+        /// <summary>사냥·솎기 대상 쓰러진 몸(Ragdoll) m_ttl = 떨굼이 나오기까지(LootWatch, 사용자 11-11 "재서 맞추기").</summary>
+        static void LogRagdollTtl()
+        {
+            var parts = new List<string>();
+            foreach (string name in new[] { "Boar", "Deer", "Neck", "Hen", "Wolf", "Lox", "Asksvin", "Hare", "Greyling", "Troll" })
+            {
+                Character c = ZNetScene.instance.GetPrefab(name)?.GetComponent<Character>();
+                if (c == null) continue;
+                float ttl = -1f;
+                foreach (var e in c.m_deathEffects.m_effectPrefabs)
+                    if (e.m_prefab != null && e.m_prefab.TryGetComponent(out Ragdoll r)) ttl = r.m_ttl;
+                parts.Add($"{name} {ttl:0.0}");
+            }
+            Plugin.Log.LogInfo("DIAG 몸 m_ttl(초): " + string.Join(", ", parts));
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> boars)
         {
             w.CountsCreatures = true; // 생물을 부르거나 세는 시험
@@ -40,6 +56,7 @@ namespace ValheimHelper
             if (w.Ragnar == null || w.Chest == null) yield break;
             GameObject prefab = ZNetScene.instance.GetPrefab("Boar");
             checks.Add("멧돼지 프리팹", prefab != null);
+            LogRagdollTtl();
             var ways = ResourceCatalog.WaysFor("RawMeat");
             checks.Add("고기는 사냥으로만 얻음(Hunt)", ways.Count == 1 && ways.Contains(ToolKind.Hunt));
             checks.Add("멧돼지는 사냥감", prefab != null && Prey.Is("RawMeat", prefab.GetComponent<Character>()));
