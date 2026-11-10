@@ -119,8 +119,11 @@ namespace ValheimHelper
             // E072 진단(회차 380 간헐 FAIL: 불러온 월드가 1번째 저장보다 뒤 상태 — 나무 일이 끝나 있음): 월드 파일이 상태 파일보다 얼마나 늦게 쓰였나(늦으면 종료가 늦은 것)
             try
             {
-                string db = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), "AppData", "LocalLow", "IronGate", "Valheim", "worlds_local", ZNet.instance.GetWorldName() + ".db");
-                TestRunner.Log($"E072 진단: 월드 파일 쓴 시각 − 상태 파일 쓴 시각 = {(File.GetLastWriteTime(db) - File.GetLastWriteTime(StatePath)).TotalSeconds:0.0}초 ({db})");
+                // 게임 1.0.21: 월드는 worlds_local/<월드>/ 폴더의 *.chunk(바뀐 조각만 따로 씀) — 가장 늦게 쓴 조각과 가장 이른 조각
+                string dir = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), "AppData", "LocalLow", "IronGate", "Valheim", "worlds_local", ZNet.instance.GetWorldName());
+                System.DateTime state = File.GetLastWriteTime(StatePath), newest = System.DateTime.MinValue, oldest = System.DateTime.MaxValue;
+                foreach (string c in Directory.GetFiles(dir)) { var t = File.GetLastWriteTime(c); if (t > newest) newest = t; if (t < oldest) oldest = t; }
+                TestRunner.Log($"E072 진단: 월드 조각 가장 늦게 쓴 시각 − 상태 파일 = {(newest - state).TotalSeconds:0.0}초, 가장 이른 조각 − 상태 파일 = {(oldest - state).TotalSeconds:0.0}초 ({Directory.GetFiles(dir).Length}조각)");
             }
             catch (System.Exception e) { TestRunner.Log("E072 진단 못 함: " + e.Message); }
             try

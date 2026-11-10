@@ -8,7 +8,7 @@
 - [11-09] 우리 가축 떠돌기(E071 닫음): 풀어 준 멧돼지가 예전 목표 쪽으로 걸어가 버리지 않게 하고, 멧돼지는 원래 풀어 둔 자리 둘레 20m까지 돌아다니니 그 자리가 우리 근처면 우리 가축으로 셈(먹이·솎기). [끝, 회차 378 — 커밋 6c819a4 · 시험 vh_livestocktest PASS 30/30 ×3]
 - [11-09] 비욘 경례: 문 옆 경계로 서 있을 때 플레이어가 4m 안을 지나가면 그쪽을 보고 손을 흔듦(같은 사람은 60초에 한 번, 적이 보이면 안 함). [끝, 회차 377 — 커밋 da975b1 · 시험 vh_posttest PASS 9/9]
 다음 (순서대로 — 안 끝난 일만)
-막음 E072(작업 복원): restart1→restart2가 한 번 1번째 저장보다 뒤 상태를 불러옴 — 먼저 restart 쌍을 몇 번 돌려 restart2 "E072 진단" 줄로 시험 환경(종료 늦음)인지 본체인지 가름(Errors.txt). 그다음 E075(mistlands 채집이 상자에 0) 조사.
+막음 E072(작업 복원): restart1→restart2가 한 번 1번째 저장보다 뒤 상태를 불러옴 — 먼저 restart 쌍을 몇 번 돌려 restart2 "E072 진단" 줄로 시험 환경(종료 늦음)인지 본체인지 가름(Errors.txt). E075는 다시 돌려 19/19라 관찰 중.
 요청 플레이용 빌드 valheim-stable: ① 규칙 문서 [끝, 회차 380 — 문서만: loop-plan·vh-loop-prompt·pc-howto·codemap B11] ② 전체 회귀 B1~B11 + 실제 재시작이 전부 PASS한 커밋에 첫 태그·status.txt "플레이용 빌드:" 줄. 게임 1.0.21(11-10 업데이트, 해시 9f959c0396ec)의 전체 회귀도 겸함. 묶음 실행기 C:\vh\stable-dll\run.ps1 -Dll <dll> -Batches '이름|biome|quick|시험;시험|reset'(묶음마다 diag-이름.txt, 묶음 꼴은 codemap "시험 고르기" B1~B11·history "B1 npc·flag" 줄, B7 silver·B8b는 VH_QUICK, B8a plains·B8c mistlands·B9 ashlands·B10 deepnorth는 VH_BIOME — 적·굴 시험은 빼고 따로).
   회차 380(1a63b55·73f7a1b): B1~B5·B7b PASS, B8b plains 빼고 PASS. 고친 것(90053bc matetest 시험, 1b831df 작물·구운 고기 Unload.Deliver·사냥 떨굼 60초, 7b37108 plains 시험 말) 검증: hunt 9/9·farm 25/25·matetest 18/18·plainsfarm 15/15·fuling 15/15(한 번 11/15 E074)·cook 15/15(한 번 14/15 E073). plainstest 7b37108 고침 검증 못 함.
   남은 것: 맨 위 DLL로 B1~B11 + 재시작 처음부터(B9·B10·B11·재시작은 회차 380에 못 돌림) → 전부 PASS면 태그. 이후 ALLDONE 직전마다 같은 회귀 → PASS면 태그 옮김.
