@@ -96,6 +96,7 @@ namespace ValheimHelper
             Brain.Save();
             WorkSaves.SaveNow(w.Ragnar);
             WorkSaves.SaveNow(w.Floki);
+            try { File.Delete(Path.Combine(TestRunner.PluginDir, "e072-save.txt")); } catch (IOException) { } // 끄며 하는 저장 기록만 남게
             var st = new List<string>
             {
                 "home=" + V(w.Home), "chest=" + V(w.Chest.transform.position),
@@ -126,6 +127,13 @@ namespace ValheimHelper
                 TestRunner.Log($"E072 진단: 월드 조각 가장 늦게 쓴 시각 − 상태 파일 = {(newest - state).TotalSeconds:0.0}초, 가장 이른 조각 − 상태 파일 = {(oldest - state).TotalSeconds:0.0}초 ({Directory.GetFiles(dir).Length}조각)");
             }
             catch (System.Exception e) { TestRunner.Log("E072 진단 못 함: " + e.Message); }
+            try
+            {
+                string sp = Path.Combine(TestRunner.PluginDir, "e072-save.txt");
+                if (File.Exists(sp)) { foreach (var l in File.ReadAllLines(sp)) TestRunner.Log("앞 실행 " + l); File.Delete(sp); }
+                TestRunner.Log($"E072 불러온 저장 번호 {SaveSystem.GetSaveNumber()}");
+            }
+            catch (System.Exception e) { TestRunner.Log("E072 저장 기록 못 읽음: " + e.Message); }
             try
             {
                 foreach (var l in File.ReadAllLines(StatePath))

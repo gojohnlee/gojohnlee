@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
@@ -252,8 +253,24 @@ namespace ValheimHelper
         [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.PrepareSave))]
         static class SaveMemory
         {
+            static readonly FieldInfo s_endSave = AccessTools.Field(typeof(ZDOMan), "m_endSave"), s_state = AccessTools.Field(typeof(ZDOMan), "m_currentSaveState"),
+                s_dirty = AccessTools.Field(typeof(ZDOMan), "m_dirtyChunks");
+            static readonly MethodInfo s_updateSaveState = AccessTools.Method(typeof(ZDOMan), "UpdateSaveState");
+
             static void Prefix()
             {
+                // E072: 앞 저장이 끝났어도 "저장 중" 표(둘째 표에 바뀐 조각)는 다음 ZDOMan.Update에서야 풀림 → 그 전에 다시 저장(끄기)하면
+                // 이번 저장이 첫째 표만 보고 바뀐 조각을 안 씀. 게임이 다음 프레임에 할 합치기를 지금 함(SaveWorld가 앞 저장 스레드를 기다린 뒤라 안전).
+                try
+                {
+                    var dirty = s_dirty?.GetValue(ZDOMan.instance) as HashSet<ZoneSystem.ChunkIndex>[];
+                    object end = s_endSave?.GetValue(ZDOMan.instance);
+                    string line = $"E072 저장 전: 상태 {s_state?.GetValue(ZDOMan.instance)}, 끝 {end ?? "없음"}, 바뀐 조각 {dirty?[0].Count}/{dirty?[1].Count}, 저장 번호 {SaveSystem.GetSaveNumber()}";
+                    Plugin.Log.LogInfo(line);
+                    System.IO.File.AppendAllText(System.IO.Path.Combine(TestRunner.PluginDir, "e072-save.txt"), System.DateTime.Now.ToString("HH:mm:ss ") + line + "\n"); // 다음 실행(restart2)이 읽음
+                    if (end != null) s_updateSaveState?.Invoke(ZDOMan.instance, null);
+                }
+                catch (System.Exception e) { Plugin.Log.LogWarning("E072 저장 전 확인 못 함: " + e.Message); }
                 s_savingInto = null;
                 if (s_k != null && s_for != ZDOMan.instance) Plugin.Log.LogInfo("일꾼 기억 저장 건너뜀: ZDOMan 바뀜");
                 if (s_k == null || s_for != ZDOMan.instance || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 아직 안 불러왔으면 ZDO에 불러온 그대로 저장됨
