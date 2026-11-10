@@ -18,6 +18,7 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    전체는 <게임>\BepInEx\plugins\ValheimHelper\diag.txt(FAIL이면 그 시험 '=== 이름' 부분만 grep), 오류 <게임>\BepInEx\LogOutput.log(직접 sed 말고 bash scripts/vh-log.sh [줄수] [패턴]).
    게임이 사용자 화면에서 켜짐 → 시작 전에 한 번 묻는다.
 6. dist DLL도 커밋(방식 A 한 줄 명령이 valheim/dist를 받음).
+   플레이용(전체 회귀 PASS한 빌드, 태그 valheim-stable): https://github.com/gojohnlee/gojohnlee/blob/valheim-stable/valheim/dist/ValheimHelper.dll 를 받아 <게임>\BepInEx\plugins\ValheimHelper\에 넣음. valheim 맨 위는 시험 전일 수 있음.
 클라우드 세션: 환경 네트워크에 nuget.bepinex.dev 허용됨(2026-10-23) → valheim-refs clone 뒤 bash scripts/valheim-build.sh로 빌드 확인 가능(ilspycmd는 dotnet tool install -g ilspycmd).
   게임 시험은 PC만. 클라우드에 dotnet이 없으면 dot.net/v1/dotnet-install.sh --channel 8.0 → ilspycmd --version 8.2.0.7535, 실행 때 DOTNET_ROLL_FORWARD=Major(10-24 확인).
   클라우드에서 만든 dist DLL은 커밋하지 않음(시험한 PC 빌드가 기준).

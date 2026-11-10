@@ -36,3 +36,4 @@
 마지막 줄은 반드시 하나(한국어 한 줄, 120자 이내):
 LOOP: DONE <한 일> | LOOP: FAIL <시험 이름> <못 고친 이유> | LOOP: NEED_USER <물을 것>
 LOOP: ALLDONE <요청·"다음"·구현 단계 ⑮까지 전부 끝·보류이고 Errors.txt에 관찰 중·조사 중이 없을 때만>
+  ALLDONE 직전: 전체 회귀(codemap "시험 고르기" B1~B11 + 실제 재시작)가 전부 PASS면 태그 valheim-stable을 그 커밋으로 옮기고 status.txt "플레이용 빌드:" 줄(loop-plan.txt). FAIL이면 안 옮김.
