@@ -92,18 +92,15 @@ namespace ValheimHelper
         internal static List<Character> Plan(Vector3 home, Dictionary<Character, Vector3> pens)
         {
             var list = new List<Character>();
-            var provider = Chests.TagProvider;
-            if (provider == null) return list;
             var done = new HashSet<string>();
-            foreach (var zdo in Senses.Nearby(home, Chests.BaseRange, Chests.IsBaseChest))
+            List<Container> all = Pens.Near(home);
+            var species = Pens.SpeciesMap(all);
+            foreach (Container c in all)
             {
-                if ((provider(zdo) & ChestTags.Livestock) == 0) continue;
-                ZNetView view = ZNetScene.instance.FindInstance(zdo);
-                if (view == null) continue;
-                Vector3 pen = view.transform.position;
+                Vector3 pen = c.transform.position;
                 foreach (var a in Character.GetAllCharacters())
                 {
-                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !LivestockJob.InPen(a, pen)) continue;
+                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !LivestockJob.InPen(a, pen) || !Pens.Accepts(species, c, a)) continue; // 종 우리면 그 종만
                     string sp = Species(a);
                     if (!done.Add(sp + "@" + pen)) continue; // 우리·종마다 한 번
                     List<Character> adults = InPen(pen, sp, out int total);

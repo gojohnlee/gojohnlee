@@ -49,5 +49,29 @@ namespace ValheimHelper.Tests
             var ok = ChestNames.Select(new[] { ChestTags.Gear, ChestTags.None, ChestTags.Private }, ChestTags.None);
             Assert.Equal(new[] { true, true, false }, ok);
         }
+
+        [Theory]
+        [InlineData("늑대", "Wolf")]
+        [InlineData("늑대 우리", "Wolf")]
+        [InlineData("Wolf Pen", "Wolf")]
+        [InlineData("멧돼지", "Boar")]
+        [InlineData("돼지우리", "Boar")]
+        [InlineData("pig", "Boar")]
+        [InlineData("록스", "Lox")]
+        [InlineData("닭", "Hen")]
+        [InlineData("chicken", "Hen")]
+        [InlineData("아스크스빈", "Asksvin")]
+        [InlineData("늑대 가죽", null)] // 재료 상자는 우리 아님
+        [InlineData("가축", null)]
+        [InlineData("우리", null)]
+        [InlineData("", null)]
+        public void PenSpecies(string name, string prefab) => Assert.Equal(prefab, ChestNames.PenSpecies(name));
+
+        [Fact]
+        public void SpeciesPenIsLivestock()
+        {
+            Assert.Equal(ChestTags.Livestock, ChestNames.Parse("늑대"));
+            Assert.Equal(ChestTags.None, ChestNames.Parse("늑대 가죽"));
+        }
     }
 }

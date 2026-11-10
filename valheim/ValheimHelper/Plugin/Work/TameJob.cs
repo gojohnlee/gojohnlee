@@ -90,7 +90,7 @@ namespace ValheimHelper
         }
 
         /// <summary>우리로 데려올 길든 짐승: 우리 상자 PenRange 밖이고, 플레이어가 따르게 하거나 세워 둔 것(s_follow·s_patrol, 바닐라 Command)이 아닌 것.</summary>
-        static bool Stray(Character a, MonsterAI mai, List<Container> pens, out Container pen)
+        static bool Stray(Character a, MonsterAI mai, List<Container> pens, Dictionary<Container, string> species, out Container pen)
         {
             pen = null;
             ZDO zdo = a.GetComponent<ZNetView>().GetZDO();
@@ -100,7 +100,7 @@ namespace ValheimHelper
             {
                 float d = Utils.DistanceXZ(p.transform.position, a.transform.position);
                 if (d <= LivestockJob.PenRange) return false;
-                if (d < best) { best = d; pen = p; }
+                if (d < best && Pens.Accepts(species, p, a)) { best = d; pen = p; } // 그 종을 받는 우리로
             }
             return pen != null;
         }
@@ -117,20 +117,12 @@ namespace ValheimHelper
 
         static float TameLeft(Character c, Tameable t) => c.GetComponent<ZNetView>().GetZDO().GetFloat(ZDOVars.s_tameTimeLeft, t.m_tamingTime);
 
-        /// <summary>거점 "가축" 상자에 먹이가 있는 배고픈 야생 짐승 하나(없으면 null). 이유는 로그로.</summary>
+        /// <summary>거점 가축 상자(그 종을 받는 우리 — Pens)에 먹이가 있는 배고픈 야생 짐승 하나(없으면 null). 이유는 로그로.</summary>
         internal static TameJob For(WorkerNpc npc)
         {
-            var provider = Chests.TagProvider;
-            if (provider == null) return null;
-            var pens = new List<Container>();
-            foreach (var zdo in Senses.Nearby(npc.Home, Chests.BaseRange, Chests.IsBaseChest))
-            {
-                if ((provider(zdo) & ChestTags.Livestock) == 0) continue;
-                ZNetView view = ZNetScene.instance.FindInstance(zdo);
-                Container c = view != null ? view.GetComponent<Container>() : null;
-                if (c != null) pens.Add(c);
-            }
+            List<Container> pens = Pens.Near(npc.Home);
             if (pens.Count == 0) return null;
+            var species = Pens.SpeciesMap(pens);
             Character best = null;
             Container bestChest = null;
             HashSet<string> bestFoods = null;
@@ -146,7 +138,7 @@ namespace ValheimHelper
                 if (d > TameFar) continue;
                 if (a.IsTamed())
                 {
-                    if (Stray(a, mai, pens, out Container pen))
+                    if (Stray(a, mai, pens, species, out Container pen))
                     {
                         Plugin.Log.LogInfo($"길들이기(집 {npc.Home}): 길든 {a.m_name}을 우리 {pen.transform.position}로 데려옴");
                         return new TameJob(npc, a, pen);
@@ -157,7 +149,7 @@ namespace ValheimHelper
                 if (!t.IsHungry() || mai.IsAlerted()) continue;
                 HashSet<string> foods = LivestockJob.FoodsOf(a);
                 if (foods.Count == 0 || LivestockJob.FoodOnGround(a.transform.position, foods)) continue;
-                Container chest = pens.Find(p => LivestockJob.FoodIn(p.GetInventory(), foods) != null);
+                Container chest = pens.Find(p => Pens.Accepts(species, p, a) && LivestockJob.FoodIn(p.GetInventory(), foods) != null); // 종 우리면 그 종만
                 if (chest == null) continue;
                 float score = d + (Taming(a) ? 0f : 1000f) + (Utils.GetPrefabName(a.gameObject) == "Boar" ? 0f : 500f);
                 if (score < bestScore) { bestScore = score; best = a; bestChest = chest; bestFoods = foods; }

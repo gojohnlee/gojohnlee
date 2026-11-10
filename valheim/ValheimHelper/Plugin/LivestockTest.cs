@@ -262,6 +262,17 @@ namespace ValheimHelper
             bool culled = Departures.IdleCull(w.Ragnar);
             checks.Add($"성체 2+새끼 6이면 안 잡음(종 {CullJob.Species(pair[2])})", !culled && CullJob.Species(pair[2]) == "Boar");
             if (culled) w.Ragnar.Ai.GoHome(false);
+
+            // 9) 종 우리(사용자 11-10 가축 4): "가축"은 들어온 종(멧돼지)으로 굳음, 상자 이름이 "늑대"면 멧돼지는 안 받음(먹이·솎기·데려오기)
+            Container penBox = pen.GetComponent<Container>();
+            var map = Pens.SpeciesMap(new List<Container> { penBox });
+            checks.Add($"\"가축\" 우리는 들어온 종으로 굳음({Pens.SpeciesOf(penBox)})", Pens.SpeciesOf(penBox) == "Boar" && Pens.Accepts(map, penBox, pair[0]));
+            ZDO boxZdo = pen.GetComponent<ZNetView>().GetZDO();
+            string oldName = ChestTagReader.Name(boxZdo);
+            boxZdo.Set("ChestName", "늑대");
+            map = Pens.SpeciesMap(new List<Container> { penBox });
+            checks.Add($"\"늑대\" 상자는 늑대 우리, 멧돼지 안 받음({Pens.SpeciesOf(penBox)})", Pens.SpeciesOf(penBox) == "Wolf" && !Pens.Accepts(map, penBox, pair[0]) && CullJob.Plan(home, new Dictionary<Character, Vector3>()).Count == 0);
+            boxZdo.Set("ChestName", oldName ?? "");
         }
     }
 }

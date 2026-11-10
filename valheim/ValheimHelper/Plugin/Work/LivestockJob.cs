@@ -98,23 +98,19 @@ namespace ValheimHelper
             return null;
         }
 
-        /// <summary>집 기준 거점 안 "가축" 상자마다 둘레 배고픈 길들인 가축(상자에 그 먹이가 있고 땅에 먹을 것이 없는 것). 이유는 로그로.</summary>
+        /// <summary>집 기준 거점 안 가축 상자마다 둘레 배고픈 길들인 가축(그 우리가 받는 종만 — Pens, 상자에 그 먹이가 있고 땅에 먹을 것이 없는 것). 이유는 로그로.</summary>
         internal static List<Feed> Plan(Vector3 home)
         {
             var list = new List<Feed>();
-            var provider = Chests.TagProvider;
-            if (provider == null) return list;
+            List<Container> all = Pens.Near(home);
+            var species = Pens.SpeciesMap(all);
             int pens = 0, tame = 0, hungry = 0;
-            foreach (var zdo in Senses.Nearby(home, Chests.BaseRange, Chests.IsBaseChest))
+            foreach (Container c in all)
             {
-                if ((provider(zdo) & ChestTags.Livestock) == 0) continue;
-                ZNetView view = ZNetScene.instance.FindInstance(zdo);
-                Container c = view != null ? view.GetComponent<Container>() : null;
-                if (c == null) continue;
                 pens++;
                 foreach (var a in Character.GetAllCharacters())
                 {
-                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !InPen(a, c.transform.position)) continue;
+                    if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !InPen(a, c.transform.position) || !Pens.Accepts(species, c, a)) continue;
                     Tameable t = a.GetComponent<Tameable>();
                     if (t == null || list.Exists(f => f.Animal == a)) continue;
                     tame++;
