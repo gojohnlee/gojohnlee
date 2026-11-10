@@ -191,19 +191,20 @@ namespace ValheimHelper
             return CraftResult.Done;
         }
 
-        /// <summary>열린 상자가 있으면 기다리고(BusyLimit 넘으면 Failed) false, 없으면 한 프레임에 빼고 true.</summary>
+        /// <summary>안 열린 상자로 모자라고 열린 상자에 있으면 기다리고(BusyLimit 넘으면 Failed) false, 아니면 한 프레임에 빼고 true(헛기다림 ① 빼기).</summary>
         bool TakeFromChests(Vector3 home, string item, int amount, string fuelPrefab, int fuel, out CraftResult wait)
         {
             var chests = Chests.NearBase(home, ChestRole.Ingredients);
-            foreach (var c in chests)
-                if (Chests.InUse(c))
-                {
-                    m_busy += Time.deltaTime;
-                    wait = m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working;
-                    return false;
-                }
             var need = new List<KeyValuePair<string, int>> { new KeyValuePair<string, int>(item, amount) };
             if (fuel > 0) need.Add(new KeyValuePair<string, int>(fuelPrefab, fuel));
+            foreach (var kv in need)
+            {
+                string name = CraftStep.SharedName(kv.Key);
+                if (name == null || !Chests.WaitOpen(chests, inv => inv.CountItems(name), kv.Value)) continue;
+                m_busy += Time.deltaTime;
+                wait = m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working;
+                return false;
+            }
             if (!CraftStep.TakeAll(home, chests, need)) { wait = CraftResult.Failed; return false; } // 덜 빠지면 되돌리고 설비에 안 넣음
             wait = CraftResult.Done;
             return true;

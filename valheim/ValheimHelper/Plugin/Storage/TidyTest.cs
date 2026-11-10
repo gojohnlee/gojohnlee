@@ -125,6 +125,15 @@ namespace ValheimHelper
             int resinOpen = N(open, "Resin"), resinAll = GatherTest.CountBase(w.Home, "Resin");
             checks.Add($"열린 상자 대신 다른 상자에 넣음 ({t:0.0}초, 열린 상자 {resinOpen}/5, 거점 합 {resinAll}/9, 들고 {BaseTest.Carried(w.Ragnar, "Resin")})",
                 t < 20f && resinOpen == 5 && resinAll == 9 && BaseTest.Carried(w.Ragnar, "Resin") == 0);
+            // 빼기 쪽: 열린 상자 말고 다른 상자로 되면 안 기다리고 거기서, 모자랄 때만 기다림, 첫 상자 고르기도 안 열린 것
+            var all = Chests.NearBase(w.Home);
+            string resin = CraftStep.SharedName("Resin");
+            bool noWait = !Chests.WaitOpen(all, inv => inv.CountItems(resin), 4), wait = Chests.WaitOpen(all, inv => inv.CountItems(resin), 6);
+            Container first = Chests.First(w.Home, inv => inv.CountItems(resin) > 0);
+            int took = CraftStep.Take(all, "Resin", 4);
+            checks.Add($"빼기: 다른 상자로 되면 안 기다림·모자라면 기다림·안 열린 상자에서 (뺌 {took}/4, 열린 상자 {N(open, "Resin")}/5, 첫 상자 열림 {first == open})",
+                noWait && wait && first != null && first != open && took == 4 && N(open, "Resin") == 5);
+            if (took > 0) TestKit.PutInChest(first, "Resin", took); // 뺀 상자로 되돌림(CraftStep.Put은 개인 상자 등 정리가 안 모으는 데 넣을 수 있음)
             open.SetInUse(false);
             yield return new WaitForSeconds(1.2f);
             Tidy.Instant(w.Home);

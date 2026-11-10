@@ -54,8 +54,11 @@ namespace ValheimHelper
             foreach (var kv in need)
                 if (Have(home, kv.Key) < kv.Value) return CraftResult.Failed;
             var chests = Chests.NearBase(home, ChestRole.Ingredients);
-            foreach (var c in chests)
-                if (Chests.InUse(c)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
+            foreach (var kv in need) // 열린 상자는 다른 상자로 모자랄 때만 기다림(헛기다림 ① 빼기 — Take는 열린 상자를 건너뜀)
+            {
+                string name = SharedName(kv.Key);
+                if (name != null && Chests.WaitOpen(chests, inv => inv.CountItems(name), kv.Value)) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
+            }
             foreach (var kv in need) // 사람 제작 막대가 예약한 몫을 빼면 모자라면 막대가 끝날 때까지 기다림(① 라)
             {
                 int r = BaseStock.Reserved(SharedName(kv.Key));

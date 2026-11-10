@@ -172,9 +172,14 @@ namespace ValheimHelper
                 });
                 if (FindTool(mine) == null) { m_npc.Say("chestFull"); return false; } // 가방이 꽉 참
             }
-            foreach (var c in Chests.NearBase(m_npc.Home, ChestRole.Mats))
-                if (Chests.InUse(c)) return m_stepTime < BusyLimit || Busy();
             var chests = Chests.NearBase(m_npc.Home, ChestRole.Mats);
+            foreach (var t in m_todo) // 열린 상자는 다른 상자 씨앗으로 모자랄 때만 기다림(헛기다림 ① 빼기 — TakeSeeds는 열린 상자를 건너뜀)
+            {
+                Crop crop = Crops.BySapling(t.Item);
+                string name = CraftStep.SharedName(crop.Seed);
+                int need = t.Amount * Mathf.Max(1, crop.SeedCost) - Count(mine, crop.Seed);
+                if (name != null && Chests.WaitOpen(chests, inv => inv.CountItems(name), need)) return m_stepTime < BusyLimit || Busy();
+            }
             var taken = new List<string>();
             m_total = 0;
             foreach (var t in m_todo)

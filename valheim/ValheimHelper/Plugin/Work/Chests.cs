@@ -165,10 +165,40 @@ namespace ValheimHelper
         }
 
         /// <summary>조건에 맞는 첫 거점 상자(가까운 순), 없으면 null.</summary>
+        /// <summary>맞는 상자 중 가까운 것 — 누가 연 상자는 다른 맞는 상자가 없을 때만(헛기다림 ① 빼기, 사용자 11-11).</summary>
         public static Container First(Vector3 home, Func<Inventory, bool> match, ChestRole role = ChestRole.Any)
         {
-            foreach (var c in NearBase(home, role)) if (match(c.GetInventory())) return c;
-            return null;
+            Container busy = null;
+            foreach (var c in NearBase(home, role))
+            {
+                if (!match(c.GetInventory())) continue;
+                if (!InUse(c)) return c;
+                if (busy == null) busy = c;
+            }
+            return busy;
+        }
+
+        /// <summary>열린 상자를 기다릴 까닭: 안 열린 상자로는 need가 모자라고 열린 상자에 그 물건이 있을 때만(헛기다림 ① 빼기).</summary>
+        public static bool WaitOpen(List<Container> chests, Func<Inventory, int> count, int need)
+        {
+            if (need <= 0) return false;
+            int free = 0;
+            bool open = false;
+            foreach (var c in chests)
+            {
+                int n = count(c.GetInventory());
+                if (n <= 0) continue;
+                if (InUse(c)) open = true; else free += n;
+            }
+            return open && free < need;
+        }
+
+        /// <summary>누가 연 상자를 맨 뒤로(순서는 그대로) — 차례로 들르는 일이 다른 상자부터 쓰게.</summary>
+        public static List<Container> OpenLast(List<Container> chests)
+        {
+            var list = chests.FindAll(c => !InUse(c));
+            list.AddRange(chests.FindAll(InUse));
+            return list;
         }
 
         static readonly Func<Container, bool> LoadContainer =
