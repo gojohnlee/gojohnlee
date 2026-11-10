@@ -119,7 +119,8 @@ namespace ValheimHelper
                 Departures.Gather(new Speaker(Player.m_localPlayer.GetPlayerName(), ZDOID.None, ZDOID.None), cmd, w.Ragnar);
                 yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job is GatherJob cg && cg.Item == "Cloudberry", 8f);
                 string n1 = w.Ragnar.NpcName;
-                bool said = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains(together ? "같이" : "평원")) >= 0;
+                for (int i = heard0; i < w.Heard.Count; i++) TestRunner.Log($"들음: {w.Heard[i]}");
+                bool said = w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && (together ? h.Contains("같이") : h.Contains("평원") || h.Contains("장비") || h.Contains("갑옷"))) >= 0; // depart.gear 말투에 바이옴 없는 줄도 있음(회차 380)
                 checks.Add($"{(together ? "\"같이\"" : "\"평원\" 장비")} 말하고 묻지 않고 출발 (말 {said}, {TestKit.Waited:0.0}초)", TestKit.Ok && Departures.AskedAt(w.Ragnar) < 0 && said);
                 GatherTest.Say("!멈춰", null);
                 yield return new WaitForSeconds(1f);

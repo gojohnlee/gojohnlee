@@ -116,6 +116,13 @@ namespace ValheimHelper
             var checks = new GatherTest.Checks();
             if (!Server(checks)) yield break;
             var st = new Dictionary<string, string>();
+            // E072 진단(회차 380 간헐 FAIL: 불러온 월드가 1번째 저장보다 뒤 상태 — 나무 일이 끝나 있음): 월드 파일이 상태 파일보다 얼마나 늦게 쓰였나(늦으면 종료가 늦은 것)
+            try
+            {
+                string db = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), "AppData", "LocalLow", "IronGate", "Valheim", "worlds_local", ZNet.instance.GetWorldName() + ".db");
+                TestRunner.Log($"E072 진단: 월드 파일 쓴 시각 − 상태 파일 쓴 시각 = {(File.GetLastWriteTime(db) - File.GetLastWriteTime(StatePath)).TotalSeconds:0.0}초 ({db})");
+            }
+            catch (System.Exception e) { TestRunner.Log("E072 진단 못 함: " + e.Message); }
             try
             {
                 foreach (var l in File.ReadAllLines(StatePath))
