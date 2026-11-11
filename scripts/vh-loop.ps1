@@ -27,6 +27,7 @@ $Accounts = @(
 )
 $ShowWindow = $false   # 루프 창 보이기(오른쪽 절반). $false = 숨김
 $RoundTimeoutMin = 240
+$MaxTurns = 60; $MaxCtx = 100000   # 회차 상한(사용자 11-11): 넘으면 끊고 "LOOP: 이어 함" — 작업 트리는 다음 회차가 이어 감
 $BackupMin = 15
 $ReplyTimeoutMin = 15
 $ReplyDir = Join-Path $Dir 'reply'   # 답 전용 작업 트리(회차가 쓰는 저장소 작업 트리와 따로)
@@ -129,6 +130,8 @@ public class Feed {
     public readonly StringBuilder Final = new StringBuilder();
     public readonly StringBuilder Err = new StringBuilder();
     public string ResultJson = "";
+    public long Ctx;   // 메인 대화 크기(마지막 호출의 입력+캐시 읽기+캐시 쓰기) — 회차 상한(사용자 11-11)
+    public string Subtype = "";
     readonly string tag, root;
     readonly Dictionary<string, string> tools = new Dictionary<string, string>();
     readonly JavaScriptSerializer js = new JavaScriptSerializer();
@@ -180,6 +183,11 @@ public class Feed {
                 if (S(d, "subtype") == "init") Head(ConsoleColor.DarkCyan, "claude 시작 (" + S(d, "model") + ")");
                 break;
             case "assistant":
+                if (ind == "") {
+                    object u = V(V(d, "message"), "usage"); long a, b2, c2;
+                    long.TryParse(S(u, "input_tokens"), out a); long.TryParse(S(u, "cache_read_input_tokens"), out b2); long.TryParse(S(u, "cache_creation_input_tokens"), out c2);
+                    if (a + b2 + c2 > 0) Ctx = a + b2 + c2;
+                }
                 foreach (object b in A(V(d, "message"), "content")) {
                     string t = S(b, "type");
                     if (t == "text" && S(b, "text").Trim() != "") {
@@ -193,7 +201,7 @@ public class Feed {
                 foreach (object b in A(V(d, "message"), "content")) if (S(b, "type") == "tool_result") Result(ind, b);
                 break;
             case "result":
-                if (ind == "") ResultJson = js.Serialize(d);
+                if (ind == "") { ResultJson = js.Serialize(d); Subtype = S(d, "subtype"); }
                 lock (Final) { gotResult = true; Final.Insert(0, S(d, "result") + "\n"); }
                 double ms; double.TryParse(S(d, "duration_ms"), NumberStyles.Any, CultureInfo.InvariantCulture, out ms);
                 Head(ConsoleColor.Magenta, "claude 끝: " + Math.Round(ms / 60000) + "분, " + S(d, "num_turns") + "턴" + (S(d, "is_error") == "True" ? ", 오류" : ""));
@@ -265,7 +273,7 @@ function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::Ap
 function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
-    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''
+    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''; conts = 0
             tokenDay = ''; fable = @('', '') }
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
@@ -398,6 +406,8 @@ function Start-Claude($acct, $workDir, $prompt, $tag) {
     $psi.FileName = $Claude
     # 다이어트(사용자 10-27 "소모량이 너무 큼"): 스킬·MCP 끄고 도구를 줄이고 effort 보통 → 매 턴 다시 읽히는 기본분 4.1만 → 1.7만 토큰(실측)
     $psi.Arguments = "-p `"Read $prompt and follow it exactly.`" --dangerously-skip-permissions --output-format stream-json --verbose --effort medium --disable-slash-commands --strict-mcp-config --tools `"Bash,PowerShell,Read,Edit,Write,Grep,Glob,Agent`""
+    # 회차 상한(사용자 11-11 넓게 본 리뷰 ①): 60턴. 대화 10만은 Run-Claude가 본다. 넘으면 "LOOP: 이어 함"(진척 없음으로 안 셈)
+    if (-not $tag) { $psi.Arguments += " --max-turns $MaxTurns" }
     $psi.WorkingDirectory = $workDir
     $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
     $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
@@ -424,13 +434,14 @@ function End-Claude($c, $outFile) {
         $u = Write-VhUsage $Dir $c.F.ResultJson $st.round $c.Account $c.Kind $c.Todo $c.Start $c.P.ExitCode $c.RunId
         Log ("usage {0} round={1} in={2} out={3} cache-read={4} cache-write={5} turns={6} minutes={7} result={8}" -f $u.kind,$u.round,$u.input_tokens,$u.output_tokens,$u.cache_read_tokens,$u.cache_write_tokens,$u.turns,$u.elapsed_minutes,$u.result)
     } catch { Log "usage write failed (not zero usage): $_" }
-    @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes }
+    @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes; Cap = $(if ($c.Cap) { $c.Cap } elseif ($c.F.Subtype -eq 'error_max_turns') { "${MaxTurns}턴" } else { '' }) }
 }
 
 function Run-Claude($acct, $outFile) {
     $c = Start-Claude $acct $Repo 'scripts/vh-loop-prompt.txt' ''
     $bk = Get-Date
-    while (-not $c.P.WaitForExit(60000)) {
+    while (-not $c.P.WaitForExit(10000)) {
+        if ($c.F.Ctx -gt $MaxCtx) { $c.Cap = "대화 $([math]::Round($c.F.Ctx / 10000))만"; Log "회차 대화 $($c.F.Ctx) > $MaxCtx → claude 끔(이어 함)"; & taskkill /T /F /PID $c.P.Id | Out-Null; break }
         if (((Get-Date) - $bk).TotalMinutes -ge $BackupMin) { Backup-Wip; Reply-Requests $acct; $bk = Get-Date }
         if (((Get-Date) - $c.Start).TotalMinutes -ge $RoundTimeoutMin) { Log '회차 시간 초과 → claude 끔'; & taskkill /T /F /PID $c.P.Id | Out-Null; break }
     }
@@ -738,6 +749,7 @@ while ($true) {
     $FableRetry = $false
     $lines = @($r.Text -split "`r?`n" | Where-Object { $_.Trim() })
     $last = $lines | Where-Object { $_ -match '^\s*LOOP:' } | Select-Object -Last 1
+    if ($r.Cap -and -not $last) { $last = "LOOP: 이어 함 상한 $($r.Cap)"; Backup-Wip }
     if (-not $last) {
         $lim = Limit-Until (($lines | Select-Object -Last 5) -join "`n")
         if ($lim) {
@@ -768,7 +780,8 @@ while ($true) {
     Log $last
     Prepare-Git
     $after = G rev-parse origin/valheim | Select-Object -Last 1
-    if (Test-RoundResult $before $after $st.round) { $st.noProg = 0 }
+    if (Test-RoundResult $before $after $st.round) { $st.noProg = 0; $st.conts = 0 }
+    elseif ($last -match '^LOOP: 이어 함' -and $st.conts -lt 3) { $st.conts++; Log "이어 함 $($st.conts)/3 — 진척 없음으로 안 셈" }
     else { $st.noProg++; Log "끝낸 것 없는 회차 $($st.noProg)/3" }
     $stop = $null
     if ($last -match '^LOOP: NEED_USER') { $stop = '사용자 확인 필요' }
