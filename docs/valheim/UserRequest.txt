@@ -7,3 +7,30 @@
 - 같은 걸 다시 시키려면 새로 쓴다(지워진 요청은 history.md에 남아 있다).
 - 구분선 아래만 요청으로 읽는다.
 ======================================================================
+
+루프 멈춤 오판·할 일 표시(클라우드 리뷰 11-11, 사용자 승인) — 맨 먼저
+1. vh-loop.ps1 Test-RoundResult: 회차 385·386·387이 커밋+시험 전부 통과인데 [끝] 줄에 "PASS" 낱말이 없어 "끝낸 것 없음" 3번 → 멈춤·PC 꺼짐. PASS가 없어도 n/n(앞뒤 같은 수)이면 통과로 센다. 기록 꼴(vh-loop-prompt.txt 31줄 "시험 <이름> PASS <n/n>")도 지킨다.
+2. vh-loop.ps1 Get-Todo: progress "다음"이 ★ 없이 "요청 …" 줄이라 status.txt "할 일"이 늘 (없음). "요청 "으로 시작하는 줄 중 안 끝난 첫 줄(120자)을 읽게.
+
+게임은 항상 최신 버전으로(사용자 11-11 — 업데이트가 계속 나옴)
+1. 게임 업데이트를 감지하면(이미 있는 VH_GAME_UPDATE) 전체 회귀에 더해: 비공개 gojohnlee/valheim-refs main의 DLL 3개·README를 새 버전으로 올리고(PC에서 못 올리면 이유를 history에), codemap "확인된 게임 사실" 머리·decisions·vh-loop.ps1 GameNote의 "1.0.20 기준" 글자를 지금 버전으로. 옛 버전에서 확인한 사실은 그 줄에 버전을 남긴다.
+2. 지금 1.0.21로 위 1을 한 번 한다(전체 회귀는 valheim-stable 요청의 남은 묶음이 겸함).
+3. 게임 코드를 베낀 곳(FarZones의 게임 함수 복사본 등)은 업데이트 회차에 새 디컴파일과 비교해 다르면 맞춘다. 이름 글자로 건 패치·내부 필드 읽기가 새 버전에서 못 찾으면 그 기능만 끄고 로그·채팅에 한 줄.
+
+일꾼 기억을 월드별 파일로(사용자 11-11) — 길 기억(집 안 걷기 ②)과 같이
+1. 지식·장소·적 기억(vh_knowledge·vh_places·vh_foes)을 일꾼 ZDO가 아니라 길 기억과 같은 서버 월드별 파일에 둔다(월드 저장 때 쓰기, 크기 로그).
+2. 옛 저장 읽기: 파일이 없고 ZDO에 있으면 한 번 옮기고 ZDO에서 뺀다.
+3. Senses.SaveMemory의 PrepareSave 넣었다 빼기(ZDOExtraData.s_saveStrings 복사)는 지운다. E072 고침(저장 전 합치기)은 E072가 닫힐 때까지 남기고, 기억과 무관하게 필요한지 history에 한 줄.
+4. 시험: vh_restart1→2(지식 그대로)·vh_exploretest·vh_peertest(손님에게 안 감). 월드를 백업으로 되돌려 파일이 월드보다 새것이어도 문제없는지 확인.
+   vh_sets·vh_refill·vh_farms·vh_personal·vh_debt는 작으니 그대로 ZDO.
+
+시험 스위치·작은 것(클라우드 리뷰 11-11)
+1. TestRunner.Begin에서 본체의 시험 스위치(Test* 정적 값 전부 — TestNoJump·TestNoCarve·TestNoEdgeRescue·TestNoReach·TestNoBump·TestNoFarStuck·TestNoInteriorHop·TestAutoGo 등)를 기본값으로 되돌린다(한 함수). 묶음 FAIL·단독 PASS(E054·E065·E073~E076)와 관련 있었는지 history에 한 줄.
+2. WorkSaves가 GatherJob m_goalZone·m_goalPos를 이름 글자(FieldRefAccess)로 읽는 것 → GatherJob internal 속성.
+3. E072를 닫을 때 Senses.SaveMemory의 e072-save.txt 쓰기를 지운다.
+
+Departures 쪼개기(클라우드 리뷰 11-11, 한 번만 — 11-11 순서의 맨 뒤)
+1. 동작은 그대로, 파일만 나눈다: 출발 판단·질문 / 제작 계획 말하기 / 자동 보충·쓴 재료 / 쉴 때 하는 일.
+2. 쉴 때 하는 일 5개(IdleHoney·IdleFeed·IdleCull·IdleTame·IdleFish)는 같은 틀 → 표 하나(간격·"이미 하는 일꾼 있음"·일 만들기·대사 키)로. Test…Now도 하나로.
+3. 일 종류 조건문(is XxxJob, 7파일 27곳) 중 Yields·저장 가능 여부는 IWorkerJob 속성으로.
+4. 전후로 dotnet test + vh_departtest;vh_refilltest;vh_chorestest;vh_fishtest;vh_livestocktest;vh_farmtest;vh_basetest. FAIL이 새로 나오면 되돌리고 history에 이유. decisions 2절 "중복 정리 리팩터링 안 함"에 이 한 번은 예외로 적는다.
