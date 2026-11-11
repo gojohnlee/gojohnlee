@@ -101,6 +101,19 @@ namespace ValheimHelper
             Logger.LogInfo($"Valheim Helper {FullVersion} 로드됨");
         }
 
+        // 같이 깔린 BepInEx 플러그인 "이름 판, …" — 플레이 버그가 모드 조합 탓인지 가리려고 시작 로그·diag 머리에
+        internal static string PluginList()
+        {
+            var names = new System.Collections.Generic.List<string>();
+            foreach (var info in BepInEx.Bootstrap.Chainloader.PluginInfos.Values)
+                if (info?.Metadata != null) names.Add($"{info.Metadata.Name} {info.Metadata.Version}");
+            names.Sort(StringComparer.Ordinal);
+            return string.Join(", ", names);
+        }
+
+        // Awake 땐 뒤 플러그인이 아직 안 올라와서 첫 프레임에 적는다
+        void Start() => Step("플러그인 목록", () => Logger.LogInfo("같이 깔린 플러그인: " + PluginList()));
+
         static void Step(string what, Action action)
         {
             try { action(); }
