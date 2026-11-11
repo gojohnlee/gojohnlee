@@ -489,6 +489,28 @@ function Limit-Until($tail) {
     $t.AddMinutes(2)
 }
 
+# 켜진 게임·전용 서버(사용자 11-11: 직접 플레이 중엔 끄기·절전 안 함). 시험이 띄운 게임(%TEMP%\valheim-test-game.txt의 PID·시작 시각)은 뺀다.
+# 전용 서버는 시험 것과 못 가르니 모두 셈. 있으면 "게임 PID 1234" 같은 한 줄, 없으면 ''.
+function Get-PlayingGame {
+    $g = (Get-Content (Join-Path $env:TEMP 'valheim-test-game.txt') -ErrorAction SilentlyContinue | Select-Object -First 1) -split ' '
+    $p = @(Get-Process valheim, valheim_server -ErrorAction SilentlyContinue | Where-Object {
+        -not ($_.ProcessName -eq 'valheim' -and $g.Count -ge 2 -and $_.Id -eq ($g[0] -as [int]) -and $_.StartTime.Ticks -eq ($g[1] -as [long])) })
+    if ($p) { ($p | ForEach-Object { "$(if ($_.ProcessName -eq 'valheim') { '게임' } else { '전용 서버' }) PID $($_.Id)" }) -join ', ' } else { '' }
+}
+# 자리 비움 = 입력 없음 10분 + 켜진 게임 없음. 게임 때문에 못 끄면 30분마다 로그·status 한 줄.
+$script:GameTold = [datetime]::MinValue
+function Test-Away {
+    if ([VH.Power]::IdleMs() -le 600000) { return $false }
+    $pg = Get-PlayingGame
+    if (-not $pg) { return $true }
+    if (((Get-Date) - $script:GameTold).TotalMinutes -ge 30) {
+        $script:GameTold = Get-Date
+        Log "입력 없음 10분이지만 $pg 켜져 있음 → 안 끄고 안 잠듦"
+        Write-Status "$($script:StatusNow) — $pg 켜져 있어 안 끄고 안 잠듦" '-'
+    }
+    return $false
+}
+
 function Wait-Until($t, $Cancel) {
     # $Cancel(있으면): 30초마다 불러 참이면 일찍 끝냄(쉼 파일을 지우면 바로 다시 돎 — vh-play.ps1).
     # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 자리 비움(입력 없음 10분)이면 최대 절전(사용자가 쓰는 중이면 그냥 기다림).
@@ -501,7 +523,7 @@ function Wait-Until($t, $Cancel) {
     while ((Get-Date) -lt $t) {
         if ($Cancel -and (& $Cancel)) { break }
         $idle = [VH.Power]::IdleMs()
-        if (($t - (Get-Date)).TotalMinutes -gt 10 -and $idle -gt 600000) {
+        if (($t - (Get-Date)).TotalMinutes -gt 10 -and (Test-Away)) {
             $how = '입력 없음 10분'
             if (-not $bk) { Backup-Wip; $bk = $true }
             $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c exit'
@@ -578,7 +600,7 @@ function Wait-UserRequest($why, $last) {
     Write-Status "답 기다림: $why — UserRequest.txt에 쓰면 5분 안에 이어 감(물은 것은 history.md 맨 위)" $last
     $chk = Get-Date
     while ($true) {
-        if ([VH.Power]::IdleMs() -gt 600000) {
+        if (Test-Away) {
             [IO.File]::WriteAllText($DoneFile, "$h0`n$why", $Utf8)
             Log '답 기다림 → 자리 비움, 컴퓨터 끔(2분 뒤)'
             Write-Status "답 기다림: $why — 자리 비워 컴퓨터 끔. UserRequest.txt에 쓰고 PC를 켜면 이어 감(물은 것은 history.md 맨 위)" $last
@@ -631,7 +653,7 @@ function Wait-Done($off, $last) {
     }
     $chk = Get-Date
     while ($true) {
-        if ($off -and [VH.Power]::IdleMs() -gt 600000) {
+        if ($off -and (Test-Away)) {
             Log '할 일 다 끝남 → 컴퓨터 끔(2분 뒤)'
             Stop-PC "발헤임 할 일 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
             return $false
