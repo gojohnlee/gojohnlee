@@ -268,7 +268,8 @@ namespace ValheimHelper
             m_stepLevel = level;
             if (reach || Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || (!m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach))
             {
-                if (Utils.DistanceXZ(to, m_stepTo) > 0.5f) { m_stepSince = Time.time; m_stepWaitLen = -1f; }
+                if (Utils.DistanceXZ(to, m_stepTo) > 0.5f) { m_stepSince = Time.time; m_stepWaitLen = -1f; m_stepSlowUntil = 0f; }
+                else if (m_stepSlow) m_stepSlowUntil = Time.time + 0.6f; // 꺾인 모퉁이 1.1m 안에서 다음 모퉁이로 바꾸면 그 자리서 바로 뛰어 모퉁이를 0.5~0.7m 지나쳤다 되돌았음(회차 420 오름 2) → 0.6초 더 걸음
                 m_stepAt = Time.time + 2f; m_stepTo = to; m_step = to; m_stepRest.Clear(); m_stepWait = false;
                 if (Pathfinding.instance != null && Pathfinding.instance.GetPath(pos, to, s_stepPath, m_pathAgentType))
                 {
@@ -288,9 +289,10 @@ namespace ValheimHelper
                         if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
                 }
             }
-            Vector3 next = m_stepRest.Count > 0 ? m_stepRest[0] : to;
+            Vector3 next = to; // 꺾임은 0.5m 넘는 다음 점으로 — 2층 바닥 끝 점들이 0.1m 간격이라 바로 뒤 점(0.14m)으론 꺾임을 못 보고 7.5m/s로 1m 지나쳤음(회차 420 내림)
+            foreach (Vector3 p in m_stepRest) if (Utils.DistanceXZ(p, m_step) > 0.5f) { next = p; break; }
             m_stepSlow = !m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach + 1.5f && Utils.DistanceXZ(next, m_step) > 0.3f
-                && Vector3.Angle(Flat(m_step - pos), Flat(next - m_step)) > 60f; // 꺾인 모퉁이 앞 1.5m면 걷기(MoveToPoint) — 계단 위 끝을 6.9m/s로 1m 지나쳐 97~178° 되돌았음(회차 410·411)
+                && Vector3.Angle(Flat(m_step - pos), Flat(next - m_step)) > 60f || !m_stepWait && Time.time < m_stepSlowUntil; // 꺾인 모퉁이 앞 1.5m면 걷기(MoveToPoint) — 계단 위 끝을 6.9m/s로 1m 지나쳐 97~178° 되돌았음(회차 410·411)
             return m_step;
         }
         /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐으면 지금 모퉁이 뒤 남은 길 점들(목표까지), 아니면 null.</summary>
@@ -332,6 +334,7 @@ namespace ValheimHelper
         Vector3 m_step, m_stepTo;
         float m_stepAt, m_stepSince, m_stepUsedAt = -10f, m_stepHighAt = -10f, m_stepWaitLen = -1f;
         bool m_stepWait, m_stepSlow, m_stepLevel;
+        float m_stepSlowUntil;
 
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
         public string BlockerAhead(Vector3 point)
