@@ -276,8 +276,8 @@ namespace ValheimHelper
                     if (len > Mathf.Max(direct * 3f, direct + 15f) && Time.time - m_stepSince < 3f)
                     {
                         // 출발 때 첫 길이 터무니없이 멀면(회차 410 오름 4: 남은 74m → 곧 19m, 1.5m 반대로 갔다 141° 되돌기) 3초까지 서서 0.5초마다 다시 받음 — 1.5초론 102m 길(바깥 문 돌기)을 2초 따라가다 51m 길로 157° 되돌았음(회차 414 오름 2).
-                        // 다만 0.5초 뒤 다시 받아도 1m 안 같은 길이고 직선×5·+25m 안이면 그 길로 감 — 계단을 감아 도는 진짜 길(2층 침대→1층 화덕 32.8m/직선 10.7m, 44.7m/9.1m)이 3초 내내 안 바뀌는데 서 있었음(회차 416·417 사7). 가짜 길은 직선의 7배 넘었음(74m·102m).
-                        bool same = m_stepWaitLen >= 0f && Mathf.Abs(len - m_stepWaitLen) < 1f && len <= Mathf.Max(direct * 5f, direct + 25f);
+                        // 다만 0.5초 뒤 다시 받아도 1m 안 같은 길이고 직선×5·+25m 안이면 그 길로 감 — 계단을 감아 도는 진짜 길(2층 침대→1층 화덕 32.8m/직선 10.7m, 44.7m/9.1m)이 3초 내내 안 바뀌는데 서 있었음(회차 416·417 사7). 가짜 길은 직선의 7배 넘었음(74m·102m) → 상한 ×6·+30.
+                        bool same = m_stepWaitLen >= 0f && Mathf.Abs(len - m_stepWaitLen) < 1f && len <= Mathf.Max(direct * 6f, direct + 30f); // ×5·+25였을 땐 계단 참(44.9) 출발 31.7m/직선 6.3m가 살짝 넘어 3초 섰음(회차 418 오름 4, 실제 걸음은 2.5초)
                         m_stepWaitLen = len;
                         if (!same) { m_step = pos; m_stepWait = true; m_stepAt = Time.time + 0.5f; return m_step; }
                     }
