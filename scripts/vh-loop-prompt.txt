@@ -3,7 +3,7 @@
 토큰 아끼기(사용자 10-27 — 모든 턴이 지금까지의 대화 전체를 다시 읽는다. 턴 수와 읽는 양이 곧 비용):
 - 명령은 묶어서 한 번에(예: 빌드·테스트·커밋을 한 명령으로). 같은 파일을 다시 읽지 않는다. Read는 offset/limit, 나머지는 grep.
 - 명령 출력은 짧게(| tail -20, grep). 빌드·테스트·게임 시험 출력 전체, diag 전체, 로그 전체, history.md·codemap·decisions 통째로 읽기 금지.
-- 서브에이전트는 쓰지 않는다. 예외: 막는 문제(복제·소실·저장 손상·복원 실패)를 직접 한 번 찾아도 원인을 모를 때만 vh-debug 하나, 결과를 기다려 받는다.
+- 서브에이전트는 쓰지 않는다. 예외: 막는 문제(복제·소실·저장 손상·복원 실패)를 직접 한 번 찾아도 원인을 모를 때만 vh-debug 하나(Fable), 결과를 기다려 받는다. Fable을 못 쓴다는 오류면 그 회차만 vh-debug-std.
 
 맨 먼저 한 명령으로: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-loop-restart.ps1; echo "G=$env:VH_GAME_UPDATE"; git status --short | head
  (restart 결과가 오류면 이번 회차 history "자세히"에 그 줄.)
