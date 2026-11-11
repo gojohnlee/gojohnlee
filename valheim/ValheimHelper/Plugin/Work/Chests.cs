@@ -41,12 +41,35 @@ namespace ValheimHelper
         /// </summary>
         internal static bool IsBaseChest(ZDO zdo) => IsChest(zdo) && !Character.InInterior(zdo.GetPosition());
 
+        /// <summary>
+        /// 거점 상자 ZDO(125m, IsBaseChest) — 같은 거점은 0.5초 동안 한 번 훑은 것을 다시 씀(넓게 본 리뷰 ④, 11-11: 큰 집은 5×5 구역 조각 수천 개를
+        /// 짐 정리·재고 셈·정리마다 훑음). 그 사이 부서진 상자는 빼고, 새로 놓은 상자는 최대 0.5초 늦게 보임(BaseStock 재고 캐시와 같은 길이).
+        /// 돌려준 목록은 새 것이라 고쳐도 됨.
+        /// </summary>
+        internal static List<ZDO> BaseChestZdos(Vector3 home)
+        {
+            float now = Time.time;
+            if (s_cacheList == null || s_cacheHome != home || now - s_cacheAt > CacheSeconds || now < s_cacheAt)
+            {
+                s_cacheList = Senses.Nearby(home, BaseRange, IsBaseChest);
+                s_cacheHome = home;
+                s_cacheAt = now;
+            }
+            var list = new List<ZDO>(s_cacheList.Count);
+            foreach (var z in s_cacheList) if (ZDOMan.instance.GetZDO(z.m_uid) == z) list.Add(z);
+            return list;
+        }
+        const float CacheSeconds = 0.5f;
+        static List<ZDO> s_cacheList;
+        static Vector3 s_cacheHome;
+        static float s_cacheAt;
+
         /// <summary>그 역할에 쓸 거점 근처 ZDO들(이름 규칙은 Core ChestNames: 역할 상자가 있으면 그것만, 손대지 않는 상자는 항상 뺌).</summary>
         static List<ZDO> Candidates(Vector3 home, ChestRole role)
         {
             // 상자 프리팹만(나무·바위 등 수천 개는 이름 읽기 전에 뺌 — 회차 109 부하 재기: 한 번 0.8ms → 짐 정리 최악 50ms).
             // 상자 아닌 것(이름 없음 = 일반)이 섞이면 Select가 "일반 상자 있음"으로 잘못 봐 역할 상자만 있을 때 빈 목록이 됨 — 그것도 막음.
-            List<ZDO> all = Senses.Nearby(home, BaseRange, IsBaseChest);
+            List<ZDO> all = BaseChestZdos(home);
             var provider = TagProvider;
             if (provider == null) return all;
             var tags = new ChestTags[all.Count];

@@ -78,7 +78,7 @@ namespace ValheimHelper
             into.Clear();
             Vector3? home = Home(me);
             if (!home.HasValue) return;
-            foreach (var zdo in Senses.Nearby(home.Value, BaseArea.Radius, Chests.IsBaseChest))
+            foreach (var zdo in Chests.BaseChestZdos(home.Value))
             {
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 if (view == null) continue;

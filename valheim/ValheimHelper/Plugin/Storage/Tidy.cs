@@ -31,7 +31,7 @@ namespace ValheimHelper
             var chests = new List<Container>();
             var tags = new List<ChestTags>();
             var provider = Chests.TagProvider;
-            foreach (var zdo in Senses.Nearby(home, Chests.BaseRange, Chests.IsBaseChest))
+            foreach (var zdo in Chests.BaseChestZdos(home))
             {
                 ZNetView view = ZNetScene.instance.FindInstance(zdo);
                 Container c = view != null ? view.GetComponent<Container>() : null;
