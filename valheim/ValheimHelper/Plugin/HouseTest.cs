@@ -233,6 +233,7 @@ namespace ValheimHelper
                 }
             }
             Plugin.Instance.StartCoroutine(Watch());
+            var walk = WalkRecorder.Start(w.Ragnar, pieces); // 걸음 기록(사용자 11-11, 아직 재기만 — 기준은 history)
             string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
             GatherTest.Say($"!{w.Ragnar.NpcName} {bowName} 1", null);
             yield return new WaitForSeconds(2f);
@@ -240,6 +241,7 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => Stock(w, "Bow") >= 1 || (w.Ragnar.Ai.Job == null && Stock(w, "Wood") >= wood), 420f);
             float took = TestKit.Waited;
             done = true;
+            TestRunner.Log($"집 걸음(1단계 활): {walk.Stop("housetest 1단계 활")}");
             int tele = Teleports() - tele0 - farSkips;
             Plugin.Log.LogInfo($"집 시험: {took:0}초, 벽 박음 {wallStuck:0.0}초(최장 연속 {maxRun:0.0}초), 순간이동 {tele}(집에서 먼 건너뛰기 {farSkips} 뺌), 문 열림 {opened}, 안에 들어감 {innerTrips}번, 상자 나무 {Count(w.Chest, "Wood")}");
             checks.Add($"안 작업대에서 활 만듦 (활 {Stock(w, "Bow")}, {took:0}초, {w.Ragnar.Ai.Current})", Stock(w, "Bow") >= 1);

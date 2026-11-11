@@ -79,6 +79,7 @@ namespace ValheimHelper
             m_step != null && m_step.Id == id && m_gather != null ? m_step.Amount - Mathf.Max(0, m_gather.Target - m_gather.Delivered) : 0;
         public PlanRunner Runner => m_runner;
         public string StepName => m_step != null ? m_step.Kind.ToString() : "Wait";
+        internal string InnerStep => (m_gather ?? m_filler)?.StepName; // 걸음 기록(WalkRecorder)이 구간을 나눔
         public string Label => m_goal;
         public string StateLine() => "제작 " + m_goal + " " + m_runner.Count(StepState.Done) + "/" + m_runner.Plan.Steps.Count + "단계"
             + (m_step != null && m_gather != null ? " · " + m_gather.StateLine() : "");
