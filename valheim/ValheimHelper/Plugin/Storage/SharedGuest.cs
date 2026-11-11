@@ -82,7 +82,7 @@ namespace ValheimHelper
         /// <summary>우리 길로 열 상자인지: 손님(또는 시험 Force)이고 건축물 상자(수레·묘비 빼고).</summary>
         static bool Ours(Container c)
         {
-            if (ZNet.instance == null || (ZNet.instance.IsServer() && !Force)) return false;
+            if (!Features.SharedChests || ZNet.instance == null || (ZNet.instance.IsServer() && !Force)) return false;
             if (c == null || c.m_wagon != null || c.GetComponent<Piece>() == null) return false;
             ZNetView v = c.GetComponent<ZNetView>();
             return v != null && v.IsValid();

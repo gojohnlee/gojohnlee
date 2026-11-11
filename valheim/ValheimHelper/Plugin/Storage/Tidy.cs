@@ -146,7 +146,7 @@ namespace ValheimHelper
         /// </summary>
         public static void Tick(float dt)
         {
-            if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
+            if (ZNet.instance == null || !ZNet.instance.IsServer() || !Features.Tidy) return;
             if (TestRunner.Running && !TestAllow) return;
             s_timer -= dt;
             if (s_timer > 0f) return;

@@ -394,7 +394,7 @@ namespace ValheimHelper
         static bool Allow(Container c, long uid, string response)
         {
             ZNetView view = c.GetComponent<ZNetView>();
-            if (view == null || !view.IsValid() || !view.IsOwner() || uid == ZNet.GetUID() || !GuestViewing(view.GetZDO().m_uid)) return true;
+            if (!Features.SharedChests || view == null || !view.IsValid() || !view.IsOwner() || uid == ZNet.GetUID() || !GuestViewing(view.GetZDO().m_uid)) return true;
             view.InvokeRPC(uid, response, false);
             return false;
         }

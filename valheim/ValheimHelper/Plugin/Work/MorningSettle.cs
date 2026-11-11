@@ -27,7 +27,7 @@ namespace ValheimHelper
 
         public static void Tick()
         {
-            if (ZNet.instance == null || !ZNet.instance.IsServer() || EnvMan.instance == null) return;
+            if (!Features.Settle || ZNet.instance == null || !ZNet.instance.IsServer() || EnvMan.instance == null) return;
             switch (s_skip.Step(EnvMan.instance.IsTimeSkipping()))
             {
                 case NightSettle.Edge.Started: Snapshot(); break;
@@ -381,6 +381,9 @@ namespace ValheimHelper
             var take = new List<KeyValuePair<string, int>>(need);
             if (fuelAdd > 0) take.Add(new KeyValuePair<string, int>(fuelPrefab, fuelAdd));
             if (!CraftStep.TakeAll(home, chests, take)) return 0; // 덜 빠지면 되돌리고 안 넣음
+            // 넘김 끝 직후 첫 UpdateSmelter가 넘김 동안 흐른 게임 시간(s_startTime부터, 상한 3600초)을 몰아 구워 하나를 바로 땅에 떨굼(회차 435 settletest) — 밤 몫은 정산이 셌으니 시계를 지금으로
+            zdo.Set(ZDOVars.s_startTime, ZNet.instance.GetTime().Ticks);
+            zdo.Set(ZDOVars.s_accTime, 0f);
             foreach (var kv in need)
                 for (int i = 0; i < kv.Value; i++) nv.InvokeRPC("RPC_AddOre", kv.Key, false);
             for (int i = 0; i < fuelAdd; i++) nv.InvokeRPC("RPC_AddFuel");

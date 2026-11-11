@@ -23,7 +23,7 @@ namespace ValheimHelper
         public static void Untrack(ZDOID id) { s_tracked.Remove(id); s_anchorFrame = -1; }
 
         static bool s_enabled = true;
-        public static bool Enabled { get => s_enabled; set { s_enabled = value; s_anchorFrame = -1; } }
+        public static bool Enabled { get => s_enabled && Features.FarZones; set { s_enabled = value; s_anchorFrame = -1; } }
 
         static int s_anchorFrame = -1;
 

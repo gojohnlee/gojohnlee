@@ -8,7 +8,7 @@
 채팅 명령 해석        Core/Chat/ChatParser.cs(309) ChatCommand.cs(명령 종류) ItemAliases.cs(물건 별칭) Places.cs(방향·바이옴)
 채팅 주고받기          Plugin/ChatNet.cs(VH_Chat→호스트, VH_Say 말풍선) Items.cs(번역 이름→프리팹)
 작업 상태 저장          Core/Work/WorkState.cs(WorkItem·PendingData 저장 형식) + Plugin/WorkSaves.cs(1초마다 ZDO에, NPC 생기면 불러옴)
-기능 스위치             Plugin/Features.cs(BepInEx [Features] SaveWork·KnowExplored)
+기능 스위치             Plugin/Features.cs(BepInEx [Features] SaveWork·KnowExplored·ClaudeChat·RunPlans·PlayWalkLog(끔)·SharedChests(SharedChests.Allow·SharedGuest.Ours·SharedCraft.Guest)·FarZones(FarZones.Enabled)·IdleChores(Departures 쉴 때 일 줄)·Tidy(Tidy.Tick)·Settle(MorningSettle.Tick), 쓰는 법 pc-howto 6번)
 명령 나누기·실행        Plugin/Commands.cs(262) + Core/Npc/Dispatch.cs(받을 NPC, 대답 받을 NPC)
 출발 전 판단·질문·대답  Core/Npc/Departure.cs(Judge: 질문은 밤·재고만, Risky·Alternative = 위험하면 조용히 덜 위험한 곳(거리 무관)·Avoid, 다 위험하면 GoTogether(Input.Mate), 거점 안 InBase는 안 바꿈,
                       장비 비율 PlaceOption.GearRatio ← PlaceBook.BiomeRisk·Departures.NativeTo, 상자 장비까지 Prep.Ready · Replies) + Plugin/Departures.cs(입력 모으기, MateFor·GoWithMate 동료와 같이, 질문 대기, 제작 계획 말하기, 자동 보충, !기억) · 연장 단계 GatherJob.ToolFor(ResourceCatalog.MinTier → Weak) · 은 위시본 필요 NeedFinder(ResourceCatalog.FromHidden·HiddenOres.HaveFinder, 아는 곳 없을 때 depart.needFinder)

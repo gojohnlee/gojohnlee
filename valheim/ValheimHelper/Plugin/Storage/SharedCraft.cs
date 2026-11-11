@@ -37,7 +37,7 @@ namespace ValheimHelper
 
         /// <summary>손님(또는 가짜 손님 시험)의 자기 플레이어.</summary>
         public static bool Guest(Player p) =>
-            p != null && p == Player.m_localPlayer && ZNet.instance != null && ZNetScene.instance != null && ZRoutedRpc.instance != null
+            Features.SharedChests && p != null && p == Player.m_localPlayer && ZNet.instance != null && ZNetScene.instance != null && ZRoutedRpc.instance != null
             && (!ZNet.instance.IsServer() || SharedGuest.Force) && !HostNoMod;
 
         /// <summary>제작 목록 판단에 상자를 셈: 손님이고 막대 끝(DoCrafting)이 아닐 때.</summary>

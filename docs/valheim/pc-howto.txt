@@ -22,6 +22,8 @@ PC 세션 시작 순서 (사용자 PC: Windows, 게임 설치됨, 호스트)
    플레이용(전체 회귀 PASS한 빌드, 태그 valheim-stable): https://github.com/gojohnlee/gojohnlee/blob/valheim-stable/valheim/dist/ValheimHelper.dll 를 받아 <게임>\BepInEx\plugins\ValheimHelper\에 넣음. valheim 맨 위는 시험 전일 수 있음.
    직접 플레이: powershell -ExecutionPolicy Bypass -File scripts/vh-play.ps1 (루프 12시간 쉼 → 돌던 시험 끝 기다림 → 플레이용 DLL 넣고 게임 켬, -Hours로 바꿈).
    게임을 끄면 루프를 다시 돌릴지 물음(Y = 쉼 파일 지움, 30초 안에 다시 돎 / n = 그 시각에 저절로).
+   기능 끄기(친구와 하다 문제 나면 모드를 통째로 빼지 말고): <게임>/BepInEx/config/gojohnlee.valheimhelper.cfg [Features]의 SharedChests·FarZones·IdleChores·Tidy·Settle(기본 true)를 false로 → 게임 다시 켬.
+   상자 같이 열기(SharedChests)는 호스트·손님 둘 다 끄는 게 안전. 그 밖 SaveWork·KnowExplored·ClaudeChat·RunPlans도 같은 곳, PlayWalkLog만 기본 끔.
 클라우드 세션: 환경 네트워크에 nuget.bepinex.dev 허용됨(2026-10-23) → valheim-refs clone 뒤 bash scripts/valheim-build.sh로 빌드 확인 가능(ilspycmd는 dotnet tool install -g ilspycmd).
   게임 시험은 PC만. 클라우드에 dotnet이 없으면 dot.net/v1/dotnet-install.sh --channel 8.0 → ilspycmd --version 8.2.0.7535, 실행 때 DOTNET_ROLL_FORWARD=Major(10-24 확인).
   클라우드에서 만든 dist DLL은 커밋하지 않음(시험한 PC 빌드가 기준).
