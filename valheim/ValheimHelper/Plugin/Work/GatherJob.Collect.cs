@@ -42,7 +42,15 @@ namespace ValheimHelper
             ZDOID dropId = drop.TryGetComponent(out ZNetView dv) && dv.IsValid() ? dv.GetZDO().m_uid : ZDOID.None;
             bool hand = !dropId.IsNone() && dropId == m_handDrop;
             float reach = hand ? HandWalk : 1.2f;
-            if (!hand && !dropId.IsNone() && m_stepTime > WalledWait && m_wallChecked != dropId && !m_npc.InInterior() && WalledIn(drop, dropId)) return true;
+            // 떨굼마다 막힘 판정을 새로 잰다(다가가기와 같은 Stuck — 거의 제자리 5초·1m도 못 가까워짐 MoveStuckLimit, 사용자 11-11 헛기다림 ④)
+            if (dropId != m_collectDrop) { m_collectDrop = dropId; m_bestDist = float.MaxValue; m_progressTimer = 0f; }
+            bool stuck = Stuck(dt, dp, true);
+            if (!hand && !dropId.IsNone() && stuck && m_wallChecked != dropId && !m_npc.InInterior())
+            {
+                m_bestDist = float.MaxValue; m_progressTimer = 0f; // 캘 것으로 바꾸든 손 닿는 거리 단계로 가든 판정은 새로
+                if (WalledIn(drop, dropId)) return true;
+                hand = dropId == m_handDrop; reach = hand ? HandWalk : 1.2f; stuck = false;
+            }
             if (Walk(dt, dp, reach) || InteriorNav.Reached(m_npc.transform.position, dp, hand ? HandWalk + 0.3f : 1.6f))
             {
                 if (!hand) Pick(drop);
@@ -56,7 +64,7 @@ namespace ValheimHelper
                 if (!hand) { m_handDrop = dropId; Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼까지 묘지 안 길 없음 → 손 닿는 거리({HandWalk:0.0}m)까지만"); }
                 else { Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼 손 닿는 거리까지도 길 없음 → 건너뜀"); m_dropSkip.Add(dropId); }
             }
-            else if (hand && m_stepTime > WalledWait * 2f && !m_npc.InInterior())
+            else if (hand && stuck && !m_npc.InInterior())
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} 떨굼 손 닿는 거리까지도 못 감 → 건너뜀");
                 m_dropSkip.Add(dropId);
@@ -64,8 +72,8 @@ namespace ValheimHelper
             return true;
         }
 
-        /// <summary>바깥에서 떨굼을 이만큼(초) 줍지 못하면 막혔는지 본다(WalledIn).</summary>
-        const float WalledWait = 10f;
+        /// <summary>막힘 판정(Stuck)을 재는 떨굼 — 바뀌면 판정을 새로 시작.</summary>
+        ZDOID m_collectDrop;
         /// <summary>막혔는지 본 떨굼(떨굼마다 한 번).</summary>
         ZDOID m_wallChecked;
 
