@@ -603,7 +603,7 @@ function Wait-UserRequest($why, $last) {
         if (Test-Away) {
             [IO.File]::WriteAllText($DoneFile, "$h0`n$why", $Utf8)
             Log '답 기다림 → 자리 비움, 컴퓨터 끔(2분 뒤)'
-            Write-Status "답 기다림: $why — 자리 비워 컴퓨터 끔. UserRequest.txt에 쓰고 PC를 켜면 이어 감(물은 것은 history.md 맨 위)" $last
+            Write-Status "답 기다림: $why — 자리 비워 컴퓨터 끔. PC를 켜도 루프는 저절로 안 켜짐(11-02) — UserRequest.txt에 쓰고 PC PowerShell에서 Start-ScheduledTask 'VH loop'(물은 것은 history.md 맨 위)" $last
             Stop-PC "발헤임 답 기다림 - 2분 뒤 꺼짐(취소: shutdown /a)"
             return $false
         }
@@ -655,6 +655,7 @@ function Wait-Done($off, $last) {
     while ($true) {
         if ($off -and (Test-Away)) {
             Log '할 일 다 끝남 → 컴퓨터 끔(2분 뒤)'
+            Write-Status "할 일 다 끝남 — 자리 비워 컴퓨터 끔. PC를 켜도 루프는 저절로 안 켜짐(11-02) — UserRequest.txt에 쓰고 PC PowerShell에서 Start-ScheduledTask 'VH loop'" $last
             Stop-PC "발헤임 할 일 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
             return $false
         }
