@@ -199,7 +199,7 @@ namespace ValheimHelper
         public bool Update(float dt, WorkerNpc npc, Container chest, float d, string what)
         {
             Vector3 pos = npc.transform.position;
-            if (m_for != chest) { m_for = chest; m_best = m_farMark = float.MaxValue; m_far = 0f; m_side = null; m_sides = 0; m_age = 0f; m_farResets = 0; m_slow = m_win = 0f; m_winAt = pos; }
+            if (m_for != chest) { m_clock.Reset(); m_for = chest; m_best = m_farMark = float.MaxValue; m_far = 0f; m_side = null; m_sides = 0; m_age = 0f; m_farResets = 0; m_slow = m_win = 0f; m_winAt = pos; }
             m_age += dt;
             if (m_side.HasValue && Utils.DistanceXZ(m_side.Value, pos) < 0.4f) m_side = null; // 옆 접근점에 닿음 → 거기서 곧장
             // 옆으로 돌거나 통나무를 밀며 느리게 가면 "거의 제자리" 시간이 0부터라, 1m 넘게 안 가까워진 시간도 따로 센다(E060) — 5초면 상자 앞으로.
@@ -209,6 +209,7 @@ namespace ValheimHelper
             // 상자 10m 안에서 0.5초씩 재어 느린(1.5m/s 밑) 시간을 합쳐 5초면 상자 앞으로: 통나무 사이·위로 1m씩 기어가면 위 두 셈이 거듭 0부터라 7~13초 걸렸음(E069).
             m_win += dt;
             if (m_win >= 0.5f) { if (d < 10f && Utils.DistanceXZ(pos, m_winAt) < SlowSpeed * m_win && chest.transform.position.y - pos.y < 1.5f) m_slow += m_win; m_win = 0f; m_winAt = pos; }
+            if (QuickStuck(dt, npc, chest, d) && !DoorWay.Blocked(npc, chest)) return Hop(npc, chest, d, what, $"빠른 막힘 {m_clock.NoGain:0.0}초(남은 길 {m_clock.Best:0.0}m, {(m_clock.Seen(Time.time) ? "봄" : "안 봄")})");
             if (m_slow >= (float)Core.Work.StuckHop.NearStuckSeconds && !TestNoBump && !DoorWay.Blocked(npc, chest)) return Hop(npc, chest, d, what, $"느린 시간 합 {m_slow:0.0}초");
             if (m_far >= (float)Core.Work.StuckHop.NearStuckSeconds && !DoorWay.Blocked(npc, chest)) return Hop(npc, chest, d, what, $"{m_far:0.0}초 안 가까워짐");
             if (d < m_best - 0.3f || Utils.DistanceXZ(m_from, pos) >= 1.5f) { m_best = Mathf.Min(m_best, d); m_from = pos; m_time = 0f; return false; }
@@ -240,6 +241,27 @@ namespace ValheimHelper
             return Hop(npc, chest, d, what, $"{m_time:0.0}초 거의 제자리");
         }
 
+        readonly Core.Work.StuckClock m_clock = new Core.Work.StuckClock();
+        readonly StuckWatch.PathMark m_mark = new StuckWatch.PathMark();
+        Vector3 m_clockGoal = Vector3.positiveInfinity;
+        /// <summary>빠른 막힘을 재는 최소 거리(m, 손 닿는 1.8 + GatherJob.QuickMin 5)와 상자가 바뀐 뒤 안 재는 시간(초, GatherJob과 같음).</summary>
+        const float QuickFrom = 6.8f, QuickGrace = 1.5f;
+        internal static int QuickHits;
+
+        /// <summary>막힘 1초·3초(사용자 11-11, Core StuckClock — GatherJob.QuickStuck과 같음): 남은 길이 안 줄면 안 볼 때 1초·볼 때 3초에 막힘.
+        /// 상자가 6.8m 밖·같은 층(높이 차 1.5m 안)일 때만, 지하묘지·문 나가기 중은 안 재고 공격·헤엄·비틀 중은 시계 멈춤.</summary>
+        bool QuickStuck(float dt, WorkerNpc npc, Container chest, float d)
+        {
+            Vector3 p = npc.transform.position, goal = Goal(chest);
+            if (Vector3.Distance(goal, m_clockGoal) > 1f) { m_clockGoal = goal; m_clock.Reset(); }
+            if (TestNoBump || d <= QuickFrom || m_age < QuickGrace || Mathf.Abs(chest.transform.position.y - p.y) > 1.5f
+                || npc.Ai.Carving || npc.Ai.OnInteriorPath || npc.Ai.ExitingDoor || npc.InInterior()) { m_clock.Reset(); return false; }
+            bool paused = npc.InAttack() || npc.IsSwimming() || npc.IsStaggering();
+            if (!m_clock.Tick(Time.time, dt, StuckWatch.PathLeft(npc.Ai, p, goal), StuckWatch.Seen(p), paused, m_mark.Changed(npc.Ai))) return false;
+            QuickHits++;
+            return true;
+        }
+
         /// <summary>시험용(E067): 상자 앞 옮기기 셈 상태.</summary>
         internal string State(WorkerNpc npc, Container chest) => $"안 가까워짐 {m_far:0.0}초(기준 {m_farMark:0.0}m, 갱신 {m_farResets}번 마지막 {m_farAt:0.0}/{m_age:0.0}초) 느린 합 {m_slow:0.0}초 제자리 {m_time:0.0}초 옆 {m_sides}{(m_side.HasValue ? $"(남은 {Utils.DistanceXZ(m_side.Value, npc.transform.position):0.0}m)" : "")} 높이 차 {chest.transform.position.y - npc.transform.position.y:0.0}";
 
@@ -249,6 +271,7 @@ namespace ValheimHelper
             npc.TeleportTo(chest.transform.position + chest.transform.forward * 1.5f, npc.transform.rotation, false);
             WorkerAI.StuckTeleports++;
             Hops++;
+            m_clock.Reset();
             m_time = 0f; m_far = 0f; m_farMark = float.MaxValue; m_best = float.MaxValue; m_side = null; m_slow = m_win = 0f; m_winAt = npc.transform.position;
             return true;
         }
