@@ -233,7 +233,14 @@ namespace ValheimHelper
                 }
             }
             Plugin.Instance.StartCoroutine(Watch());
-            var walk = WalkRecorder.Start(w.Ragnar, pieces); // 걸음 기록(사용자 11-11, 아직 재기만 — 기준은 history)
+            // 걸음 기록(사용자 11-11, 아직 재기만 — 기준은 history). 단계마다 새로 — 뒤 단계가 놓은 벽·계단도 벽 거리에 넣음
+            WalkRecorder Rec()
+            {
+                var cols = new List<Collider>();
+                foreach (var g in made) if (g != null) foreach (var col in g.GetComponentsInChildren<Collider>()) if (!col.isTrigger) cols.Add(col);
+                return WalkRecorder.Start(w.Ragnar, cols);
+            }
+            var walk = Rec();
             string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
             GatherTest.Say($"!{w.Ragnar.NpcName} {bowName} 1", null);
             yield return new WaitForSeconds(2f);
@@ -241,7 +248,7 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => Stock(w, "Bow") >= 1 || (w.Ragnar.Ai.Job == null && Stock(w, "Wood") >= wood), 420f);
             float took = TestKit.Waited;
             done = true;
-            TestRunner.Log($"집 걸음(1단계 활): {walk.Stop("housetest 1단계 활")}");
+            TestRunner.Log($"집 걸음(1단계 활): {walk.Stop("housetest 1단계 활", false)}");
             int tele = Teleports() - tele0 - farSkips;
             Plugin.Log.LogInfo($"집 시험: {took:0}초, 벽 박음 {wallStuck:0.0}초(최장 연속 {maxRun:0.0}초), 순간이동 {tele}(집에서 먼 건너뛰기 {farSkips} 뺌), 문 열림 {opened}, 안에 들어감 {innerTrips}번, 상자 나무 {Count(w.Chest, "Wood")}");
             checks.Add($"안 작업대에서 활 만듦 (활 {Stock(w, "Bow")}, {took:0}초, {w.Ragnar.Ai.Current})", Stock(w, "Bow") >= 1);
@@ -269,6 +276,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f); // 옮긴 뒤 열린 문으로 다시 들어가던 것(회차 312 두 번째 실행: 집 가운데서 시작)
             checks.Add($"제련 단계: 문 닫힘·일꾼 밖에서 시작 (s_state {dz.GetInt(ZDOVars.s_state)}, 일꾼 집 가운데서 {Utils.DistanceXZ(w.Ragnar.transform.position, c):0.0}m, 안 {In(w.Ragnar.transform.position)})", dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
             tele0 = Teleports(); int hops0 = MachineStep.Hops, side0 = MachineStep.SideTries, entered0 = DoorWay.Entered;
+            walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 구리주괴 1", null); // 게임 이름 "구리"는 광석으로 풀림(vh_crafttest와 같은 말)
             yield return TestKit.WaitFor(() => Stock(w, "Copper") >= 1, 300f);
             took = TestKit.Waited;
@@ -283,6 +291,7 @@ namespace ValheimHelper
             TestKit.ClearBaseStock(w, "CopperOre", "Copper", "Coal");
 
             // 3) 집 안 상자에서 꺼내기(③-4, Prep): 체력 미드는 안 상자에만, 일꾼 짐엔 없음. 일 시키면 나가기 전 준비로 문 지나 들어가 챙기는지
+            TestRunner.Log($"집 걸음(2단계 제련): {walk.Stop("housetest 2단계 제련", true)}");
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
@@ -296,6 +305,7 @@ namespace ValheimHelper
             checks.Add($"꺼내기 단계: 문 닫힘·일꾼 밖·미드 없음 (s_state {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 미드 {w.Ragnar.CountItem("MeadHealthMinor")})",
                 dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position) && w.Ragnar.CountItem("MeadHealthMinor") == 0);
             tele0 = Teleports(); entered0 = DoorWay.Entered; int doors0 = ChestHop.Doors;
+            walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() => w.Ragnar.CountItem("MeadHealthMinor") >= 3, 90f);
             took = TestKit.Waited;
@@ -306,6 +316,7 @@ namespace ValheimHelper
             closed0 = DoorWay.Closed;
             yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"꺼내고 나와서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            TestRunner.Log($"집 걸음(3단계 꺼내기): {walk.Stop("housetest 3단계 꺼내기", true)}");
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
 
@@ -321,6 +332,7 @@ namespace ValheimHelper
             w.Ragnar.TeleportTo(outAt, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1f);
             tele0 = Teleports(); entered0 = DoorWay.Entered; doors0 = ChestHop.Doors; closed0 = DoorWay.Closed; int opened0 = DoorWay.Opened;
+            walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() => w.Ragnar.CountItem("MeadHealthMinor") >= 3, 90f);
             took = TestKit.Waited;
@@ -332,6 +344,7 @@ namespace ValheimHelper
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && tele == 0 && !In(w.Ragnar.transform.position));
             checks.Add($"열어 둔 문은 열린 채 둠 (s_state {dz.GetInt(ZDOVars.s_state)}/{openSt}, 엶 {DoorWay.Opened - opened0}·닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)",
                 dz.GetInt(ZDOVars.s_state) == openSt);
+            TestRunner.Log($"집 걸음(3-2단계 열어 둔 문): {walk.Stop("housetest 3-2단계 열어 둔 문", true)}");
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
 
@@ -354,6 +367,7 @@ namespace ValheimHelper
             tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
             bool shutOnPlayer = false;
             float blockEnd = Time.time + 8f;
+            walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() =>
             {
@@ -374,6 +388,7 @@ namespace ValheimHelper
             checks.Add($"문간의 플레이어가 비킨 뒤 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 순간이동 {tele}, 들어감 {DoorWay.Entered - entered0}번, 일꾼 안 {In(w.Ragnar.transform.position)}, {w.Ragnar.Ai.Job?.StepName})",
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && tele == 0 && !In(w.Ragnar.transform.position));
             checks.Add($"문간에 플레이어 있는 동안 문 안 닫음 (닫힘 {shutOnPlayer})", !shutOnPlayer);
+            TestRunner.Log($"집 걸음(3-3단계 문간 플레이어): {walk.Stop("housetest 3-3단계 문간 플레이어", true)}");
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
             if (dz.IsValid()) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
@@ -386,6 +401,7 @@ namespace ValheimHelper
             Vector3 inAt = GatherTest.Ground(c + f * 1.2f) + Vector3.up * 0.3f; // TeleportTo는 가장 위 면(지붕) 위에 올림 → 몸을 직접
             w.Ragnar.transform.position = inAt; w.Ragnar.GetComponent<Rigidbody>().position = inAt; w.Ragnar.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
             checks.Add($"나가기 단계: 문 닫힘·일꾼 안 (s_state {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)})", dz.GetInt(ZDOVars.s_state) == 0 && In(w.Ragnar.transform.position));
+            walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() => DoorWay.Exited > exited0, 40f); // 안 판정(벽에서 0.3m 안)은 문틀을 지나는 중에 끝남
             took = TestKit.Waited;
@@ -394,6 +410,7 @@ namespace ValheimHelper
             // closed0은 단계 시작에서 — 나올 때 문짝이 내 쪽이면 바로 닫음(회차 348)
             yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
             checks.Add($"나가서 문 닫음 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            TestRunner.Log($"집 걸음(4단계 안에서 나가기): {walk.Stop("housetest 4단계 안에서 나가기", true)}");
             GatherTest.Say("!멈춰", null);
 
             // 4-2) 문 두 개(④): 상자 쪽 벽 가운데를 뒷문으로. 일꾼을 집 뒤에 두면 앞문으로 돌지 않고 뒷문으로 들어가 미드를 챙기고 뒷문을 닫는지
@@ -415,6 +432,7 @@ namespace ValheimHelper
                 dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
             tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
             bool frontOpened = false, backOpened = false;
+            walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() =>
             {
@@ -430,6 +448,7 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
             checks.Add($"나와서 두 문 다 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
                 dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            TestRunner.Log($"집 걸음(4-2단계 뒷문): {walk.Stop("housetest 4-2단계 뒷문", true)}");
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
 
@@ -457,6 +476,7 @@ namespace ValheimHelper
             tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
             frontOpened = false;
             float hallRun = 0f, hallMax = 0f; Vector3 hallLast = w.Ragnar.transform.position;
+            walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() =>
             {
@@ -474,6 +494,7 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => DoorWay.Closed > closed0 && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
             checks.Add($"복도로 나와서 문 닫힘 (앞 {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, {DoorWay.OpenedDiag()})",
                 dz.GetInt(ZDOVars.s_state) == 0 && DoorWay.Closed > closed0);
+            TestRunner.Log($"집 걸음(4-3단계 복도): {walk.Stop("housetest 4-3단계 복도", true)}");
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
 
@@ -557,6 +578,7 @@ namespace ValheimHelper
             {
                 tele0 = Teleports();
                 float topY = float.MinValue;
+                walk = Rec();
                 GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
                 yield return TestKit.WaitFor(() =>
                 {
@@ -568,6 +590,7 @@ namespace ValheimHelper
                 tele = Teleports() - tele0;
                 checks.Add($"계단 올라 2층 상자에서 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 땅 위 최고 {topY:0.0}m·바닥 {lfb.max.y - lg:0.0}m, 순간이동 {tele}, {w.Ragnar.Ai.Job?.StepName})",
                     w.Ragnar.CountItem("MeadHealthMinor") >= 3 && topY > 0.8f && tele == 0);
+                TestRunner.Log($"집 걸음(4-4단계 2층): {walk.Stop("housetest 4-4단계 2층", true)}");
                 GatherTest.Say("!멈춰", null);
             }
             TestKit.ClearBaseStock(w, "MeadHealthMinor");

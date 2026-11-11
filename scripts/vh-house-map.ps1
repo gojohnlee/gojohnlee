@@ -16,13 +16,13 @@ if (-not $Out) {
 }
 New-Item -ItemType Directory -Force (Split-Path -Parent $Out) | Out-Null
 $inv = [Globalization.CultureInfo]::InvariantCulture
-$head = @(); $s = @()
+$head = @(); $s = @(); $k = 0   # $k = 단계(머리 "… 줄 N"마다 하나 — 단계 사이는 잇지 않음)
 foreach ($l in [IO.File]::ReadAllLines($In, [Text.Encoding]::UTF8)) {
-  if ($l.StartsWith('#')) { if (-not $l.StartsWith('# t ')) { $head += $l.TrimStart('#', ' ') }; continue }
+  if ($l.StartsWith('#')) { if ($l -match ' 줄 \d+$') { $k++ }; if (-not $l.StartsWith('# t ')) { $head += $l.TrimStart('#', ' ') }; continue }
   $p = $l.Split(' ')
   if ($p.Length -lt 10) { continue }
   $s += [pscustomobject]@{ X = [double]::Parse($p[1], $inv); Y = [double]::Parse($p[2], $inv); Z = [double]::Parse($p[3], $inv)
-    V = [double]::Parse($p[4], $inv); Wall = [double]::Parse($p[6], $inv); Door = [int]$p[7] }
+    V = [double]::Parse($p[4], $inv); Wall = [double]::Parse($p[6], $inv); Door = [int]$p[7]; K = $k }
 }
 if ($s.Count -lt 2) { Write-Output "줄 없음: $In"; exit 1 }
 
@@ -57,6 +57,7 @@ $penOf = @{ 0 = (New-Object Drawing.Pen ([Drawing.Color]::Gray), 2); 1 = (New-Ob
 $tele = New-Object Drawing.Pen ([Drawing.Color]::Magenta), 2; $tele.DashStyle = 'Dash'
 for ($i = 1; $i -lt $s.Count; $i++) {
   $a = $s[$i - 1]; $b = $s[$i]; $fa = FloorOf $a.Y; $fb = FloorOf $b.Y
+  if ($a.K -ne $b.K) { continue }   # 단계 바뀜 — 시험이 옮긴 것이라 잇지 않음
   $step = [Math]::Sqrt(($b.X - $a.X) * ($b.X - $a.X) + ($b.Z - $a.Z) * ($b.Z - $a.Z) + ($b.Y - $a.Y) * ($b.Y - $a.Y))
   if ($step -gt 3) { $g.DrawLine($tele, (PX $fa $a.X), (PZ $a.Z), (PX $fb $b.X), (PZ $b.Z)); continue }
   $k = if ($b.V -lt 0.3) { 0 } elseif ($b.V -lt 2.5) { 1 } else { 2 }
