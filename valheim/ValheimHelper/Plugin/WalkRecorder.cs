@@ -99,23 +99,31 @@ namespace ValheimHelper
         // 일부러 선 순간(WorkerAI.Hold — 줍기 "떨어짐 기다림" 등, 회차 401)도 뺌: Hold는 서 있는 동안 프레임마다 불림.
         static bool Standing(string step) => step == "Work" || step == "Search" || step == "Tool" || step == "Prep" || step == "Unload";
 
-        // 남은 길 =지금 자리 → m_path 점들(지난 점은 FollowPath가 지움). 길이 비면 음수(목표 없음으로 침).
+        // 남은 길 =지금 자리 → m_path 점들(지난 점은 FollowPath가 지움) → 층 오름이면 모퉁이 뒤 남은 길(FloorRest)까지. 길이 비면 음수(목표 없음으로 침).
+        // 회차 409: m_path는 다음 모퉁이까지뿐이라 모퉁이마다 값이 튀어 진척 없음·길/직선이 잘못 나왔음.
         float PathLeft(Vector3 p)
         {
             var path = PathOf(m_npc.Ai);
             if (path == null || path.Count == 0) return -1f;
             float sum = Utils.DistanceXZ(p, path[0]);
             for (int i = 1; i < path.Count; i++) sum += Utils.DistanceXZ(path[i - 1], path[i]);
+            var rest = m_npc.Ai.FloorRest;
+            if (rest != null && rest.Count > 0)
+            {
+                sum += Utils.DistanceXZ(path[path.Count - 1], rest[0]);
+                for (int i = 1; i < rest.Count; i++) sum += Utils.DistanceXZ(rest[i - 1], rest[i]);
+            }
             return sum;
         }
 
-        // 출발·도착 손 닿기 안인지. 도착(m_path 끝)이 2.8m 넘게 바뀌면 새 구간 — 지금 자리가 새 출발.
+        // 출발·도착 손 닿기 안인지. 도착(m_path 끝, 층 오름이면 그 길의 끝)이 2.8m 넘게 바뀌면 새 구간 — 지금 자리가 새 출발.
         bool NearEnds(Vector3 p)
         {
             var path = PathOf(m_npc.Ai);
             if (path != null && path.Count > 0)
             {
-                Vector3 g = path[path.Count - 1];
+                var rest = m_npc.Ai.FloorRest;
+                Vector3 g = rest != null && rest.Count > 0 ? rest[rest.Count - 1] : path[path.Count - 1];
                 if (m_hasGoal && Utils.DistanceXZ(g, m_legGoal) > Reach) m_legStart = p;
                 m_legGoal = g; m_hasGoal = true;
             }

@@ -258,23 +258,28 @@ namespace ValheimHelper
 
         /// <summary>
         /// 다른 층 목표로 걸을 곳: 바닐라 BaseAI.MoveTo는 수평 거리만 봐 0.5m 안이면 도착으로 침 → 2층 상자 바로 밑에서 길(계단)이 있어도 섬(회차 352, E063).
-        /// 길의 모퉁이 중 수평 0.6m 넘는 첫 점을 준다(0.5초마다 새로). 길이 없으면 목표 그대로.
+        /// 길의 모퉁이 중 수평 1.1m 넘는 첫 점을 준다(바닐라 MoveTo는 달리면 1m 안을 도착으로 쳐 그 안에선 곧장 몰기만 함 — 0.6m였을 땐 모퉁이 곁에서 맴돌다 계단 참에서 떨어짐, 회차 409). 그 모퉁이에 닿거나 2초 지나면 새로 — 0.5초마다 새로 고르면 갈림길에서 두 길을 오락가락했음(회차 409 상자→침대 5초). 길이 없으면 목표 그대로.
         /// </summary>
         public Vector3 FloorStep(Vector3 to)
         {
             Vector3 pos = transform.position;
-            if (Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || Utils.DistanceXZ(m_step, pos) < 0.6f)
+            m_stepUsedAt = Time.time;
+            if (Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || Utils.DistanceXZ(m_step, pos) < StepReach)
             {
-                m_stepAt = Time.time + 0.5f; m_stepTo = to; m_step = to;
+                m_stepAt = Time.time + 2f; m_stepTo = to; m_step = to; m_stepRest.Clear();
                 if (Pathfinding.instance != null && Pathfinding.instance.GetPath(pos, to, s_stepPath, m_pathAgentType))
                     for (int i = 1; i < s_stepPath.Count; i++)
-                        if (Utils.DistanceXZ(s_stepPath[i], pos) > 0.6f) { m_step = s_stepPath[i]; break; }
+                        if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
             }
             return m_step;
         }
+        /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐으면 지금 모퉁이 뒤 남은 길 점들(목표까지), 아니면 null.</summary>
+        public List<Vector3> FloorRest => Time.time - m_stepUsedAt < 0.5f ? m_stepRest : null;
+        const float StepReach = 1.1f;
         static readonly List<Vector3> s_stepPath = new List<Vector3>();
+        readonly List<Vector3> m_stepRest = new List<Vector3>();
         Vector3 m_step, m_stepTo;
-        float m_stepAt;
+        float m_stepAt, m_stepUsedAt = -10f;
 
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
         public string BlockerAhead(Vector3 point)
