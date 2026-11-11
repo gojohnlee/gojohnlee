@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 429 · 11-12 · 채집 일 저장을 정식 속성으로
+
+**요약**
+
+- 하던 채집 일을 저장할 때 목표 구역·자리를 숨은 필드 억지로 읽기 대신 정식 속성으로 읽음(게임·모드 바뀌어도 덜 깨짐).
+
+**자세히**
+
+- WorkSaves.FromJob의 AccessTools.FieldRefAccess 두 개를 지우고 GatherJob.GoalPos(internal)·GoalZone을 씀. 커밋 a5a244c.
+- 시험: vh_restart1 PASS 6/6 → vh_restart2 PASS 16/16, Core 662/662.
+
 ### 회차 428 · 11-12 · 시험 시작 때 시험용 스위치 모두 되돌리기
 
 **요약**
