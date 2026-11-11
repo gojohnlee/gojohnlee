@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 428 · 11-12 · 시험 시작 때 시험용 스위치 모두 되돌리기
+
+**요약**
+
+- [11-12] 시험을 시작할 때마다 시험용 스위치(Test…) 21개를 모두 기본값으로 되돌림: 앞 시험이 중간에 끊겨도 다음 시험을 흔들지 않음. [끝, 회차 428 — 커밋 54d2ee0 · 시험 vh_unloadreachtest PASS 13/13·vh_departtest PASS 23/23]
+
+**자세히**
+
+- TestRunner.Begin → ResetTestSwitches(Departures·PlayWalkLog·PersonalChests·Tidy·TidyJob·CraftStep·GatherJob·MachineStep·PortalBuilder·Prep·Unload·ChestHop·WorkerAI). 예외·시간 초과로 끝난 시험이 스위치를 켠 채 남기던 위험(E054·E065·E073~E076 때 의심)을 없앰. 새 스위치는 이 함수에도 넣기(codemap 게임 안 시험 줄).
+- Core 662/662, 빌드·참조 검사 PASS. 로그 오류는 늘 나오는 "Unable to start Unity log writer"뿐.
+
 ### 회차 427 · 11-12 · 게임 업데이트 전후 코드 비교
 
 **요약**
