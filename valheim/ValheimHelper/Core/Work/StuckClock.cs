@@ -24,6 +24,9 @@ namespace ValheimHelper.Core.Work
         double m_best = double.PositiveInfinity;
         double m_noGain;
         double m_lastSeen = double.NegativeInfinity;
+        int m_replans;
+        /// <summary>진척 없는 동안 새 길로 기준을 다시 잡는 횟수 한도(길만 자꾸 바뀌며 제자리면 막힘).</summary>
+        public const int MaxReplans = 3;
 
         /// <summary>진척 없이 흐른 시간(멈춘 시간 뺌).</summary>
         public double NoGain => m_noGain;
@@ -37,7 +40,7 @@ namespace ValheimHelper.Core.Work
         public void Reset()
         {
             m_best = double.PositiveInfinity;
-            m_noGain = 0;
+            m_noGain = 0; m_replans = 0;
             Hops = 0;
         }
 
@@ -46,7 +49,7 @@ namespace ValheimHelper.Core.Work
         {
             Hops++;
             m_best = double.PositiveInfinity;
-            m_noGain = 0;
+            m_noGain = 0; m_replans = 0;
         }
 
         /// <summary>지금 '보는 중'인가(마지막으로 본 뒤 UnseenGrace 안).</summary>
@@ -55,15 +58,17 @@ namespace ValheimHelper.Core.Work
         public double Limit(double now) => Seen(now) ? SeenSeconds : UnseenSeconds;
 
         /// <summary>매 틱. remaining = 남은 길 길이(m, 길 없으면 직선), seenNow = 지금 플레이어가 보는지,
-        /// paused = 공격·문·헤엄·넉백 중. 막혔으면 true(부른 쪽이 복구 후 NoteHop 또는 Reset).</summary>
-        public bool Tick(double now, double dt, double remaining, bool seenNow, bool paused)
+        /// paused = 공격·문·헤엄·넉백 중. 막혔으면 true(부른 쪽이 복구 후 NoteHop 또는 Reset).
+        /// newPath = 이번 틱에 길을 새로 받음(돌아가는 길이면 남은 길이 늘어남) → 기준을 다시 잡음(진척 없이 MaxReplans번까지).</summary>
+        public bool Tick(double now, double dt, double remaining, bool seenNow, bool paused, bool newPath = false)
         {
             if (seenNow) m_lastSeen = now;
             if (double.IsNaN(remaining)) return false;
+            if (newPath && remaining > m_best && m_replans < MaxReplans) { m_replans++; m_best = remaining; m_noGain = 0; return false; }
             if (remaining < m_best - MinGain || double.IsPositiveInfinity(m_best))
             {
                 m_best = remaining;
-                m_noGain = 0;
+                m_noGain = 0; m_replans = 0;
                 return false;
             }
             if (remaining < m_best) m_best = remaining; // 조금씩 줄어도 기준은 따라감(시계는 그대로)

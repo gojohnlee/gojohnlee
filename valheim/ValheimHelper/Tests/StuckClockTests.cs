@@ -80,3 +80,20 @@ public class StuckClockTests
         Assert.False(StuckClock.InFront(1, 0, -5, 3));
     }
 }
+
+public class StuckClockReplanTests
+{
+    [Fact]
+    public void NewLongerPathRebaselinesUpToLimit()
+    {
+        var c = new StuckClock(); double t = 0;
+        c.Tick(t, 0, 10, false, false);
+        t += 0.8; Assert.False(c.Tick(t, 0.8, 10, false, false));
+        t += 0.1; Assert.False(c.Tick(t, 0.1, 14, false, false, newPath: true)); // 돌아가는 길
+        Assert.Equal(0, c.NoGain, 6);
+        t += 0.5; Assert.False(c.Tick(t, 0.5, 13, false, false)); // 새 길 따라 진척
+        for (int i = 0; i < StuckClock.MaxReplans; i++) { t += 0.5; Assert.False(c.Tick(t, 0.5, 20 + i, false, false, newPath: true)); }
+        t += 0.5; c.Tick(t, 0.5, 30, false, false, newPath: true); // 한도 넘음: 기준 안 바꿈
+        t += 0.6; Assert.True(c.Tick(t, 0.6, 30, false, false));
+    }
+}
