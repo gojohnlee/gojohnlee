@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ValheimHelper.Core.Npc;
 using Xunit;
@@ -71,6 +72,8 @@ public class WalkTraceTests
         Assert.Equal(1, r.Legs);
         Assert.True(r.WorstRatio > 1.3f, r.ToString());
         Assert.True(r.SharpTurns >= 1, r.ToString());
+        Assert.Equal(Math.Min(r.SharpTurns, 8), r.TurnAt.Count);
+        Assert.StartsWith("6.", r.TurnAt[0]);
         Assert.False(r.Pass);
     }
 

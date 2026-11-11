@@ -26,6 +26,8 @@ namespace ValheimHelper.Core.Npc
         {
             public int Legs, NoProgress, SharpTurns, DoorPauses, TeleSeen, TeleUnseen, Moving;
             public float WorstRatio, MeanRatio, WallFrac, DoorPauseLongest, Stand, Walk, Run;
+            /// <summary>급회전 자리 "t@x,z,y 각°"(앞 8개) — 꺾인 계단 참인지 보려고(회차 410).</summary>
+            public readonly List<string> TurnAt = new List<string>();
 
             public bool Pass => WorstRatio <= 1.3f && NoProgress == 0 && WallFrac <= 0.05f && SharpTurns == 0
                 && DoorPauseLongest <= DoorPauseMax && TeleSeen == 0;
@@ -112,7 +114,12 @@ namespace ValheimHelper.Core.Npc
                         {
                             double d = Math.Abs(dir - lastDir) % 360.0;
                             if (d > 180.0) d = 360.0 - d;
-                            if (d > SharpTurn) r.SharpTurns++;
+                            if (d > SharpTurn)
+                            {
+                                r.SharpTurns++;
+                                if (r.TurnAt.Count < 8)
+                                    r.TurnAt.Add(string.Format(CultureInfo.InvariantCulture, "{0:0.00}@{1:0.0},{2:0.0},{3:0.0} {4:0}°", a.T, a.X, a.Z, a.Y, d));
+                            }
                         }
                         lastDir = dir;
                     }

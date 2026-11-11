@@ -53,7 +53,8 @@ namespace ValheimHelper
         {
             m_done = true;
             var rep = WalkTrace.Analyze(m_samples);
-            var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# 벽 붙음 " + NearPieces(), "# t x y z speed goal wall door seen job" };
+            var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# 벽 붙음 " + NearPieces(),
+                "# 급회전 " + (rep.TurnAt.Count > 0 ? string.Join(" ", rep.TurnAt.ToArray()) : "없음"), "# t x y z speed goal wall door seen job" };
             foreach (var s in m_samples) lines.Add(WalkTrace.Line(s));
             try
             {
