@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 434 · 11-12 · 거점 상자 찾기 캐시
+
+**요약**
+
+- [11-12] 일꾼이 거점 상자를 찾을 때 125m 안 조각을 매번 다 훑던 것을 0.5초 동안 한 번만 훑게 함 — 큰 집에서 짐 정리·재고 셈·정리가 가벼워짐. [끝, 회차 434 — 커밋 56c4fb1 · 시험 vh_bagtest 9/9·nametest 9/9·basetest 22/22·tidytest 16/16·stocktest 33/33·livestocktest 33/33 PASS]
+
+**자세히**
+
+- Chests.BaseChestZdos(home): Senses.Nearby(125m, 5×5 구역) 결과를 같은 거점이면 0.5초 다시 씀, 부서진 상자는 ZDOMan.GetZDO로 걸러 뺌, 새 상자는 최대 0.5초 늦게 보임. Chests.Candidates·BaseStock·Tidy·Pens가 씀(시험 코드는 그대로).
+- 로그 오류는 BepInEx "Unable to start Unity log writer" 한 줄뿐(늘 나오는 것).
+
 ### 회차 433 · 11-12 · 모드 판에 빌드 해시·시각
 
 **요약**
