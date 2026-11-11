@@ -4,11 +4,10 @@
 덩어리 머리 "★ 이름 (근거)", 조각 "  가) …"(status.txt "할 일"이 읽음). PC 시작 순서·게임 시험 방법은 docs/valheim/pc-howto.txt.
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+$L
 - [11-11] 루프가 PC를 끌 때 절전으로 빠지던 것 고침: 2분 카운트다운 동안 잠 안 들기를 쥐고 150초 기다림, 할 일 끝 대기 중엔 미리 안 풂. [끝, 회차 389 — 커밋 77196ff · 시험 Stop-PC 직접 실행(shutdown 가짜) PASS 3/3·Parser PASS]
 - [11-11] 루프가 시험 통과를 "33/33"처럼 수만 적어도 알아봄(회차 385~387 멈춤 오판 고침), status "할 일"이 안 끝난 첫 요청 줄을 보여 줌, 새 요청 14개 받아 순서대로 정리. [끝, 회차 388 — 커밋 8e504c4 · 시험 vh-loop.ps1 Parser 검사·Get-Todo·통과 판정 직접 실행 PASS 4/4]
-- [11-11] 길들이기에서 먹이를 던진 뒤 40초 서서 지켜보던 것 없앰: 던지고 바로 집 쪽으로 떠나 다른 일, 다음 길들이기 확인(1분마다) 때 먹었는지 보고 알림. [끝, 회차 387 — 커밋 28b25bf · 시험 vh_livestocktest 33/33]
 다음 (순서대로 — 안 끝난 일만)
-요청 검증 분업·시험 운전 코드 지우기(11-11): harness 스크립트·Harness.md·review.txt·handoff·trial 갈래·VH_HARNESS 갈래·status "분업" 줄 지움, 토큰 기록은 남김, decisions 2절·loop-plan 한 줄로 · Parser·BOM 검사 + -Once · 줄 수 전후 history
 요청 버그 담당 Fable(11-11, "노력은 보통" 포함): + "Fable 못 쓰면 다른 계정": 못 쓰면 "LOOP: FABLE 다른 계정"(진척 없음 아님)→루프가 다른 계정+VH_FABLE_RETRY=1로 바로, state.json 계정별 Fable 됨/안 됨(하루 한 번 재확인), 둘 다 안 되면 std; vh-debug.md model fable(안 되면 claude-fable-5-2, 그것도 안 되면 빼기)·effort medium, vh-debug-std(지금 내용·xhigh), 실패 땐 그 회차 std만, 크레딧 차감 보이면 std+status 한 줄, history·token-report에 쪽별 턴·토큰, decisions 2절 노력 줄
 요청 직접 플레이와 부딪힘(11-11, 플레이 전에): ① valheim-test.ps1이 스크립트가 띄운 게임(PID 기록)만 끄고 모르는 게임이면 시험 미룸·status 한 줄 ② scripts/vh-play.ps1(멈춤 파일→시험 끝 기다림→valheim-stable DLL 복사·autotest 지움→커밋 한 줄→게임 실행→멈춤 지울지 물음)+pc-howto 두 줄 ③ 게임·전용 서버 켜져 있으면 끄기·절전 안 함 ④ status 문구 "Start-ScheduledTask 'VH loop'"(자동 시작 되살릴지 사용자에게 물음) ⑤ TheNewEra → vh_house_TheNewEra 복사만(게임 꺼짐·경로 다름 확인, 전후 파일 수·크기 history)
 요청 집 안에서 사람처럼(11-11, 아래 "집 안 걷기" ①② 대신): ① 집 시험·실플레이에서 0.25초 behavior-house.txt(자리·방향·속도·일) → 숫자 요약(길/직선·진척 없음·벽 0.3m·급회전·문 멈칫 열림/닫힘·서기걷기뛰기·순간이동 봄/안 봄)+층별 위에서 본 그림 docs/valheim/house/<날짜-회차>.png ② 한 번 재서 history ③ vh-house(Fable·medium) 새 에이전트가 가장 나쁜 수치부터, 메인은 diff 검토·빌드·시험(못 쓰면 메인이 기존 방식·status 한 줄) ④ 실플레이 기록은 거점 안·크기 상한·스위치. 기준: 길/직선 ≤1.3·진척 없음 0·벽 ≤5%·급회전 0·열린 문 멈칫 ≤0.4초(확정)·보는 중 순간이동 0

@@ -8,6 +8,20 @@
 
 ## 회차 기록
 
+### 회차 390 · 11-11 · 안 쓰는 검증 분업·시험 운전 코드 지움
+
+**요약**
+
+- 안 쓰는 검증 분업·시험 운전 코드를 지움(스크립트 6개·문서 2개, 약 850줄), 회차 토큰 기록은 루프 안에 남김.
+
+**자세히**
+
+- 지운 것: scripts/vh-harness.ps1·vh-harness-lib.ps1·vh-harness-selftest.ps1·vh-harness-smoke.json·vh-loop-handoff.txt·vh-trial-prompt.txt, docs/valheim/Harness.md·review.txt. vh-loop.ps1의 분업(HANDOFF·VH_VERIFY)·시험 운전(trial.json) 갈래, status "분업" 줄, valheim-test.ps1의 VH_HARNESS·VH_EVIDENCE_DIR 갈래.
+- 남긴 것: 회차 토큰 기록(Write-VhUsage → usage-records·usage.csv)을 vh-loop.ps1 안으로 옮김(mode 칸만 뺌), vh-token-report.ps1도 맞춤.
+- 줄 수: 지운 파일 744줄, vh-loop.ps1 823→762, valheim-test.ps1 248→225 (전체 897줄 지우고 50줄 더함).
+- 시험: 세 스크립트 Parser 오류 0, vh-loop.ps1 UTF-8 BOM 유지. -Once는 돌고 있는 루프가 잠금(Global\VhLoop)을 쥐고 있어 이 회차 안에서 못 돌림 — 다음 회차가 바뀐 스크립트로 다시 켜지는 것이 실제 확인.
+- decisions.txt 2절·loop-plan.txt의 분업 설명은 한 줄로 줄임.
+
 ### 회차 389 · 11-11 · 컴퓨터 끄기가 절전이 되던 것 고침
 
 **요약**
