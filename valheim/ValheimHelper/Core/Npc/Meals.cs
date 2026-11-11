@@ -16,7 +16,7 @@ namespace ValheimHelper.Core.Npc
 
     /// <summary>
     /// NPC가 먹은 음식 (구상서 3장: 음식 상자에서 최대 3종, 수치·지속시간은 바닐라 그대로).
-    /// 게임 1.0.20 Player.CanEat/EatFood/UpdateFood와 같은 규칙: 3종까지, 같은 음식·새 음식은 먹은 것 중 하나가
+    /// 게임 1.0.20·1.0.21 Player.CanEat/EatFood/UpdateFood와 같은 규칙: 3종까지, 같은 음식·새 음식은 먹은 것 중 하나가
     /// 절반 넘게 지났을 때만, 1초마다 남은 시간 비율^0.3만큼 효과, 10초마다 회복량 합만큼 회복.
     /// </summary>
     public sealed class Meals

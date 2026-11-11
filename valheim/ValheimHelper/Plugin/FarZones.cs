@@ -9,7 +9,7 @@ namespace ValheimHelper
     /// 먼 구역 유지 (구상서 12장, 16장). 호스트가 추적 중인 물체(NPC) 주변도 자기 주변처럼
     /// 구역을 만들고, 물체를 불러오고, 소유해서 계산한다. 서버(호스트)에서만 동작한다.
     ///
-    /// 게임 1.0.20 코드 기준:
+    /// 게임 1.0.20·1.0.21 코드 기준:
     /// - ZoneSystem.Update → CreateLocalZones(호스트 위치): 0.1초마다 구역을 하나씩 만든다.
     /// - ZNetScene.CreateDestroyObjects: 호스트 위치 주변 ZDO만 남기고 나머지 인스턴스를 지운다.
     /// - ZDOMan.ReleaseNearbyZDOS: 2초마다 호스트 활동 영역 밖 물체의 소유권을 놓는다.

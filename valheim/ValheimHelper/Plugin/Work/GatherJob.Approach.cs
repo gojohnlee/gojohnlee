@@ -538,7 +538,7 @@ namespace ValheimHelper
         const float BelowFloorReach = 2f;
 
         /// <summary>
-        /// 맞힐 수 있는 충돌체: MineRock은 m_areaRoot 아래만 부위(1.0.20 MineRock.Awake·Damage — 밖이면 "Invalid hit area"로 안 깎임, 회차 250 용암 속 LeviathanLava 몸 Rock_4).
+        /// 맞힐 수 있는 충돌체: MineRock은 m_areaRoot 아래만 부위(1.0.20·1.0.21 MineRock.Awake·Damage — 밖이면 "Invalid hit area"로 안 깎임, 회차 250 용암 속 LeviathanLava 몸 Rock_4).
         /// </summary>
         static Collider[] HitColliders(ZNetView view) =>
             view.GetComponent<MineRock>() is MineRock mr && mr.m_areaRoot != null ? mr.m_areaRoot.GetComponentsInChildren<Collider>() : view.GetComponentsInChildren<Collider>();

@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 장비 수리(구상서 4장, 결정 E): 일꾼 짐의 도구·무기·갑옷 중 반 넘게 닳았거나 부러진 것을 거점 제작대에서 고친다.
-    /// 바닐라 InventoryGui.CanRepair·RepairOneItem(게임 1.0.20)과 같은 규칙: m_canBeReparied, 그 물건 레시피의 수리대·제작대와
+    /// 바닐라 InventoryGui.CanRepair·RepairOneItem(게임 1.0.20·1.0.21)과 같은 규칙: m_canBeReparied, 그 물건 레시피의 수리대·제작대와
     /// 이름이 같은 설비, 설비 레벨(최대 4) ≥ 레시피 최소 레벨, 설비를 쓸 수 있음(지붕 70%·불, CraftingStation.CheckUsable).
     /// 무료이고 재료는 안 든다. 건축물 수리는 안 함(사용자 결정).
     /// </summary>

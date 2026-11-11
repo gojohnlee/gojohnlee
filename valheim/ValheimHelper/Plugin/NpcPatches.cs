@@ -10,7 +10,7 @@ namespace ValheimHelper
     static class NpcPatches
     {
         /// <summary>
-        /// Character.RPC_Damage(게임 1.0.20)는 갑옷 방어력을 플레이어만 계산한다: if (IsPlayer()) { ApplyArmor(GetBodyArmor()); DamageArmorDurability(hit); }.
+        /// Character.RPC_Damage(게임 1.0.20·1.0.21)는 갑옷 방어력을 플레이어만 계산한다: if (IsPlayer()) { ApplyArmor(GetBodyArmor()); DamageArmorDurability(hit); }.
         /// 바로 뒤에 GetBodyArmor가 오는 그 IsPlayer 하나만 "플레이어 또는 일꾼"으로 바꾼다(0.3.7 시험: 가죽 갑옷 7인데 둔기 20을 그대로 맞음).
         /// </summary>
         [HarmonyPatch(typeof(Character), "RPC_Damage")]
@@ -60,7 +60,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// Character.RPC_Damage(게임 1.0.20)의 몬스터 전용 피해 배율 둘을 일꾼에게서 뺀다(플레이어처럼, 회차 166):
+        /// Character.RPC_Damage(게임 1.0.20·1.0.21)의 몬스터 전용 피해 배율 둘을 일꾼에게서 뺀다(플레이어처럼, 회차 166):
         /// - 뒤치기: if (m_baseAI != null && !m_baseAI.IsAlerted() && hit.m_backstabBonus > 1f && 300초에 한 번) hit.ApplyModifier(m_backstabBonus).
         ///   일꾼은 WorkerAI(BaseAI)인데 경계(alerted)를 켜지 않아 300초마다 첫 한 방이 공격자 무기의 뒤치기 배율(몬스터 무기 기본 4배)로 들어왔다
         ///   (vh_resisttest 진단: 늑대 69.6 × 4 − 갑옷 42 → 체력 71/71 일꾼 즉사). 플레이어는 BaseAI가 없어 안 받는다 → 일꾼이 받는 hit의 배율을 1로.

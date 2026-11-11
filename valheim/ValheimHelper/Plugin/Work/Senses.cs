@@ -35,7 +35,7 @@ namespace ValheimHelper
         {
             s_temp.Clear();
             // 둘레 구역 수: 64m 넘는 범위(거점 125m)는 ±2구역까지 봐야 다 들어옴. classic = 네모 전부
-            // (아니면 ZonesWithinRadius 원이라 ±2에서 모서리 구역이 빠져 대각선 ~90m까지만 — 게임 1.0.20 ZDOMan.FindSectorObjects)
+            // (아니면 ZonesWithinRadius 원이라 ±2에서 모서리 구역이 빠져 대각선 ~90m까지만 — 게임 1.0.20·1.0.21 ZDOMan.FindSectorObjects)
             int area = Mathf.Max(1, Mathf.CeilToInt(range / ZoneSystem.c_ZoneSize));
             ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(pos), new SimulationDistance(area, 0, classic: true), s_temp);
             var list = new List<ZDO>();

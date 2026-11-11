@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 전용 서버에서 거두기(Pickable) 고침(E052, 회차 309). 게임 1.0.20 Pickable.RPC_Pick은 효과를 만들 때 Player.m_localPlayer.GetZDOID()를 쓰는데
+    /// 전용 서버에서 거두기(Pickable) 고침(E052, 회차 309). 게임 1.0.20·1.0.21 Pickable.RPC_Pick은 효과를 만들 때 Player.m_localPlayer.GetZDOID()를 쓰는데
     /// 전용 서버엔 로컬 플레이어가 없어 매번 NullReference → 떨굼·m_picked 없이 끝남 → 서버 일꾼이 같은 나뭇가지를 끝없이 거둬 예외가 쌓이고(1회 시험 15천 번) 서버가 느려짐.
     /// 로컬 플레이어가 있으면 원본 그대로, 없을 때만 원본과 같은 순서로 하되 효과 주인을 ZDOID.None으로.
     /// </summary>

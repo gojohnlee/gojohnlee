@@ -7,7 +7,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 시험 전용: 시험이 판 땅을 원래대로 되돌린다(시험 월드에 구덩이가 쌓여 다른 시험이 빠지지 않게).
-    /// 바닐라에 되돌리기 기능이 없어 TerrainComp 내부 배열(게임 1.0.20: m_modifiedHeight·m_levelDelta·m_smoothDelta)을 지우고 저장한다.
+    /// 바닐라에 되돌리기 기능이 없어 TerrainComp 내부 배열(게임 1.0.20·1.0.21: m_modifiedHeight·m_levelDelta·m_smoothDelta)을 지우고 저장한다.
     /// </summary>
     static class TestTerrain
     {
