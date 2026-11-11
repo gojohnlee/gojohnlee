@@ -266,11 +266,11 @@ function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
     $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''
-            tokenDay = '' }
+            tokenDay = ''; fable = @('', '') }
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
     }
-    $s.until = @($s.until); $s.noProg = 0; $s.lastFail = ''; $s.errs = 0   # 다시 켜면 멈춤 셈은 새로
+    $s.until = @($s.until); $s.fable = @($s.fable); $s.noProg = 0; $s.lastFail = ''; $s.errs = 0   # 다시 켜면 멈춤 셈은 새로
     $s
 }
 # 게임 업데이트 감지: assembly_valheim.dll 파일 버전 + 해시 앞 12자. 지난 회차 것($st.game)과 다르면 그 회차에 VH_GAME_UPDATE로 알린다.
@@ -403,6 +403,10 @@ function Start-Claude($acct, $workDir, $prompt, $tag) {
     # 배경 서브에이전트가 남은 채 턴이 끝나도 10분 뒤 끊지 않고 끝까지 기다린다(회차 54가 그렇게 끊겨 LOOP 줄 없이 끝남). 회차 시간 제한은 그대로.
     $psi.EnvironmentVariables['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'
     $psi.EnvironmentVariables['VH_LOOP_HASH'] = $SelfHash   # 회차 claude가 vh-loop-restart.ps1로 옛 루프인지 본다
+    # Fable(vh-debug) 못 씀: 'no:날짜'는 그날만(하루 한 번 재확인). 다른 계정으로 다시 돌릴 땐 VH_FABLE_RETRY=1, 두 계정 다 못 쓰면 VH_FABLE=std(vh-loop-prompt 서브에이전트 줄)
+    $today = "no:$(Get-Date -Format 'yyyy-MM-dd')"
+    if (@($st.fable | Where-Object { $_ -eq $today }).Count -eq 2) { $psi.EnvironmentVariables['VH_FABLE'] = 'std' } else { $psi.EnvironmentVariables.Remove('VH_FABLE') }
+    if ($FableRetry) { $psi.EnvironmentVariables['VH_FABLE_RETRY'] = '1' } else { $psi.EnvironmentVariables.Remove('VH_FABLE_RETRY') }
     if ($GameUpdate) { $psi.EnvironmentVariables['VH_GAME_UPDATE'] = $GameUpdate } else { $psi.EnvironmentVariables.Remove('VH_GAME_UPDATE') }   # 회차 claude: 전체 회귀부터(vh-loop-prompt 1-0)
     $p = [Diagnostics.Process]::Start($psi)
     @{ P = $p; F = New-Object VH.Feed($p, $tag, $workDir); Start = Get-Date; RunId = [guid]::NewGuid().ToString('N'); Account = $acct.Name; Kind = $(if ($tag) { 'reply' } else { 'implementation' }); Todo = (Get-Todo (Join-Path $workDir 'docs\valheim\progress.txt')) }
@@ -703,6 +707,7 @@ while ($true) {
     Log "회차 $($st.round) 시작 ($($acct.Name) 계정)"
     $Host.UI.RawUI.WindowTitle = "VH loop - 회차 $($st.round)"
     $r = Run-Claude $acct (Join-Path $Dir "round-$($st.round).txt")
+    $FableRetry = $false
     $lines = @($r.Text -split "`r?`n" | Where-Object { $_.Trim() })
     $last = $lines | Where-Object { $_ -match '^\s*LOOP:' } | Select-Object -Last 1
     if (-not $last) {
@@ -722,6 +727,14 @@ while ($true) {
         }
     }
     $st.errs = 0
+    if ($last -match '^\s*LOOP: FABLE') {
+        # 이 계정은 오늘 Fable 못 씀 → 진척 셈 없이 다른 계정으로 바로 다시(작업 트리는 그대로 이어 감). 다른 계정도 오늘 못 쓰면 VH_FABLE=std로 다시.
+        $st.fable[$st.acct] = "no:$(Get-Date -Format 'yyyy-MM-dd')"; $st.round--
+        $o = 1 - $st.acct
+        if ($st.fable[$o] -ne $st.fable[$st.acct] -and (-not $st.until[$o] -or [datetime]$st.until[$o] -le (Get-Date))) { $st.acct = $o }
+        $FableRetry = $true
+        Log "$($acct.Name) 계정 Fable 못 씀 → $($Accounts[$st.acct].Name) 계정으로 다시"; Save-State; continue
+    }
     if ($gid) { $st.game = $gid }   # 알린 회차가 끝났으면 본 것으로(한도·금방 끝난 오류면 위에서 continue → 다음 회차에 다시 알림)
     $last = $last.Trim()
     Log $last
