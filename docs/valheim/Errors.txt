@@ -57,3 +57,8 @@ E078 / 관찰 중 — vh_newerahouse "1 상자→화덕" PASS지만 1층 상자 
   증상·조건: 회차 419 네 번째 판(vh_house_TheNewEra 되돌림 직후, 게임 1.0.21). 출발 (-3955.6,-5828.8) → 1.8초 만에 (-3954.8,-5824.9,42.6)에서 몸 속도 0, 남은 길 19.3m, m_path 7점 첫 점 2.3m 북서, 쪽도 북서, 둘레 piece_chest_blackmetal 4·piece_dvergr_lantern·wood_floor. 막힘 점프 2번(4.8·6.3초) 뒤 36초에 3.6m 돌아 빠져나옴. FloorStep 안 씀(같은 층) — 그 회차 FloorStep 고침과 무관.
   근거: 같은 회차 다른 네 판은 이 다리 길/직선 1.04~1.06·섬 없음.
   다음 확인: 다시 나오면 behavior-house.txt "# 섬"·"# 점프" 줄과 시작 자리 비교, 걸린 조각이 상자 더미 모서리인지(시험 걷기 WalkJob엔 막힘 비켜 가기가 없는지 ExploreTest.WalkJob 확인).
+
+E079 / 관찰 중 — vh_guestcmdtest "외모 장비가 손님 화면에 그려짐 (머리 0/0, 수염 0/0)" FAIL(7/8) + vh_guestchesttest "상자 주인 = 서버 쪽 (597760812, 나 597760812)" FAIL(9/10)
+  증상·조건: 회차 432 B12 첫 판(scripts/vh-b12.ps1, 서버 월드 VhTest 안 지움 — 앞 시험 일꾼 3명·대기열이 남은 월드). 같은 월드로 둘만 다시: guestcmd "일꾼 2명 나타남 (1명)" FAIL·guestchest PASS 10/10.
+  근거: 월드를 새로 지운 뒤 B12 두 판 모두 전부 PASS. 남은 일꾼 중 하나를 All[0]으로 집거나, 상자가 손님 소유로 남은 순간을 본 듯(추정).
+  다음 확인: B12는 이제 새 월드로만 돌림. 새 월드에서 다시 나오면 서버 LogOutput.log·diag "=== vh_guestcmdtest" 일꾼 이름·주인 줄로 원인.

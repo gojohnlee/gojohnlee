@@ -10,7 +10,7 @@
 - 분업(Claude 구현 → 스크립트 검증)·시험 운전: 지움(사용자 11-11, decisions.txt 2절). 회차 토큰 기록은 남김.
 
 플레이용 빌드(사용자 11-10)
-- 태그 valheim-stable = 사용자가 직접 플레이할 빌드. ALLDONE 직전에만 전체 회귀(codemap "시험 고르기" B1~B11 + 실제 재시작)를 돌려 전부 PASS면 그 커밋으로 git tag -f valheim-stable → git push -f origin valheim-stable(그 커밋의 dist DLL = 시험한 DLL). 하나라도 FAIL이면 안 옮기고 Errors.txt 규칙대로. status.txt에 "플레이용 빌드: <해시7> <날짜> (전체 회귀 n/n)". 회차마다 돌리지 않음.
+- 태그 valheim-stable = 사용자가 직접 플레이할 빌드. ALLDONE 직전에만 전체 회귀(codemap "시험 고르기" B1~B12 + 실제 재시작)를 돌려 전부 PASS면 그 커밋으로 git tag -f valheim-stable → git push -f origin valheim-stable(그 커밋의 dist DLL = 시험한 DLL). 하나라도 FAIL이면 안 옮기고 Errors.txt 규칙대로. status.txt에 "플레이용 빌드: <해시7> <날짜> (전체 회귀 n/n)". 회차마다 돌리지 않음.
 
 멈춤·쉼
 - 멈추기: docs/valheim/loop-stop.txt(아무 내용) 또는 %USERPROFILE%\vh-loop\stop. 쉬기: docs/valheim/loop-pause.txt 첫 줄에 다시 시작할 시각.
