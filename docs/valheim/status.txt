@@ -1,7 +1,7 @@
-갱신: 2026-11-11 23:41  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 415 진행 중
+갱신: 2026-11-12 00:12  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 415, 계정: 2번, 한도: 1번 11-12 03:52까지
-할 일: 요청 Fable 할 일 바로잡기(11-11 22:19): ① vh-house.md·vh-house-std.md ② vh-loop-prompt 서브에이전트 줄 [끝, 회차 415 — 문서만: .claude/agents…
-마지막 시험: 11-11 23:39 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+할 일: 요청 Fable 할 일 바로잡기(11-11 22:19): ① vh-house.md·vh-house-std.md [끝, 회차 415 — 문서만: .claude/agents] ② vh-loop-prompt 서브에이전트 …
+마지막 시험: 11-12 00:09 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE 회차 416 집 안 8초 멈춰 섬 고침(문 나가기 접기·계단 끝 3초 유지), 내 집 시험 11/11 ×2
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
