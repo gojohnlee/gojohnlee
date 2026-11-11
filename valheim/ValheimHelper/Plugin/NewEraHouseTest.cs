@@ -96,6 +96,9 @@ namespace ValheimHelper
             TestRunner.Log($"집 조각 {pieces}개({Radius:0}m 안): 침대 {beds.Count}·상자 {chests.Count}·불 {fires.Count}·문 {doors.Count}·계단 {stairs}");
             checks.Add($"집이 불러와짐 (조각 {pieces}, 침대 {beds.Count})", pieces > 500 && beds.Count > 0);
             if (beds.Count == 0) yield break;
+            // 찾은 차례는 판마다 달라서(회차 422까지 침대가 바뀜) 자리로 줄 세워 늘 같은 침대·상자·화덕
+            int ByPos(Component a, Component b) { var x = a.transform.position; var y = b.transform.position; return x.x != y.x ? x.x.CompareTo(y.x) : x.z.CompareTo(y.z); }
+            beds.Sort(ByPos); chests.Sort(ByPos); fires.Sort(ByPos);
             Bed bed = beds[0];
             float upper = bed.transform.position.y - 3f; // 침대가 2층 → 3m 아래부터 1층
             Container chest = null; Fireplace fire = null;
