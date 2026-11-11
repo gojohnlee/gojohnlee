@@ -272,7 +272,7 @@ namespace ValheimHelper
                 {
                     float len = 0f; for (int i = 1; i < s_stepPath.Count; i++) len += Vector3.Distance(s_stepPath[i - 1], s_stepPath[i]);
                     float direct = Vector3.Distance(pos, to);
-                    if (len > Mathf.Max(direct * 3f, direct + 15f) && Time.time - m_stepSince < 1.5f) { m_step = pos; m_stepWait = true; m_stepAt = Time.time + 0.5f; return m_step; } // 출발 때 첫 길이 터무니없이 멀면(회차 410 오름 4: 남은 74m → 곧 19m, 1.5m 반대로 갔다 141° 되돌기) 1.5초까지 서서 0.5초마다 다시 받음
+                    if (len > Mathf.Max(direct * 3f, direct + 15f) && Time.time - m_stepSince < 3f) { m_step = pos; m_stepWait = true; m_stepAt = Time.time + 0.5f; return m_step; } // 출발 때 첫 길이 터무니없이 멀면(회차 410 오름 4: 남은 74m → 곧 19m, 1.5m 반대로 갔다 141° 되돌기) 3초까지 서서 0.5초마다 다시 받음 — 1.5초론 102m 길(바깥 문 돌기)을 2초 따라가다 51m 길로 157° 되돌았음(회차 414 오름 2)
                     for (int i = 1; i < s_stepPath.Count; i++)
                         if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
                 }

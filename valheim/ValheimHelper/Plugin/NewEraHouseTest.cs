@@ -18,6 +18,18 @@ namespace ValheimHelper
 
         const string World = "vh_house_TheNewEra";
         static readonly Vector3 Center = new Vector3(-3959f, 0f, -5829f);
+
+        /// <summary>집 60m 안 야생 생물(플레이어·일꾼·길든 짐승 아님)을 치움 — 사용자 집 살림(길든 짐승)은 그대로.</summary>
+        static void ClearWild()
+        {
+            foreach (var c in new List<Character>(Character.GetAllCharacters()))
+                if (c != null && !c.IsDead() && !(c is Player) && !(c is WorkerNpc) && !c.IsTamed() && Utils.DistanceXZ(c.transform.position, Center) < 60f)
+                {
+                    TestRunner.Log($"야생 생물 치움: {c.m_name} {Utils.DistanceXZ(c.transform.position, Center):0}m");
+                    ZNetScene.instance.Destroy(c.gameObject);
+                }
+        }
+
         const float Radius = 22f;
 
         static IEnumerator Run()
@@ -119,6 +131,7 @@ namespace ValheimHelper
             for (int i = 0; i < names.Length; i++)
             {
                 Vector3 goal = tos[i].transform.position;
+                ClearWild(); // 회색 난쟁이가 와 일꾼이 경계로 8초 섬·hp 깎임(회차 405·414) — 걸음만 재려고 다리마다 야생 생물 치움, 길든 짐승은 남김
                 var walk = new ExploreTest.WalkJob(w.Ragnar.Ai, goal, true);
                 var rec = WalkRecorder.Start(w.Ragnar, cols);
                 w.Ragnar.Ai.StartJob(walk);

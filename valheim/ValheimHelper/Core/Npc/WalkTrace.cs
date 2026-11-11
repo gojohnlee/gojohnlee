@@ -6,7 +6,7 @@ namespace ValheimHelper.Core.Npc
 {
     /// <summary>
     /// 집 안 걸음 기록(사용자 11-11 "집 안에서 사람처럼" ①): 0.25초마다 한 줄(behavior-house.txt) → 숫자 요약.
-    /// 기준: 길/직선 ≤1.3·진척 없음 0·벽 ≤5%·급회전 0·열린 문 멈칫 ≤0.4초·보는 중 순간이동 0.
+    /// 기준: 길/직선 ≤1.3·진척 없음 0·벽 ≤5%·급회전 0(90° 넘게 꺾인 앞뒤 걸음 중 하나가 뛰기 — 걸음으로 늦춰 돌아서기는 안 셈, 회차 414)·열린 문 멈칫 ≤0.4초·보는 중 순간이동 0.
     /// </summary>
     public static class WalkTrace
     {
@@ -82,7 +82,7 @@ namespace ValheimHelper.Core.Npc
             int legStart = -1;
             float legPath = 0f, ratioSum = 0f, best = 0f, bestT = 0f, pauseStart = -1f;
             bool stuckNow = false;
-            double lastDir = double.NaN;
+            double lastDir = double.NaN, lastV = 0.0;
             void CloseLeg(Sample end)
             {
                 float straight = Flat(s[legStart], end);
@@ -114,14 +114,15 @@ namespace ValheimHelper.Core.Npc
                         {
                             double d = Math.Abs(dir - lastDir) % 360.0;
                             if (d > 180.0) d = 360.0 - d;
-                            if (d > SharpTurn)
+                            double v = step / Math.Max(1e-3, a.T - b.T);
+                            if (d > SharpTurn && Math.Max(v, lastV) > RunSpeed) // 계단 위 끝처럼 목표가 뒤인 곳에서 걸음으로 늦춰 돌아서기는 사람 같음(회차 412 늦춤 뒤 남은 94~140°는 1.1~1.6m/s)
                             {
                                 r.SharpTurns++;
                                 if (r.TurnAt.Count < 8)
                                     r.TurnAt.Add(string.Format(CultureInfo.InvariantCulture, "{0:0.00}@{1:0.0},{2:0.0},{3:0.0} {4:0}°", a.T, a.X, a.Z, a.Y, d));
                             }
                         }
-                        lastDir = dir;
+                        lastDir = dir; lastV = step / Math.Max(1e-3, a.T - b.T);
                     }
                     if (legStart >= 0 && !tele) legPath += step;
                 }
