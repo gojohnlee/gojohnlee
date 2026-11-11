@@ -21,6 +21,8 @@ namespace ValheimHelper
         /// <summary>동료 부르기(사용자 결정 2026-10-24 나): 이 거리 안 동료를 부르고, 20m 안에 올 때까지 최대 MateWait초 기다린다.</summary>
         /// <summary>동료 부르기: 일꾼끼리는 서로 일을 끊고 돕지 않는다 — 50m 안만(사용자 결정 2026-10-26, 전 100m).</summary>
         public const float MateCallRange = 50f, MateWait = 30f, MateCallEvery = 60f, ComeLimit = 40f;
+        /// <summary>기다리는 동료가 이만큼(초) 1m도 가까워지지 않으면(길 막힘·발 묶임) MateWait 전에 접는다(사용자 11-11 헛기다림 ③).</summary>
+        public const float MateStall = 8f;
         /// <summary>[기본안] 내가 한 번 휘두를 때 적이 치는 횟수(바닐라 몬스터의 공격 간격 반영, 시험으로 조정).</summary>
         public const float FoeHitsPerSwing = 0.5f;
 
@@ -242,6 +244,7 @@ namespace ValheimHelper
         float m_mateAt = -999f;
         /// <summary>불러 놓고 물러나 기다리는 동료(오면 싸움, 못 오면 MateWait 뒤 원래 판단).</summary>
         WorkerNpc m_waitMate;
+        float m_mateBest, m_mateStall;
         /// <summary>나를 부른 동료(State.Come 동안 그쪽으로 달려감).</summary>
         WorkerNpc m_caller;
         float m_comeTime;
@@ -288,6 +291,8 @@ namespace ValheimHelper
             m_npc.Say("callMate", Args(foeName));
             if (call == MateCall.Join) return false;
             m_waitMate = mate;
+            m_mateBest = float.MaxValue;
+            m_mateStall = 0f;
             m_target = null;
             m_backTo = AwayPoint(pos, BackDistance);
             m_backTimer = MateWait;
@@ -860,8 +865,23 @@ namespace ValheimHelper
         bool m_backWalking;
         float m_backWalkTime;
 
+        /// <summary>오는 중이 아니게 된 동료(다른 싸움·포기·죽음)나 MateStall초 동안 1m도 안 가까워진 동료면 이유, 아니면 null.</summary>
+        string MateNotComing(float dt)
+        {
+            var g = m_waitMate.IsDead() ? null : m_waitMate.Ai?.Guard;
+            if (g == null || g.m_state != State.Come || g.m_caller != m_npc) return "오는 중 아님";
+            float d = Vector3.Distance(m_waitMate.transform.position, m_npc.transform.position);
+            if (d <= AllyRange || d < m_mateBest - 1f) { m_mateBest = Mathf.Min(m_mateBest, d); m_mateStall = 0f; return null; }
+            return (m_mateStall += dt) > MateStall ? $"{MateStall:0}초 진척 없음 ({d:0}m)" : null;
+        }
+
         bool UpdateBack(float dt)
         {
+            if (m_waitMate != null && MateNotComing(dt) is string why)
+            {
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 기다림 접음: {why}");
+                m_ai.StopMoving(); m_backWalking = false; m_state = State.Calm; m_waitMate = null; return false;
+            }
             if (m_backWalking)
             {
                 m_backWalkTime += dt;

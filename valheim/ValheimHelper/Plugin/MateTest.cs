@@ -150,7 +150,7 @@ namespace ValheimHelper
             checks.Add($"2호가 {Guard.MateCallRange:0}m 밖이면 안 부름 ({(Guard.LastMateCall == "" ? "안 부름" : Guard.LastMateCall)})", Guard.LastMateCall == "");
             foreach (var c in foes2) if (c != null && !c.IsDead() && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid()) v.Destroy();
 
-            // C) 부른 동료가 못 옴(발 묶음) → MateWait초 뒤 기다림을 접고 원래 판단, 60초 안엔 다시 안 부름. 회색난쟁이도 발 묶어 1호가 맞지 않게.
+            // C) 부른 동료가 못 옴(발 묶음) → MateStall초 진척 없으면 기다림을 접고 원래 판단, 60초 안엔 다시 안 부름. 회색난쟁이도 발 묶어 1호가 맞지 않게.
             // 2호는 부르는 거리(MateCallRange 50m) 안 — 거점 옆 60m 자리는 1호까지 약 67m라 10-26 50m 규칙 뒤로 안 부름
             Vector3 mateSpot = GatherTest.Ground(w.Home + rot * new Vector3(-30f, 0f, 0f));
             f.TeleportTo(mateSpot + Vector3.up * 0.3f, rot, false);
@@ -182,8 +182,8 @@ namespace ValheimHelper
             float waited = Time.time - t0;
             yield return new WaitForSeconds(2f);
             TestRunner.Log($"[C 기다림 끝 {waited:0.0}s] {Diag(r)} / {Diag(f)}");
-            checks.Add($"C 2호가 못 오면 {Guard.MateWait:0}초쯤 뒤 기다림을 접음 ({waited:0.0}초, 2호까지 {Vector3.Distance(r.transform.position, f.transform.position):0}m)",
-                r.Ai.Guard != null && !r.Ai.Guard.WaitingMate && waited >= Guard.MateWait - 5f && waited <= Guard.MateWait + 8f);
+            checks.Add($"C 2호가 못 오면 {Guard.MateStall:0}초쯤 뒤 기다림을 접음 ({waited:0.0}초, 2호까지 {Vector3.Distance(r.transform.position, f.transform.position):0}m)",
+                r.Ai.Guard != null && !r.Ai.Guard.WaitingMate && waited >= Guard.MateStall - 3f && waited <= Guard.MateStall + 8f);
             checks.Add($"C 그 뒤 원래 판단({r.Ai.Guard?.LastVerdict} — 체력·남은 적에 따라 싸움도 맞음), 다시 안 부름 ({Guard.LastMateCall})",
                 r.Ai.Guard != null && !r.Ai.Guard.WaitingMate && Guard.LastMateCall.EndsWith("Wait") && r.Deaths == deaths);
             Speeds(f, fSaved, false);
