@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 391 · 11-11 · 버그 담당을 Fable로
+
+**요약**
+
+- 버그 담당(vh-debug)을 Fable·보통 노력으로 바꾸고, 옛 엑스트라 하이 담당은 예비(vh-debug-std)로 남김.
+
+**자세히**
+
+- .claude/agents/vh-debug.md에 model: fable·effort: medium. 옛 내용은 vh-debug-std.md(엑스트라 하이)로 복사 — Fable을 못 쓰는 회차만 씀.
+- decisions 2절 노력 줄과 vh-loop-prompt 서브에이전트 줄을 맞춤. 루프 쪽(다른 계정으로 다시 해 보기·계정별 Fable 됨/안 됨·크레딧 확인·쪽별 토큰)은 다음 회차.
+
 ### 회차 390 · 11-11 · 안 쓰는 검증 분업·시험 운전 코드 지움
 
 **요약**
