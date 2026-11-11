@@ -37,13 +37,14 @@ function Key($name, $in) {
     }
 }
 function Read-Session($file) {
-    $calls = New-Object System.Collections.ArrayList; $byId = @{}; $results = @{}; $first = $null; $sidechain = $false
+    $calls = New-Object System.Collections.ArrayList; $byId = @{}; $results = @{}; $first = $null; $sidechain = $false; $model = ''
     foreach ($line in [IO.File]::ReadLines($file)) {
         if (-not $line) { continue }
         try { $e = $line | ConvertFrom-Json } catch { continue }
         if (-not $first -and $e.timestamp) { $first = [datetime]$e.timestamp }
         if ($e.isSidechain) { $sidechain = $true }
         $m = $e.message
+        if (-not $model -and $e.type -eq 'assistant' -and $m.model -and $m.model -ne '<synthetic>') { $model = "$($m.model)" -replace '^claude-', '' }
         if ($e.type -eq 'assistant' -and $m.usage) {
             # 내용 블록마다 줄이 따로지만 같은 message.id = 같은 API 호출 하나
             $id = if ($m.id) { $m.id } else { "$($calls.Count)" }
@@ -59,7 +60,7 @@ function Read-Session($file) {
             foreach ($b in @($m.content)) { if ($b.type -eq 'tool_result') { $results[$b.tool_use_id] = Len $b.content } }
         }
     }
-    [pscustomobject]@{ file = $file; first = $first; sidechain = $sidechain; calls = $calls; results = $results }
+    [pscustomobject]@{ file = $file; first = $first; sidechain = $sidechain; model = $model; calls = $calls; results = $results }
 }
 # 호출 i와 i+1 사이에 늘어난 대화(= i의 출력 + 도구 결과 + 시스템 알림)를 i의 도구들에 결과 길이 비율로 나눔.
 # 누적 = 늘어난 양 × (그 뒤 호출 수): 그만큼의 턴이 그것을 다시 읽었다.
@@ -85,16 +86,22 @@ $files = @(foreach ($r in $Roots) { Get-ChildItem -LiteralPath $r -Directory -Er
 $sessions = @(foreach ($f in $files) { $s = Read-Session $f.FullName; if ($s.calls.Count) { $s } }) | Sort-Object first
 $o = @("# 토큰 측정 보고", '', "만든 때 $((Get-Date).ToString('yyyy-MM-dd HH:mm')) · 최근 ${Days}일 · 세션 $($sessions.Count)개(대화 기록 $($files.Count)개) · scripts/vh-token-report.ps1", '',
     ('읽는 법: **대화 크기** = 그 턴에 모델이 다시 읽은 양(입력+캐시 읽기+캐시 쓰기). **누적** = 도구 결과 하나가 늘린 양 × 그 뒤 턴 수 — 그 출력 때문에 회차 전체에서 더 읽은 양. 토큰은 Claude가 보고한 실측, 도구별 나눔만 결과 글자 수 비율(추정). **입력값 환산** = Opus 5.5 API 가격 배수(일반 입력 1, 캐시 읽기 ' + $ReadX + ', 쓰기 ' + $WriteX + ', 출력 ' + $OutX + ')로 더한 것 — 구독 한도가 같은 비율인지는 모름. 출력에는 생각(effort) 토큰도 들어감.'), '',
-    '## 회차별', '', '| 시작 | 회차 | 종류 | 턴 | 첫 턴 크기 | 5턴째 크기 | 마지막 크기 | 다시 읽은 합(캐시 읽기) | 캐시 쓰기 | 출력 | 입력값 환산(읽기·쓰기·출력 몫) |', '|---|---|---|---|---|---|---|---|---|---|---|')
-$all = @(); $agg = @{}
+    '## 회차별', '', '| 시작 | 회차 | 종류 | 모델 | 턴 | 첫 턴 크기 | 5턴째 크기 | 마지막 크기 | 다시 읽은 합(캐시 읽기) | 캐시 쓰기 | 출력 | 입력값 환산(읽기·쓰기·출력 몫) |', '|---|---|---|---|---|---|---|---|---|---|---|---|')
+$all = @(); $agg = @{}; $side = [ordered]@{}; $recOf = @{}
 foreach ($s in $sessions) {
-    $rec = $recs | Where-Object { $_.started -and $s.first -and [math]::Abs(([datetime]$_.started - $s.first).TotalMinutes) -le 5 } | Select-Object -First 1
+    # 서브에이전트 기록은 <부모 세션>\subagents\ 안 → 부모 회차를 물려받음(시작 시각은 부모보다 늦어 시각으로는 못 맞춤)
+    $parent = if ($s.sidechain) { Split-Path (Split-Path $s.file -Parent) -Parent } else { Join-Path (Split-Path $s.file -Parent) ([IO.Path]::GetFileNameWithoutExtension($s.file)) }
+    $rec = if ($s.sidechain) { $recOf[$parent] } else { $recs | Where-Object { $_.started -and $s.first -and [math]::Abs(([datetime]$_.started - $s.first).TotalMinutes) -le 5 } | Select-Object -First 1 }
+    if (-not $s.sidechain) { $recOf[$parent] = $rec }
     $kind = if ($s.sidechain) { '서브에이전트' } elseif ($rec) { $rec.kind } else { '-' }
     $c = $s.calls; $n = $c.Count
     $sumIn = 0; $sumRead = 0; $sumWrite = 0; $sumOut = 0; foreach ($x in $c) { $sumIn += $x.inp; $sumRead += $x.read; $sumWrite += $x.write; $sumOut += $x.out }
     $wR = $sumRead * $ReadX; $wW = $sumWrite * $WriteX; $wO = $sumOut * $OutX; $wT = $sumIn + $wR + $wW + $wO
     $mix = if ($wT) { '{0:N0}·{1:N0}·{2:N0}%' -f (100 * $wR / $wT), (100 * $wW / $wT), (100 * $wO / $wT) } else { '-' }
-    $o += "| $(if ($s.first) { $s.first.ToLocalTime().ToString('MM-dd HH:mm') }) | $(if ($rec) { $rec.round } else { '-' }) | $kind | $n | $(K $c[0].ctx) | $(if ($n -ge 5) { K $c[4].ctx } else { '-' }) | $(K $c[$n-1].ctx) | $(K $sumRead) | $(K $sumWrite) | $(K $sumOut) | $(K $wT) ($mix) |"
+    $o += "| $(if ($s.first) { $s.first.ToLocalTime().ToString('MM-dd HH:mm') }) | $(if ($rec) { $rec.round } else { '-' }) | $kind | $(if ($s.model) { $s.model } else { '-' }) | $n | $(K $c[0].ctx) | $(if ($n -ge 5) { K $c[4].ctx } else { '-' }) | $(K $c[$n-1].ctx) | $(K $sumRead) | $(K $sumWrite) | $(K $sumOut) | $(K $wT) ($mix) |"
+    $sk = "$(if ($s.sidechain) { '서브에이전트' } else { '메인' }) · $(if ($s.model) { $s.model } else { '-' })"
+    if (-not $side.Contains($sk)) { $side[$sk] = [pscustomobject]@{ s = 0; n = 0; read = 0.0; write = 0.0; out = 0.0; w = 0.0 } }
+    $side[$sk].s++; $side[$sk].n += $n; $side[$sk].read += $sumRead; $side[$sk].write += $sumWrite; $side[$sk].out += $sumOut; $side[$sk].w += $wT
     foreach ($it in @(Measure-Session $s)) {
         $all += [pscustomobject]@{ when = $(if ($s.first) { $s.first.ToLocalTime().ToString('MM-dd HH:mm') }); round = $(if ($rec) { $rec.round } else { '-' }); key = $it.key; grow = $it.grow; cost = $it.cost; turn = $it.turn }
         $g = if ($it.key -like '(*') { $it.key } else { ($it.key -split ' ')[0] }; if ($it.key -match '^(Bash|PowerShell) (\S+)') { $g = "$($Matches[1]) $($Matches[2])" }
@@ -102,6 +109,8 @@ foreach ($s in $sessions) {
         $agg[$g].n++; $agg[$g].grow += $it.grow; $agg[$g].cost += $it.cost
     }
 }
+$o += ''; $o += '## 쪽별 합(메인·서브에이전트, 모델별 — 사용자 11-11)'; $o += ''; $o += '| 쪽 · 모델 | 세션 | 턴 | 캐시 읽기 | 캐시 쓰기 | 출력 | 입력값 환산 |'; $o += '|---|---|---|---|---|---|---|'
+foreach ($k in $side.Keys) { $v = $side[$k]; $o += "| $k | $($v.s) | $($v.n) | $(K $v.read) | $(K $v.write) | $(K $v.out) | $(K $v.w) |" }
 $total = 0; foreach ($x in $all) { $total += $x.cost }
 $o += ''; $o += "## 무엇이 대화를 키웠나(종류별 합, 누적 큰 순)"; $o += ''; $o += '| 종류 | 호출 수 | 늘린 양 합 | 누적 | 누적 비율 |'; $o += '|---|---|---|---|---|'
 foreach ($k in ($agg.Keys | Sort-Object { $agg[$_].cost } -Descending | Select-Object -First $Top)) {
