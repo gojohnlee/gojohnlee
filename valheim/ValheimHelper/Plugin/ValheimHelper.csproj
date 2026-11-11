@@ -30,4 +30,19 @@
     <Reference Include="Unity.TextMeshPro"><HintPath>$(ValheimRefs)/Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UI"><HintPath>$(ValheimRefs)/UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
+
+  <!-- 빌드 정보(Plugin.FullVersion): 빌드 때 git 해시(고친 채면 *)·시각을 obj에 만들어 넣는다. git 없으면 "nogit". -->
+  <Target Name="VhBuildInfo" BeforeTargets="CoreCompile">
+    <Exec Command="git describe --always --dirty=* --abbrev=7 --match=vh-no-tag" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="VhGitHash" />
+      <Output TaskParameter="ExitCode" PropertyName="VhGitExit" />
+    </Exec>
+    <PropertyGroup>
+      <VhGitHash Condition="'$(VhGitExit)' != '0' or '$(VhGitHash)' == ''">nogit</VhGitHash>
+      <VhBuildTime>$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm"))</VhBuildTime>
+      <VhBuildInfoFile>$(IntermediateOutputPath)BuildInfo.g.cs</VhBuildInfoFile>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(VhBuildInfoFile)" Overwrite="true" WriteOnlyWhenDifferent="true" Lines="namespace ValheimHelper { static class BuildInfo { public const string Commit = &quot;$(VhGitHash)&quot;%3B public const string Time = &quot;$(VhBuildTime)&quot;%3B } }" />
+    <ItemGroup><Compile Include="$(VhBuildInfoFile)" /><FileWrites Include="$(VhBuildInfoFile)" /></ItemGroup>
+  </Target>
 </Project>

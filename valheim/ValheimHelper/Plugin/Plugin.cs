@@ -9,6 +9,8 @@ namespace ValheimHelper
     {
         public const string Guid = "gojohnlee.valheimhelper";
         public const string Version = "0.3.8";
+        // 시작 로그·!상태·diag 머리에 쓰는 판: "0.3.8+해시7 (빌드 시각)" — 해시는 빌드 때 HEAD, 고친 채면 *
+        public static string FullVersion => $"{Version}+{BuildInfo.Commit} ({BuildInfo.Time})";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -96,7 +98,7 @@ namespace ValheimHelper
             Step("vh_blocktest", BlockTest.Register);
             Step("vh_weaktest", WeakTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
-            Logger.LogInfo($"Valheim Helper {Version} 로드됨");
+            Logger.LogInfo($"Valheim Helper {FullVersion} 로드됨");
         }
 
         static void Step(string what, Action action)

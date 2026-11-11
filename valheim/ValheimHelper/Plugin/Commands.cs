@@ -194,6 +194,7 @@ namespace ValheimHelper
                             ["hp"] = npc.GetHealth().ToString("0"),
                             ["max"] = npc.GetMaxHealth().ToString("0"),
                         });
+                        MessageHud.instance?.ShowMessage(MessageHud.MessageType.TopLeft, $"Valheim Helper {Plugin.FullVersion}"); // 이 PC 화면에만
                         break;
                     default:
                         npc.Say("notYet");
