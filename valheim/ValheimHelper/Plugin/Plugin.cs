@@ -92,6 +92,7 @@ namespace ValheimHelper
             Step("vh_machinestucktest", MachineStuckTest.Register);
             Step("vh_unloadreachtest", UnloadReachTest.Register);
             Step("vh_housetest", HouseTest.Register);
+            Step("vh_newerahouse", NewEraHouseTest.Register);
             Step("vh_blocktest", BlockTest.Register);
             Step("vh_weaktest", WeakTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);

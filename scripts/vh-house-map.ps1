@@ -1,7 +1,7 @@
 ﻿# behavior-house.txt(0.25초 걸음 기록, Core WalkTrace.Line 꼴) → 층별 위에서 본 그림 PNG.
 # 쓰기: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-house-map.ps1 [-In <txt>] [-Out <png>]
 # 기본 In = 게임 plugins\ValheimHelper\behavior-house.txt, Out = docs/valheim/house/<날짜>-<회차>.png
-# 층 = 높이(y)를 정렬해 2m 넘게 벌어지는 곳에서 나눔. 색: 서기 회색·걷기 초록·뛰기 파랑, 벽 0.3m 안 빨간 점, 문 열림 주황 점,
+# 층 = 오래 머문 높이 무리(계단 표본은 빠짐) 사이가 2m 넘는 곳에서 나눔. 색: 서기 회색·걷기 초록·뛰기 파랑, 벽 0.3m 안 빨간 점, 문 열림 주황 점,
 # 순간이동(한 칸 3m 넘게) 보라 점선, 시작 ○ 끝 ■. 격자 1m(5m마다 진하게). 기준값은 Core WalkTrace와 같게.
 param(
   [string]$In = "C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimHelper\behavior-house.txt",
@@ -28,7 +28,10 @@ if ($s.Count -lt 2) { Write-Output "줄 없음: $In"; exit 1 }
 
 # 층 나누기
 $ys = $s | ForEach-Object { $_.Y } | Sort-Object
-$cuts = @(); for ($i = 1; $i -lt $ys.Count; $i++) { if ($ys[$i] - $ys[$i - 1] -gt 2) { $cuts += ($ys[$i] + $ys[$i - 1]) / 2 } }
+# 층 = 오래 머문 높이(0.5m 칸에 표본 3% 넘게) 무리 — 계단 표본은 드물어 빠짐(회차 404: TheNewEra 계단이 높이를 이어 2m 틈 규칙으로는 한 층). 무리 사이가 2m 넘으면 그 가운데서 나눔
+$bins = @{}; foreach ($y in $ys) { $k = [Math]::Floor($y * 2); $bins[$k] = 1 + [int]$bins[$k] }
+$lvls = @($bins.Keys | Where-Object { $bins[$_] -ge [Math]::Max(3, $ys.Count * 0.03) } | Sort-Object | ForEach-Object { $_ / 2 })
+$cuts = @(); for ($i = 1; $i -lt $lvls.Count; $i++) { if ($lvls[$i] - $lvls[$i - 1] -gt 2) { $cuts += ($lvls[$i] + $lvls[$i - 1] + 0.5) / 2 } }
 function FloorOf($y) { $f = 0; foreach ($c in $cuts) { if ($y -gt $c) { $f++ } }; $f }
 $floors = $cuts.Count + 1
 
