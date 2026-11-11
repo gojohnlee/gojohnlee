@@ -19,6 +19,8 @@ namespace ValheimHelper
         readonly List<Collider> m_walls;
         readonly List<Door> m_doors = new List<Door>();
         readonly List<WalkTrace.Sample> m_samples = new List<WalkTrace.Sample>();
+        // 걷는 중 벽 0.3m 안에 붙은 조각별 횟수(이름@자리, 회차 407 — 벽 23~38%가 어디서 나는지)
+        readonly Dictionary<string, int> m_nearPieces = new Dictionary<string, int>();
         bool m_done;
 
         public IList<WalkTrace.Sample> Samples => m_samples;
@@ -47,7 +49,7 @@ namespace ValheimHelper
         {
             m_done = true;
             var rep = WalkTrace.Analyze(m_samples);
-            var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# t x y z speed goal wall door seen job" };
+            var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# 벽 붙음 " + NearPieces(), "# t x y z speed goal wall door seen job" };
             foreach (var s in m_samples) lines.Add(WalkTrace.Line(s));
             try
             {
@@ -70,14 +72,17 @@ namespace ValheimHelper
                 if (m_done || m_npc == null) break;
                 Vector3 p = m_npc.transform.position;
                 float dt = Mathf.Max(0.01f, Time.time - lastT);
+                float speed = Utils.DistanceXZ(p, last) / dt;
+                float gap = WallGap(p, out var nearCol);
+                if (nearCol != null && gap < WalkTrace.WallNear && speed >= WalkTrace.StandSpeed) CountNear(nearCol);
                 var job = m_npc.Ai.Job;
                 string step = job is PlanJob plan && plan.InnerStep != null ? plan.InnerStep : job?.StepName;
                 m_samples.Add(new WalkTrace.Sample
                 {
                     T = Time.time - t0, X = p.x, Y = p.y, Z = p.z,
-                    Speed = Utils.DistanceXZ(p, last) / dt,
+                    Speed = speed,
                     Goal = job != null && !Standing(step) && Time.time - m_npc.Ai.HoldAt > Step ? PathLeft(p) : -1f,
-                    Wall = WallGap(p), Door = DoorNear(p), Seen = Seen(p),
+                    Wall = gap, Door = DoorNear(p), Seen = Seen(p),
                     Job = job != null ? job.GetType().Name + "/" + step : ""
                 });
                 last = p; lastT = Time.time;
@@ -99,8 +104,9 @@ namespace ValheimHelper
         }
 
         // 몸 겉에서 가장 가까운 집 조각까지(몸 가운데 높이, 캡슐 반지름 뺌). 문짝은 빼지 않음.
-        float WallGap(Vector3 p)
+        float WallGap(Vector3 p, out Collider nearCol)
         {
+            nearCol = null;
             var cap = m_npc.GetComponent<CapsuleCollider>();
             float radius = cap != null ? cap.radius : 0.4f;
             Vector3 mid = p + Vector3.up;
@@ -112,9 +118,29 @@ namespace ValheimHelper
                     Vector3 d = col.ClosestPoint(mid) - mid;
                     float flat = new Vector2(d.x, d.z).magnitude;
                     if (Mathf.Abs(d.y) > flat) continue;
-                    near = Mathf.Min(near, d.magnitude);
+                    if (d.magnitude < near) { near = d.magnitude; nearCol = col; }
                 }
             return near == float.MaxValue ? -1f : Mathf.Max(0f, near - radius);
+        }
+
+        void CountNear(Collider col)
+        {
+            var piece = col.GetComponentInParent<Piece>();
+            var t = piece != null ? piece.transform : col.transform;
+            Vector3 q = t.position;
+            string key = $"{Utils.GetPrefabName(t.gameObject)}@{q.x:F1},{q.z:F1},{q.y:F1}";
+            m_nearPieces.TryGetValue(key, out int n);
+            m_nearPieces[key] = n + 1;
+        }
+
+        // 많이 붙은 조각 8개: 이름@x,z,y×횟수
+        string NearPieces()
+        {
+            var top = new List<KeyValuePair<string, int>>(m_nearPieces);
+            top.Sort((a, b) => b.Value.CompareTo(a.Value));
+            var parts = new List<string>();
+            for (int i = 0; i < top.Count && i < 8; i++) parts.Add($"{top[i].Key}×{top[i].Value}");
+            return parts.Count > 0 ? string.Join(" ", parts.ToArray()) : "없음";
         }
 
         // 1.5m 안 문: 열림(s_state ≠ 0) 1, 닫힘 2, 없음 0.
