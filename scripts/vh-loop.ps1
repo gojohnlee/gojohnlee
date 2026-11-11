@@ -489,7 +489,8 @@ function Limit-Until($tail) {
     $t.AddMinutes(2)
 }
 
-function Wait-Until($t) {
+function Wait-Until($t, $Cancel) {
+    # $Cancel(있으면): 30초마다 불러 참이면 일찍 끝냄(쉼 파일을 지우면 바로 다시 돎 — vh-play.ps1).
     # 기다리는 동안 30초마다 본다: 10분 넘게 남았고 자리 비움(입력 없음 10분)이면 최대 절전(사용자가 쓰는 중이면 그냥 기다림).
     # 모니터는 안 본다(사용자 결정 2026-10-23 밤: 이 PC 모니터는 DDC/CI에 답이 없어 "꺼짐"으로 보고 쓰는 중에도 잠들었음).
     # 잠들 때·못 잠들 때·입력 때문에 안 잠들 때(처음 한 번, 그 뒤 30분마다 마지막 입력 시각)는 status.txt "지금"에 덧붙인다
@@ -498,6 +499,7 @@ function Wait-Until($t) {
     # status.txt는 첫 실패와 그 뒤 15번(약 30분)마다 + 그 실패를 알린 다음 시도 때만 고친다(2분마다 커밋하지 않게).
     $bk = $false; $fails = 0; $failTold = $false; $told = [datetime]::MinValue; $why = $script:StatusNow
     while ((Get-Date) -lt $t) {
+        if ($Cancel -and (& $Cancel)) { break }
         $idle = [VH.Power]::IdleMs()
         if (($t - (Get-Date)).TotalMinutes -gt 10 -and $idle -gt 600000) {
             $how = '입력 없음 10분'
@@ -686,7 +688,7 @@ while ($true) {
     if ($pause) {
         Log "쉼 파일 → $($pause.ToString('MM-dd HH:mm'))까지 새 회차 안 함"
         Write-Status "쉼: loop-pause.txt — $($pause.ToString('MM-dd HH:mm'))에 다시" '-'
-        Save-State; Wait-Until $pause; continue
+        Save-State; Wait-Until $pause { -not (Get-PauseUntil) }; continue
     }
     $free = @(0, 1 | Where-Object { -not $st.until[$_] -or [datetime]$st.until[$_] -le (Get-Date) })
     if ($free.Count -eq 0) {
