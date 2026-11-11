@@ -1,7 +1,7 @@
-갱신: 2026-11-11 19:55  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 391 진행 중
+갱신: 2026-11-11 19:56  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 391, 계정: 2번, 한도: 없음
-할 일: 요청 버그 담당 Fable(11-11, "노력은 보통" 포함): + "Fable 못 쓰면 다른 계정": 못 쓰면 "LOOP: FABLE 다른 계정"(진척 없음 아님)→루프가 다른 계정+VH_FABLE_RETRY=1로…
+할 일: 요청 버그 담당 Fable(11-11, "노력은 보통" 포함): 에이전트 파일·decisions 노력 줄 [끝, 회차 391 — 문서만: vh-debug.md model fable·effort medium, vh-d…
 마지막 시험: 11-11 02:01 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+Claude가 한 일: LOOP: DONE 버그 담당 vh-debug를 Fable·보통 노력으로, 옛 것은 vh-debug-std 예비로(루프 쪽은 다음)
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
