@@ -138,6 +138,7 @@ namespace ValheimHelper
             Run("PersonalChests", () => PersonalChests.Tick(UnityEngine.Time.deltaTime));
             Run("SharedChests", () => SharedChests.Tick());
             Run("SharedGuest", () => SharedGuest.Tick());
+            Run("PlayWalkLog", () => PlayWalkLog.Tick(UnityEngine.Time.deltaTime));
             Run("SharedCraft", () => SharedCraft.Tick());
             Run("MapSense", () => MapSense.Tick(UnityEngine.Time.deltaTime));
             Run("MapIcons", () => MapIcons.Update(UnityEngine.Time.deltaTime));

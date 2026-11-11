@@ -151,6 +151,24 @@ namespace ValheimHelper
                 if (ok) reached++;
                 yield return new WaitForSeconds(1f);
             }
+            // 실플레이 기록(PlayWalkLog, 사용자 11-11 ④): 스위치를 시험용으로 켜고 화덕→상자 한 다리 — behavior-house-play.txt에 구간이 붙는지
+            {
+                string playPath = System.IO.Path.Combine(TestRunner.PluginDir, "behavior-house-play.txt");
+                try { System.IO.File.Delete(playPath); } catch (System.IO.IOException) { }
+                PlayWalkLog.TestHome = Center; PlayWalkLog.TestOn = true;
+                Vector3 goal = chest.transform.position;
+                var walk = new ExploreTest.WalkJob(w.Ragnar.Ai, goal, true) { Stay = true };
+                w.Ragnar.Ai.StartJob(walk);
+                yield return TestKit.WaitFor(() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2.8f, 60f);
+                yield return new WaitForSeconds(1.5f);
+                PlayWalkLog.Flush();
+                PlayWalkLog.TestOn = false; PlayWalkLog.TestHome = null;
+                walk.Halt = true;
+                string[] got = System.IO.File.Exists(playPath) ? System.IO.File.ReadAllLines(playPath) : new string[0];
+                int heads = 0, rows = 0;
+                foreach (var l in got) if (l.StartsWith("# 실플레이")) heads++; else if (!l.StartsWith("#")) rows++;
+                checks.Add($"실플레이 걸음 기록 (머리 {heads}, 줄 {rows}{(got.Length > 1 ? ", " + got[1] : "")})", heads >= 1 && rows >= 8);
+            }
             // 라그나 걸음 기록의 순간이동만 셈 — 전역 셈은 사용자 월드에 원래 사는 일꾼(비욘 등)이 먼 깃발로 옮겨진 것까지 셈(회차 405)
             checks.Add($"집 안 순간이동 없음 (라그나 {jumps}, 다른 일꾼 포함 전체 {Teleports() - tele0}, 닿은 다리 {reached}/{names.Length})", jumps == 0);
         }

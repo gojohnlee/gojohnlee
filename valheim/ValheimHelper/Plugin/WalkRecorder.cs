@@ -54,8 +54,11 @@ namespace ValheimHelper
             return r;
         }
 
+        /// <summary>쓰지 않고 그만 잼(실플레이 기록의 짧은 구간·사라진 일꾼).</summary>
+        public void Abort() => m_done = true;
+
         /// <summary>그만 재고 behavior-house.txt(머리에 이름·요약)를 쓴 뒤 요약을 돌려준다. append면 뒤에 붙임(한 시험 여러 단계 — 단계마다 머리 두 줄).</summary>
-        public WalkTrace.Report Stop(string name, bool append)
+        public WalkTrace.Report Stop(string name, bool append, string file = "behavior-house.txt")
         {
             m_done = true;
             var rep = WalkTrace.Analyze(m_samples);
@@ -75,10 +78,10 @@ namespace ValheimHelper
             foreach (var s in m_samples) lines.Add(WalkTrace.Line(s));
             try
             {
-                string path = Path.Combine(TestRunner.PluginDir, "behavior-house.txt");
+                string path = Path.Combine(TestRunner.PluginDir, file);
                 if (append) File.AppendAllLines(path, lines); else File.WriteAllLines(path, lines.ToArray());
             }
-            catch (IOException e) { Plugin.Log.LogWarning($"behavior-house.txt 못 씀: {e.Message}"); }
+            catch (IOException e) { Plugin.Log.LogWarning($"{file} 못 씀: {e.Message}"); }
             return rep;
         }
 
