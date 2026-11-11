@@ -3,7 +3,7 @@
 토큰 아끼기(사용자 10-27 — 모든 턴이 지금까지의 대화 전체를 다시 읽는다. 턴 수와 읽는 양이 곧 비용):
 - 명령은 묶어서 한 번에(예: 빌드·테스트·커밋을 한 명령으로). 같은 파일을 다시 읽지 않는다. Read는 offset/limit, 나머지는 grep.
 - 명령 출력은 짧게(| tail -20, grep). 빌드·테스트·게임 시험 출력 전체, diag 전체, 로그 전체, history.md·codemap·decisions 통째로 읽기 금지.
-- 서브에이전트(사용자 11-11, decisions 2절): 집 걸음 일(걸음 기록 수치 고치기)은 vh-house, 원인 찾기 버그(시험 FAIL·로그 예외·이상 동작 전부)는 vh-debug — 메인이 한 번 보고 바로 안 보이면 증상·시험 이름·diag·로그 발췌를 붙여 넘기고 결과를 기다려 받는다. 메인은 증상 넘기기·diff 검토·빌드·시험·커밋만. 그 밖(단순 오타·빌드 경고·문서)은 쓰지 않는다. vh-debug는 Opus·엑스트라 하이, vh-house는 Opus·보통(사용자 11-11 — Fable 안 씀), -std는 쓰지 않는다.
+- 서브에이전트(사용자 11-11, decisions 2절): 도우미는 노력을 바꿀 때만 쓴다. 집 걸음 일(걸음 기록 수치 고치기)은 메인이 직접(기준은 decisions "집 걸음 기준" grep). 원인 찾기 버그(시험 FAIL·로그 예외·이상 동작)만 메인이 한 번 보고 바로 안 보이면 vh-debug(Opus·엑스트라 하이)에 증상·시험 이름·diag·로그 발췌를 붙여 넘기고 결과를 받아 diff 검토·빌드·시험·커밋. 그 밖(단순 오타·빌드 경고·문서)은 쓰지 않는다. -std·Fable은 쓰지 않는다.
 
 맨 먼저 한 명령으로: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-loop-restart.ps1; echo "G=$env:VH_GAME_UPDATE"; git status --short | head
  (restart 결과가 오류면 이번 회차 history "자세히"에 그 줄.)
