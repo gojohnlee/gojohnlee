@@ -266,14 +266,22 @@ namespace ValheimHelper
             m_stepUsedAt = Time.time;
             if (Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || (!m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach))
             {
-                if (Utils.DistanceXZ(to, m_stepTo) > 0.5f) m_stepSince = Time.time;
+                if (Utils.DistanceXZ(to, m_stepTo) > 0.5f) { m_stepSince = Time.time; m_stepWaitLen = -1f; }
                 m_stepAt = Time.time + 2f; m_stepTo = to; m_step = to; m_stepRest.Clear(); m_stepWait = false;
                 if (Pathfinding.instance != null && Pathfinding.instance.GetPath(pos, to, s_stepPath, m_pathAgentType))
                 {
                     float len = 0f; for (int i = 1; i < s_stepPath.Count; i++) len += Vector3.Distance(s_stepPath[i - 1], s_stepPath[i]);
                     float direct = Vector3.Distance(pos, to);
                     m_stepPicked = $"길 {len:0.0}m/직선 {direct:0.0}m 모퉁이 {s_stepPath.Count}:{PathText(s_stepPath, 5)}";
-                    if (len > Mathf.Max(direct * 3f, direct + 15f) && Time.time - m_stepSince < 3f) { m_step = pos; m_stepWait = true; m_stepAt = Time.time + 0.5f; return m_step; } // 출발 때 첫 길이 터무니없이 멀면(회차 410 오름 4: 남은 74m → 곧 19m, 1.5m 반대로 갔다 141° 되돌기) 3초까지 서서 0.5초마다 다시 받음 — 1.5초론 102m 길(바깥 문 돌기)을 2초 따라가다 51m 길로 157° 되돌았음(회차 414 오름 2)
+                    if (len > Mathf.Max(direct * 3f, direct + 15f) && Time.time - m_stepSince < 3f)
+                    {
+                        // 출발 때 첫 길이 터무니없이 멀면(회차 410 오름 4: 남은 74m → 곧 19m, 1.5m 반대로 갔다 141° 되돌기) 3초까지 서서 0.5초마다 다시 받음 — 1.5초론 102m 길(바깥 문 돌기)을 2초 따라가다 51m 길로 157° 되돌았음(회차 414 오름 2).
+                        // 다만 0.5초 뒤 다시 받아도 1m 안 같은 길이고 직선×5·+25m 안이면 그 길로 감 — 계단을 감아 도는 진짜 길(2층 침대→1층 화덕 32.8m/직선 10.7m, 44.7m/9.1m)이 3초 내내 안 바뀌는데 서 있었음(회차 416·417 사7). 가짜 길은 직선의 7배 넘었음(74m·102m).
+                        bool same = m_stepWaitLen >= 0f && Mathf.Abs(len - m_stepWaitLen) < 1f && len <= Mathf.Max(direct * 5f, direct + 25f);
+                        m_stepWaitLen = len;
+                        if (!same) { m_step = pos; m_stepWait = true; m_stepAt = Time.time + 0.5f; return m_step; }
+                    }
+                    m_stepSince = Time.time - 3f; // 한 번 길을 받아 떠났으면 이 목표로는 다시 서지 않음 — 걷다 모퉁이에서 새로 받은 남은 길(29m/직선 10m)도 터무니없다고 쳐 계단 위에서 0.5초 섰음(회차 417)
                     for (int i = 1; i < s_stepPath.Count; i++)
                         if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
                 }
@@ -285,6 +293,8 @@ namespace ValheimHelper
         }
         /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐으면 지금 모퉁이 뒤 남은 길 점들(목표까지), 아니면 null.</summary>
         public List<Vector3> FloorRest => Time.time - m_stepUsedAt < 0.5f ? m_stepRest : null;
+        /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐고 출발 기다림이 아니면 지금 모퉁이 — m_path는 계단 위 끝 FindPath 실패·1m 안 점 지우기로 비어 남은 길 -1(셈에서 빠짐)이 잦았음(회차 417 사7).</summary>
+        public bool FloorCorner(out Vector3 corner) { corner = m_step; return Time.time - m_stepUsedAt < 0.5f && !m_stepWait; }
         /// <summary>다른 층 목표인지(FloorStep으로 걸을지): 높이 차가 up보다 크거나, 0.5초 안에 같은 목표로 FloorStep을 따랐고 아직 0.5m 넘게 차이 나거나 모퉁이가 남음 — 계단 아래에서 1.3m 밑으로 내려오자 곧장 걷기로 바뀌어 기둥 곁에 1초 서고 96° 꺾였음(회차 412 내림 5).
         /// 0.5m 밑이어도 계단 끝 발판(아래 0.1m·위 0.3m 차)에서 곧장 걷기로 바뀌면 길 첫 점으로 대각선 몰아 계단 옆 기둥·지붕벽에 3초 밀리고(내림 5) 2층 바닥 턱에 0.5초 걸렸다 141° 뛰었음(오름 2·4, 회차 416) → 모퉁이가 남은 동안은 계속 따르되 높이 차 0.5m를 벗어난 뒤 3초까지만
         /// — 같은 높이에서 계속 모퉁이를 dist 0으로 곧장 몰면 문 들어가기(Steering)를 안 타 갓 지은 복도 벽(navmesh 미반영)에 10초 밀리고 갇힘 구조 순간이동(회차 416 vh_housetest 4-3).</summary>
@@ -318,7 +328,7 @@ namespace ValheimHelper
         static readonly List<Vector3> s_stepPath = new List<Vector3>();
         readonly List<Vector3> m_stepRest = new List<Vector3>();
         Vector3 m_step, m_stepTo;
-        float m_stepAt, m_stepSince, m_stepUsedAt = -10f, m_stepHighAt = -10f;
+        float m_stepAt, m_stepSince, m_stepUsedAt = -10f, m_stepHighAt = -10f, m_stepWaitLen = -1f;
         bool m_stepWait, m_stepSlow;
 
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
@@ -438,7 +448,7 @@ namespace ValheimHelper
             else if (dw < m_inBest - 0.3f) { m_inBest = dw; m_inProgressAt = Time.time; }
             bool last = m_inIdx == m_inPath.Count - 1 && dw < 0.5f;
             MoveTowards(Flat(last ? point - pos : wp - pos), run);
-            if (wp.y - pos.y > (float)StepGrid.StepUp && dw < 1.4f) TryJump(); // 턱 위 점: 뛰어 오른다
+            if (wp.y - pos.y > (float)StepGrid.StepUp && dw < 1.4f) { if (TryJump()) JumpWhy = "턱 위 길 점"; } // 턱 위 점: 뛰어 오른다
             return true;
         }
 
@@ -521,7 +531,7 @@ namespace ValheimHelper
             if (m_ledgeTimer <= 0f)
             {
                 m_ledgeTimer = 0.25f;
-                if (Flat(m_character.GetVelocity()).magnitude < 1f && LedgeAhead(pos, m_character.GetMoveDir())) TryJump();
+                if (Flat(m_character.GetVelocity()).magnitude < 1f && LedgeAhead(pos, m_character.GetMoveDir()) && TryJump()) JumpWhy = $"턱 {m_ledgeHit}";
             }
             m_sampleTimer += dt;
             if (m_sampleTimer >= 1.5f)
@@ -531,7 +541,7 @@ namespace ValheimHelper
                     // 막혔다: 두 번까지 뛰어 보고, 구덩이에 갇혔으면 경사로를 깎고, 아니면 옆으로 비켜 간다
                     Vector3 fwd = Flat(point - pos).normalized;
                     if (m_pitSince <= 0f && Climb.IsPit(Rise8(pos, fwd))) MarkPit(pos);
-                    if (m_stuckJumps < 2 && m_detourCount == 0 && TryJump()) m_stuckJumps++; // 이미 비켜 가 봤으면 점프는 건너뜀
+                    if (m_stuckJumps < 2 && m_detourCount == 0 && TryJump()) { m_stuckJumps++; JumpWhy = $"막힘 1.5초 {Utils.DistanceXZ(m_samplePos, pos):0.00}m"; } // 이미 비켜 가 봤으면 점프는 건너뜀
                     else if (!StartCarve(pos, fwd))
                     {
                         m_stuckJumps = 0;
@@ -580,12 +590,16 @@ namespace ValheimHelper
         internal static int SolidMask => s_solidMask != 0 ? s_solidMask
             : (s_solidMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
 
+        /// <summary>시험 기록용: 마지막 점프 시각·까닭(회차 417: 침대 곁 출발 때 1.5m 뛰어오름).</summary>
+        public float JumpAt = -10f;
+        public string JumpWhy = "";
+        string m_ledgeHit = "";
         /// <summary>바닐라 점프(일꾼은 몸 앞쪽으로 뛴다). 땅에 서 있을 때만, 0.8초에 한 번.</summary>
         bool TryJump()
         {
             if (TestNoJump || Time.time - m_lastJump < 0.8f || !m_character.IsOnGround() || m_character.InAttack()) return false;
             m_lastJump = Time.time;
-            m_character.Jump();
+            m_character.Jump(); JumpAt = Time.time; JumpWhy = "";
             Jumps++;
             return true;
         }
@@ -598,6 +612,7 @@ namespace ValheimHelper
             dir.Normalize();
             if (!Physics.Raycast(pos + Vector3.up * 0.4f, dir, out RaycastHit low, 1f, SolidMask, QueryTriggerInteraction.Ignore)) return false;
             if (low.normal.y > 0.7f) return false; // 완만한 비탈은 걸어 오른다
+            m_ledgeHit = $"{(low.collider.GetComponentInParent<Piece>() is Piece lp ? Utils.GetPrefabName(lp.gameObject) : low.collider.name)}@{low.point.x:F1},{low.point.z:F1},{low.point.y:F1} 면 {low.normal.y:0.00}";
             return !Physics.Raycast(pos + Vector3.up * 1.4f, dir, 1.4f, SolidMask, QueryTriggerInteraction.Ignore);
         }
 

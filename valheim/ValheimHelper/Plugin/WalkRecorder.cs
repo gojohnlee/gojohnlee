@@ -26,6 +26,8 @@ namespace ValheimHelper
         readonly List<string> m_stands = new List<string>();
         readonly List<string> m_diags = new List<string>(); // 표본마다 StepDiag(급회전 상세용)
         float m_standSince = -1f;
+        readonly List<string> m_jumps = new List<string>(); // 점프 시각·자리·까닭(회차 417 침대 곁 출발 1.5m 뛰어오름)
+        float m_lastJump = -1f;
         // 구간 출발 자리·도착(m_path 끝) — 그 손 닿기 2.8m 안은 벽 셈에서 뺌(회차 408: 붙는 것 대부분이 목적지 화덕·상자였음)
         Vector3 m_legStart, m_legGoal;
         bool m_hasGoal;
@@ -60,6 +62,7 @@ namespace ValheimHelper
             var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# 벽 붙음 " + NearPieces(),
                 "# 급회전 " + (rep.TurnAt.Count > 0 ? string.Join(" ", rep.TurnAt.ToArray()) : "없음") };
             foreach (var st in m_stands) lines.Add("# 섬 " + st);
+            foreach (var jp in m_jumps) lines.Add("# 점프 " + jp);
             foreach (var ta in rep.TurnAt) // 급회전 앞뒤 1초의 걷기 상태(회차 416: 2층 계단 위 끝 122~163°가 뛰기로 셈)
             {
                 if (!float.TryParse(ta.Substring(0, ta.IndexOf('@')), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float tt)) continue;
@@ -80,6 +83,7 @@ namespace ValheimHelper
         IEnumerator Run()
         {
             float t0 = Time.time;
+            m_lastJump = m_npc.Ai.JumpAt;
             var wait = new WaitForSeconds(Step);
             Vector3 last = m_npc != null ? m_npc.transform.position : Vector3.zero;
             float lastT = Time.time;
@@ -106,6 +110,7 @@ namespace ValheimHelper
                 });
                 var s = m_samples[m_samples.Count - 1];
                 m_diags.Add(m_npc.Ai.StepDiag);
+                if (m_npc.Ai.JumpAt > m_lastJump) { m_lastJump = m_npc.Ai.JumpAt; if (m_jumps.Count < 8) m_jumps.Add($"{s.T:0.00}@{p.x:F1},{p.z:F1},{p.y:F1} {(m_npc.Ai.JumpWhy.Length > 0 ? m_npc.Ai.JumpWhy : "다른 곳")}"); }
                 if (job != null && speed < WalkTrace.StandSpeed) // m_path가 비어(남은 길 -1) 선 것도 기록(회차 416: 출발 3초 서기가 남은 길 -1이라 안 찍혔음)
                 {
                     if (m_standSince < 0f) m_standSince = s.T;
@@ -127,29 +132,38 @@ namespace ValheimHelper
 
         // 남은 길 =지금 자리 → m_path 점들(지난 점은 FollowPath가 지움) → 층 오름이면 모퉁이 뒤 남은 길(FloorRest)까지. 길이 비면 음수(목표 없음으로 침).
         // 회차 409: m_path는 다음 모퉁이까지뿐이라 모퉁이마다 값이 튀어 진척 없음·길/직선이 잘못 나왔음.
+        // 회차 417: FloorStep을 따르는 중이면 m_path 대신 지금 모퉁이(m_path도 그 모퉁이로 가는 길) — 계단 위 끝 FindPath 실패·1m 안 점 지우기로 m_path가 비어 -1(구간이 끊겨 셈에서 빠짐)이 잦았음.
         float PathLeft(Vector3 p)
         {
             var path = PathOf(m_npc.Ai);
-            if (path == null || path.Count == 0) return -1f;
-            float sum = Utils.DistanceXZ(p, path[0]);
-            for (int i = 1; i < path.Count; i++) sum += Utils.DistanceXZ(path[i - 1], path[i]);
+            float sum;
+            Vector3 end;
+            if (m_npc.Ai.FloorCorner(out var corner)) { sum = Utils.DistanceXZ(p, corner); end = corner; }
+            else
+            {
+                if (path == null || path.Count == 0) return -1f;
+                sum = Utils.DistanceXZ(p, path[0]);
+                for (int i = 1; i < path.Count; i++) sum += Utils.DistanceXZ(path[i - 1], path[i]);
+                end = path[path.Count - 1];
+            }
             var rest = m_npc.Ai.FloorRest;
             if (rest != null && rest.Count > 0)
             {
-                sum += Utils.DistanceXZ(path[path.Count - 1], rest[0]);
+                sum += Utils.DistanceXZ(end, rest[0]);
                 for (int i = 1; i < rest.Count; i++) sum += Utils.DistanceXZ(rest[i - 1], rest[i]);
             }
             return sum;
         }
 
-        // 출발·도착 손 닿기 안인지. 도착(m_path 끝, 층 오름이면 그 길의 끝)이 2.8m 넘게 바뀌면 새 구간 — 지금 자리가 새 출발.
+        // 출발·도착 손 닿기 안인지. 도착(m_path 끝 또는 FloorStep 모퉁이, 층 오름이면 그 길의 끝)이 2.8m 넘게 바뀌면 새 구간 — 지금 자리가 새 출발.
         bool NearEnds(Vector3 p)
         {
             var path = PathOf(m_npc.Ai);
-            if (path != null && path.Count > 0)
+            bool corner = m_npc.Ai.FloorCorner(out var c);
+            if (corner || (path != null && path.Count > 0))
             {
                 var rest = m_npc.Ai.FloorRest;
-                Vector3 g = rest != null && rest.Count > 0 ? rest[rest.Count - 1] : path[path.Count - 1];
+                Vector3 g = rest != null && rest.Count > 0 ? rest[rest.Count - 1] : corner ? c : path[path.Count - 1];
                 if (m_hasGoal && Utils.DistanceXZ(g, m_legGoal) > Reach) m_legStart = p;
                 m_legGoal = g; m_hasGoal = true;
             }
