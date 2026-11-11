@@ -38,3 +38,10 @@
 5. WorkerAI.cs(1,446줄, 10-21엔 513줄) → partial 파일: 본체(모드·대기열) / 걷기·점프·구덩이 / 타르·용암·물 / 호위병 경계. Guard.cs(1,137줄) → 판단 / 동료 부르기 / 행동 / 원거리 / 장소 기억·약점. 옮기기만. 시험 기본 묶음 + vh_pittest;vh_stucktest;vh_tartest;vh_fighttest;vh_escorttest;vh_posttest;vh_guardbowtest.
 6. Brain 클래스가 Work/Senses.cs 안에 있음 → Brain.cs로(일꾼 기억 파일 요청 때 같이).
 7. 끝날 때마다 codemap 맞춤(줄 수가 10-21 기준으로 남아 있음 — 줄 수는 빼거나 새로).
+
+넓게 본 리뷰 5개(클라우드 리뷰 11-11 둘째, 게임플레이 안 바뀜)
+1. 회차 길이 상한: token-report 기준 회차 380 한 번(294턴, 마지막 대화 33.7만)이 388만으로 회차 361~379 스무 회차 합(464만)에 가깝다 — 턴이 길수록 다시 읽는 양이 제곱으로 는다. vh-loop-prompt에 "60턴쯤(또는 대화가 10만을 넘으면) progress에 이어 할 곳을 적고 회차를 끝낸다(LOOP: 이어 함)"를 넣고, 루프는 그 끝을 진척 없음으로 세지 않는다. 전체 회귀는 묶음 실행기(run.ps1)를 스크립트가 돌리고 회차는 요약만 읽게. 전후 수치를 token-report에.
+2. 플레이용 빌드(valheim-stable) 회귀에 멀티 묶음 추가: 지금 B1~B11은 guest*·join을 "멀티 시험이라 뺌" → 친구와 같이 하는 게 목표인데 태그가 멀티를 안 본다(vh_guestchesttest 마지막 기록 10-31). 묶음 B12 = vh-server.ps1 서버 + 손님으로 vh_jointest;vh_guestcmdtest;vh_guestchesttest;vh_guestrestart. PASS해야 태그.
+3. 빌드 표시: Plugin.Version이 10-21부터 "0.3.8" 그대로라 로그로 어느 빌드인지 모른다. 빌드 때 커밋 해시7·빌드 시각을 DLL에 넣어 시작 로그·"!상태"·diag 머리에 "0.3.8+<해시>"로. (1.0 번호는 사용자가 배포할 때.)
+4. 거점 상자 찾기 캐시: Chests.Candidates·BaseStock·Tidy·Pens·PersonalChests(×3)가 부를 때마다 Senses.Nearby(거점 125m = 5×5구역 ZDO 전부 훑기, 캐시 없음 — BaseStock.Count만 0.5초 캐시), Chests.NearBase 호출 자리 약 40곳. 요청 "큰 집 성능 ③" 측정 때 이 훑기 횟수·시간을 먼저 재고, 크면 거점별 상자 목록 하나(1~2초 갱신 또는 상자 ZDO 생김·사라짐 때)로 모은다. 같은 훑기 줄 6곳도 Chests 하나로.
+5. 기능 끄기 스위치: 지금 BepInEx 설정은 4개(SaveWork·KnowExplored·ClaudeChat·RunPlans)뿐. 친구와 하다 문제가 나면 모드를 통째로 빼야 한다. 기본 켬으로 스위치 추가 — 사람끼리 상자 동시 열기(SharedChests·SharedGuest·SharedCraft), 먼 구역 유지(FarZones), 쉴 때 하는 일, 상자 정리·밤사이 정산. 끄면 그 기능의 패치·틱만 쉰다. pc-howto에 끄는 법 두 줄.
