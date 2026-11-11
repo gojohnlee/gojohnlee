@@ -284,6 +284,12 @@ namespace ValheimHelper
         }
         /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐으면 지금 모퉁이 뒤 남은 길 점들(목표까지), 아니면 null.</summary>
         public List<Vector3> FloorRest => Time.time - m_stepUsedAt < 0.5f ? m_stepRest : null;
+        /// <summary>다른 층 목표인지(FloorStep으로 걸을지): 높이 차가 up보다 크거나, 0.5초 안에 같은 목표로 FloorStep을 따랐고 아직 0.5m 넘게 차이 남 — 계단 아래에서 1.3m 밑으로 내려오자 곧장 걷기로 바뀌어 기둥 곁에 1초 서고 96° 꺾였음(회차 412 내림 5).</summary>
+        public bool OtherFloor(Vector3 to, float up)
+        {
+            float h = Mathf.Abs(to.y - transform.position.y);
+            return h > up || (h > 0.5f && Time.time - m_stepUsedAt < 0.5f && Utils.DistanceXZ(to, m_stepTo) < 0.5f);
+        }
         const float StepReach = 1.1f;
         static readonly List<Vector3> s_stepPath = new List<Vector3>();
         readonly List<Vector3> m_stepRest = new List<Vector3>();
@@ -424,6 +430,7 @@ namespace ValheimHelper
         {
             Vector3 pos = transform.position;
             if (run && m_stepSlow && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) run = false; // FloorStep 꺾인 모퉁이 앞은 걸음
+            if (m_stepWait && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) { StopMoving(); return false; } // FloorStep 출발 기다림은 제자리에 섬 — 제 자리로 0m 걷기는 뛰던 기세로 1.6m 지나쳤다 150° 되돌았음(회차 412 오름 4)
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
             float d = Utils.DistanceXZ(point, pos);

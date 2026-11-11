@@ -223,7 +223,7 @@ namespace ValheimHelper
             public bool Update(float dt)
             {
                 if (Halt) return false;
-                bool floor = m_floors && Mathf.Abs(m_to.y - m_ai.transform.position.y) > 1.3f; // 1층 상자는 바닥보다 1.1m 위(TheNewEra) — 계단 45.3(1.7m 위)에서 멈추지 않게
+                bool floor = m_floors && m_ai.OtherFloor(m_to, 1.3f); // 1층 상자는 바닥보다 1.1m 위(TheNewEra) — 계단 45.3(1.7m 위)에서 멈추지 않게
                 m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_to) : m_to, floor ? 0f : 2f, true);
                 return true;
             }
