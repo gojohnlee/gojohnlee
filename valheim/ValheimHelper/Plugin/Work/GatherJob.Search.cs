@@ -348,7 +348,7 @@ namespace ValheimHelper
                 if (m_exploring && m_far == null && Scout.Explored(m_goalZone)) { Go(Step.Search); return true; }
             }
             bool arrived = WalkVia(dt, m_goalPos, 6f);
-            if (arrived || Stuck(dt, PortalOr(m_goalPos)))
+            if (arrived || Stuck(dt, PortalOr(m_goalPos)) || QuickStuck(dt, PortalOr(m_goalPos), 6f))
             {
                 if (arrived) ArrivedAt(m_goalZone);
                 if (!arrived)
