@@ -11,7 +11,7 @@ $errs = $null
 [void][Management.Automation.Language.Parser]::ParseFile($loop, [ref]$null, [ref]$errs)
 if ($errs) { $errs | ForEach-Object { "line $($_.Extent.StartLineNumber): $($_.Message)" }; throw 'vh-loop.ps1 has syntax errors' }
 
-$act = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$loop`""
+$act = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$loop`""   # headless (user 11-11): a visible conhost flashed on every restart before the loop hid it; set it back to plain conhost only when $ShowWindow is $true
 $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 $prn = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName 'VH loop' -Action $act -Settings $set -Principal $prn -Force | Out-Null
