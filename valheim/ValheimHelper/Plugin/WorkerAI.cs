@@ -532,11 +532,13 @@ namespace ValheimHelper
                 return false;
             }
             // 바위·통나무·구덩이 벽 같은 턱에 걸려 섰으면 뛴다(플레이어처럼)
+            // 출발 순간은 늘 느리다 → 느린 채 0.5초 지나야 턱으로 봄(침대 곁 출발에 침대 옆면으로 뛰던 것, 회차 422)
+            m_slowTime = Flat(m_character.GetVelocity()).magnitude < 1f ? m_slowTime + dt : 0f;
             m_ledgeTimer -= dt;
             if (m_ledgeTimer <= 0f)
             {
                 m_ledgeTimer = 0.25f;
-                if (Flat(m_character.GetVelocity()).magnitude < 1f && LedgeAhead(pos, m_character.GetMoveDir()) && TryJump()) JumpWhy = $"턱 {m_ledgeHit}";
+                if (m_slowTime >= 0.5f && LedgeAhead(pos, m_character.GetMoveDir()) && TryJump()) JumpWhy = $"턱 {m_ledgeHit}";
             }
             m_sampleTimer += dt;
             if (m_sampleTimer >= 1.5f)
@@ -588,6 +590,7 @@ namespace ValheimHelper
 
         float m_lastJump = -10f;
         float m_ledgeTimer;
+        float m_slowTime;
         /// <summary>막혀서 뛴 횟수(진척이 있으면 0).</summary>
         int m_stuckJumps;
         static int s_solidMask;
