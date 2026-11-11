@@ -57,3 +57,9 @@
 1. Brain.Get의 합치기 규칙: 일꾼 ZDO들의 vh_sets·vh_refill·vh_farms·vh_personal·vh_debt 중 "글자가 가장 긴 것"을 고른다 → 한 ZDO만 저장이 건너뛰어진 채(남 소유, 2초 뒤 다시 저장 전) 꺼지면, 지운 항목(끈 "!채워"·지운 밭)이 든 옛 글자가 더 길어 되살아난다. 저장 때마다 올리는 번호를 앞에 붙여 번호 큰 쪽을 고른다(옛 저장은 번호 없음 = 0). Core 시험 추가.
 2. 같이 깔린 모드 기록: 시작 로그와 diag 머리에 BepInEx에 올라온 플러그인 이름·버전을 한 줄. thirdparty.txt에는 CustomChestName만 있는데 decisions는 지도 공유 모드·음식 모드도 전제로 한다 → 이름·버전을 thirdparty.txt에(모르면 로그에서 읽어). 플레이 중 버그가 모드 조합 탓인지 가리려고.
 3. history.md(항목 474개, 592KB)는 사용자가 휴대폰으로 가끔 읽는다 → 지난달 것은 history-2026-10.md처럼 달마다 떼고 history.md엔 이번 달만. vh-history-add.sh·vh-history-note.sh·루프의 grep 자리를 같이 맞춘다.
+
+검증 분업·시험 운전 코드 지우기(사용자 11-11 "지워. 챗지피티 쓰려다 만 것") — 루프 고치기(맨 먼저 덩어리) 바로 뒤
+1. 지울 것: scripts/vh-harness.ps1·vh-harness-lib.ps1·vh-harness-selftest.ps1·vh-harness-smoke.json·vh-loop-handoff.txt·vh-trial-prompt.txt, docs/valheim/Harness.md·review.txt, vh-loop.ps1의 분업(handoff·Invoke-VhHandoff·verify·verifyFail·$HandoffOn·Gate)·시험 운전(TrialFile·End-Trial) 갈래, valheim-test.ps1의 VH_HARNESS 갈래(223줄 근처 증거 모으기 포함), vh-loop-restart.ps1·vh-loop-prompt.txt에 남은 언급, status.txt "분업" 줄.
+2. 남길 것: 회차별 토큰 기록(vh-token-report.ps1·history 토큰 줄)은 분업과 별개면 그대로. valheim-test.ps1의 "켜져 있는 게임을 끄지 않음"은 '직접 플레이' 요청 1번의 새 규칙으로 대신한다(VH_HARNESS에 기대지 않게).
+3. decisions 2절 "검증 분업" 문단과 loop-plan의 관련 줄을 지우고 한 줄만: "검증 분업·GPT는 쓰지 않음(사용자 10-27·11-11, 코드 지움 — 옛 코드는 git)".
+4. 지운 뒤 vh-loop.ps1 문법·BOM 검사(vh-loop-install.ps1의 Parser 검사) + -Once 한 회차로 확인. 줄 수 전후를 history에.
