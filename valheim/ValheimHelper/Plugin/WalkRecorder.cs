@@ -72,7 +72,7 @@ namespace ValheimHelper
                 {
                     T = Time.time - t0, X = p.x, Y = p.y, Z = p.z,
                     Speed = Utils.DistanceXZ(p, last) / dt,
-                    Goal = job != null && !Standing(step) ? PathLeft(p) : -1f,
+                    Goal = job != null && !Standing(step) && Time.time - m_npc.Ai.HoldAt > Step ? PathLeft(p) : -1f,
                     Wall = WallGap(p), Door = DoorNear(p), Seen = Seen(p),
                     Job = job != null ? job.GetType().Name + "/" + step : ""
                 });
@@ -81,6 +81,7 @@ namespace ValheimHelper
         }
 
         // 제자리 단계(베기·캐기, 찾기·도구 고르기)는 걷는 구간이 아님 — m_path가 지난 길로 남아 진척 없음으로 잘못 셈(회차 400 첫 기록).
+        // 일부러 선 순간(WorkerAI.Hold — 줍기 "떨어짐 기다림" 등, 회차 401)도 뺌: Hold는 서 있는 동안 프레임마다 불림.
         static bool Standing(string step) => step == "Work" || step == "Search" || step == "Tool" || step == "Prep" || step == "Unload";
 
         // 남은 길 =지금 자리 → m_path 점들(지난 점은 FollowPath가 지움). 길이 비면 음수(목표 없음으로 침).
