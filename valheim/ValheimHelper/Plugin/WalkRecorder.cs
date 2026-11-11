@@ -22,6 +22,10 @@ namespace ValheimHelper
         // 걷는 중 벽 0.3m 안에 붙은 조각별 횟수(이름@자리, 회차 407 — 벽 23~38%가 어디서 나는지)
         readonly Dictionary<string, int> m_nearPieces = new Dictionary<string, int>();
         bool m_done;
+        // 구간 출발 자리·도착(m_path 끝) — 그 손 닿기 2.8m 안은 벽 셈에서 뺌(회차 408: 붙는 것 대부분이 목적지 화덕·상자였음)
+        Vector3 m_legStart, m_legGoal;
+        bool m_hasGoal;
+        public const float Reach = 2.8f;
 
         public IList<WalkTrace.Sample> Samples => m_samples;
 
@@ -66,6 +70,7 @@ namespace ValheimHelper
             var wait = new WaitForSeconds(Step);
             Vector3 last = m_npc != null ? m_npc.transform.position : Vector3.zero;
             float lastT = Time.time;
+            m_legStart = last;
             while (!m_done && m_npc != null)
             {
                 yield return wait;
@@ -74,6 +79,7 @@ namespace ValheimHelper
                 float dt = Mathf.Max(0.01f, Time.time - lastT);
                 float speed = Utils.DistanceXZ(p, last) / dt;
                 float gap = WallGap(p, out var nearCol);
+                if (NearEnds(p)) { gap = -1f; nearCol = null; }
                 if (nearCol != null && gap < WalkTrace.WallNear && speed >= WalkTrace.StandSpeed) CountNear(nearCol);
                 var job = m_npc.Ai.Job;
                 string step = job is PlanJob plan && plan.InnerStep != null ? plan.InnerStep : job?.StepName;
@@ -101,6 +107,19 @@ namespace ValheimHelper
             float sum = Utils.DistanceXZ(p, path[0]);
             for (int i = 1; i < path.Count; i++) sum += Utils.DistanceXZ(path[i - 1], path[i]);
             return sum;
+        }
+
+        // 출발·도착 손 닿기 안인지. 도착(m_path 끝)이 2.8m 넘게 바뀌면 새 구간 — 지금 자리가 새 출발.
+        bool NearEnds(Vector3 p)
+        {
+            var path = PathOf(m_npc.Ai);
+            if (path != null && path.Count > 0)
+            {
+                Vector3 g = path[path.Count - 1];
+                if (m_hasGoal && Utils.DistanceXZ(g, m_legGoal) > Reach) m_legStart = p;
+                m_legGoal = g; m_hasGoal = true;
+            }
+            return Utils.DistanceXZ(p, m_legStart) < Reach || (m_hasGoal && Utils.DistanceXZ(p, m_legGoal) < Reach);
         }
 
         // 몸 겉에서 가장 가까운 집 조각까지(몸 가운데 높이, 캡슐 반지름 뺌). 문짝은 빼지 않음.
