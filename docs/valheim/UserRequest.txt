@@ -68,3 +68,9 @@
 1. 원인(클라우드에서 코드로 본 추정): vh-loop.ps1 538줄 shutdown /s /t 120 뒤 바로 return → 루프 끝 804줄에서 잠 안 들기(SetThreadExecutionState)를 푼다 → 이미 10분 넘게 입력이 없어 Windows 절전이 2분 안에 먼저 걸림 → 끄기 카운트다운이 절전 동안 멈췄다가 깨울 때 이어져 꺼짐. 580줄(할 일 없음)은 567줄에서 기다리기 전에 이미 풀어 둬 더 쉽게 절전된다.
 2. 고침: shutdown /s 를 부른 뒤 실제로 꺼질 때까지 잠 안 들기를 쥔 채 기다린다(Start-Sleep 150 뒤 끝). 끌 예정인 대기($off)에서는 끄기 전에 풀지 않는다. 시험 운전 쪽(611줄)은 지울 코드라 그대로.
 3. 확인: 실제로 한 번(입력 없음 10분 → 2분 뒤 꺼짐)을 재고, Windows 이벤트 로그(Kernel-Power 42 절전·1074 종료)로 절전 없이 꺼졌는지 history에 한 줄.
+
+버그 담당(vh-debug)을 Fable로, 못 쓰면 기존 방식(사용자 11-11) — 루프 고치기 바로 뒤
+1. .claude/agents/vh-debug.md에 model 줄을 넣어 Fable로 돌린다(effort xhigh 그대로). 별칭 fable을 먼저 써 보고, 서브에이전트 기록의 실제 "model" 값이 Fable이 아니면 전체 ID(claude-fable-5-2)로. 둘 다 안 되면 model 줄을 빼 지금대로.
+2. 기존 방식을 그대로 둔 vh-debug-std(지금 vh-debug.md 내용, model 줄 없음)를 같이 둔다. 규칙(vh-loop-prompt·CLAUDE.md 노력 줄): 원인 찾기 버그는 vh-debug → 호출이 오류·"모델을 쓸 수 없음"·한도 알림으로 끝나거나 실제 모델이 Fable이 아니면 같은 증상을 vh-debug-std로 넘기고 그 회차 동안은 vh-debug-std만. 다음 회차에 다시 vh-debug부터.
+3. 비용 0 지키기: 계정의 사용 크레딧(추가 사용)을 켜거나 결제를 일으키는 설정은 건드리지 않는다. Fable 호출 결과에 비용·크레딧 차감 알림이 보이면 바로 vh-debug-std로 돌리고 status.txt에 "Fable은 크레딧 차감 — 기존 방식으로" 한 줄, history에 사용자 확인 요청.
+4. history 버그 항목마다 어느 쪽(Fable / 기존)이 고쳤는지와 턴·토큰을 한 줄. token-report에 두 쪽을 나눠 적는다.
