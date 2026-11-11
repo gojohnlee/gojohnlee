@@ -89,7 +89,7 @@ $o = @("# 토큰 측정 보고", '', "만든 때 $((Get-Date).ToString('yyyy-MM-
 $all = @(); $agg = @{}
 foreach ($s in $sessions) {
     $rec = $recs | Where-Object { $_.started -and $s.first -and [math]::Abs(([datetime]$_.started - $s.first).TotalMinutes) -le 5 } | Select-Object -First 1
-    $kind = if ($s.sidechain) { '서브에이전트' } elseif ($rec) { "$($rec.kind)/$($rec.mode)" } else { '-' }
+    $kind = if ($s.sidechain) { '서브에이전트' } elseif ($rec) { $rec.kind } else { '-' }
     $c = $s.calls; $n = $c.Count
     $sumIn = 0; $sumRead = 0; $sumWrite = 0; $sumOut = 0; foreach ($x in $c) { $sumIn += $x.inp; $sumRead += $x.read; $sumWrite += $x.write; $sumOut += $x.out }
     $wR = $sumRead * $ReadX; $wW = $sumWrite * $WriteX; $wO = $sumOut * $OutX; $wT = $sumIn + $wR + $wW + $wO

@@ -42,7 +42,6 @@ Set-Content $lock $PID
 # Steam을 관리자로 켜 두면 게임도 관리자라 여기서 못 끈다 → 바로 알리고 멈춘다.
 $old = @(Get-Process | Where-Object { $_.ProcessName -eq 'valheim' })
 if ($old) {
-    if ($env:VH_HARNESS -eq '1') { throw 'Harness refuses to terminate an existing game.' }
     try { $old | Stop-Process -Force -ErrorAction Stop; Start-Sleep 5; Write-Host '남아 있던 게임을 껐습니다.' }
     catch { throw "남아 있던 게임(PID $($old.Id -join ','))을 끌 수 없습니다(액세스 거부 = Steam이 관리자 실행). 작업 관리자에서 끄고 Steam을 일반 권한으로 다시 켜 주세요." }
 }
@@ -131,7 +130,6 @@ if (Test-Path $cfg) {
 if ((Get-Process steam -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $game 'steam_appid.txt'))) {
     $runGameProcess = Start-Process (Join-Path $game 'valheim.exe') -WorkingDirectory $game -PassThru -WindowStyle Hidden
 } else {
-    if ($env:VH_HARNESS -eq '1') { throw 'Start Steam first; harness requires a directly observed game process.' }
     Start-Process "steam://rungameid/$AppId"
 }
 Write-Host ''
@@ -218,31 +216,10 @@ if ($exitHang) { $report += '게임 종료 멈춤: 종료 시작(OnApplicationQu
 elseif ($runTimedOut) { $report += '게임이 30분 안에 안 꺼져 강제 종료 — 중단(PASS로 치지 않음)' }
 if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }
 $reports += ($report -join "`r`n")
-if ($env:VH_EVIDENCE_DIR) {
-    # Copy originals before any retry can clear them. Harness invokes one run per process.
-    . (Join-Path $env:VH_HARNESS_SCRIPTS 'vh-harness-lib.ps1')
-    $evidenceDir = $env:VH_EVIDENCE_DIR
-    $diagText = ''; $logText = ''
-    # 복사본을 읽는다: 강제로 끈 게임이 원본을 아직 쥐고 있으면 ReadAllText가 실패해 run.json이 안 생겼음(10-26)
-    if (Test-Path $diag) { Copy-Item -LiteralPath $diag -Destination (Join-Path $evidenceDir 'diag.txt'); $diagText = [IO.File]::ReadAllText((Join-Path $evidenceDir 'diag.txt')) }
-    if (Test-Path $log) { Copy-Item -LiteralPath $log -Destination (Join-Path $evidenceDir 'LogOutput.log'); $logText = [IO.File]::ReadAllText((Join-Path $evidenceDir 'LogOutput.log')) }
-    $parsed = Read-VhDiag $diagText @($Run -split ';' | Where-Object { $_ })
-    $status = $parsed.status
-    # 저장이 끝난 뒤의 종료 멈춤(exit_hang)은 모드 동작과 무관 → 시험 판정을 그대로 두고 run.json에 표시만(PC 세션 10-26 기본안, E038)
-    if ($runGameProcess) { $runGameProcess.WaitForExit(); if ($runGameProcess.ExitCode -ne 0 -and -not $exitHang) { $status='ABORTED' } }
-    if ($logText -notmatch 'Valheim Helper .* 로드됨') { $status = 'ENVIRONMENT' }
-    if (@(Get-VhLogProblems $logText).Count) { $status = 'EXCEPTION' }   # 알려진 무해 줄(BepInEx log writer)만 뺀다
-    if ($runTimedOut -and -not $exitHang) { $status = 'ABORTED' }
-    Write-VhJson (Join-Path $evidenceDir 'run.json') ([ordered]@{
-        status=$status; started=$runStarted.ToString('o'); ended=(Get-Date).ToString('o'); tests=$Run
-        dll_hash=(Get-VhHash (Join-Path $plugin 'ValheimHelper.dll')); world=$World; character=$Char
-        reset=($env:VH_RESET -ne '0'); quick=($env:VH_QUICK -eq '1'); biome=$env:VH_BIOME; exit_hang=$exitHang; sections=$parsed.sections
-    })
-}
 }   # foreach $Run
 $text = $reports -join "`r`n`r`n"
-if ($env:VH_HARNESS -ne '1') { Set-Clipboard $text }
+Set-Clipboard $text
 Write-Host $text
 Write-Host ''
-if ($env:VH_HARNESS -ne '1') { Write-Host '결과를 클립보드에 복사했습니다. 대화창에 붙여넣어 주세요.' }
+Write-Host '결과를 클립보드에 복사했습니다. 대화창에 붙여넣어 주세요.'
 if ((Get-Content $lock -ErrorAction SilentlyContinue | Select-Object -First 1) -eq "$PID") { Remove-Item $lock -ErrorAction SilentlyContinue }
