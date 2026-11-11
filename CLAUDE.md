@@ -13,7 +13,7 @@
 # 발헤임 일꾼 NPC
 
 - 시작: docs/valheim/UserRequest.txt 구분선 아래 요청부터(꼴은 scripts/vh-loop-request.txt) → progress.txt "지금"·"다음" → Errors.txt 제목 줄 → 코드는 codemap.txt로 찾아 그 부분만.
-  decisions.txt·history.md·Errors-resolved.txt는 필요할 때 grep. 루프는 loop-plan.txt, PC 시작·게임 시험 방법은 docs/valheim/pc-howto.txt.
+  decisions.txt·history*.md(지난 달은 history-YYYY-MM.md)·Errors-resolved.txt는 필요할 때 grep. 루프는 loop-plan.txt, PC 시작·게임 시험 방법은 docs/valheim/pc-howto.txt.
 - 게임 DLL: PC는 설치된 게임 valheim_Data\Managed(csproj 자동), 클라우드는 비공개 gojohnlee/valheim-refs를 /home/user/valheim-refs에 clone. ilspycmd로 디컴파일,
   확인한 사실은 codemap "확인된 게임 사실"에 적고 다시 디컴파일하지 않는다. 게임 파일·디컴파일 결과는 올리지 않음, 저장소 비공개 전환 금지(dll을 raw 주소로 받음).
 - 비용 0: 유료 API 없음. 위험·이동·전투는 규칙 코드, 명령 해석은 모드 → Haiku → Sonnet(호스트 PC의 Claude Code).

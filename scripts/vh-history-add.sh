@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # docs/valheim/history.md "## 회차 기록" 줄 바로 밑(맨 위 = 최근)에 표준 입력을 끼워 넣는다.
 # history.md는 크니 읽거나 열지 말고 이것만 쓴다. 사용자가 GitHub에서 읽으므로 이 꼴로(쉬운 말, 한 항목 한두 줄):
+# 달이 바뀌면 지난 달 항목(과 맨 아래 접힌 칸)을 docs/valheim/history-YYYY-MM.md로 옮기고 맨 아래 링크 줄을 고친다(첫 나눔 회차 438: 10월).
 #   bash scripts/vh-history-add.sh <<'EOF'
 #   ### 회차 N · MM-dd · 제목(무엇을 했나, 짧게)
 #

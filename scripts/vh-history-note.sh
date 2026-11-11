@@ -11,6 +11,7 @@ f="$(cd "$(dirname "$0")/.." && pwd)/docs/valheim/history.md"
 key="$1"
 [ -n "$key" ] || { echo "요청 이름을 주세요" >&2; exit 1; }
 start="$(grep -nE -- '^### (요청 · |질문 · |회차 [0-9]+ · )' "$f" | grep -F -- "$key" | head -1 | cut -d: -f1)"
+if [ -z "$start" ]; then for g in "$(dirname "$f")"/history-*.md; do [ -f "$g" ] || continue; start="$(grep -nE -- '^### (요청 · |질문 · |회차 [0-9]+ · )' "$g" | grep -F -- "$key" | head -1 | cut -d: -f1)"; [ -n "$start" ] && { f="$g"; break; }; done; fi
 [ -n "$start" ] || { echo "history.md에 '### 요청(질문) · … $key' 항목이 없음" >&2; exit 1; }
 end="$(awk -v s="$start" 'NR > s && /^(### |## |<details)/ { print NR; exit }' "$f")"
 [ -n "$end" ] || end=$(( $(wc -l < "$f") + 1 ))
