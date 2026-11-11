@@ -373,6 +373,9 @@ function Write-Status($now, $last) {
     $todo = Get-Todo (Join-Path $Repo 'docs\valheim\progress.txt')
     $test = if (Test-Path $Diag) { "$((Get-Item $Diag).LastWriteTime.ToString('MM-dd HH:mm')) $(Get-Content $Diag -Encoding UTF8 -TotalCount 1)" } else { '(없음)' }
     $lim = @(0, 1 | ForEach-Object { if ($st.until[$_] -and [datetime]$st.until[$_] -gt (Get-Date)) { "$($Accounts[$_].Name) $(([datetime]$st.until[$_]).ToString('MM-dd HH:mm'))까지" } })
+    # 시험 미룸(valheim-test.ps1이 모르는 게임 = 직접 플레이를 보고 남김, 6시간 안 것만)
+    $df = Join-Path $env:TEMP 'valheim-test-deferred.txt'
+    $testNote = if ((Test-Path $df) -and ((Get-Date) - (Get-Item $df).LastWriteTime).TotalHours -lt 6) { "시험 미룸: 직접 켠 게임이 있어 끄지 않음($(Get-Content $df -Encoding UTF8 -TotalCount 1))" }
     $text = @(
         "갱신: $(Get-Date -Format 'yyyy-MM-dd HH:mm')  (무인 루프, scripts/vh-loop.ps1)",
         "지금: $now",
@@ -381,7 +384,7 @@ function Write-Status($now, $last) {
         "마지막 시험: $test",
         "Claude가 한 일: $last",
         "요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
-    ) + @(if ($StaleNote) { $StaleNote }) + @(if ($GameNote) { $GameNote }) -join "`n"
+    ) + @(if ($StaleNote) { $StaleNote }) + @(if ($GameNote) { $GameNote }) + @(if ($testNote) { $testNote }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
     [IO.File]::WriteAllText($f, "$text`n", $Utf8)
     G add docs/valheim/status.txt | Out-Null

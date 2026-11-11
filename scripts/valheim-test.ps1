@@ -39,10 +39,24 @@ while ((Test-Path $lock) -and $lw -lt 2400) {
 if ($lw -ge 2400) { throw "다른 시험(PID $lp)이 40분 넘게 안 끝남 — 이번 시험 안 함" }
 Set-Content $lock $PID
 # 지난 시험에서 멈춘 게임이 남아 있으면 새 게임이 안 뜨고 아래 대기가 끝나지 않는다(2026-10-21 루프 회차 9).
+# 끄는 것은 이 스크립트가 띄운 게임(%TEMP%\valheim-test-game.txt의 PID·시작 시각)만. 모르는 게임 = 사용자가 직접 플레이 중 →
+# 끄지 않고 시험을 미룬다(exit 3, %TEMP%\valheim-test-deferred.txt → 루프가 status.txt에 한 줄, 사용자 11-11).
 # Steam을 관리자로 켜 두면 게임도 관리자라 여기서 못 끈다 → 바로 알리고 멈춘다.
+$gameFile = Join-Path $env:TEMP 'valheim-test-game.txt'
+$deferFile = Join-Path $env:TEMP 'valheim-test-deferred.txt'
+$g = (Get-Content $gameFile -ErrorAction SilentlyContinue | Select-Object -First 1) -split ' '
+$ours = if ($g.Count -ge 2) { Get-Process -Id ($g[0] -as [int]) -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -eq 'valheim' -and $_.StartTime.Ticks -eq ($g[1] -as [long]) } }
 $old = @(Get-Process | Where-Object { $_.ProcessName -eq 'valheim' })
+$foreign = @($old | Where-Object { -not $ours -or $_.Id -ne $ours.Id })
+if ($foreign) {
+    Set-Content $deferFile "$(Get-Date -Format 'MM-dd HH:mm') PID $($foreign.Id -join ',')" -Encoding UTF8
+    Remove-Item $lock -ErrorAction SilentlyContinue
+    Write-Host "시험 미룸: 이 스크립트가 띄우지 않은 게임(PID $($foreign.Id -join ','))이 켜져 있음 = 직접 플레이 중으로 봄. 게임을 끈 뒤 다시."
+    exit 3
+}
+Remove-Item $deferFile -ErrorAction SilentlyContinue
 if ($old) {
-    try { $old | Stop-Process -Force -ErrorAction Stop; Start-Sleep 5; Write-Host '남아 있던 게임을 껐습니다.' }
+    try { $old | Stop-Process -Force -ErrorAction Stop; Start-Sleep 5; Write-Host '남아 있던 시험 게임을 껐습니다.' }
     catch { throw "남아 있던 게임(PID $($old.Id -join ','))을 끌 수 없습니다(액세스 거부 = Steam이 관리자 실행). 작업 관리자에서 끄고 Steam을 일반 권한으로 다시 켜 주세요." }
 }
 $tmp = Join-Path $env:TEMP "valheim-test-$(Get-Random)"
@@ -153,6 +167,8 @@ if ($Min) {
     }
 }
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
+$gp = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Select-Object -First 1
+$ourId = if ($gp) { $gp.Id; Set-Content $gameFile "$($gp.Id) $($gp.StartTime.Ticks)" }   # 다음 시험의 '모르는 게임' 판단용
 $t = 0; $exitHang = $false
 $gameLog = Join-Path $game 'BepInEx\LogOutput.log'
 while ((Test-Game) -and $t -lt 1800) {   # 30분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
@@ -166,8 +182,8 @@ while ((Test-Game) -and $t -lt 1800) {   # 30분 넘으면 멈춘 것으로 보�
 }
 $runTimedOut = Test-Game
 if ($runTimedOut) {
-    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Stop-Process -Force -ErrorAction SilentlyContinue
-    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue   # 로그 파일을 놓을 때까지
+    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue   # 로그 파일을 놓을 때까지
 }
 
 # 4) 결과 → 짧은 요약만 화면·클립보드에(토큰 아끼기, 2026-10-21). 자세한 건 diag.txt·LogOutput.log를 FAIL일 때만 연다.
