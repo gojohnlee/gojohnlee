@@ -320,6 +320,14 @@ function Get-Todo($path) {
         if ($todo.Length -gt 120) { $todo = $todo.Substring(0, 120) + '…' }
         return $todo
     }
+    # ★가 없으면 "요청 이름: …" 줄 중 이름 바로 뒤가 [끝]·[보류]가 아닌 첫 줄(11-11)
+    for ($i = 0; $i -lt $p.Count -and $p[$i] -notmatch '^다음'; $i++) { }
+    for ($i++; $i -lt $p.Count -and $p[$i] -notmatch '^보류:'; $i++) {
+        if ($p[$i] -notmatch '^요청 ' -or $p[$i] -match '^요청 [^:\[]*\[(끝|보류)') { continue }
+        $todo = $p[$i].Trim()
+        if ($todo.Length -gt 120) { $todo = $todo.Substring(0, 120) + '…' }
+        return $todo
+    }
     $stage = $p | Where-Object { $_ -match '^- \[( |~)\]' } | Select-Object -First 1
     if ($stage) { return "$stage".Trim() }
     return '(없음)'
@@ -513,7 +521,9 @@ function Test-RoundResult($before, $after, $n) {
         return $false
     }
     $add = @(G diff -U0 $before $after -- docs/valheim/progress.txt | Where-Object { $_ -match "^\+[^+].*\[끝,?\s*회차\s*$n(?!\d)" })
-    foreach ($l in $add) { if ($l -match '문서만' -or ($l -match '\bPASS\b' -and (& $hasCommit $l))) { return $true } }
+    # 시험 통과 = "PASS" 낱말 또는 앞뒤 같은 n/n(회차 385~387이 "33/33"만 적어 멈춤 오판 — 11-11)
+    $passed = { param($t) ($t -match '\bPASS\b') -or (($t -match '시험') -and @([regex]::Matches($t, '(?<![\d/])(\d+)/(\d+)(?![\d/])') | Where-Object { $_.Groups[1].Value -eq $_.Groups[2].Value -and [int]$_.Groups[1].Value -gt 0 }).Count) }
+    foreach ($l in $add) { if ($l -match '문서만' -or ((& $passed $l) -and (& $hasCommit $l))) { return $true } }
     if (@(G diff -U0 $before $after -- docs/valheim/history.md | Where-Object { $_ -match "^\+\*\*답\*\*.*회차\s*$n(?!\d)" }).Count) { return $true }
     $res = @(G diff -U0 $before $after -- docs/valheim/Errors-resolved.txt)
     $minus = @($res | Where-Object { $_ -match '^-[^-]' } | ForEach-Object { [regex]::Matches($_, 'E\d{3}') } | ForEach-Object { $_.Value })
