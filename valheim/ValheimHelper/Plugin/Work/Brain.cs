@@ -26,6 +26,9 @@ namespace ValheimHelper
         public const string KeyDebt = "vh_debt";
         /// <summary>내 개인 상자 준비(상자 기능 ③) — 사람마다 물건·수.</summary>
         public const string KeyPersonal = "vh_personal";
+        /// <summary>공유 값 저장 번호(Save마다 +1) — 불러올 때 큰 쪽을 고른다(SaveStamp, 옛 저장 = 0).</summary>
+        public const string KeySaveNo = "vh_saveno";
+        static long s_saveNo;
         static Knowledge s_k;
         static PersonalBook s_personal;
         static PlaceBook s_places;
@@ -45,6 +48,8 @@ namespace ValheimHelper
             {
                 s_for = ZDOMan.instance;
                 string best = "", foes = "", places = "", sets = "", refill = "", farms = "", personal = "", debt = "";
+                long noSets = 0, noRefill = 0, noFarms = 0, noPersonal = 0, noDebt = 0;
+                s_saveNo = 0;
                 var zdos = Workers.AllZdos();
                 foreach (var zdo in zdos) // 월드 불러온 직후 한 번만
                 {
@@ -54,16 +59,13 @@ namespace ValheimHelper
                     if (f.Length > foes.Length) foes = f;
                     string pl = zdo.GetString(KeyPlaces, "");
                     if (pl.Length > places.Length) places = pl;
-                    string se = zdo.GetString(KeySets, "");
-                    if (se.Length > sets.Length) sets = se;
-                    string re = zdo.GetString(KeyRefill, "");
-                    if (re.Length > refill.Length) refill = re;
-                    string fa = zdo.GetString(KeyFarms, "");
-                    if (fa.Length > farms.Length) farms = fa;
-                    string pe = zdo.GetString(KeyPersonal, "");
-                    if (pe.Length > personal.Length) personal = pe;
-                    string de = zdo.GetString(KeyDebt, "");
-                    if (de.Length > debt.Length) debt = de;
+                    long no = zdo.GetLong(KeySaveNo, 0L); // 공유 값은 저장 번호 큰 쪽(같으면 긴 쪽)
+                    Pick(zdo, KeySets, no, ref sets, ref noSets);
+                    Pick(zdo, KeyRefill, no, ref refill, ref noRefill);
+                    Pick(zdo, KeyFarms, no, ref farms, ref noFarms);
+                    Pick(zdo, KeyPersonal, no, ref personal, ref noPersonal);
+                    Pick(zdo, KeyDebt, no, ref debt, ref noDebt);
+                    if (no > s_saveNo) s_saveNo = no;
                 }
                 bool server = ZNet.instance != null && ZNet.instance.IsServer();
                 string from = best.Length + places.Length + foes.Length > 0 ? "옛 ZDO" : "없음";
@@ -85,6 +87,12 @@ namespace ValheimHelper
                 StripMemory(zdos);
             }
             return s_k;
+        }
+
+        static void Pick(ZDO zdo, string key, long no, ref string best, ref long bestNo)
+        {
+            string t = zdo.GetString(key, "");
+            if (SaveStamp.Better(no, t, bestNo, best)) { best = t; bestNo = no; }
         }
 
         /// <summary>시험용: 지식·장소 기억을 통째로 바꾼다(시험 상황 만들기, 끝나면 원래 문자열로 되돌림).</summary>
@@ -147,12 +155,13 @@ namespace ValheimHelper
             string foes = s_foes.Save();
             string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save(), personal = s_personal.Save(), debt = s_debt.Save();
             bool skipped = false;
+            long no = ++s_saveNo;
             foreach (var zdo in Workers.Zdos())
             {
                 // 남(친구 컴퓨터)이 주인인 ZDO에는 안 쓴다(vh_peertest "싸우는 중": 30초 저장이 뺏긴 순간과 겹쳐 주인 아닌데 씀).
                 // Workers.Reclaim이 1초 안에 되찾으니 바뀐 표시를 남기고 2초 뒤 다시 저장한다.
                 if (zdo.HasOwner() && !zdo.IsOwner()) { skipped = true; continue; }
-                zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms); zdo.Set(KeyPersonal, personal); zdo.Set(KeyDebt, debt); // 기억 셋은 SaveMemory가
+                zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms); zdo.Set(KeyPersonal, personal); zdo.Set(KeyDebt, debt); zdo.Set(KeySaveNo, no); // 기억 셋은 SaveMemory가
             }
             if (skipped) { s_saveTimer = 2f; return; }
             s_k.Dirty = false;
