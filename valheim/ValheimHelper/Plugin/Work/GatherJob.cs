@@ -434,7 +434,7 @@ namespace ValheimHelper
             }
             Vector3 home = m_npc.Home;
             if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { m_book.HomeReached(); PortalHome(); Go(Step.Deposit); return true; }
-            if (Stuck(dt, PortalOr(home)))
+            if (Stuck(dt, PortalOr(home)) || QuickStuck(dt, PortalOr(home), 2.5f))
             {
                 // 막힘 복구(사용자 결정 2026-10-23): 귀환 걷기는 StuckBook.HomeWalkTries번까지(비켜 가기·점프는 걷기가 계속 함), 넘으면 깃발로 순간이동.
                 // 순간이동마저 안 되면 그 자리에서 쉰다("집에 못 가요") — 다시 걷기 되풀이 금지.
@@ -467,7 +467,7 @@ namespace ValheimHelper
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
             {
                 // 상자 가기 막힘: 진척 없이 5초면 상자 앞으로(30 → 15 → 5초, 사용자 10-31). 먼 상자로 그냥 오래 걷는 건 60초까지
-                if (Stuck(dt, m_chest.transform.position, true) || m_stepTime > 60f)
+                if (Stuck(dt, m_chest.transform.position, true) || QuickStuck(dt, m_chest.transform.position, 1.8f) || m_stepTime > 60f)
                 {
                     LogStuck("넣기", m_chest.transform.position);
                     m_npc.TeleportTo(m_chest.transform.position + m_chest.transform.forward * 1.5f, m_npc.transform.rotation, false);

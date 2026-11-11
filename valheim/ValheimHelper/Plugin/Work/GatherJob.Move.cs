@@ -296,16 +296,18 @@ namespace ValheimHelper
         Vector3 m_clockGoal = Vector3.positiveInfinity;
         /// <summary>빠른 막힘(StuckClock)을 재는 최소 거리: 손 닿는 거리 + 이만큼(m) 밖일 때만(회차 441 돌 시험 — 남은 3~5m에서 1초 막힘).</summary>
         const float QuickMin = 5f;
+        /// <summary>걸음 단계가 바뀐 뒤 이만큼(초)은 안 잼 — 줍기·캐기 동작 끝나고 돌아서는 중(회차 443 돌 시험: 다가가기 시작 1초에 막힘).</summary>
+        const float QuickStartGrace = 1.5f;
         public static int QuickStuckHits;
 
         /// <summary>막힘 1초·3초(사용자 11-11, Core StuckClock): 남은 길이 안 줄면 안 볼 때 1초·볼 때 3초에 막힘.
-        /// 다가가기만, 목표가 reach + QuickMin 밖일 때만 — 지하묘지 안·멀리선 이동 생략·경사로 깎기·문 나가기 중은 안 재고, 공격·헤엄·비틀 중은 시계 멈춤.</summary>
+        /// 다가가기·집 가기·넣기(회차 443), 목표가 reach + QuickMin 밖일 때만 — 지하묘지 안·멀리선 이동 생략·경사로 깎기·문 나가기 중은 안 재고, 공격·헤엄·비틀 중은 시계 멈춤.</summary>
         bool QuickStuck(float dt, Vector3 goal, float reach)
         {
             Vector3 p = m_npc.transform.position;
             if (Vector3.Distance(goal, m_clockGoal) > 1f) { m_clockGoal = goal; m_clock.Reset(); }
             if (m_far != null || m_ai.Carving || m_ai.OnInteriorPath || m_ai.ExitingDoor || m_npc.InInterior()
-                || Utils.DistanceXZ(goal, p) <= reach + QuickMin) { m_clock.Reset(); return false; }
+                || m_stepTime < QuickStartGrace || Utils.DistanceXZ(goal, p) <= reach + QuickMin) { m_clock.Reset(); return false; }
             bool paused = m_npc.InAttack() || m_npc.IsSwimming() || m_npc.IsStaggering();
             if (!m_clock.Tick(Time.time, dt, StuckWatch.PathLeft(m_ai, p, goal), StuckWatch.Seen(p), paused, m_mark.Changed(m_ai))) return false;
             QuickStuckHits++;
