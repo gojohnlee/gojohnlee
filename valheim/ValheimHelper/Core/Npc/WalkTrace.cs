@@ -81,6 +81,14 @@ namespace ValheimHelper.Core.Npc
             float legPath = 0f, ratioSum = 0f, best = 0f, bestT = 0f, pauseStart = -1f;
             bool stuckNow = false;
             double lastDir = double.NaN;
+            void CloseLeg(Sample end)
+            {
+                float straight = Flat(s[legStart], end);
+                if (straight < MinLeg) return;
+                float ratio = legPath / straight;
+                r.Legs++; ratioSum += ratio;
+                if (ratio > r.WorstRatio) r.WorstRatio = ratio;
+            }
             for (int i = 0; i < s.Count; i++)
             {
                 var a = s[i];
@@ -110,17 +118,7 @@ namespace ValheimHelper.Core.Npc
                 }
 
                 bool inLeg = a.Goal >= 0f && !string.IsNullOrEmpty(a.Job);
-                if (legStart >= 0 && (tele || !inLeg || a.Job != s[legStart].Job || a.Goal < Arrive))
-                {
-                    float straight = Flat(s[legStart], a);
-                    if (!tele && straight >= MinLeg)
-                    {
-                        float ratio = legPath / straight;
-                        r.Legs++; ratioSum += ratio;
-                        if (ratio > r.WorstRatio) r.WorstRatio = ratio;
-                    }
-                    legStart = -1;
-                }
+                if (legStart >= 0 && (tele || !inLeg || a.Job != s[legStart].Job || a.Goal < Arrive)) { if (!tele) CloseLeg(a); legStart = -1; }
                 if (legStart < 0 && inLeg && a.Goal >= Arrive)
                 {
                     legStart = i; legPath = 0f; best = a.Goal; bestT = a.T; stuckNow = false;
@@ -137,6 +135,8 @@ namespace ValheimHelper.Core.Npc
                 }
                 else if (pauseStart >= 0f) EndPause(r, a.T - pauseStart, ref pauseStart);
             }
+            // 기록이 구간 중에 끝남(시험이 닿음·시간 끝으로 기록을 멈춤 — 회차 404 집 시험은 그래서 0구간)도 그 자리까지 한 구간으로 셈
+            if (legStart >= 0) CloseLeg(s[s.Count - 1]);
             if (pauseStart >= 0f) EndPause(r, s[s.Count - 1].T - pauseStart, ref pauseStart);
             r.MeanRatio = r.Legs > 0 ? ratioSum / r.Legs : 0f;
             return r;

@@ -530,7 +530,7 @@ namespace ValheimHelper
         int m_stuckJumps;
         static int s_solidMask;
 
-        static int SolidMask => s_solidMask != 0 ? s_solidMask
+        internal static int SolidMask => s_solidMask != 0 ? s_solidMask
             : (s_solidMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
 
         /// <summary>바닐라 점프(일꾼은 몸 앞쪽으로 뛴다). 땅에 서 있을 때만, 0.8초에 한 번.</summary>

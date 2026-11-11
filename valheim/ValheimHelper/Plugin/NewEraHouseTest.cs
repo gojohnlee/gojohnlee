@@ -115,27 +115,32 @@ namespace ValheimHelper
             int tele0 = Teleports();
             string[] names = { "상자→화덕", "화덕→침대(오름)", "침대→상자(내림)", "상자→침대(오름)", "침대→화덕(내림)" }; // ValueTuple은 게임 mono에 없음
             Component[] tos = { fire, bed, chest, bed, fire };
-            int reached = 0;
+            int reached = 0, jumps = 0;
             for (int i = 0; i < names.Length; i++)
             {
                 Vector3 goal = tos[i].transform.position;
-                var walk = new ExploreTest.WalkJob(w.Ragnar.Ai, goal);
+                var walk = new ExploreTest.WalkJob(w.Ragnar.Ai, goal, true);
                 var rec = WalkRecorder.Start(w.Ragnar, cols);
                 w.Ragnar.Ai.StartJob(walk);
-                bool At() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - goal.y) < 1.8f;
+                bool At() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - goal.y) < 1.3f; // 계단에서 상자 곁(1.7m 위)은 닿음 아님(회차 405)
                 yield return TestKit.WaitFor(At, 90f);
                 bool ok = At();
                 float took = TestKit.Waited;
                 walk.Halt = true;
                 var rep = rec.Stop($"newerahouse {i + 1} {names[i]}", i > 0);
+                jumps += rep.TeleSeen + rep.TeleUnseen;
                 TestRunner.Log($"집 걸음({names[i]}): {rep}");
-                checks.Add($"{i + 1}) {names[i]} 닿음 ({took:0.0}초, 남은 거리 {Utils.DistanceXZ(w.Ragnar.transform.position, goal):0.0}m·높이 차 {w.Ragnar.transform.position.y - goal.y:0.0}m)", ok);
+                checks.Add($"{i + 1}) {names[i]} 닿음 ({took:0.0}초, 남은 거리 {Utils.DistanceXZ(w.Ragnar.transform.position, goal):0.0}m·높이 차 {w.Ragnar.transform.position.y - goal.y:0.0}m, 발밑 {Under(w.Ragnar.transform.position)})", ok);
                 if (ok) reached++;
                 yield return new WaitForSeconds(1f);
             }
-            int tele = Teleports() - tele0;
-            checks.Add($"집 안 순간이동 없음 ({tele}, 닿은 다리 {reached}/{names.Length})", tele == 0);
+            // 라그나 걸음 기록의 순간이동만 셈 — 전역 셈은 사용자 월드에 원래 사는 일꾼(비욘 등)이 먼 깃발로 옮겨진 것까지 셈(회차 405)
+            checks.Add($"집 안 순간이동 없음 (라그나 {jumps}, 다른 일꾼 포함 전체 {Teleports() - tele0}, 닿은 다리 {reached}/{names.Length})", jumps == 0);
         }
+
+        /// <summary>발밑 조각 이름·높이(다리 끝에 어느 바닥에 섰는지 — 회차 404 상자 위 45.5에 선 것).</summary>
+        static string Under(Vector3 p) => Physics.Raycast(p + Vector3.up * 0.3f, Vector3.down, out RaycastHit hit, 2f, WorkerAI.SolidMask, QueryTriggerInteraction.Ignore)
+            ? $"{(hit.collider.GetComponentInParent<Piece>() is Piece pc ? Utils.GetPrefabName(pc.gameObject) : hit.collider.name)} {hit.point.y:0.0}" : "없음";
 
         static int Teleports() => WorkerAI.StuckTeleports + WorkerAI.TrapRescues + WorkerAI.PitEdgeRescues;
     }

@@ -210,8 +210,10 @@ namespace ValheimHelper
         {
             readonly WorkerAI m_ai;
             readonly Vector3 m_to;
+            readonly bool m_floors;
             public bool Halt;
-            public WalkJob(WorkerAI ai, Vector3 to) { m_ai = ai; m_to = to; }
+            /// <summary>floors: 집 안 다른 층 목표면 실제 일(Unload·Prep)처럼 길 모퉁이(FloorStep)를 따라감 — 도착 판정이 수평만 봐 상자 위 층에 서 버림(회차 404 vh_newerahouse).</summary>
+            public WalkJob(WorkerAI ai, Vector3 to, bool floors = false) { m_ai = ai; m_to = to; m_floors = floors; }
             public string StepName => "TestWalk";
             public string StateLine() => "시험 걷기";
             public string Label => "시험 걷기";
@@ -221,7 +223,8 @@ namespace ValheimHelper
             public bool Update(float dt)
             {
                 if (Halt) return false;
-                m_ai.MoveToPoint(dt, m_to, 2f, true);
+                bool floor = m_floors && Mathf.Abs(m_to.y - m_ai.transform.position.y) > 1.3f; // 1층 상자는 바닥보다 1.1m 위(TheNewEra) — 계단 45.3(1.7m 위)에서 멈추지 않게
+                m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_to) : m_to, floor ? 0f : 2f, true);
                 return true;
             }
         }

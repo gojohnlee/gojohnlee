@@ -27,6 +27,16 @@ public class WalkTraceTests
     }
 
     [Fact]
+    public void RecordEndsMidLeg_StillCounts()
+    {
+        var l = Straight(20);
+        l.RemoveAt(l.Count - 1); // 시험이 닿기 직전에 기록을 멈춤(남은 길 > Arrive)
+        var r = WalkTrace.Analyze(l);
+        Assert.Equal(1, r.Legs);
+        Assert.InRange(r.WorstRatio, 0.99f, 1.01f);
+    }
+
+    [Fact]
     public void Detour_RatioAndSharpTurn()
     {
         var l = new List<WalkTrace.Sample>();
