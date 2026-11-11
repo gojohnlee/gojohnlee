@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 432 · 11-12 · 전체 시험에 멀티 묶음 B12 추가
+
+**요약**
+
+- [11-12] 플레이용 빌드를 정하기 전 전체 시험에 친구와 같이 하는 멀티 묶음(B12: 서버+손님 접속·명령·상자·재시작)을 넣고, 한 번에 돌리는 스크립트를 만듦. [끝, 회차 432 — 커밋 ea7c43c · 시험 vh-b12.ps1 새 월드 ×2 전부 PASS]
+
+**자세히**
+
+- scripts/vh-b12.ps1: 시험 서버 월드를 지우고 새로 → 서버 설치(DLL)·시작 → 손님으로 jointest·guestcmdtest·guestchesttest·guestrestart1 → 서버 재시작 → guestrestart2 → 서버 끔.
+- 결과(새 월드 두 판): jointest 5/5 · guestcmdtest 8/8 · guestchesttest 10/10 · guestrestart1 7/7 → guestrestart2 9/9.
+- 앞 시험 일꾼이 남은 헌 월드로 돈 첫 판은 guestcmd(외모 0)·guestchest(상자 주인) FAIL → E079 관찰 중.
+- codemap "시험 고르기"·loop-plan·루프 지시문을 B1~B12로 맞춤.
+
 ### 회차 431 · 11-12 · 루프 회차에 턴·대화 크기 상한
 
 **요약**
