@@ -277,6 +277,9 @@ namespace ValheimHelper
                         if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
                 }
             }
+            Vector3 next = m_stepRest.Count > 0 ? m_stepRest[0] : to;
+            m_stepSlow = !m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach + 1.5f && Utils.DistanceXZ(next, m_step) > 0.3f
+                && Vector3.Angle(Flat(m_step - pos), Flat(next - m_step)) > 60f; // 꺾인 모퉁이 앞 1.5m면 걷기(MoveToPoint) — 계단 위 끝을 6.9m/s로 1m 지나쳐 97~178° 되돌았음(회차 410·411)
             return m_step;
         }
         /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐으면 지금 모퉁이 뒤 남은 길 점들(목표까지), 아니면 null.</summary>
@@ -286,7 +289,7 @@ namespace ValheimHelper
         readonly List<Vector3> m_stepRest = new List<Vector3>();
         Vector3 m_step, m_stepTo;
         float m_stepAt, m_stepSince, m_stepUsedAt = -10f;
-        bool m_stepWait;
+        bool m_stepWait, m_stepSlow;
 
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
         public string BlockerAhead(Vector3 point)
@@ -420,6 +423,7 @@ namespace ValheimHelper
         public bool MoveToPoint(float dt, Vector3 point, float dist, bool run)
         {
             Vector3 pos = transform.position;
+            if (run && m_stepSlow && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) run = false; // FloorStep 꺾인 모퉁이 앞은 걸음
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
             float d = Utils.DistanceXZ(point, pos);
