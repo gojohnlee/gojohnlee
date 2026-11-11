@@ -70,9 +70,6 @@ namespace ValheimHelper
                 ? WorkState.NextMorning(ZNet.instance.GetTimeSeconds(), EnvMan.instance.m_dayLengthSec) : 0,
         };
 
-        static readonly AccessTools.FieldRef<GatherJob, ZoneXY> GoalZone = AccessTools.FieldRefAccess<GatherJob, ZoneXY>("m_goalZone");
-        static readonly AccessTools.FieldRef<GatherJob, Vector3> GoalPos = AccessTools.FieldRefAccess<GatherJob, Vector3>("m_goalPos");
-
         /// <summary>하던 일 → 이어 하기 칸(큰 단계만). 저장할 수 없는 일(묘비 회수 등)이면 null.</summary>
         public static WorkItem FromJob(IWorkerJob job)
         {
@@ -80,7 +77,7 @@ namespace ValheimHelper
             {
                 int left = Mathf.Max(1, g.Remaining()); // 같이 출발한 동료 몫은 빼고(사용자 11-09)
                 var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = g.Item, Amount = left, Label = GatherJob.ItemLabel(g.Item) + " " + left, Stuck = g.StuckSave, PortalTag = g.PortalCarryTag };
-                if (GoalPos(g) != Vector3.zero) { w.HasZone = true; w.Zone = GoalZone(g); }
+                if (g.GoalPos != Vector3.zero) { w.HasZone = true; w.Zone = g.GoalZone; }
                 return w;
             }
             if (job is PlanJob p && p.Goal != null) return p.ToWork(); // 계획 단계·상태·진행까지(재시작 뒤 이어 감)

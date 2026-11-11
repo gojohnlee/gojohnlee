@@ -22,6 +22,8 @@ namespace ValheimHelper
         public string StepName => m_step.ToString();
         /// <summary>시험용: 가려고 고른 구역.</summary>
         public ZoneXY GoalZone => m_goalZone;
+        /// <summary>이어 하기 저장용: 구역 땅 자리(안 골랐으면 0).</summary>
+        internal Vector3 GoalPos => m_goalPos;
         readonly HashSet<ToolKind> m_ways;
         ResourceInfo m_targetInfo;
         /// <summary>지난 휘두름 끝의 대상 체력 기록(HealthMark). null이면 다음 프레임에 잰다.</summary>
