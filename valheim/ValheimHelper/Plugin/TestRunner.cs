@@ -81,6 +81,7 @@ namespace ValheimHelper
             if (Running) { t?.AddString("이미 시험 중입니다."); return false; }
             Running = true;
             Workers.SkipGuard = true; // 시험은 기본으로 호위병 없이(호위병 시험만 켬)
+            ResetTestSwitches();
             s_gen++;
             s_timeout = s_timeouts.TryGetValue(name, out float lim) ? lim : DefaultTimeout;
             s_startTime = Time.time;
@@ -94,6 +95,20 @@ namespace ValheimHelper
             ClaudeChat.Drop(); // 앞 시험이 던진 자연어 명령의 늦은 해석 답도 버린다(E039: npctest "!나무 좀 많이 가져와" → flagtest 중 "나무 20")
             if (Brain.Refill.Count > 0) { s_report.Add($"시작 정리: 남은 채워 기준치 {Brain.Refill.Count}개 끔"); Brain.Refill.Off(); }
             return true;
+        }
+
+        // 앞 시험이 예외·시간 초과로 끝나 못 되돌린 Test* 스위치가 다음 시험을 흔들지 않게 전부 기본값으로(E054·E065·E073~E076 때 의심 — 새 스위치는 여기에도)
+        static void ResetTestSwitches()
+        {
+            Departures.TestAutoGo = true; Departures.TestIdleChores = false;
+            PlayWalkLog.TestOn = false; PlayWalkLog.TestHome = null;
+            PersonalChests.TestAllow = false; Tidy.TestAllow = false; TidyJob.TestNoReach = false;
+            CraftStep.TestCheckRoof = false; CraftStep.TestShortBy = 0;
+            GatherJob.TestNoFarStuck = false; GatherJob.TestIgnorePlayers = false; GatherJob.TestFakePlayer = null; GatherJob.TestNoInteriorHop = false;
+            MachineStep.TestIgnoreRoof = false; MachineStep.TestLose = 0;
+            PortalBuilder.TestFailAfter = -1;
+            Prep.TestNoReach = false; Unload.TestNoReach = false; ChestHop.TestNoBump = false;
+            WorkerAI.TestNoJump = false; WorkerAI.TestNoCarve = false; WorkerAI.TestNoEdgeRescue = false;
         }
 
         public static void Log(string line)
