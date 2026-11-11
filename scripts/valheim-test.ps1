@@ -119,6 +119,9 @@ if ($env:VH_RESET -ne '0') {
     if (-not $resolvedWorld.StartsWith($worldRoot, [StringComparison]::OrdinalIgnoreCase) -or $World -notmatch '^[a-zA-Z0-9_-]+$' -or $Char -notmatch '^vhtest[a-z0-9_-]*$') { throw 'Unsafe test save path' }
     if (Test-Path $wdir) { Remove-Item -LiteralPath $resolvedWorld -Recurse -Force }
     Copy-Item $base $wdir -Recurse
+    # 일꾼 기억 파일(월드 폴더 곁 <월드>.vh-memory, Brain.MemoryPath)도 원본대로: 원본에 있으면 복사, 없으면 지움
+    if (Test-Path -LiteralPath "$resolvedWorld.vh-memory") { Remove-Item -LiteralPath "$resolvedWorld.vh-memory" -Force }
+    if (Test-Path -LiteralPath "$base.vh-memory") { Copy-Item -LiteralPath "$base.vh-memory" "$resolvedWorld.vh-memory" }
     Get-ChildItem (Join-Path $save 'characters_local') -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -like "$Char.fch*" -or $_.Name -like "${Char}_backup*.fch" } | Remove-Item -Force   # 게임 자동 백업도
     Write-Host "시험 월드 $World 원본으로 되돌림, 시험 캐릭터 $Char 새로"
