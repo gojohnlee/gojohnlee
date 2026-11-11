@@ -106,7 +106,14 @@ namespace ValheimHelper
             Vector3 mid = p + Vector3.up;
             float near = float.MaxValue;
             foreach (var col in m_walls)
-                if (col != null && col.enabled && !col.isTrigger) near = Mathf.Min(near, Vector3.Distance(col.ClosestPoint(mid), mid));
+                if (col != null && col.enabled && !col.isTrigger)
+                {
+                    // 옆쪽만 벽: 가장 가까운 점이 수평보다 위·아래로 더 멀면(디딘 계단·바닥, 머리 위 천장·들보) 뺌 — 회차 405 벽 10~35%는 계단 자체를 셈(회차 406)
+                    Vector3 d = col.ClosestPoint(mid) - mid;
+                    float flat = new Vector2(d.x, d.z).magnitude;
+                    if (Mathf.Abs(d.y) > flat) continue;
+                    near = Mathf.Min(near, d.magnitude);
+                }
             return near == float.MaxValue ? -1f : Mathf.Max(0f, near - radius);
         }
 

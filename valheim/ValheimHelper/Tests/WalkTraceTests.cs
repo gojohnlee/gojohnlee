@@ -37,6 +37,26 @@ public class WalkTraceTests
     }
 
     [Fact]
+    public void OtherFloor_BaselineIsPathAtStart()
+    {
+        // 계단을 꺾어 4m 위로: 걸음 10m, 수평 직선 7.1m(1.4배), 시작 때 남은 길 10.5m → 1.0 아래
+        List<WalkTrace.Sample> Leg(float rise)
+        {
+            var l = new List<WalkTrace.Sample>();
+            for (int i = 0; i <= 25; i++)
+            {
+                var a = S(i * 0.25f, System.Math.Min(i, 12) * 0.4f, System.Math.Max(0, i - 12) * 0.4f, 10.5f - i * 0.4f);
+                a.Y = i * rise / 25f; l.Add(a);
+            }
+            return l;
+        }
+        var r = WalkTrace.Analyze(Leg(4f));
+        Assert.Equal(1, r.Legs);
+        Assert.True(r.WorstRatio < 1.3f, r.ToString());
+        Assert.True(WalkTrace.Analyze(Leg(0f)).WorstRatio > 1.3f); // 같은 층이면 그대로 직선 기준
+    }
+
+    [Fact]
     public void Detour_RatioAndSharpTurn()
     {
         var l = new List<WalkTrace.Sample>();

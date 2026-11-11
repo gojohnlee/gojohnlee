@@ -11,7 +11,7 @@ namespace ValheimHelper.Core.Npc
     public static class WalkTrace
     {
         public const float StandSpeed = 0.3f, RunSpeed = 2.5f, WallNear = 0.3f, TeleportStep = 3f,
-            StuckSecs = 1f, SharpTurn = 90f, TurnStep = 0.1f, DoorPauseMax = 0.4f, MinLeg = 2f, Arrive = 1f;
+            StuckSecs = 1f, SharpTurn = 90f, TurnStep = 0.1f, DoorPauseMax = 0.4f, MinLeg = 2f, Arrive = 1f, FloorRise = 1.3f;
 
         /// <summary>한 줄. Goal = 남은 길 길이(m, 목표 없으면 음수), Wall = 가장 가까운 벽(m, 모르면 음수), Door 0 없음·1 열린 문 곁·2 닫힌 문 곁.</summary>
         public struct Sample
@@ -85,6 +85,8 @@ namespace ValheimHelper.Core.Npc
             {
                 float straight = Flat(s[legStart], end);
                 if (straight < MinLeg) return;
+                // 다른 층(높이 차 1.3m 넘음)이면 기준 = 시작 때 남은 길(계단 따라가는 길) — 직선으론 계단을 돌아가는 오름이 늘 5~6배(회차 406)
+                if (Math.Abs(end.Y - s[legStart].Y) > FloorRise && s[legStart].Goal > straight) straight = s[legStart].Goal;
                 float ratio = legPath / straight;
                 r.Legs++; ratioSum += ratio;
                 if (ratio > r.WorstRatio) r.WorstRatio = ratio;
