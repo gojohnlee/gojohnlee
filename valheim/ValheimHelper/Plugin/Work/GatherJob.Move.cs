@@ -291,6 +291,29 @@ namespace ValheimHelper
         bool Walk(float dt, Vector3 point, float dist) =>
             m_ai.MoveToPoint(dt, point, dist, Utils.DistanceXZ(point, m_npc.transform.position) > 10f);
 
+        readonly StuckClock m_clock = new StuckClock();
+        readonly StuckWatch.PathMark m_mark = new StuckWatch.PathMark();
+        Vector3 m_clockGoal = Vector3.positiveInfinity;
+        /// <summary>빠른 막힘(StuckClock)을 재는 최소 거리: 손 닿는 거리 + 이만큼(m) 밖일 때만(회차 441 돌 시험 — 남은 3~5m에서 1초 막힘).</summary>
+        const float QuickMin = 5f;
+        public static int QuickStuckHits;
+
+        /// <summary>막힘 1초·3초(사용자 11-11, Core StuckClock): 남은 길이 안 줄면 안 볼 때 1초·볼 때 3초에 막힘.
+        /// 다가가기만, 목표가 reach + QuickMin 밖일 때만 — 지하묘지 안·멀리선 이동 생략·경사로 깎기·문 나가기 중은 안 재고, 공격·헤엄·비틀 중은 시계 멈춤.</summary>
+        bool QuickStuck(float dt, Vector3 goal, float reach)
+        {
+            Vector3 p = m_npc.transform.position;
+            if (Vector3.Distance(goal, m_clockGoal) > 1f) { m_clockGoal = goal; m_clock.Reset(); }
+            if (m_far != null || m_ai.Carving || m_ai.OnInteriorPath || m_ai.ExitingDoor || m_npc.InInterior()
+                || Utils.DistanceXZ(goal, p) <= reach + QuickMin) { m_clock.Reset(); return false; }
+            bool paused = m_npc.InAttack() || m_npc.IsSwimming() || m_npc.IsStaggering();
+            if (!m_clock.Tick(Time.time, dt, StuckWatch.PathLeft(m_ai, p, goal), StuckWatch.Seen(p), paused, m_mark.Changed(m_ai))) return false;
+            QuickStuckHits++;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 빠른 막힘 {m_clock.NoGain:0.0}초(남은 길 {m_clock.Best:0.0}m, {(m_clock.Seen(Time.time) ? "봄" : "안 봄")})");
+            m_clock.Reset();
+            return true;
+        }
+
         /// <summary>MoveStuckLimit초 동안 목표에 1m도 가까워지지 않거나 깊은 물 앞에서 섰으면 막힌 것.
         /// teleport: 막히면 바로 순간이동할 걷기 — 진척 없이 5초 거의 제자리면 막힘(사용자 10-31).</summary>
         bool Stuck(float dt, Vector3 point, bool teleport = false)
