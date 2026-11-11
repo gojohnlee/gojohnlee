@@ -1,7 +1,7 @@
-갱신: 2026-11-12 00:12  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 416 진행 중
+갱신: 2026-11-12 00:13  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 416, 계정: 2번, 한도: 1번 11-12 03:52까지
-할 일: 요청 Fable 할 일 바로잡기(11-11 22:19): ① vh-house.md·vh-house-std.md [끝, 회차 415 — 문서만: .claude/agents] ② vh-loop-prompt 서브에이전트 …
+할 일: 요청 집 걸음은 내 집(TheNewEra 복사본)에서 먼저(11-11 20:53, 아래 "집 안에서 사람처럼"의 순서 바꿈): ① 시험 vh_newerahouse [끝, 회차 404 — 커밋 dbdb4d0 · 시험 …
 마지막 시험: 11-12 00:09 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+Claude가 한 일: LOOP: DONE 서브에이전트 Fable 실사용 확인 기록(토큰 보고서 fable 4세션), 사용자 Opus 되돌림 커밋과 progress 병합
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
