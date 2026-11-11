@@ -545,7 +545,7 @@ function Wait-UserRequest($why, $last) {
             [IO.File]::WriteAllText($DoneFile, "$h0`n$why", $Utf8)
             Log '답 기다림 → 자리 비움, 컴퓨터 끔(2분 뒤)'
             Write-Status "답 기다림: $why — 자리 비워 컴퓨터 끔. UserRequest.txt에 쓰고 PC를 켜면 이어 감(물은 것은 history.md 맨 위)" $last
-            & shutdown /s /t 120 /c "발헤임 답 기다림 - 2분 뒤 꺼짐(취소: shutdown /a)"
+            Stop-PC "발헤임 답 기다림 - 2분 뒤 꺼짐(취소: shutdown /a)"
             return $false
         }
         Start-Sleep 30
@@ -568,13 +568,22 @@ function Get-PendingRequests {
 # 답 기다림(Wait-UserRequest)에서 끈 것이면 done 파일 둘째 줄이 멈춘 까닭 → 다시 켜져도 "답 기다림"으로 알린다.
 # 바뀌면 $true(다시 돎), 멈춤 파일이거나 껐으면 $false.
 $DoneFile = Join-Path $Dir 'done'
+# 컴퓨터 끄기(사용자 11-11: 끄기가 절전이 됨 — 잠 안 들기를 푼 채 2분을 세는 동안 Windows 유휴 절전이 먼저 잠).
+# 잠 안 들기를 쥔 채 shutdown /s /t 120, 벽시계로 150초 기다린다(그사이 꺼짐). shutdown /a로 취소됐으면 돌아온다.
+function Stop-PC($c) {
+    [void][VH.Power]::SetThreadExecutionState($Awake)
+    & shutdown /s /t 120 /c $c
+    $h = Get-Date
+    while (((Get-Date) - $h).TotalSeconds -lt 150) { Start-Sleep 2 }
+    Log '끄기 150초 지났는데 아직 켜짐(취소됐거나 실패)'
+}
 function Wait-Done($off, $last) {
     $f = 'origin/valheim:docs/valheim/UserRequest.txt'
     $d = @(if (Test-Path $DoneFile) { Get-Content $DoneFile -Encoding UTF8 } else { G rev-parse $f | Select-Object -Last 1 })   # @()를 밖에: if 결과는 풀려서 한 줄이면 문자열이 되고 $d[0]이 첫 글자만 됨(11-09 5분마다 헛회차)
     $h0 = "$($d[0])".Trim(); $why = if ($d.Count -gt 1) { "$($d[1])".Trim() } else { '' }
     [IO.File]::WriteAllText($DoneFile, $(if ($why) { "$h0`n$why" } else { $h0 }), $Utf8)
     Unregister-ScheduledTask -TaskName 'VH loop wake' -Confirm:$false -ErrorAction SilentlyContinue   # 남은 깨우기 예약이 PC를 켜지 않게
-    [void][VH.Power]::SetThreadExecutionState($Release)
+    if (-not $off) { [void][VH.Power]::SetThreadExecutionState($Release) }   # 끌 예정이면 미리 안 풂(풀면 입력 없음 10분 전에 유휴 절전이 먼저 잠 — 11-11)
     $how = if ($off) { '자리 비우면(입력 없음 10분) 컴퓨터 끔, 깨우기 예약 없음' } else { '켜진 PC는 안 건드림' }
     if ($why) {
         Log "답 기다림($why) → $how, UserRequest.txt가 바뀔 때까지 기다림"
@@ -587,7 +596,7 @@ function Wait-Done($off, $last) {
     while ($true) {
         if ($off -and [VH.Power]::IdleMs() -gt 600000) {
             Log '할 일 다 끝남 → 컴퓨터 끔(2분 뒤)'
-            & shutdown /s /t 120 /c "발헤임 할 일 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
+            Stop-PC "발헤임 할 일 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
             return $false
         }
         Start-Sleep 30
@@ -618,8 +627,7 @@ function End-Trial($tr, $why) {
     Write-Status "멈춤: 시험 운전 끝($range) — history.md 맨 위에 결과. 다시 돌리려면 %USERPROFILE%\vh-loop\stop을 지움" '-'
     # 사용자 10-26 밤: 다 돌면 컴퓨터를 끈다(절전 아님). 2분 여유 — 그사이 사람이 있으면 shutdown /a로 취소
     Log '시험 운전 끝 → 컴퓨터 끔(2분 뒤)'
-    [void][VH.Power]::SetThreadExecutionState($Release)
-    & shutdown /s /t 120 /c "발헤임 시험 운전 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
+    Stop-PC "발헤임 시험 운전 끝 - 2분 뒤 꺼짐(취소: shutdown /a)"
 }
 $st = Load-State
 Log "루프 시작$(if ($Once) { ' (한 회차만)' })"
