@@ -6,12 +6,12 @@ namespace ValheimHelper.Core.Npc
 {
     /// <summary>
     /// 집 안 걸음 기록(사용자 11-11 "집 안에서 사람처럼" ①): 0.25초마다 한 줄(behavior-house.txt) → 숫자 요약.
-    /// 기준: 길/직선 ≤1.3·진척 없음 0·벽 ≤5%·급회전 0(90° 넘게 꺾인 앞뒤 걸음 중 하나가 뛰기 — 걸음으로 늦춰 돌아서기는 안 셈, 회차 414)·열린 문 멈칫 ≤0.4초·보는 중 순간이동 0.
+    /// 기준: 길/직선 ≤1.3·진척 없음 0·벽 ≤5%·급회전 0(= 헛걸음 되돌기: 남은 길이 늘어나는 쪽으로 0.5m 넘게 걸은 뒤 다시 줄어듦 — 홱 도는 각도·속도는 안 셈, 사용자 11-11)·열린 문 멈칫 ≤0.4초·보는 중 순간이동 0.
     /// </summary>
     public static class WalkTrace
     {
         public const float StandSpeed = 0.3f, RunSpeed = 2.5f, WallNear = 0.3f, TeleportStep = 3f,
-            StuckSecs = 1f, SharpTurn = 90f, TurnStep = 0.1f, DoorPauseMax = 0.4f, MinLeg = 2f, Arrive = 1f, FloorRise = 1.3f;
+            StuckSecs = 1f, AwayMin = 0.5f, TurnStep = 0.1f, DoorPauseMax = 0.4f, MinLeg = 2f, Arrive = 1f, FloorRise = 1.3f;
 
         /// <summary>한 줄. Goal = 남은 길 길이(m, 목표 없으면 음수), Wall = 가장 가까운 벽(m, 모르면 음수), Door 0 없음·1 열린 문 곁·2 닫힌 문 곁.</summary>
         public struct Sample
@@ -26,7 +26,7 @@ namespace ValheimHelper.Core.Npc
         {
             public int Legs, NoProgress, SharpTurns, DoorPauses, TeleSeen, TeleUnseen, Moving;
             public float WorstRatio, MeanRatio, WallFrac, DoorPauseLongest, Stand, Walk, Run;
-            /// <summary>급회전 자리 "t@x,z,y 각°"(앞 8개) — 꺾인 계단 참인지 보려고(회차 410).</summary>
+            /// <summary>급회전(되돌기) 자리 "t@x,z,y 멀어진m"(앞 8개, t = 되돌기 시작).</summary>
             public readonly List<string> TurnAt = new List<string>();
 
             public bool Pass => WorstRatio <= 1.3f && NoProgress == 0 && WallFrac <= 0.05f && SharpTurns == 0
@@ -82,7 +82,7 @@ namespace ValheimHelper.Core.Npc
             int legStart = -1;
             float legPath = 0f, ratioSum = 0f, best = 0f, bestT = 0f, pauseStart = -1f;
             bool stuckNow = false;
-            double lastDir = double.NaN, lastV = 0.0;
+            float away = 0f; // 구간 안에서 남은 길이 늘어나는 쪽으로 걸은 거리(되돌기 셈)
             void CloseLeg(Sample end)
             {
                 float straight = Flat(s[legStart], end);
@@ -105,24 +105,22 @@ namespace ValheimHelper.Core.Npc
                     {
                         tele = true;
                         if (a.Seen || b.Seen) r.TeleSeen++; else r.TeleUnseen++;
-                        lastDir = double.NaN;
                     }
-                    else if (step >= TurnStep)
+                    else if (legStart >= 0 && step >= TurnStep && a.Job == b.Job && a.Goal >= 0f && b.Goal >= 0f)
                     {
-                        double dir = Math.Atan2(a.Z - b.Z, a.X - b.X) * 180.0 / Math.PI;
-                        if (!double.IsNaN(lastDir))
+                        // 남은 길이 걸은 거리보다 훨씬 늘면 길을 새로 받은 것(걸음 탓 아님) — 셈에서 뺌
+                        float dg = a.Goal - b.Goal;
+                        if (dg > 0.05f && dg <= step + 0.3f) away += step;
+                        else if (dg < -0.05f)
                         {
-                            double d = Math.Abs(dir - lastDir) % 360.0;
-                            if (d > 180.0) d = 360.0 - d;
-                            double v = step / Math.Max(1e-3, a.T - b.T);
-                            if (d > SharpTurn && Math.Max(v, lastV) > RunSpeed) // 계단 위 끝처럼 목표가 뒤인 곳에서 걸음으로 늦춰 돌아서기는 사람 같음(회차 412 늦춤 뒤 남은 94~140°는 1.1~1.6m/s)
+                            if (away > AwayMin)
                             {
                                 r.SharpTurns++;
                                 if (r.TurnAt.Count < 8)
-                                    r.TurnAt.Add(string.Format(CultureInfo.InvariantCulture, "{0:0.00}@{1:0.0},{2:0.0},{3:0.0} {4:0}°", a.T, a.X, a.Z, a.Y, d));
+                                    r.TurnAt.Add(string.Format(CultureInfo.InvariantCulture, "{0:0.00}@{1:0.0},{2:0.0},{3:0.0} {4:0.0}m", b.T, b.X, b.Z, b.Y, away));
                             }
+                            away = 0f;
                         }
-                        lastDir = dir; lastV = step / Math.Max(1e-3, a.T - b.T);
                     }
                     if (legStart >= 0 && !tele) legPath += step;
                 }
@@ -131,7 +129,7 @@ namespace ValheimHelper.Core.Npc
                 if (legStart >= 0 && (tele || !inLeg || a.Job != s[legStart].Job || a.Goal < Arrive)) { if (!tele) CloseLeg(a); legStart = -1; }
                 if (legStart < 0 && inLeg && a.Goal >= Arrive)
                 {
-                    legStart = i; legPath = 0f; best = a.Goal; bestT = a.T; stuckNow = false;
+                    legStart = i; legPath = 0f; best = a.Goal; bestT = a.T; stuckNow = false; away = 0f;
                 }
                 else if (legStart >= 0)
                 {

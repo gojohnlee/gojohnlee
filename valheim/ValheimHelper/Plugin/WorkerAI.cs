@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
@@ -264,7 +264,9 @@ namespace ValheimHelper
         {
             Vector3 pos = transform.position;
             m_stepUsedAt = Time.time;
-            if (Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || (!m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach))
+            bool level = Mathf.Abs(to.y - pos.y) < 0.5f, reach = level && !m_stepLevel && !m_stepWait; // 목표 층 바닥에 막 올라섬(0.5m 안 — 1m면 계단 위 끝 앞에서 새로 받아 0.7m 지나침) → 길 한 번 바로 새로: 계단 참에서 받은 먼 길(25.3m)을 2층에서 0.5초 더 따라 동쪽으로 4m 뛰다 짧은 길(9.3m)로 되돌았음(회차 419 오름 4)
+            m_stepLevel = level;
+            if (reach || Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || (!m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach))
             {
                 if (Utils.DistanceXZ(to, m_stepTo) > 0.5f) { m_stepSince = Time.time; m_stepWaitLen = -1f; }
                 m_stepAt = Time.time + 2f; m_stepTo = to; m_step = to; m_stepRest.Clear(); m_stepWait = false;
@@ -329,7 +331,7 @@ namespace ValheimHelper
         readonly List<Vector3> m_stepRest = new List<Vector3>();
         Vector3 m_step, m_stepTo;
         float m_stepAt, m_stepSince, m_stepUsedAt = -10f, m_stepHighAt = -10f, m_stepWaitLen = -1f;
-        bool m_stepWait, m_stepSlow;
+        bool m_stepWait, m_stepSlow, m_stepLevel;
 
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
         public string BlockerAhead(Vector3 point)

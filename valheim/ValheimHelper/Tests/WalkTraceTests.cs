@@ -60,27 +60,49 @@ public class WalkTraceTests
     [Fact]
     public void Detour_RatioAndSharpTurn()
     {
+        // 목표 (8,0) 곁을 z=3으로 지나쳐 x=11.2까지 갔다 되돌아옴 → 되돌기 1번(멀어진 3m 남짓)
         var l = new List<WalkTrace.Sample>();
-        float t = 0f, goal = 40f; // 뛰기(0.8m/0.25초 = 3.2m/s)
-        void Go(float x, float z) { l.Add(S(t, 2f * x, 2f * z, goal, 3.2f)); t += 0.25f; goal -= 0.8f; }
-        for (int i = 0; i < 10; i++) Go(i * 0.4f, 0f);       // 동쪽
-        for (int i = 0; i < 10; i++) Go(4f, i * 0.4f);       // 북쪽(90°는 급회전 아님)
-        for (int i = 0; i < 6; i++) Go(4f - i * 0.4f, 4f);   // 서쪽
-        for (int i = 0; i < 10; i++) Go(2f + i * 0.2f, 4f - i * 0.4f); // 남동쪽으로 꺾음(>90°)
-        l.Add(S(t, 8f, 0f, 0.5f));
+        float t = 0f;
+        void Go(float x, float z) { l.Add(S(t, x, z, (float)Math.Sqrt((x - 8f) * (x - 8f) + z * z), 3.2f)); t += 0.25f; }
+        for (int i = 0; i <= 14; i++) Go(i * 0.8f, 3f);
+        for (int i = 1; i <= 5; i++) Go(11.2f - i * 0.64f, 3f - i * 0.6f);
         var r = WalkTrace.Analyze(l);
         Assert.Equal(1, r.Legs);
         Assert.True(r.WorstRatio > 1.3f, r.ToString());
-        Assert.True(r.SharpTurns >= 1, r.ToString());
-        Assert.Equal(Math.Min(r.SharpTurns, 8), r.TurnAt.Count);
-        Assert.StartsWith("6.", r.TurnAt[0]);
+        Assert.Equal(1, r.SharpTurns);
+        Assert.Single(r.TurnAt);
+        Assert.StartsWith("3.50@11.2,3.0", r.TurnAt[0]);
         Assert.False(r.Pass);
     }
 
     [Fact]
+    public void FastSharpTurn_NotCountedWhenGoalKeepsShrinking()
+    {
+        // 홱 도는 것 자체는 괜찮음(사용자 11-11): 뛰다가 135° 꺾어도 남은 길이 계속 줄면 0
+        var l = new List<WalkTrace.Sample>();
+        float goal = 20f;
+        for (int i = 0; i <= 8; i++) { l.Add(S(i * 0.25f, i * 0.8f, 0f, goal, 3.2f)); goal -= 0.8f; }
+        for (int i = 1; i <= 8; i++) { l.Add(S(2f + i * 0.25f, 6.4f - i * 0.56f, i * 0.56f, goal, 3.2f)); goal -= 0.8f; }
+        Assert.Equal(0, WalkTrace.Analyze(l).SharpTurns);
+    }
+
+    [Fact]
+    public void SmallOvershootAndReplan_NotCounted()
+    {
+        // 0.4m 지나침은 봐줌, 걷지 않고 남은 길이 20m 뛴 것(길 새로 받음)은 셈에서 뺌
+        var l = new List<WalkTrace.Sample>();
+        float t = 0f;
+        void Add(float x, float goal) { l.Add(S(t, x, 0f, goal)); t += 0.25f; }
+        for (int i = 0; i <= 10; i++) Add(i * 0.4f, 10f - i * 0.4f);
+        Add(4.4f, 6.4f); Add(4.0f, 6.0f);           // 0.4m 지나쳐 되돌기
+        Add(4.4f, 26f); Add(4.8f, 25.6f);           // 길 새로 받음(+20m)
+        for (int i = 1; i <= 5; i++) Add(4.8f + i * 0.4f, 25.6f - i * 0.4f);
+        Assert.Equal(0, WalkTrace.Analyze(l).SharpTurns);
+    }
+    [Fact]
     public void SlowTurnAround_NotSharp()
     {
-        // 계단 위 끝: 걸음(0.35m/0.25초)으로 늦춰 거꾸로 돌아섬 → 급회전 아님(회차 414)
+        // 계단 위 끝: 거꾸로 돌아서도 남은 길이 계속 줄면 되돌기 아님
         var l = new List<WalkTrace.Sample>();
         for (int i = 0; i <= 6; i++) l.Add(S(i * 0.25f, i * 0.35f, 0f, 10f - i * 0.1f));
         for (int i = 1; i <= 6; i++) l.Add(S(1.5f + i * 0.25f, 2.1f - i * 0.2f, i * 0.3f, 9.4f - i * 0.36f));
