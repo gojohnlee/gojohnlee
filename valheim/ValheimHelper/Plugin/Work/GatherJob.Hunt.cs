@@ -135,13 +135,36 @@ namespace ValheimHelper
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
             float range = weapon != null ? Mathf.Clamp(weapon.m_shared.m_attack.m_attackRange, 1.5f, 3f) : 1.5f;
             float d = Utils.DistanceXZ(m_preyPos, m_npc.transform.position) - m_prey.GetRadius();
-            if (d > range * 0.9f) m_ai.MoveToPoint(dt, m_preyPos, range * 0.8f + m_prey.GetRadius(), true);
+            if (d > range * 0.9f)
+            {
+                if (PreyStuck(dt, range + m_prey.GetRadius())) return true;
+                m_ai.MoveToPoint(dt, m_preyPos, range * 0.8f + m_prey.GetRadius(), true);
+            }
             else
             {
                 m_ai.StopMoving();
                 m_ai.Face(m_prey.GetCenterPoint());
                 if (!m_npc.InAttack() && m_ai.IsLookingAt(m_preyPos, 25f)) m_npc.StartAttack(m_prey, false);
             }
+            return true;
+        }
+
+        /// <summary>사냥감이 거의 서 있다고 보는 실제 속력(m/s) — 도망치면 남은 길이 안 줄어도 막힌 게 아니다.</summary>
+        const float PreyStill = 0.5f;
+        float m_preyWalkAt = float.NegativeInfinity, m_preyWalkFrom;
+
+        /// <summary>막힘 1초·3초(사용자 11-11)를 사냥 다가가기에: 사냥감이 거의 서 있을 때만 재고, 막히면 그 짐승은 2분 건너뛰고 다른 것을 찾는다.</summary>
+        bool PreyStuck(float dt, float reach)
+        {
+            // 서서 쏘거나 치다가 다시 걷기 시작하면 시계를 새로(회차 446 활 시험: 쏘는 동안 쌓인 시간으로 가리자마자 1초 막힘)
+            if (Time.time - m_preyWalkAt > 0.5f) m_preyWalkFrom = Time.time;
+            m_preyWalkAt = Time.time;
+            if (Time.time - m_preyWalkFrom < QuickStartGrace || PreyVelocity().magnitude > PreyStill) { m_clock.Reset(); return false; }
+            if (!QuickStuck(dt, m_preyPos, reach)) return false;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 다가가다 막혀 이 짐승 건너뜀");
+            m_huntSkip[m_prey] = Time.time + 120f;
+            m_prey = null;
+            Go(Step.Search);
             return true;
         }
 
@@ -185,6 +208,7 @@ namespace ValheimHelper
             if (!clear)
             {
                 m_npc.StopDraw();
+                if (PreyStuck(dt, d <= Archery.ShootRange ? 4f : Archery.Approach)) return true;
                 m_ai.MoveToPoint(dt, m_preyPos, d <= Archery.ShootRange ? 4f : Archery.Approach, true); // 가리면 더 다가간다
                 return true;
             }
