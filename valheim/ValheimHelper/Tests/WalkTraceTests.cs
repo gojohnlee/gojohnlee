@@ -6,8 +6,8 @@ using Xunit;
 public class WalkTraceTests
 {
     static WalkTrace.Sample S(float t, float x, float z, float goal, float speed = 1.6f, string job = "unload",
-        float wall = 1f, int door = 0, bool seen = false) =>
-        new WalkTrace.Sample { T = t, X = x, Z = z, Goal = goal, Speed = speed, Job = job, Wall = wall, Door = door, Seen = seen };
+        float wall = 1f, int door = 0, bool seen = false, float body = -1f) =>
+        new WalkTrace.Sample { T = t, X = x, Z = z, Goal = goal, Speed = speed, Job = job, Wall = wall, Door = door, Seen = seen, Body = body };
 
     static List<WalkTrace.Sample> Straight(int n, float step = 0.4f)
     {
@@ -159,5 +159,60 @@ public class WalkTraceTests
         Assert.Equal(2, b.Door);
         Assert.True(b.Seen);
         Assert.False(WalkTrace.TryParse("# 머리", out _));
+    }
+
+    // 사용자 11-12: 벽 0.3m 안 걷기는 기준 밖이 아님 — 닿아(0.1m 안) 속도가 확 줄거나 튀어야 충돌
+    [Fact]
+    public void NearWallWalk_Passes()
+    {
+        var l = Straight(20);
+        for (int i = 0; i < l.Count; i++) { var a = l[i]; a.Wall = 0.15f; l[i] = a; }
+        var r = WalkTrace.Analyze(l);
+        Assert.Equal(0, r.Bumps);
+        Assert.Equal(0, r.WallRuns);
+        Assert.True(r.Pass, r.ToString());
+    }
+
+    [Fact]
+    public void ShortBump_CountedOnce()
+    {
+        var l = Straight(20);
+        for (int i = 8; i <= 9; i++) { var a = l[i]; a.Wall = 0.05f; a.Speed = 0.6f; l[i] = a; }
+        var r = WalkTrace.Analyze(l);
+        Assert.Equal(1, r.Bumps);
+        Assert.Single(r.BumpAt);
+        Assert.Contains("벽", r.BumpAt[0]);
+        Assert.False(r.Pass);
+    }
+
+    [Fact]
+    public void BodyBump_DirectionFlip()
+    {
+        var l = Straight(10);
+        // 5번째에서 다른 일꾼에 닿아 옆으로 튐(속도는 그대로)
+        var a = l[5]; a.X = l[4].X; a.Z = 0.4f; a.Body = 0.02f; l[5] = a;
+        var r = WalkTrace.Analyze(l);
+        Assert.Equal(1, r.Bumps);
+        Assert.Contains("몸", r.BumpAt[0]);
+    }
+
+    [Fact]
+    public void WallRun_SlideWithoutProgress()
+    {
+        var l = new List<WalkTrace.Sample>();
+        for (int i = 0; i <= 12; i++) l.Add(S(i * 0.25f, i * 0.3f, 0f, 6f - (i < 4 ? i * 0.3f : 1.2f), wall: i >= 4 ? 0.02f : 1f));
+        var r = WalkTrace.Analyze(l);
+        Assert.Equal(1, r.WallRuns);
+        Assert.False(r.Pass);
+    }
+
+    [Fact]
+    public void Line_RoundTripsBody_OldLineHasNone()
+    {
+        var s = S(1f, 2f, 3f, 4f, body: 0.5f);
+        Assert.True(WalkTrace.TryParse(WalkTrace.Line(s), out var p));
+        Assert.InRange(p.Body, 0.49f, 0.51f);
+        Assert.True(WalkTrace.TryParse("1.00 2.00 0.00 3.00 1.60 4.00 1.00 0 0 unload", out var old));
+        Assert.True(old.Body < 0f);
     }
 }

@@ -63,7 +63,8 @@ namespace ValheimHelper
             m_done = true;
             var rep = WalkTrace.Analyze(m_samples);
             var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# 벽 붙음 " + NearPieces(),
-                "# 급회전 " + (rep.TurnAt.Count > 0 ? string.Join(" ", rep.TurnAt.ToArray()) : "없음") };
+                "# 급회전 " + (rep.TurnAt.Count > 0 ? string.Join(" ", rep.TurnAt.ToArray()) : "없음"),
+                "# 충돌 " + (rep.BumpAt.Count > 0 ? string.Join(" ", rep.BumpAt.ToArray()) : "없음") };
             foreach (var st in m_stands) lines.Add("# 섬 " + st);
             foreach (var jp in m_jumps) lines.Add("# 점프 " + jp);
             foreach (var ta in rep.TurnAt) // 급회전 앞뒤 1초의 걷기 상태(회차 416: 2층 계단 위 끝 122~163°가 뛰기로 셈)
@@ -74,7 +75,7 @@ namespace ValheimHelper
             }
             for (int i = 0, n = 0; i < m_samples.Count && i < m_diags.Count && n < 4; i++) // 벽 붙은 순간의 FloorStep 모퉁이(회차 424: 계단 아래 기둥)
                 if (m_samples[i].Wall >= 0f && m_samples[i].Wall < WalkTrace.WallNear) { lines.Add($"# 벽 상세 {m_samples[i].T:0.00} {m_diags[i]}"); n++; }
-            lines.Add("# t x y z speed goal wall door seen job");
+            lines.Add("# t x y z speed goal wall door seen job body");
             foreach (var s in m_samples) lines.Add(WalkTrace.Line(s));
             try
             {
@@ -110,7 +111,7 @@ namespace ValheimHelper
                     T = Time.time - t0, X = p.x, Y = p.y, Z = p.z,
                     Speed = speed,
                     Goal = job != null && !Standing(step) && Time.time - m_npc.Ai.HoldAt > Step ? PathLeft(p) : -1f,
-                    Wall = gap, Door = DoorNear(p), Seen = Seen(p),
+                    Wall = gap, Body = BodyGap(p), Door = DoorNear(p), Seen = Seen(p),
                     Job = job != null ? job.GetType().Name + "/" + step : ""
                 });
                 var s = m_samples[m_samples.Count - 1];
@@ -195,6 +196,21 @@ namespace ValheimHelper
         }
 
         // 몸 겉에서 가장 가까운 집 조각까지(몸 가운데 높이, 캡슐 반지름 뺌). 문짝은 빼지 않음.
+        // 다른 일꾼·플레이어와 몸 사이(수평, 캡슐 반지름 뺌) — 짧은 충돌 셈(사용자 11-12). 3m 안에 없으면 -1.
+        float BodyGap(Vector3 p)
+        {
+            var cap = m_npc.GetComponent<CapsuleCollider>();
+            float mine = cap != null ? cap.radius : 0.4f, near = 3f;
+            foreach (Character c in Character.GetAllCharacters())
+            {
+                if (c == null || c == (Character)m_npc || !(c is WorkerNpc || c is Player) || c.IsDead()) continue;
+                var oc = c.GetComponent<CapsuleCollider>();
+                float g = Utils.DistanceXZ(c.transform.position, p) - mine - (oc != null ? oc.radius : 0.4f);
+                if (g < near) near = g;
+            }
+            return near >= 3f ? -1f : Mathf.Max(0f, near);
+        }
+
         float WallGap(Vector3 p, out Collider nearCol)
         {
             nearCol = null;
