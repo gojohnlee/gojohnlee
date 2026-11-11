@@ -69,6 +69,8 @@ namespace ValheimHelper
                 for (int i = 0; i < m_samples.Count && i < m_diags.Count; i++)
                     if (m_samples[i].T >= tt - 1f && m_samples[i].T <= tt + 0.3f) lines.Add($"# 급회전 상세 {m_samples[i].T:0.00} 속도 {m_samples[i].Speed:0.0} {m_diags[i]}");
             }
+            for (int i = 0, n = 0; i < m_samples.Count && i < m_diags.Count && n < 4; i++) // 벽 붙은 순간의 FloorStep 모퉁이(회차 424: 계단 아래 기둥)
+                if (m_samples[i].Wall >= 0f && m_samples[i].Wall < WalkTrace.WallNear) { lines.Add($"# 벽 상세 {m_samples[i].T:0.00} {m_diags[i]}"); n++; }
             lines.Add("# t x y z speed goal wall door seen job");
             foreach (var s in m_samples) lines.Add(WalkTrace.Line(s));
             try
