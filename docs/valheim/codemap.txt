@@ -109,7 +109,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh_debt(쓴 재료 다시 캘 몫, Core/Work/Debt.cs DebtBook)(30초) · 기억 vh_knowledge vh_foes vh_places는 월드 저장 순간에만(Brain.SaveMemory = ZDOMan.PrepareSave 앞에 넣고 뒤에 저장본 표를 복사해 바꾼 뒤 뺌, 불러온 뒤 Get이 뺌 — E052) / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기) vh_settled(밤사이 정산 마지막 아침 날짜)
 
 ----------------------------------------------------------------------
-확인된 게임 사실 (게임 1.0.20 = assembly_valheim.dll 해시 앞 94998885B103, 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
+확인된 게임 사실 (지금 게임 1.0.21 = assembly_valheim.dll 해시 앞 9f959c0396ec(11-10). 버전 안 붙은 옛 줄은 1.0.20(94998885B103) 때 확인 — 의심되면 다시 보고 버전 붙임, 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
 - [11-09 vh_chorestest] 벌통(Beehive, piece_beehive): 꿀 단계 ZDO s_level(최대 m_maxHoney 4, m_secPerUnit마다 1, 바이옴·덮개 m_maxCover 0.25 미만·낮만). Interact는 PrivateArea·플레이어 통계를 보고 Extract → RPC_Extract("RPC_Extract", 주인이 단계 수만큼 Honey를 m_spawnPoint 둘레 0.5m에 떨구고 0으로). 일꾼은 RPC를 바로 부름(HoneyJob).
 - [11-09 vh_fishtest] 낚시: 바닐라 찌 FishingFloat.GetOwner는 ZDO s_rodOwner를 ZNet 플레이어 목록에서만 찾아(없으면 찌를 지움) NPC는 못 씀. 물고기(Fish, 프리팹 Fish1 등)는 ItemDrop 달림(Fish.Instances 정적 목록, IsOutOfWater) — 바닐라 Catch도 ItemDrop.Pickup. 무는 확률 = m_baseHookChance(기본 0.5) × m_baits[미끼 프리팹 이름].m_chance, 미끼는 걸렸을 때만 씀(아니면 ReturnBait). 찌 m_range 10·m_maxDistance 30. 낚싯대 = m_animationState FishingRod, 미끼 FishingBait.
 - [11-09 vh_fishtest] 물고기 요리: FishRaw 제작법 = 물고기(Fish1~Fish12) 중 하나 1개 → 1개 @ $piece_preptable(손질대), FishCooked = FishRaw @ piece_cookingstation(·_iron). 쉴 때 먹거리 TryCook이 그대로 계획(상자 농어 6 → 구운 물고기, 단계 10, 153초).
