@@ -29,8 +29,12 @@
 2. WorkSaves가 GatherJob m_goalZone·m_goalPos를 이름 글자(FieldRefAccess)로 읽는 것 → GatherJob internal 속성.
 3. E072를 닫을 때 Senses.SaveMemory의 e072-save.txt 쓰기를 지운다.
 
-Departures 쪼개기(클라우드 리뷰 11-11, 한 번만 — 11-11 순서의 맨 뒤)
-1. 동작은 그대로, 파일만 나눈다: 출발 판단·질문 / 제작 계획 말하기 / 자동 보충·쓴 재료 / 쉴 때 하는 일.
-2. 쉴 때 하는 일 5개(IdleHoney·IdleFeed·IdleCull·IdleTame·IdleFish)는 같은 틀 → 표 하나(간격·"이미 하는 일꾼 있음"·일 만들기·대사 키)로. Test…Now도 하나로.
-3. 일 종류 조건문(is XxxJob, 7파일 27곳) 중 Yields·저장 가능 여부는 IWorkerJob 속성으로.
-4. 전후로 dotnet test + vh_departtest;vh_refilltest;vh_chorestest;vh_fishtest;vh_livestocktest;vh_farmtest;vh_basetest. FAIL이 새로 나오면 되돌리고 history에 이유. decisions 2절 "중복 정리 리팩터링 안 함"에 이 한 번은 예외로 적는다.
+리팩터링 허용(사용자 11-11 "굳이 안 할 이유는 없지") — 11-11 순서의 맨 뒤, 덩어리마다 한 회차
+0. decisions 2절의 "중복 정리만 하는 리팩터링은 안 한다"·"큰 파일은 고칠 일이 생길 때 같이 쪼갠다" 줄을 지우고 새 규칙으로: 리팩터링 허용 — 동작은 안 바꿈, 한 번에 한 덩어리, 전후로 관련 시험, 새 FAIL이면 되돌리고 history에 이유, 사용자 기능 요청·막는 문제보다 뒤. progress 결정 모음의 같은 줄도 맞춘다.
+1. Departures.cs(1,337줄) 파일 나누기: 출발 판단·질문 / 제작 계획 말하기 / 자동 보충·쓴 재료 / 쉴 때 하는 일. 쉴 때 하는 일 5개(IdleHoney·IdleFeed·IdleCull·IdleTame·IdleFish)는 같은 틀 → 표 하나(간격·"이미 하는 일꾼 있음"·일 만들기·대사 키), Test…Now도 하나로. 시험 vh_departtest;vh_refilltest;vh_chorestest;vh_fishtest;vh_livestocktest;vh_farmtest;vh_basetest.
+2. 일 종류 조건문(is XxxJob, 7파일 27곳) 중 Yields·저장 가능 여부는 IWorkerJob 속성으로. 시험 vh_departtest;vh_basetest;vh_restart1→2.
+3. 손 닿기 판정 CanReach가 4곳(Unload·Prep·TidyJob·MachineStep)에 따로 → 하나로, TestNoReach도 하나로. 시험 vh_unloadreachtest;vh_bagtest;vh_preptest;vh_tidywalktest;vh_machinestucktest;vh_housetest.
+4. 작은 일들(FishJob·HoneyJob·CullJob·LivestockJob·FarmJob)에 같은 토막이 겹침(6줄 넘게 같은 곳 약 20군데 — 클라우드 검색) → 공통 도우미. 시험 vh_chorestest;vh_fishtest;vh_livestocktest;vh_farmtest.
+5. WorkerAI.cs(1,446줄, 10-21엔 513줄) → partial 파일: 본체(모드·대기열) / 걷기·점프·구덩이 / 타르·용암·물 / 호위병 경계. Guard.cs(1,137줄) → 판단 / 동료 부르기 / 행동 / 원거리 / 장소 기억·약점. 옮기기만. 시험 기본 묶음 + vh_pittest;vh_stucktest;vh_tartest;vh_fighttest;vh_escorttest;vh_posttest;vh_guardbowtest.
+6. Brain 클래스가 Work/Senses.cs 안에 있음 → Brain.cs로(일꾼 기억 파일 요청 때 같이).
+7. 끝날 때마다 codemap 맞춤(줄 수가 10-21 기준으로 남아 있음 — 줄 수는 빼거나 새로).
