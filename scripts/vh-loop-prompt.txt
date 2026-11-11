@@ -3,7 +3,7 @@
 토큰 아끼기(사용자 10-27 — 모든 턴이 지금까지의 대화 전체를 다시 읽는다. 턴 수와 읽는 양이 곧 비용):
 - 명령은 묶어서 한 번에(예: 빌드·테스트·커밋을 한 명령으로). 같은 파일을 다시 읽지 않는다. Read는 offset/limit, 나머지는 grep.
 - 명령 출력은 짧게(| tail -20, grep). 빌드·테스트·게임 시험 출력 전체, diag 전체, 로그 전체, history.md·codemap·decisions 통째로 읽기 금지.
-- 서브에이전트는 쓰지 않는다. 예외: 막는 문제(복제·소실·저장 손상·복원 실패)를 직접 한 번 찾아도 원인을 모를 때만 vh-debug 하나(Fable), 결과를 기다려 받는다. VH_FABLE=std거나 VH_FABLE_RETRY=1이면 처음부터 vh-debug-std. 그 밖에 Fable을 못 쓴다는 오류면 고친 것은 커밋하지 않고 그대로 둔 채 마지막 줄 "LOOP: FABLE 다른 계정"으로 끝낸다(루프가 다른 계정으로 바로 다시, 진척 셈 없음).
+- 서브에이전트(사용자 11-11, decisions 2절): 집 걸음 일(걸음 기록 수치 고치기)은 vh-house, 원인 찾기 버그(시험 FAIL·로그 예외·이상 동작 전부)는 vh-debug — 메인이 한 번 보고 바로 안 보이면 증상·시험 이름·diag·로그 발췌를 붙여 넘기고 결과를 기다려 받는다. 메인은 증상 넘기기·diff 검토·빌드·시험·커밋만. 그 밖(단순 오타·빌드 경고·문서)은 쓰지 않는다. VH_FABLE=std거나 VH_FABLE_RETRY=1이면 처음부터 vh-debug-std·vh-house-std. 그 밖에 Fable을 못 쓴다는 오류면 고친 것은 커밋하지 않고 그대로 둔 채 마지막 줄 "LOOP: FABLE 다른 계정"으로 끝낸다(루프가 다른 계정으로 바로 다시, 진척 셈 없음).
 
 맨 먼저 한 명령으로: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/vh-loop-restart.ps1; echo "G=$env:VH_GAME_UPDATE"; git status --short | head
  (restart 결과가 오류면 이번 회차 history "자세히"에 그 줄.)

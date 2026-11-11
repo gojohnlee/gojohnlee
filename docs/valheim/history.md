@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 요청 · 11-11 22:19 · Fable이 할 일을 메인이 하고 있음 — 바로잡기
+
+> Fable이 할 일을 메인이 하고 있음 — 바로잡기(맨 먼저, 지금 하던 사5)보다 앞)<br>
+> 회차 405부터 ③을 메인이 직접 고쳐 왔다. vh-house 에이전트 파일도 없다. 원인: vh-loop-prompt.txt 6줄이 10-27 그대로.<br>
+> 1. vh-house.md 새로(fable·medium) 2. vh-loop-prompt 6줄을 decisions 2절에 맞춤(vh-house-std도) 3. 하던 일을 vh-house에 넘김 4. 다음 회차 실제 model이 Fable인지·token-report fable 줄 확인
+
+**받음** · 11-11 22:19 회차 415
+
+- 할 만함, 위험 없음. 사5)는 회차 414에 이미 커밋됨(3b60999) → 남은 사6)(8초 멈춰 섬)을 이번 회차에 vh-house로 넘김.
+- 순서: vh-house.md·vh-house-std.md 만들기 → 루프 지시 6줄 고치기 → 사6) vh-house 호출 → 메인은 diff 검토·빌드·시험·커밋 → 확인(model 값·token-report)은 다음 회차.
+
 ### 회차 414 · 11-11 · 계단 위 돌아서기는 급회전으로 안 셈, 먼 첫 길은 3초 기다림
 
 **요약**

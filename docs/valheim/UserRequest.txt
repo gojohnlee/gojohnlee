@@ -7,12 +7,3 @@
 - 같은 걸 다시 시키려면 새로 쓴다(지워진 요청은 history.md에 남아 있다).
 - 구분선 아래만 요청으로 읽는다.
 ======================================================================
-
-Fable이 할 일을 메인이 하고 있음 — 바로잡기(맨 먼저, 지금 하던 사5)보다 앞)
-11-11 20:53 요청은 "첫 수치·그림 뒤 ③ vh-house(Fable) 차례"였는데, 회차 405부터 ③을 "고칠 것"으로 바꿔 메인이 직접 고쳐 왔다(405~414). vh-house 에이전트 파일도 없다.
-원인: scripts/vh-loop-prompt.txt 6줄 "서브에이전트는 쓰지 않는다. 예외: 막는 문제만 vh-debug"가 10-27 그대로라, 11-11 결정(decisions.txt 2절: 원인 찾기 버그 = 시험 FAIL·로그 예외·이상 동작은 전부 vh-debug(Fable))과 다르다.
-1. .claude/agents/vh-house.md 새로 — model: fable, effort: medium. 할 일: 집 걸음 기록(behavior-house·걸음 기록 '# 급회전' 줄·층별 그림)을 읽고 기준(길/직선 ≤1.3·진척 없음 0·벽 ≤5%·급회전 0·문 멈칫 ≤0.4초·보는 중 순간이동 0)에서 가장 나쁜 수치부터 원인 찾기·고치기. 먼저 읽을 것은 vh-debug.md처럼.
-2. vh-loop-prompt.txt 6줄을 decisions 2절에 맞춤: 집 걸음 일은 vh-house, 원인 찾기 버그(막는 문제만이 아니라 시험 FAIL·로그 예외·이상 동작 전부)는 vh-debug. 메인은 증상 넘기기·diff 검토·빌드·시험·커밋만. Fable 못 쓰면 지금 규칙(다른 계정 → vh-debug-std). vh-house 예비가 필요하면 vh-house-std(model 줄 없음)도.
-3. 지금 하던 사5)(동쪽 2층 계단 위 끝 48.6~48.9 급회전 94~153°, 상자→화덕 5초 섬)는 메인이 작업 트리에 고치던 것(WalkTrace.cs·WalkTraceTests.cs)을 커밋했든 안 했든 vh-house에 넘겨 이어 하게.
-4. 확인: 다음 회차 서브에이전트 기록의 실제 "model" 값이 Fable인지 history 한 줄, token-report 쪽별 합에 fable 줄이 생기는지.
-
