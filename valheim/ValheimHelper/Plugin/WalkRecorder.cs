@@ -22,6 +22,10 @@ namespace ValheimHelper
         // 걷는 중 벽 0.3m 안에 붙은 조각별 횟수(이름@자리, 회차 407 — 벽 23~38%가 어디서 나는지)
         readonly Dictionary<string, int> m_nearPieces = new Dictionary<string, int>();
         bool m_done;
+        // 1초 넘게 선 자리마다 그때 걷기 상태(FloorStep·m_path·MoveTo 반환) — 회차 415 사6: 남은 길 그대로 속도 0으로 8~12초 섬
+        readonly List<string> m_stands = new List<string>();
+        readonly List<string> m_diags = new List<string>(); // 표본마다 StepDiag(급회전 상세용)
+        float m_standSince = -1f;
         // 구간 출발 자리·도착(m_path 끝) — 그 손 닿기 2.8m 안은 벽 셈에서 뺌(회차 408: 붙는 것 대부분이 목적지 화덕·상자였음)
         Vector3 m_legStart, m_legGoal;
         bool m_hasGoal;
@@ -54,7 +58,15 @@ namespace ValheimHelper
             m_done = true;
             var rep = WalkTrace.Analyze(m_samples);
             var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# 벽 붙음 " + NearPieces(),
-                "# 급회전 " + (rep.TurnAt.Count > 0 ? string.Join(" ", rep.TurnAt.ToArray()) : "없음"), "# t x y z speed goal wall door seen job" };
+                "# 급회전 " + (rep.TurnAt.Count > 0 ? string.Join(" ", rep.TurnAt.ToArray()) : "없음") };
+            foreach (var st in m_stands) lines.Add("# 섬 " + st);
+            foreach (var ta in rep.TurnAt) // 급회전 앞뒤 1초의 걷기 상태(회차 416: 2층 계단 위 끝 122~163°가 뛰기로 셈)
+            {
+                if (!float.TryParse(ta.Substring(0, ta.IndexOf('@')), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float tt)) continue;
+                for (int i = 0; i < m_samples.Count && i < m_diags.Count; i++)
+                    if (m_samples[i].T >= tt - 1f && m_samples[i].T <= tt + 0.3f) lines.Add($"# 급회전 상세 {m_samples[i].T:0.00} 속도 {m_samples[i].Speed:0.0} {m_diags[i]}");
+            }
+            lines.Add("# t x y z speed goal wall door seen job");
             foreach (var s in m_samples) lines.Add(WalkTrace.Line(s));
             try
             {
@@ -92,6 +104,19 @@ namespace ValheimHelper
                     Wall = gap, Door = DoorNear(p), Seen = Seen(p),
                     Job = job != null ? job.GetType().Name + "/" + step : ""
                 });
+                var s = m_samples[m_samples.Count - 1];
+                m_diags.Add(m_npc.Ai.StepDiag);
+                if (job != null && speed < WalkTrace.StandSpeed) // m_path가 비어(남은 길 -1) 선 것도 기록(회차 416: 출발 3초 서기가 남은 길 -1이라 안 찍혔음)
+                {
+                    if (m_standSince < 0f) m_standSince = s.T;
+                    else if (s.T - m_standSince >= 1f - Step * 0.5f && m_stands.Count < 8 && (m_stands.Count == 0 || !m_stands[m_stands.Count - 1].StartsWith($"{m_standSince:0.00}@")))
+                        m_stands.Add($"{m_standSince:0.00}@{p.x:F1},{p.z:F1},{p.y:F1} 남은 길 {s.Goal:0.0} · {m_npc.Ai.StepDiag} · 몸 {BodyDiag(p)}");
+                }
+                else
+                {
+                    if (m_standSince >= 0f && m_stands.Count > 0 && m_stands[m_stands.Count - 1].StartsWith($"{m_standSince:0.00}@")) m_stands[m_stands.Count - 1] = $"{m_standSince:0.00}~{s.T:0.00} " + m_stands[m_stands.Count - 1].Substring(m_stands[m_stands.Count - 1].IndexOf('@'));
+                    m_standSince = -1f;
+                }
                 last = p; lastT = Time.time;
             }
         }
@@ -129,6 +154,25 @@ namespace ValheimHelper
                 m_legGoal = g; m_hasGoal = true;
             }
             return Utils.DistanceXZ(p, m_legStart) < Reach || (m_hasGoal && Utils.DistanceXZ(p, m_legGoal) < Reach);
+        }
+
+        // 선 자리 진단(회차 416): 발~머리 1.2m 안 모든 조각(이름, 가장 가까운 점이 발에서 어디), 몸 속도·가는 쪽·땅
+        string BodyDiag(Vector3 p)
+        {
+            var sb = new System.Text.StringBuilder();
+            var c = m_npc as Character;
+            sb.Append($"속도 {c.GetVelocity():F2} 쪽 {c.GetMoveDir():F2} 땅 {c.IsOnGround()} 조각:");
+            int n = 0;
+            foreach (var col in Physics.OverlapSphere(p + Vector3.up, 1.3f)) // 모든 충돌체(오목 메시는 ClosestPoint가 안 돼 경계 상자 가운데)
+            {
+                if (col == null || col.isTrigger || col.GetComponentInParent<Character>() != null) continue;
+                bool concave = col is MeshCollider mc && !mc.convex;
+                Vector3 q = concave ? col.bounds.center : col.ClosestPoint(p + Vector3.up); Vector3 d = q - p;
+                var piece = col.GetComponentInParent<Piece>();
+                sb.Append(' ').Append(Utils.GetPrefabName(piece != null ? piece.gameObject : col.gameObject)).Append(concave ? "~" : "").Append($"({d.x:+0.00},{d.y:+0.00},{d.z:+0.00})");
+                if (++n >= 8) break;
+            }
+            return sb.ToString();
         }
 
         // 몸 겉에서 가장 가까운 집 조각까지(몸 가운데 높이, 캡슐 반지름 뺌). 문짝은 빼지 않음.

@@ -122,6 +122,7 @@ namespace ValheimHelper
 
             Vector3 Near(Component c) { Vector3 p = c.transform.position, to = Center - p; to.y = 0f; return p + to.normalized * 1.2f; }
             Vector3 start = Near(chest) + Vector3.up * 0.5f;
+            { string fs = System.Environment.GetEnvironmentVariable("VH_NEWERA_START"); if (!string.IsNullOrEmpty(fs)) { var a = fs.Split(','); start = new Vector3(float.Parse(a[0], System.Globalization.CultureInfo.InvariantCulture), float.Parse(a[1], System.Globalization.CultureInfo.InvariantCulture), float.Parse(a[2], System.Globalization.CultureInfo.InvariantCulture)); TestRunner.Log($"진단 시작 자리 {start:F1}"); } }
             w.Ragnar.TeleportTo(start, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(2f);
             int tele0 = Teleports();
@@ -132,7 +133,7 @@ namespace ValheimHelper
             {
                 Vector3 goal = tos[i].transform.position;
                 ClearWild(); // 회색 난쟁이가 와 일꾼이 경계로 8초 섬·hp 깎임(회차 405·414) — 걸음만 재려고 다리마다 야생 생물 치움, 길든 짐승은 남김
-                var walk = new ExploreTest.WalkJob(w.Ragnar.Ai, goal, true);
+                var walk = new ExploreTest.WalkJob(w.Ragnar.Ai, goal, true) { Stay = true }; // 다리 사이에 서 있음(일이 끝나 깃발로 걸어가면 문 나가기·되돌기가 섞임)
                 var rec = WalkRecorder.Start(w.Ragnar, cols);
                 w.Ragnar.Ai.StartJob(walk);
                 bool At() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - goal.y) < 1.3f; // 계단에서 상자 곁(1.7m 위)은 닿음 아님(회차 405)

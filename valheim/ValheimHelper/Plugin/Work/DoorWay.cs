@@ -98,7 +98,13 @@ namespace ValheimHelper
         public bool Exit(float dt, WorkerNpc npc, Vector3 point)
         {
             if (npc == null || m_walking) return false;
-            if (Utils.DistanceXZ(point, m_for) > 2f) { m_for = point; if (m_phase == Phase.GaveUp) m_phase = Phase.None; }
+            if (Utils.DistanceXZ(point, m_for) > 2f)
+            {
+                m_for = point;
+                if (m_phase == Phase.GaveUp) m_phase = Phase.None;
+                // 회차 415 사6: 집 밖 목표(일 끝나 깃발로)로 문을 향하던 중 새 목표가 집 안이면 그 문으로 계속 가다 막혀 8~13초 섰음(2층 문, 욕조에 막힘) → 문틀 들어서기 전이면 접고 새 목표로 다시 판단
+                else if (m_phase == Phase.ToDoor) { Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 접음: 목표 바뀜 {point:F1} ({m_t:0.0}초)"); m_phase = Phase.None; m_check = 0f; }
+            }
             if (m_phase == Phase.GaveUp) return false;
             Vector3 me = npc.transform.position;
             if (m_phase == Phase.None)

@@ -212,6 +212,8 @@ namespace ValheimHelper
             readonly Vector3 m_to;
             readonly bool m_floors;
             public bool Halt;
+            /// <summary>Halt 뒤에도 일을 끝내지 않고 제자리에 선다(vh_newerahouse: 다리 사이 1초에 일이 끝나 깃발로 걸어가며 집 밖 목표로 문 나가기가 켜져 다음 다리 첫 8~13초 섰음, 회차 415 사6).</summary>
+            public bool Stay;
             /// <summary>floors: 집 안 다른 층 목표면 실제 일(Unload·Prep)처럼 길 모퉁이(FloorStep)를 따라감 — 도착 판정이 수평만 봐 상자 위 층에 서 버림(회차 404 vh_newerahouse).</summary>
             public WalkJob(WorkerAI ai, Vector3 to, bool floors = false) { m_ai = ai; m_to = to; m_floors = floors; }
             public string StepName => "TestWalk";
@@ -222,7 +224,7 @@ namespace ValheimHelper
             public void AvoidHere(Vector3 danger) { }
             public bool Update(float dt)
             {
-                if (Halt) return false;
+                if (Halt) { if (!Stay) return false; m_ai.StopMoving(); return true; }
                 bool floor = m_floors && m_ai.OtherFloor(m_to, 1.3f); // 1층 상자는 바닥보다 1.1m 위(TheNewEra) — 계단 45.3(1.7m 위)에서 멈추지 않게
                 m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_to) : m_to, floor ? 0f : 2f, true);
                 return true;

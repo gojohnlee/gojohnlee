@@ -272,6 +272,7 @@ namespace ValheimHelper
                 {
                     float len = 0f; for (int i = 1; i < s_stepPath.Count; i++) len += Vector3.Distance(s_stepPath[i - 1], s_stepPath[i]);
                     float direct = Vector3.Distance(pos, to);
+                    m_stepPicked = $"길 {len:0.0}m/직선 {direct:0.0}m 모퉁이 {s_stepPath.Count}:{PathText(s_stepPath, 5)}";
                     if (len > Mathf.Max(direct * 3f, direct + 15f) && Time.time - m_stepSince < 3f) { m_step = pos; m_stepWait = true; m_stepAt = Time.time + 0.5f; return m_step; } // 출발 때 첫 길이 터무니없이 멀면(회차 410 오름 4: 남은 74m → 곧 19m, 1.5m 반대로 갔다 141° 되돌기) 3초까지 서서 0.5초마다 다시 받음 — 1.5초론 102m 길(바깥 문 돌기)을 2초 따라가다 51m 길로 157° 되돌았음(회차 414 오름 2)
                     for (int i = 1; i < s_stepPath.Count; i++)
                         if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
@@ -284,17 +285,40 @@ namespace ValheimHelper
         }
         /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐으면 지금 모퉁이 뒤 남은 길 점들(목표까지), 아니면 null.</summary>
         public List<Vector3> FloorRest => Time.time - m_stepUsedAt < 0.5f ? m_stepRest : null;
-        /// <summary>다른 층 목표인지(FloorStep으로 걸을지): 높이 차가 up보다 크거나, 0.5초 안에 같은 목표로 FloorStep을 따랐고 아직 0.5m 넘게 차이 남 — 계단 아래에서 1.3m 밑으로 내려오자 곧장 걷기로 바뀌어 기둥 곁에 1초 서고 96° 꺾였음(회차 412 내림 5).</summary>
+        /// <summary>다른 층 목표인지(FloorStep으로 걸을지): 높이 차가 up보다 크거나, 0.5초 안에 같은 목표로 FloorStep을 따랐고 아직 0.5m 넘게 차이 나거나 모퉁이가 남음 — 계단 아래에서 1.3m 밑으로 내려오자 곧장 걷기로 바뀌어 기둥 곁에 1초 서고 96° 꺾였음(회차 412 내림 5).
+        /// 0.5m 밑이어도 계단 끝 발판(아래 0.1m·위 0.3m 차)에서 곧장 걷기로 바뀌면 길 첫 점으로 대각선 몰아 계단 옆 기둥·지붕벽에 3초 밀리고(내림 5) 2층 바닥 턱에 0.5초 걸렸다 141° 뛰었음(오름 2·4, 회차 416) → 모퉁이가 남은 동안은 계속 따르되 높이 차 0.5m를 벗어난 뒤 3초까지만
+        /// — 같은 높이에서 계속 모퉁이를 dist 0으로 곧장 몰면 문 들어가기(Steering)를 안 타 갓 지은 복도 벽(navmesh 미반영)에 10초 밀리고 갇힘 구조 순간이동(회차 416 vh_housetest 4-3).</summary>
         public bool OtherFloor(Vector3 to, float up)
         {
             float h = Mathf.Abs(to.y - transform.position.y);
-            return h > up || (h > 0.5f && Time.time - m_stepUsedAt < 0.5f && Utils.DistanceXZ(to, m_stepTo) < 0.5f);
+            if (h > up) { m_stepHighAt = Time.time; return true; }
+            if (Time.time - m_stepUsedAt >= 0.5f || Utils.DistanceXZ(to, m_stepTo) > 0.5f) return false;
+            if (h > 0.5f) { m_stepHighAt = Time.time; return true; }
+            return Time.time - m_stepHighAt < 3f && (m_stepRest.Count > 0 || Utils.DistanceXZ(m_step, to) > 0.5f);
         }
+        /// <summary>시험 기록용(회차 415 사6: 8초 섬): FloorStep 상태 — 고른 길(모퉁이·길이), 지금 모퉁이·기다림·걷기, BaseAI m_path.</summary>
+        public string StepDiag
+        {
+            get
+            {
+                var path = PathOf(this);
+                return $"FloorStep{(Time.time - m_stepUsedAt < 0.5f ? "" : "(안 씀)")} 모퉁이 {m_step:F1}({Utils.DistanceXZ(m_step, transform.position):0.0}m) 기다림 {m_stepWait} 걷기 {m_stepSlow} 뒤 {m_stepRest.Count} 새로 {m_stepAt - Time.time:0.0}초 뒤 · {m_stepPicked} · m_path {(path == null ? "없음" : path.Count + ":" + PathText(path, 3))} 길 {FoundPath()} · {m_moveDiag}";
+            }
+        }
+        static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, List<Vector3>> PathOf = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, List<Vector3>>("m_path");
+        static string PathText(List<Vector3> p, int n)
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < p.Count && i < n; i++) sb.Append(' ').Append(p[i].ToString("F1"));
+            if (p.Count > n) sb.Append(" … ").Append(p[p.Count - 1].ToString("F1"));
+            return sb.ToString();
+        }
+        string m_stepPicked = "길 없음", m_moveDiag = "";
         const float StepReach = 1.1f;
         static readonly List<Vector3> s_stepPath = new List<Vector3>();
         readonly List<Vector3> m_stepRest = new List<Vector3>();
         Vector3 m_step, m_stepTo;
-        float m_stepAt, m_stepSince, m_stepUsedAt = -10f;
+        float m_stepAt, m_stepSince, m_stepUsedAt = -10f, m_stepHighAt = -10f;
         bool m_stepWait, m_stepSlow;
 
         /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
@@ -430,15 +454,15 @@ namespace ValheimHelper
         {
             Vector3 pos = transform.position;
             if (run && m_stepSlow && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) run = false; // FloorStep 꺾인 모퉁이 앞은 걸음
-            if (m_stepWait && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) { StopMoving(); return false; } // FloorStep 출발 기다림은 제자리에 섬 — 제 자리로 0m 걷기는 뛰던 기세로 1.6m 지나쳤다 150° 되돌았음(회차 412 오름 4)
+            if (m_stepWait && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) { m_moveDiag = "MoveToPoint 출발 기다림"; StopMoving(); return false; } // FloorStep 출발 기다림은 제자리에 섬 — 제 자리로 0m 걷기는 뛰던 기세로 1.6m 지나쳤다 150° 되돌았음(회차 412 오름 4)
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
             float d = Utils.DistanceXZ(point, pos);
             if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
-            if (EdgeRescueIfLong(dt, pos)) return false;
+            m_moveDiag = "MoveToPoint 시작"; if (EdgeRescueIfLong(dt, pos)) { m_moveDiag = "MoveToPoint 벼랑 구조"; return false; }
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
-            if (m_carving && UpdateCarve(dt, pos)) return false;
-            if (RescueIfTrapped(dt, pos)) return false;
+            if (m_carving && UpdateCarve(dt, pos)) { m_moveDiag = "MoveToPoint 깎기"; return false; }
+            if (RescueIfTrapped(dt, pos)) { m_moveDiag = "MoveToPoint 갇힘 구조"; return false; }
             bool inPath = Character.InInterior(pos) && m_inPath != null; // 지하묘지 안 길(헤엄 칸 포함)을 따라가는 중
             if (m_character.IsSwimming() && Character.InInterior(pos) && !inPath) // 진단: 묘지 안 길 없이(바닐라 걷기로) 물에 빠짐
             {
@@ -457,7 +481,7 @@ namespace ValheimHelper
             }
             if (SlowSwim(dt, pos, point)) return false;
             if (TarStep(dt, pos, point, dist)) return false;
-            if (m_detourTime > 0f)
+            if (m_detourTime > 0f && (m_moveDiag = $"MoveToPoint 비켜 가기 {m_detourTime:0.0}초") != null)
             {
                 m_detourTime -= dt;
                 if (!WaterAhead(pos, m_detourDir) && !TarAhead(pos, m_detourDir, point)) MoveTowards(m_detourDir, true); // 걷기(1.6m/s)로는 큰 바위를 못 돌아감 → 달림
@@ -465,7 +489,7 @@ namespace ValheimHelper
                 return false;
             }
             bool inside = Character.InInterior(pos);
-            if (!inside && m_exitWay.Exit(dt, m_character as WorkerNpc, point)) return false;
+            if (!inside && m_exitWay.Exit(dt, m_character as WorkerNpc, point)) { m_moveDiag = $"MoveToPoint 나가기 문 {m_exitWay.Busy}"; return false; }
             if (!inside) ForgetInteriorPath();
             if (!inside || !InteriorWalk(pos, point, dist, run))
             {
@@ -473,7 +497,7 @@ namespace ValheimHelper
                 if (!inside && FloorLine(pos, point)) MoveTowards(Flat(point - pos), false);
                 else if (inside || !FollowHazardPath(pos, point, run))
                 {
-                    bool done = MoveTo(dt, point, dist, run);
+                    bool done = MoveTo(dt, point, dist, run); m_moveDiag = $"MoveTo {(done ? "도착" : "가는 중")}({point:F1} 거리 {dist:0.0} 뛰기 {run})";
                     if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
                 }
             }
