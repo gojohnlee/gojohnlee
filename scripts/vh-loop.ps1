@@ -600,10 +600,30 @@ function Test-RoundResult($before, $after, $n) {
         }
         return $false
     }
-    $add = @(G diff -U0 $before $after -- docs/valheim/progress.txt | Where-Object { $_ -match "^\+[^+].*\[[^\[\]]*끝,?\s*회차\s*$n(?!\d)" })   # "[조각 이름 끝, 회차 N"도(11-13 회차 506 "[Add·Served·Remove 끝, 회차 506 …"을 못 세서 멈춤)
+    # 사용자 11-13: 꼴(괄호 모양)로 세지 않는다 — 회차 506 "[Add·… 끝, 회차 506"·509 "(회차 509 — 커밋 … PASS 6/6)"을 못 세서 멈춤.
+    # 코드: 이 회차 번호 + 시험 통과 + 실제 푸시된 커밋이 한 줄에 있으면 진척. 문서만: "[… 끝, 회차 N — 문서만" 꼴일 때만.
+    # 한 줄에 다른 회차 기록([… 회차 490 — 커밋 … 7/7] 등)이 같이 있으므로 "회차 N"을 감싼 괄호([…] 또는 (…)) 안만 본다.
+    $add = @(G diff -U0 $before $after -- docs/valheim/progress.txt | Where-Object { $_ -match "^\+[^+]" } | ForEach-Object {
+        $s = $_
+        foreach ($m in [regex]::Matches($s, "회차\s*$n(?!\d)")) {
+            $o = -1; $d = 0
+            for ($j = $m.Index - 1; $j -ge 0; $j--) {
+                $ch = $s[$j]
+                if ($ch -eq ']' -or $ch -eq ')') { $d++ }
+                elseif ($ch -eq '[' -or $ch -eq '(') { if ($d) { $d-- } else { $o = $j; break } }
+            }
+            if ($o -lt 0) { $s; continue }
+            $cl = if ($s[$o] -eq '[') { ']' } else { ')' }; $op = $s[$o]; $d = 0; $e = $s.Length
+            for ($j = $o + 1; $j -lt $s.Length; $j++) {
+                if ($s[$j] -eq $op) { $d++ } elseif ($s[$j] -eq $cl) { if ($d) { $d-- } else { $e = $j; break } }
+            }
+            $s.Substring($o, $e - $o + [int]($e -lt $s.Length))
+        }
+    })
+    $docOnly = "끝,?\s*회차\s*$n(?!\d).*문서만"
     # 시험 통과 = "PASS" 낱말 또는 앞뒤 같은 n/n(회차 385~387이 "33/33"만 적어 멈춤 오판 — 11-11)
-    $passed = { param($t) ($t -match '\bPASS\b') -or (($t -match '시험') -and @([regex]::Matches($t, '(?<![\d/])(\d+)/(\d+)(?![\d/])') | Where-Object { $_.Groups[1].Value -eq $_.Groups[2].Value -and [int]$_.Groups[1].Value -gt 0 }).Count) }
-    foreach ($l in $add) { if ($l -match '문서만' -or ((& $passed $l) -and (& $hasCommit $l))) { return $true } }
+    $passed = { param($t) ($t -match '\bPASS\b') -or (($t -match '시험|\btest') -and @([regex]::Matches($t, '(?<![\d/])(\d+)/(\d+)(?![\d/])') | Where-Object { $_.Groups[1].Value -eq $_.Groups[2].Value -and [int]$_.Groups[1].Value -gt 0 }).Count) }
+    foreach ($l in $add) { if ($l -match $docOnly -or ((& $passed $l) -and (& $hasCommit $l))) { return $true } }
     if (@(G diff -U0 $before $after -- docs/valheim/history.md | Where-Object { $_ -match "^\+\*\*답\*\*.*회차\s*$n(?!\d)" }).Count) { return $true }
     $res = @(G diff -U0 $before $after -- docs/valheim/Errors-resolved.txt)
     $minus = @($res | Where-Object { $_ -match '^-[^-]' } | ForEach-Object { [regex]::Matches($_, 'E\d{3}') } | ForEach-Object { $_.Value })
