@@ -401,9 +401,9 @@ namespace ValheimHelper
                 // 갈린 땅(밭)의 기른 작물은 줍지 않는다: 사람이 기르는 것 — 밭일(FarmJob)만 거둔다. 기른 작물만 본다: 타르 웅덩이 땅도
                 // 갈린 땅 칠(IsCultivated)이라 웅덩이 위 줍는 타르를 밭 작물로 건너뛰었다(회차 174 vh_tartest).
                 if (info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition())) { m_skip.Add(zdo.m_uid); continue; }
-                // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰).
+                // 건축물 4m 안의 나무·바위는 건드리지 않는다: 쓰러지는 나무·캐낸 바위 위의 상자가 부서진다(0.3.1 사용자 관찰). 자기 통나무는 뺌 — 집 곁도 치되 미는 방향은 집 반대(사용자 11-12).
                 // 용암 위 바위는 뺌: 둘레 건물은 거기 가려고 깐 바닥(회차 250, 불꽃금속 나)).
-                if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(FloorReach && OnLava(zdo.GetPosition()))) { m_skip.Add(zdo.m_uid); continue; }
+                if (info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(info.Log && NearFelled(zdo.GetPosition())) && !(FloorReach && OnLava(zdo.GetPosition()))) { m_skip.Add(zdo.m_uid); continue; }
                 if (info.Tool != ToolKind.None)
                 {
                     ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
@@ -439,7 +439,7 @@ namespace ValheimHelper
                 string why = m_skip.Contains(zdo.m_uid) ? "건너뜀 목록" : Avoided(zdo.GetPosition()) ? "위험 구역"
                     : !inside && m_book.Excluded(zdo.GetPosition().x, zdo.GetPosition().z) ? "막힘 기록으로 뺀 곳"
                     : !m_ways.Contains(info.Tool) ? "방법 아님" : info.Pickable && zdo.GetBool(ZDOVars.s_picked) ? "이미 땀" : info.Pickable && StuckInTar(zdo) ? "타르에 잠김" : info.Pickable && Crops.IsGrown(info.Prefab) && Farmland(zdo.GetPosition()) ? "밭 작물"
-                    : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(FloorReach && OnLava(zdo.GetPosition())) ? "건축물 4m 안"
+                    : info.Tool != ToolKind.None && NearAny(zdo.GetPosition(), pieces, 4f) && !(info.Log && NearFelled(zdo.GetPosition())) && !(FloorReach && OnLava(zdo.GetPosition())) ? "건축물 4m 안"
                     : info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) == null ? "도구 없음"
                     : info.MinToolTier > 0 && info.Tool != ToolKind.None && WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool) is ItemDrop.ItemData t && info.MinToolTier > t.m_shared.m_toolTier ? "도구 단계 낮음"
                     : Utils.DistanceXZ(zdo.GetPosition(), pos) > range ? "시야 밖"

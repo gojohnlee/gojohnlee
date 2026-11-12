@@ -162,6 +162,30 @@ namespace ValheimHelper
             }
         }
 
+        /// <summary>
+        /// 집 곁 통나무(사용자 11-12): 일꾼이 친 통나무가 건축물 6m 안이면 미는 방향(TreeLog.RPC_Damage: hit.m_dir × m_pushForce × 2)을
+        /// 가장 가까운 조각 반대쪽(수평)으로 — 집 쪽으로 밀려 벽·바닥에 박히지 않게. 피해·쪼개짐은 그대로.
+        /// </summary>
+        [HarmonyPatch(typeof(TreeLog), "RPC_Damage")]
+        static class LogPushAwayFromHouse
+        {
+            static void Prefix(TreeLog __instance, HitData hit)
+            {
+                if (hit == null || !(hit.GetAttacker() is WorkerNpc)) return;
+                UnityEngine.Vector3 p = __instance.transform.position, away = UnityEngine.Vector3.zero;
+                float best = 6f;
+                foreach (var zdo in Senses.Nearby(p, best))
+                {
+                    if (!Buildings.IsPiece(zdo.GetPrefab())) continue;
+                    UnityEngine.Vector3 d = p - zdo.GetPosition();
+                    d.y = 0f;
+                    if (d.magnitude < best) { best = d.magnitude; away = d; }
+                }
+                if (away.sqrMagnitude < 0.01f) return;
+                hit.m_dir = away.normalized;
+            }
+        }
+
         /// <summary>진단(E020): 일꾼 20m 안에 통나무(TreeLog)가 생기면 기록 — 쓰러진 나무·쪼갠 반토막이 어디 생겼는지.</summary>
         [HarmonyPatch(typeof(TreeLog), "Awake")]
         static class LogSpawnDiag

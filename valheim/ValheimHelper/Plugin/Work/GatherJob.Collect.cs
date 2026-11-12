@@ -234,7 +234,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 자기 통나무 중 지금 쪼갤 수 있는 가장 가까운 것. 다음 나무·바위보다 먼저, 시킨 개수를 채워도 끝까지 쪼갠다.
-        /// 거르는 것은 FindInSight와 같다(건너뜀·위험 구역·막힘 기록·높이 걸림·도구·건축물 4m). 쪼갤 것이 안 남은 자리는 지운다.
+        /// 거르는 것은 FindInSight와 같다(건너뜀·위험 구역·막힘 기록·높이 걸림·도구), 건축물 4m는 안 거름(사용자 11-12 집 곁 통나무). 쪼갤 것이 안 남은 자리는 지운다.
         /// </summary>
         bool OwnLog(out ZDO best)
         {
@@ -246,16 +246,13 @@ namespace ValheimHelper
             {
                 bool any = false;
                 var nearby = Senses.Nearby(m_felled[i], OwnLogRange + 4f);
-                var pieces = new List<Vector3>();
-                foreach (var zdo in nearby)
-                    if (Buildings.IsPiece(zdo.GetPrefab())) pieces.Add(zdo.GetPosition());
                 foreach (var zdo in nearby)
                 {
                     ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
                     Vector3 p = zdo.GetPosition();
                     if (info == null || !info.Log || !m_ways.Contains(info.Tool) || !info.Produces.Contains(Item)) continue;
                     if (Utils.DistanceXZ(p, m_felled[i]) > OwnLogRange || Character.InInterior(p)) continue;
-                    if (m_skip.Contains(zdo.m_uid) || Avoided(p) || m_book.Excluded(p.x, p.z) || NearAny(p, pieces, 4f)) continue;
+                    if (m_skip.Contains(zdo.m_uid) || Avoided(p) || m_book.Excluded(p.x, p.z)) continue; // 건축물 곁도 침(사용자 11-12) — 미는 방향은 NpcPatches.LogPushAwayFromHouse
                     ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
                     if (tool == null || info.MinToolTier > tool.m_shared.m_toolTier) continue;
                     any = true;
