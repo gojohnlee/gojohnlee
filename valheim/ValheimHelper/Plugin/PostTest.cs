@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_posttest (호위병 경계 — 사용자 11-09): 거점 4m 앞 방문(양쪽 지붕)·8m 앞 바깥문 → 쉬는 호위병이 바깥문 바깥 옆 자리로 가서 섬 → 집 반대편 35m 밖 그레일링(멈춤)은 문 옆에선 안 보임
-    /// → 순찰(바로 시작)하며 집 둘레를 돌다 만나 처리 → 순찰 끝나면 문 옆으로. 순찰 순서·시간 한도는 Core PatrolTests.
+    /// → 순찰(바로 시작, 거점 둘레 크게)하며 점 근처에 옮긴 적을 만나 처리 → 순찰 끝나면 문 옆으로. 순찰 순서·시간 한도는 Core PatrolTests.
     /// </summary>
     static class PostTest
     {
@@ -72,13 +72,23 @@ namespace ValheimHelper
             checks.Add($"문 옆에선 안 감 (그레일링까지 {Utils.DistanceXZ(guard.transform.position, foe.transform.position):0}m, 싸움 {ai.Guard?.Engaged})",
                 !foe.IsDead() && Utils.DistanceXZ(guard.transform.position, ai.Post) < 2f);
 
-            // 3) 순찰 → 둘레를 돌다 그레일링 처리 → 순찰 끝 → 문 옆
+            // 3) 순찰(거점 둘레 크게, PatrolRoute 점) → 가운데쯤 점 10m 안쪽에 옮긴 그레일링 처리 → 순찰 끝 → 문 옆
+            foreach (var n in new[] { "Club", "ArmorLeatherChest", "ArmorLeatherLegs" }) guard.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1); // 거점 밖 먼 점은 일꾼이 안 도움 — 맨손이면 물러남
             int rounds = WorkerAI.PatrolRounds;
+            var pts = ai.RoutePoints;
+            checks.Add($"순찰 점 고름 ({WorkerAI.LastRoute})", pts.Count >= 3);
+            if (pts.Count > 0)
+            {
+                var sp = pts[pts.Count / 2];
+                Vector3 at = new Vector3((float)sp.X, 0f, (float)sp.Z);
+                at += (w.Home - at).normalized * 10f;
+                foe.transform.position = GatherTest.Ground(at) + Vector3.up * 0.3f;
+            }
             ai.GuardPatrol.Now();
-            yield return TestKit.WaitFor(() => foe == null || foe.IsDead(), 120f);
+            yield return TestKit.WaitFor(() => foe == null || foe.IsDead(), 300f);
             checks.Add($"순찰하며 몬스터 처리 ({TestKit.Waited:0.0}초)", TestKit.Ok);
-            yield return TestKit.WaitFor(() => WorkerAI.PatrolRounds > rounds && Utils.DistanceXZ(guard.transform.position, ai.Post) < 1.5f, 180f);
-            checks.Add($"순찰 끝나고 문 옆으로 ({TestKit.Waited:0.0}초, 순찰 {WorkerAI.PatrolRounds - rounds}번, 자리까지 {Utils.DistanceXZ(guard.transform.position, ai.Post):0.0}m)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => WorkerAI.PatrolRounds > rounds && Utils.DistanceXZ(guard.transform.position, ai.Post) < 1.5f, 400f);
+            checks.Add($"순찰 끝나고 문 옆으로 ({TestKit.Waited:0.0}초, 순찰 {WorkerAI.PatrolRounds - rounds}번, {WorkerAI.LastRound}, 자리까지 {Utils.DistanceXZ(guard.transform.position, ai.Post):0.0}m)", TestKit.Ok);
 
             // 4) 플레이어가 3m 앞을 지나가면 경례, 같은 사람은 60초 안에 다시 안 함(요청 11-09)
             Vector3 back = w.Player.transform.position;

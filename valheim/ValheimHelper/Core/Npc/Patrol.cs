@@ -36,8 +36,9 @@ namespace ValheimHelper.Core.Npc
         /// <summary>끊겼다 다시 쉼: 문 옆부터. 기다림은 그대로.</summary>
         public void Reset() { Point = -1; m_t = 0f; m_gaveUp = false; }
 
-        /// <summary>reached = 지금 목표(문 옆 또는 Point 점)에 닿음. skip = 그 점은 못 감(물 등) — 바로 다음 점.</summary>
-        public PatrolGoal Tick(float dt, bool reached, bool skip = false)
+        /// <summary>reached = 지금 목표(문 옆 또는 Point 점)에 닿음. skip = 그 점은 못 감(물 등) — 바로 다음 점.
+        /// count = 이번 바퀴 점 수(PatrolRoute, 기본 Points), limit = 이 점까지 시간 한도(먼 점은 길게, 기본 PointLimit).</summary>
+        public PatrolGoal Tick(float dt, bool reached, bool skip = false, int count = Points, float limit = PointLimit)
         {
             m_t += dt;
             if (Point < 0)
@@ -49,10 +50,10 @@ namespace ValheimHelper.Core.Npc
                 m_wait = Every; Point = 0; m_t = 0f; m_gaveUp = false;
                 return PatrolGoal.Point;
             }
-            if (reached || skip || m_t > PointLimit)
+            if (reached || skip || m_t > limit)
             {
                 m_t = 0f;
-                if (++Point >= Points) { Point = -1; Rounds++; return PatrolGoal.Post; }
+                if (++Point >= Math.Max(1, count)) { Point = -1; Rounds++; return PatrolGoal.Post; }
             }
             return PatrolGoal.Point;
         }

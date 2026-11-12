@@ -58,4 +58,18 @@ public class PatrolTests
         Patrol.PointAt(10, 10, 0, 5, 2, 20, out x, out z);
         Assert.Equal(10, x, 3); Assert.Equal(-10, z, 3);
     }
+
+    [Fact]
+    public void RouteCountAndLimit()
+    {
+        var p = new Patrol();
+        p.Now();
+        Assert.Equal(PatrolGoal.Point, p.Tick(0f, true, false, 8, 70f));
+        Assert.Equal(PatrolGoal.Point, p.Tick(Patrol.PointLimit + 1f, false, false, 8, 70f)); // 먼 점은 한도가 길다 — 아직 같은 점
+        Assert.Equal(0, p.Point);
+        for (int i = 0; i < 7; i++) Assert.Equal(PatrolGoal.Point, p.Tick(0f, true, false, 8, 70f));
+        Assert.Equal(7, p.Point);
+        Assert.Equal(PatrolGoal.Post, p.Tick(0f, true, false, 8, 70f));
+        Assert.Equal(1, p.Rounds);
+    }
 }

@@ -1231,6 +1231,8 @@ namespace ValheimHelper
                 }
             }
             GuardBusy = m_guard.Update(dt);
+            if (m_patrol.Walking && m_guard.Engaged && !m_patrolFighting) m_roundFights++; // 순찰 중 싸움 셈(diag)
+            m_patrolFighting = m_guard.Engaged;
             if (GuardBusy) { m_patrolTick = Time.time; return true; } // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다(호위병 순찰은 싸운 뒤 이어 감)
             switch (Current)
             {
@@ -1358,7 +1360,7 @@ namespace ValheimHelper
         public Vector3 Post => m_post;
 
         /// <summary>
-        /// 쉬는 호위병: 거점 집 문 옆에 서서 바깥을 보고, 10분마다 집 둘레(거점 반경 20m, 문 쪽부터 4점)를 돌고 문 옆으로(Core Patrol).
+        /// 쉬는 호위병: 거점 집 문 옆에 서서 바깥을 보고, 10분마다 거점 둘레를 크게(PatrolRoute 점, 달림 — 점이 없으면 옛 20m 4점) 돌고 문 옆으로(Core Patrol). 시간 안에 못 닿은 점은 다음 고르기에서 안쪽.
         /// 보이는 적은 경계(Guard)가 싸우고 그 뒤 순찰을 이어 감, 다른 일(따라가기·장비 챙기기)로 끊긴 뒤 다시 쉬면 문 옆부터. 25m 안 문이 없으면 거점(깃발 옆)을 자리로.
         /// </summary>
         void GuardPostTick(WorkerNpc npc, float dt)
@@ -1376,12 +1378,31 @@ namespace ValheimHelper
                 if (m_hasPost && !had) Plugin.Log.LogInfo($"{npc.NpcName}: 경계 자리 = 문 옆 {m_post:F1}(거점에서 {Utils.DistanceXZ(m_post, m_postHome):0.0}m)");
             }
             Vector3 pos = transform.position;
+            if (!m_patrol.Walking) RouteTick(npc, dt);
+            int count = m_route.Points.Count > 0 ? m_route.Points.Count : Patrol.Points;
             Vector3 goal = m_patrol.Walking ? PatrolPoint(m_patrol.Point) : m_post;
             bool skip = m_patrol.Walking && !PointOk(goal);
             int was = m_patrol.Point;
-            PatrolGoal g = m_patrol.Tick(dt, Utils.DistanceXZ(pos, goal) < (m_patrol.Walking ? 2f : 1.2f), skip);
-            if (g == PatrolGoal.Point && was < 0) Plugin.Log.LogInfo($"{npc.NpcName}: 집 둘레 순찰 시작");
-            if (g == PatrolGoal.Post && was >= 0 && !m_patrol.Walking) { PatrolRounds++; Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 끝 → 문 옆으로"); }
+            bool reached = Utils.DistanceXZ(pos, goal) < (m_patrol.Walking ? 2f : 1.2f);
+            float limit = m_patrol.Walking ? Mathf.Max(Patrol.PointLimit, 20f + Utils.DistanceXZ(was > 0 ? PatrolPoint(was - 1) : m_post, goal) / 4f) : Patrol.PointLimit;
+            PatrolGoal g = m_patrol.Tick(dt, reached, skip, count, limit);
+            if (was >= 0 && m_patrol.Point != was && !reached && !skip && m_route.Points.Count > 0)
+            {
+                m_roundMissed++;
+                m_route.Unreached(was); // 시간 안에 못 닿음 — 다음 고르기에서 그 방향은 안쪽 반경으로
+                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 점 {was} 못 닿음({Utils.DistanceXZ(pos, goal):0}m 남음) → 다음엔 안쪽");
+            }
+            if (g == PatrolGoal.Point && was < 0)
+            {
+                m_roundStart = Time.time; m_roundFights = 0; m_roundMissed = 0;
+                Plugin.Log.LogInfo($"{npc.NpcName}: 거점 둘레 순찰 시작(점 {count})");
+            }
+            if (g == PatrolGoal.Post && was >= 0 && !m_patrol.Walking)
+            {
+                PatrolRounds++;
+                LastRound = $"한 바퀴 {Time.time - m_roundStart:0}초·점 {count}·못 닿음 {m_roundMissed}·싸움 {m_roundFights}";
+                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 끝({LastRound}) → 문 옆으로");
+            }
             switch (g)
             {
                 case PatrolGoal.Stand:
@@ -1392,9 +1413,59 @@ namespace ValheimHelper
                     MoveToPoint(dt, m_post, 1f, Utils.DistanceXZ(pos, m_post) > 15f);
                     break;
                 default:
-                    MoveToPoint(dt, PatrolPoint(m_patrol.Point), 1.5f, false);
+                    MoveToPoint(dt, PatrolPoint(m_patrol.Point), 1.5f, m_route.Points.Count > 0); // 큰 바퀴는 달림(요청 11-12)
                     break;
             }
+        }
+
+        // ---- 순찰 점 고르기(요청 11-12 23:22: 거점 범위를 크게 한 바퀴, 점은 지형을 보고 Core PatrolRoute) ----
+        readonly PatrolRoute m_route = new PatrolRoute();
+        float m_routeSigAt, m_roundStart;
+        long m_routeSig;
+        int m_roundFights, m_roundMissed;
+        bool m_patrolFighting;
+        static readonly List<Piece> s_routePieces = new List<Piece>();
+        /// <summary>시험·diag: 마지막 바퀴 요약, 마지막 고르기(점·버린 방향과 까닭).</summary>
+        public static string LastRound, LastRoute;
+        public IReadOnlyList<PatrolRoute.Spot> RoutePoints => m_route.Points;
+
+        /// <summary>문 옆에 있을 때: 30초마다 거점 130m 안 조각 수·자리로 땅 표시를 만들고, 바뀌었거나 막은 점·1시간이면 다시 고름.</summary>
+        void RouteTick(WorkerNpc npc, float dt)
+        {
+            if (ZoneSystem.instance == null) return;
+            if (Time.time >= m_routeSigAt)
+            {
+                m_routeSigAt = Time.time + 30f;
+                s_routePieces.Clear();
+                Piece.GetAllPiecesInRadius(m_postHome, 130f, s_routePieces);
+                long sig = s_routePieces.Count * 1000003L + Mathf.RoundToInt(m_postHome.x) * 31L + Mathf.RoundToInt(m_postHome.z);
+                foreach (var pc in s_routePieces) if (pc != null) sig += Mathf.RoundToInt(pc.transform.position.x) * 7L + Mathf.RoundToInt(pc.transform.position.z) * 13L;
+                m_routeSig = sig;
+            }
+            if (!m_route.Due(dt, m_routeSig)) return;
+            Vector3 dir = m_post - m_postHome;
+            m_route.Build(m_postHome.x, m_postHome.z, dir.x, dir.z, RouteProbe);
+            var why = new List<string>();
+            for (int d = 0; d < PatrolRoute.Dirs; d++) if (m_route.DroppedWhy[d] != null) why.Add($"{d}:{m_route.DroppedWhy[d]}");
+            var rings = new List<string>();
+            foreach (var s in m_route.Points) rings.Add($"{s.Dir}:{PatrolRoute.Radii[s.Ring]:0}");
+            LastRoute = $"점 {m_route.Points.Count} [{string.Join(" ", rings)}] 버림 [{string.Join(" ", why)}]";
+            Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 점 고름 — {LastRoute}");
+        }
+
+        static PatrolSpot RouteProbe(double x, double z)
+        {
+            var p = new Vector3((float)x, 0f, (float)z);
+            if (!ZoneSystem.instance.GetGroundHeight(p, out float h)) return PatrolSpot.NoGround;
+            if (h < ZoneSystem.instance.m_waterLevel + 0.3f) return PatrolSpot.Water;
+            float H(float ox, float oz) => ZoneSystem.instance.GetGroundHeight(p + new Vector3(ox, 0f, oz), out float y) ? y : h;
+            if (PatrolRoute.Steep(h, H(0f, 2f), H(2f, 0f), H(0f, -2f), H(-2f, 0f), 2.0, 40.0)) return PatrolSpot.Steep;
+            p.y = h;
+            s_routePieces.Clear();
+            Piece.GetAllPiecesInRadius(p, 4f, s_routePieces);
+            if (s_routePieces.Count > 0) return PatrolSpot.Built;
+            if (Physics.Raycast(p + Vector3.up * 0.5f, Vector3.up, 30f, LayerMask.GetMask("piece"))) return PatrolSpot.Roof;
+            return PatrolSpot.Ok;
         }
 
         /// <summary>문 옆에 선 호위병: 플레이어가 4m 안을 지나가면 그쪽을 보고 경례(같은 사람 60초 한 번, 적이 보이면 안 함, Core Salute). 경례 중이면 참.</summary>
@@ -1428,6 +1499,13 @@ namespace ValheimHelper
 
         Vector3 PatrolPoint(int i)
         {
+            if (m_route.Points.Count > 0)
+            {
+                var s = m_route.Points[Mathf.Clamp(i, 0, m_route.Points.Count - 1)];
+                var q = new Vector3((float)s.X, m_postHome.y, (float)s.Z);
+                if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(q, out float qh)) q.y = qh;
+                return q;
+            }
             Vector3 dir = m_post - m_postHome;
             float r = Mathf.Max(Patrol.Radius, Utils.DistanceXZ(m_post, m_postHome) + 8f);
             Patrol.PointAt(m_postHome.x, m_postHome.z, dir.x, dir.z, i, r, out double x, out double z);
