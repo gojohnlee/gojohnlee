@@ -17,6 +17,8 @@ namespace ValheimHelper
         public static bool Quick;
         /// <summary>E049 용암 위 바닥 길 시험(vh_ashlandstest 나) FloorWalk): autotest.txt에 "floor"(스크립트 $env:VH_FLOOR='1').</summary>
         public static bool Floor;
+        /// <summary>시험 기본 집(te4st41 TheNewEra 집)을 거점으로 — woodtest·stonetest(HouseBase): autotest.txt에 "house"(스크립트 $env:VH_HOUSE='1'). 집 걸음이 고쳐질 때까지 기본 끔.</summary>
+        public static bool House;
         static readonly List<string> s_report = new List<string>();
         static readonly Queue<string> s_autoQueue = new Queue<string>();
         static readonly Dictionary<string, System.Func<IEnumerator>> s_tests = new Dictionary<string, System.Func<IEnumerator>>();
@@ -209,6 +211,7 @@ namespace ValheimHelper
                 else if (c == "min") Minimized.On = true; // 창 최소화·소리 끔(시험 동안 다른 게임)
                 else if (c == "quick") Quick = true;
                 else if (c == "floor") Floor = true;
+                else if (c == "house") House = true;
                 else if (c.StartsWith("biome=")) TestKit.SetRunBiome(c.Substring(6).Trim()); // 늪 회귀: 그 바이옴 평지에서 시험
                 else if (c.Length > 0) s_autoQueue.Enqueue(c);
             }

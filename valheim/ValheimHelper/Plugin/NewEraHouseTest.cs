@@ -49,30 +49,6 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
-        /// <summary>집 밖 빈 땅: 집에서 16~52m, 위에 건축 조각이 없고 2.5m 안에 건축 조각이 없는 곳. why = 못 쓴 까닭 셈.</summary>
-        static Vector3? OpenGround(out string why)
-        {
-            float wl = ZoneSystem.instance.m_waterLevel;
-            int water = 0, roof = 0, near = 0;
-            why = "";
-            for (float d = 16f; d <= 52f; d += 3f)
-                for (int k = 0; k < 16; k++)
-                {
-                    float a = k * Mathf.PI / 8f;
-                    Vector3 p = Center + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * d;
-                    if (!ZoneSystem.instance.GetGroundHeight(p, out float h) || h < wl + 1f) { water++; continue; }
-                    p.y = h;
-                    if (Physics.Raycast(p + Vector3.up * 40f, Vector3.down, out RaycastHit hit, 39.5f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.GetComponentInParent<Piece>() != null) { roof++; continue; }
-                    bool clear = true;
-                    foreach (var col in Physics.OverlapSphere(p + Vector3.up, 2.5f, ~0, QueryTriggerInteraction.Ignore))
-                        if (col.GetComponentInParent<Piece>() != null) { clear = false; break; }
-                    if (clear) return p;
-                    near++;
-                }
-            why = $"물·못 읽음 {water}·위 조각 {roof}·곁 조각 {near}";
-            return null;
-        }
-
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
         {
             Player pl = Player.m_localPlayer;
@@ -108,7 +84,7 @@ namespace ValheimHelper
             checks.Add($"1층 상자·화덕 찾음 (상자 {chest != null}, 화덕 {(fire != null ? Utils.GetPrefabName(fire.gameObject) : "없음")})", chest != null && fire != null);
             if (chest == null || fire == null) yield break;
 
-            Vector3? open = OpenGround(out string whyNot);
+            Vector3? open = HouseBase.OpenGround(Center, out string whyNot);
             checks.Add($"집 밖 깃발 자리 ({open?.ToString("F1") ?? "없음 — " + whyNot})", open.HasValue);
             if (!open.HasValue) yield break;
             Vector3 out_ = open.Value - Center; out_.y = 0f;

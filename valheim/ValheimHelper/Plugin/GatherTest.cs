@@ -59,8 +59,16 @@ namespace ValheimHelper
             // 1) 깃발과 NPC
             Workers.DespawnAll();
             yield return new WaitForSeconds(1f);
+            // 시험 기본 집(te4st41, 사용자 11-12): 광맥 시험·바이옴 회귀가 아니면 집 밖 깃발·집 1층 상자 둘로. 못 쓰면 옛 자리
+            HouseBase.Site site = null;
+            if (TestRunner.House && !spawnDeposit && TestKit.RunBiome == Heightmap.Biome.None)
+            {
+                site = new HouseBase.Site();
+                yield return HouseBase.Go(site);
+                if (!site.Ok) { TestRunner.Log($"시험 기본 집 못 씀({site.Why}) → 옛 자리"); site = null; }
+            }
             // 물가에서 돌면 상자가 물속에 놓여 일꾼이 못 간다(루프 회차 5 stonetest: 장비 상자 물 3.1m 아래) → 마른 초원으로 옮긴다
-            if (!DrySite(player.transform.position, player.transform.rotation, real: true))
+            if (site == null && !DrySite(player.transform.position, player.transform.rotation, real: true))
             {
                 Vector3 dry = FindDrySite(player.transform.position, player.transform.rotation);
                 if (dry != player.transform.position)
@@ -85,14 +93,20 @@ namespace ValheimHelper
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
 
             // 2) 상자 2개
-            if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다
-            Piece chestPiece = chestPrefab.GetComponent<Piece>();
-            Vector3 eqPos = Ground(home + rot * new Vector3(-4f, 0f, -1f));
-            Vector3 resPos = Ground(home + rot * new Vector3(4f, 0f, -1f));
-            player.PlacePiece(chestPiece, eqPos, rot, doAttack: false);
-            player.PlacePiece(chestPiece, resPos, rot, doAttack: false);
-            yield return new WaitForSeconds(1f);
-            Container eq = ChestAt(eqPos), res = ChestAt(resPos);
+            Vector3 eqPos, resPos;
+            Container eq, res;
+            if (site != null) { eq = site.Chest1; res = site.Chest2; eqPos = eq.transform.position; resPos = res.transform.position; }
+            else
+            {
+                if (GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f); // 없앤 상자는 프레임 끝에 사라짐: 그 전에 땅 높이를 재면 옛 상자 위에 놓인다
+                Piece chestPiece = chestPrefab.GetComponent<Piece>();
+                eqPos = Ground(home + rot * new Vector3(-4f, 0f, -1f));
+                resPos = Ground(home + rot * new Vector3(4f, 0f, -1f));
+                player.PlacePiece(chestPiece, eqPos, rot, doAttack: false);
+                player.PlacePiece(chestPiece, resPos, rot, doAttack: false);
+                yield return new WaitForSeconds(1f);
+                eq = ChestAt(eqPos); res = ChestAt(resPos);
+            }
             checks.Add("상자 2개 놓임", eq != null && res != null);
             if (eq == null || res == null) { End(player, god, checks, onHeard, heard); yield break; }
             // 광맥은 오래 캐서 곡괭이가 부러질 수 있다(바닐라 내구도) → 예비 하나 더
@@ -289,6 +303,7 @@ namespace ValheimHelper
                 TestRunner.Log($"구덩이 되돌림: 꼭짓점 {back}개");
                 TestRunner.Log($"남은 광맥 조각 {gone}개 지움");
             }
+            if (site != null) yield return HouseBase.Back(site.Start); // 다음 시험이 집 곁에 거점을 잡지 않게
             End(player, god, checks, onHeard, heard);
         }
 
