@@ -23,7 +23,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true };
             var made = new List<GameObject>();
             try { yield return Body(w, checks, made); }
             finally
@@ -79,6 +79,41 @@ namespace ValheimHelper
 
         static float TameLeft(Character c) => c.GetComponent<ZNetView>().GetZDO().GetFloat(ZDOVars.s_tameTimeLeft, c.GetComponent<Tameable>().m_tamingTime);
 
+        /// <summary>
+        /// 짐승이 걷는 줄(우리 쪽 -12m ~ 야생 쪽 +42m)이 트인 방향. 바닐라 따라오기(BaseAI.Follow→MoveTo)는 navmesh 길이 있어도
+        /// 큰 바위 모서리·가파른 턱에 몸이 끼면 그 자리에서 멈춘다(11-12: te4st41 집 거점 동쪽 Stone1_huge 곁 (271,457)에서 3)·6) 멧돼지 둘 다 속도 0).
+        /// 예전엔 라그나 자리로 방향을 정해 회차마다 달라 가끔 막힘 → 16방향 중 막힌 점이 가장 적은 쪽(같으면 원래 쪽에 가까운 것).
+        /// </summary>
+        static Vector3 PickSide(Vector3 home, Vector3 first)
+        {
+            int mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "blocker");
+            float wl = ZoneSystem.instance.m_waterLevel;
+            Vector3 best = first;
+            int bestBad = int.MaxValue, firstBad = -1;
+            float bestAngle = 0f;
+            for (int k = 0; k < 16; k++)
+            {
+                Vector3 dir = Quaternion.Euler(0f, k * 22.5f, 0f) * first;
+                int bad = 0;
+                float prev = float.NaN;
+                for (float d = -12f; d <= 42f; d += 1f)
+                {
+                    Vector3 p = home + dir * d;
+                    if (!ZoneSystem.instance.GetGroundHeight(p, out float h) || h < wl + 0.5f) { bad++; prev = float.NaN; continue; }
+                    if (!float.IsNaN(prev) && Mathf.Abs(h - prev) > 0.6f) bad++;   // 1m에 0.6m 넘는 턱(31°)
+                    prev = h;
+                    p.y = h;
+                    if (Mathf.Abs(d) < 3f) continue;   // 깃발·일꾼 자리
+                    if (Physics.CheckCapsule(p + Vector3.up * 0.4f, p + Vector3.up * 1.2f, 0.8f, mask, QueryTriggerInteraction.Ignore)) bad++;
+                }
+                float angle = k <= 8 ? k * 22.5f : (16 - k) * 22.5f;
+                if (k == 0) firstBad = bad;
+                if (bad < bestBad || (bad == bestBad && angle < bestAngle)) { best = dir; bestBad = bad; bestAngle = angle; }
+            }
+            TestRunner.Log($"짐승 줄 방향: 원래 쪽 막힘 {firstBad} → {bestAngle:0}° 돌린 쪽 막힘 {bestBad}");
+            return best;
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made)
         {
             LogPrefabs();
@@ -88,6 +123,9 @@ namespace ValheimHelper
             Vector3 home = w.Home;
             ClearOthers(home, made);
             Vector3 side = Vector3.Cross(Vector3.up, (w.Ragnar.transform.position - home).sqrMagnitude > 1f ? (w.Ragnar.transform.position - home).normalized : Vector3.forward);
+            side.y = 0f;
+            side = side.sqrMagnitude > 0.01f ? side.normalized : Vector3.right;
+            if (w.Site != null) side = PickSide(home, side); // 집 거점만(집 모드 끔은 옛 쪽 그대로 — 돌린 쪽에선 5) 야생이 안 골라짐, 11-12)
 
             // 1) 야생 멧돼지 — 일꾼(진영 Players)을 적으로 보는지, 6m 옆에서 경보·목표가 되는지
             var wild = Spawn("Boar", w.Ragnar.transform.position + side * 6f, made);
@@ -157,9 +195,11 @@ namespace ValheimHelper
             checks.Add($"먹이 주기 끝, 가축 상자 산딸기 5→{left}", TestKit.Ok && left == 4);
             if (pig != null) pig.GetComponent<MonsterAI>().SetPatrolPoint();   // 우리에 세워 둠 — 안 그러면 떠돌다 10m 밖에서 6) 데려오기 대상이 됨(회차 374)
 
-            // 5) 길들이기(요청 다-3): 집 30m 야생 멧돼지 → 쉬던 일꾼이 가축 상자 산딸기를 곁에 떨구고 시야 밖에서 지켜봄 → 먹고 길들이기가 줄고, 일꾼이 안 잡음
+            // 5) 길들이기(요청 다-3): 집 38m 야생 멧돼지 → 쉬던 일꾼이 가축 상자 산딸기를 곁에 떨구고 시야 밖에서 지켜봄 → 먹고 길들이기가 줄고, 일꾼이 안 잡음
             ClearOthers(home, made);
-            var wildPig = Spawn("Boar", home + side * 30f, made);
+            foreach (Collider col in Physics.OverlapSphere(home + side * 38f, 15f, LayerMask.GetMask("item")))   // 1)~3) 길들이기 칸에 떨군 산딸기가 38m 자리 10m 안에 남으면 멧돼지가 혼자 먹어 일꾼이 안 고름(11-12)
+            { ItemDrop d = col.GetComponentInParent<ItemDrop>(); if (d != null) ZNetScene.instance.Destroy(d.gameObject); }
+            var wildPig = Spawn("Boar", home + side * 38f, made);   // 30m면 집 곁(8~10m)에서 쉬는 일꾼이 멧돼지 시야(20m) 끝이라 가끔 경보 → 일꾼이 잡음(11-12 집 거점)
             var wtm = wildPig.GetComponent<Tameable>();
             yield return new WaitForSeconds(1f);
             float wl0 = TameLeft(wildPig);
@@ -208,6 +248,7 @@ namespace ValheimHelper
             float pd2 = Utils.DistanceXZ(wildPig.transform.position, pen.transform.position);
             // 멧돼지 떠돌기 범위 10m → 순찰점 둘레 20m 넘어야 돌아옴(바닐라, 회차 378)
             checks.Add($"10초 뒤에도 우리에 있음({pd2:0.0}m)", pd2 < wmai.m_randomMoveRange * 2f + 1f && LivestockJob.InPen(wildPig, pen.transform.position));
+            ClearOthers(home, made);   // 집 거점 95m 둘레에서 월드가 멧돼지를 다시 낳음(11-12) — 그걸 길들이러 가면 이 칸이 어긋남
             Departures.TestTameNow();
             checks.Add("머물러 둔 멧돼지·우리 멧돼지는 안 데리러 감", !Departures.IdleTame(w.Ragnar));
 

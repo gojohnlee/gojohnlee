@@ -94,7 +94,7 @@ namespace ValheimHelper
                 // E063 ② 진단: 다른 층 상자로 60초 걷기만 하던 꼴 — 10초마다 자리·높이·길
                 if ((int)(m_time / 10f) != (int)((m_time - dt) / 10f))
                     Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Prep 걷기 {m_time:0}초: 상자까지 {d:0.0}m·높이 {at.y - m_npc.transform.position.y:0.0}, 자리 {m_npc.transform.position:F1}, 목표 {m_hop.Goal(m_chest):F1}, {m_ai.PathDiag(m_hop.Goal(m_chest))}, 문길 {Steering(m_chest)}, {m_ai.BlockerAhead(at)}");
-                if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) { bool floor = m_ai.OtherFloor(at, 1.2f); m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_hop.Goal(m_chest)) : m_hop.Goal(m_chest), floor ? 0f : 1.8f, d > 10f); } // 다른 층 상자면 길 모퉁이를 따라감(E063: 도착 판정이 수평만 봐 2층 바닥 밑 1.4m·0.1m에서 "닿음"으로 60초 섬 — 닿음은 위 조건이 정함), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Prep")) { bool floor = m_ai.OtherFloor(at, 1.2f); m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_hop.Goal(m_chest)) : m_hop.Goal(m_chest), floor ? 0f : m_hop.Near(m_chest, 1.8f), d > 10f); } // 다른 층 상자면 길 모퉁이를 따라감(E063: 도착 판정이 수평만 봐 2층 바닥 밑 1.4m·0.1m에서 "닿음"으로 60초 섬 — 닿음은 위 조건이 정함), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로(Unload와 같음)
                 return true;
             }
             if (Through(dt, m_chest)) return true;

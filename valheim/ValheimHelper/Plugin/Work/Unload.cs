@@ -66,7 +66,7 @@ namespace ValheimHelper
             if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
             if (!Instant && (d > 2.5f || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f) && !(m_wayFor == m_chest && m_way.Busy) && !CanReach(at, d))
             {
-                if (!m_hop.Update(dt, m_npc, m_chest, d, "Unload")) { bool floor = m_ai.OtherFloor(at, 1.5f); m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_hop.Goal(m_chest)) : m_hop.Goal(m_chest), floor ? 0f : 1.8f, d > 10f); } // 다른 층 상자면 길 모퉁이를 따라감(E063, Prep과 같음), 거점 125m: 멀면 뜀(Prep과 같음), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로
+                if (!m_hop.Update(dt, m_npc, m_chest, d, "Unload")) { bool floor = m_ai.OtherFloor(at, 1.5f); m_ai.MoveToPoint(dt, floor ? m_ai.FloorStep(m_hop.Goal(m_chest)) : m_hop.Goal(m_chest), floor ? 0f : m_hop.Near(m_chest, 1.8f), d > 10f); } // 다른 층 상자면 길 모퉁이를 따라감(E063, Prep과 같음), 거점 125m: 멀면 뜀(Prep과 같음), 2.5초 거의 제자리면 옆으로, 5초면 상자 앞으로
                 return true;
             }
             if (m_wayFor != m_chest) { m_way = new DoorWay(); m_wayFor = m_chest; }
@@ -193,13 +193,70 @@ namespace ValheimHelper
         internal static bool TestNoBump;
 
         /// <summary>걸어갈 곳: 옆 접근점을 도는 중이면 거기, 아니면 상자.</summary>
-        public Vector3 Goal(Container chest) => m_side ?? chest.transform.position;
+        public Vector3 Goal(Container chest) => m_side ?? (m_accessFor == chest ? m_access : null) ?? chest.transform.position;
+
+        /// <summary>걸어가 멈출 거리: 같은 층 접근점이면 그 점 곁(0.5m), 아니면 near(상자 둘레).</summary>
+        public float Near(Container chest, float near) => !m_side.HasValue && m_accessFor == chest && m_access.HasValue ? 0.5f : near;
+
+        // 같은 층 접근점(11-12 vh_livestocktest 집 모드): 계단 밑 상자(TheNewEra 집 1층 (251.6,43.9,433.9))는 navmesh에서 상자 자리에 가장 가까운 곳이
+        // 바로 위 계단 면(2.6m 위, Pathfinding.SnapToNavMesh = SamplePosition 1.5→3m)이라 길 끝이 상자 위 계단 → 거기 서서 손이 안 닿고(높이 차 > 1),
+        // 사이를 계단이 가려(DoorWay.Blocked) 옆으로 돌기·옮기기도 꺼져 Unload 시간(90초)까지 섬. 상자 자리가 navmesh에서 1.2m 넘게 위로 붙으면
+        // 상자 둘레 0.9~2.5m에서 상자 층(±0.6m) navmesh 점 중 가장 가깝고 길이 끝까지 이어진 곳으로 걷는다. 못 찾으면 2초 뒤 다시(타일이 아직 안 구워졌을 수 있음).
+        const float AccessUp = 1.2f, AccessRetry = 2f;
+        Container m_accessFor;
+        Vector3? m_access;
+        float m_accessAt;
+
+        static readonly System.Reflection.MethodInfo s_getSettings = HarmonyLib.AccessTools.Method(typeof(Pathfinding), "GetSettings");
+        static readonly Dictionary<Pathfinding.AgentType, UnityEngine.AI.NavMeshQueryFilter> s_filters = new Dictionary<Pathfinding.AgentType, UnityEngine.AI.NavMeshQueryFilter>();
+
+        /// <summary>navmesh 위 가장 가까운 점(GetPath와 같은 필터 m_build.agentTypeID·m_areaMask). 바닐라 Pathfinding.FindValidPoint는 agentTypeID에
+        /// (int)AgentType(열거 값)을 넣어 다른 질의와 다른 navmesh를 봄 → 못 씀(11-12 디컴파일).</summary>
+        static bool Sample(Pathfinding pf, Pathfinding.AgentType agent, Vector3 p, float r, out Vector3 at)
+        {
+            if (!s_filters.TryGetValue(agent, out var f))
+            {
+                var s = HarmonyLib.Traverse.Create(s_getSettings.Invoke(pf, new object[] { agent }));
+                f = new UnityEngine.AI.NavMeshQueryFilter { agentTypeID = s.Field("m_build").GetValue<UnityEngine.AI.NavMeshBuildSettings>().agentTypeID, areaMask = s.Field("m_areaMask").GetValue<int>() };
+                s_filters[agent] = f;
+            }
+            bool ok = UnityEngine.AI.NavMesh.SamplePosition(p, out UnityEngine.AI.NavMeshHit hit, r, f);
+            at = ok ? hit.position : p;
+            return ok;
+        }
+
+        void UpdateAccess(WorkerNpc npc, Container chest)
+        {
+            if (m_accessFor == chest && (m_access.HasValue || Time.time - m_accessAt < AccessRetry)) return;
+            bool fresh = m_accessFor != chest;
+            m_accessFor = chest; m_accessAt = Time.time; m_access = null;
+            Pathfinding pf = Pathfinding.instance;
+            if (pf == null) return;
+            Vector3 at = chest.transform.position;
+            Pathfinding.AgentType agent = npc.Ai.m_pathAgentType;
+            // 바닐라 SnapToNavMesh처럼 1.5→3→6m(이 상자는 1.5m 안에 navmesh가 없고 3m에서 위 계단 면이 잡힘)
+            if (!Sample(pf, agent, at, 1.5f, out Vector3 snap) && !Sample(pf, agent, at, 3f, out snap) && !Sample(pf, agent, at, 6f, out snap)) return;
+            if (snap.y - at.y < AccessUp) return;
+            var cands = new List<Vector3>();
+            for (float r = 0.9f; r <= 2.6f && cands.Count == 0; r += 0.55f)
+                for (int k = 0; k < 16; k++)
+                {
+                    float a = k * Mathf.PI / 8f;
+                    if (Sample(pf, agent, at + new Vector3(Mathf.Cos(a) * r, 0.2f, Mathf.Sin(a) * r), 0.45f, out Vector3 p) && Mathf.Abs(p.y - at.y) < 0.6f) cands.Add(p);
+                }
+            cands.Sort((x, y) => Utils.DistanceXZ(x, at).CompareTo(Utils.DistanceXZ(y, at)));
+            foreach (var p in cands)
+                if (pf.HavePath(npc.transform.position, p, agent)) { m_access = p; break; }
+            if (fresh || m_access.HasValue)
+                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 상자 {at:F1}: navmesh 자리가 {snap.y - at.y:0.0}m 위 → 같은 층 접근점 {(m_access.HasValue ? $"{m_access.Value:F1}({Utils.DistanceXZ(m_access.Value, at):0.0}m)" : "없음")}, 후보 {cands.Count}");
+        }
 
         /// <returns>true = 이번에 옮김.</returns>
         public bool Update(float dt, WorkerNpc npc, Container chest, float d, string what)
         {
             Vector3 pos = npc.transform.position;
             if (m_for != chest) { m_clock.Reset(); m_for = chest; m_best = m_farMark = float.MaxValue; m_far = 0f; m_side = null; m_sides = 0; m_age = 0f; m_farResets = 0; m_slow = m_win = 0f; m_winAt = pos; }
+            UpdateAccess(npc, chest);
             m_age += dt;
             if (m_side.HasValue && Utils.DistanceXZ(m_side.Value, pos) < 0.4f) m_side = null; // 옆 접근점에 닿음 → 거기서 곧장
             // 옆으로 돌거나 통나무를 밀며 느리게 가면 "거의 제자리" 시간이 0부터라, 1m 넘게 안 가까워진 시간도 따로 센다(E060) — 5초면 상자 앞으로.

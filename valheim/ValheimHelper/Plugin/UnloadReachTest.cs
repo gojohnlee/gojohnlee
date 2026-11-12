@@ -35,6 +35,7 @@ namespace ValheimHelper
                 ChestHop.TestNoBump = false;
                 if (held != null) HopTest.Speeds(held, saved, false);
                 foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
+                if (w.Chest != null) foreach (Collider col in Physics.OverlapSphere(w.Chest.transform.position, 25f)) { var tl = col.GetComponentInParent<TreeLog>(); if (tl != null && tl.GetComponent<ZNetView>()?.IsValid() == true) ZNetScene.instance.Destroy(tl.gameObject); } // 놓은 통나무가 쪼개진 반토막도(11-12 집 모드: 남은 beech_log_half를 다음 vh_woodtest가 주우려다 집 바닥에서 막혀 순간이동 5~7번)
                 if (w.Ragnar != null) { w.Ragnar.GetInventory().RemoveItem("$item_wood", 999); DropMeads(w.Ragnar.GetInventory()); }
                 if (w.Chest != null) Chests.TryEdit(w.Chest, DropMeads);
                 TestKit.ClearBaseStock(w, "Wood");
