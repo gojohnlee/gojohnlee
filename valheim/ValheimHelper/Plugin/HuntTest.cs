@@ -48,6 +48,14 @@ namespace ValheimHelper
             Plugin.Log.LogInfo("DIAG 몸 m_ttl(초): " + string.Join(", ", parts));
         }
 
+        /// <summary>바닐라 휴식(Rested) 값 — 일꾼 체력 회복에 닿는지(사용자 11-12 23:58). 체력 회복은 SE_Stats.m_healthRegenMultiplier만 닿는다(Player.UpdateFood).</summary>
+        static void LogRested()
+        {
+            var se = ObjectDB.instance.GetStatusEffect(SEMan.s_statusEffectRested) as SE_Stats;
+            Plugin.Log.LogInfo(se == null ? "DIAG Rested: SE_Stats 아님/없음"
+                : $"DIAG Rested: 체력 회복 ×{se.m_healthRegenMultiplier:0.##}, 기력 회복 ×{se.m_staminaRegenMultiplier:0.##}, 에이트르 ×{se.m_eitrRegenMultiplier:0.##}, 기술 +{se.m_raiseSkillModifier:0.##}, 기본 {((SE_Rested)se).m_baseTTL:0}초");
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> boars)
         {
             w.CountsCreatures = true; // 생물을 부르거나 세는 시험
@@ -57,6 +65,7 @@ namespace ValheimHelper
             GameObject prefab = ZNetScene.instance.GetPrefab("Boar");
             checks.Add("멧돼지 프리팹", prefab != null);
             LogRagdollTtl();
+            LogRested();
             var ways = ResourceCatalog.WaysFor("RawMeat");
             checks.Add("고기는 사냥으로만 얻음(Hunt)", ways.Count == 1 && ways.Contains(ToolKind.Hunt));
             checks.Add("멧돼지는 사냥감", prefab != null && Prey.Is("RawMeat", prefab.GetComponent<Character>()));

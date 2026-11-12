@@ -288,7 +288,19 @@ namespace ValheimHelper
         float m_foodTimer, m_foodSaveTimer;
         bool m_saidNoFood;
 
-        /// <summary>소유자(호스트)에서 매 프레임: 음식 시간이 흐르고, 최대 체력이 바뀌고, 10초마다 음식만큼 회복한다.</summary>
+        /// <summary>바닐라 휴식(Rested) 체력 회복 배수 — 일꾼은 늘 휴식 상태로 침(사용자 11-12 23:58, 게임 1.0.21에서 ×1.5). Player.UpdateFood처럼 음식 회복에 곱한다.</summary>
+        static float RestedRegen
+        {
+            get
+            {
+                if (s_restedRegen < 0f && ObjectDB.instance != null)
+                    s_restedRegen = ObjectDB.instance.GetStatusEffect(SEMan.s_statusEffectRested) is SE_Stats se ? Mathf.Max(1f, se.m_healthRegenMultiplier) : 1f;
+                return s_restedRegen < 0f ? 1f : s_restedRegen;
+            }
+        }
+        static float s_restedRegen = -1f;
+
+        /// <summary>소유자(호스트)에서 매 프레임: 음식 시간이 흐르고, 최대 체력이 바뀌고, 10초마다 음식×휴식 배수만큼 회복한다.</summary>
         public void UpdateFood(float dt)
         {
             m_foodTimer += dt;
@@ -296,7 +308,7 @@ namespace ValheimHelper
             float heal = Meals.Tick(m_foodTimer, Game.m_foodRate);
             m_foodTimer = 0f;
             SetMaxHealth(Meals.MaxHealth);
-            if (heal > 0f && GetHealth() < GetMaxHealth()) Heal(heal, false);
+            if (heal > 0f && GetHealth() < GetMaxHealth()) Heal(heal * RestedRegen, false);
             if (++m_foodSaveTimer >= 10f) { m_foodSaveTimer = 0f; SaveFoods(); }
             // 음식이 끝나 칸이 비면 들고 다니는 음식을 그 자리에서 먹는다(사용자 11-09 "들고 가게", Prep.FoodToCarry)
             if (Meals.HasEmptySlot && !IsDead() && HasFood(GetInventory()))

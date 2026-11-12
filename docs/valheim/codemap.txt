@@ -110,6 +110,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (지금 게임 1.0.21 = assembly_valheim.dll 해시 앞 9f959c0396ec(11-10). 버전 안 붙은 옛 줄은 1.0.20(94998885B103) 때 확인 — 의심되면 다시 보고 버전 붙임, 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
+- 휴식(Rested) [1.0.21]: SE_Rested(SE_Stats) 프리팹 값 체력 회복 ×1.5·기력 ×2·에이트르 ×2·기술 +0.5·기본 480초(vh_hunttest DIAG Rested). 체력 회복 배수는 Player.UpdateFood(음식 회복 10초마다 × SEMan.ModifyHealthRegen)만 쓰고 Character·BaseAI.UpdateRegeneration(m_regenAllHPTime)은 안 씀 → 일꾼은 WorkerNpc.RestedRegen으로 음식 회복에 곱함
 - [1.0.21] ZDOMan: FindObjects는 구역 목록 + m_portalObjects[구역]을 같이 돌려줌. DestroyZDO는 포탈을 GetSectorIndex() 키로만 빼서 키가 어긋나면 목록에 남은 채 ZDOPool.Release → 다음 CreateNewZDO가 그 객체를 재사용(같은 ZDO 두 번 → CreateObjectsSorted가 인스턴스 둘). 막기: FarZones.DropFromPortals·Dedupe(회차 460). ZDO를 풀로 돌릴 때(ZDOPool.Release(ZDO) — DestroyZDO·불러오기 깨진 ZDO) 남은 것도 뺌(회차 471, 안 빼면 깃발 등이 포탈 덩어리에도 저장돼 불러오면 둘).
 - [11-12 회차 427, 1.0.20↔1.0.21 디컴파일 비교] Character(RPC_Damage 등, 미끄럼 줄만 다름)·Player(먹기 같음 — 통계 GetStat 인자·소프트 데스 시간만)·InventoryGui(수리 같음 — 끌어 놓기만)·Pickable·TerrainComp·MineRock·ZDOMan·ZoneSystem·ZNetScene는 같음 → 코드 주석 "게임 1.0.20·1.0.21". 시험 B1~B7이 1.0.21에서 PASS라 Harmony 이름 패치도 다 붙음.
 - [11-09 vh_chorestest] 벌통(Beehive, piece_beehive): 꿀 단계 ZDO s_level(최대 m_maxHoney 4, m_secPerUnit마다 1, 바이옴·덮개 m_maxCover 0.25 미만·낮만). Interact는 PrivateArea·플레이어 통계를 보고 Extract → RPC_Extract("RPC_Extract", 주인이 단계 수만큼 Honey를 m_spawnPoint 둘레 0.5m에 떨구고 0으로). 일꾼은 RPC를 바로 부름(HoneyJob).
