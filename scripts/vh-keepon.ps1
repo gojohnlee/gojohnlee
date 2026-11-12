@@ -15,13 +15,14 @@ Add-Type -Namespace VHK -Name Power -MemberDefinition '[DllImport("kernel32.dll"
 $m = New-Object Threading.Mutex($false, 'Global\VHKeepOn')
 if (-not $m.WaitOne(0)) { exit }   # 이미 하나 돎
 
-# 임시 조치(사용자 11-13): 11-13 18:30이 지나거나 루프가 할 일 없이 멈춰 기다리면 지킴이를 스스로 지운다
+# 임시 조치(사용자 11-13): 11-13 18:30이 지나거나 루프가 할 일을 다 끝내면 지킴이를 스스로 지운다(답 기다림이면 안 지움)
 # (stay-on 지움 → 루프는 원래대로 자리 비우면 끔, 작업 "VH keep on" 지움, 끝).
 $Deadline = [datetime]'2026-11-13 18:30'
 function Test-LoopIdle {
     $l = Get-Content (Join-Path $Dir 'loop.log') -Tail 200 -Encoding UTF8 -ErrorAction SilentlyContinue |
         Where-Object { $_ -match '회차 \d+ 시작|루프 시작|다시 돎|멈춤:|할 일 없음|답 기다림|멈춤 파일' } | Select-Object -Last 1
-    [bool]($l -and $l -match '멈춤:|할 일 없음|답 기다림|멈춤 파일')
+    # 답 기다림(멈춤:)은 할 일 없음이 아니다 — 사용자가 답할 수 있게 PC를 켜 둔다(사용자 11-13). 다 끝남·멈춤 파일만.
+    [bool]($l -and $l -match '할 일 없음|멈춤 파일')
 }
 function Remove-KeepOn($why) {
     Remove-Item (Join-Path $Dir 'stay-on') -Force -ErrorAction SilentlyContinue
