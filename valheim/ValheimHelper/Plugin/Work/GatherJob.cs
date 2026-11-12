@@ -18,6 +18,8 @@ namespace ValheimHelper
         public readonly int Target;
         /// <summary>같이 출발한 일꾼들의 같은 물건 일(자기 포함, Departures.ShareGather). 목표는 모두 같은 수, 합쳐서 채우면 끝. 혼자면 null. 저장 안 함.</summary>
         public List<GatherJob> Team;
+        /// <summary>이 일이 올린 지원 요청 이름(Brain.Help, Departures.ShareGather). 저장 안 함 — 일이 없어진 요청은 Departures.JoinHelp가 지운다.</summary>
+        public string HelpTask;
         public int Delivered { get; private set; }
         public string StepName => m_step.ToString();
         /// <summary>시험용: 가려고 고른 구역.</summary>

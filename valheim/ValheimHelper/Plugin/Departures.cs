@@ -1136,6 +1136,11 @@ namespace ValheimHelper
                 n.Ai.StartJob(job);
                 n.Say("gatherHelp", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = g.Target.ToString(), ["partner"] = lead.NpcName });
             }
+            if (g.Team == null && g.Remaining() > 0) // 손 빈 동료가 없으면 한 명 더 청함(decisions 7절 "지원 요청 캐기 쪽")
+            {
+                g.HelpTask = $"{GatherJob.ItemLabel(cmd.Item)} {g.Remaining()}";
+                Brain.Help.Add(g.HelpTask, 1);
+            }
         }
 
 
@@ -1181,6 +1186,7 @@ namespace ValheimHelper
             HelpQueue.Ask ask = Brain.Help.Next();
             if (ask == null) return false;
             WorkerNpc waiting = WorkerNpc.All.Find(w => w != null && w != npc && !w.IsDead() && w.Ai.Guard != null && w.Ai.Guard.HelpTask == ask.Task);
+            if (waiting == null && !ask.Task.StartsWith("호위:")) return JoinHelpGather(npc, ask.Task);
             if (waiting == null || !npc.Ai.Guard.Summon(waiting))
             {
                 Brain.Help.Postpone(ask.Task);
@@ -1189,6 +1195,34 @@ namespace ValheimHelper
             Plugin.Log.LogInfo($"{npc.NpcName} 지원 요청 '{ask.Task}' → {waiting.NpcName} 쪽으로 달려감(대기열 맨 앞)");
             return true;
         }
+        /// <summary>
+        /// 쉬는 일꾼 없게 ⓐ-2(decisions 7절 "지원 요청 캐기 쪽"): 캐기 요청("호위:"로 안 시작하는 일)을 받으면 그 요청을 올린 일꾼의 같은 물건 일에 ShareGather 규칙대로 낀다.
+        /// 그 일이 이미 없으면 요청을 지우고, 판단이 안 가면 미룸(Postpone). 낀 것은 Served로 채움.
+        /// </summary>
+        static bool JoinHelpGather(WorkerNpc npc, string task)
+        {
+            WorkerNpc lead = WorkerNpc.All.Find(w => w != null && w != npc && !w.IsDead() && w.Ai.Job is GatherJob lg && lg.HelpTask == task);
+            if (lead == null) { Brain.Help.Remove(task); return false; }
+            var g = (GatherJob)lead.Ai.Job;
+            HashSet<ToolKind> ways = GatherJob.WaysFor(npc, g.Item);
+            if (ways.Count == 0) { Brain.Help.Postpone(task); return false; }
+            var c = new ChatCommand { Kind = CommandKind.Item, Item = g.Item, Amount = g.Target };
+            DepartureInput input = Input(npc, c, ways, true);
+            input.Stock = 0;
+            DepartureResult r = Departure.Judge(input);
+            Plugin.Log.LogInfo($"{npc.NpcName} 지원 요청 '{task}' 같이 캐기 ({lead.NpcName}): {r.Action} ({r.Reason})");
+            if (r.Action != DepartAction.Go) { Brain.Help.Postpone(task); return false; }
+            var job = new GatherJob(npc, g.Item, g.Target, ways);
+            foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
+            if (g.Team == null) g.Team = new List<GatherJob> { g };
+            g.Team.Add(job);
+            job.Team = g.Team;
+            npc.Ai.StartJob(job);
+            npc.Say("gatherHelp", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(g.Item), ["n"] = g.Target.ToString(), ["partner"] = lead.NpcName });
+            if (Brain.Help.Served(task, 1)) g.HelpTask = null;
+            return true;
+        }
+
         /// <summary>자동 보충할 것: !채워 기준치 아래인 것 + 개인 상자 준비(상자 기능 ③ 나-2)에서 거점 상자로도 모자란 몫(같은 물건이면 더함).</summary>
         static List<Ingredient> RefillDue(Vector3 home)
         {
