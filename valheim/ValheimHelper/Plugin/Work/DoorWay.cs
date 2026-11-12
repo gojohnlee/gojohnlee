@@ -150,6 +150,14 @@ namespace ValheimHelper
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
                 m_phase = Phase.ToDoor; m_t = 0f;
                 m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false; m_sides = 0; m_pathed = false;
+                // 회차 477: 문 앞 곧은 길이 처음부터 막혔으면(집 상자 둘) 1초 막힘·비킴 없이 길찾기로
+                Vector3 to0 = m_out - me; to0.y = 0f;
+                if (to0.magnitude > 1.6f && Physics.CapsuleCast(me + Vector3.up * 0.6f, me + Vector3.up * 1.0f, 0.4f, to0.normalized, to0.magnitude - 0.5f, Mask, QueryTriggerInteraction.Ignore)
+                    && npc.Ai.FullPathLength(me, m_out) > 0f)
+                {
+                    m_pathed = true;
+                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기");
+                }
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감 (나 {me:F1}·벽 {WallHits(me, n)}/4·방금 나온 문 {d == m_outDoor}·목표 {point:F1})");
             }
             m_walking = m_exiting = true;
@@ -260,7 +268,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 안에서 문 앞으로 곧장 걷기. 1초 동안 0.2m도 안 가까워지면(E061: 사이에 제련로) 옆 두 쪽 중 1.5m 빈 쪽으로 비킨다 —
-        /// 문 앞 가는 곧은 길이 트이면(0.5초 뒤부터) 또는 2.5초면 그침. 지난번 비킴으로도 못 가까워졌으면 반대쪽부터(회차 346: 같은 쪽 1초 비킴 5번, 1.8m에 머묾).
+        /// 문 앞 가는 곧은 길이 트이면(0.5초 뒤부터) 또는 2.5초면 그침. 비킨 뒤에도 막히면 길찾기로 문 앞까지(회차 477).
         /// </summary>
         void ExitToward(float dt, WorkerNpc npc, Vector3 me)
         {
@@ -282,7 +290,7 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 {d:0.0}m에서 막힘 → 거기서 엶");
                 return;
             }
-            else if (m_stall > 1f && m_sides >= 2)
+            else if (m_stall > 1f && m_sides >= 1) // 회차 477: 집 상자 둘이 문 앞길을 막아 같은 쪽 비킴 2번(5초) 뒤에야 길찾기 → 한 번 비켜도 막히면 바로
             {
                 m_pathed = true;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 비킴 {m_sides}번에도 막힘({d:0.0}m) → 길찾기로 문 앞까지");

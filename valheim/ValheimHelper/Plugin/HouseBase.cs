@@ -117,6 +117,7 @@ namespace ValheimHelper
                 yield break;
             }
             TestRunner.Log($"시험 기본 집 (자리 {s.Center.x:0},{s.Center.z:0}): 조각 {s.Pieces}, 1층 상자 {chests.Count}개 중 {Utils.GetPrefabName(s.Chest1.gameObject)} {s.Chest1.transform.position:F1}·{Utils.GetPrefabName(s.Chest2.gameObject)} {s.Chest2.transform.position:F1}, 깃발 쪽 빈 땅 {open.Value:F1}");
+            PlayWalkLog.TestHome = s.Center; PlayWalkLog.TestOn = true; // 짐 든 채 문·계단 걸음 재기(behavior-house-play.txt, 회차 477)
             Plugin.Instance.StartCoroutine(Watch(s));
         }
 
@@ -161,6 +162,7 @@ namespace ValheimHelper
         internal static IEnumerator Leave(Site s)
         {
             s.Done = true;
+            PlayWalkLog.Flush(); PlayWalkLog.TestOn = false; PlayWalkLog.TestHome = null;
             int n = Count(s.Center, out int drops);
             var gone = new Dictionary<string, int>(); int kept = 0;
             foreach (var kv in s.Seen)
