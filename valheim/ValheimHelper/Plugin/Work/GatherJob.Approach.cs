@@ -457,7 +457,8 @@ namespace ValheimHelper
             if (m_lastHealth == null) m_lastHealth = HealthMark(zdo, view);
             // 큰 광맥은 다 캐기 전에 목표만큼 모일 수 있다(0.3.8 구리 시험: 10개 시켰는데 18개를 들고 계속 캠)
             // 자기 통나무는 개수를 채워도 끝까지 쪼갠다(사용자 11-01). 같이 캔 팀이 이미 목표를 넘었으면(Remaining ≤ 0) 연쇄 쓰러짐으로 더 캐지 않는다(회차 513 — 팀 135/20 FAIL)
-            bool keepLog = m_targetInfo.Log && NearFelled(m_targetPos) && (Team == null || Remaining() > 0);
+            // Remaining()은 내 들고 있는 것을 안 뺀다 → 내가 든 것까지 합쳐 목표가 찼는지 본다(회차 514 — 넘침 42: 들고 있는 것을 빼지 않아 계속 쪼갬)
+            bool keepLog = m_targetInfo.Log && NearFelled(m_targetPos) && (Team == null || Remaining() - Carried() > 0);
             if (Full() || Carried() >= Remaining() && !keepLog) { Go(Step.Return); return true; }
             // 진척(대상이 깎이거나 땅을 팜) 없이 30초면 다른 것으로. 큰 광맥은 오래 걸려도 계속 캔다.
             m_workIdle += Time.deltaTime;
