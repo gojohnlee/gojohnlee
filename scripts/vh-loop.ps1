@@ -512,6 +512,7 @@ function Get-PlayingGame {
 # 자리 비움 = 입력 없음 10분 + 켜진 게임 없음. 게임 때문에 못 끄면 30분마다 로그·status 한 줄.
 $script:GameTold = [datetime]::MinValue
 function Test-Away {
+    if (Test-Path (Join-Path $Dir 'stay-on')) { return $false }   # 사용자 11-13: 밖에 있을 땐 절대 안 끔·안 잠듦(scripts/vh-keepon.ps1이 둠)
     if ([VH.Power]::IdleMs() -le 600000) { return $false }
     $pg = Get-PlayingGame
     if (-not $pg) { return $true }
