@@ -123,9 +123,7 @@ namespace ValheimHelper
             Vector3 home = w.Home;
             ClearOthers(home, made);
             Vector3 side = Vector3.Cross(Vector3.up, (w.Ragnar.transform.position - home).sqrMagnitude > 1f ? (w.Ragnar.transform.position - home).normalized : Vector3.forward);
-            side.y = 0f;
-            side = side.sqrMagnitude > 0.01f ? side.normalized : Vector3.right;
-            if (w.Site != null) side = PickSide(home, side); // 집 거점만(집 모드 끔은 옛 쪽 그대로 — 돌린 쪽에선 5) 야생이 안 골라짐, 11-12)
+            if (w.Site != null) { side.y = 0f; side = PickSide(home, side.sqrMagnitude > 0.01f ? side.normalized : Vector3.right); } // 집 거점만(집 모드 끔은 옛 쪽 그대로 — 돌린 쪽에선 5) 야생이 안 골라짐, 11-12)
 
             // 1) 야생 멧돼지 — 일꾼(진영 Players)을 적으로 보는지, 6m 옆에서 경보·목표가 되는지
             var wild = Spawn("Boar", w.Ragnar.transform.position + side * 6f, made);

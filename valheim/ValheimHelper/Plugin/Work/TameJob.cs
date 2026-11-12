@@ -121,10 +121,11 @@ namespace ValheimHelper
             return pen != null;
         }
 
-        /// <summary>길들이기가 시작된(남은 시간이 줄어든) 야생 짐승 — 일꾼이 사냥·싸움에서 뺀다.</summary>
+        /// <summary>길들이기가 시작된(남은 시간이 줄어든) 야생 짐승, 또는 먹이를 던져 두고 먹기를 기다리는 짐승 — 일꾼이 사냥·싸움에서 뺀다(11-12: 던진 직후 7m에서 라그나가 그 멧돼지와 싸움, vh_livestocktest).</summary>
         internal static bool Taming(Character c)
         {
             if (c == null || c.IsTamed()) return false;
+            foreach (var kv in s_dropped) if (kv.Key == c) return true;
             Tameable t = c.GetComponent<Tameable>();
             ZNetView v = c.GetComponent<ZNetView>();
             if (t == null || v == null || v.GetZDO() == null) return false;
