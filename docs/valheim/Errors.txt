@@ -81,6 +81,7 @@ E083 / 관찰 중 — VH_HOUSE=1 묶음 unloadreach→woodtest에서 woodtest "�
   증상·조건: 라그나 "넣기 막힘" 되풀이 — 집 1층 돌 바닥(높이 43.9, 땅 0.6m·앞 1m 땅 -0.7m)에서 상자까지 8.0m 남고 목표 beech_log_half(246.9,43.9,450.3). 높이 걸린 통나무(262,55,462)를 쪼갠 반토막이 집 쪽으로 굴러 옴. unloadreach 끝 정리에 상자 25m 안 TreeLog 지우기를 넣어도 같음.
   근거: 같은 DLL woodtest 단독·첫 시험 PASS 14/14, 집 모드 끔 묶음 PASS. unloadreach의 "8.0m 묶임" 칸 막힘 꼴(같은 땅 설명)과 닮음.
   다음 확인: woodtest가 넣는 상자가 어느 것인지(집 계단 밑 상자면 회차 467 ChestHop 접근점과 닿음), unloadreach가 남기는 것(일꾼 자리·상자 내용·HopTest.Speeds 되돌림) 시작·끝 비교.
+  회차 471: 자기 통나무 4m 건너뜀 뺌·집 반대로 밀기(163554e) 뒤 같은 순서 unloadreach→woodtest 15/15·14/14 PASS — 재현 안 됨, 집 곁 통나무 재현 시험으로 계속 봄.
   덧: 회차 467 VH_HOUSE=1 livestocktest가 산딸기 치우기 전 두 판 "시험 코드 오류 NullReferenceException"(스택 못 남김), 고친 뒤 5판 PASS. 회차 468: 먹이 던진 야생 멧돼지와 싸움 2판 FAIL → TameJob.Taming(던진 뒤도)·Guard는 실제로 맞았을 때만 맞섬으로 고침.
 E084 / 관찰 중 — VH_HOUSE=1 vh_livestocktest "우리 멧돼지가 먹이를 먹음 (60초)"·"먹이 주기 끝, 가축 상자 산딸기 5→5"·"길들이기 끝, 상자 산딸기 4→4" FAIL(30/33, 회차 468 세 판 중 한 판)
   증상·조건: 집 모드 우리 먹이 주기에서 일꾼이 가축 상자 산딸기를 못 꺼냄(5→5). 같은 DLL 집 모드 다른 두 판·집 모드 끔 두 판 PASS 33/33.
