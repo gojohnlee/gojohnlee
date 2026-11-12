@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 454 · 11-12 · 내 집(TheNewEra)을 기본 시험 월드로 옮기기 시작
+
+**요약**
+
+- [11-12] 시험 기본 집 옮기기 ①: TheNewEra 집 조각 1,144개(상자 23·침대 2)를 파일로 뜨고(vh_houseexport), 기본 시험 월드 te4st41 (250,433)에 땅까지 맞춰 그대로 다시 세움(vh_houseimport) — 무너짐 0. [끝, 회차 454 — 커밋 3014a6e·5551623 · 시험 vh_houseexport PASS 1/1·vh_houseimport PASS 3/3·dotnet test 679/679]
+
+**자세히**
+
+- vh_houseexport: vh_house_TheNewEra 메인 베이스 30m 안 건축 조각 ZDO를 ZDO.Serialize(프리팹·회전·상자 안 물건 등 모든 값)로 %USERPROFILE%/vh-test-base/house-TheNewEra.txt에(사용자 집 자료라 저장소엔 안 올림) + 2m 칸 땅 높이. 가운데 땅 42.2, 조각 높이 -1.9~11.4m, 땅 -1.6~4.4m.
+- vh_houseimport: te4st41에서 스폰 400~1600m 초원·높이 폭 5m 밑 자리를 찾아(씨앗 같으면 늘 (250,43.5,433)) 땅을 칸마다 원래 높이로 고르고, 풀·나무 211개 치우고, CreateNewZDO+Deserialize로 1,144개 세움 → 20초 뒤 1144/1144 서 있음.
+- 처음 한 판은 ValueTuple이 게임에 없어 TypeLoadException → 작은 class로 바꿈.
+- 남은 것: 세운 월드를 vh-test-base 원본(te4st41)으로(옛 원본은 백업) → 시험들을 이 집으로.
+
 ### 요청 · 11-12 11:01 · 덧붙임: 나무·채집 시험도 내 집 상자로
 
 > 나무 베기·돌·채집도 결국 상자에 넣으니 이 집 둘레가 안 맞는 시험이 아니다 — "그대로 두는 시험"에서 나무·채집을 빼고 옮기는 쪽에 넣는다.<br>
