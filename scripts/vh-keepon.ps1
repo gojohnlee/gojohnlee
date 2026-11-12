@@ -24,7 +24,31 @@ function Test-LoopIdle {
     # 답 기다림(멈춤:)은 할 일 없음이 아니다 — 사용자가 답할 수 있게 PC를 켜 둔다(사용자 11-13). 다 끝남·멈춤 파일만.
     [bool]($l -and $l -match '할 일 없음|멈춤 파일')
 }
+# 텔레그램 알림(사용자 11-13): %USERPROFILE%\vh-loop\telegram.txt 첫 줄 봇 토큰, 둘째 줄 chat id(저장소에 안 올림). 없으면 조용히 건너뜀.
+function Send-Tg($text) {
+    $c = @(Get-Content (Join-Path $Dir 'telegram.txt') -Encoding UTF8 -ErrorAction SilentlyContinue | Where-Object { $_.Trim() })
+    if ($c.Count -lt 2) { Log "텔레그램 못 보냄(chat id 없음): $text"; return }
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $b = @{ chat_id = $c[1].Trim(); text = $text } | ConvertTo-Json -Compress
+        [void](Invoke-RestMethod "https://api.telegram.org/bot$($c[0].Trim())/sendMessage" -Method Post -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($b)) -TimeoutSec 30)
+        Log "텔레그램 보냄: $text"
+    } catch { Log "텔레그램 실패: $($_.Exception.Message)" }
+}
+$LoopLog = Join-Path $Dir 'loop.log'
+$script:Seen = @(Get-Content $LoopLog -Encoding UTF8 -ErrorAction SilentlyContinue).Count
+# 루프 기록에 새로 멈춤·질문·다 끝남이 찍히면 한 번씩 텔레그램.
+function Watch-LoopLog {
+    $all = @(Get-Content $LoopLog -Encoding UTF8 -ErrorAction SilentlyContinue)
+    if ($all.Count -lt $script:Seen) { $script:Seen = 0 }
+    $new = @($all | Select-Object -Skip $script:Seen); $script:Seen = $all.Count
+    foreach ($l in $new) {
+        if ($l -match '멈춤:|LOOP: NEED_USER') { Send-Tg "발헤임 루프가 멈춰 네 답을 기다려. $($l.Substring([math]::Min(15, $l.Length)))`n답: GitHub gojohnlee/gojohnlee valheim 브랜치 docs/valheim/UserRequest.txt 구분선 아래에 쓰면 5분 안에 다시 돎(PC는 켜 둠)." }
+        elseif ($l -match '할 일 없음') { Send-Tg "발헤임 루프: 할 일 다 끝남. 지킴이 지우고 원래대로(자리 비우면 PC 끔)." }
+    }
+}
 function Remove-KeepOn($why) {
+    Send-Tg "발헤임 지킴이 지움: $why. 이제 루프가 멈추면 자리 비울 때 PC가 꺼질 수 있어."
     Remove-Item (Join-Path $Dir 'stay-on') -Force -ErrorAction SilentlyContinue
     Log "지킴이 지움: $why (stay-on 지움, 작업 VH keep on 지움)"
     Unregister-ScheduledTask -TaskName 'VH keep on' -Confirm:$false -ErrorAction SilentlyContinue
@@ -36,7 +60,8 @@ Log "지킴이 시작($($Deadline.ToString('MM-dd HH:mm'))까지 또는 루프�
 $down = 0; $tick = 0
 while ($true) {
     if ((Get-Date) -ge $Deadline) { Remove-KeepOn "$($Deadline.ToString('HH:mm')) 지남" }
-    if (Test-LoopIdle) { Remove-KeepOn '루프가 할 일 없이 멈춤' }
+    Watch-LoopLog
+    if (Test-LoopIdle) { Remove-KeepOn '루프가 할 일을 다 끝냄' }
     [void][VHK.Power]::SetThreadExecutionState([uint32]'0x80000001')   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
     & shutdown /a 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) { Log '예약된 컴퓨터 끄기 취소함(shutdown /a)' }
