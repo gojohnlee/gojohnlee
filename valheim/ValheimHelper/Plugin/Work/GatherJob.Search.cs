@@ -97,9 +97,10 @@ namespace ValheimHelper
                 GoZone();
                 return true;
             }
+            // 그 물건이 나는 바이옴(게임 표 + 직접 본 곳, 사용자 11-13): 있으면 1)·2) 모두 그 바이옴 구역만, 덜 위험한 바이옴부터
+            int biomes = ItemBiomes.Of(Item) | k.BiomesOf(Item);
             // 1) 아는 곳(밝혀진 곳) 중 안 둘러본 구역: 거점 가까운 곳부터 15분까지
-            if (!m_exploring && m_searchTime <= SearchLimit
-                && SearchPlan.Next(Senses.ZoneOf(m_npc.Home), here, KnownRing, k, Scout.Explored, z => !ZoneAvoided(z) && !m_tried.Contains(z) && !ZoneExcluded(z) && Scout.Reachable(pos, z), out m_goalZone))
+            if (!m_exploring && m_searchTime <= SearchLimit && NextKnownZone(k, here, pos, biomes))
             {
                 if (!m_saidSearching && Delivered == 0 && Carried() == 0) { m_saidSearching = true; m_npc.Say("searching", Args()); }
                 GoZone();
@@ -108,19 +109,55 @@ namespace ValheimHelper
             // 2) 다 둘러봤거나 15분이 지났다: 새 땅(지도 경계)으로 30분까지. 밤에는 모르는 땅에 가지 않는다.
             if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
             if (EnvMan.IsNight()) return GiveUp(m_exploring ? "nightBack" : "nightNoExplore");
-            int biomes = k.BiomesOf(Item); // 그 물건이 나던 바이옴 쪽 경계부터
             if (Scout.NextFrontier(m_npc, 0, 0, biomes, m_avoid, out m_goalZone))
             {
                 if (!m_exploring)
                 {
                     m_exploring = true;
-                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 아는 곳에 없음 → 새 땅 탐험");
-                    if (!m_saidExplore) { m_saidExplore = true; m_npc.Say("exploreStart", Args()); }
+                    bool unseen = biomes != 0 && !MapHasBiome(biomes);
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 아는 곳에 없음 → 새 땅 탐험(바이옴 {BiomeNames.Of(biomes)}{(unseen ? ", 지도에 없음" : "")}, 첫 경계 {m_goalZone.X},{m_goalZone.Y} {BiomeNames.Of(ZoneBiome(m_goalZone))})");
+                    if (!m_saidExplore)
+                    {
+                        m_saidExplore = true;
+                        if (unseen) { var a = Args(); a["biome"] = BiomeNames.Of(BiomeNames.ByRisk(biomes)[0]); m_npc.Say("biomeUnseen", a); }
+                        else m_npc.Say("exploreStart", Args());
+                    }
                 }
                 GoZone();
                 return true;
             }
             return GiveUp("notFound");
+        }
+
+        /// <summary>구역 가운데의 바이옴(지도에 보이는 색).</summary>
+        static int ZoneBiome(ZoneXY z) => Scout.BiomeAt(Senses.ZoneCenter(z));
+
+        /// <summary>1) 밝혀진 곳 중 다음 구역. biomes가 있으면 그 바이옴 구역만, 덜 위험한 바이옴부터(그 안에선 거점 가까운 차례).</summary>
+        bool NextKnownZone(Knowledge k, ZoneXY here, Vector3 pos, int biomes)
+        {
+            ZoneXY home = Senses.ZoneOf(m_npc.Home);
+            System.Func<ZoneXY, bool> ok = z => !ZoneAvoided(z) && !m_tried.Contains(z) && !ZoneExcluded(z) && Scout.Reachable(pos, z);
+            if (biomes == 0) return SearchPlan.Next(home, here, KnownRing, k, Scout.Explored, ok, out m_goalZone);
+            foreach (int b in BiomeNames.ByRisk(biomes))
+                if (SearchPlan.Next(home, here, KnownRing, k, z => Scout.Explored(z) && (ZoneBiome(z) & b) != 0, ok, out m_goalZone))
+                {
+                    if (m_searchTime < 1f) Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 찾기 첫 구역 {m_goalZone.X},{m_goalZone.Y} {BiomeNames.Of(b)}(나는 곳 {BiomeNames.Of(biomes)})");
+                    return true;
+                }
+            return false;
+        }
+
+        /// <summary>거점 둘레 밝혀진 지도에 그 바이옴이 있는지.</summary>
+        bool MapHasBiome(int biomes)
+        {
+            ZoneXY home = Senses.ZoneOf(m_npc.Home);
+            for (int dy = -KnownRing; dy <= KnownRing; dy++)
+                for (int dx = -KnownRing; dx <= KnownRing; dx++)
+                {
+                    var z = new ZoneXY(home.X + dx, home.Y + dy);
+                    if (Scout.Explored(z) && (ZoneBiome(z) & biomes) != 0) return true;
+                }
+            return false;
         }
 
         // ---- 지하묘지 (⑦ 철: 고철은 늪 지하묘지의 진흙 더미에서만 나온다) ----

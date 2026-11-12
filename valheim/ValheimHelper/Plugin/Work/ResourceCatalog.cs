@@ -152,7 +152,7 @@ namespace ValheimHelper
         }
 
         /// <summary>월드가 바뀌면(ZNetScene 새로 생김) 다시 만든다.</summary>
-        public static void Reset() { s_byHash = null; s_obstacles.Clear(); Prey.Reset(); HiddenOres.Reset(); }
+        public static void Reset() { s_byHash = null; s_obstacles.Clear(); Prey.Reset(); HiddenOres.Reset(); ItemBiomes.Reset(); }
 
         static readonly Dictionary<int, ResourceInfo> s_obstacles = new Dictionary<int, ResourceInfo>();
 

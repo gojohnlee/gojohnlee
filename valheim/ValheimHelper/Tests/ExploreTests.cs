@@ -111,6 +111,9 @@ public class ExploreTests
     }
 
     [Fact]
+    public void BiomeByRisk() => Assert.Equal(new[] { 1, 8, 2, 16, 512 }, BiomeNames.ByRisk(512 | 16 | 8 | 2 | 1).ToArray());
+
+    [Fact]
     public void BiomeNameMask() => Assert.Equal("늪·검은 숲", BiomeNames.Of(BiomeNames.FromGame("Swamp") | BiomeNames.FromGame("BlackForest")));
 
     [Fact]

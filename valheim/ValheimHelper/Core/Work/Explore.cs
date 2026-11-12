@@ -129,6 +129,17 @@ namespace ValheimHelper.Core.Work
             return i >= 0 ? Bits[i] : 0;
         }
 
+        /// <summary>덜 위험한 차례(게임 진행 순서) — 여러 바이옴에서 나는 물건은 이 차례로 찾는다.</summary>
+        static readonly int[] Risk = { 1, 8, 2, 4, 16, 256, 512, 32, 64 };
+
+        /// <summary>비트 합 → 덜 위험한 바이옴부터 하나씩.</summary>
+        public static System.Collections.Generic.List<int> ByRisk(int mask)
+        {
+            var list = new System.Collections.Generic.List<int>();
+            foreach (int b in Risk) if ((mask & b) != 0) list.Add(b);
+            return list;
+        }
+
         /// <summary>비트 합 → "검은 숲·늪". 없으면 빈 문자열.</summary>
         public static string Of(int mask)
         {

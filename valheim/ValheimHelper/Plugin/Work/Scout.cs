@@ -143,7 +143,7 @@ namespace ValheimHelper
         {
             Knowledge k = Brain.Get();
             System.Func<ZoneXY, bool> prefer = null;
-            if (preferBiome != 0) prefer = n => (k.BiomeOf(n) & preferBiome) != 0;
+            if (preferBiome != 0) prefer = n => ((k.BiomeOf(n) | BiomeAt(Senses.ZoneCenter(n))) & preferBiome) != 0; // 밝혀진 이웃은 지도에 바이옴이 보임
             Vector3 from = npc.transform.position;
             return ExplorePlan.Next(Senses.ZoneOf(npc.Home), Senses.ZoneOf(from), MaxRing, k,
                 Explored, Land, dirX, dirY, prefer, z => (avoid == null || !avoid.Contains(z)) && Reachable(from, z), out zone);
