@@ -53,6 +53,8 @@ namespace ValheimHelper
         public bool Engaged => m_state != State.Calm;
         /// <summary>시험용: 불러 놓고 동료를 기다리는 중.</summary>
         public bool WaitingMate => m_waitMate != null;
+        /// <summary>이 호위가 기다리며 올린 지원 요청 이름(없으면 null). 쉬는 일꾼이 Next로 찾을 때 쓴다.</summary>
+        public string HelpTask => m_helpTask;
 
         /// <summary>도망을 그만둔다(갇혀서 깃발로 순간이동했을 때).</summary>
         /// <summary>시험용: 적 없이 to로 도망을 시작한다(적이 없어도 도망은 끝까지 감).</summary>
@@ -891,8 +893,24 @@ namespace ValheimHelper
             return (m_mateStall += dt) > MateStall ? $"{MateStall:0}초 진척 없음 ({d:0}m)" : null;
         }
 
+        /// <summary>기다리는 중 Next로 달려온 손 빈 일꾼(Come, 부른 쪽이 이 호위)이 AllyRange 안에 오면 지원 요청을 채운다(decisions 7절 "Next 소비처 기본안").</summary>
+        void CheckHelpArrived()
+        {
+            if (m_helpTask == null) return;
+            foreach (var h in WorkerNpc.All)
+            {
+                var g = h == null || h == m_npc || h.IsDead() ? null : h.Ai?.Guard;
+                if (g == null || g.m_state != State.Come || g.m_caller != m_npc) continue;
+                if (Vector3.Distance(h.transform.position, m_npc.transform.position) > AllyRange) continue;
+                Brain.Help.Served(m_helpTask, 1);
+                m_helpTask = null;
+                return;
+            }
+        }
+
         bool UpdateBack(float dt)
         {
+            CheckHelpArrived();
             if (m_waitMate != null && MateNotComing(dt) is string why)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 기다림 접음: {why}");

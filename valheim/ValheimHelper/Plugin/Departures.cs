@@ -774,6 +774,7 @@ namespace ValheimHelper
                 if (!FreeForChores(npc)) continue;
                 if (JoinRisky(npc) != null) continue; // 쉬는 일꾼 없게 ① 동료가 위험한 데 혼자 가면 같이(사용자 11-13)
                 if (!npc.Ai.Resting && JoinGather(npc)) continue; // 쉬는 일꾼 없게 ① 동료 일 돕기 먼저(사용자 11-13)
+                if (!npc.Ai.Resting && JoinHelp(npc)) continue; // 쉬는 일꾼 없게 ② 지원 요청 대기열 맨 앞(decisions 7절)
                 if (Brain.Refill.Count > 0 || Brain.Personal.Count > 0)
                 {
                     GatherJob job = NextRefillJob(npc, 0, true);
@@ -1169,6 +1170,24 @@ namespace ValheimHelper
                 return true;
             }
             return false;
+        }
+        /// <summary>
+        /// 쉬는 일꾼 없게 ②(사용자 11-13, decisions 7절 "Next 소비처 기본안"): 지원 대기열 맨 앞 요청을 올린 기다리는 호위 곁으로 손 빈 일꾼의 호위가 달려간다(Summon).
+        /// 그 호위를 못 찾거나 바쁘면 미룸(Postpone). 도착 확인은 Guard.CheckHelpArrived.
+        /// </summary>
+        internal static bool JoinHelp(WorkerNpc npc)
+        {
+            if (!ChoresOn || npc.Ai.Guard == null) return false;
+            HelpQueue.Ask ask = Brain.Help.Next();
+            if (ask == null) return false;
+            WorkerNpc waiting = WorkerNpc.All.Find(w => w != null && w != npc && !w.IsDead() && w.Ai.Guard != null && w.Ai.Guard.HelpTask == ask.Task);
+            if (waiting == null || !npc.Ai.Guard.Summon(waiting))
+            {
+                Brain.Help.Postpone(ask.Task);
+                return false;
+            }
+            Plugin.Log.LogInfo($"{npc.NpcName} 지원 요청 '{ask.Task}' → {waiting.NpcName} 쪽으로 달려감(대기열 맨 앞)");
+            return true;
         }
         /// <summary>자동 보충할 것: !채워 기준치 아래인 것 + 개인 상자 준비(상자 기능 ③ 나-2)에서 거점 상자로도 모자란 몫(같은 물건이면 더함).</summary>
         static List<Ingredient> RefillDue(Vector3 home)
