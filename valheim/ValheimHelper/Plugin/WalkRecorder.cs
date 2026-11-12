@@ -64,7 +64,8 @@ namespace ValheimHelper
             var rep = WalkTrace.Analyze(m_samples);
             var lines = new List<string> { $"# {name} {System.DateTime.Now:yyyy-MM-dd HH:mm} 줄 {m_samples.Count}", "# " + rep, "# 벽 붙음 " + NearPieces(),
                 "# 급회전 " + (rep.TurnAt.Count > 0 ? string.Join(" ", rep.TurnAt.ToArray()) : "없음"),
-                "# 충돌 " + (rep.BumpAt.Count > 0 ? string.Join(" ", rep.BumpAt.ToArray()) : "없음") };
+                "# 충돌 " + (rep.BumpAt.Count > 0 ? string.Join(" ", rep.BumpAt.ToArray()) : "없음"),
+                "# 멈칫 " + (rep.StuckAt.Count > 0 ? string.Join(" ", rep.StuckAt.ToArray()) : "없음") };
             foreach (var st in m_stands) lines.Add("# 섬 " + st);
             foreach (var jp in m_jumps) lines.Add("# 점프 " + jp);
             foreach (var ta in rep.TurnAt) // 급회전 앞뒤 1초의 걷기 상태(회차 416: 2층 계단 위 끝 122~163°가 뛰기로 셈)

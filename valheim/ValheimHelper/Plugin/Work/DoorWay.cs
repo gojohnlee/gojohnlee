@@ -23,7 +23,7 @@ namespace ValheimHelper
         public static int Opened, Entered, Exited, Closed;
 
         /// <summary>일꾼이 연 문(회차 313): 그 일꾼이 지붕 밖으로 나와 문에서 3m 넘게(지붕 아래여도 15m 넘게) 멀어지고 문틀에 아무도 없으면 닫는다. 플레이어가 연 문은 안 건드림.</summary>
-        sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen; public bool Shut; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
+        sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen; public bool Shut, Inside; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
         static readonly System.Collections.Generic.List<OpenedDoor> s_opened = new System.Collections.Generic.List<OpenedDoor>();
         static float s_next;
 
@@ -85,6 +85,9 @@ namespace ValheimHelper
             int r = Walk(dt, npc, target.name);
             if (r != 2) return r == 1;
             Entered++;
+            // 회차 450: 들어온 뒤 내가 연 문은 몇 걸음 지나 닫음(CloseBehind) — 열어 두면 문짝이 안쪽에 있어 나갈 때 문 앞에 서서 닫고 반대로 다시 열며 1.2~2.8초 섰음
+            var mine = s_opened.Find(o => o.Door == m_door);
+            if (mine != null && mine.By == npc && mine.Reopen == 0) mine.Inside = true;
             Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
             m_phase = Phase.None;
             return Blocked(npc, target) ? Retry(npc, target.name) : false;
@@ -309,7 +312,7 @@ namespace ValheimHelper
                 {
                     Vector3 me = o.By.transform.position;
                     float d = Utils.DistanceXZ(me, o.Mid);
-                    if (d < 3f || (d < 15f && Roofed(me))) continue; // 문 곁이거나 아직 지붕 아래(안) — 문 평면 반쪽으로는 못 가름: 집 뒤로 돈 일꾼도 안쪽 반에 있음(회차 313)
+                    if (o.Inside ? d < 2.5f || o.By.Ai.ExitingDoor : d < 3f || (d < 15f && Roofed(me))) continue; // 들어와 문짝 반경을 지났으면 닫음(나가려고 문으로 가는 중이면 그대로), 아니면 문 곁이거나 아직 지붕 아래(안) — 문 평면 반쪽으로는 못 가름: 집 뒤로 돈 일꾼도 안쪽 반에 있음(회차 313)
                 }
                 if (SomeoneAt(o.Mid, null)) continue;
                 v.InvokeRPC("UseDoor", false); // 열린 문이면 방향 무관하게 s_state = 0

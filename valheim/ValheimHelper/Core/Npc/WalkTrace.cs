@@ -28,6 +28,7 @@ namespace ValheimHelper.Core.Npc
             public float WorstRatio, MeanRatio, WallFrac, DoorPauseLongest, Stand, Walk, Run;
             /// <summary>급회전(되돌기) 자리 "t@x,z,y 멀어진m"(앞 8개, t = 되돌기 시작).</summary>
             public readonly List<string> TurnAt = new List<string>();
+            public readonly List<string> StuckAt = new List<string>(); // 진척 없음 자리 8개까지
 
             /// <summary>짧은 충돌 자리 "t@x,z,y 벽|몸 속도→속도 방향°"(앞 8개).</summary>
             public readonly List<string> BumpAt = new List<string>();
@@ -167,7 +168,14 @@ namespace ValheimHelper.Core.Npc
                 else if (legStart >= 0)
                 {
                     if (a.Goal < best - 0.05f) { best = a.Goal; bestT = a.T; stuckNow = false; }
-                    else if (!stuckNow && a.T - bestT > StuckSecs) { r.NoProgress++; stuckNow = true; }
+                    // 남은 길이 걸은 거리보다 훨씬 늘면 길을 새로 받은 것 — 그 값부터 다시 잼(회차 450: 뛰는 중 새 길을 진척 없음으로 셌음)
+                    else if (a.Goal - s[i - 1].Goal > Flat(a, s[i - 1]) + 0.3f) { best = a.Goal; bestT = a.T; stuckNow = false; }
+                    else if (!stuckNow && a.T - bestT > StuckSecs)
+                    {
+                        r.NoProgress++; stuckNow = true;
+                        if (r.StuckAt.Count < 8)
+                            r.StuckAt.Add(string.Format(CultureInfo.InvariantCulture, "{0:0.00}~{1:0.00}@{2:0.0},{3:0.0},{4:0.0} 남은 길 {5:0.0} 속도 {6:0.0} {7}", bestT, a.T, a.X, a.Z, a.Y, a.Goal, a.Speed, a.Job));
+                    }
                 }
 
                 if (a.Door == 1 && a.Speed < StandSpeed && inLeg)

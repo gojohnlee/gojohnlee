@@ -110,6 +110,18 @@ public class WalkTraceTests
     }
 
     [Fact]
+    public void NoProgress_NewPathWhileRunningNotCounted()
+    {
+        // 회차 450 vh_housetest: 뛰는 중 길을 새로 받아 남은 길이 4.5→7.4로 튐 → 그 뒤 줄어도 옛 최솟값 밑으로 안 가 진척 없음으로 셌음
+        var l = Straight(4);
+        float t = l[l.Count - 1].T, x = 1.6f, g = l[l.Count - 1].Goal + 3f;
+        for (int i = 1; i <= 8; i++) l.Add(S(t + i * 0.25f, x + i * 0.4f, 0f, g - i * 0.4f, 3.5f));
+        var r = WalkTrace.Analyze(l);
+        Assert.Equal(0, r.NoProgress);
+        Assert.Empty(r.StuckAt);
+    }
+
+    [Fact]
     public void NoProgress_CountedOncePerEpisode()
     {
         var l = Straight(4);
