@@ -303,7 +303,7 @@ namespace ValheimHelper
                 TestRunner.Log($"구덩이 되돌림: 꼭짓점 {back}개");
                 TestRunner.Log($"남은 광맥 조각 {gone}개 지움");
             }
-            if (site != null) yield return HouseBase.Back(site.Start); // 다음 시험이 집 곁에 거점을 잡지 않게
+            if (site != null) yield return HouseBase.Leave(site); // 다음 시험이 집 곁에 거점을 잡지 않게
             End(player, god, checks, onHeard, heard);
         }
 

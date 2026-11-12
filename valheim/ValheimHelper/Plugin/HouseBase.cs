@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,8 +16,10 @@ namespace ValheimHelper
             public Vector3 Center, Start;
             public Container Chest1, Chest2;
             public int Pieces;
+            public readonly Dictionary<ZDOID, string> Seen = new Dictionary<ZDOID, string>(); // 시작 때 조각(사라진 것 이름·자리 — 회차 457 1144→1017)
             public string Why = "";
             public bool Ok => Chest1 != null && Chest2 != null;
+            public bool Done; // Leave가 켬 → Watch 그침
         }
 
         /// <summary>집 밖 빈 땅: 집에서 16~52m, 위에 건축 조각이 없고 2.5m 안에 건축 조각이 없는 곳. why = 못 쓴 까닭 셈.</summary>
@@ -55,12 +57,14 @@ namespace ValheimHelper
             s.Center = at.Value;
             pl.TeleportTo(s.Center + new Vector3(HouseCopy.Radius + 8f, 2f, 0f), pl.transform.rotation, true);
             yield return TestKit.WaitFor(() => !pl.IsTeleporting(), 60f);
-            yield return new WaitForSeconds(5f); // 집 조각 1,144개가 다 생길 때까지
+            int last = -1; // 집 조각이 다 생길 때까지: 2초 사이 수가 그대로면 끝, 최대 20초(회차 457 두 번째 시험이 5초 뒤 996개로 셈)
+            for (int t = 0; t < 10; t++) { yield return new WaitForSeconds(2f); int n = Count(s.Center, out _); if (n == last) break; last = n; }
             var beds = new List<Bed>(); var chests = new List<Container>();
             foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
             {
                 if (Utils.DistanceXZ(p.transform.position, s.Center) > HouseCopy.Radius) continue;
                 s.Pieces++;
+                Remember(s, p);
                 if (p.GetComponent<Bed>() is Bed b) beds.Add(b);
                 if (p.GetComponent<Container>() is Container c) chests.Add(c);
             }
@@ -73,10 +77,71 @@ namespace ValheimHelper
             chests.Sort((a, b) => Utils.DistanceXZ(a.transform.position, s.Center).CompareTo(Utils.DistanceXZ(b.transform.position, s.Center)));
             if (chests.Count < 2) { s.Why = $"1층 상자 {chests.Count}개"; yield return Back(s.Start); yield break; }
             s.Chest1 = chests[0]; s.Chest2 = chests[1];
+            // 사용자 살림이 든 상자면 일꾼이 그 나무를 꺼내 "가져왔다"가 됨(회차 457 woodtest 쓰러뜨린 곳 0) → 시험 복사본이라 두 상자를 비움
+            int took = s.Chest1.GetInventory().NrOfItems() + s.Chest2.GetInventory().NrOfItems();
+            s.Chest1.GetInventory().RemoveAll(); s.Chest2.GetInventory().RemoveAll();
+            Count(s.Center, out int drops);
+            TestRunner.Log($"두 상자 비움(물건 {took}칸), 집 안 땅 물건 {drops}");
             Vector3 out_ = open.Value - s.Center; out_.y = 0f;
             pl.TeleportTo(open.Value + Vector3.up * 0.3f, Quaternion.LookRotation(out_.normalized), false); // 깃발은 플레이어 앞 4m = 집 반대쪽
             yield return new WaitForSeconds(2f);
             TestRunner.Log($"시험 기본 집 (자리 {s.Center.x:0},{s.Center.z:0}): 조각 {s.Pieces}, 1층 상자 {chests.Count}개 중 {Utils.GetPrefabName(s.Chest1.gameObject)} {s.Chest1.transform.position:F1}·{Utils.GetPrefabName(s.Chest2.gameObject)} {s.Chest2.transform.position:F1}, 깃발 쪽 빈 땅 {open.Value:F1}");
+            Plugin.Instance.StartCoroutine(Watch(s));
+        }
+
+        /// <summary>집 둘레(Radius) 생긴 건축 조각 수, drops = 땅 물건 수.</summary>
+        internal static int Count(Vector3 center, out int drops)
+        {
+            int n = 0; drops = 0;
+            foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
+                if (Utils.DistanceXZ(p.transform.position, center) <= HouseCopy.Radius) n++;
+            foreach (var d in Object.FindObjectsByType<ItemDrop>(FindObjectsSortMode.None))
+                if (Utils.DistanceXZ(d.transform.position, center) <= HouseCopy.Radius) drops++;
+            return n;
+        }
+
+        /// <summary>조각 하나를 Seen에: 이름 (8m 칸)@높이 틈(맨 아래 콜라이더 - 땅 높이, 회차 458 일꾼 없이도 무너짐 — 땅에 안 닿은 바닥 조각인지).</summary>
+        internal static void Remember(Site s, Piece p)
+        {
+            if (!(p.GetComponent<ZNetView>()?.GetZDO() is ZDO pz)) return;
+            Vector3 d = p.transform.position - s.Center;
+            float low = float.MaxValue;
+            foreach (var c in p.GetComponentsInChildren<Collider>()) if (!c.isTrigger) low = Mathf.Min(low, c.bounds.min.y);
+            string gap = low < float.MaxValue ? $" 틈{low - ZoneSystem.instance.GetGroundHeight(p.transform.position):0.00}" : "";
+            s.Seen[pz.m_uid] = $"{Utils.GetPrefabName(p.gameObject)} ({Mathf.Round(d.x / 8f) * 8f:0},{Mathf.Round(d.z / 8f) * 8f:0})@{d.y:0}{gap}";
+        }
+
+        /// <summary>시험 동안 1초마다 사라진 조각 ZDO를 세어 늘면 시각·새로 사라진 것 3개 한 줄(회차 457: wood 시험 중 북쪽 152개 무너짐, 458: 일꾼 없이도).</summary>
+        internal static IEnumerator Watch(Site s)
+        {
+            float t0 = Time.time; var gone = new HashSet<ZDOID>();
+            while (!s.Done && Time.time - t0 < 900f)
+            {
+                yield return new WaitForSeconds(1f);
+                var fresh = new List<string>();
+                foreach (var kv in s.Seen) if (!gone.Contains(kv.Key) && ZDOMan.instance.GetZDO(kv.Key) == null) { gone.Add(kv.Key); if (fresh.Count < 3) fresh.Add(kv.Value); }
+                if (fresh.Count == 0) continue;
+                Player pl = Player.m_localPlayer; WorkerNpc w = WorkerNpc.All.Count > 0 ? WorkerNpc.All[0] : null;
+                TestRunner.Log($"[{Time.time - t0:0}s] 집 조각 사라짐 → {gone.Count} (새로 {string.Join(", ", fresh.ToArray())}), 플레이어 {(pl ? pl.transform.position - s.Center : Vector3.zero):F0}, 일꾼 {(w ? w.transform.position - s.Center : Vector3.zero):F0}");
+            }
+        }
+
+        /// <summary>시험 끝: 집이 그대로인지 한 줄(조각·땅 물건 — 회차 457 wood 뒤 1144→996·땅 물건 130) 남기고 시작 자리로.</summary>
+        internal static IEnumerator Leave(Site s)
+        {
+            s.Done = true;
+            int n = Count(s.Center, out int drops);
+            var gone = new Dictionary<string, int>(); int kept = 0;
+            foreach (var kv in s.Seen)
+            {
+                if (ZDOMan.instance.GetZDO(kv.Key) != null) { kept++; continue; }
+                string key = kv.Value.Split(new[] { " 틈" }, System.StringSplitOptions.None)[0]; gone.TryGetValue(key, out int c); gone[key] = c + 1;
+            }
+            var top = new List<KeyValuePair<string, int>>(gone);
+            top.Sort((a, b) => b.Value.CompareTo(a.Value));
+            if (top.Count > 12) top.RemoveRange(12, top.Count - 12);
+            TestRunner.Log($"시험 기본 집 끝: 조각 {s.Pieces} → {n}(ZDO 남음 {kept}), 집 안 땅 물건 {drops}{(gone.Count > 0 ? ", 사라진 것(8m 칸 (x,z)@높이) " + string.Join(", ", top.ConvertAll(kv => $"{kv.Key}×{kv.Value}").ToArray()) : "")}");
+            yield return Back(s.Start);
         }
 
         /// <summary>플레이어를 시작 자리로.</summary>
