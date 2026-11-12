@@ -114,16 +114,26 @@ namespace ValheimHelper
         public static void DropFromPortals(ZDO zdo)
         {
             var portals = ZDOMan.instance.GetPortals();
-            var empty = new List<ZoneSystem.SectorIndex>();
+            List<ZoneSystem.SectorIndex> empty = null;
             foreach (var kv in portals)
                 if (kv.Value.Remove(zdo))
                 {
                     string msg = $"[포탈 목록에 남은 ZDO] {zdo.m_uid} 구역 {kv.Key.Sector}에서 뺌";
                     Plugin.Log.LogInfo(msg);
                     if (TestRunner.Running) TestRunner.Log("  " + msg);
-                    if (kv.Value.Count == 0) empty.Add(kv.Key);
+                    if (kv.Value.Count == 0) (empty ??= new List<ZoneSystem.SectorIndex>()).Add(kv.Key);
                 }
-            foreach (var k in empty) portals.Remove(k);
+            if (empty != null) foreach (var k in empty) portals.Remove(k);
+        }
+
+        /// <summary>
+        /// ZDO가 풀로 돌아갈 때 포탈 목록에 남은 것을 뺀다(지우기·불러오기 깨진 ZDO 모두 ZDOPool.Release(ZDO)를 지남). 안 빼면
+        /// 다음 CreateNewZDO가 그 객체를 다시 써 포탈 덩어리와 제 조각에 둘 다 저장 → 불러오면 둘(회차 470·471 restart 거점 깃발 317→318).
+        /// </summary>
+        [HarmonyPatch(typeof(ZDOPool), nameof(ZDOPool.Release), typeof(ZDO))]
+        static class ZDOPoolReleasePatch
+        {
+            static void Prefix(ZDO zdo) { if (ZDOMan.instance != null) DropFromPortals(zdo); }
         }
 
         static readonly AccessTools.FieldRef<ZDOMan, List<ZDO>[]> BySector = AccessTools.FieldRefAccess<ZDOMan, List<ZDO>[]>("m_objectsBySector");

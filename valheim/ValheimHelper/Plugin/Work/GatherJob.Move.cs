@@ -14,6 +14,8 @@ namespace ValheimHelper
         internal void TestPortalArrive(ZoneXY z) => ArrivedAt(z);
         internal void TestPortalHome() => PortalHome();
         internal string PortalCarryTag => m_portalTag;
+        /// <summary>시험용(vh_restart2 집 모드): 불러올 때 이어 받은 이름표 — 일터가 가까워 시험이 보기 전에 귀환해 한 몫을 돌려놓아도 남음.</summary>
+        internal string LoadedPortalTag { get; private set; }
 
         /// <summary>
         /// 저장에서 불러온 이름표(WorkItem.PortalTag): 한 몫을 실제로 들고 있을 때만 이어 간다. 그 이름표 포탈이 1개면 도착해 짝을 놓고,
@@ -23,7 +25,7 @@ namespace ValheimHelper
         {
             if (string.IsNullOrEmpty(tag)) return;
             if (!PortalBuilder.Carrying(m_npc.GetInventory())) { Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 포탈 {tag} 한 몫이 짐에 없어 잊음"); return; }
-            m_portalTag = tag;
+            m_portalTag = LoadedPortalTag = tag;
             int n = PortalBuilder.MineWithTag(tag);
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 포탈 {tag} 이어 감(그 이름표 {n}개{(n == 1 ? ", 도착하면 짝" : ", 귀환 때 한 몫 상자로")})");
         }
