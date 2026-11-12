@@ -47,6 +47,38 @@ function Watch-LoopLog {
         elseif ($l -match '할 일 없음') { Send-Tg "발헤임 루프: 할 일 다 끝남. 지킴이 지우고 원래대로(자리 비우면 PC 끔)." }
     }
 }
+# 회차 기록(사용자 11-13): 루프가 history.md에 새 회차 기록을 올리면 그 "자세히" 부분만(맨 위 제목 한 줄과) 텔레그램.
+# 루프 작업 트리는 건드리지 않고 푸시된 origin/valheim에서 읽는다.
+function Get-HistEntries {
+    $lines = @(git -C $Repo show 'origin/valheim:docs/valheim/history.md' 2>$null)
+    $i = 0; while ($i -lt $lines.Count -and $lines[$i] -notmatch '^## 회차 기록') { $i++ }
+    $out = @(); $cur = $null
+    for ($j = $i + 1; $j -lt $lines.Count -and $out.Count -lt 40; $j++) {
+        if ($lines[$j] -match '^## ') { break }
+        if ($lines[$j] -match '^### (.+)') { if ($cur) { $out += $cur }; $cur = @{ Title = $Matches[1].Trim(); Body = @() }; continue }
+        if ($cur) { $cur.Body += $lines[$j] }
+    }
+    if ($cur) { $out += $cur }
+    foreach ($e in $out) {
+        $k = [array]::IndexOf(@($e.Body | ForEach-Object { $_.Trim() }), '**자세히**')
+        $e.Detail = if ($k -ge 0) { (@($e.Body | Select-Object -Skip ($k + 1)) -join "`n").Trim() -replace '\*\*', '' } else { '' }
+    }
+    $out
+}
+$script:HistSeen = New-Object 'System.Collections.Generic.HashSet[string]'
+function Send-NewHistory($first) {
+    $es = @(Get-HistEntries)
+    if (-not $es.Count) { return }
+    if ($first) { foreach ($e in $es) { [void]$script:HistSeen.Add($e.Title) }; return }   # 사용자 11-13: 지난 것은 안 보내고 앞으로 끝난 것만
+    [array]::Reverse($es)   # 오래된 것부터
+    foreach ($e in $es) {
+        if (-not $script:HistSeen.Add($e.Title)) { continue }
+        if (-not $e.Detail) { continue }
+        $t = "$($e.Title)`n`n$($e.Detail)"
+        if ($t.Length -gt 3900) { $t = $t.Substring(0, 3900) + '…' }
+        Send-Tg $t
+    }
+}
 function Remove-KeepOn($why) {
     Send-Tg "발헤임 지킴이 지움: $why. 이제 루프가 멈추면 자리 비울 때 PC가 꺼질 수 있어."
     Remove-Item (Join-Path $Dir 'stay-on') -Force -ErrorAction SilentlyContinue
@@ -58,6 +90,8 @@ function Remove-KeepOn($why) {
 [IO.File]::WriteAllText((Join-Path $Dir 'stay-on'), "1", $Utf8)
 Log "지킴이 시작($($Deadline.ToString('MM-dd HH:mm'))까지 또는 루프가 할 일 없이 멈출 때까지)"
 $down = 0; $tick = 0
+[Console]::OutputEncoding = [Text.Encoding]::UTF8   # git show 한글
+Send-NewHistory $true
 while ($true) {
     if ((Get-Date) -ge $Deadline) { Remove-KeepOn "$($Deadline.ToString('HH:mm')) 지남" }
     Watch-LoopLog
@@ -68,6 +102,7 @@ while ($true) {
     if (-not (Test-Path (Join-Path $Dir 'stay-on'))) { [IO.File]::WriteAllText((Join-Path $Dir 'stay-on'), "1", $Utf8) }
     $tick++
     if ($tick % 3 -eq 0) {
+        Send-NewHistory $false
         $stop = (Test-Path (Join-Path $Repo 'docs\valheim\loop-stop.txt')) -or (Test-Path (Join-Path $Dir 'stop'))
         $run = @('VH loop', 'VH loop restart' | ForEach-Object { (Get-ScheduledTask -TaskName $_ -ErrorAction SilentlyContinue).State }) -contains 'Running'
         if ($run -or $stop) { $down = 0 }
