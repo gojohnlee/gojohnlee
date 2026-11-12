@@ -591,7 +591,7 @@ function Test-RoundResult($before, $after, $n) {
         }
         return $false
     }
-    $add = @(G diff -U0 $before $after -- docs/valheim/progress.txt | Where-Object { $_ -match "^\+[^+].*\[끝,?\s*회차\s*$n(?!\d)" })
+    $add = @(G diff -U0 $before $after -- docs/valheim/progress.txt | Where-Object { $_ -match "^\+[^+].*\[[^\[\]]*끝,?\s*회차\s*$n(?!\d)" })   # "[조각 이름 끝, 회차 N"도(11-13 회차 506 "[Add·Served·Remove 끝, 회차 506 …"을 못 세서 멈춤)
     # 시험 통과 = "PASS" 낱말 또는 앞뒤 같은 n/n(회차 385~387이 "33/33"만 적어 멈춤 오판 — 11-11)
     $passed = { param($t) ($t -match '\bPASS\b') -or (($t -match '시험') -and @([regex]::Matches($t, '(?<![\d/])(\d+)/(\d+)(?![\d/])') | Where-Object { $_.Groups[1].Value -eq $_.Groups[2].Value -and [int]$_.Groups[1].Value -gt 0 }).Count) }
     foreach ($l in $add) { if ($l -match '문서만' -or ((& $passed $l) -and (& $hasCommit $l))) { return $true } }
