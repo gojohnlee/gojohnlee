@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 509 · 11-13 · 지원 요청 — 손 빈 일꾼이 도우러 감(시험 PASS)
+
+**요약**
+
+- 쉬는 일꾼이 지원 요청 맨 앞을 기다리는 호위 곁으로 달려가고, 곁에 오면 요청이 채워짐 (vh_helpjointest 6/6 PASS)
+
+**자세히**
+
+- 커밋 9ecf42d. 새 시험 vh_helpjointest(Plugin/HelpJoinTest.cs): 1호가 요청을 올리고 Back으로 기다림 → 2호 JoinHelp → Come → 곁 1m에서 요청이 빠지고 1호 요청 칸이 지워짐. 기다리는 호위 없는 요청은 미룸 1.
+- 처음 두 번 FAIL은 시험 설정 문제였다: 시험 중엔 쉬는 일꾼 판단이 꺼져 있어(Departures.TestIdleChores) 켬, 도착 확인은 Back 기다림에서만 돌아서 Back으로 맞춤. 게임 로직은 안 바꿈.
+- 실수: 기존 JoinTest.cs(vh_jointest, 늦게 끼기 시험)를 덮어썼다가 git으로 되돌리고 새 이름 HelpJoinTest로 옮김. 기존 시험은 그대로.
+- 게임 로그의 "Unable to start Unity log writer" 한 줄은 BepInEx 쪽 메시지(예전부터 나옴).
+
 ### 회차 508 · 11-13 · 지원 요청에 손 빈 일꾼 연결(시험 전)
 
 **요약**
