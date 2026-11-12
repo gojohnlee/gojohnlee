@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 508 · 11-13 · 지원 요청에 손 빈 일꾼 연결(시험 전)
+
+**요약**
+
+- 손 빈 일꾼이 지원 대기열 맨 앞 요청을 집어 기다리는 호위 곁으로 달려가게 연결함. 게임 시험은 아직 안 함.
+
+**자세히**
+
+- Departures.JoinHelp: 쉬는 일꾼(FreeForChores, 쉬는 중 아님)이 Brain.Help.Next()를 받으면 그 요청("호위:적")을 올린 호위(Guard.HelpTask)를 찾아 Summon. 못 찾거나 바쁘면 Postpone.
+- Guard.CheckHelpArrived: 기다리는 호위는 달려온 호위(Come, 부른 쪽이 나)가 AllyRange 안에 오면 Served로 채움.
+- Core 시험 dotnet test 709/709 통과, Plugin 빌드 오류 0. 새 vh_ 게임 시험 없음 → 다음 회차가 시험 먼저.
+- 커밋 e563a2e (decisions 7절 "Next 소비처 기본안" 그대로).
+
 ### 회차 507 · 11-13 · 지원 요청을 누가 도우러 가나 정함(문서만)
 
 **요약**
