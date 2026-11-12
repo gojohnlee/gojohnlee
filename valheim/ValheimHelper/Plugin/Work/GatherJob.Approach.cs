@@ -273,12 +273,44 @@ namespace ValheimHelper
         bool NearSkip(Vector3 dest, out string why)
         {
             Vector3 from = m_npc.transform.position;
-            if (!LandNear(dest, out why, true, StuckHop.NearCandidates(from.x, from.z, dest.x, dest.z))) return false;
+            if (!LandNear(dest, out why, true, PlausibleNear(from, dest))) return false;
             NearSkips++;
             LastNearSkipFrom = from;
+            LastNearSkipDest = dest;
             WorkerAI.StuckTeleports++;
             m_npc.Say("rescue");
             return true;
+        }
+
+        /// <summary>마지막으로 플레이어 눈에 보인 자리·시각(WatchSeen이 0.5초마다, 있을 법한 자리 사용자 11-12). 본 적 없으면 m_seenAt &lt; 0.</summary>
+        Vector3 m_seenPos;
+        float m_seenAt = -1f, m_seenCheck;
+
+        void WatchSeen(float dt)
+        {
+            m_seenCheck -= dt;
+            if (m_seenCheck > 0f) return;
+            m_seenCheck = 0.5f;
+            Vector3 p = m_npc.transform.position;
+            if (StuckWatch.Seen(p)) { m_seenPos = p; m_seenAt = Time.time; }
+        }
+
+        /// <summary>시험용: 마지막 근처 막힘 건너뛰기 때 마지막으로 보인 자리·지난 초(본 적 없으면 -1).</summary>
+        public static Vector3 LastNearSkipSeenPos;
+        public static float LastNearSkipSinceSeen = -1f;
+        public static Vector3 LastNearSkipDest;
+
+        /// <summary>근처 막힘 건너뛰기 후보를 있을 법한 자리 순으로(StuckHop.Plausible, 사용자 11-12): 가던 쪽만, 마지막으로 보인 뒤 달려 갈 수 있던 범위 안, 안 보이는 자리 먼저.</summary>
+        IEnumerable<StuckHop.XZ> PlausibleNear(Vector3 from, Vector3 dest)
+        {
+            m_seenCheck = 0f;
+            WatchSeen(0f); // 지금 보이는지 바로 재고
+            float since = m_seenAt < 0f ? -1f : Time.time - m_seenAt;
+            LastNearSkipSeenPos = m_seenPos;
+            LastNearSkipSinceSeen = since;
+            StuckHop.XZ? seenAt = m_seenAt < 0f ? (StuckHop.XZ?)null : new StuckHop.XZ(m_seenPos.x, m_seenPos.z);
+            return StuckHop.Plausible(StuckHop.NearCandidates(from.x, from.z, dest.x, dest.z), from.x, from.z, dest.x, dest.z,
+                seenAt, since, m_npc.m_runSpeed, c => StuckWatch.Seen(new Vector3((float)c.X, from.y, (float)c.Z)));
         }
 
         /// <summary>

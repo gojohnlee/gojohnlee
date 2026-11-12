@@ -30,6 +30,7 @@ namespace ValheimHelper
             finally
             {
                 running = false;
+                StuckWatch.TestSeen = null;
                 if (held != null) Speeds(held, saved, false);
                 TestKit.Restore(w);
             }
@@ -91,10 +92,18 @@ namespace ValheimHelper
             // 근처 막힘 건너뛰기(사용자 결정 10-23): NearStuckSeconds(5초, 사용자 10-31) 넘게 못 가면 막힌 곳 너머 몇 m로 옮기고 구조 대사, 짐 그대로
             int skips0 = GatherJob.NearSkips, items0 = w.Ragnar.GetInventory().NrOfItems();
             Vector3 before = w.Ragnar.transform.position;
+            // 있을 법한 자리(사용자 11-12): 묶인 자리만 보이게 강제 — 보는 중(0초)이면 여유 4.5m 안·가던 쪽·안 보이는 자리에 내려야 함
+            StuckWatch.TestSeen = p => Utils.DistanceXZ(p, before) < 2f;
             yield return TestKit.WaitFor(() => GatherJob.NearSkips > skips0 || GatherJob.Rescues > rescues0, 70f);
             float skipAt = TestKit.Waited;
             bool skipped = GatherJob.NearSkips > skips0;
             Vector3 after = w.Ragnar.transform.position;
+            StuckWatch.TestSeen = null;
+            float since = GatherJob.LastNearSkipSinceSeen, fwd = (after.x - before.x) * (GatherJob.LastNearSkipDest.x - before.x) + (after.z - before.z) * (GatherJob.LastNearSkipDest.z - before.z);
+            float fromSeen = Utils.DistanceXZ(after, GatherJob.LastNearSkipSeenPos), reach = since * w.Ragnar.m_runSpeed + (float)Core.Work.StuckHop.ReachSlack;
+            TestRunner.Log($"있을 법한 자리: 마지막으로 보인 뒤 {since:0.0}초, 보인 자리에서 {fromSeen:0.0}m(범위 {reach:0.0}m), 가던 쪽 내적 {fwd:0.0}");
+            checks.Add($"내린 자리가 가던 쪽·걸어갈 수 있던 범위 안 ({fromSeen:0.0}m ≤ {reach:0.0}m)", skipped && since >= 0f && since < 1.5f && fwd >= 0f && fromSeen <= reach + 0.3f);
+            checks.Add("내린 자리가 시야 밖", skipped && Utils.DistanceXZ(after, before) >= 2f);
             float moved = Utils.DistanceXZ(before, after);
             bool ground = ZoneSystem.instance.GetGroundHeight(after, out float gh) && Mathf.Abs(after.y - gh) < 1.5f;
             TestRunner.Log($"근처 막힘 건너뛰기: {skipAt:0}초, {moved:0.0}m 옮김, 땅과 {after.y - gh:0.0}m, 짐 {items0} → {w.Ragnar.GetInventory().NrOfItems()}");

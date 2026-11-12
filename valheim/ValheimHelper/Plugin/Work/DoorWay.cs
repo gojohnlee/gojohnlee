@@ -17,7 +17,7 @@ namespace ValheimHelper
         Vector3 m_out, m_in, m_mouth; bool m_hall, m_lined; Vector3 m_hallN; float m_hallEnd; float m_lineCheck; // m_mouth: 문 앞이 복도면 복도 입구(들어갈 때 거기부터 곧장, E059)
         float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN;
         int m_swing, m_orig; // m_swing 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064). m_orig = 그때 남이 열어 둔 문이면 원래 s_state
-        float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near, m_pre; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
+        float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for;
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
         public static int Opened, Entered, Exited, Closed;
@@ -77,7 +77,7 @@ namespace ValheimHelper
                 m_out = mid + n * Step;
                 m_in = mid - n * Step;
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
-                m_phase = Phase.ToDoor; m_t = 0f; m_diagNext = 0f; m_lineCheck = 0f; m_pre = false;
+                m_phase = Phase.ToDoor; m_t = 0f; m_diagNext = 0f; m_lineCheck = 0f;
                 m_hall = Mouth(mid, n, out m_mouth); m_lined = false; m_hallN = n; m_hallEnd = Vector3.Dot(m_mouth - mid, n) - 0.8f;
                 if (m_hall) m_limit = PhaseLimit + (Utils.DistanceXZ(me, m_mouth) + Utils.DistanceXZ(m_mouth, m_out)) / 1.5f;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} {target.name} 앞 벽 → 문 {m_door.name}({Utils.DistanceXZ(me, m_door.transform.position):0.0}m)으로");
@@ -127,11 +127,7 @@ namespace ValheimHelper
                 m_out = aIn ? a : b; m_in = aIn ? b : a; // 이름은 들어갈 때 기준: m_out = 다가갈 곳, m_in = 지나갈 곳
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
                 m_phase = Phase.ToDoor; m_t = 0f;
-                m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false; m_swing = 0;
-                // 회차 448: 문짝이 내 쪽으로 열려 있으면 문 앞까지 걷는 동안 미리 닫음 — 문 앞에 서서 닫고 다시 열면 1.2~1.8초 섬(vh_housetest 3·3-3단계 진척 없음)
-                int st = dv.GetZDO().GetInt(ZDOVars.s_state);
-                m_pre = st != 0 && st == -Mine(me) && !SomeoneAt(Middle(d), npc);
-                if (m_pre) SwingClose(npc, dv, st, "나가기(미리)");
+                m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감 (나 {me:F1}·벽 {WallHits(me, n)}/4·방금 나온 문 {d == m_outDoor}·목표 {point:F1})");
             }
             m_walking = m_exiting = true;
@@ -182,17 +178,12 @@ namespace ValheimHelper
                     }
                     return 1;
                 }
-                bool pre = m_pre && m_swing == 1; m_pre = false; // 걸어오며 미리 닫음 — 닫히는 중이라 못 열면 아래 m_swing 1 줄이 될 때까지 다시 엶
-                if (!pre) m_swing = 0;
+                m_swing = 0;
                 if (Dungeons.Open(npc, m_door))
                 {
                     Opened++;
-                    if (pre) Track(m_door, npc, m_orig);
-                    else
-                    {
-                        Track(m_door, npc);
-                        m_swing = 2; // 방금 내가 엶 — 바꿔 열기 안 함(회차 347: 연 직후 s_state가 반대로 읽혀 들어갈 때도 닫음)
-                    }
+                    Track(m_door, npc);
+                    m_swing = 2; // 방금 내가 엶 — 바꿔 열기 안 함(회차 347: 연 직후 s_state가 반대로 읽혀 들어갈 때도 닫음)
                 }
                 m_phase = Phase.Through; m_t = 0f;
             }
@@ -202,12 +193,13 @@ namespace ValheimHelper
             int state = v.GetZDO().GetInt(ZDOVars.s_state);
             if (m_swing == 0 && state != 0)
             {
-                int mine = Mine(me);
+                int mine = Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
                 if (state == -mine && SomeoneAt(Middle(m_door), npc)) { npc.Ai.StopMoving(); return 1; } // 회차 352: 문간에 플레이어가 서 있으면 닫지 않고 비킬 때까지 기다림(바꿔 열기가 문간의 플레이어 앞에서 문을 닫음)
                 if (state == -mine)
                 {
-                    SwingClose(npc, v, state, what);
-                    m_t = 0f;
+                    v.InvokeRPC("UseDoor", false);
+                    var had = s_opened.Find(o => o.Door == m_door); m_orig = had != null ? had.Reopen : state; m_swing = 1; // 내가 연 문이면 had.Reopen 0 — 닫는 사이 CloseBehind가 항목을 지우므로 넘겨줌 m_t = 0f; m_swingNext = Time.time + 0.3f;
+                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문짝이 내 쪽으로 열림(s_state {state}) → 닫고 반대로 다시 엶");
                     npc.Ai.StopMoving();
                     return 1;
                 }
@@ -228,18 +220,6 @@ namespace ValheimHelper
                 return 1;
             }
             return 2;
-        }
-
-        /// <summary>m_door 앞 me가 문 forward 쪽이 아니면 1(바닐라 RPC_UseDoor가 그쪽에서 열면 s_state 1).</summary>
-        int Mine(Vector3 me) => Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
-
-        /// <summary>E064: 내 쪽으로 열린 문짝을 닫고 m_swing 1(닫힌 뒤 반대로 다시 엶).</summary>
-        void SwingClose(WorkerNpc npc, ZNetView v, int state, string what)
-        {
-            v.InvokeRPC("UseDoor", false);
-            var had = s_opened.Find(o => o.Door == m_door); m_orig = had != null ? had.Reopen : state; m_swing = 1; // 내가 연 문이면 had.Reopen 0 — 닫는 사이 CloseBehind가 항목을 지우므로 넘겨줌
-            m_swingNext = Time.time + 0.3f;
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문짝이 내 쪽으로 열림(s_state {state}) → 닫고 반대로 다시 엶");
         }
 
         /// <summary>

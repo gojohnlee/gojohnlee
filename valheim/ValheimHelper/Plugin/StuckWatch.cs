@@ -41,8 +41,12 @@ namespace ValheimHelper
         }
 
         /// <summary>누구든 p(발)의 일꾼을 보는가.</summary>
+        /// <summary>시험용: 있으면 Seen 대신 이것(보는 중·안 보는 중 강제, 있을 법한 자리 시험). 평소 null.</summary>
+        public static System.Func<Vector3, bool> TestSeen;
+
         public static bool Seen(Vector3 p)
         {
+            if (TestSeen != null) return TestSeen(p);
             Vector3 body = p + Vector3.up;
             var cam = Utils.GetMainCamera();
             if (cam != null)

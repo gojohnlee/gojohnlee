@@ -320,6 +320,7 @@ namespace ValheimHelper
         public bool Update(float dt)
         {
             m_stepTime += dt;
+            WatchSeen(dt);
             if (m_npc.InInterior())
             {
                 m_insideTime += dt;

@@ -87,4 +87,25 @@ public class StuckHopTests
         Assert.All(ring, p => Assert.True(Math.Sqrt(p.X * p.X + p.Z * p.Z) < 2.5)); // MachineStep 설비 앞 일 거리 2.5m 안
         Assert.Equal(StuckHop.Radii.Length * StuckHop.Directions, StuckHop.Candidates(10, 0, 0, 0).Count()); // 기본은 그대로
     }
+
+    [Fact]
+    public void PlausibleDropsBehindAndPrefersUnseenInRange()
+    {
+        // 사용자 11-12 예: 플레이어 (0,0)이 +x를 봄, 일꾼은 (1,0)에서 보인 뒤 (-1,0)으로 감, 목표 (-6,0)
+        var cands = new[] { new XZ(2, 0), new XZ(-3, 0), new XZ(-5, 1), new XZ(-30, 0) };
+        Func<XZ, bool> seen = c => c.X > 0; // 앞(+x)만 보임
+        var got = StuckHop.Plausible(cands, -1, 0, -6, 0, new XZ(1, 0), 1.0, 5.0, seen);
+        Assert.DoesNotContain(got, c => c.X > 0); // 지나온 쪽·앞쪽 시야는 빠짐
+        Assert.Equal(new[] { -3.0, -5.0, -30.0 }, got.Select(c => c.X)); // 범위(1초×5+4.5=9.5m) 안 먼저, 밖은 안 보이면 맨 뒤
+        Assert.DoesNotContain(StuckHop.Plausible(new[] { new XZ(-30, 0) }, -1, 0, -6, 0, new XZ(1, 0), 1.0, 5.0, c => true), c => true); // 보이는 범위 밖은 뺌
+    }
+
+    [Fact]
+    public void PlausibleOrdersUnseenBeforeSeenAndKeepsOrderWithoutSighting()
+    {
+        var cands = new[] { new XZ(4, 0), new XZ(4, 2), new XZ(6, 0) };
+        var got = StuckHop.Plausible(cands, 0, 0, 10, 0, new XZ(0, 0), 0, 5, c => c.Z == 0);
+        Assert.Equal(new[] { 2.0, 0.0 }, got.Select(c => c.Z)); // 보는 중(0초): 여유 4.5m 안, 안 보임 먼저, 6m는 보여서 빠짐
+        Assert.Equal(3, StuckHop.Plausible(cands, 0, 0, 10, 0, null, 0, 5, null).Count); // 본 적 없음: 앞쪽 전부 그대로
+    }
 }

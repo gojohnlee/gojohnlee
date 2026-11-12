@@ -112,5 +112,39 @@ namespace ValheimHelper.Core.Work
                 if (o2 >= 1.5 * 1.5 && o2 <= 100.0) yield return c; // 제자리·먼 곳 빼고
             }
         }
+
+        /// <summary>있을 법한 자리(사용자 11-12): 마지막으로 보인 뒤 걸어서 갈 수 있었던 거리 = 지난 초 × 달리기 속도 + 이 여유(m). 보는 중이면 여유만(NearSteps 4m는 들어감).</summary>
+        public const double ReachSlack = 4.5;
+
+        /// <summary>
+        /// 근처 순간이동 후보를 '있을 법한 자리' 순으로 거른다(사용자 11-12): ② 가던 쪽(일꾼→목표 방향 앞, 지나온 쪽·반대편은 뺌)만,
+        /// ① 마지막으로 보인 자리 seenAt에서 sinceSeen초 × speed + ReachSlack 안을 먼저, ③ 같은 무리에선 안 보이는 자리(seen=false) 먼저.
+        /// 순서: 범위 안·안 보임 → 범위 안·보임 → 범위 밖·안 보임(순간이동을 막지 않으려고. 보이는 범위 밖은 뺌). seenAt이 없으면(본 적 없음) 범위 제한 없음.
+        /// 같은 무리 안은 원래 후보 순서.
+        /// </summary>
+        public static List<XZ> Plausible(IEnumerable<XZ> candidates, double npcX, double npcZ, double destX, double destZ,
+            XZ? seenAt, double sinceSeen, double speed, Func<XZ, bool> seen)
+        {
+            double fx = destX - npcX, fz = destZ - npcZ;
+            bool hasDir = fx * fx + fz * fz > 1e-6;
+            double reach = Math.Max(0, sinceSeen) * Math.Max(0, speed) + ReachSlack;
+            var tiers = new[] { new List<XZ>(), new List<XZ>(), new List<XZ>() };
+            foreach (var c in candidates)
+            {
+                if (hasDir && (c.X - npcX) * fx + (c.Z - npcZ) * fz < 0) continue; // 뒤(지나온 쪽)
+                bool inRange = true;
+                if (seenAt.HasValue)
+                {
+                    double sx = c.X - seenAt.Value.X, sz = c.Z - seenAt.Value.Z;
+                    inRange = sx * sx + sz * sz <= reach * reach;
+                }
+                bool visible = seen != null && seen(c);
+                if (inRange) tiers[visible ? 1 : 0].Add(c);
+                else if (!visible) tiers[2].Add(c);
+            }
+            tiers[0].AddRange(tiers[1]);
+            tiers[0].AddRange(tiers[2]);
+            return tiers[0];
+        }
     }
 }
