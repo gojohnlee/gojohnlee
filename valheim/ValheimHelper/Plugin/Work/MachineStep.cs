@@ -283,6 +283,17 @@ namespace ValheimHelper
             return cover < 0.7f || !underRoof;
         }
 
+        /// <summary>
+        /// 바닐라 Smelter.IsActive의 연료·광석 밖 조건: 연기 막힘(SmokeSpawner.IsBlocked — 꺼져 있으면 TestBlocked로 위를 봄)이거나 지붕이 필요한데 없으면 넣어도 안 돎
+        /// (회차 461 시험 기본 집: 남쪽 제련소에 광석 4·연료 8을 넣고 200초 그대로 → 꺼내기 실패).
+        /// </summary>
+        internal static bool Stalled(Smelter s)
+        {
+            if (s.m_smokeSpawner != null && s.m_smokeSpawner.IsBlocked()) return true;
+            if (!s.m_requiresRoof || (TestRunner.Running && TestIgnoreRoof)) return false;
+            return !Cover.IsUnderRoof(s.m_roofCheckPoint != null ? s.m_roofCheckPoint.position : s.transform.position);
+        }
+
         CraftResult DoUnload(ZNetView nview)
         {
             ZDO zdo = nview.GetZDO();
@@ -565,6 +576,7 @@ namespace ValheimHelper
                 if (s != null)
                 {
                     int queued = z.GetInt(ZDOVars.s_queued);
+                    if (m_load && Stalled(s)) { Plugin.Log.LogInfo($"{m_npc.NpcName} 설비 {m_step.Station} {s.transform.position:F0} 안 씀: 연기 막힘·지붕 없음(넣어도 안 돎)"); continue; }
                     int score = m_load ? s.m_maxOre - queued : queued + z.GetInt(ZDOVars.s_spawnAmount);
                     if (score > bestScore) { bestScore = score; m_smelter = s; }
                     continue;

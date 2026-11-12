@@ -22,7 +22,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true };
             var made = new List<GameObject>();
             try { yield return Body(w, checks, made); }
             finally
@@ -39,6 +39,31 @@ namespace ValheimHelper
 
         internal static int Carried(WorkerNpc npc, string prefab) =>
             npc == null ? 0 : npc.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
+
+        /// <summary>거점 둘레 제련소마다 자리·대기 광석·연료·내놓을 것 한 줄.</summary>
+        static void Smelters(TestKit.World w, string when)
+        {
+            var parts = new List<string>();
+            foreach (var s in Object.FindObjectsByType<Smelter>(FindObjectsSortMode.None))
+            {
+                if (Utils.DistanceXZ(s.transform.position, w.Home) > 60f || !(s.GetComponent<ZNetView>()?.GetZDO() is ZDO sz)) continue;
+                parts.Add($"{Utils.GetPrefabName(s.gameObject)} {s.transform.position:F0} 대기 {sz.GetInt(ZDOVars.s_queued)}({sz.GetString("item0")}) 연료 {sz.GetFloat(ZDOVars.s_fuel):0} 내놓을 {sz.GetString(ZDOVars.s_spawnOre)}×{sz.GetInt(ZDOVars.s_spawnAmount)} 누적 {sz.GetFloat(ZDOVars.s_accTime):0}{(s.m_smokeSpawner != null || s.m_requiresRoof ? $" 막힘 {MachineStep.Stalled(s)}" : "")}");
+            }
+            TestRunner.Log($"제련소({when}, 거점 60m): {string.Join(" · ", parts.ToArray())}");
+        }
+
+        /// <summary>거점 60m 안 구리 제련소(smelter)마다 대기열+내놓을 것과 그 둘레 땅의 구리·광석 — 집이면 집 제련소를 쓸 수 있음(회차 462).</summary>
+        static int CopperSmelters(TestKit.World w, out int ground)
+        {
+            int n = 0; ground = 0;
+            foreach (var s in Object.FindObjectsByType<Smelter>(FindObjectsSortMode.None))
+            {
+                if (Utils.GetPrefabName(s.gameObject) != "smelter" || Utils.DistanceXZ(s.transform.position, w.Home) > 60f || !(s.GetComponent<ZNetView>()?.GetZDO() is ZDO sz)) continue;
+                n += sz.GetInt(ZDOVars.s_queued) + sz.GetInt(ZDOVars.s_spawnAmount);
+                ground += OnGround(s.transform.position, "Copper") + OnGround(s.transform.position, "CopperOre");
+            }
+            return n;
+        }
 
         static bool Idle(WorkerNpc npc) => npc != null && npc.Ai.Job == null && npc.Ai.Queue.Count == 0;
 
@@ -126,17 +151,18 @@ namespace ValheimHelper
             made.Add(sm);
             ZDO z = sm.GetComponent<ZNetView>().GetZDO();
             yield return new WaitForSeconds(1f);
+            if (w.Site != null) Smelters(w, "시작"); // 시험 기본 집 첫 판(회차 461): 둘이 집 남쪽 제련소에 넣고 180초 기다리다 꺼내기 실패 — 집 제련소에 사용자 광석이 밀려 있었나
             GatherTest.Say($"!{w.Ragnar.NpcName} 구리주괴 2", null);
             GatherTest.Say($"!{w.Floki.NpcName} 구리주괴 2", null);
             yield return new WaitForSeconds(1f);
             checks.Add($"둘 다 제련 계획 시작 ({w.Ragnar.Ai.Job?.GetType().Name}·{w.Floki.Ai.Job?.GetType().Name})",
                 w.Ragnar.Ai.Job is PlanJob && w.Floki.Ai.Job is PlanJob);
             yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 360f);
+            if (w.Site != null) Smelters(w, "끝");
             checks.Add($"둘 다 끝 ({TestKit.Waited:0}초, {w.Ragnar.Ai.Current}·{w.Floki.Ai.Current})", TestKit.Ok);
             int bars = Base(w, "Copper"), ore = Base(w, "CopperOre");
             int bag = Carried(w.Ragnar, "Copper") + Carried(w.Floki, "Copper") + Carried(w.Ragnar, "CopperOre") + Carried(w.Floki, "CopperOre");
-            int ground = OnGround(sm.transform.position, "Copper") + OnGround(sm.transform.position, "CopperOre");
-            int inside = z.GetInt(ZDOVars.s_queued) + z.GetInt(ZDOVars.s_spawnAmount);
+            int inside = CopperSmelters(w, out int ground); // 시험이 놓은 제련소 + 집 제련소
             checks.Add($"같은 제련소 동시: 주괴 {bars} ≥ 4 (광석 남음 {ore})", bars >= 4);
             checks.Add($"제련 개수 보존 (상자 주괴 {bars}+광석 {ore}, 짐 {bag}, 땅 {ground}, 제련소 안 {inside} → 합 4)",
                 bars + ore + bag + ground + inside == 4);

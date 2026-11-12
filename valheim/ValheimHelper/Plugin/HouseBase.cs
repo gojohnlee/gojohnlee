@@ -46,6 +46,25 @@ namespace ValheimHelper
             return null;
         }
 
+        /// <summary>
+        /// 집은 TheNewEra에서 ZDO째 옮겨 와 그 월드 시각(te4st41보다 훨씬 뒤)의 s_startTime이 남음 → Smelter.GetDeltaTime이 크게 음수라 s_accTime이 음수로 쌓여
+        /// 광석·연료를 넣어도 안 구움(회차 462 basetest 집 제련소 대기 4·연료 8 그대로 180초). 미래 시각은 지금으로, 음수 누적은 0으로. 고친 ZDO 수.
+        /// </summary>
+        static int FixClocks(Vector3 center)
+        {
+            long now = ZNet.instance.GetTime().Ticks;
+            int n = 0;
+            foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
+            {
+                if (Utils.DistanceXZ(p.transform.position, center) > HouseCopy.Radius || !(p.GetComponent<ZNetView>()?.GetZDO() is ZDO z)) continue;
+                bool hit = false;
+                if (z.GetLong(ZDOVars.s_startTime, 0L) > now) { z.Set(ZDOVars.s_startTime, now); hit = true; }
+                if (z.GetFloat(ZDOVars.s_accTime, 0f) < 0f) { z.Set(ZDOVars.s_accTime, 0f); hit = true; }
+                if (hit) n++;
+            }
+            return n;
+        }
+
         /// <summary>te4st41이면 집으로 가서 1층 상자 둘(가운데에서 가까운 차례)을 고르고 집 밖 빈 땅에 선다. 못 쓰면 s.Ok = false·s.Why(시작 자리로 돌아옴).</summary>
         internal static IEnumerator Go(Site s)
         {
@@ -81,7 +100,7 @@ namespace ValheimHelper
             int took = s.Chest1.GetInventory().NrOfItems() + s.Chest2.GetInventory().NrOfItems();
             s.Chest1.GetInventory().RemoveAll(); s.Chest2.GetInventory().RemoveAll();
             Count(s.Center, out int drops);
-            TestRunner.Log($"두 상자 비움(물건 {took}칸), 집 안 땅 물건 {drops}");
+            TestRunner.Log($"두 상자 비움(물건 {took}칸), 집 안 땅 물건 {drops}, 시계 맞춤 {FixClocks(s.Center)}");
             Vector3 out_ = open.Value - s.Center; out_.y = 0f;
             // 깃발은 플레이어 앞 4m = 집 반대쪽. Player.UpdateTeleport는 m_teleportTimer > 2초(FixedUpdate)가 지나야 자리를 옮기고,
             // TeleportTo는 쿨다운 2초 안이면 false — 2초만 기다리면 아직 옛 자리(집 동쪽 38m)라 깃발이 거기 놓였다(회차 459 wood·stone 거점 (284.6,430.9), 상자까지 31m).

@@ -193,7 +193,13 @@ namespace ValheimHelper
             public string Knowledge0, Places0;
             public bool Shared; // 동시 시험(around): 둘레가 남의 시험이라 끝 정리를 안 함
             public bool CountsCreatures; // 생물을 일부러 부르거나 세는 시험(사냥·싸움 등): 시작 때 남은 생물은 환경 불량, 싸움 중 시간 안 멈춤
+            public bool House; // 시험 기본 집으로 옮긴 시험(사용자 11-12): VH_HOUSE=1이면 집 밖 빈 땅에 깃발·w.Chest = 집 1층 상자(HouseBase)
+            public HouseBase.Site Site; // 집을 썼으면(못 쓰면 null — 옛 자리)
         }
+
+        /// <summary>앞 시험이 집에서 끝나 플레이어를 시작 자리로 옮기는 중(Restore가 시작) — 다음 Setup이 끝날 때까지 기다림.</summary>
+        static bool s_leaving;
+        static IEnumerator LeaveHouse(HouseBase.Site s) { s_leaving = true; try { yield return HouseBase.Leave(s); } finally { s_leaving = false; } }
 
         /// <summary>WaitFor 결과(코루틴이라 out을 못 씀).</summary>
         public static bool Ok;
@@ -265,12 +271,21 @@ namespace ValheimHelper
             // around가 있으면 그 자리 둘레(동시 시험용)만 정리하고 거기에 세운다. 없으면 예전처럼 전부 정리·플레이어 앞.
             if (around.HasValue) Workers.DespawnNear(around, 60f); else Workers.DespawnAll();
             yield return new WaitForSeconds(1f);
+            for (float t = 0f; s_leaving && t < 70f; t += 0.5f) yield return new WaitForSeconds(0.5f);
+            if (w.House && TestRunner.House && !around.HasValue && RunBiome == Heightmap.Biome.None)
+            {
+                w.Site = new HouseBase.Site();
+                yield return HouseBase.Go(w.Site); // 집 밖 빈 땅에서 집 반대쪽을 봄 → 깃발은 그 앞 4m
+                if (!w.Site.Ok) { TestRunner.Log($"시험 기본 집 못 씀({w.Site.Why}) → 옛 자리"); w.Site = null; }
+            }
             Vector3 home = (around ?? w.Player.transform.position) + w.Player.transform.forward * 4f;
             if (ZoneSystem.instance.GetGroundHeight(home, out float gh)) home.y = gh;
             w.Home = home;
             // 지난 시험 상자(사용 중 표시가 남으면 비우지도 못해 재고가 틀어짐, 회차 60)를 치운다. 동시 시험(around)은 남의 상자라 안 건드림.
-            if (!around.HasValue && GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f);
-            if (!around.HasValue && SweepGround(home) > 0) yield return new WaitForSeconds(0.5f); // 앞 시험이 남긴 땅 물건·몸·통나무(개선 셋 가)
+            // 집(w.Site)이면 안 치움: 거점 둘레에 집 상자·살림이 있다(되돌린 원본이라 앞 시험 것도 없음).
+            bool clear = !around.HasValue && w.Site == null;
+            if (clear && GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f);
+            if (clear && SweepGround(home) > 0) yield return new WaitForSeconds(0.5f); // 앞 시험이 남긴 땅 물건·몸·통나무(개선 셋 가)
             w.Player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, w.Player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
             // 먼 바이옴으로 막 옮겨 FPS가 낮으면(회차 194 안개땅 8 FPS) NPC가 3초 안에 안 생김(ZNetScene이 안개땅 물건 수천 개를 프레임마다 조금씩 만듦) → 60초까지 기다림
@@ -292,11 +307,15 @@ namespace ValheimHelper
                 foreach (var n in new[] { "CookedMeat", "Honey", "Blueberries" }) food.AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
                 npc.EatFrom(food);
             }
-            Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
-            Vector3 spot = GatherTest.Ground(home + right * 3f);
-            w.Player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), spot, w.Player.transform.rotation, doAttack: false);
-            yield return new WaitForSeconds(1f);
-            w.Chest = GatherTest.ChestAt(spot);
+            if (w.Site != null) w.Chest = w.Site.Chest1;
+            else
+            {
+                Vector3 right = Vector3.Cross(Vector3.up, w.Player.transform.forward).normalized;
+                Vector3 spot = GatherTest.Ground(home + right * 3f);
+                w.Player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), spot, w.Player.transform.rotation, doAttack: false);
+                yield return new WaitForSeconds(1f);
+                w.Chest = GatherTest.ChestAt(spot);
+            }
             Brain.ReplaceForTest("", "");
             if (w.Chest != null) yield return CheckStart(w, !around.HasValue);
         }
@@ -813,6 +832,7 @@ namespace ValheimHelper
         {
             if (!Workers.SkipGuard) { Workers.SkipGuard = true; Workers.DespawnGuards(); }
             if (s_cur == w) s_cur = null; // 상태 흐름 기록 멈춤(링 버퍼는 End가 쏟을 때까지 남김)
+            if (w.Site != null) { Plugin.Instance.StartCoroutine(LeaveHouse(w.Site)); w.Site = null; } // 다음 시험이 집 곁에 거점을 잡지 않게
             if (w.OnHeard != null) { ChatNet.Heard -= w.OnHeard; w.OnHeard = null; }
             if (w.OnBubbled != null) { ChatNet.Bubbled -= w.OnBubbled; w.OnBubbled = null; }
             if (w.Player != null) w.Player.SetGodMode(w.God);
