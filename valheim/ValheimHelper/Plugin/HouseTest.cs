@@ -78,7 +78,7 @@ namespace ValheimHelper
         }
 
         /// <summary>둘레 나무·덤불·채집물 치우기(건축물·생물은 남김), 치운 수.</summary>
-        static int ClearPlants(Vector3 at, float radius)
+        internal static int ClearPlants(Vector3 at, float radius)
         {
             var cleared = new HashSet<ZNetView>();
             foreach (var col in Physics.OverlapSphere(at, radius))
