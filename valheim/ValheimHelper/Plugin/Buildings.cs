@@ -43,10 +43,10 @@ namespace ValheimHelper
             s_logAt.Add(p); s_logT.Add(Time.time);
             if (s_logAt.Count > 64) { s_logAt.RemoveAt(0); s_logT.RemoveAt(0); }
         }
-        static bool NearWorkerLog(Vector3 p)
+        public static bool NearWorkerLog(Vector3 p, float range = 15f)
         {
             for (int i = s_logAt.Count - 1; i >= 0; i--)
-                if (Time.time - s_logT[i] < 120f && Utils.DistanceXZ(s_logAt[i], p) < 15f) return true;
+                if (Time.time - s_logT[i] < 120f && Utils.DistanceXZ(s_logAt[i], p) < range) return true;
             return false;
         }
     }

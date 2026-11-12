@@ -242,11 +242,30 @@ namespace ValheimHelper
         /// <summary>시험용(vh_houselogtest): 그 자리를 쓰러뜨린 자리로 — 둘레 통나무가 자기 통나무가 됨.</summary>
         internal void TestFelled(Vector3 p) => NoteFelled(p);
 
-        bool NearFelled(Vector3 p)
+        bool NearFelled(Vector3 p, float range = OwnLogRange)
         {
             foreach (var s in m_felled)
-                if (Utils.DistanceXZ(s, p) < OwnLogRange) return true;
+                if (Utils.DistanceXZ(s, p) < range) return true;
             return false;
+        }
+
+        /// <summary>시험용: 연쇄로 쓰러진 나무·쪼개진 통나무 수.</summary>
+        public static int ChainFelled;
+
+        /// <summary>
+        /// 연쇄 쓰러짐(사용자 11-12): 일꾼 통나무(from)에 맞아 쓰러진 나무·쪼개진 통나무 자리 p를 from이 가까운 채집 일의 자기 통나무 자리로.
+        /// 통나무 몸은 쓰러뜨린 자리에서 길이만큼(최대 약 20m) 떨어져 부딪히니 25m로 본다. 새 자리도 일꾼 통나무가 돼 다음 연쇄로 이어진다.
+        /// </summary>
+        public static void NoteChain(Vector3 from, Vector3 p)
+        {
+            foreach (var w in WorkerNpc.All)
+                if (w != null && w.Ai?.Job is GatherJob g && g.NearFelled(from, 25f))
+                {
+                    g.NoteFelled(p);
+                    ChainFelled++;
+                    Plugin.Log.LogInfo($"연쇄 쓰러짐 ({p.x:0.0},{p.z:0.0}) ← 통나무 ({from.x:0.0},{from.z:0.0}) — {w.NpcName} 자기 통나무로");
+                    return;
+                }
         }
 
         /// <summary>

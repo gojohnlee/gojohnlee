@@ -187,6 +187,43 @@ namespace ValheimHelper
             }
         }
 
+        /// <summary>
+        /// 연쇄 쓰러짐(사용자 11-12): 일꾼 통나무가 부딪힌 동안(ImpactEffect.OnCollisionEnter → 피해 RPC는 주인이면 바로 처리) 쓰러진 나무(TreeBase.SpawnLog)·
+        /// 쪼개진 통나무(TreeLog.Destroy)를 그 일꾼의 자기 통나무 자리로(GatherJob.NoteChain). 부딪힘 피해엔 공격자가 없어 이렇게 잇는다.
+        /// </summary>
+        [HarmonyPatch(typeof(ImpactEffect), nameof(ImpactEffect.OnCollisionEnter))]
+        static class ChainFallSource
+        {
+            internal static bool On;
+            internal static UnityEngine.Vector3 From;
+            static void Prefix(ImpactEffect __instance)
+            {
+                On = false;
+                UnityEngine.Vector3 p = __instance.transform.position;
+                if (__instance.GetComponent<TreeLog>() == null || !Buildings.NearWorkerLog(p, 25f)) return;
+                On = true; From = p;
+            }
+            static void Postfix() => On = false;
+        }
+
+        [HarmonyPatch(typeof(TreeBase), "SpawnLog")]
+        static class ChainFallTree
+        {
+            static void Prefix(TreeBase __instance)
+            {
+                if (ChainFallSource.On) GatherJob.NoteChain(ChainFallSource.From, __instance.transform.position);
+            }
+        }
+
+        [HarmonyPatch(typeof(TreeLog), "Destroy")]
+        static class ChainFallLog
+        {
+            static void Prefix(TreeLog __instance)
+            {
+                if (ChainFallSource.On) GatherJob.NoteChain(ChainFallSource.From, __instance.transform.position);
+            }
+        }
+
         /// <summary>진단(E020): 일꾼 20m 안에 통나무(TreeLog)가 생기면 기록 — 쓰러진 나무·쪼갠 반토막이 어디 생겼는지.</summary>
         [HarmonyPatch(typeof(TreeLog), "Awake")]
         static class LogSpawnDiag
