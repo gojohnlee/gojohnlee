@@ -199,13 +199,13 @@ namespace ValheimHelper
             if (m_swing == 0 && state != 0)
             {
                 int mine = Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
-                if (state == -mine && SomeoneAt(Middle(m_door), npc)) { npc.Ai.StopMoving(); return 1; } // 회차 352: 문간에 플레이어가 서 있으면 닫지 않고 비킬 때까지 기다림(바꿔 열기가 문간의 플레이어 앞에서 문을 닫음)
+                if (state == -mine && SomeoneAt(Middle(m_door), npc)) { npc.Ai.StopMoving(); npc.Ai.Hold("문간 사람 비키길 기다림"); return 1; } // 회차 352: 문간에 플레이어가 서 있으면 닫지 않고 비킬 때까지 기다림(바꿔 열기가 문간의 플레이어 앞에서 문을 닫음). 회차 453: 이유 있는 섬으로(걸음 기록 멈칫에서 뺌)
                 if (state == -mine)
                 {
                     v.InvokeRPC("UseDoor", false);
                     var had = s_opened.Find(o => o.Door == m_door); m_orig = had != null ? had.Reopen : state; m_swing = 1; // 내가 연 문이면 had.Reopen 0 — 닫는 사이 CloseBehind가 항목을 지우므로 넘겨줌 m_t = 0f; m_swingNext = Time.time + 0.3f;
                     Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문짝이 내 쪽으로 열림(s_state {state}) → 닫고 반대로 다시 엶");
-                    npc.Ai.StopMoving();
+                    npc.Ai.StopMoving(); npc.Ai.Hold("문 바꿔 여는 중"); // 회차 453: 닫히는 동안 선 것은 이유 있는 섬
                     return 1;
                 }
             }
@@ -214,7 +214,7 @@ namespace ValheimHelper
                 m_swingNext = Time.time + 0.3f; // 닫히는 애니메이션 중엔 바닐라 CanInteract가 거절 → 될 때까지
                 if (Dungeons.Open(npc, m_door)) Track(m_door, npc, m_orig);
             }
-            if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); return 1; } // 열리는 중(주인 RPC 기다림)
+            if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); npc.Ai.Hold("문 열리길 기다림"); return 1; } // 열리는 중(주인 RPC 기다림)
             // 문틀 가운데를 지나기 전엔 가운데를 겨눔(회차 317: 문 앞 0.56m 옆에서 곧장 가다 열린 문짝에 8초 박힘)
             Vector3 mid = Middle(m_door), dirIn = m_in - mid; dirIn.y = 0f; dirIn.Normalize();
             Vector3 aim = Vector3.Dot(me - mid, dirIn) < -0.2f ? mid : m_in;
