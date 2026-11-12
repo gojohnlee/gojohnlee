@@ -48,6 +48,7 @@ namespace ValheimHelper
         readonly ChestHop m_hop = new ChestHop();
         /// <summary>시험용: 손 거리 꺼내기 끔(고치기 전 비교)·한 수.</summary>
         internal static bool TestNoReach;
+        internal static Container TestOnly; // 시험용: 이 상자만 장비·미드·음식 상자로 봄(집 시험 — 사용자 상자부터 들르지 않게)
         internal static int Reached;
 
         /// <summary>시험용(E066 꺼내기): 손 거리 꺼내기를 건너뛴 까닭.</summary>
@@ -155,8 +156,8 @@ namespace ValheimHelper
             }
             // 거점 상자 전부(가까운 순)를 한 번씩: 더 좋은 장비·모자란 미드 → 먹을 음식
             // 누가 연 상자는 맨 뒤(헛기다림 ① 빼기): 다른 상자에서 먼저 챙기면 그 상자는 들를 까닭이 없어짐
-            List<Container> gearChests = Chests.OpenLast(Chests.NearBase(m_npc.Home, ChestRole.Gear));
-            List<Container> chests = Chests.OpenLast(Chests.NearBase(m_npc.Home, ChestRole.Food));
+            List<Container> gearChests = TestOnly != null ? new List<Container> { TestOnly } : Chests.OpenLast(Chests.NearBase(m_npc.Home, ChestRole.Gear));
+            List<Container> chests = TestOnly != null ? new List<Container> { TestOnly } : Chests.OpenLast(Chests.NearBase(m_npc.Home, ChestRole.Food));
             // 미드는 짐 정리가 음식·미드 상자(ChestRole.Food)에 넣으므로 거기서도 챙긴다(이름 붙은 "미드 상자"에서 못 꺼내던 것)
             var takeChests = new List<Container>(gearChests);
             foreach (var c in chests) if (!takeChests.Contains(c)) takeChests.Add(c);

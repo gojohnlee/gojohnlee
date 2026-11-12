@@ -21,7 +21,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true }; // 사용자 11-12: VH_HOUSE=1이면 집에서 나무를 넣을 상자와 그 앞 빈 바닥(층·문·좁은 자리)으로
             var made = new List<GameObject>();
             float[] saved = new float[6];
             Character held = null;
@@ -30,6 +30,7 @@ namespace ValheimHelper
             {
                 Unload.TestNoReach = false;
                 Prep.TestNoReach = false;
+                Prep.TestOnly = null;
                 TidyJob.TestNoReach = false;
                 ChestHop.TestNoBump = false;
                 if (held != null) HopTest.Speeds(held, saved, false);
@@ -42,7 +43,36 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
-        static void DropMeads(Inventory inv) { foreach (var it in new List<ItemDrop.ItemData>(inv.GetAllItems())) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") inv.RemoveItem(it); }
+        static int Mask => LayerMask.GetMask("piece", "Default", "static_solid", "terrain", "vehicle");
+
+        // 집 바닥: y0 위 1.6m에서 아래로 — 지형 높이(GatherTest.Ground)는 1층 돌 바닥 밑이라 못 씀
+        static Vector3 Floor(Vector3 p, float y0)
+        {
+            p.y = y0 + 1.6f;
+            return Physics.Raycast(p, Vector3.down, out RaycastHit h, 4f, Mask) ? h.point : new Vector3(p.x, y0, p.z);
+        }
+
+        // 상자 c 앞 24쪽마다 0.5m씩: 바닥이 상자 높이 ±0.6m이고 몸 높이(0.8~1.6m)에 막는 것이 없는 거리, 가장 긴 쪽
+        static float OpenRun(Vector3 c, out Vector3 dir)
+        {
+            float best = 0f; dir = Vector3.forward;
+            for (int i = 0; i < 24; i++)
+            {
+                float a = i * Mathf.PI / 12f;
+                Vector3 d = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                float run = 0f;
+                for (float r = 1f; r <= 8.5f; r += 0.5f)
+                {
+                    Vector3 f = Floor(c + d * r, c.y);
+                    if (Mathf.Abs(f.y - c.y) > 0.6f || Physics.CheckCapsule(f + Vector3.up * 0.8f, f + Vector3.up * 1.6f, 0.4f, Mask)) break;
+                    run = r;
+                }
+                if (run > best) { best = run; dir = d; }
+            }
+            return best;
+        }
+
+        static void DropMeads(Inventory inv) { foreach (var it in new List<ItemDrop.ItemData>(inv.GetAllItems())) if (Gear.IsHealthMead(it)) inv.RemoveItem(it); } // 집: 일꾼이 사용자 상자에서 챙긴 다른 체력 미드도(있으면 안 꺼냄 — 회차 466)
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> made, float[] saved, System.Action<Character> hold)
         {
@@ -52,19 +82,33 @@ namespace ValheimHelper
             GameObject lp = ZNetScene.instance.GetPrefab("beech_log_half"), wood = ObjectDB.instance.GetItemPrefab("Wood");
             if (lp == null || wood == null) { checks.Add("통나무·나무 프리팹 있음", false); yield break; }
             TestKit.ClearBaseStock(w, "Wood");
-            Vector3 c = w.Chest.transform.position, dir = w.Player.transform.forward;
+            Vector3 dir = w.Player.transform.forward;
+            float far = 8f;
+            if (w.Site != null)
+            {
+                // 집: 일꾼이 나무를 넣을 상자(Unload.ChestFor와 같음) 앞에서 바닥이 같은 높이로 가장 길게 트인 쪽
+                var pick = Chests.ForItem("Wood", w.Ragnar.Home, Chests.RoleFor(wood.GetComponent<ItemDrop>().m_itemData), true);
+                if (pick != null) w.Chest = pick;
+                float best = OpenRun(w.Chest.transform.position, out dir);
+                far = Mathf.Min(8f, best);
+                TestRunner.Log($"  집 상자 {Utils.GetPrefabName(w.Chest.gameObject)} {w.Chest.transform.position:F1}, 앞 빈 바닥 {best:0.0}m 쪽 {dir:F2}");
+                checks.Add($"집 상자 앞 빈 바닥 5m 넘음 ({best:0.0}m)", best >= 5f);
+                if (best < 5f) yield break;
+            }
+            Vector3 c = w.Chest.transform.position;
             dir.y = 0f; dir.Normalize();
             Vector3 side = Vector3.Cross(Vector3.up, dir);
+            Vector3 Ground(Vector3 p) => w.Site != null ? Floor(p, c.y) : GatherTest.Ground(p);
             // 상자 앞 0~8m 길의 나무·통나무(앞 시험이 남긴 것 포함)를 치운다: 처음 자리마다 땅이 달라 8m 자리가 나무 위면 일꾼이 우듬지에 올라 막힘(E055 회차 343)
             if (GatherTest.ClearWood(c + dir * 5f, 6f) > 0) yield return new WaitForSeconds(0.5f);
             HopTest.Speeds(w.Ragnar, saved, true);
             hold(w.Ragnar);
             Back();
-            made.Add(Object.Instantiate(lp, GatherTest.Ground(c + dir * 1.7f) + Vector3.up * 0.4f, Quaternion.FromToRotation(Vector3.up, side)));
+            made.Add(Object.Instantiate(lp, Ground(c + dir * 1.7f) + Vector3.up * 0.4f, Quaternion.FromToRotation(Vector3.up, side)));
             yield return new WaitForSeconds(2f);
             float Dist() => Utils.DistanceXZ(c, w.Ragnar.transform.position);
             // 단계마다 3.5m 자리로 다시 세운다: 묶여도 통나무에 밀려 손 거리(4m) 밖으로 나가면 다음 단계가 상자 앞 옮기기로 넘어가 FAIL(E055 회차 343 — 4.4m)
-            void Back() => w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 3.5f), Quaternion.LookRotation(-dir), false);
+            void Back() => w.Ragnar.TeleportTo(Ground(c + dir * 3.5f), Quaternion.LookRotation(-dir), false);
             w.Ragnar.GetInventory().AddItem(wood, 10);
             checks.Add($"상자 앞 3.5m·나무 10 들고 묶임 ({Dist():0.0}m, 들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
                 Dist() > 2.5f && Dist() <= 4f && BaseTest.Carried(w.Ragnar, "Wood") == 10);
@@ -91,7 +135,10 @@ namespace ValheimHelper
             GameObject mead = ObjectDB.instance.GetItemPrefab("MeadHealthMinor");
             if (mead == null) { checks.Add("미드 프리팹 있음", false); yield break; }
             DropMeads(w.Ragnar.GetInventory());
-            Chests.TryEdit(w.Chest, inv => inv.AddItem(mead, 5));
+            if (w.Site != null) Prep.TestOnly = w.Chest; // 집: 사용자 상자의 장비·음식·미드를 먼저 챙기러 감(회차 466 첫 판들) → 이 상자만
+            TestKit.ClearBaseStock(w, "Wood"); // 집 상자는 꽉 차 있어 넣은 나무 칸을 비워야 미드가 들어감(회차 466)
+            Chests.TryEdit(w.Chest, inv => { DropMeads(inv); inv.AddItem(mead, 5); });
+            checks.Add($"상자에 미드 5 ({GatherTest.Count(w.Chest, "MeadHealthMinor")})", GatherTest.Count(w.Chest, "MeadHealthMinor") == 5);
             int Meads() => BaseTest.Carried(w.Ragnar, "MeadHealthMinor");
             Back();
             yield return new WaitForSeconds(1f);
@@ -138,24 +185,25 @@ namespace ValheimHelper
             // 손 거리 밖 8m에서 묶여 거의 제자리: 5초에 상자 앞으로 옮겨 넣기·꺼내기(ChestHop, 사용자 10-31 — 전엔 90·60초 한도까지 섬)
             DropMeads(w.Ragnar.GetInventory());
             Chests.TryEdit(w.Chest, DropMeads);
-            w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
+            w.Ragnar.TeleportTo(Ground(c + dir * far), Quaternion.LookRotation(-dir), false);
             yield return new WaitForSeconds(1f);
             w.Ragnar.GetInventory().AddItem(wood, 10);
             int hops0 = ChestHop.Hops, sides0 = ChestHop.Sides;
-            var far = new Unload(w.Ragnar);
+            var uFar = new Unload(w.Ragnar);
             float hTook = 0f;
-            while (hTook < 12f && far.Update(Time.deltaTime)) { hTook += Time.deltaTime; yield return null; }
-            checks.Add($"8m 묶임 넣기: 5초에 상자 앞으로 옮겨 넣음 ({hTook:0.0}초, 옆 {ChestHop.Sides - sides0}, 옮김 {ChestHop.Hops - hops0}, 들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
+            while (hTook < 12f && uFar.Update(Time.deltaTime)) { hTook += Time.deltaTime; yield return null; }
+            checks.Add($"{far:0.0}m 묶임 넣기: 5초에 상자 앞으로 옮겨 넣음 ({hTook:0.0}초, 옆 {ChestHop.Sides - sides0}, 옮김 {ChestHop.Hops - hops0}, 들고 {BaseTest.Carried(w.Ragnar, "Wood")})",
                 hTook >= 4.5f && hTook <= 8f && ChestHop.Sides - sides0 >= 1 && ChestHop.Hops - hops0 == 1 && BaseTest.Carried(w.Ragnar, "Wood") == 0);
 
+            TestKit.ClearBaseStock(w, "Wood");
             Chests.TryEdit(w.Chest, inv => inv.AddItem(mead, 5));
-            w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
+            w.Ragnar.TeleportTo(Ground(c + dir * far), Quaternion.LookRotation(-dir), false);
             yield return new WaitForSeconds(1f);
             hops0 = ChestHop.Hops; sides0 = ChestHop.Sides;
             var pFar = new Prep(w.Ragnar);
             float phTook = 0f;
             while (phTook < 12f && Meads() == 0 && pFar.Update(Time.deltaTime)) { phTook += Time.deltaTime; yield return null; }
-            checks.Add($"8m 묶임 꺼내기: 5초에 상자 앞으로 옮겨 미드 챙김 ({phTook:0.0}초, 옆 {ChestHop.Sides - sides0}, 옮김 {ChestHop.Hops - hops0}, 들고 {Meads()})",
+            checks.Add($"{far:0.0}m 묶임 꺼내기: 5초에 상자 앞으로 옮겨 미드 챙김 ({phTook:0.0}초, 옆 {ChestHop.Sides - sides0}, 옮김 {ChestHop.Hops - hops0}, 들고 {Meads()})",
                 phTook >= 4.5f && phTook <= 8f && ChestHop.Sides - sides0 >= 1 && ChestHop.Hops - hops0 == 1 && Meads() > 0);
 
             // 묶지 않고 8m 앞 상자, 일꾼 1.5m 앞에 통나무(beech_log)를 가로로: 닿으면 0.5초에 옆으로(ChestHop.Bumps) — 고치기 전(TestNoBump)·후 넣기까지 시간 비교
@@ -167,8 +215,8 @@ namespace ValheimHelper
             for (int i = 0; i < 2; i++)
             {
                 ChestHop.TestNoBump = i == 0;
-                w.Ragnar.TeleportTo(GatherTest.Ground(c + dir * 8f), Quaternion.LookRotation(-dir), false);
-                GameObject log = Object.Instantiate(big, GatherTest.Ground(c + dir * 6.5f) + Vector3.up * 0.5f, Quaternion.FromToRotation(Vector3.up, side));
+                w.Ragnar.TeleportTo(Ground(c + dir * far), Quaternion.LookRotation(-dir), false);
+                GameObject log = Object.Instantiate(big, Ground(c + dir * (far - 1.5f)) + Vector3.up * 0.5f, Quaternion.FromToRotation(Vector3.up, side));
                 made.Add(log);
                 yield return new WaitForSeconds(1.5f);
                 w.Ragnar.GetInventory().AddItem(wood, 10);
