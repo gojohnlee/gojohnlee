@@ -415,6 +415,7 @@ namespace ValheimHelper
 
             // 4-2) 문 두 개(④): 상자 쪽 벽 가운데를 뒷문으로. 일꾼을 집 뒤에 두면 앞문으로 돌지 않고 뒷문으로 들어가 미드를 챙기고 뒷문을 닫는지
             yield return new WaitForSeconds(1f);
+            if (smelter != null) ZNetScene.instance.Destroy(smelter); // 회차 452: 2단계 제련소가 뒷문 안쪽 0.5m까지 와 문간을 좁혀 Through 8초 포기·문멈칫 6.5초 — 시험 배치 탓
             foreach (var g in made)
                 if (g != null && Utils.GetPrefabName(g) == "woodwall" && Utils.DistanceXZ(g.transform.position, c + r * Half) < 0.5f) { ZNetScene.instance.Destroy(g); break; }
             Vector3 backAt = c + r * Half; backAt.y = floorY;
@@ -471,6 +472,12 @@ namespace ValheimHelper
             bool wallBack = Put(made, "woodwall", backAt, Quaternion.LookRotation(r), floorY - 0.05f) != null;
             w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 6f) + f * 3f) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(7f); // 새 벽·닫은 문 navmesh
+            for (int k = 0; k < 2 && In(w.Ragnar.transform.position); k++) // 회차 452: "!멈춰" 뒤 연장 넣으러 다시 들어가 있음 — 끝날 때까지 기다렸다 다시 밖으로
+            {
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 15f);
+                w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 6f) + f * 3f) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
+                yield return new WaitForSeconds(4f);
+            }
             checks.Add($"복도 단계: 복도 벽 {hall}/4·뒷벽 {wallBack}·앞문 닫힘·일꾼 밖 (앞 {dz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)})",
                 hall == 4 && wallBack && dz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
             tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
