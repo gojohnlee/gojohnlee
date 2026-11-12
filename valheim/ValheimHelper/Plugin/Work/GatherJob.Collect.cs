@@ -204,6 +204,19 @@ namespace ValheimHelper
             return ZoneSystem.instance.GetGroundHeight(p, out float ground) && p.y - ground > HungHeight;
         }
 
+        /// <summary>통나무 가운데가 지형 윗면(ZoneSystem.GetGroundHeight — 위에서 쏜 지형 층 레이)보다 이만큼(m) 넘게 아래면 지형 밑으로 빠진 것.
+        /// 땅에 누운 통나무 가운데는 땅 위, 반쯤 묻혀도 반지름(0.5m 안팎) 아래까지.</summary>
+        const float SunkDepth = 2f;
+
+        /// <summary>통나무가 지형 밑으로 빠졌나(지하묘지 안 뺌 — 그 밑엔 지형이 없다). depth = 땅 윗면에서 아래로 몇 m.</summary>
+        internal static bool SunkLog(ResourceInfo info, Vector3 p, out float depth)
+        {
+            depth = 0f;
+            if (info == null || !info.Log || Character.InInterior(p) || ZoneSystem.instance == null || !ZoneSystem.instance.GetGroundHeight(p, out float ground)) return false;
+            depth = ground - p.y;
+            return depth > SunkDepth;
+        }
+
         // ---- 자기가 쓰러뜨린 나무의 통나무(사용자 11-01 "통나무 끝까지") ----
 
         /// <summary>쓰러뜨린 나무·쪼갠 통나무 자리에서 이만큼(xz) 안의 통나무를 "자기 통나무"로 본다(넘어진 통나무·구른 반토막).</summary>
@@ -223,7 +236,11 @@ namespace ValheimHelper
             m_felled.Add(p);
             if (m_felled.Count > FelledMax) { m_felled.RemoveAt(0); FelledForgot++; }
             FelledLog.Add(p);
+            Buildings.NoteWorkerLog(p);
         }
+
+        /// <summary>시험용(vh_houselogtest): 그 자리를 쓰러뜨린 자리로 — 둘레 통나무가 자기 통나무가 됨.</summary>
+        internal void TestFelled(Vector3 p) => NoteFelled(p);
 
         bool NearFelled(Vector3 p)
         {

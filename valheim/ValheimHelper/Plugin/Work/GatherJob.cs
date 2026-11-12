@@ -81,7 +81,8 @@ namespace ValheimHelper
         public int StuckExcluded => m_book.ExcludedCount;
         int m_swings, m_swingsNoProgress;
         bool m_wasAttacking;
-        float m_bestDist;
+        float m_bestDist, m_bestLeft; // m_bestLeft: 가장 짧았던 남은 길(Stuck — 돌아가는 길 진척)
+        int m_leftRebases; readonly StuckWatch.PathMark m_stuckMark = new StuckWatch.PathMark();
         float m_progressTimer;
         Vector3 m_stuckFrom; // 막힘 시간을 재기 시작한 자리(순간이동 걷기: 거의 제자리일 때만 5초 막힘)
         bool m_saidTooWeak, m_saidSearching, m_saidExplore, m_saidFound, m_saidSea;
@@ -401,7 +402,7 @@ namespace ValheimHelper
             if (m_chest == null) { Go(Step.Tool); return true; }
             // Prep처럼 2.5m 안이면 닿은 것(옆 상자·깃발에 막혀 1.8m까지 못 가던 것, coppertest). 못 닿으면 모은 것부터 넣는다.
             if (m_depWayFor != m_chest) { m_depWay = new DoorWay(); m_depWayFor = m_chest; }
-            if (Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) < 8f && m_depWay.Steer(dt, m_npc, m_chest)) return true;
+            if ((Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) < 8f || m_depWay.Busy) && m_depWay.Steer(dt, m_npc, m_chest)) return true; // 문으로 가는 중이면 8m 밖이어도 이어 감(상자보다 먼 문 — 8m 넘나들며 바닐라 길과 오락가락하다 막힘 순간이동, 회차 475)
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
                 return m_stepTime < 60f || GiveUp("noTool");
             bool took = Chests.TryEdit(m_chest, inv =>
@@ -464,7 +465,7 @@ namespace ValheimHelper
             if (m_chest == null) m_chest = DepositChest();
             if (m_chest == null) return Fail("noChest");
             if (m_depWayFor != m_chest) { m_depWay = new DoorWay(); m_depWayFor = m_chest; }
-            if (Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) < 8f && m_depWay.Steer(dt, m_npc, m_chest)) return true;
+            if ((Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) < 8f || m_depWay.Busy) && m_depWay.Steer(dt, m_npc, m_chest)) return true; // 문으로 가는 중이면 8m 밖이어도 이어 감(상자보다 먼 문 — 8m 넘나들며 바닐라 길과 오락가락하다 막힘 순간이동, 회차 475)
             if (!Walk(dt, m_chest.transform.position, 1.8f) && Utils.DistanceXZ(m_chest.transform.position, m_npc.transform.position) > 2.5f)
             {
                 // 상자 가기 막힘: 진척 없이 5초면 상자 앞으로(30 → 15 → 5초, 사용자 10-31). 먼 상자로 그냥 오래 걷는 건 60초까지

@@ -245,6 +245,16 @@ namespace ValheimHelper
 
         static readonly List<Vector3> s_diagPath = new List<Vector3>();
         /// <summary>진단(막힘 기록용): 여기서 그 점까지 바닐라 길찾기 — 완전/부분(끝이 목표에서 몇 m)/없음.</summary>
+        static readonly List<Vector3> s_lenPath = new List<Vector3>();
+        /// <summary>from에서 to까지 완전한 길(바닐라 GetPath requireFullPath)의 수평 길이(m), 없으면 -1. DoorWay.Exit가 문 거쳐 가는 길과 견줌.</summary>
+        public float FullPathLength(Vector3 from, Vector3 to)
+        {
+            if (Pathfinding.instance == null || !Pathfinding.instance.GetPath(from, to, s_lenPath, m_pathAgentType, requireFullPath: true) || s_lenPath.Count == 0) return -1f;
+            float sum = Utils.DistanceXZ(from, s_lenPath[0]);
+            for (int i = 1; i < s_lenPath.Count; i++) sum += Utils.DistanceXZ(s_lenPath[i - 1], s_lenPath[i]);
+            return sum;
+        }
+
         public string PathDiag(Vector3 to)
         {
             if (Pathfinding.instance == null) return "길찾기 없음";

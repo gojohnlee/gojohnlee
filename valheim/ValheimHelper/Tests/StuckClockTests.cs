@@ -46,6 +46,19 @@ public class StuckClockTests
     }
 
     [Fact]
+    public void SteadyJogAtGameTickIsProgress()
+    {
+        // 게임 AI 틱 0.05초, 조깅 3.9m/s = 틱당 0.195m(MinGain 0.3 밑) — 꾸준히 줄면 진척(E083 회차 475)
+        var c = new StuckClock(); double t = 0, left = 20;
+        c.Tick(t, 0, left, false, false);
+        for (int i = 0; i < 60; i++) { t += 0.05; left -= 0.195; Assert.False(c.Tick(t, 0.05, left, false, false)); }
+        // 아주 느리게 기어감(0.2m/s, 1초에 0.2m)은 안 볼 때 1초면 막힘
+        bool stuck = false;
+        for (int i = 0; i < 40 && !stuck; i++) { t += 0.05; left -= 0.01; stuck = c.Tick(t, 0.05, left, false, false); }
+        Assert.True(stuck);
+    }
+
+    [Fact]
     public void PausedStopsClock()
     {
         var c = new StuckClock(); double t = 0;

@@ -319,11 +319,23 @@ namespace ValheimHelper
         }
 
         /// <summary>MoveStuckLimit초 동안 목표에 1m도 가까워지지 않거나 깊은 물 앞에서 섰으면 막힌 것.
+        /// 진척 = 직선 1m 또는 남은 길(m_path 합, decisions 10절 사용자 11-11) 1m — 돌아가는 길을 따라가면 직선으로 멀어져도 진척(E083 회차 475:
+        /// 집 서쪽 꼭짓점 통나무까지 길이 북서문→집 안→남서문으로 52m(직선 9m), 길 따라 6.5m/s로 뛰는데 직선이 9→18m라 5초에 막힘 순간이동).
         /// teleport: 막히면 바로 순간이동할 걷기 — 진척 없이 5초 거의 제자리면 막힘(사용자 10-31).</summary>
         bool Stuck(float dt, Vector3 point, bool teleport = false)
         {
-            float d = Utils.DistanceXZ(point, m_npc.transform.position);
-            if (d < m_bestDist - 1f) { m_bestDist = d; m_progressTimer = 0f; return false; }
+            Vector3 pos = m_npc.transform.position;
+            bool newPath = m_stuckMark.Changed(m_ai);
+            // 남은 길은 이 목표로 받은 길(끝이 목표 3m 안)일 때만 — 목표 바꾼 첫 틱의 앞 목표 길(짧음)을 기준으로 잡으면 진짜 길(52m)이 그 밑으로 안 내려감(회차 475)
+            float d = Utils.DistanceXZ(point, pos), left = StuckWatch.PathEndsNear(m_ai, point, 3f) ? StuckWatch.PathLeft(m_ai, pos, point) : float.MaxValue;
+            if (m_bestDist == float.MaxValue) { m_bestLeft = float.MaxValue; m_leftRebases = 0; } // 새로 잴 때(부른 쪽이 m_bestDist만 되돌림) 남은 길 기준도 새로
+            if (d < m_bestDist - 1f) { m_bestDist = d; m_bestLeft = Mathf.Min(m_bestLeft, left); m_leftRebases = 0; m_progressTimer = 0f; return false; }
+            if (left < float.MaxValue)
+            {
+                // 이 목표 길을 처음 받음, 또는 새로 받은 길이 더 돌아감(3번까지) → 기준만 새로(시계는 그대로)
+                if (m_bestLeft == float.MaxValue || newPath && left > m_bestLeft && m_leftRebases++ < 3) m_bestLeft = left;
+                else if (left < m_bestLeft - 1f) { m_bestLeft = left; m_leftRebases = 0; m_progressTimer = 0f; return false; }
+            }
             if (m_far != null) { m_progressTimer = 0f; return false; } // 멀리선 이동 생략 중: 서서 기다리는 것이지 막힌 게 아니다
             if (m_ai.Carving) return false; // 구덩이에서 경사로를 깎는 중: 막힌 게 아니다
             if (m_ai.OnInteriorPath) { m_progressTimer = 0f; return false; } // 지하묘지 안 길을 따라 도는 중(목표에서 잠시 멀어질 수 있음)

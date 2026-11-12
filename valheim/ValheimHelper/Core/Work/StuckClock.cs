@@ -71,7 +71,8 @@ namespace ValheimHelper.Core.Work
                 m_noGain = 0; m_replans = 0;
                 return false;
             }
-            if (remaining < m_best) m_best = remaining; // 조금씩 줄어도 기준은 따라감(시계는 그대로)
+            // 기준(m_best)은 MinGain만큼 줄었을 때만 옮긴다 — 틱마다 조금씩 준 것을 따라가면 0.05초 틱(바닐라 MonoUpdaters UpdateAI)에서
+            // 6m/s 밑 걸음(조깅 3.9m/s = 틱당 0.2m)은 꾸준히 다가가도 늘 진척 없음이 됐음(E083 회차 475: 돌아가는 길 끝 직선 10m 안에서 조깅 1초 만에 막힘 순간이동)
             if (!paused && dt > 0) m_noGain += dt;
             return m_noGain >= Limit(now);
         }

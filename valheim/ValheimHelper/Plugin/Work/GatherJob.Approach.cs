@@ -28,6 +28,14 @@ namespace ValheimHelper
             ZDO zdo = ZDOMan.instance.GetZDO(m_targetId);
             if (zdo == null) { Go(Step.Collect); return true; }
             m_targetPos = zdo.GetPosition();
+            if (SunkLog(m_targetInfo, m_targetPos, out float sunk))
+            {
+                // 지형 밑으로 빠진 통나무(바닐라 물리 — 쪼갠 반토막이 지형 충돌체를 뚫고 떨어짐, 바닐라는 y < -5000에서만 땅 위로 올림): 걸어서 닿을 길이 없다.
+                // 그 xz로 걷다 막힘 → 순간이동 → 15m 위에서 직접 피해였음(E083 회차 475 houselog: 반토막이 땅 43.4m 밑 22m) → 건너뜀
+                Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅 밑으로 빠짐({sunk:0.0}m 아래, {m_targetPos:F1}) → 건너뜀");
+                Skip();
+                return true;
+            }
             if (m_standFor != m_targetId && HungLog(zdo, m_targetInfo))
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 높이 걸린 통나무(뿌리 높이 {m_targetPos.y:0.0}) → 밑에서 쪼갬(나무 피해 안 받음)");
             // 용암 위 대상은 둘레 설 자리(건물 바닥 위)로 걸어감 — 바위 가운데로 가면 길이 띄운 바닥 밑 땅으로 내려감(회차 250)

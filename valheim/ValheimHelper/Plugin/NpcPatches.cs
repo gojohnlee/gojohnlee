@@ -172,6 +172,7 @@ namespace ValheimHelper
             static void Prefix(TreeLog __instance, HitData hit)
             {
                 if (hit == null || !(hit.GetAttacker() is WorkerNpc)) return;
+                Buildings.NoteWorkerLog(__instance.transform.position);
                 UnityEngine.Vector3 p = __instance.transform.position, away = UnityEngine.Vector3.zero;
                 float best = 6f;
                 foreach (var zdo in Senses.Nearby(p, best))

@@ -24,6 +24,13 @@ namespace ValheimHelper
             return sum + Utils.DistanceXZ(path[path.Count - 1], goal);
         }
 
+        /// <summary>m_path가 이 목표로 받은 길인가(끝이 목표 within m 안) — 목표를 바꾼 첫 틱엔 앞 목표 길이 남아 있음.</summary>
+        public static bool PathEndsNear(BaseAI ai, Vector3 goal, float within)
+        {
+            var path = ai != null ? PathOf(ai) : null;
+            return path != null && path.Count > 0 && Utils.DistanceXZ(path[path.Count - 1], goal) < within;
+        }
+
         /// <summary>길을 새로 받았는지(점 수가 늘었거나 끝점이 1m 넘게 바뀜 — 지나간 점 지우기는 아님). 일마다 하나씩.</summary>
         public sealed class PathMark
         {

@@ -10,6 +10,7 @@ namespace ValheimHelper
     public sealed class DoorWay
     {
         const float PhaseLimit = 8f, DoorSearch = 15f, ExitSearch = 10f, Step = 1.3f, LeafClear = 0.8f; // LeafClear: 들어온 뒤 문 충돌체에서 몸 가운데까지(캡슐 0.4 + 0.4, E077)
+        const float ViaSlack = 10f; // 나가기: 문 거쳐 가는 길이 완전한 바닐라 길보다 이만큼(m) 넘게 길면 문 안 씀(회차 475)
         static int s_mask;
         enum Phase { None, ToDoor, Through, GaveUp }
         Phase m_phase;
@@ -17,7 +18,7 @@ namespace ValheimHelper
         Vector3 m_out, m_in, m_mouth; bool m_hall, m_lined; Vector3 m_hallN; float m_hallEnd; float m_lineCheck; // m_mouth: 문 앞이 복도면 복도 입구(들어갈 때 거기부터 곧장, E059)
         float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN;
         int m_swing, m_orig; // m_swing 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064). m_orig = 그때 남이 열어 둔 문이면 원래 s_state
-        float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
+        float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; int m_sides; bool m_pathed; // m_sides: 비킨 횟수, 2번 비켜도 못 가까워지면 m_pathed = 길찾기로(E083 회차 474: 반대쪽이 막혀 같은 쪽 비킴 5번) // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for, m_goal; bool m_hasGoal; float m_clearT = -1f; // m_goal: 들어갈 대상 자리, m_clearT: 안쪽 1.3m 닿은 때(문짝 곁이면 더 걸음, E077)
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
         public static int Opened, Entered, Exited, Closed;
@@ -131,9 +132,24 @@ namespace ValheimHelper
                 bool ra = Roofed(a), rb = Roofed(b);
                 bool aIn = ra != rb ? ra : Utils.DistanceXZ(me, a) < Utils.DistanceXZ(me, b); // 지붕 아래 쪽이 안, 모호하면 가까운 쪽
                 m_out = aIn ? a : b; m_in = aIn ? b : a; // 이름은 들어갈 때 기준: m_out = 다가갈 곳, m_in = 지나갈 곳
+                // E083 회차 475: 10m 안 문이 목표 반대쪽(계단에서 서쪽 통나무로 동북문)이거나 문 밖 길이 집 안으로 되돌아오면(북서문 밖 꼭짓점이 막힘)
+                // 나갔다 같은 문으로 되들어와 문짝·바깥 계단에 끼여 막힘 → 안에서 목표까지 완전한 바닐라 길(열린 다른 문)이 문 거쳐 가는 길보다 ViaSlack 넘게 짧으면 그 길로.
+                // 닫힌 문·덜 구운 navmesh면 완전한 길이 없어 그대로 문으로(회차 315).
+                float direct = npc.Ai.FullPathLength(me, point);
+                if (direct > 0f)
+                {
+                    float outside = npc.Ai.FullPathLength(m_in, point);
+                    float via = outside > 0f ? Utils.DistanceXZ(me, m_out) + Utils.DistanceXZ(m_out, m_in) + outside : float.MaxValue;
+                    if (via > direct + ViaSlack)
+                    {
+                        m_check = Time.time + 2f;
+                        Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}({Utils.DistanceXZ(me, mid):0.0}m) 대신 바닐라 길 — 문 거쳐 {(outside > 0f ? via.ToString("0") + "m" : "문 밖 길 없음")}·곧장 {direct:0}m (나 {me:F1}·목표 {point:F1})");
+                        return false;
+                    }
+                }
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
                 m_phase = Phase.ToDoor; m_t = 0f;
-                m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false;
+                m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false; m_sides = 0; m_pathed = false;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감 (나 {me:F1}·벽 {WallHits(me, n)}/4·방금 나온 문 {d == m_outDoor}·목표 {point:F1})");
             }
             m_walking = m_exiting = true;
@@ -250,6 +266,7 @@ namespace ValheimHelper
         {
             Vector3 to = m_out - me; to.y = 0f;
             float d = to.magnitude;
+            if (m_pathed) { npc.Ai.MoveToPoint(dt, m_out, 0.5f, false); return; }
             if (m_side > 0f)
             {
                 m_side -= dt;
@@ -263,6 +280,12 @@ namespace ValheimHelper
                 // 회차 346: 문 앞 1.0m(문틀 1.7m)에서 막은 것 없이 속도 0 — 문 쓰는 거리라 거기서 열고 문틀로
                 m_near = true;
                 Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 {d:0.0}m에서 막힘 → 거기서 엶");
+                return;
+            }
+            else if (m_stall > 1f && m_sides >= 2)
+            {
+                m_pathed = true;
+                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 비킴 {m_sides}번에도 막힘({d:0.0}m) → 길찾기로 문 앞까지");
                 return;
             }
             else if (m_stall > 1f)
@@ -281,7 +304,7 @@ namespace ValheimHelper
                 if (pick != Vector3.zero)
                 {
                     string block = Physics.Raycast(me + Vector3.up * 0.8f, to.normalized, out RaycastHit h, d, Mask, QueryTriggerInteraction.Ignore) ? $"{h.collider.transform.root.name} {h.distance:0.0}m" : "없음";
-                    m_sideDir = pick; m_side = 2.5f;
+                    m_sideDir = pick; m_side = 2.5f; m_sides++;
                     Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 길 막힘({d:0.0}m, 나 {me:F1}·문 앞 {m_out:F1}·막은 것 {block}) → 옆으로 비킴 {pick:F1}");
                     npc.Ai.MoveTowards(pick, false);
                     return;
