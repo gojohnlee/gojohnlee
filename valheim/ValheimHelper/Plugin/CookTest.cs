@@ -28,7 +28,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true };
             var made = new List<GameObject>();
             try { yield return Body(w, checks, made, wet); }
             finally

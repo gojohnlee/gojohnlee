@@ -25,7 +25,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true };
             var made = new List<GameObject>();
             SetMenu old = Brain.Sets.Get(SetNo);
             string oldItems = old == null ? null : string.Join(";", old.Items.ToArray());

@@ -43,7 +43,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true };
             var errors = new Errors();
             var spawned = new List<GameObject>();
             BepInEx.Logging.Logger.Listeners.Add(errors);

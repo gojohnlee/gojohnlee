@@ -27,7 +27,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true };
             FarmField field = null;
             try { yield return Body(w, checks, f => field = f); }
             finally
