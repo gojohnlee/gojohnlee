@@ -294,7 +294,7 @@ namespace ValheimHelper
             m_mateBest = float.MaxValue;
             m_mateStall = 0f;
             m_target = null;
-            m_backTo = AwayPoint(pos, BackDistance);
+            m_backTo = WaitSpotFor(pos, AwayPoint(pos, BackDistance), myHit, taken);
             m_backTimer = MateWait;
             m_backWalking = true;
             m_backWalkTime = 0f;
@@ -964,6 +964,33 @@ namespace ValheimHelper
 
         /// <summary>돌아가는 쪽(Core Retreat.Way side) — 마주침이 끝나면 0.</summary>
         int m_aroundSide;
+        /// <summary>
+        /// 동료를 기다리며 쉴 곳(사용자 11-13 00:30 "약한 적·덜 몰린·가까운"): 물러날 곳과 지금 자리 중 WaitSpot로 고른다.
+        /// 세기는 물러날 곳이면 그 구역 장소 기억 적, 지금 자리면 눈앞의 적(LastRatio)을 Danger.Ratio로 잰 값
+        /// (AvoidRatio 이상 3, MateCallRatio 이상 2, 그 밑 1, 기억 없음 0).
+        /// 몰림은 20m 안 다른 일꾼 수. 고를 곳이 없으면(둘 다 강함) 물러날 곳 그대로.
+        /// </summary>
+        Vector3 WaitSpotFor(Vector3 pos, Vector3 away, float myHit, System.Func<float, float> taken)
+        {
+            var spots = new List<Vector3> { away, pos };
+            var cands = new List<WaitSpot.Cand>();
+            foreach (Vector3 p in spots)
+            {
+                var c = new WaitSpot.Cand { Name = cands.Count == 0 ? "물러날 곳" : "지금 자리", Dist = Utils.DistanceXZ(p, pos) };
+                // 지금 자리는 눈앞의 적(LastRatio), 물러날 곳은 그 구역 기억 적(기억 없으면 0)
+                PlaceMemory mem = p == pos ? null : Brain.Places.Get(Senses.ZoneOf(p));
+                float ratio = p == pos ? LastRatio : mem != null && mem.Group.Count > 0 ? Danger.Ratio(mem.Group.ConvertAll(Resolve), m_npc.GetHealth(), myHit, taken) : -1f;
+                if (ratio >= 0f) c.Threat = ratio >= Danger.AvoidRatio ? 3 : ratio >= Danger.MateCallRatio ? 2 : 1;
+                foreach (WorkerNpc w in WorkerNpc.All)
+                    if (w != null && w != m_npc && !w.IsDead() && Vector3.Distance(w.transform.position, p) < 20f) c.Crowd++;
+                cands.Add(c);
+            }
+            WaitSpot.Cand best = WaitSpot.Pick(cands);
+            if (best == null) return away;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 기다릴 곳: {best.Name} (세기 {best.Threat}, 몰림 {best.Crowd}, {best.Dist:0}m)");
+            return spots[cands.IndexOf(best)];
+        }
+
         /// <summary>마지막으로 고른 물러날 곳(로그용): 길 종류·거점까지 지금 → 그곳.</summary>
         string m_lastAway = "";
 
