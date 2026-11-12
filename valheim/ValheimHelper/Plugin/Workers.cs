@@ -103,6 +103,7 @@ namespace ValheimHelper
                 if (existing.Contains(role) || role == WorkerNpc.GuardRole && SkipGuard) continue;
                 Vector3 pos = HomeSpot(center, rot, role) + Vector3.up * 0.5f;
                 ZDO zdo = ZDOMan.instance.CreateNewZDO(pos, hash);
+                FarZones.DropFromPortals(zdo);
                 zdo.Persistent = true;
                 zdo.Type = view.m_type;
                 zdo.Distant = view.m_distant;

@@ -106,21 +106,71 @@ namespace ValheimHelper
             s_temp.Clear();
         }
 
+        /// <summary>
+        /// 새 ZDO를 포탈 목록에서 뺀다. ZDOMan.DestroyZDO는 포탈을 "지금 자리" 구역 키로만 빼서, 키가 어긋난 포탈 ZDO는 목록에 남은 채
+        /// ZDOPool로 돌아가고 다음 CreateNewZDO가 그 객체를 다시 쓴다 — 회차 460 일꾼이 옆 구역 포탈 목록에도 들어
+        /// FindSectorObjects가 두 번 돌려줘 한 프레임에 둘 생김(복제)·포탈 연결 대상이 됨.
+        /// </summary>
+        public static void DropFromPortals(ZDO zdo)
+        {
+            var portals = ZDOMan.instance.GetPortals();
+            var empty = new List<ZoneSystem.SectorIndex>();
+            foreach (var kv in portals)
+                if (kv.Value.Remove(zdo))
+                {
+                    string msg = $"[포탈 목록에 남은 ZDO] {zdo.m_uid} 구역 {kv.Key.Sector}에서 뺌";
+                    Plugin.Log.LogInfo(msg);
+                    if (TestRunner.Running) TestRunner.Log("  " + msg);
+                    if (kv.Value.Count == 0) empty.Add(kv.Key);
+                }
+            foreach (var k in empty) portals.Remove(k);
+        }
+
+        static readonly AccessTools.FieldRef<ZDOMan, List<ZDO>[]> BySector = AccessTools.FieldRefAccess<ZDOMan, List<ZDO>[]>("m_objectsBySector");
+        static int s_dupLogs;
+
+        /// <summary>목록에서 같은 ZDO 둘째부터 뺀다. 시험 중 처음 몇 번은 그 ZDO가 어느 구역 목록에 몇 번 들었는지 남긴다(원인 찾기).</summary>
+        static void Dedupe(List<ZDO> list, string what)
+        {
+            s_seen.Clear();
+            int w = 0;
+            for (int i = 0; i < list.Count; i++)
+            {
+                ZDO z = list[i];
+                if (s_seen.Add(z)) { list[w++] = z; continue; }
+                if (TestRunner.Running && s_dupLogs++ < 5)
+                {
+                    var where = new List<string>();
+                    var all = BySector(ZDOMan.instance);
+                    for (int s = 0; s < all.Length; s++)
+                        if (all[s] != null) { int c = all[s].FindAll(o => o == z).Count; if (c > 0) where.Add($"{s}×{c}"); }
+                    foreach (var kv in ZDOMan.instance.GetPortals())
+                        { int c = kv.Value.FindAll(o => o == z).Count; if (c > 0) where.Add($"포탈목록 {kv.Key.Sector}×{c}"); }
+                    TestRunner.Log($"  [중복 ZDO] {what} {z.m_uid} 프리팹 {z.GetPrefab()} 자리 {z.GetPosition():F1} 제 구역 {ZoneSystem.GetSectorIndex(z.GetPosition()).Sector}, 구역 목록 {string.Join(",", where.ToArray())}");
+                }
+            }
+            list.RemoveRange(w, list.Count - w);
+            s_seen.Clear();
+        }
+
         [HarmonyPatch(typeof(ZNetScene), "CreateDestroyObjects")]
         static class CreateDestroyObjectsPatch
         {
-            // 원본과 같은 순서로 하되, 근거리 목록에 추적 물체 주변을 더한다.
+            // 원본과 같은 순서로 하되, 근거리 목록에 추적 물체 주변을 더한다. 추적 물체가 없어도 중복을 걸러야 해서 늘 이쪽으로.
             static bool Prefix(ZNetScene __instance)
             {
                 var anchors = Anchors();
-                if (anchors.Count == 0) return true;
                 s_near.Clear();
                 s_distant.Clear();
                 s_seen.Clear();
                 ZDOMan.instance.FindSectorObjects(ZoneSystem.GetZone(ZNet.instance.GetReferencePosition()),
                     ZNet.instance.GetSyncedSimulationDistance(), s_near, s_distant);
+                // 같은 ZDO가 목록에 두 번 들면 CreateObjectsSorted가 한 프레임에 인스턴스를 둘 만든다(회차 460 플로키 복제) — 걸러 넘김
+                Dedupe(s_near, "근거리");
+                Dedupe(s_distant, "원거리");
+                s_seen.Clear();
                 s_seen.UnionWith(s_near);
-                AddNear(s_near, anchors);
+                if (anchors.Count > 0) AddNear(s_near, anchors);
                 CreateObjects(__instance, s_near, s_distant);
                 RemoveObjects(__instance, s_near, s_distant);
                 s_seen.Clear();

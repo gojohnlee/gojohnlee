@@ -90,6 +90,8 @@ namespace ValheimHelper
             yield return new WaitForSeconds(3f);
             WorkerNpc claude = WorkerNpc.All.Find(n => n.Personality == Core.Npc.Personality.Ragnar);
             checks.Add("깃발에 NPC 나타남", claude != null && WorkerNpc.All.Count == 2);
+            if (claude == null || WorkerNpc.All.Count != 2)
+                TestRunner.Log($"  NPC {WorkerNpc.All.Count}명: {string.Join(", ", WorkerNpc.All.ConvertAll(n => $"{n.NpcName}({n.Personality}) {n.transform.position:F1} zdo {n.Zdo?.m_uid}").ToArray())}, ZDO {Workers.AllZdos().Count}개, 깃발 {home:F1}");
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
 
             // 2) 상자 2개

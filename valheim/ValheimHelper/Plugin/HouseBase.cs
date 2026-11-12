@@ -83,8 +83,20 @@ namespace ValheimHelper
             Count(s.Center, out int drops);
             TestRunner.Log($"두 상자 비움(물건 {took}칸), 집 안 땅 물건 {drops}");
             Vector3 out_ = open.Value - s.Center; out_.y = 0f;
-            pl.TeleportTo(open.Value + Vector3.up * 0.3f, Quaternion.LookRotation(out_.normalized), false); // 깃발은 플레이어 앞 4m = 집 반대쪽
-            yield return new WaitForSeconds(2f);
+            // 깃발은 플레이어 앞 4m = 집 반대쪽. Player.UpdateTeleport는 m_teleportTimer > 2초(FixedUpdate)가 지나야 자리를 옮기고,
+            // TeleportTo는 쿨다운 2초 안이면 false — 2초만 기다리면 아직 옛 자리(집 동쪽 38m)라 깃발이 거기 놓였다(회차 459 wood·stone 거점 (284.6,430.9), 상자까지 31m).
+            Quaternion face = Quaternion.LookRotation(out_.normalized);
+            for (float w = 0f; w < 10f && !pl.TeleportTo(open.Value + Vector3.up * 0.3f, face, false); w += 0.5f) yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.5f);
+            yield return TestKit.WaitFor(() => !pl.IsTeleporting(), 30f);
+            yield return new WaitForSeconds(1f);
+            if (Utils.DistanceXZ(pl.transform.position, open.Value) > 2f)
+            {
+                s.Why = $"빈 땅으로 못 옮김(플레이어 {pl.transform.position:F1}, 빈 땅 {open.Value:F1})";
+                s.Chest1 = s.Chest2 = null;
+                yield return Back(s.Start);
+                yield break;
+            }
             TestRunner.Log($"시험 기본 집 (자리 {s.Center.x:0},{s.Center.z:0}): 조각 {s.Pieces}, 1층 상자 {chests.Count}개 중 {Utils.GetPrefabName(s.Chest1.gameObject)} {s.Chest1.transform.position:F1}·{Utils.GetPrefabName(s.Chest2.gameObject)} {s.Chest2.transform.position:F1}, 깃발 쪽 빈 땅 {open.Value:F1}");
             Plugin.Instance.StartCoroutine(Watch(s));
         }
