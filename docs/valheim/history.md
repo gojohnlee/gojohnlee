@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 504 · 11-13 · 지원 대기열 게임 연결 자리 조사(코드 안 바꿈)
+
+**요약**
+
+- 지원 대기열을 게임에 붙일 자리만 확인했다. 아직 아무것도 바꾸지 않았다.
+
+**자세히**
+
+- Plugin 안에서 HelpQueue의 Add·Next·Served·Postpone 호출은 없다(grep). 저장·되읽기만 되어 있다(Brain.cs:89·168·176).
+- 붙일 자리: Guard.cs:258 TryCallMate(동료 부름), Commands.cs:124~142(GoWithGuard·Gather·ShareGather), Brain.cs:145 Help 접근자.
+- 게임 쪽 행동을 바꾸는 일이라 새 vh_ 시험(20개 채움)이 필요하다. 설계(누가 Add하는지·Served 기준)가 먼저다.
+
 ### 회차 498 · 11-13 · 동료 기다릴 때 쉴 곳을 골라 감
 
 **요약**
