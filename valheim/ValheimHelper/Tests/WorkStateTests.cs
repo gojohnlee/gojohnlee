@@ -10,7 +10,7 @@ public class WorkStateTests
     {
         var items = new List<WorkItem>
         {
-            new WorkItem { Kind = WorkKind.Gather, Resume = true, Label = "나무 50", Item = "Wood", Amount = 37, HasZone = true, Zone = new ZoneXY(-3, 12) },
+            new WorkItem { Kind = WorkKind.Gather, Resume = true, Label = "나무 50", Item = "Wood", Amount = 37, Got = 13, Why = "습격;=,", HasZone = true, Zone = new ZoneXY(-3, 12) },
             new WorkItem { Kind = WorkKind.Gather, Label = "구리 광석 20", Item = "CopperOre", Amount = 20, Speaker = "lee;=,|%", Target = "Alarak", Urgent = true, Ready = ReadyWhen.Morning, NotBefore = 3780.5 },
             new WorkItem { Kind = WorkKind.Explore, Label = "동쪽", Arg = "east" },
             new WorkItem { Kind = WorkKind.Explore, Resume = true, Label = "늪 탐험 중", DirX = 1, DirY = -1, BiomeId = 2, Where = "늪", Biome = "Swamp" },
@@ -35,6 +35,10 @@ public class WorkStateTests
         Assert.Equal(37, back[0].Amount);
         Assert.True(back[0].HasZone);
         Assert.Equal(new ZoneXY(-3, 12), back[0].Zone);
+        Assert.Equal(13, back[0].Got);
+        Assert.Equal("습격;=,", back[0].Why);
+        Assert.Equal(0, back[1].Got);
+        Assert.Equal("", back[1].Why);
         Assert.Equal(ReadyWhen.Always, back[0].Ready);
         Assert.Equal("lee;=,|%", back[1].Speaker);
         Assert.Equal("Alarak", back[1].Target);

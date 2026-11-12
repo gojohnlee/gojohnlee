@@ -55,6 +55,10 @@ namespace ValheimHelper.Core.Work
         public string PortalTag;
         /// <summary>제작(Make) 이어 하기: 하던 계획의 단계·상태·진행(PlanSave). 있으면 계획을 다시 세우지 않고 이어 간다(외부 검토 10-26). 없으면(옛 저장) 다시 세움.</summary>
         public string Plan;
+        /// <summary>채집 이어 하기: 멈추기 전에 이번 일로 모은 수량(남은 수량은 Amount). 0이면 안 씀.</summary>
+        public int Got;
+        /// <summary>채집 이어 하기: 멈춘 까닭(예: 습격). 빈 문자열이면 안 씀.</summary>
+        public string Why = "";
     }
 
     /// <summary>질문하고 대답을 기다리는 상태(Departures 질문 대기).</summary>
@@ -114,6 +118,8 @@ namespace ValheimHelper.Core.Work
                 if (!string.IsNullOrEmpty(w.Stuck)) f.Add("sb=" + Esc(w.Stuck));
                 if (!string.IsNullOrEmpty(w.PortalTag)) f.Add("pt=" + Esc(w.PortalTag));
                 if (!string.IsNullOrEmpty(w.Plan)) f.Add("pl=" + Esc(w.Plan));
+                if (w.Got != 0) f.Add("g=" + w.Got.ToString(Inv));
+                if (!string.IsNullOrEmpty(w.Why)) f.Add("y=" + Esc(w.Why));
                 if (w.Kind == WorkKind.Farm) f.Add("f=" + w.FarmX.ToString("0.0", Inv) + "|" + w.FarmZ.ToString("0.0", Inv));
                 parts.Add(string.Join(",", f.ToArray()));
             }
@@ -148,6 +154,8 @@ namespace ValheimHelper.Core.Work
                 if (f.TryGetValue("sb", out v)) w.Stuck = v;
                 if (f.TryGetValue("pt", out v)) w.PortalTag = v;
                 if (f.TryGetValue("pl", out v)) w.Plan = v;
+                if (f.TryGetValue("g", out v)) TryInt(v, out w.Got);
+                if (f.TryGetValue("y", out v)) w.Why = v;
                 bool farmAt = f.TryGetValue("f", out v) && TryFloatPair(v, out w.FarmX, out w.FarmZ);
                 if (w.Kind == WorkKind.Gather && (string.IsNullOrEmpty(w.Item) || w.Amount <= 0)) continue; // 깨진 칸
                 if (w.Kind == WorkKind.Make && (w.Amount <= 0 || (w.SetNo <= 0 && string.IsNullOrEmpty(w.Item)))) continue; // 깨진 칸
