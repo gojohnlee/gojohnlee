@@ -120,11 +120,50 @@ namespace ValheimHelper
                 yield break;
             }
             var w = new TestKit.World();
-            try { yield return ImportBody(checks); }
+            Vector3 start = Player.m_localPlayer.transform.position;
+            try { yield return ImportBody(checks); yield return Back(start); }
             finally { TestKit.Restore(w); }
             TestKit.End(w, checks);
         }
 
+
+        public static void RegisterHere() => TestRunner.Register("vh_househere", "되돌린 기본 시험 월드에 TheNewEra 집이 그대로 있는지(원본에 넣은 뒤)", () => TestKit.Flat(Here()));
+
+        static IEnumerator Here()
+        {
+            var checks = new GatherTest.Checks();
+            var w = new TestKit.World();
+            Vector3 start = Player.m_localPlayer.transform.position;
+            try { yield return HereBody(checks); yield return Back(start); }
+            finally { TestKit.Restore(w); }
+            TestKit.End(w, checks);
+        }
+
+        static IEnumerator HereBody(GatherTest.Checks checks)
+        {
+            Vector3? at = Place(out string why);
+            checks.Add($"집 자리 찾음 ({why})", at != null);
+            if (at == null) yield break;
+            Vector3 P = at.Value;
+            Player pl = Player.m_localPlayer;
+            pl.TeleportTo(P + new Vector3(Radius + 8f, 2f, 0f), pl.transform.rotation, true);
+            yield return TestKit.WaitFor(() => !pl.IsTeleporting(), 60f);
+            yield return new WaitForSeconds(10f);
+            int alive = 0, beds = 0, chests = 0;
+            foreach (var p in UnityEngine.Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
+                if (Utils.DistanceXZ(p.transform.position, P) <= Radius) { alive++; if (p.GetComponent<Bed>()) beds++; if (p.GetComponent<Container>()) chests++; }
+            TestRunner.Log($"되돌린 월드 집 조각 {alive}·침대 {beds}·상자 {chests} (자리 {P.x:0},{P.z:0})");
+            checks.Add($"집이 원본에 있음 (조각 {alive}/1144, 침대 {beds}, 상자 {chests})", alive >= 1139 && beds >= 2 && chests >= 20);
+        }
+
+        /// <summary>집 곁으로 간 플레이어를 시작 자리로(다음 시험이 집 곁에서 거점을 잡아 집을 부수지 않게).</summary>
+        static IEnumerator Back(Vector3 start)
+        {
+            Player pl = Player.m_localPlayer;
+            pl.TeleportTo(start + Vector3.up * 0.5f, pl.transform.rotation, true);
+            yield return TestKit.WaitFor(() => !pl.IsTeleporting(), 60f);
+            yield return new WaitForSeconds(3f);
+        }
         class Saved { public string Name; public Vector3 D; public byte[] Data; }
 
         static IEnumerator ImportBody(GatherTest.Checks checks)

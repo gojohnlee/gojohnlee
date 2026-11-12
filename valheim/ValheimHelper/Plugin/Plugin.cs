@@ -97,6 +97,7 @@ namespace ValheimHelper
             Step("vh_newerahouse", NewEraHouseTest.Register);
             Step("vh_houseexport", HouseCopy.Register);
             Step("vh_houseimport", HouseCopy.RegisterImport);
+            Step("vh_househere", HouseCopy.RegisterHere);
             Step("vh_blocktest", BlockTest.Register);
             Step("vh_weaktest", WeakTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
