@@ -24,6 +24,8 @@ namespace ValheimHelper
         public const string KeyFarms = "vh_farms";
         /// <summary>쓴 재료 다시 캐기 몫(Departures.Repay, 사용자 11-10 저장).</summary>
         public const string KeyDebt = "vh_debt";
+        /// <summary>지원 대기열(요청 지원 기다리기) — 재시작 뒤에도 엇갈리지 않게.</summary>
+        public const string KeyHelp = "vh_help";
         /// <summary>내 개인 상자 준비(상자 기능 ③) — 사람마다 물건·수.</summary>
         public const string KeyPersonal = "vh_personal";
         /// <summary>공유 값 저장 번호(Save마다 +1) — 불러올 때 큰 쪽을 고른다(SaveStamp, 옛 저장 = 0).</summary>
@@ -36,6 +38,8 @@ namespace ValheimHelper
         static RefillBook s_refill;
         static FarmBook s_farms;
         static DebtBook s_debt;
+        static HelpQueue s_help;
+        static string s_helpSaved = "";
         static FoeBook s_foes;
         static string s_foesSaved = "";
         static ZDOMan s_for;
@@ -47,8 +51,8 @@ namespace ValheimHelper
             if (s_k == null || s_for != ZDOMan.instance)
             {
                 s_for = ZDOMan.instance;
-                string best = "", foes = "", places = "", sets = "", refill = "", farms = "", personal = "", debt = "";
-                long noSets = 0, noRefill = 0, noFarms = 0, noPersonal = 0, noDebt = 0;
+                string best = "", foes = "", places = "", sets = "", refill = "", farms = "", personal = "", debt = "", help = "";
+                long noSets = 0, noRefill = 0, noFarms = 0, noPersonal = 0, noDebt = 0, noHelp = 0;
                 s_saveNo = 0;
                 var zdos = Workers.AllZdos();
                 foreach (var zdo in zdos) // 월드 불러온 직후 한 번만
@@ -65,6 +69,7 @@ namespace ValheimHelper
                     Pick(zdo, KeyFarms, no, ref farms, ref noFarms);
                     Pick(zdo, KeyPersonal, no, ref personal, ref noPersonal);
                     Pick(zdo, KeyDebt, no, ref debt, ref noDebt);
+                    Pick(zdo, KeyHelp, no, ref help, ref noHelp);
                     if (no > s_saveNo) s_saveNo = no;
                 }
                 bool server = ZNet.instance != null && ZNet.instance.IsServer();
@@ -81,6 +86,8 @@ namespace ValheimHelper
                 s_farms = FarmBook.Load(farms);
                 s_personal = PersonalBook.Load(personal);
                 s_debt = DebtBook.Load(debt);
+                s_help = HelpQueue.Load(help);
+                s_helpSaved = s_help.Save();
                 LoadedZones = s_k.Count;
                 if (server)
                     Plugin.Log.LogInfo($"일꾼 기억 불러옴({from}, {Path.GetFileName(s_file ?? "")}):일꾼 ZDO {zdos.Count}개, 지식 {s_k.Count}구역({best.Length}자), 장소 {places.Length}자, 적 {foes.Length}자");
@@ -135,6 +142,11 @@ namespace ValheimHelper
             get { Get(); return s_debt; }
         }
 
+        public static HelpQueue Help
+        {
+            get { Get(); return s_help; }
+        }
+
         public static PersonalBook Personal
         {
             get { Get(); return s_personal; }
@@ -146,14 +158,14 @@ namespace ValheimHelper
             s_saveTimer -= dt;
             if (s_saveTimer > 0f) return;
             s_saveTimer = 30f;
-            if (s_k.Dirty || s_places.Dirty || s_sets.Dirty || s_refill.Dirty || s_farms.Dirty || s_personal.Dirty || s_debt.Dirty || s_foes.Save() != s_foesSaved) Save();
+            if (s_k.Dirty || s_places.Dirty || s_sets.Dirty || s_refill.Dirty || s_farms.Dirty || s_personal.Dirty || s_debt.Dirty || s_foes.Save() != s_foesSaved || s_help.Save() != s_helpSaved) Save();
         }
 
         public static void Save()
         {
             if (s_k == null) return;
             string foes = s_foes.Save();
-            string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save(), personal = s_personal.Save(), debt = s_debt.Save();
+            string sets = s_sets.Save(), refill = s_refill.Save(), farms = s_farms.Save(), personal = s_personal.Save(), debt = s_debt.Save(), help = s_help.Save();
             bool skipped = false;
             long no = ++s_saveNo;
             foreach (var zdo in Workers.Zdos())
@@ -161,7 +173,7 @@ namespace ValheimHelper
                 // 남(친구 컴퓨터)이 주인인 ZDO에는 안 쓴다(vh_peertest "싸우는 중": 30초 저장이 뺏긴 순간과 겹쳐 주인 아닌데 씀).
                 // Workers.Reclaim이 1초 안에 되찾으니 바뀐 표시를 남기고 2초 뒤 다시 저장한다.
                 if (zdo.HasOwner() && !zdo.IsOwner()) { skipped = true; continue; }
-                zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms); zdo.Set(KeyPersonal, personal); zdo.Set(KeyDebt, debt); zdo.Set(KeySaveNo, no); // 기억 셋은 SaveMemory가
+                zdo.Set(KeySets, sets); zdo.Set(KeyRefill, refill); zdo.Set(KeyFarms, farms); zdo.Set(KeyPersonal, personal); zdo.Set(KeyDebt, debt); zdo.Set(KeyHelp, help); zdo.Set(KeySaveNo, no); // 기억 셋은 SaveMemory가
             }
             if (skipped) { s_saveTimer = 2f; return; }
             s_k.Dirty = false;
@@ -171,6 +183,7 @@ namespace ValheimHelper
             s_farms.Dirty = false;
             s_personal.Dirty = false;
             s_debt.Dirty = false;
+            s_helpSaved = help;
             s_foesSaved = foes;
         }
 
