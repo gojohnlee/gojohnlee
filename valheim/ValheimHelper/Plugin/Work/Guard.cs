@@ -72,7 +72,7 @@ namespace ValheimHelper
         }
         public Character Target => m_target;
         /// <summary>시험용: 동료 부르기 60초 쉬는 시간을 없앤다.</summary>
-        internal void TestForgetMateCall() { m_mateAt = -999f; m_waitMate = null; }
+        internal void TestForgetMateCall() { m_mateAt = -999f; EndMateWait(false); }
         public float LastRatio { get; private set; }
         public Verdict LastVerdict { get; private set; }
         /// <summary>시험 기록용: 마지막 판단에 쓴 수치.</summary>
@@ -88,7 +88,7 @@ namespace ValheimHelper
             m_backWalking = false;
             m_backs = 0;
             m_aroundSide = 0;
-            m_waitMate = null;
+            EndMateWait(false);
             m_caller = null;
             m_helpPlayer = null;
         }
@@ -99,7 +99,7 @@ namespace ValheimHelper
             m_backs = 0;
             m_state = State.Calm;
             m_target = null;
-            m_waitMate = null;
+            EndMateWait(false);
             m_caller = null;
             m_helpPlayer = null;
         }
@@ -227,7 +227,7 @@ namespace ValheimHelper
                     // (회차 147 vh_matetest C: 발 묶인 동료 63m인데 1초 만에 "옴 → 같이 싸움"으로 기다림을 접음)
                     if (m_waitMate != null && m_state == State.Back && !m_waitMate.IsDead()
                         && Vector3.Distance(m_waitMate.transform.position, pos) > AllyRange && !Chased(CloseRange)) break;
-                    if (m_waitMate != null) { Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 옴 → 같이 싸움"); m_waitMate = null; }
+                    if (m_waitMate != null) { Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 옴 → 같이 싸움"); EndMateWait(true); }
                     if (t != m_target) { DrinkResist(pos, t); m_missStreak = 0; m_diagSwings = 0; }
                     if (!m_saidFight) { m_saidFight = true; m_npc.Say("fightStart", Args(Localization.instance.Localize(t.m_name))); }
                     if (t != m_target) RememberDrops(t);
@@ -244,7 +244,21 @@ namespace ValheimHelper
         float m_mateAt = -999f;
         /// <summary>불러 놓고 물러나 기다리는 동료(오면 싸움, 못 오면 MateWait 뒤 원래 판단).</summary>
         WorkerNpc m_waitMate;
+        /// <summary>그 기다림이 올린 지원 요청 이름(Brain.Help). 동료가 와서 싸움에 끼면 채우고, 아니면 지운다.</summary>
+        string m_helpTask;
         float m_mateBest, m_mateStall;
+
+        /// <summary>동료 기다림이 끝난다. 온 동료로 끝났으면 지원 요청을 채우고, 못 왔으면 지운다.</summary>
+        void EndMateWait(bool came)
+        {
+            if (m_helpTask != null)
+            {
+                if (came) Brain.Help.Served(m_helpTask, 1);
+                else Brain.Help.Remove(m_helpTask);
+                m_helpTask = null;
+            }
+            m_waitMate = null;
+        }
         /// <summary>나를 부른 동료(State.Come 동안 그쪽으로 달려감).</summary>
         WorkerNpc m_caller;
         float m_comeTime;
@@ -291,6 +305,8 @@ namespace ValheimHelper
             m_npc.Say("callMate", Args(foeName));
             if (call == MateCall.Join) return false;
             m_waitMate = mate;
+            m_helpTask = "호위:" + foeName;
+            Brain.Help.Add(m_helpTask, 1);
             m_mateBest = float.MaxValue;
             m_mateStall = 0f;
             m_target = null;
@@ -880,13 +896,13 @@ namespace ValheimHelper
             if (m_waitMate != null && MateNotComing(dt) is string why)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 동료 {m_waitMate.NpcName} 기다림 접음: {why}");
-                m_ai.StopMoving(); m_backWalking = false; m_state = State.Calm; m_waitMate = null; return false;
+                m_ai.StopMoving(); m_backWalking = false; m_state = State.Calm; EndMateWait(false); return false;
             }
             if (m_backWalking)
             {
                 m_backWalkTime += dt;
                 // 동료 기다림(MateWait)은 걷는 동안에도 센다(회차 147 vh_matetest C: 걷기 30초 + 기다림 30초 = 60초 기다림)
-                if (m_waitMate != null && (m_backTimer -= dt) <= 0f) { m_ai.StopMoving(); m_backWalking = false; m_state = State.Calm; m_waitMate = null; return false; }
+                if (m_waitMate != null && (m_backTimer -= dt) <= 0f) { m_ai.StopMoving(); m_backWalking = false; m_state = State.Calm; EndMateWait(false); return false; }
                 bool there = Utils.DistanceXZ(m_backTo, m_npc.transform.position) < 3f;
                 if (!there && m_backWalkTime < 30f && m_ai.WaterBlockedTime <= WorkerAI.WaterGiveUp)
                 {
@@ -897,7 +913,7 @@ namespace ValheimHelper
             }
             m_ai.StopMoving();
             m_backTimer -= dt;
-            if (m_backTimer <= 0f) { m_state = State.Calm; m_waitMate = null; return false; } // 다시 해 본다
+            if (m_backTimer <= 0f) { m_state = State.Calm; EndMateWait(false); return false; } // 다시 해 본다
             return true;
         }
 
