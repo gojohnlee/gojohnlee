@@ -121,8 +121,9 @@ namespace ValheimHelper
             Start(npc, cmd, ways, r.Avoid);
             if (r.Action == DepartAction.GoTogether)
             {
-                // 남은 곳이 다 위험: 호위병을 데려간다(사용자 결정 2026-10-26)
-                WorkerNpc partner = GoWithGuard(npc);
+                // 남은 곳이 다 위험: 호위병을 데려간다(사용자 결정 2026-10-26), 호위병이 없거나 바쁘면 쉬는 동료 일꾼(사용자 11-13)
+                npc.Ai.Risky = true;
+                WorkerNpc partner = GoWithGuard(npc) ?? GoWithMate(npc);
                 args["partner"] = partner != null ? partner.NpcName : "";
                 if (partner == null) r.Key = "depart.danger";
             }
@@ -224,6 +225,41 @@ namespace ValheimHelper
             npc.Ai.EscortBy(g.GetZDOID(), g.NpcName, Escort.ForMate(d));
             Plugin.Log.LogInfo($"{npc.NpcName}: 호위병 {g.NpcName}과 같이 감({d:0}m)");
             return g;
+        }
+
+        /// <summary>동료가 위험한 데 혼자 갈 때 같이 갈 수 있는 거리(m) — 더 멀면 따라가는 쪽이 혼자 위험한 길을 걷고 앞장선 쪽도 오래 기다린다.</summary>
+        internal const float MateJoinRange = 100f;
+
+        /// <summary>
+        /// 쉬는 일꾼 없게 ①(사용자 11-13 "동료가 위험한 데 가면 같이"): 남은 곳이 다 위험한 일(WorkerAI.Risky)을 동행 없이 하는 동료가 MateJoinRange 안이면
+        /// 쉬는 이 일꾼이 호위병처럼 따라간다(Follow + 앞장선 쪽 EscortBy — 기다렸다가 같이, 20m 안 유지). 앞장선 쪽 일이 끝나면 집으로(Follow의 동료 규칙).
+        /// 명령이 오면 바로 그 일로(앞장선 쪽은 혼자 감). 같이 간 동료 일꾼, 못 붙였으면 null.
+        /// </summary>
+        internal static WorkerNpc JoinRisky(WorkerNpc npc)
+        {
+            if (!ChoresOn || npc == null || npc.IsGuard || !FreeForChores(npc)) return null;
+            foreach (var lead in WorkerNpc.All)
+            {
+                if (lead == npc || lead == null || lead.IsDead() || lead.IsGuard || lead.Ai.Current != WorkerAI.Mode.Work || lead.Ai.Job == null
+                    || !lead.Ai.Risky || lead.Ai.EscortName != null || lead.InInterior()) continue;
+                float d = Vector3.Distance(lead.transform.position, npc.transform.position);
+                if (d > MateJoinRange) continue;
+                npc.Ai.Follow(lead.GetZDOID(), lead.NpcName);
+                lead.Ai.EscortBy(npc.GetZDOID(), npc.NpcName, Escort.ForMate(d));
+                Plugin.Log.LogInfo($"{npc.NpcName}: 동료 {lead.NpcName}이 위험한 데 혼자 감 → 같이 감({d:0}m)");
+                npc.Say("mateJoin", new Dictionary<string, string> { ["partner"] = lead.NpcName });
+                return lead;
+            }
+            return null;
+        }
+
+        /// <summary>호위병을 못 붙였을 때 위험한 일을 막 시작한 이 일꾼에게 쉬는 동료 일꾼을 붙인다(JoinRisky를 그 동료 쪽에서). 붙였으면 그 동료, 없으면 null.</summary>
+        internal static WorkerNpc GoWithMate(WorkerNpc npc)
+        {
+            if (!npc.Ai.Risky || npc.Ai.EscortName != null) return null;
+            foreach (var mate in new List<WorkerNpc>(WorkerNpc.All))
+                if (mate != npc && JoinRisky(mate) == npc) return mate;
+            return null;
         }
 
         /// <summary>제작 계획의 채집 단계 출발 판단(재고·밤 질문 없이 위험만 — 직접 명령과 같은 규칙, 외부 검토 10-26). 채집으로 안 나면 null.</summary>
@@ -736,6 +772,7 @@ namespace ValheimHelper
             foreach (var npc in new List<WorkerNpc>(WorkerNpc.All))
             {
                 if (!FreeForChores(npc)) continue;
+                if (JoinRisky(npc) != null) continue; // 쉬는 일꾼 없게 ① 동료가 위험한 데 혼자 가면 같이(사용자 11-13)
                 if (!npc.Ai.Resting && JoinGather(npc)) continue; // 쉬는 일꾼 없게 ① 동료 일 돕기 먼저(사용자 11-13)
                 if (Brain.Refill.Count > 0 || Brain.Personal.Count > 0)
                 {

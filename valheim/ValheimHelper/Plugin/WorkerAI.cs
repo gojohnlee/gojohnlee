@@ -140,6 +140,7 @@ namespace ValheimHelper
         {
             Job = job;
             m_escort = null; // 동행은 그 일에만(부르는 쪽이 StartJob 뒤 EscortBy)
+            Risky = false;
             m_guard?.Reset();
             m_choresHeld = false;
             Current = Mode.Work;
@@ -149,6 +150,8 @@ namespace ValheimHelper
 
         Escort m_escort;
         ZDOID m_escortId = ZDOID.None;
+        /// <summary>지금 일이 남은 곳이 다 위험한 데로 가는 일(출발 판단 GoTogether) — 동행이 없으면 쉬는 동료가 따라간다(Departures.JoinRisky, 사용자 11-13). StartJob마다 지움, 저장 안 함.</summary>
+        public bool Risky { get; set; }
         /// <summary>지금 일에 같이 가는 동료 일꾼 이름(앞장서는 중), 없으면 null. 시험·!상태용.</summary>
         public string EscortName => m_escort != null ? m_escortName : null;
         string m_escortName;

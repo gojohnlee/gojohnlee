@@ -9,6 +9,7 @@ namespace ValheimHelper
     /// vh_chorestest (사용자 11-09 "극초반 좀 더 자유롭게"):
     /// 1) 이름 없이 "!나무 10" → 쉬던 두 일꾼이 같이 출발, 둘이 합쳐 10개면 둘 다 복귀(나무 10~ 조금 넘게).
     /// 1-2) 다른 일 하던 일꾼이 쉬게 되면 동료의 남은 몫 큰 채집에 낌.
+    /// 1-3) 호위병 없이 위험한 데 가는 동료(Risky)를 쉬는 일꾼이 따라감, 명령이 오면 바로 그 일로.
     /// 2) "!계속채워 나무 n" → 대답하고 몇 초 안에 실제로 출발(1분 기다리지 않음).
     /// 3) 음식이 없고 조리대·화로가 있으면 쉬는 일꾼이 멧돼지를 사냥해 구워 둔다.
     /// 4) 조리대가 없으면 채집 음식(이 단계는 라즈베리만 남김)을 따 온다.
@@ -74,23 +75,37 @@ namespace ValheimHelper
             // 쓰러뜨린 자기 통나무는 목표를 채워도 끝까지 쪼개므로(사용자 11-01) 넘는 수는 판정하지 않고 기록만
             checks.Add($"합쳐 10개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
 
-            // 1-2) 늦게 같이 캐기(사용자 11-13 쉬는 일꾼 없게 ①): 플로키는 다른 일(나무 1) 중에 라그나만 나무 20 → 플로키가 끝나고 쉬면 라그나 팀에 낌
+            // 1-2) 늦게 같이 캐기(사용자 11-13 쉬는 일꾼 없게 ①): 플로키는 다른 일(나무 1) 중에 라그나만 나무 40(한 그루에서 20 넘게 나와 끼기 전에 끝난 적 있음, 회차 483) → 플로키가 끝나고 쉬면 라그나 팀에 낌
             int wood0 = Count(w, "Wood");
             GatherTest.Say($"!{w.Floki.NpcName} 나무 1", null);
             yield return new WaitForSeconds(2f);
-            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 20", null);
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 40", null);
             yield return new WaitForSeconds(2f);
             bool alone = Gathering(w.Ragnar, "Wood") && ((GatherJob)w.Ragnar.Ai.Job).Team == null && TargetOf(w.Floki) == 1;
-            checks.Add($"라그나만 나무 20, 플로키는 제 일(목표 {TargetOf(w.Floki)})", alone);
-            yield return TestKit.WaitFor(() => TargetOf(w.Floki) == 20 || !Gathering(w.Ragnar, "Wood"), 240f);
+            checks.Add($"라그나만 나무 40, 플로키는 제 일(목표 {TargetOf(w.Floki)})", alone);
+            yield return TestKit.WaitFor(() => TargetOf(w.Floki) == 40 || !Gathering(w.Ragnar, "Wood"), 240f);
             bool joined = Gathering(w.Floki, "Wood") && Gathering(w.Ragnar, "Wood") && ((GatherJob)w.Floki.Ai.Job).Team != null && ((GatherJob)w.Floki.Ai.Job).Team == ((GatherJob)w.Ragnar.Ai.Job).Team;
             checks.Add($"플로키가 제 일 끝내고 라그나 팀에 낌 ({TestKit.Waited:0}초)", joined);
-            yield return TestKit.WaitFor(() => Count(w, "Wood") >= wood0 + 20 && Idle(w.Ragnar) && Idle(w.Floki), 300f);
-            checks.Add($"합쳐 20개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood") - wood0}, {TestKit.Waited:0}초)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => Count(w, "Wood") >= wood0 + 40 && Idle(w.Ragnar) && Idle(w.Floki), 300f);
+            checks.Add($"합쳐 40개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood") - wood0}, {TestKit.Waited:0}초)", TestKit.Ok);
+
+            // 1-3) 위험한 데 혼자 가는 동료 따라가기(사용자 11-13 쉬는 일꾼 없게 ①): 이 시험엔 호위병이 없다 — 라그나 일을 위험한 일로 표시하면 쉬는 플로키가 따라감
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 10", null);
+            yield return new WaitForSeconds(1f);
+            if (w.Ragnar.Ai.Job != null) w.Ragnar.Ai.Risky = true;
+            yield return TestKit.WaitFor(() => w.Floki.Ai.Current == WorkerAI.Mode.Follow, 90f);
+            checks.Add($"플로키가 위험한 데 혼자 가는 라그나를 따라감 (동행 {w.Ragnar.Ai.EscortName}, {TestKit.Waited:0}초)",
+                TestKit.Ok && w.Floki.Ai.FollowTarget == w.Ragnar.GetZDOID() && w.Ragnar.Ai.EscortName == w.Floki.NpcName);
+            yield return new WaitForSeconds(5f);
+            GatherTest.Say($"!{w.Floki.NpcName} 돌 1", null);
+            yield return new WaitForSeconds(2f);
+            checks.Add($"따라가다 명령 오면 바로 그 일 ({w.Floki.Ai.Current}, {(w.Floki.Ai.Job as GatherJob)?.Item})", w.Floki.Ai.Current == WorkerAI.Mode.Work && Gathering(w.Floki, "Stone"));
+            yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 300f);
+            checks.Add($"둘 다 일 끝내고 쉼 ({TestKit.Waited:0}초)", TestKit.Ok);
 
             // 2) 계속채워 → 바로 출발
             int wood = Count(w, "Wood");
-            GatherTest.Say($"!계속채워 나무 {wood + 10}", null);
+            GatherTest.Say($"!계속채워 나무 {wood + 20}", null);
             float t0 = Time.time;
             yield return TestKit.WaitFor(() => Gathering(w.Ragnar, "Wood") || Gathering(w.Floki, "Wood"), 10f);
             checks.Add($"!계속채워 → {Time.time - t0:0.0}초 만에 출발(10초 안)", TestKit.Ok);
