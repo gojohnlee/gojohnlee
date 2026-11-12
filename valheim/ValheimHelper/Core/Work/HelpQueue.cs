@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace ValheimHelper.Core.Work
 {
@@ -35,7 +36,7 @@ namespace ValheimHelper.Core.Work
         /// <summary>요청을 넣는다. 같은 일이 이미 있으면 더 필요한 수만 큰 쪽으로 맞춘다.</summary>
         public void Add(string task, int needed)
         {
-            if (string.IsNullOrEmpty(task) || needed <= 0) return;
+            if (string.IsNullOrEmpty(task) || needed <= 0 || HasSep(task)) return;
             var old = Find(task);
             if (old != null)
             {
@@ -80,6 +81,39 @@ namespace ValheimHelper.Core.Work
             var a = Find(task);
             if (a != null) _asks.Remove(a);
         }
+
+        /// <summary>저장 글: "일=필요수/미룬수;…" (들어온 순서대로). 일 이름에 ; = / 가 있으면 넣지 않음.</summary>
+        public string Save()
+        {
+            var parts = new List<string>();
+            foreach (var a in _asks)
+            {
+                parts.Add(a.Task + "=" + a.Needed.ToString(CultureInfo.InvariantCulture) + "/" + a.Postponed.ToString(CultureInfo.InvariantCulture));
+            }
+            return string.Join(";", parts.ToArray());
+        }
+
+        /// <summary>저장 글을 되읽는다. 깨진 조각은 건너뛴다. 들어온 순서는 저장 순서대로 다시 맞춘다.</summary>
+        public static HelpQueue Load(string text)
+        {
+            var q = new HelpQueue();
+            if (string.IsNullOrEmpty(text)) return q;
+            foreach (var part in text.Split(';'))
+            {
+                int eq = part.LastIndexOf('=');
+                if (eq < 1) continue;
+                int slash = part.LastIndexOf('/');
+                if (slash <= eq) continue;
+                string task = part.Substring(0, eq);
+                if (!int.TryParse(part.Substring(eq + 1, slash - eq - 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int needed)) continue;
+                if (!int.TryParse(part.Substring(slash + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int postponed)) continue;
+                if (needed <= 0 || HasSep(task)) continue;
+                q._asks.Add(new Ask { Task = task, Needed = needed, Postponed = Math.Max(0, postponed), Seq = q._seq++ });
+            }
+            return q;
+        }
+
+        private static bool HasSep(string task) => task.IndexOf(';') >= 0 || task.IndexOf('=') >= 0 || task.IndexOf('/') >= 0;
 
         private Ask Find(string task)
         {
