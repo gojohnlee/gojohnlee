@@ -15,10 +15,27 @@ Add-Type -Namespace VHK -Name Power -MemberDefinition '[DllImport("kernel32.dll"
 $m = New-Object Threading.Mutex($false, 'Global\VHKeepOn')
 if (-not $m.WaitOne(0)) { exit }   # 이미 하나 돎
 
+# 임시 조치(사용자 11-13): 11-13 18:30이 지나거나 루프가 할 일 없이 멈춰 기다리면 지킴이를 스스로 지운다
+# (stay-on 지움 → 루프는 원래대로 자리 비우면 끔, 작업 "VH keep on" 지움, 끝).
+$Deadline = [datetime]'2026-11-13 18:30'
+function Test-LoopIdle {
+    $l = Get-Content (Join-Path $Dir 'loop.log') -Tail 200 -Encoding UTF8 -ErrorAction SilentlyContinue |
+        Where-Object { $_ -match '회차 \d+ 시작|루프 시작|다시 돎|멈춤:|할 일 없음|답 기다림|멈춤 파일' } | Select-Object -Last 1
+    [bool]($l -and $l -match '멈춤:|할 일 없음|답 기다림|멈춤 파일')
+}
+function Remove-KeepOn($why) {
+    Remove-Item (Join-Path $Dir 'stay-on') -Force -ErrorAction SilentlyContinue
+    Log "지킴이 지움: $why (stay-on 지움, 작업 VH keep on 지움)"
+    Unregister-ScheduledTask -TaskName 'VH keep on' -Confirm:$false -ErrorAction SilentlyContinue
+    exit
+}
+
 [IO.File]::WriteAllText((Join-Path $Dir 'stay-on'), "1", $Utf8)
-Log '지킴이 시작'
+Log "지킴이 시작($($Deadline.ToString('MM-dd HH:mm'))까지 또는 루프가 할 일 없이 멈출 때까지)"
 $down = 0; $tick = 0
 while ($true) {
+    if ((Get-Date) -ge $Deadline) { Remove-KeepOn "$($Deadline.ToString('HH:mm')) 지남" }
+    if (Test-LoopIdle) { Remove-KeepOn '루프가 할 일 없이 멈춤' }
     [void][VHK.Power]::SetThreadExecutionState([uint32]'0x80000001')   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
     & shutdown /a 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) { Log '예약된 컴퓨터 끄기 취소함(shutdown /a)' }
