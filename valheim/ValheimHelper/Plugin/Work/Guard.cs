@@ -75,6 +75,8 @@ namespace ValheimHelper
         public Character Target => m_target;
         /// <summary>시험용: 동료 부르기 60초 쉬는 시간을 없앤다.</summary>
         internal void TestForgetMateCall() { m_mateAt = -999f; EndMateWait(false); }
+        /// <summary>vh_helpjointest: 지원 요청을 올리고 기다리는 상태(Back·60초 — 실제 기다림과 같은 자리, 도착 확인은 UpdateBack).</summary>
+        internal void TestWaitForHelp(string task) { m_helpTask = task; m_state = State.Back; m_backTimer = 60f; m_backWalking = false; }
         public float LastRatio { get; private set; }
         public Verdict LastVerdict { get; private set; }
         /// <summary>시험 기록용: 마지막 판단에 쓴 수치.</summary>
