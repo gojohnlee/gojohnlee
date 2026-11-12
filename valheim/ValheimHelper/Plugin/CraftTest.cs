@@ -24,7 +24,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true }; // 사용자 11-12: VH_HOUSE=1이면 TheNewEra 집 설비를 일꾼이 쓰는 대로 셈, 집에 없는 설비만 시험이 놓음
             var made = new System.Collections.Generic.List<GameObject>();
             try { yield return Body(w, checks, made); }
             finally
@@ -47,16 +47,73 @@ namespace ValheimHelper
             for (int i = 0; i < 10 && sum != total; i++)
             {
                 if (i > 0) yield return new WaitForSeconds(1f);
-                int chest = Stock(w, from) + Stock(w, to);
-                int bag = BaseTest.Carried(w.Ragnar, from) + BaseTest.Carried(w.Ragnar, to) + BaseTest.Carried(w.Floki, from) + BaseTest.Carried(w.Floki, to);
-                Vector3 at = machine != null ? machine.transform.position : w.Home;
-                int ground = BaseTest.OnGround(at, from) + BaseTest.OnGround(at, to) + BaseTest.OnGround(w.Home, from) + BaseTest.OnGround(w.Home, to);
-                ZDO z = machine != null ? machine.GetComponent<ZNetView>()?.GetZDO() : null;
-                int inside = z != null ? z.GetInt(ZDOVars.s_queued) + z.GetInt(ZDOVars.s_spawnAmount) : 0;
-                sum = chest + bag + ground + inside;
-                where = $"상자 {chest}(원료 {Stock(w, from)}·결과 {Stock(w, to)}), 짐 {bag}, 땅 {ground}, 설비 안 {inside}, 보충 누적 {MachineStep.Refilled}";
+                sum = Count(w, machine, from, to, out where);
             }
             checks.Add($"제련 개수 보존 {from}→{to} ({where} → 합 {sum} = {total})", sum == total);
+        }
+
+        /// <summary>상자 + 두 일꾼 짐 + 땅(설비마다·깃발 둘레 6m) + 설비 안(같은 프리팹 설비 전부 — 집이면 집 설비 여럿).</summary>
+        static int Count(TestKit.World w, GameObject machine, string from, string to, out string where)
+        {
+            int chest = Stock(w, from) + Stock(w, to);
+            int bag = BaseTest.Carried(w.Ragnar, from) + BaseTest.Carried(w.Ragnar, to) + BaseTest.Carried(w.Floki, from) + BaseTest.Carried(w.Floki, to);
+            int ground = BaseTest.OnGround(w.Home, from) + BaseTest.OnGround(w.Home, to), inside = 0;
+            foreach (var m in Same(w, machine))
+            {
+                ground += BaseTest.OnGround(m.transform.position, from) + BaseTest.OnGround(m.transform.position, to);
+                inside += Inside(m, from, to);
+            }
+            where = $"상자 {chest}(원료 {Stock(w, from)}·결과 {Stock(w, to)}), 짐 {bag}, 땅 {ground}, 설비 안 {inside}, 보충 누적 {MachineStep.Refilled}";
+            return chest + bag + ground + inside;
+        }
+
+        /// <summary>설비 안: 대기열(ZDO item0..)의 from + 내놓을 to(집 설비엔 사용자 다른 광석이 들어 있을 수 있어 종류로 셈).</summary>
+        static int Inside(GameObject m, string from, string to)
+        {
+            if (!(m.GetComponent<ZNetView>()?.GetZDO() is ZDO z)) return 0;
+            int n = 0, q = z.GetInt(ZDOVars.s_queued);
+            for (int i = 0; i < q; i++) if (z.GetString("item" + i) == from) n++;
+            if (z.GetString(ZDOVars.s_spawnOre) == to) n += z.GetInt(ZDOVars.s_spawnAmount);
+            return n;
+        }
+
+        /// <summary>같은 프리팹 설비들의 대기열 속 from 합(정말 설비에 들어갔는지).</summary>
+        static int Queued(TestKit.World w, GameObject machine, string from)
+        {
+            int n = 0;
+            foreach (var m in Same(w, machine)) n += Inside(m, from, "");
+            return n;
+        }
+
+        /// <summary>셀 설비: 집(아니면 거점 60m) 안 제련 설비 전부 + machine.</summary>
+        static System.Collections.Generic.List<GameObject> Same(TestKit.World w, GameObject machine)
+        {
+            var list = new System.Collections.Generic.List<GameObject>();
+            if (machine == null) return list;
+            Vector3 c = w.Site != null ? w.Site.Center : w.Home; // 제련 설비 전부(제련소·용광로 — 고철은 제련소가 녹임, 회차 465 용광로 대기열 0): 집이면 집 안, 아니면 거점 60m
+            foreach (var s in Object.FindObjectsByType<Smelter>(FindObjectsSortMode.None))
+                if (Utils.DistanceXZ(s.transform.position, c) <= (w.Site != null ? HouseCopy.Radius : 60f)) list.Add(s.gameObject);
+            if (!list.Contains(machine)) list.Add(machine);
+            return list;
+        }
+
+        /// <summary>집(HouseCopy.Radius) 안 그 프리팹 조각, 깃발에 가까운 차례. 집 모드 아니면 빈 목록.</summary>
+        static System.Collections.Generic.List<GameObject> InHouse(TestKit.World w, string prefab)
+        {
+            var list = new System.Collections.Generic.List<GameObject>();
+            if (w.Site == null) return list;
+            foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
+                if (Utils.GetPrefabName(p.gameObject) == prefab && Utils.DistanceXZ(p.transform.position, w.Site.Center) <= HouseCopy.Radius) list.Add(p.gameObject);
+            list.Sort((a, b) => Utils.DistanceXZ(a.transform.position, w.Home).CompareTo(Utils.DistanceXZ(b.transform.position, w.Home)));
+            return list;
+        }
+
+        /// <summary>집에 그 설비가 있으면 그것(시험이 놓지 않음), 없으면 at(깃발 곁)에 놓음.</summary>
+        static GameObject Station(TestKit.World w, System.Collections.Generic.List<GameObject> made, string prefab, Vector3 at)
+        {
+            var house = InHouse(w, prefab);
+            if (w.Site != null) TestRunner.Log($"집 {prefab} {house.Count}개{(house.Count > 0 ? $" — 깃발에 가까운 것 {house[0].transform.position:F1}({Utils.DistanceXZ(house[0].transform.position, w.Home):0}m)" : " → 시험이 깃발 곁에 놓음")}");
+            return house.Count > 0 ? house[0] : Place(made, prefab, at);
         }
 
         /// <summary>
@@ -125,10 +182,11 @@ namespace ValheimHelper
                 if (r.m_item != null && Utils.GetPrefabName(r.m_item.gameObject) == "Bow") bow = r;
             checks.Add("활 레시피 있음", bow != null);
             if (bow == null) yield break;
-            yield return MissingStation(w, checks, bow);
+            if (InHouse(w, "piece_workbench").Count == 0) yield return MissingStation(w, checks, bow);
+            else TestRunner.Log("집에 작업대 있음 → 0) 설비 없는 거점 칸 건너뜀");
             foreach (var req in bow.m_resources)
                 TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount);
-            Place(made, "piece_workbench", w.Home - right * 4f);
+            Station(w, made, "piece_workbench", w.Home - right * 4f);
             yield return new WaitForSeconds(1f);
             string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
             yield return Say($"!{n1} {bowName} 1", 1f);
@@ -152,7 +210,9 @@ namespace ValheimHelper
             TestKit.PutInChest(w.Chest, "CopperOre", 4);
             TestKit.PutInChest(w.Chest, "Coal", 20);
             if (ZNetScene.instance.GetPrefab("smelter") == null) { checks.Add("제련소 프리팹 있음", false); yield break; }
-            GameObject smelter = Place(made, "smelter", w.Home - right * 7f);
+            GameObject smelter = Station(w, made, "smelter", w.Home - right * 7f);
+            int base0 = Count(w, smelter, "CopperOre", "Copper", out string start0), peak = 0; // 시험 광석 4 + 집 설비에 원래 든 구리(사용자 것)
+            TestRunner.Log($"제련 시작 구리(시험 광석 포함): {start0}");
             yield return new WaitForSeconds(1f);
             string barName = Localization.instance.Localize(ObjectDB.instance.GetItemPrefab("Copper").GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
             TestRunner.Log($"구리 주괴 게임 이름: [{barName}] → Items.Resolve {Items.Resolve(barName)}, \"구리주괴\" → {Items.Resolve("구리주괴")}");
@@ -162,7 +222,7 @@ namespace ValheimHelper
             w.Player.TeleportTo(GatherTest.Ground(w.Home + right * 25f) + Vector3.up * 0.3f, w.Player.transform.rotation, false);
             yield return Say($"!{n1} 구리주괴 2", 1f);
             checks.Add($"제련 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
-            yield return TestKit.WaitFor(() => Stock(w, "Copper") >= 2, 240f);
+            yield return TestKit.WaitFor(() => { peak = Mathf.Max(peak, Queued(w, smelter, "CopperOre")); return Stock(w, "Copper") >= 2; }, 240f);
             checks.Add($"구리 주괴 2개가 상자에 ({TestKit.Waited:0}초, 광석 {Stock(w, "CopperOre")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
             int dist = (int)Vector3.Distance(Player.m_localPlayer.transform.position, w.Ragnar.transform.position);
             checks.Add($"짐에서 1개 잃으면 보충 1개 (보충 {MachineStep.Refilled - refilled0}, 시험 흉내 남음 {MachineStep.TestLose}, 플레이어와 {dist}m)", MachineStep.Refilled - refilled0 == 1);
@@ -171,7 +231,8 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             checks.Add("끝나고 계획 일 없음", TestKit.Ok);
             // 광석 4개 = 어디에 있든 합 4(복제도 소실도 없음, 사용자 2026-10-22 — E001): 상자 + 일꾼 짐 + 땅(제련소·상자 둘레) + 제련소 안
-            yield return Conserved(w, checks, smelter, "CopperOre", "Copper", 4);
+            checks.Add($"구리 광석이 제련소에 들어갔다 나옴 (대기열 최대 {peak}, 지금 {Queued(w, smelter, "CopperOre")})", peak > 0);
+            yield return Conserved(w, checks, smelter, "CopperOre", "Copper", base0);
             yield return Stop();
             yield return Blast(w, checks, made, right);
             yield return Ferment(w, checks, made, right);
@@ -186,14 +247,17 @@ namespace ValheimHelper
             TestKit.PutInChest(w.Chest, "IronScrap", 4);
             TestKit.PutInChest(w.Chest, "Coal", 20);
             if (ZNetScene.instance.GetPrefab("blastfurnace") == null) { checks.Add("용광로 프리팹 있음", false); yield break; }
-            GameObject furnace = Place(made, "blastfurnace", w.Home - right * 10f);
+            GameObject furnace = Station(w, made, "blastfurnace", w.Home - right * 10f);
+            int base0 = Count(w, furnace, "IronScrap", "Iron", out string start0), peak = 0;
+            TestRunner.Log($"용광로 시작 철(시험 고철 포함): {start0}");
             yield return new WaitForSeconds(1f);
             yield return Say($"!{n1} 철주괴 2", 1f);
             checks.Add($"용광로 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
-            yield return TestKit.WaitFor(() => Stock(w, "Iron") >= 2, 240f);
+            yield return TestKit.WaitFor(() => { peak = Mathf.Max(peak, Queued(w, furnace, "IronScrap")); return Stock(w, "Iron") >= 2; }, 240f);
             checks.Add($"철 주괴 2개가 상자에 ({TestKit.Waited:0}초, 고철 {Stock(w, "IronScrap")}, 석탄 {Stock(w, "Coal")})", TestKit.Ok);
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
-            yield return Conserved(w, checks, furnace, "IronScrap", "Iron", 4);
+            checks.Add($"고철이 제련 설비에 들어갔다 나옴 (대기열 최대 {peak}, 지금 {Queued(w, furnace, "IronScrap")})", peak > 0);
+            yield return Conserved(w, checks, furnace, "IronScrap", "Iron", base0);
             yield return Stop();
         }
 
@@ -219,6 +283,11 @@ namespace ValheimHelper
                 empty += c.GetInventory().GetEmptySlots();
             }
             checks.Add($"거점 상자 {chests.Count}개 가득 (빈칸 {empty})", empty == 0);
+            if (w.Site != null) // 집 상자 23개(층·상자 기록) 전부가 거점 상자에 들어 있어야 "꽉 참"이 집 기준
+            {
+                int inHouse = chests.FindAll(c => Utils.DistanceXZ(c.transform.position, w.Site.Center) <= HouseCopy.Radius).Count;
+                checks.Add($"집 상자 {inHouse}개가 거점 상자에 (23개)", inHouse >= 23);
+            }
             int heard0 = w.Heard.Count;
             string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
             yield return Say($"!{n1} {bowName} 1", 1f);
@@ -263,28 +332,42 @@ namespace ValheimHelper
             foreach (var npc in new[] { w.Ragnar, w.Floki }) RemoveFromBag(npc, Mead);
             if (ZNetScene.instance.GetPrefab("fermenter") == null) { checks.Add("발효기 프리팹 있음", false); yield break; }
             TestKit.PutInChest(w.Chest, Base, 1);
-            GameObject fe = Place(made, "fermenter", w.Home + right * 6f);
+            var house = InHouse(w, "fermenter"); // 집 발효기가 있으면 그걸 씀(지붕 판단 그대로), 없으면 지붕 없는 곳에 놓음
+            GameObject fe = house.Count > 0 ? null : Place(made, "fermenter", w.Home + right * 6f);
+            var cands = fe != null ? new System.Collections.Generic.List<GameObject> { fe } : house;
+            var empty = cands.FindAll(g => g.GetComponent<ZNetView>()?.GetZDO()?.GetInt(ZDOVars.s_content) == 0);
             yield return new WaitForSeconds(1f);
-            ZDO fz = fe.GetComponent<ZNetView>().GetZDO();
+            ZDO fz = fe != null ? fe.GetComponent<ZNetView>().GetZDO() : null;
+            if (fe == null) { TestRunner.Log($"집 발효기 {house.Count}개(빈 것 {empty.Count}) → 지붕 없는 발효기 칸 건너뜀"); fe = empty.Count > 0 ? empty[0] : house[0]; }
             string layers = "";
             foreach (var col in fe.GetComponentsInChildren<Collider>()) layers += $" {LayerMask.LayerToName(col.gameObject.layer)}{(col.isTrigger ? "(t)" : "")}";
             TestRunner.Log($"발효기 충돌체 층:{layers}, 거점 설비 {string.Join(",", Recipes.At(w.Home).Processors.Keys)}");
             string meadName = Localization.instance.Localize(ObjectDB.instance.GetItemPrefab(Mead).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
             TestRunner.Log($"독 저항 미드 게임 이름: [{meadName}] → Items.Resolve {Items.Resolve(meadName)}");
 
-            MachineStep.TestIgnoreRoof = false;
-            yield return Say($"!{n1} {meadName} 6", 1f);
-            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
-            checks.Add($"지붕 없는 발효기엔 안 넣음 (바탕 {Stock(w, Base)}, 발효기 {fz.GetInt(ZDOVars.s_content) != 0})",
-                TestKit.Ok && Stock(w, Base) == 1 && fz.GetInt(ZDOVars.s_content) == 0);
-            yield return Stop();
+            bool placed = fz != null;
+            if (placed)
+            {
+                MachineStep.TestIgnoreRoof = false;
+                yield return Say($"!{n1} {meadName} 6", 1f);
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
+                checks.Add($"지붕 없는 발효기엔 안 넣음 (바탕 {Stock(w, Base)}, 발효기 {fz.GetInt(ZDOVars.s_content) != 0})",
+                    TestKit.Ok && Stock(w, Base) == 1 && fz.GetInt(ZDOVars.s_content) == 0);
+                yield return Stop();
+            }
 
-            MachineStep.TestIgnoreRoof = true;
+            MachineStep.TestIgnoreRoof = placed; // 집 발효기는 지붕 판단 그대로
             try
             {
                 yield return Say($"!{n1} {meadName} 6", 1f);
                 checks.Add($"발효 계획 시작 ({w.Ragnar.Ai.Current}, {w.Ragnar.Ai.Job?.GetType().Name})", w.Ragnar.Ai.Job is PlanJob);
-                yield return TestKit.WaitFor(() => fz.GetInt(ZDOVars.s_content) != 0, 60f);
+                yield return TestKit.WaitFor(() =>
+                {
+                    foreach (var g in empty)
+                        if (g != null && g.GetComponent<ZNetView>()?.GetZDO() is ZDO z && z.GetInt(ZDOVars.s_content) != 0) { fe = g; fz = z; return true; }
+                    return false;
+                }, placed ? 60f : 120f);
+                if (!placed) TestRunner.Log($"바탕을 넣은 집 발효기: {(fz != null ? $"{fe.transform.position:F1}" : "없음")}");
                 checks.Add($"발효기에 바탕을 넣음 ({TestKit.Waited:0}초, 상자 바탕 {Stock(w, Base)})", TestKit.Ok && Stock(w, Base) == 0);
                 if (!TestKit.Ok) yield break;
                 // 게임 시계로 40분은 못 기다리니 시작 시각을 당긴다(지붕 없어도 다 익은 뒤엔 바닐라가 시계를 되돌리지 않음)
