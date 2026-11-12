@@ -430,11 +430,12 @@ function End-Claude($c, $outFile) {
     $c.F.Join()
     $text = "$($c.F.Final)`n$($c.F.Err)"
     [IO.File]::WriteAllText($outFile, $text, $Utf8)
+    $u = $null
     try {
         $u = Write-VhUsage $Dir $c.F.ResultJson $st.round $c.Account $c.Kind $c.Todo $c.Start $c.P.ExitCode $c.RunId
         Log ("usage {0} round={1} in={2} out={3} cache-read={4} cache-write={5} turns={6} minutes={7} result={8}" -f $u.kind,$u.round,$u.input_tokens,$u.output_tokens,$u.cache_read_tokens,$u.cache_write_tokens,$u.turns,$u.elapsed_minutes,$u.result)
     } catch { Log "usage write failed (not zero usage): $_" }
-    @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes; Cap = $(if ($c.Cap) { $c.Cap } elseif ($c.F.Subtype -eq 'error_max_turns') { "${MaxTurns}턴" } else { '' }) }
+    @{ Code = $c.P.ExitCode; Text = $text; Min = ((Get-Date) - $c.Start).TotalMinutes; Turns = $(if ($u -and "$($u.turns)" -match '^\d+$') { [int]$u.turns } else { -1 }); Cap = $(if ($c.Cap) { $c.Cap } elseif ($c.F.Subtype -eq 'error_max_turns') { "${MaxTurns}턴" } else { '' }) }
 }
 
 function Run-Claude($acct, $outFile) {
@@ -781,7 +782,9 @@ while ($true) {
     Prepare-Git
     $after = G rev-parse origin/valheim | Select-Object -Last 1
     if (Test-RoundResult $before $after $st.round) { $st.noProg = 0; $st.conts = 0 }
-    elseif ($last -match '^LOOP: 이어 함' -and $st.conts -lt 3) { $st.conts++; Log "이어 함 $($st.conts)/3 — 진척 없음으로 안 셈" }
+    # "이어 함"은 상한(턴·대화) 때만 공짜(사용자 11-13: 회차 494~504가 10턴 안에 "이어 함"으로 빠져나가 11번 내리 헛돎). 턴 수를 모르면(-1) 옛 동작.
+    elseif ($last -match '^LOOP: 이어 함' -and $st.conts -lt 3 -and ($r.Cap -or $r.Turns -lt 0 -or $r.Turns -ge 40)) { $st.conts++; Log "이어 함 $($st.conts)/3 — 진척 없음으로 안 셈" }
+    elseif ($last -match '^LOOP: 이어 함' -and -not $r.Cap) { $st.noProg++; Log "일찍 이어 함($($r.Turns)턴) — 끝낸 것 없는 회차 $($st.noProg)/3" }
     else { $st.noProg++; Log "끝낸 것 없는 회차 $($st.noProg)/3" }
     $stop = $null
     if ($last -match '^LOOP: NEED_USER') { $stop = '사용자 확인 필요' }
