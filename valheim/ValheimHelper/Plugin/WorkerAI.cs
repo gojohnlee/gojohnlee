@@ -1156,6 +1156,8 @@ namespace ValheimHelper
 
         bool m_announceHome = true;
 
+        static bool RaidOver() => RandEventSystem.instance == null || RandEventSystem.instance.GetCurrentRandomEvent() == null;
+
         public void GoHome(bool announce = true)
         {
             m_announceHome = announce;
@@ -1226,6 +1228,10 @@ namespace ValheimHelper
                 if (ev != null && Utils.DistanceXZ(transform.position, ev.m_pos) < ev.m_eventRange && Utils.DistanceXZ(transform.position, npc.Home) > 30f)
                 {
                     npc.Say("raid");
+                    // 하던 일은 대기열 맨 앞에 두고 습격이 끝나면 이어 감(사용자 11-13 "귀환해도 하던 일은 절대 안 잊음")
+                    bool keep = Job != null && !Yields;
+                    Interrupt();
+                    if (keep && Queue.Count > 0) Queue[0].Ready = RaidOver;
                     GoHome(false);
                     return true;
                 }

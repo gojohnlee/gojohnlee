@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_raidtest (5번 습격 귀환): 일하는 중 습격 구역 안이고 거점에서 30m 넘으면 일을 접고 거점으로 돌아오는지.
+    /// vh_raidtest (5번 습격 귀환): 일하는 중 습격 구역 안이고 거점에서 30m 넘으면 일을 멈추고 거점으로 돌아왔다가, 습격이 끝나면 하던 일을 이어 가는지.
     /// 습격은 RandEventSystem.SetRandomEventByName으로 일꾼 위치에 건다(플레이어는 거점, 갓 모드).
     /// </summary>
     static class RaidTest
@@ -66,6 +66,12 @@ namespace ValheimHelper
             checks.Add("귀환 대사를 함", said);
             yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Ragnar.transform.position, w.Home) < 15f, 60f);
             checks.Add($"거점 근처로 돌아옴 ({Utils.DistanceXZ(w.Ragnar.transform.position, w.Home):0}m, {TestKit.Waited:0}초)", TestKit.Ok);
+            checks.Add("하던 일을 대기열에 기억", ai.Queue.Exists(q => q.Resume is GatherJob));
+
+            // 3) 습격이 끝나면 하던 일을 이어 감
+            RandEventSystem.instance.ResetRandomEvent();
+            yield return TestKit.WaitFor(() => ai.Job is GatherJob, 30f);
+            checks.Add($"습격 끝나고 하던 일 이어 감 ({TestKit.Waited:0}초)", TestKit.Ok);
         }
     }
 }
