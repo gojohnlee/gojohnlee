@@ -1,5 +1,5 @@
 갱신: 2026-11-13 03:09  (무인 루프, scripts/vh-loop.ps1)
-지금: 답 기다림: 3회차 연속 근거 있는 완료 없음(커밋·시험 붙은 [끝]·질문 답·닫은 문제 없음) — UserRequest.txt에 쓰면 5분 안에 이어 감(물은 것은 history.md 맨 위)
+지금: 답 기다림: 3회차 연속 근거 있는 완료 없음(커밋·시험 붙은 [끝]·질문 답·닫은 문제 없음) — 자리 비워 컴퓨터 끔. PC를 켜도 루프는 저절로 안 켜짐(11-02) — UserRequest.txt에 쓰고 PC PowerShell에서 Start-ScheduledTask 'VH loop'(물은 것은 history.md 맨 위)
 회차: 504, 계정: 2번, 한도: 없음
 할 일: 요청 쉬는 일꾼 없게(11-13 00:25): 쉬게 되면 ① 동료 일 돕기 [늦게 끼기 끝, 회차 482 — 커밋 f670434 · 시험 vh_chorestest 21/21 PASS — JoinGather·TeamJ…
 마지막 시험: 11-13 03:04 요약: 1/1 PASS
