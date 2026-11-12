@@ -8,6 +8,7 @@ namespace ValheimHelper
     /// <summary>
     /// vh_chorestest (사용자 11-09 "극초반 좀 더 자유롭게"):
     /// 1) 이름 없이 "!나무 10" → 쉬던 두 일꾼이 같이 출발, 둘이 합쳐 10개면 둘 다 복귀(나무 10~ 조금 넘게).
+    /// 1-2) 다른 일 하던 일꾼이 쉬게 되면 동료의 남은 몫 큰 채집에 낌.
     /// 2) "!계속채워 나무 n" → 대답하고 몇 초 안에 실제로 출발(1분 기다리지 않음).
     /// 3) 음식이 없고 조리대·화로가 있으면 쉬는 일꾼이 멧돼지를 사냥해 구워 둔다.
     /// 4) 조리대가 없으면 채집 음식(이 단계는 라즈베리만 남김)을 따 온다.
@@ -15,7 +16,7 @@ namespace ValheimHelper
     /// </summary>
     static class ChoresTest
     {
-        public static void Register() => TestRunner.Register("vh_chorestest", "같이 캐기·바로 보충·쉴 때 먹거리·밭일·꿀 시험", () => TestKit.Flat(Run()), 900f);
+        public static void Register() => TestRunner.Register("vh_chorestest", "같이 캐기·바로 보충·쉴 때 먹거리·밭일·꿀 시험", () => TestKit.Flat(Run()), 1300f);
 
         static readonly string[] Foods = { "Raspberry", "Blueberries", "Mushroom", "MushroomYellow", "Cloudberry", "Honey", "CookedMeat" };
 
@@ -72,6 +73,20 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => Count(w, "Wood") >= 10 && Idle(w.Ragnar) && Idle(w.Floki), 240f);
             // 쓰러뜨린 자기 통나무는 목표를 채워도 끝까지 쪼개므로(사용자 11-01) 넘는 수는 판정하지 않고 기록만
             checks.Add($"합쳐 10개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
+
+            // 1-2) 늦게 같이 캐기(사용자 11-13 쉬는 일꾼 없게 ①): 플로키는 다른 일(나무 1) 중에 라그나만 나무 20 → 플로키가 끝나고 쉬면 라그나 팀에 낌
+            int wood0 = Count(w, "Wood");
+            GatherTest.Say($"!{w.Floki.NpcName} 나무 1", null);
+            yield return new WaitForSeconds(2f);
+            GatherTest.Say($"!{w.Ragnar.NpcName} 나무 20", null);
+            yield return new WaitForSeconds(2f);
+            bool alone = Gathering(w.Ragnar, "Wood") && ((GatherJob)w.Ragnar.Ai.Job).Team == null && TargetOf(w.Floki) == 1;
+            checks.Add($"라그나만 나무 20, 플로키는 제 일(목표 {TargetOf(w.Floki)})", alone);
+            yield return TestKit.WaitFor(() => TargetOf(w.Floki) == 20 || !Gathering(w.Ragnar, "Wood"), 240f);
+            bool joined = Gathering(w.Floki, "Wood") && Gathering(w.Ragnar, "Wood") && ((GatherJob)w.Floki.Ai.Job).Team != null && ((GatherJob)w.Floki.Ai.Job).Team == ((GatherJob)w.Ragnar.Ai.Job).Team;
+            checks.Add($"플로키가 제 일 끝내고 라그나 팀에 낌 ({TestKit.Waited:0}초)", joined);
+            yield return TestKit.WaitFor(() => Count(w, "Wood") >= wood0 + 20 && Idle(w.Ragnar) && Idle(w.Floki), 300f);
+            checks.Add($"합쳐 20개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood") - wood0}, {TestKit.Waited:0}초)", TestKit.Ok);
 
             // 2) 계속채워 → 바로 출발
             int wood = Count(w, "Wood");

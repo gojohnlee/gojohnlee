@@ -736,6 +736,7 @@ namespace ValheimHelper
             foreach (var npc in new List<WorkerNpc>(WorkerNpc.All))
             {
                 if (!FreeForChores(npc)) continue;
+                if (!npc.Ai.Resting && JoinGather(npc)) continue; // 쉬는 일꾼 없게 ① 동료 일 돕기 먼저(사용자 11-13)
                 if (Brain.Refill.Count > 0 || Brain.Personal.Count > 0)
                 {
                     GatherJob job = NextRefillJob(npc, 0, true);
@@ -1072,7 +1073,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 이름 없이 시킨 채집: 그 일을 맡은 일꾼(lead)이 바로 떠났으면 그 순간 쉬던 다른 일꾼도 같은 물건을 캐러 간다(각자 따로 다님 — 일꾼끼리 같이 가지는 않음, 9절).
-        /// 목표는 나누지 않고 같이 센다(GatherJob.Team): 둘이 넣은 것 + 들고 있는 것이 목표면 둘 다 복귀. 나중에 쉬게 된 일꾼은 끼지 않음(자기 할 일).
+        /// 목표는 나누지 않고 같이 센다(GatherJob.Team): 둘이 넣은 것 + 들고 있는 것이 목표면 둘 다 복귀. 나중에 쉬게 된 일꾼은 JoinGather가 남은 몫이 클 때만 끼움.
         /// 동료는 묻지 않고 출발 판단이 Go일 때만 간다.
         /// </summary>
         internal static void ShareGather(ChatCommand cmd, WorkerNpc lead)
@@ -1099,6 +1100,39 @@ namespace ValheimHelper
             }
         }
 
+
+        /// <summary>
+        /// 쉬는 일꾼 없게 ①(사용자 11-13): 나중에 쉬게 된 일꾼도 동료가 명령받아 캐는 물건의 남은 몫이 크면(Core TeamJoin.Worth) 같은 팀으로 낀다.
+        /// 자동 보충·갚기·쉴 때 일은 안 낌(그건 각자 맡음). 출발 판단이 Go일 때만.
+        /// </summary>
+        internal static bool JoinGather(WorkerNpc npc)
+        {
+            if (!ChoresOn) return false;
+            foreach (var lead in WorkerNpc.All)
+            {
+                if (lead == npc || lead == null || lead.IsDead() || !(lead.Ai.Job is GatherJob g) || g.FromRefill || g.Repay || g.Target < 2) continue;
+                int team = g.Team?.Count ?? 1;
+                if (g.Team != null && g.Team.Exists(o => o.Npc == npc)) continue;
+                if (!TeamJoin.Worth(g.Remaining() - g.Carried(), g.Target, team)) continue;
+                HashSet<ToolKind> ways = GatherJob.WaysFor(npc, g.Item);
+                if (ways.Count == 0) continue;
+                var c = new ChatCommand { Kind = CommandKind.Item, Item = g.Item, Amount = g.Target };
+                DepartureInput input = Input(npc, c, ways, true);
+                input.Stock = 0;
+                DepartureResult r = Departure.Judge(input);
+                Plugin.Log.LogInfo($"{npc.NpcName} 늦게 같이 캐기 {g.Item} 남은 {g.Remaining() - g.Carried()}/{g.Target} ({lead.NpcName} 팀 {team}): {r.Action} ({r.Reason})");
+                if (r.Action != DepartAction.Go) continue;
+                var job = new GatherJob(npc, g.Item, g.Target, ways);
+                foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
+                if (g.Team == null) g.Team = new List<GatherJob> { g };
+                g.Team.Add(job);
+                job.Team = g.Team;
+                npc.Ai.StartJob(job);
+                npc.Say("gatherHelp", new Dictionary<string, string> { ["item"] = GatherJob.ItemLabel(g.Item), ["n"] = g.Target.ToString(), ["partner"] = lead.NpcName });
+                return true;
+            }
+            return false;
+        }
         /// <summary>자동 보충할 것: !채워 기준치 아래인 것 + 개인 상자 준비(상자 기능 ③ 나-2)에서 거점 상자로도 모자란 몫(같은 물건이면 더함).</summary>
         static List<Ingredient> RefillDue(Vector3 home)
         {

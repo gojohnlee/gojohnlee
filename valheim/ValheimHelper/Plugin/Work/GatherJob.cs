@@ -47,6 +47,7 @@ namespace ValheimHelper
         /// <summary>마지막 FindInSight에서 목록 대상이 보였지만 건너뜀(m_skip·위험 구역·막힘 기록)이라 안 고름.</summary>
         bool m_sawSkipped;
         readonly WorkerNpc m_npc;
+        internal WorkerNpc Npc => m_npc;
         readonly WorkerAI m_ai;
 
         Step m_step = Step.Unload;
