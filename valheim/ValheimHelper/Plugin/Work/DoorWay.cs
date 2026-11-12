@@ -36,6 +36,8 @@ namespace ValheimHelper
 
         /// <summary>문 쪽으로 가는 중 — 부른 쪽은 "대상까지 멀면 걷기"를 건너뛴다(문으로 돌다 대상 2.5m 밖으로 나가면 다시 대상 쪽으로 당겨 오락가락, 회차 314).</summary>
         public bool Busy => m_phase == Phase.ToDoor || m_phase == Phase.Through;
+        /// <summary>문으로 가는 중 남은 길(문 앞 → 문틀 너머 → 목표 직선). 걸음 기록용 — 문 쪽 걷기는 m_path를 안 써서 옛 m_path로 재면 멀어지는 것처럼 보였음(회차 452: 나가며 1초 멈칫으로 셈).</summary>
+        public float LeftVia(Vector3 me) => (m_phase == Phase.ToDoor ? Utils.DistanceXZ(me, m_out) + Utils.DistanceXZ(m_out, m_in) : Utils.DistanceXZ(me, m_in)) + Utils.DistanceXZ(m_in, m_for);
 
         static int Mask =>s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("piece"));
 

@@ -142,6 +142,7 @@ namespace ValheimHelper
         // 회차 417: FloorStep을 따르는 중이면 m_path 대신 지금 모퉁이(m_path도 그 모퉁이로 가는 길) — 계단 위 끝 FindPath 실패·1m 안 점 지우기로 m_path가 비어 -1(구간이 끊겨 셈에서 빠짐)이 잦았음.
         float PathLeft(Vector3 p)
         {
+            if (m_npc.Ai.ExitingDoor) return m_npc.Ai.ExitLeft(p);
             var path = PathOf(m_npc.Ai);
             float sum;
             Vector3 end;
