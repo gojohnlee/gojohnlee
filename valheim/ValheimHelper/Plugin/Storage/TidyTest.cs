@@ -21,7 +21,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true };
             var made = new List<Container>();
             var days = new Dictionary<WorkerNpc, int>();
             try { yield return Body(w, checks, made, days); }

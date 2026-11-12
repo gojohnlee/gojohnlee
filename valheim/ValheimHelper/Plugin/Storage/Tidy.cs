@@ -70,11 +70,17 @@ namespace ValheimHelper
             return moves;
         }
 
-        /// <summary>바로 정리. 옮긴 물건 수.</summary>
+        /// <summary>바로 정리. 옮긴 물건 수. 꽉 찬 상자는 다른 물건이 빠져야 자리가 나니(회차 463 집 상자 23개) 옮길 것이 없을 때까지 최대 5번.</summary>
         public static int Instant(Vector3 home)
         {
             int moved = 0;
-            foreach (var m in Plan(home)) moved += MoveNow(m.From, m.To, m.Name);
+            for (int pass = 0; pass < 5; pass++)
+            {
+                int n = 0;
+                foreach (var m in Plan(home)) n += MoveNow(m.From, m.To, m.Name);
+                moved += n;
+                if (n == 0) break;
+            }
             if (moved > 0) BaseStock.Changed();
             return moved;
         }
