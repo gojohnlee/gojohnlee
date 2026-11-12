@@ -9,7 +9,7 @@ namespace ValheimHelper
     /// </summary>
     public sealed class DoorWay
     {
-        const float PhaseLimit = 8f, DoorSearch = 15f, ExitSearch = 10f, Step = 1.3f;
+        const float PhaseLimit = 8f, DoorSearch = 15f, ExitSearch = 10f, Step = 1.3f, LeafClear = 0.8f; // LeafClear: 들어온 뒤 문 충돌체에서 몸 가운데까지(캡슐 0.4 + 0.4, E077)
         static int s_mask;
         enum Phase { None, ToDoor, Through, GaveUp }
         Phase m_phase;
@@ -18,7 +18,7 @@ namespace ValheimHelper
         float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN;
         int m_swing, m_orig; // m_swing 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064). m_orig = 그때 남이 열어 둔 문이면 원래 s_state
         float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
-        Vector3 m_for;
+        Vector3 m_for, m_goal; bool m_hasGoal; float m_clearT = -1f; // m_goal: 들어갈 대상 자리, m_clearT: 안쪽 1.3m 닿은 때(문짝 곁이면 더 걸음, E077)
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
         public static int Opened, Entered, Exited, Closed;
 
@@ -78,7 +78,7 @@ namespace ValheimHelper
                 if (Vector3.Dot(n, target.transform.position - mid) > 0f) n = -n; // n = 대상 반대쪽(일꾼이 벽 옆줄에 서면 일꾼 쪽은 모호)
                 m_out = mid + n * Step;
                 m_in = mid - n * Step;
-                m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
+                m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f; m_goal = target.transform.position; m_hasGoal = true;
                 m_phase = Phase.ToDoor; m_t = 0f; m_diagNext = 0f; m_lineCheck = 0f;
                 m_hall = Mouth(mid, n, out m_mouth); m_lined = false; m_hallN = n; m_hallEnd = Vector3.Dot(m_mouth - mid, n) - 0.8f;
                 if (m_hall) m_limit = PhaseLimit + (Utils.DistanceXZ(me, m_mouth) + Utils.DistanceXZ(m_mouth, m_out)) / 1.5f;
@@ -87,10 +87,11 @@ namespace ValheimHelper
             int r = Walk(dt, npc, target.name);
             if (r != 2) return r == 1;
             Entered++;
+            npc.Ai.ForgetPath(); // 문 앞 가던 길(1초·5초 옛 길)이 아니라 지금 자리에서 대상으로 새 길(Exit와 같음)
             // 회차 450: 들어온 뒤 내가 연 문은 몇 걸음 지나 닫음(CloseBehind) — 열어 두면 문짝이 안쪽에 있어 나갈 때 문 앞에 서서 닫고 반대로 다시 열며 1.2~2.8초 섰음
             var mine = s_opened.Find(o => o.Door == m_door);
             if (mine != null && mine.By == npc && mine.Reopen == 0) mine.Inside = true;
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
+            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 더 걸음 {(m_clearT >= 0f ? m_t - m_clearT : 0f):0.0}초·문 충돌체 {DoorGap(m_door, me):0.00}m, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
             m_phase = Phase.None;
             return Blocked(npc, target) ? Retry(npc, target.name) : false;
         }
@@ -190,7 +191,7 @@ namespace ValheimHelper
                     Track(m_door, npc);
                     m_swing = 2; // 방금 내가 엶 — 바꿔 열기 안 함(회차 347: 연 직후 s_state가 반대로 읽혀 들어갈 때도 닫음)
                 }
-                m_phase = Phase.Through; m_t = 0f;
+                m_phase = Phase.Through; m_t = 0f; m_clearT = -1f;
             }
             ZNetView v = m_door != null ? m_door.GetComponent<ZNetView>() : null;
             if (v == null || !v.IsValid()) { GiveUp(npc, what, "문 사라짐"); return 0; }
@@ -219,10 +220,24 @@ namespace ValheimHelper
             Vector3 mid = Middle(m_door), dirIn = m_in - mid; dirIn.y = 0f; dirIn.Normalize();
             Vector3 aim = Vector3.Dot(me - mid, dirIn) < -0.2f ? mid : m_in;
             Vector3 go = aim - me; go.y = 0f; // 높이 성분이 있으면 smooth 이동의 moveDir.y로 새어 거의 안 걸음(회차 311)
-            if (Utils.DistanceXZ(me, m_in) > 0.5f)
+            if (m_clearT < 0f && Utils.DistanceXZ(me, m_in) > 0.5f)
             {
                 npc.Ai.MoveTowards(go.normalized, false);
                 return 1;
+            }
+            // E077(회차 400·453): 안쪽 1.3m는 안으로 열린 문짝(경첩이 문틀 가운데서 0.75m 옆, 문짝 1.5m) 반경 안이라 몸이 문짝에 닿아 있다(0.49m).
+            // 그 타일 navmesh는 문이 다 열리기 전 것이라(바닐라 Pathfinding.Buildtiles: 찔린 시각이 마지막 굽기보다 5초 넘게 뒤일 때만 다시 구움,
+            // BaseAI.FindPath는 같은 목표면 5초 옛 길) 길 첫 모퉁이가 문짝 너머에 나오고, MoveTo가 문짝에 대고 5초 밀다 넣기 막힘 순간이동.
+            // 들어갈 때는 문짝에서 LeafClear 넘게 떨어질 때까지 들어온 쪽으로 곧장 더 걷는다(1.5초까지, 대상 2.2m 안이거나 앞이 막히면 그만). 나갈 땐 CloseIfSwungAtMe.
+            if (!m_exiting)
+            {
+                if (m_clearT < 0f) m_clearT = m_t;
+                Vector3 deeper = m_in - m_out; deeper.y = 0f; deeper.Normalize(); // 닫힌 문 때 잰 방향(열린 문의 Middle은 문짝 쪽으로 쏠림)
+                if (m_t - m_clearT < 1.5f && DoorGap(m_door, me) < LeafClear && (!m_hasGoal || Utils.DistanceXZ(me, m_goal) > 2.2f) && !AheadBlocked(me, deeper))
+                {
+                    npc.Ai.MoveTowards(deeper, false);
+                    return 1;
+                }
             }
             return 2;
         }
@@ -396,6 +411,28 @@ namespace ValheimHelper
                 return s > Step;
             }
             return false; // 8m 넘는 복도 — 바닐라 길에 맡김
+        }
+
+        /// <summary>몸 가운데(발 위 1m)에서 이 문 충돌체(문짝·문틀, 트리거 뺌)까지 가장 가까운 거리. 바닥 판은 1m 아래라 멂.</summary>
+        static float DoorGap(Door d, Vector3 me)
+        {
+            Vector3 c = me + Vector3.up;
+            float best = float.MaxValue;
+            foreach (var col in d.GetComponentsInChildren<Collider>())
+            {
+                if (col.isTrigger || !col.enabled) continue;
+                Vector3 q = col is MeshCollider mc && !mc.convex ? col.bounds.ClosestPoint(c) : col.ClosestPoint(c);
+                best = Mathf.Min(best, Vector3.Distance(q, c));
+            }
+            return best;
+        }
+
+        /// <summary>그쪽으로 몸 앞 0.5m쯤에 이 문 말고 다른 단단한 것(설비·벽)이 있나 — 있으면 더 안 걷는다.</summary>
+        bool AheadBlocked(Vector3 me, Vector3 dir)
+        {
+            foreach (var h in Physics.SphereCastAll(me + Vector3.up * 0.9f, 0.3f, dir, 0.6f, WorkerAI.SolidMask, QueryTriggerInteraction.Ignore))
+                if (h.collider != null && !h.collider.transform.IsChildOf(m_door.transform) && h.collider.GetComponentInParent<Character>() == null) return true;
+            return false;
         }
 
         /// <summary>문틀 가운데(문 transform은 경첩 쪽일 수 있어 닫힌 문 충돌체 가운데).</summary>
