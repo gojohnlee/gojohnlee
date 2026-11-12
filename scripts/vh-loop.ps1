@@ -27,6 +27,7 @@ $Accounts = @(
 )
 $ShowWindow = $false   # 루프 창 보이기(오른쪽 절반). $false = 숨김
 $RoundTimeoutMin = 240
+$RoundHardMin = 720   # 시험 스크립트가 띄운 게임이 돌고 있으면 240분에 안 끊고 이때까지 기다림(사용자 11-13: 최종 실전 시험은 몇 시간)
 $MaxTurns = 60; $MaxCtx = 100000   # 회차 상한(사용자 11-11): 넘으면 끊고 "LOOP: 이어 함" — 작업 트리는 다음 회차가 이어 감
 $BackupMin = 15
 $ReplyTimeoutMin = 15
@@ -444,7 +445,8 @@ function Run-Claude($acct, $outFile) {
     while (-not $c.P.WaitForExit(10000)) {
         if ($c.F.Ctx -gt $MaxCtx) { $c.Cap = "대화 $([math]::Round($c.F.Ctx / 10000))만"; Log "회차 대화 $($c.F.Ctx) > $MaxCtx → claude 끔(이어 함)"; & taskkill /T /F /PID $c.P.Id | Out-Null; break }
         if (((Get-Date) - $bk).TotalMinutes -ge $BackupMin) { Backup-Wip; Reply-Requests $acct; $bk = Get-Date }
-        if (((Get-Date) - $c.Start).TotalMinutes -ge $RoundTimeoutMin) { Log '회차 시간 초과 → claude 끔'; & taskkill /T /F /PID $c.P.Id | Out-Null; break }
+        $rm = ((Get-Date) - $c.Start).TotalMinutes
+        if ($rm -ge $RoundTimeoutMin -and ($rm -ge $RoundHardMin -or -not (Test-TestGame))) { Log "회차 시간 초과($([math]::Round($rm))분) → claude 끔"; & taskkill /T /F /PID $c.P.Id | Out-Null; break }
     }
     End-Claude $c $outFile
 }
@@ -508,6 +510,12 @@ function Get-PlayingGame {
     $p = @(Get-Process valheim, valheim_server -ErrorAction SilentlyContinue | Where-Object {
         -not ($_.ProcessName -eq 'valheim' -and $g.Count -ge 2 -and $_.Id -eq ($g[0] -as [int]) -and $_.StartTime.Ticks -eq ($g[1] -as [long])) })
     if ($p) { ($p | ForEach-Object { "$(if ($_.ProcessName -eq 'valheim') { '게임' } else { '전용 서버' }) PID $($_.Id)" }) -join ', ' } else { '' }
+}
+# 시험 스크립트(valheim-test.ps1)가 띄운 게임이 지금 돌고 있나 — 긴 시험 중엔 회차를 240분에 안 끊는다.
+function Test-TestGame {
+    $g = (Get-Content (Join-Path $env:TEMP 'valheim-test-game.txt') -ErrorAction SilentlyContinue | Select-Object -First 1) -split ' '
+    if ($g.Count -lt 2) { return $false }
+    [bool](Get-Process valheim -ErrorAction SilentlyContinue | Where-Object { $_.Id -eq ($g[0] -as [int]) -and $_.StartTime.Ticks -eq ($g[1] -as [long]) })
 }
 # 자리 비움 = 입력 없음 10분 + 켜진 게임 없음. 게임 때문에 못 끄면 30분마다 로그·status 한 줄.
 $script:GameTold = [datetime]::MinValue

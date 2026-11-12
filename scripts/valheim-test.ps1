@@ -174,7 +174,9 @@ $gp = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Select-Objec
 $ourId = if ($gp) { $gp.Id; Set-Content $gameFile "$($gp.Id) $($gp.StartTime.Ticks)" }   # 다음 시험의 '모르는 게임' 판단용
 $t = 0; $exitHang = $false
 $gameLog = Join-Path $game 'BepInEx\LogOutput.log'
-while ((Test-Game) -and $t -lt 1800) {   # 30분 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
+# 상한 기본 30분. 긴 시험(최종 실전 시험 등)은 $env:VH_MAXMIN="분"(사용자 11-13: 최종 시험은 30분보다 확실히 김)
+$maxMin = if ("$env:VH_MAXMIN" -match '^\d+$' -and [int]$env:VH_MAXMIN -gt 0) { [int]$env:VH_MAXMIN } else { 30 }
+while ((Test-Game) -and $t -lt $maxMin * 60) {   # 상한 넘으면 멈춘 것으로 보고 끈다(못 끄면 다음 시험 시작 때 알림)
     Start-Sleep 3; $t += 3
     # 종료 시작("Game - OnApplicationQuit", 6번 다 있음 — ZNet OnDestroy는 없는 실행도 있었음)이 이번 실행 로그에 찍힌 뒤 로그가 2분 넘게 멈춰 있으면
     # 종료 멈춤(10-26 세 번, 응답 없음) → 30분 기다리지 않고 끈다(E038). 멈춘 게임이 로그를 쥐고 있어 Select-String은 못 읽음 → Get-Content.
@@ -232,7 +234,7 @@ if ($env:VH_JOIN) {   # 멀티 시험: 서버 쪽 모드 로그의 오류도(손
 }
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
 if ($exitHang) { $report += '게임 종료 멈춤: 종료 시작(OnApplicationQuit) 뒤 로그가 2분 멈춰 안 꺼져 강제 종료(Errors.txt E038 — 발생 횟수 더하기). 시험 판정은 그대로' }
-elseif ($runTimedOut) { $report += '게임이 30분 안에 안 꺼져 강제 종료 — 중단(PASS로 치지 않음)' }
+elseif ($runTimedOut) { $report += "게임이 ${maxMin}분 안에 안 꺼져 강제 종료(더 길게: `$env:VH_MAXMIN) — 중단(PASS로 치지 않음)" }
 if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }
 $reports += ($report -join "`r`n")
 }   # foreach $Run
