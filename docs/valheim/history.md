@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 598 · 11-14 · 아는 적 맞는 인원 계산(Core)
+
+**요약**
+
+- 아는 적은 처음부터 맞는 인원을 고르는 계산을 만듦(셋도 안 되면 0 = 출발 안 함). 아직 출발 판단에는 안 붙임.
+
+**자세히**
+
+- Core/Npc/TeamPlan.cs `Start(known, needed, tried)`: 아는 적이면 Needed 그대로, 모르는 적이면 Next. 시험 TeamPlanTests.StartKnownFoeUsesNeeded 추가.
+- dotnet test 737/737 PASS. 게임 시험은 안 돌림(아직 출발 판단에 안 붙어 게임 쪽 바뀐 것 없음). 다음 회차: Departures에서 연결하고 게임 시험.
+- 커밋 26f6d015 (valheim 푸시).
+
 ### 회차 597 · 11-14 · 둘이도 버거우면 셋이 같이 사냥
 
 **요약**
