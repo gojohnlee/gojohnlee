@@ -17,6 +17,9 @@ if ($d -le $now) { throw "끝 시각이 이미 지났어: $d" }
 [IO.File]::WriteAllText((Join-Path $Dir 'keepon-until.txt'), $d.ToString('yyyy-MM-dd HH:mm'), (New-Object Text.UTF8Encoding $false))
 if (-not (Get-ScheduledTask -TaskName 'VH keep on' -ErrorAction SilentlyContinue)) { throw "작업 'VH keep on'이 없어. 처음 만들 때처럼 다시 등록해야 해." }
 Stop-ScheduledTask -TaskName 'VH keep on' -ErrorAction SilentlyContinue   # 돌고 있으면 새 끝 시각으로 다시
+# conhost --headless 아래 powershell은 Stop-ScheduledTask로 안 죽음(11-13 확인) → 남은 지킴이를 직접 끔(안 그러면 새 것이 뮤텍스에 막혀 바로 끝남)
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -match 'vh-keepon\.ps1' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Start-Sleep 2
 Enable-ScheduledTask -TaskName 'VH keep on' | Out-Null
 Start-ScheduledTask -TaskName 'VH keep on'
 "지킴이 켬: $($d.ToString('MM-dd HH:mm'))까지"
