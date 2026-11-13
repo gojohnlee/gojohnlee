@@ -362,7 +362,18 @@ namespace ValheimHelper
                 }
             }
             foreach (var d in drop) Close(d.Value, d.Key);
+            // E092: 보는 동안 바닐라 2초 정리가 근처 손님에게 주인을 넘기면 되찾는다(설계: 주인은 늘 호스트, NPC는 Workers.Reclaim).
+            long me = ZDOMan.GetSessionID();
+            foreach (var id in new List<ZDOID>(s_viewers.Keys))
+            {
+                ZDO zdo = ZDOMan.instance.GetZDO(id);
+                if (zdo == null || !zdo.HasOwner() || zdo.GetOwner() == me) continue;
+                if (s_reclaimLogged.Add(id)) Plugin.Log.LogInfo($"손님이 보는 상자 주인 {zdo.GetOwner()} → 호스트로 되찾음 ({zdo.GetPosition()})");
+                ForEdit(id);
+            }
         }
+
+        static readonly HashSet<ZDOID> s_reclaimLogged = new HashSet<ZDOID>();
 
         /// <summary>시험 끝: 가짜 손님과 그들이 보던 것 지움.</summary>
         public static void ClearFakes()
