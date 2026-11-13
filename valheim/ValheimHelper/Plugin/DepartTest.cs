@@ -88,6 +88,10 @@ namespace ValheimHelper
                 checks.Add("아침 전에는 안 꺼냄(질문 되풀이 없음)", q.Count == 1 && Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
                 if (queued)
                 {
+                    // 대기열은 쉬는(Idle) 일꾼만 꺼낸다 — 집에 가는 중(Mode.Home)은 안 보고, 둘이 잡담하면 그 자리에 선다(WorkerBanter.Facing).
+                    // 시작 자리가 거점에서 멀면(집 시험 자리 20m) "멈춰" 뒤 아직 걷는 중에 아침이 와 잡담에 묶여 8초를 넘겼다(11-14) → 집에 닿은 뒤 아침으로
+                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Idle, 30f);
+                    if (!TestKit.Ok) TestRunner.Log($"아침 전 집에 못 닿음({w.Ragnar.Ai.Current}, {TestKit.Waited:0}초) — 그대로 아침으로");
                     ZNet.instance.SetNetTime(q[0].Work.NotBefore + 5.0); // 잠자기처럼 아침으로
                     w.Env.m_debugTime = 0.3f;
                     yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);

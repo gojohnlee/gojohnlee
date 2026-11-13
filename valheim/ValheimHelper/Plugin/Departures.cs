@@ -346,11 +346,13 @@ namespace ValheimHelper
             }
             // 밤 몫: 밤이면 그 바이옴 밤 적(장비와 무관)을 더해 잃을 비율을 셈 — 센 장비는 밤 목초지도 괜찮게 나온다(사용자 11-13 17:30)
             bool night = EnvMan.IsNight();
-            System.Func<float, List<NightSpawn>, System.Func<IList<Foe>, float>> ratioAt = (h, ns) => f =>
+            // extra = 아직 곁에 없는 동료 일꾼 한 방(TeamPlan.Needed가 아는 적의 맞는 인원을 셀 때만 더함)
+            System.Func<float, List<NightSpawn>, float, System.Func<IList<Foe>, float>> hitAt = (h, ns, extra) => f =>
             {
                 List<Foe> all = NightFoes.Plus(f, ns, resolve);
-                return Danger.Ratio(all, h, hit, taken(all));
+                return Danger.Ratio(all, h, hit + extra, taken(all));
             };
+            System.Func<float, List<NightSpawn>, System.Func<IList<Foe>, float>> ratioAt = (h, ns) => hitAt(h, ns, 0f);
             foreach (ZoneMemory m in zones)
             {
                 if (input.Places.Count >= MaxPlaces) break;
@@ -378,6 +380,20 @@ namespace ValheimHelper
                 o.InBase = BaseArea.Contains(o.Distance);
                 foreach (WorkerNpc w in WorkerNpc.All)
                     if (w != null && w != npc && !w.IsDead() && Senses.ZoneOf(w.transform.position).Equals(m.Zone)) o.Crowd++;
+                // 아는 적의 맞는 인원(사용자 11-13 00:15): 호위병 → 다른 일꾼 순으로 한 방씩 더해 셋까지 셈, 셋도 안 되면 0(장비 요청). 모르는 적은 -1(Team 기본)
+                if (alone.Known && alone.TopFoe != null)
+                {
+                    var helpers = new List<float>();
+                    foreach (bool isGuard in new[] { true, false })
+                        foreach (WorkerNpc w in WorkerNpc.All)
+                            if (w != null && w != npc && !w.IsDead() && w.IsGuard == isGuard) helpers.Add(Guard.HitOf(w));
+                    o.Team = Core.Npc.TeamPlan.Needed(extra =>
+                    {
+                        PlaceRisk pr = book.Risk(m.Zone, now, hitAt(health, nightSpawns, extra), resolve);
+                        var probe = new PlaceOption { Ratio = pr.Ratio, Boss = pr.Boss, GearRatio = o.GearRatio }; // 죽은 기록은 맞는 인원이 아니라 덜 위험한 곳 판단에서 본다
+                        return !Departure.Risky(npc.Personality, probe, Departure.Level(npc.Personality, probe));
+                    }, helpers);
+                }
                 input.Places.Add(o);
             }
             input.Places.Sort((a, b) => a.Distance.CompareTo(b.Distance));
