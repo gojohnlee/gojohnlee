@@ -154,6 +154,34 @@ public class DepartureTests
     }
 
     [Fact]
+    public void KnownFoeThatThreeCannotBeatAsksForGear()
+    {
+        // 아는 적(Team 0 = 셋도 안 됨)이면 호위병이 있어도 출발 안 하고 장비 요청
+        var a = P(100, 1.3f, x: 1); a.Team = 0;
+        var i = In(a); i.Guard = "호위병";
+        var r = Departure.Judge(i);
+        Assert.Equal(DepartAction.GearRequest, r.Action);
+        Assert.Equal("depart.gearRequest", r.Key);
+    }
+
+    [Fact]
+    public void KnownFoeNeedingTwoOrThreeStillGoesWithGuard()
+    {
+        var a = P(100, 1.3f, x: 1); a.Team = 3;
+        var i = In(a); i.Guard = "호위병";
+        Assert.Equal(DepartAction.GoTogether, Departure.Judge(i).Action);
+    }
+
+    [Fact]
+    public void BaseZoneNeverAsksForGear()
+    {
+        // 거점 범위 안은 위험해도 피해 바꾸지 않으니 장비 요청으로도 막지 않는다
+        var a = P(100, 1.3f, x: 1); a.Team = 0; a.InBase = true;
+        var i = In(a);
+        Assert.NotEqual(DepartAction.GearRequest, Departure.Judge(i).Action);
+    }
+
+    [Fact]
     public void AlarakIsBolder()
     {
         var i = In(P(100, 0.9f, withMead: 0.9f)); i.Personality = Personality.Floki;

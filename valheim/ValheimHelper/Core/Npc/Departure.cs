@@ -32,6 +32,8 @@ namespace ValheimHelper.Core.Npc
         public bool InBase;
         /// <summary>그 구역에 있는 다른 일꾼 수(사용자 11-13 00:30 "출발 전 편한 곳: 약한 적·덜 몰린·가까운") — 대안 고를 때 거리보다 먼저.</summary>
         public int Crowd;
+        /// <summary>아는 적의 맞는 인원(TeamPlan.Needed, 1~3). 0 = 셋도 안 돼 장비 요청, -1 = 안 셈(모르는 적·기본).</summary>
+        public int Team = -1;
     }
 
     public sealed class DepartureInput
@@ -86,6 +88,8 @@ namespace ValheimHelper.Core.Npc
         /// <summary>"~부터 하고 갈게요" → 대기열 끝. 꺼낼 때 다시 판단한다.</summary>
         Queue,
         Refuse,
+        /// <summary>아는 적이 셋도 안 되는 곳뿐 → 출발 안 하고 장비를 요청한다(PlaceOption.Team 0, 거점 안 제외).</summary>
+        GearRequest,
     }
 
     public enum Question { None, Alternative, Escort, DiedThere, Condition, Night, Stock }
@@ -264,6 +268,7 @@ namespace ValheimHelper.Core.Npc
                     foreach (var o in i.Places)
                         if (o != t && !o.InBase && Risky(p, o, Level(p, o))) r.Avoid.Add(o);
                 }
+                else if (t.Team == 0 && !t.InBase) return Go(r, DepartAction.GearRequest, "depart.gearRequest", "셋도 안 되는 적 → 장비 요청");
                 else if (i.Guard != null)
                 {
                     r.Args["partner"] = i.Guard;
