@@ -851,7 +851,11 @@ while ($true) {
         $script:SkipNote = "루프 메모: 3회차 연속 근거 있는 완료 없음 → 지금 일을 progress에 '멈춤(3회차)'·Errors.txt에 적고 다음 일로(사용자에게 묻지 않음)"
         Log "3회차 연속 완료 없음 → 안 멈추고 다음 일로 넘기라는 메모($script:StuckRuns번째)"
         $st.noProg = 0
-        if ($script:StuckRuns -ge 2) { Log '다음 일로 넘겨도 또 헛돎 → 30분 쉬고 다시(사용자 답은 안 기다림)'; Start-Sleep 1800 }
+        # 사용자 11-13: 넘겨도 또 헛돌면 기다려 봐야 소용없음(바탕 고장은 30분 뒤에도 같음) → 다음 회차가 바탕부터 점검·고침.
+        if ($script:StuckRuns -ge 2) {
+            $script:SkipNote = "루프 메모: 일을 넘겨도 또 3회차 헛돎 → 이번 회차는 바탕 점검부터: 빌드(scripts/valheim-build.sh)·Core 테스트·짧은 게임 시험 하나(vh_npctest)·git status·디스크·게임/스팀 버전. 깨진 것을 고치고 history에 원인. 사용자만 고칠 수 있는 것(스팀 로그인·PC 문제 등)이면 그 회차 기록 요약 첫 줄에 '사용자만 고칠 수 있음: …'(텔레그램으로 감) 남기고 게임 시험 없이 되는 일(Core·문서)을 계속"
+            Log '다음 일로 넘겨도 또 헛돎 → 다음 회차는 바탕 점검부터(기다리지 않음)'
+        }
     } elseif ($st.noProg -eq 0) { $script:StuckRuns = 0 }
     if ($last -match '^LOOP: ERROR') { Start-Sleep 300 }   # 네트워크 등 → 5분 쉬고
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }
