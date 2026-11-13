@@ -165,6 +165,9 @@ namespace ValheimHelper
         /// <summary>지금 일에 같이 가는 동료 일꾼 이름(앞장서는 중), 없으면 null. 시험·!상태용.</summary>
         public string EscortName => m_escort != null ? m_escortName : null;
         string m_escortName;
+        /// <summary>셋째로 같이 가는 동료 일꾼 이름(⑦ 셋이면 될 때), 없으면 null.</summary>
+        public string Escort2Name => m_escort != null ? m_escort2Name : null;
+        string m_escort2Name;
         /// <summary>시험용: 앞장서기 단계.</summary>
         public Escort.Phase? EscortPhase => m_escort?.Now;
 
@@ -175,6 +178,13 @@ namespace ValheimHelper
             m_escort = escort ?? new Escort();
             m_escortId = who;
             m_escortName = name;
+            m_escort2Name = null;
+        }
+
+        /// <summary>EscortBy 뒤에 셋째 동료를 붙인다(그 동료는 Follow로 이 일꾼을 따라옴, 기다림은 첫 동행만 — Departures.GoWithTeam).</summary>
+        public void EscortAlso(string name)
+        {
+            if (m_escort != null) m_escort2Name = name;
         }
 
         /// <summary>지금 일의 동행을 끝낸다(제작 재료 채집 단계가 끝남 등) — 호위병은 이걸 보고 거점으로 돌아간다(Follow).</summary>
@@ -202,6 +212,22 @@ namespace ValheimHelper
             float d = z != null ? Vector3.Distance(pos, transform.position) : -1f;
             if (mate != null && mate.IsTeleporting()) d = Mathf.Min(d, Escort.Resume); // 곁으로 옮기는 중: 포기하지 않는다
             else if (mate != null && d > Escort.Far && BringMate(npc, mate, d)) d = Escort.Resume;
+            if (m_escort2Name != null && d >= 0f)
+            {
+                // ⑦ 셋째 동료(Escort2Name)도 곁에 와야 셋으로 셈(Guard.MyHit 20m) — 먼 쪽 거리로 기다림, 따라오기를 그만두면 둘로
+                WorkerNpc third = WorkerNpc.All.Find(o => o != null && o != npc && o.NpcName == m_escort2Name);
+                if (third == null || third.IsDead() || third.Ai.Current != Mode.Follow || third.Ai.FollowTarget != npc.GetZDOID())
+                {
+                    Plugin.Log.LogInfo($"{npc.NpcName}: 셋째 동행 {m_escort2Name}이 따라오기를 그만둠 → 둘이 감");
+                    m_escort2Name = null;
+                }
+                else if (!third.IsTeleporting())
+                {
+                    float d2 = Vector3.Distance(third.transform.position, transform.position);
+                    if (d2 > Escort.Far && BringMate(npc, third, d2)) d2 = Escort.Resume;
+                    d = Mathf.Max(d, d2);
+                }
+            }
             EscortAct act = m_escort.Tick(dt, d);
             if (m_escort.Say != null) npc.Say(m_escort.Say);
             if (act == EscortAct.GiveUp)
@@ -1334,7 +1360,7 @@ namespace ValheimHelper
                     if (lead != null)
                     {
                         // 같이 가는 동료 일꾼(사용자 결정 2026-10-26: 거리 무관 — 멀어도 따라감). 그쪽이 일을 마치고 쉬거나 나를 더는 안 기다리면(혼자 감) 끝
-                        if (lead.Ai.Current == Mode.Idle || lead.Ai.Current == Mode.Home || lead.Ai.EscortName != npc.NpcName) { GoHome(false); break; }
+                        if (lead.Ai.Current == Mode.Idle || lead.Ai.Current == Mode.Home || lead.Ai.EscortName != npc.NpcName && lead.Ai.Escort2Name != npc.NpcName) { GoHome(false); break; }
                     }
                     else
                     {

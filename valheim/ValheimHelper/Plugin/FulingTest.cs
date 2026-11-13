@@ -133,6 +133,7 @@ namespace ValheimHelper
             TestKit.ClearBaseStock(w, Scrap);
             yield return new WaitForSeconds(2f);
             yield return MateCall(w, checks, spawned, goblin, brute, shaman, rot, camp);
+            yield return TeamCall(w, checks, spawned, goblin, brute, shaman, rot, camp);
         }
 
         /// <summary>
@@ -178,6 +179,52 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => band.TrueForAll(c => c == null || c.IsDead()) || !(w.Ragnar.Ai.Job is GatherJob), 120f);
             TestRunner.Log($"C 끝: 남은 풀링 {band.FindAll(c => c != null && !c.IsDead()).Count}/{band.Count}, 라그나 {w.Ragnar.Ai.Current}·{w.Ragnar.GetHealth():0}, 호위병 {guard.Ai.Current}·{guard.GetHealth():0}");
             checks.Add($"둘이 싸워 안 죽음 (라그나 {w.Ragnar.GetHealth():0}, 호위병 {guard.GetHealth():0})", w.Ragnar.Deaths + w.Floki.Deaths + guard.Deaths == deaths0);
+            foreach (var c in band) if (c != null && !c.IsDead()) Kill(c);
+            GatherTest.Say("!멈춰", null);
+            TestKit.ClearBaseStock(w, Scrap);
+            yield return new WaitForSeconds(2f);
+        }
+
+        /// <summary>
+        /// D(⑦ 포기 전 시도 순서): 호위병과 둘이도 무리지만 쉬는 플로키까지 셋이면 되는 무리 → "!라그나 고철 1"에 호위병+플로키가 같이 따라옴, 아무도 안 죽음.
+        /// 그런 무리가 없으면 로그만(판정 안 함).
+        /// </summary>
+        static IEnumerator TeamCall(TestKit.World w, GatherTest.Checks checks, List<GameObject> spawned, GameObject goblin, GameObject brute, GameObject shaman, Quaternion rot, Vector3 camp)
+        {
+            WorkerNpc guard = WorkerNpc.TheGuard;
+            if (guard == null) yield break;
+            foreach (var n in PlainsGear) w.Floki.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+            Prep.WearBest(w.Floki);
+            foreach (var npc in new[] { w.Ragnar, w.Floki, guard }) { npc.Ai.Interrupt(); npc.Ai.Queue.Clear(); npc.Heal(1000f, false); }
+            w.Ragnar.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 0f), rot, false);
+            w.Floki.TeleportTo(w.Home + rot * new Vector3(-30f, 0f, -60f), rot, false);
+            guard.TeleportTo(w.Home + rot * new Vector3(0f, 0f, -60f), rot, false);
+            yield return new WaitForSeconds(2f);
+            var bands = new[] { new[] { goblin }, new[] { goblin, goblin }, new[] { goblin, goblin, goblin }, new[] { goblin, goblin, brute }, new[] { goblin, goblin, shaman }, new[] { goblin, goblin, goblin, goblin }, new[] { goblin, brute, shaman } };
+            List<Character> band = null;
+            float gh = Guard.HitOf(guard), fh = Guard.HitOf(w.Floki);
+            foreach (var kinds in bands)
+            {
+                var b = new List<Character>();
+                for (int i = 0; i < kinds.Length; i++) b.Add(Spawn(kinds[i], camp + rot * new Vector3(i * 2f - 3f, 0f, 0f), spawned));
+                yield return new WaitForSeconds(0.5f);
+                bool duo = w.Ragnar.Ai.Guard.SafePrey(b[0], out _, gh);
+                bool trio = w.Ragnar.Ai.Guard.SafePrey(b[0], out _, gh + fh);
+                TestRunner.Log($"D 후보 {kinds.Length}마리({Utils.GetPrefabName(kinds[kinds.Length - 1])}): 호위병과 둘이 {duo}, 플로키까지 셋이 {trio}");
+                if (!duo && trio) { band = b; break; }
+                foreach (var c in b) if (c != null && !c.IsDead()) Kill(c);
+                yield return new WaitForSeconds(1f);
+            }
+            if (band == null) { TestRunner.Log("D: 둘이면 안 되고 셋이면 되는 무리가 이 차림엔 없음 → 판정 안 함"); yield break; }
+            int deaths0 = w.Ragnar.Deaths + w.Floki.Deaths + guard.Deaths;
+            GatherTest.Say($"!{w.Ragnar.NpcName} {Scrap} 1", null);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Escort2Name == w.Floki.NpcName && w.Floki.Ai.Current == WorkerAI.Mode.Follow
+                && w.Floki.Ai.FollowTarget == w.Ragnar.GetZDOID() && guard.Ai.FollowTarget == w.Ragnar.GetZDOID(), 180f); // 구역까지 가는 길(막힘 순간이동 포함)이 60초를 넘기도 함
+            checks.Add($"D 셋이면 되는 무리 → 호위병·플로키 셋이 같이 감 ({TestKit.Waited:0}초, 동행 {w.Ragnar.Ai.EscortName ?? "없음"}·{w.Ragnar.Ai.Escort2Name ?? "없음"}, 플로키 {w.Floki.Ai.Current})", TestKit.Ok);
+            yield return TestKit.WaitFor(() => band.TrueForAll(c => c == null || c.IsDead()) || !(w.Ragnar.Ai.Job is GatherJob), 150f);
+            TestRunner.Log($"D 끝: 남은 풀링 {band.FindAll(c => c != null && !c.IsDead()).Count}/{band.Count}, 라그나 {w.Ragnar.Ai.Current}·{w.Ragnar.GetHealth():0}, 플로키 {w.Floki.Ai.Current}·{w.Floki.GetHealth():0}, 호위병 {guard.GetHealth():0}");
+            checks.Add($"D 셋이 무리를 잡음 (남은 {band.FindAll(c => c != null && !c.IsDead()).Count}/{band.Count})", band.TrueForAll(c => c == null || c.IsDead()));
+            checks.Add($"D 셋이 싸워 안 죽음 (라그나 {w.Ragnar.GetHealth():0}, 플로키 {w.Floki.GetHealth():0}, 호위병 {guard.GetHealth():0})", w.Ragnar.Deaths + w.Floki.Deaths + guard.Deaths == deaths0);
             foreach (var c in band) if (c != null && !c.IsDead()) Kill(c);
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, Scrap);

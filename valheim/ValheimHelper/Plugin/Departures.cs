@@ -231,6 +231,20 @@ namespace ValheimHelper
             return g;
         }
 
+        /// <summary>
+        /// ⑦ 셋이면 될 때(TeamPlan.Needed 3): 호위병을 붙이고(GoWithGuard) 쉬는 동료 일꾼도 따라오게 한다(기다림은 호위병만, 동료는 Follow).
+        /// 호위병을 못 붙이면 null(동료도 안 부름).
+        /// </summary>
+        internal static WorkerNpc GoWithTeam(WorkerNpc npc, WorkerNpc mate)
+        {
+            WorkerNpc g = GoWithGuard(npc);
+            if (g == null || mate == null || mate.IsDead() || !GuardFree(mate)) return g;
+            mate.Ai.Follow(npc.GetZDOID(), npc.NpcName);
+            npc.Ai.EscortAlso(mate.NpcName);
+            Plugin.Log.LogInfo($"{npc.NpcName}: 동료 {mate.NpcName}도 같이 감(셋, {Vector3.Distance(mate.transform.position, npc.transform.position):0}m)");
+            return g;
+        }
+
         /// <summary>동료가 위험한 데 혼자 갈 때 같이 갈 수 있는 거리(m) — 더 멀면 따라가는 쪽이 혼자 위험한 길을 걷고 앞장선 쪽도 오래 기다린다.</summary>
         internal const float MateJoinRange = 100f;
 
