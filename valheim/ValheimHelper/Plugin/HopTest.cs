@@ -172,6 +172,50 @@ namespace ValheimHelper
             yield return new WaitForSeconds(3f);
             checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);
             if (ai.Job is GatherJob) yield return CantReach(w, checks, saved, hold);
+            yield return HuntHop(w, checks, saved);
+        }
+
+        /// <summary>
+        /// 사냥 막힘 순간이동(사용자 11-13 ④): 45m 앞 멧돼지(발 묶음)로 다가가던 일꾼 발을 묶으면 1초 막힘 → 목표 쪽으로 옮기고, 풀면 잡는다.
+        /// hold(둘레 생물 치움)는 안 씀 — 멧돼지가 지워진다.
+        /// </summary>
+        static IEnumerator HuntHop(TestKit.World w, GatherTest.Checks checks, float[] saved)
+        {
+            var ai = w.Ragnar.Ai;
+            yield return TestKit.WaitFor(() => ai.Job == null, 120f); // 앞 칸 일(넣고 그만둠)이 끝나길
+            TestKit.ClearBaseStock(w, "RawMeat");
+            Quaternion rot = w.Player.transform.rotation;
+            GameObject go = Object.Instantiate(ZNetScene.instance.GetPrefab("Boar"), GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 45f)) + Vector3.up * 0.5f, Quaternion.identity);
+            Character boar = go.GetComponent<Character>();
+            boar.SetLevel(1);
+            var boarSaved = new float[6];
+            yield return new WaitForSeconds(1f);
+            Speeds(boar, boarSaved, true);
+            GatherJob.TestIgnorePlayers = true;
+            try
+            {
+                GatherTest.Say($"!{Workers.Name1} RawMeat 1", null);
+                yield return TestKit.WaitFor(() => ai.Job is GatherJob g && g.StepName == "Hunt", 60f);
+                checks.Add($"사냥 시작 ({TestKit.Waited:0}초)", TestKit.Ok);
+                if (!TestKit.Ok) yield break;
+                Speeds(w.Ragnar, saved, true);
+                int hops0 = GatherJob.HuntHops;
+                float d0 = Utils.DistanceXZ(w.Ragnar.transform.position, boar.transform.position);
+                yield return TestKit.WaitFor(() => GatherJob.HuntHops > hops0, 60f);
+                yield return new WaitForSeconds(1f);
+                float d1 = Utils.DistanceXZ(w.Ragnar.transform.position, boar.transform.position);
+                checks.Add($"사냥 다가가다 막혀 목표 쪽 순간이동 ({GatherJob.HuntHops - hops0}번, 멧돼지까지 {d0:0.0} → {d1:0.0}m)", TestKit.Ok && d1 < 6f);
+                Speeds(w.Ragnar, saved, false);
+                GatherJob.TestIgnorePlayers = false;
+                yield return TestKit.WaitFor(() => boar == null || boar.IsDead(), 60f);
+                checks.Add($"옮긴 뒤 잡음 ({TestKit.Waited:0}초)", TestKit.Ok);
+            }
+            finally
+            {
+                GatherJob.TestIgnorePlayers = false;
+                if (w.Ragnar != null && w.Ragnar.m_runSpeed == 0f) Speeds(w.Ragnar, saved, false);
+                if (boar != null && !boar.IsDead()) ZNetScene.instance.Destroy(go);
+            }
         }
 
         static int Wood(Humanoid c)

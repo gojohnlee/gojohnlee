@@ -185,7 +185,7 @@ namespace ValheimHelper
                 if (m_farCheck > 0f) return false;
                 m_farCheck = 2f;
                 float d = Utils.DistanceXZ(me, dest);
-                if (!FarSkip.Worth(d) || HopBlocked() != null || !FarFromPlayers(dest)) return false;
+                if (!FarSkip.Worth(d) || m_hunt || HopBlocked() != null || !FarFromPlayers(dest)) return false; // 사냥은 생략 안 함(사용자 결정 2026-10-23 그대로)
                 ZNetView nv = m_npc.GetComponent<ZNetView>();
                 if (nv == null || !nv.IsOwner()) return false;
                 m_far = new FarSkip(FarRoute(me, dest), m_npc.m_runSpeed);

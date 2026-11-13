@@ -152,6 +152,10 @@ namespace ValheimHelper
         /// <summary>사냥감이 거의 서 있다고 보는 실제 속력(m/s) — 도망치면 남은 길이 안 줄어도 막힌 게 아니다.</summary>
         const float PreyStill = 0.5f;
         float m_preyWalkAt = float.NegativeInfinity, m_preyWalkFrom;
+        /// <summary>다가가다 막혀 이미 순간이동해 준 짐승(짐승마다 한 번).</summary>
+        Character m_preyHopped;
+        /// <summary>시험용: 사냥 다가가기 막힘 순간이동 횟수.</summary>
+        public static int HuntHops;
 
         /// <summary>막힘 1초·3초(사용자 11-11)를 사냥 다가가기에: 사냥감이 거의 서 있을 때만 재고, 막히면 그 짐승은 2분 건너뛰고 다른 것을 찾는다.</summary>
         bool PreyStuck(float dt, float reach)
@@ -161,6 +165,17 @@ namespace ValheimHelper
             m_preyWalkAt = Time.time;
             if (Time.time - m_preyWalkFrom < QuickStartGrace || PreyVelocity().magnitude > PreyStill) { m_clock.Reset(); return false; }
             if (!QuickStuck(dt, m_preyPos, reach)) return false;
+            // 짐승마다 한 번은 목표 쪽 순간이동(채집과 같은 안전 조건 — 사용자 11-13 ④), 그래도 막히면 건너뜀
+            if (m_preyHopped != m_prey && HopBlocked() == null && HopToward(m_preyPos, out string why))
+            {
+                m_preyHopped = m_prey;
+                HuntHops++;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 다가가다 막혀 목표 쪽 순간이동 {why}");
+                m_clock.Reset();
+                m_bestDist = float.MaxValue;
+                m_progressTimer = 0f;
+                return false;
+            }
             Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 다가가다 막혀 이 짐승 건너뜀");
             m_huntSkip[m_prey] = Time.time + 120f;
             m_prey = null;

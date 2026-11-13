@@ -406,8 +406,8 @@ namespace ValheimHelper
                 {
                     LogStuck("구역 가기", m_goalPos);
                     Vector3 c = Senses.ZoneCenter(m_goalZone); // ZoneExcluded와 같은 자리로 센다
-                    // 탐험(새 땅 경계)은 순간이동 안 함(사용자 결정 2026-10-23). 옮겼으면 그 구역으로 마저 걷는다.
-                    bool done = WalkFailed(c, !m_exploring, out bool keep, out bool moved);
+                    // 탐험·사냥도 순간이동함(사용자 11-13 ④, 안 불러온 구역은 Land가 거름). 옮겼으면 그 구역으로 마저 걷는다.
+                    bool done = WalkFailed(c, true, out bool keep, out bool moved);
                     if (moved) return true;
                     m_tried.Add(m_goalZone); // 못 간 곳을 또 고르면 같은 자리에서 되풀이한다
                     if (done) { Brain.Get().MarkLooked(m_goalZone); return keep; }

@@ -231,10 +231,10 @@ namespace ValheimHelper
         /// <summary>시험용: TestIgnorePlayers 동안 이 자리에 플레이어가 있는 것으로 본다(멀리선 이동 생략 중 다가옴 흉내). 평소 null.</summary>
         public static Vector3? TestFakePlayer;
 
-        /// <summary>목표 쪽 순간이동을 못 하는 까닭(되면 null): 사냥·지하묘지·동행·실내는 안 함(사용자 결정 2026-10-23), 떠날 자리가 플레이어 64m 안(근처)이면 안 함.</summary>
+        /// <summary>목표 쪽 순간이동을 못 하는 까닭(되면 null): 지하묘지·동행·실내는 안 함(사용자 결정 2026-10-23), 떠날 자리가 플레이어 64m 안(근처)이면 안 함.
+        /// 사냥·탐험도 같은 안전 조건으로 함(사용자 11-13 "시킨 일을 스스로 접지 말기" ④).</summary>
         string HopBlocked()
         {
-            if (m_hunt) return "사냥";
             if (m_npc.InInterior()) return "지하묘지·실내"; // 묘지 가기(GoCrypt)는 자기 막힘 처리라 여기 안 옴
             if (!FarFromPlayers(m_npc.transform.position)) return NearWhy;
             return null;
