@@ -34,6 +34,7 @@ $ReplyTimeoutMin = 15
 $ReplyDir = Join-Path $Dir 'reply'   # 답 전용 작업 트리(회차가 쓰는 저장소 작업 트리와 따로)
 $SelfHash = (Get-FileHash $PSCommandPath).Hash   # 지금 도는 스크립트(바뀌면 다시 켜기, claude에는 VH_LOOP_HASH로 넘김)
 $StaleNote = ''   # 다시 켜기를 못 하면 status.txt에 이유
+$script:SkipNote = ''; $script:StuckRuns = 0   # 멈추는 대신 다음 회차에 주는 메모(status.txt "루프 메모:" 줄), 넘겨도 또 헛돈 횟수
 $Diag = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimHelper\diag.txt'
 $GameDll = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll'
 $GameNote = ''   # 게임 업데이트 감지 때 status.txt에 한 줄(그 회차가 전체 회귀)
@@ -393,7 +394,7 @@ function Write-Status($now, $last) {
         "마지막 시험: $test",
         "Claude가 한 일: $last",
         "요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나)."
-    ) + @(if ($StaleNote) { $StaleNote }) + @(if ($GameNote) { $GameNote }) + @(if ($testNote) { $testNote }) -join "`n"
+    ) + @(if ($script:SkipNote) { $script:SkipNote }) + @(if ($StaleNote) { $StaleNote }) + @(if ($GameNote) { $GameNote }) + @(if ($testNote) { $testNote }) -join "`n"
     $f = Join-Path $Repo 'docs\valheim\status.txt'
     [IO.File]::WriteAllText($f, "$text`n", $Utf8)
     G add docs/valheim/status.txt | Out-Null
@@ -821,7 +822,14 @@ while ($true) {
     elseif ($last -match '^LOOP: 이어 함' -and -not $r.Cap) { $st.noProg++; Log "일찍 이어 함($($r.Turns)턴) — 끝낸 것 없는 회차 $($st.noProg)/3" }
     else { $st.noProg++; Log "끝낸 것 없는 회차 $($st.noProg)/3" }
     $stop = $null
-    if ($last -match '^LOOP: NEED_USER') { $stop = '사용자 확인 필요' }
+    $script:SkipNote = ''   # 지난 회차 메모는 이 회차가 읽었음
+    # 사용자 11-13: 사용자 답을 기다리며 멈추는 건 "그냥 가면 게임에 버그가 날 수 있을 때"만(NEED_USER 버그 위험:).
+    # 그 밖(취향 질문·진척 없음·같은 시험 연속 FAIL)은 멈추지 않고 다음 회차에 메모를 주고 계속 간다.
+    if ($last -match '^LOOP: NEED_USER\s*버그 위험') { $stop = '사용자 확인 필요(버그 위험)' }
+    elseif ($last -match '^LOOP: NEED_USER') {
+        $script:SkipNote = "루프 메모: 지난 회차가 사용자에게 물었지만 버그 위험이 아님 → 멈추지 않음. 그 일은 progress에 '[보류: 사용자 답 기다림]'으로 두고(질문은 history에 남김) 답과 상관없는 다른 일을 함($($last -replace '^LOOP: NEED_USER\s*', ''))"
+        Log "NEED_USER인데 버그 위험 아님 → 안 멈추고 그 일만 보류, 다른 일 계속"
+    }
     elseif ($last -match '^LOOP: ALLDONE') {
         $n = Get-PendingRequests
         $o = @(G show 'origin/valheim:docs/valheim/Errors.txt' | Where-Object { $_ -match '^E\d+ / (관찰 중|조사 중)' }).Count
@@ -830,10 +838,21 @@ while ($true) {
         else { $stop = '할 일 없음' }
     }
     elseif ($last -match '^LOOP: FAIL (\S+)') {
-        if ($st.lastFail -eq $Matches[1]) { $stop = "같은 시험 2회차 연속 FAIL($($Matches[1]))" }
-        $st.lastFail = $Matches[1]
+        $ft = $Matches[1]
+        if ($st.lastFail -eq $ft) {
+            $script:SkipNote = "루프 메모: 같은 시험 $ft 이 2회차 연속 FAIL → 막는 문제(복제·소실·저장 손상·작업 복원)면 계속 파고, 아니면 Errors.txt에 적고 다음 일로"
+            Log "같은 시험 2회차 연속 FAIL($ft) → 안 멈추고 메모 주고 계속"
+            $ft = ''
+        }
+        $st.lastFail = $ft
     } else { $st.lastFail = '' }
-    if (-not $stop -and $st.noProg -ge 3) { $stop = '3회차 연속 근거 있는 완료 없음(커밋·시험 붙은 [끝]·질문 답·닫은 문제 없음)' }
+    if (-not $stop -and $st.noProg -ge 3) {
+        $script:StuckRuns++
+        $script:SkipNote = "루프 메모: 3회차 연속 근거 있는 완료 없음 → 지금 일을 progress에 '멈춤(3회차)'·Errors.txt에 적고 다음 일로(사용자에게 묻지 않음)"
+        Log "3회차 연속 완료 없음 → 안 멈추고 다음 일로 넘기라는 메모($script:StuckRuns번째)"
+        $st.noProg = 0
+        if ($script:StuckRuns -ge 2) { Log '다음 일로 넘겨도 또 헛돎 → 30분 쉬고 다시(사용자 답은 안 기다림)'; Start-Sleep 1800 }
+    } elseif ($st.noProg -eq 0) { $script:StuckRuns = 0 }
     if ($last -match '^LOOP: ERROR') { Start-Sleep 300 }   # 네트워크 등 → 5분 쉬고
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }
     if (-not $stop) { Write-Status $(if ($Once) { '한 회차 끝(시험 실행)' } else { '다음 회차 준비' }) $last }
