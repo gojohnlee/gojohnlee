@@ -1,7 +1,7 @@
-갱신: 2026-11-13 17:46  (무인 루프, scripts/vh-loop.ps1)
-지금: 답 기다림: 3회차 연속 근거 있는 완료 없음(커밋·시험 붙은 [끝]·질문 답·닫은 문제 없음) — 자리 비워 컴퓨터 끔. PC를 켜도 루프는 저절로 안 켜짐(11-02) — UserRequest.txt에 쓰고 PC PowerShell에서 Start-ScheduledTask 'VH loop'(물은 것은 history.md 맨 위)
+갱신: 2026-11-13 17:51  (무인 루프, scripts/vh-loop.ps1)
+지금: 다시 켜는 중: 새 루프 스크립트로(1~2분)
 회차: 561, 계정: 2번, 한도: 없음
 할 일: 요청 밤 몫(11-13 17:30): [1조각 끝, 회차 560 — 커밋 9dd1f230 · 시험 coppertest FAIL(E085 같은 자리)] [2조각 구현 완료·검증 대기, 회차 561 — 커밋 79a5c9…
 마지막 시험: 11-13 17:45 요약: 1/1 PASS
-Claude가 한 일: LOOP: DONE 밤 탐험 명령을 밤 몫 장비 위험으로 판단(커밋 79a5c9f7, vh_exploretest 16/16 낮 회귀 PASS, 밤 시험은 다음)
+Claude가 한 일: -
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
