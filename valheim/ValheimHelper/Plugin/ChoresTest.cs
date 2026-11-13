@@ -91,7 +91,9 @@ namespace ValheimHelper
 
             // 1-3) 위험한 데 혼자 가는 동료 따라가기(사용자 11-13 쉬는 일꾼 없게 ①): 이 시험엔 호위병이 없다 — 라그나 일을 위험한 일로 표시하면 쉬는 플로키가 따라감
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 10", null);
-            yield return new WaitForSeconds(1f);
+            // 위험 표시는 일이 생긴 그 프레임에(실제 출발 GoTogether도 Start 직후 같은 프레임에 Risky를 켠다). 1초 뒤에 켜면 그 사이
+            // 쉬는 플로키가 늦게 같이 캐기(JoinGather)로 먼저 라그나 팀에 껴서 따라가기를 못 본다(11-14 FAIL "나무 나도 캔다! 둘이 10개!")
+            if (w.Ragnar.Ai.Job == null) yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job != null, 5f);
             if (w.Ragnar.Ai.Job != null) w.Ragnar.Ai.Risky = true;
             yield return TestKit.WaitFor(() => w.Floki.Ai.Current == WorkerAI.Mode.Follow, 90f);
             checks.Add($"플로키가 위험한 데 혼자 가는 라그나를 따라감 (동행 {w.Ragnar.Ai.EscortName}, {TestKit.Waited:0}초)",
@@ -165,6 +167,9 @@ namespace ValheimHelper
 
         static IEnumerator Farm(TestKit.World w, GatherTest.Checks checks)
         {
+            // 앞 단계들이 넣은 나무·돌·싸움 떨굼으로 나무 상자(10칸)가 꽉 차 경작기가 안 들어갔다(11-14 FAIL "밭에 심음 (0)",
+            // 로그 "Adding item Cultivator x1" 뒤 "Trying to add item to occupied slot -1, -1" → farmNoTool) — 먼저 비운다
+            Chests.TryEdit(w.Chest, inv => inv.RemoveAll());
             TestKit.PutInChest(w.Chest, "Honey", 20); // 먹거리 말고 밭일이 고르게
             TestKit.ClearBaseStock(w, Crops.Cultivator, "CarrotSeeds", "Carrot");
             TestKit.PutInChest(w.Chest, "CarrotSeeds", 6);

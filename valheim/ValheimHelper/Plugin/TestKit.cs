@@ -876,8 +876,13 @@ namespace ValheimHelper
             TestRunner.Finish();
         }
 
-        public static void PutInChest(Container c, string prefab, int n) =>
-            Chests.TryEdit(c, inv => inv.AddItem(ObjectDB.instance.GetItemPrefab(prefab), n));
+        /// <summary>시험 상자에 넣는다. 못 넣으면(꽉 참·사용 중) 그냥 넘어가지 않고 로그·diag에 남긴다(11-14 chorestest: 꽉 찬 상자에 경작기가 조용히 안 들어감).</summary>
+        public static void PutInChest(Container c, string prefab, int n)
+        {
+            bool added = false;
+            bool edited = Chests.TryEdit(c, inv => added = inv.AddItem(ObjectDB.instance.GetItemPrefab(prefab), n));
+            if (!added) TestRunner.Log($"시험 상자에 {prefab} {n}개 못 넣음({(edited ? "꽉 참" : "사용 중")})");
+        }
 
         public static void TakeFromChest(Container c, string prefab)
         {
