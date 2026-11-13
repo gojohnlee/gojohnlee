@@ -18,7 +18,8 @@ namespace ValheimHelper
             TestRunner.Register("vh_stonetest", "돌 채집 시험", () => Run("PickaxeAntler", "Stone", "돌"));
             TestRunner.Register("vh_coppertest", "구리 채집 시험(광맥을 거점 12m 앞에 놓음, 땅속 광석 파기·구덩이 탈출)", () => Run("PickaxeAntler", "CopperOre", "구리", true));
             TestRunner.Register("vh_tintest", "주석 채집 시험(광맥을 거점 12m 앞에 놓음, 구리와 같은 경로)", () => Run("PickaxeAntler", "TinOre", "주석", true));
-            TestRunner.Register("vh_notooltest", "연장 없이 나무 채집 시험(장비 상자에 도끼를 안 넣음 → 맞는 연장 제작을 대기열에 걸고 나무 10개)", () => Run("AxeFlint", "Wood", "나무", noTool: true));
+            // 나무는 손줍기 가지(None)로 채워져 연장 경로를 못 본다 → 광맥(곡괭이만)으로 본다
+            TestRunner.Register("vh_notooltest", "연장 없이 구리 채집 시험(장비 상자에 곡괭이를 안 넣음 → 맞는 연장 제작을 대기열에 걸고 구리 10개)", () => Run("PickaxeAntler", "CopperOre", "구리", true, noTool: true));
         }
 
         internal sealed class Checks

@@ -8,6 +8,21 @@
 
 ## 회차 기록
 
+### 회차 530 · 11-13 · 연장 없는 구리 시험 FAIL(출발 판단이 먼저 거절)
+
+**요약**
+
+- vh_notooltest를 구리(곡괭이만 쓰는 광맥)로 바꿔 돌림: 10/13 FAIL. NPC가 "연장 없음"으로 출발 전에 거절
+- 대기열 제작 경로(GatherJob.UpdateTool)에는 못 닿음 → 연장 제작 걸기는 아직 검증 안 됨
+
+**자세히**
+
+- 로그: "출발 전 판단 CopperOre 10: Refuse None (연장 없음)" → "연장을 찾았는데 없군. 하나 넣어 줘."
+- 원인: Core/Npc/Departure.cs:198 `if (i.Tool == ToolState.None) return Refuse(r, "noTool", "연장 없음")` — 연장이 없으면 출발 자체를 안 함. GatherJob의 noTool 자리(연장이 중간에 부러졌을 때)만 제작 걸기를 탐
+- 나무 시험은 가지(Pickable_Branch, 손줍기 None)로 채워져 그 전에 못 막음
+- 다음 조각: 출발 판단에서 맞는 연장을 대기열에 걸고 거절하는 쪽으로 바꿀지 결정. Core는 게임 무관이라 "연장 제작 걸기" 결과를 Core가 돌려주고 Plugin이 대기열에 건다. 설계 전에 decisions 확인
+- 시험 코드(vh_notooltest, 구리)는 검증 도구로 커밋. 기능은 여전히 "구현 완료·검증 대기"
+
 ### 회차 529 · 11-13 · 연장 없는 나무 시험 만듦(FAIL, 시험 설계 문제)
 
 **요약**
