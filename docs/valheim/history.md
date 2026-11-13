@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 534 · 11-13 · 땅 앉은 새 프리팹 읽기(명중 재기 첫 조각)
+
+**요약**
+
+- 땅에 앉은 새 프리팹 3종(Crow·Seagal·AshCrow)을 게임 안에서 읽었다. 셋 다 Character가 없고 떨굼 항목(CharacterDrop)도 없다. 시험 vh_birdprobetest 3/3 PASS.
+
+**자세히**
+
+- 새 시험 `vh_birdprobetest`(BirdProbeTest.cs)는 게임 안 프리팹만 읽고 아무것도 바꾸지 않는다.
+- 결과: Crow, Seagal, AshCrow 모두 "Character 없음, 떨굼 없음". 그래서 체력·깃털은 Character 경로가 아닌 다른 쪽에서 정해진다. 명중 셈 시험에서 확인한다.
+- codemap "땅에 앉은 새"에 이 사실을 적었다. 다음은 쏘기·명중 셈 시험(나·다 항목).
+- 빌드 통과, Core 테스트는 건드리지 않았다. 커밋 1beeb70 푸시.
+
 ### 회차 533 · 11-13 · 땅에 앉은 새 게임 코드 확인
 
 **요약**
