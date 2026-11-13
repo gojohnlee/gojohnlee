@@ -6,7 +6,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_birdshoottest (땅에 앉은 새 명중 셈): 낮·밤 각각 10·20·30m 앞 땅 새(Crow)를 Ragnar가 활로 3판씩 쏘고, 쏜 수·맞음(죽음)·앉아 있던 시간·쏘기 전 날아감·깃털 수를 셈.
+    /// vh_birdshoottest (땅에 앉은 새 명중 셈): 낮·밤 각각 10·20·30m 앞 땅 새(Crow)를 Ragnar가 활로 3판씩 쏘고, 쏜 수·맞음(죽음)·스스로 앉아 있던 시간·강제 앉힘·깃털 수를 셈.
     /// 새는 놓은 자리가 아니라 날아가 앉은 자리에 앉으니, 거리는 앉은 자리까지 잰다(DIAG 착지 m). 당기기는 새가 앉기 전부터 시작해 앉은 뒤 놓는다.
     /// 칸마다 여러 판의 중간값을 표로 남긴다(측정만 — 기능 아님). 쏘기 자체가 나가는지(화살 한 발씩)가 PASS 기준.
     /// </summary>
@@ -17,7 +17,7 @@ namespace ValheimHelper
 
         class Shot
         {
-            public bool Fired, Hit, FlewBeforeShot;
+            public bool Fired, Hit, Forced;
             public float Sat, Dist, Pct;
             public int Feathers;
         }
@@ -86,21 +86,21 @@ namespace ValheimHelper
                         shots.Add(s);
                         total++;
                         if (s.Fired) fired++;
-                        TestRunner.Log($"DIAG {when} {dist:0}m #{i + 1}: 쏨 {(s.Fired ? "예" : "아니오")} · 맞음 {(s.Hit ? "예" : "아니오")} · 앉은 시간 {s.Sat:0.0}초 · 착지 {s.Dist:0.0}m · 당김 {s.Pct:0.00} · 쏘기 전 날아감 {(s.FlewBeforeShot ? "예" : "아니오")} · 깃털 {s.Feathers}");
+                        TestRunner.Log($"DIAG {when} {dist:0}m #{i + 1}: 쏨 {(s.Fired ? "예" : "아니오")} · 맞음 {(s.Hit ? "예" : "아니오")} · 스스로 앉은 시간 {s.Sat:0.0}초 · 강제 앉힘 {(s.Forced ? "예" : "아니오")} · 착지 {s.Dist:0.0}m · 당김 {s.Pct:0.00} · 깃털 {s.Feathers}");
                     }
-                    int hits = 0, flew = 0;
+                    int hits = 0, forced = 0;
                     var sats = new List<float>();
                     var feathers = new List<float>();
                     var dists = new List<float>();
                     foreach (var s in shots)
                     {
                         if (s.Hit) hits++;
-                        if (s.FlewBeforeShot) flew++;
+                        if (s.Forced) forced++;
                         sats.Add(s.Sat);
                         feathers.Add(s.Feathers);
                         dists.Add(s.Dist);
                     }
-                    TestRunner.Log($"표 {when} {dist:0}m: 쏨 {shots.FindAll(s => s.Fired).Count}/{Trials} · 맞음 {hits}/{Trials} · 착지 중간 {Median(dists):0.0}m · 앉은 시간 중간 {Median(sats):0.0}초 · 쏘기 전 날아감 {flew}/{Trials} · 깃털 중간 {Median(feathers):0}");
+                    TestRunner.Log($"표 {when} {dist:0}m: 쏨 {shots.FindAll(s => s.Fired).Count}/{Trials} · 맞음 {hits}/{Trials} · 착지 중간 {Median(dists):0.0}m · 스스로 앉은 시간 중간 {Median(sats):0.0}초 · 강제 앉힘 {forced}/{Trials} · 깃털 중간 {Median(feathers):0}");
                 }
             }
             checks.Add($"쏘기마다 화살 한 발 나감 ({fired}/{total})", fired == total);
@@ -118,17 +118,20 @@ namespace ValheimHelper
             if (bird == null) yield break;
 
             // 최대 8초 안에 다 당긴다
-            float t = 0f, pct = 0f;
+            // sitSince = 스스로 앉은 것을 처음 본 시각(날면 −1로 되돌림) — 앉은 시간은 이 값부터 잰다
+            float t = 0f, pct = 0f, sitSince = -1f;
             while (bird != null && npc.HoldingBow() && t < 8f)
             {
                 npc.Ai.Face(bird.transform.position);
                 pct = npc.DrawBow(Time.deltaTime);
+                if (IsLanded(bird)) { if (sitSince < 0f) sitSince = Time.time; }
+                else sitSince = -1f;
                 t += Time.deltaTime;
                 if (pct >= 1f) break;
                 yield return null;
             }
 
-            // 스스로 앉았는지(강제 전) — 아니면 "쏘기 전 날아감"
+            // 스스로 앉았는지(강제 전) — 아니면 강제 앉힘(시험이 자리에 앉힘, 앉은 시간 0)
             bool natural = bird != null && IsLanded(bird);
             Vector3 landAt = at;
             float landTime = 0f;
@@ -141,8 +144,8 @@ namespace ValheimHelper
             }
             s.Pct = pct;
             s.Dist = Vector3.Distance(npc.GetEyePoint(), landAt);
-            s.Sat = 0f;
-            s.FlewBeforeShot = !natural;
+            s.Sat = natural && sitSince >= 0f ? Time.time - sitSince : 0f;
+            s.Forced = !natural;
             int feathersBefore = GatherTest.GroundCount(landAt, "Feather");
             TestRunner.Log($"DIAG 진단 {dist:0}m: 새 {(bird == null ? "없음" : "있음")} · 스스로 앉음 {natural} · 당김 {pct:0.00}");
 
