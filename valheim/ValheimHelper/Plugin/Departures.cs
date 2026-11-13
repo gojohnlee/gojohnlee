@@ -109,6 +109,10 @@ namespace ValheimHelper
                     if (npc.Ai.Current != WorkerAI.Mode.Work && Utils.DistanceXZ(npc.transform.position, npc.Home) > 5f) npc.Ai.GoHome(false);
                     npc.Say(r.Key, args);
                     return;
+                case DepartAction.GearRequest:
+                    // 아는 적이 셋이 와도 안 되는 곳: 출발하지 않고 장비를 부탁한다(사용자 11-13 00:15 — 위험 판단은 Core)
+                    npc.Say(r.Key, args);
+                    return;
                 case DepartAction.Ask:
                     if (r.Interrupts) { npc.Ai.Interrupt(); npc.Ai.GoHome(false); npc.Say("dropJob", args); }
                     s_pending[npc] = new Pending { Result = r, Cmd = cmd, Who = who, AskedAt = Now };
