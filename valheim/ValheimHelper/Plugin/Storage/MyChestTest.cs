@@ -81,6 +81,14 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>"모자라" 말(prepShort, 회차 568: 낱말 목록은 "나머진 구해야 해" 같은 줄을 못 알아봐 FAIL) — 두 일꾼 성격 다 봄.</summary>
+        static bool SaidShort(TestKit.World w, int from)
+        {
+            for (int i = from; i < w.Heard.Count; i++)
+                if (TestKit.SaidKey(w.Heard[i], Core.Npc.Personality.Ragnar, "prepShort") || TestKit.SaidKey(w.Heard[i], Core.Npc.Personality.Floki, "prepShort")) return true;
+            return false;
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<Container> made)
         {
             yield return TestKit.Setup(w);
@@ -158,7 +166,7 @@ namespace ValheimHelper
             Say(who, "!채워 개인 나무 30");
             yield return new WaitForSeconds(5f);
             checks.Add($"있는 만큼 넣음 (내 상자 나무 {N(mine, "Wood")}/{wood0}, 거점 {N(src, "Wood")}/0)", N(mine, "Wood") == wood0 && N(src, "Wood") == 0);
-            checks.Add($"모자라 말·지움 (적힘 {Brain.Personal.Find(s_owner, "Wood") != null})", Brain.Personal.Find(s_owner, "Wood") == null && HeardAny(w, h3, "모자라", "없", "바닥", "부족", "떨어졌", "그것뿐", "그게 다", "더 있어야", "동났"));
+            checks.Add($"모자라 말·지움 (적힘 {Brain.Personal.Find(s_owner, "Wood") != null})", Brain.Personal.Find(s_owner, "Wood") == null && SaidShort(w, h3));
 
             // 3-2) 나-2: 거점 상자에 없지만 구할 수 있으면 자동 보충이 채집해 오고 → 개인 상자로
             Departures.TestSkip("Wood", false);
