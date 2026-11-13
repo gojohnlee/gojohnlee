@@ -75,6 +75,20 @@ namespace ValheimHelper.Core.Npc
             ExpectedLoss(foes, myHit, taken) / Math.Max(myHealth, 1f);
 
         /// <summary>
+        /// 밤 몫(사용자 11-14): 밤에 더 나오는 적은 한꺼번에 다 붙지 않고 하나씩 생긴다. place(기억한 자리의 적)은 다 셈,
+        /// night은 그중 혼자일 때 가장 센 overlap마리만 같이 붙는다고 셈(넷 전부 더하던 것 대신 — 회차 582 vh_cryptnighttest 1.08).
+        /// taken은 같이 붙는 목록으로 막음을 잰다(방패 막음이 마릿수에 따름).
+        /// </summary>
+        public static float NightRatio(IList<Foe> place, IList<Foe> night, float myHealth, float myHit, Func<IList<Foe>, Func<float, float>> taken, int overlap = 2)
+        {
+            var solo = new List<Foe>(night);
+            solo.Sort((a, b) => ExpectedLoss(new[] { b }, myHit, taken(new[] { b })).CompareTo(ExpectedLoss(new[] { a }, myHit, taken(new[] { a }))));
+            var all = new List<Foe>(place);
+            all.AddRange(solo.GetRange(0, Math.Min(overlap, solo.Count)));
+            return ExpectedLoss(all, myHit, taken(all)) / Math.Max(myHealth, 1f);
+        }
+
+        /// <summary>
         /// 순서: 체력이 낮으면 미드부터(마시는 건 바로 끝난다) → 보스, 또는 체력이 가득해도 이길 수 없는 적(최대 체력 기준 2배)은 도망 →
         /// 지금 체력으로 잃을 비율이 기준 이하이고 그 뒤에도 적 한 방을 더 버틸 체력이 남으면 싸움, 아니면 물러남
         /// (체력이 낮은데 미드가 없어도 같은 기준으로 — 사용자 결정 2026-10-24).

@@ -422,14 +422,12 @@ namespace ValheimHelper
             List<NightSpawn> nightSpawns = NightOf(biome);
             Knowledge known = Brain.Get();
             System.Func<ZoneXY, int> biomeOf = z => known.BiomeOf(z) != 0 ? known.BiomeOf(z) : Scout.BiomeAt(Senses.ZoneCenter(z));
-            PlaceRisk land = Brain.Places.BiomeRisk(biome, biomeOf, f =>
-            {
-                List<Foe> all = NightFoes.Plus(f, nightSpawns, resolve);
-                return Danger.Ratio(all, health, hit, taken(all));
-            }, resolve, NativeTo);
-            // 기억한 자리가 없어도 밤에만 나는 적 몫은 센다(새 월드에서 밤 늪이 0으로 나오던 것 — 회차 563 vh_nightexploretest)
+            // 밤 적은 하나씩 생기므로 한꺼번에 다 붙지 않는다고 셈(사용자 11-14): 낮 기억 적은 다 셈, 밤 적은 가장 센 둘만 겹침
             List<Foe> nightOnly = NightFoes.Plus(new List<Foe>(), nightSpawns, resolve);
-            float alone = nightOnly.Count > 0 ? Danger.Ratio(nightOnly, health, hit, taken(nightOnly)) : 0f;
+            PlaceRisk land = Brain.Places.BiomeRisk(biome, biomeOf, f =>
+                Danger.NightRatio(f, nightOnly, health, hit, taken), resolve, NativeTo);
+            // 기억한 자리가 없어도 밤에만 나는 적 몫은 센다(새 월드에서 밤 늪이 0으로 나오던 것 — 회차 563 vh_nightexploretest)
+            float alone = nightOnly.Count > 0 ? Danger.NightRatio(new List<Foe>(), nightOnly, health, hit, taken) : 0f;
             landPart = land.Ratio;
             nightPart = alone;
             return Mathf.Max(land.Ratio, alone);

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ValheimHelper.Core.Npc;
 using Xunit;
@@ -19,6 +20,28 @@ public class DangerTests
     {
         // 같은 적 둘: 첫째 잡는 동안 둘 다 때리고(2방×16), 둘째 잡는 동안 하나(2방×8) = 48 > 16+16
         Assert.Equal(48f, Danger.ExpectedLoss(new[] { F(40, 8), F(40, 8) }, 20f, NoArmor));
+    }
+
+    [Fact]
+    public void NightOverlapCountsOnlyTheTwoStrongest()
+    {
+        // 밤 적 넷: 가장 센 둘(체력 100·한 방 30 둘)만 같이 붙음. 약한 둘(체력 10, 한 방 2)은 빠짐
+        Func<IList<Foe>, Func<float, float>> taken = l => NoArmor;
+        var strong = new[] { F(100, 30), F(100, 30) };
+        var night = new List<Foe>(strong) { F(10, 2), F(10, 2) };
+        float got = Danger.NightRatio(new List<Foe>(), night, 100f, 20f, taken);
+        Assert.Equal(Danger.ExpectedLoss(strong, 20f, NoArmor) / 100f, got);
+    }
+
+    [Fact]
+    public void NightRatioKeepsDayFoesAll()
+    {
+        // 낮 적(place)은 밤 적과 함께 다 셈 — 밤 두 마리 몫에 낮 한 마리가 더해짐
+        Func<IList<Foe>, Func<float, float>> taken = l => NoArmor;
+        var place = new List<Foe> { F(40, 8) };
+        var night = new List<Foe> { F(40, 8) };
+        float got = Danger.NightRatio(place, night, 100f, 20f, taken);
+        Assert.Equal(Danger.ExpectedLoss(new[] { F(40, 8), F(40, 8) }, 20f, NoArmor) / 100f, got);
     }
 
     [Fact]

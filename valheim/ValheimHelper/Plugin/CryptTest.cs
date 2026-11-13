@@ -274,7 +274,12 @@ namespace ValheimHelper
                 EnvMan.instance.m_debugTimeOfDay = true;
                 EnvMan.instance.m_debugTime = 0f; // 자정
                 var npc = w.Ragnar;
-                foreach (var it in new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems())) { npc.UnequipItem(it, false); npc.GetInventory().RemoveItem(it); }
+                // 연장(곡괭이·도끼)은 남긴다: 곡괭이가 없으면 GatherJob.WaysFor가 고철 일을 사냥으로 바꿔 더미가 "방법 아님"이 됨(E095)
+                foreach (var it in new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems()))
+                {
+                    if (WorkerNpc.IsTool(it, ToolKind.Pickaxe) || WorkerNpc.IsTool(it, ToolKind.Axe)) continue;
+                    npc.UnequipItem(it, false); npc.GetInventory().RemoveItem(it);
+                }
                 bool gearOk = true;
                 foreach (var n in AshFoeTest.BestGear()) gearOk &= AshFoeTest.Give(npc, n);
                 Prep.WearBest(npc);
