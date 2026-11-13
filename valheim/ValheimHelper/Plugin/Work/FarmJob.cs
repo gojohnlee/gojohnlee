@@ -163,7 +163,7 @@ namespace ValheimHelper
             if (FindTool(mine) == null)
             {
                 Container c = Chests.First(m_npc.Home, inv => FindTool(inv) != null, ChestRole.Gear);
-                if (c == null) { m_npc.Say("farmNoTool"); return false; }
+                if (c == null) { m_npc.Say(QueueCultivatorMake() ? "farmMake" : "farmNoTool"); return false; }
                 if (Chests.InUse(c)) return m_stepTime < BusyLimit || Busy();
                 Chests.TryEdit(c, inv =>
                 {
@@ -209,6 +209,19 @@ namespace ValheimHelper
             Go(Step.Store);
             return true;
         }
+
+        /// <summary>경작기가 없어 그만두기 전에(사용자 11-13 "연장이 없으면 스스로 만들기", 활·화살과 같은 꼴): 거점에 그 제작대가 있으면
+        /// 경작기 제작을 대기열에 걸고 이 밭일을 그 뒤에 다시 건다. 제작대·제작법이 없으면 안 함(그대로 farmNoTool). 같은 일꾼은 10분에 한 번만.</summary>
+        bool QueueCultivatorMake()
+        {
+            if (s_makeAt.TryGetValue(m_npc, out float at) && Time.time - at < 600f) return false;
+            if (!GatherJob.QueueMakeAt(m_npc, Crops.Cultivator, 1, "경작기 없음(밭일)")) return false;
+            s_makeAt[m_npc] = Time.time;
+            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, ToWork()));
+            return true;
+        }
+
+        static readonly Dictionary<WorkerNpc, float> s_makeAt = new Dictionary<WorkerNpc, float>();
 
         static ItemDrop.ItemData FindTool(Inventory inv)
         {

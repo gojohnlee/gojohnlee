@@ -65,9 +65,35 @@ namespace ValheimHelper
 
             // 경작기 없으면 거절
             TestKit.PutInChest(w.Chest, Seed, 6);
+            int heard0 = w.Heard.Count;
             w.Ragnar.Ai.StartJob(new FarmJob(w.Ragnar, field, plan));
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
             checks.Add($"경작기 없으면 거절 ({TestKit.Waited:0}초, 새싹 {Plants(field).Count}, 씨앗 상자 {Stock(w, Seed)})", TestKit.Ok && Plants(field).Count == 0 && Stock(w, Seed) == 6);
+            // 경작기 제작대가 거점에 있으면 경작기 제작 + 이 밭일을 대기열 뒤에 다시 건다, 없으면 아무것도 안 검(사용자 11-13 "연장이 없으면 스스로 만들기").
+            // 제작은 곧바로 대기열에서 꺼내 시작하니(재료·설비 없으면 바로 접힘) 대기열엔 다시 건 밭일과 "만들" 말로 본다
+            Recipe cr = ObjectDB.instance.GetRecipe(ObjectDB.instance.GetItemPrefab(Crops.Cultivator).GetComponent<ItemDrop>().m_itemData);
+            bool station = cr != null && (cr.m_craftingStation == null || Recipes.At(w.Home).HasStation(cr.m_craftingStation.m_name, cr.m_minStationLevel));
+            var queue = w.Ragnar.Ai.Queue;
+            bool SaidMake(int from) { for (int i = from; i < w.Heard.Count; i++) if (w.Heard[i].Contains("만들")) return true; return false; }
+            string qs = string.Join(",", queue.ConvertAll(x => x.Label));
+            checks.Add($"제작대 {(station ? "있음 → 경작기 제작·밭일 다시 걸기" : "없음 → 안 검")} (대기열 {qs}, 만들 말 {SaidMake(heard0)})",
+                station ? SaidMake(heard0) && queue.Exists(x => x.Work?.Kind == WorkKind.Farm) : queue.Count == 0 && !SaidMake(heard0));
+            queue.Clear();
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
+            if (!station && cr?.m_craftingStation != null)
+            {
+                GameObject forge = Object.Instantiate(ZNetScene.instance.GetPrefab(Utils.GetPrefabName(cr.m_craftingStation.gameObject)), GatherTest.Ground(w.Home + w.Player.transform.rotation * new Vector3(4f, 0f, -4f)), Quaternion.identity);
+                yield return new WaitForSeconds(1f);
+                int heard1 = w.Heard.Count;
+                w.Ragnar.Ai.StartJob(new FarmJob(w.Ragnar, field, plan));
+                yield return TestKit.WaitFor(() => SaidMake(heard1), 10f);
+                qs = string.Join(",", queue.ConvertAll(x => x.Label));
+                checks.Add($"{cr.m_craftingStation.m_name} 세우면 경작기 제작·밭일 다시 걸기 ({TestKit.Waited:0}초, 대기열 {qs})",
+                    TestKit.Ok && queue.Exists(x => x.Work?.Kind == WorkKind.Farm));
+                queue.Clear();
+                yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 10f);
+                ZNetScene.instance.Destroy(forge);
+            }
 
             TestKit.PutInChest(w.Chest, Crops.Cultivator, 1);
             var job = new FarmJob(w.Ragnar, field, plan);

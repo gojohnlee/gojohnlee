@@ -518,15 +518,18 @@ namespace ValheimHelper
         static readonly Dictionary<WorkerNpc, float> s_archeryAt = new Dictionary<WorkerNpc, float>();
 
         /// <summary>거점에 제작대가 있는 물건을 대기열 제작으로 건다. 이미 걸렸으면 true, 제작법·제작대가 없으면 false.</summary>
-        bool QueueMakeAt(string prefab, int amount)
+        bool QueueMakeAt(string prefab, int amount) => QueueMakeAt(m_npc, prefab, amount, $"활·화살 없음({Item})");
+
+        /// <summary>QueueMakeAt의 일꾼 판(FarmJob 경작기도 씀). why는 로그 머리.</summary>
+        public static bool QueueMakeAt(WorkerNpc npc, string prefab, int amount, string why)
         {
-            if (m_ai.Queue.Exists(q => q.Label == ItemLabel(prefab))) return true;
+            if (npc.Ai.Queue.Exists(q => q.Label == ItemLabel(prefab))) return true;
             GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
             Recipe r = go != null ? ObjectDB.instance.GetRecipe(go.GetComponent<ItemDrop>().m_itemData) : null;
             if (r == null || Recipes.Book().RecipesFor(prefab).Count == 0) return false;
-            if (r.m_craftingStation != null && !Recipes.At(m_npc.Home).HasStation(r.m_craftingStation.m_name, r.m_minStationLevel)) return false;
-            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(prefab), Item = prefab, Amount = amount }));
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 활·화살 없음({Item}): {prefab} {amount} 제작을 대기열에 건다");
+            if (r.m_craftingStation != null && !Recipes.At(npc.Home).HasStation(r.m_craftingStation.m_name, r.m_minStationLevel)) return false;
+            npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(prefab), Item = prefab, Amount = amount }));
+            Plugin.Log.LogInfo($"{npc.NpcName} {why}: {prefab} {amount} 제작을 대기열에 건다");
             return true;
         }
 
