@@ -11,11 +11,15 @@ namespace ValheimHelper
     /// A) 손 빈 동료가 없어 "나무 남은수" 지원 요청을 올림(1호 GatherJob.HelpTask).
     /// B) 2호가 쉬게 돼 JoinHelp → 같은 물건 일에 같이 낌(팀 2명), 요청은 채워져 빠짐.
     /// C) 기다림(시간 제한 240초) 뒤 팀 합계가 20개 이상(통나무는 여러 개씩 나와 넘침은 표시만).
+    /// D) 목표가 찬 뒤 60초 안에 둘 다 일을 놓고(E088), 든 것은 상자에 넣고 집 곁으로 돌아온 뒤 60초 동안 다시 일하러 나가지 않음.
     /// </summary>
     static class WaitJoinTest
     {
         const int Amount = 20;
         const float LimitSeconds = 240f;
+        const float DropLimit = 60f;
+        const float WatchSeconds = 60f;
+        const float HomeRadius = 30f;
 
         public static void Register() => TestRunner.Register("vh_waitjointest", "기다림·합류 시험(20개)", () => TestKit.Flat(Run()));
 
@@ -77,15 +81,51 @@ namespace ValheimHelper
             checks.Add("B 채워져 요청이 빠지고 1호 요청 표시도 지움", Brain.Help.Count == 0 && lead.HelpTask == null);
 
             // C) 둘이 다 끝날 때까지 기다림(시간 제한) → 팀 합계가 정확히 20개
-            float waited = 0f;
+            float waited = 0f, filledAt = -1f;
             while (waited < LimitSeconds && (r.Ai.Job == lead || (f.Ai.Job is GatherJob fg && fg.Team == lead.Team)))
             {
                 yield return new WaitForSeconds(2f);
                 waited += 2f;
+                if (filledAt < 0f && TeamTotal(lead) >= Amount) filledAt = waited;
             }
-            int total = 0;
-            if (lead.Team != null) foreach (var o in lead.Team) total += o.Delivered;
+            int total = TeamTotal(lead);
             checks.Add($"C 팀 합계 {total}/{Amount}개(넘침 {total - Amount}), 기다림 {waited:0}초", total >= Amount);
+
+            // D) 목표가 찬 뒤 60초 안에 둘 다 일을 놓고, 든 것은 상자에 넣고 집 곁으로 돌아온 뒤 60초 동안 다시 일하러 나가거나 먼 데 머물지 않음
+            bool off = r.Ai.Job != lead && !(f.Ai.Job is GatherJob dj && dj.Team == lead.Team);
+            float afterFill = filledAt < 0f ? -1f : waited - filledAt;
+            checks.Add($"D 목표 찬 뒤 {afterFill:0}초 만에 둘 다 일을 놓음 (기준 {DropLimit:0}초)", filledAt >= 0f && off && afterFill <= DropLimit);
+            // 든 것을 상자에 넣고 집 곁으로 돌아올 때까지 기다림(최대 DropLimit초)
+            float back = 0f, far;
+            int held;
+            while (true)
+            {
+                far = Mathf.Max(Utils.DistanceXZ(r.transform.position, w.Home), Utils.DistanceXZ(f.transform.position, w.Home));
+                held = r.CountItem(item) + f.CountItem(item);
+                if (held == 0 && far <= HomeRadius || back >= DropLimit) break;
+                yield return new WaitForSeconds(2f);
+                back += 2f;
+            }
+            checks.Add($"D 든 것 {held}개(0이어야), {back:0}초 뒤 집에서 최대 {far:0}m (기준 {DropLimit:0}초·{HomeRadius:0}m 안)", held == 0 && far <= HomeRadius);
+            float watched = 0f, maxFar = far;
+            bool again = false, other = false;
+            while (watched < WatchSeconds)
+            {
+                yield return new WaitForSeconds(2f);
+                watched += 2f;
+                // 같은 나무 일만 셈. 빈 음식 상자 때문에 나가는 먹을거리 일(IdleFood)은 따로 적기만 함(사용자 규칙 밖의 필요)
+                if (r.Ai.Job is GatherJob rg && rg.Item == item || f.Ai.Job is GatherJob fw && fw.Item == item) again = true;
+                if (r.Ai.Job is GatherJob || f.Ai.Job is GatherJob) other = true;
+                maxFar = Mathf.Max(maxFar, Mathf.Max(Utils.DistanceXZ(r.transform.position, w.Home), Utils.DistanceXZ(f.transform.position, w.Home)));
+            }
+            checks.Add($"D 뒤 {WatchSeconds:0}초 동안 나무 일 다시 나감 {(again ? "있음" : "없음")} (다른 일 나감 {(other ? "있음" : "없음")}, 집에서 최대 {maxFar:0}m)", !again);
+        }
+
+        static int TeamTotal(GatherJob job)
+        {
+            int total = 0;
+            if (job.Team != null) foreach (var o in job.Team) total += o.Delivered;
+            return total;
         }
     }
 }
