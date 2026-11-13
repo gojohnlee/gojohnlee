@@ -131,11 +131,13 @@ namespace ValheimHelper
             // 스스로 앉았는지(강제 전) — 아니면 "쏘기 전 날아감"
             bool natural = bird != null && IsLanded(bird);
             Vector3 landAt = at;
+            float landTime = 0f;
             if (bird != null)
             {
                 var nv = bird.GetComponent<ZNetView>();
                 if (nv != null && nv.GetZDO() != null) nv.GetZDO().Set("landed", true);
                 bird.transform.position = landAt;
+                landTime = Time.time;
             }
             s.Pct = pct;
             s.Dist = Vector3.Distance(npc.GetEyePoint(), landAt);
@@ -170,6 +172,8 @@ namespace ValheimHelper
             // 쉬는 일꾼은 잡담 중 WorkerBanter.Facing으로 동료를 본다 → 화살이 생길 때까지 겨눔 유지(Hunt.UpdateShoot도 공격 중 틱마다 Face).
             GameObject prev = bow.m_lastProjectile, arrow = null;
             bool shot = npc.ReleaseBow();
+            // 앉힌 뒤 놓기까지 걸린 시간과 그때 새가 아직 앉아 있는지(이륙은 landed 가지에서 m_landedTimer > 2초)
+            TestRunner.Log($"DIAG 놓기 {dist:0}m: 앉힌 뒤 {Time.time - landTime:0.00}초 · 놓을 때 앉음 {(bird != null && IsLanded(bird))} · 겨눔 기다림 {aimWait:0.00}초 · 새 있음 {bird != null}");
             string hitWhat = "없음", colInfo = "화살 못 봄";
             Vector3 spawn = Vector3.zero, lastPos = Vector3.zero, dir0 = Vector3.zero;
             float minD = float.MaxValue, waitT = 0f;
@@ -186,7 +190,7 @@ namespace ValheimHelper
                         dir0 = pj.GetVelocity();
                         // 맞은 것(바닐라 Projectile.OnHit 끝의 m_onHit — 피해 판정까지 간 것만 불림)
                         pj.m_onHit += (c, p, water) => hitWhat = c == null ? (water ? "물" : "?")
-                            : $"{c.name}(층 {LayerMask.LayerToName(c.gameObject.layer)}) {Utils.DistanceXZ(eye, p):0.0}m 땅 위 {p.y - GatherTest.Ground(p).y:0.00}m";
+                            : $"{c.name}(위 {c.transform.root.name}, 층 {LayerMask.LayerToName(c.gameObject.layer)}) {Utils.DistanceXZ(eye, p):0.0}m 땅 위 {p.y - GatherTest.Ground(p).y:0.00}m";
                     }
                 }
                 if (arrow == null) npc.Ai.Face(aim);
