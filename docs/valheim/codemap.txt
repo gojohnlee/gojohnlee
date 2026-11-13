@@ -211,6 +211,9 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh
 - 점프: m_jumpForce 8, 앞 2, 제자리 1.49m. 플레이어 충돌체 반지름 0.49 높이 1.85.
 - 소유권: 서버만 2초마다 정리(ZDOMan.Update → IsServer일 때 ReleaseZDOS → 호스트·접속자마다 ReleaseNearbyZDOS). 주인이 있는 물체는
   주인의 활동 영역 밖일 때만 남이 가져감(IsInPeerActiveArea, 주인 peer가 없으면 밖). FarZones 패치로 NPC 주변도 호스트 영역.
+  [1.0.21, 회차 584] 활동 영역 = ZNetScene.PointInsideActiveArea: 구역 중심 Chebyshev 1.5구역(96m, 근거리 1이면 64m), 근거리 2 원이면 반지름 112m와 겹친 곳 —
+  인스턴스(근거리 2구역)보다 좁아 그 사이 생물은 보이지만 주인 0(멈춤, AI 안 돎). Character.Damage → InvokeRPC(주인) → RPC_Damage는 IsOwner 아니면 버림(피해 0).
+  → FarZones.Anchors는 일꾼 둘레 30m(Guard.SenseRange)가 영역에 다 안 들면 일꾼도 기준점.
 - 지도: Minimap.m_explored·m_exploredOthers(BitArray, 비공개), IsExplored(Vector3)는 한 점만 봄(Scout.Explored = 구역 중심).
 - 지형 높이(회차 130): WorldGenerator.instance.GetHeight(float wx, float wz) = 게임 생성 높이(절대 Y, 물 높이 ZoneSystem.m_waterLevel과 비교), 안 불러온 곳도 됨, 실제 땅과 0.8m쯤 다름. 8m 칸 2천 개쯤 펼쳐 20~30ms.
 - 생성된 구역: ZoneSystem.IsZoneGenerated(Vector2s)는 비공개(m_generatedZones). ZDOMan.FindSectorObjects(Vector2s, SimulationDistance, List<ZDO>, List<ZDO> distant=null),

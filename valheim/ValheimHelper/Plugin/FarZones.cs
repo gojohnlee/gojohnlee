@@ -27,7 +27,26 @@ namespace ValheimHelper
 
         static int s_anchorFrame = -1;
 
-        /// <summary>호스트 주변 밖에 있는 추적 물체 위치. 프레임마다 한 번만 계산한다(반환 목록을 순회 중에 다시 불러도 안전).</summary>
+        /// <summary>
+        /// 추적 물체 둘레 이만큼(네모 반쪽)이 호스트 활동 영역 안에 다 들지 않으면 그 물체도 기준점으로 삼는다(경계 감지 거리 Guard.SenseRange).
+        /// 물체만 영역 안이고 곁의 적이 영역 밖이면 ReleaseNearbyZDOS가 그 적의 주인을 놓아 멈춰 있고, Character.RPC_Damage는 주인만
+        /// 피해를 넣어 일꾼이 아무리 쳐도 체력이 그대로다(회차 584 vh_entrailstest: 집 80m 드라우그 체력 64 그대로 584번 침, 드라우그는 안 움직이고 안 침).
+        /// </summary>
+        const float EdgeMargin = Guard.SenseRange;
+
+        /// <summary>
+        /// 둘레 EdgeMargin 네모의 네 모서리가 다 호스트 활동 영역 안인가. 활동 영역(ZNetScene.PointInsideActiveArea: 구역 중심 Chebyshev 1.5구역,
+        /// 원 시뮬레이션 거리면 원과 겹친 곳)은 볼록하니 네 모서리가 안이면 네모 전체가 안이다.
+        /// </summary>
+        static bool AroundInside(Vector3 pos, Vector2s hostZone)
+        {
+            for (int sx = -1; sx <= 1; sx += 2)
+                for (int sz = -1; sz <= 1; sz += 2)
+                    if (!ZNetScene.InActiveArea(pos + new Vector3(sx * EdgeMargin, 0f, sz * EdgeMargin), hostZone)) return false;
+            return true;
+        }
+
+        /// <summary>호스트 주변 밖에 있거나 둘레가 그 경계에 걸친 추적 물체 위치. 프레임마다 한 번만 계산한다(반환 목록을 순회 중에 다시 불러도 안전).</summary>
         static List<Vector3> Anchors()
         {
             if (s_anchorFrame == Time.frameCount) return s_anchors;
@@ -41,7 +60,7 @@ namespace ValheimHelper
                 ZDO zdo = ZDOMan.instance.GetZDO(s_tracked[i]);
                 if (zdo == null) { s_tracked.RemoveAt(i); continue; }
                 Vector3 pos = zdo.GetPosition();
-                if (!ZNetScene.InActiveArea(pos, hostZone)) s_anchors.Add(pos);
+                if (!AroundInside(pos, hostZone)) s_anchors.Add(pos);
             }
             return s_anchors;
         }
