@@ -98,12 +98,21 @@ namespace ValheimHelper
                     }
                     wave++;
                 }
+                // 시험 거점엔 대장간이 없어 철 갑옷을 못 고침 → 끝없는 드라우그에 닳아 부러지면 Unload가 상자에 넣고 가죽을 입어 preyStrong(맞는 판단, 11-14 두 번째 판).
+                // 닳음은 이 시험 밖이라 입은 갑옷 내구도를 채워 둠
+                foreach (var n in new[] { w.Ragnar, w.Floki })
+                    if (n != null)
+                        foreach (var it in n.GetInventory().GetAllItems())
+                            if (it.m_shared.m_useDurability && System.Array.IndexOf(Gear.WearSlots, it.m_shared.m_itemType) >= 0) it.m_durability = it.GetMaxDurability();
                 WorkerNpc h = Hunter(w);
                 if (h != null) lastHunter = h;
+                // 다침 칸 기록은 매초 비움: 끝없는 드라우그에 저절로 물러난 칸이 같은 곳(40m) 세 번째 접음(huntTooHard)으로 쌓여 일이 끝나지 않게(11-14, 접음 규칙은 dotnet test RecoveryTests)
+                if (lastHunter != null && lastHunter.HurtSpots.CountAt(lastHunter.transform.position.x, lastHunter.transform.position.z) > 0) lastHunter.ClearHurt();
                 bool home = lastHunter == null || Utils.DistanceXZ(lastHunter.transform.position, lastHunter.Home) < 15f;
                 if (wasHome && !home) trips++;
                 wasHome = home;
-                int got = GatherTest.CountBase(w.Home, "Entrails");
+                // 다침 때는 상자+든 것으로 셈: 싸움 중엔 일이 멈추고(WorkerAI GuardBusy) 떨굼은 Guard.Loot가 주워, 한 번에 24개를 넣어 상자 수가 3→27로 뛰면 다침 조건을 못 채움(11-14 0/2)
+                int got = GatherTest.CountBase(w.Home, "Entrails") + BaseTest.Carried(w.Ragnar, "Entrails") + BaseTest.Carried(w.Floki, "Entrails");
                 if (h != null && Utils.DistanceXZ(h.transform.position, h.Home) > 15f && (hurtNo == 0 && got >= 4 || hurtNo == 1 && got >= 12))
                 {
                     hurtNo++;

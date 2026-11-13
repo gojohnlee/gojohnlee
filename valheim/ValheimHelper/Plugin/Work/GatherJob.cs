@@ -266,8 +266,16 @@ namespace ValheimHelper
         bool GatherHurt(out bool result)
         {
             result = true;
-            if (m_hunt || m_giveUp != null) return false;
-            if (m_step != Step.Search && m_step != Step.GoZone && m_step != Step.GoCrypt && m_step != Step.Approach && m_step != Step.Work && m_step != Step.Collect) return false;
+            if (m_giveUp != null) return false;
+            if (m_step != Step.Search && m_step != Step.GoZone && m_step != Step.GoCrypt && m_step != Step.Approach && m_step != Step.Work && m_step != Step.Collect && m_step != Step.Hunt) return false;
+            if (m_hunt && m_hurtRetreat)
+            {
+                // 사냥: 다친 채 물러났으면 줍기(Collect)·구역 가기 중에도 다침 칸 — Search까지 안 기다림(11-14 줍기 중 물러났다 체력 47%로 다시 나감)
+                m_hurtRetreat = false;
+                result = HurtStop("사냥", "huntHurt", "huntTooHard");
+                return true;
+            }
+            // 물러남 없이 크게 다쳐도(사냥 포함) 다침 칸 — 사냥은 안 그러면 Search가 지금 체력으로 preyStrong을 매겨 일을 접음(11-14 두 번째 다침)
             if (!Core.Work.Recovery.IsHurt(m_npc.GetHealth(), m_npc.GetMaxHealth())) { m_wasWell = true; return false; }
             if (!m_wasWell) return false;
             m_wasWell = false;
