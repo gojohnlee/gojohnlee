@@ -58,8 +58,10 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
             checks.Add($"활 없으면 곧 그만둠 ({TestKit.Waited:0}초)", TestKit.Ok);
             bool said = false;
-            for (int i = heard; i < w.Heard.Count; i++) if (w.Heard[i].Contains("활")) said = true;
+            bool planSaid = false; // 대기열에 걸린 활 제작이 계획으로 돌았다(작업대 없어 접음 — 말풍선 "조잡한 활")
+            for (int i = heard; i < w.Heard.Count; i++) { if (w.Heard[i].Contains("활")) said = true; if (w.Heard[i].Contains("조잡한 활")) planSaid = true; }
             checks.Add("활이 필요하다고 말함", said);
+            checks.Add("활 제작을 대기열에 걸어 계획이 돎", planSaid);
 
             // 2) 활+화살을 주고 사슴을 25m 앞에 세움
             TestKit.PutInChest(w.Chest, "Bow", 1);

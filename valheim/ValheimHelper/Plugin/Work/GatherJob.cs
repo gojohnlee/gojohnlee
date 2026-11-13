@@ -417,6 +417,17 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>활이 없어 그만두기 전에: 기본 활(Bow)을 대기열에 제작으로 건다(사용자 11-13 "활 없을 때 맞는 것 먼저 만들기"). 활을 이미 가졌거나 제작법이 없거나 이미 걸려 있으면 안 함. 화살은 아직 안 만든다.</summary>
+        void QueueBowMake()
+        {
+            const string bow = "Bow";
+            if (Gear.BestBow(m_npc.GetInventory().GetAllItems()) != null) return;
+            if (m_ai.Queue.Exists(q => q.Label == ItemLabel(bow))) return;
+            if (ObjectDB.instance.GetItemPrefab(bow) == null || Recipes.Book().RecipesFor(bow).Count == 0) return;
+            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(bow), Item = bow, Amount = 1 }));
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 활 없음({Item}): {bow} 제작을 대기열에 건다");
+        }
+
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)
         {
             if (kind == ToolKind.None || kind == ToolKind.Hunt) return null;
