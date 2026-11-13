@@ -1,7 +1,7 @@
-갱신: 2026-11-13 12:09  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 531 진행 중
+갱신: 2026-11-13 12:14  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 531, 계정: 2번, 한도: 없음
-할 일: 요청 연장·활·화살 연결(11-13 11:40): 1) noTool [구현 완료·검증 대기, 회차 528 — 커밋 2b12fcd4 · 시험 vh_notooltest(구리) FAIL 회차 529: Departure.c…
-마지막 시험: 11-13 12:08 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+할 일: 요청 연장·활·화살 연결(11-13 11:40): 1) noTool [끝, 회차 531 — 커밋 5f0ad52c · 시험 vh_notooltest(구리) PASS 13/13] 2) needBow(GatherJob.S…
+마지막 시험: 11-13 12:14 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE 연장 없을 때 맞는 연장 먼저 만들기 끝(회차 531, 커밋 5f0ad52c·2d63c24f, vh_notooltest 13/13 PASS)
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
