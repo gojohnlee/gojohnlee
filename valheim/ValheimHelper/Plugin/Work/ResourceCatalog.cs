@@ -24,7 +24,7 @@ namespace ValheimHelper
         public bool Log;
         /// <summary>쪼개면 반토막 통나무가 생기는 통나무(TreeLog.m_subLogPrefab): 반토막이 그 자리에 생겨 구른다.</summary>
         public bool Splits;
-        /// <summary>여러 물건 중 무작위로 떨구는 통·궤짝(barrell 등, 부수는 것에 물건 3종 이상). 사냥감이 있는 물건은 이걸 얻는 법으로 안 친다(사슴 가죽).</summary>
+        /// <summary>여러 물건 중 무작위로 떨구는 통·궤짝·고기 더미(barrell 등, 부수거나 덤으로 줍는 것에 물건 3종 이상). 사냥감이 있는 물건은 이걸 얻는 법으로 안 친다(사슴 가죽).</summary>
         public bool Loot;
         /// <summary>땅에 묻혀 숨는 광맥(Beacon이 붙음 — 산 은). 묻혔으면 위시본을 얻어야 안다(HiddenOres, ⑪).</summary>
         public bool Hidden;
@@ -220,6 +220,7 @@ namespace ValheimHelper
                 var r = new ResourceInfo { Prefab = p.name, Tool = ToolKind.None, Pickable = true, Priority = 5f };
                 if (pick.m_itemPrefab.GetComponent<ItemDrop>() != null) r.Produces.Add(pick.m_itemPrefab.name);
                 AddDrops(r, pick.m_extraDrops);
+                r.Loot = pick.m_extraDrops?.m_drops != null && pick.m_extraDrops.m_drops.Count >= 3; // 고기 더미(Pickable_MeatPile → 창자·동전·은 목걸이)도 통처럼: 사냥감 있는 물건은 사냥으로(회차 579)
                 return r;
             }
             var des = p.GetComponent<Destructible>();

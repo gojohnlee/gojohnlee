@@ -74,6 +74,7 @@ namespace ValheimHelper
             Step("vh_crypttest", CryptTest.Register);
             Step("vh_frostcavetest", FrostCaveTest.Register);
             Step("vh_hunttest", HuntTest.Register);
+            Step("vh_entrailstest", EntrailsTest.Register);
             Step("vh_cooktest", CookTest.Register);
             Step("vh_farmtest", FarmTest.Register);
             Step("vh_bowtest", BowTest.Register);
