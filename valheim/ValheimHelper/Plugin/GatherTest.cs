@@ -20,6 +20,9 @@ namespace ValheimHelper
             TestRunner.Register("vh_tintest", "주석 채집 시험(광맥을 거점 12m 앞에 놓음, 구리와 같은 경로)", () => Run("PickaxeAntler", "TinOre", "주석", true));
             // 나무는 손줍기 가지(None)로 채워져 연장 경로를 못 본다 → 광맥(곡괭이만)으로 본다
             TestRunner.Register("vh_notooltest", "연장 없이 구리 채집 시험(장비 상자에 곡괭이를 안 넣음 → 맞는 연장 제작을 대기열에 걸고 구리 10개)", () => Run("PickaxeAntler", "CopperOre", "구리", true, noTool: true));
+            // 채집 중 연장이 부러짐(사용자 11-13 "toolBroke 같은 방식"): 곡괭이를 내구도 1.5로 줘 첫 휘두름에 부러뜨리고, 맞는 연장 제작을 대기열에 걸고 구리 10개.
+            // 광맥은 vh_notooltest처럼 거점 12m 앞에 놓는다(먼 자연 광맥은 헛휘두름이 많아 만든 곡괭이도 8개째에 부러져 360초 안에 못 채움, 회차 557)
+            TestRunner.Register("vh_toolbreaktest", "채집 중 연장 부러짐 시험(내구도 1.5 곡괭이 → 첫 휘두름에 부러짐 → 맞는 연장 제작 후 구리 10개)", () => Run("PickaxeAntler", "CopperOre", "구리", true, worn: true));
         }
 
         internal sealed class Checks
@@ -34,7 +37,7 @@ namespace ValheimHelper
             }
         }
 
-        static IEnumerator Run(string toolPrefab, string item, string word, bool spawnDeposit = false, bool noTool = false)
+        static IEnumerator Run(string toolPrefab, string item, string word, bool spawnDeposit = false, bool noTool = false, bool worn = false)
         {
             var checks = new Checks();
             Player player = Player.m_localPlayer;
@@ -95,7 +98,7 @@ namespace ValheimHelper
             if (claude == null || WorkerNpc.All.Count != 2)
                 TestRunner.Log($"  NPC {WorkerNpc.All.Count}명: {string.Join(", ", WorkerNpc.All.ConvertAll(n => $"{n.NpcName}({n.Personality}) {n.transform.position:F1} zdo {n.Zdo?.m_uid}").ToArray())}, ZDO {Workers.AllZdos().Count}개, 깃발 {home:F1}");
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
-            if (noTool) // 원래 가진 연장(짐의 도끼)을 뺀다. 안 빼면 손에 도끼가 있어 연장 없음 경로를 안 탄다
+            if (noTool || worn) // 원래 가진 연장(짐의 도끼)을 뺀다. 안 빼면 손에 도끼가 있어 연장 없음 경로를 안 탄다
                 foreach (var it in new List<ItemDrop.ItemData>(claude.GetInventory().GetAllItems()))
                     if (it.m_dropPrefab != null && (it.m_dropPrefab.name.StartsWith("Axe") || it.m_dropPrefab.name.StartsWith("Pickaxe")))
                     { claude.UnequipItem(it, false); claude.GetInventory().RemoveItem(it); }
@@ -120,7 +123,9 @@ namespace ValheimHelper
             // 광맥은 오래 캐서 곡괭이가 부러질 수 있다(바닐라 내구도) → 예비 하나 더
             if (!noTool) // 연장 없는 시험: 도끼를 안 넣어 맞는 연장 제작 경로를 본다
             {
-                bool put = Chests.TryEdit(eq, inv => { inv.AddItem(tool, 1); if (spawnDeposit) inv.AddItem(tool, 1); });
+                // 부러짐 시험은 예비 없이(예비가 있으면 Tool 단계가 가져와 이어 해 제작 경로를 안 탐)
+                bool put = Chests.TryEdit(eq, inv => { inv.AddItem(tool, 1); if (spawnDeposit && !worn) inv.AddItem(tool, 1);
+                    if (worn) foreach (var it in inv.GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == toolPrefab) it.m_durability = WorkerNpc.WornFloor + 0.5f; });
                 checks.Add($"장비 상자에 {toolPrefab}", put && eq.GetInventory().HaveItem(toolToken));
             }
 
@@ -193,12 +198,13 @@ namespace ValheimHelper
             }
             // 연장 없는 시험: 맞는 연장(곡괭이)을 만들 작업대와 재료를 둔다. 없으면 제작 계획이 "작업대 지어 줘"에서 멈춰 구리를 못 캔다(회차 531 FAIL)
             GameObject bench = null;
-            if (noTool)
+            if (noTool || worn)
             {
                 bench = Object.Instantiate(ZNetScene.instance.GetPrefab("piece_workbench"), Ground(home + rot * new Vector3(0f, 0f, -5f)), rot);
+                // 부러짐 시험은 두 벌: 만든 곡괭이도 광맥을 다 캐기 전에 부러질 수 있다 → 그때 상자의 부러진 곡괭이를 재고로 안 세고 다시 만드는지까지 본다
                 foreach (var rec in ObjectDB.instance.m_recipes)
                     if (rec.m_item != null && Utils.GetPrefabName(rec.m_item.gameObject) == toolPrefab)
-                        Chests.TryEdit(res, inv => { foreach (var req in rec.m_resources) inv.AddItem(req.m_resItem.gameObject, req.m_amount); });
+                        Chests.TryEdit(res, inv => { foreach (var req in rec.m_resources) inv.AddItem(req.m_resItem.gameObject, req.m_amount * (worn ? 2 : 1)); });
             }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             // 바이옴 회귀(검은숲): 시험 자리(거점 60m) 생물은 계속 치운다 — 뿔 곡괭이만 든 일꾼은 회색난쟁이에 도망치고 도망은 그 목표를 버린다(회차 142)
@@ -210,7 +216,8 @@ namespace ValheimHelper
             GatherJob.SkippedLogs.Clear();
             // 회차 142: 경계가 몸을 옮긴 뒤(물러나기·도망) 캐기가 이어지면 그 자리에서 휘두르지 않고 다시 다가가는지 — 캐는 중 한 번 25m 도망시킨다
             // (검은숲: 물러났다 34m 밖에서 일이 이어져 직접 피해가 20.6m 떨어진 조각에 들어감)
-            bool moveCheck = item == "CopperOre", moved = false;
+            // 부러짐 시험은 뺌: 첫 휘두름에 일이 끝나고 다시 건 일은 새 일이라 도망 뒤 목표를 잊는다(decisions "도망 뒤 목표: 그 일 동안") — 이 두 검사는 vh_coppertest·vh_notooltest가 본다
+            bool moveCheck = item == "CopperOre" && !worn, moved = false;
             int reapproach0 = GatherJob.WorkReapproaches, longHits0 = GatherJob.LongDirectHits;
             // 다) 도망 뒤 목표(사용자 10-28, decisions "도망 뒤 목표"): 위험 알림(AvoidHere)까지 준 도망 뒤 그 광맥은 두고(플레이어가 안 싸우니 도우러 안 감) 다른 광맥을 캔다
             bool fled = false, backToOre = false;
@@ -253,7 +260,8 @@ namespace ValheimHelper
                     TestRunner.Log($"[{t:0}s] 상자 {word} {count}, 들고 있는 {word} {(claude ? claude.CountItem(item) : -1)}, 상태 {(claude ? claude.Ai.Current.ToString() : "없음")}/{job?.StepName}, 집에서 {(claude ? Utils.DistanceXZ(claude.Home, claude.transform.position) : -1):0}m, 지식 {Brain.Get().Count}구역");
                     if (claude) Plugin.Log.LogInfo($"  [{t:0}s] 광맥에서 {Utils.DistanceXZ(depositPos, claude.transform.position):0.0}m, 땅에 {item} {GroundCount(depositPos, item)}개, {claude.Ai.MoveState} / {claude.MoveDebug}");
                 }
-                if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
+                // 부러짐 시험은 일이 끊겨 쉬는 동안(Idle)에도 자동 보충이 다시 잡을 때까지 기다린다(회차 556: 부러짐 뒤 Idle이라 55초에 끝남)
+                if (count >= 10 || claude == null || (claude.Ai.Current != WorkerAI.Mode.Work && !worn)) break;
             }
             checks.Add($"거점 상자에 {word} {count}개 더 ({t:0}초)", count >= 10);
             if (bench != null) { bench.GetComponent<ZNetView>()?.ClaimOwnership(); ZNetScene.instance.Destroy(bench); } // 다음 시험이 작업대를 보지 않게 치운다

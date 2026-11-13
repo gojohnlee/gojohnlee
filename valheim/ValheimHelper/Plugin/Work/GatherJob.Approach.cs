@@ -505,7 +505,12 @@ namespace ValheimHelper
                 ItemDrop.ItemData tool = m_npc.GetCurrentWeapon();
                 if (tool != null && tool.m_shared.m_useDurability && WorkerNpc.WearTool(tool, tool.m_shared.m_useDurabilityDrain))
                 {
-                    m_npc.UnequipItem(tool); m_npc.Say("toolBroke", Args()); // 최저 1: 일에는 부서진 것, 경사로 깎기에는 씀
+                    // 최저 1: 일에는 부서진 것, 경사로 깎기에는 씀. 연장 없음과 같은 길(사용자 11-13 "같은 방식"): 상자에 예비가 있으면 가져와 이 일을 이어 하고
+                    // (도망 뒤 목표 등 이 일의 기억 그대로), 없으면 UpdateTool이 맞는 연장 제작·남은 일을 대기열에 걸고 모은 것부터 넣고 그만둔다(말 toolBroke는 Fail이 함)
+                    m_npc.UnequipItem(tool);
+                    m_toolBroke = true;
+                    Go(Step.Tool);
+                    return true;
                 }
                 // 대상 체력이 줄었으면(HealthMark) 진척. 땅을 팠으면 그것도 진척.
                 string mark = HealthMark(zdo, view);

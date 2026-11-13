@@ -393,15 +393,29 @@ namespace ValheimHelper
                 if (Carried() > 0) { Go(Step.Return); return true; }
                 return Fail("bagFull");
             }
-            QueueToolMake(); // 맞는 연장을 먼저 만들어 둔다(대기열 맨 앞, 못 만드는 연장이면 안 함)
-            return GiveUp("noTool"); // 연장이 부러졌으면 모은 것부터 상자에 넣는다
+            // 맞는 연장을 먼저 만들어 둔다(대기열 맨 앞, 못 만드는 연장이면 안 함). 일하다 부러졌으면 남은 일도 그 뒤에 다시 건다
+            // (Departures의 noTool과 같음 — 안 걸면 연장을 만든 뒤 아무도 이어 하지 않는다, 회차 556 시험)
+            if (QueueToolMake() && m_toolBroke) RequeueRest();
+            return GiveUp(m_toolBroke ? "toolBroke" : "noTool"); // 모은 것부터 상자에 넣는다
+        }
+
+        /// <summary>일하다 연장이 부러짐(GatherJob.Approach): 그때 손에 든 연장을 일에 못 쓰게 됨. 예비가 없을 때 그만두는 말·남은 일 다시 걸기에 씀.</summary>
+        bool m_toolBroke;
+
+        /// <summary>남은 개수를 대기열에 다시 건다. 들고 있는 것은 GiveUp이 상자에 넣으니 뺀다(최소 1).</summary>
+        void RequeueRest()
+        {
+            int left = Mathf.Max(1, Remaining() - Carried());
+            var cmd = new Core.Chat.ChatCommand { Kind = Core.Chat.CommandKind.Item, Item = Item, Amount = left };
+            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, WorkSaves.GatherItem(new Speaker("", ZDOID.None, ZDOID.None), cmd, ItemLabel(Item) + " " + left, ReadyWhen.Always)));
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 연장 부러짐({Item}): 남은 {left}개를 연장 제작 뒤로 다시 건다");
         }
 
         static readonly string[] AxeNames = { "AxeStone", "AxeFlint", "AxeBronze", "AxeIron", "AxeBlackMetal", "AxeJotunBane" };
         static readonly string[] PickaxeNames = { "PickaxeAntler", "PickaxeBronze", "PickaxeIron", "PickaxeBlackMetal" };
 
         /// <summary>연장이 없어 그만두기 전에: 이 일에 맞는 가장 낮은 연장을 대기열에 제작으로 건다(Departures.Craft가 재료·설비를 계획). 남은 일은 자동 보충이 다시 잡는다.</summary>
-        void QueueToolMake() => QueueToolMakeFor(m_npc, m_targetInfo != null ? m_targetInfo.Tool : m_ways.Contains(ToolKind.Axe) ? ToolKind.Axe : m_ways.Contains(ToolKind.Pickaxe) ? ToolKind.Pickaxe : ToolKind.None, Item);
+        bool QueueToolMake() => QueueToolMakeFor(m_npc, m_targetInfo != null ? m_targetInfo.Tool : m_ways.Contains(ToolKind.Axe) ? ToolKind.Axe : m_ways.Contains(ToolKind.Pickaxe) ? ToolKind.Pickaxe : ToolKind.None, Item);
 
         /// <summary>출발 판단에서 연장 없음으로 거절하기 전에도 같은 제작을 건다(Departures.Gather). 맞는 연장이 없으면 아무것도 안 함.</summary>
         public static bool QueueToolMakeFor(WorkerNpc npc, ToolKind tool, string item)

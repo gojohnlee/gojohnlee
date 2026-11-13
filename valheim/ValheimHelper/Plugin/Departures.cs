@@ -559,7 +559,9 @@ namespace ValheimHelper
             foreach (var c in Chests.NearBase(home, ChestRole.Ingredients))
                 foreach (var it in c.GetInventory().GetAllItems())
                 {
-                    if (it.m_dropPrefab == null) continue;
+                    // 부서진 연장·장비(내구도 1 이하, WornOut)는 있는 것으로 안 셈: 일에는 못 쓰는데(BestTool·출발 판단은 뺌) "상자에 있어"로 제작을 안 해
+                    // 연장 부러짐 뒤 다시 건 일이 연장 없음으로 거절되고 대기열이 비었음(vh_toolbreaktest — 거점 제작대로 못 고친 부러진 곡괭이는 짐 정리가 상자에 넣음)
+                    if (it.m_dropPrefab == null || WorkerNpc.WornOut(it)) continue;
                     string key = Utils.GetPrefabName(it.m_dropPrefab);
                     stock.TryGetValue(key, out int n);
                     stock[key] = n + it.m_stack;
