@@ -15,9 +15,13 @@ Add-Type -Namespace VHK -Name Power -MemberDefinition '[DllImport("kernel32.dll"
 $m = New-Object Threading.Mutex($false, 'Global\VHKeepOn')
 if (-not $m.WaitOne(0)) { exit }   # 이미 하나 돎
 
-# 임시 조치(사용자 11-13): 11-13 18:30이 지나거나 루프가 할 일을 다 끝내면 지킴이를 스스로 지운다(답 기다림이면 안 지움)
-# (stay-on 지움 → 루프는 원래대로 자리 비우면 끔, 작업 "VH keep on" 지움, 끝).
-$Deadline = [datetime]'2026-11-13 18:30'
+# 사이드 루프(사용자 11-13): 끝 시각이 지나거나 루프가 할 일을 다 끝내면 지킴이를 끈다(답 기다림이면 안 끔).
+# 끌 때 작업 "VH keep on"은 지우지 않고 '사용 안 함'으로만 둔다 → 다시 켤 땐 scripts/vh-keepon-on.ps1(끝 시각 -Until).
+# 끝 시각 = %USERPROFILE%\vh-loop\keepon-until.txt(켤 때 vh-keepon-on.ps1이 씀). 없으면 오늘 18:30, 이미 지났으면 지금부터 12시간.
+$UntilFile = Join-Path $Dir 'keepon-until.txt'
+$Deadline = $null
+try { $Deadline = [datetime]::Parse((Get-Content $UntilFile -ErrorAction Stop | Select-Object -First 1).Trim()) } catch { }
+if (-not $Deadline) { $Deadline = (Get-Date).Date.AddHours(18.5); if ((Get-Date) -ge $Deadline) { $Deadline = (Get-Date).AddHours(12) } }
 function Test-LoopIdle {
     $l = Get-Content (Join-Path $Dir 'loop.log') -Tail 200 -Encoding UTF8 -ErrorAction SilentlyContinue |
         Where-Object { $_ -match '회차 \d+ 시작|루프 시작|다시 돎|멈춤:|할 일 없음|답 기다림|멈춤 파일' } | Select-Object -Last 1
@@ -173,10 +177,11 @@ function Send-NewHistory($first) {
     }
 }
 function Remove-KeepOn($why) {
-    Send-Tg "발헤임 지킴이 지움: $why. 이제 루프가 멈추면 자리 비울 때 PC가 꺼질 수 있어."
+    Send-Tg "발헤임 지킴이 끔: $why. 이제 텔레그램 알림·답장은 쉬고, 루프가 멈추면 자리 비울 때 PC가 꺼질 수 있어. 다시 켜려면 PC에서 scripts/vh-keepon-on.ps1(또는 Claude한테 '지킴이 켜')."
     Remove-Item (Join-Path $Dir 'stay-on') -Force -ErrorAction SilentlyContinue
-    Log "지킴이 지움: $why (stay-on 지움, 작업 VH keep on 지움)"
-    Unregister-ScheduledTask -TaskName 'VH keep on' -Confirm:$false -ErrorAction SilentlyContinue
+    Remove-Item $UntilFile -Force -ErrorAction SilentlyContinue
+    Log "지킴이 끔: $why (stay-on 지움, 작업 VH keep on 사용 안 함 — 지우지 않음)"
+    Disable-ScheduledTask -TaskName 'VH keep on' -ErrorAction SilentlyContinue | Out-Null
     exit
 }
 
