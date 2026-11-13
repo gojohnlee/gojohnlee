@@ -7,8 +7,6 @@
 - [11-13] 찾기 끝 시간 줄 추가 — 커밋 43795f5 · vh_exploretest 16/16 PASS, vh_coppertest 13/14 FAIL(밤, E090 관찰)
 - [11-13] 연장 부러짐 — 예비 연장 가져와 잇기, 없으면 제작 뒤 남은 일 다시 걸기. 커밋 2ac05c9c · vh_toolbreaktest 12/12 PASS · vh_notooltest 13/13 PASS · vh_coppertest 13/14(E085 관찰)
 - [11-13] 활 연결 검증 — vh_bowtest PASS 13/13(회차 555, 코드 바뀜 없음). E082 관찰 유지
-- [11-13] 볼트 가장 싼 것 먼저 — 깃털 화살·볼트는 제작 재료 개수 합이 적은 것부터. 호위병 석궁 시험은 깃털 100 넘게 넣도록 고침. 커밋 1a93b786 · vh_guardbowtest PASS 8/8, dotnet test 711/711
-- [11-13] 화살 아끼기(상자에서 챙기기) — 나무 화살 먼저, 깃털 화살은 상자 깃털 50 넘을 때만(AmmoRule). 커밋 a3004f8c · vh_bowtest 13/13 PASS, 게임 값 vh_arrowtest 3/3 PASS
 다음 (순서대로 — 안 끝난 일만)
 요청 화살 아끼기(11-13 15:20): 가) [끝, 회차 552 — 시험 vh_arrowtest PASS 3/3: 제작법 값 codemap 옮김] 나) 상자에서 챙기기 [끝, 회차 552 — 커밋 a3004f8c · vh_bowtest 13/13] [끝, 회차 553 — 일꾼이 화살을 직접 만드는 길 없음(CraftPlan·Recipes에 화살 없음) · 볼트·깃털 화살 가장 싼 것 먼저(AmmoCost 재료 합) · 커밋 1a93b786 · dotnet test 711/711 · vh_guardbowtest PASS 8/8] 다) [끝, 회차 552 — AmmoRule.FeatherFloor 한 곳]
 요청 연장·활·화살 연결(11-13 11:40): 1) noTool [끝, 회차 531 — 커밋 5f0ad52c · 시험 vh_notooltest(구리) PASS 13/13] 2) needBow [끝, 회차 555 — 시험 vh_bowtest PASS 13/13(코드 바뀜 없음, 회차 532 커밋 baf618bc)] 3) toolBroke(GatherJob.Approach 부러짐) [끝, 회차 557 — 커밋 2ac05c9c · 시험 vh_toolbreaktest PASS 12/12, vh_notooltest PASS 13/13]
