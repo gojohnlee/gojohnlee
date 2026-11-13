@@ -592,6 +592,11 @@ function Wait-Until($t, $Cancel) {
 # "구현 완료·검증 대기"는 끝이 아니다. 허위 완료까지 잡지는 않는다(사용자: 거기에 시간 쓰지 말 것).
 function Test-RoundResult($before, $after, $n) {
     if ($before -eq $after) { return $false }
+    # 사용자 11-13: 회차 559(문서 최신화)·560·561(코드 커밋 9dd1f23·79a5c9f)이 progress 꼴("구현 완료·검증 대기" 등) 때문에
+    # 진척 0으로 세여 3회차마다 멈춤 → 답 기다림·PC 끔. 이 회차에 기록 파일 말고 실제 파일(코드·스크립트·codemap·decisions 등)을
+    # 바꾼 커밋이 올라왔으면 진척으로 본다. 기록만(status·progress·history·UserRequest) 바뀐 회차는 아래 꼴 셈 그대로.
+    $real = @(G diff --name-only $before $after | Where-Object { $_ -and $_ -notmatch '^docs/valheim/(status\.txt|progress\.txt|history[^/]*\.md|UserRequest\.txt)$' })
+    if ($real.Count) { return $true }
     $hasCommit = {
         param($text)
         foreach ($m in [regex]::Matches($text, '\b[0-9a-f]{7,40}\b')) {
