@@ -166,7 +166,8 @@ namespace ValheimHelper
         /// <summary>갈 지하묘지가 있으면 거기로 간다(바깥 걷기 → 닫혔으면 열쇠 문 열기 → 입구 Teleport). 열린 곳 먼저, 다 캤으면 열 수 있는 닫힌 곳.</summary>
         bool TryStartCrypt()
         {
-            if (EnvMan.IsNight()) return false; // 밤에 늪 바깥을 걷지 않는다(들어가는 건 낮에만)
+            // 밤에 늪 바깥을 걷지 않는다(들어가는 건 낮에만) — 단, 장비가 밤 늪 적을 이길 만하면(위험 판단이 밤 몫을 셈) 걷는다
+            if (EnvMan.IsNight() && !Departures.NightGearOk(m_npc, (int)Heightmap.Biome.Swamp)) return false;
             var skip = new List<Vector3>(m_cryptsDone);
             if (m_departAvoid.Count > 0) // 출발 판단이 피하라고 한 던전(⑬ 바-5: 시커에게서 도망친 광산)
                 foreach (var d in Dungeons.All(Item)) if (m_departAvoid.Contains(Senses.ZoneOf(d.Pos))) skip.Add(d.Pos);
