@@ -7,6 +7,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_birdshoottest (땅에 앉은 새 명중 셈): 낮·밤 각각 10·20·30m 앞 땅 새(Crow)를 Ragnar가 활로 3판씩 쏘고, 쏜 수·맞음(죽음)·앉아 있던 시간·쏘기 전 날아감·깃털 수를 셈.
+    /// 새는 놓은 자리가 아니라 날아가 앉은 자리에 앉으니, 거리는 앉은 자리까지 잰다(DIAG 착지 m). 당기기는 새가 앉기 전부터 시작해 앉은 뒤 놓는다.
     /// 칸마다 여러 판의 중간값을 표로 남긴다(측정만 — 기능 아님). 쏘기 자체가 나가는지(화살 한 발씩)가 PASS 기준.
     /// </summary>
     static class BirdShootTest
@@ -17,7 +18,7 @@ namespace ValheimHelper
         class Shot
         {
             public bool Fired, Hit, FlewBeforeShot;
-            public float Sat;
+            public float Sat, Dist, Pct;
             public int Feathers;
         }
 
@@ -81,50 +82,60 @@ namespace ValheimHelper
                         shots.Add(s);
                         total++;
                         if (s.Fired) fired++;
-                        TestRunner.Log($"DIAG {when} {dist:0}m #{i + 1}: 쏨 {(s.Fired ? "예" : "아니오")} · 맞음 {(s.Hit ? "예" : "아니오")} · 앉은 시간 {s.Sat:0.0}초 · 쏘기 전 날아감 {(s.FlewBeforeShot ? "예" : "아니오")} · 깃털 {s.Feathers}");
+                        TestRunner.Log($"DIAG {when} {dist:0}m #{i + 1}: 쏨 {(s.Fired ? "예" : "아니오")} · 맞음 {(s.Hit ? "예" : "아니오")} · 앉은 시간 {s.Sat:0.0}초 · 착지 {s.Dist:0.0}m · 당김 {s.Pct:0.00} · 쏘기 전 날아감 {(s.FlewBeforeShot ? "예" : "아니오")} · 깃털 {s.Feathers}");
                     }
                     int hits = 0, flew = 0;
                     var sats = new List<float>();
                     var feathers = new List<float>();
+                    var dists = new List<float>();
                     foreach (var s in shots)
                     {
                         if (s.Hit) hits++;
                         if (s.FlewBeforeShot) flew++;
                         sats.Add(s.Sat);
                         feathers.Add(s.Feathers);
+                        dists.Add(s.Dist);
                     }
-                    TestRunner.Log($"표 {when} {dist:0}m: 쏨 {shots.FindAll(s => s.Fired).Count}/{Trials} · 맞음 {hits}/{Trials} · 앉은 시간 중간 {Median(sats):0.0}초 · 쏘기 전 날아감 {flew}/{Trials} · 깃털 중간 {Median(feathers):0}");
+                    TestRunner.Log($"표 {when} {dist:0}m: 쏨 {shots.FindAll(s => s.Fired).Count}/{Trials} · 맞음 {hits}/{Trials} · 착지 중간 {Median(dists):0.0}m · 앉은 시간 중간 {Median(sats):0.0}초 · 쏘기 전 날아감 {flew}/{Trials} · 깃털 중간 {Median(feathers):0}");
                 }
             }
             checks.Add($"쏘기마다 화살 한 발 나감 ({fired}/{total})", fired == total);
         }
 
-        // 새 한 마리를 거리 dist에 놓고 활로 한 발 쏜다. 결과는 s에 쓴다
+        // 새 한 마리를 거리 dist 근처에 놓고 활로 한 발 쏜다. 결과는 s에 쓴다.
+        // 당기기는 새가 날아와 앉기 전부터 시작한다. 앉은 뒤 1.5초(낮 앉음 2초 안) 안에 놓는다.
         static IEnumerator OneShot(WorkerNpc npc, ItemDrop.ItemData bow, float dist, Shot s)
         {
             Vector3 at = GatherTest.Ground(npc.transform.position + npc.transform.forward * dist) + Vector3.up * 0.5f;
-            int feathersBefore = GatherTest.GroundCount(at, "Feather");
             int arrowsBefore = Gear.CountArrows(npc.GetInventory(), bow);
             GameObject prefab = ZNetScene.instance.GetPrefab("Crow");
             var bird = Object.Instantiate(prefab, at, Quaternion.identity).GetComponent<RandomFlyingBird>();
             if (bird == null) yield break;
-            // 땅에 앉을 때까지 기다린다(ZDO landed, 8초 넘으면 그냥 감). 앉은 뒤부터 잰다
-            yield return TestKit.WaitFor(() => bird == null || IsLanded(bird), 8f);
-            float landedAt = Time.time;
-            TestRunner.Log($"DIAG 진단 {dist:0}m: 새 {(bird == null ? "없음" : "있음")} · ZDO {(bird != null && bird.GetComponent<ZNetView>()?.GetZDO() != null ? "있음" : "없음")} · 앉음 {(bird != null && IsLanded(bird))} · 기다린 뒤 위치 {(bird == null ? "-" : Vector3.Distance(bird.transform.position, at).ToString("0.0"))}m");
 
-            // 당기면서 새를 보고, 다 당기면 놓는다(3초 넘으면 그냥 놓음)
-            float t = 0f;
-            while (t < 3f && bird != null && npc.HoldingBow())
+            // 8초 안에 앉지 않으면 그냥 쏜다
+            float t = 0f, landedAt = -1f, pct = 0f;
+            Vector3 landAt = Vector3.zero;
+            int feathersBefore = 0;
+            while (bird != null && npc.HoldingBow() && t < 8f)
             {
                 npc.Ai.Face(bird.transform.position);
-                float pct = npc.DrawBow(Time.deltaTime);
+                if (landedAt < 0f && IsLanded(bird))
+                {
+                    landedAt = Time.time;
+                    landAt = bird.transform.position;
+                    feathersBefore = GatherTest.GroundCount(landAt, "Feather");
+                }
+                if (landedAt >= 0f && Time.time - landedAt > 1.5f) break;
+                pct = npc.DrawBow(Time.deltaTime);
                 t += Time.deltaTime;
-                if (pct >= 1f) break;
+                if (landedAt >= 0f && pct >= 1f) break;
                 yield return null;
             }
-            s.FlewBeforeShot = bird != null && (!IsLanded(bird) || Vector3.Distance(bird.transform.position, at) > 1.5f);
-            s.Sat = Time.time - landedAt;
+            s.Pct = pct;
+            s.Dist = landedAt >= 0f ? Vector3.Distance(npc.GetEyePoint(), landAt) : 0f;
+            s.Sat = landedAt >= 0f ? Time.time - landedAt : 0f;
+            s.FlewBeforeShot = bird != null && (landedAt < 0f || !IsLanded(bird) || Vector3.Distance(bird.transform.position, landAt) > 1.5f);
+            TestRunner.Log($"DIAG 진단 {dist:0}m: 새 {(bird == null ? "없음" : "있음")} · 앉음 {(landedAt >= 0f)} · 당김 {pct:0.00}");
 
             // 날아가는 값(속력·중력)으로 앞질러 겨눔 — Hunt.UpdateShoot과 같은 방식(새는 안 움직인다고 봄)
             Vector3 eye = npc.GetEyePoint();
@@ -139,7 +150,7 @@ namespace ValheimHelper
 
             s.Fired = shot && Gear.CountArrows(npc.GetInventory(), bow) == arrowsBefore - 1;
             s.Hit = bird == null;
-            s.Feathers = GatherTest.GroundCount(at, "Feather") - feathersBefore;
+            s.Feathers = landedAt >= 0f ? GatherTest.GroundCount(landAt, "Feather") - feathersBefore : 0;
             if (bird != null) ZNetScene.instance.Destroy(bird.gameObject);
         }
 
