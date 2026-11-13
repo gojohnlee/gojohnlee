@@ -575,7 +575,7 @@ namespace ValheimHelper
             Vector3 pos = m_npc.transform.position, at = c.transform.position;
             float armor = m_npc.GetBodyArmor();
             float scale = Game.instance.GetDifficultyDamageScalePlayer(pos) * Game.m_enemyDamageRate;
-            float hit = MyHit(pos) + extraHit; // extraHit = 아직 곁에 없는 동료 일꾼 한 방(부르면 올 때, GatherJob.CallMateForPrey)
+            float hit = MyHit(pos) + extraHit; // extraHit = 아직 곁에 없는 동료 일꾼 한 방(부르면 올 때, GatherJob.CallGuardForPrey·TeamPlan)
             Shield? shield = m_npc.BlockStats();
             var taken = Taken(scale, armor, shield, 1);
             var one = new List<Foe>(1) { View(c, pos) };

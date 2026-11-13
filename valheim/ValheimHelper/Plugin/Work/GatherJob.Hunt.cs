@@ -64,7 +64,14 @@ namespace ValheimHelper
             float extra = Vector3.Distance(guard.transform.position, m_npc.transform.position) <= Guard.AllyRange ? 0f : Guard.HitOf(guard);
             if (extra <= 0f || !m_ai.Guard.SafePrey(m_hardPrey, out _, extra))
             {
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 호위병 {guard.NpcName}과 둘이도 {Utils.GetPrefabName(m_hardPrey.gameObject)}는 무리");
+                // ⑦ 포기 전 시도 순서(Core TeamPlan): 쉬는 둘째 일꾼까지 셋이면 되는지 — 셋 출발은 다음 조각, 지금은 판단만 남김
+                WorkerNpc mate = WorkerNpc.All.Find(w => w != null && w != m_npc && w != guard && !w.IsDead() && Departures.GuardFree(w));
+                var hits = new List<float> { extra };
+                if (mate != null && Vector3.Distance(mate.transform.position, m_npc.transform.position) > Guard.AllyRange) hits.Add(Guard.HitOf(mate));
+                Character prey = m_hardPrey;
+                int need = extra <= 0f ? 0 : Core.Npc.TeamPlan.Needed(x => m_ai.Guard.SafePrey(prey, out _, x), hits);
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 호위병 {guard.NpcName}과 둘이도 {Utils.GetPrefabName(m_hardPrey.gameObject)}는 무리 — "
+                    + (need == 3 ? $"{mate.NpcName}까지 셋이면 됨" : "셋도 안 됨"));
                 return false;
             }
             var args = new Dictionary<string, string> { ["partner"] = guard.NpcName, ["item"] = ItemLabel(Item), ["foe"] = m_packFoe ?? m_strongFoe ?? "" };
