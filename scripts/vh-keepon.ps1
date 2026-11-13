@@ -4,6 +4,9 @@
 # - 20초마다 shutdown /a: 예약된 끄기(루프의 shutdown /s /t 120 등)를 취소한다.
 # - stay-on 파일을 둔다: vh-loop.ps1 Test-Away가 이걸 보면 끄기·최대 절전을 아예 안 한다.
 # - 루프 작업 "VH loop"가 3분 넘게 안 돌고 있으면(멈춤 파일 없을 때) 다시 켠다.
+# 텔레그램만 모드(사용자 11-13 "텔레그램은 계속 살려, PC 안 끄기는 꺼도 됨"): %USERPROFILE%\vh-loop\pc-off 파일이 있으면
+#   위 PC 안 끄기 셋(절전 막기·shutdown /a·stay-on)은 안 하고 stay-on을 지운다. 텔레그램 알림·답장·루프 다시 켜기는 계속,
+#   끝 시각·루프 할 일 끝남으로도 안 꺼진다. 켜고 끄기는 scripts/vh-keepon-on.ps1 -TelegramOnly / -Until. 20초마다 다시 봄.
 $ErrorActionPreference = 'Continue'
 $Dir = Join-Path $env:USERPROFILE 'vh-loop'
 $Repo = Split-Path $PSScriptRoot -Parent
@@ -49,7 +52,7 @@ function Watch-LoopLog {
     $new = @($all | Select-Object -Skip $script:Seen); $script:Seen = $all.Count
     foreach ($l in $new) {
         if ($l -notmatch 'REPLY:' -and $l -match '멈춤:|LOOP: NEED_USER') { Send-Tg (Get-StopReport $l) }
-        elseif ($l -notmatch 'REPLY:|LOOP:' -and $l -match '할 일 없음 →') { Send-Tg "발헤임 루프: 할 일 다 끝남. 지킴이 지우고 원래대로(자리 비우면 PC 끔)." }
+        elseif ($l -notmatch 'REPLY:|LOOP:' -and $l -match '할 일 없음 →') { Send-Tg $(if (Test-PcOff) { "발헤임 루프: 할 일 다 끝남. 새 요청은 여기로 답장하면 돼." } else { "발헤임 루프: 할 일 다 끝남. 지킴이 지우고 원래대로(자리 비우면 PC 끔)." }) }
     }
 }
 # 멈춤 알림을 사람이 읽고 바로 답할 수 있게(사용자 11-13): 까닭을 쉬운 말로 + 최근 회차가 한 일 + 루프가 물은 것 + 지금 할 일.
@@ -186,20 +189,34 @@ function Remove-KeepOn($why) {
     exit
 }
 
-[IO.File]::WriteAllText((Join-Path $Dir 'stay-on'), "1", $Utf8)
-Log "지킴이 시작($($Deadline.ToString('MM-dd HH:mm'))까지 또는 루프가 할 일 없이 멈출 때까지)"
-$down = 0; $tick = 0
+$PcOffFile = Join-Path $Dir 'pc-off'
+function Test-PcOff { Test-Path $PcOffFile }
+if (Test-PcOff) {
+    Remove-Item (Join-Path $Dir 'stay-on') -Force -ErrorAction SilentlyContinue
+    Log '지킴이 시작(텔레그램만: PC 안 끄기 꺼짐, 끝 시각 없음)'
+} else {
+    [IO.File]::WriteAllText((Join-Path $Dir 'stay-on'), "1", $Utf8)
+    Log "지킴이 시작($($Deadline.ToString('MM-dd HH:mm'))까지 또는 루프가 할 일 없이 멈출 때까지)"
+}
+$down = 0; $tick = 0; $wasPcOff = Test-PcOff
 [Console]::OutputEncoding = [Text.Encoding]::UTF8   # git show 한글
 Send-NewHistory $true
 while ($true) {
-    if ((Get-Date) -ge $Deadline) { Remove-KeepOn "$($Deadline.ToString('HH:mm')) 지남" }
+    $pcOff = Test-PcOff
+    if ($pcOff -ne $wasPcOff) { Log "모드 바뀜: $(if ($pcOff) { '텔레그램만' } else { 'PC 안 끄기 + 텔레그램' })"; $wasPcOff = $pcOff }
+    if (-not $pcOff -and (Get-Date) -ge $Deadline) { Remove-KeepOn "$($Deadline.ToString('HH:mm')) 지남" }
     Watch-LoopLog
     Watch-TgReplies
-    if (Test-LoopIdle) { Remove-KeepOn '루프가 할 일을 다 끝냄' }
-    [void][VHK.Power]::SetThreadExecutionState([uint32]'0x80000001')   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
-    & shutdown /a 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { Log '예약된 컴퓨터 끄기 취소함(shutdown /a)' }
-    if (-not (Test-Path (Join-Path $Dir 'stay-on'))) { [IO.File]::WriteAllText((Join-Path $Dir 'stay-on'), "1", $Utf8) }
+    if (-not $pcOff -and (Test-LoopIdle)) { Remove-KeepOn '루프가 할 일을 다 끝냄' }
+    if ($pcOff) {
+        [void][VHK.Power]::SetThreadExecutionState([uint32]'0x80000000')   # ES_CONTINUOUS만: 절전 막기 풂
+        Remove-Item (Join-Path $Dir 'stay-on') -Force -ErrorAction SilentlyContinue
+    } else {
+        [void][VHK.Power]::SetThreadExecutionState([uint32]'0x80000001')   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+        & shutdown /a 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) { Log '예약된 컴퓨터 끄기 취소함(shutdown /a)' }
+        if (-not (Test-Path (Join-Path $Dir 'stay-on'))) { [IO.File]::WriteAllText((Join-Path $Dir 'stay-on'), "1", $Utf8) }
+    }
     $tick++
     if ($tick % 3 -eq 0) {
         Send-NewHistory $false
