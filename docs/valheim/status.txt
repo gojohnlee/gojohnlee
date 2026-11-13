@@ -1,7 +1,7 @@
 갱신: 2026-11-13 11:59  (무인 루프, scripts/vh-loop.ps1)
-지금: 다음 회차 준비
-회차: 529, 계정: 2번, 한도: 없음
+지금: 회차 530 진행 중
+회차: 530, 계정: 2번, 한도: 없음
 할 일: 요청 연장·활·화살 연결(11-13 11:40): 1) noTool [구현 완료·검증 대기, 회차 528 — 커밋 2b12fcd4 · 시험 vh_notooltest(구리) FAIL 회차 529: Departure.c…
 마지막 시험: 11-13 11:58 요약: 0/1 PASS | FAIL vh_notooltest: 거점 상자에 구리 0개 더 (5초)
-Claude가 한 일: LOOP: FAIL vh_notooltest 연장 없으면 Departure.cs:198에서 출발 전 거절해 대기열 제작 경로에 못 닿음 — 다음 회차에 출발 판단 수정
+Claude가 한 일: (진행 중)
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
