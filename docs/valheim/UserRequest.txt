@@ -25,3 +25,9 @@
 - 밤 몫은 적 쪽(그 바이옴 밤에 더 나오는 적 수·종류)에만 더함 — "밤이면 무조건 위험 +"처럼 장비와 상관없는 고정 공포 값 금지. 그래서 센 장비면 밤 목초지도 안 위험으로 나와야 함.
 - 시험 칸 더함: 극후반 장비(가장 좋은 갑옷·무기) 일꾼이 밤 목초지에서 일 → 끝까지 함(복귀 0). 같은 자리 처음 장비 일꾼은 위험 판단 값만 history(복귀하든 안 하든 숫자로).
 
+
+시험 로그의 Unity·BepInEx 잡음은 사용자한테 안 알림 (사용자 11-13 18:00)
+- history 요약·자세히, status, 텔레그램 알림에 "Unable to start Unity log writer"·우리 모드와 상관없는 Unity/BepInEx 오류 줄 이야기를 쓰지 않음. 사용자가 할 수 있는 것도 없고 문제도 아님.
+- 그래도 놓치지 않기: scripts/valheim-test.ps1 로그 오류 셈에서 알려진 잡음(위 log writer 줄 등, 목록은 스크립트 한 곳)을 빼고 셈. NullReferenceException 등 예외는 스택에 ValheimHelper가 있을 때만 "우리 오류"로 셈 → 있으면 루프가 Errors.txt에 적고 고침(사용자한테는 FAIL·막는 문제일 때만). 스택 없거나 게임 쪽뿐이면 잡음.
+- 이번에 본 NRE 9줄은 스택 한 번 보고 우리 것인지만 가려 Errors.txt 또는 잡음 목록에 — history엔 한 줄만.
+- codemap·vh-loop-prompt에 이 규칙 한 줄.
