@@ -150,6 +150,7 @@ public class ChatParserTests
     [InlineData("!탐험 늪", null, "Swamp")]
     [InlineData("!탐험 검은 숲", null, "BlackForest")]
     [InlineData("!explore black forest", null, "BlackForest")]
+    [InlineData("!탐험 목초지", null, "Meadows")]
     [InlineData("!탐험 딥노스", null, "DeepNorth")]
     public void Explore(string line, string dir, string biome)
     {

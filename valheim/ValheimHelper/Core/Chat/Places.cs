@@ -20,7 +20,7 @@ namespace ValheimHelper.Core.Chat
         // 값은 게임 Heightmap.Biome 이름. 바다는 못 가므로 넣지 않는다.
         static readonly Dictionary<string, string> Biomes = new Dictionary<string, string>
         {
-            ["초원"] = "Meadows", ["meadows"] = "Meadows",
+            ["초원"] = "Meadows", ["목초지"] = "Meadows", ["meadows"] = "Meadows",
             ["검은숲"] = "BlackForest", ["검은 숲"] = "BlackForest", ["blackforest"] = "BlackForest", ["black forest"] = "BlackForest",
             ["늪"] = "Swamp", ["swamp"] = "Swamp",
             ["산"] = "Mountain", ["mountain"] = "Mountain", ["mountains"] = "Mountain",

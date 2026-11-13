@@ -406,7 +406,10 @@ namespace ValheimHelper
         /// 밤에 새로 시키는 탐험 판단(사용자 11-13 — 밤이라고 무조건 거절하지 않고 위험으로 본다): 그 바이옴을 지금 장비로 상대할 때 밤 몫을 더한 비율이 HardFrom 미만이면 간다.
         /// 장비가 센 일꾼은 밤 목초지도 괜찮게 나온다. 장비와 상관없는 고정 공포 값은 넣지 않는다.
         /// </summary>
-        internal static bool NightGearOk(WorkerNpc npc, int biome)
+        internal static bool NightGearOk(WorkerNpc npc, int biome) => NightRatio(npc, biome) < Departure.HardFrom;
+
+        /// <summary>NightGearOk의 값: 그 바이옴 밤 몫을 더한 장비 위험 비율(시험이 숫자로 남김).</summary>
+        internal static float NightRatio(WorkerNpc npc, int biome)
         {
             Prep.Ready(npc, out float armor, out ItemDrop.ItemData weapon, out ItemDrop.ItemData shieldItem);
             armor = Mathf.Max(armor, npc.GetBodyArmor());
@@ -423,7 +426,10 @@ namespace ValheimHelper
                 List<Foe> all = NightFoes.Plus(f, nightSpawns, resolve);
                 return Danger.Ratio(all, health, hit, taken(all));
             }, resolve, NativeTo);
-            return land.Ratio < Departure.HardFrom;
+            // 기억한 자리가 없어도 밤에만 나는 적 몫은 센다(새 월드에서 밤 늪이 0으로 나오던 것 — 회차 563 vh_nightexploretest)
+            List<Foe> nightOnly = NightFoes.Plus(new List<Foe>(), nightSpawns, resolve);
+            float alone = nightOnly.Count > 0 ? Danger.Ratio(nightOnly, health, hit, taken(nightOnly)) : 0f;
+            return Mathf.Max(land.Ratio, alone);
         }
 
         /// <summary>
