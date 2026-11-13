@@ -393,7 +393,25 @@ namespace ValheimHelper
                 if (Carried() > 0) { Go(Step.Return); return true; }
                 return Fail("bagFull");
             }
+            QueueToolMake(); // 맞는 연장을 먼저 만들어 둔다(대기열 맨 앞, 못 만드는 연장이면 안 함)
             return GiveUp("noTool"); // 연장이 부러졌으면 모은 것부터 상자에 넣는다
+        }
+
+        static readonly string[] AxeNames = { "AxeStone", "AxeFlint", "AxeBronze", "AxeIron", "AxeBlackMetal", "AxeJotunBane" };
+        static readonly string[] PickaxeNames = { "PickaxeAntler", "PickaxeBronze", "PickaxeIron", "PickaxeBlackMetal" };
+
+        /// <summary>연장이 없어 그만두기 전에: 이 일에 맞는 가장 낮은 연장을 대기열에 제작으로 건다(Departures.Craft가 재료·설비를 계획). 남은 일은 자동 보충이 다시 잡는다.</summary>
+        void QueueToolMake()
+        {
+            ToolKind tool = m_targetInfo != null ? m_targetInfo.Tool : m_ways.Contains(ToolKind.Axe) ? ToolKind.Axe : m_ways.Contains(ToolKind.Pickaxe) ? ToolKind.Pickaxe : ToolKind.None;
+            if (tool != ToolKind.Axe && tool != ToolKind.Pickaxe) return;
+            int need = ResourceCatalog.MinTier(Item, tool);
+            string make = null;
+            foreach (string n in tool == ToolKind.Axe ? AxeNames : PickaxeNames)
+                if ((ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_toolTier ?? -1) >= need) { make = n; break; }
+            if (make == null || Recipes.Book().RecipesFor(make).Count == 0) return;
+            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(make), Item = make, Amount = 1 }));
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 연장 없음({Item}): {make} 제작을 대기열에 건다");
         }
 
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)
