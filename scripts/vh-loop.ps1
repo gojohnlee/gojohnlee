@@ -34,7 +34,7 @@ $ReplyTimeoutMin = 15
 $ReplyDir = Join-Path $Dir 'reply'   # 답 전용 작업 트리(회차가 쓰는 저장소 작업 트리와 따로)
 $SelfHash = (Get-FileHash $PSCommandPath).Hash   # 지금 도는 스크립트(바뀌면 다시 켜기, claude에는 VH_LOOP_HASH로 넘김)
 $StaleNote = ''   # 다시 켜기를 못 하면 status.txt에 이유
-$script:SkipNote = ''; $script:StuckRuns = 0   # 멈추는 대신 다음 회차에 주는 메모(status.txt "루프 메모:" 줄), 넘겨도 또 헛돈 횟수
+$script:SkipNote = ''   # 멈추는 대신 다음 회차에 주는 메모(status.txt "루프 메모:" 줄)
 $Diag = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimHelper\diag.txt'
 $GameDll = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll'
 $GameNote = ''   # 게임 업데이트 감지 때 status.txt에 한 줄(그 회차가 전체 회귀)
@@ -847,16 +847,11 @@ while ($true) {
         $st.lastFail = $ft
     } else { $st.lastFail = '' }
     if (-not $stop -and $st.noProg -ge 3) {
-        $script:StuckRuns++
+        # 사용자 11-13: 멈추지 않는다. 지난 멈춤 11번은 진척 오판·일찍 손 놓기·할 일 없음뿐(바탕 고장 0) → 다음 일로 넘기는 메모만.
         $script:SkipNote = "루프 메모: 3회차 연속 근거 있는 완료 없음 → 지금 일을 progress에 '멈춤(3회차)'·Errors.txt에 적고 다음 일로(사용자에게 묻지 않음)"
-        Log "3회차 연속 완료 없음 → 안 멈추고 다음 일로 넘기라는 메모($script:StuckRuns번째)"
+        Log '3회차 연속 완료 없음 → 안 멈추고 다음 일로 넘기라는 메모'
         $st.noProg = 0
-        # 사용자 11-13: 넘겨도 또 헛돌면 기다려 봐야 소용없음(바탕 고장은 30분 뒤에도 같음) → 다음 회차가 바탕부터 점검·고침.
-        if ($script:StuckRuns -ge 2) {
-            $script:SkipNote = "루프 메모: 일을 넘겨도 또 3회차 헛돎 → 이번 회차는 바탕 점검부터: 빌드(scripts/valheim-build.sh)·Core 테스트·짧은 게임 시험 하나(vh_npctest)·git status·디스크·게임/스팀 버전. 깨진 것을 고치고 history에 원인. 사용자만 고칠 수 있는 것(스팀 로그인·PC 문제 등)이면 그 회차 기록 요약 첫 줄에 '사용자만 고칠 수 있음: …'(텔레그램으로 감) 남기고 게임 시험 없이 되는 일(Core·문서)을 계속"
-            Log '다음 일로 넘겨도 또 헛돎 → 다음 회차는 바탕 점검부터(기다리지 않음)'
-        }
-    } elseif ($st.noProg -eq 0) { $script:StuckRuns = 0 }
+    }
     if ($last -match '^LOOP: ERROR') { Start-Sleep 300 }   # 네트워크 등 → 5분 쉬고
     if ($stop -and $Once) { Write-Status "멈춤: $stop" $last; Save-State; Log "멈춤: $stop"; break }
     if (-not $stop) { Write-Status $(if ($Once) { '한 회차 끝(시험 실행)' } else { '다음 회차 준비' }) $last }
