@@ -403,6 +403,30 @@ namespace ValheimHelper
         static List<SpawnSystem.SpawnData> s_nightRows;
 
         /// <summary>
+        /// 밤에 새로 시키는 탐험 판단(사용자 11-13 — 밤이라고 무조건 거절하지 않고 위험으로 본다): 그 바이옴을 지금 장비로 상대할 때 밤 몫을 더한 비율이 HardFrom 미만이면 간다.
+        /// 장비가 센 일꾼은 밤 목초지도 괜찮게 나온다. 장비와 상관없는 고정 공포 값은 넣지 않는다.
+        /// </summary>
+        internal static bool NightGearOk(WorkerNpc npc, int biome)
+        {
+            Prep.Ready(npc, out float armor, out ItemDrop.ItemData weapon, out ItemDrop.ItemData shieldItem);
+            armor = Mathf.Max(armor, npc.GetBodyArmor());
+            float health = npc.GetMaxHealth();
+            float hit = Mathf.Max(Guard.HitWith(npc, weapon), Guard.HitOf(npc));
+            Shield? shield = npc.BlockStats(shieldItem) ?? npc.BlockStats();
+            System.Func<IList<Foe>, System.Func<float, float>> taken = f => Guard.TakenFor(npc, armor, shield, f.Count);
+            System.Func<GroupFoe, Foe> resolve = Guard.ResolveFor(npc, Prep.Arsenal(npc));
+            List<NightSpawn> nightSpawns = NightOf(biome);
+            Knowledge known = Brain.Get();
+            System.Func<ZoneXY, int> biomeOf = z => known.BiomeOf(z) != 0 ? known.BiomeOf(z) : Scout.BiomeAt(Senses.ZoneCenter(z));
+            PlaceRisk land = Brain.Places.BiomeRisk(biome, biomeOf, f =>
+            {
+                List<Foe> all = NightFoes.Plus(f, nightSpawns, resolve);
+                return Danger.Ratio(all, health, hit, taken(all));
+            }, resolve, NativeTo);
+            return land.Ratio < Departure.HardFrom;
+        }
+
+        /// <summary>
         /// 그 바이옴 밤 몫(게임 생성 표의 밤에만 나는 줄: 켜짐·m_spawnAtDay 꺼짐·m_spawnAtNight 켜짐, 환경 조건 없음, 전역 열쇠가 있으면 켜졌을 때만).
         /// 수는 m_maxSpawned. 표를 못 읽으면 빈 목록(밤 몫 없음 — 지금처럼).
         /// </summary>

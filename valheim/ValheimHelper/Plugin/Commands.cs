@@ -243,7 +243,8 @@ namespace ValheimHelper
             else if (cmd.Biome != null && (biome = BiomeNames.FromGame(cmd.Biome)) != 0) where = BiomeNames.Of(biome);
             else where = npc.Line("nearby");
             var args = new Dictionary<string, string> { ["where"] = where, ["biome"] = where };
-            if (EnvMan.IsNight()) { npc.Say("nightNoExplore", args); return; }
+            // 밤: 아는 바이옴이고 밤 몫을 넣은 장비 위험이 무리가 아니면 간다(사용자 11-13). 방향만 말했거나 모르는 땅은 밤에 안 간다.
+            if (EnvMan.IsNight() && (biome == 0 || !Brain.Get().KnowsBiome(biome) || !Departures.NightGearOk(npc, biome))) { npc.Say("nightNoExplore", args); return; }
             // 일하는 중이면: 급하면 하던 일을 멈추고, 아니면 대기열(설계 B-5)
             if (npc.Ai.Current == WorkerAI.Mode.Work && npc.Ai.Job != null && !npc.Ai.Yields)
             {
