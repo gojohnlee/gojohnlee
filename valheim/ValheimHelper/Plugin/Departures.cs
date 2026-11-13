@@ -362,6 +362,8 @@ namespace ValheimHelper
                 o.GearFoe = land.TopFoe;
                 o.BiomeName = BiomeNames.Of(biome);
                 o.InBase = BaseArea.Contains(o.Distance);
+                foreach (WorkerNpc w in WorkerNpc.All)
+                    if (w != null && w != npc && !w.IsDead() && Senses.ZoneOf(w.transform.position).Equals(m.Zone)) o.Crowd++;
                 input.Places.Add(o);
             }
             input.Places.Sort((a, b) => a.Distance.CompareTo(b.Distance));

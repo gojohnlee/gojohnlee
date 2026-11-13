@@ -30,6 +30,8 @@ namespace ValheimHelper.Core.Npc
         public bool GearShort => GearRatio >= Departure.HardFrom;
         /// <summary>거점 범위(125m) 안: 위험해도 피해 바꿔 가지 않는다(습격 한 번에 집 앞 자원을 버리지 않게 — 도망 뒤 목표 FleeBook과 같은 원칙).</summary>
         public bool InBase;
+        /// <summary>그 구역에 있는 다른 일꾼 수(사용자 11-13 00:30 "출발 전 편한 곳: 약한 적·덜 몰린·가까운") — 대안 고를 때 거리보다 먼저.</summary>
+        public int Crowd;
     }
 
     public sealed class DepartureInput
@@ -141,26 +143,26 @@ namespace ValheimHelper.Core.Npc
         /// <summary>위험한 곳: 빠듯 이상, 이 장비론 그 바이옴 무리, 또는 죽은 곳.</summary>
         public static bool Risky(Personality p, PlaceOption o, DangerLevel level) => level >= DangerLevel.Tight || o.GearShort || DiedThere(p, o);
 
-        /// <summary>대안: 위험하지 않은 곳 중 가장 가까운 곳(거리 제한 없음 — 사용자 결정 2026-10-26).</summary>
+        /// <summary>대안: 위험하지 않은 곳 중 덜 몰린 곳, 같으면 가장 가까운 곳(거리 제한 없음 — 사용자 결정 2026-10-26, 몰림 11-13).</summary>
         public static PlaceOption Alternative(Personality p, List<PlaceOption> places, PlaceOption from)
         {
             PlaceOption best = null;
             foreach (var o in places)
             {
                 if (o == from || Risky(p, o, Level(p, o))) continue;
-                if (best == null || o.Distance < best.Distance) best = o;
+                if (best == null || o.Crowd < best.Crowd || o.Crowd == best.Crowd && o.Distance < best.Distance) best = o;
             }
             return best;
         }
 
-        /// <summary>다 위험할 때: from보다 덜 위험한(죽은 기록 → 위험 단계 순) 곳 중 가장 덜 위험하고, 같으면 가까운 곳. 없으면 null.</summary>
+        /// <summary>다 위험할 때: from보다 덜 위험한(죽은 기록 → 위험 단계 순) 곳 중 가장 덜 위험하고, 같으면 덜 몰린 곳, 그다음 가까운 곳. 없으면 null.</summary>
         public static PlaceOption Safer(Personality p, List<PlaceOption> places, PlaceOption from)
         {
             PlaceOption best = null;
             foreach (var o in places)
             {
                 if (o == from || o.InBase || !Worse(p, from, o)) continue;
-                if (best == null || Worse(p, best, o) || !Worse(p, o, best) && o.Distance < best.Distance) best = o;
+                if (best == null || Worse(p, best, o) || !Worse(p, o, best) && (o.Crowd < best.Crowd || o.Crowd == best.Crowd && o.Distance < best.Distance)) best = o;
             }
             return best;
         }

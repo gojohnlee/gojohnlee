@@ -175,6 +175,23 @@ public class DepartureTests
     }
 
     [Fact]
+    public void SaferPlacePrefersLessCrowdedThenNearer()
+    {
+        // 편한 곳(사용자 11-13 00:30): 약한 적 → 덜 몰린 → 가까운
+        var busy = P(300, 0.1f, x: 2); busy.Crowd = 1;
+        var r = Departure.Judge(In(P(100, 1.3f, x: 1), busy, P(900, 0.1f, x: 3)));
+        Assert.Equal(3, r.Place.Zone.X);
+        busy.Crowd = 0;
+        r = Departure.Judge(In(P(100, 1.3f, x: 1), busy, P(900, 0.1f, x: 3)));
+        Assert.Equal(2, r.Place.Zone.X);
+        // 다 위험할 때(호위병과 갈 곳)도 같은 위험이면 덜 몰린 곳
+        var a = P(300, 1.3f, x: 2); a.Crowd = 1;
+        var i = In(P(100, 2.5f, x: 1), a, P(900, 1.3f, x: 3)); i.Guard = "호위병";
+        r = Departure.Judge(i);
+        Assert.Equal(3, r.Place.Zone.X);
+    }
+
+    [Fact]
     public void SafeNearestStillAvoidsRiskyOthers()
     {
         var r = Departure.Judge(In(P(100, 0.05f, x: 1), P(150, 1.3f, x: 2)));
