@@ -1487,6 +1487,14 @@ namespace ValheimHelper
             int was = m_patrol.Point;
             bool reached = Utils.DistanceXZ(pos, goal) < (m_patrol.Walking ? 2f : 1.2f);
             float limit = m_patrol.Walking ? Mathf.Max(Patrol.PointLimit, 20f + Utils.DistanceXZ(was > 0 ? PatrolPoint(was - 1) : m_post, goal) / 4f) : Patrol.PointLimit;
+            if (m_patrol.Walking) // 순찰 점 못 닿음 diag(E099·회차 620): 이 점 가는 동안 가장 가까이 간 거리, 선·물 막힘·헤엄·길 못 찾음 시간
+            {
+                m_legBest = Mathf.Min(m_legBest, Utils.DistanceXZ(pos, goal));
+                if (Flat(m_character.GetVelocity()).magnitude < 0.5f) m_legStill += dt;
+                if (WaterBlockedTime > 0f) m_legWater += dt;
+                if (m_character.IsSwimming()) m_legSwim += dt;
+                if (!FoundPath()) m_legNoPath += dt;
+            }
             bool gaveUp = m_patrol.GaveUp;
             PatrolGoal g = m_patrol.Tick(dt, reached, skip, count, limit);
             if (!gaveUp && m_patrol.GaveUp) // E099 diag: 문 옆으로 가다 시간 한도 — 어디서(물속?) 왜(길 부분·곧장 걷기·헤엄 막힘) 멈췄나
@@ -1499,8 +1507,9 @@ namespace ValheimHelper
             {
                 m_roundMissed++;
                 m_route.Unreached(was); // 시간 안에 못 닿음 — 다음 고르기에서 그 방향은 안쪽 반경으로
-                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 점 {was} 못 닿음({Utils.DistanceXZ(pos, goal):0}m 남음) → 다음엔 안쪽");
+                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 점 {was} 못 닿음({Utils.DistanceXZ(pos, goal):0}m 남음) → 다음엔 안쪽 — DIAG 한도 {limit:0}초, 가장 가까이 {m_legBest:0}m, 선 {m_legStill:0}초·물 막힘 {m_legWater:0}초·헤엄 {m_legSwim:0}초·길 못 찾음 {m_legNoPath:0}초, 자리 {pos:F1}, 헤엄 {m_character.IsSwimming()}·물 깊이 {Scout.WaterDepth(pos):0.0}·건넘 {m_swimOk}, {m_moveDiag}, {PathDiag(goal)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, goal)}");
             }
+            if (m_patrol.Point != was) { m_legBest = float.MaxValue; m_legStill = m_legWater = m_legSwim = m_legNoPath = 0f; }
             if (g == PatrolGoal.Point && was < 0)
             {
                 m_roundStart = Time.time; m_roundFights = 0; m_roundMissed = 0;
@@ -1533,10 +1542,14 @@ namespace ValheimHelper
         long m_routeSig;
         int m_roundFights, m_roundMissed;
         bool m_patrolFighting, m_postSwim;
+        float m_legBest = float.MaxValue, m_legStill, m_legWater, m_legSwim, m_legNoPath;
         static readonly List<Piece> s_routePieces = new List<Piece>();
         /// <summary>시험·diag: 마지막 바퀴 요약, 마지막 고르기(점·버린 방향과 까닭).</summary>
         public static string LastRound, LastRoute;
         public IReadOnlyList<PatrolRoute.Spot> RoutePoints => m_route.Points;
+        /// <summary>시험 상태 줄(TestKit.Snapshot): 쉬는 호위병이 순찰 몇 번 점으로 가는지·남은 거리, 아니면 문 옆까지 거리.</summary>
+        public string PostDiag => m_patrol.Walking ? $"순찰 점 {m_patrol.Point} 남음 {Utils.DistanceXZ(transform.position, PatrolPoint(m_patrol.Point)):0}m"
+            : m_patrol.GaveUp ? "문 옆 포기" : $"문 옆 {Utils.DistanceXZ(transform.position, m_post):0}m";
 
         /// <summary>문 옆에 있을 때: 30초마다 거점 130m 안 조각 수·자리로 땅 표시를 만들고, 바뀌었거나 막은 점·1시간이면 다시 고름.</summary>
         void RouteTick(WorkerNpc npc, float dt)

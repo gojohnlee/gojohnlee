@@ -656,7 +656,13 @@ namespace ValheimHelper
                 $"{n.NpcName} hp{n.GetHealth():0}/{n.GetMaxHealth():0} {Vector3.Distance(n.transform.position, w.Home):0}m " +
                 $"{(n.Ai.Job == null ? "Idle" : n.Ai.Job.GetType().Name + "/" + n.Ai.Job.StepName)} 짐{Items(n.GetInventory())} 대기{n.Ai.Queue.Count}";
             string chest = w.Chest == null ? "-" : $"{Items(w.Chest.GetInventory())}{(w.Chest.IsInUse() ? " 사용중" : "")}";
-            return $"[{Time.time - s_t0:0}s] {N(w.Ragnar)} | {N(w.Floki)} | 상자 {chest} | 생물 {Creatures(w.Home).Count}";
+            // 호위병이 있으면(vh_posttest 등) 자리·순찰 점까지 — 회차 620: 순찰 FAIL 때 호위병이 어디 있었는지 상태 흐름에 없었음
+            WorkerNpc g = WorkerNpc.TheGuard;
+            string guard = g == null || g == w.Ragnar || g == w.Floki || g.Ai == null ? "" :
+                $" | {g.NpcName} hp{g.GetHealth():0}/{g.GetMaxHealth():0} {Vector3.Distance(g.transform.position, w.Home):0}m ({g.transform.position.x:0},{g.transform.position.z:0}) " +
+                (g.Ai.Guard != null && g.Ai.Guard.Engaged ? "싸움" : g.Ai.Job != null ? g.Ai.Job.GetType().Name + "/" + g.Ai.Job.StepName
+                    : g.Ai.Current != WorkerAI.Mode.Idle ? g.Ai.Current.ToString() : g.Ai.PostDiag);
+            return $"[{Time.time - s_t0:0}s] {N(w.Ragnar)} | {N(w.Floki)}{guard} | 상자 {chest} | 생물 {Creatures(w.Home).Count}";
         }
 
         /// <summary>시험 동안 3초마다 상태를 링 버퍼에(FAIL이면 End가 diag에 쏟음).</summary>
