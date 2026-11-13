@@ -55,7 +55,9 @@ namespace ValheimHelper
             var npc = w.Ragnar;
             npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("Bow"), 1);
             npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("ArrowWood"), 60);
-            checks.Add("활 들기", npc.HoldBow());
+            bool held = npc.HoldBow();
+            TestRunner.Log($"DIAG 활 준비: 활 {npc.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab("Bow").GetComponent<ItemDrop>().m_itemData.m_shared.m_name)} · 나무화살 {npc.GetInventory().CountItems(ObjectDB.instance.GetItemPrefab("ArrowWood").GetComponent<ItemDrop>().m_itemData.m_shared.m_name)} · 든 것 {npc.GetCurrentWeapon()?.m_shared.m_name} · 가방 칸 {npc.GetInventory().GetAllItems().Count}");
+            checks.Add("활 들기", held);
             ItemDrop.ItemData bow = npc.GetCurrentWeapon();
 
             int total = 0, fired = 0;
@@ -66,7 +68,7 @@ namespace ValheimHelper
                 env.m_debugTime = night ? 0f : 0.5f;
                 yield return new WaitForSeconds(2f);
                 string when = night ? "밤" : "낮";
-                TestRunner.Log($"DIAG {when} 시각 {env.GetCurrentDay()}일째 날 비율 {EnvMan.instance.GetDayFraction():0.000} · 밤 {EnvMan.IsNight()}");
+                TestRunner.Log($"DIAG {when} 시각 날 비율 {EnvMan.instance.GetDayFraction():0.000} · 밤 {EnvMan.IsNight()}");
                 checks.Add($"{when} 맞춤 (밤 {EnvMan.IsNight()})", EnvMan.IsNight() == night);
 
                 foreach (float dist in Distances)
@@ -104,10 +106,11 @@ namespace ValheimHelper
             int feathersBefore = GatherTest.GroundCount(at, "Feather");
             int arrowsBefore = Gear.CountArrows(npc.GetInventory(), bow);
             GameObject prefab = ZNetScene.instance.GetPrefab("Crow");
-            float spawned = Time.time;
             var bird = Object.Instantiate(prefab, at, Quaternion.identity).GetComponent<RandomFlyingBird>();
             if (bird == null) yield break;
-            yield return new WaitForSeconds(1f);
+            // 땅에 앉을 때까지 기다린다(ZDO landed, 8초 넘으면 그냥 감). 앉은 뒤부터 잰다
+            yield return TestKit.WaitFor(() => bird == null || IsLanded(bird), 8f);
+            float landedAt = Time.time;
 
             // 당기면서 새를 보고, 다 당기면 놓는다(3초 넘으면 그냥 놓음)
             float t = 0f;
@@ -119,8 +122,8 @@ namespace ValheimHelper
                 if (pct >= 1f) break;
                 yield return null;
             }
-            s.FlewBeforeShot = bird != null && Vector3.Distance(bird.transform.position, at) > 1.5f;
-            s.Sat = Time.time - spawned;
+            s.FlewBeforeShot = bird != null && (!IsLanded(bird) || Vector3.Distance(bird.transform.position, at) > 1.5f);
+            s.Sat = Time.time - landedAt;
 
             // 날아가는 값(속력·중력)으로 앞질러 겨눔 — Hunt.UpdateShoot과 같은 방식(새는 안 움직인다고 봄)
             Vector3 eye = npc.GetEyePoint();
@@ -137,6 +140,13 @@ namespace ValheimHelper
             s.Hit = bird == null;
             s.Feathers = GatherTest.GroundCount(at, "Feather") - feathersBefore;
             if (bird != null) ZNetScene.instance.Destroy(bird.gameObject);
+        }
+
+        // 새가 땅에 앉았는지(ZNetView의 ZDO landed). 없으면 안 앉은 것으로 본다
+        static bool IsLanded(RandomFlyingBird bird)
+        {
+            var nv = bird.GetComponent<ZNetView>();
+            return nv != null && nv.GetZDO() != null && nv.GetZDO().GetBool("landed");
         }
 
         static float Median(List<float> v)
