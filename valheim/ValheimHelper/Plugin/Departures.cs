@@ -92,6 +92,10 @@ namespace ValheimHelper
             switch (r.Action)
             {
                 case DepartAction.Refuse:
+                    // 연장이 없으면 맞는 연장 제작을 대기열에 걸고, 그 뒤에 이 일을 다시 건다(사용자 11-13 "연장 없을 때 맞는 연장 먼저 만들기").
+                    // 다시 온 일(fromQueue)은 연장이 여전히 없으면 그냥 거절 — 제작을 되풀이하지 않는다
+                    if (r.Key == "noTool" && !fromQueue && GatherJob.QueueToolMakeFor(npc, ways.Contains(ToolKind.Axe) ? ToolKind.Axe : ways.Contains(ToolKind.Pickaxe) ? ToolKind.Pickaxe : ToolKind.None, cmd.Item))
+                        npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, WorkSaves.GatherItem(who, cmd, args["item"] + " " + cmd.Amount, ReadyWhen.Always)));
                     npc.Say(r.Key, args);
                     return;
                 case DepartAction.Queue:

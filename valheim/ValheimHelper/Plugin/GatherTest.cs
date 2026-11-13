@@ -191,6 +191,15 @@ namespace ValheimHelper
                 }
                 checks.Add("높이 걸린 통나무 놓음(beech_log, 땅에서 6m)", !hungId.IsNone());
             }
+            // 연장 없는 시험: 맞는 연장(곡괭이)을 만들 작업대와 재료를 둔다. 없으면 제작 계획이 "작업대 지어 줘"에서 멈춰 구리를 못 캔다(회차 531 FAIL)
+            GameObject bench = null;
+            if (noTool)
+            {
+                bench = Object.Instantiate(ZNetScene.instance.GetPrefab("piece_workbench"), Ground(home + rot * new Vector3(0f, 0f, -5f)), rot);
+                foreach (var rec in ObjectDB.instance.m_recipes)
+                    if (rec.m_item != null && Utils.GetPrefabName(rec.m_item.gameObject) == toolPrefab)
+                        Chests.TryEdit(res, inv => { foreach (var req in rec.m_resources) inv.AddItem(req.m_resItem.gameObject, req.m_amount); });
+            }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             // 바이옴 회귀(검은숲): 시험 자리(거점 60m) 생물은 계속 치운다 — 뿔 곡괭이만 든 일꾼은 회색난쟁이에 도망치고 도망은 그 목표를 버린다(회차 142)
             bool keepClear = TestKit.RunBiome != Heightmap.Biome.None;
@@ -247,6 +256,7 @@ namespace ValheimHelper
                 if (count >= 10 || claude == null || claude.Ai.Current != WorkerAI.Mode.Work) break;
             }
             checks.Add($"거점 상자에 {word} {count}개 더 ({t:0}초)", count >= 10);
+            if (bench != null) { bench.GetComponent<ZNetView>()?.ClaimOwnership(); ZNetScene.instance.Destroy(bench); } // 다음 시험이 작업대를 보지 않게 치운다
             if (item == "Wood")
             {
                 // 통나무 끝까지(사용자 11-01): 시킨 개수를 채워도 자기가 쓰러뜨린 나무의 통나무를 다 쪼개 가져오고 그만둔다

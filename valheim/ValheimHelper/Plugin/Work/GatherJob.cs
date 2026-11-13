@@ -401,17 +401,20 @@ namespace ValheimHelper
         static readonly string[] PickaxeNames = { "PickaxeAntler", "PickaxeBronze", "PickaxeIron", "PickaxeBlackMetal" };
 
         /// <summary>연장이 없어 그만두기 전에: 이 일에 맞는 가장 낮은 연장을 대기열에 제작으로 건다(Departures.Craft가 재료·설비를 계획). 남은 일은 자동 보충이 다시 잡는다.</summary>
-        void QueueToolMake()
+        void QueueToolMake() => QueueToolMakeFor(m_npc, m_targetInfo != null ? m_targetInfo.Tool : m_ways.Contains(ToolKind.Axe) ? ToolKind.Axe : m_ways.Contains(ToolKind.Pickaxe) ? ToolKind.Pickaxe : ToolKind.None, Item);
+
+        /// <summary>출발 판단에서 연장 없음으로 거절하기 전에도 같은 제작을 건다(Departures.Gather). 맞는 연장이 없으면 아무것도 안 함.</summary>
+        public static bool QueueToolMakeFor(WorkerNpc npc, ToolKind tool, string item)
         {
-            ToolKind tool = m_targetInfo != null ? m_targetInfo.Tool : m_ways.Contains(ToolKind.Axe) ? ToolKind.Axe : m_ways.Contains(ToolKind.Pickaxe) ? ToolKind.Pickaxe : ToolKind.None;
-            if (tool != ToolKind.Axe && tool != ToolKind.Pickaxe) return;
-            int need = ResourceCatalog.MinTier(Item, tool);
+            if (tool != ToolKind.Axe && tool != ToolKind.Pickaxe) return false;
+            int need = ResourceCatalog.MinTier(item, tool);
             string make = null;
             foreach (string n in tool == ToolKind.Axe ? AxeNames : PickaxeNames)
                 if ((ObjectDB.instance.GetItemPrefab(n)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_toolTier ?? -1) >= need) { make = n; break; }
-            if (make == null || Recipes.Book().RecipesFor(make).Count == 0) return;
-            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(make), Item = make, Amount = 1 }));
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 연장 없음({Item}): {make} 제작을 대기열에 건다");
+            if (make == null || Recipes.Book().RecipesFor(make).Count == 0) return false;
+            npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(make), Item = make, Amount = 1 }));
+            Plugin.Log.LogInfo($"{npc.NpcName} 연장 없음({item}): {make} 제작을 대기열에 건다");
+            return true;
         }
 
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)
