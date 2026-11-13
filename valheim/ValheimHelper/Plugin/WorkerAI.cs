@@ -1256,6 +1256,7 @@ namespace ValheimHelper
                     return true;
                 }
             }
+            (Job as GatherJob)?.TrackPrey(); // Guard가 사냥감과 싸우는 동안에도 사냥감 자리를 새로(떨굼 가로채기 E094)
             GuardBusy = m_guard.Update(dt);
             // 밤에 센 적에게서 도망쳤으면 일을 접고 거점으로, 하던 일은 대기열 맨 앞에서 아침에 이어 감(요청 밤 몫 ② 11-13)
             if (m_guard.TakeFleeEnded() && Current == Mode.Work && Job != null && EnvMan.IsNight())

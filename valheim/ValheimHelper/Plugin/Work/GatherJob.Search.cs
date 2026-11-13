@@ -139,9 +139,11 @@ namespace ValheimHelper
         {
             ZoneXY home = Senses.ZoneOf(m_npc.Home);
             System.Func<ZoneXY, bool> ok = z => !ZoneAvoided(z) && !m_tried.Contains(z) && !ZoneExcluded(z) && Scout.Reachable(pos, z);
-            if (biomes == 0) return SearchPlan.Next(home, here, KnownRing, k, Scout.Explored, ok, out m_goalZone);
+            // 사냥은 둘러본 구역도 다시 본다(지식은 자원만 셈 — 집 구역에 난 사냥감을 두고 먼 구역만 돌다 시작 신전에 막혀 그만둠, vh_entrailstest 11-14).
+            // 한 일 안에서 같은 구역은 m_tried가 거른다.
+            if (biomes == 0) return SearchPlan.Next(home, here, KnownRing, k, Scout.Explored, ok, m_hunt, out m_goalZone);
             foreach (int b in BiomeNames.ByRisk(biomes))
-                if (SearchPlan.Next(home, here, KnownRing, k, z => Scout.Explored(z) && (ZoneBiome(z) & b) != 0, ok, out m_goalZone))
+                if (SearchPlan.Next(home, here, KnownRing, k, z => Scout.Explored(z) && (ZoneBiome(z) & b) != 0, ok, m_hunt, out m_goalZone))
                 {
                     if (m_searchTime < 1f) Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 찾기 첫 구역 {m_goalZone.X},{m_goalZone.Y} {BiomeNames.Of(b)}(나는 곳 {BiomeNames.Of(biomes)})");
                     return true;
@@ -411,6 +413,7 @@ namespace ValheimHelper
                     if (done) { Brain.Get().MarkLooked(m_goalZone); return keep; }
                 }
                 Brain.Get().MarkLooked(m_goalZone); // 갔거나 못 가는 곳: 다시 뒤지지 않는다
+                if (m_hunt) m_tried.Add(m_goalZone); // 사냥은 둘러봄을 안 보니(NextKnownZone) 이 일 안에선 가 본 구역으로 거름
                 Go(Step.Search);
                 if (!arrived) RescueIfStuckAgain();
             }

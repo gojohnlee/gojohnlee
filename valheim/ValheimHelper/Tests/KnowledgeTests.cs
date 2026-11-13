@@ -111,4 +111,17 @@ public class SearchPlanTests
         for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) k.MarkLooked(new ZoneXY(x, y));
         Assert.False(SearchPlan.Next(home, home, 1, k, z => true, out _));
     }
+
+    [Fact]
+    public void RevisitKeepsLookedForPrey()
+    {
+        // 사냥: 둘러본 집 구역도 다시 후보(거점 가까운 고리 먼저), 이 일에서 가 본 곳은 부르는 쪽 ok가 거름
+        var k = new Knowledge();
+        var home = new ZoneXY(0, 0);
+        for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) k.MarkLooked(new ZoneXY(x, y));
+        Assert.True(SearchPlan.Next(home, new ZoneXY(0, -1), 1, k, z => true, null, true, out var next));
+        Assert.Equal(home, next);
+        Assert.True(SearchPlan.Next(home, new ZoneXY(0, -1), 1, k, z => true, z => !z.Equals(home), true, out next));
+        Assert.Equal(1, next.Ring(home));
+    }
 }

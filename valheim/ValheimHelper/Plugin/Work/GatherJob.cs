@@ -28,6 +28,12 @@ namespace ValheimHelper
             at = m_preyPos;
             return m_hunt && (m_step == Step.Hunt || m_step == Step.Collect);
         }
+        /// <summary>사냥감 자리를 늘 새로(WorkerAI가 Guard보다 먼저 매 틱 부름): 싸움을 Guard가 맡는 동안엔 Update가 안 돌아 m_preyPos가
+        /// 찾은 때 자리로 남았다 → 죽은 자리와 어긋나 동료 Guard가 떨굼을 가로채고(OthersHunt 8m 밖) 떨굼 기다림(LootWatch)도 엉뚱한 데서 기다림(vh_entrailstest 11-14).</summary>
+        public void TrackPrey()
+        {
+            if (m_hunt && m_step == Step.Hunt && m_prey != null && !m_prey.IsDead()) m_preyPos = m_prey.transform.position;
+        }
         /// <summary>시험용: 가려고 고른 구역.</summary>
         public ZoneXY GoalZone => m_goalZone;
         /// <summary>이어 하기 저장용: 구역 땅 자리(안 골랐으면 0).</summary>

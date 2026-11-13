@@ -233,14 +233,20 @@ namespace ValheimHelper.Core.Work
 
         /// <param name="reachable">지금 자리에서 걸어서 닿는지(ExplorePlan.Next와 같게 좋은 후보부터 몇 개까지만). null이면 안 본다.</param>
         public static bool Next(ZoneXY home, ZoneXY from, int maxRing, Knowledge k, Func<ZoneXY, bool> explored,
-            Func<ZoneXY, bool> reachable, out ZoneXY next)
+            Func<ZoneXY, bool> reachable, out ZoneXY next) =>
+            Next(home, from, maxRing, k, explored, reachable, false, out next);
+
+        /// <param name="revisit">둘러본 구역도 후보로(사냥감: 지식은 자원만 세니 "둘러봄"이 사냥감 없음을 뜻하지 않고, 짐승은 다니고 다시 난다).
+        /// 한 일 안에서 다시 안 가는 것은 부르는 쪽(가 본 구역 목록)이 거른다.</param>
+        public static bool Next(ZoneXY home, ZoneXY from, int maxRing, Knowledge k, Func<ZoneXY, bool> explored,
+            Func<ZoneXY, bool> reachable, bool revisit, out ZoneXY next)
         {
             var cands = new List<KeyValuePair<double, ZoneXY>>();
             for (int dy = -maxRing; dy <= maxRing; dy++)
                 for (int dx = -maxRing; dx <= maxRing; dx++)
                 {
                     var z = new ZoneXY(home.X + dx, home.Y + dy);
-                    if (k.IsLooked(z) || !explored(z)) continue;
+                    if (!revisit && k.IsLooked(z) || !explored(z)) continue;
                     cands.Add(new KeyValuePair<double, ZoneXY>(z.Ring(home) * 1e7 + z.DistSq(from), z)); // 거점 가까운 고리 → 지금 자리 가까운 순
                 }
             return ExplorePlan.Pick(cands, reachable, out next);
