@@ -342,6 +342,9 @@ namespace ValheimHelper
         /// <summary>보이는 대상으로 간다. 새 땅에서 처음 찾았으면 어디인지 알린다.</summary>
         void Found(ZDO zdo)
         {
+            // 찾기 시간 전/후 측정(회차 527 "재기 줄 필요"): 탐험 중 찾았거나 찾기에 1초 넘게 걸렸을 때만 남김
+            if (m_exploring || m_searchTime + m_exploreTime >= 1f)
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 찾기 끝 {m_searchTime + m_exploreTime:0}초(탐험 {m_exploreTime:0}초, 탐험 중 {m_exploring})");
             if (m_exploring && !m_saidFound)
             {
                 m_saidFound = true;
