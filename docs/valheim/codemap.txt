@@ -112,7 +112,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 패치 NpcPatches·Buildings  vh_preptest(갑옷);vh_stonetest;vh_coppertest(NoDig);vh_fighttest
 시험 틀 TestRunner·TestKit·AutoStart·valheim-test.ps1  기본 묶음 + vh_basetest + VH_SOLO=1 단독 한 번
 
-ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh_debt(쓴 재료 다시 캘 몫, Core/Work/Debt.cs DebtBook)(30초) · 기억(지식·장소·적)은 ZDO 아님: 서버 월드별 파일 worlds_local/<m_worldName>.vh-memory(BinaryWriter 판 1 + 글자 셋, 월드 저장 순간 ZDOMan.PrepareSave 앞에 씀·크기 로그, 폴더 안은 RenameDirectory가 모르는 파일 지워서 곁에, 클라우드 월드는 BepInEx/config/ValheimHelper/worlds) — 옛 ZDO 키 vh_knowledge·vh_foes·vh_places는 파일 없을 때 한 번 읽고 Get이 뺌(E052), 시험 되돌리기가 곁 파일도 원본대로 / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기) vh_settled(밤사이 정산 마지막 아침 날짜)
+ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh_debt(쓴 재료 다시 캘 몫, Core/Work/Debt.cs DebtBook)(30초) · vh_hurt(다친 곳, Core/Work/Recovery Save — WorkerNpc.RecordHurt·ClearHurt 때) · 기억(지식·장소·적)은 ZDO 아님: 서버 월드별 파일 worlds_local/<m_worldName>.vh-memory(BinaryWriter 판 1 + 글자 셋, 월드 저장 순간 ZDOMan.PrepareSave 앞에 씀·크기 로그, 폴더 안은 RenameDirectory가 모르는 파일 지워서 곁에, 클라우드 월드는 BepInEx/config/ValheimHelper/worlds) — 옛 ZDO 키 vh_knowledge·vh_foes·vh_places는 파일 없을 때 한 번 읽고 Get이 뺌(E052), 시험 되돌리기가 곁 파일도 원본대로 / NPC마다: vh_name vh_role vh_home vh_inv vh_foods vh_graves vh_skills vh_queue vh_pending(WorkSaves: 하던 일+대기열, 질문 대기) vh_settled(밤사이 정산 마지막 아침 날짜)
 
 ----------------------------------------------------------------------
 확인된 게임 사실 (지금 게임 1.0.21 = assembly_valheim.dll 해시 앞 9f959c0396ec(11-10). 버전 안 붙은 옛 줄은 1.0.20(94998885B103) 때 확인 — 의심되면 다시 보고 버전 붙임, 디컴파일로 확인 — 다시 찾지 말 것, 새로 확인하면 여기에 더한다)
