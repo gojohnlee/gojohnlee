@@ -1,16 +1,27 @@
 using System.Collections;
+using System.Collections.Generic;
 using ValheimHelper.Core.Npc;
 using UnityEngine;
 
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_birdshoottest (땅에 앉은 새 명중 셈 — 쏘기 한 발): Ragnar가 활로 앞 10m 땅 새(Crow)를 한 발 쏘고, 맞았는지(죽음)·화살이 한 개 줄었는지 센다.
-    /// 여러 판 표·잡음 셈은 다음 조각. 지금은 한 발이 게임 안에서 나가는지부터 본다.
+    /// vh_birdshoottest (땅에 앉은 새 명중 셈): 낮·밤 각각 10·20·30m 앞 땅 새(Crow)를 Ragnar가 활로 3판씩 쏘고, 쏜 수·맞음(죽음)·앉아 있던 시간·쏘기 전 날아감·깃털 수를 셈.
+    /// 칸마다 여러 판의 중간값을 표로 남긴다(측정만 — 기능 아님). 쏘기 자체가 나가는지(화살 한 발씩)가 PASS 기준.
     /// </summary>
     static class BirdShootTest
     {
-        public static void Register() => TestRunner.Register("vh_birdshoottest", "땅 앉은 새 명중 셈(한 발)", () => TestKit.Flat(Run()));
+        const int Trials = 3;
+        static readonly float[] Distances = { 10f, 20f, 30f };
+
+        class Shot
+        {
+            public bool Fired, Hit, FlewBeforeShot;
+            public float Sat;
+            public int Feathers;
+        }
+
+        public static void Register() => TestRunner.Register("vh_birdshoottest", "땅 앉은 새 명중 셈(낮·밤, 거리별)", () => TestKit.Flat(Run()));
 
         static IEnumerator Run()
         {
@@ -22,28 +33,80 @@ namespace ValheimHelper
                 yield break;
             }
             var w = new TestKit.World();
-            try { yield return Body(w, checks); }
-            finally { TestKit.Restore(w); }
+            EnvMan env = EnvMan.instance;
+            bool debugTime = env.m_debugTimeOfDay;
+            float debugValue = env.m_debugTime;
+            try { yield return Body(w, checks, env); }
+            finally
+            {
+                env.m_debugTimeOfDay = debugTime;
+                env.m_debugTime = debugValue;
+                TestKit.Restore(w);
+            }
             TestKit.End(w, checks);
         }
 
-        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
+        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, EnvMan env)
         {
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC·상자", w.Ragnar != null && w.Chest != null);
 
-            // 쏘기 한 발: 호위병 대신 Ragnar가 활을 들고, 앞 10m 땅 새(Crow)를 겨눠 바닐라 활 흐름(DrawBow·ReleaseBow)으로 쏜다
+            // 활·나무 화살 60: 18판 동안 떨어지지 않게 넉넉히
             var npc = w.Ragnar;
             npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("Bow"), 1);
-            npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("ArrowWood"), 20);
+            npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("ArrowWood"), 60);
             checks.Add("활 들기", npc.HoldBow());
             ItemDrop.ItemData bow = npc.GetCurrentWeapon();
-            int before = Gear.CountArrows(npc.GetInventory(), bow);
 
-            Vector3 at = GatherTest.Ground(npc.transform.position + npc.transform.forward * 10f) + Vector3.up * 0.5f;
+            int total = 0, fired = 0;
+            foreach (bool night in new[] { false, true })
+            {
+                // 낮 = 정오(0.5), 밤 = 자정(0). 시간이 실제로 바뀔 때까지 기다린다
+                env.m_debugTimeOfDay = true;
+                env.m_debugTime = night ? 0f : 0.5f;
+                yield return new WaitForSeconds(2f);
+                string when = night ? "밤" : "낮";
+                TestRunner.Log($"DIAG {when} 시각 {env.GetCurrentDay()}일째 날 비율 {EnvMan.instance.GetDayFraction():0.000} · 밤 {EnvMan.IsNight()}");
+                checks.Add($"{when} 맞춤 (밤 {EnvMan.IsNight()})", EnvMan.IsNight() == night);
+
+                foreach (float dist in Distances)
+                {
+                    var shots = new List<Shot>();
+                    for (int i = 0; i < Trials; i++)
+                    {
+                        var s = new Shot();
+                        yield return OneShot(npc, bow, dist, s);
+                        shots.Add(s);
+                        total++;
+                        if (s.Fired) fired++;
+                        TestRunner.Log($"DIAG {when} {dist:0}m #{i + 1}: 쏨 {(s.Fired ? "예" : "아니오")} · 맞음 {(s.Hit ? "예" : "아니오")} · 앉은 시간 {s.Sat:0.0}초 · 쏘기 전 날아감 {(s.FlewBeforeShot ? "예" : "아니오")} · 깃털 {s.Feathers}");
+                    }
+                    int hits = 0, flew = 0;
+                    var sats = new List<float>();
+                    var feathers = new List<float>();
+                    foreach (var s in shots)
+                    {
+                        if (s.Hit) hits++;
+                        if (s.FlewBeforeShot) flew++;
+                        sats.Add(s.Sat);
+                        feathers.Add(s.Feathers);
+                    }
+                    TestRunner.Log($"표 {when} {dist:0}m: 쏨 {shots.FindAll(s => s.Fired).Count}/{Trials} · 맞음 {hits}/{Trials} · 앉은 시간 중간 {Median(sats):0.0}초 · 쏘기 전 날아감 {flew}/{Trials} · 깃털 중간 {Median(feathers):0}");
+                }
+            }
+            checks.Add($"쏘기마다 화살 한 발 나감 ({fired}/{total})", fired == total);
+        }
+
+        // 새 한 마리를 거리 dist에 놓고 활로 한 발 쏜다. 결과는 s에 쓴다
+        static IEnumerator OneShot(WorkerNpc npc, ItemDrop.ItemData bow, float dist, Shot s)
+        {
+            Vector3 at = GatherTest.Ground(npc.transform.position + npc.transform.forward * dist) + Vector3.up * 0.5f;
+            int feathersBefore = GatherTest.GroundCount(at, "Feather");
+            int arrowsBefore = Gear.CountArrows(npc.GetInventory(), bow);
             GameObject prefab = ZNetScene.instance.GetPrefab("Crow");
+            float spawned = Time.time;
             var bird = Object.Instantiate(prefab, at, Quaternion.identity).GetComponent<RandomFlyingBird>();
-            checks.Add("새 놓음", bird != null);
+            if (bird == null) yield break;
             yield return new WaitForSeconds(1f);
 
             // 당기면서 새를 보고, 다 당기면 놓는다(3초 넘으면 그냥 놓음)
@@ -56,6 +119,9 @@ namespace ValheimHelper
                 if (pct >= 1f) break;
                 yield return null;
             }
+            s.FlewBeforeShot = bird != null && Vector3.Distance(bird.transform.position, at) > 1.5f;
+            s.Sat = Time.time - spawned;
+
             // 날아가는 값(속력·중력)으로 앞질러 겨눔 — Hunt.UpdateShoot과 같은 방식(새는 안 움직인다고 봄)
             Vector3 eye = npc.GetEyePoint();
             if (bird != null && npc.ProjectileFlight(bow, out float speed, out float gravity))
@@ -65,15 +131,19 @@ namespace ValheimHelper
                     npc.Ai.Face(eye + new Vector3(ax, ay, az));
             }
             bool shot = npc.ReleaseBow();
-            checks.Add("쏨", shot);
             yield return new WaitForSeconds(3f);
 
-            int after = Gear.CountArrows(npc.GetInventory(), bow);
-            bool dead = bird == null;
-            checks.Add("화살 한 발 나감", after == before - 1);
-            TestRunner.Log($"쏘기 1판: 쏨 {(shot ? "예" : "아니오")} · 화살 {before}→{after} · 새 {(dead ? "죽음(맞음)" : "살아 있음(빗나감)")}");
+            s.Fired = shot && Gear.CountArrows(npc.GetInventory(), bow) == arrowsBefore - 1;
+            s.Hit = bird == null;
+            s.Feathers = GatherTest.GroundCount(at, "Feather") - feathersBefore;
             if (bird != null) ZNetScene.instance.Destroy(bird.gameObject);
-            yield break;
+        }
+
+        static float Median(List<float> v)
+        {
+            if (v.Count == 0) return 0f;
+            v.Sort();
+            return v[v.Count / 2];
         }
     }
 }
