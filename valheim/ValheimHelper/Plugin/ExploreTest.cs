@@ -199,6 +199,30 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(1f);
             }
 
+            // 처음 찾는 물건은 그것이 나는 바이옴 구역부터(요청 11-13 00:10 ④): 구리→검은숲, 창자→늪. 기억을 지우고 첫 목표 구역 바이옴·걸린 시간
+            if (claude != null) claude.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("PickaxeAntler"), 1);
+            foreach (var newItem in new[] { "CopperOre", "Entrails" })
+            {
+                if (claude == null) break;
+                foreach (var m in k.ZonesWith(newItem, hz)) k.Forget(m.Zone, newItem);
+                int want = ItemBiomes.Of(newItem);
+                int said = heard.Count;
+                Say($"!{Workers.Name1} {GatherJob.ItemLabel(newItem)} 1");
+                float took = -1f; int got = 0; bool expl = false;
+                yield return new WaitForSeconds(3f);
+                if (claude != null && !(claude.Ai.Job is GatherJob)) Say("!그래도 가"); // 상자에 있으면 "더 캐 올까?" 묻는다
+                for (float w = 0f; w < 40f && claude != null; w += 0.5f)
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    if (!(claude.Ai.Job is GatherJob gj)) break;
+                    if (gj.StepName == "GoZone" || gj.Exploring) { took = w + 3.5f; expl = gj.Exploring; got = Scout.BiomeAt(Senses.ZoneCenter(gj.GoalZone)); break; }
+                }
+                TestRunner.Log($"첫 찾기 {newItem}: 나는 곳 {BiomeNames.Of(want)}, 첫 목표 {BiomeNames.Of(got)}, 탐험 {expl}, {took:0.0}초");
+                Check($"{GatherJob.ItemLabel(newItem)} 첫 목표가 나는 바이옴 ({BiomeNames.Of(got)}, {took:0.0}초)", took >= 0f && want != 0 && ((got & want) != 0 || expl && SaidBiome(heard, said, want)));
+                Say("!멈춰");
+                yield return new WaitForSeconds(1f);
+            }
+
             bool clean = true;
             foreach (var h in heard) if (h.Contains("{")) clean = false;
             Check("대사에 자리표시자 안 남음", clean);
@@ -269,6 +293,14 @@ namespace ValheimHelper
                 }
             }
             return best < float.MaxValue;
+        }
+
+        /// <summary>그 바이옴이 지도에 없어 경계부터 갈 때: from 뒤 대사에 나는 바이옴(가장 덜 위험한 것) 이름이 나왔나("아직 못 봤어").</summary>
+        static bool SaidBiome(List<string> heard, int from, int biomes)
+        {
+            string name = BiomeNames.Of(BiomeNames.ByRisk(biomes)[0]);
+            for (int i = from; i < heard.Count; i++) if (heard[i].Contains(name)) return true;
+            return false;
         }
 
         static void Say(string text)
