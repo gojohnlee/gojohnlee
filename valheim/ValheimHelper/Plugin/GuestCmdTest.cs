@@ -54,7 +54,13 @@ namespace ValheimHelper
             checks.Add($"머리 위 말풍선 ({texts?.Count ?? 0}개)", texts != null && texts.Exists(t => t.m_go == npc.gameObject || t.m_go == WorkerNpc.All[1].gameObject));
 
             // 장비: 서버가 쓴 외모(머리·수염)가 손님 VisEquipment에 그려짐
+            // 주인이 손님에게 갔다 오며 덮인 외모는 서버 FixLook이 1초마다 되살림 → 10초까지 기다림(E079 꼴 0/0)
             VisEquipment vis = npc.GetComponent<VisEquipment>();
+            until = Time.time + 10f;
+            while (Time.time < until && (npc.Zdo.GetInt(ZDOVars.s_hairItem) == 0 || vis == null
+                   || Traverse.Create(vis).Field<int>("m_currentHairItemHash").Value != npc.Zdo.GetInt(ZDOVars.s_hairItem)
+                   || Traverse.Create(vis).Field<int>("m_currentBeardItemHash").Value != npc.Zdo.GetInt(ZDOVars.s_beardItem)))
+                yield return new WaitForSeconds(0.5f);
             int hair = npc.Zdo.GetInt(ZDOVars.s_hairItem), beard = npc.Zdo.GetInt(ZDOVars.s_beardItem);
             int drawnHair = vis != null ? Traverse.Create(vis).Field<int>("m_currentHairItemHash").Value : 0;
             int drawnBeard = vis != null ? Traverse.Create(vis).Field<int>("m_currentBeardItemHash").Value : 0;

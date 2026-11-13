@@ -207,6 +207,7 @@ namespace ValheimHelper
             long me = ZDOMan.GetSessionID();
             foreach (var zdo in Zdos())
                 if (zdo.HasOwner() && zdo.GetOwner() != me) zdo.SetOwner(me);
+            foreach (var npc in WorkerNpc.All) npc.FixLook();
         }
 
         public static void Update()

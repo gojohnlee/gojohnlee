@@ -754,8 +754,29 @@ namespace ValheimHelper
             vis.SetModel(0);
             vis.SetHairItem(Look(ragnar ? LookHair[0] : LookHair[1], ragnar ? "Hair2" : "Hair1").GetStableHashCode());
             vis.SetBeardItem(Look(ragnar ? LookBeard[0] : LookBeard[1], ragnar ? "Beard5" : "Beard2").GetStableHashCode());
-            vis.SetSkinColor(ragnar ? new Vector3(1f, 0.92f, 0.85f) : new Vector3(0.82f, 0.7f, 0.6f));
-            vis.SetHairColor(ragnar ? new Vector3(0.62f, 0.47f, 0.3f) : new Vector3(0.08f, 0.08f, 0.08f));
+            vis.SetSkinColor(ragnar ? SkinRagnar : SkinFloki);
+            vis.SetHairColor(ragnar ? HairRagnar : HairFloki);
+        }
+
+        static readonly Vector3 SkinRagnar = new Vector3(1f, 0.92f, 0.85f), SkinFloki = new Vector3(0.82f, 0.7f, 0.6f);
+        static readonly Vector3 HairRagnar = new Vector3(0.62f, 0.47f, 0.3f), HairFloki = new Vector3(0.08f, 0.08f, 0.08f);
+
+        /// <summary>
+        /// 외형이 ZDO에서 빠졌으면 다시 씀(Workers.Reclaim이 1초마다). 주인이 손님에게 갔다 오면 손님의 옛 ZDO 사본(머리 0)이
+        /// 서버 값을 덮을 수 있는데, 바닐라 SetHairItem·SetSkinColor는 자기 필드가 같으면 ZDO를 안 써 다시 안 살아난다(vh_guestcmdtest 머리 0/0).
+        /// </summary>
+        public void FixLook()
+        {
+            if (m_nview == null || !m_nview.IsValid() || !m_nview.IsOwner()) return;
+            ZDO zdo = m_nview.GetZDO();
+            bool ragnar = Personality == Personality.Ragnar;
+            int hair = Look(ragnar ? LookHair[0] : LookHair[1], ragnar ? "Hair2" : "Hair1").GetStableHashCode();
+            int beard = Look(ragnar ? LookBeard[0] : LookBeard[1], ragnar ? "Beard5" : "Beard2").GetStableHashCode();
+            if (zdo.GetInt(ZDOVars.s_hairItem) == hair && zdo.GetInt(ZDOVars.s_beardItem) == beard) return;
+            zdo.Set(ZDOVars.s_hairItem, hair);
+            zdo.Set(ZDOVars.s_beardItem, beard);
+            zdo.Set(ZDOVars.s_skinColor, ragnar ? SkinRagnar : SkinFloki);
+            zdo.Set(ZDOVars.s_hairColor, ragnar ? HairRagnar : HairFloki);
         }
 
         // 이름표(현지화): Hair24 = Shaved and Braided, Hair25 = Knot, Beard18 = Jarl Braids, Beard15 = Mini Braid.

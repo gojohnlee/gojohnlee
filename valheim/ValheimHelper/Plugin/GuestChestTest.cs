@@ -62,6 +62,9 @@ namespace ValheimHelper
             yield return Settle(() => c.GetInventory().CountItems(W) == 30);
             checks.Add($"넣기: 가방 {bag.CountItems(W)}·서버 상자 {c.GetInventory().CountItems(W)}·화면 {SharedGuest.View?.CountItems(W)}",
                 bag.CountItems(W) == 0 && c.GetInventory().CountItems(W) == 30);
+            // 주인 바뀜은 ZDO 동기화로 따로 와서 답(RPC)·예측 화면보다 늦을 수 있음 → 5초까지 기다림
+            until = Time.time + 5f;
+            while (Time.time < until && (cz.GetOwner() == me || cz.GetOwner() == 0)) yield return new WaitForSeconds(0.1f);
             checks.Add($"상자 주인 = 서버 쪽 ({cz.GetOwner()}, 나 {me})", cz.GetOwner() != me && cz.GetOwner() != 0);
 
             // 4) Alt+우클릭 등록: 나누기 창(제목 계속 채우기) → 확인 → "!계속채워 Wood 30" → 일꾼 대답
