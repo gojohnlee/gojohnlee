@@ -18,7 +18,7 @@ namespace ValheimHelper
         /// <summary>시험 배속(사용자 11-13 "시험 속도 3배"): autotest.txt "speed=N"(스크립트 $env:VH_SPEED, 기본 3·1이면 끔). 시험 도는 동안만 Game.FadeTimeScale(N)
         /// — 게임이 손님 있으면 1배로 묶음(Game.UpdatePause). 1배와 결과가 다른 시험·최종 실전 시험은 RealSpeed에 이름을 넣어 1배.</summary>
         public static float Speed = 1f;
-        static readonly HashSet<string> RealSpeed = new HashSet<string> { "vh_housetest" }; // 회차 567: 3배 37/38(문간 단계 순간이동 1)·1배 38/38
+        static readonly HashSet<string> RealSpeed = new HashSet<string> { "vh_housetest", "vh_chorestest" }; // 회차 567: house 3배 37/38(문간 단계 순간이동 1)·1배 38/38 · 회차 568: chores 3배 단독 23/24(멧돼지 사냥 cantReach→구운 고기 0)·1배 24/24
         static float s_speed = 1f;
         /// <summary>실제 시간(초)으로 정해진 기다림(Claude 답 등)을 게임 시간 기다림으로: 배속만큼 늘린다.</summary>
         public static float Real(float sec) => sec * s_speed;
