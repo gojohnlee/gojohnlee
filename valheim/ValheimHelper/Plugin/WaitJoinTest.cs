@@ -20,10 +20,13 @@ namespace ValheimHelper
         const float DropLimit = 60f;
         const float WatchSeconds = 60f;
         const float HomeRadius = 30f;
+        const float LateSeconds = 15f;
 
-        public static void Register() => TestRunner.Register("vh_waitjointest", "기다림·합류 시험(20개)", () => TestKit.Flat(Run()));
+        public static void Register() => TestRunner.Register("vh_waitjointest", "기다림·합류 시험(20개)", () => TestKit.Flat(Run(false)));
+        /// <summary>vh_waitlatetest: 같은 판이지만 2호는 1호가 캐기 시작한 뒤 15초에 멀리(60m)서 늦게 낌. 목표가 찬 뒤 둘 다 일을 놓는지 본다(E088 늦게 낀 판).</summary>
+        public static void RegisterLate() => TestRunner.Register("vh_waitlatetest", "지원 늦게 낀 판 시험(20개)", () => TestKit.Flat(Run(true)));
 
-        static IEnumerator Run()
+        static IEnumerator Run(bool late)
         {
             var checks = new GatherTest.Checks();
             if (Player.m_localPlayer == null || !ZNet.instance.IsServer())
@@ -35,7 +38,7 @@ namespace ValheimHelper
             var w = new TestKit.World();
             bool ghost = Player.m_localPlayer.InGhostMode();
             Departures.TestIdleChores = true; // 쉬는 일꾼 판단(JoinHelp)은 시험 중엔 꺼져 있음
-            try { yield return Body(w, checks); }
+            try { yield return Body(w, checks, late); }
             finally
             {
                 Departures.TestIdleChores = false;
@@ -47,7 +50,7 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
-        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks)
+        static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, bool late)
         {
             yield return TestKit.Setup(w);
             checks.Add("깃발·NPC 둘", w.Ragnar != null && w.Floki != null);
@@ -73,7 +76,13 @@ namespace ValheimHelper
             string task = lead.HelpTask;
             checks.Add($"A 손 빈 동료가 없어 캐기 요청을 올림 ({task})", task != null && Brain.Help.Count == 1 && Brain.Help.Next().Task == task && lead.Team == null);
 
-            // B) 2호가 쉬게 돼 요청을 받아 같이 캠
+            // B) 2호가 쉬게 돼 요청을 받아 같이 캠. 늦은 판은 1호가 캐기 시작한 뒤 15초에 2호가 60m 밖에서 달려옴
+            if (late)
+            {
+                yield return new WaitForSeconds(LateSeconds);
+                checks.Add($"B(늦은 판) {LateSeconds:0}초 뒤 1호가 아직 캐는 중 (1호 일 {(r.Ai.Job == lead ? "있음" : "없음")})", r.Ai.Job == lead);
+                f.TeleportTo(GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, -60f)) + Vector3.up * 0.3f, rot, false);
+            }
             f.Ai.Interrupt();
             yield return new WaitForSeconds(1f);
             bool joined = Departures.JoinHelp(f);
@@ -100,7 +109,8 @@ namespace ValheimHelper
             int held;
             while (true)
             {
-                far = Mathf.Max(Utils.DistanceXZ(r.transform.position, w.Home), Utils.DistanceXZ(f.transform.position, w.Home));
+                // 먹을거리 일(다른 물건 GatherJob)로 먼 데 간 것은 거리에서 뺌(E088 결정: 먹을거리 일은 이 기준 밖, 확인 필요)
+                far = Mathf.Max(WoodNear(r, item, w.Home), WoodNear(f, item, w.Home));
                 held = r.CountItem(item) + f.CountItem(item);
                 if (held == 0 && far <= HomeRadius || back >= DropLimit) break;
                 yield return new WaitForSeconds(2f);
@@ -119,6 +129,13 @@ namespace ValheimHelper
                 maxFar = Mathf.Max(maxFar, Mathf.Max(Utils.DistanceXZ(r.transform.position, w.Home), Utils.DistanceXZ(f.transform.position, w.Home)));
             }
             checks.Add($"D 뒤 {WatchSeconds:0}초 동안 나무 일 다시 나감 {(again ? "있음" : "없음")} (다른 일 나감 {(other ? "있음" : "없음")}, 집에서 최대 {maxFar:0}m)", !again);
+        }
+
+        /// <summary>나무 일(또는 일 없음)일 때만 집에서 거리, 다른 물건 일이면 0.</summary>
+        static float WoodNear(WorkerNpc n, string item, Vector3 home)
+        {
+            if (n.Ai.Job is GatherJob g && g.Item != item) return 0f;
+            return Utils.DistanceXZ(n.transform.position, home);
         }
 
         static int TeamTotal(GatherJob job)
