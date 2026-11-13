@@ -233,6 +233,39 @@ namespace ValheimHelper
         /// <summary>HurtDefer이고 그 자리에서 근처 회복(RecoverNearJob)으로 감 — 짐을 들고 집에 가지 않음.</summary>
         public bool HurtNear { get; private set; }
 
+        /// <summary>크게 다침: 일을 접지 않고 회복했다 남은 몫을 이어 감(요청 11-12 23:55 ③), 같은 곳 세 번째면 접음.
+        /// 든 것이 없고 집 밖이고 짐 칸이 남고 둘레에 적 없는 줍기가 있으면 집에 안 가고 그 자리에서 근처 회복(Core Recovery.Choose — 대기 중 또 맞으면 RecoverNearJob이 끝나 집 대기).</summary>
+        bool HurtStop(string what, string hurtKey, string tooHardKey)
+        {
+            Vector3 at = m_npc.transform.position;
+            bool tooHard = m_npc.RecordHurt(at.x, at.z);
+            if (!tooHard && !FromRefill && Remaining() > 0) HurtDefer = true;
+            Plugin.Log.LogInfo($"{m_npc.NpcName} {what} {Item}: 다침 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 이곳 {m_npc.HurtSpots.CountAt(at.x, at.z)}번째{(HurtDefer ? " → 회복하고 이어 감" : " → 접음")}");
+            bool away = Utils.DistanceXZ(at, m_npc.Home) > 30f;
+            if (HurtDefer && away && Carried() == 0 && Core.Work.Recovery.Choose(false, m_npc.GetInventory().GetEmptySlots() > 0, RecoverNearJob.SafePickNear(m_npc), false) == Core.Work.RecoverWay.Nearby)
+            {
+                HurtNear = true;
+                return Fail(hurtKey);
+            }
+            return GiveUp(tooHard ? tooHardKey : hurtKey);
+        }
+
+        /// <summary>이 일 동안 체력이 크게 다침 선 위였던 적이 있음 — 다친 채로 시작한 일은 바로 접지 않게.</summary>
+        bool m_wasWell;
+
+        /// <summary>싸움 끼는 모으기(사냥 말고, 요청 다침 ③): 밖에서 싸운 뒤 크게 다쳤으면 사냥처럼 회복하고 이어 감. Update는 싸움·도망이 끝나야 불린다(WorkerAI GuardBusy).</summary>
+        bool GatherHurt(out bool result)
+        {
+            result = true;
+            if (m_hunt || m_giveUp != null) return false;
+            if (m_step != Step.Search && m_step != Step.GoZone && m_step != Step.GoCrypt && m_step != Step.Approach && m_step != Step.Work && m_step != Step.Collect) return false;
+            if (!Core.Work.Recovery.IsHurt(m_npc.GetHealth(), m_npc.GetMaxHealth())) { m_wasWell = true; return false; }
+            if (!m_wasWell) return false;
+            m_wasWell = false;
+            result = HurtStop("작업", "gatherHurt", "gatherTooHard");
+            return true;
+        }
+
         bool Fail(string key)
         {
             if (key == "nightNoExplore" && !FromRefill && Remaining() > 0) NightDefer = true;
@@ -359,6 +392,7 @@ namespace ValheimHelper
                 m_autoPickTimer = 0.25f;
                 AutoPickup();
             }
+            if (GatherHurt(out bool hurtResult)) return hurtResult;
             switch (m_step)
             {
                 case Step.Prep: return UpdatePrep(dt);

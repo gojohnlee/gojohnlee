@@ -152,6 +152,39 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "RawMeat") >= 1, 150f);
             checks.Add($"근처 회복 뒤 이어 가 고기 채움 ({GatherTest.CountBase(w.Home, "RawMeat")}개, {TestKit.Waited:0}초)", TestKit.Ok);
             TestKit.ClearBaseStock(w, "RawMeat");
+
+            // 싸움 끼는 다른 모으기(요청 다침 ③): 사냥 말고 모으는 중 크게 다쳐도 접지 않고 "다침" 칸 → 체력이 차면 이어 감
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && (w.Floki == null || !(w.Floki.Ai.Job is GatherJob)), 60f);
+            w.Ragnar.ClearHurt(); w.Floki?.ClearHurt();
+            TestKit.ClearBaseStock(w, "Mushroom");
+            if (shroom != null)
+                for (int i = 0; i < 8; i++)
+                    Object.Instantiate(shroom, GatherTest.Ground(w.Home + rot * new Vector3(-10f + i * 3f, 0f, -24f - (i % 2) * 3f)), Quaternion.identity);
+            GatherTest.Say("!Mushroom 6", null);
+            WorkerNpc g = null;
+            yield return TestKit.WaitFor(() => (g = Gatherer(w, "Mushroom")) != null && g.Ai.Job is GatherJob gj && (gj.StepName == "Search" || gj.StepName == "Approach" || gj.StepName == "Collect"), 90f);
+            checks.Add($"버섯 모으기 시작 ({g?.NpcName}, {TestKit.Waited:0}초)", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            yield return new WaitForSeconds(0.5f);
+            g.SetHealth(g.GetMaxHealth() * 0.3f);
+            yield return TestKit.WaitFor(() => !(g.Ai.Job is GatherJob gj2 && gj2.Item == "Mushroom") && g.Ai.Queue.Count > 0 && g.Ai.Queue[0].Why == "다침", 90f);
+            checks.Add($"모으다 다쳐도 '다침' 칸에 남김 ({TestKit.Waited:0}초, 일 {g.Ai.Job?.GetType().Name ?? "없음"})", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            g.SetHealth(g.GetMaxHealth() * 0.5f);
+            yield return new WaitForSeconds(5f);
+            checks.Add("모으기도 체력이 차기 전엔 안 나감", !(g.Ai.Job is GatherJob) && g.Ai.Queue.Count > 0 && g.Ai.Queue[0].Why == "다침");
+            g.SetHealth(g.GetMaxHealth());
+            yield return TestKit.WaitFor(() => g.Ai.Job is GatherJob gj3 && gj3.Item == "Mushroom", 60f);
+            checks.Add($"체력이 차면 버섯 모으기 이어 감 ({TestKit.Waited:0}초)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => !(g.Ai.Job is GatherJob), 180f);
+            TestKit.ClearBaseStock(w, "Mushroom");
+        }
+
+        static WorkerNpc Gatherer(TestKit.World w, string item)
+        {
+            foreach (var n in new[] { w.Ragnar, w.Floki })
+                if (n != null && n.Ai.Job is GatherJob g && g.Item == item) return n;
+            return null;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace ValheimHelper.Core.Npc
     {
         /// <summary>이만큼 나왔는데 한쪽이라도 줄이 이보다 적으면 늘릴 것.</summary>
         public const int OftenCount = 20, FewLines = 15;
-        static readonly string[] CombatKeys = { "fightStart", "flee", "huntHurt", "backOff" };
+        static readonly string[] CombatKeys = { "fightStart", "flee", "huntHurt", "gatherHurt", "backOff" };
 
         readonly Dictionary<string, int> _counts = new Dictionary<string, int>();
 
