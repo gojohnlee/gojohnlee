@@ -153,6 +153,7 @@ namespace ValheimHelper
             }
             Tally(pos);
             taken = Taken(scale, armor, shield, m_views.Count); // 막기는 적 수에 따라(Block.MaxFoes)
+            myHit = WillingHit(pos, myHit, scale);
             bool mead = m_npc.CanDrinkHealthMead();
             Verdict v = Danger.Judge(m_npc.Personality, m_views, m_npc.GetHealth(), m_npc.GetMaxHealth(), myHit, taken, mead);
             Character nearest = Nearest(pos);
@@ -693,6 +694,38 @@ namespace ValheimHelper
                         hit += HitOf(n) / 0.9f;
             return hit * 0.9f; // 바닐라 무작위 피해 계수(0.75~1의 제곱근) 평균쯤
         }
+
+        /// <summary>
+        /// MyHit에서 같이 안 싸울 곁 동료 몫을 뺀다(사용자 10-28 "동료 쪽에서 봐도 같이면 싸움일 때만" — 부르기(TryCallMate)와 같은 셈을 이미 20m 안 동료에도).
+        /// 싸우는 중·불려 오는 중이면 그대로 셈, 아니면 그 동료 체력·갑옷·막기로 이 적들을 모두 합친 한 방(together)으로 셌을 때 싸움이어야 셈.
+        /// (회차 593 vh_entrailstest: 갑옷 4라 혼자 물러날 플로키를 집에서 셈 → 다친 라그나가 집에선 싸움, 20m 나가 플로키 몫이 빠지면 물러남을
+        /// 20분 되풀이 — 경계가 한 번도 Calm이 안 돼 일의 다침 칸(GatherJob.GatherHurt)이 안 걸리고 거점 앞에서 죽음)
+        /// </summary>
+        float WillingHit(Vector3 pos, float together, float scale)
+        {
+            float hit = together;
+            string left = null;
+            foreach (var list in new[] { WorkerNpc.All, WorkerNpc.Guards })
+                foreach (var n in list)
+                {
+                    // MyHit이 더한 동료와 같은 조건
+                    if (n == null || n == m_npc || n.IsDead() || (n.Ai?.Guard?.Fleeing ?? false) || Vector3.Distance(n.transform.position, pos) > AllyRange) continue;
+                    Guard g = n.Ai?.Guard;
+                    if (g != null && (g.m_state == State.Fight || g.m_state == State.Come)) continue;
+                    Verdict theirs = Danger.Judge(n.Personality, m_views, n.GetHealth(), n.GetMaxHealth(), together,
+                        Taken(scale, n.GetBodyArmor(), n.BlockStats(), m_views.Count), n.CanDrinkHealthMead());
+                    if (theirs == Verdict.Fight) continue;
+                    hit -= HitOf(n);
+                    left = (left == null ? "" : left + ", ") + $"{n.NpcName} {theirs}";
+                }
+            if (left != m_leftOut)
+            {
+                m_leftOut = left;
+                if (left != null) Plugin.Log.LogInfo($"{m_npc.NpcName} 곁 동료 셈에서 뺌: {left} (그쪽 판단으론 같이 안 싸움)");
+            }
+            return hit;
+        }
+        string m_leftOut;
 
         // ---- 행동 ----
 

@@ -22,10 +22,15 @@ namespace ValheimHelper
             }
             var w = new TestKit.World();
             var spawned = new List<GameObject>();
+            // 플레이어는 싸우지 않는 시험 봇 → 유령(FightTest처럼): 집 4m의 맨손 플레이어가 일꾼 한 방(Guard.MyHit 20m 안 플레이어 4.5)에 들어가고
+            // 드라우그의 노림감도 돼, 다친 라그나가 집에선 싸움·20m 나가면 물러남을 20분 되풀이하다 죽음(회차 593 FAIL 4/6)
+            bool ghost = Player.m_localPlayer.InGhostMode();
+            Player.m_localPlayer.SetGhostMode(true);
             try { yield return Body(w, checks, spawned); }
             finally
             {
                 foreach (var g in spawned) if (g != null) ZNetScene.instance.Destroy(g);
+                if (Player.m_localPlayer != null) Player.m_localPlayer.SetGhostMode(ghost);
                 TestKit.Restore(w);
             }
             TestKit.End(w, checks);
