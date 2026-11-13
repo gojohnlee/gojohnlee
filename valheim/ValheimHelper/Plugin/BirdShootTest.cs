@@ -17,7 +17,7 @@ namespace ValheimHelper
 
         class Shot
         {
-            public bool Fired, Hit, Forced;
+            public bool Fired, Hit, Forced, Tree;
             public float Sat, Dist, Pct;
             public int Feathers;
         }
@@ -88,7 +88,7 @@ namespace ValheimHelper
                         if (s.Fired) fired++;
                         TestRunner.Log($"DIAG {when} {dist:0}m #{i + 1}: 쏨 {(s.Fired ? "예" : "아니오")} · 맞음 {(s.Hit ? "예" : "아니오")} · 스스로 앉은 시간 {s.Sat:0.0}초 · 강제 앉힘 {(s.Forced ? "예" : "아니오")} · 착지 {s.Dist:0.0}m · 당김 {s.Pct:0.00} · 깃털 {s.Feathers}");
                     }
-                    int hits = 0, forced = 0;
+                    int hits = 0, forced = 0, trees = 0;
                     var sats = new List<float>();
                     var feathers = new List<float>();
                     var dists = new List<float>();
@@ -96,11 +96,12 @@ namespace ValheimHelper
                     {
                         if (s.Hit) hits++;
                         if (s.Forced) forced++;
+                        if (s.Tree) trees++;
                         sats.Add(s.Sat);
                         feathers.Add(s.Feathers);
                         dists.Add(s.Dist);
                     }
-                    TestRunner.Log($"표 {when} {dist:0}m: 쏨 {shots.FindAll(s => s.Fired).Count}/{Trials} · 맞음 {hits}/{Trials} · 착지 중간 {Median(dists):0.0}m · 스스로 앉은 시간 중간 {Median(sats):0.0}초 · 강제 앉힘 {forced}/{Trials} · 깃털 중간 {Median(feathers):0}");
+                    TestRunner.Log($"표 {when} {dist:0}m: 쏨 {shots.FindAll(s => s.Fired).Count}/{Trials} · 맞음 {hits}/{Trials} · 착지 중간 {Median(dists):0.0}m · 스스로 앉은 시간 중간 {Median(sats):0.0}초 · 강제 앉힘 {forced}/{Trials} · 나무에 막힘 {trees}/{Trials} · 깃털 중간 {Median(feathers):0}");
                 }
             }
             checks.Add($"쏘기마다 화살 한 발 나감 ({fired}/{total})", fired == total);
@@ -214,6 +215,8 @@ namespace ValheimHelper
 
             s.Fired = shot && Gear.CountArrows(npc.GetInventory(), bow) == arrowsBefore - 1;
             s.Hit = bird == null;
+            // 화살이 새 앞의 나무(Lod0)에 막혔는지 따로 셈 — 빗나감 원인 가르기(시험 자리 문제)
+            s.Tree = bird != null && hitWhat.StartsWith("Lod0");
             s.Feathers = GatherTest.GroundCount(landAt, "Feather") - feathersBefore;
             if (bird != null) ZNetScene.instance.Destroy(bird.gameObject);
         }
