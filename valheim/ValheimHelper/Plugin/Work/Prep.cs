@@ -1,3 +1,4 @@
+using ValheimHelper.Core.Work;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
@@ -315,9 +316,17 @@ namespace ValheimHelper
                 }
             }
             ItemDrop.ItemData bow = MyRanged(mine, guard);
-            if (bow != null)
+            if (bow == null) return;
+            // 화살 아끼기(사용자 11-13): 나무 화살 먼저, 깃털 화살은 상자 깃털이 50 넘을 때만 (AmmoRule)
+            TakeMeads(from, mine, chest, Carry(bow, guard) - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow) && IsWoodArrow(it), taken);
+            if (AmmoRule.MayTakeFeatherArrows(chest.CountItems(ItemName("Feathers"))))
                 TakeMeads(from, mine, chest, Carry(bow, guard) - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken);
         }
+
+        static string ItemName(string prefab) => ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+
+        /// <summary>나무 화살(재료 나무 8, 깃털 없음 — vh_arrowtest 회차 552).</summary>
+        static bool IsWoodArrow(ItemDrop.ItemData it) => it.m_shared.m_name == ItemName("ArrowWood");
 
         /// <summary>
         /// 이 미드 더미에서 들고 다닐 몫(체력 3·저항 종류마다 2)을 넘는 개수. 미드가 아니거나 넘지 않으면 0.
