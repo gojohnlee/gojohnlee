@@ -409,7 +409,8 @@ namespace ValheimHelper
         internal static bool NightGearOk(WorkerNpc npc, int biome) => NightRatio(npc, biome) < Departure.HardFrom;
 
         /// <summary>NightGearOk의 값: 그 바이옴 밤 몫을 더한 장비 위험 비율(시험이 숫자로 남김).</summary>
-        internal static float NightRatio(WorkerNpc npc, int biome)
+        internal static float NightRatio(WorkerNpc npc, int biome) => NightRatio(npc, biome, out _, out _);
+        internal static float NightRatio(WorkerNpc npc, int biome, out float landPart, out float nightPart)
         {
             Prep.Ready(npc, out float armor, out ItemDrop.ItemData weapon, out ItemDrop.ItemData shieldItem);
             armor = Mathf.Max(armor, npc.GetBodyArmor());
@@ -429,7 +430,27 @@ namespace ValheimHelper
             // 기억한 자리가 없어도 밤에만 나는 적 몫은 센다(새 월드에서 밤 늪이 0으로 나오던 것 — 회차 563 vh_nightexploretest)
             List<Foe> nightOnly = NightFoes.Plus(new List<Foe>(), nightSpawns, resolve);
             float alone = nightOnly.Count > 0 ? Danger.Ratio(nightOnly, health, hit, taken(nightOnly)) : 0f;
+            landPart = land.Ratio;
+            nightPart = alone;
             return Mathf.Max(land.Ratio, alone);
+        }
+
+        /// <summary>시험 DIAG: 밤 적 하나하나의 체력·한 방·받는 피해·혼자일 때 비율과 일꾼 체력·한 방.</summary>
+        internal static string NightDetail(WorkerNpc npc, int biome)
+        {
+            Prep.Ready(npc, out float armor, out ItemDrop.ItemData weapon, out ItemDrop.ItemData shieldItem);
+            armor = Mathf.Max(armor, npc.GetBodyArmor());
+            float health = npc.GetMaxHealth(), hit = Mathf.Max(Guard.HitWith(npc, weapon), Guard.HitOf(npc));
+            Shield? shield = npc.BlockStats(shieldItem) ?? npc.BlockStats();
+            System.Func<GroupFoe, Foe> resolve = Guard.ResolveFor(npc, Prep.Arsenal(npc));
+            var parts = new List<string> { $"일꾼 체력 {health:0}·한 방 {hit:0}·방어 {armor:0}" };
+            foreach (Foe f in NightFoes.Plus(new List<Foe>(), NightOf(biome), resolve))
+            {
+                var one = new List<Foe> { f };
+                System.Func<float, float> taken = Guard.TakenFor(npc, armor, shield, 1);
+                parts.Add($"{f.Kind} 체력 {f.Health:0}·한 방 {f.Damage:0}→{taken(f.Damage):0}·혼자 {Danger.Ratio(one, health, hit, taken):0.00}");
+            }
+            return string.Join(" / ", parts.ToArray());
         }
 
         /// <summary>
@@ -445,7 +466,7 @@ namespace ValheimHelper
                 var rows = new List<SpawnSystem.SpawnData>();
                 foreach (SpawnSystemList list in ss.m_spawnLists)
                     foreach (SpawnSystem.SpawnData d in list.m_spawners)
-                        if (d.m_enabled && d.m_prefab != null && !d.m_spawnAtDay && d.m_spawnAtNight && d.m_maxSpawned > 0 && d.m_requiredEnvironments.Count == 0)
+                        if (d.m_enabled && d.m_prefab != null && !d.m_spawnAtDay && d.m_spawnAtNight && d.m_maxSpawned > 0 && d.m_requiredEnvironments.Count == 0 && Hostile(d.m_prefab))
                             rows.Add(d);
                 s_nightRows = rows;
                 Plugin.Log.LogInfo($"생성 표: 밤에만 나는 줄 {rows.Count}개 읽음");
@@ -455,6 +476,13 @@ namespace ValheimHelper
                 if (((int)d.m_biome & biome) != 0 && (string.IsNullOrEmpty(d.m_requiredGlobalKey) || ZoneSystem.instance.GetGlobalKey(d.m_requiredGlobalKey)))
                     night.Add(new NightSpawn { Kind = d.m_prefab.name, Count = d.m_maxSpawned });
             return night;
+        }
+
+        /// <summary>싸움을 거는 생물만(밤 늪 줄의 odin처럼 Character 없는 것·짐승·플레이어 편은 뺌 — Guard 적 고르기와 같은 기준)</summary>
+        static bool Hostile(GameObject prefab)
+        {
+            Character c = prefab.GetComponent<Character>();
+            return c != null && c.m_faction != Character.Faction.Players && c.m_faction != Character.Faction.AnimalsVeg && !(prefab.GetComponent<BaseAI>() is AnimalAI);
         }
 
         static Dictionary<string, string> Args(WorkerNpc npc, DepartureResult r)

@@ -21,9 +21,15 @@ namespace ValheimHelper.Core.Npc
         {
             var list = new List<Foe>(foes);
             if (night == null || night.Count == 0) return list;
+            // 같은 종류가 여러 줄이면 합이 아니라 가장 큰 수만: 게임은 줄마다 그 프리팹의 근처 수가 m_maxSpawned 이상이면 안 낳는다(SpawnSystem.UpdateSpawnList)
             var extra = new List<GroupFoe>(night.Count);
             foreach (NightSpawn s in night)
-                if (s.Count > 0) extra.Add(new GroupFoe { Kind = s.Kind, Count = s.Count });
+            {
+                if (s.Count <= 0) continue;
+                GroupFoe same = extra.Find(g => g.Kind == s.Kind);
+                if (same == null) extra.Add(new GroupFoe { Kind = s.Kind, Count = s.Count });
+                else same.Count = Math.Max(same.Count, s.Count);
+            }
             list.AddRange(PlaceBook.Expand(extra, resolve));
             return list;
         }

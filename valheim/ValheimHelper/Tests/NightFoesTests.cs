@@ -22,6 +22,15 @@ public class NightFoesTests
     }
 
     [Fact]
+    public void SameKindInSeveralRowsCountsTheLargestOnly()
+    {
+        var night = new List<NightSpawn> { new NightSpawn { Kind = "wolf", Count = 2 }, new NightSpawn { Kind = "wolf", Count = 3 }, new NightSpawn { Kind = "greyling", Count = 1 } };
+        var all = NightFoes.Plus(new List<Foe>(), night, Resolve);
+        Assert.Equal(3, all.FindAll(f => f.Kind == "wolf").Count);
+        Assert.Single(all.FindAll(f => f.Kind == "greyling"));
+    }
+
+    [Fact]
     public void NightSpawnAddsItsCountOfTheSameKind()
     {
         var night = new List<NightSpawn> { new NightSpawn { Kind = "wolf", Count = 3 } };

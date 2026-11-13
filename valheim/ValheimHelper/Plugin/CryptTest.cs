@@ -13,7 +13,13 @@ namespace ValheimHelper
     /// </summary>
     static class CryptTest
     {
-        public static void Register() => TestRunner.Register("vh_crypttest", "지하묘지 시험", () => TestKit.Flat(Run()));
+        public static void Register()
+        {
+            TestRunner.Register("vh_crypttest", "지하묘지 시험", () => { s_night = false; return TestKit.Flat(Run()); });
+            // 밤 늪 바깥 걷기(사용자 11-13 밤 몫): ⑦ 철 일을 자정·가장 좋은 차림으로 — 장비가 밤 늪 적을 이길 만하면 밤에도 걸어가 캐 온다
+            TestRunner.Register("vh_cryptnighttest", "지하묘지 시험(⑦ 밤·좋은 차림)", () => { s_night = true; return TestKit.Flat(Run()); });
+        }
+        static bool s_night;
 
         static IEnumerator Run()
         {
@@ -28,9 +34,14 @@ namespace ValheimHelper
             var before = new HashSet<ZDOID>();
             var spot = new Vector3[1];
             var keys = new KeyState();
+            EnvMan env = EnvMan.instance;
+            bool debugTime = env.m_debugTimeOfDay;
+            float debugValue = env.m_debugTime;
             try { yield return Body(w, checks, before, spot, keys); }
             finally
             {
+                env.m_debugTimeOfDay = debugTime;
+                env.m_debugTime = debugValue;
                 if (w.Ragnar != null) w.Ragnar.TeleportTo(w.Home, w.Ragnar.transform.rotation, false);
                 Cleanup(before, spot[0]);
                 keys.Restore();
@@ -258,6 +269,23 @@ namespace ValheimHelper
             Vector3 start = TestRunner.Quick ? GatherTest.Ground(gate.transform.position + Vector3.Scale(w.Home - gate.transform.position, new Vector3(1f, 0f, 1f)).normalized * 12f) : w.Home;
             w.Ragnar.TeleportTo(start, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1.5f);
+            if (s_night)
+            {
+                EnvMan.instance.m_debugTimeOfDay = true;
+                EnvMan.instance.m_debugTime = 0f; // 자정
+                var npc = w.Ragnar;
+                foreach (var it in new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems())) { npc.UnequipItem(it, false); npc.GetInventory().RemoveItem(it); }
+                bool gearOk = true;
+                foreach (var n in AshFoeTest.BestGear()) gearOk &= AshFoeTest.Give(npc, n);
+                Prep.WearBest(npc);
+                npc.ResetMeals();
+                npc.EatFrom(npc.GetInventory());
+                yield return new WaitForSeconds(2f);
+                float swampRatio = Departures.NightRatio(npc, (int)Heightmap.Biome.Swamp, out float landPart, out float nightPart);
+                TestRunner.Log($"DIAG 밤 좋은 차림 늪 위험 {swampRatio:0.00}(기억한 자리 {landPart:0.00}·밤 적만 {nightPart:0.00}) (무리 기준 {Core.Npc.Departure.HardFrom:0.00}), NightGearOk {Departures.NightGearOk(npc, (int)Heightmap.Biome.Swamp)}, 밤 줄 {string.Join(",", Departures.NightOf((int)Heightmap.Biome.Swamp).Select(n => n.Kind + "×" + n.Count).ToArray())}");
+                TestRunner.Log($"DIAG 밤 늪 적: {Departures.NightDetail(npc, (int)Heightmap.Biome.Swamp)}");
+                checks.Add($"밤 맞춤·좋은 차림 (날 비율 {EnvMan.instance.GetDayFraction():0.000})", EnvMan.IsNight() && gearOk);
+            }
             int stockBefore = GatherTest.CountBase(w.Home, "IronScrap");
             GatherTest.Say($"!{w.Ragnar.NpcName} 철 3", null);
             bool wasInside = false;
