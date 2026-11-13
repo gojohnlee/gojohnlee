@@ -34,6 +34,17 @@ public class HelpQueueTests
     }
 
     [Fact]
+    public void StaleSignalsOnceAtLimit()
+    {
+        var q = new HelpQueue();
+        q.Add("창자 20개", 1);
+        Assert.False(q.Postpone("없는 일"));
+        for (int i = 1; i < HelpQueue.StaleAfter; i++) Assert.False(q.Postpone("창자 20개"));
+        Assert.True(q.Postpone("창자 20개")); // 막 닿을 때 한 번
+        Assert.False(q.Postpone("창자 20개")); // 그 뒤로는 안 되풀이
+    }
+
+    [Fact]
     public void AddSameTaskKeepsOneAndTakesLarger()
     {
         var q = new HelpQueue();

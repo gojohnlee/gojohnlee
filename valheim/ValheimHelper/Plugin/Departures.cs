@@ -1286,11 +1286,18 @@ namespace ValheimHelper
             if (waiting == null && !ask.Task.StartsWith("호위:")) return JoinHelpGather(npc, ask.Task);
             if (waiting == null || !npc.Ai.Guard.Summon(waiting))
             {
-                Brain.Help.Postpone(ask.Task);
+                HelpPostpone(ask.Task, waiting);
                 return false;
             }
             Plugin.Log.LogInfo($"{npc.NpcName} 지원 요청 '{ask.Task}' → {waiting.NpcName} 쪽으로 달려감(대기열 맨 앞)");
             return true;
+        }
+        /// <summary>지원 요청을 미루고, 진척 없이 StaleAfter번 밀렸으면 한 번 로그 경고 + 요청한 일꾼 상태 말(사용자 11-13 "오래 끌면 말·diag").</summary>
+        static void HelpPostpone(string task, WorkerNpc asker)
+        {
+            if (!Brain.Help.Postpone(task)) return;
+            Plugin.Log.LogWarning($"지원 요청 '{task}' {HelpQueue.StaleAfter}번 미뤄짐 — 진척 없이 오래 끎");
+            asker?.Say("helpStale", new Dictionary<string, string> { ["task"] = task });
         }
         /// <summary>
         /// 쉬는 일꾼 없게 ⓐ-2(decisions 7절 "지원 요청 캐기 쪽"): 캐기 요청("호위:"로 안 시작하는 일)을 받으면 그 요청을 올린 일꾼의 같은 물건 일에 ShareGather 규칙대로 낀다.
@@ -1302,13 +1309,13 @@ namespace ValheimHelper
             if (lead == null) { Brain.Help.Remove(task); return false; }
             var g = (GatherJob)lead.Ai.Job;
             HashSet<ToolKind> ways = GatherJob.WaysFor(npc, g.Item);
-            if (ways.Count == 0) { Brain.Help.Postpone(task); return false; }
+            if (ways.Count == 0) { HelpPostpone(task, lead); return false; }
             var c = new ChatCommand { Kind = CommandKind.Item, Item = g.Item, Amount = g.Target };
             DepartureInput input = Input(npc, c, ways, true);
             input.Stock = 0;
             DepartureResult r = Departure.Judge(input);
             Plugin.Log.LogInfo($"{npc.NpcName} 지원 요청 '{task}' 같이 캐기 ({lead.NpcName}): {r.Action} ({r.Reason})");
-            if (r.Action != DepartAction.Go) { Brain.Help.Postpone(task); return false; }
+            if (r.Action != DepartAction.Go) { HelpPostpone(task, lead); return false; }
             var job = new GatherJob(npc, g.Item, g.Target, ways);
             foreach (var o in r.Avoid) job.AvoidZone(o.Zone);
             if (g.Team == null) g.Team = new List<GatherJob> { g };

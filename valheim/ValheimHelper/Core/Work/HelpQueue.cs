@@ -13,6 +13,8 @@ namespace ValheimHelper.Core.Work
     {
         /// <summary>이만큼 미뤄지면 다른 일보다 앞으로.</summary>
         public const int UrgentAfter = 2;
+        /// <summary>이만큼 미뤄지면 진척 없이 오래 끄는 것 — 상태 말·로그로 한 번 알림(사용자 11-13 "오래 끌면 말·diag").</summary>
+        public const int StaleAfter = 5;
 
         /// <summary>대기 중인 지원 요청 하나.</summary>
         public sealed class Ask
@@ -57,11 +59,13 @@ namespace ValheimHelper.Core.Work
             return best;
         }
 
-        /// <summary>그 일을 한 번 미룸(다른 일을 먼저 한 경우). 없는 일이면 무시.</summary>
-        public void Postpone(string task)
+        /// <summary>그 일을 한 번 미룸(다른 일을 먼저 한 경우). 없는 일이면 무시. 미룬 수가 막 StaleAfter에 닿으면 true(한 번만 알림).</summary>
+        public bool Postpone(string task)
         {
             var a = Find(task);
-            if (a != null) a.Postponed++;
+            if (a == null) return false;
+            a.Postponed++;
+            return a.Postponed == StaleAfter;
         }
 
         /// <summary>도우러 온 사람 수만큼 줄인다. 다 채워지면 지우고 true.</summary>
