@@ -126,6 +126,7 @@ namespace ValheimHelper
             TestKit.OldEnd(); // 옛 시험 끝 정리(로그가 이 시험 보고에 들어가게 먼저)
             Running = false;
             Workers.SkipGuard = false;
+            WorkerAI.TestHoldAll = false; // 재시작 시험 2번째가 중간에 끝나도 일꾼이 서 있지 않게
             s_report.Add($"시간: {Time.time - s_startTime:0}초"); // 시험 스크립트 요약에 시험별로 보인다(평소보다 오래 걸린 것 알아채기)
             float real = Mathf.Max(0.001f, Time.realtimeSinceStartup - s_startReal);
             s_report.Add($"프레임: 평균 {(Time.frameCount - s_startFrame) / real:0} FPS (실시간 {real:0}초)"); // 시험 틀 바꾸기: 동시 시험 때 느려짐을 보기 위함
@@ -218,6 +219,8 @@ namespace ValheimHelper
             if (s_autoQueue.Count == 0) return;
             s_auto = true;
             Workers.SkipGuard = true; // 월드 불러올 때 "호위병 없음 → 만듦"도 막는다(재시작 시험 2번째가 NPC 3/2로 FAIL, 회차 185)
+            // 재시작 시험 2번째: 일꾼이 시험보다 먼저 일을 이어 가 불러온 상태가 안 보이던 것(E072 회차 519) — 시험이 다 볼 때까지 일꾼을 세워 둠
+            WorkerAI.TestHoldAll = s_autoQueue.Peek() == "vh_restart2";
             Plugin.Log.LogInfo($"자동 시험 예약: 월드에 들어가면 {string.Join(", ", s_autoQueue.ToArray())}를 차례로 실행합니다.");
         }
 

@@ -199,6 +199,8 @@ namespace ValheimHelper
             // 게임이 실제로 꺼지기까지(로그아웃 저장) 몇 프레임 일꾼이 더 움직여 나무를 더 주울 수 있음 → 저장 때보다 적지만 않으면 됨(작업 저장도 1초마다라 그 짐과 맞음)
             checks.Add($"짐 그대로 (나무 {Carried(w.Ragnar, "Wood")} ≥ {carried}, 도끼 있음)",
                 Carried(w.Ragnar, "Wood") >= carried && Carried(w.Ragnar, "AxeFlint") == 1);
+            // 불러온 그대로를 다 봤으니 일꾼을 풂(TestRunner.CheckAutoRun이 세워 둠 — E072: 일꾼이 시험보다 먼저 나무 일을 끝냈음)
+            WorkerAI.TestHoldAll = false;
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job is GatherJob, 10f); // WorkSaves가 불러오고 한가하면 첫 칸을 꺼냄
             var g = w.Ragnar.Ai.Job as GatherJob;
             checks.Add($"하던 나무 이어 하기 ({g?.Item} 목표 {g?.Target}, 남았던 {left})", g != null && g.Item == "Wood" && g.Target == left);

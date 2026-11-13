@@ -33,6 +33,8 @@ namespace ValheimHelper
                     {
                         HashSet<ToolKind> ways = ResourceCatalog.WaysFor(w.Item);
                         if (ways.Count == 0) return;
+                        // 멈췄다 이어 가기: 멈춘 까닭과 먼저 모은 수를 남겨 로그로 확인(사용자 11-13)
+                        if (!string.IsNullOrEmpty(w.Why) || w.Got != 0) Plugin.Log.LogInfo($"{npc.NpcName} 이어 함: 멈춘 까닭 '{w.Why}', 먼저 모은 {w.Got}개, 남은 {w.Amount}개");
                         var job = new GatherJob(npc, w.Item, w.Amount, ways);
                         job.LoadStuck(w.Stuck); // 막힌 목적지는 불러와도 다시 안 감(사용자 결정 2026-10-23)
                         job.LoadPortal(w.PortalTag);

@@ -593,6 +593,12 @@ namespace ValheimHelper
         public int CarveSwings { get; private set; }
         /// <summary>시험용: 점프·경사로 깎기를 끄고 걷기만으로 나오는지 본다.</summary>
         public static bool TestNoJump, TestNoCarve;
+        /// <summary>
+        /// 시험용(E072): 재시작 시험 2번째(vh_restart2)가 불러온 그대로(짐·상자·하던 일·대기열)를 보기 전까지 일꾼이 아무것도 안 함.
+        /// 월드를 불러오면 일꾼은 플레이어가 나타나기(8초)·자동 시험 시작(3초)보다 먼저 일을 이어 가서, 곁에 통나무가 있으면 시험이 보기 전에 나무 일을 끝냈다.
+        /// TestRunner.CheckAutoRun이 켜고 RestartTest.Body2·TestRunner.Finish가 끈다.
+        /// </summary>
+        public static bool TestHoldAll;
         /// <summary>시험 기록: 길이 막혀 거점·상자로 순간이동한 횟수(임시 대책, 0이어야 좋다).</summary>
         public static int StuckTeleports;
 
@@ -1216,6 +1222,7 @@ namespace ValheimHelper
         public override bool UpdateAI(float dt)
         {
             if (!base.UpdateAI(dt)) return false;
+            if (TestHoldAll) { StopMoving(); return true; } // 시험용(E072): 불러온 그대로 멈춰 섬
             var npc = (WorkerNpc)m_character;
             npc.UpdateFood(dt);
             m_senseTimer -= dt;
