@@ -8,6 +8,20 @@
 
 ## 회차 기록
 
+### 회차 558 · 11-13 · 밤이 돼도 하던 일 안 접기
+
+**요약**
+
+- [11-13] 밤 접기 줄임(탐험·무덤 가기) — 커밋 a949deb5 · vh_coppertest 14/14, vh_exploretest 16/16, vh_raidtest 11/11 PASS
+
+**자세히**
+
+- 밤이 됐다는 것만으로 이미 나간 탐험(GatherJob.Search 111·369)·탐험 일(ExploreJob 76)·무덤 가기(GraveJob 90)를 접던 줄을 뺌. 새로 나가는 탐험은 밤엔 그대로 안 감.
+- 위험은 Guard(눈에 보이는 적 판단)가 계속 본다. 밤 적 몫 더하기·밤 목초지 시험·명령 거절(Commands 246)은 아직 — 다음 회차.
+- Core 711/711, 빌드 오류 0. 원격에 새 UserRequest 커밋이 있어 rebase 뒤 푸시.
+- E090(밤에 구리 작업 접힘)은 이 수정으로 시험 PASS, 관찰 유지.
+- 시험 로그에 "Unable to start Unity log writer"·NullReferenceException 9줄(종류 2) — 이번 변경과 무관해 보임, 확인 안 함.
+
 ### 회차 558 · 11-13 · 찾기 끝 시간 줄 추가(찾기 시간 전/후 측정)
 
 **요약**
