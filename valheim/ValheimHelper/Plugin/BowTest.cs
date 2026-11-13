@@ -13,7 +13,7 @@ namespace ValheimHelper
     {
         public static void Register() => TestRunner.Register("vh_bowtest", "활 사냥(사슴 → 가죽) 시험", () => TestKit.Flat(Run()));
 
-        static readonly string[] Stock = { "Bow", "ArrowWood", "DeerHide" };
+        static readonly string[] Stock = { "Bow", "ArrowWood", "DeerHide", "Wood", "Feathers" };
 
         static IEnumerator Run()
         {
@@ -52,20 +52,28 @@ namespace ValheimHelper
             checks.Add("멧돼지는 활 없이도 사냥감", !Prey.NeedsBow(ZNetScene.instance.GetPrefab("Boar").GetComponent<Character>()));
             TestKit.ClearBaseStock(w, Stock);
 
-            // 1) 활 없음 → 곧 그만두고 needBow
+            // 1) 활 없음·제작대 없음 → 곧 그만두고 needBow(제작은 안 검 — 사용자 11-13 "제작대가 없을 때만 지금처럼 말함")
+            bool bench0 = Recipes.At(w.Home).HasStation("$piece_workbench", 1);
             int heard = w.Heard.Count;
             GatherTest.Say("!DeerHide 1", null);
             yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob) && !(w.Floki.Ai.Job is GatherJob), 60f);
             checks.Add($"활 없으면 곧 그만둠 ({TestKit.Waited:0}초)", TestKit.Ok);
             bool said = false;
-            bool planSaid = false; // 대기열에 걸린 활 제작이 계획으로 돌았다(작업대 없어 접음 — 말풍선 "조잡한 활")
-            for (int i = heard; i < w.Heard.Count; i++) { if (w.Heard[i].Contains("활")) said = true; if (w.Heard[i].Contains("조잡한 활")) planSaid = true; }
+            for (int i = heard; i < w.Heard.Count; i++) if (w.Heard[i].Contains("활")) said = true;
             checks.Add("활이 필요하다고 말함", said);
-            checks.Add("활 제작을 대기열에 걸어 계획이 돎", planSaid);
+            if (bench0) TestRunner.Log("거점에 작업대 있음 → 제작 안 검 칸 건너뜀");
+            else checks.Add($"제작대 없으면 활 제작 안 검(대기열 {w.Ragnar.Ai.Queue.Count}·{w.Floki.Ai.Queue.Count})", w.Ragnar.Ai.Queue.Count == 0 && w.Floki.Ai.Queue.Count == 0);
 
-            // 2) 활+화살을 주고 사슴을 25m 앞에 세움
-            TestKit.PutInChest(w.Chest, "Bow", 1);
-            TestKit.PutInChest(w.Chest, "ArrowWood", 60);
+            // 2) 활·화살 대신 작업대 + 활·나무 화살 40개 재료를 주고 사슴을 25m 앞에 세움 → 스스로 만들어 쏘고 사냥을 이어 감(사용자 11-13)
+            if (!bench0) deer.Add(Object.Instantiate(ZNetScene.instance.GetPrefab("piece_workbench"), GatherTest.Ground(w.Home + w.Player.transform.rotation * new Vector3(-4f, 0f, 0f)), Quaternion.identity));
+            foreach (string item in new[] { "Bow", "ArrowWood" })
+            {
+                int n = item == "Bow" ? 1 : Core.Npc.Archery.ArrowsToCarry;
+                Recipe r = ObjectDB.instance.GetRecipe(ObjectDB.instance.GetItemPrefab(item).GetComponent<ItemDrop>().m_itemData);
+                int times = (n + r.m_amount - 1) / r.m_amount;
+                foreach (var req in r.m_resources) TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount * times);
+                TestRunner.Log($"{item} 재료 ×{times}: {string.Join(", ", System.Linq.Enumerable.Select(r.m_resources, q => q.m_resItem.name + " " + q.m_amount * times))}");
+            }
             // 지난 시험·야생 사슴을 치운다(남은 사슴에 쏘면 판정이 흐려짐)
             int old = 0;
             foreach (Character c in new List<Character>(Character.GetAllCharacters()))
@@ -84,8 +92,8 @@ namespace ValheimHelper
             {
                 if (hunter == null) hunter = w.Ragnar.Ai.Job is GatherJob ? w.Ragnar : w.Floki.Ai.Job is GatherJob ? w.Floki : null;
                 if (hunter != null && hunter.HoldingBow()) heldBow = true;
-                return GatherTest.CountBase(w.Home, "DeerHide") >= 1;
-            }, 180f);
+                return heldBow && GatherTest.CountBase(w.Home, "DeerHide") >= 1; // 활은 만든 뒤에만 생김 — 재료 가죽이 쓰인 뒤라 새로 잡은 가죽
+            }, 420f);
             checks.Add($"가죽이 상자에 ({GatherTest.CountBase(w.Home, "DeerHide")}개, {TestKit.Waited:0}초)", TestKit.Ok);
             checks.Add($"활을 들고 쏨({hunter?.NpcName})", heldBow);
             if (hunter == null) hunter = w.Ragnar;

@@ -476,7 +476,7 @@ namespace ValheimHelper
             int left = Mathf.Max(1, Remaining() - Carried());
             var cmd = new Core.Chat.ChatCommand { Kind = Core.Chat.CommandKind.Item, Item = Item, Amount = left };
             m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, WorkSaves.GatherItem(new Speaker("", ZDOID.None, ZDOID.None), cmd, ItemLabel(Item) + " " + left, ReadyWhen.Always)));
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 연장 부러짐({Item}): 남은 {left}개를 연장 제작 뒤로 다시 건다");
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 남은 일 다시 걸기({Item}): 남은 {left}개를 연장·활 제작 뒤로");
         }
 
         static readonly string[] AxeNames = { "AxeStone", "AxeFlint", "AxeBronze", "AxeIron", "AxeBlackMetal", "AxeJotunBane" };
@@ -499,15 +499,35 @@ namespace ValheimHelper
             return true;
         }
 
-        /// <summary>활이 없어 그만두기 전에: 기본 활(Bow)을 대기열에 제작으로 건다(사용자 11-13 "활 없을 때 맞는 것 먼저 만들기"). 활을 이미 가졌거나 제작법이 없거나 이미 걸려 있으면 안 함. 화살은 아직 안 만든다.</summary>
-        void QueueBowMake()
+        /// <summary>쏠 활·화살이 없어 그만두기 전에(사용자 11-13 "연장·활·화살이 없으면 스스로 만들기"): 거점에 그 제작대가 있으면 없는 것
+        /// (기본 활 Bow·나무 화살 ArrowWood 몫만큼)을 대기열에 제작으로 걸고 남은 사냥을 그 뒤에 다시 건다. 제작대·제작법이 없으면 안 함(그대로 needBow).
+        /// 같은 일꾼은 10분에 한 번만 — 재료를 못 구해 제작이 접히면 사냥↔제작을 되풀이하지 않게.</summary>
+        bool QueueBowMake()
         {
-            const string bow = "Bow";
-            if (Gear.BestBow(m_npc.GetInventory().GetAllItems()) != null) return;
-            if (m_ai.Queue.Exists(q => q.Label == ItemLabel(bow))) return;
-            if (ObjectDB.instance.GetItemPrefab(bow) == null || Recipes.Book().RecipesFor(bow).Count == 0) return;
-            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(bow), Item = bow, Amount = 1 }));
-            Plugin.Log.LogInfo($"{m_npc.NpcName} 활 없음({Item}): {bow} 제작을 대기열에 건다");
+            if (s_archeryAt.TryGetValue(m_npc, out float at) && Time.time - at < 600f) return false;
+            ItemDrop.ItemData bow = Gear.BestBow(m_npc.GetInventory().GetAllItems());
+            bool made = false;
+            if (bow == null) made = QueueMakeAt("Bow", 1);
+            if (bow == null ? made : Gear.CountArrows(m_npc.GetInventory(), bow) == 0) made |= QueueMakeAt("ArrowWood", Archery.ArrowsToCarry);
+            if (!made) return false;
+            s_archeryAt[m_npc] = Time.time;
+            RequeueRest();
+            return true;
+        }
+
+        static readonly Dictionary<WorkerNpc, float> s_archeryAt = new Dictionary<WorkerNpc, float>();
+
+        /// <summary>거점에 제작대가 있는 물건을 대기열 제작으로 건다. 이미 걸렸으면 true, 제작법·제작대가 없으면 false.</summary>
+        bool QueueMakeAt(string prefab, int amount)
+        {
+            if (m_ai.Queue.Exists(q => q.Label == ItemLabel(prefab))) return true;
+            GameObject go = ObjectDB.instance.GetItemPrefab(prefab);
+            Recipe r = go != null ? ObjectDB.instance.GetRecipe(go.GetComponent<ItemDrop>().m_itemData) : null;
+            if (r == null || Recipes.Book().RecipesFor(prefab).Count == 0) return false;
+            if (r.m_craftingStation != null && !Recipes.At(m_npc.Home).HasStation(r.m_craftingStation.m_name, r.m_minStationLevel)) return false;
+            m_ai.Queue.Add(WorkSaves.ToQueued(m_npc, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = ItemLabel(prefab), Item = prefab, Amount = amount }));
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 활·화살 없음({Item}): {prefab} {amount} 제작을 대기열에 건다");
+            return true;
         }
 
         static Container FindToolChest(WorkerNpc npc, ToolKind kind)

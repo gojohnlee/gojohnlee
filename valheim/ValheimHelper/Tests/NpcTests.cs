@@ -84,7 +84,7 @@ public class SpeechTests
     {
         // 대사 늘리기 가)(회차 256): 자주 듣는 일 대사는 셋 이상으로 돌려 말한다
         var keys = new[] { "bagFull", "craft.missingGather", "craft.missingDone", "setEmpty", "prepOnce", "prepKeep", "prepOff", "prepNoChest", "prepShort",
-            "craft.farm", "farmNoField", "preyWaitGuard", "depart.noCrypt", "escort.noMate" };
+            "craft.farm", "farmNoField", "preyWaitGuard", "depart.noCrypt", "escort.noMate", "bowMake" };
         foreach (var p in new[] { Personality.Ragnar, Personality.Floki })
             foreach (var k in keys) Assert.True(Speech.Options(p, k).Length >= 3, p + " " + k);
     }

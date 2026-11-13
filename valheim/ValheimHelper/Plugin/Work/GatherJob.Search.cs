@@ -47,7 +47,7 @@ namespace ValheimHelper
                 if (m_packFoe != null) return GiveUp("preyPack");
                 if (m_strongFoe != null) return GiveUp("preyStrong");
                 // 사슴 가죽처럼 활로만 잡는 것뿐인데 쏠 활·화살이 없다(장비 상자에 넣어 주면 Prep이 챙긴다)
-                if (!Prey.Any(Item, false) && (m_bowFailed || m_npc.ShootingBow() == null)) { QueueBowMake(); return GiveUp("needBow"); }
+                if (!Prey.Any(Item, false) && (m_bowFailed || m_npc.ShootingBow() == null)) return GiveUp(QueueBowMake() ? "bowMake" : "needBow");
             }
             else if (FindInSight(out ZDO zdo))
             {
