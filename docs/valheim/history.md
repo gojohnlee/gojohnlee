@@ -12,7 +12,7 @@
 
 **요약**
 
-- E088 칸 D 추가·닫음(커밋 59e2567 · vh_waitjointest 9/9 PASS 2판)
+- E088 칸 D 추가·닫음(커밋 23a2b579 · vh_waitjointest 9/9 PASS 2판)
 
 **자세히**
 
