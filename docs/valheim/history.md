@@ -8,6 +8,20 @@
 
 ## 회차 기록
 
+### 회차 521 · 11-13 · 기다림·합류 시험 재확인(E088 관찰)
+
+**요약**
+
+- 빌드 통과, Core 테스트 709/709, 기다림·합류 시험 vh_waitjointest 6/6 PASS(59초). 코드는 안 바꿈
+
+**자세히**
+
+- 루프 첫 명령 restart는 "loop is up to date". 요청 덩어리 없음, "다음" 첫 줄은 쉬는 일꾼·지원 기다리기 묶음
+- ./scripts/valheim-build.sh 통과, dotnet test ValheimHelper.slnx 709/709
+- 게임 시험 vh_waitjointest: 6/6 PASS, 판정 59초, 끝에 라그나·플로키 나무 31개·넝쿨베리 상자 채움 대사까지 PASS
+- E088(플로키 끝난 뒤 186~203m 머묾)은 이번 59초 실행에서 안 봄 → 관찰 중 유지. 240초 긴 실행이 필요해 다음 회차에서 재현 시도 대신 원인 찾기 전까지 보류
+- 로그 오류 1줄 "Unable to start Unity log writer"는 BepInEx 쪽 소음으로 보고 Errors 항목은 안 만듦
+
 ### 회차 520 · 11-13 · 기다림 시험 다시 돌려 보기 (E088 확인)
 
 **요약**
