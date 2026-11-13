@@ -102,7 +102,7 @@ namespace ValheimHelper
             return prey && foe != null;
         }
 
-        /// <summary>쫓아가 친다(Guard.UpdateFight와 같은 방식). 죽으면 떨어진 것을 줍고, 2분 안에 못 잡거나 체력이 40% 아래면 그만둔다.</summary>
+        /// <summary>쫓아가 친다(Guard.UpdateFight와 같은 방식). 죽으면 떨어진 것을 줍고, 체력을 60초 못 깎거나(10분 상한, PreyProgress) 일꾼 체력이 40% 아래면 그만둔다.</summary>
         bool UpdateHunt(float dt)
         {
             if (m_prey != null && !m_prey.IsDead()) m_preyPos = m_prey.transform.position;
@@ -122,9 +122,14 @@ namespace ValheimHelper
                 m_prey = null;
                 return HurtStop("사냥", "huntHurt", "huntTooHard");
             }
-            if (m_stepTime > HuntLimit)
+            if (m_progressOf != m_prey) { m_progressOf = m_prey; m_preyProgress.Start(m_prey.GetHealth(), Time.time); }
+            PreyProgress.Verdict verdict = m_preyProgress.Tick(m_prey.GetHealth(), Time.time);
+            if (m_preyProgress.NoteLong(Time.time))
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {PreyProgress.LongSeconds:0}초 넘음(체력 {m_prey.GetHealth():0}/{m_prey.GetMaxHealth():0}, 깎는 중이라 계속)");
+            if (verdict != PreyProgress.Verdict.Keep)
             {
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: {HuntLimit:0}초 안에 못 잡아 포기");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: " + (verdict == PreyProgress.Verdict.NoHarm
+                    ? $"{PreyProgress.NoHarmSeconds:0}초 동안 못 깎아 다른 놈" : $"{PreyProgress.MaxSeconds:0}초 넘어 포기") + $"({m_preyProgress.Elapsed(Time.time):0}초)");
                 m_huntSkip[m_prey] = float.MaxValue;
                 m_prey = null;
                 Go(Step.Search);
@@ -148,6 +153,9 @@ namespace ValheimHelper
             }
             return true;
         }
+
+        readonly PreyProgress m_preyProgress = new PreyProgress();
+        Character m_progressOf;
 
         /// <summary>사냥감이 거의 서 있다고 보는 실제 속력(m/s) — 도망치면 남은 길이 안 줄어도 막힌 게 아니다.</summary>
         const float PreyStill = 0.5f;
