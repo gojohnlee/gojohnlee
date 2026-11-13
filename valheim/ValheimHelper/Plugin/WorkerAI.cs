@@ -1249,6 +1249,27 @@ namespace ValheimHelper
                 }
             }
             GuardBusy = m_guard.Update(dt);
+            // 밤에 센 적에게서 도망쳤으면 일을 접고 거점으로, 하던 일은 대기열 맨 앞에서 아침에 이어 감(요청 밤 몫 ② 11-13)
+            if (m_guard.TakeFleeEnded() && Current == Mode.Work && Job != null && EnvMan.IsNight())
+            {
+                npc.Say("nightRetreat");
+                bool keep = !Yields;
+                Interrupt("밤 위험");
+                if (keep && Queue.Count > 0)
+                {
+                    QueuedWork q = Queue[0];
+                    if (q.Work != null)
+                    {
+                        q.Work.Ready = ReadyWhen.Morning;
+                        q.Work.NotBefore = 0; // 이미 밤이라 "밤이 아니면" 만으로 다음 아침(시험의 시각 고정에서도 맞음)
+                        q.Ready = () => WorkState.IsReady(q.Work, ZNet.instance.GetTimeSeconds(), EnvMan.IsNight());
+                    }
+                    else q.Ready = () => !EnvMan.IsNight();
+                }
+                Plugin.Log.LogInfo($"{npc.NpcName} 밤 위험: 일 접고 귀환, 아침에 이어 감({(keep ? "대기열 맨 앞" : "남의 일 돕기라 안 남김")})");
+                GoHome(false);
+                return true;
+            }
             if (m_patrol.Walking && m_guard.Engaged && !m_patrolFighting) m_roundFights++; // 순찰 중 싸움 셈(diag)
             m_patrolFighting = m_guard.Engaged;
             if (GuardBusy) { m_patrolTick = Time.time; return true; } // 싸움·물러나기·도망·미드 중: 일·따라가기는 쉰다(호위병 순찰은 싸운 뒤 이어 감)

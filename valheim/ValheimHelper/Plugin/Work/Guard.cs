@@ -49,6 +49,9 @@ namespace ValheimHelper
         /// <summary>시험·!상태용.</summary>
         public string StateName => m_state.ToString();
         public bool Fleeing => m_state == State.Flee;
+        bool m_fleeEnded;
+        /// <summary>도망이 끝까지 갔으면(도착·40초·물) 한 번 true — 밤이면 WorkerAI가 일을 아침으로 미룬다(요청 밤 몫 ②).</summary>
+        public bool TakeFleeEnded() { bool e = m_fleeEnded; m_fleeEnded = false; return e; }
         /// <summary>싸우거나 물러나거나 도망치는 중(시험이 이 동안 시간을 멈춤).</summary>
         public bool Engaged => m_state != State.Calm;
         /// <summary>시험용: 불러 놓고 동료를 기다리는 중.</summary>
@@ -951,6 +954,7 @@ namespace ValheimHelper
             if (there || m_fleeTime > 40f || m_ai.WaterBlockedTime > WorkerAI.WaterGiveUp)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 도망 끝: {(there ? "도착" : m_fleeTime > 40f ? "40초" : "물에 막힘")}");
+                m_fleeEnded = true;
                 m_ai.StopMoving();
                 m_state = State.Calm;
                 return TryHelpPlayer();

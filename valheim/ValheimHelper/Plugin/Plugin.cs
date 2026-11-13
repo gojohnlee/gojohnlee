@@ -83,6 +83,7 @@ namespace ValheimHelper
             Step("vh_birdprobetest", BirdProbeTest.Register);
             Step("vh_birdshoottest", BirdShootTest.Register);
             Step("vh_nightexploretest", NightExploreTest.Register);
+            Step("vh_nightretreattest", NightRetreatTest.Register);
             Step("vh_arrowtest", ArrowTest.Register);
             Step("vh_guardbowtest", GuardBowTest.Register);
             Step("vh_silvertest", SilverTest.Register);
