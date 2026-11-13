@@ -22,7 +22,7 @@ namespace ValheimHelper
             public int Feathers;
         }
 
-        public static void Register() => TestRunner.Register("vh_birdshoottest", "땅 앉은 새 명중 셈(낮·밤, 거리별)", () => TestKit.Flat(Run()));
+        public static void Register() => TestRunner.Register("vh_birdshoottest", "땅 앉은 새 명중 셈(낮·밤, 거리별)", () => TestKit.Flat(Run()), 2400f);
 
         static IEnumerator Run()
         {
@@ -132,6 +132,18 @@ namespace ValheimHelper
                 yield return null;
             }
 
+            // 다 당긴 채 스스로 앉기를 최대 20초 기다린다(회차 550: 강제 앉힘 없이 앉은 새만 쏘려고). 앉으면 바로 놓는다.
+            // 안 앉으면 아래에서 강제 앉힘으로 넘어간다(Forced 표시).
+            float waitSit = 0f;
+            while (bird != null && npc.HoldingBow() && !IsLanded(bird) && waitSit < 20f)
+            {
+                npc.Ai.Face(bird.transform.position);
+                pct = npc.DrawBow(Time.deltaTime);
+                waitSit += Time.deltaTime;
+                yield return null;
+            }
+            if (bird != null && IsLanded(bird) && sitSince < 0f) sitSince = Time.time;
+
             // 스스로 앉았는지(강제 전) — 아니면 강제 앉힘(시험이 자리에 앉힘, 앉은 시간 0)
             bool natural = bird != null && IsLanded(bird);
             Vector3 landAt = at;
@@ -176,6 +188,8 @@ namespace ValheimHelper
             // 쉬는 일꾼은 잡담 중 WorkerBanter.Facing으로 동료를 본다 → 화살이 생길 때까지 겨눔 유지(Hunt.UpdateShoot도 공격 중 틱마다 Face).
             GameObject prev = bow.m_lastProjectile, arrow = null;
             bool shot = npc.ReleaseBow();
+            // 스스로 앉은 새면 앉은 뒤 놓을 때까지의 시간(회차 550: 앉은 시간을 놓는 순간에 잼)
+            if (natural && sitSince >= 0f) s.Sat = Time.time - sitSince;
             // 앉힌 뒤 놓기까지 걸린 시간과 그때 새가 아직 앉아 있는지(이륙은 landed 가지에서 m_landedTimer > 2초)
             TestRunner.Log($"DIAG 놓기 {dist:0}m: 앉힌 뒤 {Time.time - landTime:0.00}초 · 놓을 때 앉음 {(bird != null && IsLanded(bird))} · 겨눔 기다림 {aimWait:0.00}초 · 새 있음 {bird != null}");
             string hitWhat = "없음", colInfo = "화살 못 봄";
