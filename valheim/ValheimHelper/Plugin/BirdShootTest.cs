@@ -117,6 +117,9 @@ namespace ValheimHelper
             GameObject prefab = ZNetScene.instance.GetPrefab("Crow");
             var bird = Object.Instantiate(prefab, at, Quaternion.identity).GetComponent<RandomFlyingBird>();
             if (bird == null) yield break;
+            // 떨굼 원인 진단(회차 551): 떨굼 부품이 있는지, 이 판에서 새를 내가 가진(ZDO 주인) 것인지
+            var dropPart = bird.GetComponent<DropOnDestroyed>();
+            TestRunner.Log($"DIAG 새 부품: 떨굼 부품 {(dropPart != null)} · 떨굼 표 {(dropPart != null && dropPart.m_dropWhenDestroyed != null)} · 내 것 {bird.GetComponent<ZNetView>()?.IsOwner()}");
 
             // 최대 8초 안에 다 당긴다
             // sitSince = 스스로 앉은 것을 처음 본 시각(날면 −1로 되돌림) — 앉은 시간은 이 값부터 잰다
@@ -159,7 +162,7 @@ namespace ValheimHelper
             s.Dist = Vector3.Distance(npc.GetEyePoint(), landAt);
             s.Sat = natural && sitSince >= 0f ? Time.time - sitSince : 0f;
             s.Forced = !natural;
-            int feathersBefore = GatherTest.GroundCount(landAt, "Feather");
+            int feathersBefore = GatherTest.GroundCount(landAt, "Feathers");
             TestRunner.Log($"DIAG 진단 {dist:0}m: 새 {(bird == null ? "없음" : "있음")} · 스스로 앉음 {natural} · 당김 {pct:0.00}");
 
             // 날아가는 값(속력·중력)으로 앞질러 겨눔 — Hunt.UpdateShoot과 같은 방식(새는 안 움직인다고 봄)
@@ -231,8 +234,21 @@ namespace ValheimHelper
             s.Hit = bird == null;
             // 화살이 새 앞의 나무(Lod0)에 막혔는지 따로 셈 — 빗나감 원인 가르기(시험 자리 문제)
             s.Tree = bird != null && hitWhat.StartsWith("Lod0");
-            s.Feathers = GatherTest.GroundCount(landAt, "Feather") - feathersBefore;
+            s.Feathers = GatherTest.GroundCount(landAt, "Feathers") - feathersBefore;
+            TestRunner.Log($"DIAG 떨굼 {dist:0}m: 죽음 {s.Hit} · 깃털 셈 {s.Feathers} · 자리 10m 안 물건 {NearItems(landAt)}");
             if (bird != null) ZNetScene.instance.Destroy(bird.gameObject);
+        }
+
+        // 자리 10m 안 물건 이름(떨굼이 어디 떨어졌는지 봄 — 깃털 셈 자리·반경이 맞는지 확인용)
+        static string NearItems(Vector3 center)
+        {
+            var names = new List<string>();
+            foreach (var zdo in Senses.Nearby(center, 10f))
+            {
+                ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                if (v != null) names.Add(Utils.GetPrefabName(v.gameObject));
+            }
+            return names.Count == 0 ? "없음" : string.Join(", ", names);
         }
 
         // 새가 땅에 앉았는지(ZNetView의 ZDO landed). 없으면 안 앉은 것으로 본다
