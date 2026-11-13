@@ -128,7 +128,8 @@ if ($env:VH_RESET -ne '0') {
 }
 # 멀티 시험: $env:VH_JOIN='127.0.0.1:2456'(+ $env:VH_JOINPASS, 기본 vhtest1)이면 월드 대신 전용 서버(scripts/vh-server.ps1 start)에 손님으로 들어간다.
 $Enter = if ($env:VH_JOIN) { "join=$($env:VH_JOIN);pass=$(if ($env:VH_JOINPASS) { $env:VH_JOINPASS } else { 'vhtest1' });" } else { "world=$World;" }
-Set-Content "$plugin\autotest.txt" ("${Enter}char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $(if ($env:VH_QUICK -eq '1') { 'quick;' } else { '' }) + $(if ($env:VH_FLOOR -eq '1') { 'floor;' } else { '' }) + $(if ($env:VH_HOUSE -eq '1') { 'house;' } else { '' }) + $(if ($env:VH_BIOME) { "biome=$($env:VH_BIOME);" } else { '' }) + $Run)   # 늪 회귀 $env:VH_BIOME='swamp'(밭 시험 등은 원래 자리). 약식 시험 $env:VH_QUICK='1'(긴 시험만 짧게, FAIL이면 정식으로 다시). 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
+Set-Content "$plugin\autotest.txt" ("${Enter}char=$Char;" +$(if ($Min) { 'min;' } else { '' }) + $(if ($env:VH_QUICK -eq '1') { 'quick;' } else { '' }) + $(if ("$env:VH_SPEED" -match '^[0-9.]+$') { "speed=$($env:VH_SPEED);" } else { 'speed=3;' }) + $(if ($env:VH_FLOOR -eq '1') { 'floor;' } else { '' }) + $(if ($env:VH_HOUSE -eq '1') { 'house;' } else { '' }) + $(if ($env:VH_BIOME) { "biome=$($env:VH_BIOME);" } else { '' }) + $Run)   # 늪 회귀 $env:VH_BIOME='swamp'(밭 시험 등은 원래 자리). 약식 시험 $env:VH_QUICK='1'(긴 시험만 짧게, FAIL이면 정식으로 다시). 모드가 월드에 들어가 저절로 시험하고 게임을 끈다
+# 배속(사용자 11-13): 자동 시험은 기본 3배(speed=3). $env:VH_SPEED="1"이면 1배(최종 실전 시험·1배와 결과 다른 시험 확인). 손님 있는 시험은 게임이 1배로 묶음
 Write-Host 'Valheim Helper 설치됨'
 
 # BepInEx 콘솔(검은 창)이 게임과 같이 뜨지 않게 끈다(로그는 LogOutput.log에 그대로 남는다). 설정 파일은 첫 실행 뒤에 생긴다.

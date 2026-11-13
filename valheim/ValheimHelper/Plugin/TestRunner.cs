@@ -15,6 +15,13 @@ namespace ValheimHelper
         public static bool Running { get; private set; }
         /// <summary>약식 시험(사용자 결정 10-23 "시험 정식·약식"): autotest.txt에 "quick"(스크립트 $env:VH_QUICK='1'). 긴 시험이 같은 판정 칸을 짧게 본다. 약식 FAIL이면 정식으로 다시.</summary>
         public static bool Quick;
+        /// <summary>시험 배속(사용자 11-13 "시험 속도 3배"): autotest.txt "speed=N"(스크립트 $env:VH_SPEED, 기본 3·1이면 끔). 시험 도는 동안만 Game.FadeTimeScale(N)
+        /// — 게임이 손님 있으면 1배로 묶음(Game.UpdatePause). 1배와 결과가 다른 시험·최종 실전 시험은 RealSpeed에 이름을 넣어 1배.</summary>
+        public static float Speed = 1f;
+        static readonly HashSet<string> RealSpeed = new HashSet<string>();
+        static float s_speed = 1f;
+        /// <summary>실제 시간(초)으로 정해진 기다림(Claude 답 등)을 게임 시간 기다림으로: 배속만큼 늘린다.</summary>
+        public static float Real(float sec) => sec * s_speed;
         /// <summary>E049 용암 위 바닥 길 시험(vh_ashlandstest 나) FloorWalk): autotest.txt에 "floor"(스크립트 $env:VH_FLOOR='1').</summary>
         public static bool Floor;
         /// <summary>시험 기본 집(te4st41 TheNewEra 집)을 거점으로 — woodtest·stonetest(HouseBase): autotest.txt에 "house"(스크립트 $env:VH_HOUSE='1'). 집 걸음이 고쳐질 때까지 기본 끔.</summary>
@@ -86,13 +93,14 @@ namespace ValheimHelper
             ResetTestSwitches();
             s_gen++;
             s_timeout = s_timeouts.TryGetValue(name, out float lim) ? lim : DefaultTimeout;
+            s_speed = s_auto && !RealSpeed.Contains(name) ? Mathf.Clamp(Speed, 1f, 5f) : 1f;
             s_startTime = Time.time;
             s_startReal = Time.realtimeSinceStartup;
             s_startFrame = Time.frameCount;
             Minimized.Release();
             s_terminal = t;
             if (!s_auto) s_report.Clear(); // 자동 시험 여러 개는 한 보고에 이어 쓴다
-            s_report.Add($"=== {name} {System.DateTime.Now:yyyy-MM-dd HH:mm:ss} 게임 {Version.GetVersionString()} Unity {Application.unityVersion} 모드 {Plugin.FullVersion} ===");
+            s_report.Add($"=== {name} {System.DateTime.Now:yyyy-MM-dd HH:mm:ss} 게임 {Version.GetVersionString()} Unity {Application.unityVersion} 모드 {Plugin.FullVersion}{(s_speed > 1f ? $" 배속 {s_speed:0.#}" : "")} ===");
             s_report.Add("플러그인: " + Plugin.PluginList());
             // 월드에 남은 "!채워" 기준치는 한가한 일꾼을 내보내 다른 시험을 흔든다(E039) — 필요한 시험은 스스로 다시 건다
             ClaudeChat.Drop(); // 앞 시험이 던진 자연어 명령의 늦은 해석 답도 버린다(E039: npctest "!나무 좀 많이 가져와" → flagtest 중 "나무 20")
@@ -125,6 +133,7 @@ namespace ValheimHelper
         {
             TestKit.OldEnd(); // 옛 시험 끝 정리(로그가 이 시험 보고에 들어가게 먼저)
             Running = false;
+            if (s_speed > 1f) { s_speed = 1f; Game.FadeTimeScale(1f); }
             Workers.SkipGuard = false;
             WorkerAI.TestHoldAll = false; // 재시작 시험 2번째가 중간에 끝나도 일꾼이 서 있지 않게
             s_report.Add($"시간: {Time.time - s_startTime:0}초"); // 시험 스크립트 요약에 시험별로 보인다(평소보다 오래 걸린 것 알아채기)
@@ -211,6 +220,7 @@ namespace ValheimHelper
                 else if (c.StartsWith("pass=")) AutoStart.Pass = c.Substring(5).Trim();
                 else if (c == "min") Minimized.On = true; // 창 최소화·소리 끔(시험 동안 다른 게임)
                 else if (c == "quick") Quick = true;
+                else if (c.StartsWith("speed=") && float.TryParse(c.Substring(6), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sp)) Speed = sp;
                 else if (c == "floor") Floor = true;
                 else if (c == "house") House = true;
                 else if (c.StartsWith("biome=")) TestKit.SetRunBiome(c.Substring(6).Trim()); // 늪 회귀: 그 바이옴 평지에서 시험
@@ -233,6 +243,8 @@ namespace ValheimHelper
             // (회차 139: peertest 뒤 회색난쟁이 4마리 → basetest 환경 불량) → 자동 시험 동안 신 모드를 유지한다(Restore가 끄면 다음 프레임에 다시 켬).
             if (TestKit.RunBiome != Heightmap.Biome.None && Player.m_localPlayer is Player me && !me.IsDead() && !me.InGodMode()) me.SetGodMode(true);
             // 시험이 오류로 끝나지 않으면 5분 뒤 결과를 남기고 넘어간다(사용자가 지켜보지 않아도 되게).
+            // 배속은 매 프레임 다시 건다(Game.Unpause 등이 m_timeScale을 1로 되돌림). 일시정지 중엔 안 건드림.
+            if (Running && s_speed > 1f && !Game.IsPaused() && Time.timeScale != s_speed) Game.FadeTimeScale(s_speed);
             if (Running)
             {
                 if (Time.time - s_startTime > s_timeout)
