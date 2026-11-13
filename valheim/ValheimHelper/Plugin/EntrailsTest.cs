@@ -73,14 +73,15 @@ namespace ValheimHelper
             w.Ragnar.ClearHurt(); w.Floki?.ClearHurt();
             Quaternion rot = w.Player.transform.rotation;
             int portals0 = PortalBuilder.Mine().Count, wave = 0, hurtNo = 0, trips = 0;
-            float start = Time.time;
+            float start = Time.time, lastGone = -100f;
             var recover = new List<string>();
             WorkerNpc lastHunter = null;
             bool wasHome = true;
             GatherTest.Say($"!Entrails {Goal}", null);
-            while (GatherTest.CountBase(w.Home, "Entrails") < Goal && Time.time - start < 1200f)
+            while (GatherTest.CountBase(w.Home, "Entrails") < Goal && Time.time - start < 1380f)
             {
-                if (Alive(spawned, prey) == 0 && wave < 30) // 한 마리씩(넷이면 preyPack, 맞는 판단), 집에서 45~55m
+                if (Alive(spawned, prey) > 0) lastGone = Time.time;
+                if (Alive(spawned, prey) == 0 && wave < 60 && Time.time - lastGone > 3f) // 한 마리씩(넷이면 preyPack, 맞는 판단), 집에서 45~55m. 죽고 3초 뒤(20초면 그사이 탐험 나가 막혀 cantReach — 회차 580, 창자는 확률 떨굼이라 60마리까지)
                 {
                     for (int i = 0; i < 1; i++)
                     {
@@ -97,7 +98,7 @@ namespace ValheimHelper
                 if (wasHome && !home) trips++;
                 wasHome = home;
                 int got = GatherTest.CountBase(w.Home, "Entrails");
-                if (h != null && Utils.DistanceXZ(h.transform.position, h.Home) > 30f && (hurtNo == 0 && got >= 4 || hurtNo == 1 && got >= 12))
+                if (h != null && Utils.DistanceXZ(h.transform.position, h.Home) > 15f && (hurtNo == 0 && got >= 4 || hurtNo == 1 && got >= 12))
                 {
                     hurtNo++;
                     if (hurtNo == 2 && shroom != null) // 두 번째는 둘레에 버섯 → 근처 채집 대기

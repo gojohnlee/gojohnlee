@@ -35,6 +35,9 @@ namespace ValheimHelper.Core.Work
 
         public static bool IsHurt(float health, float max) => max > 0f && health < max * Hurt;
         public static bool IsReady(float health, float max) => max <= 0f || health >= max * Full;
+        /// <summary>사냥 중 물러남: 체력이 덜 찬 채였으면 장비·무리 탓이 아니라 다침 — 회복하고 이어 감(회차 580 vh_entrailstest, 58%에서 드라우그에 물러남).
+        /// 다 찬 채 물러났으면 정말 센 것(preyPack·preyStrong).</summary>
+        public static bool RetreatIsHurt(float health, float max) => !IsReady(health, max);
 
         /// <summary>다친 곳을 셈. 같은 곳이 GiveUpAfter번이 되면 true(접음).</summary>
         public bool Record(float x, float z)

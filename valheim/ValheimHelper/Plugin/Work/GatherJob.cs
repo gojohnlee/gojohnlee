@@ -250,6 +250,9 @@ namespace ValheimHelper
             return GiveUp(tooHard ? tooHardKey : hurtKey);
         }
 
+        /// <summary>사냥 중 크게 다친 채 물러남(AvoidHere) — 다음 Search가 HurtStop.</summary>
+        bool m_hurtRetreat;
+
         /// <summary>이 일 동안 체력이 크게 다침 선 위였던 적이 있음 — 다친 채로 시작한 일은 바로 접지 않게.</summary>
         bool m_wasWell;
 
@@ -334,7 +337,9 @@ namespace ValheimHelper
                 return;
             }
             m_avoid.Add(Senses.ZoneOf(danger));
-            if (m_hunt && m_packFoe == null && PreyNear(danger, out string foe))
+            // 사냥 중 체력이 덜 찬 채 물러났다 → 무리 탓(preyPack)으로 접지 말고 다음 Search에서 다침 칸(요청 다침 ⑤, vh_entrailstest)
+            if (m_hunt && Core.Work.Recovery.RetreatIsHurt(m_npc.GetHealth(), m_npc.GetMaxHealth())) m_hurtRetreat = true;
+            else if (m_hunt && m_packFoe == null && PreyNear(danger, out string foe))
             {
                 // ⑫ 사냥감이 위험한 무리 속에 있어 물러나거나 도망쳤다 → 다른 데를 헤매지 말고 같이 가 달라고 한다(다음 Search에서 preyPack)
                 m_packFoe = foe;

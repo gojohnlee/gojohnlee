@@ -38,6 +38,7 @@ namespace ValheimHelper
             }
             if (m_hunt)
             {
+                if (m_hurtRetreat) { m_hurtRetreat = false; return HurtStop("사냥", "huntHurt", "huntTooHard"); }
                 if (FindPrey()) { Go(Step.Hunt); return true; }
                 // ⑫ 풀링 마을 무리·록스처럼 혼자면 못 잡는 사냥감: 호위병과 둘이면 되면 불러서 같이, 바쁘면 남은 양을 호위병이 쉴 때로 미룸(사용자 결정 2026-10-26)
                 if ((m_packFoe != null || m_strongFoe != null) && CallGuardForPrey()) return true;

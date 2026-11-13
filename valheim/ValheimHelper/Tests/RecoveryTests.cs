@@ -15,6 +15,13 @@ namespace ValheimHelper.Tests
         }
 
         [Fact]
+        public void RetreatBelowFullIsHurt()
+        {
+            Assert.True(Recovery.RetreatIsHurt(41f, 71f));
+            Assert.False(Recovery.RetreatIsHurt(70f, 71f));
+        }
+
+        [Fact]
         public void ThirdBigHurtAtSamePlaceGivesUp()
         {
             var r = new Recovery();
