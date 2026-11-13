@@ -29,5 +29,8 @@ namespace ValheimHelper.Core.Npc
 
         /// <summary>모르는 적: tried명으로 안 됐으면 다음 인원, Max명도 안 됐으면 0(못 하겠어).</summary>
         public static int Next(int tried) => tried < 1 ? 1 : tried >= Max ? 0 : tried + 1;
+
+        /// <summary>출발 때 처음 맞출 인원: 아는 적(known)은 Needed 그대로(셋도 안 되면 0 = 출발 안 하고 장비 요청), 모르는 적은 Next(tried).</summary>
+        public static int Start(bool known, int needed, int tried) => known ? needed : Next(tried);
     }
 }

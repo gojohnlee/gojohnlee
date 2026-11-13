@@ -31,5 +31,14 @@ namespace ValheimHelper.Tests
             Assert.Equal(3, TeamPlan.Next(2));
             Assert.Equal(0, TeamPlan.Next(3));
         }
+
+        [Fact]
+        public void StartKnownFoeUsesNeeded()
+        {
+            Assert.Equal(2, TeamPlan.Start(true, 2, 0));
+            Assert.Equal(0, TeamPlan.Start(true, 0, 0));
+            Assert.Equal(1, TeamPlan.Start(false, 0, 0));
+            Assert.Equal(3, TeamPlan.Start(false, 0, 2));
+        }
     }
 }
