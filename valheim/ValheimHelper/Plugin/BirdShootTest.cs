@@ -111,6 +111,7 @@ namespace ValheimHelper
             // 땅에 앉을 때까지 기다린다(ZDO landed, 8초 넘으면 그냥 감). 앉은 뒤부터 잰다
             yield return TestKit.WaitFor(() => bird == null || IsLanded(bird), 8f);
             float landedAt = Time.time;
+            TestRunner.Log($"DIAG 진단 {dist:0}m: 새 {(bird == null ? "없음" : "있음")} · ZDO {(bird != null && bird.GetComponent<ZNetView>()?.GetZDO() != null ? "있음" : "없음")} · 앉음 {(bird != null && IsLanded(bird))} · 기다린 뒤 위치 {(bird == null ? "-" : Vector3.Distance(bird.transform.position, at).ToString("0.0"))}m");
 
             // 당기면서 새를 보고, 다 당기면 놓는다(3초 넘으면 그냥 놓음)
             float t = 0f;
