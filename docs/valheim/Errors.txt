@@ -26,12 +26,6 @@ E065 / 멈춤(3회차: 355·356·357) — vh_woodtest "쓰러뜨린 나무의 �
   회차 355: 조사 중으로 올림(두 번째 나옴). 셀 수 있는 원인 둘 — ① 자기 통나무 자리 기억 8개 한도(잊으면 그 통나무를 다시 안 고름) ② 한 번 건너뛴(Skip) 통나무는 다시 안 고름. 시험 판마다 자리는 2~3개라 ①은 아닐 듯(그래도 32로 늘림, 4a40eb7). 시험이 남은 통나무마다 "건너뜀(단계 줄N)"·"잊은 자리 N"을 적게 함. wood→stone→unloadreach→wood→wood 5/5 PASS, 재현 안 됨. 다음: 다시 나오면 그 칸의 건너뜀 까닭 줄로 원인.
   회차 356(조사 2/3): 세 묶음(wood→stone→unloadreach→prep→house→wood→wood 등)에서 나무 시험 6판 모두 14/14, 재현 안 됨.
   회차 357(조사 3/3): wood→stone→unloadreach→prep→house→wood×3, wood→stone→unloadreach→prep→house×3 — 나무 시험 5판 모두 14/14, 재현 안 됨 → 멈춤(3회차). 다시 나오면 남은 통나무 칸의 건너뜀 까닭·잊은 자리 줄로.
-E072 / 관찰 중(회차 381 고침 0cc4ccc — 원래 조건에서 아직 검증 안 됨); 회차 517 단독 쌍 PASS(묶음 뒤 조건 아님) — vh_restart1→vh_restart2 "상자 나무 그대로 (10/0)"·"짐 그대로"·"하던 나무 이어 하기 (Stone 목표 3, 남았던 10)"·"대기열 돌 3 그대로 (0칸/1)"·"포탈 운반 이어 감" FAIL(10/16)
-  증상·조건: 회차 380, 게임 1.0.21, 커밋 1b831df DLL, 묶음 H4(npc…peer 9개) 뒤 H5 restart1 6/6(30초, 평소 22초) → H6 restart2. 불러온 월드가 1번째 저장(짐 2·상자 0·나무 하는 중)보다 뒤 상태(나무 일 끝·돌 하는 중). 지식·쓴 재료 몫(7/7)·NPC·깃발은 그대로.
-  근거: 바로 다시 R1→R2 6/6·16/16 PASS. 로그는 다음 실행이 덮어 없음. 밤사이 정산(MorningSettle)은 잠자기 넘김에만 돌아 아님. 바닐라 Game.OnApplicationQuit는 1.0.21에서도 Shutdown(save)→2초 잠.
-  회차 380 재현(R7→R8, 7b37108 뒤 DLL, 6번 중 2번): 진단 "월드 조각 가장 늦게 쓴 시각 − 상태 파일 = 0.4초" → 1번째 종료는 늦지 않음. 월드는 worlds_local/te4st41/ *.chunk(바뀐 조각만 씀) — 거점 조각이 1번째 끌 때 안 써져 원본(vh-test-base, 예전 재시작 시험 뒤 떠 둔 것: 상자 나무 10·돌 3 하는 중) 조각을 불러온 것으로 보임.
-  게임 코드(1.0.21 디컴파일): ZDO 값 바뀜 → ZDOMan.SetDirtySector → DirtyChunks(저장 중이면 m_dirtyChunks[1], 아니면 [0]) — 저장 끝(UpdateSaveState)에 [1]을 [0]으로 옮김. 끄며 저장할 때 다른 저장이 도는 중이었거나 Brain.SaveMemory(PrepareSave 앞뒤에 ZDO 바꿈)가 상태를 엉키게 했을 가능성.
-  회차 381: 게임 코드로 확인 — ZNet.SaveWorld는 앞 저장 스레드를 Join한 뒤 PrepareSave, 조각 고르기(AddObjectsPerChunk)는 첫째 표만 봄, 앞 저장의 합치기(UpdateSaveState)는 다음 ZDOMan.Update → 앞 저장(자동 저장 등)이 끝나고 합치기 전에 끄면 그 뒤 바뀐 조각을 안 씀. 고침: PrepareSave 앞에서 끝 표시가 있으면 합침(Senses.SaveMemory). restart 쌍 3번 PASS(6/6·16/16, 저장 전 상태 NotSaving이라 그 경우는 안 생김). 다음: 긴 묶음 뒤 restart2 "앞 실행 E072 저장 전" 줄(상태·끝·바뀐 조각)로 확인 — 다시 나면 막음으로.
 E073 / 관찰 중 — vh_cooktest "다시 모으지 않고 개수 보존 (날고기 0 + 구운 1 + 탄 것 0 = 2)" FAIL(14/15)
   증상·조건: 회차 380 묶음 H1(hunt→cook) 둘째. 굽다 죽은 뒤 묘비 회수·이어 굽기 끝, 라그나 hp25/55(음식 없음), "먹을 게 없으니 몸이 무겁군". 1b831df DLL. 같은 판 앞 B6(73f7a1b)은 "구운 고기 2개가 상자에" 칸에서 FAIL(Unload.Deliver로 고침).
   근거: 단독 다시 15/15 PASS. 짐+상자를 세므로 죽은 뒤 배고파 구운 고기 하나를 먹었을 가능성(정상 동작) — 로그 없어 미확인. 먹은 게 아니면 소실(막음).
