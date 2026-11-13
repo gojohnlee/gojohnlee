@@ -336,6 +336,7 @@ namespace ValheimHelper
             m_goalPos = Scout.GroundPos(m_goalZone);
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 {m_goalZone.X},{m_goalZone.Y}로({Utils.DistanceXZ(m_goalPos, m_npc.transform.position):0}m, 탐험 {m_exploring})");
             Go(Step.GoZone);
+            m_zoneLogAt = 60f;
         }
 
         /// <summary>보이는 대상으로 간다. 새 땅에서 처음 찾았으면 어디인지 알린다.</summary>
@@ -385,6 +386,12 @@ namespace ValheimHelper
                 if (m_exploring && m_far == null && Scout.Explored(m_goalZone)) { Go(Step.Search); return true; }
             }
             bool arrived = WalkVia(dt, m_goalPos, 6f);
+            // E088 진단: 구역 가기가 길면 30초마다 어디쯤인지 남긴다(끝난 뒤 머묾 원인 찾기)
+            if (m_stepTime >= m_zoneLogAt)
+            {
+                m_zoneLogAt = m_stepTime + 30f;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 구역 가기 {m_stepTime:0}초째, 남은 {Utils.DistanceXZ(m_goalPos, m_npc.transform.position):0}m, 구역 {m_goalZone.X},{m_goalZone.Y}, 몸 {m_npc.transform.position:F0}, 걸음 {(arrived ? "도착" : "중")}, 탐험 {m_exploring}");
+            }
             if (arrived || Stuck(dt, PortalOr(m_goalPos)) || QuickStuck(dt, PortalOr(m_goalPos), 6f))
             {
                 if (arrived) ArrivedAt(m_goalZone);

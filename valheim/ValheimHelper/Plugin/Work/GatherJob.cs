@@ -102,6 +102,8 @@ namespace ValheimHelper
         /// <summary>아는 곳(밝혀진 곳)을 다 둘러봐서 새 땅으로 나갔다.</summary>
         bool m_exploring;
         float m_exploreTime;
+        /// <summary>구역 가기 진단(E088): 다음에 남길 걸음 시간(초). 60초부터 30초마다.</summary>
+        float m_zoneLogAt;
         /// <summary>그만둘 이유. 들고 있는 게 있으면 상자에 넣고 나서 말하고 끝낸다.</summary>
         string m_giveUp;
 
