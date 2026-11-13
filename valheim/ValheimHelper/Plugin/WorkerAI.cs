@@ -1280,6 +1280,18 @@ namespace ValheimHelper
                     if (Job == null || !Job.Update(dt))
                     {
                         bool ready = Job is GuardReadyJob; // 호위병 장비 챙기기 끝: 집(깃발)으로 가지 않고 쉬며 문 옆 경계 자리로(GuardPostTick)
+                        if (Job is GatherJob nd && nd.NightDefer && !Yields)
+                        {
+                            // 밤이라 새 땅에 못 감: 시킨 일을 접지 않고 남은 몫을 아침에 이어 감(요청 밤 몫 ③, E090)
+                            var w = WorkSaves.FromJob(nd);
+                            w.Ready = ReadyWhen.Morning;
+                            w.NotBefore = 0;
+                            w.Why = "밤";
+                            var dq = WorkSaves.ToQueued(npc, w);
+                            dq.Why = "밤";
+                            Queue.Insert(0, dq);
+                            Plugin.Log.LogInfo($"{npc.NpcName} 작업 {nd.Item}: 밤이라 남은 {w.Amount}개는 아침에 이어 감");
+                        }
                         Job = null;
                         m_escort = null;
                         if (!NextQueued()) { if (ready) Current = Mode.Idle; else GoHome(false); }

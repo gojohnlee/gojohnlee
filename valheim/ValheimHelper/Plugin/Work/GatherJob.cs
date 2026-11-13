@@ -219,8 +219,12 @@ namespace ValheimHelper
             if (s == Step.Unload) m_unload = null;
         }
 
+        /// <summary>밤이라 새 땅에 못 가 접음(nightNoExplore) — WorkerAI가 남은 몫을 아침 칸으로 대기열 맨 앞에 둔다(요청 밤 몫 ③, E090). 자동 보충은 따로 쉼.</summary>
+        public bool NightDefer { get; private set; }
+
         bool Fail(string key)
         {
+            if (key == "nightNoExplore" && !FromRefill && Remaining() > 0) NightDefer = true;
             var args = Args();
             if (m_packFoe != null || m_strongFoe != null) args["foe"] = m_packFoe ?? m_strongFoe;
             args["partner"] = WorkerNpc.TheGuard?.NpcName ?? "";

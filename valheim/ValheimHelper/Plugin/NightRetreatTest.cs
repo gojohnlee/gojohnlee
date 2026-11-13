@@ -73,6 +73,19 @@ namespace ValheimHelper
             env.m_debugTime = 0.3f;
             yield return TestKit.WaitFor(() => ai.Job is GatherJob, 30f);
             checks.Add($"아침에 하던 일 이어 감 ({TestKit.Waited:0}초)", TestKit.Ok && !ai.Queue.Exists(x => x.Resume is GatherJob));
+
+            // 4) 밤에 새 땅을 찾아야 하는 일(모르는 산의 수정): 실패로 접지 않고 남은 몫을 아침 칸에(요청 밤 몫 ③, E090)
+            env.m_debugTime = 0f;
+            yield return TestKit.WaitFor(() => EnvMan.IsNight(), 10f);
+            ai.Queue.Clear();
+            var ways = GatherJob.WaysFor(w.Ragnar, "Crystal");
+            ai.StartJob(new GatherJob(w.Ragnar, "Crystal", 5, ways));
+            yield return TestKit.WaitFor(() => !(ai.Job is GatherJob), 30f);
+            QueuedWork nq = ai.Queue.Find(x => x.Work != null && x.Work.Item == "Crystal");
+            checks.Add($"밤 새 땅 일은 접고 아침 칸에 (길 {ways.Count}, {TestKit.Waited:0}초)", TestKit.Ok && nq != null && nq.Work.Ready == ReadyWhen.Morning && nq.Work.Amount == 5 && nq.Work.Why == "밤");
+            env.m_debugTime = 0.3f;
+            yield return TestKit.WaitFor(() => ai.Job is GatherJob g && g.Item == "Crystal", 30f);
+            checks.Add($"아침에 수정 일 다시 잡음 ({TestKit.Waited:0}초)", TestKit.Ok);
         }
     }
 }

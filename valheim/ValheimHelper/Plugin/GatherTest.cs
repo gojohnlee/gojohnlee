@@ -48,6 +48,9 @@ namespace ValheimHelper
                 yield break;
             }
             bool god = player.InGodMode();
+            // 낮으로 고정(E090: 시작이 밤이면 도망 시험이 밤 귀환에 걸림 — 밤 미룸은 vh_nightretreattest 4)에서 봄). End가 되돌림
+            s_dbgTime = EnvMan.instance.m_debugTimeOfDay; s_dbgValue = EnvMan.instance.m_debugTime;
+            EnvMan.instance.m_debugTimeOfDay = true; EnvMan.instance.m_debugTime = 0.5f;
             player.SetGodMode(true);
             var heard = new List<string>();
             System.Action<string, string> onHeard = (n, t) => heard.Add(n + ": " + t);
@@ -223,6 +226,7 @@ namespace ValheimHelper
             bool fled = false, backToOre = false;
             ZDOID fledId = ZDOID.None;
             float t = 0f;
+            bool nightSkipped = false;
             while (t < 360f)
             {
                 for (int i = 0; i < 10; i++)
@@ -259,6 +263,20 @@ namespace ValheimHelper
                     var job = claude ? claude.Ai.Job : null;
                     TestRunner.Log($"[{t:0}s] 상자 {word} {count}, 들고 있는 {word} {(claude ? claude.CountItem(item) : -1)}, 상태 {(claude ? claude.Ai.Current.ToString() : "없음")}/{job?.StepName}, 집에서 {(claude ? Utils.DistanceXZ(claude.Home, claude.transform.position) : -1):0}m, 지식 {Brain.Get().Count}구역");
                     if (claude) Plugin.Log.LogInfo($"  [{t:0}s] 광맥에서 {Utils.DistanceXZ(depositPos, claude.transform.position):0.0}m, 땅에 {item} {GroundCount(depositPos, item)}개, {claude.Ai.MoveState} / {claude.MoveDebug}");
+                }
+                // 밤이라 접고 아침 칸에 남겼으면 잠자기 넘김으로 아침을 만들고 계속 본다(요청 밤 몫 ③, E090: 밤에 걸쳐도 10개)
+                if (claude != null && claude.Ai.Current != WorkerAI.Mode.Work && EnvMan.IsNight() && !nightSkipped
+                    && claude.Ai.Queue.Count > 0 && claude.Ai.Queue[0].Work != null && claude.Ai.Queue[0].Work.Ready == Core.Work.ReadyWhen.Morning)
+                {
+                    nightSkipped = true;
+                    TestRunner.Log($"  [{t:0}s] 밤이라 아침 칸으로 미룸(상자 {count}) → 잠자기 넘김");
+                    EnvMan.instance.SkipToMorning();
+                    float ts = 0f;
+                    while (ts < 25f && EnvMan.instance.IsTimeSkipping()) { yield return new WaitForSeconds(0.5f); ts += 0.5f; }
+                    float tw = 0f;
+                    while (tw < 30f && claude != null && claude.Ai.Current != WorkerAI.Mode.Work) { yield return new WaitForSeconds(1f); tw += 1f; }
+                    TestRunner.Log($"  아침: {(claude ? claude.Ai.Current.ToString() : "없음")} ({tw:0}초 뒤)");
+                    continue;
                 }
                 // 부러짐 시험은 일이 끊겨 쉬는 동안(Idle)에도 자동 보충이 다시 잡을 때까지 기다린다(회차 556: 부러짐 뒤 Idle이라 55초에 끝남)
                 if (count >= 10 || claude == null || (claude.Ai.Current != WorkerAI.Mode.Work && !worn)) break;
@@ -596,8 +614,12 @@ namespace ValheimHelper
             return null;
         }
 
+        static bool s_dbgTime;
+        static float s_dbgValue;
+
         static void End(Player player, bool god, Checks checks, System.Action<string, string> onHeard, List<string> heard)
         {
+            if (EnvMan.instance != null) { EnvMan.instance.m_debugTimeOfDay = s_dbgTime; EnvMan.instance.m_debugTime = s_dbgValue; }
             ChatNet.Heard -= onHeard;
             player.SetGodMode(god);
             TestRunner.Log("--- NPC 대사 ---");
