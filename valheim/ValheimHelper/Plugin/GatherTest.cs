@@ -18,6 +18,7 @@ namespace ValheimHelper
             TestRunner.Register("vh_stonetest", "돌 채집 시험", () => Run("PickaxeAntler", "Stone", "돌"));
             TestRunner.Register("vh_coppertest", "구리 채집 시험(광맥을 거점 12m 앞에 놓음, 땅속 광석 파기·구덩이 탈출)", () => Run("PickaxeAntler", "CopperOre", "구리", true));
             TestRunner.Register("vh_tintest", "주석 채집 시험(광맥을 거점 12m 앞에 놓음, 구리와 같은 경로)", () => Run("PickaxeAntler", "TinOre", "주석", true));
+            TestRunner.Register("vh_notooltest", "연장 없이 나무 채집 시험(장비 상자에 도끼를 안 넣음 → 맞는 연장 제작을 대기열에 걸고 나무 10개)", () => Run("AxeFlint", "Wood", "나무", noTool: true));
         }
 
         internal sealed class Checks
@@ -32,7 +33,7 @@ namespace ValheimHelper
             }
         }
 
-        static IEnumerator Run(string toolPrefab, string item, string word, bool spawnDeposit = false)
+        static IEnumerator Run(string toolPrefab, string item, string word, bool spawnDeposit = false, bool noTool = false)
         {
             var checks = new Checks();
             Player player = Player.m_localPlayer;
@@ -93,6 +94,10 @@ namespace ValheimHelper
             if (claude == null || WorkerNpc.All.Count != 2)
                 TestRunner.Log($"  NPC {WorkerNpc.All.Count}명: {string.Join(", ", WorkerNpc.All.ConvertAll(n => $"{n.NpcName}({n.Personality}) {n.transform.position:F1} zdo {n.Zdo?.m_uid}").ToArray())}, ZDO {Workers.AllZdos().Count}개, 깃발 {home:F1}");
             if (claude == null) { End(player, god, checks, onHeard, heard); yield break; }
+            if (noTool) // 원래 가진 연장(짐의 도끼)을 뺀다. 안 빼면 손에 도끼가 있어 연장 없음 경로를 안 탄다
+                foreach (var it in new List<ItemDrop.ItemData>(claude.GetInventory().GetAllItems()))
+                    if (it.m_dropPrefab != null && (it.m_dropPrefab.name.StartsWith("Axe") || it.m_dropPrefab.name.StartsWith("Pickaxe")))
+                    { claude.UnequipItem(it, false); claude.GetInventory().RemoveItem(it); }
 
             // 2) 상자 2개
             Vector3 eqPos, resPos;
@@ -112,8 +117,11 @@ namespace ValheimHelper
             checks.Add("상자 2개 놓임", eq != null && res != null);
             if (eq == null || res == null) { End(player, god, checks, onHeard, heard); yield break; }
             // 광맥은 오래 캐서 곡괭이가 부러질 수 있다(바닐라 내구도) → 예비 하나 더
-            bool put = Chests.TryEdit(eq, inv => { inv.AddItem(tool, 1); if (spawnDeposit) inv.AddItem(tool, 1); });
-            checks.Add($"장비 상자에 {toolPrefab}", put && eq.GetInventory().HaveItem(toolToken));
+            if (!noTool) // 연장 없는 시험: 도끼를 안 넣어 맞는 연장 제작 경로를 본다
+            {
+                bool put = Chests.TryEdit(eq, inv => { inv.AddItem(tool, 1); if (spawnDeposit) inv.AddItem(tool, 1); });
+                checks.Add($"장비 상자에 {toolPrefab}", put && eq.GetInventory().HaveItem(toolToken));
+            }
 
             // 3) 10개
             // 광맥(구리 등)은 시험 월드 근처에 없을 수 있어 거점 12m 앞에 놓는다. 지난 시험의 광맥·구덩이는 먼저 치운다.
