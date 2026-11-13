@@ -252,6 +252,12 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh
 - [1.0.21, 회차 542] Humanoid.EquipItem 거절: 이미 듦·가방에 없음·InAttack()(애니 태그 attack, 지금·다음 상태)·InDodge(Humanoid는 늘 false, Player만)·플레이어 수영·내구도 0 이하·DLC·월드 레벨(Utility·Trinket만). 휘두르는 중엔 활도 못 듦 → 들기는 다시 시도.
 - 석궁(Attack.m_requiresReload): Attack.Start가 IsWeaponLoaded()·InMinorAction 확인, Humanoid.IsWeaponLoaded 기본 false·장전은 Player만(UpdateWeaponLoading → Reload 동작 → SetWeaponLoaded), 쏘면 ResetLoadedWeapon. 장전 시간 ItemData.GetWeaponLoadingTime = lerp(m_reloadTime, ×0.5, 로컬 플레이어 스킬). 당김 없음(m_bowDraw false) → 속력 최대.
   화살은 발사 순간(OnAttackTrigger → UseAmmo)에 하나 줄고 생김(weapon.m_lastProjectile). 주인이 NPC면 BaseAI.IsEnemy인 것만 맞음(Players ↔ 사슴 = 적). 사슴 체력 10.
+  [1.0.21, 회차 544] 화살 나가는 자리·방향(Attack.FireProjectileBurst·GetProjectileSpawnPoint): 자리 = 공격 기준점(m_attackOriginJoint 뼈, 없으면 몸) + 위 m_attackHeight + 앞 m_attackRange + 오른 m_attackOffset — 눈 아님.
+  방향 = 그 순간 m_eye.forward(Player도 GetAimDir 재정의 없음), 좌우·상하 각각 ±정확도° 무작위(정확도 = lerp(활+화살 m_projectileAccuracyMin, m_projectileAccuracy, √당김)).
+  Projectile: 물리 틱마다 지난 자리→지금 자리 RaycastAll(m_rayRadius면 SphereCastAll), 층 Default·static_solid·Default_small·piece·piece_nonsolid·terrain·character·character_net·character_ghost·hitbox·character_noenv·vehicle.
+  IsValidTarget은 Character만 거름 → Character 아닌 Destructible(새)은 닿으면 늘 맞음. m_onHit(collider, 점, 물)은 피해까지 간 맞음에만 불림. 맞은 뒤 정적이면 m_stayTTL 동안 그 자리.
+  Destructible.Damage는 생긴 첫 프레임(m_firstFrame)엔 무시. RandomFlyingBird.m_landedTimer는 private, 스스로 앉을 때만 0 → ZDO landed만 바꾸면 안 줄어듦. 앉음은 m_landedModel/m_flyingModel 켜기를 바꿈(!m_singleModel).
+  BaseAI.IsLookingAt = 몸 좌우 각도만(위아래 안 봄), LookAt은 m_lookDir(위아래 포함)을 바로 바꿈.
 - 짐승 떨굼은 쓰러진 몸(Ragdoll)이 m_ttl 뒤 사라질 때 생긴다(그 몸 평균 자리 ±0.5m, 같은 호출. 회차 383 실측 m_ttl: Boar·Neck·Wolf·Asksvin·Greyling 2초, Deer·Lox·Hare 4초, Troll 8초, Hen 몸 없음. 사냥은 죽음을 알아챈 뒤 ~1.2초에 몸이 보이고 3.5~4.4초에 사라짐 — 기다림은 Plugin/Work/LootWatch.cs)(CharacterDrop → Ragdoll.SpawnLoot). barrell(부수는 통)은 DropOnDestroyed에 사슴 가죽 등 여러 물건.
 - 농사(Plant): 자라기 판정(10초마다 SUpdate) = 심은 지 10초 안이면 건강 → 바이옴(m_biome 비트) → m_needCultivatedGround면 Heightmap.IsCultivated(paint 마스크 g>0.5)
   → 애쉬랜드 m_tolerateHeat·산/딥노스 m_tolerateCold(ShieldGenerator 보호막 안은 예외) → 위로 지붕(Default·static_solid·piece 층 광선) → HaveGrowSpace(m_growRadius 구 안에 Plant 아닌 충돌체나 건강한 다른 Plant 있으면 NoSpace).

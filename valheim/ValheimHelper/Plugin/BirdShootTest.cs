@@ -145,15 +145,63 @@ namespace ValheimHelper
             TestRunner.Log($"DIAG 진단 {dist:0}m: 새 {(bird == null ? "없음" : "있음")} · 스스로 앉음 {natural} · 당김 {pct:0.00}");
 
             // 날아가는 값(속력·중력)으로 앞질러 겨눔 — Hunt.UpdateShoot과 같은 방식(새는 안 움직인다고 봄)
-            Vector3 eye = npc.GetEyePoint();
+            // 몸이 겨눔 쪽으로 천천히 돈다 → 10° 안에 들어올 때까지 다시 겨누고 기다린 뒤 놓는다(Hunt.UpdateShoot와 같음, 최대 2초).
+            // 안 기다리고 놓으면 몸이 돌기 전에 나가 빗나갔다(회차 544).
+            // 겨눌 곳은 새 몸(콜라이더) 가운데 — 사냥이 GetCenterPoint를 겨누는 것과 같게(자리 = 발밑일 수 있음)
+            // 화살은 눈 아래 0.31m에서 나간다(진단 회차 545: 발사 자리 y −0.31) → 눈에서 겨누면 그만큼 아래로 빗나갔다.
+            Vector3 eye = npc.GetEyePoint(), from = eye + Vector3.down * 0.31f, aim = eye + npc.transform.forward;
             if (bird != null && npc.ProjectileFlight(bow, out float speed, out float gravity))
             {
-                Vector3 rel = bird.transform.position - eye;
+                Vector3 rel = BirdCenter(bird) - from;
                 if (Archery.Aim(rel.x, rel.y, rel.z, 0f, 0f, 0f, speed, gravity, out float ax, out float ay, out float az))
-                    npc.Ai.Face(eye + new Vector3(ax, ay, az));
+                    aim = from + new Vector3(ax, ay, az);
             }
+            npc.Ai.Face(aim);
+            float aimWait = 0f;
+            while (aimWait < 2f && !npc.Ai.IsLookingAt(aim, 10f))
+            {
+                yield return null;
+                aimWait += Time.deltaTime;
+                npc.Ai.Face(aim);
+            }
+            // 화살은 놓는 순간이 아니라 공격 애니메이션의 발사 순간에 생기고, 방향은 그때의 m_eye.forward(Attack.GetProjectileSpawnPoint → Humanoid.GetAimDir).
+            // 쉬는 일꾼은 잡담 중 WorkerBanter.Facing으로 동료를 본다 → 화살이 생길 때까지 겨눔 유지(Hunt.UpdateShoot도 공격 중 틱마다 Face).
+            GameObject prev = bow.m_lastProjectile, arrow = null;
             bool shot = npc.ReleaseBow();
-            yield return new WaitForSeconds(3f);
+            string hitWhat = "없음", colInfo = "화살 못 봄";
+            Vector3 spawn = Vector3.zero, lastPos = Vector3.zero, dir0 = Vector3.zero;
+            float minD = float.MaxValue, waitT = 0f;
+            while (waitT < 3f)
+            {
+                if (arrow == null && bow.m_lastProjectile != null && bow.m_lastProjectile != prev)
+                {
+                    arrow = bow.m_lastProjectile;
+                    spawn = lastPos = arrow.transform.position;
+                    colInfo = ColliderInfo(bird);
+                    var pj = arrow.GetComponent<Projectile>();
+                    if (pj != null)
+                    {
+                        dir0 = pj.GetVelocity();
+                        // 맞은 것(바닐라 Projectile.OnHit 끝의 m_onHit — 피해 판정까지 간 것만 불림)
+                        pj.m_onHit += (c, p, water) => hitWhat = c == null ? (water ? "물" : "?")
+                            : $"{c.name}(층 {LayerMask.LayerToName(c.gameObject.layer)}) {Utils.DistanceXZ(eye, p):0.0}m 땅 위 {p.y - GatherTest.Ground(p).y:0.00}m";
+                    }
+                }
+                if (arrow == null) npc.Ai.Face(aim);
+                yield return null;
+                waitT += Time.deltaTime;
+                if (arrow != null)
+                {
+                    Vector3 now = arrow.transform.position;
+                    if (bird != null) minD = Mathf.Min(minD, SegDist(lastPos, now, BirdCenter(bird)));
+                    lastPos = now;
+                }
+            }
+            Vector3 aimDir = (aim - eye).normalized;
+            TestRunner.Log($"DIAG 화살 {dist:0}m: 맞은 것 {hitWhat} · 새 몸까지 가장 가까이 {(minD == float.MaxValue ? "-" : minD.ToString("0.00"))}m" +
+                           $" · 발사 자리 눈 기준(오른·위·앞) {npc.transform.InverseTransformDirection(spawn - eye):F2} · 겨눔 선에서 {Vector3.Cross(aimDir, spawn - eye).magnitude:0.00}m" +
+                           $" · 쏜 방향 어긋남 {(dir0 == Vector3.zero ? "-" : Vector3.Angle(dir0, aimDir).ToString("0.0"))}° · 겨눔 기다림 {aimWait:0.0}초" +
+                           $" · 새 앉음 {(bird != null && IsLanded(bird))} 옮겨감 {(bird == null ? "-" : Vector3.Distance(bird.transform.position, landAt).ToString("0.0"))}m · 콜라이더 {colInfo}");
 
             s.Fired = shot && Gear.CountArrows(npc.GetInventory(), bow) == arrowsBefore - 1;
             s.Hit = bird == null;
@@ -166,6 +214,38 @@ namespace ValheimHelper
         {
             var nv = bird.GetComponent<ZNetView>();
             return nv != null && nv.GetZDO() != null && nv.GetZDO().GetBool("landed");
+        }
+
+        // 새 몸 가운데: 콜라이더(SphereCollider 1개 — vh_birdprobetest) 중심. 없으면 자리
+        static Vector3 BirdCenter(RandomFlyingBird bird)
+        {
+            var c = bird.GetComponentInChildren<Collider>(true);
+            if (c is SphereCollider sc) return sc.transform.TransformPoint(sc.center);
+            return c != null ? c.bounds.center : bird.transform.position;
+        }
+
+        // 진단: 새 콜라이더(꺼진 것 포함) — 켜짐·붙은 곳·층·트리거·반지름·자리에서 중심까지.
+        // 앉으면 RandomFlyingBird가 m_landedModel/m_flyingModel을 바꿔 켜므로 맞을 몸이 켜져 있는지 본다
+        static string ColliderInfo(RandomFlyingBird bird)
+        {
+            if (bird == null) return "새 없음";
+            var parts = new List<string>();
+            foreach (var c in bird.GetComponentsInChildren<Collider>(true))
+            {
+                Vector3 sc3 = c.transform.lossyScale;
+                float r = c is SphereCollider sc ? sc.radius * Mathf.Max(sc3.x, Mathf.Max(sc3.y, sc3.z)) : c.bounds.extents.magnitude;
+                parts.Add($"{c.GetType().Name} {(c.transform == bird.transform ? "몸통" : c.transform.parent?.name + "/" + c.name)} 켜짐 {c.enabled && c.gameObject.activeInHierarchy}" +
+                          $" 층 {LayerMask.LayerToName(c.gameObject.layer)} 트리거 {c.isTrigger} 반지름 {r:0.00} 중심-자리 {(BirdCenter(bird) - bird.transform.position):F2}");
+            }
+            return parts.Count == 0 ? "없음" : string.Join(", ", parts);
+        }
+
+        // 점 p와 선분 a-b 사이 거리(화살은 물리 틱마다 ~0.7m씩 뛰니 점끼리 말고 선분으로 잰다)
+        static float SegDist(Vector3 a, Vector3 b, Vector3 p)
+        {
+            Vector3 ab = b - a;
+            float t = ab.sqrMagnitude < 1e-6f ? 0f : Mathf.Clamp01(Vector3.Dot(p - a, ab) / ab.sqrMagnitude);
+            return Vector3.Distance(a + ab * t, p);
         }
 
         static float Median(List<float> v)
