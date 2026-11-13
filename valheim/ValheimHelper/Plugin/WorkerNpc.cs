@@ -693,6 +693,7 @@ namespace ValheimHelper
             foreach (var it in m_inventory.GetEquippedItems())
                 if (!EquipItem(it, false)) it.m_equipped = false;
             Meals = Meals.Load(m_nview.GetZDO().GetString(KeyFoods), Gear.FoodOf);
+            HurtSpots = Core.Work.Recovery.Load(m_nview.GetZDO().GetString(KeyHurt));
             SetMaxHealth(Meals.MaxHealth);
             if (m_nview.GetZDO().GetBool(KeyGreet))
             {
@@ -710,7 +711,29 @@ namespace ValheimHelper
 
         public string NpcName => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO().GetString(KeyName, "Worker") : "Worker";
         /// <summary>사냥 중 크게 다친 곳(같은 곳 세 번째면 접음, Core Recovery). 시킨 일이 다쳐서 멈춘 게 아니게 끝나면 지움.</summary>
-        public readonly Core.Work.Recovery HurtSpots = new Core.Work.Recovery();
+        public Core.Work.Recovery HurtSpots { get; private set; } = new Core.Work.Recovery();
+        public const string KeyHurt = "vh_hurt";
+
+        /// <summary>다친 곳을 세고 저장(재시작에도 세 번째면 접음). 같은 곳 세 번째면 true.</summary>
+        public bool RecordHurt(float x, float z)
+        {
+            bool tooHard = HurtSpots.Record(x, z);
+            SaveHurt();
+            return tooHard;
+        }
+
+        public void ClearHurt()
+        {
+            HurtSpots.Clear();
+            SaveHurt();
+        }
+
+        void SaveHurt()
+        {
+            if (m_nview == null || !m_nview.IsValid() || !m_nview.IsOwner()) return;
+            string text = HurtSpots.Save();
+            if (m_nview.GetZDO().GetString(KeyHurt) != text) m_nview.GetZDO().Set(KeyHurt, text);
+        }
         public Personality Personality => m_nview != null && m_nview.IsValid() ? (Personality)m_nview.GetZDO().GetInt(KeyRole) : Personality.Ragnar;
         /// <summary>호위병인지(일은 안 하고 위험한 곳에 가는 일꾼을 따라가 싸움 — 사용자 10-26).</summary>
         public bool IsGuard => Personality == Personality.Guard;

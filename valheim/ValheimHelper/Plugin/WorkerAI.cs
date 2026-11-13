@@ -1297,14 +1297,10 @@ namespace ValheimHelper
                             // 다쳐서 돌아옴: 일을 접지 않고 체력이 찬 뒤 남은 몫을 이어 감(요청 다침 ③, Core Recovery)
                             var w = WorkSaves.FromJob(hd);
                             w.Why = "다침";
-                            var dq = WorkSaves.ToQueued(npc, w);
-                            dq.Why = "다침";
-                            var before = dq.Ready;
-                            dq.Ready = () => Recovery.IsReady(npc.GetHealth(), npc.GetMaxHealth()) && (before == null || before());
-                            Queue.Insert(0, dq);
+                            Queue.Insert(0, WorkSaves.ToQueued(npc, w)); // 체력이 찰 때까지 기다림은 ToQueued가 Why "다침"으로 붙임(재시작 뒤에도)
                             Plugin.Log.LogInfo($"{npc.NpcName} 작업 {hd.Item}: 다쳐서 남은 {w.Amount}개는 체력이 차면 이어 감");
                         }
-                        else if (Job is GatherJob) npc.HurtSpots.Clear();
+                        else if (Job is GatherJob) npc.ClearHurt();
                         Job = null;
                         m_escort = null;
                         if (!NextQueued()) { if (ready) Current = Mode.Idle; else GoHome(false); }

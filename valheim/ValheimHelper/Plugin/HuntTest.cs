@@ -103,7 +103,7 @@ namespace ValheimHelper
             // 다쳐도 일을 접지 않음(요청 다침 ③): 사냥 중 체력 40% 밑 → 돌아와 "다침" 칸 → 체력이 차기 전엔 안 나감 → 차면 이어 가 채움
             WorkerNpc h = null;
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
-            w.Ragnar.HurtSpots.Clear(); w.Floki?.HurtSpots.Clear();
+            w.Ragnar.ClearHurt(); w.Floki?.ClearHurt();
             Vector3 hp = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 50f));
             GameObject hb = Object.Instantiate(prefab, hp + Vector3.up * 0.5f, Quaternion.identity);
             hb.GetComponent<Character>().SetLevel(1);

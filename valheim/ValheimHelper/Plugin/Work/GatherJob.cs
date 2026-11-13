@@ -22,6 +22,12 @@ namespace ValheimHelper
         public string HelpTask;
         public int Delivered { get; private set; }
         public string StepName => m_step.ToString();
+        /// <summary>사냥 중(Hunt·Collect)이면 사냥감 자리 — 같이 싸운 동료가 그 떨굼을 가로채지 않게(Guard.Loot, E094).</summary>
+        public bool HuntLootAt(out Vector3 at)
+        {
+            at = m_preyPos;
+            return m_hunt && (m_step == Step.Hunt || m_step == Step.Collect);
+        }
         /// <summary>시험용: 가려고 고른 구역.</summary>
         public ZoneXY GoalZone => m_goalZone;
         /// <summary>이어 하기 저장용: 구역 땅 자리(안 골랐으면 0).</summary>

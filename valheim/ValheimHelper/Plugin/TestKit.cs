@@ -895,6 +895,14 @@ namespace ValheimHelper
                     int had = GatherTest.Count(c, p);
                     if (had > 0) { TakeFromChest(c, p); n += had - GatherTest.Count(c, p); }
                 }
+            // 일꾼 짐도(지난 칸 싸움에서 주운 고기가 짐에 남으면 일이 사냥 없이 바로 끝남 — 회차 574 hunttest)
+            foreach (var npc in WorkerNpc.All)
+                foreach (var p in prefabs)
+                {
+                    string name = ObjectDB.instance.GetItemPrefab(p).GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                    int had = npc.GetInventory().CountItems(name);
+                    if (had > 0) { npc.GetInventory().RemoveItem(name, had); n += had; }
+                }
             return n;
         }
 

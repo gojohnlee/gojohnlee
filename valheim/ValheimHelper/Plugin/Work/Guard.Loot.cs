@@ -55,7 +55,7 @@ namespace ValheimHelper
             {
                 Loot l = m_loots[i];
                 l.Age += dt;
-                if (l.Age > LootLimit || Utils.DistanceXZ(l.At, me) > LootLeave) { m_loots.RemoveAt(i); continue; }
+                if (l.Age > LootLimit || Utils.DistanceXZ(l.At, me) > LootLeave || OthersHunt(l.At)) { m_loots.RemoveAt(i); continue; }
                 ItemDrop best = null;
                 float bestD = float.MaxValue;
                 foreach (var zdo in Senses.Nearby(l.At, LootRange))
@@ -75,6 +75,15 @@ namespace ValheimHelper
                 else m_ai.MoveToPoint(dt, best.transform.position, 1f, true);
                 return true;
             }
+            return false;
+        }
+
+        /// <summary>다른 일꾼이 그 자리 사냥감을 사냥 중 — 떨굼은 그 일꾼이 주워 상자에 넣음(E094: 도운 쪽이 주워 가 사냥꾼이 다른 사냥감을 찾아 헤맴).</summary>
+        bool OthersHunt(Vector3 at)
+        {
+            foreach (var o in WorkerNpc.All)
+                if (o != m_npc && o.Ai != null && o.Ai.Job is GatherJob g && g.HuntLootAt(out Vector3 p) && Utils.DistanceXZ(p, at) <= LootRange)
+                    return true;
             return false;
         }
     }

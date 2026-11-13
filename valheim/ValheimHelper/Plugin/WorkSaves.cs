@@ -26,6 +26,13 @@ namespace ValheimHelper
             var q = new QueuedWork { Label = w.Label, Work = w };
             if (w.Ready == ReadyWhen.Morning) q.Ready = () => WorkState.IsReady(w, ZNet.instance.GetTimeSeconds(), EnvMan.IsNight());
             if (w.Ready == ReadyWhen.GuardIdle) q.Ready = Departures.GuardIdle; // 위험한 곳인데 호위병이 바빴음: 쉬게 되면 같이 출발(사용자 10-26)
+            if (w.Why == "다침")
+            {
+                // 다쳐서 멈춘 일: 체력이 찬 뒤 이어 감(요청 다침 ③) — 재시작 뒤에도 같게
+                q.Why = w.Why;
+                var before = q.Ready;
+                q.Ready = () => Recovery.IsReady(npc.GetHealth(), npc.GetMaxHealth()) && (before == null || before());
+            }
             if (w.Kind == WorkKind.Gather)
             {
                 if (w.Resume)
