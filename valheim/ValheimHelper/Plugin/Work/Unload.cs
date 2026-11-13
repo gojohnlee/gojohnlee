@@ -124,9 +124,13 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>손 거리 판정(넣기·Prep 꺼내기 같음): 상자 Reach m 안, 0.5초 못 다가감, 높이 차 1m 안, 문 안 막힘 — 다 맞아야 닿음.</summary>
+        internal static bool HandOk(WorkerNpc npc, Container chest, Vector3 at, float d, float still, bool testNoReach)
+            => !(testNoReach || d > Reach || still < StillSeconds || Mathf.Abs(at.y - npc.transform.position.y) > 1f || DoorWay.Blocked(npc, chest));
+
         bool CanReach(Vector3 at, float d)
         {
-            if (TestNoReach || d > Reach || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1f || DoorWay.Blocked(m_npc, m_chest)) return false;
+            if (!HandOk(m_npc, m_chest, at, d, m_still, TestNoReach)) return false;
             Reached++;
             Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Unload 손 거리 넣기: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
             return true;

@@ -43,8 +43,6 @@ namespace ValheimHelper
 
         bool Steering(Component c) => m_wayFor == c && m_way.Busy;
 
-        /// <summary>손 거리 꺼내기(사용자 10-31 ③, Unload와 같음): 상자 Reach m 안에서 0.5초 더 못 다가가면 사이를 건축물이 안 가릴 때 그 자리에서.</summary>
-        const float Reach = 4f, StillSeconds = 0.5f;
         float m_best = float.MaxValue, m_still; Container m_bestFor;
         readonly ChestHop m_hop = new ChestHop();
         /// <summary>시험용: 손 거리 꺼내기 끔(고치기 전 비교)·한 수.</summary>
@@ -64,7 +62,7 @@ namespace ValheimHelper
         {
             if (m_bestFor != m_chest) { m_bestFor = m_chest; m_best = float.MaxValue; m_still = 0f; }
             if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
-            if (TestNoReach || d > Reach || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1f || DoorWay.Blocked(m_npc, m_chest)) return false;
+            if (!Unload.HandOk(m_npc, m_chest, at, d, m_still, TestNoReach)) return false;
             Reached++;
             Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Prep 손 거리 꺼내기: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
             return true;
