@@ -125,6 +125,13 @@ namespace ValheimHelper
                 bool tooHard = m_npc.RecordHurt(at.x, at.z);
                 if (!tooHard && !FromRefill && Remaining() > 0) HurtDefer = true;
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 다침 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 이곳 {m_npc.HurtSpots.CountAt(at.x, at.z)}번째{(HurtDefer ? " → 회복하고 이어 감" : " → 접음")}");
+                // 든 것이 없고 집 밖이고 짐 칸이 남고 둘레에 적 없는 줍기가 있으면 집에 안 가고 그 자리에서 근처 회복(Core Recovery.Choose — 대기 중 또 맞으면 RecoverNearJob이 끝나 집 대기)
+                bool away = Utils.DistanceXZ(at, m_npc.Home) > 30f;
+                if (HurtDefer && away && Carried() == 0 && Core.Work.Recovery.Choose(false, m_npc.GetInventory().GetEmptySlots() > 0, RecoverNearJob.SafePickNear(m_npc), false) == Core.Work.RecoverWay.Nearby)
+                {
+                    HurtNear = true;
+                    return Fail("huntHurt");
+                }
                 return GiveUp(tooHard ? "huntTooHard" : "huntHurt");
             }
             if (m_stepTime > HuntLimit)

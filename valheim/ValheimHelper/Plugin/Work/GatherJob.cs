@@ -230,6 +230,8 @@ namespace ValheimHelper
 
         /// <summary>사냥 중 크게 다쳐 돌아감(huntHurt) — WorkerAI가 남은 몫을 체력이 찬 뒤 칸으로 대기열 맨 앞에 둔다(요청 다침 ③, Core Recovery).</summary>
         public bool HurtDefer { get; private set; }
+        /// <summary>HurtDefer이고 그 자리에서 근처 회복(RecoverNearJob)으로 감 — 짐을 들고 집에 가지 않음.</summary>
+        public bool HurtNear { get; private set; }
 
         bool Fail(string key)
         {

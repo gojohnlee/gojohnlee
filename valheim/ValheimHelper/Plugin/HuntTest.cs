@@ -113,7 +113,7 @@ namespace ValheimHelper
             checks.Add($"다침 시험 사냥 시작 ({h?.NpcName}, {TestKit.Waited:0}초)", TestKit.Ok);
             if (!TestKit.Ok) yield break;
             h.SetHealth(h.GetMaxHealth() * 0.3f);
-            yield return TestKit.WaitFor(() => h.Ai.Job == null && h.Ai.Queue.Count > 0 && h.Ai.Queue[0].Why == "다침", 90f);
+            yield return TestKit.WaitFor(() => (h.Ai.Job == null || h.Ai.Job is RecoverNearJob) && h.Ai.Queue.Count > 0 && h.Ai.Queue[0].Why == "다침", 90f); // 둘레에 버섯 등이 있으면 근처 회복
             checks.Add($"다쳐서 돌아와 '다침' 칸에 남김 ({TestKit.Waited:0}초, 이곳 {h.HurtSpots.CountAt(h.transform.position.x, h.transform.position.z)}번)", TestKit.Ok);
             if (!TestKit.Ok) yield break;
             h.SetHealth(h.GetMaxHealth() * 0.5f);
@@ -122,6 +122,35 @@ namespace ValheimHelper
             h.SetHealth(h.GetMaxHealth());
             yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "RawMeat") >= 1, 150f);
             checks.Add($"체력이 차면 이어 가 고기 채움 ({GatherTest.CountBase(w.Home, "RawMeat")}개, {TestKit.Waited:0}초)", TestKit.Ok);
+            TestKit.ClearBaseStock(w, "RawMeat");
+
+            // 근처 채집 대기(요청 다침 ③, Recovery.Nearby): 둘레에 적 없는 버섯이 있으면 집에 안 가고 주우며 회복 → 차면 이어 감
+            GameObject shroom = ZNetScene.instance.GetPrefab("Pickable_Mushroom");
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null && (w.Floki == null || w.Floki.Ai.Job == null), 60f);
+            Vector3 np = GatherTest.Ground(w.Home + rot * new Vector3(-12f, 0f, 55f)), pm = GatherTest.Ground(w.Home + rot * new Vector3(-7f, 0f, 33f)); // 멧돼지는 멀리, 버섯은 가는 길 중간(싸우는 중엔 다침을 안 봄)
+            GameObject nb = Object.Instantiate(prefab, np + Vector3.up * 0.5f, Quaternion.identity);
+            nb.GetComponent<Character>().SetLevel(1);
+            boars.Add(nb);
+            if (shroom != null)
+                foreach (var off in new[] { new Vector3(-6f, 0f, 0f), new Vector3(6f, 0f, -4f), new Vector3(0f, 0f, -12f), new Vector3(-4f, 0f, -20f) })
+                    Object.Instantiate(shroom, GatherTest.Ground(pm + rot * off), Quaternion.identity);
+            GatherTest.Say("!RawMeat 1", null);
+            h = null;
+            yield return TestKit.WaitFor(() => (h = Hunter(w)) != null, 150f);
+            if (h != null) yield return TestKit.WaitFor(() => Utils.DistanceXZ(h.transform.position, h.Home) > 32f || !(h.Ai.Job is GatherJob), 60f); // 버섯 둘레(집 밖 30m 넘게, 멧돼지 닿기 전)에서 다쳐야 근처 회복
+            checks.Add($"근처 회복 시험 사냥 시작 ({h?.NpcName}, {TestKit.Waited:0}초, 집에서 {(h != null ? Utils.DistanceXZ(h.transform.position, h.Home) : 0f):0}m, 멧돼지까지 {(h != null && nb != null ? Utils.DistanceXZ(h.transform.position, nb.transform.position) : -1f):0}m)", h != null && nb != null && Utils.DistanceXZ(h.transform.position, h.Home) > 30f && Utils.DistanceXZ(h.transform.position, nb.transform.position) < 30f);
+            if (!TestKit.Ok) yield break;
+            if (nb != null) nb.transform.position = GatherTest.Ground(w.Home + rot * new Vector3(-12f, 0f, 90f)) + Vector3.up * 0.5f; // 사냥감이 25m 안이면 적 곁이라 근처 회복 안 함(맞는 동작) — 멀리 옮겨 안전한 경우를 봄
+            h.SetHealth(h.GetMaxHealth() * 0.3f);
+            yield return TestKit.WaitFor(() => h.Ai.Job is RecoverNearJob, 90f);
+            checks.Add($"다쳐도 집에 안 가고 근처에서 회복 ({TestKit.Waited:0}초, 집에서 {Utils.DistanceXZ(h.transform.position, h.Home):0}m)", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            h.SetHealth(h.GetMaxHealth() * 0.6f);
+            yield return TestKit.WaitFor(() => h.Ai.Job is RecoverNearJob r && r.Picked >= 1, 60f);
+            checks.Add($"회복하며 버섯 주움 ({TestKit.Waited:0}초, 주운 {(h.Ai.Job as RecoverNearJob)?.Picked}번)", TestKit.Ok);
+            h.SetHealth(h.GetMaxHealth());
+            yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "RawMeat") >= 1, 150f);
+            checks.Add($"근처 회복 뒤 이어 가 고기 채움 ({GatherTest.CountBase(w.Home, "RawMeat")}개, {TestKit.Waited:0}초)", TestKit.Ok);
             TestKit.ClearBaseStock(w, "RawMeat");
         }
     }

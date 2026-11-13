@@ -1299,6 +1299,12 @@ namespace ValheimHelper
                             w.Why = "다침";
                             Queue.Insert(0, WorkSaves.ToQueued(npc, w)); // 체력이 찰 때까지 기다림은 ToQueued가 Why "다침"으로 붙임(재시작 뒤에도)
                             Plugin.Log.LogInfo($"{npc.NpcName} 작업 {hd.Item}: 다쳐서 남은 {w.Amount}개는 체력이 차면 이어 감");
+                            if (hd.HurtNear) // 다친 자리에서 고른 근처 회복(GatherJob.UpdateHunt — Core Recovery.Choose)
+                            {
+                                Plugin.Log.LogInfo($"{npc.NpcName} 다쳐서 근처에서 줍기하며 회복");
+                                Job = new RecoverNearJob(npc);
+                                break;
+                            }
                         }
                         else if (Job is GatherJob) npc.ClearHurt();
                         Job = null;
