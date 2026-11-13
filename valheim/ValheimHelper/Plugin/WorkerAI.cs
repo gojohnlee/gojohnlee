@@ -442,6 +442,19 @@ namespace ValheimHelper
         public float WaterBlockedTime { get; private set; }
         public const float WaterGiveUp = 3f;
         Vector3 m_moveTarget;
+        // 길 끝 막다른 곳(E099 순찰 뒤 문 옆): 바닐라 부분 길(물 피하는 길 지도는 0.2m 넘는 얕은 물도 못 감)의 끝에 닿으면 MoveTo가 "도착"을 돌려줘 곧장 걷지만,
+        // FindPath가 5초마다 새로 구한 부분 길이 같은 끝으로 되돌려 끝 둘레에서 맴돎 → StartDeadEnd 뒤엔 그 목표로 길찾기 없이 곧장(6초 못 다가가거나 물 막힘 WaterGiveUp이면 그만).
+        bool m_deadEnd, m_moveToDone;
+        float m_deadEndBest, m_deadEndBestAt;
+        void StartDeadEnd(float d) { m_deadEnd = true; m_deadEndBest = d; m_deadEndBestAt = Time.time; }
+        bool DeadEndStraight(float d)
+        {
+            if (!m_deadEnd) return false;
+            if (WaterBlockedTime >= WaterGiveUp) { m_deadEnd = false; return false; }
+            if (d < m_deadEndBest - 1f) { m_deadEndBest = d; m_deadEndBestAt = Time.time; }
+            else if (Time.time - m_deadEndBestAt > 6f) { m_deadEnd = false; Plugin.Log.LogInfo($"{name}: 곧장 걷기 6초 못 다가감({d:0}m) → 길찾기로"); return false; }
+            return true;
+        }
         readonly DoorWay m_exitWay = new DoorWay(); // 안에서 닫힌 문으로 나가기(회차 315)
         Vector3 m_lastDry;
         bool m_hasDry;
@@ -518,12 +531,13 @@ namespace ValheimHelper
         public bool MoveToPoint(float dt, Vector3 point, float dist, bool run)
         {
             Vector3 pos = transform.position;
+            m_moveToDone = false;
             if (run && m_stepSlow && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) run = false; // FloorStep 꺾인 모퉁이 앞은 걸음
             if (m_stepWait && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) { m_moveDiag = "MoveToPoint 출발 기다림"; StopMoving(); return false; } // FloorStep 출발 기다림은 제자리에 섬 — 제 자리로 0m 걷기는 뛰던 기세로 1.6m 지나쳤다 150° 되돌았음(회차 412 오름 4)
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
-            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; }
+            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; m_deadEnd = false; }
             float d = Utils.DistanceXZ(point, pos);
-            if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
+            if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_deadEnd = false; m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
             m_moveDiag = "MoveToPoint 시작"; if (EdgeRescueIfLong(dt, pos)) { m_moveDiag = "MoveToPoint 벼랑 구조"; return false; }
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) { m_moveDiag = "MoveToPoint 깎기"; return false; }
@@ -562,8 +576,13 @@ namespace ValheimHelper
                 if (!inside && FloorLine(pos, point)) MoveTowards(Flat(point - pos), false);
                 else if (inside || !FollowHazardPath(pos, point, run))
                 {
-                    bool done = MoveTo(dt, point, dist, run); m_moveDiag = $"MoveTo {(done ? "도착" : "가는 중")}({point:F1} 거리 {dist:0.0} 뛰기 {run})";
-                    if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+                    if (!inside && DeadEndStraight(d)) { MoveTowards(Flat(point - pos), run); m_moveDiag = $"곧장(길 끝 막힘, 가장 가까이 {m_deadEndBest:0}m)"; }
+                    else
+                    {
+                        bool done = MoveTo(dt, point, dist, run); m_moveDiag = $"MoveTo {(done ? "도착" : "가는 중")}({point:F1} 거리 {dist:0.0} 뛰기 {run})";
+                        m_moveToDone = done && d > dist + 1f; // 바닐라는 "도착"인데 아직 멂 = 길 없음 또는 부분 길 끝
+                        if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+                    }
                 }
             }
             if (WaterAhead(pos, m_character.GetMoveDir()))
@@ -1483,7 +1502,9 @@ namespace ValheimHelper
             if (!m_patrol.Walking) RouteTick(npc, dt);
             int count = m_route.Points.Count > 0 ? m_route.Points.Count : Patrol.Points;
             Vector3 goal = m_patrol.Walking ? PatrolPoint(m_patrol.Point) : m_post;
-            bool skip = m_patrol.Walking && !PointOk(goal);
+            bool waterSkip = m_patrol.Walking && WaterBlockedTime >= WaterGiveUp && Utils.DistanceXZ(m_moveTarget, goal) <= 2f; // 이 점 가다 물에 3초 막힘(E099: 47초 한도까지 물가에 서 있었음) — 막힌 시간은 그 목표 것만
+            bool skip = m_patrol.Walking && (!PointOk(goal) || waterSkip);
+            if (waterSkip) Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 점 {m_patrol.Point} 가다 물에 막힘 {WaterBlockedTime:0.0}초 → 건너뜀, 자리 {pos:F1}, {Utils.DistanceXZ(pos, goal):0}m 남음");
             int was = m_patrol.Point;
             bool reached = Utils.DistanceXZ(pos, goal) < (m_patrol.Walking ? 2f : 1.2f);
             float limit = m_patrol.Walking ? Mathf.Max(Patrol.PointLimit, 20f + Utils.DistanceXZ(was > 0 ? PatrolPoint(was - 1) : m_post, goal) / 4f) : Patrol.PointLimit;
@@ -1529,6 +1550,11 @@ namespace ValheimHelper
                     break;
                 case PatrolGoal.Post:
                     MoveToPoint(dt, m_post, 1f, Utils.DistanceXZ(pos, m_post) > 15f);
+                    if (m_moveToDone && !m_deadEnd && WaterBlockedTime < WaterGiveUp && Utils.DistanceXZ(pos, m_post) > 15f && Scout.CanWalk(pos, m_post)) // 길 없음·부분 길 끝인데 곧은 줄은 걸을 만함(E099)
+                    {
+                        StartDeadEnd(Utils.DistanceXZ(pos, m_post));
+                        Plugin.Log.LogInfo($"{npc.NpcName}: 문 옆 길이 막다름 {pos:F1}, {Utils.DistanceXZ(pos, m_post):0}m, {PathDiag(m_post)} → 곧장");
+                    }
                     break;
                 default:
                     MoveToPoint(dt, PatrolPoint(m_patrol.Point), 1.5f, m_route.Points.Count > 0); // 큰 바퀴는 달림(요청 11-12)
