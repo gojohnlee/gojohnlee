@@ -1292,6 +1292,19 @@ namespace ValheimHelper
                             Queue.Insert(0, dq);
                             Plugin.Log.LogInfo($"{npc.NpcName} 작업 {nd.Item}: 밤이라 남은 {w.Amount}개는 아침에 이어 감");
                         }
+                        else if (Job is GatherJob hd && hd.HurtDefer && !Yields)
+                        {
+                            // 다쳐서 돌아옴: 일을 접지 않고 체력이 찬 뒤 남은 몫을 이어 감(요청 다침 ③, Core Recovery)
+                            var w = WorkSaves.FromJob(hd);
+                            w.Why = "다침";
+                            var dq = WorkSaves.ToQueued(npc, w);
+                            dq.Why = "다침";
+                            var before = dq.Ready;
+                            dq.Ready = () => Recovery.IsReady(npc.GetHealth(), npc.GetMaxHealth()) && (before == null || before());
+                            Queue.Insert(0, dq);
+                            Plugin.Log.LogInfo($"{npc.NpcName} 작업 {hd.Item}: 다쳐서 남은 {w.Amount}개는 체력이 차면 이어 감");
+                        }
+                        else if (Job is GatherJob) npc.HurtSpots.Clear();
                         Job = null;
                         m_escort = null;
                         if (!NextQueued()) { if (ready) Current = Mode.Idle; else GoHome(false); }

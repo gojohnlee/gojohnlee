@@ -56,6 +56,14 @@ namespace ValheimHelper
                 : $"DIAG Rested: 체력 회복 ×{se.m_healthRegenMultiplier:0.##}, 기력 회복 ×{se.m_staminaRegenMultiplier:0.##}, 에이트르 ×{se.m_eitrRegenMultiplier:0.##}, 기술 +{se.m_raiseSkillModifier:0.##}, 기본 {((SE_Rested)se).m_baseTTL:0}초");
         }
 
+        /// <summary>지금 사냥 단계인 일꾼(명령은 손 빈 쪽이 맡음).</summary>
+        static WorkerNpc Hunter(TestKit.World w)
+        {
+            foreach (var n in new[] { w.Ragnar, w.Floki })
+                if (n != null && n.Ai.Job is GatherJob g && g.StepName == "Hunt") return n;
+            return null;
+        }
+
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, List<GameObject> boars)
         {
             w.CountsCreatures = true; // 생물을 부르거나 세는 시험
@@ -90,6 +98,30 @@ namespace ValheimHelper
             foreach (var b in boars) if (b == null || b.GetComponent<Character>().IsDead()) dead++;
             checks.Add($"멧돼지 죽음 ({dead}/2)", dead >= 1);
             checks.Add($"체력 남음 ({w.Ragnar.GetHealth():0})", w.Ragnar.GetHealth() > 0f);
+            TestKit.ClearBaseStock(w, "RawMeat");
+
+            // 다쳐도 일을 접지 않음(요청 다침 ③): 사냥 중 체력 40% 밑 → 돌아와 "다침" 칸 → 체력이 차기 전엔 안 나감 → 차면 이어 가 채움
+            WorkerNpc h = null;
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
+            w.Ragnar.HurtSpots.Clear(); w.Floki?.HurtSpots.Clear();
+            Vector3 hp = GatherTest.Ground(w.Home + rot * new Vector3(0f, 0f, 50f));
+            GameObject hb = Object.Instantiate(prefab, hp + Vector3.up * 0.5f, Quaternion.identity);
+            hb.GetComponent<Character>().SetLevel(1);
+            boars.Add(hb);
+            GatherTest.Say("!RawMeat 1", null);
+            yield return TestKit.WaitFor(() => (h = Hunter(w)) != null, 150f);
+            checks.Add($"다침 시험 사냥 시작 ({h?.NpcName}, {TestKit.Waited:0}초)", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            h.SetHealth(h.GetMaxHealth() * 0.3f);
+            yield return TestKit.WaitFor(() => h.Ai.Job == null && h.Ai.Queue.Count > 0 && h.Ai.Queue[0].Why == "다침", 90f);
+            checks.Add($"다쳐서 돌아와 '다침' 칸에 남김 ({TestKit.Waited:0}초, 이곳 {h.HurtSpots.CountAt(h.transform.position.x, h.transform.position.z)}번)", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            h.SetHealth(h.GetMaxHealth() * 0.5f);
+            yield return new WaitForSeconds(6f);
+            checks.Add("체력이 차기 전엔 안 나감", !(h.Ai.Job is GatherJob) && h.Ai.Queue.Count > 0 && h.Ai.Queue[0].Why == "다침");
+            h.SetHealth(h.GetMaxHealth());
+            yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, "RawMeat") >= 1, 150f);
+            checks.Add($"체력이 차면 이어 가 고기 채움 ({GatherTest.CountBase(w.Home, "RawMeat")}개, {TestKit.Waited:0}초)", TestKit.Ok);
             TestKit.ClearBaseStock(w, "RawMeat");
         }
     }

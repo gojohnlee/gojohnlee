@@ -222,6 +222,9 @@ namespace ValheimHelper
         /// <summary>밤이라 새 땅에 못 가 접음(nightNoExplore) — WorkerAI가 남은 몫을 아침 칸으로 대기열 맨 앞에 둔다(요청 밤 몫 ③, E090). 자동 보충은 따로 쉼.</summary>
         public bool NightDefer { get; private set; }
 
+        /// <summary>사냥 중 크게 다쳐 돌아감(huntHurt) — WorkerAI가 남은 몫을 체력이 찬 뒤 칸으로 대기열 맨 앞에 둔다(요청 다침 ③, Core Recovery).</summary>
+        public bool HurtDefer { get; private set; }
+
         bool Fail(string key)
         {
             if (key == "nightNoExplore" && !FromRefill && Remaining() > 0) NightDefer = true;

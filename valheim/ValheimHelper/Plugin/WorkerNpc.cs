@@ -709,6 +709,8 @@ namespace ValheimHelper
         }
 
         public string NpcName => m_nview != null && m_nview.IsValid() ? m_nview.GetZDO().GetString(KeyName, "Worker") : "Worker";
+        /// <summary>사냥 중 크게 다친 곳(같은 곳 세 번째면 접음, Core Recovery). 시킨 일이 다쳐서 멈춘 게 아니게 끝나면 지움.</summary>
+        public readonly Core.Work.Recovery HurtSpots = new Core.Work.Recovery();
         public Personality Personality => m_nview != null && m_nview.IsValid() ? (Personality)m_nview.GetZDO().GetInt(KeyRole) : Personality.Ragnar;
         /// <summary>호위병인지(일은 안 하고 위험한 곳에 가는 일꾼을 따라가 싸움 — 사용자 10-26).</summary>
         public bool IsGuard => Personality == Personality.Guard;

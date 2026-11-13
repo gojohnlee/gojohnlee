@@ -120,7 +120,12 @@ namespace ValheimHelper
             {
                 m_huntSkip[m_prey] = float.MaxValue;
                 m_prey = null;
-                return GiveUp("huntHurt");
+                // 다쳐도 일을 접지 않음(요청 11-12 23:55 ③): 집에서 회복했다 남은 몫을 이어 감, 같은 곳 세 번째면 접음
+                Vector3 at = m_npc.transform.position;
+                bool tooHard = m_npc.HurtSpots.Record(at.x, at.z);
+                if (!tooHard && !FromRefill && Remaining() > 0) HurtDefer = true;
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 다침 {m_npc.GetHealth():0}/{m_npc.GetMaxHealth():0}, 이곳 {m_npc.HurtSpots.CountAt(at.x, at.z)}번째{(HurtDefer ? " → 회복하고 이어 감" : " → 접음")}");
+                return GiveUp(tooHard ? "huntTooHard" : "huntHurt");
             }
             if (m_stepTime > HuntLimit)
             {
