@@ -38,6 +38,8 @@ namespace ValheimHelper
         public System.Func<bool> Ready;
         /// <summary>저장용 데이터(WorkSaves → ZDO vh_queue). null이면 저장하지 않는 칸.</summary>
         public WorkItem Work;
+        /// <summary>멈춘 까닭(예: 습격). 저장할 때 WorkItem.Why로 넘긴다(요청 멈췄다 이어 가기).</summary>
+        public string Why;
     }
 
     /// <summary>
@@ -113,10 +115,10 @@ namespace ValheimHelper
         public readonly List<QueuedWork> Queue = new List<QueuedWork>();
 
         /// <summary>급한 명령: 하던 일을 대기열 맨 앞에 넣고 비운다(새 일은 부르는 쪽이 StartJob).</summary>
-        public void Interrupt()
+        public void Interrupt(string why = null)
         {
             if (Current == Mode.Work && Job != null && !Yields)
-                Queue.Insert(0, new QueuedWork { Label = Job.Label, Resume = Job, Work = WorkSaves.FromJob(Job) });
+                Queue.Insert(0, new QueuedWork { Label = Job.Label, Resume = Job, Work = WorkSaves.FromJob(Job), Why = why });
             Job = null;
         }
 
@@ -1233,7 +1235,7 @@ namespace ValheimHelper
                     npc.Say("raid");
                     // 하던 일은 대기열 맨 앞에 두고 습격이 끝나면 이어 감(사용자 11-13 "귀환해도 하던 일은 절대 안 잊음")
                     bool keep = Job != null && !Yields;
-                    Interrupt();
+                    Interrupt("습격");
                     if (keep && Queue.Count > 0) Queue[0].Ready = RaidOver;
                     GoHome(false);
                     return true;

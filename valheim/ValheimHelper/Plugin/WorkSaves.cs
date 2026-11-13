@@ -100,7 +100,9 @@ namespace ValheimHelper
             {
                 if (q.Work == null) continue;
                 // 멈춘 일(Resume 객체)은 지금 진행으로 수량을 새로
-                list.Add(q.Resume != null ? FromJob(q.Resume) ?? q.Work : q.Work);
+                WorkItem item = q.Resume != null ? FromJob(q.Resume) ?? q.Work : q.Work;
+                if (item != null && !string.IsNullOrEmpty(q.Why)) item.Why = q.Why;
+                list.Add(item);
             }
             return list;
         }
