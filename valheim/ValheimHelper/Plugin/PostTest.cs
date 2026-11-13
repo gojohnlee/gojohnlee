@@ -82,7 +82,10 @@ namespace ValheimHelper
                 var sp = pts[pts.Count / 2];
                 Vector3 at = new Vector3((float)sp.X, 0f, (float)sp.Z);
                 at += (w.Home - at).normalized * 10f;
+                // 물가 시험(회차 611): 점 10m 안쪽이 물 쪽이면 그레일링이 물에 빠져 싸움 안 함 → 물 위 1m 넘는 땅이 나올 때까지 집 쪽으로 4m씩
+                for (int s = 0; s < 6 && GatherTest.Ground(at).y < ZoneSystem.instance.m_waterLevel + 1f; s++) at += (w.Home - at).normalized * 4f;
                 foe.transform.position = GatherTest.Ground(at) + Vector3.up * 0.3f;
+                Plugin.Log.LogInfo($"시험 그레일링 자리 {foe.transform.position} (물 위 {foe.transform.position.y - ZoneSystem.instance.m_waterLevel:0.0}m)");
             }
             ai.GuardPatrol.Now();
             yield return TestKit.WaitFor(() => foe == null || foe.IsDead(), 300f);

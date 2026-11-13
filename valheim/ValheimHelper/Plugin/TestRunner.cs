@@ -224,6 +224,7 @@ namespace ValheimHelper
                 else if (c == "floor") Floor = true;
                 else if (c == "house") House = true;
                 else if (c.StartsWith("biome=")) TestKit.SetRunBiome(c.Substring(6).Trim()); // 늪 회귀: 그 바이옴 평지에서 시험
+                else if (c.StartsWith("spot=")) TestKit.SetRunSpot(c.Substring(5).Trim()); // 물가 자리(VH_SPOT=shore)
                 else if (c.Length > 0) s_autoQueue.Enqueue(c);
             }
             if (s_autoQueue.Count == 0) return;

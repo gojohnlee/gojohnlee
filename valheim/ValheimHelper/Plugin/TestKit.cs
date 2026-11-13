@@ -94,6 +94,15 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>자리 종류(VH_SPOT=shore): 바이옴 자리 가운데 물가만 고름(바닷가 순찰 시험, 회차 611). 바이옴은 VH_BIOME과 같이 줘야 함.</summary>
+        public static bool RunShore;
+
+        public static void SetRunSpot(string name)
+        {
+            if (name == "shore") RunShore = true;
+            else TestRunner.Halt($"모르는 자리 {name}");
+        }
+
         public static void SetRunBiome(string name)
         {
             try { RunBiome = (Heightmap.Biome)System.Enum.Parse(typeof(Heightmap.Biome), name, true); }
@@ -153,16 +162,17 @@ namespace ValheimHelper
                     seen++;
                     float h = wg.GetHeight(p.x, p.z), low = h - wl;
                     maxH = Mathf.Max(maxH, low);
-                    bool ok = true;
+                    bool ok = true, wet = false;
                     for (int k = 0; k < 8 && ok; k++)
                     {
                         Vector3 dir = new Vector3(Mathf.Cos(k * Mathf.PI / 4f), 0f, Mathf.Sin(k * Mathf.PI / 4f));
                         Vector3 q = p + dir * 15f;
                         float hk = wg.GetHeight(q.x, q.z);
+                        if (RunShore && hk < wl) { wet = true; continue; } // 물가 시험(VH_SPOT=shore): 15m 안 물 칸은 높이 차를 안 보고 "물이 있다"만 셈
                         low = Mathf.Min(low, hk - wl);
                         ok = Mathf.Abs(hk - h) < 3f; // 회차 138: 늪 안쪽은 물보다 1m 높은 평지가 없어 가장자리(둘레는 다른 바이옴이어도 됨)·3m 안까지 봄
                     }
-                    if (!ok) continue;
+                    if (!ok || (RunShore && (!wet || h - wl < 1f))) continue; // 물가는 15m 안에 물이 있고 자리 자체는 물 위 1m 넘는 마른 땅
                     maxLow = Mathf.Max(maxLow, low);
                     if (low <= bestLow || NearNoBuild(p, 45f)) continue;
                     best = new Vector3(p.x, h, p.z);
