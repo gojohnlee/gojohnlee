@@ -59,7 +59,8 @@ namespace ValheimHelper
 
         /// <summary>Guard: 지금 목표 경계는 위험하다 → 둘러본 셈 치고 다음 경계로.</summary>
         public void Stop(bool pause) { } // 남기는 것 없음(11-10 확인)
-        public void Resume() { }
+        /// <summary>아침에 이어 할 때: 탐험 제한 시간은 새로 잰다(밤 전 시간은 그 판에서 셈).</summary>
+        public void Resume() { m_time = 0f; m_walking = false; }
         public void AvoidHere(Vector3 danger)
         {
             Brain.Get().MarkLooked(Senses.ZoneOf(danger));
@@ -72,7 +73,7 @@ namespace ValheimHelper
             m_time += dt;
             m_visited.Add(Senses.ZoneOf(m_npc.transform.position));
             if (m_time > Limit) return Done("exploreDone");
-            if (EnvMan.IsNight()) return Done("nightBack");
+            if (EnvMan.IsNight()) { m_ai.KeepForMorning(this); return Done("nightBack"); } // 날이 밝으면 이어 감
             if (m_prep != null) { if (m_prep.Update(dt)) return true; m_prep = null; } // 출발 준비(장비·음식)
             if (m_biome != 0 && !m_saidBiome && (Scout.BiomeAt(m_npc.transform.position) & m_biome) != 0)
             {
