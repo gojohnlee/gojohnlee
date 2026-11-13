@@ -330,22 +330,30 @@ namespace ValheimHelper
                 }
                 zones.Sort((a, b) => Utils.DistanceXZ(home, Senses.ZoneCenter(a.Zone)).CompareTo(Utils.DistanceXZ(home, Senses.ZoneCenter(b.Zone))));
             }
+            // 밤 몫: 밤이면 그 바이옴 밤 적(장비와 무관)을 더해 잃을 비율을 셈 — 센 장비는 밤 목초지도 괜찮게 나온다(사용자 11-13 17:30)
+            bool night = EnvMan.IsNight();
+            System.Func<float, List<NightSpawn>, System.Func<IList<Foe>, float>> ratioAt = (h, ns) => f =>
+            {
+                List<Foe> all = NightFoes.Plus(f, ns, resolve);
+                return Danger.Ratio(all, h, hit, taken(all));
+            };
             foreach (ZoneMemory m in zones)
             {
                 if (input.Places.Count >= MaxPlaces) break;
-                PlaceRisk alone = book.Risk(m.Zone, now, f => Danger.Ratio(f, health, hit, taken(f)), resolve);
+                int biome = m.Biome != 0 ? m.Biome : biomeOf(m.Zone);
+                List<NightSpawn> nightSpawns = night ? NightOf(biome) : null;
+                PlaceRisk alone = book.Risk(m.Zone, now, ratioAt(health, nightSpawns), resolve);
                 var o = new PlaceOption
                 {
                     Zone = m.Zone,
                     Distance = Utils.DistanceXZ(home, Senses.ZoneCenter(m.Zone)),
                     Ratio = alone.Ratio,
-                    RatioWithMead = book.Risk(m.Zone, now, f => Danger.Ratio(f, health + MeadHeal, hit, taken(f)), resolve).Ratio,
+                    RatioWithMead = book.Risk(m.Zone, now, ratioAt(health + MeadHeal, nightSpawns), resolve).Ratio,
                     DeathWeight = alone.DeathWeight,
                     Boss = alone.Boss,
                     TopFoe = alone.TopFoe,
                     Resist = NeedsResist(npc, m.Biome),
                 };
-                int biome = m.Biome != 0 ? m.Biome : biomeOf(m.Zone);
                 // 거점 바이옴(처음엔 초원)은 장비 검사 안 함: 줄 수 있는 더 좋은 장비가 없어 초반에 일을 못 했다(사용자 결정 2026-10-25)
                 if (biome == homeBiome) gearBy[biome] = new PlaceRisk();
                 if (!gearBy.TryGetValue(biome, out PlaceRisk land))
@@ -390,6 +398,33 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"생성 표: 적 {map.Count}종 바이옴 읽음");
             }
             return s_native.TryGetValue(kind, out int mask) && (mask & biome) != 0;
+        }
+
+        static List<SpawnSystem.SpawnData> s_nightRows;
+
+        /// <summary>
+        /// 그 바이옴 밤 몫(게임 생성 표의 밤에만 나는 줄: 켜짐·m_spawnAtDay 꺼짐·m_spawnAtNight 켜짐, 환경 조건 없음, 전역 열쇠가 있으면 켜졌을 때만).
+        /// 수는 m_maxSpawned. 표를 못 읽으면 빈 목록(밤 몫 없음 — 지금처럼).
+        /// </summary>
+        internal static List<NightSpawn> NightOf(int biome)
+        {
+            if (s_nightRows == null)
+            {
+                SpawnSystem ss = ZoneSystem.instance != null && ZoneSystem.instance.m_zoneCtrlPrefab != null ? ZoneSystem.instance.m_zoneCtrlPrefab.GetComponentInChildren<SpawnSystem>(true) : null;
+                if (ss == null) return new List<NightSpawn>();
+                var rows = new List<SpawnSystem.SpawnData>();
+                foreach (SpawnSystemList list in ss.m_spawnLists)
+                    foreach (SpawnSystem.SpawnData d in list.m_spawners)
+                        if (d.m_enabled && d.m_prefab != null && !d.m_spawnAtDay && d.m_spawnAtNight && d.m_maxSpawned > 0 && d.m_requiredEnvironments.Count == 0)
+                            rows.Add(d);
+                s_nightRows = rows;
+                Plugin.Log.LogInfo($"생성 표: 밤에만 나는 줄 {rows.Count}개 읽음");
+            }
+            var night = new List<NightSpawn>();
+            foreach (SpawnSystem.SpawnData d in s_nightRows)
+                if (((int)d.m_biome & biome) != 0 && (string.IsNullOrEmpty(d.m_requiredGlobalKey) || ZoneSystem.instance.GetGlobalKey(d.m_requiredGlobalKey)))
+                    night.Add(new NightSpawn { Kind = d.m_prefab.name, Count = d.m_maxSpawned });
+            return night;
         }
 
         static Dictionary<string, string> Args(WorkerNpc npc, DepartureResult r)
