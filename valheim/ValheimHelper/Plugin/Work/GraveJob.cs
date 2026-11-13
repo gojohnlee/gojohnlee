@@ -87,7 +87,6 @@ namespace ValheimHelper
         bool UpdateGo(float dt)
         {
             if (ZDOMan.instance.GetZDO(Grave) == null) { m_npc.ForgetGrave(Grave); m_npc.Say("graveGone"); return false; }
-            if (EnvMan.IsNight()) { m_npc.Say("nightBack"); return false; } // 아침에 Chores가 다시 시작
             Vector3 pos = GravePos();
             float d = Utils.DistanceXZ(pos, m_npc.transform.position);
             if (m_ai.MoveToPoint(dt, pos, 1.5f, d > 10f) || d < 2f) { Go(Step.Loot); return true; }

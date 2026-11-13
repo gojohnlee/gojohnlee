@@ -73,7 +73,6 @@ namespace ValheimHelper
             m_time += dt;
             m_visited.Add(Senses.ZoneOf(m_npc.transform.position));
             if (m_time > Limit) return Done("exploreDone");
-            if (EnvMan.IsNight()) { m_ai.KeepForMorning(this); return Done("nightBack"); } // 날이 밝으면 이어 감
             if (m_prep != null) { if (m_prep.Update(dt)) return true; m_prep = null; } // 출발 준비(장비·음식)
             if (m_biome != 0 && !m_saidBiome && (Scout.BiomeAt(m_npc.transform.position) & m_biome) != 0)
             {

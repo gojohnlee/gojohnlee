@@ -108,7 +108,8 @@ namespace ValheimHelper
             }
             // 2) 다 둘러봤거나 15분이 지났다: 새 땅(지도 경계)으로 30분까지. 밤에는 모르는 땅에 가지 않는다.
             if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
-            if (EnvMan.IsNight()) return GiveUp(m_exploring ? "nightBack" : "nightNoExplore");
+            // 이미 나간 탐험은 밤이라고 접지 않는다(사용자 11-13 — 위험은 Guard가 본다). 새로 나가는 것만 밤엔 안 간다.
+            if (!m_exploring && EnvMan.IsNight()) return GiveUp("nightNoExplore");
             if (Scout.NextFrontier(m_npc, 0, 0, biomes, m_avoid, out m_goalZone))
             {
                 if (!m_exploring)
@@ -366,7 +367,6 @@ namespace ValheimHelper
             {
                 m_exploreTime += dt;
                 if (m_exploreTime > ExploreLimit) return GiveUp("notFound");
-                if (EnvMan.IsNight()) return GiveUp("nightBack");
             }
             else
             {
