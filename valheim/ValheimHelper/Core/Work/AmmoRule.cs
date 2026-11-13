@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace ValheimHelper.Core.Work
 {
     /// <summary>
@@ -12,5 +16,10 @@ namespace ValheimHelper.Core.Work
 
         /// <summary>깃털 화살을 챙겨도 되는지: 상자 깃털이 FeatherFloor보다 많아야 한다.</summary>
         public static bool MayTakeFeatherArrows(int chestFeathers) => chestFeathers > FeatherFloor;
+
+        /// <summary>
+        /// 가장 싼 것부터 줄 세움(볼트·깃털 화살 — 사용자 11-13 15:50). 값이 같으면 상자 순서를 그대로 둔다(OrderBy는 안정 정렬).
+        /// </summary>
+        public static List<T> CheapestFirst<T>(IEnumerable<T> items, Func<T, int> cost) => items.OrderBy(cost).ToList();
     }
 }

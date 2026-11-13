@@ -320,7 +320,7 @@ namespace ValheimHelper
             // 화살 아끼기(사용자 11-13): 나무 화살 먼저, 깃털 화살은 상자 깃털이 50 넘을 때만 (AmmoRule)
             TakeMeads(from, mine, chest, Carry(bow, guard) - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow) && IsWoodArrow(it), taken);
             if (AmmoRule.MayTakeFeatherArrows(chest.CountItems(ItemName("Feathers"))))
-                TakeMeads(from, mine, chest, Carry(bow, guard) - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken);
+                TakeMeads(from, mine, chest, Carry(bow, guard) - Gear.CountArrows(mine, bow), it => Gear.IsArrowFor(it, bow), taken, AmmoCost);
         }
 
         static string ItemName(string prefab) => ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
@@ -438,9 +438,20 @@ namespace ValheimHelper
             }
         }
 
-        static void TakeMeads(Container from, Inventory mine, Inventory chest, int need, System.Predicate<ItemDrop.ItemData> kind, List<string> taken)
+        /// <summary>화살·볼트의 값 = 제작 재료 개수 합(게임 제작법). 제작법이 없으면 가장 비싼 것으로 친다.</summary>
+        static int AmmoCost(ItemDrop.ItemData it)
         {
-            foreach (var it in new List<ItemDrop.ItemData>(chest.GetAllItems()))
+            Recipe r = ObjectDB.instance.GetRecipe(it);
+            if (r == null) return int.MaxValue;
+            int sum = 0;
+            foreach (var q in r.m_resources) sum += q.m_amount;
+            return sum;
+        }
+
+        static void TakeMeads(Container from, Inventory mine, Inventory chest, int need, System.Predicate<ItemDrop.ItemData> kind, List<string> taken, System.Func<ItemDrop.ItemData, int> order = null)
+        {
+            var items = order == null ? new List<ItemDrop.ItemData>(chest.GetAllItems()) : AmmoRule.CheapestFirst(chest.GetAllItems(), order);
+            foreach (var it in items)
             {
                 if (need <= 0) break;
                 if (!kind(it)) continue;

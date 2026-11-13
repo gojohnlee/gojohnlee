@@ -80,6 +80,8 @@ namespace ValheimHelper
             if (w.Floki != null) w.Floki.Ai.enabled = false;
             TestKit.PutInChest(w.Chest, "CrossbowArbalest", 1);
             TestKit.PutInChest(w.Chest, "BoltBone", 30);
+            TestKit.PutInChest(w.Chest, "Feathers", 50); // 볼트는 깃털 2가 드는 것 — 깃털 50 넘어야 챙김(AmmoRule). 한 번에 50까지만 들어가 두 번 넣음
+            TestKit.PutInChest(w.Chest, "Feathers", 50);
             TestKit.PutInChest(w.Chest, "Bow", 1);
             TestKit.PutInChest(w.Chest, "ArrowWood", 30);
             TestKit.PutInChest(w.Chest, "Club", 1);
