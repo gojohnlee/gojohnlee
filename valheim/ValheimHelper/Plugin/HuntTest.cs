@@ -83,7 +83,9 @@ namespace ValheimHelper
             Quaternion rot = w.Player.transform.rotation;
             for (int i = 0; i < 2; i++)
             {
-                Vector3 pos = GatherTest.Ground(w.Home + rot * new Vector3(i * 6f - 3f, 0f, 25f + i * 6f));
+                // 40~46m(E096): 25~31m면 멧돼지 시야 20m+떠돌기 10m에 집의 두 일꾼이 들어 Guard 싸움이 먼저 잡음 — 라그나 일이 Unload에 묶인 채
+                // 둘 다 죽으면(쉬던 플로키가 잡아 떨굼도 플로키 가방) 사냥감이 없어 먼 구역으로 감. 사냥 찾기 60m(PreySight) 안.
+                Vector3 pos = GatherTest.Ground(w.Home + rot * new Vector3(i * 6f - 3f, 0f, 40f + i * 6f));
                 GameObject go = Object.Instantiate(prefab, pos + Vector3.up * 0.5f, Quaternion.identity);
                 go.GetComponent<Character>().SetLevel(1);
                 boars.Add(go);
