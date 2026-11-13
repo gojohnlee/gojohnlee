@@ -149,12 +149,14 @@ namespace ValheimHelper
             // 안 기다리고 놓으면 몸이 돌기 전에 나가 빗나갔다(회차 544).
             // 겨눌 곳은 새 몸(콜라이더) 가운데 — 사냥이 GetCenterPoint를 겨누는 것과 같게(자리 = 발밑일 수 있음)
             // 화살은 눈 아래 0.31m에서 나간다(진단 회차 545: 발사 자리 y −0.31) → 눈에서 겨누면 그만큼 아래로 빗나갔다.
+            // Archery.Aim은 발사 자리(from)에서 본 겨눌 점을 돌려주고 화살 방향은 눈의 앞이라, 점을 눈 기준으로 옮긴다(eye + 오프셋) — 눈 기준으로 겨눈 것보다 맞힘이 늘었다(회차 546: 낮 0→10/18·밤 1→5/18).
+            // 바닐라 공격 자리(GetProjectileSpawnPoint 식)로 from을 바꾼 판은 낮 3/18·밤 1/18로 줄어 되돌림(회차 546).
             Vector3 eye = npc.GetEyePoint(), from = eye + Vector3.down * 0.31f, aim = eye + npc.transform.forward;
             if (bird != null && npc.ProjectileFlight(bow, out float speed, out float gravity))
             {
                 Vector3 rel = BirdCenter(bird) - from;
                 if (Archery.Aim(rel.x, rel.y, rel.z, 0f, 0f, 0f, speed, gravity, out float ax, out float ay, out float az))
-                    aim = from + new Vector3(ax, ay, az);
+                    aim = eye + new Vector3(ax, ay, az);
             }
             npc.Ai.Face(aim);
             float aimWait = 0f;
