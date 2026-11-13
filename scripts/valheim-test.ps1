@@ -216,9 +216,25 @@ if (Test-Path $log) {
     $all = @(Get-Content $log -Encoding UTF8)
     $loaded = $all | Where-Object { $_ -match 'Valheim Helper .* 로드됨' } | Select-Object -Last 1
     if ($loaded) { $report += $loaded.Trim() } else { $report += '모드 로드 줄 없음(BepInEx가 모드를 못 올렸을 수 있음)' }
-    $errs = @($all | Where-Object { $_ -match 'Error|Exception' })
+    # 로그 오류 셈(사용자 11-13 18:00): 알려진 Unity·BepInEx 잡음은 뺌(목록은 여기 한 곳), 예외는 스택(아래 20줄)에 ValheimHelper가 있을 때만 우리 오류
+    $noise = @('Unable to start Unity log writer')
+    $errs = @(); $noiseN = 0
+    for ($i = 0; $i -lt $all.Count; $i++) {
+        $l = $all[$i]
+        if ($l -notmatch 'Error|Exception') { continue }
+        if (@($noise | Where-Object { $l.Contains($_) }).Count -gt 0) { $noiseN++; continue }
+        if ($l -match 'Exception' -and $l -notmatch 'ValheimHelper') {
+            $ours = $false
+            for ($j = $i + 1; $j -lt [Math]::Min($all.Count, $i + 21); $j++) {
+                if ($all[$j] -match '^\[(Info|Message|Warning|Error|Debug|Fatal)') { break }
+                if ($all[$j] -match 'ValheimHelper') { $ours = $true; break }
+            }
+            if (-not $ours) { $noiseN++; continue }
+        }
+        $errs += $l
+    }
     $kinds = @($errs | ForEach-Object { $_.Trim() } | Select-Object -Unique)
-    $report += "로그 오류 $($errs.Count)줄(종류 $($kinds.Count))"
+    $report += "로그 오류 $($errs.Count)줄(종류 $($kinds.Count), 잡음 $($noiseN)줄 뺌)"
     foreach ($e in ($kinds | Select-Object -First 8)) {
         if ($e.Length -gt 200) { $e = $e.Substring(0, 200) + '...' }
         $report += "  $e"
