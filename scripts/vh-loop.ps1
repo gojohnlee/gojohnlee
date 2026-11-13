@@ -766,6 +766,18 @@ while ($true) {
         Write-Status "한도 대기: 두 계정 모두 한도(또는 오류로 쉼), $($t.ToString('MM-dd HH:mm'))에 다시" '-'
         Save-State; Wait-Until $t; continue
     }
+    # 먼저 쓸 계정(사용자 11-13: 리셋이 가까운 계정을 먼저 다 씀): %USERPROFILE%\vh-loop\prefer-account.txt 첫 줄 "1번"/"2번".
+    # 그 계정이 한도·쉼이 아니면 그걸로, 한도면 다른 계정(지금처럼). 둘째 줄에 날짜·시각(예: 2026-11-14 09:00)이 있으면 그때 파일을 지움.
+    $pf = Join-Path $Dir 'prefer-account.txt'
+    if (Test-Path $pf) {
+        $pl = @(Get-Content $pf -Encoding UTF8 -ErrorAction SilentlyContinue | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+        $pe = $null; if ($pl.Count -ge 2) { try { $pe = [datetime]::Parse($pl[1]) } catch { } }
+        if ($pe -and (Get-Date) -ge $pe) { Remove-Item $pf -Force -ErrorAction SilentlyContinue; Log "먼저 쓸 계정 파일 끝($($pl[1])) → 지움" }
+        else {
+            $pi = -1; for ($k = 0; $k -lt $Accounts.Count; $k++) { if ($pl.Count -and $Accounts[$k].Name -eq $pl[0]) { $pi = $k } }
+            if ($pi -ge 0 -and $free -contains $pi -and $st.acct -ne $pi) { Log "먼저 쓸 계정 → $($Accounts[$pi].Name)"; $st.acct = $pi }
+        }
+    }
     if ($free -notcontains $st.acct) { $st.acct = $free[0] }
     $acct = $Accounts[$st.acct]
     $st.round++
