@@ -73,7 +73,8 @@ namespace ValheimHelper
             w.Ragnar.ClearHurt(); w.Floki?.ClearHurt();
             Quaternion rot = w.Player.transform.rotation;
             int portals0 = PortalBuilder.Mine().Count, wave = 0, hurtNo = 0, trips = 0;
-            float start = Time.time, lastGone = -100f;
+            float start = Time.time, lastGone = -100f, idleSince = -1f;
+            bool idleEnd = false;
             var recover = new List<string>();
             WorkerNpc lastHunter = null;
             bool wasHome = true;
@@ -81,6 +82,11 @@ namespace ValheimHelper
             while (GatherTest.CountBase(w.Home, "Entrails") < Goal && Time.time - start < 1380f)
             {
                 if (Alive(spawned, prey) > 0) lastGone = Time.time;
+                // 일꾼 누구도 일·대기열이 없는 채 60초(게임 시간) 넘으면 더 기다리지 않고 FAIL로 끝냄(사용자 11-14 00:58)
+                bool busy = w.Ragnar.Ai.Job != null || w.Ragnar.Ai.Queue.Count > 0 || (w.Floki != null && (w.Floki.Ai.Job != null || w.Floki.Ai.Queue.Count > 0));
+                if (busy || GatherTest.CountBase(w.Home, "Entrails") >= Goal) idleSince = -1f;
+                else if (idleSince < 0f) idleSince = Time.time;
+                if (idleSince >= 0f && Time.time - idleSince > 60f) { idleEnd = true; break; }
                 if (Alive(spawned, prey) == 0 && wave < 60 && Time.time - lastGone > 3f) // 한 마리씩(넷이면 preyPack, 맞는 판단), 집에서 45~55m. 죽고 3초 뒤(20초면 그사이 탐험 나가 막혀 cantReach — 회차 580, 창자는 확률 떨굼이라 60마리까지)
                 {
                     for (int i = 0; i < 1; i++)
@@ -124,7 +130,7 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(1f);
             }
             int have = GatherTest.CountBase(w.Home, "Entrails"), portals = PortalBuilder.Mine().Count - portals0;
-            checks.Add($"창자 {Goal}개 채움 ({have}개, {Time.time - start:0}초, 무리 {wave})", have >= Goal);
+            checks.Add($"창자 {Goal}개 채움 ({have}개, {Time.time - start:0}초, 무리 {wave}{(idleEnd ? ", 일꾼 일 없이 60초 넘어 일찍 끝냄" : "")})", have >= Goal);
             checks.Add($"두 번 다침 시험함 ({hurtNo}/2)", hurtNo == 2);
             Plugin.Log.LogInfo($"DIAG 창자 회복: {string.Join(" · ", recover)} · 집 나섬 {trips}번 · 포탈 새로 {portals}개 · 다침 칸 기록 {lastHunter?.NpcName}");
         }
