@@ -21,7 +21,7 @@ namespace ValheimHelper
                 TestRunner.Finish();
                 yield break;
             }
-            var w = new TestKit.World();
+            var w = new TestKit.World { House = true }; // 사용자 11-12: VH_HOUSE=1이면 TheNewEra 집 곁에서 순찰·문 옆 경계를 셈
             var made = new List<GameObject>();
             try { yield return Body(w, checks, made); }
             finally
