@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     static class BirdShootTest
     {
-        const int Trials = 3;
+        const int Trials = 6;
         static readonly float[] Distances = { 10f, 20f, 30f };
 
         class Shot
