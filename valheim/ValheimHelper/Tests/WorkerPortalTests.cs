@@ -38,6 +38,14 @@ public class WorkerPortalTests
     }
 
     [Fact]
+    public void HurtResumeCountsOnlyRoundTrip()
+    {
+        Assert.False(WorkerPortal.KeepVisits(5));   // 집에서 회복하고 다시 감: 도착 한 번 더
+        Assert.False(WorkerPortal.KeepVisits(30));
+        Assert.True(WorkerPortal.KeepVisits(400));  // 다친 곳 근처에서 회복하고 바로 이어 감: 안 셈
+    }
+
+    [Fact]
     public void IdleAfterDays()
     {
         Assert.False(WorkerPortal.IsIdle(10, 14));

@@ -50,6 +50,10 @@ namespace ValheimHelper.Core.Work
         public static bool ShouldPlace(double siteFromBase, int visits, bool linkedAlready) =>
             siteFromBase > FarFromBase && visits >= 2 && !linkedAlready;
 
+        /// <summary>다쳐서 멈췄다 이어 가는 일이 지난 일의 도착 기록을 물려받나(요청 다침 ④): 집에 갔다 왔으면(회복 왕복) 새 도착으로 세고,
+        /// 집 밖(30m 넘게)에서 바로 이어 가면(근처 회복) 같은 도착이라 다시 안 센다.</summary>
+        public static bool KeepVisits(double fromHomeAtResume) => fromHomeAtResume > 30;
+
         /// <summary>
         /// 거점에서 먼 일터로 떠날 때 할 일(R2 나, [기본안]). 일터 쪽 구역은 거점에서 안 불러와져 있으니 거점 쪽만 지금 놓고 한 몫은 들고 가서 도착해 놓는다.
         /// mineWithTag = 그 이름표의 일꾼 포탈 수, carrying = 한 몫을 이미 들고 있나.

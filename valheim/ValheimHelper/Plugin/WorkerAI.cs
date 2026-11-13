@@ -138,8 +138,16 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>근처 회복으로 간 일이 도착을 센 구역 — 집에 안 가고 이어 가면 다시 안 셈(요청 다침 ④, Core WorkerPortal.KeepVisits). 저장 안 함.</summary>
+        System.Collections.Generic.List<ZoneXY> m_hurtVisited;
+
         public void StartJob(IWorkerJob job)
         {
+            if (m_hurtVisited != null && job is GatherJob)
+            {
+                if (WorkerPortal.KeepVisits(Utils.DistanceXZ(transform.position, ((WorkerNpc)m_character).Home))) ((GatherJob)job).KeepVisited(m_hurtVisited);
+                m_hurtVisited = null;
+            }
             Job = job;
             m_escort = null; // 동행은 그 일에만(부르는 쪽이 StartJob 뒤 EscortBy)
             Risky = false;
@@ -1302,6 +1310,7 @@ namespace ValheimHelper
                             if (hd.HurtNear) // 다친 자리에서 고른 근처 회복(GatherJob.UpdateHunt — Core Recovery.Choose)
                             {
                                 Plugin.Log.LogInfo($"{npc.NpcName} 다쳐서 근처에서 줍기하며 회복");
+                                m_hurtVisited = new System.Collections.Generic.List<ZoneXY>(hd.Visited);
                                 Job = new RecoverNearJob(npc);
                                 break;
                             }

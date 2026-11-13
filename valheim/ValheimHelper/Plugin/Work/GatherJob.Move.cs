@@ -12,6 +12,9 @@ namespace ValheimHelper
         /// <summary>시험용(vh_portalbuildtest 8): 떠날 때·도착·귀환의 일꾼 포탈 처리만 따로 부른다.</summary>
         internal void TestPortalDepart(ZoneXY z) { m_goalZone = z; PortalDepart(); }
         internal void TestPortalArrive(ZoneXY z) => ArrivedAt(z);
+        /// <summary>이 일에서 도착을 센 먼 구역(한 일에 한 번) — 근처 회복 뒤 이어 가는 일이 물려받음(WorkerAI, 요청 다침 ④).</summary>
+        internal IEnumerable<ZoneXY> Visited => m_visited;
+        internal void KeepVisited(IEnumerable<ZoneXY> zones) => m_visited.UnionWith(zones);
         internal void TestPortalHome() => PortalHome();
         internal string PortalCarryTag => m_portalTag;
         /// <summary>시험용(vh_restart2 집 모드): 불러올 때 이어 받은 이름표 — 일터가 가까워 시험이 보기 전에 귀환해 한 몫을 돌려놓아도 남음.</summary>
