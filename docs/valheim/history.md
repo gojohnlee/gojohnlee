@@ -19,8 +19,9 @@
 - decisions 사냥 줄: "활이랑 화살 좀 넣어 줘 하고 그만둠"만 있던 것을, 기본 활을 대기열에 제작으로 걸고 그 일은 그만둔다(QueueBowMake, 회차 531·555)로 바로잡음.
 - codemap 시험 고르기: 준비·장비 줄에 vh_arrowtest·vh_guardbowtest·vh_notooltest·vh_toolbreaktest 추가, 새 시험(vh_birdprobetest·vh_birdshoottest)은 회귀 묶음에 안 넣는다고 한 줄 추가.
 - progress: 끝난 "요청 화살 아끼기"·"요청 연장·활·화살 연결" 덩어리 지움, 지금 목록 3개로 맞춤.
+- ⑤ 확인: pc-howto·vh-loop-prompt·CLAUDE는 킵온 언급이 없어 그대로 둠(킵온 줄은 loop-plan에만, grep으로 본 것).
 - loop-plan: 컴퓨터 안 끄기 지킴이(vh-keepon.ps1) 한 줄 추가.
-- 남은 것: ④ Errors.txt 관찰 중 항목 상태 갱신(E073~ 등 열 개 넘음). 다음 회차에 이어 감.
+- ④ Errors.txt: 30회차 넘게 안 나온 관찰 중 11개(E074~E081·E084·E086·E087)를 Errors-resolved로 닫음(원인 미확인, 10-30 규칙). 남은 관찰 중: E073·E082·E085·E090.
 - 시험은 안 돌림(문서만). 바꾼 코드 없음.
 
 ### 회차 558 · 11-13 · 밤이 돼도 하던 일 안 접기
