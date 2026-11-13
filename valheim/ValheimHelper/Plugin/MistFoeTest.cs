@@ -62,18 +62,26 @@ namespace ValheimHelper
             checks.Add($"안개땅 음식 먹음 ({string.Join(",", ate.ToArray())})", ate.Count == 3);
             npc.Heal(npc.GetMaxHealth(), false);
             yield return new WaitForSeconds(1f);
+            // E091: 갑옷이 늦게 입혀지는 판이 있어(갑옷 4 → 판단이 달라짐) 입을 때까지 기다린다
+            for (float wt = 0f; wt < 5f && npc.GetBodyArmor() < 20f; wt += 0.5f) { Prep.WearBest(npc); yield return new WaitForSeconds(0.5f); }
+            checks.Add($"안개땅 갑옷 입음 (갑옷 {npc.GetBodyArmor():0})", npc.GetBodyArmor() >= 20f);
 
             // A) 시커 하나: 판단은 위험 비율대로, 싸움이면 잡음
-            float ratio = RatioOf(npc, "Seeker");
-            Verdict expect = Danger.Judge(Personality.Ragnar, new List<Foe> { Guard.Resolve(new GroupFoe { Kind = "Seeker", Count = 1, Level = 1 }) },
+            // 예상은 Guard.Judge와 같게: 약점 보정(ResolveFor) + 나보다 빠른 적이면 물러남 대신 싸움(E091)
+            var resolve = Guard.ResolveFor(npc, new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems()));
+            float ratio = Danger.Ratio(new List<Foe> { resolve(new GroupFoe { Kind = "Seeker", Count = 1, Level = 1 }) }, npc.GetMaxHealth(), Guard.HitOf(npc), Guard.TakenFor(npc));
+            Verdict expect = Danger.Judge(Personality.Ragnar, new List<Foe> { resolve(new GroupFoe { Kind = "Seeker", Count = 1, Level = 1 }) },
                 npc.GetMaxHealth(), npc.GetMaxHealth(), Guard.HitOf(npc), Guard.TakenFor(npc), false);
+            Character seekerC = seeker.GetComponent<Character>();
+            if (expect == Verdict.Back && seekerC != null && Guard.ChaseSpeed(seekerC) > npc.m_runSpeed * 1.05f) expect = Verdict.Fight;
             TestRunner.Log($"A 안개땅 차림: 체력 {npc.GetMaxHealth():0}, 갑옷 {npc.GetBodyArmor():0}, 한 방 {Guard.HitOf(npc):0.0}, 시커 위험 비율 {ratio:0.00} → 예상 {expect}");
             var states = new HashSet<string>();
             yield return Watch("A", npc, Spawn(seeker, npc, 15f, spawned), 45f, states, r => checks.Add(r.Item1, r.Item2));
             if (expect == Verdict.Fight)
                 checks.Add($"안개땅 차림이면 시커와 싸움 (상태 {Join(states)})", states.Contains("Fight"));
             else
-                checks.Add($"비율 {ratio:0.00}이면 시커와 싸우지 않음 (상태 {Join(states)})", !states.Contains("Fight") && states.Count > 0);
+                // 물러남 판단이어도 시커가 덤벼드는 순간엔 못 떨침으로 싸움(Guard.Judge) — 물러나거나 도망친 적이 있으면 됨(E091)
+                checks.Add($"비율 {ratio:0.00}이면 시커에게서 물러남 (상태 {Join(states)})", states.Contains("Back") || states.Contains("Flee"));
             if (states.Contains("Fight")) checks.Add("싸운 시커를 배움", Brain.Foes.Knows("Seeker"));
             if (npc.IsDead()) yield break;
 
@@ -106,7 +114,9 @@ namespace ValheimHelper
             {
                 yield return new WaitForSeconds(0.5f);
                 t += 0.5f;
-                if (npc.Ai.Guard != null && npc.Ai.Guard.StateName != "Calm") states.Add(npc.Ai.Guard.StateName);
+                // 도망친 곳에서 다른 동물과 싸운 것은 이 적과의 싸움으로 안 셈(E091 C: 시커 56m 밖에서 비율 0.20 싸움)
+                if (npc.Ai.Guard != null && npc.Ai.Guard.StateName != "Calm")
+                    states.Add(npc.Ai.Guard.StateName == "Fight" && npc.Ai.Guard.Target != null && npc.Ai.Guard.Target != c ? "FightOther" : npc.Ai.Guard.StateName);
                 if ((int)(t * 2) % 10 == 0) TestRunner.Log($"[C {t:0}s] 경계 {npc.Ai.Guard?.StateName}/{npc.Ai.Guard?.LastVerdict} 비율 {npc.Ai.Guard?.LastRatio:0.00}, 체력 {npc.GetHealth():0}, 시커 거리 {(c ? Utils.DistanceXZ(c.transform.position, npc.transform.position) : 0):0.0}m");
             }
             TestRunner.Log($"C 결과: 상태 [{Join(states)}], 죽음 {npc.Deaths - deaths0}, {t:0.0}초");
@@ -164,7 +174,9 @@ namespace ValheimHelper
             {
                 yield return new WaitForSeconds(0.5f);
                 t += 0.5f;
-                if (npc.Ai.Guard != null && npc.Ai.Guard.StateName != "Calm") states.Add(npc.Ai.Guard.StateName);
+                // 도망친 곳에서 다른 동물과 싸운 것은 이 적과의 싸움으로 안 셈(E091 C: 시커 56m 밖에서 비율 0.20 싸움)
+                if (npc.Ai.Guard != null && npc.Ai.Guard.StateName != "Calm")
+                    states.Add(npc.Ai.Guard.StateName == "Fight" && npc.Ai.Guard.Target != null && npc.Ai.Guard.Target != a ? "FightOther" : npc.Ai.Guard.StateName);
                 low = Mathf.Min(low, npc.GetHealth());
                 if ((int)(t * 2) % 10 == 0) TestRunner.Log($"[{tag} {t:0}s] 경계 {npc.Ai.Guard?.StateName}/{npc.Ai.Guard?.LastVerdict} 비율 {npc.Ai.Guard?.LastRatio:0.00} ({npc.Ai.Guard?.LastDetail}), 체력 {npc.GetHealth():0}, " +
                     $"적 {(a ? a.GetHealth() : 0):0} 거리 {(a ? Utils.DistanceXZ(a.transform.position, npc.transform.position) : 0):0.0}m");
@@ -172,7 +184,9 @@ namespace ValheimHelper
             TestRunner.Log($"{tag} 결과: 상태 [{Join(states)}], 죽음 {npc.Deaths - deaths0}, 가장 낮은 체력 {low:0}/{npc.GetMaxHealth():0}, {t:0.0}초");
             if (states.Contains("Fight"))
             {
-                add(System.Tuple.Create($"{tag}: 싸워서 잡음 ({t:0.0}초)", a == null || a.IsDead()));
+                // 덤벼들 때만 싸우고(못 떨침) 물러나거나, 위험이 커져 도망친 판은 못 잡아도 됨(도망 판단은 그대로 — Guard.Judge ⑪ 5 기본안, E091). 안 죽음은 그대로 봄
+                bool fled = states.Contains("Flee") || states.Contains("Back");
+                add(System.Tuple.Create($"{tag}: 싸워서 잡음{(fled ? " 또는 물러남·도망" : "")} ({t:0.0}초)", a == null || a.IsDead() || fled));
                 add(System.Tuple.Create($"{tag}: 안 죽음 (가장 낮은 체력 {low:0})", npc.Deaths == deaths0 && !npc.IsDead()));
             }
             if (a != null && !a.IsDead()) Kill(a);
