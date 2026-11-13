@@ -268,14 +268,19 @@ namespace ValheimHelper
                 }
         }
 
+        /// <summary>같이 캔 팀이 넣은 것·든 것(내 짐 포함)으로 목표를 채웠나 — 채웠으면 자기 통나무도 더 안 쪼개고 둘 다 복귀(사용자 11-09 같이 캐기, 회차 513·514).
+        /// Search·Approach·Deposit이 같은 기준이어야 함: Approach만 멈추고 Search·Deposit이 자기 통나무로 다시 보내면 빈손 왕복을 끝없이 되풀이(E089).</summary>
+        bool TeamFilled() => Team != null && Remaining() - Carried() <= 0;
+
         /// <summary>
         /// 자기 통나무 중 지금 쪼갤 수 있는 가장 가까운 것. 다음 나무·바위보다 먼저, 시킨 개수를 채워도 끝까지 쪼갠다.
         /// 거르는 것은 FindInSight와 같다(건너뜀·위험 구역·막힘 기록·높이 걸림·도구), 건축물 4m는 안 거름(사용자 11-12 집 곁 통나무). 쪼갤 것이 안 남은 자리는 지운다.
+        /// 같이 캔 팀이 목표를 채웠으면 없음(TeamFilled).
         /// </summary>
         bool OwnLog(out ZDO best)
         {
             best = null;
-            if (m_felled.Count == 0 || m_hunt) return false;
+            if (m_felled.Count == 0 || m_hunt || TeamFilled()) return false;
             Vector3 pos = m_npc.transform.position;
             float bestDist = float.MaxValue;
             for (int i = m_felled.Count - 1; i >= 0; i--)
