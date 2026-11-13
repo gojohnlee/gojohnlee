@@ -122,12 +122,6 @@ namespace ValheimHelper
             Job = null;
         }
 
-        /// <summary>밤이 되어 놓는 일(탐험 등): 아침(밤이 아닐 때)에 이어 간다. 일 자체는 끝내고 대기열에 Ready 조건으로 넣는다(사용자 11-13 "밤 탐험 기억→아침에 이어 감").</summary>
-        public void KeepForMorning(IWorkerJob job)
-        {
-            Queue.Insert(0, new QueuedWork { Label = job.Label, Resume = job, Work = WorkSaves.FromJob(job), Ready = () => !EnvMan.IsNight() });
-        }
-
         /// <summary>대기열에서 할 수 있는 첫 칸을 꺼내 시작한다. 시작했으면 true.</summary>
         bool NextQueued()
         {

@@ -357,7 +357,7 @@ namespace ValheimHelper
                 // 거점 바이옴(처음엔 초원)은 장비 검사 안 함: 줄 수 있는 더 좋은 장비가 없어 초반에 일을 못 했다(사용자 결정 2026-10-25)
                 if (biome == homeBiome) gearBy[biome] = new PlaceRisk();
                 if (!gearBy.TryGetValue(biome, out PlaceRisk land))
-                    gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, f => Danger.Ratio(f, health, hit, taken(f)), resolve, NativeTo);
+                    gearBy[biome] = land = book.BiomeRisk(biome, biomeOf, ratioAt(health, night ? NightOf(biome) : null), resolve, NativeTo); // 밤이면 그 바이옴 밤 몫도(장소 검사와 같은 식)
                 o.GearRatio = land.Ratio;
                 o.GearFoe = land.TopFoe;
                 o.BiomeName = BiomeNames.Of(biome);
