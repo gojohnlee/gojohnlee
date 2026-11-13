@@ -8,6 +8,21 @@
 
 ## 회차 기록
 
+### 회차 568 · 11-13 · 3배속 남은 시험 돌려 봄
+
+**요약**
+
+- [11-13] 3배속 남은 시험(회차 568): 47개 3배 PASS, 집안일 시험은 3배에서만 멧돼지 사냥 실패라 1배로, 개인 상자 시험 대사 판정 고침, 안개땅 적 시험은 속도와 상관없는 FAIL(E091) — 커밋 e2f473e1·ab18e153
+
+**자세히**
+
+- 3배 PASS: tin 13·prep 22·bag 9·death 22·explore 16·far·craft 32 / name·skill·refill 30·help·team·banter·mate 18·set·portal 14·portalbuild 40·skip 25·resist 20·repair / crypt 24·cook 15·cookwet·bow·machinestuck·farm 25·escort 18·silver(약식)·post 10·guardbow / plains·minefoe·mine(약식)·settle 32·block·weak·tidywalk·guest 28·share·stock 33·mistlands.
+- vh_chorestest: 3배 단독 23/24(멧돼지 사냥 "발 디딜 곳이 없어"로 접어 구운 고기 0, E080과 같은 문구), 1배 단독 24/24 → RealSpeed(1배) 목록에. 커밋 e2f473e1.
+- vh_fishtest: 묶음에서 chorestest 환경 FAIL 뒤 0마리 FAIL, 3배 단독 12/12 PASS → 앞 시험이 남긴 일꾼 일 탓.
+- vh_mychesttest: 3배 묶음·1배 단독 FAIL "모자라 말" — 대사 "나머진 구해야 해"가 시험 낱말 목록에 없었음. prepShort 대사 전체로 알아보게 고침, 3배 19/19 PASS. 커밋 ab18e153.
+- vh_mistfoetest: 3배·1배 둘 다 FAIL 14/16, 한 번 PASS — E091(시험 예상이 "못 떨침"·약점을 안 셈, 갑옷 입는 순서에 따라 갈림).
+- 남은 3배 확인: 평원 VH_BIOME 시험·B9 애쉬랜드·B10 딥노스·restart 쌍·B12 멀티.
+
 ### 회차 567 · 11-13 · 자동 시험 3배속
 
 **요약**
