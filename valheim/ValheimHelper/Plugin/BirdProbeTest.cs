@@ -47,6 +47,10 @@ namespace ValheimHelper
                 string drops = drop == null ? "없음" : $"{drop.m_drops.Count}종";
                 TestRunner.Log($"새 프리팹 {name}: Character {(ch != null ? "있음" : "없음")}" +
                                $"{(ch != null ? $", 최대 체력 {ch.GetMaxHealth():0.#}" : "")}, 떨굼 {drops}");
+                // 체력이 어디서 깎이는지 찾으려고 붙은 부품(컴포넌트) 종류와 콜라이더 수를 남긴다
+                var parts = new List<string>();
+                foreach (var part in bird.GetComponentsInChildren<Component>()) parts.Add(part.GetType().Name);
+                TestRunner.Log($"새 프리팹 {name} 부품: {string.Join(", ", parts)}, 콜라이더 {bird.GetComponentsInChildren<Collider>().Length}개");
             }
             checks.Add($"땅 앉은 새 프리팹 찾음 ({count}개 중 {seen.Count}종)", seen.Count > 0);
             TestRunner.Log($"프리팹 종류 {string.Join(", ", seen)}");
