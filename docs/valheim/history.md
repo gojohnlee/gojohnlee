@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 625 · 11-14 · 손 거리 판정 게임 시험 통과
+
+**요약**
+
+- [11-14] 손 거리 판정 시험 통과(회차 625 — 커밋 ae469596): vh_unloadreachtest 14/14·vh_preptest 22/22 PASS
+
+**자세히**
+
+- 회차 624에서 바꾼 Prep·Unload 손 거리 판정(Unload.HandOk) 코드를 게임에서 시험. 빌드 통과, dotnet test 740/740.
+- 시험: vh_unloadreachtest 14/14 PASS(53초), vh_preptest 22/22 PASS(16초). 로그 오류 0줄.
+- 바꾼 코드는 없음(커밋 ae469596 그대로). progress·codemap의 CanReach 이름을 Unload.HandOk로 맞춤(문서).
+
 ### 회차 624 · 11-14 · 손 거리 판정 한 곳으로 모음(리팩터링 3번 일부)
 
 **요약**
