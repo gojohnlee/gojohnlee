@@ -24,9 +24,10 @@ try { $Deadline = [datetime]::Parse((Get-Content $UntilFile -ErrorAction Stop | 
 if (-not $Deadline) { $Deadline = (Get-Date).Date.AddHours(18.5); if ((Get-Date) -ge $Deadline) { $Deadline = (Get-Date).AddHours(12) } }
 function Test-LoopIdle {
     $l = Get-Content (Join-Path $Dir 'loop.log') -Tail 200 -Encoding UTF8 -ErrorAction SilentlyContinue |
-        Where-Object { $_ -match '회차 \d+ 시작|루프 시작|다시 돎|멈춤:|할 일 없음|답 기다림|멈춤 파일' } | Select-Object -Last 1
+        Where-Object { $_ -notmatch 'REPLY:|LOOP:|usage ' -and $_ -match '회차 \d+ 시작|루프 시작|다시 돎|멈춤:|할 일 없음|답 기다림|멈춤 파일' } | Select-Object -Last 1
     # 답 기다림(멈춤:)은 할 일 없음이 아니다 — 사용자가 답할 수 있게 PC를 켜 둔다(사용자 11-13). 다 끝남·멈춤 파일만.
-    [bool]($l -and $l -match '할 일 없음|멈춤 파일')
+    # claude가 남긴 줄(REPLY:·LOOP:)은 루프 상태가 아님 — 11-13 11:32 답 전용 세션의 "REPLY: … 할 일 없음"을 다 끝남으로 잘못 보고 꺼짐.
+    [bool]($l -and $l -match '할 일 없음 →|멈춤 파일')
 }
 # 텔레그램 알림(사용자 11-13): %USERPROFILE%\vh-loop\telegram.txt 첫 줄 봇 토큰, 둘째 줄 chat id(저장소에 안 올림). 없으면 조용히 건너뜀.
 function Send-Tg($text) {
@@ -47,8 +48,8 @@ function Watch-LoopLog {
     if ($all.Count -lt $script:Seen) { $script:Seen = 0 }
     $new = @($all | Select-Object -Skip $script:Seen); $script:Seen = $all.Count
     foreach ($l in $new) {
-        if ($l -match '멈춤:|LOOP: NEED_USER') { Send-Tg (Get-StopReport $l) }
-        elseif ($l -match '할 일 없음') { Send-Tg "발헤임 루프: 할 일 다 끝남. 지킴이 지우고 원래대로(자리 비우면 PC 끔)." }
+        if ($l -notmatch 'REPLY:' -and $l -match '멈춤:|LOOP: NEED_USER') { Send-Tg (Get-StopReport $l) }
+        elseif ($l -notmatch 'REPLY:|LOOP:' -and $l -match '할 일 없음 →') { Send-Tg "발헤임 루프: 할 일 다 끝남. 지킴이 지우고 원래대로(자리 비우면 PC 끔)." }
     }
 }
 # 멈춤 알림을 사람이 읽고 바로 답할 수 있게(사용자 11-13): 까닭을 쉬운 말로 + 최근 회차가 한 일 + 루프가 물은 것 + 지금 할 일.
