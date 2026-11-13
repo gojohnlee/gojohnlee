@@ -153,6 +153,7 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh
 - 서리 동굴 얼음(회차 167 E031, vh_frostcavetest 진단): caverock_ice_pillar_wall = 통로를 막는 얼음 벽 Destructible 체력 50·단계 0·모든 피해 Weak → caverock_ice_wall_destruction(떨굼 없음, 그래서 자원 목록에 없음), caverock_ice_stalagmite = 석순 체력 10(같은 값) → _destruction, caverock_ice_stalagtite = 천장 고드름 체력 1 → caverock_ice_stalagtite_falling(ImpactEffect 부딪힘 피해 50 — 깨면 떨어져 다침). 방 배치는 DungeonGenerator 씨앗 = 월드 씨앗 + 세운 자리라 자리마다 다르고, 도착 방이 얼음 벽으로 막혀 수정 전부 길이 없는 배치가 있음(씨앗 1665470611·1665155603). 수정은 대개 도착 자리보다 35~55m 아래 층(동굴은 여러 층, 같은 xz에 바닥이 여럿). 방 벽 메시 충돌체 이름은 "default"(부모 caverock_pillar·caverock_curvedwallbig 등 — 진짜 벽).
 - 물·헤엄(회차 136): 몸은 충돌체가 물 트리거(WaterVolume·LiquidSurface)에 들어갈 때 그 수면을 받는다(OnTriggerEnter·UpdateFloaters → SetLiquidLevel), 깊이 = 수면 − 발 높이.
   헤엄 = 깊이 > m_swimDepth − 0.4(일꾼·플레이어 프리팹 1.5 → 1.1m), 발이 수면 − m_swimDepth보다 낮으면 떠오름. 헤엄 중 점프는 벽에 닿아 있을 때(m_hitWorldTime<0.25)만.
+  헤엄 중 돌기[1.0.21, E099]: Character.UpdateSwimming은 m_moveDir>0.1 또는 AlwaysRotateCamera(Player만)일 때만 UpdateRotation — 땅(UpdateWalking)은 m_groundContact여도 돎. 물에 떠서 선 일꾼(Humanoid)은 LookAt해도 안 돈다.
   Floating.GetLiquidLevel(점)은 그 점이 물 상자 안일 때만 → 늪 지하묘지 물(WaterVolume 상자 두께 1m, 수면 쪽만, forceDepth 0.5·바람 없음)은 깊은 바닥 점에서 놓친다.
 - MineRock5 조각이 부서지면 떨굼은 m_hitEffectAreaCenter(기본 true)면 조각 충돌체 가운데, 아니면 맞은 점 ±0.3m에 생김. 묘지 바닥 속 mudpile2_frac 조각을 깨면 바닥 밑으로 떨어짐.
 - MineRock(옛 바위, LeviathanLava 등 — 1.0.20): 부위 = m_areaRoot 아래 충돌체(없으면 자기 아래 전부). Damage는 m_hitCollider가 부위가 아니면 "Invalid hit area"로 끝(피해 없음), null이면 "no collider". 직접 칠 땐 GatherJob.HitColliders로 부위만.

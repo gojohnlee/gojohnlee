@@ -29,6 +29,8 @@ namespace ValheimHelper.Core.Npc
         public int Rounds { get; private set; }
         /// <summary>다음 순찰까지 남은 초.</summary>
         public float Wait => m_wait;
+        /// <summary>문 옆으로 PostLimit초 안에 못 가서 그 자리에 선 중(diag, E099).</summary>
+        public bool GaveUp => m_gaveUp;
 
         /// <summary>바로 순찰(시험).</summary>
         public void Now() => m_wait = 0f;

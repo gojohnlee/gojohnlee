@@ -1487,7 +1487,14 @@ namespace ValheimHelper
             int was = m_patrol.Point;
             bool reached = Utils.DistanceXZ(pos, goal) < (m_patrol.Walking ? 2f : 1.2f);
             float limit = m_patrol.Walking ? Mathf.Max(Patrol.PointLimit, 20f + Utils.DistanceXZ(was > 0 ? PatrolPoint(was - 1) : m_post, goal) / 4f) : Patrol.PointLimit;
+            bool gaveUp = m_patrol.GaveUp;
             PatrolGoal g = m_patrol.Tick(dt, reached, skip, count, limit);
+            if (!gaveUp && m_patrol.GaveUp) // E099 diag: 문 옆으로 가다 시간 한도 — 어디서(물속?) 왜(길 부분·곧장 걷기·헤엄 막힘) 멈췄나
+                Plugin.Log.LogInfo($"{npc.NpcName}: DIAG 문 옆 {Patrol.PostLimit:0}초 안에 못 감 → 그 자리에 섬 {pos:F1}, 문 옆까지 {Utils.DistanceXZ(pos, m_post):0.0}m, 헤엄 {m_character.IsSwimming()}·물속 {m_character.InLiquid()}·물 깊이 {Scout.WaterDepth(pos):0.0}·건넘 {m_swimOk}·물 막힘 {WaterBlockedTime:0.0}초, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m" : "없음")}, {m_moveDiag}, {PathDiag(m_post)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, m_post)}");
+            bool swimNow = m_character.IsSwimming();
+            if (g == PatrolGoal.Post && !m_patrol.GaveUp && swimNow != m_postSwim) // E099 diag: 문 옆 가는 길에 물에 듦·나옴
+                Plugin.Log.LogInfo($"{npc.NpcName}: DIAG 문 옆 가다 물에 {(swimNow ? "듦" : "나옴")} {pos:F1}, 문 옆까지 {Utils.DistanceXZ(pos, m_post):0.0}m, 건넘 {m_swimOk}, {m_moveDiag}, {PathDiag(m_post)}");
+            m_postSwim = swimNow;
             if (was >= 0 && m_patrol.Point != was && !reached && !skip && m_route.Points.Count > 0)
             {
                 m_roundMissed++;
@@ -1503,7 +1510,7 @@ namespace ValheimHelper
             {
                 PatrolRounds++;
                 LastRound = $"한 바퀴 {Time.time - m_roundStart:0}초·점 {count}·못 닿음 {m_roundMissed}·싸움 {m_roundFights}";
-                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 끝({LastRound}) → 문 옆으로");
+                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 끝({LastRound}) → 문 옆으로 — {pos:F1}에서 {Utils.DistanceXZ(pos, m_post):0}m, {PathDiag(m_post)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, m_post)}"); // E099 diag: 돌아가는 길
             }
             switch (g)
             {
@@ -1525,7 +1532,7 @@ namespace ValheimHelper
         float m_routeSigAt, m_roundStart;
         long m_routeSig;
         int m_roundFights, m_roundMissed;
-        bool m_patrolFighting;
+        bool m_patrolFighting, m_postSwim;
         static readonly List<Piece> s_routePieces = new List<Piece>();
         /// <summary>시험·diag: 마지막 바퀴 요약, 마지막 고르기(점·버린 방향과 까닭).</summary>
         public static string LastRound, LastRoute;
