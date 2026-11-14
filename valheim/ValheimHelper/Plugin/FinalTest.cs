@@ -6,11 +6,11 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_finaltest 최종 실전 시험(사용자 11-12, decisions 71) ① 조각: 시험 기본 집에서 한 번만 되돌린 뒤 채팅 명령을 하나씩 내려
-    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌·구리·구리주괴(활·밭·굽기·가축·사냥은 다음 조각).
+    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌·구리·구리주괴·활·세트(밭·굽기·가축·상자 정리·사냥은 다음 조각).
     /// </summary>
     static class FinalTest
     {
-        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴·활 채팅 명령(되돌림 한 번)", Run, 2400f);
+        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴·활·세트 채팅 명령(되돌림 한 번)", Run, 2400f);
 
         static bool s_dbgTime;
         static float s_dbgValue;
@@ -56,8 +56,33 @@ namespace ValheimHelper
             yield return Order(checks, home, "구리", "CopperOre", 600f);
             yield return Order(checks, home, "구리주괴", "Copper", 900f, make: true); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
             yield return Order(checks, home, "활", "Bow", 600f, make: true, n: 3); // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
+            yield return SetOrder(checks, home);
 
             End(player, god, checks, onHeard, heard);
+        }
+
+        /// <summary>"!일꾼 세트 n amount" — 시험이 세트 메뉴 n번(활·곤봉)을 먼저 저장하고(끝나면 지움), 활·곤봉이 상자에 amount개 이상 되면 PASS.
+        /// amount = 두 물건 중 많은 쪽 + 1(PlanFor가 재고를 빼고 셈이라 "상자에 amount개 되게"에 맞춤 — 활 명령과 같은 까닭).</summary>
+        static IEnumerator SetOrder(GatherTest.Checks checks, Vector3 home)
+        {
+            int no = Brain.Sets.NextFree();
+            int saved = no == 0 ? 0 : Brain.Sets.Save(no, new[] { "Bow", "Club" }, "시험 세트", "시험");
+            checks.Add($"세트 {no}번 저장", saved == no && no != 0);
+            if (saved != no || no == 0) yield break;
+            int amount = Mathf.Max(GatherTest.CountBase(home, "Bow"), GatherTest.CountBase(home, "Club")) + 1;
+            GatherTest.Say($"!{Workers.Name1} 세트 {no} {amount}", null);
+            float t = 0f;
+            int bow = 0, club = 0;
+            while (t < 900f)
+            {
+                yield return new WaitForSeconds(5f);
+                t += 5f;
+                bow = GatherTest.CountBase(home, "Bow");
+                club = GatherTest.CountBase(home, "Club");
+                if (bow >= amount && club >= amount) break;
+            }
+            Brain.Sets.Remove(no);
+            checks.Add($"세트 {no}번 {amount}개씩 명령 → 활 {bow}·곤봉 {club}개 ({t:0}초)", bow >= amount && club >= amount);
         }
 
         /// <summary>"!일꾼 말 10" 한 번 내리고 거점 상자에 그 물건이 10개 더 생기면 PASS. 최대 maxSec초(기본 240초).
