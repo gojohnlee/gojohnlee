@@ -127,6 +127,15 @@ namespace ValheimHelper
             bool farmed = Brain.Farms.Fields.Count == farmsBefore + 1 && Brain.Farms.Remove(at.x, at.z); // 확인 뒤 지워 둔다
             Check($"!밭 10 → 선 자리에 밭 적힘(바이옴 {Scout.BiomeAt(at)})", farmed);
 
+            // 6) 명령어 도움말(요청 11-14: vhtest가 "명령어"·"!명령어"를 쳤는데 답 없음) — "!" 있어도 없어도 HelpText 줄을 다 말함
+            foreach (string help in new[] { "명령어", "!명령어" })
+            {
+                before = s_heard.Count;
+                Say(help);
+                yield return new WaitForSeconds(1f);
+                Check($"{help} → 도움말 {s_heard.Count - before}/{Core.Chat.HelpText.Lines.Length}줄", s_heard.Count - before == Core.Chat.HelpText.Lines.Length);
+            }
+
             End(player, god, checks);
         }
 
