@@ -174,6 +174,7 @@ namespace ValheimHelper
             Run("MapSense", () => MapSense.Tick(UnityEngine.Time.deltaTime));
             Run("MapIcons", () => MapIcons.Update(UnityEngine.Time.deltaTime));
             Run("RefillWindow", () => RefillWindow.Update(UnityEngine.Time.deltaTime));
+            Run("FrameLog", () => FrameLog.Tick()); // VH_FRAMESTATS=1일 때만 프레임 시간 기록
             Run("TestRunner", () => TestRunner.UpdateAutoRun());
         }
 
