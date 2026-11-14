@@ -52,7 +52,7 @@ namespace ValheimHelper
         static readonly System.Func<FejdStartup, string, World> FindWorld =
             AccessTools.MethodDelegate<System.Func<FejdStartup, string, World>>(AccessTools.Method(typeof(FejdStartup), "FindWorld"));
 
-        static IEnumerator Run(FejdStartup f)
+        internal static IEnumerator Run(FejdStartup f)
         {
             // 첫 화면 연출과 메인 메뉴가 뜰 때까지 기다린다(최대 60초).
             float t = 0f;

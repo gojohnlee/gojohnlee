@@ -19,6 +19,13 @@ namespace ValheimHelper
         {
             Instance = this;
             Log = Logger;
+            if (Bare.On)
+            {
+                // 모드 끔 판(부하 비교): 패치·일꾼·명령 하나도 안 켜고 autotest.txt(월드·캐릭터)만 읽는다
+                Step("자동 시험", TestRunner.CheckAutoRun);
+                Logger.LogInfo($"Valheim Helper {FullVersion} 로드됨 — 모드 끔 판(VH_BARE=1), 패치 0");
+                return;
+            }
             // 한 단계가 실패해도 나머지는 올라오게 한다(0.1.0은 시험 명령 등록 오류로 자동 시험까지 멈췄다).
             Step("Harmony 패치", () => new Harmony(Guid).PatchAll());
             Step("NPC 설정·명령", () => Workers.Init(Config));
@@ -143,6 +150,7 @@ namespace ValheimHelper
 
         void OnGUI()
         {
+            if (Bare.On) return;
             try { RefillWindow.OnGUI(); }
             catch (Exception e)
             {
@@ -151,10 +159,16 @@ namespace ValheimHelper
             }
         }
 
-        void OnApplicationQuit() => SpeechCount.Save();
+        void OnApplicationQuit() { if (!Bare.On) SpeechCount.Save(); }
 
         void Update()
         {
+            if (Bare.On)
+            {
+                Run("Minimized", () => Minimized.Update());
+                Run("Bare", () => Bare.Update());
+                return;
+            }
             // 기능마다 따로 try: 한 기능 오류가 뒤 기능(WorkSaves·MorningSettle 등)을 멈추지 않게(사용자 11-10)
             Run("Minimized", () => Minimized.Update()); // 먼저: 다른 오류가 나도 창은 내려 둔다
             Run("Workers", () => Workers.Update());

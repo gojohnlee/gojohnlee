@@ -220,7 +220,7 @@ $runTimedOut = Test-Game
 $cpuLine = $null
 if ($cpu0 -and $cpuLast) {
     $wallS = ($wallLast - $wall0).TotalSeconds; $cpuS = $cpuLast - $cpu0
-    if ($wallS -gt 0) { $cpuLine = '[외부 부하] 게임 CPU {0:N0}% (1코어=100%, 벽시계 {1:N0}초, 모드 {2})' -f (100 * $cpuS / $wallS), $wallS, $(if ($env:VH_NOMOD -eq '1') { '끔' } else { '켬' }) }
+    if ($wallS -gt 0) { $cpuLine = '[외부 부하] 게임 CPU {0:N0}% (1코어=100%, 벽시계 {1:N0}초, 모드 {2})' -f (100 * $cpuS / $wallS), $wallS, $(if ($env:VH_NOMOD -eq '1') { '끔' } elseif ($env:VH_BARE -eq '1') { '끔(패치 0 판)' } else { '켬' }) }
 }
 if ($runTimedOut) {
     Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Stop-Process -Force -ErrorAction SilentlyContinue
