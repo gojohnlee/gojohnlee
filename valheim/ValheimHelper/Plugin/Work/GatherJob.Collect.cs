@@ -74,6 +74,8 @@ namespace ValheimHelper
 
         /// <summary>막힘 판정(Stuck)을 재는 떨굼 — 바뀌면 판정을 새로 시작.</summary>
         ZDOID m_collectDrop;
+        /// <summary>줍기 단계에서 지금 가러 가는 떨굼(최종 실전 시험 "남의 물건 가져감" 칸이 읽음).</summary>
+        internal ZDOID CollectDrop => m_step == Step.Collect ? m_collectDrop : ZDOID.None;
         /// <summary>막혔는지 본 떨굼(떨굼마다 한 번).</summary>
         ZDOID m_wallChecked;
 

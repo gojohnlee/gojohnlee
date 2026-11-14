@@ -24,6 +24,7 @@ namespace ValheimHelper.Core.Chat
             sb.Append("kind: item(item=게임 물건 이름, amount), fill(item, amount: 거점 상자에 한 번 이만큼 채움 — \"채워 놔\"), keep(item, amount: 늘 이만큼 유지 — \"계속 채워 둬\"), keepoff(item 생략=전부), fill·keep·keepoff에 personal:true면 말한 사람의 개인 상자,explore(arg=동서남북 방향 또는 바이옴), ");
             sb.Append("escort(따라오기), stop, farm(radius: 말한 사람 자리 둘레 밭 반경 1~20, 생략=10 — \"여기 밭 만들어\"), tidy(거점 상자 정리), setmake(number, amount), setsave(number 생략 가능, name, items[]), setedit(number, remove[], add[]).\n");
             sb.Append("이 밖의 작업·모르는 물건은 만들지 말고 reply로 못 한다고 답한다.\n");
+            sb.Append("만들 물건(활·곤봉·연장·갑옷)도 item이다 — 일꾼이 재료를 모아 작업대에서 만든다: \"활 3개 만들어 줘\"=item Bow 3. 만들 줄 모른다고 답하지 않는다.\n");
             sb.Append("종류를 안 밝힌 \"고기\"는 멧돼지 고기다: 고기·생고기=RawMeat, 구운 고기·\"고기 구워\"=CookedMeat.\n");
             sb.Append(HelpText.ForPrompt);
             sb.Append("물건·수량이 빠진 말은 최근 대화에서 채운다(앞에서 되물은 것의 대답일 수 있다). 그래도 수량을 모르면 되묻지 말고 ")

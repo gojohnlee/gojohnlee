@@ -44,10 +44,19 @@ namespace ValheimHelper
         /// → 같은 프레임에 다른 일꾼이 주운 것을 또 주워 복제됐다(회차 74 vh_basetest 제련소 동시: 광석 4 → 주괴 6). 그래서 ZDO부터 본다.
         /// ItemDrop.Pickup(Humanoid)은 소유권 대기 중 줍는 쪽을 Player로 가정해 NPC면 오류(0.3.4) → Humanoid.Pickup을 쓴다.
         /// </summary>
+        /// <summary>시험용: 일꾼이 땅의 물건을 주운 때(줍는 일꾼, 물건 ZDO).</summary>
+        internal static System.Action<WorkerNpc, ZDOID> TestPicked;
+
         public bool PickDrop(ItemDrop drop)
         {
             if (drop == null || !drop.TryGetComponent(out ZNetView v) || !v.IsValid()) return false;
-            if (drop.CanPickup()) return Pickup(drop.gameObject);
+            if (drop.CanPickup())
+            {
+                ZDOID id = v.GetZDO().m_uid;
+                bool got = Pickup(drop.gameObject);
+                if (got) TestPicked?.Invoke(this, id);
+                return got;
+            }
             drop.RequestOwn();
             return false;
         }

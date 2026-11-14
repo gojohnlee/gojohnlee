@@ -12,6 +12,7 @@ public class ClaudePromptTests
         Assert.Contains("- 나무 50", s);
         Assert.Contains("setsave", s);
         Assert.Contains("구운 고기", s);
+        Assert.Contains("item Bow 3", s);
         Assert.Equal("CookedMeat", ItemAliases.Resolve("구운 고기"));
         Assert.Equal("RawMeat", ItemAliases.Resolve("생고기"));
     }

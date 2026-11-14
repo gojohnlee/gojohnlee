@@ -83,6 +83,7 @@ namespace ValheimHelper
             Departures.TestIdleChores = true;
             s_ran.Clear();
             Commands.Ran += OnRan;
+            WorkerNpc.TestPicked = Busy.Picked;
             var orders = new List<Want>();
             // 밭: 말한 사람 자리가 중심이고 Claude 답이 늦게 오므라 밭 자리에서 말하고 알아들을 때까지(최대 120초) 서 있다 돌아옴(일꾼은 안 옮김 — 순간이동 빼기는 다) 조각)
             Vector3 back = player.transform.position;
@@ -121,6 +122,7 @@ namespace ValheimHelper
                 Busy.Sample(t);
             }
             Commands.Ran -= OnRan;
+            WorkerNpc.TestPicked = null;
             Busy.Report(checks);
             if (pig != null && pig.IsHungry()) // E102: 가축 못 먹임 — 우리 상자 먹이·멧돼지 자리
                 TestRunner.Log($"DIAG 가축 못 먹임: 멧돼지 우리에서 {Vector3.Distance(pig.transform.position, penAt):0}m, 우리 상자 Raspberry {(pen != null ? pen.GetInventory().CountItems("$item_raspberries") : -1)}");
@@ -273,6 +275,23 @@ namespace ValheimHelper
                 foreach (var key in new List<string>(s_bumpRun.Keys)) if (!now.Contains(key)) s_bumpRun.Remove(key);
             }
 
+            // 남의 물건 가져감 칸(나) 다섯째 조각): 일꾼이 주운 떨굼이 다른 일꾼이 줍기 단계에서 가러 가던 것이면 셈(DIAG).
+            // 한 일꾼이 5번 넘게 빼앗기면 헛걸음 되풀이로 FAIL(기준 11-12: FAIL은 헛걸음 되풀이 등)
+            static readonly Dictionary<string, int> s_lost = new Dictionary<string, int>();
+            static int s_steals;
+
+            public static void Picked(WorkerNpc who, ZDOID id)
+            {
+                if (who == null || id.IsNone()) return;
+                foreach (var n in WorkerNpc.All)
+                {
+                    if (n == null || n == who || !(n.Ai?.Job is GatherJob gj) || gj.CollectDrop != id) continue;
+                    s_steals++;
+                    s_lost.TryGetValue(n.NpcName, out int c); s_lost[n.NpcName] = c + 1;
+                    TestRunner.Log($"DIAG 남의 물건 가져감: {who.NpcName}이 {n.NpcName}이 줍던 {gj.Item}을 주움 ({n.Ai.Job.Label})");
+                }
+            }
+
             public static void Sample(float t)
             {
                 var g = WorkerNpc.TheGuard;
@@ -339,6 +358,10 @@ namespace ValheimHelper
                 checks.Add($"대기열 순서대로 꺼냄: 꺼냄 {s_take}번, 건너뜀 {s_skip}번", s_skip == 0);
                 checks.Add($"일꾼끼리 서로 막힘 없음: 부딪힘 {s_bumps}번, 15초 넘게 막힘 {s_locks}번", s_locks == 0);
                 s_bumpRun.Clear(); s_bumps = s_locks = 0;
+                int most = 0; string mostWho = "-";
+                foreach (var kv in s_lost) if (kv.Value > most) { most = kv.Value; mostWho = kv.Key; }
+                checks.Add($"남의 물건 가져감 되풀이 없음: {s_steals}번, 가장 많이 빼앗긴 {mostWho} {most}번", most <= 5);
+                s_lost.Clear(); s_steals = 0;
                 s_uNpc = null; s_uOld = null; s_uResult = null; s_uOk = s_uResumed = false; s_q.Clear(); s_job.Clear(); s_take = s_skip = 0;
             }
         }
@@ -375,6 +398,13 @@ namespace ValheimHelper
 
         /// <summary>이름 없이 한 마디를 하고 판정할 Want를 돌려준다(home이 있으면 거점 상자 개수로 판정).
         /// make: 만드는 물건 — 판정은 상자 개수가 처음보다 n개 늘었나. 모아 오는 것은 일꾼들이 상자에 넣은 수(회차 661 — 제작·굽기가 같은 재료를 씀).
+        static int Bags(string item)
+        {
+            int c = 0;
+            foreach (var n in WorkerNpc.All) if (n != null) c += n.CountItem(item);
+            return c;
+        }
+
         static Want Say(string text, CommandKind kind, string item, int n, Vector3? home = null, bool make = false)
         {
             var w = new Want { Text = text, Kind = kind, Item = item, Amount = n, N = n };
@@ -383,6 +413,8 @@ namespace ValheimHelper
                 w.Before = GatherTest.CountBase(home.Value, item);
                 // 늦게 같이 캐기(JoinGather)로 동료가 낀 몫도 이 명령의 것이라 모든 일꾼이 넣은 수를 합친다(11-14).
                 if (!make) { int p0 = PutByAll(item); w.Count = () => PutByAll(item) - p0; }
+                // 만든 음식은 넣자마자 일꾼이 들고 갈 음식으로 가져갈 수 있어(회차 671: 구운 고기 4 넣고 곧 3개 들고 사냥) 상자+일꾼 짐을 셈
+                else { Vector3 h = home.Value; int b0 = w.Before + Bags(item); w.Count = () => GatherTest.CountBase(h, item) + Bags(item) - b0; }
             }
             GatherTest.Say(text, null); // 수량 = 새로 만들/가져올 수(사용자 11-14 — 상자 포함 아님)
             return w;
@@ -416,6 +448,7 @@ namespace ValheimHelper
             if (EnvMan.instance != null) { EnvMan.instance.m_debugTimeOfDay = s_dbgTime; EnvMan.instance.m_debugTime = s_dbgValue; }
             ChatNet.Heard -= onHeard;
             Commands.Ran -= OnRan;
+            WorkerNpc.TestPicked = null;
             Departures.TestIdleChores = false;
             player.SetGodMode(god);
             TestRunner.Log("--- NPC 대사 ---");
