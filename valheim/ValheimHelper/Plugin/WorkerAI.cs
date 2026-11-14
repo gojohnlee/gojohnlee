@@ -1292,7 +1292,9 @@ namespace ValheimHelper
                 m_raidCheckAt = Time.time + 5f;
                 var ev = RandEventSystem.instance != null ? RandEventSystem.instance.GetCurrentRandomEvent() : null;
                 // 습격 구역(m_eventRange)에서 일하는 중이면 거점으로 귀환. 이미 거점 근처(30m)면 그대로 둔다.
-                if (ev != null && Utils.DistanceXZ(transform.position, ev.m_pos) < ev.m_eventRange && Utils.DistanceXZ(transform.position, npc.Home) > 30f)
+                // 도착 때 습격 남은 시간이 절반 이상일 때만 귀환, 아니면 하던 일 계속(사용자 11-14 ⑧, Core RaidReturn).
+                if (ev != null && Utils.DistanceXZ(transform.position, ev.m_pos) < ev.m_eventRange && Utils.DistanceXZ(transform.position, npc.Home) > 30f
+                    && RaidReturn.GoHome(ev.m_duration, ev.GetTime(), Utils.DistanceXZ(transform.position, npc.Home)))
                 {
                     npc.Say("raid");
                     // 하던 일은 대기열 맨 앞에 두고 습격이 끝나면 이어 감(사용자 11-13 "귀환해도 하던 일은 절대 안 잊음")
