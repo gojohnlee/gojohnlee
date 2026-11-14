@@ -27,6 +27,7 @@ namespace ValheimHelper
             Step("vh_npctest", NpcTest.Register);
             Step("vh_flagtest", FlagTest.Register);
             Step("vh_woodtest·vh_stonetest", GatherTest.Register);
+            Step("vh_finaltest", FinalTest.Register);
             Step("vh_exploretest", ExploreTest.Register);
             Step("vh_preptest", PrepTest.Register);
             Step("vh_bagtest", BagTest.Register);
