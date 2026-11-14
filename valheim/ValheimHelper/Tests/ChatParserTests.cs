@@ -191,6 +191,18 @@ public class ChatParserTests
         Assert.Equal(item, c.Item);
     }
 
+    [Theory] // 상자 Alt+우클릭(RefillPick)이 보내는 꼴: 프리팹 이름, "!" 없이(요청 11-14 "!" 통일)
+    [InlineData("계속채워 Wood 50", CommandKind.Keep, "Wood", 50)]
+    [InlineData("계속채워 개인 Wood 5", CommandKind.PrepKeep, "Wood", 5)]
+    [InlineData("!계속채워 개인 Wood 5", CommandKind.PrepKeep, "Wood", 5)]
+    public void RefillPickLine(string line, CommandKind kind, string item, int n)
+    {
+        var c = Cmd(line);
+        Assert.Equal(kind, c.Kind);
+        Assert.Equal(item, c.Item);
+        Assert.Equal(n, c.Amount);
+    }
+
     [Theory]
     [InlineData("!길")]
     [InlineData("!평탄화 30")]

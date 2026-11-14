@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// 상자에서 계속채워 등록(사용자 10-30): 상자 창 칸을 Alt+우클릭 → 바닐라 묶음 나누기 창(SplitDialog)을 "계속 채우기" 제목으로 빌려 목표 수를 고름.
-    /// 확인하면 "!계속채워 [개인] 프리팹 수"를 채팅 RPC(VH_Chat)로 보냄 — 손님도 같은 길, 호스트가 채팅 명령과 똑같이 처리.
+    /// 확인하면 "계속채워 [개인] 프리팹 수"를 채팅 RPC(VH_Chat)로 보냄 — 손님도 같은 길, 호스트가 채팅 명령과 똑같이 처리.
     /// 개인 상자(내 것)면 개인, 남의 개인 상자는 안 됨. 창을 닫는 길(취소·Esc·인벤토리 닫기)은 모두 HideSplitDialog → 우리 상태 지움.
     /// </summary>
     internal static class RefillPick
@@ -69,7 +69,7 @@ namespace ValheimHelper
         static void Accept(InventoryGui gui)
         {
             int n = (int)gui.m_splitDialog.m_splitSlider.value;
-            LastSent = "!계속채워 " + (Personal ? "개인 " : "") + Active + " " + n;
+            LastSent = "계속채워 " + (Personal ? "개인 " : "") + Active + " " + n;
             Plugin.Log.LogInfo("상자에서 계속채워: " + LastSent);
             ChatNet.SendAsLocal(LastSent);
         }

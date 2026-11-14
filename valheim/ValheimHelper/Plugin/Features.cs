@@ -15,7 +15,7 @@ namespace ValheimHelper
         {
             s_saveWork = cfg.Bind("Features", "SaveWork", true, "대기열·질문 대기·하던 일을 NPC ZDO에 저장하고 NPC가 생길 때 불러옴");
             s_knowExplored = cfg.Bind("Features", "KnowExplored", true, "지도에 밝혀진 구역의 자원은 가 보지 않아도 앎");
-            s_claudeChat = cfg.Bind("Features", "ClaudeChat", true, "! 없는 채팅·형식이 다른 ! 문장을 호스트 PC의 claude 명령줄로 해석");
+            s_claudeChat = cfg.Bind("Features", "ClaudeChat", true, "정해진 명령이 아닌 채팅을 호스트 PC의 claude 명령줄로 해석");
             s_runPlans = cfg.Bind("Features", "RunPlans", true, "제작 명령(!구리주괴 20, !세트)을 계획만 말하지 않고 실제로 실행(PlanJob)");
             s_playWalkLog = cfg.Bind("Features", "PlayWalkLog", false, "실플레이 집 안 걸음 기록: 일꾼이 집 40m 안에서 일하는 동안 0.25초 줄을 behavior-house-play.txt에(2MB 넘으면 .old로 돌림)");
             s_sharedChests = cfg.Bind("Features", "SharedChests", true, "사람끼리 상자 같이 열기(호스트 상자를 손님이 열어 둔 동안 다른 사람도 열기·손님 제작이 호스트 상자 재료 씀). 끄면 바닐라(한 사람만)");

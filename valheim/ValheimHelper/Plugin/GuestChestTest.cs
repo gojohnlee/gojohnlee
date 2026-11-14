@@ -67,7 +67,7 @@ namespace ValheimHelper
             while (Time.time < until && (cz.GetOwner() == me || cz.GetOwner() == 0)) yield return new WaitForSeconds(0.1f);
             checks.Add($"상자 주인 = 서버 쪽 ({cz.GetOwner()}, 나 {me})", cz.GetOwner() != me && cz.GetOwner() != 0);
 
-            // 4) Alt+우클릭 등록: 나누기 창(제목 계속 채우기) → 확인 → "!계속채워 Wood 30" → 일꾼 대답
+            // 4) Alt+우클릭 등록: 나누기 창(제목 계속 채우기) → 확인 → "계속채워 Wood 30" → 일꾼 대답
             ItemDrop.ItemData vw = SharedGuest.View != null ? First(SharedGuest.View, W) : null;
             bool opened = vw != null && RefillPick.Open(InventoryGui.instance, vw, c);
             checks.Add($"Alt+우클릭 창 열림 ({RefillPick.Active}, 값 {InventoryGui.instance.m_splitDialog.m_splitSlider.value})", opened && RefillPick.Active == "Wood");
@@ -76,7 +76,7 @@ namespace ValheimHelper
             until = Time.time + 6f;
             while (Time.time < until && s_heard.Count == heard0) yield return new WaitForSeconds(0.25f);
             for (int i = heard0; i < s_heard.Count; i++) TestRunner.Log("  들음 " + s_heard[i]);
-            checks.Add($"등록 보냄 \"{RefillPick.LastSent}\" → 일꾼 대답 {s_heard.Count - heard0}개", RefillPick.LastSent == "!계속채워 Wood 30" && s_heard.Count > heard0);
+            checks.Add($"등록 보냄 \"{RefillPick.LastSent}\" → 일꾼 대답 {s_heard.Count - heard0}개", RefillPick.LastSent == "계속채워 Wood 30" && s_heard.Count > heard0);
 
             // 5) 꺼내기: 화면 상자 → 가방 30, 서버 상자 0 (복제·소실 없음)
             vw = SharedGuest.View != null ? First(SharedGuest.View, W) : null;

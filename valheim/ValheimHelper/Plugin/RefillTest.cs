@@ -191,6 +191,7 @@ namespace ValheimHelper
                     if (r.m_item != null && Utils.GetPrefabName(r.m_item.gameObject) == item)
                         foreach (var req in r.m_resources)
                         {
+                            if (!CraftPatches.Counts(r.m_craftingStation, req)) continue; // 업그레이드 설비 재료(Upgrader0Weapon)는 새로 만들 때 안 씀 — SetTest와 같이(회차 675 개수 보존 FAIL: 2개 남음)
                             string key = Utils.GetPrefabName(req.m_resItem.gameObject);
                             need.TryGetValue(key, out int n);
                             need[key] = n + req.m_amount;
