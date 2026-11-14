@@ -78,6 +78,9 @@ namespace ValheimHelper
             // 2) 명령을 두 일꾼에게 나눠 처음에 한꺼번에 내림(바쁘면 일꾼 대기열) → 명령마다 거점 상자 개수로 따로 판정(사용자 11-14 바로잡기 — 하나씩 끝을 기다리지 않음)
             //    구리 광석은 제련이, 생고기는 굽기가 써서 줄어들 수 있어 판정은 지금까지 가장 많았던 수로.
             string a = Workers.Name1, b = Workers.Name2;
+            // 실전처럼 쉬는 일꾼 판단을 켬(사용자 11-14 "왜 여전히 한 놈만 일하지": 시험 중엔 ChoresOn이 꺼져 JoinGather·JoinHelp가 안 돌아
+            // 플로키가 돌·활·굽기를 금방 끝내고 라그나 혼자 구리·제련·사냥을 다 함). 시작 검사 뒤에 켬(FishTest와 같은 까닭), End에서 끔.
+            Departures.TestIdleChores = true;
             var orders = new List<Want>
             {
                 Ask(home, a, "나무", "Wood"),
@@ -168,8 +171,16 @@ namespace ValheimHelper
             GatherTest.Say($"!{who} {word} {(make ? before + n : n)}", null);
             var w = new Want { Who = who, Word = word, Item = item, N = n, Before = before };
             // 모아 오는 명령은 그 일꾼이 상자에 넣은 수로(회차 661 — 같은 때 활·세트 제작이 나무를, 쉬는 일꾼 굽기가 생고기를 써서 상자 순증가가 0·3이었음)
-            if (!make) { int p0 = GatherJob.PutBy(who, item); w.Count = () => GatherJob.PutBy(who, item) - p0; }
+            // 늦게 같이 캐기(JoinGather)로 동료가 낀 몫도 이 명령의 것이라 모든 일꾼이 넣은 수를 합친다(11-14).
+            if (!make) { int p0 = PutByAll(item); w.Count = () => PutByAll(item) - p0; }
             return w;
+        }
+
+        static int PutByAll(string item)
+        {
+            int sum = 0;
+            foreach (var n in WorkerNpc.All) if (n != null) sum += GatherJob.PutBy(n.NpcName, item);
+            return sum;
         }
 
         static int s_setNo;
@@ -194,6 +205,7 @@ namespace ValheimHelper
         {
             if (EnvMan.instance != null) { EnvMan.instance.m_debugTimeOfDay = s_dbgTime; EnvMan.instance.m_debugTime = s_dbgValue; }
             ChatNet.Heard -= onHeard;
+            Departures.TestIdleChores = false;
             player.SetGodMode(god);
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in heard) TestRunner.Log(h);
