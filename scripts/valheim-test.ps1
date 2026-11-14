@@ -75,7 +75,8 @@ if (-not (Test-Path (Join-Path $game 'BepInEx\core\BepInEx.dll'))) {
 $plugin = Join-Path $game 'BepInEx\plugins\ValheimHelper'
 New-Item -ItemType Directory $plugin -Force | Out-Null
 Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
-if ($env:VH_DLL) { Copy-Item $env:VH_DLL "$plugin\ValheimHelper.dll" -Force }   # PC 세션: 방금 빌드한 DLL
+if ($env:VH_NOMOD -eq '1') { Remove-Item "$plugin\ValheimHelper.dll" -ErrorAction SilentlyContinue; Write-Host '모드 끔: ValheimHelper.dll을 plugins에서 뺌(부하 비교용, 다음 실행이 다시 넣음)' }   # 회차 641 — 기본안 (가), decisions 부하 비교
+elseif ($env:VH_DLL) { Copy-Item $env:VH_DLL "$plugin\ValheimHelper.dll" -Force }   # PC 세션: 방금 빌드한 DLL
 else { Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll" }
 $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로). 묶음 1 새 시험: vh_departtest·vh_peertest
 $World = if ($env:VH_WORLD) { $env:VH_WORLD } else { 'te4st41' }   # 시험 월드(메인 메뉴에서 자동으로 들어감)
