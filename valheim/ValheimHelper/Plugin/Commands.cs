@@ -373,6 +373,7 @@ namespace ValheimHelper
             if (!s_tidyLeft.TryGetValue(npc, out int left)) return false;
             s_tidyLeft.Remove(npc);
             int now = Tidy.Plan(npc.Home).Count;
+            Plugin.Log.LogInfo($"{npc.NpcName} !정리 이어서: 옮길 것 {left} → {now}{(now == 0 || now >= left ? " — 그만" : "")}");
             if (now == 0 || now >= left) return false; // 다 했거나 더 못 줄임(상자 꽉 참 등)
             npc.Ai.StartJob(new TidyJob(npc));
             s_tidyLeft[npc] = now;

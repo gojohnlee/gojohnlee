@@ -105,9 +105,9 @@ namespace ValheimHelper
                 GatherTest.Say($"!{a} 가축", null);
                 orders.Add(new Want { Who = a, Word = "가축 → 멧돼지 먹음", N = 1, Count = () => pig != null && !pig.IsHungry() ? 1 : 0 });
             }
-            int tidy0 = Tidy.Plan(home).Count;
+            int tidy0 = Tidy.Plan(home).Count, tidyMin = tidy0;
             GatherTest.Say($"!{b} 정리", null);
-            orders.Add(new Want { Who = b, Word = $"정리(처음 옮길 것 {tidy0}) → 옮길 것 0", N = 1, Count = () => Tidy.Plan(home).Count == 0 ? 1 : 0 });
+            orders.Add(new Want { Who = b, Word = $"정리(처음 옮길 것 {tidy0}) → 옮길 것 0", N = 1, Count = () => { int left = Tidy.Plan(home).Count; if (left < tidyMin) { tidyMin = left; TestRunner.Log($"DIAG 정리 남은 것 {left} ({b} {(WorkerNpc.All.Find(n => n != null && n.NpcName == b)?.Ai.Job?.GetType().Name ?? "일 없음")})"); } return left == 0 ? 1 : 0; } });
             orders.RemoveAll(o => o == null);
             float t = 0f;
             while (t < 3000f && orders.Exists(o => o.Done < 0f))
