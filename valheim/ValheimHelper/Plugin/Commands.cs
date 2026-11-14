@@ -337,6 +337,7 @@ namespace ValheimHelper
         /// <summary>쉬게 된 일꾼(Departures 쉴 때 차례)이 바쁠 때 받은 !가축·!정리가 있으면 시작(먹이 먼저, 정리는 다음 쉴 때). 시작했으면 true.</summary>
         internal static bool RunLaterChore(WorkerNpc npc)
         {
+            if (ContinueTidy(npc)) return true;
             if (!s_laterChores.TryGetValue(npc, out int bits)) return false;
             s_laterChores.Remove(npc);
             if ((bits & 1) != 0 && StartChore(npc, true))
@@ -360,6 +361,21 @@ namespace ValheimHelper
             if (Tidy.Plan(npc.Home).Count == 0) { npc.Say("choreNone"); return false; }
             npc.Ai.StartJob(new TidyJob(npc));
             npc.Say("choreTidy");
+            s_tidyLeft[npc] = Tidy.Plan(npc.Home).Count;
+            return true;
+        }
+
+        /// <summary>!정리를 시작할 때 옮길 것 수. TidyJob은 한 번에 8번·180초라(회차 662 — 39개 중 일부만 하고 끝) 쉬게 될 때마다 줄어드는 동안 이어서 한다.</summary>
+        static readonly Dictionary<WorkerNpc, int> s_tidyLeft = new Dictionary<WorkerNpc, int>();
+
+        static bool ContinueTidy(WorkerNpc npc)
+        {
+            if (!s_tidyLeft.TryGetValue(npc, out int left)) return false;
+            s_tidyLeft.Remove(npc);
+            int now = Tidy.Plan(npc.Home).Count;
+            if (now == 0 || now >= left) return false; // 다 했거나 더 못 줄임(상자 꽉 참 등)
+            npc.Ai.StartJob(new TidyJob(npc));
+            s_tidyLeft[npc] = now;
             return true;
         }
 
