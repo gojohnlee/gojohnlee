@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ValheimHelper
@@ -485,28 +486,80 @@ namespace ValheimHelper
         /// 호위병 경계 자리(사용자 11-09): 거점 range 안 열쇠 없는 문 중 바깥문(한쪽만 지붕 — 집 안 방문은 걸리적거림, 11-09)을 먼저, 그중 거점에서 가장 가까운 것.
         /// 바깥문이 없으면 가장 가까운 문. 자리는 바깥(지붕 없는 쪽, 모호하면 거점 반대쪽) 1.8m·옆 1.2m, 지붕 아래면 4m까지 더 밖으로. 문이 없으면 false.
         /// </summary>
-        public static bool PostBy(Vector3 home, float range, out Vector3 post, out Vector3 outward)
+        public static bool PostBy(Vector3 home, float range, out Vector3 post, out Vector3 outward) => PostBy(home, range, null, out post, out outward, out _);
+
+        /// <summary>
+        /// 11-14 사용자 "비욘이 집 안 상자 곁에 서 있음" 고침: ① 지붕 판정을 높게(Covered 20m — 큰 집은 천장이 6m보다 높아 집 안을 바깥으로 봄)
+        /// ② 바깥문만(사용자 11-14 정문 없음 — 바깥문 아무거나, 되도록 제작대 없는 쪽), 25m 안에 없으면 range×2.5까지 넓힘
+        /// ③ 자리가 8m 밀어도 지붕 밑이면 그 문은 버리고 다음 문 ④ bad(가다 60초 못 닿은 문, WorkerAI)는 뺌
+        /// ⑤ 쓸 바깥문이 없으면 집 안에 서지 않고 거점에서 가장 가까운 지붕 없는 땅(OpenSpot). 아무 데도 없으면 false.
+        /// </summary>
+        public static bool PostBy(Vector3 home, float range, ICollection<Door> bad, out Vector3 post, out Vector3 outward, out Door door)
+        {
+            post = home; outward = Vector3.forward; door = null;
+            foreach (float r in new[] { range, range * 2.5f })
+            {
+                var cands = new List<KeyValuePair<float, Door>>();
+                var seen = new HashSet<Door>();
+                foreach (var c in Physics.OverlapSphere(home, r, Mask))
+                {
+                    Door d = c.GetComponentInParent<Door>();
+                    if (d == null || d.m_keyItem != null || !seen.Add(d) || bad != null && bad.Contains(d)) continue;
+                    Vector3 m = Middle(d), dn = d.transform.forward; dn.y = 0f; dn.Normalize();
+                    if (Covered(m + dn * Step) == Covered(m - dn * Step)) continue; // 바깥문만(양쪽 다 지붕 = 방문, 양쪽 다 없음 = 울타리 문)
+                    float score = Utils.DistanceXZ(home, d.transform.position) + (NearStation(m, 4f) ? 30f : 0f); // 제작대 곁 문은 뒤로
+                    cands.Add(new KeyValuePair<float, Door>(score, d));
+                }
+                cands.Sort((x, y) => x.Key.CompareTo(y.Key));
+                foreach (var kv in cands)
+                {
+                    Door d = kv.Value;
+                    Vector3 mid = Middle(d), n = d.transform.forward; n.y = 0f; n.Normalize();
+                    Vector3 o = Covered(mid + n * Step) ? -n : n;
+                    Vector3 p = mid + o * 1.8f + Vector3.Cross(Vector3.up, o) * 1.2f;
+                    for (int i = 0; i < 8 && Covered(p); i++) p += o;
+                    if (Covered(p)) continue; // 밀어도 지붕 밑(처마·회랑) — 다음 문
+                    if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(p, out float h)) p.y = Mathf.Max(h, Floor(p, mid.y));
+                    post = p; outward = o; door = d;
+                    return true;
+                }
+            }
+            return OpenSpot(home, range * 2.5f, out post, out outward);
+        }
+
+        /// <summary>지붕(건축물)이 머리 위 20m 안에 있나 — 경계 자리 고르기 전용(문 지나기 Roofed 6m는 그대로).</summary>
+        static bool Covered(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 20f, Mask);
+
+        /// <summary>그 자리 바닥(건축물 바닥이 땅보다 위면 그 높이). 문 높이 ±2m 안에서만 봄.</summary>
+        static float Floor(Vector3 at, float doorY)
+        {
+            return Physics.Raycast(new Vector3(at.x, doorY + 2f, at.z), Vector3.down, out RaycastHit hit, 4f, Mask) ? hit.point.y : float.MinValue;
+        }
+
+        static bool NearStation(Vector3 at, float r)
+        {
+            foreach (var c in Physics.OverlapSphere(at, r, Mask))
+                if (c.GetComponentInParent<CraftingStation>() != null) return true;
+            return false;
+        }
+
+        /// <summary>바깥문이 없을 때: 거점에서 4m씩 넓혀 가며 16방향, 지붕 없고 땅 높이가 거점과 3m 안인 가장 가까운 자리.</summary>
+        static bool OpenSpot(Vector3 home, float max, out Vector3 post, out Vector3 outward)
         {
             post = home; outward = Vector3.forward;
-            Door best = null; float bd = float.MaxValue; bool bestOuter = false;
-            foreach (var c in Physics.OverlapSphere(home, range, Mask))
-            {
-                Door d = c.GetComponentInParent<Door>();
-                if (d == null || d.m_keyItem != null || d == best) continue;
-                Vector3 m = Middle(d), dn = d.transform.forward; dn.y = 0f; dn.Normalize();
-                bool outer = Roofed(m + dn * Step) != Roofed(m - dn * Step);
-                float dd = Utils.DistanceXZ(home, d.transform.position);
-                if (outer && !bestOuter || outer == bestOuter && dd < bd) { bd = dd; best = d; bestOuter = outer; }
-            }
-            if (best == null) return false;
-            Vector3 mid = Middle(best), n = best.transform.forward; n.y = 0f; n.Normalize();
-            bool ra = Roofed(mid + n * Step), rb = Roofed(mid - n * Step);
-            Vector3 away = mid - home; away.y = 0f;
-            outward = ra != rb ? (ra ? -n : n) : (Vector3.Dot(n, away) >= 0f ? n : -n);
-            post = mid + outward * 1.8f + Vector3.Cross(Vector3.up, outward) * 1.2f;
-            for (int i = 0; i < 4 && Roofed(post); i++) post += outward;
-            if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(post, out float h)) post.y = h;
-            return true;
+            for (float r = 4f; r <= max; r += 4f)
+                for (int i = 0; i < 16; i++)
+                {
+                    float a = i * Mathf.PI / 8f;
+                    Vector3 dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    Vector3 p = home + dir * r;
+                    if (ZoneSystem.instance == null || !ZoneSystem.instance.GetGroundHeight(p, out float h) || Mathf.Abs(h - home.y) > 3f) continue;
+                    p.y = h;
+                    if (Covered(p)) continue;
+                    post = p; outward = dir;
+                    return true;
+                }
+            return false;
         }
         /// <summary>at에서 range 안 문 중 at·other까지 거리 합이 가장 짧은 것(문 둘이면 일꾼 쪽 문 — 회차 317, ④).</summary>
         static Door Nearest(Vector3 at, float range, Vector3 other)

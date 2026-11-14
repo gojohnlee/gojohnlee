@@ -215,7 +215,10 @@ namespace ValheimHelper
 
         /// <summary>호위병을 지금 데려갈 수 있나: 살아 있고 쉬는 중(거점에서 쉼·집에 감·장비 챙기기). 다른 일꾼을 따라가는 중·묘비 회수 중이면 아님.</summary>
         internal static bool GuardFree(WorkerNpc g) => g != null && !g.IsDead()
-            && (g.Ai.Current == WorkerAI.Mode.Idle || g.Ai.Current == WorkerAI.Mode.Home || g.Ai.Current == WorkerAI.Mode.Work && g.Ai.Job is GuardReadyJob);
+            && (g.Ai.Current == WorkerAI.Mode.Idle || g.Ai.Current == WorkerAI.Mode.Home || g.Ai.Current == WorkerAI.Mode.Work && (g.Ai.Job is GuardReadyJob || GuardChore(g.Ai.Job)));
+
+        /// <summary>호위병이 쉴 때 하는 거점 안 집안일(11-14) — 동행 요청이 오면 놓는다(GuardFree가 쉬는 것으로 봄).</summary>
+        internal static bool GuardChore(IWorkerJob j) => j is HoneyJob || j is LivestockJob || j is FarmJob;
 
         /// <summary>대기열 "호위병이 쉴 때"(ReadyWhen.GuardIdle).</summary>
         internal static bool GuardIdle() => GuardFree(GuardOf());
@@ -909,10 +912,20 @@ namespace ValheimHelper
             s_refillTimer = (float)RefillBook.CheckEvery;
             if (WorkerNpc.All.Count == 0) return;
             // 쉬는 일꾼 모두 차례로(사용자 11-09): 같은 물건은 RefillBusy가 막으니 각자 다른 것을 맡는다
-            foreach (var npc in new List<WorkerNpc>(WorkerNpc.All))
+            // 호위병 먼저(사용자 11-14 "비욘도 쉴 때 거점 안 집안일"): 밭·꿀·먹이를 호위병이 맡으면 일꾼은 채집·보충에 남는다
+            var order = new List<WorkerNpc>(WorkerNpc.All);
+            order.Sort((x, y) => (y != null && y.IsGuard).CompareTo(x != null && x.IsGuard));
+            foreach (var npc in order)
             {
                 if (!FreeForChores(npc)) continue;
                 if (Commands.RunLaterChore(npc)) continue; // 바쁠 때 받은 !가축·!정리(회차 662)
+                if (npc.IsGuard)
+                {
+                    // 거점(125m) 안 집안일만: 밭(거두기·심기)·꿀·먹이. 순찰 중엔 안 함(순찰 먼저), 채집·먼 길·보충은 안 함.
+                    // 동행 요청이 오면 GuardFree가 집안일 중도 쉬는 것으로 보아 GoWithGuard의 Follow가 바로 놓게 한다.
+                    if (!npc.Ai.Resting && !npc.Ai.Patrolling && ChoresOn && Features.IdleChores && !IdleFarm(npc, BaseArea.Radius) && !IdleHoney(npc)) IdleFeed(npc);
+                    continue;
+                }
                 if (JoinRisky(npc) != null) continue; // 쉬는 일꾼 없게 ① 동료가 위험한 데 혼자 가면 같이(사용자 11-13)
                 if (!npc.Ai.Resting && JoinGather(npc)) continue; // 쉬는 일꾼 없게 ① 동료 일 돕기 먼저(사용자 11-13)
                 if (!npc.Ai.Resting && JoinHelp(npc)) continue; // 쉬는 일꾼 없게 ② 지원 요청 대기열 맨 앞(decisions 7절)
@@ -1105,11 +1118,12 @@ namespace ValheimHelper
         /// 쉬는 일꾼(낮): !밭으로 정한 밭에 다 자란 것이 있거나, 빈자리가 있고 상자에 심을 씨앗이 있으면 "!밭"과 같은 일(거두고 Farm.Fill만큼 심기)을 한다.
         /// 다른 일꾼이 그 밭일 중이면 건너뜀. 시작했으면 true.
         /// </summary>
-        internal static bool IdleFarm(WorkerNpc npc)
+        internal static bool IdleFarm(WorkerNpc npc, float maxDist = float.MaxValue)
         {
             if (EnvMan.IsNight() || Brain.Farms.Fields.Count == 0) return false;
             foreach (var field in new List<FarmField>(Brain.Farms.Fields))
             {
+                if (Utils.DistanceXZ(npc.Home, new Vector3(field.X, 0f, field.Z)) > maxDist) continue; // 호위병은 거점 범위 안 밭만
                 string key = $"{field.X:0},{field.Z:0}";
                 if (s_farmNext.TryGetValue(key, out float next) && Time.time < next) continue;
                 bool taken = false;

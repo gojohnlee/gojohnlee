@@ -1503,6 +1503,8 @@ namespace ValheimHelper
         readonly Patrol m_patrol = new Patrol();
         float m_patrolTick, m_postFindAt;
         bool m_hasPost;
+        Door m_postDoor;
+        readonly HashSet<Door> m_badPostDoors = new HashSet<Door>();
         Vector3 m_post, m_postOut, m_postHome;
         /// <summary>시험: 끝까지 돈 순찰 수(호위병들 합).</summary>
         public static int PatrolRounds;
@@ -1512,6 +1514,8 @@ namespace ValheimHelper
         public static string LastSalute;
         public Patrol GuardPatrol => m_patrol;
         public bool HasPost => m_hasPost;
+        /// <summary>호위병이 거점 둘레 순찰을 걷는 중(이땐 쉴 때 집안일을 안 함 — 순찰 먼저, 11-14).</summary>
+        public bool Patrolling => m_patrol.Walking;
         public Vector3 Post => m_post;
 
         /// <summary>
@@ -1526,11 +1530,14 @@ namespace ValheimHelper
             if (Time.time >= m_postFindAt || Utils.DistanceXZ(m_postHome, npc.Home) > 1f)
             {
                 m_postFindAt = Time.time + 30f;
+                if (Utils.DistanceXZ(m_postHome, npc.Home) > 1f) m_badPostDoors.Clear(); // 거점이 바뀌면 못 닿던 문 목록도 새로
                 m_postHome = npc.Home;
-                bool had = m_hasPost;
-                m_hasPost = DoorWay.PostBy(m_postHome, 25f, out m_post, out m_postOut);
+                bool had = m_hasPost; Door prevDoor = m_postDoor; Vector3 old = m_post;
+                m_badPostDoors.RemoveWhere(d => d == null);
+                m_hasPost = DoorWay.PostBy(m_postHome, 25f, m_badPostDoors, out m_post, out m_postOut, out m_postDoor);
                 if (!m_hasPost) { m_post = m_postHome; m_postOut = transform.forward; m_postOut.y = 0f; }
-                if (m_hasPost && !had) Plugin.Log.LogInfo($"{npc.NpcName}: 경계 자리 = 문 옆 {m_post:F1}(거점에서 {Utils.DistanceXZ(m_post, m_postHome):0.0}m)");
+                if (m_hasPost && (!had || prevDoor != m_postDoor || Utils.DistanceXZ(old, m_post) > 1f))
+                    Plugin.Log.LogInfo($"{npc.NpcName}: 경계 자리 = {(m_postDoor != null ? "문 옆" : "문 없음 → 지붕 없는 곳")} {m_post:F1}(거점에서 {Utils.DistanceXZ(m_post, m_postHome):0.0}m, 못 닿은 문 {m_badPostDoors.Count})");
             }
             Vector3 pos = transform.position;
             if (!m_patrol.Walking) RouteTick(npc, dt);
@@ -1552,6 +1559,14 @@ namespace ValheimHelper
             }
             bool gaveUp = m_patrol.GaveUp;
             PatrolGoal g = m_patrol.Tick(dt, reached, skip, count, limit);
+            if (!gaveUp && m_patrol.GaveUp && m_postDoor != null && Utils.DistanceXZ(pos, m_post) > 1.2f)
+            {
+                // 11-14: 이 문 옆엔 못 닿음(문 안쪽 설비에 막힘 등) → 그 문은 빼고 곧 다시 고름(집 안 그 자리에 계속 서 있지 않게)
+                m_badPostDoors.Add(m_postDoor);
+                m_postFindAt = 0f;
+                m_patrol.Reset();
+                Plugin.Log.LogInfo($"{npc.NpcName}: 경계 자리 문 {m_postDoor.name} 옆에 못 닿음 → 그 문 빼고 다시 고름");
+            }
             if (!gaveUp && m_patrol.GaveUp) // E099 diag: 문 옆으로 가다 시간 한도 — 어디서(물속?) 왜(길 부분·곧장 걷기·헤엄 막힘) 멈췄나
                 Plugin.Log.LogInfo($"{npc.NpcName}: DIAG 문 옆 {Patrol.PostLimit:0}초 안에 못 감 → 그 자리에 섬 {pos:F1}, 문 옆까지 {Utils.DistanceXZ(pos, m_post):0.0}m, 헤엄 {m_character.IsSwimming()}·물속 {m_character.InLiquid()}·물 깊이 {Scout.WaterDepth(pos):0.0}·건넘 {m_swimOk}·물 막힘 {WaterBlockedTime:0.0}초, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m" : "없음")}, {m_moveDiag}, {PathDiag(m_post)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, m_post)}");
             bool swimNow = m_character.IsSwimming();
