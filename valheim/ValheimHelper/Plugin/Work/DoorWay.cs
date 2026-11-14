@@ -30,8 +30,12 @@ namespace ValheimHelper
         static float s_next;
 
         /// <summary>일꾼이 연 문으로 적어 둠 — 나중에 닫는다(상자 가기에서 바로 연 문도, E059·회차 334).</summary>
+        /// <summary>사용자 11-14: 문은 열려 있으면 그대로 지나가고, 닫혀 있으면 열고 지나간 뒤 닫지 않는다 → 닫으려고 기록하기(Track)·문짝 바꿔 열기(E064) 끔. 다시 닫게 하려면 true.</summary>
+        internal static bool CloseDoors = false;
+
         public static void Track(Door door, WorkerNpc npc, int reopen = 0)
         {
+            if (!CloseDoors) return;
             if (door == null || s_opened.Exists(o => o.Door == door)) return;
             s_opened.Add(new OpenedDoor { Door = door, By = npc, Mid = Middle(door), Reopen = reopen });
         }
@@ -222,7 +226,7 @@ namespace ValheimHelper
             if (v == null || !v.IsValid()) { GiveUp(npc, what, "문 사라짐"); return 0; }
             // E064: 반대쪽에서 연 문(들어갈 때 바깥에서 엶)은 문짝이 내 쪽에 있어 박힘 → 닫고 내 쪽에서 다시 엶(바닐라 RPC_UseDoor: forward면 s_state 1, 연 문이면 0)
             int state = v.GetZDO().GetInt(ZDOVars.s_state);
-            if (m_swing == 0 && state != 0)
+            if (CloseDoors && m_swing == 0 && state != 0)
             {
                 int mine = Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
                 if (state == -mine && SomeoneAt(Middle(m_door), npc)) { npc.Ai.StopMoving(); npc.Ai.Hold("문간 사람 비키길 기다림"); return 1; } // 회차 352: 문간에 플레이어가 서 있으면 닫지 않고 비킬 때까지 기다림(바꿔 열기가 문간의 플레이어 앞에서 문을 닫음). 회차 453: 이유 있는 섬으로(걸음 기록 멈칫에서 뺌)

@@ -116,10 +116,12 @@ namespace ValheimHelper
                 t += 5f;
                 Match(orders);
                 foreach (var o in orders) o.Poll(home, t);
-                Busy.Sample();
+                Busy.Sample(t);
             }
             Commands.Ran -= OnRan;
             Busy.Report(checks);
+            if (pig != null && pig.IsHungry()) // E102: 가축 못 먹임 — 우리 상자 먹이·멧돼지 자리
+                TestRunner.Log($"DIAG 가축 못 먹임: 멧돼지 우리에서 {Vector3.Distance(pig.transform.position, penAt):0}m, 우리 상자 Raspberry {(pen != null ? pen.GetInventory().CountItems("$item_raspberries") : -1)}");
             foreach (var r in s_ran) TestRunner.Log($"DIAG 짝 없는 해석: {r.Key} {Desc(r.Value)}");
             foreach (var o in orders)
             {
@@ -180,12 +182,43 @@ namespace ValheimHelper
         {
             static readonly Dictionary<string, Dictionary<string, int>> s_jobs = new Dictionary<string, Dictionary<string, int>>();
 
-            public static void Sample()
+            // 호위병 부름 칸(나) 둘째 조각): 일꾼이 위험한 일(Risky)을 하는 동안 동행(호위병·동료)이 붙었나. 30초 안에 안 붙으면
+            // 그때 호위병이 쉬고 있었으면 "안 옴"(FAIL), 바빴으면(싸움·다른 동행·순찰) "바빠 기다림"(살펴볼 것).
+            static readonly Dictionary<string, float> s_riskFrom = new Dictionary<string, float>();
+            static readonly HashSet<string> s_riskDone = new HashSet<string>();
+            static int s_with, s_wait, s_none;
+            static readonly List<string> s_riskLog = new List<string>();
+
+            public static void Sample(float t)
             {
-                foreach (var n in WorkerNpc.All)
-                    if (n != null && n.Ai != null) Add(n.NpcName, n.Ai.Job?.GetType().Name ?? (n.Ai.Resting ? "쉼(집안일 멈춤)" : "쉼"));
                 var g = WorkerNpc.TheGuard;
-                if (g != null && g.Ai != null) Add(g.NpcName, g.Ai.EscortName != null ? "동행 " + g.Ai.EscortName : g.Ai.GuardBusy ? "싸움" : g.Ai.Job?.GetType().Name ?? "쉼");
+                string escorted = null;
+                foreach (var n in WorkerNpc.All)
+                {
+                    if (n == null || n.Ai == null) continue;
+                    Add(n.NpcName, n.Ai.Job?.GetType().Name ?? (n.Ai.Resting ? "쉼(집안일 멈춤)" : "쉼"));
+                    if (g != null && n.Ai.EscortName == g.NpcName) escorted = n.NpcName;
+                    Risk(n, g, t);
+                }
+                // 호위병 쪽은 EscortName이 비어 있음(따라가는 쪽은 Follow) — 일꾼 쪽 EscortName으로 셈(회차 668 "동행 0"은 이 탓)
+                if (g != null && g.Ai != null) Add(g.NpcName, escorted != null ? "동행 " + escorted : g.Ai.GuardBusy ? "싸움" : g.Ai.Job?.GetType().Name ?? "쉼");
+            }
+
+            static void Risk(WorkerNpc n, WorkerNpc g, float t)
+            {
+                string who = n.NpcName;
+                if (!n.Ai.Risky || n.Ai.Job == null) { s_riskFrom.Remove(who); s_riskDone.Remove(who); return; }
+                if (!s_riskFrom.TryGetValue(who, out float from)) s_riskFrom[who] = from = t;
+                if (s_riskDone.Contains(who)) return;
+                string job = n.Ai.Job.GetType().Name;
+                if (n.Ai.EscortName != null) { s_with++; s_riskDone.Add(who); s_riskLog.Add($"{who} {job} {t:0}초 동행 {n.Ai.EscortName} ({t - from:0}초 만)"); }
+                else if (t - from >= 30f)
+                {
+                    bool free = Departures.GuardFree(g);
+                    if (free) s_none++; else s_wait++;
+                    s_riskDone.Add(who);
+                    s_riskLog.Add($"{who} {job} {t:0}초 동행 없음 30초 — 호위병 {(g == null ? "없음" : free ? "쉬는데 안 옴" : "바쁨 " + g.Ai.Current + "/" + (g.Ai.Job?.GetType().Name ?? "-"))}");
+                }
             }
 
             static void Add(string who, string what)
@@ -211,6 +244,9 @@ namespace ValheimHelper
                     TestRunner.Log($"DIAG 일 비율 {kv.Key}: {string.Join(", ", parts)}");
                 }
                 s_jobs.Clear();
+                foreach (var l in s_riskLog) TestRunner.Log("DIAG 위험한 일 동행: " + l);
+                checks.Add($"위험한 일에 동행 붙음(호위병 부름): 동행 {s_with}번, 호위병 바빠 기다림 {s_wait}번, 호위병 쉬는데 안 옴 {s_none}번", s_none == 0);
+                s_riskFrom.Clear(); s_riskDone.Clear(); s_riskLog.Clear(); s_with = s_wait = s_none = 0;
             }
         }
 
