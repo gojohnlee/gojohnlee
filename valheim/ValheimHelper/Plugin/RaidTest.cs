@@ -5,6 +5,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_raidtest (5번 습격 귀환): 일하는 중 습격 구역 안이고 거점에서 30m 넘으면 일을 멈추고 거점으로 돌아왔다가, 습격이 끝나면 하던 일을 이어 가는지.
+    /// 도착 때 습격 남은 시간이 절반 밑이면 귀환하지 않고 하던 일을 계속한다(사용자 11-14 ⑧, Core RaidReturn).
     /// 습격은 RandEventSystem.SetRandomEventByName으로 일꾼 위치에 건다(플레이어는 거점, 갓 모드).
     /// </summary>
     static class RaidTest
@@ -60,6 +61,7 @@ namespace ValheimHelper
             var ev = RandEventSystem.instance.GetCurrentRandomEvent();
             checks.Add($"습격이 걸림 ({name})", ev != null);
             if (ev == null) yield break;
+            ev.m_duration = 120f; // 도착 때 남은 시간이 절반 넘게 있게(귀환 쪽)
             yield return TestKit.WaitFor(() => ai.Current == WorkerAI.Mode.Home, 12f);
             checks.Add($"일을 접고 거점 귀환 모드 ({TestKit.Waited:0}초)", TestKit.Ok && ai.Job == null);
             bool said = w.Heard.Exists(h => h.Contains("돌아"));
@@ -72,6 +74,22 @@ namespace ValheimHelper
             RandEventSystem.instance.ResetRandomEvent();
             yield return TestKit.WaitFor(() => ai.Job is GatherJob, 30f);
             checks.Add($"습격 끝나고 하던 일 이어 감 ({TestKit.Waited:0}초)", TestKit.Ok);
+
+            // 4) 먼 일꾼이라도 도착 때 남은 시간이 절반 밑이면 귀환하지 않고 일을 계속
+            GatherTest.Say($"!{Workers.Name1} 나무 20", null);
+            yield return TestKit.WaitFor(() => ai.Job is GatherJob, 20f);
+            checks.Add("두 번째 일 시작함", TestKit.Ok);
+            if (!TestKit.Ok) yield break;
+            w.Ragnar.TeleportTo(away + Vector3.up * 0.3f, rot, false);
+            yield return new WaitForSeconds(2f);
+            RandEventSystem.instance.SetRandomEventByName(name, w.Ragnar.transform.position);
+            ev = RandEventSystem.instance.GetCurrentRandomEvent();
+            checks.Add("두 번째 습격이 걸림", ev != null);
+            if (ev == null) yield break;
+            ev.m_duration = 10f; // 도착 때 남은 시간이 절반 밑
+            yield return new WaitForSeconds(6f);
+            checks.Add("남은 시간 적으면 귀환 안 하고 일 계속", ai.Current != WorkerAI.Mode.Home && ai.Job is GatherJob);
+            RandEventSystem.instance.ResetRandomEvent();
         }
     }
 }
