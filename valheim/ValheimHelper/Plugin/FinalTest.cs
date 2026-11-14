@@ -114,6 +114,8 @@ namespace ValheimHelper
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
+                // 급한 명령(나) 셋째 조각, decisions 147): 모두 바쁠 때쯤 "급해 … 먼저" — 하던 일을 멈추고 바로 시작, 멈춘 일은 대기열 맨 앞
+                if (t == 120f) { var u = Say("급해, 나무 5개 먼저 해 와", CommandKind.Item, "Wood", 5, home); u.Urgent = true; orders.Add(u); }
                 Match(orders);
                 foreach (var o in orders) o.Poll(home, t);
                 Busy.Sample(t);
@@ -162,7 +164,7 @@ namespace ValheimHelper
             public CommandKind? Kind;
             public int Amount, N, Before, Before2, Best;
             public ChatCommand Heard;
-            public bool HeardOk;
+            public bool HeardOk, Urgent;
             public float Done = -1f;
             public System.Func<int> Count; // 상자 개수 대신 셀 것(밭 새싹·가축 먹음·정리 남은 것)
 
@@ -189,13 +191,73 @@ namespace ValheimHelper
             static int s_with, s_wait, s_none;
             static readonly List<string> s_riskLog = new List<string>();
 
+            // 급한 명령 칸(나) 셋째 조각): 받은 일꾼이 30초 안에 나무 일을 시작하나, 하던 일이 있었으면 그 일이 대기열 맨 앞에 있나
+            static WorkerNpc s_uNpc;
+            static IWorkerJob s_uOld;
+            static float s_uAt;
+            static string s_uResult;
+            static bool s_uOk, s_uResumed, s_uYields;
+
+            public static void UrgentRan(WorkerNpc npc)
+            {
+                if (s_uNpc != null) return;
+                s_uNpc = npc; s_uOld = npc.Ai.Job; s_uAt = Time.time; s_uYields = npc.Ai.Yields; // 쉬는 일꾼 집안일(Yields)은 명령에 양보해 버려짐(decisions 308)
+                TestRunner.Log($"DIAG 급한 명령: {npc.NpcName} 하던 일 {(s_uOld != null ? s_uOld.Label : "없음")}, 대기열 {npc.Ai.Queue.Count}");
+            }
+
+            static void Urgent(float t)
+            {
+                if (s_uNpc == null || s_uNpc.Ai == null) return;
+                var ai = s_uNpc.Ai;
+                if (s_uResult == null)
+                {
+                    if (ai.Job is GatherJob gj && gj.Item == "Wood" && ai.Job != s_uOld)
+                    {
+                        bool front = s_uOld == null || s_uYields || ai.Queue.Count > 0 && ai.Queue[0].Resume == s_uOld;
+                        s_uOk = front;
+                        s_uResult = $"{s_uNpc.NpcName} {Time.time - s_uAt:0}초 만에 시작, " + (s_uOld == null ? "쉬던 일꾼" : s_uYields ? $"하던 집안일 '{s_uOld.Label}' 양보"
+                            : front ? $"하던 '{s_uOld.Label}' 대기열 맨 앞" : $"하던 '{s_uOld.Label}' 대기열 맨 앞 아님({(ai.Queue.Count > 0 ? ai.Queue[0].Label : "빈 대기열")})");
+                    }
+                    else if (Time.time - s_uAt > 30f) s_uResult = $"{s_uNpc.NpcName} 30초 안에 안 시작 (지금 {ai.Job?.Label ?? "쉼"})";
+                }
+                else if (!s_uResumed && s_uOld != null && ai.Job == s_uOld) { s_uResumed = true; TestRunner.Log($"DIAG 급한 명령 뒤 하던 일 다시 이음: {s_uNpc.NpcName} '{s_uOld.Label}' {t:0}초"); }
+            }
+
+            // 대기열 순서 칸: 대기열에서 꺼내 시작한 일이 앞 칸(지금 할 수 있는 것)을 건너뛰었나. 아닌 일을 먼저 하면 DIAG만
+            static readonly Dictionary<string, List<QueuedWork>> s_q = new Dictionary<string, List<QueuedWork>>();
+            static readonly Dictionary<string, IWorkerJob> s_job = new Dictionary<string, IWorkerJob>();
+            static int s_take, s_skip;
+
+            static void Order(WorkerNpc n, float t)
+            {
+                string who = n.NpcName;
+                var job = n.Ai.Job;
+                s_q.TryGetValue(who, out var prev); s_job.TryGetValue(who, out var was);
+                if (prev != null && job != null && job != was)
+                {
+                    int i = prev.FindIndex(q => q.Resume == job);
+                    if (i < 0) i = prev.FindIndex(q => q.Resume == null && !n.Ai.Queue.Contains(q));
+                    if (i >= 0)
+                    {
+                        s_take++;
+                        for (int k = 0; k < i; k++)
+                            if (n.Ai.Queue.Contains(prev[k]) && (prev[k].Ready == null || prev[k].Ready()))
+                            { s_skip++; TestRunner.Log($"DIAG 대기열 건너뜀: {who} {t:0}초 '{prev[i].Label}'을 '{prev[k].Label}'보다 먼저"); break; }
+                    }
+                    else if (n.Ai.Queue.Count > 0) TestRunner.Log($"DIAG 대기열 두고 다른 일: {who} {t:0}초 {job.Label} (대기열 {n.Ai.Queue.Count}, 첫 칸 '{n.Ai.Queue[0].Label}')");
+                }
+                s_q[who] = new List<QueuedWork>(n.Ai.Queue); s_job[who] = job;
+            }
+
             public static void Sample(float t)
             {
                 var g = WorkerNpc.TheGuard;
                 string escorted = null;
+                Urgent(t);
                 foreach (var n in WorkerNpc.All)
                 {
                     if (n == null || n.Ai == null) continue;
+                    Order(n, t);
                     Add(n.NpcName, n.Ai.Job?.GetType().Name ?? (n.Ai.Resting ? "쉼(집안일 멈춤)" : "쉼"));
                     if (g != null && n.Ai.EscortName == g.NpcName) escorted = n.NpcName;
                     Risk(n, g, t);
@@ -247,6 +309,10 @@ namespace ValheimHelper
                 foreach (var l in s_riskLog) TestRunner.Log("DIAG 위험한 일 동행: " + l);
                 checks.Add($"위험한 일에 동행 붙음(호위병 부름): 동행 {s_with}번, 호위병 바빠 기다림 {s_wait}번, 호위병 쉬는데 안 옴 {s_none}번", s_none == 0);
                 s_riskFrom.Clear(); s_riskDone.Clear(); s_riskLog.Clear(); s_with = s_wait = s_none = 0;
+                checks.Add($"급한 명령 먼저: {s_uResult ?? (s_uNpc == null ? "급한 해석 없음" : "판정 전 끝")}", s_uResult != null && s_uOk);
+                if (s_uOld != null && !s_uResumed) TestRunner.Log($"DIAG 급한 명령 뒤 하던 일 안 이음: '{s_uOld.Label}'");
+                checks.Add($"대기열 순서대로 꺼냄: 꺼냄 {s_take}번, 건너뜀 {s_skip}번", s_skip == 0);
+                s_uNpc = null; s_uOld = null; s_uResult = null; s_uOk = s_uResumed = false; s_q.Clear(); s_job.Clear(); s_take = s_skip = 0;
             }
         }
 
@@ -255,6 +321,7 @@ namespace ValheimHelper
         static void OnRan(WorkerNpc npc, ChatCommand cmd)
         {
             s_ran.Add(new KeyValuePair<string, ChatCommand>(npc.NpcName, cmd));
+            if (cmd.Urgent) Busy.UrgentRan(npc); // Ran은 일을 시작하기 전 — 하던 일을 여기서 잡아 둠
             TestRunner.Log($"DIAG 해석: {npc.NpcName} ← {Desc(cmd)}");
         }
 
@@ -266,11 +333,13 @@ namespace ValheimHelper
             for (int i = 0; i < s_ran.Count; i++)
             {
                 var cmd = s_ran[i].Value;
-                var o = orders.Find(w => w != null && w.Heard == null && w.Kind == cmd.Kind
-                    && (cmd.Kind != CommandKind.Item || w.Item == cmd.Item));
+                System.Predicate<Want> same = w => w != null && w.Heard == null && w.Kind == cmd.Kind
+                    && (cmd.Kind != CommandKind.Item || w.Item == cmd.Item);
+                var o = orders.Find(w => same(w) && w.Urgent == cmd.Urgent) ?? orders.Find(same); // 급함까지 같은 것 먼저(나무 10 · 급한 나무 5)
                 if (o == null) continue;
                 o.Heard = cmd; o.Who = s_ran[i].Key;
-                o.HeardOk = cmd.Kind == CommandKind.Item ? cmd.Amount == o.Amount
+                o.HeardOk = cmd.Urgent != o.Urgent ? false
+                    : cmd.Kind == CommandKind.Item ? cmd.Amount == o.Amount
                     : cmd.Kind == CommandKind.SetMake ? cmd.Number == s_setNo && cmd.Amount == o.Amount
                     : cmd.Kind != CommandKind.Farm || cmd.Number == o.Amount;
                 s_ran.RemoveAt(i--);
