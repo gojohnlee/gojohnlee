@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 676 · 11-15 · 실플레이 준비됨
+
+**요약**
+
+- [11-15] 실플레이 준비됨: 최종 실전 시험 두 판째도 전부 통과, 쓸 DLL = valheim/dist/ValheimHelper.dll(회차 676 — 시험 vh_finaltest PASS 35/35, 2954초)
+
+**자세히**
+
+- **실플레이 준비됨.** 쓸 DLL: [valheim/dist/ValheimHelper.dll](https://github.com/gojohnlee/gojohnlee/blob/valheim/valheim/dist/ValheimHelper.dll) (0.3.8, 커밋 f8c30329 — "!" 통일까지 들어감). 게임 BepInEx/plugins/ValheimHelper/ 에 넣으면 됨.
+- 근거: 지금 DLL 그대로 최종 실전 시험(일꾼 둘+호위병, 나무·돌·구리·제련·활·세트·밭·굽기·가축·상자 정리·사냥 한꺼번에, 중간 끄고 켜기) 한 판 끊지 않고 35/35 PASS(2954초), 로그 오류 0줄. 회차 675 판(35/35, 2218초)에 이어 두 판 연속.
+- 정리: progress "다음"에서 끝난 요청 3개(집 시험 옮기기 마무리·"!" 통일·최종 실전 시험 바로잡기)를 지움. 최종 실전 시험 요청은 덧붙임의 빈틈 동작별 표만 남김.
+
 ### 회차 675 · 11-15 · 상자 등록 명령 "!" 뺌·"명령어" 시험 칸·다 끝난 일 정리
 
 **요약**
