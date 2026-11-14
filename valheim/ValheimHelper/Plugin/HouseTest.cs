@@ -257,7 +257,9 @@ namespace ValheimHelper
             checks.Add($"순간이동 없음 ({tele}, 문 열림 {opened})", tele == 0);
             int closed0 = DoorWay.Closed;
             yield return TestKit.WaitFor(() => !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
-            checks.Add($"일 끝나고 나와서 문 열린 채 둠(사용자 11-14) (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, 일꾼 안 {In(w.Ragnar.transform.position)}, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) != 0 && DoorWay.Closed == closed0);
+            yield return new WaitForSeconds(4f); // 나오며 문짝이 내 쪽이라 닫았으면 CloseBehind가 반대로 다시 엶(사용자 11-14: 열린 채)
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) != 0, 10f);
+            checks.Add($"일 끝나고 나와서 문 열린 채 둠(사용자 11-14) (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초, 일꾼 안 {In(w.Ragnar.transform.position)}, {DoorWay.OpenedDiag()})", dz.GetInt(ZDOVars.s_state) != 0); // 사용자 11-14: 닫았다 다시 열어도 됨, 끝에 열려 있으면
 
             // 2) 집 안 제련소(③-2): 작업대 자리에 제련소, 광석·석탄은 안 상자. 일꾼은 밖에서 시작, 플레이어는 25m 밖(5m 안이면 보충 안 함)
             GatherTest.Say("!멈춰", null);
@@ -270,7 +272,7 @@ namespace ValheimHelper
             var smelter = Put(made, "smelter", GatherTest.Ground(c + r * 1f - f * 1.2f), Quaternion.LookRotation(-r));
             w.Player.TeleportTo(GatherTest.Ground(w.Home - r * 25f) + Vector3.up * 0.3f, w.Player.transform.rotation, false);
             yield return new WaitForSeconds(2f);
-            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); } // 일꾼이 안 닫았을 때만(위 검사가 FAIL)
+            DoorWay.Forget(); if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); } // 일꾼이 안 닫았을 때만(위 검사가 FAIL)
             yield return new WaitForSeconds(6f); // 닫힌 문 navmesh 벽이 다시 생길 때까지
             w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1f); // 옮긴 뒤 열린 문으로 다시 들어가던 것(회차 312 두 번째 실행: 집 가운데서 시작)
@@ -298,7 +300,7 @@ namespace ValheimHelper
             foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
                 if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
             TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
-            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            DoorWay.Forget(); if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
             yield return new WaitForSeconds(6f);
             w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(1f);
@@ -338,12 +340,12 @@ namespace ValheimHelper
             took = TestKit.Waited;
             yield return TestKit.WaitFor(() => !In(w.Ragnar.transform.position), 30f);
             yield return new WaitForSeconds(4f); // 나오며 문짝 바꿔 열기(E064)로 닫았으면 CloseBehind가 원래대로 다시 엶
-            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) == openSt, 10f);
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) != 0, 10f);
             tele = Teleports() - tele0;
             checks.Add($"열어 둔 문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 순간이동 {tele}, 일꾼 안 {In(w.Ragnar.transform.position)})",
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && tele == 0 && !In(w.Ragnar.transform.position));
             checks.Add($"열어 둔 문은 열린 채 둠 (s_state {dz.GetInt(ZDOVars.s_state)}/{openSt}, 엶 {DoorWay.Opened - opened0}·닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)",
-                dz.GetInt(ZDOVars.s_state) == openSt);
+                dz.GetInt(ZDOVars.s_state) != 0); // 사용자 11-14: 열려 있기만 하면 됨(문짝이 내 쪽이면 바꿔 열어 방향은 바뀜)
             TestRunner.Log($"집 걸음(3-2단계 열어 둔 문): {walk.Stop("housetest 3-2단계 열어 둔 문", true)}");
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
@@ -391,11 +393,11 @@ namespace ValheimHelper
             TestRunner.Log($"집 걸음(3-3단계 문간 플레이어): {walk.Stop("housetest 3-3단계 문간 플레이어", true)}");
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, "MeadHealthMinor");
-            if (dz.IsValid()) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            DoorWay.Forget(); if (dz.IsValid()) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
 
             // 4) 안에서 닫힌 문으로 나가기(③-5): 일꾼을 안에 두고 문을 닫은 채 바깥 일(나무)을 시키면 문을 열고 나가는지
             yield return new WaitForSeconds(1f);
-            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            DoorWay.Forget(); if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
             yield return new WaitForSeconds(6f); // 닫힌 문 navmesh 벽이 다시 생길 때까지(일꾼은 밖 — 안에 두고 기다리면 집으로 가며 먼저 나가 버림)
             tele0 = Teleports(); int exited0 = DoorWay.Exited; closed0 = DoorWay.Closed;
             Vector3 inAt = GatherTest.Ground(c + f * 1.2f) + Vector3.up * 0.3f; // TeleportTo는 가장 위 면(지붕) 위에 올림 → 몸을 직접
@@ -409,7 +411,9 @@ namespace ValheimHelper
             checks.Add($"안에서 문 열고 나감 ({took:0}초, 나감 {DoorWay.Exited - exited0}번, 순간이동 {tele}, {w.Ragnar.Ai.Job?.StepName})", !In(w.Ragnar.transform.position) && DoorWay.Exited > exited0 && tele == 0);
             // closed0은 단계 시작에서 — 나올 때 문짝이 내 쪽이면 바로 닫음(회차 348)
             yield return TestKit.WaitFor(() => !In(w.Ragnar.transform.position), 40f); // 나갈 때 문짝 바꿔 열기로 잠깐 닫힘(E064)
-            checks.Add($"나가서 문 열린 채 둠 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) != 0 && DoorWay.Closed == closed0);
+            yield return new WaitForSeconds(4f); // 나오며 문짝이 내 쪽이라 닫았으면 CloseBehind가 반대로 다시 엶
+            yield return TestKit.WaitFor(() => dz.GetInt(ZDOVars.s_state) != 0, 10f);
+            checks.Add($"나가서 문 열린 채 둠 (s_state {dz.GetInt(ZDOVars.s_state)}, 닫기 {DoorWay.Closed - closed0}번, {TestKit.Waited:0}초)", dz.GetInt(ZDOVars.s_state) != 0); // 사용자 11-14: 닫았다 다시 열어도 됨
             TestRunner.Log($"집 걸음(4단계 안에서 나가기): {walk.Stop("housetest 4단계 안에서 나가기", true)}");
             GatherTest.Say("!멈춰", null);
 
@@ -426,7 +430,7 @@ namespace ValheimHelper
             foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
                 if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
             TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
-            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            DoorWay.Forget(); if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
             w.Ragnar.TeleportTo(GatherTest.Ground(c + r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(7f); // 새 문·닫은 문 navmesh
             checks.Add($"문 두 개 단계: 두 문 닫힘·일꾼 집 뒤 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 뒷문까지 {Utils.DistanceXZ(w.Ragnar.transform.position, backAt):0.0}m, 상자 가림 {DoorWay.Blocked(w.Ragnar, w.Chest)})",
@@ -467,7 +471,7 @@ namespace ValheimHelper
             foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
                 if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
             TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
-            if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
+            DoorWay.Forget(); if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
             ZNetScene.instance.Destroy(back); // 뒷문은 다시 벽으로(회차 318: 상자가 뒷벽 곁이라 상자 앞까지 걸은 일꾼이 뒷문을 고름 → 복도를 안 지남)
             bool wallBack = Put(made, "woodwall", backAt, Quaternion.LookRotation(r), floorY - 0.05f) != null;
             w.Ragnar.TeleportTo(GatherTest.Ground(c - r * (Half + 6f) + f * 3f) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);

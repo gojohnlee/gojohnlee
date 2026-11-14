@@ -25,17 +25,17 @@ namespace ValheimHelper
         public static int Opened, Entered, Exited, Closed;
 
         /// <summary>일꾼이 연 문(회차 313): 그 일꾼이 지붕 밖으로 나와 문에서 3m 넘게(지붕 아래여도 15m 넘게) 멀어지고 문틀에 아무도 없으면 닫는다. 플레이어가 연 문은 안 건드림.</summary>
-        sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen; public bool Shut, Inside; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
+        sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen, Away; public bool Shut, Inside; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
         static readonly System.Collections.Generic.List<OpenedDoor> s_opened = new System.Collections.Generic.List<OpenedDoor>();
         static float s_next;
 
         /// <summary>일꾼이 연 문으로 적어 둠 — 나중에 닫는다(상자 가기에서 바로 연 문도, E059·회차 334).</summary>
-        /// <summary>사용자 11-14: 문은 열려 있으면 그대로 지나가고, 닫혀 있으면 열고 지나간 뒤 닫지 않는다 → 닫으려고 기록하기(Track)·문짝 바꿔 열기(E064) 끔. 다시 닫게 하려면 true.</summary>
+        /// <summary>사용자 11-14: 문은 열려 있으면 그대로 지나가고, 닫혀 있으면 열고 지나간 뒤 닫지 않는다 → 닫으려고 기록하기(Track)·다시 닫게 하려면 true. 남긴 것(빼면 문짝에 박혀 순간이동, 11-14 vh_housetest): 문짝이 내 쪽으로 열린 문을 닫고 반대로 다시 엶(E064), 나오자 문짝이 내 쪽이면 바로 닫음(CloseIfSwungAtMe).</summary>
         internal static bool CloseDoors = false;
 
         public static void Track(Door door, WorkerNpc npc, int reopen = 0)
         {
-            if (!CloseDoors) return;
+
             if (door == null || s_opened.Exists(o => o.Door == door)) return;
             s_opened.Add(new OpenedDoor { Door = door, By = npc, Mid = Middle(door), Reopen = reopen });
         }
@@ -226,7 +226,7 @@ namespace ValheimHelper
             if (v == null || !v.IsValid()) { GiveUp(npc, what, "문 사라짐"); return 0; }
             // E064: 반대쪽에서 연 문(들어갈 때 바깥에서 엶)은 문짝이 내 쪽에 있어 박힘 → 닫고 내 쪽에서 다시 엶(바닐라 RPC_UseDoor: forward면 s_state 1, 연 문이면 0)
             int state = v.GetZDO().GetInt(ZDOVars.s_state);
-            if (CloseDoors && m_swing == 0 && state != 0)
+            if (m_swing == 0 && state != 0) // 문짝이 내 쪽(state == -mine)일 때만 — 문은 닫지 않아도(사용자 11-14) 이건 남김: 빼면 문짝에 박혀 순간이동(11-14 vh_housetest 열어 둔 문 두 단계 FAIL)
             {
                 int mine = Vector3.Dot(m_door.transform.forward, me - m_door.transform.position) < 0f ? 1 : -1;
                 if (state == -mine && SomeoneAt(Middle(m_door), npc)) { npc.Ai.StopMoving(); npc.Ai.Hold("문간 사람 비키길 기다림"); return 1; } // 회차 352: 문간에 플레이어가 서 있으면 닫지 않고 비킬 때까지 기다림(바꿔 열기가 문간의 플레이어 앞에서 문을 닫음). 회차 453: 이유 있는 섬으로(걸음 기록 멈칫에서 뺌)
@@ -339,12 +339,36 @@ namespace ValheimHelper
                 if (c != null && c != npc && !c.IsDead() && Utils.DistanceXZ(c.transform.position, o.Mid) < 1.5f && Mathf.Abs(c.transform.position.y - o.Mid.y) < 2f) return;
             v.InvokeRPC("UseDoor", false);
             o.Sent = Time.time; o.Shut = true;
+            o.Away = mine; // 문 안 닫음(사용자 11-14)이면 CloseBehind가 내 반대쪽으로 다시 엶
             Closed++;
             Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나와서 문 {m_door.name} 바로 닫음(문짝이 내 쪽 s_state {state})");
         }
 
+        /// <summary>시험 단계 사이: 시험이 문을 닫기 전에 다시 열 기록을 지움(안 지우면 닫은 뒤 다시 엶).</summary>
+        internal static void Forget() => s_opened.Clear();
+
         public static void CloseBehind()
         {
+            if (!CloseDoors)
+            {
+                // 사용자 11-14: 지나간 뒤 닫지 않음. 기록은 나오며 문짝이 내 쪽이면 바로 닫기(CloseIfSwungAtMe, 안 닫으면 문짝에 박혀 순간이동)에만 쓰고, 문이 닫혔거나 연 일꾼이 15m 넘게 멀어지면 지움.
+                for (int i = s_opened.Count - 1; i >= 0; i--)
+                {
+                    var o = s_opened[i]; // 나오며 닫은 문(문짝이 내 쪽) → 닫힌 뒤 내 반대쪽으로 다시 엶 — 열린 문은 열린 채
+                    ZNetView dv = o.Door != null ? o.Door.GetComponent<ZNetView>() : null;
+                    if (!o.Shut || Time.time - o.Sent < 1.5f) continue;
+                    s_opened.RemoveAt(i); // 다시 엶은 한 번만 — 그 뒤 남이 닫으면 그대로
+                    if (dv == null || !dv.IsValid() || Dungeons.IsOpen(dv.GetZDO())) continue;
+                    dv.InvokeRPC("UseDoor", o.Away == 1); // 바닐라 RPC_UseDoor: forward면 s_state 1
+                    Plugin.Log.LogInfo($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나오며 닫은 문 {o.Door.name} 반대로 다시 엶(s_state {o.Away})");
+                }
+                s_opened.RemoveAll(o =>
+                {
+                    ZNetView dv = o.Door != null ? o.Door.GetComponent<ZNetView>() : null;
+                    return dv == null || !dv.IsValid() || !o.Shut && !Dungeons.IsOpen(dv.GetZDO()) || o.By == null || o.By.IsDead() || Utils.DistanceXZ(o.By.transform.position, o.Mid) > 15f;
+                });
+                return;
+            }
             if (s_opened.Count == 0 || Time.time < s_next) return;
             s_next = Time.time + 0.5f;
             for (int i = s_opened.Count - 1; i >= 0; i--)
