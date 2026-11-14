@@ -48,6 +48,8 @@ namespace ValheimHelper
             yield return new WaitForSeconds(3f);
             checks.Add($"깃발에 일꾼 2명 나타남 ({WorkerNpc.All.Count}명)", WorkerNpc.All.Count == 2);
             if (WorkerNpc.All.Count != 2) { End(player, god, checks, onHeard, heard); yield break; }
+            // 남은 명령(밭·굽기·가축·사냥)의 재료는 시작 때 한 번만 거점 상자에 넣는다(decisions 71 — 명령 중엔 상자 채우기 없음)
+            StockStart(home);
 
             TestRunner.Log($"DIAG 시작 거점 상자: Wood {GatherTest.CountBase(home, "Wood")}, Stone {GatherTest.CountBase(home, "Stone")}, CopperOre {GatherTest.CountBase(home, "CopperOre")}, Copper {GatherTest.CountBase(home, "Copper")}");
             // 2) 명령마다 거점 상자 개수로 판정 — 실패해도 다음 명령을 계속(하나 막혀도 계속)
@@ -59,6 +61,18 @@ namespace ValheimHelper
             yield return SetOrder(checks, home);
 
             End(player, god, checks, onHeard, heard);
+        }
+
+        /// <summary>시작 때 한 번: 밭(경작기·당근 씨앗), 굽기(생고기), 가축(당근 먹이)에 쓸 재료를 거점 첫 상자에 넣는다.</summary>
+        static void StockStart(Vector3 home)
+        {
+            Container box = null;
+            foreach (var c in Chests.NearBase(home)) { box = c; break; }
+            if (box == null) { TestRunner.Log("FAIL: 거점 상자가 없어 시작 재료를 못 넣음"); return; }
+            TestKit.PutInChest(box, Crops.Cultivator, 1);
+            TestKit.PutInChest(box, "CarrotSeeds", 6);
+            TestKit.PutInChest(box, "RawMeat", 4);
+            TestKit.PutInChest(box, "Carrot", 10);
         }
 
         /// <summary>"!일꾼 세트 n amount" — 시험이 세트 메뉴 n번(활·곤봉)을 먼저 저장하고(끝나면 지움), 활·곤봉이 상자에 amount개 이상 되면 PASS.
