@@ -66,9 +66,9 @@ namespace ValheimHelper
             Check("소환 인사", s_heard.Count >= 2);
 
             // 2) 상태
-            Say("!상태");
+            Say("!멈춰"); // 둘 다 대답하는 명령(!상태는 11-14 없앰 — 쉬는 중이라 멈춰도 그대로)
             yield return new WaitForSeconds(1f);
-            Check("!상태 → 둘 다 대답", Count(Workers.Name1) >= 2 && Count(Workers.Name2) >= 2);
+            Check("!멈춰 → 둘 다 대답", Count(Workers.Name1) >= 2 && Count(Workers.Name2) >= 2);
 
             // 3) 따라가기: 1호만 부른 뒤 플레이어가 25m 떨어진 곳으로 이동
             Vector3 alarakStart = alarak.transform.position;

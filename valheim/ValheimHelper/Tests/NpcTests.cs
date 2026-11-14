@@ -115,8 +115,8 @@ public class DispatchTests
     public void UnknownTarget() => Assert.Empty(Dispatch.Choose(CommandKind.Escort, "Bob", Npcs()));
 
     [Theory]
-    [InlineData(CommandKind.Status)]
     [InlineData(CommandKind.Stop)]
+    [InlineData(CommandKind.ClearQueue)]
     public void Everyone(CommandKind kind) => Assert.Equal(new[] { 0, 1 }, Dispatch.Choose(kind, null, Npcs(true, true)));
 
     [Fact]

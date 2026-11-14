@@ -29,9 +29,7 @@ namespace ValheimHelper.Core.Npc
             }
             switch (kind)
             {
-                // 둘 다 보여 주거나 둘 다 멈춘다.
-                case CommandKind.Status:
-                case CommandKind.Skills:
+                // 둘 다 멈춘다.
                 case CommandKind.Stop:
                 case CommandKind.ClearQueue:
                     for (int i = 0; i < npcs.Count; i++) result.Add(i);

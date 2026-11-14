@@ -200,11 +200,11 @@ namespace ValheimHelper
             checks.Add($"상자 나무 그대로 (+{now}, 끄기 전 +{got0})", now >= got0);
             checks.Add($"저장된 나무 일 남음 (vh_queue \"{Queue(npc)}\")", Queue(npc).Contains("i=Wood") || now >= Want);
 
-            Say($"!{name} 상태");
+            Say($"!{name} 세트"); // 대답하는 명령(!상태는 11-14 없앰)
             until = Time.time + 6f;
             while (Time.time < until && !s_heard.Exists(s => s.StartsWith(name))) yield return new WaitForSeconds(0.25f);
             foreach (var s in s_heard) TestRunner.Log("  들음 " + s);
-            checks.Add("!상태 대답", s_heard.Exists(s => s.StartsWith(name)));
+            checks.Add("!세트 대답", s_heard.Exists(s => s.StartsWith(name)));
 
             until = Time.time + 300f;
             float next = 0f;

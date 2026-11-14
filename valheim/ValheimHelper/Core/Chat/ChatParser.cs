@@ -94,8 +94,8 @@ namespace ValheimHelper.Core.Chat
         /// <summary>명령어·부속어(앞에서부터 가장 긴 것을 떼어 냄). 물건 이름은 남은 덩어리 하나로 둔다(ResolveItem이 붙여 쓴 이름도 찾음).</summary>
         static readonly string[] Keywords =
         {
-            "계속채워", "계속", "채워", "개인", "끔", "목록", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "가축", "정리", "평탄화",
-            "상태", "스킬", "기억", "지식", "멈춰", "길", "같이가자", "그냥가", "전부취소", "취소전부", "명령어", "명령", "도움말", "도움",
+            "계속채워", "계속", "채워", "개인", "끔", "목록", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "정리",
+            "멈춰", "같이가자", "전부취소", "취소전부", "명령어", "명령", "도움말", "도움",
         };
 
         /// <summary>공백 없는 몸통 → [일꾼 이름] [명령어·부속어…] [물건 이름] [끝 숫자]. 나눌 게 없으면 null.</summary>
@@ -141,16 +141,11 @@ namespace ValheimHelper.Core.Chat
             switch (joined)
             {
                 case "같이 가자": case "같이가자": case "escort": return Kind(CommandKind.Escort);
-                case "그냥 가": case "그냥가": case "go anyway": case "goanyway": return Kind(CommandKind.GoAnyway);
                 case "취소 전부": case "전부 취소": case "취소전부": case "전부취소": case "clear": return Kind(CommandKind.ClearQueue);
             }
 
             switch (head)
             {
-                case "상태": case "status": return n == 1 ? Kind(CommandKind.Status) : null;
-                case "스킬": case "skills": case "skill": return n == 1 ? Kind(CommandKind.Skills) : null;
-                case "기억": case "memory": return n == 1 ? Kind(CommandKind.Memory) : null;
-                case "지식": case "knowledge": return n == 1 ? Kind(CommandKind.Knowledge) : null;
                 case "멈춰": case "stop": return n == 1 ? Kind(CommandKind.Stop) : null;
                 case "명령어": case "명령": case "도움말": case "도움": case "help": case "commands": return n == 1 ? Kind(CommandKind.Help) : null;
                 case "탐험": case "explore": return ParseExplore(t);
@@ -161,7 +156,6 @@ namespace ValheimHelper.Core.Chat
                 case "준비": case "prep": return ParsePrep(t, 1, CommandKind.Prep);
                 case "세트": case "set": return ParseSet(t);
                 case "밭": case "farm": return ParseRadius(CommandKind.Farm, t);
-                case "가축": case "livestock": case "feed": return n == 1 ? Kind(CommandKind.Livestock) : null;
                 case "정리": case "tidy": return n == 1 ? Kind(CommandKind.Tidy) : null;
             }
             return ParseItemAmount(t, 0, t.Length);

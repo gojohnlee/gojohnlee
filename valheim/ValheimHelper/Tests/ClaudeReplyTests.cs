@@ -70,7 +70,7 @@ public class ClaudeReplyTests
     public void LimitsTaskCountAndReplyLength()
     {
         var tasks = new List<string>();
-        for (int i = 0; i < 8; i++) tasks.Add("{\"kind\":\"status\"}");
+        for (int i = 0; i < 8; i++) tasks.Add("{\"kind\":\"stop\"}");
         var r = P("{\"reply\":\"" + new string('가', 300) + "\\n<color=red>x</color>\",\"tasks\":[" + string.Join(",", tasks) + "]}");
         Assert.Equal(ClaudeReply.MaxTasks, r.Tasks.Count);
         Assert.True(r.Reply.Length <= ClaudeReply.MaxReply + 1);

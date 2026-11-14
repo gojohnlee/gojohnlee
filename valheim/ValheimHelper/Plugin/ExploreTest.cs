@@ -66,15 +66,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(3f); // 시야가 한 번 돌아 지식·바이옴이 차게
             TestRunner.Log($"지식: {Brain.Get().Count}구역, 여기 바이옴 {BiomeNames.Of(Brain.Get().BiomeOf(Senses.ZoneOf(claude.transform.position)))}");
 
-            // 2) !지식, !기억
-            int before = heard.Count;
-            Say("!지식");
-            yield return new WaitForSeconds(1f);
-            Check("!지식 → 대답", heard.Count > before);
-            before = heard.Count;
-            Say("!기억");
-            yield return new WaitForSeconds(1f);
-            Check("!기억 → 대답", heard.Count > before);
+            // 2) !지식·!기억은 11-14 사용자 결정으로 없앰
 
             // 2.5) 물가: 거점 근처 바다(호수) 너머로 곧장 걷게 하면 물가에서 서야 한다(0.3.6은 해협 300m를 헤엄쳐 건넜다)
             if (FindSea(home, out Vector3 shore, out Vector3 sea))

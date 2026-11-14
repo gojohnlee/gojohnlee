@@ -99,19 +99,10 @@ public class ChatParserTests
     }
 
     [Theory]
-    [InlineData("!가축", CommandKind.Livestock)]
-    [InlineData("!feed", CommandKind.Livestock)]
     [InlineData("!정리", CommandKind.Tidy)]
     [InlineData("!tidy", CommandKind.Tidy)]
-    [InlineData("!상태", CommandKind.Status)]
-    [InlineData("!status", CommandKind.Status)]
-    [InlineData("!스킬", CommandKind.Skills)]
-    [InlineData("!기억", CommandKind.Memory)]
-    [InlineData("!지식", CommandKind.Knowledge)]
     [InlineData("!같이 가자", CommandKind.Escort)]
     [InlineData("!같이가자", CommandKind.Escort)]
-    [InlineData("!그냥 가", CommandKind.GoAnyway)]
-    [InlineData("!Go Anyway", CommandKind.GoAnyway)]
     [InlineData("!멈춰", CommandKind.Stop)]
     [InlineData("!취소 전부", CommandKind.ClearQueue)]
     [InlineData("!명령어", CommandKind.Help)]
@@ -330,10 +321,8 @@ public class ChatParserTests
     }
 
     [Theory]
-    [InlineData("상태", CommandKind.Status)]
     [InlineData("멈춰", CommandKind.Stop)]
     [InlineData("명령어", CommandKind.Help)]
-    [InlineData("그냥 가", CommandKind.GoAnyway)]
     public void PlainWordCommand(string line, CommandKind kind) => Assert.Equal(kind, Cmd(line).Kind);
 
     [Fact]
@@ -390,7 +379,7 @@ public class ChatParserTests
 
     [Fact]
     public void BangCommandWinsOverAnswer() =>
-        Assert.Equal(CommandKind.GoAnyway, P.Parse("!그냥 가", awaitingAnswer: true).Command.Kind);
+        Assert.Equal(CommandKind.Escort, P.Parse("!같이 가자", awaitingAnswer: true).Command.Kind); // !그냥 가는 11-14 없앰
 
     // 사용자 10-31: 띄어쓰기가 달라도 같은 명령
     [Theory]
@@ -421,13 +410,11 @@ public class ChatParserTests
     [Fact]
     public void Spacing_Ignored_Others()
     {
-        Assert.Equal(CommandKind.Status, Cmd("!라그나상태").Kind);
-        Assert.Equal(CommandKind.Status, Cmd("!상 태").Kind);
+        Assert.Equal(CommandKind.Stop, Cmd("!라그나멈춰").Kind); // !상태는 11-14 없앰
         Assert.Equal(CommandKind.Help, Cmd("!명 령 어").Kind);
         Assert.Equal(CommandKind.Help, Cmd("!라그나명령어").Kind);
         Assert.Equal(CommandKind.ClearQueue, Cmd("!전부취 소").Kind);
         Assert.Equal(CommandKind.Escort, Cmd("!같이 가 자").Kind);
-        Assert.Equal(CommandKind.GoAnyway, Cmd("!그 냥가").Kind);
         Assert.Equal(CommandKind.KeepList, Cmd("!계속 채워 목 록").Kind);
         Assert.True(Cmd("!라그나빨리나무50").Urgent);
         var farm = Cmd("!밭5");

@@ -41,9 +41,9 @@ namespace ValheimHelper
                     Departures.Answer(who, Departures.ReplyOf(r.Answer), null);
                     break;
                 case ChatRoute.Command:
-                    // 질문을 기다리는 중이면 "!그냥 가"·"!같이 가자"는 대답(설계 B-7)
-                    if (Departures.Awaiting && (r.Command.Kind == CommandKind.GoAnyway || r.Command.Kind == CommandKind.Escort)
-                        && Departures.Answer(who, r.Command.Kind == CommandKind.GoAnyway ? Reply.GoAnyway : Reply.Escort, r.Command.Target)) break;
+                    // 질문을 기다리는 중이면(옛 저장의 질문만 — 11-14 질문 없앰) "!같이 가자"는 대답(설계 B-7)
+                    if (Departures.Awaiting && r.Command.Kind == CommandKind.Escort
+                        && Departures.Answer(who, Reply.Escort, r.Command.Target)) break;
                     if (r.Command.Kind == CommandKind.Help) { TellHelp(r.Command.Target, npcs); break; }
                     Run(who, r.Command, npcs);
                     break;
@@ -144,17 +144,8 @@ namespace ValheimHelper
                     case CommandKind.SetChest:
                         SetChest(who, cmd, npc);
                         return; // 한 번만 처리
-                    case CommandKind.Knowledge:
-                        TellKnowledge(npc);
-                        break;
-                    case CommandKind.Memory:
-                        Departures.TellMemory(npc);
-                        break;
                     case CommandKind.Explore:
                         StartExplore(npc, cmd);
-                        break;
-                    case CommandKind.Skills:
-                        TellSkills(npc);
                         break;
                     case CommandKind.SetList:
                         TellSets(npc);
@@ -187,20 +178,8 @@ namespace ValheimHelper
                     case CommandKind.Farm:
                         SetFarm(who, cmd, npc);
                         break;
-                    case CommandKind.Livestock:
-                        Chore(npc, true);
-                        break;
                     case CommandKind.Tidy:
                         Chore(npc, false);
-                        break;
-                    case CommandKind.Status:
-                        npc.Say("status", new Dictionary<string, string>
-                        {
-                            ["state"] = State(npc),
-                            ["hp"] = npc.GetHealth().ToString("0"),
-                            ["max"] = npc.GetMaxHealth().ToString("0"),
-                        });
-                        MessageHud.instance?.ShowMessage(MessageHud.MessageType.TopLeft, $"Valheim Helper {Plugin.FullVersion}"); // 이 PC 화면에만
                         break;
                     default:
                         npc.Say("notYet");

@@ -103,8 +103,7 @@ namespace ValheimHelper
             orders.Add(new Want { Who = b, Word = "밭 3 → 당근 새싹", N = 4, Count = () => FarmTest.Plants(field).Count });
             if (pig != null)
             {
-                GatherTest.Say($"!{a} 가축", null);
-                orders.Add(new Want { Who = a, Word = "가축 → 멧돼지 먹음", N = 1, Count = () => pig != null && !pig.IsHungry() ? 1 : 0 });
+                orders.Add(new Want { Who = "쉬는 일꾼", Word = "가축 먹이(명령 없이 알아서 — 11-14 !가축 없앰) → 멧돼지 먹음", N = 1, Count = () => pig != null && !pig.IsHungry() ? 1 : 0 });
             }
             int tidy0 = Tidy.Plan(home).Count, tidyMin = tidy0;
             GatherTest.Say($"!{b} 정리", null);

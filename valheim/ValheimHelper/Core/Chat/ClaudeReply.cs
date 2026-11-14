@@ -60,7 +60,7 @@ namespace ValheimHelper.Core.Chat
     /// Claude 답(JSON) 검사 (구상서 5-1장): 허용된 작업만 받고 수량 상한을 둔다. 실제 행동은 늘 NPC가 바닐라 규칙으로 하므로
     /// 여기서 걸러지지 않은 것도 치트가 되지는 않지만, 모르는 작업·물건·지나친 수량은 버린다.
     /// 형식: {"chatter":false,"reply":"…","tasks":[{"kind":"item","item":"Wood","amount":50,"npc":"라그나","urgent":false}, …]}
-    /// kind: item, explore(arg 방향 또는 biome), escort, stop, status, memory, knowledge, skills, keep(item, amount), keepoff(item?),
+    /// kind: item, explore(arg 방향 또는 biome), escort, stop, keep(item, amount), keepoff(item?),
     ///       setmake(number, amount), setsave(number?, name?, items[]), setedit(number, remove[], add[]).
     /// </summary>
     public static class ClaudeReply
@@ -160,10 +160,6 @@ namespace ValheimHelper.Core.Chat
                     return null;
                 case "escort": cmd.Kind = CommandKind.Escort; return null;
                 case "stop": cmd.Kind = CommandKind.Stop; return null;
-                case "status": cmd.Kind = CommandKind.Status; return null;
-                case "memory": cmd.Kind = CommandKind.Memory; return null;
-                case "knowledge": cmd.Kind = CommandKind.Knowledge; return null;
-                case "skills": cmd.Kind = CommandKind.Skills; return null;
                 case "setmake":
                     cmd.Kind = CommandKind.SetMake;
                     if (!SetNumber(t, cmd, false)) return "세트 번호";

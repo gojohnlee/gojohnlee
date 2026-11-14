@@ -19,14 +19,9 @@ namespace ValheimHelper.Core.Chat
     {
         /// <summary>!나무 50, !구리주괴 20 — 채집인지 제작인지는 계획 단계가 정한다 (6-1장).</summary>
         Item,
-        Status,
-        Skills,
-        Memory,
-        Knowledge,
         /// <summary>!탐험 [방향|바이옴]. Arg = 방향("east" 등)·바이옴 이름, 없으면 null.</summary>
         Explore,
         Escort,
-        GoAnyway,
         Stop,
         ClearQueue,
         /// <summary>!상자 &lt;종류&gt; [NPC]. Arg = "equipment" | "food" | "seeds" | 물건 이름.</summary>
@@ -54,13 +49,8 @@ namespace ValheimHelper.Core.Chat
         SetEdit,
         /// <summary>!밭 &lt;반경&gt;. Number = 반경(m).</summary>
         Farm,
-        /// <summary>!가축 — 지금 "가축" 상자 둘레 배고픈 가축 먹이 주기(바쁘면 쉴 때 바로).</summary>
-        Livestock,
         /// <summary>!정리 — 지금 거점 상자 정리(바쁘면 쉴 때 바로).</summary>
         Tidy,
-        /// <summary>!평탄화 &lt;반경&gt;. Number = 반경(m).</summary>
-        Level,
-        Path,
         /// <summary>!명령어·!도움말 — 명령 목록과 상자 이름 바꾸는 법(HelpText).</summary>
         Help,
     }

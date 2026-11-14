@@ -45,11 +45,11 @@ namespace ValheimHelper
             checks.Add("일꾼 주인이 손님 아님", owner != ZDOMan.GetSessionID());
 
             // 2) !상태 → 둘 다 대답(채팅) + 머리 위 말풍선
-            Say("!상태");
+            Say("!멈춰"); // 둘 다 대답하는 명령(!상태는 11-14 없앰 — 쉬는 중이라 멈춰도 그대로)
             until = Time.time + 6f;
             while (Time.time < until && !(Count(WorkerNpc.All[0].NpcName) >= 1 && Count(WorkerNpc.All[1].NpcName) >= 1)) yield return new WaitForSeconds(0.25f);
             foreach (var s in s_heard) TestRunner.Log("  들음 " + s);
-            checks.Add("!상태 → 둘 다 대답", Count(WorkerNpc.All[0].NpcName) >= 1 && Count(WorkerNpc.All[1].NpcName) >= 1);
+            checks.Add("!멈춰 → 둘 다 대답", Count(WorkerNpc.All[0].NpcName) >= 1 && Count(WorkerNpc.All[1].NpcName) >= 1);
             var texts = Chat.instance != null ? NpcTexts(Chat.instance) : null;
             checks.Add($"머리 위 말풍선 ({texts?.Count ?? 0}개)", texts != null && texts.Exists(t => t.m_go == npc.gameObject || t.m_go == WorkerNpc.All[1].gameObject));
 
