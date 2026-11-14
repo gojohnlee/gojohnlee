@@ -12,3 +12,14 @@
 - 소스는 하나. 빌드만 둘: 사용자(호스트) = 지금처럼 시험 포함, 친구들 나눠 줄 것 = 시험 파일(*Test*.cs·TestKit·TestRunner 등) 뺀 빌드(예: Release-Play 구성, 빌드 스크립트 옵션, dist에 따로).
 - 기능 코드에 섞인 시험 스위치(Departures.TestIdleChores·Unload.TestNoBump 등)는 시험 빌드에만 있게 정리 — 플레이 빌드에서 기능 동작이 시험 빌드와 똑같아야 함(시험 스위치 기본값 그대로).
 - 확인: 정리 뒤 전체 회귀 PASS + 플레이 빌드가 빌드되고 게임에서 켜짐(명령 하나·일꾼 일 하나). 앞으로 고칠 때마다 두 빌드 다 만듦(빌드 스크립트가 같이). 기존 "플레이용 빌드 valheim-stable" 요청에 붙임.
+
+플레이용 빌드에서 진단 패치도 빼기 (사용자 11-15, 위 "플레이용 빌드는 시험 코드 빼고"에 붙임)
+- 시험 파일 이름 규칙(*Test*.cs)으로는 안 빠지는 진단 전용 Harmony 패치도 시험 빌드에만: NpcPatches.cs의 HitDiag(큰 피해)·LogSpawnDiag(통나무 생김)·ImpactDiag(부딪힘), 그 밖에 로그만 남기는 "진단"·"DIAG" 패치·주기 로그(예: Guard 싸움 5초 DIAG, Brain.SaveMemory의 e072-save.txt 쓰기).
+- 기능에 영향 주는 패치(ArmorCounts·NoTreeHurt·LikePlayerHit·NoDig·LogPushAwayFromHouse·ChainFall*)는 두 빌드 다 그대로.
+- 확인: 플레이 빌드 DLL에 위 진단 패치 클래스가 없음(이름으로 확인) + 플레이 빌드로 나무 캐기 한 번 돌려 LogOutput.log에 "진단 "·"DIAG " 줄 0. 호스트(시험 포함) 빌드는 지금 그대로.
+
+게임 업데이트 때 통째로 바꿔 끼운 게임 함수가 바뀌었는지 자동 확인 (사용자 11-15)
+- 까닭: FarZones가 ZNetScene.CreateDestroyObjects·ZDOMan.ReleaseNearbyZDOS를 Prefix return false로 통째로 대신함(원본 안 돎). 게임이 원본에 줄을 더해도 회귀가 PASS면 아무도 모름(지금은 FAIL일 때만 디컴파일).
+- 할 것: 원본을 안 돌리는 패치(Prefix가 false를 돌려 원본을 건너뛰는 것 — 위 둘부터, 더 있으면 목록에) 대상 함수의 IL 해시(또는 디컴파일 글 해시)를 저장소에 적어 두고, 게임 업데이트 감지(VH_GAME_UPDATE) 때 다시 계산해 비교.
+- 다르면: status.txt 한 줄 + 그 함수를 디컴파일해 우리 사본과 견주고 고친 뒤 codemap "확인된 게임 사실"·해시 갱신. 같으면 한 줄 기록만. 게임 실행 중에도 시작 때 해시가 다르면 로그 경고 한 줄(갑옷 패치 "바꾼 자리 1곳" 경고와 같은 뜻).
+- 확인: 지금 게임 버전에서 해시 기록 + 일부러 다른 해시를 넣어 경고·status 줄이 나오는지.
