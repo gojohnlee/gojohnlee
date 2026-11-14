@@ -912,6 +912,7 @@ namespace ValheimHelper
             foreach (var npc in new List<WorkerNpc>(WorkerNpc.All))
             {
                 if (!FreeForChores(npc)) continue;
+                if (Commands.RunLaterChore(npc)) continue; // 바쁠 때 받은 !가축·!정리(회차 662)
                 if (JoinRisky(npc) != null) continue; // 쉬는 일꾼 없게 ① 동료가 위험한 데 혼자 가면 같이(사용자 11-13)
                 if (!npc.Ai.Resting && JoinGather(npc)) continue; // 쉬는 일꾼 없게 ① 동료 일 돕기 먼저(사용자 11-13)
                 if (!npc.Ai.Resting && JoinHelp(npc)) continue; // 쉬는 일꾼 없게 ② 지원 요청 대기열 맨 앞(decisions 7절)

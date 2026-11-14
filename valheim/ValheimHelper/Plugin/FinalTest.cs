@@ -86,7 +86,7 @@ namespace ValheimHelper
                 Ask(home, b, "활", "Bow", make: true, n: 3), // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
                 Ask(home, a, "구리주괴", "Copper", make: true), // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
                 SetAsk(checks, home, b),
-                Ask(home, b, "CookedMeat", "CookedMeat", n: 4), // 굽기: 시작 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름(회차 657)
+                Ask(home, b, "CookedMeat", "CookedMeat", make: true, n: 4), // 굽기(만드는 물건이라 상자 수 — 회차 662: 넣은 수로 세어 4개 구워 넣고도 0): 시작 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름(회차 657)
                 Ask(home, a, "RawMeat", "RawMeat", n: 6), // 사냥: 집 근처 멧돼지가 드물어 6개(회차 660 — 고기는 다 모을 때까지 들고 다님). 회차 661: 6개 넣었는데 상자엔 3(굽기가 씀) → 넣은 수로 판정
             };
             // 밭: "!밭 3"은 말한 사람 자리가 중심이라 플레이어가 밭 자리에 가서 말하고 돌아옴(일꾼은 안 옮김)

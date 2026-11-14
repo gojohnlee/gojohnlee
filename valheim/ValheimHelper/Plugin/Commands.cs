@@ -317,32 +317,54 @@ namespace ValheimHelper
             if (field != null) StartFarm(npc, field, cmd.Urgent);
         }
 
-        /// <summary>
-        /// 그 밭일(job, 없으면 ForField) 시작. 다른 일꾼이 같은 밭일 중이면 맡지 않는다(같은 자리에 두 번 심지 않게). 일하는 중이면 탐험처럼: 급하면 멈추고,
-        /// 아니면 대기열(밭 자리만 — 꺼낼 때 ForField). 지금 시작했으면 true.
-        /// </summary>
-        /// <summary>!가축·!정리(최종 실전 시험 명령, 11-14): 쉬는 중이면 바로 먹이 주기(LivestockJob)·상자 정리(TidyJob), 바쁘면 쉴 때 확인 시계를 당겨 쉬는 즉시 하게.</summary>
+        /// <summary>!가축·!정리(최종 실전 시험 명령, 11-14): 쉬는 중이면 바로 먹이 주기(LivestockJob)·상자 정리(TidyJob), 바쁘면 적어 두고 쉬게 되면 바로(RunLaterChore).
+        /// 회차 662: 예전엔 쉴 때 집안일 시계만 당겨서 시험 중(집안일 꺼짐)·밤·30m 밖이면 명령이 사라졌음.</summary>
         static void Chore(WorkerNpc npc, bool feed)
         {
             if (npc.Ai.Current != WorkerAI.Mode.Idle || npc.Ai.Queue.Count > 0)
             {
-                if (feed) Departures.TestFeedNow(); else Tidy.TestNow();
+                s_laterChores.Add((npc, feed));
                 npc.Say("choreLater");
                 return;
             }
+            StartChore(npc, feed);
+        }
+
+        /// <summary>바쁠 때 받은 !가축·!정리(일꾼, 먹이면 true).</summary>
+        static readonly HashSet<(WorkerNpc, bool)> s_laterChores = new HashSet<(WorkerNpc, bool)>();
+
+        /// <summary>쉬게 된 일꾼(Departures 쉴 때 차례)이 바쁠 때 받은 !가축·!정리가 있으면 시작. 시작했으면 true.</summary>
+        internal static bool RunLaterChore(WorkerNpc npc)
+        {
+            s_laterChores.RemoveWhere(c => c.Item1 == null);
+            foreach (bool feed in new[] { true, false })
+            {
+                if (!s_laterChores.Remove((npc, feed))) continue;
+                if (StartChore(npc, feed)) return true;
+            }
+            return false;
+        }
+
+        static bool StartChore(WorkerNpc npc, bool feed)
+        {
             if (feed)
             {
                 LivestockJob job = LivestockJob.For(npc);
-                if (job == null) { npc.Say("choreNone"); return; }
+                if (job == null) { npc.Say("choreNone"); return false; }
                 npc.Ai.StartJob(job);
                 npc.Say("idleFeed");
-                return;
+                return true;
             }
-            if (Tidy.Plan(npc.Home).Count == 0) { npc.Say("choreNone"); return; }
+            if (Tidy.Plan(npc.Home).Count == 0) { npc.Say("choreNone"); return false; }
             npc.Ai.StartJob(new TidyJob(npc));
             npc.Say("choreTidy");
+            return true;
         }
 
+        /// <summary>
+        /// 그 밭일(job, 없으면 ForField) 시작. 다른 일꾼이 같은 밭일 중이면 맡지 않는다(같은 자리에 두 번 심지 않게). 일하는 중이면 탐험처럼: 급하면 멈추고,
+        /// 아니면 대기열(밭 자리만 — 꺼낼 때 ForField). 지금 시작했으면 true.
+        /// </summary>
         internal static bool StartFarm(WorkerNpc npc, FarmField field, bool urgent, FarmJob job = null)
         {
             foreach (var other in WorkerNpc.All)
