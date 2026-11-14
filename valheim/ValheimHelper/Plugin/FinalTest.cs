@@ -249,11 +249,36 @@ namespace ValheimHelper
                 s_q[who] = new List<QueuedWork>(n.Ai.Queue); s_job[who] = job;
             }
 
+            // 부딪힘 칸(나) 넷째 조각): 표본 때 두 일꾼이 1.2m 안에서 둘 다 걸으려는데 못 움직이면 부딪힘(DIAG), 같은 쌍이 표본 4번 내리(15초 넘게) 그러면 서로 막힘(FAIL)
+            static readonly Dictionary<string, int> s_bumpRun = new Dictionary<string, int>();
+            static int s_bumps, s_locks;
+
+            static void Bumps(float t)
+            {
+                var all = new List<WorkerNpc>();
+                foreach (var n in WorkerNpc.All) if (n != null && !n.IsDead() && n.Ai != null) all.Add(n);
+                var now = new HashSet<string>();
+                for (int i = 0; i < all.Count; i++)
+                    for (int k = i + 1; k < all.Count; k++)
+                    {
+                        WorkerNpc a = all[i], b = all[k];
+                        if (!a.PushingStill || !b.PushingStill || Utils.DistanceXZ(a.transform.position, b.transform.position) > 1.2f) continue;
+                        string key = a.NpcName + "·" + b.NpcName;
+                        now.Add(key);
+                        s_bumpRun.TryGetValue(key, out int run);
+                        s_bumpRun[key] = ++run;
+                        if (run == 1) { s_bumps++; TestRunner.Log($"DIAG 부딪힘: {key} {t:0}초 ({a.Ai.Job?.Label ?? "쉼"} / {b.Ai.Job?.Label ?? "쉼"})"); }
+                        if (run == 4) { s_locks++; TestRunner.Log($"DIAG 서로 막힘 15초: {key} {t:0}초 / {a.MoveDebug}"); }
+                    }
+                foreach (var key in new List<string>(s_bumpRun.Keys)) if (!now.Contains(key)) s_bumpRun.Remove(key);
+            }
+
             public static void Sample(float t)
             {
                 var g = WorkerNpc.TheGuard;
                 string escorted = null;
                 Urgent(t);
+                Bumps(t);
                 foreach (var n in WorkerNpc.All)
                 {
                     if (n == null || n.Ai == null) continue;
@@ -312,6 +337,8 @@ namespace ValheimHelper
                 checks.Add($"급한 명령 먼저: {s_uResult ?? (s_uNpc == null ? "급한 해석 없음" : "판정 전 끝")}", s_uResult != null && s_uOk);
                 if (s_uOld != null && !s_uResumed) TestRunner.Log($"DIAG 급한 명령 뒤 하던 일 안 이음: '{s_uOld.Label}'");
                 checks.Add($"대기열 순서대로 꺼냄: 꺼냄 {s_take}번, 건너뜀 {s_skip}번", s_skip == 0);
+                checks.Add($"일꾼끼리 서로 막힘 없음: 부딪힘 {s_bumps}번, 15초 넘게 막힘 {s_locks}번", s_locks == 0);
+                s_bumpRun.Clear(); s_bumps = s_locks = 0;
                 s_uNpc = null; s_uOld = null; s_uResult = null; s_uOk = s_uResumed = false; s_q.Clear(); s_job.Clear(); s_take = s_skip = 0;
             }
         }

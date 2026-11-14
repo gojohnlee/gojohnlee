@@ -610,6 +610,9 @@ namespace ValheimHelper
             Say("noFood");
         }
 
+        /// <summary>시험 기록용: 걸으려는데(이동 입력 0.5 넘게) 거의 안 움직임(0.3m/s 밑) — 최종 실전 시험 부딪힘 칸.</summary>
+        public bool PushingStill { get { Vector3 v = GetVelocity(); v.y = 0f; return m_moveDir.magnitude > 0.5f && v.magnitude < 0.3f; } }
+
         /// <summary>시험 기록용: 이동 입력 크기, 달리기 입력, 실제 속도 값.</summary>
         public string MoveDebug
         {
