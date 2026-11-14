@@ -49,21 +49,23 @@ namespace ValheimHelper
             checks.Add($"깃발에 일꾼 2명 나타남 ({WorkerNpc.All.Count}명)", WorkerNpc.All.Count == 2);
             if (WorkerNpc.All.Count != 2) { End(player, god, checks, onHeard, heard); yield break; }
 
+            TestRunner.Log($"DIAG 시작 거점 상자: Wood {GatherTest.CountBase(home, "Wood")}, Stone {GatherTest.CountBase(home, "Stone")}, CopperOre {GatherTest.CountBase(home, "CopperOre")}, Copper {GatherTest.CountBase(home, "Copper")}");
             // 2) 명령마다 거점 상자 개수로 판정 — 실패해도 다음 명령을 계속(하나 막혀도 계속)
             yield return Order(checks, home, "나무", "Wood");
             yield return Order(checks, home, "돌", "Stone");
             yield return Order(checks, home, "구리", "CopperOre", 600f);
-            yield return Order(checks, home, "구리주괴", "Copper", 900f); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
+            yield return Order(checks, home, "구리주괴", "Copper", 900f, make: true); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
 
             End(player, god, checks, onHeard, heard);
         }
 
         /// <summary>"!일꾼 말 10" 한 번 내리고 거점 상자에 그 물건이 10개 더 생기면 PASS. 최대 maxSec초(기본 240초).
-        /// 구리는 광맥을 찾아 멀리(240m) 가야 해서 회차 647에 600초로 늘림(찾기 152초 + 캐기 + 운반이 240초를 넘음).</summary>
-        static IEnumerator Order(GatherTest.Checks checks, Vector3 home, string word, string item, float maxSec = 240f)
+        /// 구리는 광맥을 찾아 멀리(240m) 가야 해서 회차 647에 600초로 늘림(찾기 152초 + 캐기 + 운반이 240초를 넘음).
+        /// make: 만드는 물건(제작 계획)은 수량이 "상자에 n개 되게"라(PlanFor가 재고를 빼고 셈) 처음 개수 + 10을 시킨다 — 집 상자에 원래 구리주괴 14개가 있어 "구리주괴 10"은 "이미 상자에 있어"였음.</summary>
+        static IEnumerator Order(GatherTest.Checks checks, Vector3 home, string word, string item, float maxSec = 240f, bool make = false)
         {
             int before = GatherTest.CountBase(home, item), got = 0;
-            GatherTest.Say($"!{Workers.Name1} {word} 10", null);
+            GatherTest.Say($"!{Workers.Name1} {word} {(make ? before + 10 : 10)}", null);
             float t = 0f;
             while (t < maxSec)
             {
