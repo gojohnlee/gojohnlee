@@ -187,6 +187,12 @@ namespace ValheimHelper
                     case CommandKind.Farm:
                         SetFarm(who, cmd, npc);
                         break;
+                    case CommandKind.Livestock:
+                        Chore(npc, true);
+                        break;
+                    case CommandKind.Tidy:
+                        Chore(npc, false);
+                        break;
                     case CommandKind.Status:
                         npc.Say("status", new Dictionary<string, string>
                         {
@@ -315,6 +321,28 @@ namespace ValheimHelper
         /// 그 밭일(job, 없으면 ForField) 시작. 다른 일꾼이 같은 밭일 중이면 맡지 않는다(같은 자리에 두 번 심지 않게). 일하는 중이면 탐험처럼: 급하면 멈추고,
         /// 아니면 대기열(밭 자리만 — 꺼낼 때 ForField). 지금 시작했으면 true.
         /// </summary>
+        /// <summary>!가축·!정리(최종 실전 시험 명령, 11-14): 쉬는 중이면 바로 먹이 주기(LivestockJob)·상자 정리(TidyJob), 바쁘면 쉴 때 확인 시계를 당겨 쉬는 즉시 하게.</summary>
+        static void Chore(WorkerNpc npc, bool feed)
+        {
+            if (npc.Ai.Current != WorkerAI.Mode.Idle || npc.Ai.Queue.Count > 0)
+            {
+                if (feed) Departures.TestFeedNow(); else Tidy.TestNow();
+                npc.Say("choreLater");
+                return;
+            }
+            if (feed)
+            {
+                LivestockJob job = LivestockJob.For(npc);
+                if (job == null) { npc.Say("choreNone"); return; }
+                npc.Ai.StartJob(job);
+                npc.Say("idleFeed");
+                return;
+            }
+            if (Tidy.Plan(npc.Home).Count == 0) { npc.Say("choreNone"); return; }
+            npc.Ai.StartJob(new TidyJob(npc));
+            npc.Say("choreTidy");
+        }
+
         internal static bool StartFarm(WorkerNpc npc, FarmField field, bool urgent, FarmJob job = null)
         {
             foreach (var other in WorkerNpc.All)

@@ -94,7 +94,7 @@ namespace ValheimHelper.Core.Chat
         /// <summary>명령어·부속어(앞에서부터 가장 긴 것을 떼어 냄). 물건 이름은 남은 덩어리 하나로 둔다(ResolveItem이 붙여 쓴 이름도 찾음).</summary>
         static readonly string[] Keywords =
         {
-            "계속채워", "계속", "채워", "개인", "끔", "목록", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "평탄화",
+            "계속채워", "계속", "채워", "개인", "끔", "목록", "세트", "상자", "장비", "음식", "씨앗", "준비", "탐험", "밭", "가축", "정리", "평탄화",
             "상태", "스킬", "기억", "지식", "멈춰", "길", "같이가자", "그냥가", "전부취소", "취소전부", "명령어", "명령", "도움말", "도움",
         };
 
@@ -161,6 +161,8 @@ namespace ValheimHelper.Core.Chat
                 case "준비": case "prep": return ParsePrep(t, 1, CommandKind.Prep);
                 case "세트": case "set": return ParseSet(t);
                 case "밭": case "farm": return ParseRadius(CommandKind.Farm, t);
+                case "가축": case "livestock": case "feed": return n == 1 ? Kind(CommandKind.Livestock) : null;
+                case "정리": case "tidy": return n == 1 ? Kind(CommandKind.Tidy) : null;
             }
             return ParseItemAmount(t, 0, t.Length);
         }

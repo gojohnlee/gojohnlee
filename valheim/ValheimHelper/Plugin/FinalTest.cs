@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
     /// <summary>
     /// vh_finaltest 최종 실전 시험(사용자 11-12, decisions 71): 시험 기본 집에서 한 번만 되돌린 뒤 일꾼 2+호위병 1, 채팅 명령을 두 일꾼에게 나눠 한꺼번에 내려
-    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌·구리·구리주괴·활·세트(밭·굽기·가축·상자 정리·사냥은 다음 조각).
+    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 나무·돌·구리·구리주괴·활·세트·굽기·사냥·밭·가축·상자 정리.
     /// </summary>
     static class FinalTest
     {
@@ -53,6 +54,25 @@ namespace ValheimHelper
             checks.Add($"일꾼 2 + 호위병 1 = 3명 ({WorkerNpc.All.Count} + {(WorkerNpc.TheGuard != null ? 1 : 0)})", WorkerNpc.All.Count == 2 && WorkerNpc.TheGuard != null);
             // 남은 명령(밭·굽기·가축·사냥)의 재료는 시작 때 한 번만 거점 상자에 넣는다(decisions 71 — 명령 중엔 상자 채우기 없음)
             StockStart(home);
+            // 밭·가축·정리 명령 자리(시작 때 한 번 — 회차 661): 밭은 집 왼쪽 12m 반경 3(FarmTest 집 모드와 같은 자리), 가축은 오른쪽 12m에 "가축" 상자+산딸기+길들인 배고픈 멧돼지
+            Vector3 right = Vector3.Cross(Vector3.up, player.transform.forward).normalized;
+            Vector3 fieldAt = GatherTest.Ground(home - right * 12f);
+            var field = new FarmField(fieldAt.x, fieldAt.z, 3);
+            FarmTest.Clean(field);
+            Vector3 penAt = GatherTest.Ground(home + right * 12f);
+            player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), penAt, player.transform.rotation, doAttack: false);
+            Container pen = GatherTest.ChestAt(penAt);
+            Tameable pig = null;
+            if (pen != null)
+            {
+                pen.GetComponent<ZNetView>().GetZDO().Set("ChestName", "가축");
+                TestKit.PutInChest(pen, "Raspberry", 5);
+                var g = Object.Instantiate(ZNetScene.instance.GetPrefab("Boar"), GatherTest.Ground(penAt + right * 4f) + Vector3.up * 0.3f, Quaternion.identity);
+                g.GetComponent<MonsterAI>().MakeTame();
+                pig = g.GetComponent<Tameable>();
+            }
+            yield return new WaitForSeconds(1f);
+            checks.Add($"가축 상자·길들인 배고픈 멧돼지 놓음", pen != null && pig != null && pig.IsHungry());
 
             TestRunner.Log($"DIAG 시작 거점 상자: Wood {GatherTest.CountBase(home, "Wood")}, Stone {GatherTest.CountBase(home, "Stone")}, CopperOre {GatherTest.CountBase(home, "CopperOre")}, Copper {GatherTest.CountBase(home, "Copper")}, RawMeat {GatherTest.CountBase(home, "RawMeat")}");
             // 2) 명령을 두 일꾼에게 나눠 처음에 한꺼번에 내림(바쁘면 일꾼 대기열) → 명령마다 거점 상자 개수로 따로 판정(사용자 11-14 바로잡기 — 하나씩 끝을 기다리지 않음)
@@ -69,6 +89,22 @@ namespace ValheimHelper
                 Ask(home, b, "CookedMeat", "CookedMeat", n: 4), // 굽기: 시작 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름(회차 657)
                 Ask(home, a, "RawMeat", "RawMeat", n: 6), // 사냥: 집 근처 멧돼지가 드물어 6개(회차 660 — 고기는 다 모을 때까지 들고 다님)
             };
+            // 밭: "!밭 3"은 말한 사람 자리가 중심이라 플레이어가 밭 자리에 가서 말하고 돌아옴(일꾼은 안 옮김)
+            Vector3 back = player.transform.position;
+            player.TeleportTo(fieldAt + Vector3.up * 0.5f, player.transform.rotation, distantTeleport: false);
+            yield return new WaitForSeconds(3f);
+            GatherTest.Say($"!{b} 밭 3", null);
+            yield return new WaitForSeconds(1f);
+            player.TeleportTo(back, player.transform.rotation, distantTeleport: false);
+            orders.Add(new Want { Who = b, Word = "밭 3 → 당근 새싹", N = 4, Count = () => FarmTest.Plants(field).Count });
+            if (pig != null)
+            {
+                GatherTest.Say($"!{a} 가축", null);
+                orders.Add(new Want { Who = a, Word = "가축 → 멧돼지 먹음", N = 1, Count = () => pig != null && !pig.IsHungry() ? 1 : 0 });
+            }
+            int tidy0 = Tidy.Plan(home).Count;
+            GatherTest.Say($"!{b} 정리", null);
+            orders.Add(new Want { Who = b, Word = $"정리(처음 옮길 것 {tidy0}) → 옮길 것 0", N = 1, Count = () => Tidy.Plan(home).Count == 0 ? 1 : 0 });
             orders.RemoveAll(o => o == null);
             float t = 0f;
             while (t < 3000f && orders.Exists(o => o.Done < 0f))
@@ -112,12 +148,13 @@ namespace ValheimHelper
             public string Who, Word, Item, Item2;
             public int N, Before, Before2, Best;
             public float Done = -1f;
+            public System.Func<int> Count; // 상자 개수 대신 셀 것(밭 새싹·가축 먹음·정리 남은 것)
 
             public void Poll(Vector3 home, float t)
             {
                 if (Done >= 0f) return;
-                int got = GatherTest.CountBase(home, Item) - Before;
-                if (Item2 != null) got = Mathf.Min(got, GatherTest.CountBase(home, Item2) - Before2);
+                int got = Count != null ? Count() : GatherTest.CountBase(home, Item) - Before;
+                if (Count == null && Item2 != null) got = Mathf.Min(got, GatherTest.CountBase(home, Item2) - Before2);
                 if (got > Best) Best = got;
                 if (Best >= N) Done = t;
             }

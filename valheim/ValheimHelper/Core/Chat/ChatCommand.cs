@@ -54,6 +54,10 @@ namespace ValheimHelper.Core.Chat
         SetEdit,
         /// <summary>!밭 &lt;반경&gt;. Number = 반경(m).</summary>
         Farm,
+        /// <summary>!가축 — 지금 "가축" 상자 둘레 배고픈 가축 먹이 주기(바쁘면 쉴 때 바로).</summary>
+        Livestock,
+        /// <summary>!정리 — 지금 거점 상자 정리(바쁘면 쉴 때 바로).</summary>
+        Tidy,
         /// <summary>!평탄화 &lt;반경&gt;. Number = 반경(m).</summary>
         Level,
         Path,

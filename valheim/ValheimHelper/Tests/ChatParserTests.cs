@@ -99,6 +99,10 @@ public class ChatParserTests
     }
 
     [Theory]
+    [InlineData("!가축", CommandKind.Livestock)]
+    [InlineData("!feed", CommandKind.Livestock)]
+    [InlineData("!정리", CommandKind.Tidy)]
+    [InlineData("!tidy", CommandKind.Tidy)]
     [InlineData("!상태", CommandKind.Status)]
     [InlineData("!status", CommandKind.Status)]
     [InlineData("!스킬", CommandKind.Skills)]
