@@ -57,6 +57,8 @@ namespace ValheimHelper.Core.Chat
         ChatResult ParseBody(string body, string text)
         {
             string[] spaced = Split(body);
+            _keepNumbersApart = false;
+            for (int k = 1; k < spaced.Length; k++) if (spaced[k - 1].All(char.IsDigit) && spaced[k].All(char.IsDigit)) _keepNumbersApart = true; // "세트 11 20"을 "세트1120"으로 붙여 읽지 않게
             var result = ParseTokens(spaced, text);
             if (result.Route == ChatRoute.Command) return result;
             // 사용자 10-31: 띄어쓰기가 달라도("!라그나계속채워나무50") 공백을 빼고 다시 읽는다. 그래도 안 되면 Haiku.
@@ -248,9 +250,9 @@ namespace ValheimHelper.Core.Chat
                 off.Item = ResolveItem(t, 2, t.Length);
                 return off.Item == null ? null : off;
             }
-            if ((second == "세트" || second == "set") && t.Length == 4)
+            if ((second == "세트" || second == "set") && (t.Length == 4 || t.Length == 3))
             {
-                var set = ParseSetNumbers(CommandKind.KeepSet, t[2], t[3]);
+                var set = t.Length == 4 ? ParseSetNumbers(CommandKind.KeepSet, t[2], t[3]) : ParseGluedSet(CommandKind.KeepSet, t[2]);
                 if (set != null) set.Once = once;
                 return set;
             }
@@ -297,7 +299,17 @@ namespace ValheimHelper.Core.Chat
         {
             if (t.Length == 1) return Kind(CommandKind.SetList);
             if (t.Length == 3) return ParseSetNumbers(CommandKind.SetMake, t[1], t[2]);
+            if (t.Length == 2) return ParseGluedSet(CommandKind.SetMake, t[1]);
             return null;
+        }
+
+        /// <summary>띄어쓰기 없이 붙은 "세트13" = 세트 1번 3개(사용자 11-14: 모든 명령 띄어쓰기 없어도). 번호는 한 자리, "10"으로 시작하고 더 있으면 10번.</summary>
+        bool _keepNumbersApart; // 띄어 쓴 두 숫자가 있었으면 붙은 숫자로 나누지 않음
+        ChatCommand ParseGluedSet(CommandKind kind, string digits)
+        {
+            if (_keepNumbersApart || digits.Length < 2 || !digits.All(char.IsDigit)) return null;
+            int cut = digits.StartsWith("10") && digits.Length > 2 ? 2 : 1;
+            return ParseSetNumbers(kind, digits.Substring(0, cut), digits.Substring(cut));
         }
 
         ChatCommand ParseSetNumbers(CommandKind kind, string number, string amount)

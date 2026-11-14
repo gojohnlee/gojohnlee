@@ -422,4 +422,28 @@ public class ChatParserTests
         Assert.Equal(5, farm.Number);
         Assert.Equal(ChatRoute.Haiku, P.Parse("!라그나아무말이나해봐").Route);
     }
+
+    /// <summary>사용자 11-14: 모든 명령은 띄어쓰기 없어도 된다. 세트 번호와 수량이 붙으면 번호는 한 자리("10"으로 시작하고 더 있으면 10번).</summary>
+    [Theory]
+    [InlineData("!나무30", CommandKind.Item, 0, 30)]
+    [InlineData("!라그나나무30", CommandKind.Item, 0, 30)]
+    [InlineData("!계속채워나무30", CommandKind.Keep, 0, 30)]
+    [InlineData("!계속 채워나무 30", CommandKind.Keep, 0, 30)]
+    [InlineData("!세트13", CommandKind.SetMake, 1, 3)]
+    [InlineData("!세트1 3", CommandKind.SetMake, 1, 3)]
+    [InlineData("!세트103", CommandKind.SetMake, 10, 3)]
+    [InlineData("!라그나세트25", CommandKind.SetMake, 2, 5)]
+    [InlineData("!계속채워세트12", CommandKind.KeepSet, 1, 2)]
+    [InlineData("!채워세트1 20", CommandKind.KeepSet, 1, 20)]
+    [InlineData("!같이가자", CommandKind.Escort, 0, 0)]
+    [InlineData("!전부취소", CommandKind.ClearQueue, 0, 0)]
+    [InlineData("!밭3", CommandKind.Farm, 3, 0)]
+    [InlineData("!상자장비", CommandKind.SetChest, 0, 0)]
+    public void NoSpaces(string line, CommandKind kind, int number, int amount)
+    {
+        var c = Cmd(line);
+        Assert.Equal(kind, c.Kind);
+        if (number > 0) Assert.Equal(number, c.Number);
+        if (amount > 0) Assert.Equal(amount, c.Amount);
+    }
 }
