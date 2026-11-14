@@ -12,6 +12,11 @@ namespace ValheimHelper
     /// </summary>
     public sealed partial class GatherJob : IWorkerJob
     {
+        /// <summary>일꾼·물건별로 상자에 넣은 수(최종 실전 시험 판정 — 다른 명령이 상자 재료를 같이 써서 상자 순증가로는 못 셈, 회차 661).</summary>
+        internal static readonly Dictionary<string, int> PutCount = new Dictionary<string, int>();
+        static void Put(string npc, string item, int n) { PutCount.TryGetValue(npc + "|" + item, out int v); PutCount[npc + "|" + item] = v + n; }
+        internal static int PutBy(string npc, string item) => PutCount.TryGetValue(npc + "|" + item, out int v) ? v : 0;
+
         enum Step { Unload, Prep, Tool, GoChest, Search, GoZone, GoCrypt, Approach, Work, Hunt, Collect, Return, Deposit }
 
         public readonly string Item;
@@ -637,6 +642,7 @@ namespace ValheimHelper
                 return true; // 누가 열고 있다
             }
             Delivered += moved;
+            Put(m_npc.NpcName, Item, moved);
             if (Repay) Departures.Repaid(Item, moved);
             Plugin.Log.LogInfo($"{m_npc.NpcName}: {Item} {moved}개 넣음 ({Delivered}/{Target}) 상자 {m_chest.transform.position:F1} 집에서 {Utils.DistanceXZ(m_npc.Home, m_chest.transform.position):0}m");
             if (Remaining() <= 0 && !OwnLog(out _)) // 자기 통나무가 남았으면 다시 나가 마저 쪼갠다(사용자 11-01). 같이 출발했으면 둘이 넣은 합으로

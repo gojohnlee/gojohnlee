@@ -87,7 +87,7 @@ namespace ValheimHelper
                 Ask(home, a, "구리주괴", "Copper", make: true), // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
                 SetAsk(checks, home, b),
                 Ask(home, b, "CookedMeat", "CookedMeat", n: 4), // 굽기: 시작 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름(회차 657)
-                Ask(home, a, "RawMeat", "RawMeat", n: 6), // 사냥: 집 근처 멧돼지가 드물어 6개(회차 660 — 고기는 다 모을 때까지 들고 다님)
+                Ask(home, a, "RawMeat", "RawMeat", n: 6), // 사냥: 집 근처 멧돼지가 드물어 6개(회차 660 — 고기는 다 모을 때까지 들고 다님). 회차 661: 6개 넣었는데 상자엔 3(굽기가 씀) → 넣은 수로 판정
             };
             // 밭: "!밭 3"은 말한 사람 자리가 중심이라 플레이어가 밭 자리에 가서 말하고 돌아옴(일꾼은 안 옮김)
             Vector3 back = player.transform.position;
@@ -166,7 +166,10 @@ namespace ValheimHelper
         {
             int before = GatherTest.CountBase(home, item);
             GatherTest.Say($"!{who} {word} {(make ? before + n : n)}", null);
-            return new Want { Who = who, Word = word, Item = item, N = n, Before = before };
+            var w = new Want { Who = who, Word = word, Item = item, N = n, Before = before };
+            // 모아 오는 명령은 그 일꾼이 상자에 넣은 수로(회차 661 — 같은 때 활·세트 제작이 나무를, 쉬는 일꾼 굽기가 생고기를 써서 상자 순증가가 0·3이었음)
+            if (!make) { int p0 = GatherJob.PutBy(who, item); w.Count = () => GatherJob.PutBy(who, item) - p0; }
+            return w;
         }
 
         static int s_setNo;
