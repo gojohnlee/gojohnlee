@@ -26,9 +26,14 @@ namespace ValheimHelper
             s_for = ObjectDB.instance;
             s_names.Clear();
             var b = new RecipeBook();
+            var skipped = new List<string>();
+            int upgraderRes = 0;
             foreach (Recipe r in ObjectDB.instance.m_recipes)
             {
                 if (r == null || !r.m_enabled || r.m_item == null || r.m_resources == null || r.m_resources.Length == 0) continue;
+                // 새로 만들기(품질 1)는 게임과 같이: 업그레이드 전용 제작법(m_noCraftOnlyUpgrade — InventoryGui.UpdateRecipeList가 제작 탭에서 뺌)은 빼고,
+                // 재료는 Player.HaveRequirementItems·ConsumeResources 거르기(CraftPatches.Counts — 업그레이드 설비 재료 m_upgraderResource는 보통 제작대에서 안 셈)
+                if (r.m_noCraftOnlyUpgrade) { skipped.Add(r.name); continue; }
                 var cr = new Core.Work.Recipe
                 {
                     Output = Utils.GetPrefabName(r.m_item.gameObject),
@@ -38,7 +43,11 @@ namespace ValheimHelper
                     OnlyOne = r.m_requireOnlyOneIngredient,
                 };
                 foreach (var req in r.m_resources)
-                    if (req.m_resItem != null && req.m_amount > 0) cr.Inputs.Add(new Ingredient(Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount));
+                {
+                    if (req.m_resItem == null || req.m_amount <= 0) continue;
+                    if (!CraftPatches.Counts(r.m_craftingStation, req)) { upgraderRes++; continue; }
+                    cr.Inputs.Add(new Ingredient(Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount));
+                }
                 if (cr.Inputs.Count == 0) continue;
                 if (cr.Station != null) s_names[cr.Station] = Localization.instance.Localize(cr.Station);
                 b.Add(cr);
@@ -97,7 +106,8 @@ namespace ValheimHelper
                 if (Crops.ForProduce(item.name) != null && !ResourceCatalog.AnySourceBut(item.name, Crops.IsGrown)) b.SetSource(item.name, SourceKind.Farm);
             }
             s_book = b;
-            Plugin.Log.LogInfo($"제작 계획: 제작법·가공표·출처 준비됨");
+            Plugin.Log.LogInfo($"제작 계획: 제작법·가공표·출처 준비됨 (업그레이드 전용 제작법 {skipped.Count}개 뺌" +
+                (skipped.Count > 0 ? $" 예 {string.Join(", ", skipped.GetRange(0, Mathf.Min(5, skipped.Count)).ToArray())}" : "") + $", 업그레이드 설비 재료 {upgraderRes}개 안 셈)");
             return s_book;
         }
 

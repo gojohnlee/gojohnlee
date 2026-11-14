@@ -182,6 +182,8 @@ ZDO 저장 키(두 NPC ZDO에 같이): vh_sets vh_refill vh_farms vh_personal vh
   GetRandomSkillFactor = sqrt(0.75~1) × ZDO 값 → NPC는 재정의함. 맞힐 때 Attack이 m_character.RaiseSkill 부름. 이름 "$skill_"+종류 소문자.
 - 제작: ObjectDB.m_recipes(Recipe: m_item, m_amount, m_enabled, m_craftingStation, m_minStationLevel, m_resources[m_resItem, m_amount],
   m_requireOnlyOneIngredient). CraftingStation.FindClosestStationInRange(name, pos, range), GetLevel()(확장 포함).
+  [11-14 디컴파일] 새로 만들기에서 빠지는 것: Recipe.m_noCraftOnlyUpgrade(업그레이드 전용 — InventoryGui.UpdateRecipeList 제작 탭이 뺌), 재료 Requirement.m_upgraderResource
+  (CraftingStation.m_upgrader 설비에서만 셈 — HaveRequirementItems·GetFirstRequiredItem 거르기 = CraftPatches.Counts). Bow 계획에 Upgrader0Weapon(나무 전투 우상)이 끼어 "본 적 없어"로 멈췄었음 → Recipes.Book이 거름.
 - 발효기: RPC_AddItem(int 프리팹이름 해시, bool cheated)·RPC_Tap(주인만, Ready일 때 → m_tapDelay 1.5초 뒤 m_outputPoint에 m_producedItems개), ZDO s_content(해시)·s_startTime(ZNet 시각 Ticks), 덮임 70% 미만·지붕 없으면 발효 중 시계를 처음으로(10초마다). 충돌체는 Default 층(piece 아님).
 - 조리대(CookingStation): RPC_AddItem(string 프리팹, bool)·RPC_RemoveDoneItem(Vector3 사용자 위치, int 개수 = 익거나 탄 첫 칸 하나를 m_spawnPoint 또는 칸에서 사용자 쪽으로)·RPC_AddFuel(화덕 m_useFuel). ZDO 칸 "slot"+i(string 이름·float 시간)·"slotstatus"+i(0 덜 됨·1 익음·2 탐), 굽는 시간 2배 넘으면 m_overCookedItem. 굽기 조건 = (m_requireFire && IsFireLit 비공개) || (m_useFuel && 연료>0).
   IsFireLit는 EffectArea 불 영역 목록(Awake에서 등록, 꺼져도 OnDestroy까지 안 지움) → 이번 세션에 한 번 탄 불은 꺼져도 굽는다(바닐라). 화로 Fireplace: RPC_AddFuel(+1, m_maxFuel까지), IsBurning = s_state 1·연료>0, m_startFuel 3.

@@ -10,7 +10,7 @@ namespace ValheimHelper
     /// </summary>
     static class FinalTest
     {
-        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴 채팅 명령(되돌림 한 번)", Run, 2400f);
+        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴·활 채팅 명령(되돌림 한 번)", Run, 2400f);
 
         static bool s_dbgTime;
         static float s_dbgValue;
@@ -55,6 +55,7 @@ namespace ValheimHelper
             yield return Order(checks, home, "돌", "Stone");
             yield return Order(checks, home, "구리", "CopperOre", 600f);
             yield return Order(checks, home, "구리주괴", "Copper", 900f, make: true); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
+            yield return Order(checks, home, "활", "Bow", 600f, make: true, n: 3); // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
 
             End(player, god, checks, onHeard, heard);
         }
@@ -62,19 +63,19 @@ namespace ValheimHelper
         /// <summary>"!일꾼 말 10" 한 번 내리고 거점 상자에 그 물건이 10개 더 생기면 PASS. 최대 maxSec초(기본 240초).
         /// 구리는 광맥을 찾아 멀리(240m) 가야 해서 회차 647에 600초로 늘림(찾기 152초 + 캐기 + 운반이 240초를 넘음).
         /// make: 만드는 물건(제작 계획)은 수량이 "상자에 n개 되게"라(PlanFor가 재고를 빼고 셈) 처음 개수 + 10을 시킨다 — 집 상자에 원래 구리주괴 14개가 있어 "구리주괴 10"은 "이미 상자에 있어"였음.</summary>
-        static IEnumerator Order(GatherTest.Checks checks, Vector3 home, string word, string item, float maxSec = 240f, bool make = false)
+        static IEnumerator Order(GatherTest.Checks checks, Vector3 home, string word, string item, float maxSec = 240f, bool make = false, int n = 10)
         {
             int before = GatherTest.CountBase(home, item), got = 0;
-            GatherTest.Say($"!{Workers.Name1} {word} {(make ? before + 10 : 10)}", null);
+            GatherTest.Say($"!{Workers.Name1} {word} {(make ? before + n : n)}", null);
             float t = 0f;
             while (t < maxSec)
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
                 got = GatherTest.CountBase(home, item) - before;
-                if (got >= 10) break;
+                if (got >= n) break;
             }
-            checks.Add($"{word} 10 명령 → 거점 상자 {got}개 ({t:0}초)", got >= 10);
+            checks.Add($"{word} {n} 명령 → 거점 상자 {got}개 ({t:0}초)", got >= n);
         }
 
         static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)

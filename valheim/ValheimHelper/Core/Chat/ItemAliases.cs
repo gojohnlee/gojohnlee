@@ -30,6 +30,7 @@ namespace ValheimHelper.Core.Chat
             ["늑대 털"] = "WolfHairBundle", ["늑대털"] = "WolfHairBundle", ["wolf hair"] = "WolfHairBundle",
             ["구리주괴"] = "Copper", ["구리 주괴"] = "Copper", ["copper bar"] = "Copper", ["주석주괴"] = "Tin", ["주석 주괴"] = "Tin", ["tin bar"] = "Tin",
             ["청동"] = "Bronze", ["청동주괴"] = "Bronze", ["청동 주괴"] = "Bronze", ["bronze"] = "Bronze", ["철주괴"] = "Iron", ["철 주괴"] = "Iron", ["iron bar"] = "Iron", ["은주괴"] = "Silver", ["은 주괴"] = "Silver", ["silver bar"] = "Silver",
+            ["활"] = "Bow", ["bow"] = "Bow",
         };
 
         /// <returns>프리팹 이름, 별칭이 아니면 null.</returns>

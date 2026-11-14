@@ -184,8 +184,8 @@ namespace ValheimHelper
             if (bow == null) yield break;
             if (InHouse(w, "piece_workbench").Count == 0) yield return MissingStation(w, checks, bow);
             else TestRunner.Log("집에 작업대 있음 → 0) 설비 없는 거점 칸 건너뜀");
-            foreach (var req in bow.m_resources)
-                TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount);
+            foreach (var req in bow.m_resources) // 업그레이드 설비 재료(Upgrader0Weapon, m_upgraderResource)는 새로 만들 때 안 씀 — 넣지도 세지도 않는다
+                if (CraftPatches.Counts(bow.m_craftingStation, req)) TestKit.PutInChest(w.Chest, Utils.GetPrefabName(req.m_resItem.gameObject), req.m_amount);
             Station(w, made, "piece_workbench", w.Home - right * 4f);
             yield return new WaitForSeconds(1f);
             string bowName = Localization.instance.Localize(bow.m_item.m_itemData.m_shared.m_name);
@@ -199,6 +199,7 @@ namespace ValheimHelper
             bool conserved = Stock(w, "Bow") == 1;
             foreach (var req in bow.m_resources)
             {
+                if (!CraftPatches.Counts(bow.m_craftingStation, req)) continue;
                 int c = Stock(w, Utils.GetPrefabName(req.m_resItem.gameObject));
                 left += $" {Utils.GetPrefabName(req.m_resItem.gameObject)}={c}";
                 if (c != 0) conserved = false;
