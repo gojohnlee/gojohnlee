@@ -116,8 +116,10 @@ namespace ValheimHelper
                 t += 5f;
                 Match(orders);
                 foreach (var o in orders) o.Poll(home, t);
+                Busy.Sample();
             }
             Commands.Ran -= OnRan;
+            Busy.Report(checks);
             foreach (var r in s_ran) TestRunner.Log($"DIAG 짝 없는 해석: {r.Key} {Desc(r.Value)}");
             foreach (var o in orders)
             {
@@ -169,6 +171,46 @@ namespace ValheimHelper
                 if (Count == null && Item2 != null) got = Mathf.Min(got, GatherTest.CountBase(home, Item2) - Before2);
                 if (got > Best) Best = got;
                 if (Best >= N) Done = t;
+            }
+        }
+
+        /// <summary>우선순위 판정 나) 첫 조각(11-14 다시 짜기): 5초마다 일꾼마다 일 종류(없으면 "쉼"), 호위병은 동행·싸움 여부를 센다.
+        /// 판정은 "일꾼마다 일함"만(사용자 11-12 "모든 일꾼 늘 같이"), 쉬는 비율·일 종류는 살펴볼 것 기록(DIAG).</summary>
+        static class Busy
+        {
+            static readonly Dictionary<string, Dictionary<string, int>> s_jobs = new Dictionary<string, Dictionary<string, int>>();
+
+            public static void Sample()
+            {
+                foreach (var n in WorkerNpc.All)
+                    if (n != null && n.Ai != null) Add(n.NpcName, n.Ai.Job?.GetType().Name ?? (n.Ai.Resting ? "쉼(집안일 멈춤)" : "쉼"));
+                var g = WorkerNpc.TheGuard;
+                if (g != null && g.Ai != null) Add(g.NpcName, g.Ai.EscortName != null ? "동행 " + g.Ai.EscortName : g.Ai.GuardBusy ? "싸움" : g.Ai.Job?.GetType().Name ?? "쉼");
+            }
+
+            static void Add(string who, string what)
+            {
+                if (!s_jobs.TryGetValue(who, out var d)) s_jobs[who] = d = new Dictionary<string, int>();
+                d.TryGetValue(what, out int c); d[what] = c + 1;
+            }
+
+            public static void Report(GatherTest.Checks checks)
+            {
+                foreach (var n in WorkerNpc.All)
+                {
+                    if (n == null) continue;
+                    s_jobs.TryGetValue(n.NpcName, out var d);
+                    int all = 0, rest = 0;
+                    if (d != null) foreach (var kv in d) { all += kv.Value; if (kv.Key.StartsWith("쉼")) rest += kv.Value; }
+                    checks.Add($"일꾼 {n.NpcName} 일함 (표본 {all - rest}/{all}, 쉼 {(all > 0 ? rest * 100 / all : 0)}%)", all - rest > 0);
+                }
+                foreach (var kv in s_jobs)
+                {
+                    var parts = new List<string>();
+                    foreach (var j in kv.Value) parts.Add(j.Key + " " + j.Value);
+                    TestRunner.Log($"DIAG 일 비율 {kv.Key}: {string.Join(", ", parts)}");
+                }
+                s_jobs.Clear();
             }
         }
 
