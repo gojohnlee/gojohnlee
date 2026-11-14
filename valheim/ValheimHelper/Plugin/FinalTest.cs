@@ -6,11 +6,11 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_finaltest 최종 실전 시험(사용자 11-12, decisions 71) ① 조각: 시험 기본 집에서 한 번만 되돌린 뒤 채팅 명령을 하나씩 내려
-    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌·구리(제련·활·밭·가축·사냥은 다음 조각).
+    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌·구리·구리주괴(활·밭·굽기·가축·사냥은 다음 조각).
     /// </summary>
     static class FinalTest
     {
-        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌 채팅 명령(되돌림 한 번)", Run, 1200f);
+        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴 채팅 명령(되돌림 한 번)", Run, 2400f);
 
         static bool s_dbgTime;
         static float s_dbgValue;
@@ -53,6 +53,7 @@ namespace ValheimHelper
             yield return Order(checks, home, "나무", "Wood");
             yield return Order(checks, home, "돌", "Stone");
             yield return Order(checks, home, "구리", "CopperOre", 600f);
+            yield return Order(checks, home, "구리주괴", "Copper", 900f); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
 
             End(player, god, checks, onHeard, heard);
         }
