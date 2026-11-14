@@ -309,31 +309,32 @@ public class DepartureTests
     }
 
     [Fact]
-    public void NightAndStockQuestions()
+    public void NightTakesGuardAndNoStockQuestion() // 사용자 11-14: 질문 없앰 — 곧 밤이면 호위병과 같이, 재고는 안 물음("나무 20" = 20개 더)
     {
         var i = In(P(500)); i.SecondsToNight = 60;
-        Assert.Equal(Question.Night, Departure.Judge(i).Question);
-        i = In(P(50)); i.SecondsToNight = 0; // 거점 근처는 밤이어도 묻지 않음
+        var r = Departure.Judge(i);
+        Assert.NotEqual(DepartAction.Ask, r.Action); // 호위병 없으면 그냥 감
+        i.Guard = "비욘";
+        r = Departure.Judge(i);
+        Assert.Equal(DepartAction.GoTogether, r.Action);
+        Assert.Equal("depart.together", r.Key);
+        i.GuardBusy = true;
+        Assert.Equal(DepartAction.WaitGuard, Departure.Judge(i).Action);
+        i = In(P(50)); i.SecondsToNight = 0; i.Guard = "비욘"; // 거점 근처는 밤이어도 혼자
         Assert.Equal(DepartAction.Go, Departure.Judge(i).Action);
         i = In(P(100)); i.Stock = 300;
-        var r = Departure.Judge(i);
-        Assert.Equal(Question.Stock, r.Question);
-        Assert.Equal("300", r.Args["stock"]);
-        i = In(); i.Stock = 300; // 모르는 물건이어도 재고는 묻는다
-        Assert.Equal(Question.Stock, Departure.Judge(i).Question);
+        Assert.Equal(DepartAction.Go, Departure.Judge(i).Action);
+        i = In(); i.Stock = 300;
+        Assert.NotEqual(DepartAction.Ask, Departure.Judge(i).Action);
     }
 
     [Fact]
-    public void NightAndStockStillAskWhenDangerous()
+    public void DangerousNightAndStockDoNotAsk()
     {
         var i = In(P(300, 1.3f)); i.Stock = 500; i.SecondsToNight = 0;
         var r = Departure.Judge(i);
-        Assert.Equal(Question.Night, r.Question);
-        Assert.Equal("note.stock", r.ExtraKey);
-        i.SecondsToNight = float.PositiveInfinity;
-        Assert.Equal(Question.Stock, Departure.Judge(i).Question);
-        i.Stock = 0;
-        Assert.Equal("depart.danger", Departure.Judge(i).Key);
+        Assert.NotEqual(DepartAction.Ask, r.Action);
+        Assert.Equal("depart.danger", r.Key);
     }
 
     [Fact]

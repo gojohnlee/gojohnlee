@@ -47,6 +47,8 @@ namespace ValheimHelper.Core.Work
         public string Where;
         /// <summary>제작(Make): 세트 번호(0이면 Item 한 가지를 Amount개). 이어 할 때 계획을 현재 재고로 다시 세운다.</summary>
         public int SetNo;
+        /// <summary>제작(Make): 명령 때 거점 상자에 있던 목표 물건 수("Bow:2,Club:0"). 목표 = 이것 + Amount(사용자 11-14 "나무 20 = 20개 더" — 상자 포함 아님). 비면 옛 저장(Amount가 상자 목표).</summary>
+        public string Base;
         /// <summary>농사(Farm): 밭 중심. 반경은 Amount.</summary>
         public float FarmX, FarmZ;
         /// <summary>막힘 복구(StuckBook.Save): 이번 일 동안 막힌 목적지·귀환 막힘. 불러와도 같은 곳을 되풀이하지 않게.</summary>
@@ -115,6 +117,7 @@ namespace ValheimHelper.Core.Work
                 if (w.BiomeId != 0) f.Add("bi=" + w.BiomeId.ToString(Inv));
                 if (w.Where != null) f.Add("wh=" + Esc(w.Where));
                 if (w.SetNo != 0) f.Add("sn=" + w.SetNo.ToString(Inv));
+                if (!string.IsNullOrEmpty(w.Base)) f.Add("bs=" + Esc(w.Base));
                 if (!string.IsNullOrEmpty(w.Stuck)) f.Add("sb=" + Esc(w.Stuck));
                 if (!string.IsNullOrEmpty(w.PortalTag)) f.Add("pt=" + Esc(w.PortalTag));
                 if (!string.IsNullOrEmpty(w.Plan)) f.Add("pl=" + Esc(w.Plan));
@@ -151,6 +154,7 @@ namespace ValheimHelper.Core.Work
                 if (f.TryGetValue("bi", out v)) TryInt(v, out w.BiomeId);
                 if (f.TryGetValue("wh", out v)) w.Where = v;
                 if (f.TryGetValue("sn", out v)) TryInt(v, out w.SetNo);
+                if (f.TryGetValue("bs", out v)) w.Base = v;
                 if (f.TryGetValue("sb", out v)) w.Stuck = v;
                 if (f.TryGetValue("pt", out v)) w.PortalTag = v;
                 if (f.TryGetValue("pl", out v)) w.Plan = v;

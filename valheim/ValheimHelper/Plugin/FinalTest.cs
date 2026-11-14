@@ -69,6 +69,7 @@ namespace ValheimHelper
                 TestKit.PutInChest(pen, "Raspberry", 5);
                 var g = Object.Instantiate(ZNetScene.instance.GetPrefab("Boar"), GatherTest.Ground(penAt + right * 4f) + Vector3.up * 0.3f, Quaternion.identity);
                 g.GetComponent<MonsterAI>().MakeTame();
+                g.GetComponent<MonsterAI>().SetPatrolPoint(); // 우리에 세워 둠(LivestockTest와 같이) — 안 그러면 떠돌다 10m 밖으로(회차 663 FAIL)
                 pig = g.GetComponent<Tameable>();
             }
             yield return new WaitForSeconds(1f);
@@ -164,11 +165,11 @@ namespace ValheimHelper
         }
 
         /// <summary>"!일꾼 말 10"을 내리고 판정할 Want를 돌려준다.
-        /// make: 만드는 물건(제작 계획)은 수량이 "상자에 n개 되게"라(PlanFor가 재고를 빼고 셈) 처음 개수 + n을 시킨다 — 집 상자에 원래 구리주괴 14개가 있어 "구리주괴 10"은 "이미 상자에 있어"였음.</summary>
+        /// make: 만드는 물건 — 판정은 상자 개수가 처음보다 n개 늘었나(구리 광석·생고기처럼 다른 일이 써서 줄 수 있어 가장 많았던 수로).
         static Want Ask(Vector3 home, string who, string word, string item, bool make = false, int n = 10)
         {
             int before = GatherTest.CountBase(home, item);
-            GatherTest.Say($"!{who} {word} {(make ? before + n : n)}", null);
+            GatherTest.Say($"!{who} {word} {n}", null); // 수량 = 새로 만들/가져올 수(사용자 11-14 — 상자 포함 아님)
             var w = new Want { Who = who, Word = word, Item = item, N = n, Before = before };
             // 모아 오는 명령은 그 일꾼이 상자에 넣은 수로(회차 661 — 같은 때 활·세트 제작이 나무를, 쉬는 일꾼 굽기가 생고기를 써서 상자 순증가가 0·3이었음)
             // 늦게 같이 캐기(JoinGather)로 동료가 낀 몫도 이 명령의 것이라 모든 일꾼이 넣은 수를 합친다(11-14).
@@ -185,9 +186,7 @@ namespace ValheimHelper
 
         static int s_setNo;
 
-        /// <summary>"!일꾼 세트 n amount" — 시험이 세트 메뉴 n번(활·곤봉)을 먼저 저장하고(끝나면 지움), 활·곤봉이 상자에 amount개 이상 되면 PASS.
-        /// amount = 두 물건 중 많은 쪽 + 1(PlanFor가 재고를 빼고 셈이라 "상자에 amount개 되게"에 맞춤 — 활 명령과 같은 까닭).
-        /// 활 명령이 앞서 활을 늘려도 곤봉이 함께 amount개가 돼야 PASS라 세트가 돈 것을 본다.</summary>
+        /// <summary>"!일꾼 세트 n 1" — 시험이 세트 메뉴 n번(활·곤봉)을 먼저 저장하고(끝나면 지움), 활·곤봉이 상자에 처음보다 하나씩 더 생기면 PASS(11-14 수량 = 더 만들 수).</summary>
         static Want SetAsk(GatherTest.Checks checks, Vector3 home, string who)
         {
             int no = s_setNo = Brain.Sets.NextFree();
@@ -195,10 +194,9 @@ namespace ValheimHelper
             checks.Add($"세트 {no}번 저장", saved == no && no != 0);
             if (saved != no || no == 0) return null;
             int bow = GatherTest.CountBase(home, "Bow"), club = GatherTest.CountBase(home, "Club");
-            int amount = Mathf.Max(bow, club) + 1;
-            GatherTest.Say($"!{who} 세트 {no} {amount}", null);
-            // 판정 꼴을 Want에 맞춤: 두 물건 모두 amount 이상 = 각각 (amount - 처음) 이상 늘어남 — 적게 늘어난 쪽 기준이라 Before를 amount - N으로 둠
-            return new Want { Who = who, Word = $"세트 {no}번", Item = "Bow", Item2 = "Club", N = 1, Before = amount - 1, Before2 = amount - 1 };
+            GatherTest.Say($"!{who} 세트 {no} 1", null); // 세트 1 = 활·곤봉 하나씩 더(11-14)
+            // 두 물건 모두 처음보다 1개 이상 늘어야 PASS
+            return new Want { Who = who, Word = $"세트 {no}번", Item = "Bow", Item2 = "Club", N = 1, Before = bow, Before2 = club };
         }
 
         static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)

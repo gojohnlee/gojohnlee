@@ -160,7 +160,7 @@ namespace ValheimHelper
                         TellSets(npc);
                         break;
                     case CommandKind.SetMake:
-                        Departures.MakeSet(npc, cmd.Number, cmd.Amount);
+                        Departures.MakeSet(npc, cmd.Number, cmd.Amount, null, true);
                         break;
                     case CommandKind.Keep:
                         Brain.Refill.Keep(cmd.Item, cmd.Amount, cmd.Once);
@@ -362,21 +362,29 @@ namespace ValheimHelper
             npc.Ai.StartJob(new TidyJob(npc));
             npc.Say("choreTidy");
             s_tidyLeft[npc] = Tidy.Plan(npc.Home).Count;
+            s_tidyMiss.Remove(npc);
             return true;
         }
 
         /// <summary>!정리를 시작할 때 옮길 것 수. TidyJob은 한 번에 8번·180초라(회차 662 — 39개 중 일부만 하고 끝) 쉬게 될 때마다 줄어드는 동안 이어서 한다.</summary>
         static readonly Dictionary<WorkerNpc, int> s_tidyLeft = new Dictionary<WorkerNpc, int>();
 
+        /// <summary>가장 적었던 옮길 것보다 못 줄인 연속 횟수. 다른 일꾼이 그사이 물건을 넣어 한 번 늘 수 있어(회차 663 — 19 → 20에서 그만) 3번 내리 못 줄여야 그만.</summary>
+        static readonly Dictionary<WorkerNpc, int> s_tidyMiss = new Dictionary<WorkerNpc, int>();
+
         static bool ContinueTidy(WorkerNpc npc)
         {
             if (!s_tidyLeft.TryGetValue(npc, out int left)) return false;
             s_tidyLeft.Remove(npc);
             int now = Tidy.Plan(npc.Home).Count;
-            Plugin.Log.LogInfo($"{npc.NpcName} !정리 이어서: 옮길 것 {left} → {now}{(now == 0 || now >= left ? " — 그만" : "")}");
-            if (now == 0 || now >= left) return false; // 다 했거나 더 못 줄임(상자 꽉 참 등)
+            s_tidyMiss.TryGetValue(npc, out int miss);
+            miss = now < left ? 0 : miss + 1;
+            bool stop = now == 0 || miss >= 3; // 다 했거나 더 못 줄임(상자 꽉 참 등)
+            Plugin.Log.LogInfo($"{npc.NpcName} !정리 이어서: 옮길 것 {left} → {now}{(stop ? " — 그만" : miss > 0 ? $" (못 줄임 {miss})" : "")}");
+            if (stop) { s_tidyMiss.Remove(npc); return false; }
             npc.Ai.StartJob(new TidyJob(npc));
-            s_tidyLeft[npc] = now;
+            s_tidyLeft[npc] = Mathf.Min(left, now);
+            s_tidyMiss[npc] = miss;
             return true;
         }
 

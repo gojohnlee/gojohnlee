@@ -224,7 +224,6 @@ namespace ValheimHelper.Core.Npc
             r.Place = t;
             r.Seconds = Estimate(i, t);
             r.Args["minutes"] = Minutes5(r.Seconds).ToString();
-            bool stockEnough = i.Amount > 0 && i.Stock >= i.Amount;
             bool nightSoon = t != null && t.Distance > NightNearHome && i.SecondsToNight < r.Seconds;
             r.Args["stock"] = i.Stock.ToString();
 
@@ -238,8 +237,7 @@ namespace ValheimHelper.Core.Npc
                 if (level == DangerLevel.Tight && i.HealthMeads > 0 && t.RatioWithMead < FightLine(p))
                     level = DangerLevel.Caution; // 가진 미드로 버틴다
 
-                if (nightSoon) return Ask(r, Question.Night, null, stockEnough, false);
-                if (stockEnough) return Ask(r, Question.Stock, null, false, false);
+                // 질문 없앰(사용자 11-14): 재고 질문은 뺌 — "나무 20"은 20개 더(상자 포함 아님). 곧 밤이면 묻지 않고 호위병을 데려간다(아래 4)).
 
                 PlaceOption alt = Risky(p, t, level) && !t.InBase ? Alternative(p, i.Places, t) : null;
                 if (alt != null)
@@ -285,6 +283,12 @@ namespace ValheimHelper.Core.Npc
                 else return Go(r, DepartAction.Go, "depart.danger", "위험해도 감");
 
                 // 4) 출발 + 덧붙이는 말 하나
+                if (nightSoon && i.Guard != null) // 도착할 때쯤 밤(사용자 11-14 "호위병 데려가면 되는 거 아닌가"): 호위병과 같이, 바쁘면 기다렸다 같이
+                {
+                    r.Args["partner"] = i.Guard;
+                    if (i.GuardBusy) return Go(r, DepartAction.WaitGuard, "depart.waitGuard", "곧 밤·호위병 바쁨 → 기다렸다 같이");
+                    return Go(r, DepartAction.GoTogether, "depart.together", "곧 밤 → 호위병과 같이");
+                }
                 // 그 바이옴 저항 미드가 없으면 묻지 않고 투덜대고 간다(사용자 결정 2026-10-22, 예전엔 "독 저항 미드 하나만 주시면 갈게요"로 기다림)
                 if (level == DangerLevel.Caution && t.Resist != null && !i.ResistMeads.Contains(t.Resist))
                 {
@@ -293,7 +297,7 @@ namespace ValheimHelper.Core.Npc
                 }
                 if (level == DangerLevel.Caution) return Go(r, DepartAction.Go, "depart.warn", "주의");
             }
-            else if (stockEnough) return Ask(r, Question.Stock, null, false, false);
+
 
             if (!i.Fed && !i.FoodInChest) return Go(r, DepartAction.Go, "depart.hungry", "배고픔");
             if (t != null && t.Distance > FarDistance && !i.KnowsPortal)

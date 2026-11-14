@@ -83,7 +83,7 @@ namespace ValheimHelper
         {
             if (Farming(npc, cmd)) return;
             HashSet<ToolKind> ways = GatherJob.WaysFor(npc, cmd.Item);
-            if (ways.Count == 0) { Craft(npc, cmd); return; }
+            if (ways.Count == 0) { Craft(npc, cmd, null, true); return; }
             s_pending.Remove(npc);
             DepartureInput input = Input(npc, cmd, ways, fromQueue);
             DepartureResult r = Departure.Judge(input);
@@ -626,22 +626,46 @@ namespace ValheimHelper
             ReplannedPlans++;
             if (!string.IsNullOrEmpty(w.Plan)) Plugin.Log.LogWarning($"{npc.NpcName} 저장된 계획을 못 읽음 — {w.Label} 다시 세움");
             else Plugin.Log.LogInfo($"{npc.NpcName} 저장된 계획 없음 — {w.Label} 다시 세움");
-            if (w.SetNo > 0) MakeSet(npc, w.SetNo, w.Amount);
-            else Craft(npc, new ChatCommand { Kind = CommandKind.Item, Item = w.Item, Amount = w.Amount });
+            if (w.SetNo > 0) MakeSet(npc, w.SetNo, w.Amount, w.Base);
+            else Craft(npc, new ChatCommand { Kind = CommandKind.Item, Item = w.Item, Amount = w.Amount }, w.Base);
         }
 
-        static void Craft(WorkerNpc npc, ChatCommand cmd)
+        /// <summary>
+        /// 제작 수량 = 새로 만들 수(사용자 11-14 "나무 20은 20개 해 오라는 것, 상자 포함 20이 아님"). 계획(CraftPlanner)은 "상자에 n개 되게"라
+        /// 명령 때 상자에 있던 수(bases)를 더해 목표로 준다. fresh = 채팅 명령(지금 상자 수를 잼), 아니면 저장된 bases(없으면 옛 저장 — 목표 = 수량).
+        /// </summary>
+        static string BaseOf(Vector3 home, IEnumerable<string> items)
+        {
+            var stock = BaseStock(home);
+            var parts = new List<string>();
+            foreach (string it in items) { stock.TryGetValue(it, out int n); parts.Add(it + ":" + n); }
+            return string.Join(",", parts.ToArray());
+        }
+
+        static int BaseFor(string bases, string item)
+        {
+            if (string.IsNullOrEmpty(bases)) return 0;
+            foreach (string p in bases.Split(','))
+            {
+                int c = p.LastIndexOf(':');
+                if (c > 0 && p.Substring(0, c) == item && int.TryParse(p.Substring(c + 1), out int n)) return n;
+            }
+            return 0;
+        }
+
+        static void Craft(WorkerNpc npc, ChatCommand cmd, string bases = null, bool fresh = false)
         {
             RecipeBook book = Recipes.Book();
             if (book.RecipesFor(cmd.Item).Count == 0 && book.ProcessesFor(cmd.Item).Count == 0) { npc.Say("notYet"); return; }
-            Plan plan = PlanFor(npc, new List<Ingredient> { new Ingredient(cmd.Item, cmd.Amount) });
+            if (fresh) bases = BaseOf(npc.Home, new[] { cmd.Item });
+            Plan plan = PlanFor(npc, new List<Ingredient> { new Ingredient(cmd.Item, BaseFor(bases, cmd.Item) + cmd.Amount) });
             var args = new Dictionary<string, string>
             {
                 ["item"] = GatherJob.ItemLabel(cmd.Item), ["n"] = cmd.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString(),
             };
             if (FarmFor(npc, plan, args)) return;
             SayPlan(npc, plan, args);
-            StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], Item = cmd.Item, Amount = cmd.Amount });
+            StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], Item = cmd.Item, Amount = cmd.Amount, Base = bases });
         }
 
         /// <summary>
@@ -670,9 +694,11 @@ namespace ValheimHelper
         }
 
         /// <summary>!세트 n 수량: 세트 안의 물건마다 수량만큼(6-4). 범위 밖 물건은 빼고 계획.</summary>
-        public static void MakeSet(WorkerNpc npc, int number, int amount)
+        public static void MakeSet(WorkerNpc npc, int number, int amount, string bases = null, bool fresh = false)
         {
             var targets = Brain.Sets.Targets(number, amount);
+            if (fresh) { var names = new List<string>(); foreach (var t in targets) names.Add(t.Item); bases = BaseOf(npc.Home, names); }
+            for (int k = 0; k < targets.Count; k++) targets[k] = new Ingredient(targets[k].Item, BaseFor(bases, targets[k].Item) + targets[k].Amount); // 세트도 "수량만큼 더"(11-14)
             var args = new Dictionary<string, string> { ["no"] = number.ToString(), ["item"] = "세트 " + number + "번", ["n"] = amount.ToString() };
             if (targets.Count == 0) { npc.Say("setNone", args); return; }
             Plan plan = PlanFor(npc, targets);
@@ -685,13 +711,21 @@ namespace ValheimHelper
             args["minutes"] = Departure.Minutes5(plan.Seconds).ToString();
             if (FarmFor(npc, plan, args)) return;
             SayPlan(npc, plan, args);
-            StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], SetNo = number, Amount = amount });
+            StartPlan(npc, plan, args["item"], new WorkItem { Kind = WorkKind.Make, Resume = true, Label = args["item"], SetNo = number, Amount = amount, Base = bases });
         }
 
         static Plan PlanFor(WorkerNpc npc, List<Ingredient> targets)
         {
             RecipeBook book = Recipes.Book();
             Vector3 home = npc.Home;
+            var stock = BaseStock(home);
+            ZoneXY homeZone = Senses.ZoneOf(home);
+            return PlanWith(npc, book, home, homeZone, targets, stock);
+        }
+
+        /// <summary>거점 재료 상자의 물건 수(계획이 "있는 것"으로 보는 수 — 제작 수량 기준 BaseOf도 같은 것을 씀).</summary>
+        static Dictionary<string, int> BaseStock(Vector3 home)
+        {
             var stock = new Dictionary<string, int>();
             foreach (var c in Chests.NearBase(home, ChestRole.Ingredients))
                 foreach (var it in c.GetInventory().GetAllItems())
@@ -703,7 +737,11 @@ namespace ValheimHelper
                     stock.TryGetValue(key, out int n);
                     stock[key] = n + it.m_stack;
                 }
-            ZoneXY homeZone = Senses.ZoneOf(home);
+            return stock;
+        }
+
+        static Plan PlanWith(WorkerNpc npc, RecipeBook book, Vector3 home, ZoneXY homeZone, List<Ingredient> targets, Dictionary<string, int> stock)
+        {
             var planner = new CraftPlanner(book, Recipes.At(home), (item, n) =>
             {
                 var zones = Brain.Get().ZonesWith(item, homeZone);

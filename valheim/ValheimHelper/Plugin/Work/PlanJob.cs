@@ -70,7 +70,7 @@ namespace ValheimHelper
 
         public WorkItem ToWork() => new WorkItem
         {
-            Kind = Goal.Kind, Resume = Goal.Resume, Label = Goal.Label, Item = Goal.Item, Amount = Goal.Amount, SetNo = Goal.SetNo,
+            Kind = Goal.Kind, Resume = Goal.Resume, Label = Goal.Label, Item = Goal.Item, Amount = Goal.Amount, SetNo = Goal.SetNo, Base = Goal.Base,
             Plan = PlanSave.Save(m_runner, Progress),
         };
 
