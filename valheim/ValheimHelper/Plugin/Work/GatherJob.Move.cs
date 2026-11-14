@@ -330,7 +330,8 @@ namespace ValheimHelper
             Vector3 pos = m_npc.transform.position;
             bool newPath = m_stuckMark.Changed(m_ai);
             // 남은 길은 이 목표로 받은 길(끝이 목표 3m 안)일 때만 — 목표 바꾼 첫 틱의 앞 목표 길(짧음)을 기준으로 잡으면 진짜 길(52m)이 그 밑으로 안 내려감(회차 475)
-            float d = Utils.DistanceXZ(point, pos), left = StuckWatch.PathEndsNear(m_ai, point, 3f) ? StuckWatch.PathLeft(m_ai, pos, point) : float.MaxValue;
+            // 길 토막(WorkerAI.OnLegTo, 먼 목표)도 이 목표 길: 남은 길 = 토막까지 길 + 토막~목표(토막 점은 다가갈 때까지 그대로라 길 따라 줄어듦)
+            float d = Utils.DistanceXZ(point, pos), left = StuckWatch.PathEndsNear(m_ai, point, 3f) || m_ai.OnLegTo(point) ? StuckWatch.PathLeft(m_ai, pos, point) : float.MaxValue;
             if (m_bestDist == float.MaxValue) { m_bestLeft = float.MaxValue; m_leftRebases = 0; } // 새로 잴 때(부른 쪽이 m_bestDist만 되돌림) 남은 길 기준도 새로
             if (d < m_bestDist - 1f) { m_bestDist = d; m_bestLeft = Mathf.Min(m_bestLeft, left); m_leftRebases = 0; m_progressTimer = 0f; return false; }
             if (left < float.MaxValue)

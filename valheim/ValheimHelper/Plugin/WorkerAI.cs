@@ -520,10 +520,40 @@ namespace ValheimHelper
             return true;
         }
 
+        // 먼 목표 길 토막(Core PathLeg, 회차 657 vh_finaltest 사냥 FAIL): 목표까지 바닐라 길이 없으면(목표 둘레 navmesh 타일이 아직 안 구워짐·구역 안 불러와짐 —
+        // BaseAI.FindPath는 같은 목표 실패를 5초 들고 있고 MoveTo는 그동안 "도착"을 돌려줌) 곧장 걷다 집 가구·문·바위·나무에 박혀 빠른 막힘(1초)이 났다.
+        // 그때는 목표 쪽 PathLeg.Length m 앞 토막 점(일꾼 둘레 구워진 타일 안)까지 바닐라 길로 가고, 5초마다 목표까지 바로 길을 다시 본다. 지하묘지 안은 안 씀.
+        readonly PathLeg m_leg = new PathLeg();
+        Vector3 m_legPoint;
+        /// <summary>시험 기록: 길 토막을 시작한 횟수(목표까지 바로 길 실패).</summary>
+        public static int LegStarts;
+        /// <summary>지금 이 목표로 길 토막을 따라가는 중(m_path 끝이 토막 점 — 남은 길 = 토막까지 길 + 토막~목표).</summary>
+        public bool OnLegTo(Vector3 goal) => m_leg.Active && Utils.DistanceXZ(goal, m_moveTarget) <= 2f;
+
+        bool MoveToOrLeg(float dt, Vector3 pos, Vector3 point, float dist, bool run, bool inside)
+        {
+            if (inside) { m_leg.Reset(); return MoveTo(dt, point, dist, run); }
+            int picks = m_leg.Picks;
+            if (m_leg.Active && !m_leg.Keep(Time.time, pos.x, pos.z, point.x, point.z)) ForgetPath(); // 다시 목표까지 바로 길을 본다(그새 타일이 구워졌을 수 있음)
+            if (!m_leg.Active)
+            {
+                bool done = MoveTo(dt, point, dist, run);
+                if (!done || FoundPath() || !m_leg.DirectFailed(Time.time, pos.x, pos.z, point.x, point.z)) return done;
+                LegStarts++;
+            }
+            if (m_leg.Picks != picks)
+            {
+                m_legPoint = new Vector3((float)m_leg.X, pos.y, (float)m_leg.Z);
+                if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(m_legPoint, out float h)) m_legPoint.y = h; // SnapToNavMesh가 땅 높이에서 1.5~12m로 붙임
+                ForgetPath(); // 새 토막: 옛 목표 실패 결과를 1초 들고 있지 말고 바로 구함
+            }
+            return MoveTo(dt, m_legPoint, 1f, run);
+        }
+
         /// <summary>
         /// 걷기: 바닐라 길찾기(BaseAI.MoveTo, 물 뺀 길)를 쓰되
         /// - 지하묘지 안은 InteriorNav 칸 길(InteriorWalk).
-        /// - 길을 못 찾으면(처음 가는 곳은 길 지도를 만드는 중일 때가 많다) 서 있지 말고 곧장 걸어간다.
+        /// - 길을 못 찾으면(처음 가는 곳은 길 지도를 만드는 중일 때가 많다) 서 있지 말고, 먼 목표는 목표 쪽 토막 점까지 바닐라 길로(MoveToOrLeg), 그것도 없으면 곧장 걸어간다.
         /// - 1.5초 동안 거의 못 움직였으면(앞을 막은 생물·장애물) 1.2초 옆으로 비켜 간다.
         /// - 앞이 깊은 물이면 좁은 강만 헤엄쳐 건너고, 늪·바다·긴 물이면 멈춘다(WaterBlockedTime). 모르고 빠졌으면 마른 땅으로 돌아간다.
         /// 도착하면 true.
@@ -535,7 +565,7 @@ namespace ValheimHelper
             if (run && m_stepSlow && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) run = false; // FloorStep 꺾인 모퉁이 앞은 걸음
             if (m_stepWait && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) { m_moveDiag = "MoveToPoint 출발 기다림"; StopMoving(); return false; } // FloorStep 출발 기다림은 제자리에 섬 — 제 자리로 0m 걷기는 뛰던 기세로 1.6m 지나쳤다 150° 되돌았음(회차 412 오름 4)
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
-            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; m_deadEnd = false; }
+            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; m_deadEnd = false; m_leg.Reset(); }
             float d = Utils.DistanceXZ(point, pos);
             if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_deadEnd = false; m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
             m_moveDiag = "MoveToPoint 시작"; if (EdgeRescueIfLong(dt, pos)) { m_moveDiag = "MoveToPoint 벼랑 구조"; return false; }
@@ -579,7 +609,7 @@ namespace ValheimHelper
                     if (!inside && DeadEndStraight(d)) { MoveTowards(Flat(point - pos), run); m_moveDiag = $"곧장(길 끝 막힘, 가장 가까이 {m_deadEndBest:0}m)"; }
                     else
                     {
-                        bool done = MoveTo(dt, point, dist, run); m_moveDiag = $"MoveTo {(done ? "도착" : "가는 중")}({point:F1} 거리 {dist:0.0} 뛰기 {run})";
+                        bool done = MoveToOrLeg(dt, pos, point, dist, run, inside); m_moveDiag = $"MoveTo {(done ? "도착" : "가는 중")}({point:F1} 거리 {dist:0.0} 뛰기 {run}{(m_leg.Active ? $", 토막 {m_legPoint:F0}" : "")})";
                         m_moveToDone = done && d > dist + 1f; // 바닐라는 "도착"인데 아직 멂 = 길 없음 또는 부분 길 끝
                         if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
                     }
