@@ -16,8 +16,8 @@ namespace ValheimHelper
     static class Bare
     {
         public static readonly bool On = Environment.GetEnvironmentVariable("VH_BARE") == "1";
-        static readonly float WaitSecs = EnvSecs("VH_BARE_WAIT", 20f);
-        static readonly float MeasureSecs = EnvSecs("VH_BARE_SECS", 60f);
+        internal static readonly float WaitSecs = EnvSecs("VH_BARE_WAIT", 20f);
+        internal static readonly float MeasureSecs = EnvSecs("VH_BARE_SECS", 60f);
         static readonly List<double> Frames = new List<double>();
         static bool s_started, s_done;
         static float s_look, s_inWorld, s_measured;

@@ -20,6 +20,7 @@ namespace ValheimHelper
             get => s_on;
             set { s_on = value; if (value) AudioListener.volume = 0f; }
         }
+        static readonly bool FullFps = System.Environment.GetEnvironmentVariable("VH_FULLFPS") == "1";
         static bool s_on;
         static bool s_released;
         static float s_timer;
@@ -31,7 +32,7 @@ namespace ValheimHelper
         {
             if (!On) return;
             AudioListener.volume = 0f; // AudioMan·연출이 1로 되돌리므로 매 프레임
-            Settings.ReduceBackgroundUsage = true;
+            Settings.ReduceBackgroundUsage = !FullFps; // 부하 재기 판(VH_FULLFPS=1)은 뒤 창 30fps 제한 없이(정적 필드라 사용자 설정엔 안 남음)
             Application.runInBackground = true;
             if (s_released) return;
             s_timer -= Time.unscaledDeltaTime;

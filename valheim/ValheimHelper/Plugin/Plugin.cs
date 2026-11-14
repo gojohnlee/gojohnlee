@@ -121,6 +121,7 @@ namespace ValheimHelper
             Step("vh_houseground", HouseCopy.RegisterGround);
             Step("vh_blocktest", BlockTest.Register);
             Step("vh_weaktest", WeakTest.Register);
+            Step("vh_loadtest", LoadTest.Register);
             Step("자동 시험", TestRunner.CheckAutoRun);
             Logger.LogInfo($"Valheim Helper {FullVersion} 로드됨");
         }
