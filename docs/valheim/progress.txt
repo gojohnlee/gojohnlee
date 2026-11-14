@@ -1,12 +1,12 @@
 발헤임 일꾼 NPC — 진행 상황 (세션이 끊겨도 여기서 이어간다)
-지금: 회차 628 — E073 닫음·E082 조사 중(문서만)
+지금: 회차 629 — E082 조사 중, vh_bowtest 13/13 PASS 1회(코드 안 고침)
 "지금"(최근 3개)·"다음"(남은 일만, 순서대로)만 둔다. 끝난 일은 history.md. 규칙: 조각을 끝내면 "[끝, 회차 N — 커밋 · 시험]" 한 줄로, ★ 조각이 전부 [끝]이면 다음 회차가 덩어리째 지움.
 덩어리 머리 "★ 이름 (근거)", 조각 "  가) …"(status.txt "할 일"이 읽음). PC 시작 순서·게임 시험 방법은 docs/valheim/pc-howto.txt.
 ======================================================================
 지금 (최근 3개만, 최근 → 과거. 그 전 기록은 history.md 맨 위 "회차 기록" — 간헐 FAIL·원인 못 찾음도 거기서 grep)
+- [11-14] E082 활 사슴 시험 1회 PASS, 조사 중 유지(회차 629 — 문서만: vh_bowtest 13/13, 코드 안 고침)
 - [11-14] E073 닫음·E082 조사 중 올림(회차 628 — 문서만: E073 380 뒤 재현 없음, E082 반복)
 - [11-14] E073 관찰 한 번 더 PASS(회차 626 — vh_cooktest 15/15, 코드 변경 없음)
-- [11-14] 손 거리 판정 시험 통과(회차 625 — 커밋 ae469596): Prep·Unload CanReach → Unload.HandOk, vh_unloadreachtest 14/14·vh_preptest 22/22 PASS
 다음 (순서대로 — 안 끝난 일만)
 E082 사슴 활 원인 찾기(조사 중, 회차 628 올림): vh_bowtest "사슴 죽음"·"가죽" FAIL이 446·532·553·574에 반복. 메인이 bow 코드·diag를 한 번 보고 바로 안 보이면 vh-debug. 고치면 원래 조건에서 검증(연속 PASS만으로 닫지 않음).
 요청 밤 몫(11-13 17:30): [1조각 끝, 회차 560 — 커밋 9dd1f230 · 시험 coppertest FAIL(E085 같은 자리)] [2조각 구현 완료·검증 대기, 회차 561 — 커밋 79a5c9f7 · 밤 명령 판단(NightGearOk)] [끝, 회차 562 — 커밋 8d4fa4d4 · 장비 검사 밤 몫 + KeepForMorning 삭제(dotnet test 715/715, vh_exploretest 16/16 PASS)] [구현 완료·검증 대기, 회차 562 — 커밋 e96a9f4b · 밤 늪 걷기 NightGearOk(vh_crypttest 24/24 낮 PASS)] [밤 명령 시험 끝, 회차 563 — 커밋 5f93f725 · 시험 vh_nightexploretest PASS 9/9, vh_exploretest 16/16·vh_crypttest 24/24 PASS — 2조각(밤 명령 판단) 검증됨] [⑤ 끝, 회차 564 — 커밋 bd02924f · 게임은 줄마다 그 프리팹 근처 수로 상한 → 같은 적은 큰 상한만, odin 뺌(밤 늪 1.29→1.08), dotnet test 717/717] 남은 것: ① 밤 늪 바깥 걷기 시험 vh_cryptnighttest 만듦, FAIL 22/25 — 불꽃금속 차림도 밤 늪 1.08(적별 혼자 0.04~0.29, 넷 한꺼번에 붙는다고 셈) [보류: 사용자 답 기다림 — 질문 11-13] ② [끝, 회차 565 — 커밋 61ae4b52 · 시험 vh_nightretreattest PASS 14/14·vh_raidtest 11/11 — 밤 도망 끝이면 Interrupt("밤 위험")+아침 칸] [③ 끝, 회차 566 — 커밋 6076b399 · 시험 vh_nightretreattest PASS 16/16·vh_coppertest 14/14 — 밤에 새 땅 못 가면 실패 대신 남은 몫 아침 칸(E090 닫음)] [④ 끝, 회차 566 — 커밋 6076b399 · 시험 vh_raidtest 11/11·vh_restart1 6/6→vh_restart2 16/16·wood 14/14·stone 11/11 PASS]
