@@ -59,7 +59,7 @@ namespace ValheimHelper
             yield return Order(checks, home, "구리주괴", "Copper", 900f, make: true); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
             yield return Order(checks, home, "활", "Bow", 600f, make: true, n: 3); // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
             yield return SetOrder(checks, home);
-            yield return Order(checks, home, "RawMeat", "RawMeat", 600f); // 사냥: 생고기 10개 더(시작 재료 4개는 Order가 뺌). 시작 때 상자가 꽉 차 생고기는 못 넣음(회차 657)
+            yield return Order(checks, home, "RawMeat", "RawMeat", 900f, n: 6); // 사냥: 생고기 6개 더, 900초(회차 660 — 집 근처 멧돼지가 드물어 600초에 4마리뿐·고기는 다 모을 때까지 들고 다녀 상자 0개). 시작 때 상자가 꽉 차 생고기는 못 넣음(회차 657)
             yield return Order(checks, home, "CookedMeat", "CookedMeat", 600f, n: 4); // 굽기: 사냥한 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름으로 씀(회차 657 — 밭·가축·상자 정리는 다음 조각)
 
             End(player, god, checks, onHeard, heard);
