@@ -296,7 +296,7 @@ namespace ValheimHelper
             if (draw >= 1f && m_ai.IsLookingAt(aim, 10f) && m_npc.ReleaseBow())
             {
                 m_shots++;
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 활 쏨 {m_shots}번째, {d:0}m, 화살 {Gear.CountArrows(m_npc.GetInventory(), bow)}개 남음");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 활 쏨 {m_shots}번째, {d:0}m, 당김 {draw:0.00}, 화살 {Gear.CountArrows(m_npc.GetInventory(), bow)}개 남음");
                 if (m_shots <= 3) { m_diagShot = true; m_diagPrev = bow.m_lastProjectile; }
                 m_releaseCheck = true;
                 m_releaseAt = Time.time;
