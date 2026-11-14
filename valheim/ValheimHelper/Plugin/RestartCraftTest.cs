@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// 다시 켜서(VH_RESET=0, vh_restartcraft2) 저장한 계획으로 이어 가는지. 끄는 때 셋(1번째 실행 이름):
     /// vh_restartcraft_load = 둘 다 넣은 직후, vh_restartcraft_part = 일부 완성(제련소 안 1~5), vh_restartcraft_carry = 꺼내기 단계 일꾼이 주괴를 든 채.
     /// 2번째: 계획을 다시 세우지 않음·다시 넣지 않음·광석 채집 없음, 끝에 상자 주괴 6·광석 0(어디에도), 석탄은 계획이 넣은 만큼만, 계획 단계 전부 끝.
-    /// 두 실행 사이 상태는 플러그인 폴더 restartcraft-state.txt(2번째가 읽고 지움). 1번째는 묶음의 마지막이어야 한다(바로 끔).
+    /// 두 실행 사이 상태는 플러그인 폴더 restartcraft-state.txt(2번째가 읽고 지움). 1번째는 바로 끄므로 valheim-test.ps1이 거기서 실행을 끊고 2번째를 되돌리기 없이 붙인다(요청 11-14).
     /// </summary>
     static class RestartCraftTest
     {

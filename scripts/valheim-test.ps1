@@ -86,13 +86,29 @@ $Char = if ($env:VH_CHAR) { $env:VH_CHAR.ToLower() } else { 'vhtest' }   # 시�
 # 기본은 연속 묶음(실행마다 한 번 되돌리고 A→B→B를 한 게임에서 이어 돌림 — 앞 시험이 뒤 시험을 망치는지 보는 용도).
 $Solo = $env:VH_SOLO -eq '1'
 if ($Solo -and $env:VH_RESET -eq '0') { throw '단독 시험은 원본 되돌리기가 필요함(VH_SOLO=1과 VH_RESET=0은 같이 못 씀)' }
-$runs = if ($Solo) { @($Test -split ';' | Where-Object { $_ }) } else { @($Test) }
+# 실제 재시작 시험(요청 11-14): 1번째(vh_restart1·vh_restartcraft_load/part/carry)는 저장하고 게임을 바로 끄므로 같은 실행의 뒤 시험이 안 돌았다.
+# → 1번째에서 실행을 끊고, 2번째(vh_restart2·vh_restartcraft2)를 원본 되돌리기 없이 새 실행으로 붙인 뒤, 남은 시험은 다음 실행(되돌리기 켬)으로 이어 간다.
+$second = @{ 'vh_restart1' = 'vh_restart2'; 'vh_restartcraft_load' = 'vh_restartcraft2'; 'vh_restartcraft_part' = 'vh_restartcraft2'; 'vh_restartcraft_carry' = 'vh_restartcraft2' }
+$names = @($Test -split ';' | Where-Object { $_ })
+$runs = @(); $cur = @(); $firstReset = $env:VH_RESET -ne '0'
+for ($i = 0; $i -lt $names.Count; $i++) {
+    $cur += $names[$i]
+    $two = $second[$names[$i]]
+    if ($Solo -or $two -or $i -eq $names.Count - 1) {
+        $runs += [pscustomobject]@{ Tests = ($cur -join ';'); Reset = $firstReset }; $cur = @(); $firstReset = $true
+        if ($two) {
+            if ($i + 1 -lt $names.Count -and $names[$i + 1] -eq $two) { $i++ }   # 이미 2번째를 바로 뒤에 적었으면 한 번만
+            $runs += [pscustomobject]@{ Tests = $two; Reset = $false }
+        }
+    }
+}
 $resolvedTmp=[IO.Path]::GetFullPath($tmp)
 $tempRoot=[IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')+'\'
 if (-not $resolvedTmp.StartsWith($tempRoot,[StringComparison]::OrdinalIgnoreCase) -or (Split-Path $resolvedTmp -Leaf) -notmatch '^valheim-test-\d+$') { throw 'Unsafe temporary cleanup path' }
 Remove-Item -LiteralPath $resolvedTmp -Recurse -Force
 $reports = @()
-foreach ($Run in $runs) {
+foreach ($RunItem in $runs) {
+$Run = $RunItem.Tests
 $runStarted = Get-Date
 $w = 0   # 앞 실행의 게임 프로세스가 완전히 끝날 때까지(되돌리기 조건)
 while ((Get-Process | Where-Object { $_.ProcessName -eq 'valheim' }) -and $w -lt 60) { Start-Sleep 2; $w += 2 }
@@ -101,7 +117,7 @@ Remove-Item "$plugin\diag.txt" -ErrorAction SilentlyContinue
 # 시험 월드·캐릭터 원본 되돌리기(사용자 결정 2026-10-22): 실행마다 한 번, 게임이 완전히 꺼진 뒤, 시험 전용 경로일 때만.
 # 월드 원본은 %USERPROFILE%\vh-test-base(첫 실행 때 지금 월드를 떠 둠). 캐릭터는 지워서 모드가 새로 만들게(= 깨끗한 원본).
 # 끄기: $env:VH_RESET='0'(실제 재시작 시험의 2번째 실행은 1번째가 저장한 월드·캐릭터를 그대로 불러와야 함).
-if ($env:VH_RESET -ne '0') {
+if ($RunItem.Reset) {
     $save = Join-Path $env:USERPROFILE 'AppData\LocalLow\IronGate\Valheim'
     $okWorlds = @('te4st41') + @(($env:VH_TEST_WORLDS -split ';') | Where-Object { $_ })   # 시험 월드로 확인된 이름만
     if ($okWorlds -notcontains $World -or $Char -notmatch '^vhtest') { throw "원본 되돌리기 중단: 시험 전용 월드·캐릭터가 아님(월드 $World, 캐릭터 $Char). 되돌리지 않으려면 VH_RESET=0" }
@@ -215,7 +231,7 @@ if ($runTimedOut) {
 #    요약: diag 첫 줄, 시험별 판정·시간, FAIL 줄, 모드 로드 줄, 로그 오류 줄 수와 종류별 첫 8개.
 $diag = Join-Path $plugin 'diag.txt'
 $log = Join-Path $game 'BepInEx\LogOutput.log'
-$report = @("=== Valheim 테스트 결과 ===$(if ($Solo) { " (단독: $Run)" })")
+$report = @("=== Valheim 테스트 결과 ===$(if ($Solo -or $runs.Count -gt 1) { " ($Run$(if (-not $RunItem.Reset) { ', 되돌리기 없음' }))" })")
 if (Test-Path $diag) {
     $lines = @(Get-Content $diag -Encoding UTF8)
     $report += $lines[0]
@@ -230,6 +246,8 @@ if (Test-Path $diag) {
         elseif ($l.StartsWith('FAIL')) { $fails += "  [$name] $l" }
     }
     if ($name) { $report += "  $name $verdict $time" }
+    # 이 실행에 넣었는데 diag에 칸이 없는 시험(게임이 먼저 꺼짐 등)도 요약에 남긴다(요청 11-14)
+    foreach ($n in ($Run -split ';' | Where-Object { $_ })) { if (-not ($lines -like "=== $n *")) { $report += "  $n 안 돔(게임이 먼저 꺼졌거나 시험 이름 없음)" } }
     if ($fails.Count -gt 0) { $report += @($fails | Select-Object -First 30) }
 } else { $report += '(diag.txt 없음: 시험이 안 돌았거나 모드가 로드되지 않았음)' }
 if (Test-Path $log) {
