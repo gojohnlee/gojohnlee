@@ -323,26 +323,28 @@ namespace ValheimHelper
         {
             if (npc.Ai.Current != WorkerAI.Mode.Idle || npc.Ai.Queue.Count > 0)
             {
-                s_laterChores.Add((npc, feed));
+                s_laterChores.TryGetValue(npc, out int bits);
+                s_laterChores[npc] = bits | (feed ? 1 : 2);
                 npc.Say("choreLater");
                 return;
             }
             StartChore(npc, feed);
         }
 
-        /// <summary>바쁠 때 받은 !가축·!정리(일꾼, 먹이면 true).</summary>
-        static readonly HashSet<(WorkerNpc, bool)> s_laterChores = new HashSet<(WorkerNpc, bool)>();
+        /// <summary>바쁠 때 받은 !가축(1)·!정리(2). 튜플은 게임 런타임에 System.ValueTuple이 없어 못 씀(회차 662 TypeLoadException).</summary>
+        static readonly Dictionary<WorkerNpc, int> s_laterChores = new Dictionary<WorkerNpc, int>();
 
-        /// <summary>쉬게 된 일꾼(Departures 쉴 때 차례)이 바쁠 때 받은 !가축·!정리가 있으면 시작. 시작했으면 true.</summary>
+        /// <summary>쉬게 된 일꾼(Departures 쉴 때 차례)이 바쁠 때 받은 !가축·!정리가 있으면 시작(먹이 먼저, 정리는 다음 쉴 때). 시작했으면 true.</summary>
         internal static bool RunLaterChore(WorkerNpc npc)
         {
-            s_laterChores.RemoveWhere(c => c.Item1 == null);
-            foreach (bool feed in new[] { true, false })
+            if (!s_laterChores.TryGetValue(npc, out int bits)) return false;
+            s_laterChores.Remove(npc);
+            if ((bits & 1) != 0 && StartChore(npc, true))
             {
-                if (!s_laterChores.Remove((npc, feed))) continue;
-                if (StartChore(npc, feed)) return true;
+                if ((bits & 2) != 0) s_laterChores[npc] = 2;
+                return true;
             }
-            return false;
+            return (bits & 2) != 0 && StartChore(npc, false);
         }
 
         static bool StartChore(WorkerNpc npc, bool feed)

@@ -175,7 +175,7 @@ while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실�
 $gp = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Select-Object -First 1
 $ourId = if ($gp) { $gp.Id; Set-Content $gameFile "$($gp.Id) $($gp.StartTime.Ticks)" }   # 다음 시험의 '모르는 게임' 판단용
 $cpu0 = if ($gp) { $gp.TotalProcessorTime.TotalSeconds }; $wall0 = Get-Date   # 외부 부하: 게임 CPU 시간(모드 끔에도 남는 재는 값, 회차 642)
-$t = 0; $exitHang = $false
+$t = 0; $exitHang = $false; $fatalLine = $null
 $gameLog = Join-Path $game 'BepInEx\LogOutput.log'
 # 상한 기본 30분. 긴 시험(최종 실전 시험 등)은 $env:VH_MAXMIN="분"(사용자 11-13: 최종 시험은 30분보다 확실히 김)
 $maxMin = if ("$env:VH_MAXMIN" -match '^\d+$' -and [int]$env:VH_MAXMIN -gt 0) { [int]$env:VH_MAXMIN } else { 30 }
@@ -188,6 +188,17 @@ while ((Test-Game) -and $t -lt $maxMin * 60) {   # 상한 넘으면 멈춘 것�
     $li = Get-Item $gameLog -ErrorAction SilentlyContinue
     if ($gp -and $li -and $li.LastWriteTime -gt $gp.StartTime -and ((Get-Date) - $li.LastWriteTime).TotalSeconds -gt 120 -and
         @((Get-Content $gameLog -Encoding UTF8 -ErrorAction SilentlyContinue) -match 'Game - OnApplicationQuit').Count) { $exitHang = $true; break }
+    # 모드 코드가 아예 안 불러와지는 오류(11-14 System.ValueTuple로 채팅 명령 전부 먹통 — 시험은 끝까지 기다려 봐야 FAIL)
+    # → 15초마다 이번 실행 로그 끝을 보고, 보이면 바로 끄고 FAIL로 알린다(사용자 11-14: 실패면 기다리지 말고 고쳐서 다시).
+    if ($gp -and $li -and $li.LastWriteTime -gt $gp.StartTime -and $t % 15 -eq 0) {
+        $fatal = @(Get-Content $gameLog -Encoding UTF8 -Tail 400 -ErrorAction SilentlyContinue |
+            Select-String -Pattern 'TypeLoadException|Could not load (file or assembly|type)|MissingMethodException|MissingFieldException' | Select-Object -First 1)
+        if ($fatal.Count) { $fatalLine = "$($fatal[0].Line)".Trim(); break }
+    }
+}
+if ($fatalLine) {
+    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue
 }
 $runTimedOut = Test-Game
 $cpuLine = $null
@@ -259,6 +270,7 @@ if ($env:VH_JOIN) {   # 멀티 시험: 서버 쪽 모드 로그의 오류도(손
 }
 if ($cpuLine) { $report += $cpuLine }
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
+if ($fatalLine) { $report += "FAIL 모드 치명 오류로 바로 끔(끝까지 기다리지 않음): $fatalLine — 고쳐서 다시 시험" }
 if ($exitHang) { $report += '게임 종료 멈춤: 종료 시작(OnApplicationQuit) 뒤 로그가 2분 멈춰 안 꺼져 강제 종료(Errors.txt E038 — 발생 횟수 더하기). 시험 판정은 그대로' }
 elseif ($runTimedOut) { $report += "게임이 ${maxMin}분 안에 안 꺼져 강제 종료(더 길게: `$env:VH_MAXMIN) — 중단(PASS로 치지 않음)" }
 if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }

@@ -16,6 +16,10 @@ ilspycmd -p -o "$TMP" "$PROJ/bin/Release/ValheimHelper.dll" >/dev/null 2>&1 || t
 ls "$TMP"/*.csproj >/dev/null 2>&1 || { echo "참조 검사용 디컴파일 실패(csproj 없음)" >&2; exit 1; }
 bad=$(grep -o 'Reference Include="[^"]*"' "$TMP"/*.csproj | sed 's/.*="\(.*\)"/\1/' |
       grep -vE '^(0Harmony|BepInEx|assembly_.*|UnityEngine(\..*)?|Unity\..*|mscorlib|netstandard|System|System\.Core|System\.Xml|System\.Data)$' || true)
+# 11-14: 튜플 필드(HashSet<(A,B)>)는 디컴파일 csproj 참조에 안 잡히는데 게임에선 System.ValueTuple을 찾다 Commands가 통째로 안 불러와짐 → DLL 안 이름으로도 막는다.
+if grep -qa 'ValueTuple' "$PROJ/bin/Release/ValheimHelper.dll"; then
+  bad="${bad:+$bad }System.ValueTuple(튜플 문법 — 튜플 대신 클래스·배열·집합)"
+fi
 if [ -n "$bad" ]; then
   echo "게임 런타임에 없을 수 있는 참조: $bad" >&2
   exit 1
