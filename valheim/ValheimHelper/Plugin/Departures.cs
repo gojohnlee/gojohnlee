@@ -643,7 +643,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 계획이 끝까지 할 수 있거나 모자란 게 설비뿐이면(StationsOnly — 재료는 모아 두고 끝에 지어 달라고 함, 10-26) 실제로 시작(6번 실행기).
-        /// 범위 밖·모름이 끼면 시작하지 않음. 일하는 중이면 시작하지 않음(대기열은 데이터 없는 PlanJob을 못 저장).
+        /// 범위 밖·모름이 끼면 시작하지 않음. 일하는 중이면 시작하지 않고 대기열에(꺼낼 때 다시 세움, 회차 660).
         /// </summary>
         static void StartPlan(WorkerNpc npc, Plan plan, string label, WorkItem goal)
         {
@@ -653,6 +653,13 @@ namespace ValheimHelper
             bool busy = mode == WorkerAI.Mode.Work ? npc.Ai.Job != null && !(npc.Ai.Job is TidyJob) : mode != WorkerAI.Mode.Idle && mode != WorkerAI.Mode.Home;
             if (busy)
             {
+                // 일하는 중이면 대기열에(회차 660 — 최종 실전 시험에서 일하는 중 받은 활·구리주괴·세트·굽기 명령이 버려짐). 꺼낼 때 ResumeMake가 지금 재고로 다시 세움
+                if (mode == WorkerAI.Mode.Work && goal != null && goal.Kind == WorkKind.Make)
+                {
+                    npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, goal));
+                    Plugin.Log.LogInfo($"{npc.NpcName} 계획 {label}: 하던 일 → 대기열");
+                    return;
+                }
                 Plugin.Log.LogInfo($"{npc.NpcName} 계획 {label}: 지금 {mode}라 시작 안 함");
                 return;
             }

@@ -5,12 +5,12 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_finaltest 최종 실전 시험(사용자 11-12, decisions 71) ① 조각: 시험 기본 집에서 한 번만 되돌린 뒤 채팅 명령을 하나씩 내려
+    /// vh_finaltest 최종 실전 시험(사용자 11-12, decisions 71): 시험 기본 집에서 한 번만 되돌린 뒤 일꾼 2+호위병 1, 채팅 명령을 두 일꾼에게 나눠 한꺼번에 내려
     /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌·구리·구리주괴·활·세트(밭·굽기·가축·상자 정리·사냥은 다음 조각).
     /// </summary>
     static class FinalTest
     {
-        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴·활·세트 채팅 명령(되돌림 한 번)", Run, 2400f);
+        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴·활·세트 채팅 명령(되돌림 한 번)", Run, 3600f);
 
         static bool s_dbgTime;
         static float s_dbgValue;
@@ -48,75 +48,106 @@ namespace ValheimHelper
             yield return new WaitForSeconds(3f);
             checks.Add($"깃발에 일꾼 2명 나타남 ({WorkerNpc.All.Count}명)", WorkerNpc.All.Count == 2);
             if (WorkerNpc.All.Count != 2) { End(player, god, checks, onHeard, heard); yield break; }
+            // 처음부터 일꾼 2 + 호위병 1(사용자 11-12 23:22 — 2명 판 없음)
+            yield return TestKit.SpawnGuard();
+            checks.Add($"일꾼 2 + 호위병 1 = 3명 ({WorkerNpc.All.Count} + {(WorkerNpc.TheGuard != null ? 1 : 0)})", WorkerNpc.All.Count == 2 && WorkerNpc.TheGuard != null);
             // 남은 명령(밭·굽기·가축·사냥)의 재료는 시작 때 한 번만 거점 상자에 넣는다(decisions 71 — 명령 중엔 상자 채우기 없음)
             StockStart(home);
 
-            TestRunner.Log($"DIAG 시작 거점 상자: Wood {GatherTest.CountBase(home, "Wood")}, Stone {GatherTest.CountBase(home, "Stone")}, CopperOre {GatherTest.CountBase(home, "CopperOre")}, Copper {GatherTest.CountBase(home, "Copper")}");
-            // 2) 명령마다 거점 상자 개수로 판정 — 실패해도 다음 명령을 계속(하나 막혀도 계속)
-            yield return Order(checks, home, "나무", "Wood");
-            yield return Order(checks, home, "돌", "Stone");
-            yield return Order(checks, home, "구리", "CopperOre", 600f);
-            yield return Order(checks, home, "구리주괴", "Copper", 900f, make: true); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
-            yield return Order(checks, home, "활", "Bow", 600f, make: true, n: 3); // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
-            yield return SetOrder(checks, home);
-            yield return Order(checks, home, "RawMeat", "RawMeat", 900f, n: 6); // 사냥: 생고기 6개 더, 900초(회차 660 — 집 근처 멧돼지가 드물어 600초에 4마리뿐·고기는 다 모을 때까지 들고 다녀 상자 0개). 시작 때 상자가 꽉 차 생고기는 못 넣음(회차 657)
-            yield return Order(checks, home, "CookedMeat", "CookedMeat", 600f, n: 4); // 굽기: 사냥한 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름으로 씀(회차 657 — 밭·가축·상자 정리는 다음 조각)
+            TestRunner.Log($"DIAG 시작 거점 상자: Wood {GatherTest.CountBase(home, "Wood")}, Stone {GatherTest.CountBase(home, "Stone")}, CopperOre {GatherTest.CountBase(home, "CopperOre")}, Copper {GatherTest.CountBase(home, "Copper")}, RawMeat {GatherTest.CountBase(home, "RawMeat")}");
+            // 2) 명령을 두 일꾼에게 나눠 처음에 한꺼번에 내림(바쁘면 일꾼 대기열) → 명령마다 거점 상자 개수로 따로 판정(사용자 11-14 바로잡기 — 하나씩 끝을 기다리지 않음)
+            //    구리 광석은 제련이, 생고기는 굽기가 써서 줄어들 수 있어 판정은 지금까지 가장 많았던 수로.
+            string a = Workers.Name1, b = Workers.Name2;
+            var orders = new List<Want>
+            {
+                Ask(home, a, "나무", "Wood"),
+                Ask(home, b, "돌", "Stone"),
+                Ask(home, a, "구리", "CopperOre"),
+                Ask(home, b, "활", "Bow", make: true, n: 3), // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
+                Ask(home, a, "구리주괴", "Copper", make: true), // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
+                SetAsk(checks, home, b),
+                Ask(home, b, "CookedMeat", "CookedMeat", n: 4), // 굽기: 시작 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름(회차 657)
+                Ask(home, a, "RawMeat", "RawMeat", n: 6), // 사냥: 집 근처 멧돼지가 드물어 6개(회차 660 — 고기는 다 모을 때까지 들고 다님)
+            };
+            orders.RemoveAll(o => o == null);
+            float t = 0f;
+            while (t < 3000f && orders.Exists(o => o.Done < 0f))
+            {
+                yield return new WaitForSeconds(5f);
+                t += 5f;
+                foreach (var o in orders) o.Poll(home, t);
+            }
+            foreach (var o in orders)
+                checks.Add($"{o.Who} {o.Word} {o.N} 명령 → 거점 상자 {o.Best}개 ({(o.Done >= 0f ? o.Done : t):0}초)", o.Done >= 0f);
+            if (Brain.Sets.Get(s_setNo) != null) Brain.Sets.Remove(s_setNo);
 
             End(player, god, checks, onHeard, heard);
         }
 
-        /// <summary>시작 때 한 번: 밭(경작기·당근 씨앗), 굽기(생고기), 가축(당근 먹이)에 쓸 재료를 거점 첫 상자에 넣는다.</summary>
+        /// <summary>시작 때 한 번: 밭(경작기·당근 씨앗), 굽기(생고기), 가축(당근 먹이)에 쓸 재료를 거점 상자에 넣는다. 첫 상자가 꽉 차면 다음 상자(회차 657 — 생고기 못 넣음).</summary>
         static void StockStart(Vector3 home)
         {
-            Container box = null;
-            foreach (var c in Chests.NearBase(home)) { box = c; break; }
-            if (box == null) { TestRunner.Log("FAIL: 거점 상자가 없어 시작 재료를 못 넣음"); return; }
-            TestKit.PutInChest(box, Crops.Cultivator, 1);
-            TestKit.PutInChest(box, "CarrotSeeds", 6);
-            TestKit.PutInChest(box, "RawMeat", 4);
-            TestKit.PutInChest(box, "Carrot", 10);
+            var boxes = new List<Container>(Chests.NearBase(home));
+            if (boxes.Count == 0) { TestRunner.Log("FAIL: 거점 상자가 없어 시작 재료를 못 넣음"); return; }
+            Put(boxes, Crops.Cultivator, 1);
+            Put(boxes, "CarrotSeeds", 6);
+            Put(boxes, "RawMeat", 4);
+            Put(boxes, "Carrot", 10);
         }
+
+        static void Put(List<Container> boxes, string prefab, int n)
+        {
+            var item = ObjectDB.instance.GetItemPrefab(prefab);
+            foreach (var c in boxes)
+            {
+                bool added = false;
+                if (Chests.TryEdit(c, inv => added = inv.AddItem(item, n)) && added) return;
+            }
+            TestRunner.Log($"시험 상자에 {prefab} {n}개 못 넣음(상자 {boxes.Count}개 모두 꽉 참·사용 중)");
+        }
+
+        /// <summary>명령 하나: 누구에게 무엇을 시켰고, 거점 상자에 n개 더 생긴 때(Done, 초). Item2가 있으면 둘 다(세트).</summary>
+        sealed class Want
+        {
+            public string Who, Word, Item, Item2;
+            public int N, Before, Before2, Best;
+            public float Done = -1f;
+
+            public void Poll(Vector3 home, float t)
+            {
+                if (Done >= 0f) return;
+                int got = GatherTest.CountBase(home, Item) - Before;
+                if (Item2 != null) got = Mathf.Min(got, GatherTest.CountBase(home, Item2) - Before2);
+                if (got > Best) Best = got;
+                if (Best >= N) Done = t;
+            }
+        }
+
+        /// <summary>"!일꾼 말 10"을 내리고 판정할 Want를 돌려준다.
+        /// make: 만드는 물건(제작 계획)은 수량이 "상자에 n개 되게"라(PlanFor가 재고를 빼고 셈) 처음 개수 + n을 시킨다 — 집 상자에 원래 구리주괴 14개가 있어 "구리주괴 10"은 "이미 상자에 있어"였음.</summary>
+        static Want Ask(Vector3 home, string who, string word, string item, bool make = false, int n = 10)
+        {
+            int before = GatherTest.CountBase(home, item);
+            GatherTest.Say($"!{who} {word} {(make ? before + n : n)}", null);
+            return new Want { Who = who, Word = word, Item = item, N = n, Before = before };
+        }
+
+        static int s_setNo;
 
         /// <summary>"!일꾼 세트 n amount" — 시험이 세트 메뉴 n번(활·곤봉)을 먼저 저장하고(끝나면 지움), 활·곤봉이 상자에 amount개 이상 되면 PASS.
-        /// amount = 두 물건 중 많은 쪽 + 1(PlanFor가 재고를 빼고 셈이라 "상자에 amount개 되게"에 맞춤 — 활 명령과 같은 까닭).</summary>
-        static IEnumerator SetOrder(GatherTest.Checks checks, Vector3 home)
+        /// amount = 두 물건 중 많은 쪽 + 1(PlanFor가 재고를 빼고 셈이라 "상자에 amount개 되게"에 맞춤 — 활 명령과 같은 까닭).
+        /// 활 명령이 앞서 활을 늘려도 곤봉이 함께 amount개가 돼야 PASS라 세트가 돈 것을 본다.</summary>
+        static Want SetAsk(GatherTest.Checks checks, Vector3 home, string who)
         {
-            int no = Brain.Sets.NextFree();
+            int no = s_setNo = Brain.Sets.NextFree();
             int saved = no == 0 ? 0 : Brain.Sets.Save(no, new[] { "Bow", "Club" }, "시험 세트", "시험");
             checks.Add($"세트 {no}번 저장", saved == no && no != 0);
-            if (saved != no || no == 0) yield break;
-            int amount = Mathf.Max(GatherTest.CountBase(home, "Bow"), GatherTest.CountBase(home, "Club")) + 1;
-            GatherTest.Say($"!{Workers.Name1} 세트 {no} {amount}", null);
-            float t = 0f;
-            int bow = 0, club = 0;
-            while (t < 900f)
-            {
-                yield return new WaitForSeconds(5f);
-                t += 5f;
-                bow = GatherTest.CountBase(home, "Bow");
-                club = GatherTest.CountBase(home, "Club");
-                if (bow >= amount && club >= amount) break;
-            }
-            Brain.Sets.Remove(no);
-            checks.Add($"세트 {no}번 {amount}개씩 명령 → 활 {bow}·곤봉 {club}개 ({t:0}초)", bow >= amount && club >= amount);
-        }
-
-        /// <summary>"!일꾼 말 10" 한 번 내리고 거점 상자에 그 물건이 10개 더 생기면 PASS. 최대 maxSec초(기본 240초).
-        /// 구리는 광맥을 찾아 멀리(240m) 가야 해서 회차 647에 600초로 늘림(찾기 152초 + 캐기 + 운반이 240초를 넘음).
-        /// make: 만드는 물건(제작 계획)은 수량이 "상자에 n개 되게"라(PlanFor가 재고를 빼고 셈) 처음 개수 + 10을 시킨다 — 집 상자에 원래 구리주괴 14개가 있어 "구리주괴 10"은 "이미 상자에 있어"였음.</summary>
-        static IEnumerator Order(GatherTest.Checks checks, Vector3 home, string word, string item, float maxSec = 240f, bool make = false, int n = 10)
-        {
-            int before = GatherTest.CountBase(home, item), got = 0;
-            GatherTest.Say($"!{Workers.Name1} {word} {(make ? before + n : n)}", null);
-            float t = 0f;
-            while (t < maxSec)
-            {
-                yield return new WaitForSeconds(5f);
-                t += 5f;
-                got = GatherTest.CountBase(home, item) - before;
-                if (got >= n) break;
-            }
-            checks.Add($"{word} {n} 명령 → 거점 상자 {got}개 ({t:0}초)", got >= n);
+            if (saved != no || no == 0) return null;
+            int bow = GatherTest.CountBase(home, "Bow"), club = GatherTest.CountBase(home, "Club");
+            int amount = Mathf.Max(bow, club) + 1;
+            GatherTest.Say($"!{who} 세트 {no} {amount}", null);
+            // 판정 꼴을 Want에 맞춤: 두 물건 모두 amount 이상 = 각각 (amount - 처음) 이상 늘어남 — 적게 늘어난 쪽 기준이라 Before를 amount - N으로 둠
+            return new Want { Who = who, Word = $"세트 {no}번", Item = "Bow", Item2 = "Club", N = 1, Before = amount - 1, Before2 = amount - 1 };
         }
 
         static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)
