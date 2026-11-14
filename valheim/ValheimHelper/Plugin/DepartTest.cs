@@ -9,8 +9,8 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_departtest (묶음 1 작업 4): 출발 전 판단·질문·대답·대기열을 질문 자동 대답 없이(TestAutoGo=false).
-    /// 재고 질문 → "응", 곧 밤 질문 → "응" → 대기열(다음 아침까지 안 꺼냄) → 아침에 출발, 죽은 곳 질문 → "아니"(보류),
-    /// 위험 조건(체력 미드) → 미드가 생기면 스스로 출발, 3분 무응답 보류, 일하는 중 새 명령(급함 아님 → 대기열, 급함 → 끼어듦),
+    /// 재고 있어도·곧 밤이어도 묻지 않고 출발(11-14), 죽은 곳은 묻지 않고 같이·경고,
+    /// 위험 조건(체력 미드) → 미드가 생기면 스스로 출발, 일하는 중 새 명령(급함 아님 → 대기열, 급함 → 끼어듦),
     /// 저장 왕복(대기열·질문이 있는 채로 NPC 인스턴스를 내렸다가 다시 만들어 그대로인지), 밝혀진 곳 아는지(스위치 끔/켬 비교).
     /// 시험 상황(먼 곳의 구리, 위험·죽음 기록)은 지식·장소 기억에 직접 넣고, 끝나면 원래대로 되돌린다.
     /// </summary>
@@ -56,12 +56,11 @@ namespace ValheimHelper
                 // (2026-10-21: 나무 150·구리 10 → 재고 질문이 먼저 잡힘). 거점 상자에서 이 시험의 물건을 비우고 시작한다.
                 TestRunner.Log($"거점 상자 {Chests.NearBase(w.Home).Count}개에서 지난 시험의 나무·구리 {TestKit.ClearBaseStock(w, "Wood", "CopperOre", "MeadHealthMinor", "MeadHealthMedium", "HealthUpgrade_Bonemass")}개 비움");
 
-                // 1) 재고 질문 → "응" → 출발
+                // 1) 재고가 있어도 묻지 않고 출발, 수량은 10개 더(사용자 11-14 "나무 20 = 20개 해 오기, 상자 포함 아님")
                 TestKit.PutInChest(w.Chest, "Wood", 20);
                 yield return Say($"!{n1} 나무 10", 1f);
-                checks.Add($"재고 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0 && LastSaid(w, n1).Contains("20"));
-                yield return Say("응", 1f);
-                checks.Add($"\"응\" → 출발 ({w.Ragnar.Ai.Current})", Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work && w.Ragnar.Ai.Job is GatherJob);
+                checks.Add($"재고 있어도 묻지 않고 10개 캐러 감 ({w.Ragnar.Ai.Current}, 목표 {(w.Ragnar.Ai.Job as GatherJob)?.Target})",
+                    Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Job is GatherJob gj && gj.Target == 10);
                 yield return Stop();
                 TestKit.TakeFromChest(w.Chest, "Wood");
 
@@ -73,30 +72,13 @@ namespace ValheimHelper
                 string knowFar = Brain.Get().Save();
                 var copper = new ChatCommand { Kind = CommandKind.Item, Item = "CopperOre", Amount = 10 };
 
-                // 2) 곧 밤 질문 → "응" → 대기열(아침 조건) → 아직 낮이어도 안 꺼냄 → 아침에 출발
+                // 2) 곧 밤 → 묻지 않음(사용자 11-14): 호위병이 있으면 같이(Core DepartureTests), 이 시험엔 호위병이 없어 그냥 출발
                 w.Env.m_debugTime = 0.74f;
                 yield return new WaitForSeconds(0.5f);
                 OnlyFar(far, hz); // 기다리는 동안 NPC가 둘러보며 거점 근처 구리를 다시 배웠을 수 있다(명령은 같은 프레임에 처리됨)
                 Log("곧 밤", Departures.JudgeFor(w.Ragnar, copper));
                 yield return Say($"!{n1} 구리 10", 1f);
-                checks.Add($"곧 밤 질문 ({Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) >= 0);
-                yield return Say("응", 1f);
-                var q = w.Ragnar.Ai.Queue;
-                bool queued = q.Count == 1 && q[0].Work != null && q[0].Work.Ready == ReadyWhen.Morning && q[0].Work.NotBefore > ZNet.instance.GetTimeSeconds();
-                checks.Add($"\"응\" → 대기열(다음 아침) {q.Count}칸", queued && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
-                yield return new WaitForSeconds(3f);
-                checks.Add("아침 전에는 안 꺼냄(질문 되풀이 없음)", q.Count == 1 && Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
-                if (queued)
-                {
-                    // 대기열은 쉬는(Idle) 일꾼만 꺼낸다 — 집에 가는 중(Mode.Home)은 안 보고, 둘이 잡담하면 그 자리에 선다(WorkerBanter.Facing).
-                    // 시작 자리가 거점에서 멀면(집 시험 자리 20m) "멈춰" 뒤 아직 걷는 중에 아침이 와 잡담에 묶여 8초를 넘겼다(11-14) → 집에 닿은 뒤 아침으로
-                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Idle, 30f);
-                    if (!TestKit.Ok) TestRunner.Log($"아침 전 집에 못 닿음({w.Ragnar.Ai.Current}, {TestKit.Waited:0}초) — 그대로 아침으로");
-                    ZNet.instance.SetNetTime(q[0].Work.NotBefore + 5.0); // 잠자기처럼 아침으로
-                    w.Env.m_debugTime = 0.3f;
-                    yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, 8f);
-                    checks.Add($"아침 → 대기열에서 꺼내 출발 ({TestKit.Waited:0.0}초)", TestKit.Ok && q.Count == 0);
-                }
+                checks.Add($"곧 밤이어도 묻지 않고 출발 ({w.Ragnar.Ai.Current}, 질문 {Asked(w.Ragnar)})", Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work);
                 w.Env.m_debugTime = 0.5f;
                 yield return Stop();
 
@@ -157,22 +139,14 @@ namespace ValheimHelper
                 }
                 Brain.ReplaceForTest("", "");
 
-                // 5) 3분 무응답 → 보류
-                TestKit.PutInChest(w.Chest, "Wood", 20);
-                yield return Say($"!{n1} 나무 10", 1f);
-                bool asked = Departures.AskedAt(w.Ragnar) >= 0;
-                Departures.AgeQuestion(w.Ragnar, Replies.Timeout + 1.0);
-                int before = w.Heard.Count;
-                yield return TestKit.WaitFor(() => Departures.AskedAt(w.Ragnar) < 0, 2f);
-                checks.Add("3분 무응답 → 보류하고 말함", asked && TestKit.Ok && w.Heard.Count > before && w.Ragnar.Ai.Current != WorkerAI.Mode.Work);
-                TestKit.TakeFromChest(w.Chest, "Wood");
+                // 5) 3분 무응답 → 보류: 질문이 없어져(11-14) 뺌 — 옛 저장의 질문 대답 처리는 Core ReplyTests
 
                 // 6) 일하는 중 새 명령: 급함 아님 → 대기열, 급함 → 하던 일은 대기열 맨 앞
                 yield return Say($"!{n1} 나무 30", 1f);
                 bool working = w.Ragnar.Ai.Current == WorkerAI.Mode.Work && w.Ragnar.Ai.Job is GatherJob;
                 checks.Add($"나무 30 출발 ({w.Ragnar.Ai.Current})", working);
                 yield return Say($"!{n1} 나무 5", 1f);
-                q = w.Ragnar.Ai.Queue;
+                var q = w.Ragnar.Ai.Queue;
                 checks.Add($"급하지 않음 → 대기열 ({q.Count}칸, 하던 일 {w.Ragnar.Ai.Job?.Label})",
                     q.Count == 1 && q[0].Work != null && q[0].Work.Amount == 5 && w.Ragnar.Ai.Job is GatherJob g30 && g30.Target == 30);
                 yield return Say($"!{n1} 빨리 나무 7", 1f);
@@ -180,18 +154,14 @@ namespace ValheimHelper
                     q.Count == 2 && q[0].Resume is GatherJob r30 && r30.Target == 30 && q[0].Work != null && q[0].Work.Resume
                     && w.Ragnar.Ai.Job is GatherJob g7 && g7.Target == 7);
 
-                // 7) 저장 왕복: 라그나는 하던 일+대기열 2칸, 플로키는 질문 대기 → 인스턴스를 내렸다가 다시
-                TestKit.PutInChest(w.Chest, "Wood", 20);
-                yield return Say($"!{n2} 나무 10", 1f);
-                checks.Add($"플로키 재고 질문 ({Asked(w.Floki)})", Departures.AskedAt(w.Floki) >= 0);
+                // 7) 저장 왕복: 라그나는 하던 일+대기열 2칸 → 인스턴스를 내렸다가 다시(질문 대기 칸은 11-14 질문 없앰으로 뺌)
                 if (Features.SaveWork)
                 {
                     w.Ragnar.Ai.Queue.Add(WorkSaves.ToQueued(w.Ragnar, new WorkItem { Kind = WorkKind.Make, Resume = true, Label = "구리 주괴 2", Item = "CopperBar", Amount = 2 }));
                     string sigC = Sig(WorkSaves.Snapshot(w.Ragnar));
-                    string pendA = WorkState.SavePending(Departures.Snapshot(w.Floki));
                     WorkSaves.SaveNow(w.Ragnar);
                     WorkSaves.SaveNow(w.Floki);
-                    TestRunner.Log($"저장: {n1} [{sigC}], {n2} 질문 [{pendA}]");
+                    TestRunner.Log($"저장: {n1} [{sigC}]");
                     WorkerNpc oldC = w.Ragnar, oldA = w.Floki;
                     TestKit.Unload(oldC.GetComponent<ZNetView>());
                     TestKit.Unload(oldA.GetComponent<ZNetView>());
@@ -207,12 +177,8 @@ namespace ValheimHelper
                     if (w.Ragnar != null && w.Floki != null)
                     {
                         string sigC2 = Sig(WorkSaves.Snapshot(w.Ragnar));
-                        string pendA2 = WorkState.SavePending(Departures.Snapshot(w.Floki));
-                        TestRunner.Log($"불러옴: {n1} [{sigC2}] ({w.Ragnar.Ai.Current}), {n2} 질문 [{pendA2}]");
+                        TestRunner.Log($"불러옴: {n1} [{sigC2}] ({w.Ragnar.Ai.Current})");
                         checks.Add("하던 일·대기열 그대로", sigC2 == sigC);
-                        checks.Add("질문 대기 그대로", pendA2 == pendA && pendA.Length > 0);
-                        yield return Say("아니", 1f);
-                        checks.Add("불러온 질문에 대답 받음", Departures.AskedAt(w.Floki) < 0);
                     }
                 }
                 else TestRunner.Log("저장 왕복 건너뜀: 설정 Features.SaveWork 꺼짐");
