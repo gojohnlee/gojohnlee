@@ -6,7 +6,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 채팅 → Claude 호출 → 검사된 작업 실행 (구상서 5-1장). 한 번에 하나만 부르고, 부르는 동안 온 말은 한 줄만 기다린다.
+    /// 채팅 → Claude 호출 → 검사된 작업 실행 (구상서 5-1장). 한 번에 하나만 부르고, 부르는 동안 온 말은 차례로 기다린다(WaitMax까지 — 11-14: 한 줄만 기다려 한꺼번에 내린 말이 덮여 사라짐).
     /// 호출이 실패하거나 30초가 지나면 "정해진 ! 명령만 돼요"로 대신한다.
     /// </summary>
     public static class ClaudeChat
@@ -15,8 +15,8 @@ namespace ValheimHelper
         static ClaudeCli s_call;
         static Speaker s_who;
         static ChatResult s_pending;
-        static ChatResult s_waiting;
-        static Speaker s_waitingWho;
+        const int WaitMax = 8;
+        static readonly Queue<KeyValuePair<Speaker, ChatResult>> s_waiting = new Queue<KeyValuePair<Speaker, ChatResult>>();
         static float s_started;
         /// <summary>최근 대화(플레이어 말·NPC 답), 지시문에 붙인다. RecentSeconds 지나거나 RecentMax 넘으면 버린다.</summary>
         static readonly List<KeyValuePair<float, string>> s_recent = new List<KeyValuePair<float, string>>();
@@ -41,14 +41,24 @@ namespace ValheimHelper
         public static void Ask(Speaker who, ChatResult r)
         {
             if (!Features.ClaudeChat) { Commands.OnlyBang(r.Target); return; }
-            if (s_call != null) { s_waiting = r; s_waitingWho = who; return; }
-            Start(who, r);
+            if (s_waiting.Count >= WaitMax) { Commands.OnlyBang(r.Target); return; }
+            s_waiting.Enqueue(new KeyValuePair<Speaker, ChatResult>(who, r));
+            Next();
+        }
+
+        /// <summary>부르는 중이 아니면 기다리는 말 하나를 부른다. Sonnet 한도(분당)에 걸리면 버리지 않고 다음 Tick에 다시(11-14).</summary>
+        static void Next()
+        {
+            if (s_call != null || s_waiting.Count == 0) return;
+            var w = s_waiting.Peek();
+            if (w.Value.Route != ChatRoute.Haiku && !s_sonnet.TryTake(Time.realtimeSinceStartup)) return;
+            s_waiting.Dequeue();
+            if (WorkerNpc.All.Count > 0) Start(w.Key, w.Value);
         }
 
         static void Start(Speaker who, ChatResult r)
         {
             bool bang = r.Route == ChatRoute.Haiku;
-            if (!bang && !s_sonnet.TryTake(Time.realtimeSinceStartup)) { Commands.OnlyBang(r.Target); return; }
             var npcs = WorkerNpc.All;
             var lines = new List<string>();
             foreach (var n in npcs) lines.Add(n.NpcName + ": " + Commands.StateOf(n) + " — " + ClaudePrompt.Voice(n.Personality));
@@ -72,18 +82,19 @@ namespace ValheimHelper
         /// <summary>기다리는 해석을 버린다(시험 시작: 앞 시험의 늦은 답이 다음 시험 일꾼을 움직이던 것, E039). 돌던 호출은 스스로 끝나고 답은 안 씀.</summary>
         public static void Drop()
         {
-            s_call = null; s_pending = null; s_waiting = null;
+            s_call = null; s_pending = null; s_waiting.Clear();
         }
 
         public static void Tick()
         {
-            if (s_call == null || !s_call.Done) return;
+            if (s_call == null) { Next(); return; }
+            if (!s_call.Done) return;
             var call = s_call; s_call = null;
             var r = s_pending; var who = s_who;
             try { Finish(call, r, who); }
             finally
             {
-                if (s_waiting != null) { var w = s_waiting; s_waiting = null; Start(s_waitingWho, w); }
+                Next();
             }
         }
 

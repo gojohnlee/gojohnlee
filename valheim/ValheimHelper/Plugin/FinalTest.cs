@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
@@ -11,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     static class FinalTest
     {
-        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험 ① 나무·돌·구리·구리주괴·활·세트 채팅 명령(되돌림 한 번)", Run, 3600f);
+        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험: 이름 없는 실제 말투 명령 한꺼번에(알아들음·해냄 따로, 되돌림 한 번)", Run, 3600f);
 
         static bool s_dbgTime;
         static float s_dbgValue;
@@ -76,48 +77,53 @@ namespace ValheimHelper
             checks.Add($"가축 상자·길들인 배고픈 멧돼지 놓음", pen != null && pig != null && pig.IsHungry());
 
             TestRunner.Log($"DIAG 시작 거점 상자: Wood {GatherTest.CountBase(home, "Wood")}, Stone {GatherTest.CountBase(home, "Stone")}, CopperOre {GatherTest.CountBase(home, "CopperOre")}, Copper {GatherTest.CountBase(home, "Copper")}, RawMeat {GatherTest.CountBase(home, "RawMeat")}");
-            // 2) 명령을 두 일꾼에게 나눠 처음에 한꺼번에 내림(바쁘면 일꾼 대기열) → 명령마다 거점 상자 개수로 따로 판정(사용자 11-14 바로잡기 — 하나씩 끝을 기다리지 않음)
-            //    구리 광석은 제련이, 생고기는 굽기가 써서 줄어들 수 있어 판정은 지금까지 가장 많았던 수로.
-            string a = Workers.Name1, b = Workers.Name2;
-            // 실전처럼 쉬는 일꾼 판단을 켬(사용자 11-14 "왜 여전히 한 놈만 일하지": 시험 중엔 ChoresOn이 꺼져 JoinGather·JoinHelp가 안 돌아
-            // 플로키가 돌·활·굽기를 금방 끝내고 라그나 혼자 구리·제련·사냥을 다 함). 시작 검사 뒤에 켬(FishTest와 같은 까닭), End에서 끔.
+            // 2) 실제 말투(사용자 11-14 다시 짜기 가): 이름 없는 자연스러운 말을 처음에 한꺼번에 — 누가 할지는 일꾼(Dispatch)이, 말은 모드 또는 Claude가 해석.
+            //    판정은 둘로 나눔: "알아들음"(해석된 명령이 기대와 같나, Commands.Ran) · "해냄"(거점 상자 개수 등). 구리 광석·생고기는 다른 일이 써서 줄 수 있어 넣은 수·가장 많았던 수로.
+            // 실전처럼 쉬는 일꾼 판단을 켬(사용자 11-14 "왜 여전히 한 놈만 일하지"). 시작 검사 뒤에 켬(FishTest와 같은 까닭), End에서 끔.
             Departures.TestIdleChores = true;
-            var orders = new List<Want>
-            {
-                Ask(home, a, "나무", "Wood"),
-                Ask(home, b, "돌", "Stone"),
-                Ask(home, a, "구리", "CopperOre"),
-                Ask(home, b, "활", "Bow", make: true, n: 3), // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
-                Ask(home, a, "구리주괴", "Copper", make: true), // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
-                SetAsk(checks, home, b),
-                Ask(home, b, "CookedMeat", "CookedMeat", make: true, n: 4), // 굽기(만드는 물건이라 상자 수 — 회차 662: 넣은 수로 세어 4개 구워 넣고도 0): 시작 생고기 4개를 구움. 한글 "구운 고기"는 물건 이름에 없어 프리팹 이름(회차 657)
-                Ask(home, a, "RawMeat", "RawMeat", n: 6), // 사냥: 집 근처 멧돼지가 드물어 6개(회차 660 — 고기는 다 모을 때까지 들고 다님). 회차 661: 6개 넣었는데 상자엔 3(굽기가 씀) → 넣은 수로 판정
-            };
-            // 밭: "!밭 3"은 말한 사람 자리가 중심이라 플레이어가 밭 자리에 가서 말하고 돌아옴(일꾼은 안 옮김)
+            s_ran.Clear();
+            Commands.Ran += OnRan;
+            var orders = new List<Want>();
+            // 밭: 말한 사람 자리가 중심이고 Claude 답이 늦게 오므라 밭 자리에서 말하고 알아들을 때까지(최대 120초) 서 있다 돌아옴(일꾼은 안 옮김 — 순간이동 빼기는 다) 조각)
             Vector3 back = player.transform.position;
             player.TeleportTo(fieldAt + Vector3.up * 0.5f, player.transform.rotation, distantTeleport: false);
             yield return new WaitForSeconds(3f);
-            GatherTest.Say($"!{b} 밭 3", null);
-            yield return new WaitForSeconds(1f);
+            var farm = Say("여기 밭 좀 만들어 줘, 반경 3", CommandKind.Farm, null, 3);
+            farm.N = 4; farm.Count = () => FarmTest.Plants(field).Count; farm.Goal = "당근 새싹";
+            orders.Add(farm);
+            for (float w = 0f; w < 120f && farm.Heard == null; w += 1f) { yield return new WaitForSeconds(1f); Match(orders); }
             player.TeleportTo(back, player.transform.rotation, distantTeleport: false);
-            orders.Add(new Want { Who = b, Word = "밭 3 → 당근 새싹", N = 4, Count = () => FarmTest.Plants(field).Count });
+            orders.Add(Say("나무 10개 좀 해 와", CommandKind.Item, "Wood", 10, home));
+            orders.Add(Say("돌 10개 캐 와", CommandKind.Item, "Stone", 10, home));
+            orders.Add(Say("구리 10개", CommandKind.Item, "CopperOre", 10, home)); // 정해진 꼴은 모드가 바로
+            orders.Add(Say("활 3개 만들어 줘", CommandKind.Item, "Bow", 3, home, make: true)); // 활은 제작(작업대·재료). 화살은 활이 챙김
+            orders.Add(Say("구리주괴 10", CommandKind.Item, "Copper", 10, home, make: true)); // 제련: 거점 제련소·석탄
+            orders.Add(SetSay(checks, home));
+            orders.Add(Say("고기 4개 구워 줘", CommandKind.Item, "CookedMeat", 4, home, make: true)); // 시작 생고기 4개를 구움
+            orders.Add(Say("멧돼지 잡아서 생고기 6개 가져와", CommandKind.Item, "RawMeat", 6, home)); // 사냥: 넣은 수로(굽기가 씀)
             if (pig != null)
-            {
-                orders.Add(new Want { Who = "쉬는 일꾼", Word = "가축 먹이(명령 없이 알아서 — 11-14 !가축 없앰) → 멧돼지 먹음", N = 1, Count = () => pig != null && !pig.IsHungry() ? 1 : 0 });
-            }
+                orders.Add(new Want { Text = "(명령 없음 — 쉬는 일꾼이 알아서 가축 먹이, 11-14 !가축 없앰)", Goal = "멧돼지 먹음", N = 1, Count = () => pig != null && !pig.IsHungry() ? 1 : 0 });
             int tidy0 = Tidy.Plan(home).Count, tidyMin = tidy0;
-            GatherTest.Say($"!{b} 정리", null);
-            orders.Add(new Want { Who = b, Word = $"정리(처음 옮길 것 {tidy0}) → 옮길 것 0", N = 1, Count = () => { int left = Tidy.Plan(home).Count; if (left < tidyMin) { tidyMin = left; TestRunner.Log($"DIAG 정리 남은 것 {left} ({b} {(WorkerNpc.All.Find(n => n != null && n.NpcName == b)?.Ai.Job?.GetType().Name ?? "일 없음")})"); } return left == 0 ? 1 : 0; } });
+            var tidy = Say("상자 정리 좀 해 줘", CommandKind.Tidy, null, 0);
+            tidy.Goal = $"옮길 것 {tidy0} → 0"; tidy.N = 1;
+            tidy.Count = () => { int left = Tidy.Plan(home).Count; if (left < tidyMin) { tidyMin = left; TestRunner.Log($"DIAG 정리 남은 것 {left} ({tidy.Who} {(WorkerNpc.All.Find(n => n != null && n.NpcName == tidy.Who)?.Ai.Job?.GetType().Name ?? "일 없음")})"); } return left == 0 ? 1 : 0; };
+            orders.Add(tidy);
             orders.RemoveAll(o => o == null);
             float t = 0f;
             while (t < 3000f && orders.Exists(o => o.Done < 0f))
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
+                Match(orders);
                 foreach (var o in orders) o.Poll(home, t);
             }
+            Commands.Ran -= OnRan;
+            foreach (var r in s_ran) TestRunner.Log($"DIAG 짝 없는 해석: {r.Key} {Desc(r.Value)}");
             foreach (var o in orders)
-                checks.Add($"{o.Who} {o.Word} {o.N} 명령 → 거점 상자 {o.Best}개 ({(o.Done >= 0f ? o.Done : t):0}초)", o.Done >= 0f);
+            {
+                if (o.Kind != null) checks.Add($"알아들음 '{o.Text}' → {(o.Heard == null ? "해석 없음" : o.Who + " " + Desc(o.Heard))}", o.HeardOk);
+                checks.Add($"해냄 '{o.Text}' ({o.Who ?? "누구도 안 맡음"}) → {o.Goal ?? o.Item} {o.Best}/{o.N} ({(o.Done >= 0f ? o.Done : t):0}초)", o.Done >= 0f);
+            }
             if (Brain.Sets.Get(s_setNo) != null) Brain.Sets.Remove(s_setNo);
 
             End(player, god, checks, onHeard, heard);
@@ -145,11 +151,14 @@ namespace ValheimHelper
             TestRunner.Log($"시험 상자에 {prefab} {n}개 못 넣음(상자 {boxes.Count}개 모두 꽉 참·사용 중)");
         }
 
-        /// <summary>명령 하나: 누구에게 무엇을 시켰고, 거점 상자에 n개 더 생긴 때(Done, 초). Item2가 있으면 둘 다(세트).</summary>
+        /// <summary>명령 하나: 한 말(Text), 기대한 해석(Kind·Item·Amount), 실제 해석(Heard·Who), 거점 상자에 n개 더 생긴 때(Done, 초). Item2가 있으면 둘 다(세트).</summary>
         sealed class Want
         {
-            public string Who, Word, Item, Item2;
-            public int N, Before, Before2, Best;
+            public string Text, Goal, Who, Item, Item2;
+            public CommandKind? Kind;
+            public int Amount, N, Before, Before2, Best;
+            public ChatCommand Heard;
+            public bool HeardOk;
             public float Done = -1f;
             public System.Func<int> Count; // 상자 개수 대신 셀 것(밭 새싹·가축 먹음·정리 남은 것)
 
@@ -163,16 +172,45 @@ namespace ValheimHelper
             }
         }
 
-        /// <summary>"!일꾼 말 10"을 내리고 판정할 Want를 돌려준다.
-        /// make: 만드는 물건 — 판정은 상자 개수가 처음보다 n개 늘었나(구리 광석·생고기처럼 다른 일이 써서 줄 수 있어 가장 많았던 수로).
-        static Want Ask(Vector3 home, string who, string word, string item, bool make = false, int n = 10)
+        static readonly List<KeyValuePair<string, ChatCommand>> s_ran = new List<KeyValuePair<string, ChatCommand>>();
+
+        static void OnRan(WorkerNpc npc, ChatCommand cmd)
         {
-            int before = GatherTest.CountBase(home, item);
-            GatherTest.Say($"!{who} {word} {n}", null); // 수량 = 새로 만들/가져올 수(사용자 11-14 — 상자 포함 아님)
-            var w = new Want { Who = who, Word = word, Item = item, N = n, Before = before };
-            // 모아 오는 명령은 그 일꾼이 상자에 넣은 수로(회차 661 — 같은 때 활·세트 제작이 나무를, 쉬는 일꾼 굽기가 생고기를 써서 상자 순증가가 0·3이었음)
-            // 늦게 같이 캐기(JoinGather)로 동료가 낀 몫도 이 명령의 것이라 모든 일꾼이 넣은 수를 합친다(11-14).
-            if (!make) { int p0 = PutByAll(item); w.Count = () => PutByAll(item) - p0; }
+            s_ran.Add(new KeyValuePair<string, ChatCommand>(npc.NpcName, cmd));
+            TestRunner.Log($"DIAG 해석: {npc.NpcName} ← {Desc(cmd)}");
+        }
+
+        static string Desc(ChatCommand c) => $"{c.Kind}{(c.Item != null ? " " + c.Item : "")}{(c.Amount > 0 ? " " + c.Amount : "")}{(c.Number > 0 ? " #" + c.Number : "")}";
+
+        /// <summary>들어온 해석을 아직 짝 없는 명령에 붙인다: 종류가 같고 물건이 같은 첫 명령. 수량(세트는 번호·밭은 반경도)까지 같아야 "알아들음".</summary>
+        static void Match(List<Want> orders)
+        {
+            for (int i = 0; i < s_ran.Count; i++)
+            {
+                var cmd = s_ran[i].Value;
+                var o = orders.Find(w => w != null && w.Heard == null && w.Kind == cmd.Kind
+                    && (cmd.Kind != CommandKind.Item || w.Item == cmd.Item));
+                if (o == null) continue;
+                o.Heard = cmd; o.Who = s_ran[i].Key;
+                o.HeardOk = cmd.Kind == CommandKind.Item ? cmd.Amount == o.Amount
+                    : cmd.Kind == CommandKind.SetMake ? cmd.Number == s_setNo && cmd.Amount == o.Amount
+                    : cmd.Kind != CommandKind.Farm || cmd.Number == o.Amount;
+                s_ran.RemoveAt(i--);
+            }
+        }
+
+        /// <summary>이름 없이 한 마디를 하고 판정할 Want를 돌려준다(home이 있으면 거점 상자 개수로 판정).
+        /// make: 만드는 물건 — 판정은 상자 개수가 처음보다 n개 늘었나. 모아 오는 것은 일꾼들이 상자에 넣은 수(회차 661 — 제작·굽기가 같은 재료를 씀).
+        static Want Say(string text, CommandKind kind, string item, int n, Vector3? home = null, bool make = false)
+        {
+            var w = new Want { Text = text, Kind = kind, Item = item, Amount = n, N = n };
+            if (home != null && item != null)
+            {
+                w.Before = GatherTest.CountBase(home.Value, item);
+                // 늦게 같이 캐기(JoinGather)로 동료가 낀 몫도 이 명령의 것이라 모든 일꾼이 넣은 수를 합친다(11-14).
+                if (!make) { int p0 = PutByAll(item); w.Count = () => PutByAll(item) - p0; }
+            }
+            GatherTest.Say(text, null); // 수량 = 새로 만들/가져올 수(사용자 11-14 — 상자 포함 아님)
             return w;
         }
 
@@ -185,23 +223,25 @@ namespace ValheimHelper
 
         static int s_setNo;
 
-        /// <summary>"!일꾼 세트 n 1" — 시험이 세트 메뉴 n번(활·곤봉)을 먼저 저장하고(끝나면 지움), 활·곤봉이 상자에 처음보다 하나씩 더 생기면 PASS(11-14 수량 = 더 만들 수).</summary>
-        static Want SetAsk(GatherTest.Checks checks, Vector3 home, string who)
+        /// <summary>"세트 n번 하나 만들어 줘" — 시험이 세트 메뉴 n번(활·곤봉)을 먼저 저장하고(끝나면 지움), 활·곤봉이 상자에 처음보다 하나씩 더 생기면 PASS(11-14 수량 = 더 만들 수).</summary>
+        static Want SetSay(GatherTest.Checks checks, Vector3 home)
         {
             int no = s_setNo = Brain.Sets.NextFree();
             int saved = no == 0 ? 0 : Brain.Sets.Save(no, new[] { "Bow", "Club" }, "시험 세트", "시험");
             checks.Add($"세트 {no}번 저장", saved == no && no != 0);
             if (saved != no || no == 0) return null;
             int bow = GatherTest.CountBase(home, "Bow"), club = GatherTest.CountBase(home, "Club");
-            GatherTest.Say($"!{who} 세트 {no} 1", null); // 세트 1 = 활·곤봉 하나씩 더(11-14)
+            var w = Say($"세트 {no}번 하나 만들어 줘", CommandKind.SetMake, null, 1);
             // 두 물건 모두 처음보다 1개 이상 늘어야 PASS
-            return new Want { Who = who, Word = $"세트 {no}번", Item = "Bow", Item2 = "Club", N = 1, Before = bow, Before2 = club };
+            w.Goal = "활·곤봉"; w.Item = "Bow"; w.Item2 = "Club"; w.Before = bow; w.Before2 = club;
+            return w;
         }
 
         static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)
         {
             if (EnvMan.instance != null) { EnvMan.instance.m_debugTimeOfDay = s_dbgTime; EnvMan.instance.m_debugTime = s_dbgValue; }
             ChatNet.Heard -= onHeard;
+            Commands.Ran -= OnRan;
             Departures.TestIdleChores = false;
             player.SetGodMode(god);
             TestRunner.Log("--- NPC 대사 ---");

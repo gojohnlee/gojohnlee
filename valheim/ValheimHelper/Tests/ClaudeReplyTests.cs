@@ -24,6 +24,23 @@ public class ClaudeReplyTests
         Assert.Equal(once, c.Once);
     }
 
+    [Theory] // 자연어 "여기 밭 좀 만들어 줘"·"상자 정리해 줘"(11-14 최종 시험 실제 말투) — "!밭 n"·"!정리"와 같은 명령
+    [InlineData("{\"kind\":\"farm\",\"radius\":3}", CommandKind.Farm, 3, false)]
+    [InlineData("{\"kind\":\"farm\"}", CommandKind.Farm, 10, false)]
+    [InlineData("{\"kind\":\"farm\",\"radius\":50}", CommandKind.Farm, 20, true)]
+    [InlineData("{\"kind\":\"tidy\"}", CommandKind.Tidy, 0, false)]
+    public void FarmAndTidy(string task, CommandKind want, int number, bool clamped)
+    {
+        var c = Assert.Single(P("{\"reply\":\"응\",\"tasks\":[" + task + "]}").Tasks).Command;
+        Assert.Equal(want, c.Kind);
+        Assert.Equal(number, c.Number);
+        Assert.Equal(clamped, c.Clamped);
+    }
+
+    [Fact]
+    public void FarmBadRadiusRejected() =>
+        Assert.Empty(P("{\"reply\":\"응\",\"tasks\":[{\"kind\":\"farm\",\"radius\":0}]}").Tasks);
+
     [Fact]
     public void ParsesTasksAndReply()
     {

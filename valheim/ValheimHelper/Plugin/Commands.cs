@@ -108,11 +108,15 @@ namespace ValheimHelper
             return infos;
         }
 
+        /// <summary>명령이 일꾼에게 갈 때마다(모드 해석·Claude 해석 모두) — 최종 시험이 "말을 어떻게 알아들었나"를 잼(11-14).</summary>
+        internal static event System.Action<WorkerNpc, ChatCommand> Ran;
+
         static void Run(Speaker who, ChatCommand cmd, List<WorkerNpc> npcs)
         {
             // 순회 중에 목록이 바뀌지 않게 복사한다.
             var targets = new List<WorkerNpc>();
             foreach (int i in Dispatch.Choose(cmd.Kind, cmd.Target, Infos(npcs))) targets.Add(npcs[i]);
+            if (Ran != null) foreach (var npc in targets) Ran(npc, cmd);
             foreach (var npc in targets)
             {
                 switch (cmd.Kind)

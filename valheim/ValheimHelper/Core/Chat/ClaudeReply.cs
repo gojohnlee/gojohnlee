@@ -160,6 +160,17 @@ namespace ValheimHelper.Core.Chat
                     return null;
                 case "escort": cmd.Kind = CommandKind.Escort; return null;
                 case "stop": cmd.Kind = CommandKind.Stop; return null;
+                case "farm": // "여기 밭 좀 만들어 줘" — 말한 사람 자리 둘레 반경 radius(없으면 기본), "!밭 n"과 같음(11-14 최종 시험 실제 말투)
+                    cmd.Kind = CommandKind.Farm;
+                    cmd.Number = ChatParser.DefaultRadius;
+                    if (t.TryGetValue("radius", out var rad) && rad != null)
+                    {
+                        if (!(rad is double rd) || rd != Math.Floor(rd) || rd < 1) return "밭 반경";
+                        cmd.Number = (int)Math.Min(rd, ChatParser.MaxRadius);
+                        cmd.Clamped = rd > ChatParser.MaxRadius;
+                    }
+                    return null;
+                case "tidy": cmd.Kind = CommandKind.Tidy; return null;
                 case "setmake":
                     cmd.Kind = CommandKind.SetMake;
                     if (!SetNumber(t, cmd, false)) return "세트 번호";
