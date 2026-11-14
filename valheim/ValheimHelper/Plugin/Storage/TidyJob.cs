@@ -24,6 +24,7 @@ namespace ValheimHelper
         Tidy.Move m_move;
         /// <summary>지금 들고 가는 물건(프리팹 이름), 없으면 null.</summary>
         string m_carry;
+        int m_keep; // 꺼내기 전 가방에 있던 그 물건 수(일꾼 먹거리 등) — 옮기지 않고 남김(회차 663: BugMeat를 들고 있어 그 물건을 늘 건너뜀)
         int m_trips;
         float m_time, m_stepTime;
         bool m_abort;
@@ -81,9 +82,8 @@ namespace ValheimHelper
         {
             if (m_trips >= MaxTrips) { Go(Step.Store); return true; }
             m_move = null;
-            Inventory mine = m_npc.GetInventory();
             foreach (var m in m_plan(m_npc.Home))
-                if (!m_skip.Contains(m.Name) && Tidy.Count(mine, m.Name) == 0) { m_move = m; break; }
+                if (!m_skip.Contains(m.Name)) { m_move = m; break; }
             if (m_move == null) { Go(Step.Store); return true; }
             Go(Step.ToFrom);
             return true;
@@ -132,6 +132,7 @@ namespace ValheimHelper
             Inventory mine = m_npc.GetInventory();
             string name = m_move.Name;
             int limit = m_move.Count;
+            int keep = Tidy.Count(mine, name);
             bool done = Chests.TryEdit(m_move.From, finv =>
             {
                 if (limit > 0) { Tidy.TakeSome(finv, mine, name, limit); return; }
@@ -139,9 +140,10 @@ namespace ValheimHelper
                     if (it.m_dropPrefab != null && it.m_dropPrefab.name == name && mine.CanAddItem(it, 1)) mine.MoveItemToThis(finv, it);
             });
             if (!done) { if (m_stepTime > WalkLimit + EditWait) Skip("상자 열림"); return true; }
-            int got = Tidy.Count(mine, name);
+            int got = Tidy.Count(mine, name) - keep;
             if (got == 0) { Skip("가방 자리 없음·이미 없음"); return true; }
             m_carry = name;
+            m_keep = keep;
             m_trips++;
             Go(Step.ToTarget);
             return true;
@@ -152,14 +154,10 @@ namespace ValheimHelper
             if (!Reach(dt, m_move.To, out bool failed)) { if (failed) { m_skip.Add(m_carry); m_carry = null; Go(Step.Store); } return true; }
             Inventory mine = m_npc.GetInventory();
             string name = m_carry;
-            int before = Tidy.Count(mine, name);
-            bool done = Chests.TryEdit(m_move.To, tinv =>
-            {
-                foreach (var it in new List<ItemDrop.ItemData>(mine.GetAllItems()))
-                    if (it.m_dropPrefab != null && it.m_dropPrefab.name == name) tinv.MoveItemToThis(mine, it); // 자리만큼만
-            });
+            int before = Tidy.Count(mine, name) - m_keep;
+            bool done = before <= 0 || Chests.TryEdit(m_move.To, tinv => Tidy.TakeSome(mine, tinv, name, before)); // 자리만큼만, 원래 든 몫은 남김
             if (!done && m_stepTime < WalkLimit + EditWait) return true; // 누가 열고 있다
-            int left = Tidy.Count(mine, name);
+            int left = System.Math.Max(0, Tidy.Count(mine, name) - m_keep);
             Moved += before - left;
             Plugin.Log.LogInfo($"{m_npc.NpcName} 상자 정리: {name} {before - left}개 옮김{(left > 0 ? $", {left}개 남음(자리 없음 → 짐 정리로)" : "")}");
             m_carry = null;
@@ -185,19 +183,15 @@ namespace ValheimHelper
             string name = m_carry;
             m_carry = null;
             Inventory mine = m_npc.GetInventory();
-            int had = Tidy.Count(mine, name);
-            if (had == 0) return;
+            int had = Tidy.Count(mine, name) - m_keep;
+            if (had <= 0) return;
+            int left = had;
             foreach (Container c in new[] { m_move?.From, Chests.ForItem(name, m_npc.Home) })
             {
                 if (c == null) continue;
-                Chests.TryEdit(c, inv =>
-                {
-                    foreach (var it in new List<ItemDrop.ItemData>(mine.GetAllItems()))
-                        if (it.m_dropPrefab != null && it.m_dropPrefab.name == name) inv.MoveItemToThis(mine, it);
-                });
-                if (Tidy.Count(mine, name) == 0) break;
+                Chests.TryEdit(c, inv => left -= Tidy.TakeSome(mine, inv, name, left));
+                if (left <= 0) break;
             }
-            int left = Tidy.Count(mine, name);
             BaseStock.Changed();
             Plugin.Log.LogInfo($"{m_npc.NpcName} 상자 정리 그만둠: 든 {name} {had - left}개 상자에 되돌림{(left > 0 ? $", {left}개 가방에(다음 짐 정리)" : "")}");
         }

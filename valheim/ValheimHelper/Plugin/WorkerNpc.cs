@@ -311,7 +311,8 @@ namespace ValheimHelper
             if (heal > 0f && GetHealth() < GetMaxHealth()) Heal(heal * RestedRegen, false);
             if (++m_foodSaveTimer >= 10f) { m_foodSaveTimer = 0f; SaveFoods(); }
             // 음식이 끝나 칸이 비면 들고 다니는 음식을 그 자리에서 먹는다(사용자 11-09 "들고 가게", Prep.FoodToCarry)
-            if (Meals.HasEmptySlot && !IsDead() && HasFood(GetInventory()))
+            // 먹이·정리로 옮기는 중인 음식은 안 먹음(회차 663 — 우리 먹이로 꺼낸 산딸기를 먹어 "먹임 0")
+            if (Meals.HasEmptySlot && !IsDead() && !(Ai?.Job is LivestockJob) && !(Ai?.Job is TidyJob) && HasFood(GetInventory()))
             {
                 var eaten = EatFrom(GetInventory(), null, true);
                 if (eaten.Count > 0) Plugin.Log.LogInfo($"{NpcName} 들고 간 음식 먹음: {string.Join(", ", eaten.ToArray())} → 최대 체력 {Meals.MaxHealth:0}");

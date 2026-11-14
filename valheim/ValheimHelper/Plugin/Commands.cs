@@ -359,7 +359,9 @@ namespace ValheimHelper
                 return true;
             }
             if (Tidy.Plan(npc.Home).Count == 0) { npc.Say("choreNone"); return false; }
-            npc.Ai.StartJob(new TidyJob(npc));
+            var tidy = new TidyJob(npc);
+            npc.Ai.StartJob(tidy);
+            s_tidyJob[npc] = tidy;
             npc.Say("choreTidy");
             s_tidyLeft[npc] = Tidy.Plan(npc.Home).Count;
             s_tidyMiss.Remove(npc);
@@ -372,17 +374,23 @@ namespace ValheimHelper
         /// <summary>가장 적었던 옮길 것보다 못 줄인 연속 횟수. 다른 일꾼이 그사이 물건을 넣어 한 번 늘 수 있어(회차 663 — 19 → 20에서 그만) 3번 내리 못 줄여야 그만.</summary>
         static readonly Dictionary<WorkerNpc, int> s_tidyMiss = new Dictionary<WorkerNpc, int>();
 
+        /// <summary>마지막으로 맡긴 TidyJob — 옮긴 게 있으면 남은 수가 안 줄어도(동료가 그사이 상자에 넣음, 회차 664) 이어 간다.</summary>
+        static readonly Dictionary<WorkerNpc, TidyJob> s_tidyJob = new Dictionary<WorkerNpc, TidyJob>();
+
         static bool ContinueTidy(WorkerNpc npc)
         {
             if (!s_tidyLeft.TryGetValue(npc, out int left)) return false;
             s_tidyLeft.Remove(npc);
             int now = Tidy.Plan(npc.Home).Count;
             s_tidyMiss.TryGetValue(npc, out int miss);
-            miss = now < left ? 0 : miss + 1;
+            int moved = s_tidyJob.TryGetValue(npc, out TidyJob last) && last != null ? last.Moved : 0;
+            miss = now < left || moved > 0 ? 0 : miss + 1;
             bool stop = now == 0 || miss >= 3; // 다 했거나 더 못 줄임(상자 꽉 참 등)
-            Plugin.Log.LogInfo($"{npc.NpcName} !정리 이어서: 옮길 것 {left} → {now}{(stop ? " — 그만" : miss > 0 ? $" (못 줄임 {miss})" : "")}");
-            if (stop) { s_tidyMiss.Remove(npc); return false; }
-            npc.Ai.StartJob(new TidyJob(npc));
+            Plugin.Log.LogInfo($"{npc.NpcName} !정리 이어서: 옮길 것 {left} → {now}, 지난번 옮김 {moved}{(stop ? " — 그만" : miss > 0 ? $" (못 줄임 {miss})" : "")}");
+            if (stop) { s_tidyMiss.Remove(npc); s_tidyJob.Remove(npc); return false; }
+            var tidy = new TidyJob(npc);
+            npc.Ai.StartJob(tidy);
+            s_tidyJob[npc] = tidy;
             s_tidyLeft[npc] = Mathf.Min(left, now);
             s_tidyMiss[npc] = miss;
             return true;
