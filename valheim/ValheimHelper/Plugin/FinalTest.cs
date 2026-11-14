@@ -59,6 +59,7 @@ namespace ValheimHelper
             yield return Order(checks, home, "구리주괴", "Copper", 900f, make: true); // 제련: 거점 제련소·석탄 연료가 있어야 함(없으면 FAIL로 드러남)
             yield return Order(checks, home, "활", "Bow", 600f, make: true, n: 3); // 활은 제작(작업대·재료). 시험은 3자루만(화살은 활이 챙김)
             yield return SetOrder(checks, home);
+            yield return Order(checks, home, "RawMeat", "RawMeat", 600f); // 사냥: 생고기 10개 더(시작 재료 4개는 Order가 뺌)
 
             End(player, god, checks, onHeard, heard);
         }
