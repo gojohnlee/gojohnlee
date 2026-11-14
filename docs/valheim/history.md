@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 636 · 11-14 · 모드 부하 재기 ② 게임 쪽 프레임 기록 넣음
+
+**요약**
+
+- 게임 안에서 프레임 시간을 모아 30초마다 로그에 "평균·최악·1% 최악" 한 줄을 남기는 기능을 넣었다. 평소에는 꺼져 있다(VH_FRAMESTATS=1일 때만).
+
+**자세히**
+
+- Plugin/FrameLog.cs 새로 만듦: Time.unscaledDeltaTime을 모아 FrameStats.Summarize·ToText로 요약, BepInEx 로그 "[모드 부하] ..." 줄. 끄면 Tick은 아무 일도 안 함.
+- Plugin.Update에 Run("FrameLog", ...) 한 줄 추가.
+- 빌드 통과(오류 0), dotnet test 746/746 PASS. dist DLL 갱신(커밋 81a33b2).
+- 게임 시험은 아직 안 돌림: 모드 끔·켬 비교와 로그 줄 확인은 다음 회차에.
+
 ### 회차 635 · 11-14 · 모드 부하 재기 첫 조각: 프레임 시간 요약 Core
 
 **요약**
