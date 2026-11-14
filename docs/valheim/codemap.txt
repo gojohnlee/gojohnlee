@@ -83,6 +83,7 @@ PC 시험 스크립트        scripts/valheim-test.ps1, 빌드 scripts/valheim-b
   한 실행은 25분이면 꺼지므로 묶음 4~7개로 나눔(회차 293 꼴 10묶음: progress·history "요청 · 전체 회귀" — B1 기본+copper·tin … B8 평원·안개땅·상자 정리, B9 애쉬랜드, B10 딥노스, B11 house·unloadreach·livestock·post·guardbow·chores·fish, B12 멀티 = scripts/vh-b12.ps1 -Dll <dll>(전용 서버+손님 jointest·guestcmdtest·guestchesttest·guestrestart1 → 서버 재시작 → guestrestart2) — 묶음별 시험은 history-2026-10.md "B1 npc·flag" 줄). 슬래시(/) 뒤 시험은 VH_BIOME 없이 따로(기본 자리에서 굴·적을 세움 — 회차 301: VH_BIOME=ashlands로 같이 돌리면 둘레 탄 전사·아스크스빈 탓에 ashfoe·morgen FAIL).
 - 시험이 Errors.txt 항목과 겹치면 그 항목 "다음 확인"도 같이 본다.
 - 새(땅에 앉은 새) 시험 vh_birdprobetest·vh_birdshoottest는 남겨 두지만 회귀 묶음(B1~B11)엔 안 넣음 [사용자 11-13 15:40].
+- 최종 실전 시험 ①(나무·돌 채팅 명령, 되돌림 한 번): vh_finaltest (FinalTest.cs, 회차 645) — 명령마다 거점 상자 개수로 판정.
 기본 묶음(공통)          vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest
 잡담 WorkerBanter·Banter      vh_bantertest (Core만이면 dotnet test)
 WorkerAI 걷기·물·구덩이   기본 묶음 + vh_pittest;vh_stucktest;vh_hoptest;vh_fartest(먼 구역) · 멀리선 이동 생략 GatherJob.FarWalk·FarSkip → vh_skiptest;vh_hoptest · Core Water/Climb·StuckBook은 dotnet test + vh_pittest · 타르 웅덩이 피하기(TarStep·TarAhead) → + vh_tartest · 용암 피하기(Lava·Hazard·LavaEdge) → + vh_ashlandstest(VH_BIOME=ashlands)
