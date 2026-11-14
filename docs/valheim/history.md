@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 666 · 11-14 · 재시작 시험 뒤 시험이 빠지던 것 고침
+
+**요약**
+
+- 요청 재시작 시험 뒤 시험 빠짐 끝: 시험 스크립트가 재시작 1번째에서 실행을 끊고 2번째를 붙인 뒤 남은 시험을 이어 돌림(커밋 5a302ef9, 두 묶음 전부 PASS)
+
+**자세히**
+
+- 원인: 재시작 1번째 시험이 게임을 바로 꺼 같은 실행의 뒤 시험이 안 돌았음. 이제 실행을 나눠 돌리고, 안 돈 시험은 요약에 "안 돔".
+- 시험: settest;restartcraft_part;restartcraft_carry;crafttest(+자동 restartcraft2 두 번) 5/5, restartcraft_carry;crafttest(+restartcraft2) 3/3 PASS.
+- 참고: 이 PC엔 python이 없어(WindowsApps 가짜) 문서 고치기는 sed·편집 도구로.
+
 ### 요청 · 11-14 19:38 · 시험 도구: 재시작 시험 뒤 시험이 빠짐
 
 > VH_TEST에 재시작 시험 뒤에 다른 시험을 넣으면 재시작 시험 하나만 결과가 나오고 뒤 시험은 돌지 않은 채 요약에서 빠진다(11-14 두 번 재현).
@@ -18,6 +30,12 @@
 - 할 만함: 시험 스크립트(valheim-test.ps1)·TestKit의 재시작 처리만 고치는 일이라 게임 쪽 위험 없음.
 - 순서: 원인 찾기 → 재시작 뒤 남은 시험 이어 돌리기(안 되면 "안 돔"으로 요약에 남김) → 두 묶음 다시 돌려 확인.
 
+
+**끝** · 11-14 19:53 회차 666
+
+- 원인: 재시작 1번째 시험(vh_restart1·vh_restartcraft_load/part/carry)이 저장하고 게임을 바로 꺼서, 같은 실행에 적힌 뒤 시험이 돌 기회가 없었고 요약에도 안 나왔다.
+- 고침: 시험 스크립트가 1번째에서 실행을 끊고, 2번째(vh_restart2·vh_restartcraft2)를 원본 되돌리기 없이 붙인 뒤, 남은 시험은 새 실행으로 이어 돌린다. 그래도 diag에 칸이 없는 시험은 요약에 "안 돔"으로 남긴다.
+- 확인: settest;restartcraft_part;restartcraft_carry;crafttest → 5개 실행 모두 PASS(재시작 2번째 두 번 포함), restartcraft_carry;crafttest → 3개 모두 PASS. 커밋 5a302ef9.
 
 ### 회차 664 · 11-14 · 최종 실전 시험: 상자 정리·가축 고침
 
