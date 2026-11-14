@@ -184,14 +184,15 @@ while ((Test-Game) -and $t -lt $maxMin * 60) {   # 상한 넘으면 멈춘 것�
     # 종료 시작("Game - OnApplicationQuit", 6번 다 있음 — ZNet OnDestroy는 없는 실행도 있었음)이 이번 실행 로그에 찍힌 뒤 로그가 2분 넘게 멈춰 있으면
     # 종료 멈춤(10-26 세 번, 응답 없음) → 30분 기다리지 않고 끈다(E038). 멈춘 게임이 로그를 쥐고 있어 Select-String은 못 읽음 → Get-Content.
     $gp = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Select-Object -First 1
+    if ($gp) { $cpuLast = $gp.TotalProcessorTime.TotalSeconds; $wallLast = Get-Date }   # 마지막으로 본 값(게임은 시험 끝에 꺼져 뒤에 찾으면 없음, 회차 643)
     $li = Get-Item $gameLog -ErrorAction SilentlyContinue
     if ($gp -and $li -and $li.LastWriteTime -gt $gp.StartTime -and ((Get-Date) - $li.LastWriteTime).TotalSeconds -gt 120 -and
         @((Get-Content $gameLog -Encoding UTF8 -ErrorAction SilentlyContinue) -match 'Game - OnApplicationQuit').Count) { $exitHang = $true; break }
 }
 $runTimedOut = Test-Game
 $cpuLine = $null
-if ($cpu0 -and $ourId -and ($gpEnd = Get-Process -Id $ourId -ErrorAction SilentlyContinue)) {
-    $wallS = ((Get-Date) - $wall0).TotalSeconds; $cpuS = $gpEnd.TotalProcessorTime.TotalSeconds - $cpu0
+if ($cpu0 -and $cpuLast) {
+    $wallS = ($wallLast - $wall0).TotalSeconds; $cpuS = $cpuLast - $cpu0
     if ($wallS -gt 0) { $cpuLine = '[외부 부하] 게임 CPU {0:N0}% (1코어=100%, 벽시계 {1:N0}초, 모드 {2})' -f (100 * $cpuS / $wallS), $wallS, $(if ($env:VH_NOMOD -eq '1') { '끔' } else { '켬' }) }
 }
 if ($runTimedOut) {
