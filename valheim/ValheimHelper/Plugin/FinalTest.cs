@@ -6,7 +6,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_finaltest 최종 실전 시험(사용자 11-12, decisions 71) ① 조각: 시험 기본 집에서 한 번만 되돌린 뒤 채팅 명령을 하나씩 내려
-    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌만(구리·제련·활·밭·가축·사냥은 다음 조각).
+    /// 명령마다 거점 상자 개수로 PASS/FAIL. 되돌리기·상자 채우기 없이 이어 간다. 지금은 나무·돌·구리(제련·활·밭·가축·사냥은 다음 조각).
     /// </summary>
     static class FinalTest
     {
@@ -52,17 +52,19 @@ namespace ValheimHelper
             // 2) 명령마다 거점 상자 개수로 판정 — 실패해도 다음 명령을 계속(하나 막혀도 계속)
             yield return Order(checks, home, "나무", "Wood");
             yield return Order(checks, home, "돌", "Stone");
+            yield return Order(checks, home, "구리", "CopperOre", 600f);
 
             End(player, god, checks, onHeard, heard);
         }
 
-        /// <summary>"!일꾼 말 10" 한 번 내리고 거점 상자에 그 물건이 10개 더 생기면 PASS. 최대 240초.</summary>
-        static IEnumerator Order(GatherTest.Checks checks, Vector3 home, string word, string item)
+        /// <summary>"!일꾼 말 10" 한 번 내리고 거점 상자에 그 물건이 10개 더 생기면 PASS. 최대 maxSec초(기본 240초).
+        /// 구리는 광맥을 찾아 멀리(240m) 가야 해서 회차 647에 600초로 늘림(찾기 152초 + 캐기 + 운반이 240초를 넘음).</summary>
+        static IEnumerator Order(GatherTest.Checks checks, Vector3 home, string word, string item, float maxSec = 240f)
         {
             int before = GatherTest.CountBase(home, item), got = 0;
             GatherTest.Say($"!{Workers.Name1} {word} 10", null);
             float t = 0f;
-            while (t < 240f)
+            while (t < maxSec)
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
