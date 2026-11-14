@@ -14,8 +14,7 @@ namespace ValheimHelper
     {
         public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험: 이름 없는 실제 말투 명령 한꺼번에(알아들음·해냄 따로, 되돌림 한 번)", Run, 3600f);
 
-        static bool s_dbgTime;
-        static float s_dbgValue;
+        static bool s_autoGo;
 
         static IEnumerator Run()
         {
@@ -28,9 +27,9 @@ namespace ValheimHelper
                 yield break;
             }
             bool god = player.InGodMode();
-            // 낮으로 고정(시작이 밤이면 귀환이 걸림 — GatherTest와 같은 까닭). End가 되돌림
-            s_dbgTime = EnvMan.instance.m_debugTimeOfDay; s_dbgValue = EnvMan.instance.m_debugTime;
-            EnvMan.instance.m_debugTimeOfDay = true; EnvMan.instance.m_debugTime = 0.5f;
+            // 실플레이 조건(다시 짜기 다): 시간 고정 없음(밤도 옴), 질문 자동 대답 없음 — End가 되돌림
+            s_autoGo = Departures.TestAutoGo;
+            Departures.TestAutoGo = false;
             player.SetGodMode(true);
             var heard = new List<string>();
             System.Action<string, string> onHeard = (n, t) => heard.Add(n + ": " + t);
@@ -85,15 +84,14 @@ namespace ValheimHelper
             Commands.Ran += OnRan;
             WorkerNpc.TestPicked = Busy.Picked;
             var orders = new List<Want>();
-            // 밭: 말한 사람 자리가 중심이고 Claude 답이 늦게 오므라 밭 자리에서 말하고 알아들을 때까지(최대 120초) 서 있다 돌아옴(일꾼은 안 옮김 — 순간이동 빼기는 다) 조각)
-            Vector3 back = player.transform.position;
+            // 밭: 말한 사람 자리가 중심 → 플레이어는 시작 때 한 번 밭 자리에 서서 모든 명령을 거기서 말하고 시험 내내 서 있음
+            //    (다시 짜기 다: 명령 사이 순간이동·알아들을 때까지 기다림 없음 — 실플레이처럼 한꺼번에)
             player.TeleportTo(fieldAt + Vector3.up * 0.5f, player.transform.rotation, distantTeleport: false);
             yield return new WaitForSeconds(3f);
+            TestRunner.Log($"DIAG 시작 시각: {(EnvMan.IsNight() ? "밤" : "낮")} (하루 {EnvMan.instance.GetDayFraction():F2})");
             var farm = Say("여기 밭 좀 만들어 줘, 반경 3", CommandKind.Farm, null, 3);
             farm.N = 4; farm.Count = () => FarmTest.Plants(field).Count; farm.Goal = "당근 새싹";
             orders.Add(farm);
-            for (float w = 0f; w < 120f && farm.Heard == null; w += 1f) { yield return new WaitForSeconds(1f); Match(orders); }
-            player.TeleportTo(back, player.transform.rotation, distantTeleport: false);
             orders.Add(Say("나무 10개 좀 해 와", CommandKind.Item, "Wood", 10, home));
             orders.Add(Say("돌 10개 캐 와", CommandKind.Item, "Stone", 10, home));
             orders.Add(Say("구리 10개", CommandKind.Item, "CopperOre", 10, home)); // 정해진 꼴은 모드가 바로
@@ -111,10 +109,15 @@ namespace ValheimHelper
             orders.Add(tidy);
             orders.RemoveAll(o => o == null);
             float t = 0f;
-            while (t < 3000f && orders.Exists(o => o.Done < 0f))
+            int nights = 0; bool wasNight = EnvMan.IsNight();
+            while (t < 4200f && orders.Exists(o => o.Done < 0f)) // 밤이 끼면 더 걸림(3000 → 4200초)
             {
                 yield return new WaitForSeconds(5f);
                 t += 5f;
+                bool night = EnvMan.IsNight();
+                if (night && !wasNight) { nights++; TestRunner.Log($"DIAG 밤 시작 {t:F0}초 ({nights}번째)"); }
+                if (!night && wasNight) TestRunner.Log($"DIAG 낮 시작 {t:F0}초");
+                wasNight = night;
                 // 급한 명령(나) 셋째 조각, decisions 147): 모두 바쁠 때쯤 "급해 … 먼저" — 하던 일을 멈추고 바로 시작, 멈춘 일은 대기열 맨 앞
                 if (t == 120f) { var u = Say("급해, 나무 5개 먼저 해 와", CommandKind.Item, "Wood", 5, home); u.Urgent = true; orders.Add(u); }
                 Match(orders);
@@ -445,7 +448,7 @@ namespace ValheimHelper
 
         static void End(Player player, bool god, GatherTest.Checks checks, System.Action<string, string> onHeard, List<string> heard)
         {
-            if (EnvMan.instance != null) { EnvMan.instance.m_debugTimeOfDay = s_dbgTime; EnvMan.instance.m_debugTime = s_dbgValue; }
+            Departures.TestAutoGo = s_autoGo;
             ChatNet.Heard -= onHeard;
             Commands.Ran -= OnRan;
             WorkerNpc.TestPicked = null;
