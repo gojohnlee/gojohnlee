@@ -42,8 +42,12 @@ namespace ValheimHelper
         public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
 
-        public TidyJob(WorkerNpc npc, Func<Vector3, List<Tidy.Move>> plan = null, string label = "state.tidy")
+        /// <summary>자리 없음·못 닿음으로 건너뛴 물건 — !정리 이어서가 다음 TidyJob에 넘겨 같은 물건을 다시 고르지 않게(E103: 매번 0개 옮김 되풀이).</summary>
+        public IEnumerable<string> Skipped => m_skip;
+
+        public TidyJob(WorkerNpc npc, Func<Vector3, List<Tidy.Move>> plan = null, string label = "state.tidy", IEnumerable<string> skip = null)
         {
+            if (skip != null) m_skip.UnionWith(skip);
             m_npc = npc;
             m_ai = npc.Ai;
             m_plan = plan ?? Tidy.Plan;

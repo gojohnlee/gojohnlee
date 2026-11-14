@@ -364,14 +364,18 @@ namespace ValheimHelper
         {
             if (!s_tidyLeft.TryGetValue(npc, out int left)) return false;
             s_tidyLeft.Remove(npc);
-            int now = Tidy.Plan(npc.Home).Count;
+            s_tidyJob.TryGetValue(npc, out TidyJob last);
+            // 지난번에 건너뛴 물건(자리 없음·못 닿음)은 넘겨 다시 안 고르고 셈에서도 뺀다 — 남은 게 그것뿐이면 그만(E103: 매번 같은 물건 0개 옮김 되풀이)
+            var skip = last != null ? new HashSet<string>(last.Skipped) : new HashSet<string>();
+            int now = 0;
+            foreach (var m in Tidy.Plan(npc.Home)) if (!skip.Contains(m.Name)) now++;
             s_tidyMiss.TryGetValue(npc, out int miss);
-            int moved = s_tidyJob.TryGetValue(npc, out TidyJob last) && last != null ? last.Moved : 0;
+            int moved = last != null ? last.Moved : 0;
             miss = now < left || moved > 0 ? 0 : miss + 1;
             bool stop = now == 0 || miss >= 3; // 다 했거나 더 못 줄임(상자 꽉 참 등)
-            Plugin.Log.LogInfo($"{npc.NpcName} !정리 이어서: 옮길 것 {left} → {now}, 지난번 옮김 {moved}{(stop ? " — 그만" : miss > 0 ? $" (못 줄임 {miss})" : "")}");
+            Plugin.Log.LogInfo($"{npc.NpcName} !정리 이어서: 옮길 것 {left} → {now}, 지난번 옮김 {moved}{(skip.Count > 0 ? $", 건너뜀 {skip.Count}" : "")}{(stop ? " — 그만" : miss > 0 ? $" (못 줄임 {miss})" : "")}");
             if (stop) { s_tidyMiss.Remove(npc); s_tidyJob.Remove(npc); return false; }
-            var tidy = new TidyJob(npc);
+            var tidy = new TidyJob(npc, skip: skip);
             npc.Ai.StartJob(tidy);
             s_tidyJob[npc] = tidy;
             s_tidyLeft[npc] = Mathf.Min(left, now);
