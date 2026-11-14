@@ -406,33 +406,37 @@ namespace ValheimHelper
 
         static bool NeedsFoodToCarry(Inventory mine, Container c) => CountFood(mine) < FoodToCarry && WorkerNpc.HasFood(c.GetInventory());
 
-        /// <summary>들고 다닐 음식을 FoodToCarry까지: 체력 높은 음식부터 한 종류에 하나씩 돌아가며(사람 제작 막대 예약분은 안 가져감).</summary>
+        /// <summary>명령으로 만든 음식 몫(PlanJob.Finish가 적음) — 들고 갈 음식에서 뒤로(decisions "갓 만든 음식").</summary>
+        public static readonly FoodHold Fresh = new FoodHold();
+
+        /// <summary>들고 다닐 음식을 FoodToCarry까지: 체력 높은 음식부터 한 종류에 하나씩 돌아가며, 명령으로 만든 몫은 다른 음식이 모자랄 때만(사람 제작 막대 예약분은 안 가져감).</summary>
         static void TakeFood(Container from, Inventory mine, Inventory chest, List<string> taken)
         {
             int need = FoodToCarry - CountFood(mine);
-            var kinds = new List<ItemDrop.ItemData>();
+            if (need <= 0) return;
+            var kinds = new List<(string name, float food, int have)>();
             foreach (var it in chest.GetAllItems())
-                if (Gear.IsFood(it) && !kinds.Exists(k => k.m_shared.m_name == it.m_shared.m_name)) kinds.Add(it);
-            kinds.Sort((a, b) => b.m_shared.m_food.CompareTo(a.m_shared.m_food)); // 체력만(사용자 11-09)
-            bool any = true;
-            while (need > 0 && any)
             {
-                any = false;
-                foreach (var k in kinds)
-                {
-                    if (need <= 0) break;
-                    ItemDrop.ItemData it = null;
-                    foreach (var c in chest.GetAllItems()) if (c.m_shared.m_name == k.m_shared.m_name) { it = c; break; }
-                    if (it == null || BaseStock.Allow(from, it.m_shared.m_name, 1) < 1) continue;
-                    ItemDrop.ItemData copy = it.Clone();
-                    copy.m_stack = 1;
-                    if (!mine.AddItem(copy)) return;
-                    chest.RemoveItem(it, 1);
-                    BaseStock.Changed();
-                    need--;
-                    any = true;
-                    taken.Add(it.m_shared.m_name);
-                }
+                if (!Gear.IsFood(it)) continue;
+                int i = kinds.FindIndex(k => k.name == it.m_shared.m_name);
+                if (i < 0) kinds.Add((it.m_shared.m_name, it.m_shared.m_food, it.m_stack)); // 체력만(사용자 11-09)
+                else kinds[i] = (kinds[i].name, kinds[i].food, kinds[i].have + it.m_stack);
+            }
+            double now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
+            // 막대 예약분으로 못 가져가는 것이 있을 수 있어 넉넉히 고르고 앞에서부터 need개
+            foreach (var name in FoodHold.Pick(kinds, kinds.Count * FoodToCarry + need, n => Fresh.Held(n, now)))
+            {
+                if (need <= 0) break;
+                ItemDrop.ItemData it = null;
+                foreach (var c in chest.GetAllItems()) if (c.m_shared.m_name == name) { it = c; break; }
+                if (it == null || BaseStock.Allow(from, name, 1) < 1) continue;
+                ItemDrop.ItemData copy = it.Clone();
+                copy.m_stack = 1;
+                if (!mine.AddItem(copy)) return;
+                chest.RemoveItem(it, 1);
+                BaseStock.Changed();
+                need--;
+                taken.Add(name);
             }
         }
 

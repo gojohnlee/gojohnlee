@@ -240,6 +240,15 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>명령으로 만든 음식은 들고 갈 음식에서 뒤로(decisions "갓 만든 음식", 회차 673).</summary>
+        void HoldFood(string prefab, int n)
+        {
+            var drop = prefab != null && ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab(prefab)?.GetComponent<ItemDrop>() : null;
+            if (drop == null || !Gear.IsFood(drop.m_itemData)) return;
+            Prep.Fresh.Add(drop.m_itemData.m_shared.m_name, n, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time);
+            Plugin.Log.LogInfo($"{m_npc.NpcName} 만든 음식 몫: {prefab} {n} — 들고 갈 음식에서 뒤로");
+        }
+
         bool Finish()
         {
             Plugin.Log.LogInfo($"{m_npc.NpcName} 계획 끝: 완료 {m_runner.Count(StepState.Done)}, 실패 {m_runner.Count(StepState.Failed)}, 막힘 {m_runner.Count(StepState.Blocked)}");
@@ -247,6 +256,8 @@ namespace ValheimHelper
             if (FromIdle && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
                 Departures.RefillJobFailed(m_npc, Goal.Item, "idlePlan");
             else if (FromIdle) Departures.AddDebt(m_npc, m_runner.Plan.UsedStock); // 상자에서 쓴 재료는 다시 캐 둠(사용자 11-09)
+            else if (Goal != null && Goal.Kind == WorkKind.Make && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) == 0)
+                HoldFood(Goal.Item, Goal.Amount);
             var missing = m_runner.Plan.MissingStations;
             if (missing.Count > 0 && m_runner.Finished)
                 m_npc.Say("craft.missingDone", new Dictionary<string, string> { ["item"] = m_goal, ["station"] = Recipes.StationName(missing[0]) });

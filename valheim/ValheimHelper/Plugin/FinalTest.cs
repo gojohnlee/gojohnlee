@@ -400,14 +400,7 @@ namespace ValheimHelper
         }
 
         /// <summary>이름 없이 한 마디를 하고 판정할 Want를 돌려준다(home이 있으면 거점 상자 개수로 판정).
-        /// make: 만드는 물건 — 판정은 상자 개수가 처음보다 n개 늘었나. 모아 오는 것은 일꾼들이 상자에 넣은 수(회차 661 — 제작·굽기가 같은 재료를 씀).
-        static int Bags(string item)
-        {
-            int c = 0;
-            foreach (var n in WorkerNpc.All) if (n != null) c += n.CountItem(item);
-            return c;
-        }
-
+        /// make: 만드는 물건 — 판정은 상자 개수가 처음보다 n개 늘었나. 모아 오는 것은 일꾼들이 상자에 넣은 수(회차 661 — 제작·굽기가 같은 재료를 씀).</summary>
         static Want Say(string text, CommandKind kind, string item, int n, Vector3? home = null, bool make = false)
         {
             var w = new Want { Text = text, Kind = kind, Item = item, Amount = n, N = n };
@@ -416,8 +409,8 @@ namespace ValheimHelper
                 w.Before = GatherTest.CountBase(home.Value, item);
                 // 늦게 같이 캐기(JoinGather)로 동료가 낀 몫도 이 명령의 것이라 모든 일꾼이 넣은 수를 합친다(11-14).
                 if (!make) { int p0 = PutByAll(item); w.Count = () => PutByAll(item) - p0; }
-                // 만든 음식은 넣자마자 일꾼이 들고 갈 음식으로 가져갈 수 있어(회차 671: 구운 고기 4 넣고 곧 3개 들고 사냥) 상자+일꾼 짐을 셈
-                else { Vector3 h = home.Value; int b0 = w.Before + Bags(item); w.Count = () => GatherTest.CountBase(h, item) + Bags(item) - b0; }
+                // 만든 음식은 상자만 셈 — 명령 몫은 들고 갈 음식에서 뒤로라 넣자마자 사라지면 안 됨(회차 671 구운 고기 4 → 3개 들고 사냥, 회차 673 고침)
+                else { Vector3 h = home.Value; int b0 = w.Before; w.Count = () => GatherTest.CountBase(h, item) - b0; }
             }
             GatherTest.Say(text, null); // 수량 = 새로 만들/가져올 수(사용자 11-14 — 상자 포함 아님)
             return w;
