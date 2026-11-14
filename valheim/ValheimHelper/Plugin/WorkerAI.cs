@@ -932,6 +932,7 @@ namespace ValheimHelper
             m_detourCount = 0;
             m_samplePos = at;
             m_sampleTimer = 0f;
+            Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 순간이동 자리 구덩이 가장자리 → 목표 쪽 {at.x:0} {at.z:0}");
             StuckTeleports++;
         }
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
@@ -1247,6 +1248,7 @@ namespace ValheimHelper
             StopMoving();
             m_carving = false;
             bool sent = npc.TeleportTo(home, transform.rotation, false);
+            Plugin.Log.LogInfo($"{npc.NpcName}: 순간이동 자리 집으로 귀환 (보냄 {sent})");
             StuckTeleports++;
             if (!sent) return false;
             ZNetView nv = npc.GetComponent<ZNetView>();

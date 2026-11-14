@@ -264,6 +264,7 @@ namespace ValheimHelper
             if (!LandNear(dest, out why)) return false;
             Hops++;
             LastHopDest = dest;
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: 순간이동 자리 채집 근처 뛰기 → {dest.x:0} {dest.z:0}");
             WorkerAI.StuckTeleports++;
             return true;
         }
@@ -285,6 +286,7 @@ namespace ValheimHelper
             NearSkips++;
             LastNearSkipFrom = from;
             LastNearSkipDest = dest;
+            Plugin.Log.LogInfo($"{m_npc.NpcName}: 순간이동 자리 근처 건너뛰기 → {dest.x:0} {dest.z:0}");
             WorkerAI.StuckTeleports++;
             m_npc.Say("rescue");
             return true;
