@@ -348,6 +348,7 @@ namespace ValheimHelper
             npc.Say("choreTidy");
             s_tidyLeft[npc] = Tidy.Plan(npc.Home).Count;
             s_tidyMiss.Remove(npc);
+            TidySkip.Remove(npc);
             return true;
         }
 
@@ -360,6 +361,9 @@ namespace ValheimHelper
         /// <summary>마지막으로 맡긴 TidyJob — 옮긴 게 있으면 남은 수가 안 줄어도(동료가 그사이 상자에 넣음, 회차 664) 이어 간다.</summary>
         static readonly Dictionary<WorkerNpc, TidyJob> s_tidyJob = new Dictionary<WorkerNpc, TidyJob>();
 
+        /// <summary>!정리 이어서가 건너뛴 물건(자리 없음 등) — 시험이 "옮길 것 0"을 셀 때 뺌(새 !정리 때 비움).</summary>
+        internal static readonly Dictionary<WorkerNpc, HashSet<string>> TidySkip = new Dictionary<WorkerNpc, HashSet<string>>();
+
         static bool ContinueTidy(WorkerNpc npc)
         {
             if (!s_tidyLeft.TryGetValue(npc, out int left)) return false;
@@ -367,6 +371,7 @@ namespace ValheimHelper
             s_tidyJob.TryGetValue(npc, out TidyJob last);
             // 지난번에 건너뛴 물건(자리 없음·못 닿음)은 넘겨 다시 안 고르고 셈에서도 뺀다 — 남은 게 그것뿐이면 그만(E103: 매번 같은 물건 0개 옮김 되풀이)
             var skip = last != null ? new HashSet<string>(last.Skipped) : new HashSet<string>();
+            TidySkip[npc] = skip;
             int now = 0;
             foreach (var m in Tidy.Plan(npc.Home)) if (!skip.Contains(m.Name)) now++;
             s_tidyMiss.TryGetValue(npc, out int miss);

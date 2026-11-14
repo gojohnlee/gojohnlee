@@ -46,6 +46,8 @@ namespace ValheimHelper
         public float LeftVia(Vector3 me) => (m_phase == Phase.ToDoor ? Utils.DistanceXZ(me, m_out) + Utils.DistanceXZ(m_out, m_in) : Utils.DistanceXZ(me, m_in)) + Utils.DistanceXZ(m_in, m_for);
 
         static int Mask =>s_mask != 0 ? s_mask : (s_mask = LayerMask.GetMask("piece"));
+        static int s_spotMask;
+        static int SpotMask => s_spotMask != 0 ? s_spotMask : (s_spotMask = LayerMask.GetMask("Default", "static_solid", "piece", "piece_nonsolid"));
 
         /// <summary>사이를 건축물이 가리나(대상 자신·대상의 자식 충돌체는 뺌). 가운데 줄이 문 옆 좁은 틈(사람 못 지남)을 지나도
         /// 좌우 0.35m 두 줄이 다 막히면 가림(회차 357: 뒷문 옆 틈으로 안 가린다고 봐 앞문으로 돌아감).</summary>
@@ -544,10 +546,19 @@ namespace ValheimHelper
                     Door d = kv.Value;
                     Vector3 mid = Middle(d), n = d.transform.forward; n.y = 0f; n.Normalize();
                     Vector3 o = Covered(mid + n * Step) ? -n : n;
-                    Vector3 p = mid + o * 1.8f + Vector3.Cross(Vector3.up, o) * 1.2f;
-                    for (int i = 0; i < 8 && Covered(p); i++) p += o;
-                    if (Covered(p)) continue; // 밀어도 지붕 밑(처마·회랑) — 다음 문
-                    if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(p, out float h)) p.y = Mathf.Max(h, Floor(p, mid.y));
+                    // 사용자 11-15: 문 가운데 앞이 아니라 문 옆 벽에 붙어 섬(앞 1m·옆 2.2m) — 양옆 중 바위·물건에 안 막힌 쪽, 둘 다 막히면 예전 자리(앞 1.8m·옆 1.2m)
+                    Vector3 side = Vector3.Cross(Vector3.up, o), p = Vector3.zero;
+                    bool found = false;
+                    foreach (Vector3 cand in new[] { mid + o * 1.0f + side * 2.2f, mid + o * 1.0f - side * 2.2f, mid + o * 1.8f + side * 1.2f })
+                    {
+                        Vector3 q = cand;
+                        for (int i = 0; i < 8 && Covered(q); i++) q += o;
+                        if (Covered(q)) continue; // 밀어도 지붕 밑(처마·회랑)
+                        if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(q, out float h)) q.y = Mathf.Max(h, Floor(q, mid.y));
+                        if (Physics.CheckCapsule(q + Vector3.up * 0.6f, q + Vector3.up * 1.6f, 0.45f, SpotMask, QueryTriggerInteraction.Ignore)) continue; // 바위·나무·벽에 박힘
+                        p = q; found = true; break;
+                    }
+                    if (!found) continue; // 다음 문
                     post = p; outward = o; door = d;
                     return true;
                 }

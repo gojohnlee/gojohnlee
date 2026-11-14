@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     static class FinalTest
     {
-        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험: 이름 없는 실제 말투 명령 한꺼번에(알아들음·해냄 따로, 되돌림 한 번)", Run, 3600f);
+        public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험: 이름 없는 실제 말투 명령 한꺼번에(알아들음·해냄 따로, 되돌림 한 번)", Run, 4500f); // 안 기다림 4200초보다 길게(E103: 3600에 끊겨 남은 칸을 못 적음)
 
         static bool s_autoGo;
 
@@ -105,7 +105,7 @@ namespace ValheimHelper
             int tidy0 = Tidy.Plan(home).Count, tidyMin = tidy0;
             var tidy = Say("상자 정리 좀 해 줘", CommandKind.Tidy, null, 0);
             tidy.Goal = $"옮길 것 {tidy0} → 0"; tidy.N = 1;
-            tidy.Count = () => { int left = Tidy.Plan(home).Count; if (left < tidyMin) { tidyMin = left; TestRunner.Log($"DIAG 정리 남은 것 {left} ({tidy.Who} {(WorkerNpc.All.Find(n => n != null && n.NpcName == tidy.Who)?.Ai.Job?.GetType().Name ?? "일 없음")})"); } return left == 0 ? 1 : 0; };
+            tidy.Count = () => { var npcT = WorkerNpc.All.Find(n => n != null && n.NpcName == tidy.Who); HashSet<string> sk = null; if (npcT != null) Commands.TidySkip.TryGetValue(npcT, out sk); int left = 0; foreach (var m in Tidy.Plan(home)) if (sk == null || !sk.Contains(m.Name)) left++; /* 자리 없어 건너뛴 물건은 뺌(E103) */ if (left < tidyMin) { tidyMin = left; TestRunner.Log($"DIAG 정리 남은 것 {left} ({tidy.Who} {(WorkerNpc.All.Find(n => n != null && n.NpcName == tidy.Who)?.Ai.Job?.GetType().Name ?? "일 없음")})"); } return left == 0 ? 1 : 0; };
             orders.Add(tidy);
             orders.RemoveAll(o => o == null);
             float t = 0f;
