@@ -414,13 +414,13 @@ namespace ValheimHelper
         {
             int need = FoodToCarry - CountFood(mine);
             if (need <= 0) return;
-            var kinds = new List<(string name, float food, int have)>();
+            var kinds = new List<FoodKind>();
             foreach (var it in chest.GetAllItems())
             {
                 if (!Gear.IsFood(it)) continue;
-                int i = kinds.FindIndex(k => k.name == it.m_shared.m_name);
-                if (i < 0) kinds.Add((it.m_shared.m_name, it.m_shared.m_food, it.m_stack)); // 체력만(사용자 11-09)
-                else kinds[i] = (kinds[i].name, kinds[i].food, kinds[i].have + it.m_stack);
+                var k = kinds.Find(x => x.Name == it.m_shared.m_name);
+                if (k == null) kinds.Add(new FoodKind(it.m_shared.m_name, it.m_shared.m_food, it.m_stack)); // 체력만(사용자 11-09)
+                else k.Have += it.m_stack;
             }
             double now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
             // 막대 예약분으로 못 가져가는 것이 있을 수 있어 넉넉히 고르고 앞에서부터 need개

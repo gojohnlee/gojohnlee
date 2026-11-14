@@ -6,7 +6,7 @@ namespace ValheimHelper.Tests
 {
     public class FoodHoldTests
     {
-        static List<(string, float, int)> Kinds(params (string, float, int)[] k) => new List<(string, float, int)>(k);
+        static List<FoodKind> Kinds(params (string n, float f, int h)[] k) { var l = new List<FoodKind>(); foreach (var x in k) l.Add(new FoodKind(x.n, x.f, x.h)); return l; }
 
         [Fact]
         public void 몫은_다른_음식이_있으면_뒤로()
