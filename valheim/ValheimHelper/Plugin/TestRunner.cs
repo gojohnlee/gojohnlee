@@ -237,9 +237,17 @@ namespace ValheimHelper
 
         static bool s_leftNoBuild;
 
+        /// <summary>사용자 11-15(침대에서 게임 소리): 자동 시험 동안 소리 끔(AudioListener.volume — 사용자 음량 설정은 안 건드림, AudioMan.Start가 한 번 1로 둠) + 시작 영상이 돌면 멈춤(모드 끔 판은 SkipIntro 패치가 없어 영상이 나옴).</summary>
+        internal static void Quiet()
+        {
+            AudioListener.volume = 0f;
+            if (CinematicsManager.s_instance != null && CinematicsManager.IsStartedPlaying()) CinematicsManager.Stop();
+        }
+
         public static void UpdateAutoRun()
         {
             if (!s_auto) return;
+            Quiet();
             // 바이옴 회귀(검은숲 등): 시험 끝 정리 전·시험 사이에도 적이 와서 시험 캐릭터가 죽으면 다음 시험이 "플레이어 죽음" 환경 불량
             // (회차 139: peertest 뒤 회색난쟁이 4마리 → basetest 환경 불량) → 자동 시험 동안 신 모드를 유지한다(Restore가 끄면 다음 프레임에 다시 켬).
             if (TestKit.RunBiome != Heightmap.Biome.None && Player.m_localPlayer is Player me && !me.IsDead() && !me.InGodMode()) me.SetGodMode(true);
