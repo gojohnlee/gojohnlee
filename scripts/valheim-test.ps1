@@ -174,6 +174,7 @@ if ($Min) {
 while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실행은 느릴 수 있음
 $gp = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Select-Object -First 1
 $ourId = if ($gp) { $gp.Id; Set-Content $gameFile "$($gp.Id) $($gp.StartTime.Ticks)" }   # 다음 시험의 '모르는 게임' 판단용
+$cpu0 = if ($gp) { $gp.TotalProcessorTime.TotalSeconds }; $wall0 = Get-Date   # 외부 부하: 게임 CPU 시간(모드 끔에도 남는 재는 값, 회차 642)
 $t = 0; $exitHang = $false
 $gameLog = Join-Path $game 'BepInEx\LogOutput.log'
 # 상한 기본 30분. 긴 시험(최종 실전 시험 등)은 $env:VH_MAXMIN="분"(사용자 11-13: 최종 시험은 30분보다 확실히 김)
@@ -188,6 +189,11 @@ while ((Test-Game) -and $t -lt $maxMin * 60) {   # 상한 넘으면 멈춘 것�
         @((Get-Content $gameLog -Encoding UTF8 -ErrorAction SilentlyContinue) -match 'Game - OnApplicationQuit').Count) { $exitHang = $true; break }
 }
 $runTimedOut = Test-Game
+$cpuLine = $null
+if ($cpu0 -and $ourId -and ($gpEnd = Get-Process -Id $ourId -ErrorAction SilentlyContinue)) {
+    $wallS = ((Get-Date) - $wall0).TotalSeconds; $cpuS = $gpEnd.TotalProcessorTime.TotalSeconds - $cpu0
+    if ($wallS -gt 0) { $cpuLine = '[외부 부하] 게임 CPU {0:N0}% (1코어=100%, 벽시계 {1:N0}초, 모드 {2})' -f (100 * $cpuS / $wallS), $wallS, $(if ($env:VH_NOMOD -eq '1') { '끔' } else { '켬' }) }
+}
 if ($runTimedOut) {
     Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Stop-Process -Force -ErrorAction SilentlyContinue
     Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue   # 로그 파일을 놓을 때까지
@@ -250,6 +256,7 @@ if ($env:VH_JOIN) {   # 멀티 시험: 서버 쪽 모드 로그의 오류도(손
         foreach ($e in ($serrs | Select-Object -Unique -First 5)) { $report += "  $(if ($e.Length -gt 200) { $e.Substring(0, 200) + '...' } else { $e })" }
     } else { $report += "(서버 LogOutput.log 없음: $slog)" }
 }
+if ($cpuLine) { $report += $cpuLine }
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
 if ($exitHang) { $report += '게임 종료 멈춤: 종료 시작(OnApplicationQuit) 뒤 로그가 2분 멈춰 안 꺼져 강제 종료(Errors.txt E038 — 발생 횟수 더하기). 시험 판정은 그대로' }
 elseif ($runTimedOut) { $report += "게임이 ${maxMin}분 안에 안 꺼져 강제 종료(더 길게: `$env:VH_MAXMIN) — 중단(PASS로 치지 않음)" }
