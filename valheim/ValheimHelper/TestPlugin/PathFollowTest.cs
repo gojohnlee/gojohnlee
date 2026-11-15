@@ -81,22 +81,23 @@ namespace ValheimHelper
                 Brain.Paths.Remember(P(a), P(b), pts, now);
                 int f0 = ai.PathsFollowed, d0 = ai.PathsDropped, s0 = ai.PathsSpoiled;
                 bool hit = false;
-                var walk = new ExploreTest.WalkJob(ai, b);
+                var walk = new ExploreTest.WalkJob(ai, b) { Stay = true }; // 멈춘 뒤 제자리에 — 일이 끝나면 다음 판 순간이동 뒤 2초에 4.6m 걸어가 a가 a0에서 벗어나 기억 칸이 어긋났음(회차 697)
                 keep(walk);
                 ai.ForgetMoveTarget(); // 앞 판 목표가 같은 b라 새 목표로 안 쳐 따라 걷기가 안 시작됨(회차 696 맞음 판)
                 ai.StartJob(walk);
+                TestRunner.Log($"판 {round}: 기억 찾음 {Brain.Paths.Find(P(a), P(b), now) != null}, a→b {Utils.DistanceXZ(a, b):0.0}m, a0→a {Utils.DistanceXZ(a0, a):0.0}m, 일 {ai.Job?.Label}");
                 float bend = float.MaxValue, t0 = Time.time;
                 bool on = false;
                 yield return TestKit.WaitFor(() =>
                 {
                     bend = Mathf.Min(bend, Utils.DistanceXZ(npc.transform.position, c));
                     on |= ai.OnMemPath;
-                    if (hurt && !hit && ai.OnMemPath && Time.time - t0 > 0.4f) { hit = true; var h = new HitData(); h.m_damage.m_blunt = 1f; h.m_point = npc.transform.position; npc.Damage(h); }
+                    if (hurt && !hit && ai.OnMemPath && Time.time - t0 > 0.4f) { hit = true; var h = new HitData(); h.m_damage.m_blunt = 8f; /* 1은 일꾼 갑옷(NpcPatches)에 깎여 OnDamaged가 안 불림(회차 697) */ h.m_point = npc.transform.position; npc.Damage(h); }
                     return Utils.DistanceXZ(npc.transform.position, b) < 2.2f;
                 }, 30f);
                 bool reached = TestKit.Ok;
                 walk.Halt = true;
-                string why = $"{Time.time - t0:0.0}초, 꺾인 점까지 최소 {bend:0.0}m, 따라 {ai.PathsFollowed - f0}·지움 {ai.PathsDropped - d0}, {npc.MoveDebug}";
+                string why = $"{Time.time - t0:0.0}초, 꺾인 점까지 최소 {bend:0.0}m, 따라 {ai.PathsFollowed - f0}·지움 {ai.PathsDropped - d0}, 따라 걸음 {on}, {npc.MoveDebug}";
                 TestRunner.Log($"{(wall ? "벽 뒤" : "벽 앞")}: {why}");
                 if (round == 0)
                 {
