@@ -27,6 +27,7 @@ namespace ValheimHelper
                 yield break;
             }
             bool god = player.InGodMode();
+            GapWatch.Log.Clear(); // 빈틈 표는 이 판 것만
             // 실플레이 조건(다시 짜기 다): 시간 고정 없음(밤도 옴), 질문 자동 대답 없음 — End가 되돌림
             s_autoGo = Departures.TestAutoGo;
             Departures.TestAutoGo = false;
@@ -127,6 +128,7 @@ namespace ValheimHelper
             Commands.Ran -= OnRan;
             WorkerNpc.TestPicked = null;
             Busy.Report(checks);
+            foreach (var l in GapWatch.Table(1.0)) TestRunner.Log("DIAG 빈틈 " + l); // 일꾼·동작별 가만히 선 시간(최악 1초 넘는 것) — 살펴볼 것, 판정 아님
             if (pig != null && pig.IsHungry()) // E102: 가축 못 먹임 — 우리 상자 먹이·멧돼지 자리
                 TestRunner.Log($"DIAG 가축 못 먹임: 멧돼지 우리에서 {Vector3.Distance(pig.transform.position, penAt):0}m, 우리 상자 Raspberry {(pen != null ? pen.GetInventory().CountItems("$item_raspberries") : -1)}");
             foreach (var r in s_ran) TestRunner.Log($"DIAG 짝 없는 해석: {r.Key} {Desc(r.Value)}");

@@ -9,6 +9,7 @@ namespace ValheimHelper
     public static class Features
     {
         static ConfigEntry<bool> s_saveWork, s_knowExplored, s_claudeChat, s_runPlans, s_playWalkLog, s_sharedChests, s_farZones, s_idleChores, s_tidy, s_settle;
+        static ConfigEntry<bool> s_gapLog;
         static bool? s_knowExploredOverride;
 
         public static void Init(ConfigFile cfg)
@@ -23,6 +24,7 @@ namespace ValheimHelper
             s_idleChores = cfg.Bind("Features", "IdleChores", true, "쉴 때 하는 일(먹거리·낚시·쓴 재료 다시 캐기·밭·꿀·먹이·솎기·길들이기)");
             s_tidy = cfg.Bind("Features", "Tidy", true, "거점 상자 정리(같은 것끼리 모으기)");
             s_settle = cfg.Bind("Features", "Settle", true, "밤사이(잠으로 건너뛴 시간) 정산: 그동안 했을 일을 아침에 셈");
+            s_gapLog = cfg.Bind("Features", "GapLog", true, "일 사이 빈틈 기록: 일꾼이 가만히 선 시간을 동작별 횟수·평균·최악으로 모아 5분마다 gap-stats.txt에(합계만, 크기 안 늘어남)");
         }
 
         public static bool SaveWork => s_saveWork?.Value ?? true;
@@ -34,6 +36,7 @@ namespace ValheimHelper
         public static bool IdleChores => s_idleChores?.Value ?? true;
         public static bool Tidy => s_tidy?.Value ?? true;
         public static bool Settle => s_settle?.Value ?? true;
+        public static bool GapLog => s_gapLog?.Value ?? true;
         public static bool KnowExplored => s_knowExploredOverride ?? s_knowExplored?.Value ?? true;
 
         /// <summary>시험용: null이면 설정값으로 돌아감.</summary>
