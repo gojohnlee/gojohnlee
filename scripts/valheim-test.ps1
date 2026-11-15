@@ -265,6 +265,8 @@ if (Test-Path $log) {
     $all = @(Get-Content $log -Encoding UTF8)
     $loaded = $all | Where-Object { $_ -match 'Valheim Helper .* 로드됨' } | Select-Object -Last 1
     if ($loaded) { $report += $loaded.Trim() } else { $report += '모드 로드 줄 없음(BepInEx가 모드를 못 올렸을 수 있음)' }
+    # 통째로 바꾼 게임 함수 변경 감지(요청 11-15 ③, Plugin/GameCheck.cs): 바뀐 원본은 디컴파일해 모드 쪽을 맞춘다(vh-loop-prompt 1-0)
+    foreach ($h in @($all | Where-Object { $_ -match '\[게임 함수 바뀜\]' } | Select-Object -Unique)) { $report += $h.Trim() }
     # 로그 오류 셈(사용자 11-13 18:00): 알려진 Unity·BepInEx 잡음은 뺌(목록은 여기 한 곳), 예외는 스택(아래 20줄)에 ValheimHelper가 있을 때만 우리 오류
     $noise = @('Unable to start Unity log writer')
     $errs = @(); $noiseN = 0
