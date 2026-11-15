@@ -715,6 +715,8 @@ function Wait-Done($off, $last) {
 
 $st = Load-State
 Log "루프 시작$(if ($Once) { ' (한 회차만)' })"
+# 텔레그램 지킴이(VH keep on)는 PC가 꺼졌다 켜지면 안 살아난다(11-15 12:00 갑자기 꺼진 뒤 7시간 알림 없음) → 루프가 켤 때 같이 켬
+try { $kt = Get-ScheduledTask -TaskName 'VH keep on' -ErrorAction Stop; if ($kt.State -ne 'Running') { Start-ScheduledTask -TaskName 'VH keep on'; Log '지킴이(VH keep on) 꺼져 있어 켬' } } catch { }
 # 사용자 11-02: 컴퓨터를 켤 때 루프가 저절로 켜지지 않게 한다. 작업 "VH loop"는 남기고(다시 켜기·손으로 켜기에 씀) 로그인 트리거만 끈다.
 # 이번에 처음 끈 것이면 이번 실행도 로그인으로 켜진 것이라 여기서 끝낸다. 손으로 켜기: PC PowerShell에서 Start-ScheduledTask 'VH loop'.
 $lt = Get-ScheduledTask -TaskName 'VH loop' -ErrorAction SilentlyContinue
