@@ -3,7 +3,7 @@ using ValheimHelper.Core.Work;
 
 namespace ValheimHelper
 {
-    /// <summary>WorkerAI 집 안 길 기억(요청 11-15 ③ 첫 조각): 집(일꾼 집 40m) 안에서 걸어 닿은 길을 Brain.Paths에 넣는다. 길 찾기에 쓰기는 다음 조각.</summary>
+    /// <summary>WorkerAI 집 안 길 기억(요청 11-15 ③ 첫 조각): 집(일꾼 집 40m) 안에서 걸어 닿은 길을 Brain.Paths에 넣는다. 같은 출발·목표면 그 길을 따라 걷는다(막히면 지우고 바닐라).</summary>
     public partial class WorkerAI
     {
         readonly PathTrail m_trail = new PathTrail();
@@ -34,6 +34,60 @@ namespace ValheimHelper
             Brain.Paths.Remember(from, P(target), pts, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time);
             PathsRemembered++;
             Diag.Log($"길 기억: ({from.X:0.0},{from.Y:0.0},{from.Z:0.0})→{target:F1} 점 {pts.Length}, 모두 {Brain.Paths.Count}");
+        }
+
+        // ---- 기억한 길 따라 걷기(③ 마지막 조각): 같은 출발·목표 칸이면 걸어 닿았던 점을 차례로 따라간다. 막히면 그 길을 지우고 바닐라로 ----
+        PathMemory.P[] m_memPath; int m_memIdx; PathMemory.P m_memFrom, m_memTo;
+        /// <summary>시험용: 기억한 길로 걷기 시작한 수, 막혀 지운 수.</summary>
+        internal int PathsFollowed, PathsDropped;
+        /// <summary>시험용: 기억한 길 따라 걷는 중.</summary>
+        internal bool OnMemPath => m_memPath != null;
+        static int s_memMask;
+        static int MemMask => s_memMask != 0 ? s_memMask : (s_memMask = LayerMask.GetMask("piece"));
+
+        void MemPathStart(Vector3 pos, Vector3 target)
+        {
+            m_memPath = null;
+            if (!NearHome(pos) || !NearHome(target)) return;
+            var from = P(pos); var to = P(target);
+            var pts = Brain.Paths.Find(from, to, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time);
+            if (pts == null || pts.Length < 2) return;
+            // 닫힌 문·새 벽(손님이 놓은 조각은 서버가 못 봄): 점 사이를 허리 높이(0.8m)로 건축물 층에 쏴 막히면 지우고 바닐라
+            for (int i = 1; i < pts.Length; i++)
+            {
+                Vector3 a = V(pts[i - 1]) + Vector3.up * 0.8f, b = V(pts[i]) + Vector3.up * 0.8f;
+                if (Physics.Linecast(a, b, MemMask)) { Brain.Paths.Forget(from, to); PathsDropped++; Diag.Log($"길 기억 막힘(놓을 때 {i}/{pts.Length}): 지움 → 바닐라"); return; }
+            }
+            m_memPath = pts; m_memIdx = 1; m_memFrom = from; m_memTo = to;
+            PathsFollowed++;
+        }
+
+        static Vector3 V(PathMemory.P p) => new Vector3(p.X, p.Y, p.Z);
+
+        /// <summary>기억한 길 다음 점으로 한 걸음. 길 끝이면 놓고 false(남은 몇 m는 바닐라).</summary>
+        bool MemPathStep(Vector3 pos, bool run)
+        {
+            if (m_memPath == null) return false;
+            // 밀리거나 지나쳤으면 앞 4점 안에서 0.7m 곁인 가장 먼 점 다음으로
+            for (int i = Mathf.Min(m_memPath.Length - 1, m_memIdx + 4); i >= m_memIdx; i--)
+            {
+                Vector3 q = V(m_memPath[i]);
+                if (Utils.DistanceXZ(pos, q) < 0.7f && Mathf.Abs(pos.y - q.y) < 1.5f) { m_memIdx = i + 1; break; }
+            }
+            if (m_memIdx >= m_memPath.Length) { m_memPath = null; return false; }
+            MoveTowards(Flat(V(m_memPath[m_memIdx]) - pos), run);
+            m_moveDiag = $"길 기억 따라 {m_memIdx}/{m_memPath.Length}";
+            return true;
+        }
+
+        /// <summary>기억한 길로 가다 막힘(1.5초 진척 없음) — 그 길을 지우고 바닐라로.</summary>
+        void MemPathBlocked()
+        {
+            if (m_memPath == null) return;
+            Brain.Paths.Forget(m_memFrom, m_memTo);
+            PathsDropped++;
+            Diag.Log($"길 기억 막힘({m_memIdx}/{m_memPath.Length}): 지움 → 바닐라");
+            m_memPath = null;
         }
     }
 }

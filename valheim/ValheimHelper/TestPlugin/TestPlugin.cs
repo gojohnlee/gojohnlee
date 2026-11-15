@@ -79,6 +79,7 @@ namespace ValheimHelper
             Step("vh_hoptest", HopTest.Register);
             Step("vh_skiptest", SkipTest.Register);
             Step("vh_pathforget", PathForgetTest.Register);
+            Step("vh_pathfollow", PathFollowTest.Register);
             Step("vh_resisttest", ResistTest.Register);
             Step("vh_repairtest", RepairTest.Register);
             Step("vh_crypttest", CryptTest.Register);

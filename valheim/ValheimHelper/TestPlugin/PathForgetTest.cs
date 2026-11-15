@@ -78,7 +78,8 @@ namespace ValheimHelper
             int pruned = paths.Prune(now, Brain.PathMaxAge);
             checks.Add($"오래된 길만 지움 (Prune {pruned})", pruned >= 1 && paths.Find(P(a), P(b), now) == null && paths.Find(P(fa), P(fb), now) != null);
             paths.Forget(P(fa), P(fb));
-            checks.Add($"길 수 제자리 ({c0}→{paths.Count}, 원래 오래된 것 {pruned - 1})", paths.Count == c0 - (pruned - 1));
+            // 앞 시험(housetest)이 남긴 진짜 길이 벽 3m 안이면 같이 지워진다(맞는 동작) → 가짜 길이 남지 않고 늘지 않았는지만
+            checks.Add($"가짜 길 안 남음 ({c0}→{paths.Count}, 원래 오래된 것 {pruned - 1})", paths.Count <= c0 && paths.Find(P(a), P(b), now) == null && paths.Find(P(fa), P(fb), now) == null);
         }
     }
 }
