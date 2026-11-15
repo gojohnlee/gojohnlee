@@ -125,9 +125,10 @@ namespace ValheimHelper
                     var rec = WalkRecorder.Start(w.Ragnar, cols);
                     ai.StartJob(walk);
                     bool Here() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - goal.y) < 1.3f;
+                    float legT = Time.time;
                     yield return TestKit.WaitFor(Here, 90f);
                     bool ok = Here();
-                    took[round] += TestKit.Waited;
+                    took[round] += Time.time - legT; // Waited는 먼 호위병이 싸우는 동안을 빼서 0.0초가 됨(회차 699)
                     walk.Halt = true;
                     var rep = rec.Stop($"otherhouse {round + 1}-{i + 1} {names[i]}", round > 0 || i > 0);
                     jumps += rep.TeleSeen + rep.TeleUnseen;
@@ -142,6 +143,61 @@ namespace ValheimHelper
             }
             checks.Add($"2바퀴(기억 뒤)가 1바퀴보다 안 느림 ({took[0]:0.0} → {took[1]:0.0}초)", took[1] <= took[0] * 1.25f + 3f);
             checks.Add($"집 안 순간이동 없음 (라그나 {jumps}, 전체 {Teleports() - tele0})", jumps == 0);
+
+            // E108: 바깥문마다 안쪽 2m·옆 0.6m에서 바깥 4m로 나가기 — 문 닫힘·열림 1·열림 -1 셋(2바퀴 출발이 벽 안이면 wood_gate에서 8초 포기)
+            var doorList = new List<Door>();
+            foreach (var d in Object.FindObjectsByType<Door>(FindObjectsSortMode.None))
+                if (d != null && d.m_keyItem == null && Utils.DistanceXZ(d.transform.position, center) < Radius && !doorList.Contains(d)) doorList.Add(d);
+            int tries = 0, outs = 0, gave0 = DoorWay.GaveUps; float midOff = 0f; Vector3 shutMid = Vector3.zero;
+            int mask = LayerMask.GetMask("piece");
+            bool Roof(Vector3 p) => Physics.Raycast(p + Vector3.up * 1.8f, Vector3.up, 20f, mask);
+            foreach (var d in doorList)
+            {
+                if (tries >= 9) break;
+                Vector3 mid = DoorWay.Middle(d), n = d.transform.forward; n.y = 0f; n.Normalize();
+                if (Roof(mid - n * 2f) && !Roof(mid + n * 2f)) n = -n;
+                if (!Roof(mid + n * 2f) || Roof(mid - n * 4f)) { TestRunner.Log($"문 나가기 뺌(바깥문 아님): {d.name} {mid:F1}"); continue; }
+                Vector3 side = Vector3.Cross(Vector3.up, n), inside = Vector3.zero, goal = mid - n * 4f;
+                bool found = false;
+                foreach (float s in new[] { 0.6f, -0.6f, 0f })
+                {
+                    inside = mid + n * 2f + side * s;
+                    if (!Physics.CheckCapsule(inside + Vector3.up * 0.5f, inside + Vector3.up * 1.4f, 0.35f, mask, QueryTriggerInteraction.Ignore)) { found = true; break; }
+                }
+                if (!found) { TestRunner.Log($"문 나가기 뺌(안쪽 자리 없음): {d.name} {mid:F1}"); continue; }
+                var dz = d.GetComponent<ZNetView>().GetZDO();
+                foreach (int st in new[] { 0, 1, -1 })
+                {
+                    DoorWay.Forget();
+                    dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, st);
+                    w.Ragnar.TeleportTo(inside + Vector3.up * 0.3f, Quaternion.LookRotation(-n), false);
+                    yield return new WaitForSeconds(2f);
+                    {
+                        Animator an = d.GetComponentInChildren<Animator>();
+                        var info = an != null ? an.GetCurrentAnimatorStateInfo(0) : default;
+                        var sb = new System.Text.StringBuilder();
+                        foreach (var c in d.GetComponentsInChildren<Collider>())
+                            if (!c.isTrigger) sb.Append($" {c.name}{(an != null && c.transform.IsChildOf(an.transform) ? "*" : "")}({c.bounds.center.x:0.0},{c.bounds.center.z:0.0} {c.bounds.size.x:0.0}x{c.bounds.size.z:0.0})");
+                        Vector3 now = DoorWay.Middle(d);
+                        if (st == 0) shutMid = now; else midOff = Mathf.Max(midOff, Utils.DistanceXZ(now, shutMid));
+                        TestRunner.Log($"문 자리 {d.name} s_state {st}: 문 {d.transform.position:F1}·앞 ({n.x:0.00},{n.z:0.00})·애니 {(an == null ? "없음" : an.transform == d.transform ? "뿌리" : an.name)} 닫힘 {an != null && info.IsTag("closed")}·열림 {an != null && info.IsTag("open")} · Middle {now:F1}·지금 충돌체 {DoorWay.Bounds(d):F1} · 일꾼 {w.Ragnar.transform.position:F1} ·{sb}");
+                    }
+                    int ex0 = DoorWay.Exited;
+                    var walk = new ExploreTest.WalkJob(ai, goal, true) { Stay = true };
+                    ai.StartJob(walk);
+                    bool Out() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2f;
+                    yield return TestKit.WaitFor(Out, 15f);
+                    walk.Halt = true;
+                    tries++;
+                    if (Out()) outs++;
+                    TestRunner.Log($"문 나가기 {d.name} {mid:F1} 시작 s_state {st}: {(Out() ? "나감" : "못 나감")} {TestKit.Waited:0.0}초·문으로 나감 {DoorWay.Exited - ex0}·남은 {Utils.DistanceXZ(w.Ragnar.transform.position, goal):0.0}m");
+                    yield return new WaitForSeconds(1f);
+                }
+            }
+            DoorWay.Forget();
+            checks.Add($"바깥문 안쪽에서 15초 안에 나감 ({outs}/{tries})", tries > 0 && outs == tries);
+            checks.Add($"열린 문에서 잰 문틀 가운데가 닫힌 문 때와 같음 (최대 {midOff:0.00}m, E108)", tries > 0 && midOff < 0.3f);
+            checks.Add($"문 나가기 중 문 길 포기 없음 ({DoorWay.GaveUps - gave0}번, E108)", DoorWay.GaveUps == gave0);
         }
 
         static void ClearWild(Vector3 center)

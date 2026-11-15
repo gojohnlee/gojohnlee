@@ -22,7 +22,7 @@ namespace ValheimHelper
         float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; int m_sides; bool m_pathed; // m_sides: 비킨 횟수, 2번 비켜도 못 가까워지면 m_pathed = 길찾기로(E083 회차 474: 반대쪽이 막혀 같은 쪽 비킴 5번) // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for, m_goal; bool m_hasGoal; float m_clearT = -1f; // m_goal: 들어갈 대상 자리, m_clearT: 안쪽 1.3m 닿은 때(문짝 곁이면 더 걸음, E077)
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
-        public static int Opened, Entered, Exited, Closed;
+        public static int Opened, Entered, Exited, Closed, GaveUps;
 
         /// <summary>일꾼이 연 문(회차 313): 그 일꾼이 지붕 밖으로 나와 문에서 3m 넘게(지붕 아래여도 15m 넘게) 멀어지고 문틀에 아무도 없으면 닫는다. 플레이어가 연 문은 안 건드림.</summary>
         sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen, Away; public bool Shut, Inside; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
@@ -244,6 +244,7 @@ namespace ValheimHelper
             if (m_swing == 1 && state == 0 && Time.time >= m_swingNext)
             {
                 m_swingNext = Time.time + 0.3f; // 닫히는 애니메이션 중엔 바닐라 CanInteract가 거절 → 될 때까지
+                Middle(m_door); // 다 닫힌 순간 문틀 가운데를 잼(E108)
                 if (Dungeons.Open(npc, m_door)) Track(m_door, npc, m_orig);
             }
             if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); npc.Ai.Hold("문 열리길 기다림"); return 1; } // 열리는 중(주인 RPC 기다림)
@@ -347,7 +348,7 @@ namespace ValheimHelper
         }
 
         /// <summary>시험 단계 사이: 시험이 문을 닫기 전에 다시 열 기록을 지움(안 지우면 닫은 뒤 다시 엶).</summary>
-        internal static void Forget() => s_opened.Clear();
+        internal static void Forget() { s_opened.Clear(); s_mid.Clear(); }
 
         public static void CloseBehind()
         {
@@ -447,7 +448,7 @@ namespace ValheimHelper
 
         void GiveUp(WorkerNpc npc, string what, string why)
         {
-            m_phase = Phase.GaveUp;
+            m_phase = Phase.GaveUp; GaveUps++;
             if (m_door != null) npc?.Ai?.PathSpoil("문 못 엶");
             if (m_door != null)
             {
@@ -499,7 +500,53 @@ namespace ValheimHelper
         }
 
         /// <summary>문틀 가운데(문 transform은 경첩 쪽일 수 있어 닫힌 문 충돌체 가운데).</summary>
-        static Vector3 Middle(Door d)
+        /// E108: 열린 문은 문짝 충돌체가 돌아가 있어 가운데가 문짝 쪽으로 쏠림 — wood_gate(문짝 1.6m, 애니메이터가 뿌리라 문짝만 못 뺌)는 1m,
+        /// 그 가운데를 겨누다 문짝에 박혀 8초 포기. 다 닫힌 문(s_state 0·애니메이터 closed)에서 잰 값을 기억해 쓰고,
+        /// 아직 못 쟀으면 프리팹(닫힌 자세)의 충돌체 가운데를 이 문 자리로 옮겨 씀.
+        internal static Vector3 Middle(Door d)
+        {
+            if (s_mid.TryGetValue(d, out Vector3 kept)) return kept;
+            if (s_mid.Count > 512) s_mid.Clear(); // 부서진 문 몫
+            ZDO z = d.GetComponent<ZNetView>()?.GetZDO();
+            Animator anim = d.GetComponentInChildren<Animator>();
+            bool shut = z != null && z.GetInt(ZDOVars.s_state) == 0 && (anim == null || anim.GetCurrentAnimatorStateInfo(0).IsTag("closed"));
+            if (shut) return s_mid[d] = Bounds(d);
+            return z != null && PrefabMid(z.GetPrefab(), out Vector3 local) ? Flat(d, d.transform.TransformPoint(local)) : Bounds(d);
+        }
+        static readonly System.Collections.Generic.Dictionary<Door, Vector3> s_mid = new System.Collections.Generic.Dictionary<Door, Vector3>();
+        static readonly System.Collections.Generic.Dictionary<int, Vector3?> s_prefabMid = new System.Collections.Generic.Dictionary<int, Vector3?>();
+
+        /// <summary>프리팹(닫힌 자세) 충돌체 상자들의 가운데, 프리팹 뿌리 기준. 꺼진 프리팹은 Collider.bounds가 비어 상자·메시 모서리를 직접 옮겨 잼.</summary>
+        static bool PrefabMid(int hash, out Vector3 local)
+        {
+            if (!s_prefabMid.TryGetValue(hash, out Vector3? got))
+            {
+                GameObject p = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(hash) : null;
+                bool any = false; Bounds b = default;
+                if (p != null)
+                    foreach (var c in p.GetComponentsInChildren<Collider>(true))
+                    {
+                        if (c.isTrigger) continue;
+                        Bounds lb;
+                        if (c is BoxCollider box) lb = new Bounds(box.center, box.size);
+                        else if (c is MeshCollider mc && mc.sharedMesh != null) lb = mc.sharedMesh.bounds;
+                        else continue;
+                        for (int i = 0; i < 8; i++)
+                        {
+                            Vector3 corner = lb.center + Vector3.Scale(lb.extents, new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                            Vector3 q = p.transform.InverseTransformPoint(c.transform.TransformPoint(corner));
+                            if (!any) { b = new Bounds(q, Vector3.zero); any = true; } else b.Encapsulate(q);
+                        }
+                    }
+                s_prefabMid[hash] = got = any ? b.center : (Vector3?)null;
+            }
+            local = got ?? Vector3.zero;
+            return got.HasValue;
+        }
+
+        static Vector3 Flat(Door d, Vector3 m) { m.y = d.transform.position.y; return m; }
+
+        internal static Vector3 Bounds(Door d)
         {
             bool any = false; Bounds b = default;
             foreach (var c in d.GetComponentsInChildren<Collider>())
@@ -507,9 +554,7 @@ namespace ValheimHelper
                 if (c.isTrigger) continue;
                 if (!any) { b = c.bounds; any = true; } else b.Encapsulate(c.bounds);
             }
-            Vector3 m = any ? b.center : d.transform.position;
-            m.y = d.transform.position.y;
-            return m;
+            return Flat(d, any ? b.center : d.transform.position);
         }
 
 
