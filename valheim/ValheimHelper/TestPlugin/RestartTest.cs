@@ -76,6 +76,9 @@ namespace ValheimHelper
             checks.Add($"나무 10 하는 중·돌 3 대기 ({w.Ragnar.Ai.Job?.Label}, 대기 {w.Ragnar.Ai.Queue.Count}칸)",
                 w.Ragnar.Ai.Job is GatherJob gj && gj.Item == "Wood" && w.Ragnar.Ai.Queue.Count == 1);
             if (!(w.Ragnar.Ai.Job is GatherJob)) yield break;
+            GatherTest.Say($"!{n1} 정리", null); // 바쁠 때 받은 !정리 — 재시작 뒤에도 남는지(E111)
+            yield return new WaitForSeconds(1f);
+            checks.Add($"바쁠 때 !정리 미뤄 둠 ({Commands.LaterChores(w.Ragnar)})", (Commands.LaterChores(w.Ragnar) & 2) != 0);
             yield return TestKit.WaitFor(() => Carried(w.Ragnar, "Wood") + Base(w.Home, "Wood") >= 2, 200f);
             checks.Add($"일 중간까지 감 (짐 {Carried(w.Ragnar, "Wood")}, 상자 {Base(w.Home, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
             if (!TestKit.Ok) yield break;
@@ -102,7 +105,7 @@ namespace ValheimHelper
             {
                 "home=" + V(w.Home), "chest=" + V(w.Chest.transform.position),
                 "left=" + (g.Target - g.Delivered), "carried=" + Carried(w.Ragnar, "Wood"),
-                "stocked=" + Base(w.Home, "Wood"), "queue=" + w.Ragnar.Ai.Queue.Count,
+                "stocked=" + Base(w.Home, "Wood"), "queue=" + w.Ragnar.Ai.Queue.Count, "chores=" + Commands.LaterChores(w.Ragnar),
                 "npcs=" + Workers.AllZdos().Count, "flags=" + BaseFlag.AllFlags().Count,
                 "ptag=" + tag, "pfar=" + V(farPt), "biome=" + TestKit.RunBiome, "know=" + Brain.Get().Count,
             };
@@ -205,6 +208,7 @@ namespace ValheimHelper
             var g = w.Ragnar.Ai.Job as GatherJob;
             checks.Add($"하던 나무 이어 하기 ({g?.Item} 목표 {g?.Target}, 남았던 {left})", g != null && g.Item == "Wood" && g.Target == left);
             checks.Add($"대기열 돌 3 그대로 ({w.Ragnar.Ai.Queue.Count}칸/{st["queue"]})", w.Ragnar.Ai.Queue.Count.ToString() == st["queue"]);
+            checks.Add($"미룬 !정리 그대로 ({Commands.LaterChores(w.Ragnar)}/{(st.TryGetValue("chores", out string ch) ? ch : "-")})", st.ContainsKey("chores") && Commands.LaterChores(w.Ragnar).ToString() == st["chores"]);
             if (g == null) yield break;
             if (st.TryGetValue("ptag", out string ptag))
             {

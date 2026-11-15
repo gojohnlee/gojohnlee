@@ -99,7 +99,7 @@ namespace ValheimHelper
             Container grave = graves.Count > 0 ? Chests.FromId(graves[0].Id) : null;
             checks.Add($"짐은 묘비에 (나무 {(grave ? GatherTest.Count(grave, "Wood") : -1)}, 들고 있는 것 {mine.NrOfItems()}개)",
                 grave != null && GatherTest.Count(grave, "Wood") == 7 && GatherTest.Count(grave, "ArmorLeatherChest") == 1 && mine.NrOfItems() == 0);
-            checks.Add("죽었다고 알림", heard.Exists(h => h.Contains("묘비는")));
+            checks.Add("죽었다고 알림", heard.Exists(h => h.Contains("m") && (h.Contains("당했") || h.Contains("묘비는") || h.Contains("때문")))); // died 대사 30개(Speech.cs) 모두 거리+셋 중 하나, graveGo는 아님
 
             // 4) 스스로 묘비 회수
             bool started = false, wasRags = false;

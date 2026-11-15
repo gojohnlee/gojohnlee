@@ -15,6 +15,8 @@ namespace ValheimHelper
     {
         public const string KeyQueue = "vh_queue";
         public const string KeyPending = "vh_pending";
+        /// <summary>바쁠 때 받은 !가축(1)·!정리(2)(이어 하던 !정리도 2) — 재시작 뒤에도 쉬게 되면 함(맞물림 점검 E111, 사용자 11-13 "하던 일은 절대 안 잊음").</summary>
+        public const string KeyChores = "vh_chores";
 
         const float Every = 1f;
         static float s_timer;
@@ -128,6 +130,8 @@ namespace ValheimHelper
                 string pending = WorkState.SavePending(Departures.Snapshot(npc));
                 if (queue != last[0]) zdo.Set(KeyQueue, queue);
                 if (pending != last[1]) zdo.Set(KeyPending, pending);
+                int chores = Commands.LaterChores(npc);
+                if (chores != zdo.GetInt(KeyChores)) zdo.Set(KeyChores, chores);
                 last[0] = queue;
                 last[1] = pending;
             }
@@ -140,6 +144,7 @@ namespace ValheimHelper
             string queue = WorkState.SaveQueue(Snapshot(npc)), pending = WorkState.SavePending(Departures.Snapshot(npc));
             zdo.Set(KeyQueue, queue);
             zdo.Set(KeyPending, pending);
+            zdo.Set(KeyChores, Commands.LaterChores(npc));
             s_saved[npc] = new[] { queue, pending };
         }
 
@@ -159,6 +164,8 @@ namespace ValheimHelper
         {
             var items = WorkState.LoadQueue(zdo.GetString(KeyQueue));
             PendingData p = WorkState.LoadPending(zdo.GetString(KeyPending));
+            int chores = zdo.GetInt(KeyChores);
+            if (chores != 0) Commands.RestoreChores(npc, chores);
             if (items.Count == 0 && p == null) return;
             // 이미 이 NPC에 대기열이 있으면(같은 세션에서 막 받은 명령) 저장된 걸 뒤에 붙인다
             foreach (var w in items) npc.Ai.Queue.Add(ToQueued(npc, w));

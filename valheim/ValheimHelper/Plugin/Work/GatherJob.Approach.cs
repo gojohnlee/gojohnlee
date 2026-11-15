@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using ValheimHelper.Core.Npc;
 using ValheimHelper.Core.Work;
@@ -309,6 +310,10 @@ namespace ValheimHelper
         public static Vector3 LastNearSkipSeenPos;
         public static float LastNearSkipSinceSeen = -1f;
         public static Vector3 LastNearSkipDest;
+        /// <summary>시험용: 마지막 건너뛰기 후보 중 걸어갈 수 있던 범위 안 수, 마지막 Land가 몇 번째 후보에 내렸나·앞 후보들 거절 이유.</summary>
+        public static int LastNearSkipInRange, LastLandTried;
+        public static string LastLandRejects = "";
+        static readonly List<string> s_rejects = new List<string>();
 
         /// <summary>근처 막힘 건너뛰기 후보를 있을 법한 자리 순으로(StuckHop.Plausible, 사용자 11-12): 가던 쪽만, 마지막으로 보인 뒤 달려 갈 수 있던 범위 안, 안 보이는 자리 먼저.</summary>
         IEnumerable<StuckHop.XZ> PlausibleNear(Vector3 from, Vector3 dest)
@@ -319,8 +324,11 @@ namespace ValheimHelper
             LastNearSkipSeenPos = m_seenPos;
             LastNearSkipSinceSeen = since;
             StuckHop.XZ? seenAt = m_seenAt < 0f ? (StuckHop.XZ?)null : new StuckHop.XZ(m_seenPos.x, m_seenPos.z);
-            return StuckHop.Plausible(StuckHop.NearCandidates(from.x, from.z, dest.x, dest.z), from.x, from.z, dest.x, dest.z,
+            var list = StuckHop.Plausible(StuckHop.NearCandidates(from.x, from.z, dest.x, dest.z), from.x, from.z, dest.x, dest.z,
                 seenAt, since, m_npc.m_runSpeed, c => StuckWatch.Seen(new Vector3((float)c.X, from.y, (float)c.Z)));
+            double reach = Mathf.Max(0f, since) * m_npc.m_runSpeed + StuckHop.ReachSlack;
+            LastNearSkipInRange = seenAt.HasValue ? list.Count(c => (c.X - m_seenPos.x) * (c.X - m_seenPos.x) + (c.Z - m_seenPos.z) * (c.Z - m_seenPos.z) <= reach * reach) : list.Count;
+            return list;
         }
 
         /// <summary>
@@ -344,8 +352,10 @@ namespace ValheimHelper
             Vector3 from = npc.transform.position;
             int tried = 0;
             string last = "후보 없음";
+            s_rejects.Clear();
             foreach (var c in candidates ?? StuckHop.Candidates(from.x, from.z, dest.x, dest.z))
             {
+                if (tried > 0) s_rejects.Add(last);
                 tried++;
                 var p = new Vector3((float)c.X, dest.y, (float)c.Z);
                 if (!ZoneSystem.instance.IsZoneLoaded(p)) { last = "구역 안 불러와짐"; continue; }
@@ -371,6 +381,8 @@ namespace ValheimHelper
                 if (ai.Guard != null && !ai.Guard.SafeAt(p)) { last = "위험"; continue; }
                 ai.StopMoving();
                 if (!npc.TeleportTo(p + Vector3.up * 0.2f, npc.transform.rotation, false)) { last = "옮기기 실패"; continue; }
+                LastLandTried = tried;
+                LastLandRejects = string.Join(",", s_rejects);
                 why = $"{Utils.DistanceXZ(from, p):0.0}m → 목표에서 {Utils.DistanceXZ(dest, p):0.0}m (후보 {tried}번째)";
                 return true;
             }

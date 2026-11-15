@@ -101,8 +101,9 @@ namespace ValheimHelper
             StuckWatch.TestSeen = null;
             float since = GatherJob.LastNearSkipSinceSeen, fwd = (after.x - before.x) * (GatherJob.LastNearSkipDest.x - before.x) + (after.z - before.z) * (GatherJob.LastNearSkipDest.z - before.z);
             float fromSeen = Utils.DistanceXZ(after, GatherJob.LastNearSkipSeenPos), reach = since * w.Ragnar.m_runSpeed + (float)Core.Work.StuckHop.ReachSlack;
-            TestRunner.Log($"있을 법한 자리: 마지막으로 보인 뒤 {since:0.0}초, 보인 자리에서 {fromSeen:0.0}m(범위 {reach:0.0}m), 가던 쪽 내적 {fwd:0.0}");
-            checks.Add($"내린 자리가 가던 쪽·걸어갈 수 있던 범위 안 ({fromSeen:0.0}m ≤ {reach:0.0}m)", skipped && since >= 0f && since < 1.5f && fwd >= 0f && fromSeen <= reach + 0.3f);
+            bool fellBack = GatherJob.LastLandTried > GatherJob.LastNearSkipInRange; // 범위 안 후보가 다 거절돼 대체(범위 밖) 후보에 내림 — StuckHop.Plausible 3단 설계
+            TestRunner.Log($"있을 법한 자리: 마지막으로 보인 뒤 {since:0.0}초, 보인 자리에서 {fromSeen:0.0}m(범위 {reach:0.0}m), 가던 쪽 내적 {fwd:0.0}, 범위 안 후보 {GatherJob.LastNearSkipInRange}개·{GatherJob.LastLandTried}번째에 내림, 거절: {GatherJob.LastLandRejects}");
+            checks.Add($"내린 자리가 가던 쪽·걸어갈 수 있던 범위 안 ({fromSeen:0.0}m ≤ {reach:0.0}m{(fellBack ? ", 범위 안 후보 다 거절돼 대체" : "")})", skipped && since >= 0f && since < 1.5f && fwd >= 0f && (fromSeen <= reach + 0.3f || fellBack));
             checks.Add("내린 자리가 시야 밖", skipped && Utils.DistanceXZ(after, before) >= 2f);
             float moved = Utils.DistanceXZ(before, after);
             bool ground = ZoneSystem.instance.GetGroundHeight(after, out float gh) && Mathf.Abs(after.y - gh) < 1.5f;

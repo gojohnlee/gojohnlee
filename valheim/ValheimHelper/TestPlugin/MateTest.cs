@@ -164,6 +164,8 @@ namespace ValheimHelper
             f.Ai.Guard?.Reset();
             r.Heal(1000f, false);
             r.SetHealth(r.GetMaxHealth() * 0.8f);
+            r.TeleportTo(arena + Vector3.up * 0.3f, rot, false); // 위 기다림(30초까지) 사이 1호가 걸어 나가면 적이 29m라 Calm — 안 부름(회차 709, E086 꼴)
+            yield return new WaitForSeconds(0.5f);
             r.Ai.Guard?.TestForgetMateCall();
             Guard.LastMateCall = "";
             var foes3 = new List<Character>();

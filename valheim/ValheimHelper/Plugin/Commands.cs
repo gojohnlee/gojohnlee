@@ -317,6 +317,16 @@ namespace ValheimHelper
         /// <summary>바쁠 때 받은 !가축(1)·!정리(2). 튜플은 게임 런타임에 System.ValueTuple이 없어 못 씀(회차 662 TypeLoadException).</summary>
         static readonly Dictionary<WorkerNpc, int> s_laterChores = new Dictionary<WorkerNpc, int>();
 
+        /// <summary>저장할 미룬 집안일: !가축 1·!정리 2(이어 하던 !정리도 2 — 불러오면 새 !정리로). WorkSaves가 쓴다.</summary>
+        internal static int LaterChores(WorkerNpc npc) => (s_laterChores.TryGetValue(npc, out int bits) ? bits : 0) | (s_tidyLeft.ContainsKey(npc) ? 2 : 0);
+
+        internal static void RestoreChores(WorkerNpc npc, int bits)
+        {
+            s_laterChores.TryGetValue(npc, out int now);
+            s_laterChores[npc] = now | (bits & 3);
+            Plugin.Log.LogInfo($"{npc.NpcName} 미룬 집안일 불러옴: {((bits & 1) != 0 ? "!가축 " : "")}{((bits & 2) != 0 ? "!정리" : "")}");
+        }
+
         /// <summary>쉬게 된 일꾼(Departures 쉴 때 차례)이 바쁠 때 받은 !가축·!정리가 있으면 시작(먹이 먼저, 정리는 다음 쉴 때). 시작했으면 true.</summary>
         internal static bool RunLaterChore(WorkerNpc npc)
         {

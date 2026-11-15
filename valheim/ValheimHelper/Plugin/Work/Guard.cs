@@ -745,13 +745,14 @@ namespace ValheimHelper
         bool m_backWalking;
         float m_backWalkTime;
 
-        /// <summary>오는 중이 아니게 된 동료(다른 싸움·포기·죽음)나 MateStall초 동안 1m도 안 가까워진 동료면 이유, 아니면 null.</summary>
+        /// <summary>오는 중이 아니게 된 동료(다른 싸움·포기·죽음)나 MateStall초 동안 스스로 1m도 안 가까워진 동료면 이유, 아니면 null.</summary>
         string MateNotComing(float dt)
         {
             var g = m_waitMate.IsDead() ? null : m_waitMate.Ai?.Guard;
             if (g == null || g.m_state != State.Come || g.m_caller != m_npc) return "오는 중 아님";
             float d = Vector3.Distance(m_waitMate.transform.position, m_npc.transform.position);
-            if (d <= AllyRange || d < m_mateBest - 1f) { m_mateBest = Mathf.Min(m_mateBest, d); m_mateStall = 0f; return null; }
+            Vector3 at = m_waitMate.transform.position;
+            if (d <= AllyRange || m_mateBest == float.MaxValue || (d < m_mateBest - 1f && Vector3.Distance(at, m_matePos) >= 1f)) { m_mateBest = Mathf.Min(m_mateBest, d); m_matePos = at; m_mateStall = 0f; return null; }
             return (m_mateStall += dt) > MateStall ? $"{MateStall:0}초 진척 없음 ({d:0}m)" : null;
         }
 

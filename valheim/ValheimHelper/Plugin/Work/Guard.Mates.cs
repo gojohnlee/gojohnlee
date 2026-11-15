@@ -16,6 +16,7 @@ namespace ValheimHelper
         /// <summary>그 기다림이 올린 지원 요청 이름(Brain.Help). 동료가 와서 싸움에 끼면 채우고, 아니면 지운다.</summary>
         string m_helpTask;
         float m_mateBest, m_mateStall;
+        Vector3 m_matePos; // 마지막으로 진척으로 센 때 2호 자리(1호가 물러나며 2호 쪽으로 가 준 것은 진척 아님 — 회차 708 matetest C 18초)
 
         /// <summary>동료 기다림이 끝난다. 온 동료로 끝났으면 지원 요청을 채우고, 못 왔으면 지운다.</summary>
         void EndMateWait(bool came)
