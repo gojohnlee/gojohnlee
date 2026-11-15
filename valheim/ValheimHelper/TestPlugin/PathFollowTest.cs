@@ -92,7 +92,7 @@ namespace ValheimHelper
                 {
                     bend = Mathf.Min(bend, Utils.DistanceXZ(npc.transform.position, c));
                     on |= ai.OnMemPath;
-                    if (hurt && !hit && ai.OnMemPath && Time.time - t0 > 0.4f) { hit = true; var h = new HitData(); h.m_damage.m_blunt = 8f; /* 1은 일꾼 갑옷(NpcPatches)에 깎여 OnDamaged가 안 불림(회차 697) */ h.m_point = npc.transform.position; npc.Damage(h); }
+                    if (hurt && !hit && ai.OnMemPath && Time.time - t0 > 0.4f) { hit = true; var h = new HitData(); h.m_damage.m_fire = 8f; /* 굴뚝 불 흉내(사용자 11-15 "불타면"). 둔기 1은 일꾼 갑옷(NpcPatches)에 깎여 OnDamaged가 안 불림(회차 697) */ h.m_point = npc.transform.position; npc.Damage(h); }
                     return Utils.DistanceXZ(npc.transform.position, b) < 2.2f;
                 }, 30f);
                 bool reached = TestKit.Ok;
