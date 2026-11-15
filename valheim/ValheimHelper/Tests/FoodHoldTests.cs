@@ -18,12 +18,15 @@ namespace ValheimHelper.Tests
         }
 
         [Fact]
-        public void 다른_음식이_없으면_몫에서도()
+        public void 다른_음식이_없어도_몫은_안_씀()
         {
             var hold = new FoodHold();
             hold.Add("cooked", 4, 0);
             var pick = FoodHold.Pick(Kinds(("cooked", 30, 4), ("berry", 10, 1)), 3, n => hold.Held(n, 10));
-            Assert.Equal(new[] { "berry", "cooked", "cooked" }, pick);
+            Assert.Equal(new[] { "berry" }, pick);
+            Assert.Equal(0, hold.Free("cooked", 4, 10));
+            Assert.Equal(2, hold.Free("cooked", 6, 10));
+            Assert.Equal(4, hold.Free("cooked", 4, FoodHold.HoldTime));
         }
 
         [Fact]

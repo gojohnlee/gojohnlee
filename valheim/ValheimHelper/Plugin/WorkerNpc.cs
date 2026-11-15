@@ -356,6 +356,7 @@ namespace ValheimHelper
             {
                 if (!Gear.IsFood(it)) continue;
                 if (from != null && BaseStock.Allow(from, it.m_shared.m_name, 1) < 1) continue;
+                if (from != null && Prep.Fresh.Free(it.m_shared.m_name, inv.CountItems(it.m_shared.m_name), ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time) < 1) continue; // 명령으로 만든 음식 몫은 안 먹음(회차 702)
                 FoodInfo f = Gear.FoodOf(it);
                 if (byName.ContainsKey(f.Name)) continue;
                 byName[f.Name] = it;

@@ -409,7 +409,7 @@ namespace ValheimHelper
         /// <summary>명령으로 만든 음식 몫(PlanJob.Finish가 적음) — 들고 갈 음식에서 뒤로(decisions "갓 만든 음식").</summary>
         public static readonly FoodHold Fresh = new FoodHold();
 
-        /// <summary>들고 다닐 음식을 FoodToCarry까지: 체력 높은 음식부터 한 종류에 하나씩 돌아가며, 명령으로 만든 몫은 다른 음식이 모자랄 때만(사람 제작 막대 예약분은 안 가져감).</summary>
+        /// <summary>들고 다닐 음식을 FoodToCarry까지: 체력 높은 음식부터 한 종류에 하나씩 돌아가며, 명령으로 만든 몫은 안 가져감(회차 702), 사람 제작 막대 예약분도 안 가져감.</summary>
         static void TakeFood(Container from, Inventory mine, Inventory chest, List<string> taken)
         {
             int need = FoodToCarry - CountFood(mine);
