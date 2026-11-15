@@ -48,5 +48,44 @@ namespace ValheimHelper.Tests
             var pick = FoodHold.Pick(Kinds(("cooked", 30, 4), ("berry", 10, 5)), 2, n => hold.Held(n, FoodHold.HoldTime + 1));
             Assert.Equal(new[] { "cooked", "berry" }, pick);
         }
+
+        [Fact]
+        public void 주문마다_만료가_따로()
+        {
+            var hold = new FoodHold();
+            hold.Add("cooked", 4, 0);
+            hold.Add("cooked", 3, 1000);
+            Assert.Equal(7, hold.Held("cooked", 2000));
+            Assert.Equal(3, hold.Held("cooked", FoodHold.HoldTime));
+            Assert.Equal(0, hold.Held("cooked", FoodHold.HoldTime + 1000));
+        }
+
+        [Fact]
+        public void 가져가면_몫이_줄고_새로_생긴_것은_보통_음식()
+        {
+            var hold = new FoodHold();
+            hold.Add("cooked", 4, 0);
+            hold.Add("cooked", 3, 100);
+            hold.Trim("cooked", 5, 200); // 플레이어가 2개 가져감 → 오래된 주문부터 줄임
+            Assert.Equal(5, hold.Held("cooked", 200));
+            Assert.Equal(3, hold.Held("cooked", FoodHold.HoldTime + 50)); // 옛 주문 2개 남은 것만 만료
+            Assert.Equal(2, hold.Free("cooked", 5, FoodHold.HoldTime + 50));
+            hold.Trim("cooked", 9, 300); // 늘어난 건 몫이 안 늘음
+            Assert.Equal(3, hold.Held("cooked", FoodHold.HoldTime + 50));
+        }
+
+        [Fact]
+        public void 시킨_음식만_있으면_일꾼_음식은_0()
+        {
+            var hold = new FoodHold();
+            hold.Add("cooked", 12, 0);
+            var haves = new Dictionary<string, int> { ["cooked"] = 12, ["berry"] = 3 };
+            Assert.Equal(3, hold.FreeTotal(haves, 10));
+            haves["cooked"] = 14; // 시킨 수보다 더 있는 것은 보통 음식
+            Assert.Equal(5, hold.FreeTotal(haves, 10));
+            haves["cooked"] = 8; // 가져감
+            Assert.Equal(3, hold.FreeTotal(haves, 10));
+            Assert.Equal(8, hold.Held("cooked", 10));
+        }
     }
 }

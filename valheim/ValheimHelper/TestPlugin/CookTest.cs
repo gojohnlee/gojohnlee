@@ -135,6 +135,8 @@ namespace ValheimHelper
             }, 180f);
             int cooked = Stock(w, "CookedMeat") + Bag(w, "CookedMeat"), raw = Stock(w, "RawMeat") + Bag(w, "RawMeat"), black = Stock(w, burnt) + Bag(w, burnt);
             checks.Add($"구운 고기 2개가 상자에 ({TestKit.Waited:0}초, 상자 {Stock(w, "CookedMeat")}, {w.Ragnar.Ai.Current})", TestKit.Ok);
+            string cookedName = ObjectDB.instance.GetItemPrefab("CookedMeat").GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            checks.Add($"시킨 2개는 몫 (몫 {Prep.Fresh.Held(cookedName, ZNet.instance.GetTimeSeconds())})", Prep.Fresh.Held(cookedName, ZNet.instance.GetTimeSeconds()) == 2);
             checks.Add($"굽는 곁에서 불붙지 않음 (가장 가까이 {nearest:0.0}m, 불붙음 {burned}, 죽음 {w.Ragnar.Deaths - deaths0})", !burned && w.Ragnar.Deaths == deaths0 && nearest >= 1.2f);
             checks.Add($"타지 않음 (탄 것 {black})", black == 0);
             checks.Add($"개수 보존 (날고기 {raw} + 구운 {cooked} + 탄 것 {black} = 2)", raw + cooked + black == 2);
@@ -177,6 +179,36 @@ namespace ValheimHelper
             checks.Add($"묘비 회수 뒤 같은 계획 이어 조리대 비움 ({TestKit.Waited:0}초, 회수 {graveSeen}, 이어 함 {resumed}, {r.Ai.Current})", TestKit.Ok && graveSeen);
             checks.Add($"다시 모으지 않고 개수 보존 (날고기 {raw} + 구운 {cooked} + 탄 것 {black} = 2)", raw + cooked + black == 2 && raw == 0);
             TestKit.ClearBaseStock(w, "RawMeat", "CookedMeat", "Wood", burnt);
+            yield return HoldPhase(w, checks);
+        }
+
+        /// <summary>
+        /// 시킨 음식 몫(사용자 11-16): "고기 12개 구워 줘"가 끝난 상자(구운 고기 12, 몫 12, 다른 음식 0) → 쉴 때 음식 셈은 0(넉넉으로 안 봄),
+        /// 일꾼이 몫을 먹거나 들고 가지 않음, 플레이어가 가져가면 몫이 줄고 새로 생긴 것은 보통 음식.
+        /// </summary>
+        static IEnumerator HoldPhase(TestKit.World w, GatherTest.Checks checks)
+        {
+            string meat = ObjectDB.instance.GetItemPrefab("CookedMeat").GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            Prep.Fresh.Clear();
+            try
+            {
+                TestKit.PutInChest(w.Chest, "CookedMeat", 12);
+                int all = Departures.BaseFood(w.Home);
+                Prep.Fresh.Add(meat, 12, ZNet.instance.GetTimeSeconds());
+                int free = Departures.BaseFood(w.Home);
+                checks.Add($"몫 12 → 쉴 때 음식 셈 0 (몫 없으면 {all}, 몫 뺀 {free}, 기준 {Departures.IdleFoodBelow} 밑)", all == 12 && free == 0);
+                yield return new WaitForSeconds(20f);
+                checks.Add($"20초 뒤 상자 구운 고기 그대로 12 (상자 {Stock(w, "CookedMeat")}, 짐 {Bag(w, "CookedMeat")}, {w.Ragnar.Ai.Current})", Stock(w, "CookedMeat") == 12);
+                w.Chest.GetInventory().RemoveItem(meat, 5);
+                int afterTake = Departures.BaseFood(w.Home), held = Prep.Fresh.Held(meat, ZNet.instance.GetTimeSeconds());
+                TestKit.PutInChest(w.Chest, "CookedMeat", 3);
+                int afterMore = Departures.BaseFood(w.Home);
+                checks.Add($"5개 가져감 → 몫 7, 3개 더 생김 → 일꾼 음식 3 (몫 {held}, 가져간 뒤 {afterTake}, 더 생긴 뒤 {afterMore})", held == 7 && afterTake == 0 && afterMore == 3);
+            }
+            finally { Prep.Fresh.Clear(); }
+            GatherTest.Say("!멈춰", null);
+            yield return new WaitForSeconds(1f);
+            TestKit.ClearBaseStock(w, "CookedMeat");
         }
 
         static int Stock(TestKit.World w, string prefab)

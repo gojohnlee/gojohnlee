@@ -168,7 +168,7 @@ namespace ValheimHelper
             }
             foreach (var c in chests)
                 if (m_foodDone.Add(c) && (m_npc.CanEatFrom(c.GetInventory()) || NeedsFoodToCarry(m_npc.GetInventory(), c))) { m_chest = c; m_forFood = true; return true; }
-            if (m_npc.Meals.Count == 0 && !chests.Exists(c => WorkerNpc.HasFood(c.GetInventory()))) m_npc.SayNoFoodOnce();
+            if (m_npc.Meals.Count == 0 && !chests.Exists(c => HasFreeFood(c.GetInventory()))) m_npc.SayNoFoodOnce();
             return false;
         }
 
@@ -404,7 +404,16 @@ namespace ValheimHelper
             return n;
         }
 
-        static bool NeedsFoodToCarry(Inventory mine, Container c) => CountFood(mine) < FoodToCarry && WorkerNpc.HasFood(c.GetInventory());
+        static bool NeedsFoodToCarry(Inventory mine, Container c) => CountFood(mine) < FoodToCarry && HasFreeFood(c.GetInventory());
+
+        /// <summary>상자에 시킨 음식 몫(Fresh) 밖 음식이 있나(사용자 11-16 — 몫만 있으면 들르지 않고 "음식 없어").</summary>
+        static bool HasFreeFood(Inventory inv)
+        {
+            double now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
+            foreach (var it in inv.GetAllItems())
+                if (Gear.IsFood(it) && Fresh.Free(it.m_shared.m_name, inv.CountItems(it.m_shared.m_name), now) > 0) return true;
+            return false;
+        }
 
         /// <summary>명령으로 만든 음식 몫(PlanJob.Finish가 적음) — 들고 갈 음식에서 뒤로(decisions "갓 만든 음식").</summary>
         public static readonly FoodHold Fresh = new FoodHold();

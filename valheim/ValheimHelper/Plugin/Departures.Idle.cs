@@ -15,13 +15,14 @@ namespace ValheimHelper
         internal const int IdleFoodBelow = 10;
         /// <summary>한 번에 따 올 수.</summary>
         internal const int IdleFoodAmount = 10;
-        static int BaseFood(Vector3 home)
+        /// <summary>거점 음식 상자의 일꾼 음식 합 — 시킨 음식 몫(Prep.Fresh)은 뺌(사용자 11-16: 몫을 넉넉으로 보면 안 만들고 몫이라 못 먹어 굶음).</summary>
+        internal static int BaseFood(Vector3 home)
         {
-            int n = 0;
+            var haves = new Dictionary<string, int>();
             foreach (var c in Chests.NearBase(home, ChestRole.Food))
                 foreach (var it in c.GetInventory().GetAllItems())
-                    if (Gear.IsFood(it)) n += it.m_stack;
-            return n;
+                    if (Gear.IsFood(it)) { haves.TryGetValue(it.m_shared.m_name, out int h); haves[it.m_shared.m_name] = h + it.m_stack; }
+            return Prep.Fresh.FreeTotal(haves, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time);
         }
 
         /// <summary>
