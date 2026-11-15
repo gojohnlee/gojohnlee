@@ -172,12 +172,23 @@ namespace ValheimHelper
             static void Postfix() => On = false;
         }
 
+        /// <summary>일꾼이 직접 친 나무가 쓰러지는 그 순간(TreeBase.RPC_Damage 안의 SpawnLog)에 자기 통나무 자리로 — 다음 AI 틱(UpdateWork)을 기다리면
+        /// 그 사이 넘어지던 통나무가 옆 나무에 부딪혀도 일꾼 통나무로 안 보여 연쇄가 0번(E115).</summary>
+        [HarmonyPatch(typeof(TreeBase), "RPC_Damage")]
+        static class WorkerFellTree
+        {
+            internal static WorkerNpc By;
+            static void Prefix(HitData hit) => By = hit?.GetAttacker() as WorkerNpc;
+            static void Postfix() => By = null;
+        }
+
         [HarmonyPatch(typeof(TreeBase), "SpawnLog")]
         static class ChainFallTree
         {
             static void Prefix(TreeBase __instance)
             {
                 if (ChainFallSource.On) GatherJob.NoteChain(ChainFallSource.From, __instance.transform.position);
+                else if (WorkerFellTree.By?.Ai?.Job is GatherJob g) g.FelledNow(__instance.transform.position);
             }
         }
 

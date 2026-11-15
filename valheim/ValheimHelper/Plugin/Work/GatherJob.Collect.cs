@@ -243,6 +243,7 @@ namespace ValheimHelper
 
         /// <summary>시험용(vh_houselogtest): 그 자리를 쓰러뜨린 자리로 — 둘레 통나무가 자기 통나무가 됨.</summary>
         internal void TestFelled(Vector3 p) => NoteFelled(p);
+        internal void FelledNow(Vector3 p) { if (!NearFelled(p, 1f)) NoteFelled(p); }
 
         bool NearFelled(Vector3 p, float range = OwnLogRange)
         {

@@ -144,7 +144,8 @@ namespace ValheimHelper
             FindFoes(pos, myHit, taken);
             if (m_foes.Count == 0)
             {
-                if (m_state == State.Fight) EndFight();
+                // 대상이 죽은 프레임에 판단이 먼저 돌면 UpdateFight의 NoteKill을 건너뛰어 떨굼을 안 주움(회차 715 fighttest) → 여기서도 적어 둠
+                if (m_state == State.Fight) { NoteKill(); EndFight(); }
                 m_saidFight = false;
                 // 물러나 기다리는 중이거나 도망 중이면 마저 한다(0.3.7: 적이 30m 경계를 넘나들 때마다 도망이 취소됐다 다시 시작됨)
                 if (m_state != State.Back && m_state != State.Flee && m_state != State.Come) m_state = State.Calm;

@@ -40,6 +40,7 @@ namespace ValheimHelper
             if ((gone || m_target != null) && m_targetDrops != null)
             {
                 m_loots.Add(new Loot { At = m_targetAt, Names = m_targetDrops });
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 떨굼 기다림: ({m_targetAt.x:0.0},{m_targetAt.z:0.0}) {m_targetDrops.Count}종");
                 if (m_loots.Count > 6) m_loots.RemoveAt(0);
             }
             m_targetDrops = null;
