@@ -71,4 +71,31 @@ public class FrameStatsTests
         var s = FrameStats.Summarize(new List<double> { 0.010, 0.030 });
         Assert.Equal("프레임 2장 · 평균 20.0 ms · 최악 30.0 ms · 1% 최악 30.0 ms", FrameStats.ToText(s));
     }
+
+    [Fact]
+    public void MedianTakesMiddleOfEachColumn()
+    {
+        var a = new FrameStats.Summary(100, 4.0, 20.0, 9.0);
+        var b = new FrameStats.Summary(120, 5.0, 10.0, 7.0);
+        var c = new FrameStats.Summary(110, 4.5, 14.0, 8.0);
+        var m = FrameStats.Median(new[] { a, b, c });
+        Assert.Equal(110, m.Count);
+        Assert.Equal(4.5, m.AvgMs, 6);
+        Assert.Equal(14.0, m.WorstMs, 6);
+        Assert.Equal(8.0, m.Worst1PctMs, 6);
+    }
+
+    [Fact]
+    public void MedianOfEvenRunsAveragesMiddleTwoAndSkipsEmpty()
+    {
+        var m = FrameStats.Median(new[]
+        {
+            new FrameStats.Summary(100, 4.0, 10.0, 6.0),
+            new FrameStats.Summary(0, 0, 0, 0),
+            new FrameStats.Summary(100, 6.0, 20.0, 8.0),
+        });
+        Assert.Equal(5.0, m.AvgMs, 6);
+        Assert.Equal(15.0, m.WorstMs, 6);
+        Assert.Equal(0, FrameStats.Median(new FrameStats.Summary[0]).Count);
+    }
 }

@@ -34,6 +34,20 @@ namespace ValheimHelper.Core.Npc
             return new Summary(ms.Count, ms.Average(), ms[0], ms.Take(top).Average());
         }
 
+        /// <summary>같은 판을 여러 번 잰 요약들의 칸별 중간값(장수도 중간값). 짝수 개면 가운데 둘의 평균, 비면 0.</summary>
+        public static Summary Median(IEnumerable<Summary> runs)
+        {
+            var l = runs.Where(r => r.Count > 0).ToList();
+            if (l.Count == 0) return new Summary(0, 0, 0, 0);
+            double Mid(Func<Summary, double> f)
+            {
+                var v = l.Select(f).OrderBy(x => x).ToList();
+                int h = v.Count / 2;
+                return v.Count % 2 == 1 ? v[h] : (v[h - 1] + v[h]) / 2.0;
+            }
+            return new Summary((int)Math.Round(Mid(r => r.Count)), Mid(r => r.AvgMs), Mid(r => r.WorstMs), Mid(r => r.Worst1PctMs));
+        }
+
         /// <summary>history·diag 한 줄: "프레임 n장 · 평균 a.a ms · 최악 b.b ms · 1% 최악 c.c ms".</summary>
         public static string ToText(Summary s) =>
             string.Format(CultureInfo.InvariantCulture, "프레임 {0}장 · 평균 {1:0.0} ms · 최악 {2:0.0} ms · 1% 최악 {3:0.0} ms",

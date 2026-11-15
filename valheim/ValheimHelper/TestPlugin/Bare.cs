@@ -18,7 +18,10 @@ namespace ValheimHelper
         public static readonly bool On = Environment.GetEnvironmentVariable("VH_BARE") == "1";
         internal static readonly float WaitSecs = EnvSecs("VH_BARE_WAIT", 20f);
         internal static readonly float MeasureSecs = EnvSecs("VH_BARE_SECS", 60f);
+        /// <summary>VH_LOAD_RUNS(기본 1): 같은 판에서 재는 시간을 이만큼 되풀이해 칸별 중간값을 낸다(게임을 여러 번 켜지 않고 여러 번 재기).</summary>
+        internal static readonly int Runs = int.TryParse(Environment.GetEnvironmentVariable("VH_LOAD_RUNS"), out int r) && r > 1 ? Math.Min(r, 9) : 1;
         static readonly List<double> Frames = new List<double>();
+        static readonly List<FrameStats.Summary> Done = new List<FrameStats.Summary>();
         static bool s_started, s_done;
         static float s_look, s_inWorld, s_measured;
 
@@ -50,8 +53,12 @@ namespace ValheimHelper
             Frames.Add(dt);
             s_measured += dt;
             if (s_measured < MeasureSecs) return;
+            Done.Add(FrameStats.Summarize(Frames));
+            Frames.Clear();
+            Plugin.Log.LogInfo($"[모드 부하] 모드 끔 {Done.Count}/{Runs}번째 " + FrameStats.ToText(Done[Done.Count - 1]));
+            if (Done.Count < Runs) { s_measured = 0f; return; }
             s_done = true;
-            string text = FrameStats.ToText(FrameStats.Summarize(Frames));
+            string text = FrameStats.ToText(FrameStats.Median(Done)) + (Runs > 1 ? $" (중간값 {Runs}번)" : "");
             Plugin.Log.LogInfo("[모드 부하] 모드 끔 " + text);
             try
             {
@@ -60,7 +67,7 @@ namespace ValheimHelper
                     $"모드 끔 판 {Plugin.FullVersion} — 패치 0",
                     $"=== vh_bare 월드 {AutoStart.World}",
                     $"판정: PASS",
-                    $"시간: {s_measured:0}초",
+                    $"시간: {s_measured * Runs:0}초",
                     "프레임: " + text,
                 });
             }
