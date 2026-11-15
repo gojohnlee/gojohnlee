@@ -119,8 +119,9 @@ namespace ValheimHelper
             m_pickTime += dt;
             if (m_pickTime < 0.6f) return true;
             int left = 0;
-            foreach (var (d, name) in JobKit.DropsNear(m_pickAt, 3f))
+            foreach (ItemDrop d in JobKit.DropsNear(m_pickAt, 3f))
             {
+                string name = Utils.GetPrefabName(d.gameObject);
                 if (name != "Honey") continue;
                 int n = d.m_itemData.m_stack;
                 if (m_npc.PickDrop(d)) Got += n;

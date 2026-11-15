@@ -46,6 +46,8 @@ namespace ValheimHelper
                 foreach (var n in WorkerNpc.All)
                 {
                     if (!FreeForChores(n)) { s_idleSeen.Remove(n); continue; }
+                    // 위험한 데 혼자 가는 동료는 5초마다 봄 — 60초 틱만 보면 1분 안에 끝나는 일엔 못 붙음(회차 690 chorestest FAIL)
+                    if (!n.IsGuard && JoinRisky(n) != null) { s_idleSeen.Remove(n); continue; }
                     if (s_idleSeen.Add(n) && !n.Ai.Resting) fresh = true;
                 }
                 s_idleSeen.RemoveWhere(n => n == null);

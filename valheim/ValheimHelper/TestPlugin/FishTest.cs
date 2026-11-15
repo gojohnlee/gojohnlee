@@ -150,6 +150,8 @@ namespace ValheimHelper
             made.AddRange(station);
             TestKit.ClearBaseStock(w, "FishRaw", "FishCooked", "Wood");
             TestKit.PutInChest(w.Chest, "Fish1", 6);
+            // 넣은 바로 뒤에 셈 — 아래 2초 사이 일꾼이 농어 6을 꺼내 손질(FishRaw)까지 하면 2(낚은 것)만 남아 "농어 2 → 2" FAIL(회차 689)
+            int fish0 = All(w, "Fish1");
             TestKit.PutInChest(w.Chest, "Wood", 20);
             foreach (string f in Departures.FoodRank()) Departures.TestSkip(f, f != "FishCooked");
             yield return new WaitForSeconds(2f);
@@ -158,7 +160,6 @@ namespace ValheimHelper
             TestKit.ClearBaseStock(w, "FishingRod", "FishingBait");
             foreach (var n in new[] { w.Ragnar, w.Floki })
                 foreach (string p in new[] { "FishingRod", "FishingBait" }) n.GetInventory().RemoveItem(SharedName(p), 999);
-            int fish0 = All(w, "Fish1");
             float t0 = Time.time;
             yield return TestKit.WaitFor(() => Cooking(w), 70f);
             checks.Add($"상자에 농어·조리대 → 쉬던 일꾼이 물고기 구우러 감 ({Time.time - t0:0}초)", TestKit.Ok);

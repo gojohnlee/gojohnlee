@@ -204,8 +204,9 @@ namespace ValheimHelper
         bool UpdatePick()
         {
             bool any = false;
-            foreach (var (d, name) in JobKit.DropsNear(m_loot.Pos, 5f))
+            foreach (ItemDrop d in JobKit.DropsNear(m_loot.Pos, 5f))
             {
+                string name = Utils.GetPrefabName(d.gameObject);
                 if (!m_drops.Contains(name)) continue;
                 any = true;
                 int n = d.m_itemData.m_stack;

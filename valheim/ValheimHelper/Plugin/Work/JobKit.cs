@@ -21,14 +21,14 @@ namespace ValheimHelper
             return false;
         }
 
-        /// <summary>at 둘레 r 안 땅의 떨굼(ItemDrop, ZNetView 유효)과 프리팹 이름.</summary>
-        internal static IEnumerable<(ItemDrop drop, string name)> DropsNear(Vector3 at, float r)
+        /// <summary>at 둘레 r 안 땅의 떨굼(ItemDrop, ZNetView 유효). 이름은 Utils.GetPrefabName(d.gameObject).</summary>
+        internal static IEnumerable<ItemDrop> DropsNear(Vector3 at, float r)
         {
             foreach (Collider col in Physics.OverlapSphere(at, r, LayerMask.GetMask("item")))
             {
                 ItemDrop d = col.GetComponentInParent<ItemDrop>();
                 if (d == null || !d.TryGetComponent(out ZNetView v) || !v.IsValid()) continue;
-                yield return (d, Utils.GetPrefabName(d.gameObject));
+                yield return d;
             }
         }
     }
