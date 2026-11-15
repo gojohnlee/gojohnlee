@@ -185,6 +185,26 @@ namespace ValheimHelper
                 yield return Stop();
                 TestKit.TakeFromChest(w.Chest, "Wood");
 
+                // 7-1) E112 질문을 기다리는 사이 다른 일을 시작함: 조건이 저절로 채워지면 질문의 일은 대기열 뒤, 대답하면 하던 일이 대기열 맨 앞
+                yield return Say($"!{n1} 나무 30", 1f);
+                var stone = new ChatCommand { Kind = CommandKind.Item, Item = "Stone", Amount = 5 };
+                var q2 = w.Ragnar.Ai.Queue;
+                Departures.AskForTest(w.Ragnar, stone, new DepartureResult { Question = Question.Condition, Condition = "healthMead" });
+                w.Ragnar.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("MeadHealthMinor"), 1);
+                yield return TestKit.WaitFor(() => Departures.AskedAt(w.Ragnar) < 0, 8f);
+                checks.Add($"질문 조건 채워짐: 하던 일 그대로·질문의 일은 대기열 뒤 ({TestKit.Waited:0.0}초, {q2.Count}칸: {Labels(q2)}, 지금 {w.Ragnar.Ai.Job?.Label})",
+                    TestKit.Ok && w.Ragnar.Ai.Job is GatherJob k30 && k30.Target == 30 && q2.Count == 1 && q2[0].Work != null && q2[0].Work.Item == "Stone");
+                Departures.AskForTest(w.Ragnar, stone, new DepartureResult { Question = Question.Night });
+                yield return Say("그래도 가", 1f);
+                checks.Add($"질문 대답: 하던 일은 대기열 맨 앞 ({q2.Count}칸: {Labels(q2)}, 지금 {w.Ragnar.Ai.Job?.Label})",
+                    Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Job is GatherJob k5 && k5.Target == 5
+                    && q2.Count == 2 && q2[0].Resume is GatherJob b30 && b30.Target == 30);
+                yield return Stop();
+                foreach (var it in new List<ItemDrop.ItemData>(w.Ragnar.GetInventory().GetAllItems()))
+                    if (Gear.IsHealthMead(it)) w.Ragnar.GetInventory().RemoveItem(it);
+                TestKit.TakeFromChest(w.Chest, "Wood");
+                TestKit.TakeFromChest(w.Chest, "Stone");
+
                 // 8) 밝혀진 곳은 안다(작업 3): 스위치 끔 → 먼 밝혀진 구역 모름, 켬 → 앎
                 // 지도 밝힘은 캐릭터마다 따로라 새 시험 캐릭터는 거점 둘레도 안 밝혀져 있다 → 바닐라 밝히기(걸어다닐 때와 같음)로 둘레 230m를 밝힌다.
                 HarmonyLib.AccessTools.Method(typeof(Minimap), "Explore", new[] { typeof(Vector3), typeof(float) })?.Invoke(Minimap.instance, new object[] { w.Home, 230f });

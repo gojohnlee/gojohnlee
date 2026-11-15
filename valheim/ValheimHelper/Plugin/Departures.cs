@@ -44,6 +44,10 @@ namespace ValheimHelper
 
         public static void Forget(WorkerNpc npc) => s_pending.Remove(npc);
 
+        /// <summary>시험용(vh_departtest E112): 질문하고 대답을 기다리는 상태를 바로 만든다.</summary>
+        internal static void AskForTest(WorkerNpc npc, ChatCommand cmd, DepartureResult r) =>
+            s_pending[npc] = new Pending { Result = r, Cmd = cmd, Who = new Speaker("vhtest", ZDOID.None, ZDOID.None), AskedAt = Now };
+
         /// <summary>저장용(WorkSaves → ZDO vh_pending). 기다리는 질문이 없으면 null.</summary>
         public static PendingData Snapshot(WorkerNpc npc)
         {
@@ -203,6 +207,24 @@ namespace ValheimHelper
             if (s_pending.TryGetValue(npc, out var p)) p.AskedAt -= seconds;
         }
 
+        /// <summary>
+        /// 질문을 기다리는 사이 다른 명령으로 일을 시작했으면(E112) 그 일을 덮어쓰지 않는다: 대답("그래도 가" 등)은 하던 일을 대기열 맨 앞에 넣고 가고,
+        /// 저절로 채워진 조건(answered = false)은 질문의 일을 대기열 뒤에 넣는다. 대기열에 넣었으면 true(Start 안 함).
+        /// </summary>
+        static bool KeepBusy(WorkerNpc npc, Pending p, bool answered)
+        {
+            if (npc.Ai.Current != WorkerAI.Mode.Work || npc.Ai.Job == null || npc.Ai.Yields) return false;
+            if (answered)
+            {
+                npc.Ai.Interrupt("질문 대답");
+                Plugin.Log.LogInfo($"{npc.NpcName} 질문 대답: 하던 일 {npc.Ai.Queue[0].Label}은 대기열 맨 앞(E112)");
+                return false;
+            }
+            npc.Ai.Queue.Add(WorkSaves.ToQueued(npc, WorkSaves.GatherItem(p.Who, p.Cmd, GatherJob.ItemLabel(p.Cmd.Item) + " " + p.Cmd.Amount, ReadyWhen.Always)));
+            Plugin.Log.LogInfo($"{npc.NpcName} 질문 조건 채워짐: 하던 일 {npc.Ai.Job.Label}이 있어 {p.Cmd.Item} {p.Cmd.Amount}은 대기열 뒤(E112)");
+            return true;
+        }
+
         static void Start(WorkerNpc npc, ChatCommand cmd, HashSet<ToolKind> ways, List<PlaceOption> avoid)
         {
             var job = new GatherJob(npc, cmd.Item, cmd.Amount, ways);
@@ -332,6 +354,7 @@ namespace ValheimHelper
             {
                 case ReplyAction.GoAlternative: // 옛 저장의 대안 질문(이제 묻지 않음): Place가 원래 곳
                     s_pending.Remove(npc);
+                    KeepBusy(npc, p, true);
                     Start(npc, p.Cmd, ways, r.Place != null ? new List<PlaceOption> { r.Place } : null);
                     npc.Say("answer.alternative", args);
                     break;
@@ -340,6 +363,7 @@ namespace ValheimHelper
                 case ReplyAction.GoEscort:
                 {
                     s_pending.Remove(npc);
+                    KeepBusy(npc, p, true);
                     Start(npc, p.Cmd, ways, null);
                     // "같이 가자": 호위병이 와서 같이 간다(사용자 결정 2026-10-26 — 일꾼끼리는 같이 가지 않음)
                     WorkerNpc mate = act == ReplyAction.GoEscort ? GoWithGuard(npc) : null;
@@ -350,6 +374,7 @@ namespace ValheimHelper
                 case ReplyAction.Recheck:
                     if (!ConditionMet(npc, p)) { p.AskedAt = Now; npc.Say(r.Condition == "gear" ? "answer.gearMissing" : "answer.conditionMissing", args); break; }
                     s_pending.Remove(npc);
+                    KeepBusy(npc, p, true);
                     Start(npc, p.Cmd, ways, null);
                     npc.Say(r.Condition == "gear" ? "answer.gearMet" : "answer.conditionMet", args);
                     break;
@@ -408,6 +433,7 @@ namespace ValheimHelper
                         if (ConditionMet(npc, p))
                         {
                             s_pending.Remove(npc);
+                            if (KeepBusy(npc, p, false)) continue;
                             Start(npc, p.Cmd, GatherJob.WaysFor(npc, p.Cmd.Item), null);
                             npc.Say(p.Result.Condition == "gear" ? "answer.gearMet" : "answer.conditionMet", Args(npc, p.Result));
                             continue;
