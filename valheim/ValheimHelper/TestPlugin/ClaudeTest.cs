@@ -46,6 +46,7 @@ namespace ValheimHelper
 
                 // 3) 수량 없는 부탁 → 되묻지 않고 기본 수로 시작, 되물었으면 짧은 대답("30개")을 앞 말과 이어 시작(사용자 2026-10-25)
                 yield return new WaitForSeconds(2f);
+                int fail0 = ClaudeChat.FailCount; before = w.Heard.Count;
                 GatherTest.Say($"{n1} 돌 좀 캐 와", null);
                 yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, TestRunner.Real(45f)); // Claude 답은 실제 시간
                 bool direct = w.Ragnar.Ai.Current == WorkerAI.Mode.Work;
@@ -54,7 +55,11 @@ namespace ValheimHelper
                     GatherTest.Say($"{n1} 30개", null);
                     yield return TestKit.WaitFor(() => w.Ragnar.Ai.Current == WorkerAI.Mode.Work, TestRunner.Real(45f)); // Claude 답은 실제 시간
                 }
-                checks.Add($"수량 없는 부탁 → 일 시작 ({(direct ? "바로" : "대답 뒤")}, 일 {w.Ragnar.Ai.Job?.Label})", w.Ragnar.Ai.Current == WorkerAI.Mode.Work);
+                bool working = w.Ragnar.Ai.Current == WorkerAI.Mode.Work;
+                if (!working && ClaudeChat.FailCount > fail0)
+                    // Claude CLI가 못 쓰임(계정 한도·로그인 등 PC 환경) — 모드 쪽은 정해진 명령 안내로 물러나면 됨
+                    checks.Add($"수량 없는 부탁 → Claude 못 씀(환경: {ClaudeChat.LastError?.Substring(0, System.Math.Min(120, ClaudeChat.LastError.Length))}) → 정해진 명령 안내", w.Heard.Count > before);
+                else checks.Add($"수량 없는 부탁 → 일 시작 ({(direct ? "바로" : "대답 뒤")}, 일 {w.Ragnar.Ai.Job?.Label})", working);
             }
             finally { TestKit.Restore(w); }
             GatherTest.Say("!멈춰", null);

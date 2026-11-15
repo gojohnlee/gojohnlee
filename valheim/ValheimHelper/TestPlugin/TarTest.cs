@@ -205,9 +205,17 @@ namespace ValheimHelper
         /// <summary>플레이어 순간이동(바닐라: 쿨다운 2초면 거절, 옮기기는 2초 뒤) — 받아질 때까지 다시 부르고 끝날 때까지 기다림.</summary>
         static IEnumerator Tp(Player player, Vector3 pos, Quaternion rot, bool distant = false)
         {
-            yield return TestKit.WaitFor(() => player.TeleportTo(pos, rot, distant), 10f);
-            yield return TestKit.WaitFor(() => !player.IsTeleporting(), 60f);
-            yield return new WaitForSeconds(distant ? 5f : 1f);
+            // 회차 713: 한 번 옮긴 뒤에도 거점에 남은 적 있음(까닭 못 봄) — 닿았는지 보고 3번까지 다시, 기록
+            for (int i = 0; i < 3; i++)
+            {
+                bool ok = false;
+                yield return TestKit.WaitFor(() => ok = player.TeleportTo(pos, rot, distant), 10f);
+                yield return TestKit.WaitFor(() => !player.IsTeleporting(), 60f);
+                yield return new WaitForSeconds(distant ? 5f : 1f);
+                float d = Utils.DistanceXZ(player.transform.position, pos);
+                if (d < 5f) yield break;
+                TestRunner.Log($"플레이어 옮기기 {i + 1}번째 안 닿음: TeleportTo {ok}, 남은 {d:0}m");
+            }
         }
 
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }

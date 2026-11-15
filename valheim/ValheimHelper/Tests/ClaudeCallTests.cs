@@ -35,6 +35,13 @@ public class ClaudeCallTests
     public void BadOutputIsNull(string s) => Assert.Null(ClaudeCall.ExtractResult(s));
 
     [Theory]
+    [InlineData("{\"is_error\":true,\"result\":\" limit \"}", "limit")]
+    [InlineData("{\"is_error\":true,\"api_error_status\":429}", "api_error_status 429")]
+    [InlineData("{\"x\":1}", null)]
+    [InlineData("not json", null)]
+    public void ErrorReasonReadsWhy(string s, string want) => Assert.Equal(want, ClaudeCall.ErrorReason(s));
+
+    [Theory]
     [InlineData("abc", "abc")]
     [InlineData("", "\"\"")]
     [InlineData("a b", "\"a b\"")]

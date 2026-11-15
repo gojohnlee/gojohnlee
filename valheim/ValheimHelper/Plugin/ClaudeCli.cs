@@ -55,7 +55,7 @@ namespace ValheimHelper
                     }
                     reader.Join(2000);
                     Text = ClaudeCall.ExtractResult(stdout);
-                    if (Text == null) Error = "답 없음 exit=" + p.ExitCode + " " + Trim(stdout) + " " + Trim(err.ToString());
+                    if (Text == null) Error = "답 없음 exit=" + p.ExitCode + " " + (ClaudeCall.ErrorReason(stdout) is string why ? "까닭: " + Trim(why) + " / " : "") + Trim(stdout) + " " + Trim(err.ToString());
                 }
             }
             catch (Exception e) { Error = e.GetType().Name + ": " + e.Message; }

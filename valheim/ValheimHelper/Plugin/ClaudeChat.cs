@@ -18,6 +18,9 @@ namespace ValheimHelper
         const int WaitMax = 8;
         static readonly Queue<KeyValuePair<Speaker, ChatResult>> s_waiting = new Queue<KeyValuePair<Speaker, ChatResult>>();
         static float s_started;
+        /// <summary>시험용: Claude 호출 실패 수·마지막 까닭(한도 등 환경 탓 가르기).</summary>
+        public static int FailCount;
+        public static string LastError;
         /// <summary>최근 대화(플레이어 말·NPC 답), 지시문에 붙인다. RecentSeconds 지나거나 RecentMax 넘으면 버린다.</summary>
         static readonly List<KeyValuePair<float, string>> s_recent = new List<KeyValuePair<float, string>>();
         const float RecentSeconds = 300f;
@@ -105,6 +108,7 @@ namespace ValheimHelper
             if (call.Text == null)
             {
                 Plugin.Log.LogWarning("Claude 호출 실패: " + call.Error);
+                FailCount++; LastError = call.Error;
                 Commands.OnlyBang(r.Target);
                 return;
             }

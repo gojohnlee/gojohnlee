@@ -88,16 +88,19 @@ namespace ValheimHelper
             int bag0 = 0; foreach (var n in names) bag0 += claude.CountItem(n);
             Vector3 killAt = claude.transform.position;
             int ground = 0, seen = 0;
-            for (t = 0f; t < 20f; t += 0.5f)
+            // 싸우는 동안엔 줍지 않음(설계) — 밤에 다른 적이 끼면 그 시간은 안 셈, 모두 60초까지
+            float all = 0f;
+            for (t = 0f; t < 20f && all < 60f; all += 0.5f)
             {
                 yield return new WaitForSeconds(0.5f);
+                var gs = claude.Ai.Guard.StateName; if (gs != "Fight" && gs != "Back" && gs != "Flee") t += 0.5f;
                 ground = 0;
                 foreach (var zdo in Senses.Nearby(killAt, 15f)) { var v = ZNetScene.instance.FindInstance(zdo); var it = v != null ? v.GetComponent<ItemDrop>() : null; if (it != null && names.Contains(Utils.GetPrefabName(it.gameObject))) ground++; }
                 seen = System.Math.Max(seen, ground);
                 if (t >= 8f && ground == 0 && claude.Ai.Guard.LootsWaiting == 0) break;
             }
             int got = -bag0; foreach (var n in names) got += claude.CountItem(n);
-            checks.Add($"잡은 회색난쟁이 떨굼 주움 (가방 +{got}, 땅에 남음 {ground}, 본 떨굼 {seen}, {t:0}초)", ground == 0 && (got > 0 || seen == 0));
+            checks.Add($"잡은 회색난쟁이 떨굼 주움 (가방 +{got}, 땅에 남음 {ground}, 본 떨굼 {seen}, {t:0}초·싸움 포함 {all:0}초)", ground == 0 && (got > 0 || seen == 0));
             yield return new WaitForSeconds(2f);
 
             // C) 체력 25% → 미드

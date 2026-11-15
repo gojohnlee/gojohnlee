@@ -32,6 +32,18 @@ namespace ValheimHelper.Core.Chat
             return obj.TryGetValue("result", out var res) && res is string s && s.Trim().Length > 0 ? s : null;
         }
 
+        /// <summary>실패한 json 출력에서 까닭(result 또는 api_error_status — 한도·로그인 등). 못 읽으면 null.</summary>
+        public static string ErrorReason(string stdout)
+        {
+            if (string.IsNullOrWhiteSpace(stdout)) return null;
+            object root;
+            try { root = MiniJson.Parse(stdout.Trim()); }
+            catch (System.FormatException) { return null; }
+            if (!(root is Dictionary<string, object> obj)) return null;
+            if (obj.TryGetValue("result", out var res) && res is string s && s.Trim().Length > 0) return s.Trim();
+            return obj.TryGetValue("api_error_status", out var st) && st != null ? "api_error_status " + st : null;
+        }
+
         /// <summary>Windows 명령줄 한 줄로 합칠 때 인자 하나를 인용한다.</summary>
         const char BS = (char)92;
 
