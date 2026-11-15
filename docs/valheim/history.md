@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 688 · 11-15 · 리팩터링 2번: "쉬는 일인지·저장할 수 있는지"를 일마다 스스로 알려 줌
+
+**요약**
+
+- [11-15] 리팩터링 2번: 일마다 "쉬는 일인지(Yields)·저장 칸(Save)"을 IWorkerJob 속성으로, is XxxJob 줄 없앰(회차 688 — 커밋 ce29c6f8 · depart 15/15·base 22/22·tidy 16/16·restart1→2 16/16·chores 단독 24/24 PASS, 묶음 chores 21/24는 E106)
+
+**자세히**
+
+- 전에는 WorkerAI.Yields와 WorkSaves.FromJob이 일 종류를 하나씩 물어(is GatherJob…) 판단했다. 이제 일(14가지)마다 `Yields`·`Save()`를 가지고, 두 곳은 그것만 부른다. 판단 조건과 저장 내용은 그대로 옮겼다.
+- 다른 is XxxJob(채집 144곳 등)은 자리마다 판정이 달라 그대로 뒀다. 처음 계획(history 4076줄)도 "Yields·저장 가능 여부만"이었다.
+- 묶음 depart;base;tidy;chores;restart1→2에서 chores만 21/24 FAIL(팀에 낌 E098 꼴·구운 고기 E080 꼴·꿀). 같은 DLL로 chores만 단독으로 돌리면 24/24 PASS → E106 관찰 중(basetest가 남긴 판 상태가 의심됨).
+- 첫 시험은 도구 시간 한도(10분)에 걸려 멈춰서, 시간을 늘려 다시 돌렸다.
+
 ### 회차 687 · 11-15 · 리팩터링 1번: 큰 파일(Departures.cs) 나누기
 
 **요약**
