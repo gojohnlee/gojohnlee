@@ -152,7 +152,7 @@ namespace ValheimHelper
                 Brain.Get().Forget(far, "BlackMarble");
                 r = Departures.JudgeFor(npc, marble);
                 TestRunner.Log($"D 시커 곳만: {r?.Action} 곳 {Z(r?.Place)} — {r?.Reason}");
-                checks.Add($"시커 있는 곳뿐이면 묻지 않고 호위병과 ({r?.Action})", r != null && r.Action == DepartAction.GoTogether && r.Question == Question.None);
+                checks.Add($"시커 있는 곳뿐이면 묻지 않고 호위병과·셋도 안 되면 장비 요청 ({r?.Action})", r != null && (r.Action == DepartAction.GoTogether || r.Action == DepartAction.GearRequest) && r.Question == Question.None); // 셋도 안 되는 아는 적은 장비 요청(회차 600, 사용자 11-13 00:15)
             }
             finally
             {
