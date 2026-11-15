@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using ValheimHelper.Core.Work;
+using ValheimHelper.Core.Npc;
 
 namespace ValheimHelper
 {
@@ -303,7 +304,7 @@ namespace ValheimHelper
                     TestRunner.Log($"DIAG 상자 {Utils.DistanceXZ(c.transform.position, w.Home):0.0}m 빈칸 {c.GetInventory().GetEmptySlots()} 덜 찬 더미 [{string.Join(", ", names.ToArray())}]");
                 }
             checks.Add($"짐에는 안 넣음 (짐 활 {w.Ragnar.CountItem("Bow")})", w.Ragnar.CountItem("Bow") == 0);
-            checks.Add("\"상자 하나만 더\" 대사", w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && h.Contains("상자")) >= 0);
+            checks.Add("\"상자 하나만 더\" 대사", w.Heard.FindIndex(heard0, h => h.StartsWith(n1 + ":") && System.Array.Exists(Speech.Options(Personality.Ragnar, "craftChestFull"), o => h.EndsWith(o))) >= 0); // "상자" 낱말로 찾으면 "곳간이 모자라는군" 줄에서 FAIL(회차 682)
             yield return Stop();
             if (onGround != null && onGround.TryGetComponent(out ZNetView v) && v.IsValid()) v.Destroy();
             TestKit.ClearBaseStock(w, "Stone");
