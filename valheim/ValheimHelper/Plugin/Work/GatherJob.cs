@@ -378,6 +378,14 @@ namespace ValheimHelper
         }
 
         public string Label => ItemLabel(Item) + " " + Target;
+        public bool Yields => FromRefill;
+        public WorkItem Save()
+        {
+            int left = Mathf.Max(1, Remaining()); // 같이 출발한 동료 몫은 빼고(사용자 11-09)
+            var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = Item, Amount = left, Label = ItemLabel(Item) + " " + left, Stuck = StuckSave, PortalTag = PortalCarryTag, Got = Delivered };
+            if (GoalPos != Vector3.zero) { w.HasZone = true; w.Zone = GoalZone; }
+            return w;
+        }
 
         /// <summary>!상태 한 줄(사용자 11-09 "벌목 1/50"처럼): 하는 일 + 물건 + 넣은 수/목표. 같이 출발했으면 둘이 넣은 합.</summary>
         public string StateLine()

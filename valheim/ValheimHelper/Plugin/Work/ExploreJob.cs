@@ -48,6 +48,8 @@ namespace ValheimHelper
         }
 
         public string Label => m_npc.Line("state.explore", new Dictionary<string, string> { ["where"] = m_where });
+        public bool Yields => false;
+        public WorkItem Save() => ToWork();
 
         public string StateLine() => m_npc.Line("state.explore", new Dictionary<string, string> { ["where"] = m_where });
 

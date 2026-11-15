@@ -39,6 +39,8 @@ namespace ValheimHelper
         }
 
         public string Label => m_npc.Line("state.grave");
+        public bool Yields => true;
+        public Core.Work.WorkItem Save() => null;
 
         public string StateLine() => m_npc.Line("state.grave");
 

@@ -113,6 +113,8 @@ namespace ValheimHelper
         };
 
         public string Label => m_npc.Line("job.farm");
+        public bool Yields => false;
+        public WorkItem Save() => ToWork();
         public string StateLine() => m_npc.Line("state.farm", Args());
         Dictionary<string, string> Args() => new Dictionary<string, string> { ["n"] = Planted.ToString(), ["total"] = m_total.ToString() };
 

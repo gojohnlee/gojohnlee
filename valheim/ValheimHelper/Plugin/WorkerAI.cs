@@ -24,6 +24,10 @@ namespace ValheimHelper
         void Stop(bool pause);
         /// <summary>대기열에서 다시 시작할 때(Stop(true) 뒤). 멈출 때 푼 것을 다시 건다.</summary>
         void Resume();
+        /// <summary>쉬는 일(상자 정리·묘비·보충 채집·쉴 때 계획): 새 명령에 바로 자리를 내준다(WorkerAI.Yields).</summary>
+        bool Yields { get; }
+        /// <summary>하던 일 → 이어 하기 칸(큰 단계만). 저장할 수 없는 일(묘비 회수 등)이면 null.</summary>
+        WorkItem Save();
     }
 
     /// <summary>
@@ -76,7 +80,7 @@ namespace ValheimHelper
         /// 지금 일이 새 명령에 바로 자리를 내주는 일(묘비 회수·쉴 때 상자 정리, 스스로 한 일 — 자동 보충·쉴 때 먹거리·만들기·밭일·쓴 재료 다시 캐기)
         /// — 대기열에 안 넣고 "~부터 하고 갈게요"도 안 함(사용자 11-09 "시켰으면 바로 출발").
         /// </summary>
-        public bool Yields => Job is GraveJob || Job is TidyJob || Job is GatherJob g && g.FromRefill || Job is PlanJob p && p.FromIdle && !p.Committed; // 밭일·설비에 올린 요리는 끝내고 감(사용자 11-09)
+        public bool Yields => Job != null && Job.Yields;
         float m_senseTimer;
 
         public Mode Current { get; private set; } = Mode.Idle;

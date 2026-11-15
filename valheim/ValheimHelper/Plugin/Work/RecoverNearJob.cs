@@ -133,5 +133,7 @@ namespace ValheimHelper
         public void Stop(bool pause) { }
         public void Resume() { m_lastHealth = m_npc.GetHealth(); }
         public string Label => "근처 회복";
+        public bool Yields => false;
+        public Core.Work.WorkItem Save() => null;
     }
 }

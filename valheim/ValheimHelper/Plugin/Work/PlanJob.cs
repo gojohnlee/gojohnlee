@@ -81,6 +81,8 @@ namespace ValheimHelper
         public string StepName => m_step != null ? m_step.Kind.ToString() : "Wait";
         internal string InnerStep => (m_gather ?? m_filler)?.StepName; // 걸음 기록(WalkRecorder)이 구간을 나눔
         public string Label => m_goal;
+        public bool Yields => FromIdle && !Committed; // 밭일·설비에 올린 요리는 끝내고 감(사용자 11-09)
+        public WorkItem Save() => Goal != null ? ToWork() : null; // 계획 단계·상태·진행까지(재시작 뒤 이어 감)
         public string StateLine() => "제작 " + m_goal + " " + m_runner.Count(StepState.Done) + "/" + m_runner.Plan.Steps.Count + "단계"
             + (m_step != null && m_gather != null ? " · " + m_gather.StateLine() : "");
 

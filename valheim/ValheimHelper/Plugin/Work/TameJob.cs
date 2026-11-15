@@ -57,6 +57,8 @@ namespace ValheimHelper
         public string StepName => "Tame" + m_step;
         internal Character Animal => m_animal;
         public string Label => m_npc.Line("job.tame");
+        public bool Yields => false;
+        public Core.Work.WorkItem Save() => null;
         public string StateLine() => m_npc.Line("state.feed", new Dictionary<string, string> { ["n"] = Fed.ToString() });
         /// <summary>
         /// 데려오다 그만두면(그만·집으로·따라와·급한 명령·쉬기·죽음) 짐승 따라오기를 풂 — 안 풀면 영영 일꾼을 따라다니고 우리 가축(Cullable)에서도 빠짐.

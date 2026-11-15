@@ -37,6 +37,8 @@ namespace ValheimHelper
         public int Got { get; private set; }
         public string StepName => "Fish" + m_step;
         public string Label => m_npc.Line("job.fish");
+        public bool Yields => false;
+        public Core.Work.WorkItem Save() => null;
         public string StateLine() => m_npc.Line("state.fish", new Dictionary<string, string> { ["n"] = Got.ToString() });
         public void Stop(bool pause) { } // 챙긴 도구·미끼/씨앗은 짐에 남음(다음 짐 내리기가 넣는지 확인 남음, 11-10)
         public void Resume() { }

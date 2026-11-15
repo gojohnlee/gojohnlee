@@ -37,6 +37,8 @@ namespace ValheimHelper
         public int Moved { get; private set; }
         public string StepName => "Tidy" + m_step;
         public string Label => m_npc.Line(m_label);
+        public bool Yields => true;
+        public Core.Work.WorkItem Save() => null;
         public string StateLine() => m_npc.Line(m_label);
         public void Stop(bool pause) => PutBack(); // 든 물건은 상자에(쉬는 일이라 멈춤 없음)
         public void Resume() { }

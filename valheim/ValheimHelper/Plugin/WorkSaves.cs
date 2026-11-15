@@ -80,20 +80,7 @@ namespace ValheimHelper
         };
 
         /// <summary>하던 일 → 이어 하기 칸(큰 단계만). 저장할 수 없는 일(묘비 회수 등)이면 null.</summary>
-        public static WorkItem FromJob(IWorkerJob job)
-        {
-            if (job is GatherJob g)
-            {
-                int left = Mathf.Max(1, g.Remaining()); // 같이 출발한 동료 몫은 빼고(사용자 11-09)
-                var w = new WorkItem { Kind = WorkKind.Gather, Resume = true, Item = g.Item, Amount = left, Label = GatherJob.ItemLabel(g.Item) + " " + left, Stuck = g.StuckSave, PortalTag = g.PortalCarryTag, Got = g.Delivered };
-                if (g.GoalPos != Vector3.zero) { w.HasZone = true; w.Zone = g.GoalZone; }
-                return w;
-            }
-            if (job is PlanJob p && p.Goal != null) return p.ToWork(); // 계획 단계·상태·진행까지(재시작 뒤 이어 감)
-            if (job is FarmJob fj) return fj.ToWork();
-            if (job is ExploreJob e) return e.ToWork();
-            return null;
-        }
+        public static WorkItem FromJob(IWorkerJob job) => job?.Save();
 
         /// <summary>저장할 칸들: 하던 일(맨 앞) + 대기열(데이터가 있는 칸만).</summary>
         public static List<WorkItem> Snapshot(WorkerNpc npc)

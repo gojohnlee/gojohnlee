@@ -45,6 +45,8 @@ namespace ValheimHelper
         public int Fed { get; private set; }
         public string StepName => "Feed" + m_step;
         public string Label => m_npc.Line("job.feed");
+        public bool Yields => false;
+        public Core.Work.WorkItem Save() => null;
         public string StateLine() => m_npc.Line("state.feed", new Dictionary<string, string> { ["n"] = Fed.ToString() });
         /// <summary>취소·쉬기면 꺼낸 먹이를 상자에 되돌림. 급한 명령으로 잠깐 멈춤이면 들고 있다가 이어서 줌.</summary>
         public void Stop(bool pause) { if (!pause) ReturnFood(); }

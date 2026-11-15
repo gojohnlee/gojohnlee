@@ -19,5 +19,7 @@ namespace ValheimHelper
         public void Resume() { }
         public void AvoidHere(Vector3 danger) { }
         public string Label => "장비 챙기기";
+        public bool Yields => false;
+        public Core.Work.WorkItem Save() => null;
     }
 }

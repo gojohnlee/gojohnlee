@@ -235,6 +235,8 @@ namespace ValheimHelper
             public string StepName => "TestWalk";
             public string StateLine() => "시험 걷기";
             public string Label => "시험 걷기";
+            public bool Yields => false;
+            public WorkItem Save() => null;
             public void Stop(bool pause) { }
             public void Resume() { }
             public void AvoidHere(Vector3 danger) { }
