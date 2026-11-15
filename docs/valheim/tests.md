@@ -1,7 +1,7 @@
 # 시험 목록 (회차 716 · 11-16 정리)
 
 게임 시험 111개(TestRunner.Register 기준). 회귀 묶음은 `C:\vh\stable-dll\run.ps1 -Dll <dll> -Batches <아래 줄>`로 돌린다.
-"마지막 PASS"는 history에서 찾은 회차 — 회귀 묶음 시험은 회차 713~715 전체 회귀에서 통과(묶음 단위 기록).
+"마지막 PASS"는 history에서 찾은 회차 — 회귀 묶음 시험은 회차 713~715 전체 회귀에서 통과(묶음 단위 기록), 회차 716에 새로 넣은 7개(plainsfarm·pathforget·pathfollow·newerahouse·restartcraft 셋+2)는 716 PASS.
 
 ## 회귀 묶음 (run.ps1 줄 = 이름|바이옴|약식|시험|VH_RESET|집|월드)
 
@@ -25,7 +25,7 @@ B10|deepnorth|0|vh_deepnorthtest
 B10b||0|vh_deepfoetest;vh_frostcavetest
 B11||0|vh_housetest;vh_unloadreachtest;vh_livestocktest;vh_posttest;vh_pathforget;vh_pathfollow
 B11b||0|vh_guardbowtest;vh_chorestest;vh_fishtest
-B11c||0|vh_newerahouse||||vh_house_TheNewEra
+B11c||0|vh_newerahouse|||vh_house_TheNewEra
 B13||0|vh_arrowtest;vh_cryptnighttest;vh_entrailstest;vh_gatherhelptest;vh_helpjointest
 B13b||0|vh_nightexploretest;vh_nightretreattest;vh_notooltest;vh_toolbreaktest;vh_waitjointest;vh_waitlatetest;vh_chainfalltest
 B13c||0|vh_houselogtest||1
@@ -104,17 +104,17 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 | morgentest | 애쉬랜드 모르겐 굴 용융 핵 시험 | B9b | 713~715 |
 | mychesttest | 챗으로 내 개인 상자 준비 시험 | B8d | 713~715 |
 | nametest | 상자 이름 → 역할 선택 시험 | B4 | 713~715 |
-| newerahouse | TheNewEra 복사본 집 안 걸음(상자·화덕·2층 침대) | B11c | 701 |
+| newerahouse | TheNewEra 복사본 집 안 걸음(상자·화덕·2층 침대) | B11c | 716 |
 | nightexploretest | 밤 탐험 명령 판단(장비별) | B13b | 713~715 |
 | nightretreattest | 밤 위험 귀환·아침 이어 감 시험 | B13b | 713~715 |
 | notooltest | 연장 없이 구리 채집 시험(장비 상자에 곡괭이를 안 넣음 → 맞는 연장 제작을 대기열에 걸고 구리 10개) | B13b | 713~715 |
 | npctest | 일꾼 NPC 시험 | B1 | 713~715 |
 | otherhouse | 다른 구조 집에서 두 바퀴 걷기(길 기억 전후) | 회귀 밖 | 700 |
-| pathfollow | 길 기억 따라 걷기 시험 | B11 | 697 |
-| pathforget | 길 기억 건축 바뀜·나이 지움 시험 | B11 | 696 |
+| pathfollow | 길 기억 따라 걷기 시험 | B11 | 716 |
+| pathforget | 길 기억 건축 바뀜·나이 지움 시험 | B11 | 716 |
 | peertest | 혼자 하는 멀티(소유권·남의 채팅·손님) 시험 | B3 | 713~715 |
 | pittest | 구덩이 탈출 시험(점프·경사로) | B2 | 713~715 |
-| plainsfarmtest | 평원 밭(보리·아마)·록스 판단 시험 | B8a | 596 |
+| plainsfarmtest | 평원 밭(보리·아마)·록스 판단 시험 | B8a | 716 |
 | plainstest | 평원 자료·출발 판단 시험 | B8a2 | 713~715 |
 | portalbuildtest | 일꾼 포탈 놓기 시험 | B5 | 713~715 |
 | portaltest | 포탈 시험 | B5 | 713~715 |
@@ -124,12 +124,12 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 | refilltest | 자동 보충(!채워) 시험 | B4 | 713~715 |
 | repairtest | 장비 수리 시험 | B5 | 713~715 |
 | resisttest | 저항 미드 시험 | B5 | 713~715 |
-| restart1 | 재시작 시험 1: 일 중간 저장·게임 종료 | R1 | 715 |
-| restart2 | 재시작 시험 2: 다시 켜서 이어 하기(VH_RESET=0) | R1 | 715 |
-| restartcraft2 | 제작 재시작 2: 다시 켜서 계획 이어 하기(VH_RESET=0) | R2·R3·R4 | 666 |
-| restartcraft_carry | 제작 재시작 1: 꺼낸 주괴를 든 채 종료 | R4 | 666 |
-| restartcraft_load | 제작 재시작 1: 둘이 제련소에 넣은 직후 종료 | R2 | 570 |
-| restartcraft_part | 제작 재시작 1: 일부 완성 때 종료 | R3 | 666 |
+| restart1 | 재시작 시험 1: 일 중간 저장·게임 종료 | R | 715 |
+| restart2 | 재시작 시험 2: 다시 켜서 이어 하기(VH_RESET=0) | R | 715 |
+| restartcraft2 | 제작 재시작 2: 다시 켜서 계획 이어 하기(VH_RESET=0) | R | 716 |
+| restartcraft_carry | 제작 재시작 1: 꺼낸 주괴를 든 채 종료 | R | 716 |
+| restartcraft_load | 제작 재시작 1: 둘이 제련소에 넣은 직후 종료 | R | 716 |
+| restartcraft_part | 제작 재시작 1: 일부 완성 때 종료 | R | 716 |
 | settest | 세트메뉴 제작 시험 | B5 | 713~715 |
 | settletest | 밤사이 정산(아침 정리) 시험 | B8b | 713~715 |
 | sharetest | 사람끼리 동시 열기 호스트 쪽 시험 | B8d | 713~715 |

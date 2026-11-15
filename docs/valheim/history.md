@@ -8,6 +8,20 @@
 
 ## 회차 기록
 
+### 회차 716 · 11-16 · 시험 목록 정리(표·회귀 묶음 실제대로)
+
+**요약**
+
+- [11-16] 시험 목록 정리 — 시험 111개 표(docs/valheim/tests.md), 합칠 만큼 똑같은 시험은 없음, 회귀 묶음에 빠졌던 7개(평원 밭·길 기억 둘·새 집·제작 재시작 셋)를 넣고 한 번씩 PASS(회차 716 — 커밋 2d5ab443 · 시험 plainsfarm 15/15·pathforget 7/7·pathfollow 8/8·newerahouse 14/14·restartcraft load·part·carry 5/5→2 12/12 ×3 PASS)
+
+**자세히**
+
+- 표: [tests.md](https://github.com/gojohnlee/gojohnlee/blob/valheim/docs/valheim/tests.md) — 이름·지키는 것·묶음·마지막 PASS, 맨 위에 run.ps1 묶음 줄 그대로(B1~B11c·B13~B13c·R, B12는 vh-b12.ps1).
+- 후보 확인: debt·test_debt·foods·test_food·chores·fartest_follow·help·guestrestart·restartcraft는 시험이 아니라 저장 키·상자 이름·표지 물체·등록 묶음 이름이었음. 재시작 9개는 셋이 지키는 것이 다름(일 저장·제작 계획 저장·멀티). help·helpjoin·gatherhelp·waitjoin·waitlate는 각각 플레이어 돕기·호위 지원·캐기 지원·합류·늦게 끼기로 검사 칸이 달라 그대로. tidy(아침에 한 번에)·tidywalk(쉴 때 걸어서)도 다름 → 합친 것 없음.
+- 회귀 묶음에 넣음: B11 += pathforget·pathfollow, 새 B11c = newerahouse(월드 vh_house_TheNewEra — run.ps1에 7번째 월드 칸 더함), R = restart1 + restartcraft load·part·carry(2번째는 valheim-test.ps1이 붙임). plainsfarm은 B8a에 있었지만 회차 713엔 tar FAIL 뒤라 안 돌았음.
+- 회귀 밖(일부러): finaltest(따로 한 판)·birdprobe·birdshoot(사용자 11-13)·loadtest(부하)·otherhouse(조사용)·집 도구 5개(houseexport·houseimport·househere·houseground·housefind).
+- 실수 하나: 처음 B11c 줄에 칸 구분 `|`를 하나 더 써서 월드가 안 바뀌어 FAIL → 줄 고쳐 실행기로 다시 PASS 14/14.
+
 ### 요청 · 11-16 08:00 · 시험 목록 최신화
 
 > 시험 목록 최신화(사용자 11-16 — 줄이기가 목표 아님, 안 쓰거나 중복된 것 정리. 안전하게, 문서·grep 위주 1~2회차, 다음 전체 회귀 전에)
@@ -22,6 +36,12 @@
 - 할 만함·위험 낮음(문서·묶음 목록만, 코드는 안 지움). 표는 docs/valheim/tests.md(휴대폰용)로 만들고 history엔 바꾼 것만.
 - 순서: ① 시험 이름 전부 뽑기(TestPlugin 등록) ② 묶음(run.ps1·history B 줄)과 맞춰 표 ③ 후보 내용 비교 → 합침/회귀에서 뺌/그대로 ④ codemap "시험 고르기" B1~B13c 실제대로 ⑤ 합친 시험만 게임 한 번.
 - 전체 회귀·valheim-stable 태그보다 먼저(요청대로 "다음 전체 회귀 전에").
+
+**끝** · 11-16 08:30 회차 716
+
+- 표 docs/valheim/tests.md, codemap "시험 고르기"가 그 표를 가리킴.
+- 합친 시험 없음(검사 칸이 완전히 같은 쌍이 없음), 회귀에서 뺀 것 없음(이미 밖이던 것만 이유 적음), 묶음에 7개 넣고 모두 PASS.
+- 근거 커밋 2d5ab443.
 
 ### 회차 715 · 11-16 · 전체 회귀 남은 시험 다시 돌림, 떨굼·연쇄 쓰러짐 고침
 
