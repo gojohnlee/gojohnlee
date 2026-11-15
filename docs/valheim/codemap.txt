@@ -117,7 +117,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 농사 Farm(Core)·Crops·FarmJob  dotnet test;vh_farmtest · !밭 명령 → vh_npctest · Departures.Farming → vh_farmtest(!당근 칸)
 스킬 SkillBook            vh_skilltest
 포탈·던전 Portals·PortalBuilder·Dungeons·Unlocks  vh_portaltest;vh_portalbuildtest;vh_crypttest;vh_minetest;vh_minefoetest(VH_QUICK=1);vh_morgentest · 숨는 광맥 HiddenOres → vh_silvertest;vh_coppertest
-집 안 길 기억 PathMemory·PathTrail·BrainPaths·WorkerAI.PathMem  dotnet test;vh_pathforget;vh_pathfollow;vh_housetest · 다른 집 걷기 vh_otherhouse(TestPlugin/OtherHouseTest.cs: VH_HOUSE_AT="x,z" 기본 단층 집 (-4867,-1157), 살림 중 길 나는 것만 A 낮음→B 높음→C·D 가로로 먼 둘 두 바퀴, 바퀴마다 시간·진척 없음·길 기억/따름) · 다른 집 찾기 vh_housefind(TestPlugin/HouseFind.cs: 월드의 침대·문·작업대·상자 40m 무리 → 기지별 조각·문·층 수, VH_WORLD=vh_house_TheNewEra)
+집 안 길 기억 PathMemory·PathTrail·BrainPaths·WorkerAI.PathMem  dotnet test;vh_pathforget;vh_pathfollow;vh_housetest · 다른 집 걷기 vh_otherhouse(TestPlugin/OtherHouseTest.cs: VH_HOUSE_AT="x,z" 기본 단층 집 (-4867,-1157)·트인 작업장 -3998,-5827, 조각 수 멈출 때까지 기다림·길 재기 3번·살림 모자라면 층별 바닥·문 없으면 문 칸 건너뜀, 살림 중 길 나는 것만 A 낮음→B 높음→C·D 가로로 먼 둘 두 바퀴, 바퀴마다 시간·진척 없음·길 기억/따름) · 다른 집 찾기 vh_housefind(TestPlugin/HouseFind.cs: 월드의 침대·문·작업대·상자 40m 무리 → 기지별 조각·문·층 수, 만든이 0인 폐허 조각은 뺌, VH_WORLD=vh_house_TheNewEra)
 패치 NpcPatches·Buildings  vh_preptest(갑옷);vh_stonetest;vh_coppertest(NoDig);vh_fighttest
 시험 틀 TestRunner·TestKit·AutoStart·valheim-test.ps1  기본 묶음 + vh_basetest + VH_SOLO=1 단독 한 번
 
