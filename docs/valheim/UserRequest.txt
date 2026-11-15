@@ -9,3 +9,9 @@
 ======================================================================
 
 
+시험 목록 최신화(사용자 11-16 — 줄이기가 목표 아님, 안 쓰거나 중복된 것 정리. 안전하게, 문서·grep 위주 1~2회차, 다음 전체 회귀 전에)
+- 게임 시험 약 110개(vh_ 145개 중 명령·진단 빼고)를 표로: 이름 | 지키는 것 | 회귀 묶음(B?) | 마지막 PASS 회차.
+- 후보(이름만 본 것, 내용 확인 필요): 재시작 9개(restart1·2, restartcraft 5종, guestrestart·1·2), chores/chorestest, debt/test_debt, foods/test_food, fartest/fartest_follow, help·helpjoin·waitjoin·waitlate·join, tidy/tidywalk, birdprobe(조사용), loadtest(부하 끝나면 회귀 밖).
+- 처리: 확인 내용이 완전히 같으면 하나로 합침(검사 항목은 빠짐없이 옮김). 조사용·끝난 것은 회귀 목록에서만 뺌(코드는 둠). 그 시험이 지키던 Errors-resolved 버그가 다른 시험에 덮이는지 확인 못 하면 그대로 둠.
+- 어느 묶음에도 없는 시험이 있으면 맞는 묶음에 넣음. codemap "시험 고르기"에 B13·B13b·B13c(와 B8b·B11b)를 실제대로 적음.
+- 서브에이전트 안 씀. 표와 바꾼 것은 history에, 합친 시험만 게임으로 한 번 돌려 PASS 확인.
