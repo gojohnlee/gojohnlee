@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 692 · 11-15 · 게임 업데이트로 모드가 대신하는 게임 함수가 바뀌면 알려 줌
+
+**요약**
+
+- [11-15] 게임 업데이트로 모드가 대신하는 게임 함수 5개가 바뀌면 시작 로그·시험 요약에 경고 + codemap 파일 경로 맞춤(회차 692 — 커밋 4667a0cc·c2892b3a · vh_posttest 10/10 ×3, 틀린 해시 경고 확인)
+
+**자세히**
+
+- 모드가 원본을 건너뛰고 같은 일을 대신 하는 게임 함수 5개(ZNetScene.CreateDestroyObjects·ZDOMan.ReleaseNearbyZDOS·Pickable.RPC_Pick·InventoryGui.UpdateContainer·Player.ConsumeResources)의 코드 지문(IL 해시)을 게임을 켤 때 모드 폴더 game-hashes.txt와 비교합니다. 다르면 로그에 "[게임 함수 바뀜]" 경고, 시험 요약에도 그 줄이 나옵니다. 파일이 없으면 처음 켤 때 만듭니다(게임 1.0.21 값은 codemap에 기록).
+- 조건만 걸어 막는 패치(상자 막기·땅 파기 막기 등)는 원본을 흉내 내지 않아서 목록에 넣지 않았습니다.
+- 시험: vh_posttest 10/10 PASS 세 번(기록 만듦 → 일부러 틀린 해시 넣어 경고 확인 → 시험 요약 줄 확인), Core 테스트 779/779(GameHashesTests 4개 새로).
+- 리팩터링 7번(codemap 맞춤): 시험 파일 25개가 TestPlugin/으로 옮겨졌는데 codemap엔 Plugin/으로 남아 있던 것을 고치고, 빠진 파일 4개(FrameLog·RefillWindow·ZdoScan·ItemBiomes)를 더했습니다. 6번(Brain.cs 나누기)은 길 기억 일과 같이 하기로 그 항목에 붙였습니다.
+
 ### 회차 691 · 11-15 · 큰 파일 두 개를 주제별로 나눔
 
 **요약**
