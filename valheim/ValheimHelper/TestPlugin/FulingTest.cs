@@ -56,12 +56,7 @@ namespace ValheimHelper
             {
                 foreach (var n in PlainsGear) npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
                 Prep.WearBest(npc);
-                // 평원 갈 때 먹는 음식(없으면 체력 70쯤이라 풀링 하나도 물러남 — 회차 173 첫 실행)
-                var food = new Inventory("vh_test_food", null, 4, 2);
-                foreach (var n in new[] { "CookedLoxMeat", "Sausages", "SerpentStew" }) food.AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
-                npc.ResetMeals();
-                npc.EatFrom(food);
-                npc.Heal(1000f, false);
+                Feed(npc);
             }
             TestRunner.Log($"차림: 체력 {w.Ragnar.GetMaxHealth():0}, 갑옷 {w.Ragnar.GetBodyArmor():0}");
             yield return new WaitForSeconds(1f);
@@ -148,6 +143,8 @@ namespace ValheimHelper
             if (guard == null) yield break;
             foreach (var n in PlainsGear) guard.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
             Prep.WearBest(guard);
+            // 호위병도 먹임(r684 D FAIL 두 번: 맨속 체력 25라 풀링 둘에 혼자 판단이 도망 → 일꾼 쪽 셈(WillingHit·Fleeing)에서 빠져 셋이 둘이 됨)
+            Feed(guard);
             foreach (var npc in new[] { w.Ragnar, w.Floki, guard }) { npc.Ai.Interrupt(); npc.Ai.Queue.Clear(); npc.Heal(1000f, false); }
             w.Ragnar.TeleportTo(w.Home + rot * new Vector3(2f, 0f, 0f), rot, false);
             w.Floki.TeleportTo(w.Home + rot * new Vector3(-30f, 0f, -60f), rot, false);
@@ -200,6 +197,8 @@ namespace ValheimHelper
             w.Floki.TeleportTo(w.Home + rot * new Vector3(-30f, 0f, -60f), rot, false);
             guard.TeleportTo(w.Home + rot * new Vector3(0f, 0f, -60f), rot, false);
             yield return new WaitForSeconds(2f);
+            // 떠돌다 온 평원 생물(r684 두 번째 판: 록스가 호위병과 싸우는 중에 출발해 셋이 못 모임)은 치우고 시험 무리만 남긴다
+            TestRunner.Log($"D 시작: 거점 둘레 생물 {TestKit.ClearCreatures(w.Home)}마리 치움, 체력 라그나 {w.Ragnar.GetMaxHealth():0}·플로키 {w.Floki.GetMaxHealth():0}·호위병 {guard.GetMaxHealth():0}");
             var bands = new[] { new[] { goblin }, new[] { goblin, goblin }, new[] { goblin, goblin, goblin }, new[] { goblin, goblin, brute }, new[] { goblin, goblin, shaman }, new[] { goblin, goblin, goblin, goblin }, new[] { goblin, brute, shaman } };
             List<Character> band = null;
             float gh = Guard.HitOf(guard), fh = Guard.HitOf(w.Floki);
@@ -229,6 +228,16 @@ namespace ValheimHelper
             GatherTest.Say("!멈춰", null);
             TestKit.ClearBaseStock(w, Scrap);
             yield return new WaitForSeconds(2f);
+        }
+
+        /// <summary>평원 갈 때 먹는 음식(없으면 체력 70쯤이라 풀링 하나도 물러남 — 회차 173 첫 실행, 맨속 호위병은 25).</summary>
+        static void Feed(WorkerNpc npc)
+        {
+            var food = new Inventory("vh_test_food", null, 4, 2);
+            foreach (var n in new[] { "CookedLoxMeat", "Sausages", "SerpentStew" }) food.AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
+            npc.ResetMeals();
+            npc.EatFrom(food);
+            npc.Heal(1000f, false);
         }
 
         internal static void Cleanup(List<GameObject> spawned)
