@@ -50,6 +50,8 @@ namespace ValheimHelper
             if (job == null) return "쉼(" + ai.Current + ")";
             string name = job.GetType().Name;
             if (name.EndsWith("Job")) name = name.Substring(0, name.Length - 3);
+            // 멀리선 이동 생략(모든 플레이어 64m 밖)으로 서서 기다림은 아무도 못 보는 설계대로의 기다림 — 따로 센다(회차 703)
+            if (job is GatherJob g && g.FarMapPos != null) return name + ".먼길생략";
             return name + "." + (job is PlanJob plan && plan.InnerStep != null ? plan.InnerStep : job.StepName);
         }
 

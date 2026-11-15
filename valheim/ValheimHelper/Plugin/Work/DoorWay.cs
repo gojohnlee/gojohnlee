@@ -88,6 +88,7 @@ namespace ValheimHelper
                 m_in = mid - n * Step;
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f; m_goal = target.transform.position; m_hasGoal = true;
                 m_phase = Phase.ToDoor; m_t = 0f; m_diagNext = 0f; m_lineCheck = 0f;
+                m_best = float.MaxValue; m_stall = 0f; m_near = false;
                 m_hall = Mouth(mid, n, out m_mouth); m_lined = false; m_hallN = n; m_hallEnd = Vector3.Dot(m_mouth - mid, n) - 0.8f;
                 if (m_hall) m_limit = PhaseLimit + (Utils.DistanceXZ(me, m_mouth) + Utils.DistanceXZ(m_mouth, m_out)) / 1.5f;
                 Diag.Log($"DIAG {npc.NpcName} {target.name} 앞 벽 → 문 {m_door.name}({Utils.DistanceXZ(me, m_door.transform.position):0.0}m)으로");
@@ -211,6 +212,10 @@ namespace ValheimHelper
                             if (along > 0f && along < m_hallEnd + 0.4f && side < 2.4f) npc.Ai.MoveTowards(m_hallN, false);
                             else npc.Ai.MoveToPoint(dt, m_mouth, 0.5f, false);
                         }
+                        // 회차 703 빈틈 표: 들어갈 때도 문 앞 0.8m에서 속도 0으로 16초 섬(Tidy·FarmStore 11~13초) → 나가기(회차 346)처럼 1.6m 안 1초 막히면 거기서 엶
+                        float dOut = Utils.DistanceXZ(me, m_out);
+                        if (dOut < m_best - 0.2f) { m_best = dOut; m_stall = 0f; }
+                        else if ((m_stall += dt) > 1f && dOut < 1.6f) { m_near = true; Diag.Log($"DIAG {npc.NpcName} {what} 문 앞 {dOut:0.0}m에서 막힘 → 거기서 엶"); }
                         if (m_t >= m_diagNext) { m_diagNext = m_t + 3f; Diag.Log($"DIAG {npc.NpcName} {what} 문 앞으로 {m_t:0.0}초: 나 {me:F1}·문 앞 {m_out:F1}({Utils.DistanceXZ(me, m_out):0.0}m)·복도 {(m_hall ? $"입구 {m_mouth:F1} 트임 {m_lined}" : "없음")}·길 {npc.Ai.PathFound}·속도 {npc.GetVelocity().magnitude:0.0}"); }
                     }
                     return 1;
