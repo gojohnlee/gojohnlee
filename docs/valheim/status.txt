@@ -1,7 +1,7 @@
-갱신: 2026-11-15 12:09  (무인 루프, scripts/vh-loop.ps1)
+갱신: 2026-11-15 12:19  (무인 루프, scripts/vh-loop.ps1)
 지금: 회차 680 진행 중
 회차: 680, 계정: 1번, 한도: 없음
-할 일: 요청 플레이용 빌드는 시험 코드 빼고(11-15): ① csproj Play 구성(VH_PLAY, *Test*.cs·TestKit·TestRunner 뺌)·빌드 스크립트가 두 빌드 함께·dist/play ② 기능 파…
+할 일: 요청 플레이 빌드 방식 바꿈: 모드를 두 개로(11-15 12:09, 앞 요청 "시험 코드 빼고"·"진단 패치 빼기"를 합침 — #if VH_PLAY 두 빌드 대신): ① 시험 모드 프로젝트(BepInDependen…
 마지막 시험: 11-15 12:08 요약: 4/4 PASS
 Claude가 한 일: (진행 중)
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
