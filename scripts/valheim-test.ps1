@@ -1,4 +1,4 @@
-# 발헤임 모드 자동 설치 + 실행 + 결과 수집 (Windows PowerShell)
+﻿# 발헤임 모드 자동 설치 + 실행 + 결과 수집 (Windows PowerShell)
 # 사용법 (PowerShell에 한 줄 붙여넣기):
 #   irm https://raw.githubusercontent.com/gojohnlee/gojohnlee/valheim/scripts/valheim-test.ps1 | iex
 # PC의 Claude Code 세션: $env:VH_DLL='<빌드한 ValheimHelper.dll>'; powershell -ExecutionPolicy Bypass -File scripts\valheim-test.ps1
@@ -81,7 +81,12 @@ elseif ($env:VH_DLL) {   # PC 세션: 방금 빌드한 DLL
     Copy-Item $env:VH_DLL "$plugin\ValheimHelper.dll" -Force
     $tdll = Join-Path (Split-Path $env:VH_DLL) 'ValheimHelperTest.dll'   # dist·stable-dll은 옆에, Plugin\bin\Release면 TestPlugin\bin\Release에
     if (-not (Test-Path $tdll)) { $t2 = Join-Path (Split-Path $env:VH_DLL) '..\..\..\TestPlugin\bin\Release\ValheimHelperTest.dll'; if (Test-Path $t2) { $tdll = $t2 } }
-    if ($env:VH_PLAYONLY -ne '1' -and (Test-Path $tdll)) { Copy-Item $tdll "$plugin\ValheimHelperTest.dll" -Force } else { Remove-Item "$plugin\ValheimHelperTest.dll" -ErrorAction SilentlyContinue }
+    if ($env:VH_PLAYONLY -eq '1') { Remove-Item "$plugin\ValheimHelperTest.dll" -ErrorAction SilentlyContinue }
+    elseif (Test-Path $tdll) { Copy-Item $tdll "$plugin\ValheimHelperTest.dll" -Force }
+    else {   # 11-15 회차 687: 시험 DLL 없이 켜면 자동 시험·최소화·소리 끔·인트로 건너뛰기가 다 빠져 메뉴 음악이 울린 채 30분 멈춤 → 켜지 않고 끝냄
+        Remove-Item "$plugin\ValheimHelperTest.dll" -ErrorAction SilentlyContinue
+        Write-Host "시험 DLL 없음: $tdll — VH_DLL 옆이나 TestPlugin\bin\Release에 ValheimHelperTest.dll을 두거나(빌드 스크립트) 플레이 판이면 VH_PLAYONLY=1. 게임 안 켬"; exit 2
+    }
 }
 else { Invoke-WebRequest "$Raw/valheim/dist/ValheimHelper.dll" -OutFile "$plugin\ValheimHelper.dll"; Invoke-WebRequest "$Raw/valheim/dist/ValheimHelperTest.dll" -OutFile "$plugin\ValheimHelperTest.dll" }
 $Test = if ($env:VH_TEST) { $env:VH_TEST } else { 'vh_npctest;vh_flagtest;vh_woodtest;vh_stonetest' }   # 다른 시험: $env:VH_TEST='vh_fartest' (여러 개는 ;로). 묶음 1 새 시험: vh_departtest·vh_peertest
