@@ -7,7 +7,7 @@ namespace ValheimHelper
     /// <summary>
     /// 사용자 집 걸음 시험(사용자 11-11 20:53 "집 걸음은 내 집에서 먼저"): 사용자 월드 TheNewEra 복사본 vh_house_TheNewEra의
     /// 메인 베이스(가운데 (-3959,-5829), 1층 돌 바닥·2층 나무 바닥)에서 일꾼을 집 안에 두고 집 안 길만 걷게 한다 —
-    /// 1층 상자 → 부엌 화덕 → 2층 침대(계단 오름) → 1층 상자(내림) → 침대 → 화덕. 나무 베기·바깥 채집은 없음.
+    /// 1층 상자 → 부엌 화덕 → 2층 침대(계단 오름) → 1층 상자(내림) → 침대 → 화덕을 두 바퀴(1바퀴 길 기억 전, 2바퀴 따름). 나무 베기·바깥 채집은 없음.
     /// 깃발은 집 밖 빈 땅에(TestKit.Setup의 around — 거점 상자 치우기·생물 치우기를 안 해 사용자 집 살림을 그대로 둠).
     /// 다리마다 WalkRecorder로 behavior-house.txt에 이어 쓰고(층별 그림은 scripts/vh-house-map.ps1) 요약을 diag에.
     /// 실행: VH_WORLD=vh_house_TheNewEra, VH_TEST_WORLDS=vh_house_TheNewEra(되돌리기 원본은 첫 실행 때 복사본에서 뜸 — 원본 TheNewEra는 안 건드림).
@@ -107,25 +107,54 @@ namespace ValheimHelper
             int tele0 = Teleports();
             string[] names = { "상자→화덕", "화덕→침대(오름)", "침대→상자(내림)", "상자→침대(오름)", "침대→화덕(내림)" }; // ValueTuple은 게임 mono에 없음
             Component[] tos = { fire, bed, chest, bed, fire };
+            // 두 바퀴(길 기억 ④-3, 사용자 11-15): 1바퀴 = 길 기억 전, 2바퀴 = 기억한 길을 따름. 바퀴 사이엔 화덕→상자로 걸어 돌아감(재지 않음)
+            var ai = w.Ragnar.Ai;
+            var lapT = new float[2];
             int reached = 0, jumps = 0;
-            for (int i = 0; i < names.Length; i++)
+            for (int round = 0; round < 2; round++)
             {
-                Vector3 goal = tos[i].transform.position;
-                ClearWild(); // 회색 난쟁이가 와 일꾼이 경계로 8초 섬·hp 깎임(회차 405·414) — 걸음만 재려고 다리마다 야생 생물 치움, 길든 짐승은 남김
-                var walk = new ExploreTest.WalkJob(w.Ragnar.Ai, goal, true) { Stay = true }; // 다리 사이에 서 있음(일이 끝나 깃발로 걸어가면 문 나가기·되돌기가 섞임)
-                var rec = WalkRecorder.Start(w.Ragnar, cols);
-                w.Ragnar.Ai.StartJob(walk);
-                bool At() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - goal.y) < 1.3f; // 계단에서 상자 곁(1.7m 위)은 닿음 아님(회차 405)
-                yield return TestKit.WaitFor(At, 90f);
-                bool ok = At();
-                float took = TestKit.Waited;
-                walk.Halt = true;
-                var rep = rec.Stop($"newerahouse {i + 1} {names[i]}", i > 0);
-                jumps += rep.TeleSeen + rep.TeleUnseen;
-                TestRunner.Log($"집 걸음({names[i]}): {rep}");
-                checks.Add($"{i + 1}) {names[i]} 닿음 ({took:0.0}초, 남은 거리 {Utils.DistanceXZ(w.Ragnar.transform.position, goal):0.0}m·높이 차 {w.Ragnar.transform.position.y - goal.y:0.0}m, 발밑 {Under(w.Ragnar.transform.position)})", ok);
-                if (ok) reached++;
-                yield return new WaitForSeconds(1f);
+                int got = 0, noProg = 0, bumps = 0, rem0 = ai.PathsRemembered, fol0 = ai.PathsFollowed, drop0 = ai.PathsDropped, spoil0 = ai.PathsSpoiled;
+                float worst = 0f;
+                for (int i = 0; i < names.Length; i++)
+                {
+                    Vector3 goal = tos[i].transform.position;
+                    ClearWild(); // 회색 난쟁이가 와 일꾼이 경계로 8초 섬·hp 깎임(회차 405·414) — 걸음만 재려고 다리마다 야생 생물 치움, 길든 짐승은 남김
+                    var walk = new ExploreTest.WalkJob(ai, goal, true) { Stay = true }; // 다리 사이에 서 있음(일이 끝나 깃발로 걸어가면 문 나가기·되돌기가 섞임)
+                    var rec = WalkRecorder.Start(w.Ragnar, cols);
+                    ai.StartJob(walk);
+                    bool At() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, goal) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - goal.y) < 1.3f; // 계단에서 상자 곁(1.7m 위)은 닿음 아님(회차 405)
+                    float legT = Time.time;
+                    yield return TestKit.WaitFor(At, 90f);
+                    bool ok = At();
+                    float took = Time.time - legT;
+                    lapT[round] += took;
+                    walk.Halt = true;
+                    var rep = rec.Stop($"newerahouse {round + 1}-{i + 1} {names[i]}", round > 0 || i > 0);
+                    jumps += rep.TeleSeen + rep.TeleUnseen;
+                    noProg += rep.NoProgress; bumps += rep.Bumps; worst = Mathf.Max(worst, rep.WorstRatio);
+                    TestRunner.Log($"집 걸음({round + 1}바퀴 {names[i]}): {rep}");
+                    string where = $"{took:0.0}초, 남은 거리 {Utils.DistanceXZ(w.Ragnar.transform.position, goal):0.0}m·높이 차 {w.Ragnar.transform.position.y - goal.y:0.0}m, 발밑 {Under(w.Ragnar.transform.position)}";
+                    if (round == 0) checks.Add($"{i + 1}) {names[i]} 닿음 ({where})", ok);
+                    else if (!ok) TestRunner.Log($"못 닿음 2바퀴 {names[i]}: {where}");
+                    if (ok) got++;
+                    yield return new WaitForSeconds(1f);
+                }
+                TestRunner.Log($"{round + 1}바퀴: {lapT[round]:0.0}초·진척 없음 {noProg}·충돌 {bumps}·길/직선 최악 {worst:0.00} · 길 기억 {ai.PathsRemembered - rem0}·따름 {ai.PathsFollowed - fol0}·지움 {ai.PathsDropped - drop0}·안 함 {ai.PathsSpoiled - spoil0}");
+                if (round == 0)
+                {
+                    reached = got;
+                    Vector3 back = chest.transform.position;
+                    var link = new ExploreTest.WalkJob(ai, back, true) { Stay = true };
+                    ai.StartJob(link);
+                    yield return TestKit.WaitFor(() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, back) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - back.y) < 1.3f, 60f);
+                    link.Halt = true;
+                    yield return new WaitForSeconds(1f);
+                }
+                else
+                {
+                    checks.Add($"2바퀴 다 닿음 ({got}/{names.Length}, {lapT[1]:0.0}초, 따름 {ai.PathsFollowed - fol0})", got == names.Length);
+                    checks.Add($"2바퀴(기억 뒤)가 1바퀴보다 안 느림 ({lapT[0]:0.0} → {lapT[1]:0.0}초)", lapT[1] <= lapT[0] * 1.25f + 3f);
+                }
             }
             // 실플레이 기록(PlayWalkLog, 사용자 11-11 ④): 스위치를 시험용으로 켜고 화덕→상자 한 다리 — behavior-house-play.txt에 구간이 붙는지
             {
