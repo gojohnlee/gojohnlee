@@ -154,6 +154,10 @@ namespace ValheimHelper
             foreach (string f in Departures.FoodRank()) Departures.TestSkip(f, f != "FishCooked");
             yield return new WaitForSeconds(2f);
             TestKit.ClearBaseStock(w, Foods);
+            // 낚싯대·미끼를 치워 쉴 때 낚시가 농어를 더 들이지 않게(회차 685 B11: 굽는 사이 농어 2 → 4로 "상자 농어를 씀" FAIL)
+            TestKit.ClearBaseStock(w, "FishingRod", "FishingBait");
+            foreach (var n in new[] { w.Ragnar, w.Floki })
+                foreach (string p in new[] { "FishingRod", "FishingBait" }) n.GetInventory().RemoveItem(SharedName(p), 999);
             int fish0 = All(w, "Fish1");
             float t0 = Time.time;
             yield return TestKit.WaitFor(() => Cooking(w), 70f);

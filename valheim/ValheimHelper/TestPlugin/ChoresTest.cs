@@ -32,7 +32,6 @@ namespace ValheimHelper
             }
             var w = new TestKit.World();
             var made = new List<GameObject>();
-            Departures.TestIdleChores = true;
             try { yield return Body(w, checks, made); }
             finally
             {
@@ -59,6 +58,7 @@ namespace ValheimHelper
             yield return TestKit.Setup(w);
             checks.Add("깃발·두 일꾼·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
             if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
+            Departures.TestIdleChores = true; // 시작 검사(Setup) 뒤에 켬 — 먼저 켜면 시작 검사 사이에 빈 상자를 보고 채집하러 나가 환경 불량(회차 683·685 B11 묶음)
             // 먹을 것이 있는 동안엔 쉴 때 먹거리가 끼지 않는다
             TestKit.ClearBaseStock(w, Foods);
             TestKit.PutInChest(w.Chest, "Honey", 20);
