@@ -119,10 +119,9 @@ namespace ValheimHelper
             m_pickTime += dt;
             if (m_pickTime < 0.6f) return true;
             int left = 0;
-            foreach (Collider col in Physics.OverlapSphere(m_pickAt, 3f, LayerMask.GetMask("item")))
+            foreach (var (d, name) in JobKit.DropsNear(m_pickAt, 3f))
             {
-                ItemDrop d = col.GetComponentInParent<ItemDrop>();
-                if (d == null || !d.TryGetComponent(out ZNetView v) || !v.IsValid() || Utils.GetPrefabName(d.gameObject) != "Honey") continue;
+                if (name != "Honey") continue;
                 int n = d.m_itemData.m_stack;
                 if (m_npc.PickDrop(d)) Got += n;
                 else left++;
@@ -139,13 +138,7 @@ namespace ValheimHelper
 
         bool UpdateHome(float dt)
         {
-            Vector3 home = m_npc.Home;
-            if (m_ai.MoveToPoint(dt, home, 2.5f, true) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Store); return true; }
-            if (m_stepTime > HomeLimit)
-            {
-                if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return true; }
-                Go(Step.Store);
-            }
+            if (JobKit.ArriveHome(m_npc, dt, m_stepTime, HomeLimit)) Go(Step.Store);
             return true;
         }
 

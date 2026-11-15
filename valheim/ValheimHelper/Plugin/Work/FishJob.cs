@@ -288,13 +288,7 @@ namespace ValheimHelper
 
         bool UpdateHome(float dt)
         {
-            Vector3 home = m_npc.Home;
-            if (m_ai.MoveToPoint(dt, home, 2.5f, true) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Store); return true; }
-            if (m_stepTime > HomeLimit)
-            {
-                if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return true; }
-                Go(Step.Store);
-            }
+            if (JobKit.ArriveHome(m_npc, dt, m_stepTime, HomeLimit)) Go(Step.Store);
             return true;
         }
 

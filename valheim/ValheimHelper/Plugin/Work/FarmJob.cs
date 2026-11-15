@@ -372,11 +372,8 @@ namespace ValheimHelper
             m_pickTime += dt;
             if (m_pickTime < 0.6f) return true;
             int left = 0;
-            foreach (Collider col in Physics.OverlapSphere(m_pickAt, 3f, LayerMask.GetMask("item")))
+            foreach (var (d, name) in JobKit.DropsNear(m_pickAt, 3f))
             {
-                ItemDrop d = col.GetComponentInParent<ItemDrop>();
-                if (d == null || !d.TryGetComponent(out ZNetView v) || !v.IsValid()) continue;
-                string name = Utils.GetPrefabName(d.gameObject);
                 if (!Crops.IsProduce(name) && !Crops.All.Exists(c => c.Seed == name)) continue;
                 int n = d.m_itemData.m_stack;
                 if (m_npc.PickDrop(d))
@@ -473,14 +470,7 @@ namespace ValheimHelper
 
         bool UpdateHome(float dt)
         {
-            Vector3 home = m_npc.Home;
-            if (m_ai.MoveToPoint(dt, home, 2.5f, true) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { Go(Step.Store); return true; }
-            if (m_stepTime > HomeLimit)
-            {
-                // 귀환 통일(요청 코드 정리 나): 깃발 순간이동은 WorkerAI.TeleportHome(도착 확인), 그것도 안 되면 그 자리에서 쉼.
-                if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return true; }
-                Go(Step.Store);
-            }
+            if (JobKit.ArriveHome(m_npc, dt, m_stepTime, HomeLimit)) Go(Step.Store);
             return true;
         }
 

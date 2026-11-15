@@ -216,14 +216,7 @@ namespace ValheimHelper
 
         bool UpdateHome(float dt)
         {
-            Vector3 home = m_npc.Home;
-            if (m_ai.MoveToPoint(dt, home, 2.5f, true) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) return Done();
-            if (m_stepTime > HomeLimit)
-            {
-                if (!m_ai.TeleportHome()) { m_ai.RestHere(m_npc); return true; }
-                return Done();
-            }
-            return true;
+            return JobKit.ArriveHome(m_npc, dt, m_stepTime, HomeLimit) ? Done() : true;
         }
 
         /// <summary>못 준 먹이는 꺼낸 우리 상자에 되돌림(가득 차면 짐에 남음 — 다음 짐 내리기가 넣음).</summary>
