@@ -61,7 +61,7 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => ai.HasPost && ai.Current == WorkerAI.Mode.Idle && !ai.GuardPatrol.Walking && Utils.DistanceXZ(guard.transform.position, ai.Post) < 1.5f, 70f);
             float side = Vector3.Dot(ai.Post - doorAt, f);
             checks.Add($"방문 말고 바깥문 바깥 옆에 섬 (방문까지 {Utils.DistanceXZ(ai.Post, inner):0.0}m, {TestKit.Waited:0.0}초, 문에서 {Utils.DistanceXZ(ai.Post, doorAt):0.0}m·바깥쪽 {side:0.0}m, 호위병 자리까지 {Utils.DistanceXZ(guard.transform.position, ai.Post):0.0}m)",
-                TestKit.Ok && side > 1f && Utils.DistanceXZ(ai.Post, doorAt) < 3f);
+                TestKit.Ok && side > 0.5f && Utils.DistanceXZ(ai.Post, doorAt) < 3f); // 자리는 문틀 가운데에서 바깥 1.0m(DoorWay.PostBy) — 1f로 보면 소수점에 갈림
 
             // 2) 집 반대편(거점 뒤 25m) 그레일링 — 문 옆(35m)에선 경계 밖
             Vector3 foeAt = w.Home - f * 25f;
