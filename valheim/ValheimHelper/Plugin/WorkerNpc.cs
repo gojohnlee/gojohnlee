@@ -380,6 +380,7 @@ namespace ValheimHelper
         protected override void OnDamaged(HitData hit)
         {
             base.OnDamaged(hit);
+            Ai?.PathSpoil("피해"); // 내렸는데 불타면 성공한 길 아님(사용자 11-15)
             Character attacker = hit.GetAttacker();
             if (attacker == null || attacker == this) return;
             if (m_hitBy.Count > 40) { var old = new List<Character>(); foreach (var kv in m_hitBy) if (kv.Key == null || Time.time - kv.Value > 60f) old.Add(kv.Key); foreach (var o in old) m_hitBy.Remove(o); }

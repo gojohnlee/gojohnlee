@@ -30,6 +30,7 @@ namespace ValheimHelper
             if (!m_trail.Active) return;
             var from = m_trail.From;
             var pts = m_trail.Finish(P(pos));
+            if (pts == null && m_trail.SpoilReason != null) { PathsSpoiled++; Diag.Log($"길 기억 안 함({m_trail.SpoilReason}): ({from.X:0.0},{from.Y:0.0},{from.Z:0.0})→{target:F1}"); }
             if (pts == null || !NearHome(target)) return;
             Brain.Paths.Remember(from, P(target), pts, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time);
             PathsRemembered++;
@@ -42,6 +43,8 @@ namespace ValheimHelper
         internal int PathsFollowed, PathsDropped;
         /// <summary>시험용: 기억한 길 따라 걷는 중.</summary>
         internal bool OnMemPath => m_memPath != null;
+        /// <summary>시험용: 다음 MoveToPoint를 새 목표로 치게(같은 목표로 다시 걸리면 따라 걷기·자취가 새로 안 시작됨).</summary>
+        internal void ForgetMoveTarget() { m_moveTarget = new Vector3(0f, -10000f, 0f); m_trail.Stop(); }
         static int s_memMask;
         static int MemMask => s_memMask != 0 ? s_memMask : (s_memMask = LayerMask.GetMask("piece"));
 
@@ -80,13 +83,17 @@ namespace ValheimHelper
             return true;
         }
 
-        /// <summary>기억한 길로 가다 막힘(1.5초 진척 없음) — 그 길을 지우고 바닐라로.</summary>
-        void MemPathBlocked()
+        /// <summary>시험용: 성공한 길이 아니라 기억 안 한 자취 수.</summary>
+        internal int PathsSpoiled;
+
+        /// <summary>성공한 길이 아님(사용자 11-15 — 피해·막힘·문 못 엶): 걷는 자취는 기억 안 하고, 기억한 길로 가던 중이면 그 길을 지우고 바닐라로.</summary>
+        internal void PathSpoil(string why)
         {
+            m_trail.Spoil(why);
             if (m_memPath == null) return;
             Brain.Paths.Forget(m_memFrom, m_memTo);
             PathsDropped++;
-            Diag.Log($"길 기억 막힘({m_memIdx}/{m_memPath.Length}): 지움 → 바닐라");
+            Diag.Log($"길 기억 {why}({m_memIdx}/{m_memPath.Length}): 지움 → 바닐라");
             m_memPath = null;
         }
     }

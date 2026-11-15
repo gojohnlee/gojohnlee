@@ -317,6 +317,7 @@ namespace ValheimHelper
             if (!m_clock.Tick(Time.time, dt, StuckWatch.PathLeft(m_ai, p, goal), StuckWatch.Seen(p), paused, m_mark.Changed(m_ai))) return false;
             QuickStuckHits++;
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 빠른 막힘 {m_clock.NoGain:0.0}초(남은 길 {m_clock.Best:0.0}m, {(m_clock.Seen(Time.time) ? "봄" : "안 봄")})");
+            m_ai.PathSpoil("빠른 막힘");
             m_clock.Reset();
             return true;
         }

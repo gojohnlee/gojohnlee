@@ -373,7 +373,7 @@ namespace ValheimHelper
                 if (Utils.DistanceXZ(m_samplePos, pos) < 0.75f && d > dist + 1f)
                 {
                     // 막혔다: 두 번까지 뛰어 보고, 구덩이에 갇혔으면 경사로를 깎고, 아니면 옆으로 비켜 간다
-                    MemPathBlocked();
+                    PathSpoil("막힘");
                     Vector3 fwd = Flat(point - pos).normalized;
                     if (m_pitSince <= 0f && Climb.IsPit(Rise8(pos, fwd))) MarkPit(pos);
                     if (m_stuckJumps < 2 && m_detourCount == 0 && TryJump()) { m_stuckJumps++; JumpWhy = $"막힘 1.5초 {Utils.DistanceXZ(m_samplePos, pos):0.00}m"; } // 이미 비켜 가 봤으면 점프는 건너뜀

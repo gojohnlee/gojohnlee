@@ -448,6 +448,7 @@ namespace ValheimHelper
         void GiveUp(WorkerNpc npc, string what, string why)
         {
             m_phase = Phase.GaveUp;
+            if (m_door != null) npc?.Ai?.PathSpoil("문 못 엶");
             if (m_door != null)
             {
                 Vector3 me = npc.transform.position, along = Vector3.Cross(Vector3.up, m_in - m_out).normalized;

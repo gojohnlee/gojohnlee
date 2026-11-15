@@ -60,9 +60,9 @@ namespace ValheimHelper
             if (cut > 0) TestRunner.Log($"자리 9m 안 나무 {cut}개 치움");
 
             var route = Bent(a0, c, b); // 벽 놓기 전에 — 놓은 뒤엔 Ground가 벽 꼭대기를 땅으로 잡아 점이 벽 위로 뜸(첫 시험들)
-            for (int round = 0; round < 2; round++)
+            for (int round = 0; round < 3; round++)
             {
-                bool wall = round == 1;
+                bool wall = round == 2, hurt = round == 1; // hurt: 걷는 중 맞으면 성공한 길 아님(사용자 11-15) — 기억 길 지우고 새 자취도 안 넣음
                 if (wall)
                 {
                     // 벽 방향을 몰라도 막히게 십자로 두 장(한 장은 길과 나란히 놓여 옆을 지나갔음 — 첫 시험)
@@ -79,9 +79,11 @@ namespace ValheimHelper
                 double now = ZNet.instance.GetTimeSeconds();
                 var pts = (PathMemory.P[])route.Clone(); pts[0] = P(a);
                 Brain.Paths.Remember(P(a), P(b), pts, now);
-                int f0 = ai.PathsFollowed, d0 = ai.PathsDropped;
+                int f0 = ai.PathsFollowed, d0 = ai.PathsDropped, s0 = ai.PathsSpoiled;
+                bool hit = false;
                 var walk = new ExploreTest.WalkJob(ai, b);
                 keep(walk);
+                ai.ForgetMoveTarget(); // 앞 판 목표가 같은 b라 새 목표로 안 쳐 따라 걷기가 안 시작됨(회차 696 맞음 판)
                 ai.StartJob(walk);
                 float bend = float.MaxValue, t0 = Time.time;
                 bool on = false;
@@ -89,16 +91,23 @@ namespace ValheimHelper
                 {
                     bend = Mathf.Min(bend, Utils.DistanceXZ(npc.transform.position, c));
                     on |= ai.OnMemPath;
+                    if (hurt && !hit && ai.OnMemPath && Time.time - t0 > 0.4f) { hit = true; var h = new HitData(); h.m_damage.m_blunt = 1f; h.m_point = npc.transform.position; npc.Damage(h); }
                     return Utils.DistanceXZ(npc.transform.position, b) < 2.2f;
                 }, 30f);
                 bool reached = TestKit.Ok;
                 walk.Halt = true;
                 string why = $"{Time.time - t0:0.0}초, 꺾인 점까지 최소 {bend:0.0}m, 따라 {ai.PathsFollowed - f0}·지움 {ai.PathsDropped - d0}, {npc.MoveDebug}";
                 TestRunner.Log($"{(wall ? "벽 뒤" : "벽 앞")}: {why}");
-                if (!wall)
+                if (round == 0)
                 {
                     checks.Add($"기억한 길 따라 걷기 시작 ({why})", ai.PathsFollowed - f0 == 1 && on);
                     checks.Add($"꺾인 점을 지나 닿음 ({why})", reached && bend < 1.2f);
+                }
+                else if (hurt)
+                {
+                    yield return new WaitForSeconds(1f);
+                    bool kept = Brain.Paths.Find(P(a), P(b), ZNet.instance.GetTimeSeconds()) != null;
+                    checks.Add($"걷다 맞으면 기억 길 지우고 새로 안 넣음 (맞음 {hit}, 남음 {kept}, 기억 안 함 {ai.PathsSpoiled - s0}, {why})", hit && ai.PathsDropped - d0 == 1 && !kept);
                 }
                 else
                 {
