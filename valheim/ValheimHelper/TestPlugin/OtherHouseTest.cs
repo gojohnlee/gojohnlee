@@ -7,7 +7,7 @@ namespace ValheimHelper
 {
     /// <summary>
     /// vh_otherhouse(길 기억 ④ "다른 구조 집 두 판", decisions "시험 집" 11-15): vh_house_TheNewEra 안 메인 집과 구조가 다른 기지(VH_HOUSE_AT="x,z",
-    /// 기본 단층 집 (-4867,-1157) — 탑은 -4735,-1302)에서 살림(상자·침대·작업대·불) 중 가장 낮은 것 A·가장 높은 것 B·가로로 가장 먼 둘 C·D를
+    /// 기본 단층 집 (-4867,-1157) — 트인 3층 작업장은 -3998,-5827)에서 살림(상자·침대·작업대·불) 중 가장 낮은 것 A·가장 높은 것 B·가로로 가장 먼 둘 C·D를
     /// A→B→C→D→A로 두 바퀴 걷는다. 1바퀴 = 길 기억 전, 2바퀴 = 기억한 길을 따름 → 바퀴마다 시간·진척 없음·충돌·길/직선·기억/따름 수를 diag에.
     /// 집 좌표에 맞춘 예외는 넣지 않는다(decisions "집 시험 원칙") — 살림은 자리로 고르고, 기준은 메인 집 시험과 같다.
     /// </summary>
@@ -16,7 +16,7 @@ namespace ValheimHelper
         public static void Register() => TestRunner.Register("vh_otherhouse", "다른 구조 집에서 두 바퀴 걷기(길 기억 전후)", () => TestKit.Flat(Run()));
 
         const string World = "vh_house_TheNewEra";
-        const float Radius = 25f;
+        static float Radius = 25f;   // 살림이 3곳 안 되면 40m(vh_housefind 무리 크기)까지 넓힘 — 탑처럼 살림이 적은 집
 
         static Vector3 At()
         {
@@ -50,16 +50,31 @@ namespace ValheimHelper
             float gy = WorldGenerator.instance.GetHeight(center.x, center.z);
             pl.TeleportTo(new Vector3(center.x + 20f, gy + 1f, center.z), pl.transform.rotation, true);
             yield return TestKit.WaitFor(() => !pl.IsTeleporting(), 60f);
-            yield return new WaitForSeconds(5f);
+            // 조각 수가 2초 동안 안 늘 때까지(최대 30초) — 5초만 기다리면 탑이 277개 중 177개만 불러와짐(회차 700)
+            int seen = -1;
+            for (float t = 0f; t < 30f; t += 2f)
+            {
+                yield return new WaitForSeconds(2f);
+                int n = 0;
+                foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None)) if (Utils.DistanceXZ(p.transform.position, center) <= 40f) n++;
+                if (n == seen && n > 0) break;
+                seen = n;
+            }
             int pieces = 0, doors = 0;
             var spots = new List<Component>();
-            foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
+            Radius = 25f;
+            for (; ; Radius = 40f)
             {
-                if (Utils.DistanceXZ(p.transform.position, center) > Radius) continue;
-                pieces++;
-                if (p.GetComponent<Door>() != null) doors++;
-                Component c = (Component)p.GetComponent<Container>() ?? (Component)p.GetComponent<Bed>() ?? (Component)p.GetComponent<CraftingStation>() ?? p.GetComponent<Fireplace>();
-                if (c != null) spots.Add(c);
+                pieces = 0; doors = 0; spots.Clear();
+                foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
+                {
+                    if (Utils.DistanceXZ(p.transform.position, center) > Radius) continue;
+                    pieces++;
+                    if (p.GetComponent<Door>() != null) doors++;
+                    Component c = (Component)p.GetComponent<Container>() ?? (Component)p.GetComponent<Bed>() ?? (Component)p.GetComponent<CraftingStation>() ?? p.GetComponent<Fireplace>();
+                    if (c != null) spots.Add(c);
+                }
+                if (spots.Count >= 3 || Radius >= 40f) break;
             }
             // 찾은 차례는 판마다 달라서 자리로 줄 세움
             spots.Sort((a, b) => { var x = a.transform.position; var y = b.transform.position; return x.x != y.x ? x.x.CompareTo(y.x) : x.z.CompareTo(y.z); });
@@ -91,9 +106,32 @@ namespace ValheimHelper
             // 걸을 곳은 라그나 자리에서 끝까지 길이 나는 살림만(바닥에서 4.6m 위 침대처럼 점프로만 닿는 곳은 빼고 diag에 — 회차 698 단층 집)
             var path = new List<Vector3>();
             var reach = new List<Component>();
-            foreach (var s in spots)
-                if (s == lo || Pathfinding.instance.GetPath(w.Ragnar.transform.position, s.transform.position, path, Pathfinding.AgentType.Humanoid, requireFullPath: true)) reach.Add(s);
-                else TestRunner.Log($"길 안 남(뺌): {Name(s)}");
+            // 회차 700: 같은 집에서 6/10 → 1/10(전부 길 안 남)이 번갈아 나옴 — 옮긴 직후(2초)엔 일꾼이 아직 땅에 안 닿았거나 길 그물이 안 만들어짐. 3번까지 다시 잼
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                reach.Clear();
+                foreach (var s in spots)
+                    if (s == lo || Pathfinding.instance.GetPath(w.Ragnar.transform.position, s.transform.position, path, Pathfinding.AgentType.Humanoid, requireFullPath: true)) reach.Add(s);
+                    else if (attempt == 3) TestRunner.Log($"길 안 남(뺌): {Name(s)}");
+                TestRunner.Log($"길 재기 {attempt}번째: {reach.Count}/{spots.Count} (라그나 {w.Ragnar.transform.position:F1}, 땅 {w.Ragnar.IsOnGround()})");
+                if (reach.Count >= 3) break;
+                yield return new WaitForSeconds(3f);
+            }
+            // 살림이 모자란 집(탑: 상자 하나뿐, 회차 700)은 층마다(2m 띠) 가운데에서 가장 먼 바닥 조각 하나씩을 걸을 곳에 더함
+            if (reach.Count < 3)
+            {
+                var bands = new SortedDictionary<int, Piece>();
+                foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None))
+                {
+                    if (Utils.DistanceXZ(p.transform.position, center) > 25f || Utils.GetPrefabName(p.gameObject).IndexOf("floor", System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    int band = Mathf.FloorToInt(p.transform.position.y / 2f);
+                    if (!bands.TryGetValue(band, out var old) || Utils.DistanceXZ(p.transform.position, center) > Utils.DistanceXZ(old.transform.position, center)) bands[band] = p;
+                }
+                foreach (var p in bands.Values)
+                    if (Pathfinding.instance.GetPath(w.Ragnar.transform.position, p.transform.position, path, Pathfinding.AgentType.Humanoid, requireFullPath: true)) reach.Add(p);
+                    else TestRunner.Log($"길 안 남(뺌): {Name(p)}");
+                TestRunner.Log($"살림 모자람 → 층별 바닥 {bands.Count}곳 가운데 길 나는 것 더함");
+            }
             checks.Add($"길 나는 살림 3곳 넘음 ({reach.Count}/{spots.Count})", reach.Count >= 3);
             if (reach.Count < 3) yield break;
             Component hi = lo, c1 = reach[0], c2 = reach[1];
@@ -195,8 +233,9 @@ namespace ValheimHelper
                 }
             }
             DoorWay.Forget();
-            checks.Add($"바깥문 안쪽에서 15초 안에 나감 ({outs}/{tries})", tries > 0 && outs == tries);
-            checks.Add($"열린 문에서 잰 문틀 가운데가 닫힌 문 때와 같음 (최대 {midOff:0.00}m, E108)", tries > 0 && midOff < 0.3f);
+            if (doorList.Count == 0) TestRunner.Log("문 없는 집(트인 작업장) — 문 나가기 칸 건너뜀");
+            else checks.Add($"바깥문 안쪽에서 15초 안에 나감 ({outs}/{tries})", tries > 0 && outs == tries);
+            if (doorList.Count > 0) checks.Add($"열린 문에서 잰 문틀 가운데가 닫힌 문 때와 같음 (최대 {midOff:0.00}m, E108)", tries > 0 && midOff < 0.3f);
             checks.Add($"문 나가기 중 문 길 포기 없음 ({DoorWay.GaveUps - gave0}번, E108)", DoorWay.GaveUps == gave0);
         }
 

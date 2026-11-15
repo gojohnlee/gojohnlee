@@ -32,6 +32,7 @@ namespace ValheimHelper
             foreach (string a in Anchors)
                 foreach (ZDO z in ZdoScan.All(a))
                 {
+                    if (z.GetLong(ZDOVars.s_creator, 0L) == 0L) continue;   // 폐허·버려진 마을(월드가 만든 조각, 만든이 0)은 뺌 — 회차 700: 고른 "탑"이 폐허였음
                     Vector3 p = z.GetPosition();
                     Base b = bases.FirstOrDefault(x => Utils.DistanceXZ(x.Pos, p) < Join);
                     if (b == null) bases.Add(new Base { Pos = p, N = 1 });
@@ -49,7 +50,7 @@ namespace ValheimHelper
                 float minY = float.MaxValue, maxY = float.MinValue;
                 foreach (ZDO z in near)
                 {
-                    if (z == null || !z.Persistent || Utils.DistanceXZ(z.GetPosition(), b.Pos) > Radius) continue;
+                    if (z == null || !z.Persistent || z.GetLong(ZDOVars.s_creator, 0L) == 0L || Utils.DistanceXZ(z.GetPosition(), b.Pos) > Radius) continue;
                     GameObject pf = ZNetScene.instance.GetPrefab(z.GetPrefab());
                     if (pf == null || pf.GetComponent<Piece>() == null || pf.GetComponent<Character>() != null) continue;
                     pieces++;
@@ -66,7 +67,7 @@ namespace ValheimHelper
                 if (pieces == 0) continue;
                 rows.Add(new KeyValuePair<int, string>(pieces, $"  기지 ({b.Pos.x:F0},{b.Pos.z:F0}) 높이 {minY:F0}~{maxY:F0}: 조각 {pieces}·문 {doors}·침대 {beds}·상자 {chests}·작업대 {stations}·계단 {stairs}·바닥 층 {floors.Count}"));
             }
-            foreach (var r in rows.OrderByDescending(r => r.Key).Take(10)) TestRunner.Log(r.Value);
+            foreach (var r in rows.OrderByDescending(r => r.Key).Take(14)) TestRunner.Log(r.Value);
             TestRunner.Log($"판정: {(rows.Count > 0 ? "PASS" : "FAIL")} ({(rows.Count > 0 ? 1 : 0)}/1) 조각 있는 기지 {rows.Count}곳");
             TestRunner.Finish();
         }
