@@ -1,0 +1,968 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+using ValheimHelper.Core.Npc;
+using ValheimHelper.Core.Work;
+
+namespace ValheimHelper
+{
+    /// <summary>WorkerAI 걷기: 길찾기·집 안 길·점프·구덩이 깎기·타르·용암·물 판단.</summary>
+    public partial class WorkerAI
+    {
+        static readonly List<Vector3> s_diagPath = new List<Vector3>();
+        /// <summary>진단(막힘 기록용): 여기서 그 점까지 바닐라 길찾기 — 완전/부분(끝이 목표에서 몇 m)/없음.</summary>
+        static readonly List<Vector3> s_lenPath = new List<Vector3>();
+        /// <summary>from에서 to까지 완전한 길(바닐라 GetPath requireFullPath)의 수평 길이(m), 없으면 -1. DoorWay.Exit가 문 거쳐 가는 길과 견줌.</summary>
+        public float FullPathLength(Vector3 from, Vector3 to)
+        {
+            if (Pathfinding.instance == null || !Pathfinding.instance.GetPath(from, to, s_lenPath, m_pathAgentType, requireFullPath: true) || s_lenPath.Count == 0) return -1f;
+            float sum = Utils.DistanceXZ(from, s_lenPath[0]);
+            for (int i = 1; i < s_lenPath.Count; i++) sum += Utils.DistanceXZ(s_lenPath[i - 1], s_lenPath[i]);
+            return sum;
+        }
+
+        public string PathDiag(Vector3 to)
+        {
+            if (Pathfinding.instance == null) return "길찾기 없음";
+            Vector3 from = transform.position;
+            if (!Pathfinding.instance.GetPath(from, to, s_diagPath, m_pathAgentType)) return "길 없음";
+            if (s_diagPath.Count == 0) return "길 빈 것";
+            Vector3 end = s_diagPath[s_diagPath.Count - 1];
+            bool full = Pathfinding.instance.GetPath(from, to, null, m_pathAgentType, requireFullPath: true);
+            return $"길 {(full ? "완전" : "부분")}(모퉁이 {s_diagPath.Count}, 끝이 목표에서 {Utils.DistanceXZ(end, to):0.0}m·높이 {end.y - to.y:0.0})";
+        }
+
+        /// <summary>
+        /// 다른 층 목표로 걸을 곳: 바닐라 BaseAI.MoveTo는 수평 거리만 봐 0.5m 안이면 도착으로 침 → 2층 상자 바로 밑에서 길(계단)이 있어도 섬(회차 352, E063).
+        /// 길의 모퉁이 중 수평 1.1m 넘는 첫 점을 준다(바닐라 MoveTo는 달리면 1m 안을 도착으로 쳐 그 안에선 곧장 몰기만 함 — 0.6m였을 땐 모퉁이 곁에서 맴돌다 계단 참에서 떨어짐, 회차 409). 그 모퉁이에 닿거나 2초 지나면 새로 — 0.5초마다 새로 고르면 갈림길에서 두 길을 오락가락했음(회차 409 상자→침대 5초). 길이 없으면 목표 그대로.
+        /// </summary>
+        public Vector3 FloorStep(Vector3 to)
+        {
+            Vector3 pos = transform.position;
+            m_stepUsedAt = Time.time;
+            bool level = Mathf.Abs(to.y - pos.y) < 0.5f, reach = level && !m_stepLevel && !m_stepWait; // 목표 층 바닥에 막 올라섬(0.5m 안 — 1m면 계단 위 끝 앞에서 새로 받아 0.7m 지나침) → 길 한 번 바로 새로: 계단 참에서 받은 먼 길(25.3m)을 2층에서 0.5초 더 따라 동쪽으로 4m 뛰다 짧은 길(9.3m)로 되돌았음(회차 419 오름 4)
+            m_stepLevel = level;
+            if (reach || Time.time >= m_stepAt || Utils.DistanceXZ(to, m_stepTo) > 0.5f || (!m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach))
+            {
+                if (Utils.DistanceXZ(to, m_stepTo) > 0.5f) { m_stepSince = Time.time; m_stepWaitLen = -1f; m_stepSlowUntil = 0f; }
+                else if (m_stepSlow) m_stepSlowUntil = Time.time + 0.6f; // 꺾인 모퉁이 1.1m 안에서 다음 모퉁이로 바꾸면 그 자리서 바로 뛰어 모퉁이를 0.5~0.7m 지나쳤다 되돌았음(회차 420 오름 2) → 0.6초 더 걸음
+                m_stepAt = Time.time + 2f; m_stepTo = to; m_step = to; m_stepRest.Clear(); m_stepWait = false;
+                if (Pathfinding.instance != null && Pathfinding.instance.GetPath(pos, to, s_stepPath, m_pathAgentType))
+                {
+                    float len = 0f; for (int i = 1; i < s_stepPath.Count; i++) len += Vector3.Distance(s_stepPath[i - 1], s_stepPath[i]);
+                    float direct = Vector3.Distance(pos, to);
+                    m_stepPicked = $"길 {len:0.0}m/직선 {direct:0.0}m 모퉁이 {s_stepPath.Count}:{PathText(s_stepPath, 5)}";
+                    if (len > Mathf.Max(direct * 3f, direct + 15f) && Time.time - m_stepSince < 3f)
+                    {
+                        // 출발 때 첫 길이 터무니없이 멀면(회차 410 오름 4: 남은 74m → 곧 19m, 1.5m 반대로 갔다 141° 되돌기) 3초까지 서서 0.5초마다 다시 받음 — 1.5초론 102m 길(바깥 문 돌기)을 2초 따라가다 51m 길로 157° 되돌았음(회차 414 오름 2).
+                        // 다만 0.5초 뒤 다시 받아도 1m 안 같은 길이고 직선×5·+25m 안이면 그 길로 감 — 계단을 감아 도는 진짜 길(2층 침대→1층 화덕 32.8m/직선 10.7m, 44.7m/9.1m)이 3초 내내 안 바뀌는데 서 있었음(회차 416·417 사7). 가짜 길은 직선의 7배 넘었음(74m·102m) → 상한 ×6·+30.
+                        bool same = m_stepWaitLen >= 0f && Mathf.Abs(len - m_stepWaitLen) < 1f && len <= Mathf.Max(direct * 6f, direct + 30f); // ×5·+25였을 땐 계단 참(44.9) 출발 31.7m/직선 6.3m가 살짝 넘어 3초 섰음(회차 418 오름 4, 실제 걸음은 2.5초)
+                        m_stepWaitLen = len;
+                        if (!same) { m_step = pos; m_stepWait = true; m_stepAt = Time.time + 0.5f; return m_step; }
+                    }
+                    m_stepSince = Time.time - 3f; // 한 번 길을 받아 떠났으면 이 목표로는 다시 서지 않음 — 걷다 모퉁이에서 새로 받은 남은 길(29m/직선 10m)도 터무니없다고 쳐 계단 위에서 0.5초 섰음(회차 417)
+                    for (int i = 1; i < s_stepPath.Count; i++)
+                        if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
+                }
+            }
+            Vector3 next = to; // 꺾임은 0.5m 넘는 다음 점으로 — 2층 바닥 끝 점들이 0.1m 간격이라 바로 뒤 점(0.14m)으론 꺾임을 못 보고 7.5m/s로 1m 지나쳤음(회차 420 내림)
+            foreach (Vector3 p in m_stepRest) if (Utils.DistanceXZ(p, m_step) > 0.5f) { next = p; break; }
+            m_stepSlow = !m_stepWait && Utils.DistanceXZ(m_step, pos) < StepReach + 1.5f && Utils.DistanceXZ(next, m_step) > 0.3f
+                && Vector3.Angle(Flat(m_step - pos), Flat(next - m_step)) > 60f || !m_stepWait && Time.time < m_stepSlowUntil; // 꺾인 모퉁이 앞 1.5m면 걷기(MoveToPoint) — 계단 위 끝을 6.9m/s로 1m 지나쳐 97~178° 되돌았음(회차 410·411)
+            return m_step;
+        }
+        /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐으면 지금 모퉁이 뒤 남은 길 점들(목표까지), 아니면 null.</summary>
+        public List<Vector3> FloorRest => Time.time - m_stepUsedAt < 0.5f ? m_stepRest : null;
+        /// <summary>시험 기록용: 0.5초 안에 FloorStep을 따랐고 출발 기다림이 아니면 지금 모퉁이 — m_path는 계단 위 끝 FindPath 실패·1m 안 점 지우기로 비어 남은 길 -1(셈에서 빠짐)이 잦았음(회차 417 사7).</summary>
+        public bool FloorCorner(out Vector3 corner) { corner = m_step; return Time.time - m_stepUsedAt < 0.5f && !m_stepWait; }
+        /// <summary>다른 층 목표인지(FloorStep으로 걸을지): 높이 차가 up보다 크거나, 0.5초 안에 같은 목표로 FloorStep을 따랐고 아직 0.5m 넘게 차이 나거나 모퉁이가 남음 — 계단 아래에서 1.3m 밑으로 내려오자 곧장 걷기로 바뀌어 기둥 곁에 1초 서고 96° 꺾였음(회차 412 내림 5).
+        /// 0.5m 밑이어도 계단 끝 발판(아래 0.1m·위 0.3m 차)에서 곧장 걷기로 바뀌면 길 첫 점으로 대각선 몰아 계단 옆 기둥·지붕벽에 3초 밀리고(내림 5) 2층 바닥 턱에 0.5초 걸렸다 141° 뛰었음(오름 2·4, 회차 416) → 모퉁이가 남은 동안은 계속 따르되 높이 차 0.5m를 벗어난 뒤 3초까지만
+        /// — 같은 높이에서 계속 모퉁이를 dist 0으로 곧장 몰면 문 들어가기(Steering)를 안 타 갓 지은 복도 벽(navmesh 미반영)에 10초 밀리고 갇힘 구조 순간이동(회차 416 vh_housetest 4-3).</summary>
+        public bool OtherFloor(Vector3 to, float up)
+        {
+            float h = Mathf.Abs(to.y - transform.position.y);
+            if (h > up) { m_stepHighAt = Time.time; return true; }
+            if (Time.time - m_stepUsedAt >= 0.5f || Utils.DistanceXZ(to, m_stepTo) > 0.5f) return false;
+            if (h > 0.5f) { m_stepHighAt = Time.time; return true; }
+            return Time.time - m_stepHighAt < 3f && (m_stepRest.Count > 0 || Utils.DistanceXZ(m_step, to) > 0.5f);
+        }
+        /// <summary>시험 기록용(회차 415 사6: 8초 섬): FloorStep 상태 — 고른 길(모퉁이·길이), 지금 모퉁이·기다림·걷기, BaseAI m_path.</summary>
+        public string StepDiag
+        {
+            get
+            {
+                var path = PathOf(this);
+                return $"FloorStep{(Time.time - m_stepUsedAt < 0.5f ? "" : "(안 씀)")} 모퉁이 {m_step:F1}({Utils.DistanceXZ(m_step, transform.position):0.0}m) 기다림 {m_stepWait} 걷기 {m_stepSlow} 뒤 {m_stepRest.Count} 새로 {m_stepAt - Time.time:0.0}초 뒤 · {m_stepPicked} · m_path {(path == null ? "없음" : path.Count + ":" + PathText(path, 3))} 길 {FoundPath()} · {m_moveDiag}";
+            }
+        }
+        static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, List<Vector3>> PathOf = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, List<Vector3>>("m_path");
+        static string PathText(List<Vector3> p, int n)
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < p.Count && i < n; i++) sb.Append(' ').Append(p[i].ToString("F1"));
+            if (p.Count > n) sb.Append(" … ").Append(p[p.Count - 1].ToString("F1"));
+            return sb.ToString();
+        }
+        string m_stepPicked = "길 없음", m_moveDiag = "";
+        const float StepReach = 1.1f;
+        static readonly List<Vector3> s_stepPath = new List<Vector3>();
+        readonly List<Vector3> m_stepRest = new List<Vector3>();
+        Vector3 m_step, m_stepTo;
+        float m_stepAt, m_stepSince, m_stepUsedAt = -10f, m_stepHighAt = -10f, m_stepWaitLen = -1f;
+        bool m_stepWait, m_stepSlow, m_stepLevel;
+        float m_stepSlowUntil;
+
+        /// <summary>시험 기록용: 그쪽으로 3m 안에 걸리는 것(발 0.4m·가슴 1.4m 높이).</summary>
+        public string BlockerAhead(Vector3 point)
+        {
+            Vector3 pos = transform.position, dir = Flat(point - pos).normalized;
+            string Hit(float h) => Physics.Raycast(pos + Vector3.up * h, dir, out RaycastHit hit, 3f, SolidMask, QueryTriggerInteraction.Ignore)
+                ? $"{hit.collider.name}({LayerMask.LayerToName(hit.collider.gameObject.layer)}, {hit.distance:0.0}m, 위 {hit.collider.transform.root.name})" : "없음";
+            return $"앞 발 {Hit(0.4f)} / 가슴 {Hit(1.4f)}, 땅 {pos.y - ZoneSystem.instance.GetGroundHeight(pos):0.0}m, 앞 1m 땅 {ZoneSystem.instance.GetGroundHeight(pos + dir) - pos.y:0.0}m, 둘레 {Around()}";
+        }
+
+        /// <summary>
+        /// 앞 1m에 닿은 것(사용자 10-31 — 원인을 보고 0.5초 안 반응): 발·가슴 높이 광선이 맞은 충돌체가 움직이는 Rigidbody(통나무 등)면 그 이름,
+        /// 문(Door)이면 door에 담는다. 둘 다 아니면 null.
+        /// </summary>
+        public string BumpAhead(Vector3 point, out Door door)
+        {
+            door = null;
+            Vector3 pos = transform.position, dir = Flat(point - pos).normalized;
+            foreach (float h in new[] { 0.4f, 1.4f })
+            {
+                if (!Physics.Raycast(pos + Vector3.up * h, dir, out RaycastHit hit, 1f, SolidMask, QueryTriggerInteraction.Ignore)) continue;
+                door = hit.collider.GetComponentInParent<Door>();
+                if (door != null) return null;
+                Rigidbody rb = hit.collider.attachedRigidbody;
+                if (rb != null && !rb.isKinematic) return hit.collider.transform.root.name;
+            }
+            return null;
+        }
+
+        /// <summary>진단: 몸 둘레 1.3m 안 단단한 충돌체(이름·종류·루트와의 거리·몸 기준 높이 범위).</summary>
+        string Around()
+        {
+            Vector3 pos = transform.position;
+            var cols = Physics.OverlapSphere(pos + Vector3.up * 0.9f, 1.3f, SolidMask, QueryTriggerInteraction.Ignore);
+            var sb = new System.Text.StringBuilder();
+            int n = 0;
+            foreach (var c in cols)
+            {
+                if (c.transform.root == transform.root) continue;
+                if (++n > 6) break;
+                Bounds b = c.bounds;
+                string kind = c is MeshCollider m ? (m.convex ? "메시(볼록)" : "메시") : c.GetType().Name.Replace("Collider", "");
+                sb.Append($"[{c.name}:{kind} 루트 {c.transform.root.name} {Utils.DistanceXZ(c.transform.root.position, pos):0.0}m 높이 {b.min.y - pos.y:0.0}~{b.max.y - pos.y:0.0} 크기 {b.size.x:0.0}x{b.size.z:0.0}]");
+            }
+            return n == 0 ? "없음" : sb.ToString();
+        }
+
+        float m_sampleTimer;
+        Vector3 m_samplePos;
+        float m_detourTime;
+        Vector3 m_detourDir;
+        int m_detourCount;
+        float m_detourSide = 1f;
+
+        /// <summary>깊은 물 앞에서 선 채로 지난 시간. 작업은 이게 WaterGiveUp초를 넘으면 그 목표를 버리고 다른 데를 고른다.</summary>
+        public float WaterBlockedTime { get; private set; }
+        public const float WaterGiveUp = 3f;
+        Vector3 m_moveTarget;
+        // 길 끝 막다른 곳(E099 순찰 뒤 문 옆): 바닐라 부분 길(물 피하는 길 지도는 0.2m 넘는 얕은 물도 못 감)의 끝에 닿으면 MoveTo가 "도착"을 돌려줘 곧장 걷지만,
+        // FindPath가 5초마다 새로 구한 부분 길이 같은 끝으로 되돌려 끝 둘레에서 맴돎 → StartDeadEnd 뒤엔 그 목표로 길찾기 없이 곧장(6초 못 다가가거나 물 막힘 WaterGiveUp이면 그만).
+        bool m_deadEnd, m_moveToDone;
+        float m_deadEndBest, m_deadEndBestAt;
+        void StartDeadEnd(float d) { m_deadEnd = true; m_deadEndBest = d; m_deadEndBestAt = Time.time; }
+        bool DeadEndStraight(float d)
+        {
+            if (!m_deadEnd) return false;
+            if (WaterBlockedTime >= WaterGiveUp) { m_deadEnd = false; return false; }
+            if (d < m_deadEndBest - 1f) { m_deadEndBest = d; m_deadEndBestAt = Time.time; }
+            else if (Time.time - m_deadEndBestAt > 6f) { m_deadEnd = false; Plugin.Log.LogInfo($"{name}: 곧장 걷기 6초 못 다가감({d:0}m) → 길찾기로"); return false; }
+            return true;
+        }
+        readonly DoorWay m_exitWay = new DoorWay(); // 안에서 닫힌 문으로 나가기(회차 315)
+        Vector3 m_lastDry;
+        bool m_hasDry;
+        /// <summary>지금 앞의 물은 건너기로 했다(좁은 강, WaterRule). 물에서 나오면 풀린다.</summary>
+        bool m_swimOk;
+        /// <summary>물가에서 내린 판단(건넘/못 건넘)을 이때까지 다시 재지 않는다(앞 32m를 재는 건 비싸다).</summary>
+        float m_waterDecidedUntil;
+
+        List<Vector3> m_inPath;
+        int m_inIdx;
+        static readonly Vector3 NoGoal = new Vector3(1e9f, 0f, 1e9f);
+        Vector3 m_inGoal = NoGoal;
+        float m_inPlanAt = -100f, m_inBest, m_inProgressAt, m_inDist;
+
+        bool m_inSwimLogged;
+
+        void ForgetInteriorPath() { m_inPath = null; m_inGoal = NoGoal; }
+        static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, float> LastFindPathTime = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, float>("m_lastFindPathTime");
+        /// <summary>바닐라 FindPath는 같은 목표(1m 안)면 5초 동안 옛 길을 씀 → 문으로 나온 직후 안에서 구한 길을 따라 되돌아감(회차 348). 다음 틀에 새로 구하게.</summary>
+        public void ForgetPath() => LastFindPathTime(this) = -999f;
+
+        /// <summary>지하묘지 안 길(InteriorNav)을 따라 걷는 중이고 최근 3초 안에 다음 점에 다가갔다(막힘 판단이 길을 도는 걸음을 막힘으로 안 보게).</summary>
+        public bool OnInteriorPath => m_inPath != null && Time.time - m_inProgressAt < 3f;
+        /// <summary>안에서 문으로 나가는 중(회차 333 E058: 목표에서 멀어지는 문 쪽 걷기를 일의 막힘 감지가 막힘으로 보고 4m 옮겼음). 문 길은 자체 시간 한계가 있다.</summary>
+        public bool ExitingDoor => m_exitWay.Busy;
+        public float ExitLeft(Vector3 me) => m_exitWay.LeftVia(me);
+
+        /// <summary>지하묘지 안에서 그 점(2m 안)·닿을 거리(0.3m 안)로 마지막에 찾은 묘지 안 길이 없었다(바닐라 걷기로 헤매는 중).</summary>
+        public bool InteriorNoPath(Vector3 point, float dist) =>
+            m_inPath == null && Character.InInterior(transform.position) && Utils.DistanceXZ(point, m_inGoal) <= 2f && Mathf.Abs(dist - m_inDist) <= 0.3f;
+
+        /// <summary>
+        /// 지하묘지 안 걷기: InteriorNav 칸 길을 점마다 따라간다(바닐라 길 지도는 안에서 조각나 길이 늘 "부분"). 다음 점이 턱 위면 뛴다.
+        /// 목표가 2m 넘게 바뀌었거나 3초 동안 다음 점에 못 다가가면 지금 자리에서 다시 찾는다(3초에 한 번까지). 길이 없으면 false(바닐라 걷기로).
+        /// </summary>
+        bool InteriorWalk(Vector3 pos, Vector3 point, float dist, bool run)
+        {
+            bool newGoal = Utils.DistanceXZ(point, m_inGoal) > 2f || Mathf.Abs(dist - m_inDist) > 0.3f; // 닿을 거리가 바뀌어도(줍기: 손 닿는 거리로) 새로 찾는다
+            bool stalled = m_inPath != null && Time.time - m_inProgressAt > 3f;
+            bool retry = m_inPath == null; // 못 찾았던 같은 목표: 3초마다 다시
+            if (newGoal ? Time.time - m_inPlanAt > 0.5f : (stalled || retry) && Time.time - m_inPlanAt > 3f)
+            {
+                m_inGoal = point;
+                m_inDist = dist;
+                m_inPlanAt = Time.time;
+                InteriorNav.UseBody(m_character);
+                m_inPath = InteriorNav.Plan(pos, point, dist, out string why);
+                m_inIdx = m_inPath != null && m_inPath.Count > 1 ? 1 : 0; // 첫 점은 지금 자리
+                m_inBest = float.MaxValue;
+                if (!stalled) m_inProgressAt = Time.time; // 멈춰서 다시 찾은 길은 실제로 다가가야 진척(막힘 판단이 계속 미뤄지지 않게)
+                Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 묘지 안 길 {(m_inPath != null ? "찾음" : "못 찾음")}{(stalled ? "(멈춰서 다시)" : "")} — {why}, 목표까지 {Utils.DistanceXZ(point, pos):0.0}m");
+                if (m_inPath == null && newGoal) Diag.Log($"DIAG 묘지 안 길 없음: {InteriorNav.Explain(pos, point, dist)}, 목표 ({point.x - pos.x:0.0},{point.y - pos.y:0.0},{point.z - pos.z:0.0})");
+            }
+            if (m_inPath == null) return false;
+            while (m_inIdx < m_inPath.Count - 1 && Utils.DistanceXZ(m_inPath[m_inIdx], pos) < 0.5f) { m_inIdx++; m_inBest = float.MaxValue; m_inProgressAt = Time.time; }
+            Vector3 wp = m_inPath[m_inIdx];
+            float dw = Utils.DistanceXZ(wp, pos);
+            if (m_inBest == float.MaxValue) m_inBest = dw; // 새 점: 지금 거리가 기준
+            else if (dw < m_inBest - 0.3f) { m_inBest = dw; m_inProgressAt = Time.time; }
+            bool last = m_inIdx == m_inPath.Count - 1 && dw < 0.5f;
+            MoveTowards(Flat(last ? point - pos : wp - pos), run);
+            if (wp.y - pos.y > (float)StepGrid.StepUp && dw < 1.4f) { if (TryJump()) JumpWhy = "턱 위 길 점"; } // 턱 위 점: 뛰어 오른다
+            return true;
+        }
+
+        // 먼 목표 길 토막(Core PathLeg, 회차 657 vh_finaltest 사냥 FAIL): 목표까지 바닐라 길이 없으면(목표 둘레 navmesh 타일이 아직 안 구워짐·구역 안 불러와짐 —
+        // BaseAI.FindPath는 같은 목표 실패를 5초 들고 있고 MoveTo는 그동안 "도착"을 돌려줌) 곧장 걷다 집 가구·문·바위·나무에 박혀 빠른 막힘(1초)이 났다.
+        // 그때는 목표 쪽 PathLeg.Length m 앞 토막 점(일꾼 둘레 구워진 타일 안)까지 바닐라 길로 가고, 5초마다 목표까지 바로 길을 다시 본다. 지하묘지 안은 안 씀.
+        readonly PathLeg m_leg = new PathLeg();
+        Vector3 m_legPoint;
+        /// <summary>시험 기록: 길 토막을 시작한 횟수(목표까지 바로 길 실패).</summary>
+        public static int LegStarts;
+        /// <summary>지금 이 목표로 길 토막을 따라가는 중(m_path 끝이 토막 점 — 남은 길 = 토막까지 길 + 토막~목표).</summary>
+        public bool OnLegTo(Vector3 goal) => m_leg.Active && Utils.DistanceXZ(goal, m_moveTarget) <= 2f;
+
+        bool MoveToOrLeg(float dt, Vector3 pos, Vector3 point, float dist, bool run, bool inside)
+        {
+            if (inside) { m_leg.Reset(); return MoveTo(dt, point, dist, run); }
+            int picks = m_leg.Picks;
+            if (m_leg.Active && !m_leg.Keep(Time.time, pos.x, pos.z, point.x, point.z)) ForgetPath(); // 다시 목표까지 바로 길을 본다(그새 타일이 구워졌을 수 있음)
+            if (!m_leg.Active)
+            {
+                bool done = MoveTo(dt, point, dist, run);
+                if (!done || FoundPath() || !m_leg.DirectFailed(Time.time, pos.x, pos.z, point.x, point.z)) return done;
+                LegStarts++;
+            }
+            if (m_leg.Picks != picks)
+            {
+                m_legPoint = new Vector3((float)m_leg.X, pos.y, (float)m_leg.Z);
+                if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(m_legPoint, out float h)) m_legPoint.y = h; // SnapToNavMesh가 땅 높이에서 1.5~12m로 붙임
+                ForgetPath(); // 새 토막: 옛 목표 실패 결과를 1초 들고 있지 말고 바로 구함
+            }
+            return MoveTo(dt, m_legPoint, 1f, run);
+        }
+
+        /// <summary>
+        /// 걷기: 바닐라 길찾기(BaseAI.MoveTo, 물 뺀 길)를 쓰되
+        /// - 지하묘지 안은 InteriorNav 칸 길(InteriorWalk).
+        /// - 길을 못 찾으면(처음 가는 곳은 길 지도를 만드는 중일 때가 많다) 서 있지 말고, 먼 목표는 목표 쪽 토막 점까지 바닐라 길로(MoveToOrLeg), 그것도 없으면 곧장 걸어간다.
+        /// - 1.5초 동안 거의 못 움직였으면(앞을 막은 생물·장애물) 1.2초 옆으로 비켜 간다.
+        /// - 앞이 깊은 물이면 좁은 강만 헤엄쳐 건너고, 늪·바다·긴 물이면 멈춘다(WaterBlockedTime). 모르고 빠졌으면 마른 땅으로 돌아간다.
+        /// 도착하면 true.
+        /// </summary>
+        public bool MoveToPoint(float dt, Vector3 point, float dist, bool run)
+        {
+            Vector3 pos = transform.position;
+            m_moveToDone = false;
+            if (run && m_stepSlow && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) run = false; // FloorStep 꺾인 모퉁이 앞은 걸음
+            if (m_stepWait && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) { m_moveDiag = "MoveToPoint 출발 기다림"; StopMoving(); return false; } // FloorStep 출발 기다림은 제자리에 섬 — 제 자리로 0m 걷기는 뛰던 기세로 1.6m 지나쳤다 150° 되돌았음(회차 412 오름 4)
+            // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
+            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; m_deadEnd = false; m_leg.Reset(); }
+            float d = Utils.DistanceXZ(point, pos);
+            if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_deadEnd = false; m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
+            m_moveDiag = "MoveToPoint 시작"; if (EdgeRescueIfLong(dt, pos)) { m_moveDiag = "MoveToPoint 벼랑 구조"; return false; }
+            if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
+            if (m_carving && UpdateCarve(dt, pos)) { m_moveDiag = "MoveToPoint 깎기"; return false; }
+            if (RescueIfTrapped(dt, pos)) { m_moveDiag = "MoveToPoint 갇힘 구조"; return false; }
+            bool inPath = Character.InInterior(pos) && m_inPath != null; // 지하묘지 안 길(헤엄 칸 포함)을 따라가는 중
+            if (m_character.IsSwimming() && Character.InInterior(pos) && !inPath) // 진단: 묘지 안 길 없이(바닐라 걷기로) 물에 빠짐
+            {
+                if (!m_inSwimLogged)
+                {
+                    m_inSwimLogged = true;
+                    Diag.Log($"DIAG 묘지 안 길 밖 헤엄: 수면 {m_character.GetLiquidLevel() - pos.y:+0.00}, 발밑 {InteriorNav.CellDiag(pos, pos.y)}, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m 높이 " + (m_lastDry.y - pos.y).ToString("+0.0;-0.0") : "없음")}");
+                }
+            }
+            else m_inSwimLogged = false;
+            if (!m_character.InLiquid()) { m_lastDry = pos; m_hasDry = true; if (Time.time > m_waterDecidedUntil) m_swimOk = false; }
+            else if (m_character.IsSwimming() && !m_swimOk && m_hasDry && !inPath && !TarGoal(point)) // 줍는 타르는 웅덩이 안에 떠 있다(그때만 헤엄쳐 감). 묘지 안 길이 헤엄 칸을 지나면 그대로 헤엄쳐 간다(회차 136: 돌아가기를 되풀이해 20초 갇힘)
+            {
+                MoveTowards(Flat(m_lastDry - pos), true);
+                return false;
+            }
+            if (SlowSwim(dt, pos, point)) return false;
+            if (TarStep(dt, pos, point, dist)) return false;
+            if (m_detourTime > 0f && (m_moveDiag = $"MoveToPoint 비켜 가기 {m_detourTime:0.0}초") != null)
+            {
+                m_detourTime -= dt;
+                if (!WaterAhead(pos, m_detourDir) && !TarAhead(pos, m_detourDir, point)) MoveTowards(m_detourDir, true); // 걷기(1.6m/s)로는 큰 바위를 못 돌아감 → 달림
+                else m_detourTime = 0f;
+                return false;
+            }
+            bool inside = Character.InInterior(pos);
+            if (!inside && m_exitWay.Exit(dt, m_character as WorkerNpc, point)) { m_moveDiag = $"MoveToPoint 나가기 문 {m_exitWay.Busy}"; return false; }
+            if (!inside) ForgetInteriorPath();
+            if (!inside || !InteriorWalk(pos, point, dist, run))
+            {
+                // 용암 위 건물 바닥 길: 목표까지 직선이 다 바닥이면 곧장 걷는다 — 길찾기는 띄운 바닥 옆 땅으로 내려가 용암에 빠짐(E049)
+                if (!inside && FloorLine(pos, point)) MoveTowards(Flat(point - pos), false);
+                else if (inside || !FollowHazardPath(pos, point, run))
+                {
+                    if (!inside && DeadEndStraight(d)) { MoveTowards(Flat(point - pos), run); m_moveDiag = $"곧장(길 끝 막힘, 가장 가까이 {m_deadEndBest:0}m)"; }
+                    else
+                    {
+                        bool done = MoveToOrLeg(dt, pos, point, dist, run, inside); m_moveDiag = $"MoveTo {(done ? "도착" : "가는 중")}({point:F1} 거리 {dist:0.0} 뛰기 {run}{(m_leg.Active ? $", 토막 {m_legPoint:F0}" : "")})";
+                        m_moveToDone = done && d > dist + 1f; // 바닐라는 "도착"인데 아직 멂 = 길 없음 또는 부분 길 끝
+                        if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+                    }
+                }
+            }
+            if (WaterAhead(pos, m_character.GetMoveDir()))
+            {
+                StopMoving();
+                if (WaterBlockedTime < WaterGiveUp && WaterBlockedTime + dt >= WaterGiveUp)
+                    Brain.Places.AddFeature(Senses.ZoneOf(point), PlaceFeature.DeepWater, ZNet.instance.GetTimeSeconds()); // 장소 기억: 물에 막힘
+                WaterBlockedTime += dt;
+                return false;
+            }
+            WaterBlockedTime = 0f;
+            if (TarAhead(pos, m_character.GetMoveDir(), point))
+            {
+                // 용암 위 건물 바닥에선 비켜 가면 바닥 밖 용암으로 떨어짐(E049) → 길 못 찾으면 멈춤(일의 시간 제한이 그만둠)
+                if (!StartHazardPath(pos, point)) { if (LavaFloored(pos)) StopMoving(); else StartTarDetour(pos, point); }
+                return false;
+            }
+            // 바위·통나무·구덩이 벽 같은 턱에 걸려 섰으면 뛴다(플레이어처럼)
+            // 출발 순간은 늘 느리다 → 느린 채 0.5초 지나야 턱으로 봄(침대 곁 출발에 침대 옆면으로 뛰던 것, 회차 422)
+            m_slowTime = Flat(m_character.GetVelocity()).magnitude < 1f ? m_slowTime + dt : 0f;
+            m_ledgeTimer -= dt;
+            if (m_ledgeTimer <= 0f)
+            {
+                m_ledgeTimer = 0.25f;
+                if (m_slowTime >= 0.5f && LedgeAhead(pos, m_character.GetMoveDir()) && TryJump()) JumpWhy = $"턱 {m_ledgeHit}";
+            }
+            m_sampleTimer += dt;
+            if (m_sampleTimer >= 1.5f)
+            {
+                if (Utils.DistanceXZ(m_samplePos, pos) < 0.75f && d > dist + 1f)
+                {
+                    // 막혔다: 두 번까지 뛰어 보고, 구덩이에 갇혔으면 경사로를 깎고, 아니면 옆으로 비켜 간다
+                    Vector3 fwd = Flat(point - pos).normalized;
+                    if (m_pitSince <= 0f && Climb.IsPit(Rise8(pos, fwd))) MarkPit(pos);
+                    if (m_stuckJumps < 2 && m_detourCount == 0 && TryJump()) { m_stuckJumps++; JumpWhy = $"막힘 1.5초 {Utils.DistanceXZ(m_samplePos, pos):0.00}m"; } // 이미 비켜 가 봤으면 점프는 건너뜀
+                    else if (!StartCarve(pos, fwd))
+                    {
+                        m_stuckJumps = 0;
+                        // 같은 목표로 또 막히면 같은 쪽으로 점점 길게 비켜 간다(큰 바위는 1.2초로 못 돌아감, 회차 72 coppertest).
+                        // 네 번 해도 안 되면 반대쪽부터 다시.
+                        if (m_detourCount >= 4) { m_detourSide = -m_detourSide; m_detourCount = 0; }
+                        else if (m_detourCount == 0) m_detourSide = Random.value < 0.5f ? 1f : -1f;
+                        m_detourCount++;
+                        Vector3 side = Vector3.Cross(Vector3.up, fwd) * m_detourSide;
+                        m_detourDir = (side + fwd * 0.3f).normalized;
+                        m_detourTime = 1.2f * m_detourCount;
+                        if (m_detourCount >= 2) Diag.Log($"DIAG 비켜 가기 {m_detourCount}번째: 쪽 {m_detourSide:0} {m_detourTime:0.0}초, 목표까지 {d:0.0}m, 앞 {BlockerAhead(point)}");
+                    }
+                }
+                else m_stuckJumps = 0;
+                m_sampleTimer = 0f;
+                m_samplePos = pos;
+            }
+            return false;
+        }
+
+        // ---- 점프·구덩이 (2026-10-21 사용자 관찰: 점프를 안 해서 돌 캐다 판 구덩이에서 못 나옴) ----
+
+        /// <summary>시험 기록: 뛴 횟수, 경사로를 깎은 곡괭이질 수.</summary>
+        public int Jumps { get; private set; }
+        public int CarveSwings { get; private set; }
+        /// <summary>시험용: 점프·경사로 깎기를 끄고 걷기만으로 나오는지 본다.</summary>
+        public static bool TestNoJump, TestNoCarve;
+        /// <summary>
+        /// 시험용(E072): 재시작 시험 2번째(vh_restart2)가 불러온 그대로(짐·상자·하던 일·대기열)를 보기 전까지 일꾼이 아무것도 안 함.
+        /// 월드를 불러오면 일꾼은 플레이어가 나타나기(8초)·자동 시험 시작(3초)보다 먼저 일을 이어 가서, 곁에 통나무가 있으면 시험이 보기 전에 나무 일을 끝냈다.
+        /// 시험 모드(TestRunner.CheckAutoRun)가 켜고 RestartTest.Body2·TestRunner.Finish가 끈다.
+        /// </summary>
+        public static bool TestHoldAll;
+        /// <summary>시험 기록: 길이 막혀 거점·상자로 순간이동한 횟수(임시 대책, 0이어야 좋다).</summary>
+        public static int StuckTeleports;
+
+        /// <summary>이때까지는 이 일꾼의 곡괭이질이 땅을 판다(광석 캐기·구덩이 탈출). 그 밖에는 안 판다(NpcPatches.NoDig).</summary>
+        public float DigAllowedUntil;
+        public bool DigAllowed => Time.time < DigAllowedUntil;
+        /// <summary>이 일꾼이 판 횟수(NpcPatches.NoDig가 센다). 채집은 이것도 진척으로 본다.</summary>
+        public int Digs;
+        /// <summary>땅에 먼저 닿았는데 파기를 막은 횟수(그 휘두름은 바위에 안 들어감).</summary>
+        public int BlockedDigs;
+
+        float m_lastJump = -10f;
+        float m_ledgeTimer;
+        float m_slowTime;
+        /// <summary>막혀서 뛴 횟수(진척이 있으면 0).</summary>
+        int m_stuckJumps;
+        static int s_solidMask;
+
+        internal static int SolidMask => s_solidMask != 0 ? s_solidMask
+            : (s_solidMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle"));
+
+        /// <summary>시험 기록용: 마지막 점프 시각·까닭(회차 417: 침대 곁 출발 때 1.5m 뛰어오름).</summary>
+        public float JumpAt = -10f;
+        public string JumpWhy = "";
+        string m_ledgeHit = "";
+        /// <summary>바닐라 점프(일꾼은 몸 앞쪽으로 뛴다). 땅에 서 있을 때만, 0.8초에 한 번.</summary>
+        bool TryJump()
+        {
+            if (TestNoJump || Time.time - m_lastJump < 0.8f || !m_character.IsOnGround() || m_character.InAttack()) return false;
+            m_lastJump = Time.time;
+            m_character.Jump(); JumpAt = Time.time; JumpWhy = "";
+            Jumps++;
+            return true;
+        }
+
+        /// <summary>앞 1m 안에 무릎 높이 턱(가파른 면)이 있고, 뛰면 닿는 높이(1.4m)는 비었는지.</summary>
+        bool LedgeAhead(Vector3 pos, Vector3 dir)
+        {
+            dir = Flat(dir);
+            if (dir.sqrMagnitude < 0.01f) return false;
+            dir.Normalize();
+            if (!Physics.Raycast(pos + Vector3.up * 0.4f, dir, out RaycastHit low, 1f, SolidMask, QueryTriggerInteraction.Ignore)) return false;
+            if (low.normal.y > 0.7f) return false; // 완만한 비탈은 걸어 오른다
+            m_ledgeHit = $"{(low.collider.GetComponentInParent<Piece>() is Piece lp ? Utils.GetPrefabName(lp.gameObject) : low.collider.name)}@{low.point.x:F1},{low.point.z:F1},{low.point.y:F1} 면 {low.normal.y:0.00}";
+            return !Physics.Raycast(pos + Vector3.up * 1.4f, dir, 1.4f, SolidMask, QueryTriggerInteraction.Ignore);
+        }
+
+        bool m_carving;
+        /// <summary>구덩이에서 경사로를 깎는 중(제자리라도 막힌 게 아니다).</summary>
+        public bool Carving => m_carving;
+        float m_carveSeen;
+        Vector3 m_carveDir;
+        bool m_carveSwung;
+        float m_carveWalk;
+        int m_carveCount;
+        float m_carveStart;
+        float m_noCarveUntil;
+        const int CarveMax = 30;
+        /// <summary>시험 진단(E054): 마지막 경사로 깎기의 시작 둘레·방향, 곡괭이질마다 발 높이, 끝 이유.</summary>
+        public string CarveDebug { get; private set; } = "";
+
+        /// <summary>8방향(0 = toward, 45°씩) 둘레 땅이 발보다 얼마나 높은지: 1.5·3·4.5m 중 가장 높은 값.</summary>
+        static double[] Rise8(Vector3 pos, Vector3 toward)
+        {
+            var rise = new double[8];
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 dir = Quaternion.Euler(0f, 45f * i, 0f) * toward;
+                float best = -99f;
+                for (int s = 1; s <= 3; s++)
+                    if (ZoneSystem.instance.GetGroundHeight(pos + dir * (1.5f * s), out float h)) best = Mathf.Max(best, h - pos.y);
+                rise[i] = best;
+            }
+            return rise;
+        }
+
+        /// <summary>
+        /// 구덩이에 갇혔으면(Climb.IsPit) 곡괭이로 가려는 쪽 가장 낮은 벽에 경사로를 깎기 시작한다.
+        /// 곡괭이가 없거나 구덩이가 아니면 false(그냥 언덕·절벽은 길 만들기라 시킬 때만, 구상서 6-5).
+        /// </summary>
+        bool StartCarve(Vector3 pos, Vector3 toward)
+        {
+            if (TestNoCarve || Time.time < m_noCarveUntil || toward.sqrMagnitude < 0.01f) return false;
+            if (WorkerNpc.BestTool(((WorkerNpc)m_character).GetInventory(), ToolKind.Pickaxe, true) == null) return false;
+            double[] rise = Rise8(pos, toward);
+            if (!Climb.IsPit(rise)) return false;
+            int k = Climb.CarveDir(rise);
+            m_carveDir = Quaternion.Euler(0f, 45f * k, 0f) * toward;
+            m_carving = true;
+            m_carveSwung = false;
+            m_carveWalk = 0f;
+            m_carveCount = 0;
+            m_carveStart = m_carveSeen = Time.time;
+            MarkPit(pos);
+            Brain.Places.AddFeature(Senses.ZoneOf(pos), PlaceFeature.Pit, ZNet.instance.GetTimeSeconds()); // 장소 기억: 구덩이
+            CarveDebug = $"시작 둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))} 방향 {k}·{Mathf.Atan2(m_carveDir.x, m_carveDir.z) * Mathf.Rad2Deg:0}° 발 {pos.y:0.0}, 높이";
+            Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 구덩이에 갇힘(둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))}) → 경사로 깎기");
+            return true;
+        }
+
+        /// <summary>
+        /// 경사로 깎기 한 번: 벽 쪽(발 위 1m)으로 곡괭이질(바닐라: 맞은 곳보다 조금 아래로 땅이 깎임) → 1.2초 올라가 본다 →
+        /// 아직 구덩이면 다시. 다 나왔거나 30번이면 끝(끝나면 1분 동안은 다시 시작하지 않는다). true면 이번 프레임은 깎기가 맡았다.
+        /// </summary>
+        bool UpdateCarve(float dt, Vector3 pos)
+        {
+            var npc = (WorkerNpc)m_character;
+            m_carveSeen = Time.time;
+            if (m_carveWalk > 0f)
+            {
+                m_carveWalk -= dt;
+                MoveTowards(m_carveDir, false);
+                if (m_carveWalk > 0f) return true;
+                double[] rise = Rise8(pos, m_carveDir);
+                if (!Climb.IsPit(rise) || m_carveCount >= CarveMax)
+                {
+                    CarveDebug += $" → 끝 {(Climb.IsPit(rise) ? "못 나옴" : "나옴")} 둘레 {string.Join(" ", System.Array.ConvertAll(rise, r => r.ToString("0.0")))}";
+                    Plugin.Log.LogInfo($"{npc.NpcName}: 경사로 깎기 끝({(Climb.IsPit(rise) ? "못 나옴" : "나옴")}, 곡괭이질 {m_carveCount}번, {Time.time - m_carveStart:0}초)");
+                    m_carving = false;
+                    m_stuckJumps = 0;
+                    if (Climb.IsPit(rise)) m_noCarveUntil = Time.time + 60f;
+                    return false;
+                }
+                return true;
+            }
+            if (!npc.HoldTool(ToolKind.Pickaxe, true)) { m_carving = false; return false; }
+            StopMoving();
+            Vector3 aim = pos + m_carveDir * 1.2f + Vector3.up * 1f;
+            LookAt(aim);
+            bool attacking = npc.InAttack();
+            if (m_carveSwung && !attacking)
+            {
+                m_carveSwung = false;
+                m_carveCount++;
+                CarveSwings++;
+                m_carveWalk = 1.2f; // 깎인 데로 올라가 본다
+                if (m_carveCount <= 40) CarveDebug += $" {pos.y:0.0}";
+                return true;
+            }
+            if (!attacking && IsLookingAt(aim, 20f))
+            {
+                DigAllowedUntil = Time.time + 1.5f;
+                if (npc.StartAttack(null, false)) m_carveSwung = true;
+            }
+            return true;
+        }
+
+
+        Vector3 m_trapAnchor;
+        float m_trapStill, m_trapCheck;
+        /// <summary>시험용: 갇혀서(도망 중 구덩이·물 찬 구덩이) 깃발로 순간이동한 횟수.</summary>
+        public static int TrapRescues;
+
+        /// <summary>
+        /// 갇힘 구조(사용자 결정 2026-10-22, Core Climb.TrapRescue): 도망 중 구덩이에 갇혀 6초, 또는 헤엄만 치며 20초 동안 3m 안을 못 벗어나면
+        /// 깃발로 순간이동한다(체력·짐·장비 그대로, 도망은 그만둠). 그냥 걷다 빠진 구덩이는 점프·경사로 깎기가 맡는다. true면 옮겼다.
+        /// </summary>
+        bool RescueIfTrapped(float dt, Vector3 pos)
+        {
+            bool fleeing = m_guard != null && m_guard.Fleeing;
+            bool swimming = m_character.IsSwimming();
+            // 도망·헤엄 중인 시간만 센다(⑬ 사), 회차 211 vh_coppertest: 서서 캐던 시간까지 세어 도망 시작 1~2초 만에 깃발로 옮겨짐)
+            if ((!fleeing && !swimming) || Utils.DistanceXZ(pos, m_trapAnchor) > (float)Climb.TrapRadius) { m_trapAnchor = pos; m_trapStill = 0f; return false; }
+            m_trapStill += dt;
+            if (m_trapStill < Mathf.Min((float)Climb.FleeTrapSeconds, (float)Climb.SwimTrapSeconds)) return false;
+            m_trapCheck -= dt;
+            if (m_trapCheck > 0f) return false;
+            m_trapCheck = 0.5f;
+            Vector3 toward = Flat(m_moveTarget - pos);
+            if (toward.sqrMagnitude < 0.01f) toward = Flat(transform.forward);
+            bool pit = fleeing && !swimming && Climb.IsPit(Rise8(pos, toward));
+            string why = Climb.TrapRescue(fleeing, pit, swimming, m_trapStill);
+            if (why == null) return false;
+            var npc = (WorkerNpc)m_character;
+            Plugin.Log.LogInfo($"{npc.NpcName}: {(why == "water" ? "물 찬 구덩이에서 헤엄만 함" : "도망 중 구덩이에 갇힘")} {m_trapStill:0}초 → 깃발로 순간이동");
+            m_guard?.CancelFlee();
+            m_carving = false;
+            StopMoving();
+            npc.TeleportTo(npc.Home, transform.rotation, false);
+            m_trapAnchor = npc.Home;
+            m_trapStill = 0f;
+            m_pitSince = 0f; // 구덩이 시간도 새로(회차 122: 도망 구덩이 시간이 이어져 다음 구덩이에서 24초 만에 옮김)
+            StuckTeleports++;
+            TrapRescues++;
+            npc.Say("stuck");
+            return true;
+        }
+
+        float m_pitSince, m_pitSeen, m_pitCheck;
+        Vector3 m_pitPos;
+        static int s_edgeMask;
+        /// <summary>시험용: 구덩이에서 30초 못 나와 가장자리 위로 옮긴 횟수.</summary>
+        public static int PitEdgeRescues;
+        /// <summary>시험용: 구덩이 가장자리 옮기기를 끈다(점프·경사로만 보는 칸).</summary>
+        public static bool TestNoEdgeRescue;
+
+        /// <summary>걷다 구덩이에 갇힌 것을 처음 본 때를 적는다(이미 적었으면 그대로).</summary>
+        void MarkPit(Vector3 pos)
+        {
+            if (m_pitSince > 0f) return;
+            m_pitSince = m_pitSeen = Time.time;
+            m_pitPos = pos;
+            m_pitCheck = 0f;
+        }
+
+        /// <summary>
+        /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 5초(Climb.PitEscapeSeconds) 안에 못 나오면
+        /// 가장 가까운 가장자리 위(Climb.EdgeSpots — 단단한 지형·물 아님·몸 자리 빔·위험 판단 통과)로 옮긴다. 플레이어 근처라도. 짐·체력·일은 그대로.
+        /// 자리가 없으면 깃발로. 도망 구덩이(6초 → 깃발)는 RescueIfTrapped가 먼저 맡는다. true면 옮겼다.
+        /// </summary>
+        bool EdgeRescueIfLong(float dt, Vector3 pos)
+        {
+            if (m_pitSince <= 0f) return false;
+            if (TestNoEdgeRescue) { m_pitSince = 0f; return false; } // 꺼 둔 동안 시간을 쌓지 않는다(켜자마자 옮기지 않게)
+            if (m_guard != null && m_guard.Fleeing) return false; // 도망 구덩이는 RescueIfTrapped(6초 → 깃발)가 맡는다 — 5초(10-31)라 먼저 옮기지 않게
+            if (Time.time - m_pitSeen > 5f || Utils.DistanceXZ(pos, m_pitPos) > (float)Climb.PitLeftRadius) { m_pitSince = 0f; return false; }
+            m_pitSeen = Time.time;
+            if (Time.time - m_pitSince < (float)Climb.PitEscapeSeconds || m_character.IsSwimming()) return false;
+            m_pitCheck -= dt;
+            if (m_pitCheck > 0f) return false;
+            m_pitCheck = 0.5f;
+            Vector3 toward = Flat(m_moveTarget - pos);
+            if (toward.sqrMagnitude < 0.01f) toward = Flat(transform.forward);
+            toward.Normalize();
+            if (!Climb.IsPit(Rise8(pos, toward))) { m_pitSince = 0f; return false; } // 나왔다(경사로 위)
+            var npc = (WorkerNpc)m_character;
+            float stuck = Time.time - m_pitSince;
+            var rise = new double[8][];
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 dir = Quaternion.Euler(0f, 45f * i, 0f) * toward;
+                rise[i] = new double[Climb.EdgeSteps];
+                for (int k = 0; k < Climb.EdgeSteps; k++)
+                    rise[i][k] = ZoneSystem.instance.GetGroundHeight(pos + dir * ((k + 1) * (float)Climb.EdgeStep), out float h) ? h - pos.y : double.NaN;
+            }
+            if (s_edgeMask == 0) s_edgeMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece");
+            string last = "후보 없음";
+            int tried = 0;
+            foreach (var e in Climb.EdgeSpots(rise))
+            {
+                tried++;
+                Vector3 dir = Quaternion.Euler(0f, 45f * e.Dir, 0f) * toward;
+                Vector3 p = pos + dir * ((e.Step + 1) * (float)Climb.EdgeStep + 0.5f); // 가장자리 끝에서 반 m 더 바깥
+                if (!ZoneSystem.instance.GetSolidHeight(p, out float h, out Vector3 normal, out GameObject go) || go == null) { last = "땅 없음"; continue; }
+                if (go.GetComponentInParent<Heightmap>() == null) { last = "지형 아님(" + go.name + ")"; continue; }
+                if (normal.y < StuckHop.MinNormalY) { last = $"가파름({normal.y:0.00})"; continue; }
+                p.y = h;
+                if (h < pos.y + (float)Climb.Wall) { last = "낮음"; continue; }
+                if (Climb.IsPit(Rise8(p, dir))) { last = "아직 구덩이 안"; continue; }
+                if (h < ZoneSystem.instance.m_waterLevel + 0.3f || Floating.GetLiquidLevel(p) > h + 0.1f) { last = "물"; continue; }
+                if (Physics.CheckCapsule(p + Vector3.up * 0.6f, p + Vector3.up * 1.6f, 0.45f, s_edgeMask, QueryTriggerInteraction.Ignore)) { last = "몸 자리 막힘"; continue; }
+                if (m_guard != null && !m_guard.SafeAt(p)) { last = "위험"; continue; }
+                m_carving = false;
+                StopMoving();
+                if (!npc.TeleportTo(p + Vector3.up * 0.2f, transform.rotation, false)) { last = "옮기기 실패"; continue; }
+                Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴 → 가장자리 위로 {Utils.DistanceXZ(pos, p):0.0}m 옮김(위 {h - pos.y:0.0}m, 후보 {tried}번째)");
+                AfterPitRescue(p);
+                PitEdgeRescues++;
+                npc.Say("rescue");
+                return true;
+            }
+            Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴, 가장자리 자리 없음(후보 {tried}개, 마지막: {last}) → 깃발로 순간이동");
+            m_carving = false;
+            StopMoving();
+            npc.TeleportTo(npc.Home, transform.rotation, false);
+            AfterPitRescue(npc.Home);
+            npc.Say("stuck");
+            return true;
+        }
+
+        void AfterPitRescue(Vector3 at)
+        {
+            m_pitSince = 0f;
+            m_trapAnchor = at;
+            m_trapStill = 0f;
+            m_stuckJumps = 0;
+            m_detourTime = 0f;
+            m_detourCount = 0;
+            m_samplePos = at;
+            m_sampleTimer = 0f;
+            Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 순간이동 자리 구덩이 가장자리 → 목표 쪽 {at.x:0} {at.z:0}");
+            StuckTeleports++;
+        }
+        static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+
+        // ---- 타르 웅덩이 (⑫ 평원 바): 빠지면 Tared(느려짐)라 걸어 들어가지 않고, 빠졌으면 마지막 타르 밖 자리로 돌아간다 ----
+
+        /// <summary>이보다 깊은 타르(m)는 걸어 들어가지 않는다(무릎 아래 가장자리는 지나감).</summary>
+        public const float TarWade = 0.4f;
+        /// <summary>시험 기록: 타르를 비켜 간 횟수, TarWade보다 깊은 타르에 있던 시간(초).</summary>
+        public int TarDetours { get; private set; }
+        public float TarTime { get; private set; }
+        /// <summary>시험 기록: 진짜 용암(Heightmap.IsLava, 칠 0.6 넘음) 위에 있던 시간(초) — 가장자리(LavaEdge~0.6)는 안 셈.</summary>
+        public float LavaTime { get; private set; }
+        Vector3 m_lastNoTar;
+        bool m_hasNoTar, m_tarLogged;
+        Vector3 m_tarTarget;
+        float m_tarSide = 1f;
+
+        /// <summary>
+        /// 그 자리(xz) 땅 위 타르 깊이(m), 없으면 0. 타르(LiquidVolume)는 평원에만 있다. 바닐라 Floating.GetLiquidLevel(타르만)
+        /// — 웅덩이 충돌체는 볼록 껍질이라 땅 0.2m 위 점으로 물으면 웅덩이 안에서 잡히고, 타르가 없는 칸은 표면이 땅보다 낮게 나온다(LiquidVolume.GetSurface).
+        /// </summary>
+        public static float TarDepth(Vector3 p)
+        {
+            if (Character.InInterior(p) || WorldGenerator.instance == null || WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.Plains) return 0f;
+            if (ZoneSystem.instance == null || !ZoneSystem.instance.GetGroundHeight(p, out float g)) return 0f;
+            float tar = Floating.GetLiquidLevel(new Vector3(p.x, g + 0.2f, p.z), 1f, LiquidType.Tar);
+            return tar < -1000f ? 0f : Mathf.Max(0f, tar - g);
+        }
+
+        /// <summary>
+        /// 그 자리가 용암이거나 용암 가장자리(애쉬랜드만). 바닐라 Character.UpdateLava는 Heightmap.GetLava(땅 칠 마스크 a, 바이옴 가장자리 지형 조각은 0)가 0.05를 넘으면 열이 쌓이고
+        /// 0.7이 되면 0.2초마다 큰 불 피해. 열은 SmoothStep(0.1,1,칠) > 0.05(칠 약 0.22)에서만 쌓이고 그동안은 안 식음. 회차 223: IsLava 0.6·LavaEdge 0.3 기준으론 가장자리를 맴돌다 죽음 → 0.2. 지형이 안 불러진 곳은 false.
+        /// 위에 건물 바닥이 있으면(Floored) 아님. above·ignore는 Floored 그대로.
+        /// </summary>
+        public static bool Lava(Vector3 p, float above = 1f, ZNetView ignore = null)
+        {
+            if (Character.InInterior(p) || WorldGenerator.instance == null || WorldGenerator.instance.GetBiome(p) != Heightmap.Biome.AshLands) return false;
+            Heightmap hm = Heightmap.FindHeightmap(p);
+            return hm != null && hm.GetLava(p) > LavaEdge && !Floored(p, above, ignore);
+        }
+
+        static int s_floorMask;
+        /// <summary>
+        /// 용암 위 건물 바닥: 바닐라 Character.UpdateLava는 몸 1m 위에서 50m 아래로 쏜 첫 충돌이 지형(Heightmap)이 아니면 열이 안 붙는다(회차 249).
+        /// 일꾼은 건물(Piece)만 바닥으로 세고 바위 같은 다른 것은 꿰뚫어 그 아래를 본다(회차 250: 용암 속 바위 몸을 바닥으로 세면 바위로 가다 용암에 빠짐).
+        /// 땅에 붙은 건물 바닥은 용암에 약 9초면 타니(WearNTear 피해는 최대 체력의 %) 쓸 바닥은 1.5m 넘게 띄운 것.
+        /// above: 쏘는 높이(p.y와 땅 중 높은 쪽 위, 기본 1m = 바닐라). ignore: 그 물체 충돌체는 건너뜀(용암 속 바위 둘레를 볼 때 바위 자신).
+        /// </summary>
+        public static bool Floored(Vector3 p, float above = 1f, ZNetView ignore = null) => FloorHeight(p, above, ignore, out _);
+
+        /// <summary>용암 땅 위 건물 바닥에 서 있는지(바닥이 없으면 용암인 곳).</summary>
+        public static bool LavaFloored(Vector3 p) =>
+            WorldGenerator.instance != null && WorldGenerator.instance.GetBiome(p) == Heightmap.Biome.AshLands && (Heightmap.FindHeightmap(p)?.GetLava(p) ?? 0f) > LavaEdge && Floored(p);
+
+        /// <summary>a에서 b까지 직선(1m 간격)이 전부 건물 바닥이나 마른 땅(바닥 높이와 0.6m 안)이고 그중 용암 땅 위 바닥이 있는지(E049 바닥 길 곧장 걷기). 회차 253: 바닥 사이 마른 땅 틈에서 끊겨 둘레 길로 용암에 빠짐 → 마른 땅도 이어짐.</summary>
+        /// <summary>마지막 FloorLine 결과 까닭(진단).</summary>
+        public static string FloorWhy = "";
+        public static bool FloorLine(Vector3 a, Vector3 b)
+        {
+            FloorWhy = "시작 바닥 아님";
+            if (WorldGenerator.instance == null || WorldGenerator.instance.GetBiome(a) != Heightmap.Biome.AshLands || !Floored(a)) return false;
+            float d = Utils.DistanceXZ(a, b);
+            FloorWhy = "60m 넘음";
+            if (d > 60f) return false;
+            bool lava = false;
+            for (float s = 1f; s < d + 1f; s += 1f)
+            {
+                Vector3 q = Vector3.Lerp(a, b, Mathf.Min(1f, s / Mathf.Max(d, 0.01f)));
+                q.y = a.y;
+                bool lavaGround = (Heightmap.FindHeightmap(q)?.GetLava(q) ?? 1f) > LavaEdge;
+                if (!Floored(q) && (lavaGround || !ZoneSystem.instance.GetGroundHeight(q, out float g) || Mathf.Abs(g - a.y) > 0.6f)) { FloorWhy = $"{s:0}m에서 끊김({q.x:0.0},{q.z:0.0})"; return false; }
+                lava |= lavaGround;
+            }
+            FloorWhy = lava ? "이어짐" : "용암 안 지남";
+            return lava;
+        }
+
+        /// <summary>Floored와 같고, 바닥이면 그 윗면 높이.</summary>
+        public static bool FloorHeight(Vector3 p, float above, ZNetView ignore, out float y)
+        {
+            y = 0f;
+            if (s_floorMask == 0) s_floorMask = LayerMask.GetMask("piece", "Default", "static_solid", "Default_small", "terrain");
+            if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(p, out float g) && g > p.y) p.y = g;
+            var hits = Physics.RaycastAll(p + Vector3.up * above, Vector3.down, 50f + above, s_floorMask, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            foreach (var hit in hits)
+            {
+                if (ignore != null && hit.collider.transform.IsChildOf(ignore.transform)) continue;
+                if (hit.collider.GetComponentInParent<Piece>() != null) { y = hit.point.y; return true; }
+                if (hit.collider.GetComponent<Heightmap>() != null) return false;
+            }
+            return false;
+        }
+
+        /// <summary>용암은 아주 깊은 타르로 본다(비켜 가기·빠져나오기를 그대로 씀). 타르처럼 들어가는 목표는 없다(TarGoal은 타르만).</summary>
+        public const float LavaDepth = 10f, LavaEdge = 0.2f;
+        public static float Hazard(Vector3 p) => Lava(p) ? LavaDepth : TarDepth(p);
+
+        /// <summary>깊은 타르에 빠졌으면 마지막 타르 밖 자리로 달려 나온다(목표가 타르 안이거나 바로 옆이면 그대로). 나오는 중이면 true.</summary>
+        bool TarStep(float dt, Vector3 pos, Vector3 point, float dist)
+        {
+            float here = Hazard(pos);
+            if (here < 0.1f) { m_lastNoTar = pos; m_hasNoTar = true; m_tarLogged = false; return false; }
+            if (here <= TarWade) return false;
+            bool lava = here >= LavaDepth;
+            if (!lava) TarTime += dt;
+            else if (Heightmap.FindHeightmap(pos)?.IsLava(pos) == true) LavaTime += dt;
+            if (!m_hasNoTar || TarGoal(point) || Utils.DistanceXZ(point, pos) <= dist + 1f) return false;
+            if (!m_tarLogged)
+            {
+                m_tarLogged = true;
+                Plugin.Log.LogInfo($"{(m_character as WorkerNpc)?.NpcName}: {(lava ? "용암" : $"타르 {here:0.0}m")}에 빠짐 → 밖 {Utils.DistanceXZ(m_lastNoTar, pos):0.0}m로 나옴");
+            }
+            MoveTowards(Flat(m_lastNoTar - pos), true);
+            return true;
+        }
+
+        /// <summary>그 방향 1.5m 앞이 깊은 타르인지(목표가 2m 안이면 안 봄 — 가장자리 타르를 주우러 감).</summary>
+        bool TarAhead(Vector3 pos, Vector3 dir, Vector3 point)
+        {
+            dir = Flat(dir);
+            if (dir.sqrMagnitude < 0.01f || Utils.DistanceXZ(point, pos) < 2f || TarGoal(point)) return false;
+            return Hazard(pos + dir.normalized * 1.5f) > TarWade || (m_hazPath == null && Lava(pos + dir.normalized * 3f)); // 용암에선 느려지니(m_lavaSlowMax) 더 앞을 봄. 둘레 길은 2.5m 띄워 찾았으니 1.5m만
+        }
+
+        Vector3 m_tarGoalAt = new Vector3(1e7f, 0f, 1e7f);
+        bool m_tarGoal;
+
+        /// <summary>
+        /// 가는 곳 자체가 깊은 타르 안인지(줍는 타르 Pickable_Tar는 웅덩이 1.3~3.8m 타르 위에 떠 있다 — 회차 174 vh_tartest, 플레이어도 들어가서 줍는다).
+        /// 그때만 타르에 들어가고, 지나가는 길이면 피한다. 목표가 0.5m 넘게 바뀔 때만 다시 잰다.
+        /// </summary>
+        bool TarGoal(Vector3 point)
+        {
+            if (Utils.DistanceXZ(point, m_tarGoalAt) > 0.5f) { m_tarGoalAt = point; m_tarGoal = TarDepth(point) > TarWade; }
+            return m_tarGoal;
+        }
+
+        List<Vector3> m_hazPath;
+        int m_hazIdx;
+        Vector3 m_hazTarget;
+        float m_hazRetryAt;
+        /// <summary>시험 기록: 웅덩이 둘레 길(HazardPath)을 찾은 횟수·못 찾은 횟수.</summary>
+        public int HazardPaths { get; private set; }
+        public int HazardPathFails { get; private set; }
+
+        /// <summary>
+        /// 앞이 용암·깊은 타르: 웅덩이 둘레 길(Core HazardPath, 2m 칸 A*)을 찾아 그 점들을 곧게 따라간다(다-2, 회차 224 — 가장자리를 더듬으면 60m에 134초).
+        /// 칸은 가운데·사방 2.5m 중 하나라도 위험이면 막힘(TarAhead가 3m 앞을 보니 그만큼 떨어져 감). 1m 격자로 잰 값을 한 번 찾는 동안 기억.
+        /// 따라가다 또 앞이 위험하거나 못 찾으면(목표가 위험 안·갇힘·너무 멂) false → 옛 비켜 가기, 3초 동안 다시 안 찾음. 지하묘지 안·줍는 타르는 안 씀.
+        /// </summary>
+        bool StartHazardPath(Vector3 pos, Vector3 point)
+        {
+            if (m_hazPath != null) { m_hazPath = null; m_hazRetryAt = Time.time + 3f; return false; } // 따라가다 또 앞이 위험
+            if (Time.time < m_hazRetryAt || Character.InInterior(pos) || TarGoal(point)) return false;
+            var seen = new Dictionary<long, bool>();
+            bool Bad(double x, double z)
+            {
+                int ix = (int)System.Math.Round(x), iz = (int)System.Math.Round(z);
+                long key = ((long)ix << 32) ^ (uint)iz;
+                if (!seen.TryGetValue(key, out bool b)) seen[key] = b = Hazard(new Vector3(ix, pos.y, iz)) > TarWade;
+                return b;
+            }
+            // 목표 4m 안은 넓히지 않음(가장자리 옆 목표도 닿게, 회차 224 "못 찾음")
+            bool Blocked(double x, double z) => Bad(x, z) || (Utils.DistanceXZ(new Vector3((float)x, 0f, (float)z), point) > 4f && (Bad(x + 2.5, z) || Bad(x - 2.5, z) || Bad(x, z + 2.5) || Bad(x, z - 2.5)));
+            var path = HazardPath.Find(new RoughPath.P(pos.x, pos.z), new RoughPath.P(point.x, point.z), Blocked, 3000);
+            string who = (m_character as WorkerNpc)?.NpcName;
+            if (path == null)
+            {
+                HazardPathFails++;
+                m_hazRetryAt = Time.time + 3f;
+                // E049 diag: 곧은 줄 위 첫 위험 칸(바닥 위에서 왜 막혔나)
+                string first = "-";
+                for (float s = 0f, len = Utils.DistanceXZ(point, pos); s <= len; s += 1f)
+                {
+                    Vector3 q = Vector3.MoveTowards(pos, new Vector3(point.x, pos.y, point.z), s);
+                    if (!Blocked(q.x, q.z)) continue;
+                    Vector3 c = new Vector3(Mathf.Round(q.x), pos.y, Mathf.Round(q.z));
+                    ZoneSystem.instance.GetGroundHeight(c, out float g);
+                    first = $"{s:0}m 칸 위험 {Bad(q.x, q.z)} 칠 {Heightmap.FindHeightmap(c)?.GetLava(c) ?? -1f:0.00} 바닥 {Floored(c)} 높이 {pos.y:0.0} 땅 {g:0.0}";
+                    break;
+                }
+                Plugin.Log.LogInfo($"{who}: 웅덩이 둘레 길 못 찾음(목표 {Utils.DistanceXZ(point, pos):0}m, 잰 곳 {seen.Count}, 첫 막힘 {first}, 시작 {Bad(pos.x, pos.z)}·목표 {Bad(point.x, point.z)}) → {(LavaFloored(pos) ? "바닥 위라 멈춤" : "가장자리 따라 비켜 감")}");
+                return false;
+            }
+            m_hazPath = new List<Vector3>();
+            for (int i = 1; i < path.Count; i++) m_hazPath.Add(new Vector3((float)path[i].X, point.y, (float)path[i].Z));
+            m_hazIdx = 0;
+            m_hazTarget = point;
+            HazardPaths++;
+            Plugin.Log.LogInfo($"{who}: 웅덩이 둘레 길 {m_hazPath.Count}점(목표 {Utils.DistanceXZ(point, pos):0}m, 잰 곳 {seen.Count})");
+            return true;
+        }
+
+        /// <summary>둘레 길을 따라가는 중이면 다음 점으로 곧게 걷는다(1.5m 안이면 다음 점, 마지막은 목표 — 바닐라 길찾기는 다시 용암으로 듦). 목표가 바뀌면 버리고 false.</summary>
+        bool FollowHazardPath(Vector3 pos, Vector3 point, bool run)
+        {
+            if (m_hazPath == null) return false;
+            if (Utils.DistanceXZ(point, m_hazTarget) > 2f) { m_hazPath = null; return false; }
+            while (m_hazIdx < m_hazPath.Count - 1 && Utils.DistanceXZ(m_hazPath[m_hazIdx], pos) < 1.5f) m_hazIdx++;
+            MoveTowards(Flat(m_hazPath[m_hazIdx] - pos), run);
+            return true;
+        }
+
+        /// <summary>앞이 타르: 같은 목표면 같은 쪽으로(가장자리를 따라 돎) 비켜 간다. 처음엔 타르가 얕은 쪽을 고른다.</summary>
+        void StartTarDetour(Vector3 pos, Vector3 point)
+        {
+            Vector3 fwd = Flat(point - pos).normalized;
+            Vector3 right = Vector3.Cross(Vector3.up, fwd);
+            if (Utils.DistanceXZ(point, m_tarTarget) > 2f)
+            {
+                m_tarTarget = point;
+                m_tarSide = Hazard(pos + right * 3f + fwd * 1.5f) <= Hazard(pos - right * 3f + fwd * 1.5f) ? 1f : -1f;
+            }
+            for (int flip = 0; flip < 2; flip++)
+            {
+                Vector3 side = right * m_tarSide;
+                foreach (Vector3 dir in new[] { (side + fwd * 0.3f).normalized, side, (side - fwd * 0.5f).normalized })
+                    if (!TarAhead(pos, dir, point)) { m_detourDir = dir; m_detourTime = 0.8f; TarDetours++; return; }
+                m_tarSide = -m_tarSide;
+            }
+            m_detourDir = -fwd; // 앞뒤 옆이 다 타르: 뒤로
+            m_detourTime = 0.8f;
+            TarDetours++;
+        }
+
+        float m_swimSlow, m_swimStraightUntil, m_swimCheckTime;
+        int m_swimTries;
+        Vector3 m_swimCheckPos;
+
+        /// <summary>바깥 좁은 강을 길 따라 헤엄치다 물속 바위에 걸려 2초마다 2m도 못 나아가는 게 4초 넘으면(E047: 50초 오락가락) 처음엔 목표 쪽으로 곧장 5초,
+        /// 그래도 느리면 이번 물은 못 건넌다고 보고 마른 자리로 되돌아간다(물가에선 물에 막힘 처리로 넘어감).
+        /// 속도가 아니라 실제로 옮긴 거리로 잰다 — 바위를 밀면 속도는 1.1~1.6m/s로 나와도 제자리다(회차 335).</summary>
+        bool SlowSwim(float dt, Vector3 pos, Vector3 point)
+        {
+            if (!m_character.IsSwimming()) { m_swimSlow = 0f; m_swimTries = 0; m_swimStraightUntil = 0f; m_swimCheckTime = 0f; return false; }
+            if (!m_swimOk || Character.InInterior(pos) || TarGoal(point)) return false;
+            if (m_swimCheckTime == 0f) { m_swimCheckTime = Time.time; m_swimCheckPos = pos; }
+            else if (Time.time - m_swimCheckTime >= 2f)
+            {
+                if (Utils.DistanceXZ(pos, m_swimCheckPos) < 2f) m_swimSlow += 2f; else m_swimSlow = Mathf.Max(0f, m_swimSlow - 2f);
+                m_swimCheckTime = Time.time; m_swimCheckPos = pos;
+            }
+            if (m_swimSlow >= 4f)
+            {
+                m_swimSlow = 0f;
+                string name = ((WorkerNpc)m_character).NpcName;
+                if (++m_swimTries == 1) { m_swimStraightUntil = Time.time + 5f; Plugin.Log.LogInfo($"{name}: 헤엄이 느림(바위에 걸림?) — 목표 쪽으로 곧장"); }
+                else
+                {
+                    m_swimStraightUntil = 0f; m_swimOk = false; m_waterDecidedUntil = Time.time + 10f;
+                    Plugin.Log.LogInfo($"{name}: 헤엄이 계속 느림 — 마른 자리로 되돌아감({(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m" : "자리 없음")})");
+                    if (m_hasDry) { MoveTowards(Flat(m_lastDry - pos), true); return true; }
+                }
+            }
+            if (Time.time < m_swimStraightUntil) { MoveTowards(Flat(point - pos), true); return true; }
+            return false;
+        }
+
+        /// <summary>그 방향 2.5m 앞이 깊은 물이고 건너면 안 되는 물인지. 건널 물(좁은 강)이면 m_swimOk를 켠다.</summary>
+        bool WaterAhead(Vector3 pos, Vector3 dir)
+        {
+            // Scout.WaterDepth는 바깥 지형·바다 높이로 잰다 — 지하묘지 안(y+5000)이면 그 자리 바깥 늪물을 앞 물로 본다. 안의 물은 InteriorNav가 헤엄 칸으로 다룬다.
+            if (Character.InInterior(pos)) return false;
+            dir = Flat(dir);
+            if (m_swimOk || dir.sqrMagnitude < 0.01f) return false;
+            if (Time.time < m_waterDecidedUntil) return true; // 방금 못 건넌다고 봤다
+            dir.Normalize();
+            if (Scout.WaterDepth(pos + dir * 2.5f) <= (float)WaterRule.DeepDepth) return false;
+            // 물가: 앞으로 MaxSwim보다 조금 더 내다봐서 그 안에 땅이 나오면(좁은 강) 건넌다
+            m_swimOk = Scout.CanWalk(pos, pos + dir * ((float)WaterRule.MaxSwim + 8f));
+            m_waterDecidedUntil = Time.time + (m_swimOk ? 3f : 0.5f);
+            return !m_swimOk;
+        }
+    }
+}
