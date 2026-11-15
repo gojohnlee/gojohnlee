@@ -13,7 +13,7 @@ namespace ValheimHelper
     /// </summary>
     static class GuestRestartTest
     {
-        static string StatePath => Path.Combine(TestRunner.PluginDir, "guestrestart-state.txt");
+        static string StatePath => Path.Combine(Plugin.Dir, "guestrestart-state.txt");
         const string W = "$item_wood";
         const int Want = 10;
 

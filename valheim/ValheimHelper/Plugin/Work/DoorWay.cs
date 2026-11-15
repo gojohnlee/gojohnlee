@@ -90,7 +90,7 @@ namespace ValheimHelper
                 m_phase = Phase.ToDoor; m_t = 0f; m_diagNext = 0f; m_lineCheck = 0f;
                 m_hall = Mouth(mid, n, out m_mouth); m_lined = false; m_hallN = n; m_hallEnd = Vector3.Dot(m_mouth - mid, n) - 0.8f;
                 if (m_hall) m_limit = PhaseLimit + (Utils.DistanceXZ(me, m_mouth) + Utils.DistanceXZ(m_mouth, m_out)) / 1.5f;
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} {target.name} 앞 벽 → 문 {m_door.name}({Utils.DistanceXZ(me, m_door.transform.position):0.0}m)으로");
+                Diag.Log($"DIAG {npc.NpcName} {target.name} 앞 벽 → 문 {m_door.name}({Utils.DistanceXZ(me, m_door.transform.position):0.0}m)으로");
             }
             int r = Walk(dt, npc, target.name);
             if (r != 2) return r == 1;
@@ -99,7 +99,7 @@ namespace ValheimHelper
             // 회차 450: 들어온 뒤 내가 연 문은 몇 걸음 지나 닫음(CloseBehind) — 열어 두면 문짝이 안쪽에 있어 나갈 때 문 앞에 서서 닫고 반대로 다시 열며 1.2~2.8초 섰음
             var mine = s_opened.Find(o => o.Door == m_door);
             if (mine != null && mine.By == npc && mine.Reopen == 0) mine.Inside = true;
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 더 걸음 {(m_clearT >= 0f ? m_t - m_clearT : 0f):0.0}초·문 충돌체 {DoorGap(m_door, me):0.00}m, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
+            Diag.Log($"DIAG {npc.NpcName} 문 지나 안으로 ({m_t:0.0}초, 더 걸음 {(m_clearT >= 0f ? m_t - m_clearT : 0f):0.0}초·문 충돌체 {DoorGap(m_door, me):0.00}m, 나 {me:F1}·문틀 {Middle(m_door):F1}·문 {m_door.transform.position:F1}·바깥 {m_out:F1}·{target.name}까지 {Utils.DistanceXZ(me, target.transform.position):0.0}m)");
             m_phase = Phase.None;
             return Blocked(npc, target) ? Retry(npc, target.name) : false;
         }
@@ -117,7 +117,7 @@ namespace ValheimHelper
                 m_for = point;
                 if (m_phase == Phase.GaveUp) m_phase = Phase.None;
                 // 회차 415 사6: 집 밖 목표(일 끝나 깃발로)로 문을 향하던 중 새 목표가 집 안이면 그 문으로 계속 가다 막혀 8~13초 섰음(2층 문, 욕조에 막힘) → 문틀 들어서기 전이면 접고 새 목표로 다시 판단
-                else if (m_phase == Phase.ToDoor) { Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 접음: 목표 바뀜 {point:F1} ({m_t:0.0}초)"); m_phase = Phase.None; m_check = 0f; }
+                else if (m_phase == Phase.ToDoor) { Diag.Log($"DIAG {npc.NpcName} 나가기 접음: 목표 바뀜 {point:F1} ({m_t:0.0}초)"); m_phase = Phase.None; m_check = 0f; }
             }
             if (m_phase == Phase.GaveUp) return false;
             Vector3 me = npc.transform.position;
@@ -150,7 +150,7 @@ namespace ValheimHelper
                     if (via > direct + ViaSlack)
                     {
                         m_check = Time.time + 2f;
-                        Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}({Utils.DistanceXZ(me, mid):0.0}m) 대신 바닐라 길 — 문 거쳐 {(outside > 0f ? via.ToString("0") + "m" : "문 밖 길 없음")}·곧장 {direct:0}m (나 {me:F1}·목표 {point:F1})");
+                        Diag.Log($"DIAG {npc.NpcName} 안에서 문 {d.name}({Utils.DistanceXZ(me, mid):0.0}m) 대신 바닐라 길 — 문 거쳐 {(outside > 0f ? via.ToString("0") + "m" : "문 밖 길 없음")}·곧장 {direct:0}m (나 {me:F1}·목표 {point:F1})");
                         return false;
                     }
                 }
@@ -163,9 +163,9 @@ namespace ValheimHelper
                     && npc.Ai.FullPathLength(me, m_out) > 0f)
                 {
                     m_pathed = true;
-                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기");
+                    Diag.Log($"DIAG {npc.NpcName} 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기");
                 }
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감 (나 {me:F1}·벽 {WallHits(me, n)}/4·방금 나온 문 {d == m_outDoor}·목표 {point:F1})");
+                Diag.Log($"DIAG {npc.NpcName} 안에서 문 {d.name}(열림 {Dungeons.IsOpen(dv.GetZDO())})({Utils.DistanceXZ(me, mid):0.0}m)으로 나감 (나 {me:F1}·벽 {WallHits(me, n)}/4·방금 나온 문 {d == m_outDoor}·목표 {point:F1})");
             }
             m_walking = m_exiting = true;
             int r;
@@ -175,7 +175,7 @@ namespace ValheimHelper
             npc.Ai.ForgetPath();
             CloseIfSwungAtMe(npc, me);
             m_outDoor = m_door; m_outT = Time.time; m_outN = m_in - Middle(m_door); m_outN.y = 0f; m_outN.Normalize();
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 문 지나 밖으로 ({m_t:0.0}초, 지붕 {Roofed(me)}, 나 {me:F1}·목표 {m_for:F1})");
+            Diag.Log($"DIAG {npc.NpcName} 문 지나 밖으로 ({m_t:0.0}초, 지붕 {Roofed(me)}, 나 {me:F1}·목표 {m_for:F1})");
             m_phase = Phase.None;
             return false;
         }
@@ -211,7 +211,7 @@ namespace ValheimHelper
                             if (along > 0f && along < m_hallEnd + 0.4f && side < 2.4f) npc.Ai.MoveTowards(m_hallN, false);
                             else npc.Ai.MoveToPoint(dt, m_mouth, 0.5f, false);
                         }
-                        if (m_t >= m_diagNext) { m_diagNext = m_t + 3f; Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문 앞으로 {m_t:0.0}초: 나 {me:F1}·문 앞 {m_out:F1}({Utils.DistanceXZ(me, m_out):0.0}m)·복도 {(m_hall ? $"입구 {m_mouth:F1} 트임 {m_lined}" : "없음")}·길 {npc.Ai.PathFound}·속도 {npc.GetVelocity().magnitude:0.0}"); }
+                        if (m_t >= m_diagNext) { m_diagNext = m_t + 3f; Diag.Log($"DIAG {npc.NpcName} {what} 문 앞으로 {m_t:0.0}초: 나 {me:F1}·문 앞 {m_out:F1}({Utils.DistanceXZ(me, m_out):0.0}m)·복도 {(m_hall ? $"입구 {m_mouth:F1} 트임 {m_lined}" : "없음")}·길 {npc.Ai.PathFound}·속도 {npc.GetVelocity().magnitude:0.0}"); }
                     }
                     return 1;
                 }
@@ -236,7 +236,7 @@ namespace ValheimHelper
                 {
                     v.InvokeRPC("UseDoor", false);
                     var had = s_opened.Find(o => o.Door == m_door); m_orig = had != null ? had.Reopen : state; m_swing = 1; // 내가 연 문이면 had.Reopen 0 — 닫는 사이 CloseBehind가 항목을 지우므로 넘겨줌 m_t = 0f; m_swingNext = Time.time + 0.3f;
-                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문짝이 내 쪽으로 열림(s_state {state}) → 닫고 반대로 다시 엶");
+                    Diag.Log($"DIAG {npc.NpcName} {what} 문짝이 내 쪽으로 열림(s_state {state}) → 닫고 반대로 다시 엶");
                     npc.Ai.StopMoving(); npc.Ai.Hold("문 바꿔 여는 중"); // 회차 453: 닫히는 동안 선 것은 이유 있는 섬
                     return 1;
                 }
@@ -294,13 +294,13 @@ namespace ValheimHelper
             {
                 // 회차 346: 문 앞 1.0m(문틀 1.7m)에서 막은 것 없이 속도 0 — 문 쓰는 거리라 거기서 열고 문틀로
                 m_near = true;
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 {d:0.0}m에서 막힘 → 거기서 엶");
+                Diag.Log($"DIAG {npc.NpcName} 나가기 문 앞 {d:0.0}m에서 막힘 → 거기서 엶");
                 return;
             }
             else if (m_stall > 1f && m_sides >= 1) // 회차 477: 집 상자 둘이 문 앞길을 막아 같은 쪽 비킴 2번(5초) 뒤에야 길찾기 → 한 번 비켜도 막히면 바로
             {
                 m_pathed = true;
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 비킴 {m_sides}번에도 막힘({d:0.0}m) → 길찾기로 문 앞까지");
+                Diag.Log($"DIAG {npc.NpcName} 나가기 문 앞 비킴 {m_sides}번에도 막힘({d:0.0}m) → 길찾기로 문 앞까지");
                 return;
             }
             else if (m_stall > 1f)
@@ -320,7 +320,7 @@ namespace ValheimHelper
                 {
                     string block = Physics.Raycast(me + Vector3.up * 0.8f, to.normalized, out RaycastHit h, d, Mask, QueryTriggerInteraction.Ignore) ? $"{h.collider.transform.root.name} {h.distance:0.0}m" : "없음";
                     m_sideDir = pick; m_side = 2.5f; m_sides++;
-                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나가기 문 앞 길 막힘({d:0.0}m, 나 {me:F1}·문 앞 {m_out:F1}·막은 것 {block}) → 옆으로 비킴 {pick:F1}");
+                    Diag.Log($"DIAG {npc.NpcName} 나가기 문 앞 길 막힘({d:0.0}m, 나 {me:F1}·문 앞 {m_out:F1}·막은 것 {block}) → 옆으로 비킴 {pick:F1}");
                     npc.Ai.MoveTowards(pick, false);
                     return;
                 }
@@ -343,7 +343,7 @@ namespace ValheimHelper
             o.Sent = Time.time; o.Shut = true;
             o.Away = mine; // 문 안 닫음(사용자 11-14)이면 CloseBehind가 내 반대쪽으로 다시 엶
             Closed++;
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} 나와서 문 {m_door.name} 바로 닫음(문짝이 내 쪽 s_state {state})");
+            Diag.Log($"DIAG {npc.NpcName} 나와서 문 {m_door.name} 바로 닫음(문짝이 내 쪽 s_state {state})");
         }
 
         /// <summary>시험 단계 사이: 시험이 문을 닫기 전에 다시 열 기록을 지움(안 지우면 닫은 뒤 다시 엶).</summary>
@@ -362,7 +362,7 @@ namespace ValheimHelper
                     s_opened.RemoveAt(i); // 다시 엶은 한 번만 — 그 뒤 남이 닫으면 그대로
                     if (dv == null || !dv.IsValid() || Dungeons.IsOpen(dv.GetZDO())) continue;
                     dv.InvokeRPC("UseDoor", o.Away == 1); // 바닐라 RPC_UseDoor: forward면 s_state 1
-                    Plugin.Log.LogInfo($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나오며 닫은 문 {o.Door.name} 반대로 다시 엶(s_state {o.Away})");
+                    Diag.Log($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나오며 닫은 문 {o.Door.name} 반대로 다시 엶(s_state {o.Away})");
                 }
                 s_opened.RemoveAll(o =>
                 {
@@ -383,7 +383,7 @@ namespace ValheimHelper
                     if (o.Reopen == 0 || !o.Shut) { s_opened.RemoveAt(i); continue; } // 남이 닫았으면 그대로
                     if (Time.time - o.Sent < 1.5f) continue; // 닫히는 중
                     v.InvokeRPC("UseDoor", o.Reopen == 1); // 바닐라 RPC_UseDoor: forward면 s_state 1
-                    Plugin.Log.LogInfo($"DIAG {(o.By != null ? o.By.NpcName : "?")} 남이 열어 둔 문 {o.Door.name} 다시 엶(s_state {o.Reopen})");
+                    Diag.Log($"DIAG {(o.By != null ? o.By.NpcName : "?")} 남이 열어 둔 문 {o.Door.name} 다시 엶(s_state {o.Reopen})");
                     s_opened.RemoveAt(i); continue;
                 }
                 if (Time.time - o.Sent < 3f) continue;
@@ -397,7 +397,7 @@ namespace ValheimHelper
                 v.InvokeRPC("UseDoor", false); // 열린 문이면 방향 무관하게 s_state = 0
                 o.Sent = Time.time; o.Shut = true;
                 Closed++;
-                Plugin.Log.LogInfo($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나와서 문 {o.Door.name} 닫음");
+                Diag.Log($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나와서 문 {o.Door.name} 닫음");
             }
         }
 
@@ -456,7 +456,7 @@ namespace ValheimHelper
                 foreach (var h in Physics.CapsuleCastAll(me + Vector3.up * 0.5f, me + Vector3.up * 1.4f, 0.45f, flat.normalized, 2f, ~0, QueryTriggerInteraction.Ignore)) if (!h.collider.transform.IsChildOf(npc.transform)) hits.Add($"{h.collider.name}/{h.collider.transform.root.name} {h.distance:0.0}m");
                 why += $", 문틀 옆으로 {Vector3.Dot(me - Middle(m_door), along):0.00}m·문 옆으로 {Vector3.Dot(me - m_door.transform.position, along):0.00}m, 안쪽으로 [{string.Join(", ", hits)}], 문 s_state {m_door.GetComponent<ZNetView>()?.GetZDO()?.GetInt(ZDOVars.s_state)}·속도 {npc.GetVelocity().magnitude:0.00}·앞 {Vector3.Angle(npc.transform.forward, m_in - m_out):0}°·{npc.Ai.HoldWhy}";
             }
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 문 길 포기: {why} → 그 자리에서");
+            Diag.Log($"DIAG {npc.NpcName} {what} 문 길 포기: {why} → 그 자리에서");
         }
 
         /// <summary>문 앞(바깥 n쪽)이 양옆 벽 좁은 복도인지(E059). 그렇다면 입구 = 양옆이 트이는 첫 자리에서 0.8m 더 밖.</summary>

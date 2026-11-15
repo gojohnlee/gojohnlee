@@ -55,7 +55,7 @@ namespace ValheimHelper
             Plugin.Log.LogInfo("[모드 부하] 모드 끔 " + text);
             try
             {
-                File.WriteAllLines(Path.Combine(TestRunner.PluginDir, "diag.txt"), new[]
+                File.WriteAllLines(Path.Combine(Plugin.Dir, "diag.txt"), new[]
                 {
                     $"모드 끔 판 {Plugin.FullVersion} — 패치 0",
                     $"=== vh_bare 월드 {AutoStart.World}",

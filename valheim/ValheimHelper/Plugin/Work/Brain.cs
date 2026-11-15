@@ -248,7 +248,7 @@ namespace ValheimHelper
                     object end = s_endSave?.GetValue(ZDOMan.instance);
                     string line = $"E072 저장 전: 상태 {s_state?.GetValue(ZDOMan.instance)}, 끝 {end ?? "없음"}, 바뀐 조각 {dirty?[0].Count}/{dirty?[1].Count}, 저장 번호 {SaveSystem.GetSaveNumber()}";
                     Plugin.Log.LogInfo(line);
-                    File.AppendAllText(Path.Combine(TestRunner.PluginDir, "e072-save.txt"), System.DateTime.Now.ToString("HH:mm:ss ") + line + "\n"); // 다음 실행(restart2)이 읽음
+                    TestHook.E072?.Invoke(line);
                     if (end != null) s_updateSaveState?.Invoke(ZDOMan.instance, null);
                 }
                 catch (System.Exception e) { Plugin.Log.LogWarning("E072 저장 전 확인 못 함: " + e.Message); }

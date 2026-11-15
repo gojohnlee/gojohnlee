@@ -16,7 +16,7 @@ namespace ValheimHelper
     {
         static bool s_loaded, s_decided;
         static float s_timer;
-        static string FilePath => Path.Combine(TestRunner.PluginDir, "food-mod.txt");
+        static string FilePath => Path.Combine(Plugin.Dir, "food-mod.txt");
 
         public static void Tick(float dt)
         {

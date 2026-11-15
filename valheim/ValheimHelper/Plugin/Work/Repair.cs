@@ -61,7 +61,7 @@ namespace ValheimHelper
         /// <summary>바닐라 CraftingStation.CheckUsable과 같은 판단(플레이어 인자 없이).</summary>
         internal static bool Usable(CraftingStation cs)
         {
-            if (cs.m_craftRequireRoof && !(TestRunner.Running && MachineStep.TestIgnoreRoof))
+            if (cs.m_craftRequireRoof && !(TestHook.Running && MachineStep.TestIgnoreRoof))
             {
                 Vector3 p = cs.m_roofCheckPoint != null ? cs.m_roofCheckPoint.position : cs.transform.position;
                 Cover.GetCoverForPoint(p, out float cover, out bool underRoof);

@@ -15,7 +15,7 @@ namespace ValheimHelper
     static class RestartTest
     {
         const string StateFile = "restart-state.txt";
-        static string StatePath => Path.Combine(TestRunner.PluginDir, StateFile);
+        static string StatePath => Path.Combine(Plugin.Dir, StateFile);
 
         public static void Register()
         {
@@ -58,7 +58,7 @@ namespace ValheimHelper
         static IEnumerator Body1(TestKit.World w, GatherTest.Checks checks)
         {
             yield return TestKit.Setup(w);
-            File.WriteAllText(Path.Combine(TestRunner.PluginDir, "flags-0.txt"), PortalList());
+            File.WriteAllText(Path.Combine(Plugin.Dir, "flags-0.txt"), PortalList());
             checks.Add("깃발·NPC 2명·상자", w.Ragnar != null && w.Floki != null && w.Chest != null);
             if (w.Ragnar == null || w.Floki == null || w.Chest == null) yield break;
             if (!Features.SaveWork) { checks.Add("설정 Features.SaveWork 켜짐", false); yield break; }
@@ -97,7 +97,7 @@ namespace ValheimHelper
             Brain.Save();
             WorkSaves.SaveNow(w.Ragnar);
             WorkSaves.SaveNow(w.Floki);
-            try { File.Delete(Path.Combine(TestRunner.PluginDir, "e072-save.txt")); } catch (IOException) { } // 끄며 하는 저장 기록만 남게
+            try { File.Delete(Path.Combine(Plugin.Dir, "e072-save.txt")); } catch (IOException) { } // 끄며 하는 저장 기록만 남게
             var st = new List<string>
             {
                 "home=" + V(w.Home), "chest=" + V(w.Chest.transform.position),
@@ -108,7 +108,7 @@ namespace ValheimHelper
             };
             File.WriteAllLines(StatePath, st.ToArray());
             TestRunner.Log("저장한 상태: " + string.Join(", ", st.ToArray()));
-            File.WriteAllText(Path.Combine(TestRunner.PluginDir, "flags-1.txt"), NearFlags(w.Home, 1e6f) + "\n--- 포탈 목록\n" + PortalList());
+            File.WriteAllText(Path.Combine(Plugin.Dir, "flags-1.txt"), NearFlags(w.Home, 1e6f) + "\n--- 포탈 목록\n" + PortalList());
             checks.Add("상태 파일 씀", File.Exists(StatePath));
             w.Knowledge0 = null; // 시험 중 지식을 그대로 저장(2번째 실행이 같은 지식으로 이어 감)
             w.Site = null; // 집을 떠나는 순간이동(Restore)을 하지 않음 — 플레이어가 거점 곁에서 저장돼야 2번째가 그 자리에서 시작
@@ -132,7 +132,7 @@ namespace ValheimHelper
             catch (System.Exception e) { TestRunner.Log("E072 진단 못 함: " + e.Message); }
             try
             {
-                string sp = Path.Combine(TestRunner.PluginDir, "e072-save.txt");
+                string sp = Path.Combine(Plugin.Dir, "e072-save.txt");
                 if (File.Exists(sp)) { foreach (var l in File.ReadAllLines(sp)) TestRunner.Log("앞 실행 " + l); File.Delete(sp); }
                 TestRunner.Log($"E072 불러온 저장 번호 {SaveSystem.GetSaveNumber()}");
             }
@@ -190,7 +190,7 @@ namespace ValheimHelper
             w.Floki = TestKit.Npc(Personality.Floki);
             yield return new WaitForSeconds(2f); // 상자·깃발 구역도 불러오게
             int npcs = Workers.AllZdos().Count, flags = BaseFlag.AllFlags().Count;
-            File.WriteAllText(Path.Combine(TestRunner.PluginDir, "flags-2.txt"), NearFlags(w.Home, 1e6f));
+            File.WriteAllText(Path.Combine(Plugin.Dir, "flags-2.txt"), NearFlags(w.Home, 1e6f));
             checks.Add($"NPC·깃발 수 그대로 (NPC {npcs}/{st["npcs"]}, 깃발 {flags}/{st["flags"]})", npcs.ToString() == st["npcs"] && flags.ToString() == st["flags"]);
             w.Chest = GatherTest.ChestAt(P(st["chest"]));
             checks.Add("상자 그대로 있음", w.Chest != null);

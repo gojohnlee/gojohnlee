@@ -5,7 +5,7 @@ using ValheimHelper.Core.Npc;
 namespace ValheimHelper
 {
     /// <summary>실플레이 상황별 대사 횟수(사용자 10-29) → 플러그인 폴더 speech-count.txt. 10분마다·게임 끌 때 저장,
-    /// 시험 중(TestRunner.Running)·시험 판(autotest.txt로 켠 판)엔 안 센다. 꼴과 "# 늘릴 것" 줄은 Core SpeechStats.</summary>
+    /// 시험 중(TestHook.Running)·시험 판(autotest.txt로 켠 판)엔 안 센다. 꼴과 "# 늘릴 것" 줄은 Core SpeechStats.</summary>
     static class SpeechCount
     {
         const float SaveEvery = 600f;
@@ -13,7 +13,7 @@ namespace ValheimHelper
         static bool s_dirty;
         static float s_nextSave;
 
-        static string FilePath => Path.Combine(TestRunner.PluginDir, "speech-count.txt");
+        static string FilePath => Path.Combine(Plugin.Dir, "speech-count.txt");
 
         static SpeechStats Stats()
         {
@@ -26,7 +26,7 @@ namespace ValheimHelper
 
         public static void Add(string key)
         {
-            if (TestRunner.Running || TestRunner.AutoSession) return;
+            if (TestHook.Running || TestHook.AutoSession) return;
             Stats().Add(key);
             s_dirty = true;
         }

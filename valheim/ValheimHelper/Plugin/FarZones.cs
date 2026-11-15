@@ -139,7 +139,7 @@ namespace ValheimHelper
                 {
                     string msg = $"[포탈 목록에 남은 ZDO] {zdo.m_uid} 구역 {kv.Key.Sector}에서 뺌";
                     Plugin.Log.LogInfo(msg);
-                    if (TestRunner.Running) TestRunner.Log("  " + msg);
+                    if (TestHook.Running) TestHook.Log?.Invoke("  " + msg);
                     if (kv.Value.Count == 0) (empty ??= new List<ZoneSystem.SectorIndex>()).Add(kv.Key);
                 }
             if (empty != null) foreach (var k in empty) portals.Remove(k);
@@ -167,7 +167,7 @@ namespace ValheimHelper
             {
                 ZDO z = list[i];
                 if (s_seen.Add(z)) { list[w++] = z; continue; }
-                if (TestRunner.Running && s_dupLogs++ < 5)
+                if (TestHook.Running && s_dupLogs++ < 5)
                 {
                     var where = new List<string>();
                     var all = BySector(ZDOMan.instance);
@@ -175,7 +175,7 @@ namespace ValheimHelper
                         if (all[s] != null) { int c = all[s].FindAll(o => o == z).Count; if (c > 0) where.Add($"{s}×{c}"); }
                     foreach (var kv in ZDOMan.instance.GetPortals())
                         { int c = kv.Value.FindAll(o => o == z).Count; if (c > 0) where.Add($"포탈목록 {kv.Key.Sector}×{c}"); }
-                    TestRunner.Log($"  [중복 ZDO] {what} {z.m_uid} 프리팹 {z.GetPrefab()} 자리 {z.GetPosition():F1} 제 구역 {ZoneSystem.GetSectorIndex(z.GetPosition()).Sector}, 구역 목록 {string.Join(",", where.ToArray())}");
+                    TestHook.Log?.Invoke($"  [중복 ZDO] {what} {z.m_uid} 프리팹 {z.GetPrefab()} 자리 {z.GetPosition():F1} 제 구역 {ZoneSystem.GetSectorIndex(z.GetPosition()).Sector}, 구역 목록 {string.Join(",", where.ToArray())}");
                 }
             }
             list.RemoveRange(w, list.Count - w);

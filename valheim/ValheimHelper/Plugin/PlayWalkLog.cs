@@ -30,7 +30,7 @@ namespace ValheimHelper
             s_tick += dt;
             if (s_tick < Check) return;
             s_tick = 0f;
-            bool on = TestOn || (Features.PlayWalkLog && !TestRunner.Running);
+            bool on = TestOn || (Features.PlayWalkLog && !TestHook.Running);
             s_gone.Clear();
             foreach (var kv in s_recs)
                 if (!on || kv.Key == null || !Inside(kv.Key) || Time.time - kv.Value.Since >= Segment) s_gone.Add(kv.Key);
@@ -62,7 +62,7 @@ namespace ValheimHelper
         {
             try
             {
-                string path = Path.Combine(TestRunner.PluginDir, File);
+                string path = Path.Combine(Plugin.Dir, File);
                 var fi = new FileInfo(path);
                 if (!fi.Exists || fi.Length < MaxBytes) return;
                 string old = path + ".old";

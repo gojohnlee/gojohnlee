@@ -24,7 +24,7 @@ namespace ValheimHelper
         {
             if (Player.m_localPlayer != null) return true;
             ZNetView nview = NView(__instance);
-            if (s_diag++ < 30) Plugin.Log.LogInfo($"DIAG 서버 거두기 {__instance.name} 주인 {nview?.GetZDO()?.GetOwner()} 나 {(nview != null && nview.IsOwner())} 거둠 {Picked(__instance)}");
+            if (s_diag++ < 30) Diag.Log($"DIAG 서버 거두기 {__instance.name} 주인 {nview?.GetZDO()?.GetOwner()} 나 {(nview != null && nview.IsOwner())} 거둠 {Picked(__instance)}");
             if (nview == null || !nview.IsOwner() || Picked(__instance)) return false;
             Vector3 pos = __instance.transform.position;
             __instance.m_pickEffector.Create(__instance.m_pickEffectAtSpawnPoint ? pos + SpawnOffset(__instance) : pos, Quaternion.identity, null, 1f, -1, ZDOID.None);

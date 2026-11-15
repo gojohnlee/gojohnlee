@@ -261,13 +261,13 @@ namespace ValheimHelper
                 m_diagShot = false;
                 m_diagArrow = bow.m_lastProjectile;
                 m_diagTracking = true;
-                Plugin.Log.LogInfo($"DIAG 활: 눈 {eye} 겨눔 {aim} 보는 쪽 {m_npc.GetLookDir()} 몸 앞 {m_npc.transform.forward} 화살 {m_diagArrow.transform.position} 속력 {speed:0} 중력 {gravity:0.0} 사슴 속도 {m_preyVel} (가려는 {m_prey.GetVelocity()}) 실제 화살 속도 {(m_diagArrow.GetComponent<Projectile>() is Projectile pj ? pj.GetVelocity().magnitude.ToString("0.0") + " 저항 " + pj.m_drag : "?")}");
+                Diag.Log($"DIAG 활: 눈 {eye} 겨눔 {aim} 보는 쪽 {m_npc.GetLookDir()} 몸 앞 {m_npc.transform.forward} 화살 {m_diagArrow.transform.position} 속력 {speed:0} 중력 {gravity:0.0} 사슴 속도 {m_preyVel} (가려는 {m_prey.GetVelocity()}) 실제 화살 속도 {(m_diagArrow.GetComponent<Projectile>() is Projectile pj ? pj.GetVelocity().magnitude.ToString("0.0") + " 저항 " + pj.m_drag : "?")}");
             }
             if (m_diagArrow != null) m_diagLast = m_diagArrow.transform.position;
             else if (m_diagTracking)
             {
                 m_diagTracking = false;
-                Plugin.Log.LogInfo($"DIAG 화살 사라짐: 마지막 {m_diagLast} 사슴 {center} 체력 {m_prey.GetHealth():0.0}/{m_prey.GetMaxHealth():0}");
+                Diag.Log($"DIAG 화살 사라짐: 마지막 {m_diagLast} 사슴 {center} 체력 {m_prey.GetHealth():0.0}/{m_prey.GetMaxHealth():0}");
             }
             if (m_releaseCheck && Time.time - m_releaseAt > 2f)
             {
@@ -277,7 +277,7 @@ namespace ValheimHelper
                 if (now >= m_releaseArrows)
                 {
                     m_dryShots++;
-                    Plugin.Log.LogInfo($"DIAG 활 안 나감 {m_dryShots}번째: 비틀 {m_npc.IsStaggering()} 공격 중 {m_npc.InAttack()} 손 {m_npc.HandsDiag()} 땅 {m_npc.IsOnGround()} 화살 {now}");
+                    Diag.Log($"DIAG 활 안 나감 {m_dryShots}번째: 비틀 {m_npc.IsStaggering()} 공격 중 {m_npc.InAttack()} 손 {m_npc.HandsDiag()} 땅 {m_npc.IsOnGround()} 화살 {now}");
                     if (m_dryShots >= 3)
                     {
                         Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 활이 안 나가 이 일 동안 활은 안 씀");

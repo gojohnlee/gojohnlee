@@ -53,7 +53,7 @@ $tmp = Join-Path $env:TEMP 'vh-play.dll'
 cmd /c "git -C `"$Repo`" show ${ref}:valheim/dist/ValheimHelper.dll > `"$tmp`""
 if ($LASTEXITCODE -ne 0 -or (Get-Item $tmp).Length -lt 10000) { throw "$ref 의 DLL을 꺼내지 못했습니다." }
 Copy-Item $tmp "$plugin\ValheimHelper.dll" -Force
-Remove-Item "$plugin\autotest.txt" -ErrorAction SilentlyContinue
+Remove-Item "$plugin\autotest.txt", "$plugin\ValheimHelperTest.dll" -ErrorAction SilentlyContinue   # 플레이는 본 모드만(시험 모드 DLL은 뺌 — 사용자 11-15)
 Write-Host "DLL: $ref $(G rev-parse --short "$ref^{commit}")"
 
 # 5) 게임 실행(Steam으로) → 꺼질 때까지 기다림

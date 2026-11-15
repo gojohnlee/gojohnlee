@@ -8,7 +8,16 @@ if [[ -n "$MODE" && "$MODE" != "--no-dist" ]]; then echo "usage: $0 [--no-dist]"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJ="$ROOT/valheim/ValheimHelper/Plugin"
 export PATH="$PATH:$HOME/.dotnet/tools"
-dotnet build "$PROJ" -c Release -nologo -v q
+# 모드 두 개(사용자 11-15): 본 모드 ValheimHelper.dll(친구들에게 주는 것) + 시험 모드 ValheimHelperTest.dll(시험 PC만). 시험 모드 빌드가 본 모드도 같이 빌드한다.
+TPROJ="$ROOT/valheim/ValheimHelper/TestPlugin"
+dotnet build "$TPROJ" -c Release -nologo -v q
+# 본 모드에 시험·진단 클래스가 남으면 실패(연결 지점 TestHook·Diag, Core의 TestSpots만 허용)
+classes=$(ilspycmd -l c "$PROJ/bin/Release/ValheimHelper.dll" 2>/dev/null | tr -d '\r' | grep -E '^Class ' || true)
+echo "$classes" | grep -qx 'Class ValheimHelper.Plugin' || { echo "본 모드 클래스 목록을 못 읽음(ilspycmd -l c)" >&2; exit 1; }
+left=$(echo "$classes" | grep -E 'Test|Diag|HouseCopy|HouseBase|AutoStart|Bare|Minimized' |
+       grep -vxE 'Class ValheimHelper\.(TestHook|Diag|Core\.Work\.TestSpots)' || true)
+if [ -n "$left" ]; then echo "본 모드에 시험·진단 클래스가 남음: $left" >&2; exit 1; fi
+if grep -qa 'ValueTuple' "$TPROJ/bin/Release/ValheimHelperTest.dll"; then echo "시험 모드가 System.ValueTuple을 씀(튜플 문법)" >&2; exit 1; fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 # 메서드 몇 개 디컴파일 오류(ILSpy 버그, 회차 184 BlockTest·WeakTest.Run)는 참조 검사와 무관 → csproj만 있으면 됨
@@ -25,6 +34,6 @@ if [ -n "$bad" ]; then
   exit 1
 fi
 if [[ "$MODE" != "--no-dist" ]]; then
-  cp "$PROJ/bin/Release/ValheimHelper.dll" "$ROOT/valheim/dist/"
+  cp "$PROJ/bin/Release/ValheimHelper.dll" "$TPROJ/bin/Release/ValheimHelperTest.dll" "$ROOT/valheim/dist/"
 fi
 echo "빌드·참조 검사 통과 (dist 복사 제외: ${MODE:-아니오})"

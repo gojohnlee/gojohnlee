@@ -129,7 +129,7 @@ namespace ValheimHelper
             }
             // 실플레이 기록(PlayWalkLog, 사용자 11-11 ④): 스위치를 시험용으로 켜고 화덕→상자 한 다리 — behavior-house-play.txt에 구간이 붙는지
             {
-                string playPath = System.IO.Path.Combine(TestRunner.PluginDir, "behavior-house-play.txt");
+                string playPath = System.IO.Path.Combine(Plugin.Dir, "behavior-house-play.txt");
                 try { System.IO.File.Delete(playPath); } catch (System.IO.IOException) { }
                 PlayWalkLog.TestHome = Center; PlayWalkLog.TestOn = true;
                 Vector3 goal = chest.transform.position;

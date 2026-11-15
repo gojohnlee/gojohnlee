@@ -80,7 +80,7 @@ namespace ValheimHelper
             foreach (var s in m_samples) lines.Add(WalkTrace.Line(s));
             try
             {
-                string path = Path.Combine(TestRunner.PluginDir, file);
+                string path = Path.Combine(Plugin.Dir, file);
                 if (append) File.AppendAllLines(path, lines); else File.WriteAllLines(path, lines.ToArray());
             }
             catch (IOException e) { Plugin.Log.LogWarning($"{file} 못 씀: {e.Message}"); }

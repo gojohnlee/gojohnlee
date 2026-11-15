@@ -53,13 +53,13 @@ namespace ValheimHelper
         public bool Update(float dt)
         {
             m_time += dt;
-            if (m_time > Limit) { Plugin.Log.LogInfo($"DIAG Unload 시간 초과 {m_time:0.0}"); return false; }
+            if (m_time > Limit) { Diag.Log($"DIAG Unload 시간 초과 {m_time:0.0}"); return false; }
             if (m_chest == null)
             {
                 ItemDrop.ItemData next = NextToStore();
-                if (next == null) { Plugin.Log.LogInfo($"DIAG Unload 다 넣음/없음 ({m_time:0.0}초) 짐 [{BagDump()}] 지킴 {Prep.Kept(m_npc).Count} skip {m_skip.Count}"); return false; } // 다 넣었다
+                if (next == null) { Diag.Log($"DIAG Unload 다 넣음/없음 ({m_time:0.0}초) 짐 [{BagDump()}] 지킴 {Prep.Kept(m_npc).Count} skip {m_skip.Count}"); return false; } // 다 넣었다
                 m_chest = ChestFor(next);
-                if (m_chest == null) { Plugin.Log.LogInfo($"DIAG Unload 넣을 상자 없음 {next.m_dropPrefab.name} (역할 {Chests.RoleFor(next)}, 상자 {Chests.NearBase(m_npc.Home, Chests.RoleFor(next)).Count})"); m_skip.Add(next); return true; }
+                if (m_chest == null) { Diag.Log($"DIAG Unload 넣을 상자 없음 {next.m_dropPrefab.name} (역할 {Chests.RoleFor(next)}, 상자 {Chests.NearBase(m_npc.Home, Chests.RoleFor(next)).Count})"); m_skip.Add(next); return true; }
             }
             var at = m_chest.transform.position;
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
@@ -97,14 +97,14 @@ namespace ValheimHelper
             if (!done && m_time < BusyLimit) // 누가 열고 있다
             {
                 // 다른 상자에 넣을 수 있으면 그리로(헛기다림 ①, 사용자 11-11), 1초마다 봄
-                if ((m_recheck += dt) >= 1f) { m_recheck = 0f; if (OtherChest(chest, keep)) { Plugin.Log.LogInfo($"DIAG Unload 열린 상자 대신 다른 상자로 ({m_time:0.0}초)"); m_chest = null; m_best = float.MaxValue; m_still = 0f; } }
+                if ((m_recheck += dt) >= 1f) { m_recheck = 0f; if (OtherChest(chest, keep)) { Diag.Log($"DIAG Unload 열린 상자 대신 다른 상자로 ({m_time:0.0}초)"); m_chest = null; m_best = float.MaxValue; m_still = 0f; } }
                 return true;
             }
             int put = bagBefore - Stacks(mine);
             // 어느 상자에 넣었나(10-29 vh_bagtest: 깃발 125m 가장자리 옛 상자에 넣은 나무를 시험이 못 세 "사라짐"으로 보임)
-            if (put > 0) Plugin.Log.LogInfo($"DIAG Unload 넣음 {put}개 → 상자 {chest.GetComponent<ZNetView>()?.GetZDO()?.m_uid} 집에서 {Utils.DistanceXZ(chest.transform.position, m_npc.Home):0.0}m");
+            if (put > 0) Diag.Log($"DIAG Unload 넣음 {put}개 → 상자 {chest.GetComponent<ZNetView>()?.GetZDO()?.m_uid} 집에서 {Utils.DistanceXZ(chest.transform.position, m_npc.Home):0.0}m");
             // 이 상자에 못 넣은 건 건너뛴다(자리가 없음)
-            foreach (var it in mine.GetAllItems()) if (Storable(it, keep) && ChestFor(it) == chest) { m_skip.Add(it); Plugin.Log.LogInfo($"DIAG Unload 못 넣고 건너뜀 {it.m_dropPrefab.name}x{it.m_stack} (편집 {(done ? "됨" : "못 함")}, 상자 빈칸 {chest.GetInventory().GetEmptySlots()})"); }
+            foreach (var it in mine.GetAllItems()) if (Storable(it, keep) && ChestFor(it) == chest) { m_skip.Add(it); Diag.Log($"DIAG Unload 못 넣고 건너뜀 {it.m_dropPrefab.name}x{it.m_stack} (편집 {(done ? "됨" : "못 함")}, 상자 빈칸 {chest.GetInventory().GetEmptySlots()})"); }
             m_chest = null;
             m_best = float.MaxValue; m_still = 0f;
             return true;
@@ -132,7 +132,7 @@ namespace ValheimHelper
         {
             if (!HandOk(m_npc, m_chest, at, d, m_still, TestNoReach)) return false;
             Reached++;
-            Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Unload 손 거리 넣기: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
+            Diag.Log($"DIAG {m_npc.NpcName} Unload 손 거리 넣기: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
             return true;
         }
 
@@ -252,7 +252,7 @@ namespace ValheimHelper
             foreach (var p in cands)
                 if (pf.HavePath(npc.transform.position, p, agent)) { m_access = p; break; }
             if (fresh || m_access.HasValue)
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} 상자 {at:F1}: navmesh 자리가 {snap.y - at.y:0.0}m 위 → 같은 층 접근점 {(m_access.HasValue ? $"{m_access.Value:F1}({Utils.DistanceXZ(m_access.Value, at):0.0}m)" : "없음")}, 후보 {cands.Count}");
+                Diag.Log($"DIAG {npc.NpcName} 상자 {at:F1}: navmesh 자리가 {snap.y - at.y:0.0}m 위 → 같은 층 접근점 {(m_access.HasValue ? $"{m_access.Value:F1}({Utils.DistanceXZ(m_access.Value, at):0.0}m)" : "없음")}, 후보 {cands.Count}");
         }
 
         /// <returns>true = 이번에 옮김.</returns>
@@ -283,7 +283,7 @@ namespace ValheimHelper
                 if (door != null && Dungeons.Open(npc, door))
                 {
                     Doors++; DoorWay.Track(door, npc);
-                    Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기: {m_time:0.0}초 닫힌 문 {door.name}에 막힘 → 열기");
+                    Diag.Log($"DIAG {npc.NpcName} {what} 상자 가기: {m_time:0.0}초 닫힌 문 {door.name}에 막힘 → 열기");
                     m_time = 0f;
                     return false;
                 }
@@ -296,7 +296,7 @@ namespace ValheimHelper
                 var p = Core.Work.StuckHop.Side(pos.x, pos.z, at.x, at.z, SideRadius, m_sides++);
                 m_side = new Vector3((float)p.X, at.y, (float)p.Z);
                 Sides++;
-                Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리{(bump != null ? $", {bump}에 닿음" : "")}, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(at)} → 옆({Core.Work.StuckHop.SideAngles[m_sides - 1]:0}°)으로");
+                Diag.Log($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {m_time:0.0}초 거의 제자리{(bump != null ? $", {bump}에 닿음" : "")}, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(at)} → 옆({Core.Work.StuckHop.SideAngles[m_sides - 1]:0}°)으로");
                 return false;
             }
             return Hop(npc, chest, d, what, $"{m_time:0.0}초 거의 제자리");
@@ -328,7 +328,7 @@ namespace ValheimHelper
 
         bool Hop(WorkerNpc npc, Container chest, float d, string what, string why)
         {
-            Plugin.Log.LogInfo($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {why}, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(Goal(chest))} → 상자 앞으로");
+            Diag.Log($"DIAG {npc.NpcName} {what} 상자 가기 막힘: {why}, 상자까지 {d:0.0}m / {npc.Ai.BlockerAhead(Goal(chest))} → 상자 앞으로");
             npc.TeleportTo(chest.transform.position + chest.transform.forward * 1.5f, npc.transform.rotation, false);
             WorkerAI.StuckTeleports++;
             Hops++;

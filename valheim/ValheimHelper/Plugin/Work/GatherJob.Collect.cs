@@ -188,7 +188,7 @@ namespace ValheimHelper
                 float d = Utils.DistanceXZ(p, m_targetPos);
                 if (d < bestD) { bestD = d; nearest = $"{d:0.0}m 높이차 {p.y - m_targetPos.y:0.0}{(m_dropSkip.Contains(zdo.m_uid) ? " 건너뜀" : "")}"; }
             }
-            Plugin.Log.LogInfo($"DIAG 떨굼 못 찾음 {Item}: {m_stepTime:0.0}초 기다림, 사냥감 자리 {m_targetPos}, 40m 안 같은 물건 {items}개(가장 가까운 {nearest}), 쓰러진 몸 {bodies}");
+            Diag.Log($"DIAG 떨굼 못 찾음 {Item}: {m_stepTime:0.0}초 기다림, 사냥감 자리 {m_targetPos}, 40m 안 같은 물건 {items}개(가장 가까운 {nearest}), 쓰러진 몸 {bodies}");
         }
 
         /// <summary>뿌리(ZDO 자리, 통나무 가운데)가 그 밑 땅에서 이만큼(m) 넘게 뜬 통나무는 다른 나무·바위에 걸린 것.</summary>

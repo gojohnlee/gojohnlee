@@ -18,7 +18,7 @@ namespace ValheimHelper
     {
         const string StateFile = "restartcraft-state.txt";
         const int Ore = 6, CoalIn = 20;
-        static string StatePath => Path.Combine(TestRunner.PluginDir, StateFile);
+        static string StatePath => Path.Combine(Plugin.Dir, StateFile);
         static bool s_quit;
 
         public static void Register()

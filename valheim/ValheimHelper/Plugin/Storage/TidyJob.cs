@@ -107,7 +107,7 @@ namespace ValheimHelper
             if (d < m_best - 0.3f) { m_best = d; m_still = 0f; } else m_still += dt;
             if (TestNoReach || d > ReachDist || m_still < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || DoorWay.Blocked(m_npc, c)) return false;
             Reached++;
-            Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} Tidy 손 거리: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
+            Diag.Log($"DIAG {m_npc.NpcName} Tidy 손 거리: {m_still:0.0}초 못 다가감, 상자까지 {d:0.0}m / {m_ai.BlockerAhead(at)}");
             return true;
         }
 

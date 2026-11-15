@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 시험 모드(사용자 11-15 "모드를 두 개로"): 시험 명령·자동 시험·진단 패치. 본 모드(../Plugin, BepInDependency)가 있어야 뜬다.
+       친구들에겐 ValheimHelper.dll만 준다 — 이 DLL은 시험 PC의 plugins에만 같이 넣는다. 게임 DLL 위치는 본 모드 csproj와 같다. -->
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <AssemblyName>ValheimHelperTest</AssemblyName>
+    <RootNamespace>ValheimHelper</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
+    <ValheimRefs Condition="'$(ValheimRefs)' == '' and Exists('C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\assembly_valheim.dll')">C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed</ValheimRefs>
+    <ValheimRefs Condition="'$(ValheimRefs)' == ''">/home/user/valheim-refs</ValheimRefs>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
+    <PackageReference Include="UnityEngine.Modules" Version="6000.0.75" PrivateAssets="all" IncludeAssets="compile" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Plugin/ValheimHelper.csproj" Private="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="assembly_valheim"><HintPath>$(ValheimRefs)/assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(ValheimRefs)/assembly_utils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_guiutils"><HintPath>$(ValheimRefs)/assembly_guiutils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.TextMeshPro"><HintPath>$(ValheimRefs)/Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(ValheimRefs)/UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

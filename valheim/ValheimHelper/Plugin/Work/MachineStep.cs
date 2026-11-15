@@ -75,7 +75,7 @@ namespace ValheimHelper
                     SideTries++;
                     var p = StuckHop.Side(me.x, me.z, at.x, at.z, StuckHop.MachineRadii[0], m_side);
                     m_sideGoal = new Vector3((float)p.X, at.y, (float)p.Z);
-                    Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → 다른 쪽({StuckHop.SideAngles[m_side]:0}°)으로");
+                    Diag.Log($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → 다른 쪽({StuckHop.SideAngles[m_side]:0}°)으로");
                 }
                 else if (!m_hopped) Hop(at, me, diag);
                 ResetProgress();
@@ -89,7 +89,7 @@ namespace ValheimHelper
             m_hopped = true;
             m_sideGoal = null;
             bool ok = GatherJob.Land(m_npc, at, out string why, true, StuckHop.Candidates(me.x, me.z, at.x, at.z, StuckHop.MachineRadii), at.y);
-            Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → {(ok ? "곁으로 옮김" : "못 옮김")} {why}");
+            Diag.Log($"DIAG {m_npc.NpcName} 설비 접근 막힘 {m_step.Station}: {diag} → {(ok ? "곁으로 옮김" : "못 옮김")} {why}");
             if (ok) { Hops++; WorkerAI.StuckTeleports++; m_npc.Say("rescue"); }
             ResetProgress();
             m_still = -1f;
@@ -106,7 +106,7 @@ namespace ValheimHelper
             if (d > Reach + 1f) { m_reachBest = float.MaxValue; m_reachStill = 0f; return false; } // 멀리서 다시 오면 새로 잼
             if (d < m_reachBest - 0.3f) { m_reachBest = d; m_reachStill = 0f; } else m_reachStill += dt;
             if (d > Reach || m_reachStill < StillSeconds || Mathf.Abs(at.y - m_npc.transform.position.y) > 1.5f || DoorWay.Blocked(m_npc, Machine)) return false;
-            if (m_reachStill - dt < StillSeconds) { Reached++; Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 설비 손 거리 쓰기 {m_step.Station}: {m_reachStill:0.0}초 못 다가감, 설비까지 {d:0.0}m / {m_npc.Ai.BlockerAhead(at)}"); }
+            if (m_reachStill - dt < StillSeconds) { Reached++; Diag.Log($"DIAG {m_npc.NpcName} 설비 손 거리 쓰기 {m_step.Station}: {m_reachStill:0.0}초 못 다가감, 설비까지 {d:0.0}m / {m_npc.Ai.BlockerAhead(at)}"); }
             m_npc.Ai.StopMoving();
             return true;
         }
@@ -239,7 +239,7 @@ namespace ValheimHelper
             {
                 m_nextDiag = m_time + 5f;
                 var d0 = drops[0];
-                Plugin.Log.LogInfo($"DIAG 발효기 줍기: 떨어진 것 {drops.Count}, 첫째 거리 {Vector3.Distance(d0.transform.position, m_npc.transform.position):0.0}m, CanPickup {d0.CanPickup()}, 주인 {d0.GetComponent<ZNetView>()?.IsOwner()}, 짐 빈칸 {m_npc.GetInventory().GetEmptySlots()}");
+                Diag.Log($"DIAG 발효기 줍기: 떨어진 것 {drops.Count}, 첫째 거리 {Vector3.Distance(d0.transform.position, m_npc.transform.position):0.0}m, CanPickup {d0.CanPickup()}, 주인 {d0.GetComponent<ZNetView>()?.IsOwner()}, 짐 빈칸 {m_npc.GetInventory().GetEmptySlots()}");
             }
             // 회차 57 한 번: 따른 뒤 60초 동안 6개를 못 주움(원인 못 찾음, 위 DIAG) → 오래 남으면 그 자리로 걸어간다
             if (any && m_tappedAt >= 0f && m_time - m_tappedAt > 8f) m_npc.Ai.MoveToPoint(dt, drops[0].transform.position, 0.5f, false);
@@ -277,7 +277,7 @@ namespace ValheimHelper
         /// <summary>바닐라 Fermenter.UpdateCover와 같은 판단: 덮임 70% 미만이거나 지붕 아래가 아니면 발효 시간이 계속 처음으로 돌아감.</summary>
         internal static bool Exposed(Fermenter f)
         {
-            if (TestRunner.Running && TestIgnoreRoof) return false;
+            if (TestHook.Running && TestIgnoreRoof) return false;
             Vector3 p = f.m_roofCheckPoint != null ? f.m_roofCheckPoint.position : f.transform.position;
             Cover.GetCoverForPoint(p, out float cover, out bool underRoof);
             return cover < 0.7f || !underRoof;
@@ -290,7 +290,7 @@ namespace ValheimHelper
         internal static bool Stalled(Smelter s)
         {
             if (s.m_smokeSpawner != null && s.m_smokeSpawner.IsBlocked()) return true;
-            if (!s.m_requiresRoof || (TestRunner.Running && TestIgnoreRoof)) return false;
+            if (!s.m_requiresRoof || (TestHook.Running && TestIgnoreRoof)) return false;
             return !Cover.IsUnderRoof(s.m_roofCheckPoint != null ? s.m_roofCheckPoint.position : s.transform.position);
         }
 
@@ -368,7 +368,7 @@ namespace ValheimHelper
                 m_cookLoaded = true;
                 return CraftResult.Working;
             }
-            if (TestRunner.Running && m_time >= m_nextDiag) { m_nextDiag = m_time + 5f; Plugin.Log.LogInfo($"DIAG {m_npc.NpcName} 굽는 곁" + CookSpotDiag()); }
+            if (TestHook.Running && m_time >= m_nextDiag) { m_nextDiag = m_time + 5f; Diag.Log($"DIAG {m_npc.NpcName} 굽는 곁" + CookSpotDiag()); }
             bool any = false;
             foreach (ItemDrop drop in Drops())
             {
@@ -405,7 +405,7 @@ namespace ValheimHelper
                 {
                     Fireplace fp = col.GetComponentInParent<Fireplace>();
                     if (fp == null || !fp.TryGetComponent(out ZNetView fv) || !fv.IsValid()) continue;
-                    Plugin.Log.LogInfo($"DIAG 불 없음: {fp.name} 켬 {fv.GetZDO().GetInt(ZDOVars.s_state, 1)} 연료 {fv.GetZDO().GetFloat(ZDOVars.s_fuel):0.0} 탐 {fp.IsBurning()}"
+                    Diag.Log($"DIAG 불 없음: {fp.name} 켬 {fv.GetZDO().GetInt(ZDOVars.s_state, 1)} 연료 {fv.GetZDO().GetFloat(ZDOVars.s_fuel):0.0} 탐 {fp.IsBurning()}"
                         + $" 날씨 {EnvMan.instance?.GetCurrentEnvironment()?.m_name} 젖음 {EnvMan.IsWet()} 바람 {EnvMan.instance?.GetWindIntensity():0.00}"
                         + $" 막힘 {HarmonyLib.Traverse.Create(fp).Field("m_blocked").GetValue<bool>()}" + SmokeDiag(fp));
                     // 바닐라: 비(지붕 없음)·센 바람(덮개 70% 미만)이면 화로가 젖어 약한 불만 남아 굽지 못한다(Fireplace.CheckWet) → 까닭을 말한다
@@ -463,7 +463,7 @@ namespace ValheimHelper
             Chests.Watch(name);
             m_removed0 = Chests.Removed(name);
             m_expect = InBag() + Chests.CountAll(m_npc.Home, inv => inv.CountItems(name));
-            if (TestLose > 0 && TestRunner.Running && InBag() >= TestLose)
+            if (TestLose > 0 && TestHook.Running && InBag() >= TestLose)
             {
                 m_npc.GetInventory().RemoveItem(name, TestLose); // 소실 흉내(vh_crafttest)
                 Plugin.Log.LogInfo($"시험: {OutItem} {TestLose}개 짐에서 지움(소실 흉내)");

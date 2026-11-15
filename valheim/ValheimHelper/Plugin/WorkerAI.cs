@@ -506,7 +506,7 @@ namespace ValheimHelper
                 m_inBest = float.MaxValue;
                 if (!stalled) m_inProgressAt = Time.time; // 멈춰서 다시 찾은 길은 실제로 다가가야 진척(막힘 판단이 계속 미뤄지지 않게)
                 Plugin.Log.LogInfo($"{((WorkerNpc)m_character).NpcName}: 묘지 안 길 {(m_inPath != null ? "찾음" : "못 찾음")}{(stalled ? "(멈춰서 다시)" : "")} — {why}, 목표까지 {Utils.DistanceXZ(point, pos):0.0}m");
-                if (m_inPath == null && newGoal) Plugin.Log.LogInfo($"DIAG 묘지 안 길 없음: {InteriorNav.Explain(pos, point, dist)}, 목표 ({point.x - pos.x:0.0},{point.y - pos.y:0.0},{point.z - pos.z:0.0})");
+                if (m_inPath == null && newGoal) Diag.Log($"DIAG 묘지 안 길 없음: {InteriorNav.Explain(pos, point, dist)}, 목표 ({point.x - pos.x:0.0},{point.y - pos.y:0.0},{point.z - pos.z:0.0})");
             }
             if (m_inPath == null) return false;
             while (m_inIdx < m_inPath.Count - 1 && Utils.DistanceXZ(m_inPath[m_inIdx], pos) < 0.5f) { m_inIdx++; m_inBest = float.MaxValue; m_inProgressAt = Time.time; }
@@ -578,7 +578,7 @@ namespace ValheimHelper
                 if (!m_inSwimLogged)
                 {
                     m_inSwimLogged = true;
-                    Plugin.Log.LogInfo($"DIAG 묘지 안 길 밖 헤엄: 수면 {m_character.GetLiquidLevel() - pos.y:+0.00}, 발밑 {InteriorNav.CellDiag(pos, pos.y)}, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m 높이 " + (m_lastDry.y - pos.y).ToString("+0.0;-0.0") : "없음")}");
+                    Diag.Log($"DIAG 묘지 안 길 밖 헤엄: 수면 {m_character.GetLiquidLevel() - pos.y:+0.00}, 발밑 {InteriorNav.CellDiag(pos, pos.y)}, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m 높이 " + (m_lastDry.y - pos.y).ToString("+0.0;-0.0") : "없음")}");
                 }
             }
             else m_inSwimLogged = false;
@@ -659,7 +659,7 @@ namespace ValheimHelper
                         Vector3 side = Vector3.Cross(Vector3.up, fwd) * m_detourSide;
                         m_detourDir = (side + fwd * 0.3f).normalized;
                         m_detourTime = 1.2f * m_detourCount;
-                        if (m_detourCount >= 2) Plugin.Log.LogInfo($"DIAG 비켜 가기 {m_detourCount}번째: 쪽 {m_detourSide:0} {m_detourTime:0.0}초, 목표까지 {d:0.0}m, 앞 {BlockerAhead(point)}");
+                        if (m_detourCount >= 2) Diag.Log($"DIAG 비켜 가기 {m_detourCount}번째: 쪽 {m_detourSide:0} {m_detourTime:0.0}초, 목표까지 {d:0.0}m, 앞 {BlockerAhead(point)}");
                     }
                 }
                 else m_stuckJumps = 0;
@@ -679,7 +679,7 @@ namespace ValheimHelper
         /// <summary>
         /// 시험용(E072): 재시작 시험 2번째(vh_restart2)가 불러온 그대로(짐·상자·하던 일·대기열)를 보기 전까지 일꾼이 아무것도 안 함.
         /// 월드를 불러오면 일꾼은 플레이어가 나타나기(8초)·자동 시험 시작(3초)보다 먼저 일을 이어 가서, 곁에 통나무가 있으면 시험이 보기 전에 나무 일을 끝냈다.
-        /// TestRunner.CheckAutoRun이 켜고 RestartTest.Body2·TestRunner.Finish가 끈다.
+        /// 시험 모드(TestRunner.CheckAutoRun)가 켜고 RestartTest.Body2·TestRunner.Finish가 끈다.
         /// </summary>
         public static bool TestHoldAll;
         /// <summary>시험 기록: 길이 막혀 거점·상자로 순간이동한 횟수(임시 대책, 0이어야 좋다).</summary>
@@ -1568,16 +1568,16 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"{npc.NpcName}: 경계 자리 문 {m_postDoor.name} 옆에 못 닿음 → 그 문 빼고 다시 고름");
             }
             if (!gaveUp && m_patrol.GaveUp) // E099 diag: 문 옆으로 가다 시간 한도 — 어디서(물속?) 왜(길 부분·곧장 걷기·헤엄 막힘) 멈췄나
-                Plugin.Log.LogInfo($"{npc.NpcName}: DIAG 문 옆 {Patrol.PostLimit:0}초 안에 못 감 → 그 자리에 섬 {pos:F1}, 문 옆까지 {Utils.DistanceXZ(pos, m_post):0.0}m, 헤엄 {m_character.IsSwimming()}·물속 {m_character.InLiquid()}·물 깊이 {Scout.WaterDepth(pos):0.0}·건넘 {m_swimOk}·물 막힘 {WaterBlockedTime:0.0}초, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m" : "없음")}, {m_moveDiag}, {PathDiag(m_post)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, m_post)}");
+                Diag.Log($"{npc.NpcName}: DIAG 문 옆 {Patrol.PostLimit:0}초 안에 못 감 → 그 자리에 섬 {pos:F1}, 문 옆까지 {Utils.DistanceXZ(pos, m_post):0.0}m, 헤엄 {m_character.IsSwimming()}·물속 {m_character.InLiquid()}·물 깊이 {Scout.WaterDepth(pos):0.0}·건넘 {m_swimOk}·물 막힘 {WaterBlockedTime:0.0}초, 마른 자리 {(m_hasDry ? Utils.DistanceXZ(m_lastDry, pos).ToString("0.0") + "m" : "없음")}, {m_moveDiag}, {PathDiag(m_post)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, m_post)}");
             bool swimNow = m_character.IsSwimming();
             if (g == PatrolGoal.Post && !m_patrol.GaveUp && swimNow != m_postSwim) // E099 diag: 문 옆 가는 길에 물에 듦·나옴
-                Plugin.Log.LogInfo($"{npc.NpcName}: DIAG 문 옆 가다 물에 {(swimNow ? "듦" : "나옴")} {pos:F1}, 문 옆까지 {Utils.DistanceXZ(pos, m_post):0.0}m, 건넘 {m_swimOk}, {m_moveDiag}, {PathDiag(m_post)}");
+                Diag.Log($"{npc.NpcName}: DIAG 문 옆 가다 물에 {(swimNow ? "듦" : "나옴")} {pos:F1}, 문 옆까지 {Utils.DistanceXZ(pos, m_post):0.0}m, 건넘 {m_swimOk}, {m_moveDiag}, {PathDiag(m_post)}");
             m_postSwim = swimNow;
             if (was >= 0 && m_patrol.Point != was && !reached && !skip && m_route.Points.Count > 0)
             {
                 m_roundMissed++;
                 m_route.Unreached(was); // 시간 안에 못 닿음 — 다음 고르기에서 그 방향은 안쪽 반경으로
-                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 점 {was} 못 닿음({Utils.DistanceXZ(pos, goal):0}m 남음) → 다음엔 안쪽 — DIAG 한도 {limit:0}초, 가장 가까이 {m_legBest:0}m, 선 {m_legStill:0}초·물 막힘 {m_legWater:0}초·헤엄 {m_legSwim:0}초·길 못 찾음 {m_legNoPath:0}초, 자리 {pos:F1}, 헤엄 {m_character.IsSwimming()}·물 깊이 {Scout.WaterDepth(pos):0.0}·건넘 {m_swimOk}, {m_moveDiag}, {PathDiag(goal)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, goal)}");
+                Plugin.Log.LogInfo($"{npc.NpcName}: 순찰 점 {was} 못 닿음({Utils.DistanceXZ(pos, goal):0}m 남음) → 다음엔 안쪽 — 한도 {limit:0}초, 가장 가까이 {m_legBest:0}m, 선 {m_legStill:0}초·물 막힘 {m_legWater:0}초·헤엄 {m_legSwim:0}초·길 못 찾음 {m_legNoPath:0}초, 자리 {pos:F1}, 헤엄 {m_character.IsSwimming()}·물 깊이 {Scout.WaterDepth(pos):0.0}·건넘 {m_swimOk}, {m_moveDiag}, {PathDiag(goal)}, 곧은 줄 걸어감 {Scout.CanWalk(pos, goal)}");
             }
             if (m_patrol.Point != was) { m_legBest = float.MaxValue; m_legStill = m_legWater = m_legSwim = m_legNoPath = 0f; }
             if (g == PatrolGoal.Point && was < 0)

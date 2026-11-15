@@ -42,7 +42,7 @@ namespace ValheimHelper
                 CraftingStation cs = CraftingStation.FindClosestStationInRange(m_recipe.Station, home, Recipes.BaseRange);
                 if (cs == null || cs.GetLevel() < m_recipe.StationLevel) return CraftResult.Failed;
                 // 바닐라처럼 지붕(70%)·불이 필요한 설비는 그래야 씀(③-1 기본안). 시험 대부분은 들판 작업대라 TestCheckRoof일 때만
-                if ((!TestRunner.Running || TestCheckRoof) && !Repair.Usable(cs))
+                if ((!TestHook.Running || TestCheckRoof) && !Repair.Usable(cs))
                 { Plugin.Log.LogInfo($"{m_npc.NpcName} 제작 실패: {Localization.instance.Localize(cs.m_name)} 지붕·불 없음"); RoofFails++; return CraftResult.Failed; }
                 Vector3 at = cs.transform.position;
                 if (Utils.DistanceXZ(at, m_npc.transform.position) > cs.m_rangeBuild)

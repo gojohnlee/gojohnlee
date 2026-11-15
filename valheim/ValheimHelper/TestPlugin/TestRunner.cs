@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     static class TestRunner
     {
-        public static bool Running { get; private set; }
+        public static bool Running { get => TestHook.Running; private set => TestHook.Running = value; }
         /// <summary>약식 시험(사용자 결정 10-23 "시험 정식·약식"): autotest.txt에 "quick"(스크립트 $env:VH_QUICK='1'). 긴 시험이 같은 판정 칸을 짧게 본다. 약식 FAIL이면 정식으로 다시.</summary>
         public static bool Quick;
         /// <summary>시험 배속(사용자 11-13 "시험 속도 3배"): autotest.txt "speed=N"(스크립트 $env:VH_SPEED, 기본 3·1이면 끔). 시험 도는 동안만 Game.FadeTimeScale(N)
@@ -59,7 +59,7 @@ namespace ValheimHelper
         }
         static bool s_auto;
         /// <summary>autotest.txt로 켠 판(시험 전용 게임) — 대사 횟수(SpeechCount)를 세지 않는다.</summary>
-        public static bool AutoSession;
+        public static bool AutoSession { get => TestHook.AutoSession; set => TestHook.AutoSession = value; }
         static float s_autoWait;
         static Terminal s_terminal;
         static float s_startTime;
@@ -83,7 +83,7 @@ namespace ValheimHelper
             if (s_halt == null) s_halt = why;
         }
 
-        internal static string PluginDir => Path.GetDirectoryName(Plugin.Instance.Info.Location);
+        internal static string PluginDir => Plugin.Dir;
 
         public static bool Begin(Terminal t, string name)
         {

@@ -32,13 +32,13 @@ namespace ValheimHelper
         public static bool Awaiting => s_pending.Count > 0;
 
         /// <summary>
-        /// 시험 중(TestRunner.Running)에는 질문하면 바로 "그래도 가"로 대답한 것으로 친다 — 예전 채집·준비 시험이
+        /// 시험 중(TestHook.Running)에는 질문하면 바로 "그래도 가"로 대답한 것으로 친다 — 예전 채집·준비 시험이
         /// 쌓인 재고·죽은 기록·밤 때문에 질문에서 멈추지 않게. 출발 전 판단 시험은 이걸 끄고 돈다.
         /// </summary>
         public static bool TestAutoGo = true;
         /// <summary>시험 중에도 쉴 때 먹거리·같이 캐기를 할지(사용자 11-09 기능). 옛 시험이 흔들리지 않게 기본은 끔 — 그 기능을 보는 시험만 켬.</summary>
         public static bool TestIdleChores;
-        static bool ChoresOn => !TestRunner.Running || TestIdleChores;
+        static bool ChoresOn => !TestHook.Running || TestIdleChores;
 
         public static double AskedAt(WorkerNpc npc) => s_pending.TryGetValue(npc, out var p) ? p.AskedAt : -1;
 
@@ -118,7 +118,7 @@ namespace ValheimHelper
                     s_pending[npc] = new Pending { Result = r, Cmd = cmd, Who = who, AskedAt = Now };
                     args["extra"] = r.ExtraKey != null ? npc.Line(r.ExtraKey, args) : "";
                     npc.Say(r.Key, args);
-                    if (TestRunner.Running && TestAutoGo)
+                    if (TestHook.Running && TestAutoGo)
                     {
                         Plugin.Log.LogInfo($"{npc.NpcName} 시험 중이라 질문 {r.Question}에 '그래도 가'로 대답");
                         Answer(who, Reply.GoAnyway, npc.NpcName);
