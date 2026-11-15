@@ -11,7 +11,7 @@ namespace ValheimHelper
 {
     /// <summary>두 NPC가 같이 쓰는 지식. 세트·보충·밭·개인·빚은 바뀌면 30초마다 일꾼 ZDO에,
     /// 기억(지식·장소·적)은 서버 월드별 파일(worlds_local/&lt;월드&gt;.vh-memory)에 월드 저장 순간에만(SaveMemory, 사용자 11-11).</summary>
-    public static class Brain
+    public static partial class Brain
     {
         public const string Key = "vh_knowledge";
         /// <summary>싸워 보고 배운 적(8-2장). 지식처럼 두 NPC ZDO에 같이 저장한다.</summary>
@@ -44,6 +44,7 @@ namespace ValheimHelper
         static string s_foesSaved = "";
         static ZDOMan s_for;
         static string s_file;
+        static PathMemory s_paths;
         static float s_saveTimer;
 
         public static Knowledge Get()
@@ -51,7 +52,7 @@ namespace ValheimHelper
             if (s_k == null || s_for != ZDOMan.instance)
             {
                 s_for = ZDOMan.instance;
-                string best = "", foes = "", places = "", sets = "", refill = "", farms = "", personal = "", debt = "", help = "";
+                string best = "", foes = "", places = "", paths = "", sets = "", refill = "", farms = "", personal = "", debt = "", help = "";
                 long noSets = 0, noRefill = 0, noFarms = 0, noPersonal = 0, noDebt = 0, noHelp = 0;
                 s_saveNo = 0;
                 var zdos = Workers.AllZdos();
@@ -75,9 +76,11 @@ namespace ValheimHelper
                 bool server = ZNet.instance != null && ZNet.instance.IsServer();
                 string from = best.Length + places.Length + foes.Length > 0 ? "옛 ZDO" : "없음";
                 s_file = server ? MemoryPath() : null;
-                if (ReadMemory(s_file, ref best, ref places, ref foes)) from = "파일";
+                if (ReadMemory(s_file, ref best, ref places, ref foes, ref paths)) from = "파일";
                 else if (server && s_file == null) Plugin.Log.LogWarning("일꾼 기억 파일 자리 모름(월드 없음) — 이번엔 저장 안 함");
                 s_k = Knowledge.Load(best);
+                s_paths = new PathMemory();
+                s_paths.Load(paths);
                 s_foes = FoeBook.Load(foes);
                 s_foesSaved = foes;
                 s_places = PlaceBook.Load(places);
@@ -90,7 +93,7 @@ namespace ValheimHelper
                 s_helpSaved = s_help.Save();
                 LoadedZones = s_k.Count;
                 if (server)
-                    Plugin.Log.LogInfo($"일꾼 기억 불러옴({from}, {Path.GetFileName(s_file ?? "")}):일꾼 ZDO {zdos.Count}개, 지식 {s_k.Count}구역({best.Length}자), 장소 {places.Length}자, 적 {foes.Length}자");
+                    Plugin.Log.LogInfo($"일꾼 기억 불러옴({from}, {Path.GetFileName(s_file ?? "")}):일꾼 ZDO {zdos.Count}개, 지식 {s_k.Count}구역({best.Length}자), 장소 {places.Length}자, 적 {foes.Length}자, 길 {s_paths.Count}개");
                 StripMemory(zdos);
             }
             return s_k;
@@ -186,91 +189,5 @@ namespace ValheimHelper
             s_helpSaved = help;
             s_foesSaved = foes;
         }
-
-        // ---- 일꾼 기억(지식·장소·적)은 서버 월드별 파일에, 월드 저장 순간에만 (사용자 11-11) ----
-        // 지식은 본 구역마다 늘어 커진다 → 일꾼 ZDO에 두면 손님에게 통째로 계속 보내져 다른 ZDO가 막힘(E052, 회차 309).
-        // 파일은 월드 폴더 곁(worlds_local/<월드>.vh-memory): 폴더 안은 게임이 이름 바꿀 때 모르는 파일을 지움(SaveSystem.RenameDirectory),
-        // 곁의 모르는 확장자는 월드 목록이 안 봄(SaveSystem.IsWorldSaveExtension). 게임 월드 백업에는 안 들어감.
-        const int MemoryVersion = 1;
-        static readonly int[] MemoryKeys = { Key.GetStableHashCode(), KeyPlaces.GetStableHashCode(), KeyFoes.GetStableHashCode() };
-        /// <summary>월드 불러올 때 읽은 지식 구역 수(시험용).</summary>
-        public static int LoadedZones;
-
-        /// <summary>서버 월드의 기억 파일 경로. 월드를 모르면 null.</summary>
-        static string MemoryPath()
-        {
-            var w = ZNet.GetWorldIfIsHost();
-            if (w == null || string.IsNullOrEmpty(w.m_worldName)) return null;
-            string root = w.m_fileSource.IsLocal() ? SaveSystem.GetWorldsSaveRootPath(w.m_fileSource)
-                : Path.Combine(BepInEx.Paths.ConfigPath, "ValheimHelper", "worlds"); // 클라우드 월드는 파일 경로가 없음
-            return Path.Combine(root, w.m_worldName + ".vh-memory");
-        }
-
-        /// <summary>파일에서 지식·장소·적을 읽는다. 없거나 못 읽으면 false(그땐 옛 ZDO 것).</summary>
-        static bool ReadMemory(string path, ref string knowledge, ref string places, ref string foes)
-        {
-            if (path == null || !File.Exists(path)) return false;
-            try
-            {
-                using (var r = new BinaryReader(File.OpenRead(path)))
-                {
-                    if (r.ReadInt32() != MemoryVersion) throw new IOException("판 다름");
-                    string k = r.ReadString(), p = r.ReadString(), f = r.ReadString();
-                    knowledge = k; places = p; foes = f;
-                }
-                return true;
-            }
-            catch (System.Exception e) { Plugin.Log.LogWarning($"일꾼 기억 파일 못 읽음({path}): {e.Message} — ZDO 것으로"); return false; }
-        }
-
-        /// <summary>불러온 뒤(Get): 서버에선 일꾼 ZDO의 옛 기억 키를 뺀다(손님에게 안 보내게, 다음 저장부터 ZDO엔 없음).</summary>
-        static void StripMemory(List<ZDO> zdos)
-        {
-            if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
-            foreach (var zdo in zdos)
-                foreach (int h in MemoryKeys) zdo.RemoveString(h);
-        }
-
-        [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.PrepareSave))]
-        static class SaveMemory
-        {
-            static readonly FieldInfo s_endSave = AccessTools.Field(typeof(ZDOMan), "m_endSave"), s_state = AccessTools.Field(typeof(ZDOMan), "m_currentSaveState"),
-                s_dirty = AccessTools.Field(typeof(ZDOMan), "m_dirtyChunks");
-            static readonly MethodInfo s_updateSaveState = AccessTools.Method(typeof(ZDOMan), "UpdateSaveState");
-
-            static void Prefix()
-            {
-                // E072: 앞 저장이 끝났어도 "저장 중" 표(둘째 표에 바뀐 조각)는 다음 ZDOMan.Update에서야 풀림 → 그 전에 다시 저장(끄기)하면
-                // 이번 저장이 첫째 표만 보고 바뀐 조각을 안 씀. 게임이 다음 프레임에 할 합치기를 지금 함(SaveWorld가 앞 저장 스레드를 기다린 뒤라 안전).
-                try
-                {
-                    var dirty = s_dirty?.GetValue(ZDOMan.instance) as HashSet<ZoneSystem.ChunkIndex>[];
-                    object end = s_endSave?.GetValue(ZDOMan.instance);
-                    string line = $"E072 저장 전: 상태 {s_state?.GetValue(ZDOMan.instance)}, 끝 {end ?? "없음"}, 바뀐 조각 {dirty?[0].Count}/{dirty?[1].Count}, 저장 번호 {SaveSystem.GetSaveNumber()}";
-                    Plugin.Log.LogInfo(line);
-                    TestHook.E072?.Invoke(line);
-                    if (end != null) s_updateSaveState?.Invoke(ZDOMan.instance, null);
-                }
-                catch (System.Exception e) { Plugin.Log.LogWarning("E072 저장 전 확인 못 함: " + e.Message); }
-                if (s_k != null && s_for != ZDOMan.instance) Plugin.Log.LogInfo("일꾼 기억 저장 건너뜀: ZDOMan 바뀜");
-                if (s_k == null || s_for != ZDOMan.instance || s_file == null || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 안 불러왔으면 파일·옛 ZDO 그대로
-                string[] vals = { s_k.Save(), s_places.Save(), s_foes.Save() };
-                try
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(s_file));
-                    string tmp = s_file + ".new";
-                    using (var w = new BinaryWriter(File.Create(tmp)))
-                    {
-                        w.Write(MemoryVersion);
-                        foreach (var v in vals) w.Write(v);
-                    }
-                    if (File.Exists(s_file)) File.Replace(tmp, s_file, null);
-                    else File.Move(tmp, s_file);
-                    Plugin.Log.LogInfo($"일꾼 기억 파일 저장: {Path.GetFileName(s_file)} {new FileInfo(s_file).Length}바이트, 지식 {s_k.Count}구역({vals[0].Length}자), 장소 {vals[1].Length}자, 적 {vals[2].Length}자");
-                }
-                catch (System.Exception e) { Plugin.Log.LogWarning($"일꾼 기억 파일 저장 못 함({s_file}): {e.Message}"); }
-            }
-        }
     }
 }
-
