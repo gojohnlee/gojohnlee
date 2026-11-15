@@ -32,6 +32,7 @@ namespace ValheimHelper
             Step("Harmony 패치", () => new Harmony(Guid).PatchAll());
             Step("NPC 설정·명령", () => Workers.Init(Config));
             Step("기능 스위치", () => Features.Init(Config));
+            Step("게임 함수 변경 감지", () => GameCheck.Run());
             Logger.LogInfo($"Valheim Helper {FullVersion} 로드됨");
         }
 
