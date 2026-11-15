@@ -27,7 +27,6 @@ namespace ValheimHelper
             bool ghost = Player.m_localPlayer.InGhostMode();
             const string task = "호위:테스트";
             const string none = "호위:없음";
-            Departures.TestIdleChores = true; // 쉬는 일꾼 판단(JoinHelp)은 시험 중엔 꺼져 있음
             try { yield return Body(w, checks, task, none); }
             finally
             {
@@ -43,6 +42,7 @@ namespace ValheimHelper
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, string task, string none)
         {
             yield return TestKit.Setup(w);
+            Departures.TestIdleChores = true; // 쉬는 일꾼 판단(JoinHelp)은 시험 중엔 꺼져 있음 — 시작 검사(Setup) 뒤에 켬: 먼저 켜면 검사 사이 빈 상자를 보고 채집하러 나가 환경 불량(회차 714 B13)
             checks.Add("깃발·NPC 둘", w.Ragnar != null && w.Floki != null);
             if (w.Ragnar == null || w.Floki == null) yield break;
             Player p = w.Player;

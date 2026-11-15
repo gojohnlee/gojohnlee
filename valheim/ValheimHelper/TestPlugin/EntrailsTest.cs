@@ -77,6 +77,8 @@ namespace ValheimHelper
             TestKit.ClearBaseStock(w, "Entrails");
             w.Ragnar.ClearHurt(); w.Floki?.ClearHurt();
             Quaternion rot = w.Player.transform.rotation;
+            var meal = new Inventory("vh_test_food", null, 4, 2);
+            foreach (var n in new[] { "CookedMeat", "Honey", "Blueberries" }) meal.AddItem(ObjectDB.instance.GetItemPrefab(n), 50);
             int portals0 = PortalBuilder.Mine().Count, wave = 0, hurtNo = 0, trips = 0;
             float start = Time.time, lastGone = -100f, idleSince = -1f;
             bool idleEnd = false;
@@ -109,6 +111,9 @@ namespace ValheimHelper
                     if (n != null)
                         foreach (var it in n.GetInventory().GetAllItems())
                             if (it.m_shared.m_useDurability && System.Array.IndexOf(Gear.WearSlots, it.m_shared.m_itemType) >= 0) it.m_durability = it.GetMaxDurability();
+                // 시험 거점 상자엔 음식이 없어 500초쯤 지나면 먹은 음식이 다 떨어져 최대 체력 25로 preyStrong(맞는 판단, 회차 714 B13 7/20) — 음식도 시험 밖이라 먹을 수 있을 때 채움
+                foreach (var n in new[] { w.Ragnar, w.Floki })
+                    if (n != null && n.CanEatFrom(meal)) n.EatFrom(meal);
                 WorkerNpc h = Hunter(w);
                 if (h != null) lastHunter = h;
                 // 다침 칸 기록은 매초 비움: 끝없는 드라우그에 저절로 물러난 칸이 같은 곳(40m) 세 번째 접음(huntTooHard)으로 쌓여 일이 끝나지 않게(11-14, 접음 규칙은 dotnet test RecoveryTests)

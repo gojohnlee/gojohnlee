@@ -796,6 +796,7 @@ namespace ValheimHelper
             if (spot == null)
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 옆에 설 자리 없음 → 건너뜀");
+                Plugin.Log.LogInfo($"DIAG 설 자리 없음(E113) 목표 {m_targetPos:F1} 닿을 거리 {m_reach:0.0} 둘레:{InteriorNav.Map(m_targetPos, 4)}");
                 Skip();
                 return true;
             }
