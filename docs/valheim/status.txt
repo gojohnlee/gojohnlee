@@ -1,7 +1,7 @@
-갱신: 2026-11-15 20:49  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 697 진행 중
+갱신: 2026-11-15 21:02  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 697, 계정: 2번, 한도: 없음
-할 일: 요청 길 기억 성공한 길(11-15, decisions "길 기억 성공한 길"): ① [끝, 회차 696 — 커밋 1f5176b5 · 시험 dotnet test 797/797(PathTrailTests 4개 새로)]…
-마지막 시험: 11-15 20:48 요약: 1/2 PASS | FAIL vh_pathfollow: 걷다 맞으면 기억 길 지우고 새로 안 넣음 (맞음 False, 남음 True, 기억 안 함 0, 1.4초, 꺾인 점까지 최소 4.7m, 따라 0·지움 0, 입력 1.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 6.8, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 65.3/땅 65.3/원래땅 65.4/물 -10000.0, 구역 True)
-Claude가 한 일: (진행 중)
+할 일: 요청 길 기억 성공한 길(11-15, decisions "길 기억 성공한 길"): ① [끝, 회차 696 — 커밋 1f5176b5 · 시험 dotnet test 797/797] ② [끝, 회차 697 — 커밋 592…
+마지막 시험: 11-15 21:01 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE 길 기억 성공한 길 ②④ 끝 — vh_pathfollow 맞음 판 고침(8/8), vh_housetest 38/38
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
