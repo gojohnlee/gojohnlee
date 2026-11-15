@@ -291,9 +291,10 @@ namespace ValheimHelper
             if (run && m_stepSlow && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) run = false; // FloorStep 꺾인 모퉁이 앞은 걸음
             if (m_stepWait && Time.time - m_stepUsedAt < 0.1f && Utils.DistanceXZ(point, m_step) < 0.01f) { m_moveDiag = "MoveToPoint 출발 기다림"; StopMoving(); return false; } // FloorStep 출발 기다림은 제자리에 섬 — 제 자리로 0m 걷기는 뛰던 기세로 1.6m 지나쳤다 150° 되돌았음(회차 412 오름 4)
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
-            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_moveTarget = point; m_detourCount = 0; m_deadEnd = false; m_leg.Reset(); }
+            if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_detourCount = 0; m_deadEnd = false; m_leg.Reset(); TrailStart(pos, m_moveTarget); m_moveTarget = point; }
             float d = Utils.DistanceXZ(point, pos);
-            if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_deadEnd = false; m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); return true; }
+            if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_deadEnd = false; m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); TrailDone(pos, point); return true; }
+            TrailStep(pos);
             m_moveDiag = "MoveToPoint 시작"; if (EdgeRescueIfLong(dt, pos)) { m_moveDiag = "MoveToPoint 벼랑 구조"; return false; }
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다
             if (m_carving && UpdateCarve(dt, pos)) { m_moveDiag = "MoveToPoint 깎기"; return false; }
