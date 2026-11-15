@@ -168,7 +168,7 @@ namespace ValheimHelper
             }
             foreach (var c in chests)
                 if (m_foodDone.Add(c) && (m_npc.CanEatFrom(c.GetInventory()) || NeedsFoodToCarry(m_npc.GetInventory(), c))) { m_chest = c; m_forFood = true; return true; }
-            if (m_npc.Meals.Count == 0 && !chests.Exists(c => HasFreeFood(c.GetInventory()))) m_npc.SayNoFoodOnce();
+            if (m_npc.Meals.Count == 0 && !chests.Exists(c => HasFreeFood(c))) m_npc.SayNoFoodOnce();
             return false;
         }
 
@@ -404,19 +404,34 @@ namespace ValheimHelper
             return n;
         }
 
-        static bool NeedsFoodToCarry(Inventory mine, Container c) => CountFood(mine) < FoodToCarry && HasFreeFood(c.GetInventory());
+        static bool NeedsFoodToCarry(Inventory mine, Container c) => CountFood(mine) < FoodToCarry && HasFreeFood(c);
 
         /// <summary>상자에 시킨 음식 몫(Fresh) 밖 음식이 있나(사용자 11-16 — 몫만 있으면 들르지 않고 "음식 없어").</summary>
-        static bool HasFreeFood(Inventory inv)
+        static bool HasFreeFood(Container c)
         {
+            Inventory inv = c.GetInventory();
             double now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
             foreach (var it in inv.GetAllItems())
-                if (Gear.IsFood(it) && Fresh.Free(it.m_shared.m_name, inv.CountItems(it.m_shared.m_name), now) > 0) return true;
+                if (Gear.IsFood(it) && inv.CountItems(it.m_shared.m_name) - HeldHere(c, it.m_shared.m_name, now) > 0) return true;
             return false;
         }
 
         /// <summary>명령으로 만든 음식 몫(PlanJob.Finish가 적음) — 들고 갈 음식에서 뒤로(decisions "갓 만든 음식").</summary>
         public static readonly FoodHold Fresh = new FoodHold();
+
+        /// <summary>
+        /// 이 상자의 그 음식 중 몫으로 묶인 수. 몫은 거점 전체 수에 걸리므로 다른 상자에 있는 것부터 몫으로 치고 모자란 만큼만 이 상자에서
+        /// (맞물림 점검 11-16 — 상자마다 몫 전체를 빼면 몫 상자·일꾼 음식 상자가 갈릴 때 남는 음식이 있어도 "음식 없어").
+        /// </summary>
+        internal static int HeldHere(Container c, string name, double now)
+        {
+            int held = Fresh.Held(name, now);
+            if (held <= 0 || c == null) return held;
+            int here = c.GetInventory().CountItems(name), others = 0;
+            foreach (var k in Chests.NearBase(c.transform.position))
+                if (k != c) others += k.GetInventory().CountItems(name);
+            return Mathf.Clamp(held - others, 0, here);
+        }
 
         /// <summary>들고 다닐 음식을 FoodToCarry까지: 체력 높은 음식부터 한 종류에 하나씩 돌아가며, 명령으로 만든 몫은 안 가져감(회차 702), 사람 제작 막대 예약분도 안 가져감.</summary>
         static void TakeFood(Container from, Inventory mine, Inventory chest, List<string> taken)
@@ -433,7 +448,7 @@ namespace ValheimHelper
             }
             double now = ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time;
             // 막대 예약분으로 못 가져가는 것이 있을 수 있어 넉넉히 고르고 앞에서부터 need개
-            foreach (var name in FoodHold.Pick(kinds, kinds.Count * FoodToCarry + need, n => Fresh.Held(n, now)))
+            foreach (var name in FoodHold.Pick(kinds, kinds.Count * FoodToCarry + need, n => HeldHere(from, n, now)))
             {
                 if (need <= 0) break;
                 ItemDrop.ItemData it = null;

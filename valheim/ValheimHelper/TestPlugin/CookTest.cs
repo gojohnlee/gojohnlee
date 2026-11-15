@@ -190,6 +190,7 @@ namespace ValheimHelper
         {
             string meat = ObjectDB.instance.GetItemPrefab("CookedMeat").GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
             Prep.Fresh.Clear();
+            GameObject second = null;
             try
             {
                 TestKit.PutInChest(w.Chest, "CookedMeat", 12);
@@ -207,8 +208,16 @@ namespace ValheimHelper
                 // 맞물림 점검(11-16): 쉴 때 만들기의 재료 꺼내기(CraftStep.Take idle)도 몫은 안 씀 — 5개 달라 해도 몫 밖 3개만
                 int took = CraftStep.Take(Chests.NearBase(w.Home, ChestRole.Ingredients), "CookedMeat", 5, true);
                 checks.Add($"쉴 때 만들기 재료로 몫 안 씀 (5개 중 꺼냄 {took}, 상자 {Stock(w, "CookedMeat")} = 7)", took == 3 && Stock(w, "CookedMeat") == 7);
+                // 맞물림 점검(11-16): 몫 상자(7)와 다른 상자(3)로 갈리면 다른 상자 3은 일꾼 몫, 몫 상자 쪽은 4만 묶임(상자마다 몫 7 전체를 빼지 않음)
+                second = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("piece_chest_wood"), w.Chest.transform.position + w.Chest.transform.right * 1.5f, w.Chest.transform.rotation);
+                yield return new WaitForSeconds(1f);
+                Container c2 = second.GetComponent<Container>();
+                c2.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab("CookedMeat"), 3);
+                double now = ZNet.instance.GetTimeSeconds();
+                int heldMain = Prep.HeldHere(w.Chest, meat, now), held2 = Prep.HeldHere(c2, meat, now);
+                checks.Add($"두 상자로 갈린 몫: 다른 상자 3개는 묶이지 않음 (몫 상자 묶임 {heldMain}/7, 다른 상자 묶임 {held2}/3)", heldMain == 4 && held2 == 0);
             }
-            finally { Prep.Fresh.Clear(); }
+            finally { Prep.Fresh.Clear(); if (second != null) ZNetScene.instance.Destroy(second); }
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             TestKit.ClearBaseStock(w, "CookedMeat");
