@@ -64,7 +64,7 @@ namespace ValheimHelper
                 int r = BaseStock.Reserved(SharedName(kv.Key));
                 if (r > 0 && Have(home, kv.Key) - r < kv.Value) { m_busy += dt; return m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working; }
             }
-            if (!TakeAll(home, chests, need)) return CraftResult.Failed;
+            if (!TakeAll(home, chests, need, m_npc.Ai.Job is PlanJob pj && pj.FromIdle)) return CraftResult.Failed;
             int left = Put(home, m_recipe.Output, m_recipe.OutputAmount * m_crafts);
             if (left > 0) LeaveAtChest(m_npc, m_recipe.Output, left);
             return CraftResult.Done;
@@ -121,11 +121,17 @@ namespace ValheimHelper
             return name == null ? 0 : Chests.CountAll(home, inv => inv.CountItems(name), ChestRole.Ingredients);
         }
 
-        /// <summary>상자들에서 뺀다. 실제로 뺀 개수를 돌려준다(상자가 그새 열렸거나 개수 확인 뒤 줄었거나 사람 제작이 예약했으면 amount보다 적음).</summary>
-        internal static int Take(List<Container> chests, string prefab, int amount)
+        /// <summary>상자들에서 뺀다. 실제로 뺀 개수를 돌려준다(상자가 그새 열렸거나 개수 확인 뒤 줄었거나 사람 제작이 예약했으면 amount보다 적음, 쉴 때 만들기(idle)면 시킨 음식 몫도 안 씀 — 사용자 11-16 맞물림 점검).</summary>
+        internal static int Take(List<Container> chests, string prefab, int amount, bool idle = false)
         {
             string name = SharedName(prefab);
             if (TestShortBy > 0) { amount = Mathf.Max(0, amount - TestShortBy); TestShortBy = 0; }
+            if (idle)
+            {
+                int have = 0;
+                foreach (var c in chests) have += c.GetInventory().CountItems(name);
+                amount = Mathf.Min(amount, Prep.Fresh.Free(name, have, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time));
+            }
             int taken = 0;
             foreach (var c in chests)
             {
@@ -148,14 +154,14 @@ namespace ValheimHelper
         /// 재료를 다 빼거나 하나도 안 뺀다: 하나라도 덜 빠지면 이미 뺀 것을 상자에 되돌리고 false(물건 복제·소실 막음, 요청 10-23 코드 정리).
         /// 되돌릴 상자 자리가 없으면 첫 상자 앞 땅에.
         /// </summary>
-        internal static bool TakeAll(Vector3 home, List<Container> chests, IEnumerable<KeyValuePair<string, int>> need)
+        internal static bool TakeAll(Vector3 home, List<Container> chests, IEnumerable<KeyValuePair<string, int>> need, bool idle = false)
         {
             var taken = new List<KeyValuePair<string, int>>();
             string shortOf = null;
             foreach (var kv in need)
             {
                 if (kv.Value <= 0) continue;
-                int n = Take(chests, kv.Key, kv.Value);
+                int n = Take(chests, kv.Key, kv.Value, idle);
                 if (n > 0) taken.Add(new KeyValuePair<string, int>(kv.Key, n));
                 if (n < kv.Value) { shortOf = $"{kv.Key} {n}/{kv.Value}"; break; }
             }

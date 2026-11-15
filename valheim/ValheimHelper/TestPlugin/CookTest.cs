@@ -204,6 +204,9 @@ namespace ValheimHelper
                 TestKit.PutInChest(w.Chest, "CookedMeat", 3);
                 int afterMore = Departures.BaseFood(w.Home);
                 checks.Add($"5개 가져감 → 몫 7, 3개 더 생김 → 일꾼 음식 3 (몫 {held}, 가져간 뒤 {afterTake}, 더 생긴 뒤 {afterMore})", held == 7 && afterTake == 0 && afterMore == 3);
+                // 맞물림 점검(11-16): 쉴 때 만들기의 재료 꺼내기(CraftStep.Take idle)도 몫은 안 씀 — 5개 달라 해도 몫 밖 3개만
+                int took = CraftStep.Take(Chests.NearBase(w.Home, ChestRole.Ingredients), "CookedMeat", 5, true);
+                checks.Add($"쉴 때 만들기 재료로 몫 안 씀 (5개 중 꺼냄 {took}, 상자 {Stock(w, "CookedMeat")} = 7)", took == 3 && Stock(w, "CookedMeat") == 7);
             }
             finally { Prep.Fresh.Clear(); }
             GatherTest.Say("!멈춰", null);

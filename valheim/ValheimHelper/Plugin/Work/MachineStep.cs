@@ -205,7 +205,7 @@ namespace ValheimHelper
                 wait = m_busy > BusyLimit ? CraftResult.Failed : CraftResult.Working;
                 return false;
             }
-            if (!CraftStep.TakeAll(home, chests, need)) { wait = CraftResult.Failed; return false; } // 덜 빠지면 되돌리고 설비에 안 넣음
+            if (!CraftStep.TakeAll(home, chests, need, m_npc.Ai.Job is PlanJob pj && pj.FromIdle)) { wait = CraftResult.Failed; return false; } // 덜 빠지면 되돌리고 설비에 안 넣음
             wait = CraftResult.Done;
             return true;
         }
