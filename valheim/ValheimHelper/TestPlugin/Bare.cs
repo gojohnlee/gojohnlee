@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -24,6 +25,8 @@ namespace ValheimHelper
         static readonly List<FrameStats.Summary> Done = new List<FrameStats.Summary>();
         static bool s_started, s_done;
         static float s_look, s_inWorld, s_measured;
+        static int s_spot; // VH_LOAD_AT: 0 아직·1 옮기는 중·2 다 옮김
+        static string s_where = "들어간 자리";
 
         static float EnvSecs(string name, float def) =>
             float.TryParse(Environment.GetEnvironmentVariable(name), System.Globalization.NumberStyles.Float,
@@ -48,6 +51,15 @@ namespace ValheimHelper
                 return;
             }
             if (Player.m_localPlayer == null) return;
+            if (LoadSpot.At != "" && s_spot < 2)
+            {
+                if (s_spot == 1) return;
+                if (!LoadSpot.Find(out Vector3 pos, out Quaternion rot, out s_where)) { Plugin.Log.LogWarning("모드 끔 판: 재는 자리 못 찾음 — " + s_where); WriteDiag("FAIL", "자리 못 찾음: " + s_where); Application.Quit(); s_done = true; return; }
+                s_spot = 1;
+                Player.m_localPlayer.StartCoroutine(Move(pos, rot));
+                return;
+            }
+            if (s_inWorld == 0f) { LoadSpot.FixSky(); Player.m_localPlayer.SetGodMode(true); } // 켬 판(TestKit.Setup)과 같은 낮·맑음
             s_inWorld += dt;
             if (s_inWorld < WaitSecs) return;
             Frames.Add(dt);
@@ -60,19 +72,31 @@ namespace ValheimHelper
             s_done = true;
             string text = FrameStats.ToText(FrameStats.Median(Done)) + (Runs > 1 ? $" (중간값 {Runs}번)" : "");
             Plugin.Log.LogInfo("[모드 부하] 모드 끔 " + text);
+            WriteDiag("PASS", text);
+            Application.Quit();
+        }
+
+        static IEnumerator Move(Vector3 pos, Quaternion rot)
+        {
+            yield return LoadSpot.Go(pos, rot);
+            Plugin.Log.LogInfo("모드 끔 판: 재는 자리 " + s_where);
+            s_spot = 2;
+        }
+
+        static void WriteDiag(string verdict, string text)
+        {
             try
             {
                 File.WriteAllLines(Path.Combine(Plugin.Dir, "diag.txt"), new[]
                 {
                     $"모드 끔 판 {Plugin.FullVersion} — 패치 0",
-                    $"=== vh_bare 월드 {AutoStart.World}",
-                    $"판정: PASS",
+                    $"=== vh_bare 월드 {AutoStart.World} · 자리 {s_where}",
+                    $"판정: {verdict}",
                     $"시간: {s_measured * Runs:0}초",
                     "프레임: " + text,
                 });
             }
             catch (IOException e) { Plugin.Log.LogWarning("모드 끔 판 diag 못 씀: " + e.Message); }
-            Application.Quit();
         }
     }
 }

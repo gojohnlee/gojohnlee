@@ -69,7 +69,7 @@ public class FrameStatsTests
     public void ToTextFormatsOneLine()
     {
         var s = FrameStats.Summarize(new List<double> { 0.010, 0.030 });
-        Assert.Equal("프레임 2장 · 평균 20.0 ms · 최악 30.0 ms · 1% 최악 30.0 ms", FrameStats.ToText(s));
+        Assert.Equal("프레임 2장 · 평균 20.0 ms · 최악 30.0 ms · 1% 최악 30.0 ms · 33ms 넘음 분당 0.0", FrameStats.ToText(s));
     }
 
     [Fact]
@@ -97,5 +97,24 @@ public class FrameStatsTests
         Assert.Equal(5.0, m.AvgMs, 6);
         Assert.Equal(15.0, m.WorstMs, 6);
         Assert.Equal(0, FrameStats.Median(new FrameStats.Summary[0]).Count);
+    }
+
+    [Fact]
+    public void SlowFramesPerMinute()
+    {
+        // 10ms 5900장 + 50ms 20장 = 60초 → 33ms 넘음 분당 20장
+        var l = Frames(5900, 0.010);
+        l.AddRange(Frames(20, 0.050));
+        var s = FrameStats.Summarize(l);
+        Assert.Equal(20.0, s.SlowPerMin, 6);
+    }
+
+    [Fact]
+    public void StuttersOnlyPastThresholds()
+    {
+        var off = new FrameStats.Summary(1000, 5.0, 12.0, 8.6, 0.5);
+        Assert.False(FrameStats.Stutters(off, new FrameStats.Summary(1000, 5.9, 20.0, 11.4, 1.5)));
+        Assert.True(FrameStats.Stutters(off, new FrameStats.Summary(1000, 5.9, 20.0, 13.7, 0.5)));
+        Assert.True(FrameStats.Stutters(off, new FrameStats.Summary(1000, 5.9, 20.0, 9.0, 1.6)));
     }
 }

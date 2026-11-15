@@ -142,7 +142,7 @@ namespace ValheimHelper
         /// from에서 100m~10km(월드 가장자리 10km 안만)를 바깥으로 돌며 가운데가 그 바이옴이고 15m 둘레가 평평한(3m 안) 자리 중, 가운데·둘레 가장 낮은 곳이 물보다 1m 넘는 첫 자리
         /// — 없으면 0.5m 넘는 것 중 가장 높은 자리(회차 138: 시험 월드 늪은 안쪽 표본 8829곳 중 가장 높아도 물 위 3.4m, 평평한 곳은 0m 이하). 생성 높이라 안 불러온 곳도 본다.
         /// </summary>
-        static Vector3? FindBiomeSpot(Vector3 from, Heightmap.Biome biome)
+        internal static Vector3? FindBiomeSpot(Vector3 from, Heightmap.Biome biome)
         {
             WorldGenerator wg = WorldGenerator.instance;
             float wl = ZoneSystem.instance.m_waterLevel;
