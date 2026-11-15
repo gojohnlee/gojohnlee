@@ -121,6 +121,7 @@ namespace ValheimHelper
             Step("vh_houseexport", HouseCopy.Register);
             Step("vh_houseimport", HouseCopy.RegisterImport);
             Step("vh_househere", HouseCopy.RegisterHere);
+            Step("vh_housefind", HouseFind.Register);
             Step("vh_houseground", HouseCopy.RegisterGround);
             Step("vh_blocktest", BlockTest.Register);
             Step("vh_weaktest", WeakTest.Register);
