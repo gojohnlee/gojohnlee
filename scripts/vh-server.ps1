@@ -28,6 +28,8 @@ switch ($Action) {
     $pl = Join-Path $Srv 'BepInEx\plugins\ValheimHelper'; New-Item -ItemType Directory -Force $pl | Out-Null
     if (-not $Dll) { $Dll = Join-Path $repo 'valheim\dist\ValheimHelper.dll' }
     Copy-Item $Dll $pl -Force
+    $tdll = Join-Path (Split-Path $Dll) 'ValheimHelperTest.dll'   # 모드 두 개(11-15): 서버도 시험 모드(시험 RPC·진단), 없으면(옛 한 DLL) 뺌
+    if (Test-Path $tdll) { Copy-Item $tdll $pl -Force } else { Remove-Item (Join-Path $pl 'ValheimHelperTest.dll') -ErrorAction SilentlyContinue }
     Write-Output "installed: $Dll"
   }
   'start' {
