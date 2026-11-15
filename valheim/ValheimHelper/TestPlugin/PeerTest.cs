@@ -97,15 +97,15 @@ namespace ValheimHelper
             if (foe != null && foe.GetComponent<ZNetView>() is ZNetView fv && fv.IsValid()) fv.Destroy();
             yield return new WaitForSeconds(1f);
 
-            // 질문 대기 중
+            // 재고가 있어도 묻지 않고 출발(사용자 11-14 질문 없앰 — 예전 "질문 대기 중" 칸): 명령 직후 출발하는 중에 뺏기
             Departures.TestAutoGo = false;
             TestKit.PutInChest(w.Chest, "Wood", 20);
             GatherTest.Say($"!{n2} 나무 10", null);
             yield return new WaitForSeconds(1f);
             bool asked = Departures.AskedAt(w.Floki) >= 0;
-            yield return Steal(w, checks, errors, w.Floki, "질문 대기 중", () => Departures.AskedAt(w.Floki) >= 0);
-            checks.Add("질문 대기가 남아 있음", asked && Departures.AskedAt(w.Floki) >= 0);
-            GatherTest.Say("아니", null);
+            yield return Steal(w, checks, errors, w.Floki, "명령 직후 출발 중", null);
+            checks.Add($"재고 있어도 질문 없이 일함 ({w.Floki.Ai.Current})", !asked && Departures.AskedAt(w.Floki) < 0 && w.Floki.Ai.Current == WorkerAI.Mode.Work);
+            GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
 
             // 2) 남의 채팅: 가짜 이름, 호스트에 없는 캐릭터
@@ -117,8 +117,8 @@ namespace ValheimHelper
             bool fakeAsked = Departures.AskedAt(w.Floki) >= 0;
             threw |= !Handle(fake, "응");
             yield return new WaitForSeconds(1f);
-            checks.Add($"남의 명령·대답 (질문 {(fakeAsked ? "받음" : "없음")} → {w.Floki.Ai.Current})",
-                !threw && fakeAsked && Departures.AskedAt(w.Floki) < 0 && w.Floki.Ai.Current == WorkerAI.Mode.Work);
+            checks.Add($"남의 명령·대답 (질문 {(fakeAsked ? "받음" : "없음")} → {w.Floki.Ai.Current}, 예외 없음)",
+                !threw && !fakeAsked && Departures.AskedAt(w.Floki) < 0 && w.Floki.Ai.Current == WorkerAI.Mode.Work);
             GatherTest.Say("!멈춰", null);
             yield return new WaitForSeconds(1f);
             Departures.TestAutoGo = true;
