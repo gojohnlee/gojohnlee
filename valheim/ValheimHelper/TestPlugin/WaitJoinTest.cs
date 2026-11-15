@@ -42,7 +42,7 @@ namespace ValheimHelper
             finally
             {
                 Departures.TestIdleChores = false;
-                foreach (WorkerNpc n in new[] { w.Ragnar, w.Floki }) if (n != null && !n.IsDead()) n.Ai.Interrupt(); // 두 일꾼의 일(시험 일)을 접어 다음 시험이 환경 불량으로 안 걸리게
+                foreach (WorkerNpc n in new[] { w.Ragnar, w.Floki }) if (n != null && !n.IsDead()) { n.Ai.Interrupt(); n.Ai.Queue.Clear(); } // 두 일꾼의 일(시험 일)을 접어(대기열에도 안 남김 — 회차 711 B13: 다음 시험에서 다시 시작) 다음 시험이 환경 불량으로 안 걸리게
                 for (HelpQueue.Ask a = Brain.Help.Next(); a != null; a = Brain.Help.Next()) Brain.Help.Remove(a.Task);
                 Player.m_localPlayer.SetGhostMode(ghost);
                 TestKit.Restore(w);

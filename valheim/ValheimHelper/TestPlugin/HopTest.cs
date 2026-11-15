@@ -259,6 +259,16 @@ namespace ValheimHelper
             if (GatherJob.Unreachable == unreach0) yield break;
             checks.Add($"든 나무를 넣으러 감 ({ai.Job?.StepName})", ai.Job is GatherJob gr && gr.StepName == "Return");
 
+            // 그만둔 뒤에도 발밑(2m)에 굴러온 나무는 자동 줍기가 줍는다(회차 711: 합 4 → 5) → 주울 때마다 합을 다시 잼(넣는 중 복제는 그대로 잡힘)
+            int late = 0;
+            System.Action<WorkerNpc, ZDOID> onPick = (n, _) =>
+            {
+                if (n != w.Ragnar) return;
+                total = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
+                late++;
+            };
+            WorkerNpc.TestPicked += onPick;
+
             // 발은 계속 묶임: 귀환 걷기가 상한만큼 막히면 깃발로 순간이동
             int jumps0 = ai.Jumps;
             yield return TestKit.WaitFor(() => Utils.DistanceXZ(w.Ragnar.transform.position, w.Home) < 5f, 120f);
@@ -271,8 +281,9 @@ namespace ValheimHelper
             bool said = false;
             for (int i = heard0; i < w.Heard.Count; i++) said |= TestKit.SaidKey(w.Heard[i], w.Ragnar.Personality, "cantReach");
             checks.Add("\"갈 수가 없어요\" 말함", said);
+            WorkerNpc.TestPicked -= onPick;
             int after = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
-            checks.Add($"나무 개수 그대로 (짐 {Wood(w.Ragnar)}, 그만둘 때 합 {total} → 지금 합 {after})", after == total && Wood(w.Ragnar) == 0);
+            checks.Add($"나무 개수 그대로 (짐 {Wood(w.Ragnar)}, 그만둘 때 합 {total} → 지금 합 {after}, 그만둔 뒤 주움 {late}번)", after == total && Wood(w.Ragnar) == 0);
         }
     }
 }

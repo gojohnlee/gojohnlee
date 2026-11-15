@@ -368,8 +368,15 @@ namespace ValheimHelper
             yield return new WaitForSeconds(6f);
             var rrb = w.Ragnar.GetComponent<Rigidbody>(); // TeleportTo로는 집 안에 남은 적 있음(회차 351) → 몸을 직접
             w.Ragnar.transform.position = outAt; rrb.position = outAt; rrb.linearVelocity = Vector3.zero;
-            yield return new WaitForSeconds(1f);
-            checks.Add($"문간 단계: 문 열림·플레이어 문간·일꾼 밖 (s_state {dz.GetInt(ZDOVars.s_state)}, 플레이어 문에서 {Utils.DistanceXZ(w.Player.transform.position, gap):0.0}m, 일꾼 안 {In(w.Ragnar.transform.position)})",
+            // 쉬는 일꾼이 1초 사이 제자리(집 안)로 걸어 들어가며 문간의 플레이어를 밀었다(E107, 회차 711·712 연속) → 준비 1초 동안 둘 다 제자리에 묶음
+            int pins = 0;
+            for (float until = Time.time + 1f; Time.time < until;)
+            {
+                if (In(w.Ragnar.transform.position)) { pins++; w.Ragnar.transform.position = outAt; rrb.position = outAt; rrb.linearVelocity = Vector3.zero; }
+                if (Utils.DistanceXZ(w.Player.transform.position, gap) > 0.4f) { w.Player.transform.position = gap; prb.position = gap; prb.linearVelocity = Vector3.zero; }
+                yield return null;
+            }
+            checks.Add($"문간 단계: 문 열림·플레이어 문간·일꾼 밖 (s_state {dz.GetInt(ZDOVars.s_state)}, 플레이어 문에서 {Utils.DistanceXZ(w.Player.transform.position, gap):0.0}m, 일꾼 안 {In(w.Ragnar.transform.position)}, 다시 내놓음 {pins}번·{w.Ragnar.Ai.Current})",
                 dz.GetInt(ZDOVars.s_state) == openSt && !In(w.Ragnar.transform.position));
             tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
             bool shutOnPlayer = false;

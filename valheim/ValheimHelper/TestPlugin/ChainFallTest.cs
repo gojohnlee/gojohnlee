@@ -56,6 +56,14 @@ namespace ValheimHelper
                 if (hi - lo < bestSpread) { bestSpread = hi - lo; dir = d; }
             }
             int cleared = HouseTest.ClearPlants(home + dir * 26f, 24f);
+            // 깃발 곁 나뭇가지를 주우면 "나무 1"이 나무를 안 베고 끝난다(회차 711·713: 2.6m 앞 Pickable_Branch, 2초) → 60m 안 나뭇가지를 치움
+            var branches = new HashSet<ZNetView>();
+            foreach (var col in Physics.OverlapSphere(home, 60f))
+            {
+                ZNetView nv = col.GetComponentInParent<ZNetView>();
+                if (nv != null && nv.IsValid() && nv.GetComponent<Pickable>() != null && nv.name.StartsWith("Pickable_Branch") && branches.Add(nv)) ZNetScene.instance.Destroy(nv.gameObject);
+            }
+            cleared += branches.Count;
             yield return new WaitForSeconds(1f);
             var row = new List<Vector3>();
             GameObject beech = ZNetScene.instance.GetPrefab("Beech1");
