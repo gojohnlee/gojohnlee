@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 686 · 11-15 · 모드 두 개 바꿈 끝 — 멀티 시험(B12)도 통과
+
+**요약**
+
+- [11-15] 모드 두 개 B12 멀티 PASS: 서버에도 시험 모드 DLL을 깔게 고치고 jointest·guestcmd·guestchest·guestrestart 1·2 전부 PASS — 모드 두 개 바꿈 끝(회차 686 — 커밋 9f574fec · vh-b12 PASS 5/5)
+
+**자세히**
+
+- 멀티 시험 서버 설치(scripts/vh-server.ps1 install)가 본 모드 DLL만 복사하던 것을, 옆에 시험 모드 DLL(ValheimHelperTest.dll)이 있으면 같이 복사하게 고침(없으면 서버에서 뺌).
+- scripts/vh-b12.ps1 -Dll dist: vh_jointest 5/5 · vh_guestcmdtest 8/8 · vh_guestchesttest 10/10 · vh_guestrestart1 7/7 → 서버 재시작 → vh_guestrestart2 9/9. 로그 오류는 잡음(Unity log writer)뿐.
+- "모드 두 개로" 요청 ①~⑤ 끝, ⑥은 "플레이용 빌드 valheim-stable" 요청에 합침. 다음은 "리팩터링 허용" 덩어리.
+
 ### 회차 685 · 11-15 · 모드 두 개 전체 회귀 거의 끝, 시험 셋 고침
 
 **요약**
