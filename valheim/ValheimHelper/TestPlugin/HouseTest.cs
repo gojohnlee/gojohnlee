@@ -28,9 +28,14 @@ namespace ValheimHelper
             }
             var w = new TestKit.World();
             var made = new List<GameObject>();
+            // 회차 694: 제련소가 내보낸 구리를 곁의 플레이어가 자동 줍기로 먼저 주움(새 물건 구리 알림, 일꾼 짐 0) → 시험 동안 끔
+            var autoPick = HarmonyLib.AccessTools.Field(typeof(Player), "m_enableAutoPickup");
+            object autoPick0 = autoPick?.GetValue(null);
+            autoPick?.SetValue(null, false);
             try { yield return Body(w, checks, made); }
             finally
             {
+                if (autoPick0 != null) autoPick.SetValue(null, autoPick0);
                 foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
                 TestKit.ClearBaseStock(w, "Wood", "LeatherScraps", "DeerHide", "Bow");
                 TestKit.Restore(w);

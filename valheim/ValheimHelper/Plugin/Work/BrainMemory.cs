@@ -15,7 +15,7 @@ namespace ValheimHelper
         // 지식은 본 구역마다 늘어 커진다 → 일꾼 ZDO에 두면 손님에게 통째로 계속 보내져 다른 ZDO가 막힘(E052, 회차 309).
         // 파일은 월드 폴더 곁(worlds_local/<월드>.vh-memory): 폴더 안은 게임이 이름 바꿀 때 모르는 파일을 지움(SaveSystem.RenameDirectory),
         // 곁의 모르는 확장자는 월드 목록이 안 봄(SaveSystem.IsWorldSaveExtension). 게임 월드 백업에는 안 들어감.
-        /// <summary>집 안 길 기억(요청 11-15, 기억 파일 판 2). 길 찾기 연결(③)은 아직.</summary>
+        /// <summary>집 안 길 기억(요청 11-15, 기억 파일 판 2). 건축 바뀜·나이로 지우기는 BrainPaths.cs, 길 찾기 연결은 아직.</summary>
         public static PathMemory Paths { get { Get(); return s_paths; } }
         static readonly int[] MemoryKeys = { Key.GetStableHashCode(), KeyPlaces.GetStableHashCode(), KeyFoes.GetStableHashCode() };
         /// <summary>월드 불러올 때 읽은 지식 구역 수(시험용).</summary>
@@ -78,6 +78,8 @@ namespace ValheimHelper
                 catch (System.Exception e) { Plugin.Log.LogWarning("E072 저장 전 확인 못 함: " + e.Message); }
                 if (s_k != null && s_for != ZDOMan.instance) Plugin.Log.LogInfo("일꾼 기억 저장 건너뜀: ZDOMan 바뀜");
                 if (s_k == null || s_for != ZDOMan.instance || s_file == null || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 안 불러왔으면 파일·옛 ZDO 그대로
+                int pruned = s_paths?.Prune(ZNet.instance.GetTimeSeconds(), PathMaxAge) ?? 0;
+                if (pruned > 0) Plugin.Log.LogInfo($"길 기억 오래된 것 지움: {pruned}개");
                 var m = new MemoryFile { Knowledge = s_k.Save(), Places = s_places.Save(), Foes = s_foes.Save(), Paths = s_paths?.Save() ?? "" };
                 try
                 {
