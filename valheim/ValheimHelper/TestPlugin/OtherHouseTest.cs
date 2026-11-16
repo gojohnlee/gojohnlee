@@ -136,11 +136,14 @@ namespace ValheimHelper
             if (reach.Count < 3) yield break;
             Component hi = lo, c1 = reach[0], c2 = reach[1];
             float far = 0f;
+            foreach (var s in reach) if (s.transform.position.y > hi.transform.position.y) hi = s;
+            bool Ends(Component c) => reach.Count >= 4 && (c == hi || c == lo);   // 회차 771: B와 C가 같은 상자면 B→C가 0초 다리(지은 집)
             foreach (var s in reach)
             {
-                if (s.transform.position.y > hi.transform.position.y) hi = s;
+                if (Ends(s)) continue;
                 foreach (var t in reach)
                 {
+                    if (Ends(t)) continue;
                     float d = Utils.DistanceXZ(s.transform.position, t.transform.position);
                     if (d > far) { far = d; c1 = s; c2 = t; }
                 }
@@ -148,7 +151,7 @@ namespace ValheimHelper
             TestRunner.Log($"걸을 곳: A 낮음 {Name(lo)} · B 높음 {Name(hi)} · C {Name(c1)} · D {Name(c2)} (C·D 사이 {far:0.0}m)");
             int tele0 = Teleports();
             string[] names = { "A→B", "B→C", "C→D", "D→A" };
-            Component[] tos = { hi, c1, c2, lo };
+            Vector3[] tos = { hi.transform.position, c1.transform.position, c2.transform.position, lo.transform.position };   // 자리로 들고 감 — 회차 771: 걸음 중 살림 Component가 사라져 NRE
             var took = new float[2];
             int jumps = 0;
             for (int round = 0; round < 2; round++)
@@ -157,7 +160,7 @@ namespace ValheimHelper
                 float worst = 0f;
                 for (int i = 0; i < names.Length; i++)
                 {
-                    Vector3 goal = tos[i].transform.position;
+                    Vector3 goal = tos[i];
                     ClearWild(center); // 회색 난쟁이가 오면 도망·순간이동이 걸음에 섞임(회차 698 첫 판) — vh_newerahouse처럼 다리마다 치움
                     var walk = new ExploreTest.WalkJob(ai, goal, true) { Stay = true };
                     var rec = WalkRecorder.Start(w.Ragnar, cols);
@@ -181,6 +184,9 @@ namespace ValheimHelper
             }
             checks.Add($"2바퀴(기억 뒤)가 1바퀴보다 안 느림 ({took[0]:0.0} → {took[1]:0.0}초)", took[1] <= took[0] * 1.25f + 3f);
             checks.Add($"집 안 순간이동 없음 (라그나 {jumps}, 전체 {Teleports() - tele0})", jumps == 0);
+            int piecesNow = 0;
+            foreach (var p in Object.FindObjectsByType<Piece>(FindObjectsSortMode.None)) if (Utils.DistanceXZ(p.transform.position, center) <= Radius) piecesNow++;
+            checks.Add($"걷는 동안 집이 안 무너짐 (조각 {pieces} → {piecesNow})", piecesNow >= pieces - 2);   // 회차 771: 띄워 지은 집이 받침 없이 무너져 벽을 뚫고 걸은 듯 보임
 
             // E108: 바깥문마다 안쪽 2m·옆 0.6m에서 바깥 4m로 나가기 — 문 닫힘·열림 1·열림 -1 셋(2바퀴 출발이 벽 안이면 wood_gate에서 8초 포기)
             var doorList = new List<Door>();

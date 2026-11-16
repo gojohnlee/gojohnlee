@@ -17,7 +17,7 @@ namespace ValheimHelper
 
         const string World = "vh_house_TheNewEra";
         const int NX = 6, NZ = 5;
-        const float C = 2f, Y0 = 0.2f, H = 2f;   // 1층 바닥 윗면(땅 위 0.2m), 층 높이 = 벽 한 장
+        const float C = 2f, Y0 = 0f, H = 2f;   // 1층 바닥 윗면 = 고른 땅(회차 771: 0.2m 띄우니 땅에 안 닿아 받침 0 → 다시 불러올 때 다 무너짐), 층 높이 = 벽 한 장
         static Vector3 P;
         static int made, missing;
         static readonly List<Transform> snaps = new List<Transform>();
@@ -143,9 +143,8 @@ namespace ValheimHelper
             Thing("wood_door", 1 * C + 1f, 1 * C, 0, 0f);
             Thing("wood_door", 4 * C + 1f, 1 * C, 0, 0f);
             WallZ(1, 0, 0); WallZ(2, 0, 0);                                    // 현관 양옆(벽장·창고와 가름)
-            // z=4 선(복도 | 거실·계단방): i0~3 벽, i4 트임, i5 벽
+            // z=4 선(복도 | 거실·계단방): i0~3 벽, i4·i5 트임(i5 = 계단 입구 — 회차 771: 벽이 막아 2층 길이 안 남)
             for (int i = 0; i < 4; i++) WallX(i, 2, 0);
-            WallX(5, 2, 0);
             // x=8 선(거실 | 계단방): k2·k4 벽, k3 트임
             WallZ(4, 2, 0); WallZ(4, 4, 0);
             // 계단: 나무 계단 한 장 = 1m 오름(회차 770 잼: 충돌체 높이 1.12) → 두 장 이어 계단방 i5에서 북쪽으로 (5,2)→(5,3), 2층 구멍 = 둘
