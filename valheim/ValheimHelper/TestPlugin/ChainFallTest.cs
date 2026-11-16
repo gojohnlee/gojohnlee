@@ -112,7 +112,22 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job is GatherJob, 15f);
             checks.Add("나무 일 받음", w.Ragnar.Ai.Job is GatherJob);
             float t0 = Time.time;
-            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is GatherJob), 480f);
+            // E125: 통나무가 둘 넘게 생기고 3초 뒤(일꾼이 자기 통나무로 봄) 라그나에게서 가장 먼 것을 줄 옆 25m로 옮김 — 비탈로 굴러 15m 밖으로 나간 꼴
+            int rolled0 = GatherJob.RolledLogs;
+            float logsAt = -1f;
+            bool moved = false;
+            while (w.Ragnar.Ai.Job is GatherJob && Time.time - t0 < 480f)
+            {
+                if (!moved)
+                {
+                    var logs = new List<ZDO>();
+                    foreach (var z in Senses.Nearby(home + dir * 26f, 30f))
+                        if (ResourceCatalog.Get(z.GetPrefab()) is ResourceInfo i && i.Log) logs.Add(z);
+                    if (logs.Count >= 2 && logsAt < 0f) logsAt = Time.time;
+                    if (logsAt >= 0f && Time.time - logsAt > 3f && logs.Count > 0) moved = RollAway(logs, w.Ragnar.transform.position, row[0], side);
+                }
+                yield return new WaitForSeconds(0.5f);
+            }
             int chain = GatherJob.ChainFelled - chain0;
             int standing = 0;
             var left = new List<string>();
@@ -131,8 +146,32 @@ namespace ValheimHelper
             TestRunner.Log($"  연쇄 {chain}번, 선 나무 {standing}/{row.Count}, {Time.time - t0:0}초");
             checks.Add($"연쇄 쓰러짐 1번 이상 ({chain}번)", chain >= 1);
             checks.Add($"남은 통나무 0 (남음 {left.Count}, 건너뛰지 않은 것 {leftUnskipped})", leftUnskipped == 0);
+            checks.Add($"굴러간 자기 통나무를 따라감 (옮김 {moved}, 따라감 {GatherJob.RolledLogs - rolled0}번)", moved && GatherJob.RolledLogs > rolled0);
             checks.Add($"순간이동 없음 ({Teleports() - tp0}번)", Teleports() == tp0);
             checks.Add($"쪼갠 나무가 상자에 ({GatherTest.CountBase(w.Home, "Wood")}개)", GatherTest.CountBase(w.Home, "Wood") > 0);
+        }
+
+        /// <summary>일꾼에게서 가장 먼 통나무를 첫 나무 자리에서 줄 옆 25m(물 위 땅인 쪽)로 옮긴다.</summary>
+        static bool RollAway(List<ZDO> logs, Vector3 npc, Vector3 first, Vector3 side)
+        {
+            ZDO far = null;
+            foreach (var z in logs)
+                if (far == null || Utils.DistanceXZ(z.GetPosition(), npc) > Utils.DistanceXZ(far.GetPosition(), npc)) far = z;
+            ZNetView nv = ZNetScene.instance.FindInstance(far);
+            GameObject go = nv != null ? nv.gameObject : null;
+            if (go == null) return false;
+            foreach (float s in new[] { 1f, -1f })
+            {
+                Vector3 p = first + side.normalized * 25f * s;
+                if (!ZoneSystem.instance.GetGroundHeight(p, out float h) || h < ZoneSystem.instance.m_waterLevel + 0.5f) continue;
+                p.y = h + 0.5f;
+                go.transform.position = p;
+                if (go.GetComponent<Rigidbody>() is Rigidbody rb) { rb.position = p; rb.linearVelocity = Vector3.zero; }
+                far.SetPosition(p);
+                TestRunner.Log($"  통나무 {Name(far)}를 {p:F1}로 옮김(E125, 첫 나무에서 25m)");
+                return true;
+            }
+            return false;
         }
 
         static string Name(ZDO z) => ZNetScene.instance.GetPrefab(z.GetPrefab()) is GameObject g ? g.name : "?";

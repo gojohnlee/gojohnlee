@@ -311,6 +311,7 @@ namespace ValheimHelper
         }
 
         /// <summary>한 번 자기 통나무로 본 통나무 id. 비탈로 굴러 쓰러뜨린 자리에서 OwnLogRange 밖으로 나가도 놓치지 않게(E125).</summary>
+        public static int RolledLogs;
         readonly HashSet<ZDOID> m_ownIds = new HashSet<ZDOID>();
 
         /// <summary>자기 통나무가 굴러 모든 자리에서 OwnLogRange 밖이면 지금 자리를 새 자리로. 없어진(쪼개진·주운) id는 지운다.</summary>
@@ -323,6 +324,7 @@ namespace ValheimHelper
                 Vector3 p = ZDOMan.instance.GetZDO(id).GetPosition();
                 if (NearFelled(p) || Avoided(p) || m_book.Excluded(p.x, p.z)) continue;
                 NoteFelled(p);
+                RolledLogs++;
                 Plugin.Log.LogInfo($"자기 통나무가 굴러감 ({p.x:0.0},{p.y:0.0},{p.z:0.0}) — 그 자리를 자기 통나무 자리로(E125)");
             }
         }
