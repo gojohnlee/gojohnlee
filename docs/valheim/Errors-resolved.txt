@@ -1,5 +1,6 @@
 해결된 문제 (평소엔 읽지 않는다. 새 FAIL·예외가 나면 시험 이름·FAIL 문구로 grep → 발생 순서·시작 상태까지 대조한 뒤에만 Errors.txt로 다시 연다)
 한 줄 형식: ID | 시험명 | FAIL 문구 | 원인 | 수정(회차·커밋) | 검증(원래 조건에서). 최근 → 과거. 2026-10-22 이전 것은 Errors.txt 전 기록에서 옮김(ID 없음).
+E119 | vh_mistlandstest | 검은 대리석 5개가 상자에 (0개, 420초) (회차 719 B8c) | 시험 쪽: 가장 가까운 '대리석 또는 부드러운 조직' 유해를 골라 보여 줘, 뇌만 있는 유해면 대리석을 몰라 탐험부터 함(대사 '본 적이 없군') | 회차 720 커밋 b354af5c(대리석 나오는 유해만) | vh_mistlandstest 19/19 PASS(103초)
 E117 | vh_refilltest | 구리 단계 "일 끝남"·"채워진 뒤엔 다시 안 만듦 (, GatherJob)"·세트 단계 "개수 보존 Wood=23" (회차 719 B4) | 시험 쪽: 상자 창 단계에서 나무 기준치를 20→30으로 올리면 플로키가 10개 보충 채집을 시작, Refill.Off()가 시작된 일은 안 멈춰 구리·세트 단계까지 나무를 날라 옴 | 회차 720 커밋 c6026823(확인 전 상자 나무 30으로) | vh_refilltest 30/30 PASS
 E116 | vh_fighttest | 잡은 회색난쟁이 떨굼 주움 (가방 +0, 땅에 남음 4, 20초·싸움 포함 20초 — 다른 적 없이) | 대상이 죽은 프레임에 판단(Judge)이 먼저 돌아 적 없음으로 싸움을 끝내며 NoteKill(줍기 목록)을 건너뜀 | 회차 715 커밋 9302a1c4(Guard.Judge도 NoteKill, '떨굼 기다림' 로그 줄) | vh_fighttest 18/18·vh_hunttest 21/21 PASS
 E115 | vh_chainfalltest | 연쇄 쓰러짐 1번 이상 (0번) 두 판 연속 | 일꾼이 쓰러뜨린 나무를 다음 AI 틱(UpdateWork)에서야 자기 통나무로 적어, 그 사이 넘어지던 통나무가 옆 나무에 부딪히면 일꾼 통나무로 안 봄 | 회차 715 커밋 9302a1c4(TreeBase.RPC_Damage 표시 → SpawnLog 때 바로 FelledNow) | vh_chainfalltest 7/7 PASS(연쇄 3번)·vh_woodtest 14/14
