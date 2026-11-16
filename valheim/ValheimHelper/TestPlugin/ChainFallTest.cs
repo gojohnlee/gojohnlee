@@ -87,7 +87,15 @@ namespace ValheimHelper
                     p.y = h;
                     Object.Instantiate(beech, p, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
                 }
-            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~39m 5m 간격(+양옆 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
+            // 양옆 3m는 ±31°까지만 — 회차 722 B13b 첫 나무가 줄에서 66° 비껴 넘어져 연쇄 0번(일꾼이 옆에서 침) → 첫 나무 둘레 5m ±55°·±80°에도(집에서 14m보다 멀어 첫 목표는 그대로)
+            foreach (float a in new[] { -80f, -55f, 55f, 80f })
+            {
+                Vector3 p = row[0] + Quaternion.Euler(0f, a, 0f) * dir * 5f;
+                ZoneSystem.instance.GetGroundHeight(p, out float h);
+                p.y = h;
+                Object.Instantiate(beech, p, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+            }
+            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~39m 5m 간격(+양옆 4·첫 나무 둘레 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
             yield return new WaitForSeconds(2f);
 
             // 2) 나무 1 — 첫 나무가 바깥으로 넘어져 연쇄
