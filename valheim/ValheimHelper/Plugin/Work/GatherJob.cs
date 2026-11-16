@@ -222,6 +222,7 @@ namespace ValheimHelper
             if (m_step == Step.Hunt && s != Step.Hunt) m_npc.StopDraw();
             m_step = s;
             m_stepTime = 0f;
+            m_returnQuick = 0;
             // 이전 단계의 걷기 방향이 남으면 계속 걸어간다(0.3.2: 돌을 줍고 한참 갔다가 돌아옴).
             m_ai.StopMoving();
             m_bestDist = float.MaxValue;
@@ -577,6 +578,10 @@ namespace ValheimHelper
 
         // ---- 돌아가서 넣기 ----
 
+        /// <summary>귀환 중 빠른 막힘 횟수(ReturnQuickPer번마다 한 번만 귀환 막힘 한도에 셈, E120).</summary>
+        int m_returnQuick;
+        const int ReturnQuickPer = 3;
+
         bool UpdateReturn(float dt)
         {
             if (m_npc.InInterior())
@@ -591,8 +596,16 @@ namespace ValheimHelper
             }
             Vector3 home = m_npc.Home;
             if (WalkVia(dt, home, 2.5f) || Utils.DistanceXZ(home, m_npc.transform.position) < 3f) { m_book.HomeReached(); PortalHome(); Go(Step.Deposit); return true; }
-            if (Stuck(dt, PortalOr(home)) || QuickStuck(dt, PortalOr(home), 2.5f))
+            bool slow = Stuck(dt, PortalOr(home));
+            if (slow || QuickStuck(dt, PortalOr(home), 2.5f))
             {
+                // 빠른 막힘(1초)은 3번에 1번만 한도에 셈 — 5초 막힘용 한도(HomeWalkTries 2번)를 그대로 쓰면 큰 돌에 2~3초 붙어도
+                // 비켜 가기 전에 깃발로 옮김(E120 회차 722 vh_coppertest: 88m 귀환 첫 걸음 BossStone에 빠른 막힘 2번 → 순간이동). 그 사이엔 길만 새로
+                if (!slow && ++m_returnQuick % ReturnQuickPer != 0)
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName}: 귀환 빠른 막힘 {m_returnQuick}번(집에서 {Utils.DistanceXZ(home, m_npc.transform.position):0.0}m) → 길 다시 {m_ai.BlockerAhead(home)}");
+                    return true;
+                }
                 // 막힘 복구(사용자 결정 2026-10-23): 귀환 걷기는 StuckBook.HomeWalkTries번까지(비켜 가기·점프는 걷기가 계속 함), 넘으면 깃발로 순간이동.
                 // 순간이동마저 안 되면 그 자리에서 쉰다("집에 못 가요") — 다시 걷기 되풀이 금지.
                 bool limit = m_book.HomeWalkFailed();
