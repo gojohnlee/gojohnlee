@@ -18,6 +18,9 @@ namespace ValheimHelper
         /// <summary>마주침 동안 셈에 든 적: 종류마다 동시에 본 최대 수·가장 높은 레벨.</summary>
         void Tally(Vector3 pos)
         {
+            // 도망 끝나고 다른 구역에서 처음 보는 종류와 붙으면 앞 마주침은 끝난 것(회차 717 minefoetest: 광산 시커 도망이 바깥 그레이링 싸움에 묻혀 안 적힘)
+            if (m_inEncounter && !Senses.ZoneOf(pos).Equals(m_encounterZone)
+                && m_foes.TrueForAll(c => !m_encounter.ContainsKey(Utils.GetPrefabName(c.gameObject)))) CloseEncounter();
             if (!m_inEncounter)
             {
                 m_inEncounter = true;

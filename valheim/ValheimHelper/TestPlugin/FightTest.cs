@@ -90,7 +90,7 @@ namespace ValheimHelper
             int ground = 0, seen = 0;
             // 싸우는 동안엔 줍지 않음(설계) — 밤에 다른 적이 끼면 그 시간은 안 셈, 모두 60초까지
             float all = 0f;
-            for (t = 0f; t < 20f && all < 60f; all += 0.5f)
+            for (t = 0f; t < 30f && all < 60f; all += 0.5f)
             {
                 yield return new WaitForSeconds(0.5f);
                 var gs = claude.Ai.Guard.StateName; if (gs != "Fight" && gs != "Back" && gs != "Flee") t += 0.5f;
