@@ -95,7 +95,7 @@ namespace ValheimHelper
             {
                 ResourceInfo info = ResourceCatalog.Get(z.GetPrefab());
                 foreach (string item in info.Produces) { kinds.TryGetValue(item, out int n); kinds[item] = n + 1; }
-                if (!info.Produces.Contains("BlackMarble") && !info.Produces.Contains("Softtissue")) continue;
+                if (!info.Produces.Contains("BlackMarble")) continue; // 명령은 대리석 — 뇌(Softtissue)만 있는 유해를 보이면 대리석을 몰라 탐험부터 함(회차 719 E119 "본 적이 없군")
                 if (!info.Prefab.StartsWith("giant_")) continue; // 드베르그 기둥(blackmarble_post01)은 유해가 아님(E042)
                 count++;
                 float d = Utils.DistanceXZ(w.Home, z.GetPosition());
@@ -110,7 +110,7 @@ namespace ValheimHelper
             Vector3 eye = g + (w.Home - g).normalized * 30f; // 유해에서 30m 떨어진 곳(시야 40m 안)
             Senses.Look(eye);
             var mem = Brain.Get().Get(Senses.ZoneOf(g));
-            bool known = mem != null && (mem.Items.ContainsKey("BlackMarble") || mem.Items.ContainsKey("Softtissue"));
+            bool known = mem != null && mem.Items.ContainsKey("BlackMarble");
             checks.Add("안개 속 30m에서 본 거인 유해가 지식에 적힘", known);
             checks.Add("가 본 곳 바이옴에 안개땅이 적힘", Brain.Get().KnowsBiome((int)Heightmap.Biome.Mistlands));
             return g;
