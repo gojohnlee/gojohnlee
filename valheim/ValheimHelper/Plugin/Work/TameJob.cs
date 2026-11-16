@@ -71,6 +71,7 @@ namespace ValheimHelper
         /// </summary>
         public void Stop(bool pause)
         {
+            Unherd();
             if (m_following && m_animal != null) m_animal.GetComponent<MonsterAI>().SetFollowTarget(null);
             m_following = false;
             if (!pause) ReturnFood();
@@ -273,7 +274,7 @@ namespace ValheimHelper
             m_animal.GetComponent<MonsterAI>().SetFollowTarget(m_npc.gameObject);
             m_following = true;
             m_mate = PenMate(m_animal, m_pen);
-            m_way = new DoorWay { PenGate = true }; m_fenced = false; m_wentIn = false;
+            m_way = new DoorWay { PenGate = true }; m_fenced = false; m_wentIn = false; m_settleT = -1f;
             Go(Step.Lead);
             return true;
         }
@@ -281,6 +282,7 @@ namespace ValheimHelper
         // ── 우리 상자까지 걸어감(짐승이 따라옴, 8m 넘게 처지면 기다림) → 다 오면 그 자리를 순찰 지점으로 풀어 둠(바닐라 "머물러" 꼴) ──
         static System.Action<BaseAI, Vector3> s_setPatrol;
         static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, float> s_moveTimer = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, float>("m_randomMoveUpdateTimer");
+        static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, bool> s_moveReached = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, bool>("m_reachedRandomMoveTarget");
 
         /// <summary>순찰 지점을 그 점으로(바닐라 private BaseAI.SetPatrolPoint(Vector3) — ZDO s_patrol·s_patrolPoint). 떠도는 범위는 m_randomMoveRange(멧돼지 10m) 둘레, 그 두 배 넘으면 돌아옴.</summary>
         internal static void PenAt(BaseAI ai, Vector3 at)
@@ -295,9 +297,11 @@ namespace ValheimHelper
         static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, Vector3> s_moveTarget = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, Vector3>("m_randomMoveTarget");
         /// <summary>울타리 우리에 풀 때: 떠돌기 목표를 지금 자리로, 다음 고르기는 한 간격(멧돼지 30초) 뒤로 — 바로 고르면 순찰점 둘레 2.8~4m 목표가 벽 밖일 때
         /// 일꾼이 나가는 사이 열린 문으로 길을 찾아 나감(회차 744 시험 13). 문이 닫힌 뒤엔 벽 밖 목표로 길이 없어 안에 머묾.</summary>
-        static void Hold(BaseAI ai)
+        static void Hold(BaseAI ai) => Hold(ai, ai.transform.position);
+        static void Hold(BaseAI ai, Vector3 at)
         {
-            s_moveTarget(ai) = ai.transform.position;
+            s_moveTarget(ai) = at;
+            s_moveReached(ai) = false;   // 바닐라는 이 표시가 true면 새 목표를 고를 때까지 안 걸음(BaseAI.RandomMovement) — 문간에 그대로 섬(회차 746)
             s_moveTimer(ai) = ai.m_randomMoveInterval;
         }
 
@@ -329,43 +333,116 @@ namespace ValheimHelper
 
         static Vector3 PatrolOf(Character c) => c.GetComponent<ZNetView>().GetZDO().GetVec3(ZDOVars.s_patrolPoint, c.transform.position);
 
+
+        /// <summary>E128 회차 745: 데려오다 시간 넘김 — 따라오기를 안 풀면 짐승이 집 가는 일꾼을 계속 따라감(m_follow는 저장 안 돼 불러오기 전까지). 선 자리 둘레에 풂.</summary>
+        void Release()
+        {
+            Unherd();
+            if (m_animal == null) return;
+            var mai = m_animal.GetComponent<MonsterAI>();
+            if (mai == null) return;
+            mai.SetFollowTarget(null);
+            PenAt(mai, m_animal.transform.position);
+            m_following = false;
+        }
+
+        float m_settleT = -1f; Vector3 m_settleIn;
+        float m_slowT, m_herdT = -1f; bool m_herdIn; // m_herdIn: 문 바깥 앞에 닿음 — 그 뒤엔 안쪽으로만(문짝이 레이캐스트를 가려 되돌아가지 않게)
+        /// <summary>E128 회차 746: 일꾼이 문 지나 안에 있는데 따라오던 짐승이 문 밖에서 2초 넘게 멈춤(열린 문 둘레 길 못 찾음 — MoveTo는 길 없으면 StopMoving) → 짐승 AI를 잠시 끄고 일꾼 문 지나기처럼 수평 MoveTowards로 문 바깥 앞 → 안쪽 2.5m, 10초 상한·못 하면 되돌림.</summary>
+        void Herd(float dt, Vector3 at, Vector3 inward, bool past)
+        {
+            MonsterAI mai = m_animal.GetComponent<MonsterAI>();
+            Vector3 mid = DoorWay.Middle(m_way.Gate);
+            if (m_herdT < 0f)
+            {
+                bool near = Utils.DistanceXZ(at, mid) < 6f && !past;
+                m_slowT = near && m_animal.GetVelocity().magnitude < 0.5f ? m_slowT + dt : 0f;
+                if (m_slowT < 2f) return;
+                m_herdT = 0f; m_herdIn = false; mai.enabled = false;
+                Diag.Log($"DIAG {m_npc.NpcName} 길든 {m_animal.m_name} 문 밖에서 멈춤 → 문으로 몰기: 자리 {at:F1}·문틀 {mid:F1}·길 짐승 {mai.m_pathAgentType}");
+            }
+            m_herdT += dt;
+            Vector3 rel = at - mid; rel.y = 0f;
+            float depth = Vector3.Dot(rel, inward), side = (rel - inward * depth).magnitude;
+            if (past || m_herdT > 10f) { Diag.Log($"DIAG {m_npc.NpcName} 문으로 몰기 끝 {m_herdT:0.0}초: 안쪽 {depth:0.0}m·옆 {side:0.0}m"); Unherd(); return; }
+            Vector3 inPt = mid + inward * 2.5f, outPt = mid - inward * 1.2f; // 문 옆 벽 곁이면 먼저 문 바깥 앞으로(회차 746)
+            if (Utils.DistanceXZ(at, outPt) < 0.6f || side < 0.5f && depth > -1.5f) m_herdIn = true; // 문 앞 통로에 들어선 뒤에만 안으로(벽에 붙으면 Linecast가 벽 충돌체 안에서 시작해 못 잡음)
+            Vector3 to = m_herdIn ? inPt : outPt;
+            Vector3 dir = to - at; dir.y = 0f;
+            mai.MoveTowards(dir, false);
+        }
+
+        void Unherd()
+        {
+            m_slowT = 0f;
+            if (m_herdT < 0f) return;
+            m_herdT = -1f;
+            if (m_animal == null) return;
+            var mai = m_animal.GetComponent<MonsterAI>();
+            mai.StopMoving(); mai.enabled = true;
+        }
         bool UpdateLead(float dt)
         {
+            if (m_settleT >= 0f)   // E128 회차 746·747: 풀자마자 나가면 문간·문 축(나가는 길)에 선 짐승을 밀어 문 밖으로 냄 — 문에서 2.5m 넘게 들어가고 문 축에서 1m 넘게 비킬 때까지(8초) 서서 기다림
+            {
+                m_settleT += dt; m_ai.StopMoving();
+                float depth = 99f, aside = 99f;
+                if (m_way.Gate != null) { Vector3 r = m_animal.transform.position - DoorWay.Middle(m_way.Gate); r.y = 0f; depth = Vector3.Dot(r, m_settleIn); aside = (r - m_settleIn * depth).magnitude; }
+                if (depth > 2.5f && aside > 1f || m_settleT > 8f) { Diag.Log($"DIAG {m_npc.NpcName} 푼 {m_animal.m_name} 안쪽 {depth:0.0}m·옆 {aside:0.0}m까지 기다림 {m_settleT:0.0}초"); m_settleT = -1f; Go(Step.Home); }
+                else m_ai.Face(m_animal.transform.position);
+                return true;
+            }
             if (m_pen == null) { Go(Step.Home); return true; }
             if (m_mate != null && (m_mate.IsDead() || !LivestockJob.InPen(m_mate, m_pen.transform.position))) m_mate = null;
             if (m_fenced && m_way.Passed == 0 && m_way.GaveUp) m_mate = null; // 문 지나기 전 문 길 포기 → 옛대로 상자 곁에 풂(지난 순간 "안에서도 가림" 포기는 무시)
             if (m_mate == null) m_fenced = m_wentIn = false;
             Vector3 pen = m_fenced ? PatrolOf(m_mate) : m_pen.transform.position, me = m_npc.transform.position, at = m_animal.transform.position;
             // 울타리 우리: 일꾼은 우리 가운데 너머(문 반대쪽 2.2m — 따라오는 짐승은 3m 뒤)까지 들어가고, 짐승이 문보다 1.5m 넘게 안쪽이면 풂(문 곁에서 풀면 일꾼이 나가는 사이 열린 문으로 떠나감, 회차 743)(열린 문 너머로 보인다고 문 밖에서 풀면 안 됨, 회차 742 시험)
-            Vector3 deep = pen; float stop = 2.5f; bool past = true;
+            Vector3 deep = pen, inward = Vector3.zero; float stop = 2.5f; bool past = true;
             if (m_fenced && m_way.Gate != null)
             {
                 Vector3 d = pen - DoorWay.Middle(m_way.Gate); d.y = 0f;
-                Vector3 ain = at - DoorWay.Middle(m_way.Gate); ain.y = 0f; past = Vector3.Dot(ain, d.normalized) > 1.5f && !DoorWay.Fenced(at, pen); deep = pen + d.normalized * 2.2f; stop = 1f;
+                inward = m_way.Gate.transform.forward; inward.y = 0f; inward.Normalize(); if (Vector3.Dot(inward, d) < 0f) inward = -inward; // 문짝 방향(DoorWay와 같음) — 순찰점 쪽은 비스듬할 수 있음(회차 746)
+                Vector3 ain = at - DoorWay.Middle(m_way.Gate); ain.y = 0f; past = Vector3.Dot(ain, inward) > 1.5f && !DoorWay.Fenced(at, pen); deep = DoorWay.Middle(m_way.Gate) + inward * Mathf.Max(Vector3.Dot(d, inward) + 2.2f, 4.5f); stop = 1f; // 순찰점이 문간(0.6m)이면 짐승이 문간에 서서 나가는 일꾼에게 밀려 나감(E128 회차 746) — 문에서 4.5m 넘게
             }
             if (m_fenced && m_way.Passed > 0) m_wentIn = true;
+            if (m_wentIn && m_way.Gate != null && !m_way.Busy) Herd(dt, at, inward, past); else Unherd();
             if (Utils.DistanceXZ(at, pen) < PenNear && (!m_fenced || m_wentIn && !m_way.Busy && past && !DoorWay.Blocked(m_animal, m_npc)))
             {
+                Unherd();
                 MonsterAI mai = m_animal.GetComponent<MonsterAI>();
                 mai.SetFollowTarget(null);
                 PenAt(mai, pen);   // 짐승 자리 말고 상자 자리(울타리 우리면 우리 가축의 순찰점) 둘레를 떠돌게(자리 기준이면 10m 밖으로 떠냄, 회차 375)
-                if (m_fenced) Hold(mai);
+                if (m_fenced)   // 문에서 3m 넘게 안쪽, 문 축에서 1.6m 옆(짐승이 있던 쪽)으로 걸어가 섬 — 문간·문 축에 서면 나가는 일꾼에게 밀려 나감(E128 회차 747)
+                {
+                    Vector3 mid = DoorWay.Middle(m_way.Gate), side = Vector3.Cross(Vector3.up, inward), r = at - mid; r.y = 0f;
+                    if (Vector3.Dot(r, side) < 0f) side = -side;
+                    Hold(mai, mid + inward * Mathf.Max(Vector3.Dot(pen - mid, inward), 3f) + side * 1.6f);
+                }
                 m_following = false;
                 Fed = 1;
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name}을 우리에 데려옴 {at}{(m_fenced ? $" — 울타리 안, 우리 가축 {m_mate.transform.position:F1}·순찰점 {pen:F1}·나 {me:F1}" : "")}");
-                Go(Step.Home);
+                if (m_fenced) { m_settleT = 0f; m_settleIn = inward; } else Go(Step.Home);
                 return true;
             }
             if (Utils.DistanceXZ(at, me) > 8f && !m_way.Busy || m_fenced && !m_wentIn && m_way.AtDoor(me) && Utils.DistanceXZ(at, me) > 3.5f) { m_ai.StopMoving(); m_ai.Face(at); }
             else if (m_mate != null && !m_wentIn && (Utils.DistanceXZ(pen, me) < 20f || m_way.Busy) && m_way.Steer(dt, m_npc, m_mate)) m_fenced = true; // 상자 곁에서 울타리가 우리 가축을 가리면 문 열고 들어가 그 순찰점까지 — 짐승은 따라옴(문은 열린 채, CloseDoors 끔)
             else if (Utils.DistanceXZ(deep, me) > stop) m_ai.MoveToPoint(dt, deep, stop * 0.8f, false);
             else m_ai.Face(at);
-            if (m_stepTime > LeadLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name} 우리까지 못 옴 {at}"); Go(Step.Home); }
+            if (m_stepTime > LeadLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name} 우리까지 못 옴 {at}"); Release(); Go(Step.Home); }
             return true;
         }
 
+        float m_homeDiag;
         bool UpdateHome(float dt)
         {
+            // E128 회차 745: 울타리 안에 푼 짐승이 집 가는 일꾼 곁(1m)까지 따라 나옴 — 무엇이 끄는지 2초마다
+            if (m_fenced && m_animal != null && m_stepTime < 30f && m_stepTime >= m_homeDiag)
+            {
+                m_homeDiag = m_stepTime + 2f;
+                var mai = m_animal.GetComponent<MonsterAI>(); var tm = m_animal.GetComponent<Tameable>();
+                Diag.Log($"DIAG {m_npc.NpcName} 푼 {m_animal.m_name} {m_stepTime:0}초: 자리 {m_animal.transform.position:F1}·나와 {Utils.DistanceXZ(m_animal.transform.position, m_npc.transform.position):0.0}m·따라감 {(mai != null && mai.GetFollowTarget() != null ? mai.GetFollowTarget().name : "-")}·표적 {(mai != null && mai.GetTargetCreature() != null ? mai.GetTargetCreature().name : "-")}·경보 {(mai != null && mai.IsAlerted())}·배고픔 {(tm != null && tm.IsHungry())}·떠돌기 목표 {s_moveTarget(mai):F1}·속도 {m_animal.GetVelocity().magnitude:0.0}");
+            }
             return JobKit.ArriveHome(m_npc, dt, m_stepTime, HomeLimit) ? Done() : true;
         }
 

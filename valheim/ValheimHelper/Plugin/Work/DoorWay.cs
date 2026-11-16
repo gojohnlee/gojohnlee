@@ -385,7 +385,8 @@ namespace ValheimHelper
                     ZNetView pv = o.Door != null ? o.Door.GetComponent<ZNetView>() : null;
                     if (!o.Pen || o.Shut || o.By == null || o.By.IsDead() || pv == null || !pv.IsValid() || !Dungeons.IsOpen(pv.GetZDO())) continue;
                     Vector3 me = o.By.transform.position;
-                    if (Vector3.Dot(me - o.Mid, o.Out) < 3f || SomeoneAt(o.Mid, null)) continue;
+                    // E128 회차 745: 울타리 문간엔 사람·일꾼만 기다림 — 우리 가축이 열린 문 둘레를 떠돌면(순찰점 둘레 7~10m 목표, 우리는 6m) 문간 1.5m를 오가며 30초 넘게 안 닫힘
+                    if (Vector3.Dot(me - o.Mid, o.Out) < 3f || SomeoneAt(o.Mid, null, true)) continue;
                     pv.InvokeRPC("UseDoor", false);
                     s_opened.RemoveAt(i);
                     Closed++;
@@ -440,10 +441,10 @@ namespace ValheimHelper
         }
 
         /// <summary>문틀 가운데 1.5m 안에 누가 서 있나(except는 뺌).</summary>
-        static bool SomeoneAt(Vector3 mid, Character except)
+        static bool SomeoneAt(Vector3 mid, Character except, bool people = false)
         {
             foreach (var c in Character.GetAllCharacters())
-                if (c != null && c != except && !c.IsDead() && Utils.DistanceXZ(c.transform.position, mid) < 1.5f && Mathf.Abs(c.transform.position.y - mid.y) < 2f) return true;
+                if (c != null && c != except && !c.IsDead() && (!people || c is Player || c is WorkerNpc) && Utils.DistanceXZ(c.transform.position, mid) < 1.5f && Mathf.Abs(c.transform.position.y - mid.y) < 2f) return true;
             return false;
         }
 
