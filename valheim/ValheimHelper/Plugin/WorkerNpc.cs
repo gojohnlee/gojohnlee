@@ -239,6 +239,16 @@ namespace ValheimHelper
             return speed > 0f;
         }
 
+        /// <summary>화살·볼트가 나가는 자리(바닐라 Attack.GetProjectileSpawnPoint — 눈이 아니라 공격 기준 뼈 + 높이·앞·오른 값, E104).</summary>
+        public Vector3 ShotOrigin(ItemDrop.ItemData w)
+        {
+            Attack a = w?.m_shared.m_attack;
+            if (a == null) return GetEyePoint();
+            Transform o = a.m_attackOriginJoint.Length > 0 ? Utils.FindChild(GetVisual().transform, a.m_attackOriginJoint) : null;
+            if (o == null) o = transform;
+            return o.position + transform.up * a.m_attackHeight + transform.forward * a.m_attackRange + transform.right * a.m_attackOffset;
+        }
+
         /// <summary>진단용: 오른손·왼손에 든 것, 당긴 시간.</summary>
         public string HandsDiag() => $"{m_rightItem?.m_shared.m_name}/{m_leftItem?.m_shared.m_name} 당김 {m_attackDrawTime:0.0}";
 

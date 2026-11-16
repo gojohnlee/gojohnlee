@@ -649,7 +649,8 @@ namespace ValheimHelper
         public const float ShootMin = 5f;
         public static int Shots; // 시험용: 호위병이 싸움에서 쏜 수
         bool m_rangedOff, m_shotCheck;
-        float m_meleeUntil, m_shotAt;
+        float m_meleeUntil, m_shotAt, m_lastShotFoeHealth;
+        Vector3 m_lastOrigin;
         int m_shotAmmo, m_dryShots;
 
         /// <returns>true = 이번 틱은 쏘기(겨눔·당김·장전), false = 근접으로.</returns>
@@ -661,7 +662,8 @@ namespace ValheimHelper
             ItemDrop.ItemData best = m_npc.FightingRanged();
             if (m_far || d <= ShootMin || d > Archery.ShootRange || best == null) { m_npc.StopDraw(); return false; }
             Vector3 eye = m_npc.GetEyePoint(), center = m_target.GetCenterPoint();
-            if (Physics.Linecast(eye, center, GatherJob.ShotMask)) { m_npc.StopDraw(); m_meleeUntil = Time.time + 2f; return false; } // 가리면 근접처럼 다가가다 2초 뒤 다시 봄
+            if (Physics.Linecast(eye, center, GatherJob.ShotMask) || Physics.Linecast(m_npc.ShotOrigin(best), center, GatherJob.ShotMask, QueryTriggerInteraction.Ignore))
+            { m_npc.StopDraw(); m_meleeUntil = Time.time + 2f; return false; } // 눈 또는 볼트 나가는 자리에서 가리면 근접처럼 다가가다 2초 뒤 다시 봄
             if (m_npc.GetCurrentWeapon() != best)
             {
                 m_npc.DropBlock();
@@ -674,7 +676,8 @@ namespace ValheimHelper
             Vector3 aim = center;
             if (m_npc.ProjectileFlight(w, out float speed, out float gravity))
             {
-                Vector3 rel = center - eye, v = m_target.GetVelocity();
+                // 볼트는 눈이 아니라 ShotOrigin에서 눈이 보는 방향으로 나간다 → 겨눔은 그 자리 기준, 방향만 눈에서 봄
+                Vector3 rel = center - m_npc.ShotOrigin(w), v = m_target.GetVelocity();
                 if (Archery.Aim(rel.x, rel.y, rel.z, v.x, v.y, v.z, speed, gravity, out float ax, out float ay, out float az))
                     aim = eye + new Vector3(ax, ay, az);
             }
@@ -683,6 +686,15 @@ namespace ValheimHelper
             {
                 // 쐈는데 화살·볼트가 안 나갔다(공격 애니메이션의 발사 순간이 안 옴): 세 번 잇달면 원거리는 접는다
                 m_shotCheck = false;
+                GameObject bolt = w.m_lastProjectile;
+                if (bolt != null && !m_target.IsDead() && m_target.GetHealth() >= m_lastShotFoeHealth)
+                {
+                    // 빗나감(E104): 볼트가 멈춘 자리·곁 충돌체·무기 값
+                    Vector3 bp = bolt.transform.position;
+                    Collider[] near = Physics.OverlapSphere(bp, 0.3f, GatherJob.ShotMask);
+                    Attack a = w.m_shared.m_attack;
+                    Diag.Log($"DIAG {m_npc.NpcName} 빗나감: {w.m_shared.m_name} 볼트 {bp:F1}·적 {m_target.GetCenterPoint():F1}·적과 {Vector3.Distance(bp, m_target.GetCenterPoint()):0.0}m·곁 {(near.Length > 0 ? near[0].name : "-")}·나간 자리 {m_lastOrigin:F1}·높이 {a.m_attackHeight:0.00} 앞 {a.m_attackRange:0.00} 오른 {a.m_attackOffset:0.00} 뼈 '{a.m_attackOriginJoint}'·발사각 {a.m_launchAngle:0}·몸방향 {a.m_useCharacterFacing}·정확도 {a.m_projectileAccuracyMin:0}~{a.m_projectileAccuracy:0} 스킬 {a.m_skillAccuracy}");
+                }
                 if (Gear.CountArrows(m_npc.GetInventory(), w) >= m_shotAmmo)
                 {
                     m_dryShots++;
@@ -698,6 +710,8 @@ namespace ValheimHelper
             m_shotAmmo = Gear.CountArrows(m_npc.GetInventory(), w);
             if (!(crossbow ? m_npc.StartAttack(null, false) : m_npc.ReleaseBow())) return true;
             Shots++;
+            m_lastShotFoeHealth = m_target.GetHealth();
+            m_lastOrigin = m_npc.ShotOrigin(w);
             m_fightIdle = 0f;
             m_diagSwings++;
             m_shotCheck = true;
