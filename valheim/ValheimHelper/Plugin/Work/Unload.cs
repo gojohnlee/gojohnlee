@@ -30,7 +30,7 @@ namespace ValheimHelper
         float m_time;
         /// <summary>
         /// 손 거리 넣기(사용자 10-31 ③): 상자 Reach m 안에서 0.5초(StillSeconds) 더 못 다가가면(통나무·동료·설비에 막힘) 사이를 건축물이 안 가리고
-        /// 높이 차가 작을 때 그 자리에서 넣는다(플레이어 손 거리 Player.m_maxInteractDistance 5 — 눈 높이 차를 빼고 4m).
+        /// 높이 차 1.5m 안일 때 그 자리에서 넣는다(플레이어 손 거리 Player.m_maxInteractDistance 5 — 눈 높이 차를 빼고 4m).
         /// </summary>
         const float Reach = 4f, StillSeconds = 0.5f;
         float m_best = float.MaxValue, m_still;
@@ -124,9 +124,9 @@ namespace ValheimHelper
             return false;
         }
 
-        /// <summary>손 거리 판정(넣기·Prep 꺼내기 같음): 상자 Reach m 안, 0.5초 못 다가감, 높이 차 1m 안, 문 안 막힘 — 다 맞아야 닿음.</summary>
+        /// <summary>손 거리 판정(넣기·Prep 꺼내기 같음): 상자 Reach m 안, 0.5초 못 다가감, 높이 차 1.5m 안(1m는 비탈에서 경계 1.0에 걸려 2초 넘음 — 회차 730 unloadreach), 문 안 막힘 — 다 맞아야 닿음.</summary>
         internal static bool HandOk(WorkerNpc npc, Container chest, Vector3 at, float d, float still, bool testNoReach)
-            => !(testNoReach || d > Reach || still < StillSeconds || Mathf.Abs(at.y - npc.transform.position.y) > 1f || DoorWay.Blocked(npc, chest));
+            => !(testNoReach || d > Reach || still < StillSeconds || Mathf.Abs(at.y - npc.transform.position.y) > 1.5f || DoorWay.Blocked(npc, chest));
 
         bool CanReach(Vector3 at, float d)
         {

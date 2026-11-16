@@ -332,6 +332,11 @@ namespace ValheimHelper
             if (w.Ragnar == null || w.Floki == null) { Plugin.Log.LogWarning("깃발 뒤 63초 안에 NPC가 안 생김"); yield break; }
             foreach (var npc in new[] { w.Ragnar, w.Floki })
             {
+                if (npc.Ai.Job != null || npc.Ai.Queue.Count > 0) // 시험 전에 혼자 시작한 일(VH_RESET=0 집 월드에서 들어가자마자 꿀 거두기 — 회차 731 newerahouse 환경 불량 두 번)을 접음
+                {
+                    TestRunner.Log($"시작 정리: {npc.NpcName} 일({npc.Ai.Job?.Label ?? "없음"})·대기열 {npc.Ai.Queue.Count} 접음");
+                    npc.Ai.Interrupt(); npc.Ai.Queue.Clear();
+                }
                 foreach (var n in new[] { "AxeFlint", "PickaxeAntler", "ArmorLeatherChest", "ArmorLeatherLegs" })
                     npc.GetInventory().AddItem(ObjectDB.instance.GetItemPrefab(n), 1);
                 Prep.WearBest(npc);
