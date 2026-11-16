@@ -119,7 +119,7 @@ namespace ValheimHelper
         Dictionary<string, string> Args() => new Dictionary<string, string> { ["n"] = Planted.ToString(), ["total"] = m_total.ToString() };
 
         /// <summary>Guard: 밭 쪽이 위험하다 → 심기를 접고 돌아간다.</summary>
-        public void Stop(bool pause) { } // 챙긴 도구·미끼/씨앗은 짐에 남음(다음 짐 내리기가 넣는지 확인 남음, 11-10)
+        public void Stop(bool pause) { } // 챙긴 도구·미끼/씨앗은 짐에 남고 다음 채집의 짐 정리(Unload — Prep.Kept에 없음)가 상자에 넣음(vh_farmtest 그만 칸)
         public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
 

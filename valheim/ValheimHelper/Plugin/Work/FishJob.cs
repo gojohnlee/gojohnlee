@@ -40,7 +40,7 @@ namespace ValheimHelper
         public bool Yields => false;
         public Core.Work.WorkItem Save() => null;
         public string StateLine() => m_npc.Line("state.fish", new Dictionary<string, string> { ["n"] = Got.ToString() });
-        public void Stop(bool pause) { } // 챙긴 도구·미끼/씨앗은 짐에 남음(다음 짐 내리기가 넣는지 확인 남음, 11-10)
+        public void Stop(bool pause) { } // 챙긴 도구·미끼/씨앗은 짐에 남고 다음 채집의 짐 정리(Unload — Prep.Kept에 없음)가 상자에 넣음(vh_farmtest 그만 칸)
         public void Resume() { }
         public void AvoidHere(Vector3 danger) => m_abort = true;
 

@@ -220,6 +220,25 @@ namespace ValheimHelper
             Departures.Gather(who, carrotCmd, w.Ragnar);
             checks.Add($"밭 없으면 !당근은 밭일·채집 안 함 ({(w.Ragnar.Ai.Job != null ? w.Ragnar.Ai.Job.GetType().Name : "없음")})", w.Ragnar.Ai.Job == null);
 
+            // 취소 뒤 남은 짐(11-10): 경작기·씨앗을 챙긴 뒤 그만 → 짐에 남음(FarmJob.Stop은 안 넣음) → 다음 채집의 짐 정리(Unload)가 상자에 넣음
+            Clean(field);
+            foreach (var npc in new[] { w.Ragnar, w.Floki }) { npc.Ai.Interrupt(); npc.Ai.Queue.Clear(); }
+            TestKit.ClearBaseStock(w, Crops.Cultivator, Seed, Produce);
+            TestKit.PutInChest(w.Chest, Crops.Cultivator, 1);
+            TestKit.PutInChest(w.Chest, Seed, 4);
+            int seedBag = Bag(w, Seed);
+            w.Ragnar.Ai.StartJob(new FarmJob(w.Ragnar, field, Farm.Plan(Crops.All, biome, 100, item => item == Seed ? 4 : 0, want)));
+            yield return TestKit.WaitFor(() => Bag(w, Crops.Cultivator) > 0 && Bag(w, Seed) > seedBag, 60f);
+            w.Ragnar.Ai.Interrupt(); w.Ragnar.Ai.Queue.Clear(); // "그만"처럼 이어 하지 않음
+            yield return new WaitForSeconds(1f);
+            checks.Add($"밭일 그만: 챙긴 경작기·씨앗은 짐에 ({TestKit.Waited:0}초, 경작기 {Bag(w, Crops.Cultivator)}, 씨앗 {Bag(w, Seed) - seedBag}, 일 {w.Ragnar.Ai.Job?.GetType().Name})",
+                TestKit.Ok && w.Ragnar.Ai.Job == null && Bag(w, Crops.Cultivator) == 1 && Bag(w, Seed) - seedBag == 4);
+            w.Ragnar.Ai.StartJob(new GatherJob(w.Ragnar, "Wood", 1, GatherJob.WaysFor(w.Ragnar, "Wood")));
+            yield return TestKit.WaitFor(() => Bag(w, Crops.Cultivator) == 0 && Bag(w, Seed) <= seedBag, 60f);
+            checks.Add($"다음 채집의 짐 정리가 경작기·씨앗을 상자에 ({TestKit.Waited:0}초, 상자 경작기 {Stock(w, Crops.Cultivator)}·씨앗 {Stock(w, Seed)}, 짐 경작기 {Bag(w, Crops.Cultivator)})",
+                TestKit.Ok && Stock(w, Crops.Cultivator) == 1 && Stock(w, Seed) == 4);
+            w.Ragnar.Ai.Interrupt();
+
             TestKit.ClearBaseStock(w, Crops.Cultivator, Seed, Produce);
         }
 
