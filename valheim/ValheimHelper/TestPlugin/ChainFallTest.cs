@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// vh_chainfalltest(사용자 11-12 나무 연쇄 쓰러짐): 깃발에서 바깥으로 3m마다 너도밤나무 한 줄(14~38m) — 일꾼이 첫 나무를 치면 바깥으로 넘어져 다음 나무를 쓰러뜨린다.
+    /// vh_chainfalltest(사용자 11-12 나무 연쇄 쓰러짐): 깃발에서 바깥으로 5m마다 너도밤나무 한 줄(14~39m) — 일꾼이 첫 나무를 치면 바깥으로 넘어져 다음 나무를 쓰러뜨린다.
     /// "나무 1"만 시켜도 연쇄로 쓰러진 나무의 통나무까지 자기 통나무로 끝까지 쪼갬. 기준: 연쇄 1번 이상·줄 둘레 통나무 0·순간이동 0. 둘레 나무를 치우니 묶음 끝에 둔다.
     /// </summary>
     static class ChainFallTest
@@ -56,6 +56,8 @@ namespace ValheimHelper
                 if (hi - lo < bestSpread) { bestSpread = hi - lo; dir = d; }
             }
             int cleared = HouseTest.ClearPlants(home + dir * 26f, 24f);
+            // 줄 반대쪽 깃발 곁 나무를 먼저 베면 줄을 안 건드리고 끝남(회차 719: 2m 앞 Beech_small1, 5초) → 첫 줄 나무(14m)보다 가까운 것은 다 치움
+            cleared += HouseTest.ClearPlants(home, 16f);
             // 깃발 곁 나뭇가지를 주우면 "나무 1"이 나무를 안 베고 끝난다(회차 711·713: 2.6m 앞 Pickable_Branch, 2초) → 60m 안 나뭇가지를 치움
             var branches = new HashSet<ZNetView>();
             foreach (var col in Physics.OverlapSphere(home, 60f))
@@ -67,7 +69,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             var row = new List<Vector3>();
             GameObject beech = ZNetScene.instance.GetPrefab("Beech1");
-            for (float r = 14f; r <= 38f; r += 3f)
+            for (float r = 14f; r <= 39f; r += 5f) // 3m 간격은 통나무가 다음 나무에 천천히 기대 서 연쇄 0번(회차 718 B13b, 기울기 7°) — 5m로 속도 붙여 부딪힘
             {
                 Vector3 p = home + dir * r;
                 ZoneSystem.instance.GetGroundHeight(p, out float h);
@@ -77,7 +79,7 @@ namespace ValheimHelper
             }
             // 첫 나무는 일꾼 반대로 쓰러지는데 일꾼이 비스듬히 서면 줄을 비껴 연쇄 0번(회차 714 B13b, 선 나무 8/9) — 둘째·셋째 자리 양옆 3m에도 한 그루씩
             Vector3 side = Vector3.Cross(Vector3.up, dir).normalized * 3f;
-            foreach (float r in new[] { 17f, 20f })
+            foreach (float r in new[] { 19f, 24f })
                 foreach (float s in new[] { -1f, 1f })
                 {
                     Vector3 p = home + dir * r + side * s;
@@ -85,7 +87,7 @@ namespace ValheimHelper
                     p.y = h;
                     Object.Instantiate(beech, p, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
                 }
-            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~38m(+양옆 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
+            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~39m 5m 간격(+양옆 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
             yield return new WaitForSeconds(2f);
 
             // 2) 나무 1 — 첫 나무가 바깥으로 넘어져 연쇄

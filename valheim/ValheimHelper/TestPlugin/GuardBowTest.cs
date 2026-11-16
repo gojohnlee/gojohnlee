@@ -55,7 +55,12 @@ namespace ValheimHelper
             float still = 0f;
             for (float s = 0f; s < 30f && still < 1f; s += Time.deltaTime) { still = guard.GetVelocity().magnitude < 0.3f && !guard.Ai.Guard.Engaged ? still + Time.deltaTime : 0f; yield return null; }
             int before = Guard.Shots;
-            Character foe = FulingTest.Spawn(ZNetScene.instance.GetPrefab("Greyling"), GatherTest.Ground(guard.transform.position + f * 12f), made);
+            // 경계 자리에서 12m 앞이 벽·나무에 가리면 호위병이 다가가 근접으로 잡는다(옳은 동작) — 눈에서 트인 방향을 고름(회차 719: 6m까지 다가가 FAIL)
+            Vector3 eye = guard.GetEyePoint(), spot = GatherTest.Ground(guard.transform.position + f * 12f);
+            for (int i = 0; i < 8 && Physics.Linecast(eye, spot + Vector3.up, GatherJob.ShotMask); i++)
+                spot = GatherTest.Ground(guard.transform.position + Quaternion.Euler(0f, 45f * (i + 1), 0f) * f * 12f);
+            Plugin.Log.LogInfo($"guardbow 적 자리 {spot} 가림 {Physics.Linecast(eye, spot + Vector3.up, GatherJob.ShotMask)}");
+            Character foe = FulingTest.Spawn(ZNetScene.instance.GetPrefab("Greyling"), spot, made);
             foe.GetBaseAI().enabled = false; // 그 자리에 서 있음(EscortTest와 같음)
             closest[0] = float.MaxValue;
             float t = 0f;
