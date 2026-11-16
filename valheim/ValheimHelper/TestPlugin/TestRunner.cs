@@ -251,6 +251,33 @@ namespace ValheimHelper
 
         static void GapWait(string why) { s_gapWhy = why; }
 
+        // E124(회차 763): 시험 사이 자리 옮김이 300초 "순간이동 중" — UpdateTeleport는 ZNetScene.IsAreaReady(목표 구역 ZDO마다 살아 있는 인스턴스)를 기다린다.
+        // 순간이동 30초 넘으면 한 번, 목표 구역에서 인스턴스가 없거나 지워진 ZDO를 적는다.
+        static bool s_tpDiag;
+        static void StuckTeleportDiag(Player player)
+        {
+            var tr = HarmonyLib.Traverse.Create(player);
+            if (tr.Field("m_teleportTimer").GetValue<float>() < 30f) { s_tpDiag = false; return; }
+            if (s_tpDiag) return;
+            s_tpDiag = true;
+            Vector3 to = tr.Field("m_teleportTargetPos").GetValue<Vector3>();
+            Vector2s zone = ZoneSystem.GetZone(to);
+            var zdos = new List<ZDO>();
+            ZDOMan.instance.FindSectorObjects(zone, new SimulationDistance(1, 0), zdos);
+            var bad = new List<string>();
+            foreach (ZDO z in zdos)
+            {
+                GameObject prefab = ZNetScene.instance.GetPrefab(z.GetPrefab());
+                if (prefab == null) continue;
+                ZNetView v = ZNetScene.instance.FindInstance(z);
+                if (v != null) continue;
+                if (bad.Count < 8) bad.Add($"{prefab.name}({(ReferenceEquals(v, null) ? "인스턴스 없음" : "지워짐")}, {z.GetPosition():F0}, 영구 {z.Persistent}, 소유 {z.IsOwner()})");
+                else if (bad.Count == 8) bad.Add("…");
+            }
+            Plugin.Log.LogWarning($"DIAG 걸린 순간이동(E124): 목표 {to:F1} 타이머 {tr.Field("m_teleportTimer").GetValue<float>():0} 먼 곳 {tr.Field("m_distantTeleport").GetValue<bool>()} " +
+                $"구역 불러옴 {ZoneSystem.instance.IsZoneLoaded(zone)} 땅 준비 {ZNetScene.instance.IsAreaReady(to)} ZDO {zdos.Count} 빠진 것 {(bad.Count == 0 ? "없음" : string.Join(", ", bad.ToArray()))}");
+        }
+
         /// <summary>사용자 11-15(침대에서 게임 소리): 자동 시험 동안 소리 끔(AudioListener.volume — 사용자 음량 설정은 안 건드림, AudioMan.Start가 한 번 1로 둠) + 시작 영상이 돌면 멈춤(모드 끔 판은 SkipIntro 패치가 없어 영상이 나옴).</summary>
         internal static void Quiet()
         {
@@ -291,7 +318,7 @@ namespace ValheimHelper
                 return;
             }
             Player player = Player.m_localPlayer;
-            if (player == null || player.IsTeleporting()) { GapWait(player == null ? "플레이어 없음" : "순간이동 중"); s_autoWait = 0f; return; }
+            if (player == null || player.IsTeleporting()) { GapWait(player == null ? "플레이어 없음" : "순간이동 중"); s_autoWait = 0f; if (player != null) StuckTeleportDiag(player); return; }
             s_autoWait += Time.deltaTime;
             GapWait("3초 기다림");
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
