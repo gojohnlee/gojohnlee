@@ -137,6 +137,10 @@ namespace ValheimHelper
 
         static float TameLeft(Character c, Tameable t) => c.GetComponent<ZNetView>().GetZDO().GetFloat(ZDOVars.s_tameTimeLeft, t.m_tamingTime);
 
+        /// <summary>사용자 11-10 가축 ④ 다): 늑대·록스·아스크스빈 야생은 덤비면 일꾼이 못 버팀 → 길들이러 갈 때 호위병(없으면 쉬는 동료)과 같이. 멧돼지(체력 10)는 혼자.</summary>
+        internal static bool NeedsGuard(Character a) => a != null && !a.IsTamed() && s_strong.Contains(Utils.GetPrefabName(a.gameObject));
+        static readonly HashSet<string> s_strong = new HashSet<string> { "Wolf", "Lox", "Asksvin" };
+
         /// <summary>거점 가축 상자(그 종을 받는 우리 — Pens)에 먹이가 있는 배고픈 야생 짐승 하나(없으면 null). 이유는 로그로.</summary>
         internal static TameJob For(WorkerNpc npc)
         {
@@ -172,7 +176,7 @@ namespace ValheimHelper
                 if (foods.Count == 0 || LivestockJob.FoodOnGround(a.transform.position, foods)) continue;
                 Container chest = pens.Find(p => Pens.Accepts(species, p, a) && LivestockJob.FoodIn(p.GetInventory(), foods) != null); // 종 우리면 그 종만
                 if (chest == null) continue;
-                float score = d + (Taming(a) ? 0f : 1000f) + (Utils.GetPrefabName(a.gameObject) == "Boar" ? 0f : 500f);
+                float score = d + (Taming(a) ? 0f : 1000f);   // 센 종은 호위병과 감(Departures.IdleTame — NeedsGuard)
                 if (score < bestScore) { bestScore = score; best = a; bestChest = chest; bestFoods = foods; }
             }
             Plugin.Log.LogInfo($"길들이기(집 {npc.Home}): 가축 상자 {pens.Count}, 야생 {wild}, 고름 {(best != null ? best.m_name : "없음")}");

@@ -288,7 +288,16 @@ namespace ValheimHelper
         {
             if (!Due(npc, s_tame, out string key)) return false;
             Stamp(s_tame, key);
-            return Begin(npc, s_tame, TameJob.For(npc));
+            TameJob job = TameJob.For(npc);
+            if (!Begin(npc, s_tame, job)) return false;
+            if (TameJob.NeedsGuard(job.Animal))
+            {
+                // 센 야생(늑대·록스·아스크스빈)은 위험한 일처럼 호위병, 없거나 바쁘면 쉬는 동료(Departures 위험 규칙과 같음)
+                npc.Ai.Risky = true;
+                WorkerNpc partner = GoWithGuard(npc) ?? GoWithMate(npc);
+                Plugin.Log.LogInfo($"{npc.NpcName} 길들이기: 센 {job.Animal.m_name} → 동행 {(partner != null ? partner.NpcName : "없음")}");
+            }
+            return true;
         }
 
         /// <summary>

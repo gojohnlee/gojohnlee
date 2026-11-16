@@ -344,6 +344,17 @@ namespace ValheimHelper
             boxZdo.Set("ChestName", "늑대");
             map = Pens.SpeciesMap(new List<Container> { penBox });
             checks.Add($"\"늑대\" 상자는 늑대 우리, 멧돼지 안 받음({Pens.SpeciesOf(penBox)})", Pens.SpeciesOf(penBox) == "Wolf" && !Pens.Accepts(map, penBox, pair[0]) && CullJob.Plan(home, new Dictionary<Character, Vector3>()).Count == 0);
+
+            // 10) 센 종 길들이기(가축 ④ 다): 늑대 우리에 고기, 집 38m 야생 늑대 → 쉬던 일꾼이 길들이러 가며 위험한 일(Risky)로 동행을 찾음
+            TestKit.PutInChest(penBox, "RawMeat", 3);
+            var wolf = Spawn("Wolf", home + side * 38f, made);
+            yield return new WaitForSeconds(1f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 30f);
+            Departures.TestTameNow();
+            bool went = Departures.IdleTame(w.Ragnar) && w.Ragnar.Ai.Job is TameJob wj && wj.Animal == wolf;
+            checks.Add($"야생 늑대는 길들이러 갈 때 위험한 일로 동행 찾음(감 {went}, 위험 {w.Ragnar.Ai.Risky}, 동행 {w.Ragnar.Ai.EscortName ?? "-"})", went && w.Ragnar.Ai.Risky && TameJob.NeedsGuard(wolf) && !TameJob.NeedsGuard(pair[0]));
+            w.Ragnar.Ai.GoHome(false);
+            if (wolf != null) ZNetScene.instance.Destroy(wolf.gameObject);
             boxZdo.Set("ChestName", oldName ?? "");
         }
     }
