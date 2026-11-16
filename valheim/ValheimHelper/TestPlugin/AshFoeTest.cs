@@ -68,6 +68,8 @@ namespace ValheimHelper
 
             // A) 적 하나씩: 판단은 위험 비율대로, 싸움이면 잡음
             yield return EachFoe(checks, npc, Foes, prefabs, spawned);
+            // E126 원인 확인: A의 적이 깃발을 부수는지(0개면 D를 A 뒤에 두면 호위병을 못 만듦)
+            TestRunner.Log($"A 뒤 켜진 깃발 {BaseFlag.AllFlags().FindAll(f => f.GetBool(BaseFlag.KeyActive)).Count}개 (E126)");
             if (npc.IsDead()) yield break;
             var states = new HashSet<string>();
 
