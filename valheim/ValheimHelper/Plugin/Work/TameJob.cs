@@ -438,7 +438,8 @@ namespace ValheimHelper
             {
                 Vector3 d = pen - DoorWay.Middle(m_way.Gate); d.y = 0f;
                 inward = m_way.Gate.transform.forward; inward.y = 0f; inward.Normalize(); if (Vector3.Dot(inward, d) < 0f) inward = -inward; // 문짝 방향(DoorWay와 같음) — 순찰점 쪽은 비스듬할 수 있음(회차 746)
-                Vector3 ain = at - DoorWay.Middle(m_way.Gate); ain.y = 0f; past = Vector3.Dot(ain, inward) > 1.5f && !DoorWay.Fenced(at, pen); room = DoorWay.Free(DoorWay.Middle(m_way.Gate) + inward, inward, 12f); deep = DoorWay.Middle(m_way.Gate) + inward * Mathf.Max(Mathf.Min(Mathf.Max(Vector3.Dot(d, inward) + 2.2f, 4.5f), room), 2f); stop = 0.5f; // 순찰점이 문간(0.6m)이면 짐승이 문간에 서서 나가는 일꾼에게 밀려 나감(E128 회차 746) — 문에서 4.5m 넘게
+                Vector3 ain = at - DoorWay.Middle(m_way.Gate); ain.y = 0f; past = Vector3.Dot(ain, inward) > 1.5f && !DoorWay.Fenced(at, pen); Vector3 low = DoorWay.Middle(m_way.Gate); low.y = pen.y; room = DoorWay.Free(low + inward, inward, 12f); // 문틀 가운데(땅 위 1.8m)에서 재면 뒤로 내려간 땅의 2m 벽 위를 지나 room 12 → 깊은 점이 뒷벽 밖, 일꾼이 문 밖으로 돌아가고 짐승이 따라 나감(E128 회차 766: 깊은 점 안 7.4, 뒷벽 안 6)
+                deep = DoorWay.Middle(m_way.Gate) + inward * Mathf.Max(Mathf.Min(Mathf.Max(Vector3.Dot(d, inward) + 2.2f, 4.5f), room), 2f); stop = 0.5f; // 순찰점이 문간(0.6m)이면 짐승이 문간에 서서 나가는 일꾼에게 밀려 나감(E128 회차 746) — 문에서 4.5m 넘게
                 // room = 문 안 1m에서 맞은편 벽까지 = 문에서 벽 안쪽 면 1m 앞(일꾼 몸·여유). 순찰점이 뒷벽 곁이면 "+2.2m"가 벽 너머 — 일꾼이 벽에 대고 걷고, 따라오던 짐승은 벽 밖이 더 가까워 문 밖으로 돌아 나감(E128 회차 747 둘째 판)
             }
             if (m_fenced && m_way.Passed > 0) m_wentIn = true;
