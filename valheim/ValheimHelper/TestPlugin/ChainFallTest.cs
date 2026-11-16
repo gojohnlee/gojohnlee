@@ -116,8 +116,14 @@ namespace ValheimHelper
             int rolled0 = GatherJob.RolledLogs;
             float logsAt = -1f;
             bool moved = false;
+            ZDO firstLog = null; // E130: 첫 통나무가 선 채 걸려 연쇄 0번 — 3초 뒤 기울기·닿은 것
+            float firstAt = 0f;
             while (w.Ragnar.Ai.Job is GatherJob && Time.time - t0 < 480f)
             {
+                if (firstLog == null)
+                    foreach (var z in Senses.Nearby(row[0], 12f))
+                        if (ResourceCatalog.Get(z.GetPrefab()) is ResourceInfo i && i.Log) { firstLog = z; firstAt = Time.time; break; }
+                if (firstLog != null && firstAt > 0f && Time.time - firstAt > 3f) { firstAt = 0f; NoteHung(firstLog); }
                 if (!moved)
                 {
                     var logs = new List<ZDO>();
@@ -149,6 +155,19 @@ namespace ValheimHelper
             checks.Add($"굴러간 자기 통나무를 따라감 (옮김 {moved}, 따라감 {GatherJob.RolledLogs - rolled0}번)", moved && GatherJob.RolledLogs > rolled0);
             checks.Add($"순간이동 없음 ({Teleports() - tp0}번)", Teleports() == tp0);
             checks.Add($"쪼갠 나무가 상자에 ({GatherTest.CountBase(w.Home, "Wood")}개)", GatherTest.CountBase(w.Home, "Wood") > 0);
+        }
+
+        /// <summary>E130 진단: 첫 통나무의 높이·기울기와 몸 위쪽(4m)에 닿은 충돌체 이름.</summary>
+        static void NoteHung(ZDO log)
+        {
+            ZNetView nv = ZNetScene.instance.FindInstance(log);
+            if (nv == null) { TestRunner.Log("  첫 통나무 3초 뒤: 없음(쪼개짐·주움)"); return; }
+            Transform t = nv.transform;
+            var touch = new HashSet<string>();
+            foreach (var col in Physics.OverlapSphere(t.position + t.up * 4f, 2.5f))
+                if (!col.transform.IsChildOf(t) && touch.Count < 6) touch.Add(col.transform.root.name.Replace("(Clone)", ""));
+            ZoneSystem.instance.GetGroundHeight(t.position, out float g);
+            TestRunner.Log($"  첫 통나무 3초 뒤: {Name(log)} 땅 위 {t.position.y - g:0.0}m 기울기 {Vector3.Angle(t.up, Vector3.up):0}° 위쪽 닿음 {string.Join("·", new List<string>(touch).ToArray())}(E130)");
         }
 
         /// <summary>일꾼에게서 가장 먼 통나무를 첫 나무 자리에서 줄 옆 25m(물 위 땅인 쪽)로 옮긴다.</summary>
