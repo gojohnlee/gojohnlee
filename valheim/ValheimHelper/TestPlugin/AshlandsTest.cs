@@ -303,9 +303,13 @@ namespace ValheimHelper
             {
                 yield return Tp(player, a0 + Vector3.up * 1f, player.transform.rotation, true);
                 // 부서진 건물(Ashlands_Ruins 벽·바닥) 안 자리는 뺀다 — 담 미로는 용암 피하기와 따로(회차 223: 담 안에서 시작하면 못 빠져나옴)
+                // 회차 721(E114): 폐허 장소는 플레이어가 B로 갈 때에야 놓여(CharredRuins) 위 물리 검사를 빠져나감 → 장소 목록으로 A·B·AB 선 30m 안 장소가 있는 쌍도 뺀다
+                var locs = new List<Vector3>();
+                foreach (var li in ZoneSystem.instance.GetLocationList())
+                    if (Utils.DistanceXZ(li.m_position, pool.Value) < 150f) locs.Add(li.m_position);
                 int mask = LayerMask.GetMask("piece", "piece_nonsolid");
-                Vector3[] clear = pairs.Find(ab => Physics.OverlapSphere(ab[0], 10f, mask).Length == 0 && Physics.OverlapSphere(ab[1], 10f, mask).Length == 0);
-                checks.Add($"건물 없는 양쪽 자리 ({pairs.Count}쌍 중)", clear != null);
+                Vector3[] clear = pairs.Find(ab => !locs.Exists(l => SegDist(l, ab[0], ab[1]) < 30f) && Physics.OverlapSphere(ab[0], 10f, mask).Length == 0 && Physics.OverlapSphere(ab[1], 10f, mask).Length == 0);
+                checks.Add($"건물 없는 양쪽 자리 ({pairs.Count}쌍 중, 150m 안 장소 {locs.Count})", clear != null);
                 if (clear == null) yield break;
                 if (Utils.DistanceXZ(clear[0], a0) > 3f) yield return Tp(player, clear[0] + Vector3.up * 1f, player.transform.rotation);
                 a0 = clear[0]; b0 = clear[1];
@@ -732,6 +736,14 @@ namespace ValheimHelper
         }
 
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+
+        /// <summary>p에서 선분 ab까지 XZ 거리.</summary>
+        static float SegDist(Vector3 p, Vector3 a, Vector3 b)
+        {
+            Vector3 ab = Flat(b - a), ap = Flat(p - a);
+            float t = ab.sqrMagnitude < 0.01f ? 0f : Mathf.Clamp01(Vector3.Dot(ap, ab) / ab.sqrMagnitude);
+            return (ap - ab * t).magnitude;
+        }
         static bool s_keep;
 
         /// <summary>VH_BIOME=ashlands: 자리가 애쉬랜드인지, 둘레 100m 용암 칸 비율(Heightmap.IsLava, 4m 간격)과 150m 안 자원을 diag에(나·다 조각 바탕).</summary>
