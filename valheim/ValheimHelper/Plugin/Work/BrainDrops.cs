@@ -8,7 +8,7 @@ namespace ValheimHelper
     {
         // ---- 뛰어내리기 지름길 점 찾기(요청 11-11 ★ 나): 일꾼 집 둘레 바닥 끝 → 내려가기 점(Core DropShortcut) ----
         /// <summary>집에서 이 가로 반경 안 바닥만 봄.</summary>
-        public const float DropScanRadius = 20f;
+        public const float DropScanRadius = PlayWalkLog.HouseRadius; // 일꾼이 집 안 걸음으로 보는 범위와 같게
         const float DropGrid = 1f;
         static DropShortcut s_drops;
         static Vector3 s_dropsHome;

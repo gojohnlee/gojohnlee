@@ -317,7 +317,7 @@ namespace ValheimHelper
             if (Vector3.Distance(goal, m_clockGoal) > 1f) { m_clockGoal = goal; m_clock.Reset(); }
             if (TestNoBump || d <= QuickFrom || m_age < QuickGrace || Mathf.Abs(chest.transform.position.y - p.y) > 1.5f
                 || npc.Ai.Carving || npc.Ai.OnInteriorPath || npc.Ai.ExitingDoor || npc.InInterior()) { m_clock.Reset(); return false; }
-            bool paused = npc.InAttack() || npc.IsSwimming() || npc.IsStaggering();
+            bool paused = npc.InAttack() || npc.IsSwimming() || npc.IsStaggering() || npc.Ai.Dropping;
             if (!m_clock.Tick(Time.time, dt, StuckWatch.PathLeft(npc.Ai, p, goal), StuckWatch.Seen(p), paused, m_mark.Changed(npc.Ai))) return false;
             QuickHits++;
             return true;

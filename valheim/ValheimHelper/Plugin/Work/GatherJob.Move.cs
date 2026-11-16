@@ -313,7 +313,7 @@ namespace ValheimHelper
             if (Vector3.Distance(goal, m_clockGoal) > 1f) { m_clockGoal = goal; m_clock.Reset(); }
             if (m_far != null || m_ai.Carving || m_ai.OnInteriorPath || m_ai.ExitingDoor || m_npc.InInterior()
                 || m_stepTime < QuickStartGrace || Utils.DistanceXZ(goal, p) <= reach + QuickMin) { m_clock.Reset(); return false; }
-            bool paused = m_npc.InAttack() || m_npc.IsSwimming() || m_npc.IsStaggering();
+            bool paused = m_npc.InAttack() || m_npc.IsSwimming() || m_npc.IsStaggering() || m_ai.Dropping;
             if (!m_clock.Tick(Time.time, dt, StuckWatch.PathLeft(m_ai, p, goal), StuckWatch.Seen(p), paused, m_mark.Changed(m_ai))) return false;
             QuickStuckHits++;
             Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 빠른 막힘 {m_clock.NoGain:0.0}초(남은 길 {m_clock.Best:0.0}m, {(m_clock.Seen(Time.time) ? "봄" : "안 봄")})");

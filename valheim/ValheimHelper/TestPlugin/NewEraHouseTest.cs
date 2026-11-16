@@ -162,6 +162,7 @@ namespace ValheimHelper
                     checks.Add($"2바퀴(기억 뒤)가 1바퀴보다 안 느림 ({lapT[0]:0.0} → {lapT[1]:0.0}초)", lapT[1] <= lapT[0] * 1.25f + 3f);
                 }
             }
+            checks.Add($"뛰어내리기 지름길 (착지 {ai.DropsTaken}, 고른 뒤 그만 {ai.DropsQuit})", ai.DropsQuit == 0); // ★ 다: 내림 다리에서 계단보다 1초 넘게 빠른 끝이 있으면 뜀
             // 실플레이 기록(PlayWalkLog, 사용자 11-11 ④): 스위치를 시험용으로 켜고 화덕→상자 한 다리 — behavior-house-play.txt에 구간이 붙는지
             {
                 string playPath = System.IO.Path.Combine(Plugin.Dir, "behavior-house-play.txt");
