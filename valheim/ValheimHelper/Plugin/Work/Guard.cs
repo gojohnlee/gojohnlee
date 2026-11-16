@@ -575,6 +575,12 @@ namespace ValheimHelper
             // 호위병 원거리(사용자 11-09): 활·석궁과 화살·볼트가 있으면 ShootMin 밖 적은 쏜다(가리면 근접처럼 다가감), 붙으면 근접.
             // 플레이어 64m 밖(m_far)은 멀리선 단순화 그대로 근접·직접 피해.
             if (m_npc.IsGuard && !m_far && !m_rangedOff && Time.time >= m_meleeUntil && Shoot(dt)) return true;
+            if (m_npc.IsGuard && m_meleeWhyFor != m_target && m_npc.FightingRanged() != null)
+            {
+                // E104 둘째 꼴(쏨 0·1.8m까지 다가가 근접): 원거리가 있는데 근접으로 간 까닭을 싸움마다 한 번
+                m_meleeWhyFor = m_target;
+                Diag.Log($"DIAG {m_npc.NpcName} 원거리 있는데 근접: {(m_far ? "플레이어 멂" : m_rangedOff ? "안 나가 접음" : Time.time < m_meleeUntil ? "가림·못 듦 " + m_meleeWhy : m_meleeWhy)} 거리 {Utils.DistanceXZ(m_target.transform.position, m_npc.transform.position):0.0}m");
+            }
             // 없으면 맨손으로. 그 적의 약점·저항에 가장 세게 들어가는 무기(전투 보강 나) — 적이 바뀌면 다시 고름
             if (!m_armed || m_npc.HoldingRanged() || m_armedFor != m_target) { m_armed = true; m_armedFor = m_target; m_fightIdle = 0f; m_npc.StopDraw(); m_npc.HoldWeapon(Mults(m_target.GetDamageModifiers())); }
             ItemDrop.ItemData weapon = m_npc.GetCurrentWeapon();
@@ -649,6 +655,8 @@ namespace ValheimHelper
         public const float ShootMin = 5f;
         public static int Shots; // 시험용: 호위병이 싸움에서 쏜 수
         bool m_rangedOff, m_shotCheck;
+        string m_meleeWhy = "";
+        Character m_meleeWhyFor;
         float m_meleeUntil, m_shotAt, m_lastShotFoeHealth;
         Vector3 m_lastOrigin;
         int m_shotAmmo, m_dryShots;
@@ -660,15 +668,17 @@ namespace ValheimHelper
             if (m_farCheck <= 0f) { m_farCheck = 1f; m_far = GatherJob.FarFromPlayers(m_npc.transform.position); }
             float d = Utils.DistanceXZ(m_target.transform.position, m_npc.transform.position) - m_target.GetRadius();
             ItemDrop.ItemData best = m_npc.FightingRanged();
-            if (m_far || d <= ShootMin || d > Archery.ShootRange || best == null) { m_npc.StopDraw(); return false; }
+            if (m_far || d <= ShootMin || d > Archery.ShootRange || best == null) { m_meleeWhy = m_far ? "플레이어 멂" : d <= ShootMin ? "가까움" : best == null ? "무기·탄 없음" : "멂"; m_npc.StopDraw(); return false; }
             Vector3 eye = m_npc.GetEyePoint(), center = m_target.GetCenterPoint();
-            if (Physics.Linecast(eye, center, GatherJob.ShotMask) || Physics.Linecast(m_npc.ShotOrigin(best), center, GatherJob.ShotMask, QueryTriggerInteraction.Ignore))
-            { m_npc.StopDraw(); m_meleeUntil = Time.time + 2f; return false; } // 눈 또는 볼트 나가는 자리에서 가리면 근접처럼 다가가다 2초 뒤 다시 봄
+            Vector3 origin = m_npc.ShotOrigin(best, center);
+            bool eyeHit = Physics.Linecast(eye, center, out RaycastHit hit, GatherJob.ShotMask);
+            if (eyeHit || Physics.Linecast(origin, center, out hit, GatherJob.ShotMask, QueryTriggerInteraction.Ignore))
+            { m_meleeWhy = $"{(eyeHit ? "눈" : "볼트 자리")}에서 가림({hit.collider?.name} {hit.distance:0.0}m)"; m_npc.StopDraw(); m_meleeUntil = Time.time + 2f; return false; } // 눈 또는 볼트 나가는 자리(적을 본 몸 기준)에서 가리면 근접처럼 다가가다 2초 뒤 다시 봄
             if (m_npc.GetCurrentWeapon() != best)
             {
                 m_npc.DropBlock();
                 m_npc.StopDraw();
-                if (!m_npc.HoldRanged()) { m_meleeUntil = Time.time + 2f; return false; }
+                if (!m_npc.HoldRanged()) { m_meleeWhy = "원거리 못 듦"; m_meleeUntil = Time.time + 2f; return false; }
                 m_armed = false; // 근접으로 돌아가면 무기를 다시 고름
             }
             ItemDrop.ItemData w = m_npc.GetCurrentWeapon();
@@ -677,7 +687,7 @@ namespace ValheimHelper
             if (m_npc.ProjectileFlight(w, out float speed, out float gravity))
             {
                 // 볼트는 눈이 아니라 ShotOrigin에서 눈이 보는 방향으로 나간다 → 겨눔은 그 자리 기준, 방향만 눈에서 봄
-                Vector3 rel = center - m_npc.ShotOrigin(w), v = m_target.GetVelocity();
+                Vector3 rel = center - m_npc.ShotOrigin(w, center), v = m_target.GetVelocity();
                 if (Archery.Aim(rel.x, rel.y, rel.z, v.x, v.y, v.z, speed, gravity, out float ax, out float ay, out float az))
                     aim = eye + new Vector3(ax, ay, az);
             }

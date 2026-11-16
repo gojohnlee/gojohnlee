@@ -249,6 +249,15 @@ namespace ValheimHelper
             return o.position + transform.up * a.m_attackHeight + transform.forward * a.m_attackRange + transform.right * a.m_attackOffset;
         }
 
+        /// <summary>적 쪽으로 돌아선 뒤의 ShotOrigin(가림 검사용 — 겨누기 전엔 몸이 딴 데를 봐 앞·오른 몫이 엉뚱한 데로 감, E104 회차 752).</summary>
+        public Vector3 ShotOrigin(ItemDrop.ItemData w, Vector3 toward)
+        {
+            Vector3 o = ShotOrigin(w), f = transform.forward, t = toward - transform.position;
+            f.y = 0f; t.y = 0f;
+            if (f.sqrMagnitude < 1e-4f || t.sqrMagnitude < 1e-4f) return o;
+            return transform.position + Quaternion.AngleAxis(Vector3.SignedAngle(f, t, Vector3.up), Vector3.up) * (o - transform.position);
+        }
+
         /// <summary>진단용: 오른손·왼손에 든 것, 당긴 시간.</summary>
         public string HandsDiag() => $"{m_rightItem?.m_shared.m_name}/{m_leftItem?.m_shared.m_name} 당김 {m_attackDrawTime:0.0}";
 
