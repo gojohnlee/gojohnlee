@@ -296,6 +296,7 @@ namespace ValheimHelper
             bool clear = !around.HasValue && w.Site == null;
             if (clear && GatherTest.ClearOldChests(home) > 0) yield return new WaitForSeconds(0.5f);
             if (clear && SweepGround(home) > 0) yield return new WaitForSeconds(0.5f); // 앞 시험이 남긴 땅 물건·몸·통나무(개선 셋 가)
+            if (!around.HasValue && Brain.ClearSharesForTest() is string shares) TestRunner.Log("시작 정리: 앞 시험이 남긴 " + shares + " 비움"); // 쉬는 일꾼이 갚으러·도우러 가 시험이 흔들림(E106 꼴)
             w.Player.PlacePiece(BaseFlag.Prefab.GetComponent<Piece>(), home, w.Player.transform.rotation, doAttack: false);
             yield return new WaitForSeconds(3f);
             // 먼 바이옴으로 막 옮겨 FPS가 낮으면(회차 194 안개땅 8 FPS) NPC가 3초 안에 안 생김(ZNetScene이 안개땅 물건 수천 개를 프레임마다 조금씩 만듦) → 60초까지 기다림
@@ -382,6 +383,8 @@ namespace ValheimHelper
                 if (npc.Ai.Queue.Count > 0) bad.Add($"{npc.NpcName} 대기열 {npc.Ai.Queue.Count}");
             }
             if (Items(w.Chest.GetInventory()) > 0) bad.Add("새 상자가 비어 있지 않음");
+            if (!w.Shared && (Brain.Debt.Count > 0 || Brain.Help.Count > 0)) bad.Add($"몫 {Brain.Debt.Count}·지원 요청 {Brain.Help.Count} 남음");
+            if (clear && Drops(w.Home).Count is int drops && drops > 0) TestRunner.Log($"시작: 거점 {StartRadius:0}m 안 땅 물건 {drops}개(정리 뒤 생김)");
             s_cur = w;
             s_t0 = Time.time;
             s_flow.Clear();

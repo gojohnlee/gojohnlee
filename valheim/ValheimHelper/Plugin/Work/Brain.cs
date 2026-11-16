@@ -115,6 +115,18 @@ namespace ValheimHelper
             s_places.Dirty = true;
         }
 
+        /// <summary>시험 시작 정리(사용자 11-16 "시험부터 똑바로" ①): 앞 시험이 남긴 쓴 재료 몫·지원 요청을 비운다. 비운 것을 돌려줌(없으면 null).</summary>
+        internal static string ClearSharesForTest()
+        {
+            Get();
+            if (s_debt.Count == 0 && s_help.Count == 0) return null;
+            string was = $"몫 [{s_debt.Save()}] 지원 요청 [{s_help.Save()}]";
+            s_debt = DebtBook.Load("");
+            s_debt.Dirty = true;
+            s_help = HelpQueue.Load("");
+            return was;
+        }
+
         public static FoeBook Foes
         {
             get { Get(); return s_foes; }
