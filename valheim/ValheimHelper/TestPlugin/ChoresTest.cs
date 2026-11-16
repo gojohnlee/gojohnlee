@@ -75,9 +75,9 @@ namespace ValheimHelper
             // 쓰러뜨린 자기 통나무는 목표를 채워도 끝까지 쪼개므로(사용자 11-01) 넘는 수는 판정하지 않고 기록만
             checks.Add($"합쳐 10개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
 
-            // 1-2) 늦게 같이 캐기(사용자 11-13 쉬는 일꾼 없게 ①): 플로키는 다른 일(나무 1) 중에 라그나만 나무 40(한 그루에서 20 넘게 나와 끼기 전에 끝난 적 있음, 회차 483) → 플로키가 끝나고 쉬면 라그나 팀에 낌
+            // 1-2) 늦게 같이 캐기(사용자 11-13 쉬는 일꾼 없게 ①): 플로키는 다른 일(돌 1 — 나무 1이면 라그나와 같은 나무를 베어 자기 통나무를 끝까지 쪼개느라 라그나가 40을 채울 때까지 안 쉼, E106 회차 730) 중에 라그나만 나무 40(한 그루에서 20 넘게 나와 끼기 전에 끝난 적 있음, 회차 483) → 플로키가 끝나고 쉬면 라그나 팀에 낌
             int wood0 = Count(w, "Wood");
-            GatherTest.Say($"!{w.Floki.NpcName} 나무 1", null);
+            GatherTest.Say($"!{w.Floki.NpcName} 돌 1", null);
             yield return new WaitForSeconds(2f);
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 40", null);
             yield return new WaitForSeconds(2f);
