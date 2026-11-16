@@ -29,16 +29,18 @@ namespace ValheimHelper
             }
             yield return null;
             var bases = new List<Base>();
+            int noCreator = 0;
             foreach (string a in Anchors)
                 foreach (ZDO z in ZdoScan.All(a))
                 {
-                    if (z.GetLong(ZDOVars.s_creator, 0L) == 0L) continue;   // 폐허·버려진 마을(월드가 만든 조각, 만든이 0)은 뺌 — 회차 700: 고른 "탑"이 폐허였음
+                    if (z.GetLong(ZDOVars.s_creator, 0L) == 0L) { noCreator++; if (noCreator <= 12) TestRunner.Log($"  만든이 0: {a} ({z.GetPosition().x:F0},{z.GetPosition().z:F0})"); continue; }   // 폐허·버려진 마을(월드가 만든 조각, 만든이 0)은 뺌 — 회차 700: 고른 "탑"이 폐허였음
                     Vector3 p = z.GetPosition();
                     Base b = bases.FirstOrDefault(x => Utils.DistanceXZ(x.Pos, p) < Join);
                     if (b == null) bases.Add(new Base { Pos = p, N = 1 });
                     else { b.Pos = (b.Pos * b.N + p) / (b.N + 1); b.N++; }
                 }
-            TestRunner.Log($"월드 {ZNet.instance.GetWorldName()}: 기지 후보 {bases.Count}곳(침대·문·작업대·상자 {bases.Sum(b => b.N)}개)");
+            TestRunner.Log($"월드 {ZNet.instance.GetWorldName()}: 기지 후보 {bases.Count}곳(침대·문·작업대·상자 {bases.Sum(b => b.N)}개, 만든이 0으로 뺀 것 {noCreator}개, 전체 ZDO {ZDOMan.instance.NrOfObjects()}개)");
+            foreach (string w in new[] { "woodwall", "wood_floor", "wood_roof", "stone_wall_2x1" }) TestRunner.Log($"  {w} {ZdoScan.All(w).Count}개(만든이 있음 {ZdoScan.All(w).Count(z => z.GetLong(ZDOVars.s_creator, 0L) != 0L)})");
             var rows = new List<KeyValuePair<int, string>>();
             foreach (Base b in bases)
             {
