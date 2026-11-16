@@ -358,6 +358,8 @@ namespace ValheimHelper
                 }
             }
             if (RunBiome != Heightmap.Biome.None) LogSpawners(w.Home);
+            string site = SiteNear(w.Home, 90f);
+            if (site != null) TestRunner.Log("자리 점검: " + site);
             var bad = new List<string>();
             if (w.Player == null || w.Player.IsDead()) bad.Add("플레이어 없음·죽음");
             else if (!w.Player.InGodMode()) bad.Add("플레이어 무적 아님");
@@ -391,6 +393,30 @@ namespace ValheimHelper
             }
             Plugin.Instance.StartCoroutine(Track(w));
             StartStalls();
+        }
+
+        /// <summary>
+        /// 시험 자리 점검 한 곳(사용자 11-16 "시험부터 똑바로" ②): 불러온 땅에서 r m 안 보스석·장소(폐허 등 — 늦게 놓이니 시작 검사 때 봄)를
+        /// 가까운 순으로 한 줄, 없으면 null. 지금은 기록만(E120: 88m 광맥 귀환이 BossStone_Bonemass에 막힘 — 자리 탓 가르기).
+        /// </summary>
+        public static string SiteNear(Vector3 c, float r)
+        {
+            var found = new List<KeyValuePair<float, string>>();
+            foreach (BossStone b in UnityEngine.Object.FindObjectsByType<BossStone>(FindObjectsSortMode.None))
+            {
+                float d = Utils.DistanceXZ(b.transform.position, c);
+                if (d < r) found.Add(new KeyValuePair<float, string>(d, $"{Utils.GetPrefabName(b.gameObject)} {d:0}m"));
+            }
+            foreach (Location l in UnityEngine.Object.FindObjectsByType<Location>(FindObjectsSortMode.None))
+            {
+                float d = Utils.DistanceXZ(l.transform.position, c);
+                if (d < r + l.GetMaxRadius()) found.Add(new KeyValuePair<float, string>(d, $"장소 {Utils.GetPrefabName(l.gameObject)} {d:0}m(반지름 {l.GetMaxRadius():0})"));
+            }
+            if (found.Count == 0) return null;
+            found.Sort((a, b) => a.Key.CompareTo(b.Key));
+            var parts = new List<string>();
+            foreach (var kv in found) parts.Add(kv.Value);
+            return string.Join(", ", parts.ToArray());
         }
 
         /// <summary>거점 둘레의 플레이어·일꾼이 아닌 생물(적·짐승·동료 해골).</summary>
@@ -794,8 +820,34 @@ namespace ValheimHelper
         public static void NoteFail()
         {
             if (s_cur == null) return;
-            try { TestRunner.Log("  상태(FAIL 순간): " + Snapshot(s_cur)); }
+            try
+            {
+                TestRunner.Log("  상태(FAIL 순간): " + Snapshot(s_cur));
+                WorkerNpc g = WorkerNpc.TheGuard;
+                foreach (var n in new[] { s_cur.Ragnar, s_cur.Floki, g == s_cur.Ragnar || g == s_cur.Floki ? null : g })
+                    if (n != null && n.Ai != null) TestRunner.Log("    " + Detail(n));
+            }
             catch (System.Exception e) { TestRunner.Log("  상태 기록 오류: " + e.Message); }
+        }
+
+        /// <summary>
+        /// FAIL 순간 일꾼 하나의 원인 가를 정보(사용자 11-16 "시험부터 똑바로" ③): 자리·모드·일부러 선 까닭·마지막 피해·고른 길·가까운 문.
+        /// </summary>
+        static string Detail(WorkerNpc n)
+        {
+            Vector3 p = n.transform.position;
+            string hold = Time.time - n.Ai.HoldAt < 3f ? $" 선 까닭 {n.Ai.HoldWhy}" : "";
+            string hurt = n.LastHurt == null ? "피해 없음" : $"마지막 피해 {n.LastHurt} {Time.time - n.LastHurtAt:0}초 전";
+            string door = "문 4m 밖";
+            float best = 4f;
+            foreach (Door d in UnityEngine.Object.FindObjectsByType<Door>(FindObjectsSortMode.None))
+            {
+                float dist = Vector3.Distance(d.transform.position, p);
+                if (dist >= best) continue;
+                best = dist;
+                door = $"문 {dist:0.0}m s_state {d.GetComponent<ZNetView>()?.GetZDO()?.GetInt(ZDOVars.s_state)}";
+            }
+            return $"{n.NpcName} ({p.x:0.0},{p.y:0.0},{p.z:0.0}) {n.Ai.Current}{hold} 속도 {n.GetVelocity().magnitude:0.0} · {hurt} · {door} · {n.Ai.StepDiag}";
         }
 
         /// <summary>

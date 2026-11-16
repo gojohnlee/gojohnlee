@@ -378,11 +378,17 @@ namespace ValheimHelper
 
         readonly Dictionary<Character, float> m_hitBy = new Dictionary<Character, float>();
 
+        /// <summary>마지막으로 받은 피해(누가·얼마)와 때. 진단용.</summary>
+        public string LastHurt { get; private set; }
+        public float LastHurtAt { get; private set; } = -99f;
+
         protected override void OnDamaged(HitData hit)
         {
             base.OnDamaged(hit);
             Ai?.PathSpoil("피해"); // 내렸는데 불타면 성공한 길 아님(사용자 11-15)
             Character attacker = hit.GetAttacker();
+            LastHurtAt = Time.time; // 시험 FAIL 순간 기록용(사용자 11-16 "시험부터 똑바로" ③)
+            LastHurt = $"{(attacker != null && attacker != this ? Utils.GetPrefabName(attacker.gameObject) : hit.m_hitType.ToString())} {hit.GetTotalDamage():0.#}";
             if (attacker == null || attacker == this) return;
             if (m_hitBy.Count > 40) { var old = new List<Character>(); foreach (var kv in m_hitBy) if (kv.Key == null || Time.time - kv.Value > 60f) old.Add(kv.Key); foreach (var o in old) m_hitBy.Remove(o); }
             m_hitBy[attacker] = Time.time;

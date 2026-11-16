@@ -75,6 +75,9 @@ namespace ValheimHelper
         public static int Gen => s_gen;
 
         static string s_halt;
+        // 환경 불량(시작 검사)이면 자동 시험마다 한 번만 정리 뒤 다시(사용자 11-16 "시험부터 똑바로" ①) — 다시 할 이름·이미 다시 한 이름
+        static string s_curName, s_retry;
+        static readonly HashSet<string> s_retried = new HashSet<string>();
 
         /// <summary>정리 실패: 남은 자동 시험은 본시험 없이 "환경 불량"으로 적고 넘긴다(TestKit 끝 정리).</summary>
         public static void Halt(string why)
@@ -92,6 +95,7 @@ namespace ValheimHelper
             Workers.SkipGuard = true; // 시험은 기본으로 호위병 없이(호위병 시험만 켬)
             ResetTestSwitches();
             s_gen++;
+            s_curName = name;
             s_timeout = s_timeouts.TryGetValue(name, out float lim) ? lim : DefaultTimeout;
             s_speed = s_auto && !RealSpeed.Contains(name) ? Mathf.Clamp(Speed, 1f, 5f) : 1f;
             s_startTime = Time.time;
@@ -143,7 +147,7 @@ namespace ValheimHelper
             lines.AddRange(s_report);
             try { File.WriteAllLines(Path.Combine(PluginDir, "diag.txt"), lines.ToArray()); }
             catch (IOException e) { Plugin.Log.LogWarning("diag.txt 쓰기 실패: " + e.Message); }
-            if (s_auto && s_autoQueue.Count == 0)
+            if (s_auto && s_autoQueue.Count == 0 && s_retry == null)
             {
                 s_auto = false;
                 Plugin.Instance.StartCoroutine(QuitSoon());
@@ -159,12 +163,12 @@ namespace ValheimHelper
         {
             int tests = 0, passed = 0;
             string name = null;
-            bool verdict = false, failed = false;
+            bool verdict = false, failed = false, redo = false; // redo: 환경 불량 뒤 다시 한 시험의 첫 판(뒤 판만 셈)
             string firstFail = null;
             var fails = new List<string>();
             void Close()
             {
-                if (name == null) return;
+                if (name == null || redo) return;
                 tests++;
                 if (verdict && !failed) passed++;
                 else fails.Add(name + (firstFail != null ? ": " + firstFail : verdict ? "" : ": 판정 없음"));
@@ -177,7 +181,7 @@ namespace ValheimHelper
                     string rest = line.Substring(4);
                     int sp = rest.IndexOf(' ');
                     name = sp > 0 ? rest.Substring(0, sp) : rest;
-                    verdict = failed = false;
+                    verdict = failed = redo = false;
                     firstFail = null;
                     continue;
                 }
@@ -187,6 +191,7 @@ namespace ValheimHelper
                 if (line.StartsWith("판정: 환경 불량"))
                 {
                     verdict = failed = true;
+                    redo = line.EndsWith("정리 뒤 다시 함");
                     if (firstFail == null) firstFail = line.Substring(4);
                 }
                 if (failLine)
@@ -263,15 +268,16 @@ namespace ValheimHelper
                 }
                 return;
             }
-            if (s_autoQueue.Count == 0) return;
+            if (s_autoQueue.Count == 0 && s_retry == null) return;
             Player player = Player.m_localPlayer;
             if (player == null || player.IsTeleporting()) { s_autoWait = 0f; return; }
             s_autoWait += Time.deltaTime;
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
             if (!s_leftNoBuild) { s_leftNoBuild = true; if (TestKit.LeaveNoBuild(player)) { s_autoWait = -3f; return; } } // 시작 제단 밖으로 한 번
             if (TestKit.GoFirstSpot(player)) { s_autoWait = -3f; return; } // 앞 시험이 옮기거나 돌린 플레이어를 첫 자리·방향으로(E055)
-            if (TestKit.GoSite(player, s_autoQueue.Peek())) { s_autoWait = -3f; return; } // 늪 회귀면 늪 평지로(원래 자리 시험은 돌아옴)
-            string cmd = s_autoQueue.Dequeue();
+            if (TestKit.GoSite(player, s_retry ?? s_autoQueue.Peek())) { s_autoWait = -3f; return; } // 늪 회귀면 늪 평지로(원래 자리 시험은 돌아옴)
+            string cmd = s_retry ?? s_autoQueue.Dequeue();
+            s_retry = null;
             if (s_halt != null && Begin(null, cmd))
             {
                 Log($"판정: 환경 불량 ({s_halt}) — 본시험 안 함");
@@ -311,7 +317,9 @@ namespace ValheimHelper
                 }
                 catch (TestKit.EnvBadException e)
                 {
-                    Log($"판정: 환경 불량 ({e.Message}) — 본시험 안 함");
+                    bool again = s_auto && s_curName != null && s_retried.Add(s_curName); // Setup이 다시 상자·땅 물건·생물을 치우고 일꾼을 새로 부름
+                    Log($"판정: 환경 불량 ({e.Message}) — 본시험 안 함{(again ? ", 정리 뒤 다시 함" : "")}");
+                    if (again) s_retry = s_curName;
                     if (Running) Finish();
                     yield break;
                 }
