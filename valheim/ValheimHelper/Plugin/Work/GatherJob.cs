@@ -578,7 +578,7 @@ namespace ValheimHelper
 
         // ---- 돌아가서 넣기 ----
 
-        /// <summary>귀환 중 빠른 막힘 횟수(ReturnQuickPer번마다 한 번만 귀환 막힘 한도에 셈, E120).</summary>
+        /// <summary>귀환·다가가기 중 빠른 막힘 횟수(ReturnQuickPer번마다 한 번만 막힘 한도·기록에 셈, E120). 단계가 바뀌면 0.</summary>
         int m_returnQuick;
         const int ReturnQuickPer = 3;
 

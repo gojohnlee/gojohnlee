@@ -70,8 +70,15 @@ namespace ValheimHelper
                 return true;
             }
             // 다가가기 한도 40 → 20초(막힘 시간 절반, 사용자 결정 2026-10-26). 던전 안은 90m 시야에 길이 굽어 40초 그대로
-            if (Stuck(dt, m_targetPos) || QuickStuck(dt, m_targetPos, m_reach) || m_stepTime > (m_npc.InInterior() ? 40f : 20f))
+            bool slow = Stuck(dt, m_targetPos) || m_stepTime > (m_npc.InInterior() ? 40f : 20f);
+            if (slow || QuickStuck(dt, m_targetPos, m_reach))
             {
+                // 빠른 막힘(1초)은 귀환처럼 3번에 1번만 막힘 기록에 셈 — 한 번에 기록하면 비켜 가기 전에 목표 쪽으로 옮김(E120 notooltest 꼴). 그 사이엔 길만 새로
+                if (!slow && ++m_returnQuick % ReturnQuickPer != 0)
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 다가가기 빠른 막힘 {m_returnQuick}번 → 길 다시 {m_ai.BlockerAhead(m_targetPos)}");
+                    return true;
+                }
                 LogStuck("다가가기", m_targetPos);
                 // 멀리(모든 플레이어 64m 밖) 목표 몇 m 앞에서 막혔다: 그 자리에서 직접 피해로 캔다(E012, 사용자 결정 2026-10-23 "오류 정리 꼼수").
                 if (!TestNoFarStuck && m_targetInfo != null && !m_targetInfo.Pickable && m_targetInfo.Tool != ToolKind.None
