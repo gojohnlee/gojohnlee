@@ -62,13 +62,14 @@ namespace ValheimHelper
             var ate = npc.EatFrom(npc.GetInventory());
             checks.Add($"음식 먹음 ({string.Join(",", ate.ToArray())})", ate.Count == 3);
 
+            // D) 출발 판단: 탄 전사를 아는 애쉬랜드 자리는 피하고, 거기뿐이면 호위병과.
+            // A보다 먼저 — A의 탄 전사가 거점 둘레를 돌다 깃발을 부수면 호위병을 못 만듦(회차 757 단독: "깃발 없음", E126)
+            yield return Departs(w, checks, npc);
+
             // A) 적 하나씩: 판단은 위험 비율대로, 싸움이면 잡음
             yield return EachFoe(checks, npc, Foes, prefabs, spawned);
             if (npc.IsDead()) yield break;
             var states = new HashSet<string>();
-
-            // D) 출발 판단: 탄 전사를 아는 애쉬랜드 자리는 피하고, 거기뿐이면 호위병과
-            yield return Departs(w, checks, npc);
 
             // C) 약한 차림 + 탄 전사 → 싸우지 않음
             foreach (var it in new List<ItemDrop.ItemData>(npc.GetInventory().GetAllItems())) { npc.UnequipItem(it, false); npc.GetInventory().RemoveItem(it); }
@@ -109,7 +110,8 @@ namespace ValheimHelper
                     npc.GetMaxHealth(), npc.GetMaxHealth(), Guard.HitOf(npc), Guard.TakenFor(npc), false);
                 TestRunner.Log($"A {kind}: 체력 {npc.GetMaxHealth():0}, 갑옷 {npc.GetBodyArmor():0}, 한 방 {Guard.HitOf(npc):0.0}, 위험 비율 {ratio:0.00} → 예상 {expect}");
                 states.Clear();
-                yield return Watch("A " + kind, kind, npc, Spawn(prefabs[i], npc, 15f, spawned), 45f, states, r => checks.Add(r.Item1, r.Item2));
+                // 10m: 경계는 나를 모르는 적을 15m(Guard.EngageRange) 안에서만 셈 — 15m에 생겨 덤비지 않고 선 아스크스빈·떠오른 볼처를 못 봄(회차 757, E122)
+                yield return Watch("A " + kind, kind, npc, Spawn(prefabs[i], npc, 10f, spawned), 45f, states, r => checks.Add(r.Item1, r.Item2));
                 if (expect == Verdict.Fight)
                     checks.Add($"{kind}: 비율 {ratio:0.00}이면 싸움 (상태 {Join(states)})", states.Contains("Fight"));
                 else if (ratio <= Borderline) // 경계선: 맞붙은 순간 적 체력이 줄면 비율이 1 밑으로 → 싸움도 맞음(아스크스빈 1.19 → 0.99, 회차 231). 싸우면 Watch가 잡음·안 죽음을 봄
@@ -233,7 +235,15 @@ namespace ValheimHelper
 
         static Character Spawn(GameObject prefab, WorkerNpc npc, float dist, List<GameObject> spawned)
         {
-            GameObject go = Object.Instantiate(prefab, GatherTest.Ground(npc.transform.position + npc.transform.forward * dist) + Vector3.up * 1f, Quaternion.identity);
+            // 앞쪽이 비탈 위면(회차 722 E122: 아스크스빈이 8.9m 위에 생겨 일꾼이 끝내 못 봄) 45°씩 돌려 높이차 3m 안 자리
+            Vector3 at = GatherTest.Ground(npc.transform.position + npc.transform.forward * dist);
+            for (int k = 1; k < 8 && Mathf.Abs(at.y - npc.transform.position.y) > 3f; k++)
+            {
+                Vector3 p = GatherTest.Ground(npc.transform.position + Quaternion.Euler(0f, 45f * k, 0f) * npc.transform.forward * dist);
+                if (Mathf.Abs(p.y - npc.transform.position.y) < Mathf.Abs(at.y - npc.transform.position.y)) at = p;
+            }
+            TestRunner.Log($"{prefab.name} 생김: 일꾼과 {dist:0}m, 높이차 {at.y - npc.transform.position.y:0.0}m");
+            GameObject go = Object.Instantiate(prefab, at + Vector3.up * 1f, Quaternion.identity);
             spawned.Add(go);
             Character ch = go.GetComponent<Character>();
             ch.SetLevel(1);
