@@ -10,7 +10,7 @@ namespace ValheimHelper
     /// </summary>
     static class LivestockTest
     {
-        public static void Register() => TestRunner.Register("vh_livestocktest", "가축 확인(수치·먹이·따라오기)", () => TestKit.Flat(Run()), 600f);
+        public static void Register() => TestRunner.Register("vh_livestocktest", "가축 확인(수치·먹이·따라오기)", () => TestKit.Flat(Run()), 900f);
 
         static readonly string[] Kinds = { "Boar", "Wolf", "Lox", "Hen", "Asksvin" };
 
@@ -513,6 +513,68 @@ namespace ValheimHelper
                 if (beast != null) ZNetScene.instance.Destroy(beast.gameObject);
             }
             boxZdo.Set("ChestName", oldName ?? "");
+
+            // 16) 닭 알(가축 ⑦): 지붕 없는 불 곁엔 안 놓고, 벽·지붕 오두막 안 모닥불 곁에 한 개 놓아 길든 병아리
+            int Chicken() { int n = 0; foreach (var it in pen.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "ChickenEgg") n += it.m_stack; return n; }
+            if (fire != null) ZNetScene.instance.Destroy(fire.gameObject);   // 11)의 불 곁이 집 지붕에 덮여 닭 알이 그리로 감(회차 750)
+            ClearOthers(home, made);
+            pen.GetInventory().RemoveAll();
+            TestKit.PutInChest(pen, "ChickenEgg", 2);
+            Vector3 hc = GatherTest.Ground(home - side * 12f - fwd * 12f);
+            HouseTest.ClearPlants(hc, 5f);
+            int hutWalls = 0; float hutTop = hc.y;
+            foreach (var n in new[] { fwd, -fwd, side, -side })
+            {
+                Vector3 along = Vector3.Cross(Vector3.up, n).normalized;
+                for (int i = -1; i <= 1; i++)
+                {
+                    if (n == side && i == 0) continue;   // 문 없는 문간(연기도 빠짐)
+                    Vector3 at = hc + n * Half + along * (2f * i);
+                    var g = HouseTest.Put(made, "woodwall", at, Quaternion.LookRotation(n), ZoneSystem.instance.GetGroundHeight(at) - 0.05f);
+                    if (g != null) { hutWalls++; hutTop = Mathf.Max(hutTop, HouseTest.Box(g).max.y); }
+                }
+            }
+            Vector3 hutFireAt = GatherTest.Ground(hc);
+            w.Player.PlacePiece(ZNetScene.instance.GetPrefab("fire_pit").GetComponent<Piece>(), hutFireAt, Quaternion.identity, doAttack: false);
+            yield return new WaitForSeconds(1f);
+            Fireplace hutFire = null;
+            foreach (Collider col in Physics.OverlapSphere(hutFireAt, 2f)) if ((hutFire = col.GetComponentInParent<Fireplace>()) != null) break;
+            ZNetView hutNv = hutFire != null ? hutFire.GetComponent<ZNetView>() : null;
+            TestRunner.Log($"닭 오두막 불: {(hutFire != null ? hutFire.transform.position.ToString() : "없음")}, ZDO {(hutNv != null && hutNv.GetZDO() != null)}, 놓을 자리 {hutFireAt}");
+            if (hutNv != null && hutNv.GetZDO() != null) { made.Add(hutFire.gameObject); hutNv.GetZDO().Set(ZDOVars.s_fuel, 10f); }
+            yield return new WaitForSeconds(1f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 30f);
+            Departures.TestEggNow();
+            bool open = Departures.IdleEgg(w.Ragnar) && w.Ragnar.Ai.Job is EggJob;
+            checks.Add($"지붕 없는 불 곁엔 닭 알 안 놓음({EggJob.LastWhy})", !open && Chicken() == 2);
+            if (open) { w.Ragnar.Ai.GoHome(false); yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 30f); }
+            int hutTiles = 0;
+            for (int i = -1; i <= 1; i++)
+                for (int j = -1; j <= 1; j++)
+                    if (HouseTest.Put(made, "wood_roof", hc + side * (2f * i) + fwd * (2f * j), Quaternion.LookRotation(fwd), hutTop + 0.2f) != null) hutTiles++;
+            checks.Add($"닭 오두막 지음(벽 {hutWalls}/11, 지붕 {hutTiles}/9, 불 {hutFire != null})", hutWalls == 11 && hutTiles == 9 && hutFire != null);
+            if (hutFire == null) yield break;
+            yield return new WaitForSeconds(1f);
+            Departures.TestEggNow();
+            bool hen = Departures.IdleEgg(w.Ragnar) && w.Ragnar.Ai.Job is EggJob;
+            Vector3 henSpot = hen ? ((EggJob)w.Ragnar.Ai.Job).Spot : Vector3.zero;
+            Cover.GetCoverForPoint(henSpot, out float henCover, out bool henRoof, 0.1f);
+            checks.Add($"쉬던 일꾼이 닭 알을 오두막 불 곁으로(자리 {henSpot}, 불과 {Utils.DistanceXZ(henSpot, hutFireAt):0.0}m, 덮임 {henCover:0.00}·지붕 {henRoof}, {EggJob.LastWhy})", hen && Utils.DistanceXZ(henSpot, hutFireAt) < 3.5f && henRoof && henCover >= 0.7f);
+            if (!hen) yield break;
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is EggJob), 90f);
+            ItemDrop henEgg = null;
+            foreach (ItemDrop d in JobKit.DropsNear(henSpot, 3f)) if (Utils.GetPrefabName(d.gameObject) == "ChickenEgg") henEgg = d;
+            checks.Add($"닭 알 한 개가 오두막 땅에, 상자 알 2→{Chicken()} ({TestKit.Waited:0}초)", henEgg != null && henEgg.m_itemData.m_stack == 1 && Chicken() == 1);
+            if (henEgg == null) yield break;
+            made.Add(henEgg.gameObject);
+            ZDO henZdo = henEgg.GetComponent<ZNetView>().GetZDO();
+            yield return TestKit.WaitFor(() => henZdo.GetFloat(ZDOVars.s_growStart) > 0f, 15f);
+            checks.Add($"닭 알이 데워지기 시작({TestKit.Waited:0}초)", henZdo.GetFloat(ZDOVars.s_growStart) > 0f);
+            henZdo.Set(ZDOVars.s_growStart, (float)ZNet.instance.GetTimeSeconds() - henEgg.GetComponent<EggGrow>().m_growTime - 1f);
+            Character chicken = null;
+            yield return TestKit.WaitFor(() => { foreach (var a in Character.GetAllCharacters()) if (a != null && Utils.GetPrefabName(a.gameObject) == "Chicken" && Utils.DistanceXZ(a.transform.position, henSpot) < 3f) chicken = a; return chicken != null; }, 15f);
+            if (chicken != null) made.Add(chicken.gameObject);
+            checks.Add($"닭 알이 깨어 길든 병아리({(chicken != null ? chicken.IsTamed().ToString() : "없음")}, MonsterAI {chicken?.GetComponent<MonsterAI>() != null}·Tameable {chicken?.GetComponent<Tameable>() != null}, {TestKit.Waited:0}초)", chicken != null && chicken.IsTamed());
         }
     }
 }
