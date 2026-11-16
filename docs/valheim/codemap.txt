@@ -111,7 +111,7 @@ Workers·BaseFlag·소환     vh_npctest;vh_flagtest;vh_basetest
 사람끼리 동시 열기 SharedChests·SharedGuest·SharedCraft   vh_guesttest;vh_sharetest;vh_mychesttest;vh_tidytest;vh_stocktest
 밤사이 정산 NightSettle·MorningSettle  dotnet test;vh_settletest;vh_bagtest
 묘비 GraveJob             vh_deathtest
-제작 CraftPlan·PlanRunner·PlanJob·CraftStep  dotnet test + vh_crafttest;vh_settest · 설비 접근 막힘 MachineStep.Approach: vh_machinestucktest;vh_basetest · 집 안 상자·설비(벽·문·지붕) → vh_housetest(집 안 걸음·계단은 + vh_newerahouse, VH_WORLD·VH_TEST_WORLDS=vh_house_TheNewEra) · 짐 정리 Unload·꺼내기 Prep(손 거리 넣기·꺼내기): vh_unloadreachtest;vh_bagtest;vh_preptest;vh_housetest
+제작 CraftPlan·PlanRunner·PlanJob·CraftStep  dotnet test + vh_crafttest;vh_settest · 설비 접근 막힘 MachineStep.Approach: vh_machinestucktest;vh_basetest · 집 안 상자·설비(벽·문·지붕) → vh_housetest(집 안 걸음·계단은 + vh_newerahouse, VH_WORLD=vh_house_TheNewEra·VH_RESET=0·VH_TEST_WORLDS=vh_house_TheNewEra) · 짐 정리 Unload·꺼내기 Prep(손 거리 넣기·꺼내기): vh_unloadreachtest;vh_bagtest;vh_preptest;vh_housetest
 설비 MachineStep(제련·발효·조리)  vh_crafttest;vh_basetest · 조리대 → vh_cooktest(날씨·불 → vh_cookwettest)
 세트·자동 보충 SetMenus·Refill  vh_settest;vh_refilltest;vh_chorestest;vh_fishtest
 가축·우리 먹이 LivestockJob·길들이기 TameJob (LivestockTest.cs)  vh_livestocktest;vh_nametest
