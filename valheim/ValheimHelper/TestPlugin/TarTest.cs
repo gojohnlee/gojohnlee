@@ -1,3 +1,4 @@
+using HarmonyLib;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -215,6 +216,14 @@ namespace ValheimHelper
                 float d = Utils.DistanceXZ(player.transform.position, pos);
                 if (d < 5f) yield break;
                 TestRunner.Log($"플레이어 옮기기 {i + 1}번째 안 닿음: TeleportTo {ok}, 남은 {d:0}m, 순간이동 중 {player.IsTeleporting()}, 주인 {player.GetComponent<ZNetView>().IsOwner()}, 죽음 {player.IsDead()}, 붙음 {player.IsAttached()}");
+                if (!ok && player.IsTeleporting())
+                {
+                    // 회차 719: 앞 순간이동이 끝나지 않고 걸려 있음(UpdateTeleport가 IsAreaReady를 못 넘김으로 보임) — 그 목표를 남기고 상태를 풀어 다시
+                    var tr = Traverse.Create(player);
+                    TestRunner.Log($"  걸린 순간이동: 목표 {tr.Field("m_teleportTargetPos").GetValue<Vector3>()} 타이머 {tr.Field("m_teleportTimer").GetValue<float>():0} 먼 곳 {tr.Field("m_distantTeleport").GetValue<bool>()} 땅 준비 {ZNetScene.instance.IsAreaReady(tr.Field("m_teleportTargetPos").GetValue<Vector3>())} → 풂");
+                    tr.Field("m_teleporting").SetValue(false);
+                    tr.Field("m_teleportCooldown").SetValue(5f);
+                }
             }
             // 회차 718: 3번 다 TeleportTo False(무적·거점에 그대로) — 시험 준비라 직접 옮김
             if (Utils.DistanceXZ(player.transform.position, pos) >= 5f)
