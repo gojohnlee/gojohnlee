@@ -34,7 +34,7 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 
 - B12 멀티는 따로: `scripts/vh-b12.ps1 -Dll <dll>`(jointest·guestcmdtest·guestchesttest·guestrestart1 → 서버 재시작 → guestrestart2).
 - R: valheim-test.ps1이 1번째 뒤에 2번째(restart2·restartcraft2)를 VH_RESET=0 새 실행으로 알아서 붙임.
-- 회귀 밖(일부러): 최종 실전 finaltest(따로 한 판, 길다) · 새 birdprobe·birdshoot(사용자 11-13) · 부하 loadtest · 다른 집 재기 otherhouse(조사용) · 집 도구 houseexport·houseimport·househere·houseground·housefind(시험 월드 만들기·찾기).
+- 회귀 밖(일부러): 최종 실전 finaltest(따로 한 판, 길다) · 새 birdprobe·birdshoot(사용자 11-13) · 멈춤 감시 확인 hangtest(일부러 8분 조용히, 회차 726) · 부하 loadtest · 다른 집 재기 otherhouse(조사용) · 집 도구 houseexport·houseimport·househere·houseground·housefind(시험 월드 만들기·찾기).
 
 ## 표
 

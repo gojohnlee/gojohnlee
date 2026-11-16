@@ -202,7 +202,9 @@ while (-not (Test-Game) -and $t -lt 180) { Start-Sleep 3; $t += 3 }   # 첫 실�
 $gp = Get-Process | Where-Object { $_.ProcessName -eq 'valheim' } | Select-Object -First 1
 $ourId = if ($gp) { $gp.Id; Set-Content $gameFile "$($gp.Id) $($gp.StartTime.Ticks)" }   # 다음 시험의 '모르는 게임' 판단용
 $cpu0 = if ($gp) { $gp.TotalProcessorTime.TotalSeconds }; $wall0 = Get-Date   # 외부 부하: 게임 CPU 시간(모드 끔에도 남는 재는 값, 회차 642)
-$t = 0; $exitHang = $false; $fatalLine = $null
+$t = 0; $exitHang = $false; $fatalLine = $null; $stallLine = $null; $modExc = $null; $armed = $false; $progLine = $null; $progAfter = 0; $progAt = Get-Date; $speechLine = $null; $speechAt = $null; $curTest = $null
+$stallMin = if ("$env:VH_STALLMIN" -match '^\d+$' -and [int]$env:VH_STALLMIN -gt 0) { [int]$env:VH_STALLMIN } else { 5 }
+$noise = @('Unable to start Unity log writer')   # 알려진 Unity·BepInEx 잡음(로그 오류 셈과 같이 씀)
 $gameLog = Join-Path $game 'BepInEx\LogOutput.log'
 # 상한 기본 30분. 긴 시험(최종 실전 시험 등)은 $env:VH_MAXMIN="분"(사용자 11-13: 최종 시험은 30분보다 확실히 김)
 $maxMin = if ("$env:VH_MAXMIN" -match '^\d+$' -and [int]$env:VH_MAXMIN -gt 0) { [int]$env:VH_MAXMIN } else { 30 }
@@ -222,8 +224,50 @@ while ((Test-Game) -and $t -lt $maxMin * 60) {   # 상한 넘으면 멈춘 것�
             Select-String -Pattern 'TypeLoadException|Could not load (file or assembly|type)|MissingMethodException|MissingFieldException' | Select-Object -First 1)
         if ($fatal.Count) { $fatalLine = "$($fatal[0].Line)".Trim(); break }
     }
+    # 시험이 멈추면 바로 끈다(사용자 11-16): "=== 이름 시작" 뒤 모드 로그 줄(시험 진행·일꾼 동작·잡담 "<이름> 말")이 $stallMin분 동안 하나도 없으면 멈춤,
+    # 모드 예외(스택에 ValheimHelper)는 그 자리에서 끄고 FAIL. 15초마다 로그 끝 400줄만 본다.
+    if ($gp -and $li -and $li.LastWriteTime -gt $gp.StartTime -and $t % 15 -eq 0) {
+        $tail = @(Get-Content $gameLog -Encoding UTF8 -Tail 400 -ErrorAction SilentlyContinue)
+        $mi = -1
+        for ($i = $tail.Count - 1; $i -ge 0; $i--) { if ($tail[$i] -match '^\[\w+\s*:\s*Valheim Helper') { $mi = $i; break } }
+        if ($mi -ge 0) {
+            $after = $tail.Count - 1 - $mi
+            if ($tail[$mi] -ne $progLine -or $after -lt $progAfter) { $progLine = $tail[$mi]; $progAt = Get-Date }
+            $progAfter = $after
+        }
+        $lastSpeech = $null
+        foreach ($l in $tail) {
+            if ($l -match '=== (\S+) 시작') { $curTest = $Matches[1]; if (-not $armed) { $armed = $true; $progAt = Get-Date } }
+            if ($l -match '^\[\w+\s*:\s*Valheim Helper[^\]]*\] <[^>]+> ') { $lastSpeech = $l }
+        }
+        if ($lastSpeech -and $lastSpeech -ne $speechLine) { $speechLine = $lastSpeech; $speechAt = Get-Date }   # 끝 잡담 줄만(여럿을 번갈아 보면 늘 방금으로 보임)
+        if ($armed -and ((Get-Date) - $progAt).TotalMinutes -ge $stallMin) { $stallLine = $progLine; break }
+        for ($i = 0; $i -lt $tail.Count -and -not $modExc; $i++) {
+            $l = $tail[$i]
+            if ($l -notmatch 'Exception' -or @($noise | Where-Object { $l.Contains($_) }).Count) { continue }
+            if ($l -match 'ValheimHelper') { $modExc = $l.Trim(); break }
+            for ($j = $i + 1; $j -lt [Math]::Min($tail.Count, $i + 21); $j++) {
+                if ($tail[$j] -match '^\[(Info|Message|Warning|Error|Debug|Fatal)') { break }
+                if ($tail[$j] -match 'ValheimHelper') { $modExc = $l.Trim(); break }
+            }
+        }
+        if ($modExc) { break }
+    }
 }
-if ($fatalLine) {
+# 끄기 전(로드 오류·멈춤·모드 예외·시간 초과·종료 멈춤 모두) 로그를 시험 이름·시각 붙여 보관(사용자 11-16 ③, 최근 10개만). 게임이 쥐고 있어도 읽게 ReadWrite 공유로 연다.
+$savedLog = $null
+if (Test-Game) {
+    $keepDir = Join-Path $env:USERPROFILE 'vh-test-logs'
+    $why = if ($fatalLine) { '로드오류' } elseif ($modExc) { '예외' } elseif ($stallLine) { '멈춤' } elseif ($exitHang) { '종료멈춤' } else { '시간초과' }
+    try {
+        New-Item -ItemType Directory -Force $keepDir | Out-Null
+        $savedLog = Join-Path $keepDir ('{0:MMdd-HHmmss}-{1}-{2}.log' -f (Get-Date), $(if ($curTest) { $curTest } else { '시작전' }), $why)
+        $src = [IO.File]::Open($gameLog, 'Open', 'Read', 'ReadWrite'); $dst = [IO.File]::Create($savedLog)
+        try { $src.CopyTo($dst) } finally { $dst.Close(); $src.Close() }
+        Get-ChildItem $keepDir -Filter *.log | Sort-Object LastWriteTime -Descending | Select-Object -Skip 10 | Remove-Item -ErrorAction SilentlyContinue
+    } catch { $savedLog = "보관 실패: $($_.Exception.Message)" }
+}
+if ($fatalLine -or $stallLine -or $modExc) {
     Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Stop-Process -Force -ErrorAction SilentlyContinue
     Get-Process | Where-Object { $_.ProcessName -eq 'valheim' -and (-not $ourId -or $_.Id -eq $ourId) } | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue
 }
@@ -268,7 +312,6 @@ if (Test-Path $log) {
     # 통째로 바꾼 게임 함수 변경 감지(요청 11-15 ③, Plugin/GameCheck.cs): 바뀐 원본은 디컴파일해 모드 쪽을 맞춘다(vh-loop-prompt 1-0)
     foreach ($h in @($all | Where-Object { $_ -match '\[게임 함수 바뀜\]' } | Select-Object -Unique)) { $report += $h.Trim() }
     # 로그 오류 셈(사용자 11-13 18:00): 알려진 Unity·BepInEx 잡음은 뺌(목록은 여기 한 곳), 예외는 스택(아래 20줄)에 ValheimHelper가 있을 때만 우리 오류
-    $noise = @('Unable to start Unity log writer')
     $errs = @(); $noiseN = 0
     for ($i = 0; $i -lt $all.Count; $i++) {
         $l = $all[$i]
@@ -302,8 +345,14 @@ if ($env:VH_JOIN) {   # 멀티 시험: 서버 쪽 모드 로그의 오류도(손
 if ($cpuLine) { $report += $cpuLine }
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
 if ($fatalLine) { $report += "FAIL 모드 치명 오류로 바로 끔(끝까지 기다리지 않음): $fatalLine — 고쳐서 다시 시험" }
+if ($stallLine) {
+    $sp = if ($speechAt) { '{0:N0}분 전 {1}' -f ((Get-Date) - $speechAt).TotalMinutes, $speechLine.Trim() } else { '없음' }
+    $report += "FAIL 멈춤 — 시험 $curTest, ${stallMin}분 동안 모드 로그 없어 끔. 마지막 진행 줄: $($stallLine.Trim()) · 마지막 잡담: $sp"
+}
+if ($modExc) { $report += "FAIL 모드 예외로 바로 끔(시험 $curTest): $(if ($modExc.Length -gt 200) { $modExc.Substring(0, 200) + '...' } else { $modExc })" }
+if ($savedLog) { $report += "로그 보관: $savedLog" }
 if ($exitHang) { $report += '게임 종료 멈춤: 종료 시작(OnApplicationQuit) 뒤 로그가 2분 멈춰 안 꺼져 강제 종료(Errors.txt E038 — 발생 횟수 더하기). 시험 판정은 그대로' }
-elseif ($runTimedOut) { $report += "게임이 ${maxMin}분 안에 안 꺼져 강제 종료(더 길게: `$env:VH_MAXMIN) — 중단(PASS로 치지 않음)" }
+elseif ($runTimedOut -and -not ($fatalLine -or $stallLine -or $modExc)) { $report += "게임이 ${maxMin}분 안에 안 꺼져 강제 종료(더 길게: `$env:VH_MAXMIN) — 중단(PASS로 치지 않음)" }
 if ($Solo -and (Test-Path $diag)) { Copy-Item $diag "$plugin\diag-$Run.txt" -Force; $report += "  (단독 diag: $plugin\diag-$Run.txt)" }
 $reports += ($report -join "`r`n")
 }   # foreach $Run

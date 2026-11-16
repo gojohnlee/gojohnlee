@@ -34,6 +34,7 @@ namespace ValheimHelper
             Step("vh_fartest", FarZoneTest.Register);
             Step("vh_npctest", NpcTest.Register);
             Step("vh_flagtest", FlagTest.Register);
+            Step("vh_hangtest", () => TestRunner.Register("vh_hangtest", "일부러 멈춘 시험(valheim-test.ps1 멈춤 감시 확인용, 회귀 밖)", HangTest, 7200f)); // 배속(최대 5배) 게임 시간 한도라 크게 — 러너 한도보다 스크립트 5분이 먼저
             Step("vh_woodtest·vh_stonetest", GatherTest.Register);
             Step("vh_finaltest", FinalTest.Register);
             Step("vh_exploretest", ExploreTest.Register);
@@ -145,6 +146,17 @@ namespace ValheimHelper
         {
             try { action(); }
             catch (Exception e) { Plugin.Log.LogError($"{what} 실패: {e}"); }
+        }
+
+        /// <summary>한 줄 남기고 8분 동안 아무 로그 없이 기다린다 — 스크립트가 5분 뒤 끄고 로그를 보관하는지 본다(사용자 11-16 ④).</summary>
+        static System.Collections.IEnumerator HangTest()
+        {
+            TestRunner.Log("일부러 멈춤: 8분 동안 로그 없음(valheim-test.ps1이 5분 뒤 꺼야 함)");
+            float until = UnityEngine.Time.realtimeSinceStartup + 480f;
+            while (UnityEngine.Time.realtimeSinceStartup < until) yield return null;
+            TestRunner.Log("FAIL 8분 지나도 안 꺼짐(멈춤 감시 안 됨)");
+            TestRunner.Log("판정: FAIL");
+            TestRunner.Finish();
         }
     }
 }

@@ -105,6 +105,7 @@ namespace ValheimHelper
             s_terminal = t;
             if (!s_auto) s_report.Clear(); // 자동 시험 여러 개는 한 보고에 이어 쓴다
             s_report.Add($"=== {name} {System.DateTime.Now:yyyy-MM-dd HH:mm:ss} 게임 {Version.GetVersionString()} Unity {Application.unityVersion} 모드 {Plugin.FullVersion}{(s_speed > 1f ? $" 배속 {s_speed:0.#}" : "")} ===");
+            Plugin.Log.LogInfo($"=== {name} 시작"); // valheim-test.ps1 멈춤 감시가 이 줄부터 셈(사용자 11-16 "시험이 멈추면 바로 끄기")
             s_report.Add("플러그인: " + Plugin.PluginList());
             // 월드에 남은 "!채워" 기준치는 한가한 일꾼을 내보내 다른 시험을 흔든다(E039) — 필요한 시험은 스스로 다시 건다
             ClaudeChat.Drop(); // 앞 시험이 던진 자연어 명령의 늦은 해석 답도 버린다(E039: npctest "!나무 좀 많이 가져와" → flagtest 중 "나무 20")
