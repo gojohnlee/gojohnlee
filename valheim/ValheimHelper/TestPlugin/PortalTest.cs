@@ -145,7 +145,8 @@ namespace ValheimHelper
                 for (; t < 15f && GatherJob.SeaSkips == sea0; t += 0.5f) yield return new WaitForSeconds(0.5f);
                 yield return new WaitForSeconds(1f);
                 bool said = false;
-                for (int i = heard0; i < w.Heard.Count; i++) if (w.Heard[i].Contains("바다")) said = true;
+                var seaLines = Core.Npc.Speech.Options(npc.Personality, "depart.sea"); // "바다"가 없는 줄도 있음(회차 718: "물이 너무 넓어…")
+                for (int i = heard0; i < w.Heard.Count; i++) foreach (var l in seaLines) if (w.Heard[i].EndsWith(l)) said = true;
                 checks.Add($"포탈 없으면 안 가고 \"바다 건너\" 말({t:0.0}초, 고른 구역 {job.GoalZone.X},{job.GoalZone.Y}, 말 {said})", GatherJob.SeaSkips == sea0 + 1 && said && !job.GoalZone.Equals(zone));
                 npc.Ai.GoHome(false);
                 yield return new WaitForSeconds(1f);

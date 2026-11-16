@@ -214,7 +214,16 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(distant ? 5f : 1f);
                 float d = Utils.DistanceXZ(player.transform.position, pos);
                 if (d < 5f) yield break;
-                TestRunner.Log($"플레이어 옮기기 {i + 1}번째 안 닿음: TeleportTo {ok}, 남은 {d:0}m");
+                TestRunner.Log($"플레이어 옮기기 {i + 1}번째 안 닿음: TeleportTo {ok}, 남은 {d:0}m, 순간이동 중 {player.IsTeleporting()}, 주인 {player.GetComponent<ZNetView>().IsOwner()}, 죽음 {player.IsDead()}, 붙음 {player.IsAttached()}");
+            }
+            // 회차 718: 3번 다 TeleportTo False(무적·거점에 그대로) — 시험 준비라 직접 옮김
+            if (Utils.DistanceXZ(player.transform.position, pos) >= 5f)
+            {
+                player.transform.SetPositionAndRotation(pos, rot);
+                var body = player.GetComponent<Rigidbody>();
+                if (body != null) { body.position = pos; body.linearVelocity = Vector3.zero; }
+                yield return new WaitForSeconds(2f);
+                TestRunner.Log($"플레이어 직접 옮김: 남은 {Utils.DistanceXZ(player.transform.position, pos):0}m");
             }
         }
 

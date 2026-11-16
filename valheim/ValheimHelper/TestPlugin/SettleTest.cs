@@ -227,6 +227,7 @@ namespace ValheimHelper
             checks.Add($"씨앗만큼 다시 심음 (새싹 {sprouts}/1, 상자 씨앗 {GatherTest.CountBase(home, carrot.Seed)}/0)", sprouts == 1 && GatherTest.CountBase(home, carrot.Seed) == 0);
 
             // 같은 아침 다시(불러온 것처럼 저장된 날짜만 보고) → 안 함, 다음 아침 → 함
+            int alWood = alarak.CountItem("Wood"); // 2호가 그새 거점 범위로 돌아오면(쉬는 일꾼은 집으로 감) 같은 아침·다음 아침 어느 쪽에서든 2호 짐도 정산됨(회차 717·718: 상자 35/25)
             claude.GetInventory().AddItem(wood, 5);
             MorningSettle.Snapshot();
             MorningSettle.SettleAll(day);
@@ -234,12 +235,10 @@ namespace ValheimHelper
             // 다음 아침: 제련소가 아직 안 내놓은 결과물 2(ZDO) → 상자로 바로
             sz.Set(ZDOVars.s_spawnOre, "CopperOre");
             sz.Set(ZDOVars.s_spawnAmount, 2);
-            // 2호가 그새 거점 범위로 돌아왔으면(쉬는 일꾼은 집으로 감) 2호 짐도 같이 정산됨(회차 717: 상자 35/25)
-            int alWood = alarak.CountItem("Wood");
             int barsBefore = GatherTest.CountBase(home, "Copper");
             MorningSettle.Snapshot();
             MorningSettle.SettleAll(day + 1);
-            int woodWant = woodAll + 5 + (alarak.Zdo.GetInt(MorningSettle.KeyDay, -1) == day + 1 ? alWood : 0);
+            int woodWant = woodAll + 5 + (alWood - alarak.CountItem("Wood"));
             checks.Add($"다음 아침엔 함 (짐 나무 {claude.CountItem("Wood")}/0, 상자 {GatherTest.CountBase(home, "Wood")}/{woodWant}, 2호 {Utils.DistanceXZ(alarak.transform.position, home):0}m)",
                 claude.CountItem("Wood") == 0 && GatherTest.CountBase(home, "Wood") == woodWant);
             checks.Add($"안 내놓은 결과물 → 상자 (주괴 {GatherTest.CountBase(home, "Copper")}/{barsBefore + 2}, 남은 기록 {sz.GetInt(ZDOVars.s_spawnAmount)})",
