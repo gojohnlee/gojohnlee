@@ -283,6 +283,7 @@ namespace ValheimHelper
         bool OwnLog(out ZDO best)
         {
             best = null;
+            FollowOwnLogs();
             if (m_felled.Count == 0 || m_hunt || TeamFilled()) return false;
             Vector3 pos = m_npc.transform.position;
             float bestDist = float.MaxValue;
@@ -300,12 +301,30 @@ namespace ValheimHelper
                     ItemDrop.ItemData tool = WorkerNpc.BestTool(m_npc.GetInventory(), info.Tool);
                     if (tool == null || info.MinToolTier > tool.m_shared.m_toolTier) continue;
                     any = true;
+                    if (m_ownIds.Count < FelledMax * 4) m_ownIds.Add(zdo.m_uid);
                     float d = Utils.DistanceXZ(p, pos);
                     if (d < bestDist) { bestDist = d; best = zdo; }
                 }
                 if (!any) m_felled.RemoveAt(i);
             }
             return best != null;
+        }
+
+        /// <summary>한 번 자기 통나무로 본 통나무 id. 비탈로 굴러 쓰러뜨린 자리에서 OwnLogRange 밖으로 나가도 놓치지 않게(E125).</summary>
+        readonly HashSet<ZDOID> m_ownIds = new HashSet<ZDOID>();
+
+        /// <summary>자기 통나무가 굴러 모든 자리에서 OwnLogRange 밖이면 지금 자리를 새 자리로. 없어진(쪼개진·주운) id는 지운다.</summary>
+        void FollowOwnLogs()
+        {
+            if (m_ownIds.Count == 0 || ZDOMan.instance == null) return;
+            m_ownIds.RemoveWhere(id => ZDOMan.instance.GetZDO(id) == null || m_skip.Contains(id));
+            foreach (var id in m_ownIds)
+            {
+                Vector3 p = ZDOMan.instance.GetZDO(id).GetPosition();
+                if (NearFelled(p) || Avoided(p) || m_book.Excluded(p.x, p.z)) continue;
+                NoteFelled(p);
+                Plugin.Log.LogInfo($"자기 통나무가 굴러감 ({p.x:0.0},{p.y:0.0},{p.z:0.0}) — 그 자리를 자기 통나무 자리로(E125)");
+            }
         }
 
     }
