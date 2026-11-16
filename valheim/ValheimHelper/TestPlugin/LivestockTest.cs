@@ -391,6 +391,49 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => { foreach (var a in Character.GetAllCharacters()) if (a != null && Utils.GetPrefabName(a.gameObject) == "Asksvin_hatchling" && Utils.DistanceXZ(a.transform.position, spot) < 3f) chick = a; return chick != null; }, 15f);
             if (chick != null) made.Add(chick.gameObject);
             checks.Add($"알이 깨어 길든 새끼({(chick != null ? chick.IsTamed().ToString() : "없음")}, {TestKit.Waited:0}초)", chick != null && chick.IsTamed());
+
+            // 12) 울타리 우리(가축 ⑥): 벽 6m×6m에 문 하나, 안에 배고픈 길든 멧돼지, 상자는 문 앞 밖 → 쉬던 일꾼이 문 열고 들어가 먹이고 나옴
+            Vector3 fwd = Vector3.Cross(side, Vector3.up).normalized;
+            Vector3 pc = GatherTest.Ground(home + fwd * 16f);
+            HouseTest.ClearPlants(pc, 7f);
+            const float Half = 3f;
+            int walls = 0; GameObject gate = null;
+            foreach (var n in new[] { fwd, -fwd, side, -side })
+            {
+                Vector3 along = Vector3.Cross(Vector3.up, n).normalized;
+                for (int i = -1; i <= 1; i++)
+                {
+                    Vector3 at = pc + n * Half + along * (2f * i);
+                    bool gateSlot = n == -fwd && i == 0;
+                    var g = HouseTest.Put(made, gateSlot ? "wood_door" : "woodwall", at, Quaternion.LookRotation(n), ZoneSystem.instance.GetGroundHeight(at) - 0.05f);
+                    if (g == null) continue;
+                    if (gateSlot) gate = g; else walls++;
+                }
+            }
+            checks.Add($"울타리 우리 지음(벽 {walls}, 문 {gate != null})", walls == 11 && gate != null);
+            if (gate == null) yield break;
+            Vector3 gateBoxAt = GatherTest.Ground(pc - fwd * (Half + 2.5f) + side * 2f);
+            w.Player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), gateBoxAt, w.Player.transform.rotation, doAttack: false);
+            Container gateBox = GatherTest.ChestAt(gateBoxAt);
+            if (gateBox == null) { checks.Add("울타리 우리 상자 지음", false); yield break; }
+            made.Add(gateBox.gameObject);
+            gateBox.GetComponent<ZNetView>().GetZDO().Set("ChestName", "멧돼지");
+            TestKit.PutInChest(gateBox, "Raspberry", 3);
+            var penned = Spawn("Boar", pc + Vector3.up * 0.3f, made);
+            var pentm = penned.GetComponent<Tameable>();
+            penned.GetComponent<MonsterAI>().MakeTame();
+            yield return new WaitForSeconds(7f); // 새 벽·닫힌 문 navmesh
+            penned.GetComponent<MonsterAI>().SetPatrolPoint();
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
+            int entered0 = DoorWay.Entered;
+            Departures.TestFeedNow();
+            checks.Add("쉬던 일꾼이 울타리 우리 먹이 주러 감", Departures.IdleFeed(w.Ragnar) && w.Ragnar.Ai.Job is LivestockJob);
+            yield return TestKit.WaitFor(() => penned == null || !pentm.IsHungry(), 120f);
+            checks.Add($"문 열고 들어가 울타리 안 멧돼지 먹임 ({TestKit.Waited:0}초, 문 지남 {DoorWay.Entered - entered0}, 일꾼과 우리 가운데 {Utils.DistanceXZ(w.Ragnar.transform.position, pc):0.0}m)",
+                penned != null && !pentm.IsHungry() && DoorWay.Entered > entered0);
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is LivestockJob), 60f);
+            checks.Add($"먹이 주기 끝내고 울타리 밖으로 나옴 ({TestKit.Waited:0}초, 우리 가운데와 {Utils.DistanceXZ(w.Ragnar.transform.position, pc):0.0}m)",
+                TestKit.Ok && Utils.DistanceXZ(w.Ragnar.transform.position, pc) > Half + 0.5f);
         }
     }
 }

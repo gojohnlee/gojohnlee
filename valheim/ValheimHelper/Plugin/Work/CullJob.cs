@@ -21,6 +21,7 @@ namespace ValheimHelper
         readonly WorkerNpc m_npc;
         readonly WorkerAI m_ai;
         readonly List<Character> m_targets;
+        DoorWay m_way; Character m_wayFor; // 울타리 우리(가축 ⑥): 벽이 짐승을 가리면 문 열고 들어감
         Step m_step = Step.Kill;
         float m_time, m_stepTime, m_swing;
         bool m_abort, m_told;
@@ -158,6 +159,8 @@ namespace ValheimHelper
             m_targets.Sort((a, b) => Utils.DistanceXZ(a.transform.position, me).CompareTo(Utils.DistanceXZ(b.transform.position, me)));
             Character t = m_targets[0];
             Vector3 at = t.transform.position;
+            if (m_wayFor != t) { m_way = new DoorWay(); m_wayFor = t; }
+            if ((Utils.DistanceXZ(at, me) < 12f || m_way.Busy) && m_way.Steer(dt, m_npc, t)) return true;
             if (Utils.DistanceXZ(at, me) - t.GetRadius() > 1.8f)
             {
                 m_ai.MoveToPoint(dt, at, 1.2f + t.GetRadius(), false);
