@@ -159,7 +159,7 @@ namespace ValheimHelper
             m_targets.Sort((a, b) => Utils.DistanceXZ(a.transform.position, me).CompareTo(Utils.DistanceXZ(b.transform.position, me)));
             Character t = m_targets[0];
             Vector3 at = t.transform.position;
-            if (m_wayFor != t) { m_way = new DoorWay(); m_wayFor = t; }
+            if (m_wayFor != t) { m_way = new DoorWay { PenGate = true }; m_wayFor = t; }
             if ((Utils.DistanceXZ(at, me) < 12f || m_way.Busy) && m_way.Steer(dt, m_npc, t)) return true;
             if (Utils.DistanceXZ(at, me) - t.GetRadius() > 1.8f)
             {

@@ -434,6 +434,30 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is LivestockJob), 60f);
             checks.Add($"먹이 주기 끝내고 울타리 밖으로 나옴 ({TestKit.Waited:0}초, 우리 가운데와 {Utils.DistanceXZ(w.Ragnar.transform.position, pc):0.0}m)",
                 TestKit.Ok && Utils.DistanceXZ(w.Ragnar.transform.position, pc) > Half + 0.5f);
+            ZDO gateZdo = gate.GetComponent<ZNetView>().GetZDO();
+            yield return TestKit.WaitFor(() => gateZdo.GetInt(ZDOVars.s_state) == 0, 30f);
+            checks.Add($"나와서 울타리 문 닫음 ({TestKit.Waited:0}초, 우리 멧돼지 가운데와 {(penned != null ? Utils.DistanceXZ(penned.transform.position, pc) : -1f):0.0}m)", gateZdo.GetInt(ZDOVars.s_state) == 0);
+
+            // 13) 울타리 우리로 데려오기(가축 ⑥): 울타리 너머(문 반대쪽) 14m에 길든 멧돼지 → 쉬던 일꾼이 데려와 문 지나 울타리 안에 풀어 둠
+            ClearOthers(home, made);
+            var stray = Spawn("Boar", pc + fwd * (Half + 11f), made);
+            stray.GetComponent<MonsterAI>().MakeTame();
+            if (penned != null) penned.GetComponent<MonsterAI>().SetPatrolPoint();
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
+            entered0 = DoorWay.Entered;
+            Departures.TestTameNow();
+            checks.Add("쉬던 일꾼이 울타리 너머 길든 멧돼지 데리러 감", Departures.IdleTame(w.Ragnar) && w.Ragnar.Ai.Job is TameJob);
+            yield return TestKit.WaitFor(() => stray == null || !(w.Ragnar.Ai.Job is TameJob), 200f);
+            if (stray == null) { checks.Add("데려온 울타리 멧돼지 살아 있음", false); yield break; }
+            Vector3 sp = stray.transform.position - pc;
+            TestRunner.Log($"울타리 데려오기 끝: 우리 가운데 {pc:F1}·앞 {fwd:F2}·옆 {side:F2}, 데려온 것 {stray.transform.position:F1}, 우리 멧돼지 {(penned != null ? penned.transform.position.ToString("F1") : "없음")}");
+            bool inside = Mathf.Abs(Vector3.Dot(sp, fwd)) < Half && Mathf.Abs(Vector3.Dot(sp, side.normalized)) < Half;
+            var szdo = stray.GetComponent<ZNetView>().GetZDO();
+            Vector3 spp = szdo.GetVec3(ZDOVars.s_patrolPoint, Vector3.zero) - pc;
+            checks.Add($"문 지나 울타리 안에 풀어 둠 ({TestKit.Waited:0}초, 문 지남 {DoorWay.Entered - entered0}, 가운데와 {Utils.DistanceXZ(stray.transform.position, pc):0.0}m, 순찰점 가운데와 {new Vector2(spp.x, spp.z).magnitude:0.0}m, 따라감 {stray.GetComponent<MonsterAI>().GetFollowTarget() != null})",
+                inside && DoorWay.Entered > entered0 && szdo.GetBool(ZDOVars.s_patrol) && new Vector2(spp.x, spp.z).magnitude < Half && stray.GetComponent<MonsterAI>().GetFollowTarget() == null);
+            yield return TestKit.WaitFor(() => gateZdo.GetInt(ZDOVars.s_state) == 0, 60f);
+            checks.Add($"데려온 뒤 나와서 울타리 문 닫음 ({TestKit.Waited:0}초)", gateZdo.GetInt(ZDOVars.s_state) == 0);
         }
     }
 }

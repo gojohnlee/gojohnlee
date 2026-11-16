@@ -35,6 +35,10 @@ namespace ValheimHelper
         bool m_abort, m_told, m_following;
         /// <summary>데려오기 모드(요청 다-3b): 길든 짐승을 이 우리 상자까지 따라오게 해 풀어 둠.</summary>
         readonly Container m_pen;
+        /// <summary>울타리 우리(가축 ⑥): 우리에 풀어 둔 같은 종 하나 — 상자 곁에서 울타리가 그것을 가리면 문 지나 들어가 그 순찰점에 풀어 둠(m_fenced). 아니면 상자 자리.</summary>
+        Character m_mate;
+        DoorWay m_way = new DoorWay();
+        bool m_fenced, m_wentIn; // m_wentIn: 문을 지나 우리 안 — 그 뒤엔 우리 가축을 다시 겨누지 않음(문 열린 사이 우리 가축이 빠져나가면 안에서 다시 문으로 돌다 포기, 회차 743 시험)
 
         /// <summary>떨군 먹이를 먹었으면 1.</summary>
         public int Fed { get; private set; }
@@ -268,6 +272,8 @@ namespace ValheimHelper
             }
             m_animal.GetComponent<MonsterAI>().SetFollowTarget(m_npc.gameObject);
             m_following = true;
+            m_mate = PenMate(m_animal, m_pen);
+            m_way = new DoorWay { PenGate = true }; m_fenced = false; m_wentIn = false;
             Go(Step.Lead);
             return true;
         }
@@ -293,23 +299,56 @@ namespace ValheimHelper
             if (ai != null && ai.m_randomMoveRange > PenRoam) ai.m_randomMoveRange = PenRoam;
         }
 
+        /// <summary>그 우리(상자 PenRange 안·순찰점)에 풀어 둔 같은 종 길든 것 중 순찰점이 상자에 가장 가까운 것.</summary>
+        static Character PenMate(Character animal, Container pen)
+        {
+            if (pen == null) return null;
+            string sp = CullJob.Species(animal);
+            Vector3 at = pen.transform.position;
+            Character best = null; float bd = float.MaxValue;
+            foreach (Character c in Character.GetAllCharacters())
+            {
+                if (c == null || c == animal || c.IsDead() || !c.IsTamed() || CullJob.Species(c) != sp || !LivestockJob.InPen(c, at)) continue;
+                ZDO zdo = c.GetComponent<ZNetView>()?.GetZDO();
+                if (zdo == null || !zdo.GetBool(ZDOVars.s_patrol)) continue;
+                float d = Utils.DistanceXZ(PatrolOf(c), at); // 지금 자리 말고 순찰점(우리 밖 순찰점인 새끼 등은 빼려고, 회차 743 시험)
+                if (d > LivestockJob.PenRange) continue;
+                if (d < bd) { bd = d; best = c; }
+            }
+            return best;
+        }
+
+        static Vector3 PatrolOf(Character c) => c.GetComponent<ZNetView>().GetZDO().GetVec3(ZDOVars.s_patrolPoint, c.transform.position);
+
         bool UpdateLead(float dt)
         {
             if (m_pen == null) { Go(Step.Home); return true; }
-            Vector3 pen = m_pen.transform.position, me = m_npc.transform.position, at = m_animal.transform.position;
-            if (Utils.DistanceXZ(at, pen) < PenNear)
+            if (m_mate != null && (m_mate.IsDead() || !LivestockJob.InPen(m_mate, m_pen.transform.position))) m_mate = null;
+            if (m_fenced && m_way.Passed == 0 && m_way.GaveUp) m_mate = null; // 문 지나기 전 문 길 포기 → 옛대로 상자 곁에 풂(지난 순간 "안에서도 가림" 포기는 무시)
+            if (m_mate == null) m_fenced = m_wentIn = false;
+            Vector3 pen = m_fenced ? PatrolOf(m_mate) : m_pen.transform.position, me = m_npc.transform.position, at = m_animal.transform.position;
+            // 울타리 우리: 일꾼은 우리 가운데 너머(문 반대쪽 2.2m — 따라오는 짐승은 3m 뒤)까지 들어가고, 짐승이 문보다 1.5m 넘게 안쪽이면 풂(문 곁에서 풀면 일꾼이 나가는 사이 열린 문으로 떠나감, 회차 743)(열린 문 너머로 보인다고 문 밖에서 풀면 안 됨, 회차 742 시험)
+            Vector3 deep = pen; float stop = 2.5f; bool past = true;
+            if (m_fenced && m_way.Gate != null)
+            {
+                Vector3 d = pen - DoorWay.Middle(m_way.Gate); d.y = 0f;
+                Vector3 ain = at - DoorWay.Middle(m_way.Gate); ain.y = 0f; past = Vector3.Dot(ain, d.normalized) > 1.5f && !DoorWay.Fenced(at, pen); deep = pen + d.normalized * 2.2f; stop = 1f;
+            }
+            if (m_fenced && m_way.Passed > 0) m_wentIn = true;
+            if (Utils.DistanceXZ(at, pen) < PenNear && (!m_fenced || m_wentIn && !m_way.Busy && past && !DoorWay.Blocked(m_animal, m_npc)))
             {
                 MonsterAI mai = m_animal.GetComponent<MonsterAI>();
                 mai.SetFollowTarget(null);
-                PenAt(mai, pen);   // 짐승 자리 말고 상자 자리 둘레를 떠돌게(자리 기준이면 10m 밖으로 떠냄, 회차 375)
+                PenAt(mai, pen);   // 짐승 자리 말고 상자 자리(울타리 우리면 우리 가축의 순찰점) 둘레를 떠돌게(자리 기준이면 10m 밖으로 떠냄, 회차 375)
                 m_following = false;
                 Fed = 1;
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name}을 우리에 데려옴 {at}");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name}을 우리에 데려옴 {at}{(m_fenced ? $" — 울타리 안, 우리 가축 {m_mate.transform.position:F1}·순찰점 {pen:F1}·나 {me:F1}" : "")}");
                 Go(Step.Home);
                 return true;
             }
-            if (Utils.DistanceXZ(at, me) > 8f) { m_ai.StopMoving(); m_ai.Face(at); }
-            else if (Utils.DistanceXZ(pen, me) > 2.5f) m_ai.MoveToPoint(dt, pen, 2f, false);
+            if (Utils.DistanceXZ(at, me) > 8f && !m_way.Busy || m_fenced && !m_wentIn && m_way.AtDoor(me) && Utils.DistanceXZ(at, me) > 3.5f) { m_ai.StopMoving(); m_ai.Face(at); }
+            else if (m_mate != null && !m_wentIn && (Utils.DistanceXZ(pen, me) < 20f || m_way.Busy) && m_way.Steer(dt, m_npc, m_mate)) m_fenced = true; // 상자 곁에서 울타리가 우리 가축을 가리면 문 열고 들어가 그 순찰점까지 — 짐승은 따라옴(문은 열린 채, CloseDoors 끔)
+            else if (Utils.DistanceXZ(deep, me) > stop) m_ai.MoveToPoint(dt, deep, stop * 0.8f, false);
             else m_ai.Face(at);
             if (m_stepTime > LeadLimit) { Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name} 우리까지 못 옴 {at}"); Go(Step.Home); }
             return true;

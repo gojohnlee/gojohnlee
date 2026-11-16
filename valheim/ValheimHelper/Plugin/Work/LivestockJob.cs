@@ -188,7 +188,7 @@ namespace ValheimHelper
             }
             if (f == null) { Go(Step.Home); return true; }
             Vector3 at = f.Animal.transform.position;
-            if (m_wayFor != f.Animal) { m_way = new DoorWay(); m_wayFor = f.Animal; }
+            if (m_wayFor != f.Animal) { m_way = new DoorWay { PenGate = true }; m_wayFor = f.Animal; }
             if ((Utils.DistanceXZ(at, me) < 12f || m_way.Busy) && m_way.Steer(dt, m_npc, f.Animal)) return true;
             if (!m_ai.MoveToPoint(dt, at, 2f, false) && Utils.DistanceXZ(at, me) > 2.5f)
             {

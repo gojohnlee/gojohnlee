@@ -25,7 +25,7 @@ namespace ValheimHelper
         public static int Opened, Entered, Exited, Closed, GaveUps;
 
         /// <summary>일꾼이 연 문(회차 313): 그 일꾼이 지붕 밖으로 나와 문에서 3m 넘게(지붕 아래여도 15m 넘게) 멀어지고 문틀에 아무도 없으면 닫는다. 플레이어가 연 문은 안 건드림.</summary>
-        sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen, Away; public bool Shut, Inside; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
+        sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen, Away; public bool Shut, Inside, Pen; public Vector3 Out; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
         static readonly System.Collections.Generic.List<OpenedDoor> s_opened = new System.Collections.Generic.List<OpenedDoor>();
         static float s_next;
 
@@ -40,8 +40,25 @@ namespace ValheimHelper
             s_opened.Add(new OpenedDoor { Door = door, By = npc, Mid = Middle(door), Reopen = reopen });
         }
 
+        /// <summary>울타리 우리 문(가축 ⑥ — 먹이·솎기·데려오기가 PenGate로 엶): 열어 두면 우리 가축이 빠져나감(회차 742 시험) → 집 문과 달리 연 일꾼이 바깥(out 쪽) 3m 넘게 나오면 닫음.</summary>
+        public bool PenGate;
+        static void MarkPen(Door door, Vector3 outside)
+        {
+            var o = s_opened.Find(x => x.Door == door);
+            if (o == null) return;
+            Vector3 n = outside - o.Mid; n.y = 0f;
+            o.Pen = true; o.Out = n.normalized;
+        }
+
         /// <summary>문 쪽으로 가는 중 — 부른 쪽은 "대상까지 멀면 걷기"를 건너뛴다(문으로 돌다 대상 2.5m 밖으로 나가면 다시 대상 쪽으로 당겨 오락가락, 회차 314).</summary>
         public bool Busy => m_phase == Phase.ToDoor || m_phase == Phase.Through;
+        /// <summary>이 길로 문을 지난 횟수·문 길 포기(울타리 우리 데려오기가 봄, 회차 743).</summary>
+        public int Passed { get; private set; }
+        public bool GaveUp => m_phase == Phase.GaveUp;
+        /// <summary>문 앞(바깥 자리 2.5m 안)에 와 아직 안 지남 — 데려오기는 짐승이 붙을 때까지 여기서 기다림(멀리 두고 들어가면 짐승이 벽에 막힘, 회차 743).</summary>
+        public bool AtDoor(Vector3 me) => m_phase == Phase.ToDoor && Utils.DistanceXZ(me, m_out) < 2.5f;
+        /// <summary>지금(또는 마지막으로) 지나는 문.</summary>
+        public Door Gate => m_door;
         /// <summary>문으로 가는 중 남은 길(문 앞 → 문틀 너머 → 목표 직선). 걸음 기록용 — 문 쪽 걷기는 m_path를 안 써서 옛 m_path로 재면 멀어지는 것처럼 보였음(회차 452: 나가며 1초 멈칫으로 셈).</summary>
         public float LeftVia(Vector3 me) => (m_phase == Phase.ToDoor ? Utils.DistanceXZ(me, m_out) + Utils.DistanceXZ(m_out, m_in) : Utils.DistanceXZ(me, m_in)) + Utils.DistanceXZ(m_in, m_for);
 
@@ -63,6 +80,9 @@ namespace ValheimHelper
         }
 
         const float SideRay = 0.35f;
+
+        /// <summary>두 점 사이를 건축물이 가리나(울타리 우리 데려오기: 짐승이 벽 안쪽인지, 회차 743).</summary>
+        public static bool Fenced(Vector3 a, Vector3 b) => Physics.Linecast(a + Vector3.up * 0.6f, b + Vector3.up * 0.6f, Mask);
 
         static bool Ray(Vector3 from, Vector3 to, Component target)
         {
@@ -95,7 +115,7 @@ namespace ValheimHelper
             }
             int r = Walk(dt, npc, target.name);
             if (r != 2) return r == 1;
-            Entered++;
+            Entered++; Passed++;
             npc.Ai.ForgetPath(); // 문 앞 가던 길(1초·5초 옛 길)이 아니라 지금 자리에서 대상으로 새 길(Exit와 같음)
             // 회차 450: 들어온 뒤 내가 연 문은 몇 걸음 지나 닫음(CloseBehind) — 열어 두면 문짝이 안쪽에 있어 나갈 때 문 앞에 서서 닫고 반대로 다시 열며 1.2~2.8초 섰음
             var mine = s_opened.Find(o => o.Door == m_door);
@@ -224,7 +244,7 @@ namespace ValheimHelper
                 if (Dungeons.Open(npc, m_door))
                 {
                     Opened++;
-                    Track(m_door, npc);
+                    Track(m_door, npc); if (PenGate) MarkPen(m_door, m_out);
                     m_swing = 2; // 방금 내가 엶 — 바꿔 열기 안 함(회차 347: 연 직후 s_state가 반대로 읽혀 들어갈 때도 닫음)
                 }
                 m_phase = Phase.Through; m_t = 0f; m_clearT = -1f;
@@ -250,7 +270,7 @@ namespace ValheimHelper
             {
                 m_swingNext = Time.time + 0.3f; // 닫히는 애니메이션 중엔 바닐라 CanInteract가 거절 → 될 때까지
                 Middle(m_door); // 다 닫힌 순간 문틀 가운데를 잼(E108)
-                if (Dungeons.Open(npc, m_door)) Track(m_door, npc, m_orig);
+                if (Dungeons.Open(npc, m_door)) { Track(m_door, npc, m_orig); if (PenGate) MarkPen(m_door, m_out); }
             }
             if (!Dungeons.IsOpen(v.GetZDO())) { npc.Ai.StopMoving(); npc.Ai.Hold("문 열리길 기다림"); return 1; } // 열리는 중(주인 RPC 기다림)
             // 문틀 가운데를 지나기 전엔 가운데를 겨눔(회차 317: 문 앞 0.56m 옆에서 곧장 가다 열린 문짝에 8초 박힘)
@@ -359,6 +379,18 @@ namespace ValheimHelper
         {
             if (!CloseDoors)
             {
+                for (int i = s_opened.Count - 1; i >= 0; i--)
+                {
+                    var o = s_opened[i];
+                    ZNetView pv = o.Door != null ? o.Door.GetComponent<ZNetView>() : null;
+                    if (!o.Pen || o.Shut || o.By == null || o.By.IsDead() || pv == null || !pv.IsValid() || !Dungeons.IsOpen(pv.GetZDO())) continue;
+                    Vector3 me = o.By.transform.position;
+                    if (Vector3.Dot(me - o.Mid, o.Out) < 3f || SomeoneAt(o.Mid, null)) continue;
+                    pv.InvokeRPC("UseDoor", false);
+                    s_opened.RemoveAt(i);
+                    Closed++;
+                    Diag.Log($"DIAG {o.By.NpcName} 우리에서 나와 울타리 문 {o.Door.name} 닫음");
+                }
                 // 사용자 11-14: 지나간 뒤 닫지 않음. 기록은 나오며 문짝이 내 쪽이면 바로 닫기(CloseIfSwungAtMe, 안 닫으면 문짝에 박혀 순간이동)에만 쓰고, 문이 닫혔거나 연 일꾼이 15m 넘게 멀어지면 지움.
                 for (int i = s_opened.Count - 1; i >= 0; i--)
                 {
@@ -366,7 +398,7 @@ namespace ValheimHelper
                     ZNetView dv = o.Door != null ? o.Door.GetComponent<ZNetView>() : null;
                     if (!o.Shut || Time.time - o.Sent < 1.5f) continue;
                     s_opened.RemoveAt(i); // 다시 엶은 한 번만 — 그 뒤 남이 닫으면 그대로
-                    if (dv == null || !dv.IsValid() || Dungeons.IsOpen(dv.GetZDO())) continue;
+                    if (o.Pen || dv == null || !dv.IsValid() || Dungeons.IsOpen(dv.GetZDO())) continue; // 울타리 문은 닫힌 채(회차 743: 다시 열어 우리 멧돼지가 빠져나감)
                     dv.InvokeRPC("UseDoor", o.Away == 1); // 바닐라 RPC_UseDoor: forward면 s_state 1
                     Diag.Log($"DIAG {(o.By != null ? o.By.NpcName : "?")} 나오며 닫은 문 {o.Door.name} 반대로 다시 엶(s_state {o.Away})");
                 }
