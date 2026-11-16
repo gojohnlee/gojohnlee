@@ -129,7 +129,11 @@ namespace ValheimHelper
                     m_bestDist = float.MaxValue;
                     m_progressTimer = 0f;
                 }
-                else if (Stuck(dt, gate)) { m_portal = null; m_bestDist = float.MaxValue; m_progressTimer = 0f; } // 못 가면 걸어서
+                else if (Stuck(dt, gate))
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 포탈 입구 못 감(입구와 {Utils.DistanceXZ(gate, m_npc.transform.position):0}m, 진척 없음 {m_progressTimer:0.0}초, 물 {m_ai.WaterBlockedTime:0.0}초, 막힘 {HopBlocked() ?? "-"}) → 걸어서");
+                    m_portal = null; m_bestDist = float.MaxValue; m_progressTimer = 0f; // 못 가면 걸어서
+                }
                 return false;
             }
             if (FarWalk(dt, dest)) return false;
@@ -138,6 +142,7 @@ namespace ValheimHelper
 
         /// <summary>시험용: 멀리선 이동 생략을 시작한 횟수·다 옮겨 끝낸 횟수·도중에 그만둔 횟수.</summary>
         public static int FarSkips, FarLanded, FarCancelled;
+        bool m_farSeaLogged;
         /// <summary>시험용: 마지막 생략의 길이(m)·기다린 시간(초)·지도 위치를 밝힌 횟수.</summary>
         public static float FarLastLength, FarLastSeconds;
         public static int FarReveals;
@@ -188,6 +193,8 @@ namespace ValheimHelper
                 if (!FarSkip.Worth(d) || m_hunt || HopBlocked() != null || !FarFromPlayers(dest)) return false; // 사냥은 생략 안 함(사용자 결정 2026-10-23 그대로)
                 ZNetView nv = m_npc.GetComponent<ZNetView>();
                 if (nv == null || !nv.IsOwner()) return false;
+                // 바다 건너는 포탈로만(사용자 결정 2026-10-23): 포탈 입구를 못 가 걸음으로 넘어온 바다 건너 목적지를 생략으로 건너뛰지 않는다(E121 — 1244m 직선 기다림)
+                if (!Scout.WalkFar(me.x, me.z, dest.x, dest.z)) { if (!m_farSeaLogged) Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 멀리선 이동 생략 안 함 — 목적지가 바다 건너({d:0}m)"); m_farSeaLogged = true; return false; }
                 m_far = new FarSkip(FarRoute(me, dest), m_npc.m_runSpeed);
                 m_farDest = dest;
                 m_ai.StopMoving();

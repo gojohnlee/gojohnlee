@@ -95,12 +95,14 @@ namespace ValheimHelper
             int oreBefore = inv.CountItems(oreName);
             Vector3 before = w.Ragnar.transform.position;
             w.Ragnar.TeleportTo(exit, w.Ragnar.transform.rotation, false);
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(0.3f);
+            // 도착 자리는 곧바로 잼 — 3초 뒤엔 쉬는 일꾼이 집 쪽으로 걷기 시작해 출구와 11m가 된 적 있음(E121, 회차 722)
+            float moved = Vector3.Distance(before, w.Ragnar.transform.position);
+            float toExit = Utils.DistanceXZ(exit, w.Ragnar.transform.position);
+            yield return new WaitForSeconds(2.7f);
             int oreAfter = inv.CountItems(oreName);
             checks.Add($"구리 광석 들고 건넘 (전 {oreBefore}, 뒤 {oreAfter})", oreBefore >= 5 && oreAfter == oreBefore);
             inv.RemoveItem(oreName, oreAfter);
-            float moved = Vector3.Distance(before, w.Ragnar.transform.position);
-            float toExit = Utils.DistanceXZ(exit, w.Ragnar.transform.position);
             checks.Add($"일꾼이 출구로 건너감 (이동 {moved:0}m, 출구와 {toExit:0.0}m)", moved > 400f && toExit < 6f);
             w.Ragnar.TeleportTo(w.Home, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(2f);
@@ -176,6 +178,7 @@ namespace ValheimHelper
                 for (t = 0f; t < 40f && Utils.DistanceXZ(npc.transform.position, land) > 15f; t += 0.5f)
                 {
                     if (job.GoalZone.Equals(zone)) chose = true;
+                    if (t % 10f < 0.25f) TestRunner.Log($"바다 포탈 칸 {t:0}초: 모드 {npc.Ai.Current}, 일 {npc.Ai.Job?.GetType().Name ?? "없음"}, 고른 구역 {job.GoalZone.X},{job.GoalZone.Y}, 집과 {Utils.DistanceXZ(npc.transform.position, home):0}m·포탈과 {Utils.DistanceXZ(npc.transform.position, gate):0}m·땅과 {Utils.DistanceXZ(npc.transform.position, land):0}m"); // E121: 40초 넘기면 어디서 늦었나
                     yield return new WaitForSeconds(0.5f);
                 }
                 if (job.GoalZone.Equals(zone)) chose = true;
