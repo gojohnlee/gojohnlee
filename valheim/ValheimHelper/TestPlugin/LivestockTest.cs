@@ -458,6 +458,25 @@ namespace ValheimHelper
                 inside && DoorWay.Entered > entered0 && szdo.GetBool(ZDOVars.s_patrol) && new Vector2(spp.x, spp.z).magnitude < Half && stray.GetComponent<MonsterAI>().GetFollowTarget() == null);
             yield return TestKit.WaitFor(() => gateZdo.GetInt(ZDOVars.s_state) == 0, 60f);
             checks.Add($"데려온 뒤 나와서 울타리 문 닫음 ({TestKit.Waited:0}초)", gateZdo.GetInt(ZDOVars.s_state) == 0);
+
+            // 14) 데려오다 "멈춰"(가축 ⑦): 따라오던 길든 멧돼지는 따라오기가 풀리고(TameJob.Stop) 일꾼은 이어 하지 않음
+            ClearOthers(home, made);
+            if (stray != null) ZNetScene.instance.Destroy(stray.gameObject);   // 13)이 못 데려온 멧돼지를 대신 데려가면 이 칸이 어긋남(회차 744)
+            var led = Spawn("Boar", GatherTest.Ground(home - side * 24f), made);
+            led.GetComponent<MonsterAI>().MakeTame();
+            var lmai = led.GetComponent<MonsterAI>();
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 60f);
+            Departures.TestTameNow();
+            checks.Add("쉬던 일꾼이 길든 멧돼지 데리러 감(멈춰 칸)", Departures.IdleTame(w.Ragnar) && w.Ragnar.Ai.Job is TameJob);
+            yield return TestKit.WaitFor(() => led == null || lmai.GetFollowTarget() == w.Ragnar.gameObject || !(w.Ragnar.Ai.Job is TameJob), 90f);
+            checks.Add($"멧돼지가 일꾼을 따라오기 시작 ({TestKit.Waited:0}초)", led != null && lmai.GetFollowTarget() == w.Ragnar.gameObject && w.Ragnar.Ai.Job is TameJob);
+            if (led == null) yield break;
+            string stopText = $"!{w.Ragnar.NpcName} 멈춰";
+            TestRunner.Log($"> {stopText}");
+            Commands.Handle(new Speaker(Player.m_localPlayer.GetPlayerName(), ZDOID.None, ZDOID.None), stopText);
+            yield return new WaitForSeconds(3f);
+            checks.Add($"멈춰: 일 그만·따라오기 풀림(일 {w.Ragnar.Ai.Job?.GetType().Name ?? "-"}, 따라감 {lmai.GetFollowTarget()?.name ?? "-"}, 대기열 {w.Ragnar.Ai.Queue.Count})",
+                led != null && !(w.Ragnar.Ai.Job is TameJob) && lmai.GetFollowTarget() == null && w.Ragnar.Ai.Queue.Count == 0);
         }
     }
 }

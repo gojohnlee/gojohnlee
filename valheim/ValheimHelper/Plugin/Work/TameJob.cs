@@ -292,6 +292,15 @@ namespace ValheimHelper
             Calm(ai);
         }
 
+        static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, Vector3> s_moveTarget = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, Vector3>("m_randomMoveTarget");
+        /// <summary>울타리 우리에 풀 때: 떠돌기 목표를 지금 자리로, 다음 고르기는 한 간격(멧돼지 30초) 뒤로 — 바로 고르면 순찰점 둘레 2.8~4m 목표가 벽 밖일 때
+        /// 일꾼이 나가는 사이 열린 문으로 길을 찾아 나감(회차 744 시험 13). 문이 닫힌 뒤엔 벽 밖 목표로 길이 없어 안에 머묾.</summary>
+        static void Hold(BaseAI ai)
+        {
+            s_moveTarget(ai) = ai.transform.position;
+            s_moveTimer(ai) = ai.m_randomMoveInterval;
+        }
+
         /// <summary>우리 안 얌전: 떠돌기 범위(멧돼지 프리팹 10m → 순찰점 둘레 20m까지 떠돎)를 바닐라 기본 4m로. 프리팹 값이라 저장 안 됨 → 불러온 뒤엔 LivestockJob.Plan이 우리 가축마다 다시.</summary>
         internal const float PenRoam = 4f;
         internal static void Calm(BaseAI ai)
@@ -340,6 +349,7 @@ namespace ValheimHelper
                 MonsterAI mai = m_animal.GetComponent<MonsterAI>();
                 mai.SetFollowTarget(null);
                 PenAt(mai, pen);   // 짐승 자리 말고 상자 자리(울타리 우리면 우리 가축의 순찰점) 둘레를 떠돌게(자리 기준이면 10m 밖으로 떠냄, 회차 375)
+                if (m_fenced) Hold(mai);
                 m_following = false;
                 Fed = 1;
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: 길든 {m_animal.m_name}을 우리에 데려옴 {at}{(m_fenced ? $" — 울타리 안, 우리 가축 {m_mate.transform.position:F1}·순찰점 {pen:F1}·나 {me:F1}" : "")}");

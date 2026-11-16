@@ -61,6 +61,8 @@ namespace ValheimHelper
                             if (Floor(p + d * DropGrid, p.y, pieceMask, out _)) continue; // 이웃 칸도 바닥 — 끝 아님
                             Vector3 edge = p;
                             for (float s = 0.1f; s < DropGrid; s += 0.1f) { if (!Floor(p + d * s, p.y, pieceMask, out Vector3 e)) break; edge = e; }
+                            Vector3 back = edge - d * 0.6f, across = Vector3.Cross(d, Vector3.up) * 0.4f;
+                            if (!Floor(back, p.y, pieceMask, out _) || !Floor(back + across, p.y, pieceMask, out _) || !Floor(back - across, p.y, pieceMask, out _)) continue; // 끝 뒤에 설 자리(0.6m·양옆 0.4m) 없음 — 벽·울타리 윗면·벽 끝(회차 744: 울타리 벽 위에서 우리 안으로 뛰어내려 갇힘)
                             bool wall = Physics.Raycast(edge + Vector3.up * 0.5f, d, 1f, mask, QueryTriggerInteraction.Ignore)
                                 || Physics.Raycast(edge + Vector3.up * 1.5f, d, 1f, mask, QueryTriggerInteraction.Ignore);
                             if (wall) continue;
