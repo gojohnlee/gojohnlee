@@ -57,6 +57,32 @@ namespace ValheimHelper
                 }
                 TestRunner.Log(line);
             }
+            foreach (string e in new[] { "ChickenEgg", "AsksvinEgg" })
+            {
+                var pf = ObjectDB.instance.GetItemPrefab(e);
+                var eg = pf != null ? pf.GetComponent<EggGrow>() : null;
+                if (eg == null) { TestRunner.Log($"알 {e}: EggGrow 없음"); continue; }
+                var gu = eg.m_grownPrefab != null ? eg.m_grownPrefab.GetComponent<Growup>() : null;
+                TestRunner.Log($"알 {e}: 부화 {eg.m_growTime:0}초, 길듦 {eg.m_tamed}, 나옴 {(eg.m_grownPrefab != null ? eg.m_grownPrefab.name : "-")} 자람 {(gu != null ? gu.m_growTime : 0):0}초→{(gu != null && gu.m_grownPrefab != null ? gu.m_grownPrefab.name : "-")}, 불 {eg.m_requireNearbyFire}, 지붕 {eg.m_requireUnderRoof} 덮임 {eg.m_requireCoverPercentige:0.##}, {eg.m_updateInterval:0}초마다");
+            }
+            // 야생으로 나오는 종(스폰 목록에 켜진 것)
+            var wild = new Dictionary<string, string>();
+            foreach (var sl in Resources.FindObjectsOfTypeAll<SpawnSystemList>())
+                foreach (var sd in sl.m_spawners)
+                    if (sd.m_enabled && sd.m_prefab != null && System.Array.IndexOf(Kinds, sd.m_prefab.name) >= 0)
+                        wild[sd.m_prefab.name] = (wild.TryGetValue(sd.m_prefab.name, out var b) ? b + "," : "") + sd.m_biome;
+            foreach (string k in Kinds) TestRunner.Log($"야생 {k}: {(wild.TryGetValue(k, out var bs) ? bs : "스폰 목록에 없음")}");
+        }
+
+        /// <summary>FAIL 때 짐승이 왜 안 움직였나 가르는 줄: 자리·속도·경보·가장 가까운 산딸기 떨굼.</summary>
+        static string BoarState(Character c)
+        {
+            var ai = c.GetComponent<MonsterAI>();
+            float near = -1f;
+            foreach (ItemDrop d in JobKit.DropsNear(c.transform.position, 40f))
+                if (Utils.GetPrefabName(d.gameObject) == "Raspberry")
+                { float dd = Vector3.Distance(d.transform.position, c.transform.position); if (near < 0f || dd < near) near = dd; }
+            return $"자리 {c.transform.position:0.0} 속도 {c.GetVelocity().magnitude:0.0} 경보 {ai.IsAlerted()} 주인 {c.IsOwner()} 길듦 {c.IsTamed()} 따라감 {(ai.GetFollowTarget() != null)} 표적 {(ai.GetTargetCreature() != null ? ai.GetTargetCreature().m_name : "-")} 산딸기 {(near < 0f ? "없음" : near.ToString("0.0") + "m")} 땅닿음 {c.IsOnGround()} FPS {1f / Time.smoothDeltaTime:0}";
         }
 
         static Character Spawn(string prefab, Vector3 at, List<GameObject> made)
@@ -147,6 +173,7 @@ namespace ValheimHelper
             berry.GetComponent<ItemDrop>().SetStack(3);
             made.Add(berry);
             yield return TestKit.WaitFor(() => boar != null && !tm.IsHungry(), 25f);
+            if (boar != null && tm.IsHungry()) TestRunner.Log($"먹이 안 먹음(25초): {BoarState(boar)} 일꾼 {Vector3.Distance(boar.transform.position, w.Ragnar.transform.position):0}m");
             checks.Add("떨군 산딸기를 먹음(배부름)", boar != null && !tm.IsHungry());
             yield return new WaitForSeconds(7f);
             if (boar == null) { checks.Add("먹이 시험 멧돼지 살아 있음", false); yield break; }
@@ -163,7 +190,7 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => boar == null || Vector3.Distance(boar.transform.position, w.Ragnar.transform.position) < 5f, 30f);
             if (boar == null) { checks.Add("따라오기 멧돼지 살아 있음", false); yield break; }
             float d1 = Vector3.Distance(boar.transform.position, w.Ragnar.transform.position);
-            TestRunner.Log($"따라오기: {d0:0}m → {d1:0.0}m");
+            TestRunner.Log($"따라오기: {d0:0}m → {d1:0.0}m ({TestKit.Waited:0}초, {BoarState(boar)})");
             checks.Add("SetFollowTarget(일꾼)으로 따라옴(5m 안)", d1 < 5f);
             mai.SetFollowTarget(null);
             mai.SetPatrolPoint();   // 플레이어가 "머물러" 둔 꼴 — 6) 데려오기가 건드리지 않아야 함
@@ -205,7 +232,13 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 30f);
             Departures.TestTameNow();
             checks.Add("쉬던 일꾼이 길들이러 감", Departures.IdleTame(w.Ragnar) && w.Ragnar.Ai.Job is TameJob);
-            yield return TestKit.WaitFor(() => wildPig == null || !wtm.IsHungry(), 90f);
+            float nextLog = Time.time + 10f;   // 먹기까지 오래 걸리는 까닭 가르기(E127)
+            yield return TestKit.WaitFor(() =>
+            {
+                if (wildPig != null && Time.time > nextLog) { nextLog = Time.time + 10f; TestRunner.Log($"먹이 기다림 {TestKit.Waited:0}초: {BoarState(wildPig)} 일꾼 {Vector3.Distance(wildPig.transform.position, w.Ragnar.transform.position):0}m"); }
+                return wildPig == null || !wtm.IsHungry();
+            }, 90f);
+            if (wildPig != null && wtm.IsHungry()) TestRunner.Log($"먹이 안 먹음: {BoarState(wildPig)}");
             checks.Add($"야생 멧돼지가 떨군 먹이를 먹음 ({TestKit.Waited:0}초)", wildPig != null && !wtm.IsHungry());
             yield return new WaitForSeconds(7f);
             if (wildPig == null) { checks.Add("길들이는 멧돼지 살아 있음", false); yield break; }

@@ -15,7 +15,8 @@ namespace ValheimHelper
         /// <summary>집에서 이 거리 안 야생만 길들인다.</summary>
         internal const float TameFar = 100f;
         /// <summary>짐승 시야(m_viewRange, 멧돼지 20m) 밖 이만큼에서 먹이를 곁에 던지고 바로 떠남 — 다가가면 덤벼 길들이기가 깨짐(회차 373 첫 시험), 서서 지켜보면 헛기다림(사용자 11-11 ②) → 먹었는지는 다음 For가 Checked로 확인.</summary>
-        const float OutOfSight = 2f;
+        /// 2m였을 땐 멈추는 사이 짐승이 떠돌다 20m 안에 들어와 일꾼을 표적으로 잡고(경보 아님) 바닐라 m_fleeIfNotAlerted로 30초쯤 달아나 먹이에서 27m까지 멀어짐 → 90초 안에 못 먹음(회차 736 E127).
+        const float OutOfSight = 8f;
 
         /// <summary>데려오기: 짐승이 이만큼 안에 오면 우리에 다 왔다고 보고 풀어 둠.</summary>
         const float PenNear = 6f, LeadLimit = 120f;
