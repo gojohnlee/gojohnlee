@@ -28,6 +28,9 @@ namespace ValheimHelper
         }
 
         /// <summary>건축 바뀜(BrainPaths.ForgetBuild 자리): 그 곁 점 지우고, 다음 Drops 때 새로 생긴 끝을 찾게 다시 훑기 표시.</summary>
+        /// <summary>시험용(vh_droptest): 시험이 Instantiate로 놓은 조각은 SetCreator를 안 거침 → 다음 Drops 때 다시 훑기.</summary>
+        internal static void DropsRescan() => s_dropsStale = true;
+
         static void ForgetDrops(Vector3 at)
         {
             if (s_drops == null || Utils.DistanceXZ(at, s_dropsHome) > DropScanRadius + 5f) return;

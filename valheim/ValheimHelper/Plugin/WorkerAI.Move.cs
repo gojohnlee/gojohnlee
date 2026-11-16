@@ -293,7 +293,8 @@ namespace ValheimHelper
             // 목표가 바뀌면 물가에서 막혀 있던 시간은 새로 센다(0.3.7: 물러날 때 막힌 시간이 남아 도망이 시작하자마자 끝남)
             if (Utils.DistanceXZ(point, m_moveTarget) > 2f) { WaterBlockedTime = 0f; m_detourCount = 0; m_deadEnd = false; m_leg.Reset(); TrailStart(pos, m_moveTarget); m_moveTarget = point; MemPathStart(pos, point); DropStart(pos, point, run); }
             float d = Utils.DistanceXZ(point, pos);
-            if (InteriorNav.Reached(pos, point, dist)) { StopMoving(); m_deadEnd = false; m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); TrailDone(pos, point); m_memPath = null; m_dropPhase = 0; return true; }
+            if (InteriorNav.Reached(pos, point, dist) && !(Dropping && !m_character.IsOnGround())) { // 떨어지는 중엔 착지까지 DropStep(목표 곁에 떨어지면 공중에서 멈추고 착지를 안 셌음, 회차 735 vh_droptest)
+ StopMoving(); m_deadEnd = false; m_detourTime = 0f; m_detourCount = 0; WaterBlockedTime = 0f; m_carving = false; m_pitSince = 0f; ForgetInteriorPath(); TrailDone(pos, point); m_memPath = null; DropEnd(pos); return true; }
             TrailStep(pos);
             m_moveDiag = "MoveToPoint 시작"; if (EdgeRescueIfLong(dt, pos)) { m_moveDiag = "MoveToPoint 벼랑 구조"; return false; }
             if (m_carving && Time.time - m_carveSeen > 1f) m_carving = false; // 깎다가 다른 일로 넘어갔다

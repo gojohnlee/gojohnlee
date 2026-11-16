@@ -15,11 +15,13 @@ namespace ValheimHelper
         internal bool Dropping => m_dropPhase >= 2;
         /// <summary>시험용: 뛰어내려 착지한 수·고른 뒤 그만둔 수.</summary>
         internal int DropsTaken, DropsQuit;
+        /// <summary>시험용(vh_droptest): 켜면 뛰어내리기를 안 고름 — 계단 길 시간 비교.</summary>
+        internal static bool TestNoDrop;
 
         void DropStart(Vector3 pos, Vector3 target, bool run)
         {
             m_dropPhase = 0;
-            if (!(m_character is WorkerNpc n) || !NearHome(pos) || !NearHome(target) || pos.y - target.y < DropShortcut.MinDrop || !m_character.IsOnGround()) return;
+            if (TestNoDrop || !(m_character is WorkerNpc n) || !NearHome(pos) || !NearHome(target) || pos.y - target.y < DropShortcut.MinDrop || !m_character.IsOnGround()) return;
             var drops = Brain.Drops(n.Home);
             if (drops.Count == 0) return;
             float stair = FullPathLength(pos, target);
@@ -32,6 +34,11 @@ namespace ValheimHelper
             m_memPath = null;
             Diag.Log($"뛰어내리기 고름: {pos:F1} → {target:F1}, 끝 {V(s.Edge):F1} 높이 {s.Height:0.0}m, 계단 길 {stair:0.0}m");
         }
+
+        /// <summary>목표에 닿음: 떨어져 내려와 있으면 착지로 셈.</summary>
+        void DropEnd(Vector3 pos) { if (m_dropPhase == 3 && pos.y < m_drop.Edge.Y - 1f) Landed(pos); m_dropPhase = 0; }
+
+        void Landed(Vector3 pos) { m_dropPhase = 0; DropsTaken++; Diag.Log($"뛰어내리기 착지: {pos:F1}, {Time.time - m_dropStartAt:0.0}초"); }
 
         void DropQuit(string why) { m_dropPhase = 0; DropsQuit++; Diag.Log($"뛰어내리기 그만({why}) — 바닐라 길"); }
 
@@ -57,11 +64,7 @@ namespace ValheimHelper
                     if (Time.time > m_dropUntil) { DropQuit("착지 못 함"); return false; }
                     MoveTowards(m_dropDir, false); m_moveDiag = "뛰어내리기 떨어지는 중";
                     if (m_character.IsOnGround() && pos.y < edge.y - 1f)
-                    {
-                        m_dropPhase = 0; DropsTaken++;
-                        Diag.Log($"뛰어내리기 착지: {pos:F1}, {Time.time - m_dropStartAt:0.0}초");
-                        return false;
-                    }
+                    { Landed(pos); return false; }
                     return true;
             }
         }

@@ -45,7 +45,7 @@ namespace ValheimHelper
             TestKit.End(w, checks);
         }
 
-        static GameObject Put(List<GameObject> made, string prefab, Vector3 at, Quaternion rot, float? bottom = null)
+        internal static GameObject Put(List<GameObject> made, string prefab, Vector3 at, Quaternion rot, float? bottom = null)
         {
             GameObject p = ZNetScene.instance.GetPrefab(prefab);
             if (p == null) { Plugin.Log.LogWarning($"집 시험: 프리팹 {prefab} 없음"); return null; }
@@ -95,7 +95,7 @@ namespace ValheimHelper
             return cleared.Count;
         }
 
-        static Bounds Box(GameObject g)
+        internal static Bounds Box(GameObject g)
         {
             var cs = g.GetComponentsInChildren<Collider>();
             Bounds b = new Bounds(g.transform.position, Vector3.zero);
