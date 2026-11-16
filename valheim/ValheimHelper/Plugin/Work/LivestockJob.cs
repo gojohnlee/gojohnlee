@@ -115,6 +115,7 @@ namespace ValheimHelper
                     if (a == null || a.IsDead() || !a.IsTamed() || a is WorkerNpc || a.IsPlayer() || !InPen(a, c.transform.position) || !Pens.Accepts(species, c, a)) continue;
                     Tameable t = a.GetComponent<Tameable>();
                     if (t == null || list.Exists(f => f.Animal == a)) continue;
+                    if (a.GetComponent<ZNetView>()?.GetZDO()?.GetBool(ZDOVars.s_patrol) == true) TameJob.Calm(a.GetComponent<BaseAI>());   // 불러온 뒤엔 프리팹 범위로 돌아가 있음
                     tame++;
                     if (!t.IsHungry()) continue;
                     hungry++;

@@ -283,6 +283,14 @@ namespace ValheimHelper
             s_setPatrol(ai, at);
             // 바닐라는 떠돌기 목표를 타이머(멧돼지 30초)가 끝날 때만 새로 고름 → 풀기 전 목표(회차 378: 순찰점에서 46m)로 계속 걸어감(E071). 바로 다시 고르게
             s_moveTimer(ai) = 0f;
+            Calm(ai);
+        }
+
+        /// <summary>우리 안 얌전: 떠돌기 범위(멧돼지 프리팹 10m → 순찰점 둘레 20m까지 떠돎)를 바닐라 기본 4m로. 프리팹 값이라 저장 안 됨 → 불러온 뒤엔 LivestockJob.Plan이 우리 가축마다 다시.</summary>
+        internal const float PenRoam = 4f;
+        internal static void Calm(BaseAI ai)
+        {
+            if (ai != null && ai.m_randomMoveRange > PenRoam) ai.m_randomMoveRange = PenRoam;
         }
 
         bool UpdateLead(float dt)

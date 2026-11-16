@@ -270,6 +270,7 @@ namespace ValheimHelper
             TestRunner.Log($"데려오기(떠돌기 범위 {wmai.m_randomMoveRange}m·간격 {wmai.m_randomMoveInterval}초): 우리까지 {pd0:0}m → {pd1:0.0}m ({TestKit.Waited:0}초), 따라감 {wmai.GetFollowTarget() != null}, 순찰 {pzdo.GetBool(ZDOVars.s_patrol)}");
             checks.Add("길든 멧돼지가 우리 상자 10m 안에 옴", pd1 < LivestockJob.PenRange);
             checks.Add("우리에 풀어 둠(안 따라감·순찰 지점)", wmai.GetFollowTarget() == null && pzdo.GetBool(ZDOVars.s_patrol));
+            checks.Add($"우리 안 얌전(떠돌기 범위 {wmai.m_randomMoveRange}m ≤ {TameJob.PenRoam}m)", wmai.m_randomMoveRange <= TameJob.PenRoam);
             for (int i = 0; i < 5; i++)
             {
                 yield return new WaitForSeconds(2f);
@@ -277,7 +278,7 @@ namespace ValheimHelper
                 TestRunner.Log($"풀어 둔 멧돼지 {i * 2 + 2}초: 우리까지 {Utils.DistanceXZ(wildPig.transform.position, pen.transform.position):0.0}m, 순찰점까지 {Utils.DistanceXZ(wildPig.transform.position, pzdo.GetVec3(ZDOVars.s_patrolPoint, Vector3.zero)):0.0}m, 경보 {wmai.IsAlerted()}, 배고픔 {wildPig.GetComponent<Tameable>().IsHungry()}, 따라감 {wmai.GetFollowTarget()?.name}, 표적 {wmai.GetTargetCreature()?.m_name}, 달림 {wildPig.IsRunning()}, 떠돌기 목표 순찰점까지 {Utils.DistanceXZ(HarmonyLib.Traverse.Create(wmai).Field("m_randomMoveTarget").GetValue<Vector3>(), pzdo.GetVec3(ZDOVars.s_patrolPoint, Vector3.zero)):0.0}m");
             }
             float pd2 = Utils.DistanceXZ(wildPig.transform.position, pen.transform.position);
-            // 멧돼지 떠돌기 범위 10m → 순찰점 둘레 20m 넘어야 돌아옴(바닐라, 회차 378)
+            // 떠돌기 범위(우리 안 4m) 두 배 넘어야 돌아옴(바닐라, 회차 378)
             checks.Add($"10초 뒤에도 우리에 있음({pd2:0.0}m)", pd2 < wmai.m_randomMoveRange * 2f + 1f && LivestockJob.InPen(wildPig, pen.transform.position));
             ClearOthers(home, made);   // 집 거점 95m 둘레에서 월드가 멧돼지를 다시 낳음(11-12) — 그걸 길들이러 가면 이 칸이 어긋남
             Departures.TestTameNow();
