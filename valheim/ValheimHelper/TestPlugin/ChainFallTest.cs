@@ -69,7 +69,7 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1f);
             var row = new List<Vector3>();
             GameObject beech = ZNetScene.instance.GetPrefab("Beech1");
-            for (float r = 14f; r <= 39f; r += 5f) // 3m 간격은 통나무가 다음 나무에 천천히 기대 서 연쇄 0번(회차 718 B13b, 기울기 7°) — 5m로 속도 붙여 부딪힘
+            for (float r = 14f; r <= 39f; r += 7f) // E130 회차 768: 5m도 첫 통나무가 16° 기울어 다음 나무에 기대 섬 → 7m(첫 나무 둘레와 같음). 3m 간격은 통나무가 다음 나무에 천천히 기대 서 연쇄 0번(회차 718 B13b, 기울기 7°) — 5m로 속도 붙여 부딪힘
             {
                 Vector3 p = home + dir * r;
                 ZoneSystem.instance.GetGroundHeight(p, out float h);
@@ -79,7 +79,7 @@ namespace ValheimHelper
             }
             // 첫 나무는 일꾼 반대로 쓰러지는데 일꾼이 비스듬히 서면 줄을 비껴 연쇄 0번(회차 714 B13b, 선 나무 8/9) — 둘째·셋째 자리 양옆 3m에도 한 그루씩
             Vector3 side = Vector3.Cross(Vector3.up, dir).normalized * 3f;
-            foreach (float r in new[] { 19f, 24f })
+            foreach (float r in new[] { 21f, 28f })
                 foreach (float s in new[] { -1f, 1f })
                 {
                     Vector3 p = home + dir * r + side * s;
@@ -95,7 +95,7 @@ namespace ValheimHelper
                 p.y = h;
                 Object.Instantiate(beech, p, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
             }
-            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~39m 5m 간격(+양옆 4·첫 나무 둘레 7m 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
+            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~35m 7m 간격(+양옆 4·첫 나무 둘레 7m 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
             yield return new WaitForSeconds(2f);
 
             // 2) 나무 1 — 첫 나무가 바깥으로 넘어져 연쇄

@@ -314,6 +314,23 @@ namespace ValheimHelper
         public static int RolledLogs;
         readonly HashSet<ZDOID> m_ownIds = new HashSet<ZDOID>();
 
+        float m_ownIdTimer;
+
+        /// <summary>쓰러뜨린 자리 둘레 통나무 id를 1초마다 적는다 — OwnLog는 다음 탐색 때만 돌아, 일꾼이 다른 통나무를 쪼개는 사이
+        /// 연쇄로 쓰러진 통나무가 굴러 나가면 놓쳤다(E130 회차 768, chainfall 7m 줄).</summary>
+        void NoteOwnIds()
+        {
+            if (m_felled.Count == 0 || m_hunt || m_ownIds.Count >= FelledMax * 4) return;
+            foreach (var s in m_felled)
+                foreach (var zdo in Senses.Nearby(s, OwnLogRange))
+                {
+                    ResourceInfo info = ResourceCatalog.Get(zdo.GetPrefab());
+                    if (info == null || !info.Log || !info.Produces.Contains(Item) || m_skip.Contains(zdo.m_uid)) continue;
+                    if (Utils.DistanceXZ(zdo.GetPosition(), s) > OwnLogRange || m_ownIds.Count >= FelledMax * 4) continue;
+                    m_ownIds.Add(zdo.m_uid);
+                }
+        }
+
         /// <summary>자기 통나무가 굴러 모든 자리에서 OwnLogRange 밖이면 지금 자리를 새 자리로. 없어진(쪼개진·주운) id는 지운다.</summary>
         void FollowOwnLogs()
         {

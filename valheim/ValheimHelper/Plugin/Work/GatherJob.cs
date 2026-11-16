@@ -408,6 +408,8 @@ namespace ValheimHelper
         {
             m_stepTime += dt;
             WatchSeen(dt);
+            m_ownIdTimer -= dt;
+            if (m_ownIdTimer <= 0f) { m_ownIdTimer = 1f; NoteOwnIds(); }
             if (m_npc.InInterior())
             {
                 m_insideTime += dt;
