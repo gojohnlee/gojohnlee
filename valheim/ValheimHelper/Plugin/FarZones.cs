@@ -201,10 +201,45 @@ namespace ValheimHelper
                 s_seen.UnionWith(s_near);
                 if (anchors.Count > 0) AddNear(s_near, anchors);
                 CreateObjects(__instance, s_near, s_distant);
+                PurgeDead(__instance);
                 RemoveObjects(__instance, s_near, s_distant);
                 s_seen.Clear();
                 return false;
             }
+        }
+
+        static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances =
+            AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
+        static readonly List<ZDO> s_dead = new List<ZDO>();
+        static int s_deadLogs;
+
+        // ZNetScene.Destroy를 거치지 않고 지워진 인스턴스(Object.Destroy·부모와 함께 지워짐)는 m_instances에 남아, 범위 밖이 되면 원본 RemoveObjects가
+        // 지워진 gameObject에서 NRE를 내고 그 뒤 매 프레임 GetZDO() null로 또 낸다(E129 회차 762 vh_tartest). 범위 밖 죽은 항목만 원본과 같은 순서로 정리
+        // (범위 안은 원본처럼 그대로 — 지우면 CreateObjects가 다시 만들어 복제될 수 있음).
+        static void PurgeDead(ZNetScene scene)
+        {
+            var inst = Instances(scene);
+            s_dead.Clear();
+            foreach (var kv in inst)
+                if (kv.Value == null || kv.Value.GetZDO() == null) s_dead.Add(kv.Key);
+            if (s_dead.Count == 0) return;
+            s_seen.Clear();
+            s_seen.UnionWith(s_near);
+            s_seen.UnionWith(s_distant);
+            foreach (ZDO z in s_dead)
+            {
+                if (s_seen.Contains(z)) continue;
+                if (s_deadLogs++ < 20)
+                {
+                    GameObject prefab = scene.GetPrefab(z.GetPrefab());
+                    Plugin.Log.LogWarning($"지워진 인스턴스 정리(E129): {(prefab != null ? prefab.name : z.GetPrefab().ToString())} 자리 {z.GetPosition():F1} " +
+                        $"{(inst[z] == null ? "물체 없음" : "ZDO 비움")} 영구 {z.Persistent} 소유 {z.IsOwner()}");
+                }
+                if (inst[z] != null) UnityEngine.Object.Destroy(inst[z].gameObject);
+                if (!z.Persistent && z.IsOwner()) ZDOMan.instance.DestroyZDO(z);
+                inst.Remove(z);
+            }
+            s_dead.Clear();
         }
 
         // ---- 3) 소유권 ----
