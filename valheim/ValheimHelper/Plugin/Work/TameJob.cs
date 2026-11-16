@@ -274,7 +274,7 @@ namespace ValheimHelper
             m_animal.GetComponent<MonsterAI>().SetFollowTarget(m_npc.gameObject);
             m_following = true;
             m_mate = PenMate(m_animal, m_pen);
-            m_way = new DoorWay { PenGate = true }; m_fenced = false; m_wentIn = false; m_settleT = -1f; m_leadDiag = 0f;
+            m_way = new DoorWay { PenGate = true }; m_fenced = false; m_wentIn = false; m_settleT = -1f; m_leadDiag = 0f; m_mateHoldT = 0f;
             Go(Step.Lead);
             return true;
         }
@@ -347,28 +347,34 @@ namespace ValheimHelper
         }
 
         float m_settleT = -1f; Vector3 m_settleIn;
-        float m_slowT, m_herdT = -1f; bool m_herdIn; // m_herdIn: 문 바깥 앞에 닿음 — 그 뒤엔 안쪽으로만(문짝이 레이캐스트를 가려 되돌아가지 않게)
+        float m_slowT, m_herdT = -1f, m_herdWide, m_herdMax = 10f, m_herdStuck, m_mateHoldT; Vector3 m_herdSide; bool m_herdIn; // m_herdIn: 문 바깥 앞에 닿음 — 그 뒤엔 안쪽으로만(문짝이 레이캐스트를 가려 되돌아가지 않게)
         /// <summary>E128 회차 746: 일꾼이 문 지나 안에 있는데 따라오던 짐승이 문 밖에서 2초 넘게 멈춤(열린 문 둘레 길 못 찾음 — MoveTo는 길 없으면 StopMoving) → 짐승 AI를 잠시 끄고 일꾼 문 지나기처럼 수평 MoveTowards로 문 바깥 앞 → 안쪽 2.5m, 10초 상한·못 하면 되돌림.</summary>
-        void Herd(float dt, Vector3 at, Vector3 inward, bool past)
+        void Herd(float dt, Vector3 at, Vector3 inward, bool past, Vector3 pen)
         {
             MonsterAI mai = m_animal.GetComponent<MonsterAI>();
             Vector3 mid = DoorWay.Middle(m_way.Gate);
             if (m_herdT < 0f)
             {
-                bool near = Utils.DistanceXZ(at, mid) < 6f && !past;
+                bool near = (Utils.DistanceXZ(at, mid) < 6f || Utils.DistanceXZ(at, mid) < 14f && DoorWay.Fenced(at, pen)) && !past; // 뒷벽·옆벽 바깥에 선 것도(E128 회차 748: 문에서 7m 뒷벽 밖에 서 몰기가 안 돎)
                 m_slowT = near && m_animal.GetVelocity().magnitude < 0.5f ? m_slowT + dt : 0f;
                 if (m_slowT < 2f) return;
                 m_herdT = 0f; m_herdIn = false; mai.enabled = false;
+                Vector3 r0 = at - mid; r0.y = 0f; m_herdSide = Vector3.Cross(Vector3.up, inward); if (Vector3.Dot(r0, m_herdSide) < 0f) m_herdSide = -m_herdSide;
+                Vector3 low = mid; low.y = pen.y; m_herdWide = DoorWay.Free(low + inward, m_herdSide, 8f) + 1.5f; // 문틀 가운데는 땅보다 1.8m 위라 벽 위로 지나감(회차 748 첫 판 13.5m) — 순찰점(우리 안 땅) 높이로
+                m_herdMax = Vector3.Dot(r0, inward) > -0.5f ? 25f : 10f; // 문 줄 안쪽(벽 옆·뒤)이면 벽 바깥을 돌아옴
                 m_herdDiag = 0f;
                 Diag.Log($"DIAG {m_npc.NpcName} 길든 {m_animal.m_name} 문 밖에서 멈춤 → 문으로 몰기: 자리 {at:F1}·문틀 {mid:F1}·길 짐승 {mai.m_pathAgentType}");
             }
             m_herdT += dt;
             Vector3 rel = at - mid; rel.y = 0f;
             float depth = Vector3.Dot(rel, inward), side = (rel - inward * depth).magnitude;
-            if (past || m_herdT > 10f) { Diag.Log($"DIAG {m_npc.NpcName} 문으로 몰기 끝 {m_herdT:0.0}초: 안쪽 {depth:0.0}m·옆 {side:0.0}m"); Unherd(); return; }
+            if (past || m_herdT > m_herdMax) { Diag.Log($"DIAG {m_npc.NpcName} 문으로 몰기 끝 {m_herdT:0.0}초: 안쪽 {depth:0.0}m·옆 {side:0.0}m"); Unherd(); return; }
             Vector3 inPt = mid + inward * 2.5f, outPt = mid - inward * 1.2f; // 문 옆 벽 곁이면 먼저 문 바깥 앞으로(회차 746)
-            if (Utils.DistanceXZ(at, outPt) < 0.6f || side < 0.5f && depth > -1.5f) m_herdIn = true; // 문 앞 통로에 들어선 뒤에만 안으로(벽에 붙으면 Linecast가 벽 충돌체 안에서 시작해 못 잡음)
+            if (Utils.DistanceXZ(at, outPt) < 0.6f || side < 0.5f && depth > -1.5f && depth < 0.3f) m_herdIn = true; // 문 앞 통로에 들어선 뒤에만 안으로(벽에 붙으면 Linecast가 벽 충돌체 안에서 시작해 못 잡음)
             Vector3 to = m_herdIn ? inPt : outPt;
+            m_herdStuck = m_animal.GetVelocity().magnitude < 0.3f ? m_herdStuck + dt : 0f;
+            if (!m_herdIn && depth > -0.8f && m_herdStuck > 2f) { m_herdStuck = 0f; m_herdSide = -m_herdSide; Vector3 low = mid; low.y = pen.y; m_herdWide = DoorWay.Free(low + inward, m_herdSide, 8f) + 1.5f; Diag.Log($"DIAG {m_npc.NpcName} 몰기 막힘 → 반대쪽으로 돌기"); } // 벽 뒤 바위 등(회차 748 둘째 판)
+            if (!m_herdIn && depth > -0.8f) to = side < m_herdWide ? at + m_herdSide * (m_herdWide - side + 0.5f) : mid + m_herdSide * m_herdWide - inward * 1.2f; // 벽 뒤면 옆으로 벽 끝 너머 → 앞 모서리 바깥 → 문 바깥 앞
             Vector3 dir = to - at; dir.y = 0f;
             mai.MoveTowards(dir, false);
             if (m_herdT >= m_herdDiag) { m_herdDiag = m_herdT + 3f; HerdDiag(mai, mid, inward, dir); } // DIAG E128
@@ -436,8 +442,19 @@ namespace ValheimHelper
                 // room = 문 안 1m에서 맞은편 벽까지 = 문에서 벽 안쪽 면 1m 앞(일꾼 몸·여유). 순찰점이 뒷벽 곁이면 "+2.2m"가 벽 너머 — 일꾼이 벽에 대고 걷고, 따라오던 짐승은 벽 밖이 더 가까워 문 밖으로 돌아 나감(E128 회차 747 둘째 판)
             }
             if (m_fenced && m_way.Passed > 0) m_wentIn = true;
+            if (m_fenced && m_mate != null && m_way.Gate != null && m_stepTime >= m_mateHoldT) // E128 ④: 우리 가축이 문간·문 축에 서면 데려오는 짐승을 막음 → 문에서 2.5~4m 안쪽, 데려오는 짐승 반대쪽 1.8m 옆에 세움
+            {
+                m_mateHoldT = m_stepTime + 3f;
+                Vector3 gm = DoorWay.Middle(m_way.Gate), sd = Vector3.Cross(Vector3.up, inward), mr = m_mate.transform.position - gm, ar = at - gm; mr.y = ar.y = 0f;
+                if (Vector3.Dot(mr, inward) < 2.5f && Mathf.Abs(Vector3.Dot(mr, sd)) < 1.5f)
+                {
+                    Vector3 hold = gm + inward * Mathf.Clamp(room, 2.5f, 4f) + sd * (Vector3.Dot(ar, sd) >= 0f ? -1.8f : 1.8f);
+                    Hold(m_mate.GetComponent<BaseAI>(), hold);
+                    Diag.Log($"DIAG {m_npc.NpcName} 우리 가축 {m_mate.m_name} 문간에서 비켜 세움: 안 {Vector3.Dot(mr, inward):0.0}·옆 {Vector3.Dot(mr, sd):0.0}");
+                }
+            }
             if (m_wentIn && m_way.Gate != null && m_herdT < 0f && m_stepTime >= m_leadDiag) { m_leadDiag = m_stepTime + 3f; LeadDiag(deep, pen, inward); } // DIAG E128
-            if (m_wentIn && m_way.Gate != null && !m_way.Busy) Herd(dt, at, inward, past); else Unherd();
+            if (m_wentIn && m_way.Gate != null && !m_way.Busy) Herd(dt, at, inward, past, pen); else Unherd();
             if (Utils.DistanceXZ(at, pen) < PenNear && (!m_fenced || m_wentIn && !m_way.Busy && past && !DoorWay.Blocked(m_animal, m_npc)))
             {
                 Unherd();

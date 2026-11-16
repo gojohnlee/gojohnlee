@@ -82,7 +82,7 @@ namespace ValheimHelper
             foreach (ItemDrop d in JobKit.DropsNear(c.transform.position, 40f))
                 if (Utils.GetPrefabName(d.gameObject) == "Raspberry")
                 { float dd = Vector3.Distance(d.transform.position, c.transform.position); if (near < 0f || dd < near) near = dd; }
-            return $"자리 {c.transform.position:0.0} 속도 {c.GetVelocity().magnitude:0.0} 경보 {ai.IsAlerted()} 주인 {c.IsOwner()} 길듦 {c.IsTamed()} 따라감 {(ai.GetFollowTarget() != null)} 표적 {(ai.GetTargetCreature() != null ? ai.GetTargetCreature().m_name : "-")} 산딸기 {(near < 0f ? "없음" : near.ToString("0.0") + "m")} 땅닿음 {c.IsOnGround()} FPS {1f / Time.smoothDeltaTime:0}";
+            return $"자리 {c.transform.position:0.0} 속도 {c.GetVelocity().magnitude:0.0} 경보 {ai.IsAlerted()} 주인 {c.IsOwner()} 길듦 {c.IsTamed()} 따라감 {(ai.GetFollowTarget() != null)} 표적 {(ai.GetTargetCreature() != null ? ai.GetTargetCreature().m_name : "-")} 산딸기 {(near < 0f ? "없음" : near.ToString("0.0") + "m")} 땅닿음 {c.IsOnGround()} 몬스터금지곁 {EffectArea.IsPointCloseToNoMonsterArea(c.transform.position)?.name ?? "-"} FPS {1f / Time.smoothDeltaTime:0}";
         }
 
         static Character Spawn(string prefab, Vector3 at, List<GameObject> made)
@@ -478,6 +478,41 @@ namespace ValheimHelper
             yield return new WaitForSeconds(3f);
             checks.Add($"멈춰: 일 그만·따라오기 풀림(일 {w.Ragnar.Ai.Job?.GetType().Name ?? "-"}, 따라감 {lmai.GetFollowTarget()?.name ?? "-"}, 대기열 {w.Ragnar.Ai.Queue.Count})",
                 led != null && !(w.Ragnar.Ai.Job is TameJob) && lmai.GetFollowTarget() == null && w.Ragnar.Ai.Queue.Count == 0);
+
+            // 15) 종마다 우리 먹이(가축 ⑦): 상자 이름을 늑대·록스·닭으로 바꿔 가며 곁에 배고픈 길든 그 종 → 쉬던 일꾼이 그 종 먹이를 꺼내 먹임
+            if (pen == null) yield break;
+            var kinds = new[] { new[] { "Wolf", "늑대", "RawMeat" }, new[] { "Lox", "록스", "Cloudberry" }, new[] { "Hen", "닭", "Dandelion" } };   // 튜플은 게임에 System.ValueTuple 없어 못 씀
+            foreach (var k in kinds)
+            {
+                string kind = k[0], chestName = k[1], food = k[2];
+                ClearOthers(home, made);
+                pen.GetInventory().RemoveAll();
+                boxZdo.Set("ChestName", chestName);
+                TestKit.PutInChest(pen, "Raspberry", 3);   // 다른 종(멧돼지) 먹이는 안 꺼냄
+                TestKit.PutInChest(pen, food, 3);
+                var beast = Spawn(kind, penAt - side * 3f, made);
+                var bmai = beast.GetComponent<MonsterAI>();
+                if (bmai != null) bmai.MakeTame(); else beast.SetTamed(true);
+                var btm = beast.GetComponent<Tameable>();
+                yield return new WaitForSeconds(1f);
+                checks.Add($"{chestName} 우리: 길들고 배고픔", beast != null && beast.IsTamed() && btm != null && btm.IsHungry());
+                if (beast == null || btm == null) continue;
+                float until = Time.time + 120f;
+                while (Time.time < until && beast != null && btm.IsHungry())
+                {
+                    if (w.Ragnar.Ai.Job == null) { Departures.TestFeedNow(); Departures.IdleFeed(w.Ragnar); }
+                    yield return new WaitForSeconds(2f);
+                }
+                checks.Add($"{chestName} 우리: 일꾼이 먹임 ({120f - (until - Time.time):0}초)", beast != null && !btm.IsHungry());
+                yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is LivestockJob), 60f);
+                int got = 0, other = 0;
+                foreach (var it in pen.GetInventory().GetAllItems())
+                    if (it.m_dropPrefab != null && it.m_dropPrefab.name == food) got += it.m_stack;
+                    else if (it.m_dropPrefab != null && it.m_dropPrefab.name == "Raspberry") other += it.m_stack;
+                checks.Add($"{chestName} 우리: {food} 3→{got}·산딸기 3→{other}", got == 2 && other == 3);
+                if (beast != null) ZNetScene.instance.Destroy(beast.gameObject);
+            }
+            boxZdo.Set("ChestName", oldName ?? "");
         }
     }
 }
