@@ -1,6 +1,6 @@
 # 시험 목록 (회차 716 · 11-16 정리)
 
-게임 시험 111개(TestRunner.Register 기준). 회귀 묶음은 `C:\vh\stable-dll\run.ps1 -Dll <dll> -Batches <아래 줄>`로 돌린다. -Dll 옆에 같은 커밋의 ValheimHelperTest.dll도 둔다(없으면 옛 시험 DLL이 섞임 — 회차 721: 커밋마다 `C:hstable-dll<해시>`에 dist 둘).
+게임 시험 111개(TestRunner.Register 기준). 회귀 묶음은 `C:\vh\stable-dll\run.ps1 -Dll <dll> -Batches <아래 줄>`로 돌린다. -Dll 옆에 같은 커밋의 ValheimHelperTest.dll도 둔다(없으면 옛 시험 DLL이 섞임 — 회차 721: 커밋마다 `C:vhstable-dll<해시>`에 dist 둘).
 "마지막 PASS"는 history에서 찾은 회차 — 회귀 묶음 시험은 회차 713~715 전체 회귀에서 통과(묶음 단위 기록), 회차 716에 새로 넣은 7개(plainsfarm·pathforget·pathfollow·newerahouse·restartcraft 셋+2)는 716 PASS.
 
 ## 회귀 묶음 (run.ps1 줄 = 이름|바이옴|약식|시험|VH_RESET|집|월드)
