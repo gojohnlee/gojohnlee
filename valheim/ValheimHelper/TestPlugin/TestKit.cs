@@ -921,8 +921,10 @@ namespace ValheimHelper
         {
             WithGuard();
             ZDO flag = BaseFlag.AllFlags().Find(f => f.GetBool(BaseFlag.KeyActive));
-            if (flag != null) Workers.SpawnMissing(flag.GetPosition(), flag.GetRotation());
-            yield return WaitFor(() => WorkerNpc.TheGuard != null && WorkerNpc.TheGuard.Zdo != null, 20f);
+            int made = flag != null ? Workers.SpawnMissing(flag.GetPosition(), flag.GetRotation()).Count : -1;
+            // 먼 바이옴(애쉬랜드 던전 불러오기 중 등)은 FPS가 낮아 20초 안에 안 생길 수 있음(회차 731 ashfoe) → Setup처럼 60초
+            yield return WaitFor(() => WorkerNpc.TheGuard != null && WorkerNpc.TheGuard.Zdo != null, 60f);
+            if (!Ok) TestRunner.Log($"호위병 안 생김: 깃발 {(flag != null ? "있음" : "없음")}, 새 ZDO {made}, 호위병 ZDO {Workers.AllZdos().FindAll(z => z.GetInt(WorkerNpc.KeyRole) == WorkerNpc.GuardRole).Count}, FPS {1f / Time.smoothDeltaTime:0}");
         }
 
         public static void Restore(World w)
