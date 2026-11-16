@@ -75,6 +75,23 @@ namespace ValheimHelper
             // 회차 239: 5.9km 옮긴 직후엔 둘레 구역이 덜 생겨 150m 안 유해 0개일 때가 있음 → 보일 때까지(30초)
             yield return TestKit.WaitFor(() => Senses.Nearby(w.Home, 150f, z => z.GetPrefab() != 0 && (ResourceCatalog.Get(z.GetPrefab())?.Prefab.StartsWith("giant_") ?? false)).Count > 0, 30f);
             TestRunner.Log($"거인 유해 기다림 {TestKit.Waited:0}초");
+            // 회차 753: 회차 729부터 자리를 장소 둘레 밖에서 골라 둘레 150m에 유해가 없는 자리가 됨 → 시험이 옆 땅에 갈비뼈(대리석)·뇌(부드러운 조직) 유해를 놓음(시험 환경)
+            if (!TestKit.Ok)
+            {
+                string[] names = { "giant_ribs", "giant_brain" };
+                Vector3[] offs = { new Vector3(40f, 0f, 0f), new Vector3(30f, 0f, 30f) }; // 게임 Mono엔 ValueTuple 없음
+                for (int i = 0; i < names.Length; i++)
+                {
+                    string name = names[i]; Vector3 off = offs[i];
+                    GameObject prefab = ZNetScene.instance.GetPrefab(name);
+                    if (prefab == null) { TestRunner.Log($"{name} 프리팹 없음"); continue; }
+                    Vector3 p = w.Home + off;
+                    p.y = ZoneSystem.instance.GetGroundHeight(p);
+                    Object.Instantiate(prefab, p, Quaternion.identity);
+                    TestRunner.Log($"둘레에 거인 유해 없음 → 시험이 {name}를 놓음 {p:F0}");
+                }
+                yield return new WaitForSeconds(1f);
+            }
             Vector3? giant = Site(w, checks);
             if (giant != null) yield return Mine(w, checks, giant.Value);
         }
