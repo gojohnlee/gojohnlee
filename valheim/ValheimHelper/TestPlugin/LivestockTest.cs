@@ -356,6 +356,40 @@ namespace ValheimHelper
             w.Ragnar.Ai.GoHome(false);
             if (wolf != null) ZNetScene.instance.Destroy(wolf.gameObject);
             boxZdo.Set("ChestName", oldName ?? "");
+
+            // 11) 알 품기(가축 ④ 라): 가축 상자에 아스크스빈 알 2 + 우리 곁 모닥불 → 쉬던 일꾼이 알 1개를 불 곁에 한 개만 놓고, 게임 EggGrow가 데우기 시작, 다 되면 길든 새끼
+            int Eggs() { int n = 0; foreach (var it in penBox.GetInventory().GetAllItems()) if (it.m_dropPrefab != null && it.m_dropPrefab.name == "AsksvinEgg") n += it.m_stack; return n; }
+            TestKit.PutInChest(penBox, "AsksvinEgg", 2);
+            Vector3 fireAt = GatherTest.Ground(home - side * 14f);
+            w.Player.PlacePiece(ZNetScene.instance.GetPrefab("fire_pit").GetComponent<Piece>(), fireAt, Quaternion.identity, doAttack: false);
+            Fireplace fire = null;
+            foreach (Collider col in Physics.OverlapSphere(fireAt, 2f)) if ((fire = col.GetComponentInParent<Fireplace>()) != null) break;
+            checks.Add("모닥불 지음", fire != null);
+            if (fire == null) yield break;
+            made.Add(fire.gameObject);
+            fire.GetComponent<ZNetView>().GetZDO().Set(ZDOVars.s_fuel, 10f);
+            yield return new WaitForSeconds(2f);
+            yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job == null, 30f);
+            Departures.TestEggNow();
+            bool egg = Departures.IdleEgg(w.Ragnar) && w.Ragnar.Ai.Job is EggJob;
+            Vector3 spot = egg ? ((EggJob)w.Ragnar.Ai.Job).Spot : Vector3.zero;
+            string areas = ""; foreach (var ea in EffectArea.GetAllAreas()) if (ea != null && Utils.DistanceXZ(ea.transform.position, fireAt) < 5f) areas += $" {ea.m_type}/{ea.gameObject.activeInHierarchy}/{(ea.GetComponent<Collider>() is SphereCollider sc ? sc.radius * ea.transform.lossyScale.x : -1f):0.0}m/높이{ea.transform.position.y - fireAt.y:0.0}";
+            checks.Add($"쉬던 일꾼이 알 품으러 감(자리 {spot}, 불과 {Utils.DistanceXZ(spot, fireAt):0.0}m, 불 곁 구역{areas}, 연료 {fire.GetComponent<ZNetView>().GetZDO().GetFloat(ZDOVars.s_fuel):0}, {EggJob.LastWhy})", egg);
+            if (!egg) yield break;
+            yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is EggJob), 90f);
+            ItemDrop laid = null;
+            foreach (ItemDrop d in JobKit.DropsNear(spot, 3f)) if (Utils.GetPrefabName(d.gameObject) == "AsksvinEgg") laid = d;
+            checks.Add($"알 한 개가 불 곁 땅에, 상자 알 2→{Eggs()} ({TestKit.Waited:0}초)", laid != null && laid.m_itemData.m_stack == 1 && Eggs() == 1);
+            if (laid == null) yield break;
+            made.Add(laid.gameObject);
+            ZDO eggZdo = laid.GetComponent<ZNetView>().GetZDO();
+            yield return TestKit.WaitFor(() => eggZdo.GetFloat(ZDOVars.s_growStart) > 0f, 15f);
+            checks.Add($"알이 데워지기 시작(EggGrow, {TestKit.Waited:0}초)", eggZdo.GetFloat(ZDOVars.s_growStart) > 0f);
+            eggZdo.Set(ZDOVars.s_growStart, (float)ZNet.instance.GetTimeSeconds() - laid.GetComponent<EggGrow>().m_growTime - 1f);
+            Character chick = null;
+            yield return TestKit.WaitFor(() => { foreach (var a in Character.GetAllCharacters()) if (a != null && Utils.GetPrefabName(a.gameObject) == "Asksvin_hatchling" && Utils.DistanceXZ(a.transform.position, spot) < 3f) chick = a; return chick != null; }, 15f);
+            if (chick != null) made.Add(chick.gameObject);
+            checks.Add($"알이 깨어 길든 새끼({(chick != null ? chick.IsTamed().ToString() : "없음")}, {TestKit.Waited:0}초)", chick != null && chick.IsTamed());
         }
     }
 }

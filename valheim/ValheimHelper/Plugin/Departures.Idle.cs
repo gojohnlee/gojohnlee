@@ -227,12 +227,14 @@ namespace ValheimHelper
         static readonly Chore s_feed = new Chore(IdleFeedEvery, "idleFeed", j => j is LivestockJob);
         static readonly Chore s_cull = new Chore(IdleFeedEvery, "idleCull", j => j is CullJob);
         static readonly Chore s_tame = new Chore(IdleFeedEvery, "idleTame", j => j is TameJob);
+        static readonly Chore s_egg = new Chore(IdleFeedEvery, "idleEgg", j => j is EggJob);
         static readonly Chore s_fish = new Chore(IdleFarmEvery, "idleFish", j => j is FishJob);
 
         internal static void TestHoneyNow() => s_honey.Next.Clear();
         internal static void TestFeedNow() => s_feed.Next.Clear();
         internal static void TestCullNow() => s_cull.Next.Clear();
         internal static void TestTameNow() => s_tame.Next.Clear();
+        internal static void TestEggNow() => s_egg.Next.Clear();
         internal static void TestFishNow() => s_fish.Next.Clear();
 
         /// <summary>볼 때인가: 낮이고, 이 집 간격이 지났고, 다른 일꾼이 그 일 중이 아님. key = 일꾼 집.</summary>
@@ -281,6 +283,14 @@ namespace ValheimHelper
             if (!Due(npc, s_cull, out string key)) return false;
             Stamp(s_cull, key);
             return Begin(npc, s_cull, CullJob.For(npc));
+        }
+
+        /// <summary>쉬는 일꾼(낮): 가축 상자의 알 하나를 거점 불 곁(닭 알은 지붕 아래)에 놓아 깨게 한다(EggJob). 시작했으면 true.</summary>
+        internal static bool IdleEgg(WorkerNpc npc)
+        {
+            if (!Due(npc, s_egg, out string key)) return false;
+            Stamp(s_egg, key);
+            return Begin(npc, s_egg, EggJob.For(npc));
         }
 
         /// <summary>쉬는 일꾼(낮): 집 TameJob.TameFar 안 배고픈 야생 짐승에게 "가축" 상자 먹이를 떨궈 길들이러 간다. 시작했으면 true.</summary>
