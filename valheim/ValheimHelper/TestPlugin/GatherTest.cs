@@ -221,10 +221,10 @@ namespace ValheimHelper
             if (noTool || worn)
             {
                 bench = Object.Instantiate(ZNetScene.instance.GetPrefab("piece_workbench"), Ground(home + rot * new Vector3(0f, 0f, -5f)), rot);
-                // 부러짐 시험은 두 벌: 만든 곡괭이도 광맥을 다 캐기 전에 부러질 수 있다 → 그때 상자의 부러진 곡괭이를 재고로 안 세고 다시 만드는지까지 본다
+                // 두 벌: 만든 곡괭이도 광맥을 다 캐기 전에 부러질 수 있다 → 부러짐 시험은 상자의 부러진 곡괭이를 재고로 안 세고 다시 만드는지까지 보고, 연장 없는 시험은 다시 만들어 이어 캠(회차 769: 9개째에 부러져 재료 없어 나무 모으러 감)
                 foreach (var rec in ObjectDB.instance.m_recipes)
                     if (rec.m_item != null && Utils.GetPrefabName(rec.m_item.gameObject) == toolPrefab)
-                        Chests.TryEdit(res, inv => { foreach (var req in rec.m_resources) inv.AddItem(req.m_resItem.gameObject, req.m_amount * (worn ? 2 : 1)); });
+                        Chests.TryEdit(res, inv => { foreach (var req in rec.m_resources) inv.AddItem(req.m_resItem.gameObject, req.m_amount * 2); });
             }
             int dug0 = NpcPatches.NoDig.Dug, blocked0 = NpcPatches.NoDig.Blocked, tp0 = WorkerAI.StuckTeleports;
             // 바이옴 회귀(검은숲): 시험 자리(거점 60m) 생물은 계속 치운다 — 뿔 곡괭이만 든 일꾼은 회색난쟁이에 도망치고 도망은 그 목표를 버린다(회차 142)
