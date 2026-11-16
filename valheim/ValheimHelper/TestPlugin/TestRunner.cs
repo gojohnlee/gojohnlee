@@ -243,6 +243,14 @@ namespace ValheimHelper
 
         static bool s_leftNoBuild;
 
+        // E124(회차 722: tartest 뒤 plainsfarmtest가 시작도 안 하고 30분 멈춤, 로그 0줄) — 시험 사이 기다림엔 시간 제한이 없어 플레이어 없음·순간이동 중·자리 옮김이 안 끝나면 영원히 기다렸다.
+        // 300초 넘으면 다음 시험을 FAIL로 적고 넘어가며, 60초마다 무엇을 기다리는지 로그에 남긴다.
+        const float GapLimit = 300f;
+        static float s_gap, s_gapLogged;
+        static string s_gapWhy = "";
+
+        static void GapWait(string why) { s_gapWhy = why; }
+
         /// <summary>사용자 11-15(침대에서 게임 소리): 자동 시험 동안 소리 끔(AudioListener.volume — 사용자 음량 설정은 안 건드림, AudioMan.Start가 한 번 1로 둠) + 시작 영상이 돌면 멈춤(모드 끔 판은 SkipIntro 패치가 없어 영상이 나옴).</summary>
         internal static void Quiet()
         {
@@ -270,14 +278,28 @@ namespace ValheimHelper
                 return;
             }
             if (s_autoQueue.Count == 0 && s_retry == null) return;
+            s_gap += Time.unscaledDeltaTime;
+            if (s_gap - s_gapLogged >= 60f) { s_gapLogged = s_gap; Plugin.Log.LogWarning($"시험 사이 {s_gap:0}초째 기다림: {s_gapWhy} (다음 {s_retry ?? s_autoQueue.Peek()})"); }
+            if (s_gap > GapLimit)
+            {
+                string late = s_retry ?? s_autoQueue.Dequeue();
+                s_retry = null;
+                s_gap = s_gapLogged = 0f;
+                Begin(null, late);
+                Log($"FAIL: 시험 사이 {GapLimit:0}초 넘게 못 넘어감(E124 — 기다린 것: {s_gapWhy})");
+                Finish();
+                return;
+            }
             Player player = Player.m_localPlayer;
-            if (player == null || player.IsTeleporting()) { s_autoWait = 0f; return; }
+            if (player == null || player.IsTeleporting()) { GapWait(player == null ? "플레이어 없음" : "순간이동 중"); s_autoWait = 0f; return; }
             s_autoWait += Time.deltaTime;
+            GapWait("3초 기다림");
             if (s_autoWait < 3f) return; // 사용자 요청: 10초 → 3초
-            if (!s_leftNoBuild) { s_leftNoBuild = true; if (TestKit.LeaveNoBuild(player)) { s_autoWait = -3f; return; } } // 시작 제단 밖으로 한 번
-            if (TestKit.GoFirstSpot(player)) { s_autoWait = -3f; return; } // 앞 시험이 옮기거나 돌린 플레이어를 첫 자리·방향으로(E055)
-            if (TestKit.GoSite(player, s_retry ?? s_autoQueue.Peek())) { s_autoWait = -3f; return; } // 늪 회귀면 늪 평지로(원래 자리 시험은 돌아옴)
+            if (!s_leftNoBuild) { s_leftNoBuild = true; if (TestKit.LeaveNoBuild(player)) { GapWait("시작 제단 밖으로"); s_autoWait = -3f; return; } } // 시작 제단 밖으로 한 번
+            if (TestKit.GoFirstSpot(player)) { GapWait("첫 자리로 옮김"); s_autoWait = -3f; return; } // 앞 시험이 옮기거나 돌린 플레이어를 첫 자리·방향으로(E055)
+            if (TestKit.GoSite(player, s_retry ?? s_autoQueue.Peek())) { GapWait("바이옴 시험 자리로 옮김"); s_autoWait = -3f; return; } // 늪 회귀면 늪 평지로(원래 자리 시험은 돌아옴)
             string cmd = s_retry ?? s_autoQueue.Dequeue();
+            s_gap = s_gapLogged = 0f;
             s_retry = null;
             if (s_halt != null && Begin(null, cmd))
             {
