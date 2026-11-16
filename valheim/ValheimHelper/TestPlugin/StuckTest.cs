@@ -86,6 +86,7 @@ namespace ValheimHelper
             hold(w.Ragnar);
             float hp0 = w.Ragnar.GetHealth();
             NpcPatches.NoTreeHurt.LastHurt.Clear();
+            NpcPatches.NoTreeHurt.EnemyHurt.Clear();
             int rescues0 = GatherJob.Rescues, hops0 = GatherJob.Hops;
             float d0 = Utils.DistanceXZ(w.Ragnar.transform.position, w.Home);
             checks.Add($"거점에서 떨어져 발이 묶임 ({d0:0}m)", d0 > 30f);
@@ -94,7 +95,8 @@ namespace ValheimHelper
             int skips0 = GatherJob.NearSkips, items0 = w.Ragnar.GetInventory().NrOfItems();
             Vector3 before = w.Ragnar.transform.position;
             // 있을 법한 자리(사용자 11-12): 묶인 자리만 보이게 강제 — 보는 중(0초)이면 여유 4.5m 안·가던 쪽·안 보이는 자리에 내려야 함
-            StuckWatch.TestSeen = p => Utils.DistanceXZ(p, before) < 2f;
+            // 묶여도 몸이 조금 밀려(회차 724: 2m 넘게 밀려 마지막으로 보인 뒤 2.5초·건너뛰기 13초) 묶인 자리 기준이면 안 보는 중이 됨 → 지금 몸 자리 2m 안만 보임
+            StuckWatch.TestSeen = p => Utils.DistanceXZ(p, w.Ragnar.transform.position) < 2f;
             yield return TestKit.WaitFor(() => GatherJob.NearSkips > skips0 || GatherJob.Rescues > rescues0, 70f);
             float skipAt = TestKit.Waited;
             bool skipped = GatherJob.NearSkips > skips0;
@@ -108,6 +110,7 @@ namespace ValheimHelper
             checks.Add("내린 자리가 시야 밖", skipped && Utils.DistanceXZ(after, before) >= 2f);
             float moved = Utils.DistanceXZ(before, after);
             bool ground = ZoneSystem.instance.GetGroundHeight(after, out float gh) && Mathf.Abs(after.y - gh) < 1.5f;
+            TestRunner.Log($"묶인 뒤 밀림: 건너뛰기 직전 자리 ↔ 묶인 자리 {Utils.DistanceXZ(GatherJob.LastNearSkipSeenPos, before):0.0}m");
             TestRunner.Log($"근처 막힘 건너뛰기: {skipAt:0}초, {moved:0.0}m 옮김, 땅과 {after.y - gh:0.0}m, 짐 {items0} → {w.Ragnar.GetInventory().NrOfItems()}");
             checks.Add($"근처 {Core.Work.StuckHop.NearStuckSeconds:0}초 막힘 → 막힌 곳 너머로 옮김 ({skipAt:0}초, {moved:0.0}m)", skipped && skipAt >= (float)Core.Work.StuckHop.NearStuckSeconds - 5f && moved >= 2f && moved <= 9f);
             checks.Add("옮긴 자리가 땅 위", skipped && ground);
@@ -130,8 +133,10 @@ namespace ValheimHelper
             checks.Add($"플레이어 근처라 목표 쪽 순간이동 안 함 ({GatherJob.Hops - hops0}번)", GatherJob.Hops == hops0);
             if (!rescued) yield break;
             checks.Add($"거점에 있음 ({d1:0.0}m)", d1 < 5f);
+            // 적 피해(EnemyHit)는 뺌: 묶인 동안 둘레 생물을 1초마다 치워도 그 사이 한 대 맞을 수 있다(E118 회차 722: EnemyHit 10) — 이 칸은 순간이동이 체력을 깎지 않는지
+            NpcPatches.NoTreeHurt.EnemyHurt.TryGetValue(w.Ragnar.NpcName, out float enemyHurt);
             // 음식이 떨어지면 최대 체력이 줄어 그만큼 줄 수 있다(회차 72: 71 → 69, 최대도 69) → 최대보다 낮아졌을 때만 다친 것
-            checks.Add($"체력 그대로 ({hp0:0} → {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}, 마지막 피해 {(NpcPatches.NoTreeHurt.LastHurt.TryGetValue(w.Ragnar.NpcName, out var hurt) ? hurt : "없음")})", Mathf.Abs(w.Ragnar.GetHealth() - hp0) < 1f || w.Ragnar.GetHealth() >= w.Ragnar.GetMaxHealth() - 0.5f);
+            checks.Add($"체력 그대로 ({hp0:0} → {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}, 마지막 피해 {(NpcPatches.NoTreeHurt.LastHurt.TryGetValue(w.Ragnar.NpcName, out var hurt) ? hurt : "없음")}, 적 피해 {enemyHurt:0})", w.Ragnar.GetHealth() + enemyHurt >= hp0 - 1f || w.Ragnar.GetHealth() >= w.Ragnar.GetMaxHealth() - 0.5f);
             checks.Add("막힘 대사를 함", w.Heard.Exists(h => TestKit.SaidKey(h, w.Ragnar.Personality, "stuck", "rescue")));
             yield return new WaitForSeconds(3f);
             checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);

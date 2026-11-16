@@ -53,6 +53,9 @@ namespace ValheimHelper
             /// <summary>시험 기록: 일꾼마다 마지막으로 받은 나무 밖 피해(종류·양·공격자) — 원인 모를 체력 감소(E118 stucktest) FAIL 문구에.</summary>
             public static readonly Dictionary<string, string> LastHurt = new Dictionary<string, string>();
 
+            /// <summary>시험 기록: 일꾼마다 받은 적 공격(EnemyHit) 피해 합 — 발 묶인 시험에서 치우기 전 순간의 적 피해를 순간이동 탓과 가름(E118).</summary>
+            public static readonly Dictionary<string, float> EnemyHurt = new Dictionary<string, float>();
+
             static bool Prefix(Character __instance, HitData hit)
             {
                 if (!(__instance is WorkerNpc w) || hit == null) return true;
@@ -60,6 +63,7 @@ namespace ValheimHelper
                 {
                     Character by = hit.GetAttacker();
                     LastHurt[w.NpcName] = $"{hit.m_hitType} {hit.GetTotalDamage():0} {(by != null ? by.m_name : "-")}";
+                    if (hit.m_hitType == HitData.HitType.EnemyHit) { EnemyHurt.TryGetValue(w.NpcName, out float sum); EnemyHurt[w.NpcName] = sum + hit.GetTotalDamage(); }
                     return true;
                 }
                 Spared++;
