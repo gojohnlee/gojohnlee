@@ -124,6 +124,8 @@ namespace ValheimHelper
             var slider = gui.m_splitDialog.m_splitSlider;
             checks.Add($"상자 Alt+우클릭: 계속 채우기 창(지금 목표 {slider.value:0}/{slider.maxValue:0})",
                 opened && gui.m_splitDialog.IsActive && RefillPick.Active == "Wood" && !RefillPick.Personal && (int)slider.value == 20 && slider.maxValue >= 100);
+            int have = Tidy.Count(w.Chest, "Wood");
+            if (have < 30) TestKit.PutInChest(w.Chest, "Wood", 30 - have); // 30으로 올려도 보충이 안 나게 — 시작된 보충 채집은 Refill.Off로 안 멈춰 구리·세트 단계에 나무를 날라 옴(E117)
             gui.m_splitDialog.SliderValue = 30;
             Traverse.Create(gui).Method("OnSplitOk").GetValue();
             yield return new WaitForSeconds(1f);
