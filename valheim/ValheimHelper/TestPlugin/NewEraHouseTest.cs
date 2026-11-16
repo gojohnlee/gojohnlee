@@ -72,6 +72,12 @@ namespace ValheimHelper
             TestRunner.Log($"집 조각 {pieces}개({Radius:0}m 안): 침대 {beds.Count}·상자 {chests.Count}·불 {fires.Count}·문 {doors.Count}·계단 {stairs}");
             checks.Add($"집이 불러와짐 (조각 {pieces}, 침대 {beds.Count})", pieces > 500 && beds.Count > 0);
             if (beds.Count == 0) yield break;
+            // 뛰어내리기 지름길 점 찾기(★ 나): 침대 둘레 20m 바닥 끝 훑기 — 점 수·시간 기록(0개여도 판정은 시간만, 다) 연결 때 쓸 점)
+            {
+                var drops = Brain.Drops(beds[0].transform.position);
+                string first = drops.Count > 0 ? $", 첫 점 끝 y {drops.Spots[0].Edge.Y:0.0} 높이 {drops.Spots[0].Height:0.0}m" : "";
+                checks.Add($"내려가기 점 훑기 (점 {drops.Count}, {Brain.DropsScanMs:0}ms{first})", Brain.DropsScanMs < 300f);
+            }
             // 찾은 차례는 판마다 달라서(회차 422까지 침대가 바뀜) 자리로 줄 세워 늘 같은 침대·상자·화덕
             int ByPos(Component a, Component b) { var x = a.transform.position; var y = b.transform.position; return x.x != y.x ? x.x.CompareTo(y.x) : x.z.CompareTo(y.z); }
             beds.Sort(ByPos); chests.Sort(ByPos); fires.Sort(ByPos);

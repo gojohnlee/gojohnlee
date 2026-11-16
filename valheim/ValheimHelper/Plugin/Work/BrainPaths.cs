@@ -18,7 +18,9 @@ namespace ValheimHelper
 
         static void ForgetBuild(Vector3 at, string why)
         {
-            if (s_paths == null || s_paths.Count == 0 || ZNet.instance == null || !ZNet.instance.IsServer()) return; // 안 불러왔으면 지울 것도 없음
+            if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
+            ForgetDrops(at);
+            if (s_paths == null || s_paths.Count == 0) return; // 안 불러왔으면 지울 것도 없음
             int n = s_paths.ForgetNear(new PathMemory.P(at.x, at.y, at.z), PathForgetRadius);
             if (n == 0) return;
             PathsForgotBuild += n;
@@ -38,7 +40,7 @@ namespace ValheimHelper
         {
             static void Prefix(ZDOMan __instance, ZDOID uid)
             {
-                if (s_paths == null || s_paths.Count == 0) return;
+                if ((s_paths == null || s_paths.Count == 0) && s_drops == null) return;
                 var zdo = __instance.GetZDO(uid);
                 if (zdo != null && IsBuildPrefab(zdo.GetPrefab())) ForgetBuild(zdo.GetPosition(), "부서짐");
             }
