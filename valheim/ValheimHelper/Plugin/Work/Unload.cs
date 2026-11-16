@@ -283,7 +283,7 @@ namespace ValheimHelper
                 if (door != null && Dungeons.Open(npc, door))
                 {
                     Doors++; DoorWay.Track(door, npc);
-                    Diag.Log($"DIAG {npc.NpcName} {what} 상자 가기: {m_time:0.0}초 닫힌 문 {door.name}에 막힘 → 열기");
+                    Diag.Log($"DIAG {npc.NpcName} {what} 상자 가기: {m_time:0.0}초 닫힌 문 {door.name}({Utils.DistanceXZ(npc.transform.position, door.transform.position):0.0}m {door.transform.position:F1})에 막힘 → 열기");
                     m_time = 0f;
                     return false;
                 }

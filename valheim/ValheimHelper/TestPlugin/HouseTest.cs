@@ -443,23 +443,26 @@ namespace ValheimHelper
                 if (it.m_dropPrefab != null && it.m_dropPrefab.name == "MeadHealthMinor") w.Ragnar.GetInventory().RemoveItem(it);
             TestKit.PutInChest(w.Chest, "MeadHealthMinor", 3);
             DoorWay.Forget(); if (dz.IsValid() && dz.GetInt(ZDOVars.s_state) != 0) { dz.SetOwner(ZDOMan.GetSessionID()); dz.Set(ZDOVars.s_state, 0); }
-            w.Ragnar.TeleportTo(GatherTest.Ground(c + r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(7f); // 새 문·닫은 문 navmesh
-            checks.Add($"문 두 개 단계: 두 문 닫힘·일꾼 집 뒤 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 뒷문까지 {Utils.DistanceXZ(w.Ragnar.transform.position, backAt):0.0}m, 상자 가림 {DoorWay.Blocked(w.Ragnar, w.Chest)})",
-                dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position));
+            // E123: 옮긴 뒤 7초 기다리면 쉬는 일꾼이 앞문 쪽(9~16m)으로 걸어가 앞문으로 들어감 — 기다린 뒤에 옮김
+            w.Ragnar.TeleportTo(GatherTest.Ground(c + r * (Half + 3f)) + Vector3.up * 0.3f, w.Ragnar.transform.rotation, false);
+            yield return new WaitForSeconds(1.5f);
+            float backDist = Utils.DistanceXZ(w.Ragnar.transform.position, backAt);
+            checks.Add($"문 두 개 단계: 두 문 닫힘·일꾼 집 뒤 (앞 {dz.GetInt(ZDOVars.s_state)}·뒤 {bz.GetInt(ZDOVars.s_state)}, 안 {In(w.Ragnar.transform.position)}, 뒷문까지 {backDist:0.0}m, 상자 가림 {DoorWay.Blocked(w.Ragnar, w.Chest)})",
+                dz.GetInt(ZDOVars.s_state) == 0 && bz.GetInt(ZDOVars.s_state) == 0 && !In(w.Ragnar.transform.position) && backDist < 6f);
             tele0 = Teleports(); entered0 = DoorWay.Entered; closed0 = DoorWay.Closed;
-            bool frontOpened = false, backOpened = false;
+            bool frontOpened = false, backOpened = false; string frontWhen = ""; float t42 = Time.time;
             walk = Rec();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() =>
             {
-                if (dz.GetInt(ZDOVars.s_state) != 0) frontOpened = true;
+                if (dz.GetInt(ZDOVars.s_state) != 0 && !frontOpened) { frontOpened = true; frontWhen = $", 앞문 연 때 {Time.time - t42:0.0}초 일꾼 {w.Ragnar.transform.position:F1}"; }
                 if (bz.GetInt(ZDOVars.s_state) != 0) backOpened = true;
                 return w.Ragnar.CountItem("MeadHealthMinor") >= 3;
             }, 90f);
             took = TestKit.Waited;
             tele = Teleports() - tele0;
-            checks.Add($"뒷문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 뒷문 열림 {backOpened}·앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele})",
+            checks.Add($"뒷문으로 들어가 미드 챙김 (들고 {w.Ragnar.CountItem("MeadHealthMinor")}, {took:0}초, 뒷문 열림 {backOpened}·앞문 열림 {frontOpened}, 들어감 {DoorWay.Entered - entered0}번, 순간이동 {tele}{frontWhen})",
                 w.Ragnar.CountItem("MeadHealthMinor") >= 3 && backOpened && !frontOpened && tele == 0);
             // closed0은 단계 시작에서 — 나올 때 문짝이 내 쪽이면 바로 닫음(회차 348)
             yield return TestKit.WaitFor(() => !In(w.Ragnar.transform.position), 40f); // E064 잠깐 닫힘
@@ -503,7 +506,7 @@ namespace ValheimHelper
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() =>
             {
-                if (dz.GetInt(ZDOVars.s_state) != 0) frontOpened = true;
+                if (dz.GetInt(ZDOVars.s_state) != 0 && !frontOpened) { frontOpened = true; frontWhen = $", 앞문 연 때 {Time.time - t42:0.0}초 일꾼 {w.Ragnar.transform.position:F1}"; }
                 Vector3 p = w.Ragnar.transform.position; // 매 틀 → 틀 사이 0.02m 아래면 멈춤으로(0.5초 간격 근사)
                 if (Utils.DistanceXZ(p, hallLast) < 0.004f) { hallRun += Time.deltaTime; hallMax = Mathf.Max(hallMax, hallRun); } else hallRun = 0f;
                 hallLast = p;

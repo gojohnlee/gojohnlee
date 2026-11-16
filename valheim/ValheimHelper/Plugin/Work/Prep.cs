@@ -88,6 +88,8 @@ namespace ValheimHelper
             float d = Utils.DistanceXZ(at, m_npc.transform.position);
             // 높이도 봄(E056): 2층 상자 바로 밑 2.5m 안을 "닿음"으로 보면 바닥에 가려 문으로 돌다 포기하고 그 자리(아래층)에서 꺼냈음
             // 회차 348(E063): 비탈 위쪽에서 2층 상자가 1.5m 안이면 2층 바닥 너머로 꺼냄(땅 위 0.2m, 4초) → 위에 있고 건축물이 가리면 닿음 아님(계단으로). 회차 352: 위로는 1.2m까지만(계단 중간 땅 위 0.7m에서 꺼냄)
+            // E123: 2.5m 안에서만 문을 고르면 집 뒤 3m에서 길 찾기가 앞문으로 돌아감 — 8m 안에서 벽이 가리면 가까운 문으로(GatherJob 넣기와 같음)
+            if (d < 8f && Mathf.Abs(at.y - m_npc.transform.position.y) < 1f && !Steering(m_chest) && DoorWay.Blocked(m_npc, m_chest) && Through(dt, m_chest)) return true;
             if ((d > 2.5f || at.y - m_npc.transform.position.y > 1.2f || m_npc.transform.position.y - at.y > 1.5f || (at.y - m_npc.transform.position.y > 1f && DoorWay.Blocked(m_npc, m_chest))) && !Steering(m_chest) && !CanReach(at, d, dt))
             {
                 // E063 ② 진단: 다른 층 상자로 60초 걷기만 하던 꼴 — 10초마다 자리·높이·길
