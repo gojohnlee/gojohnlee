@@ -87,20 +87,25 @@ namespace ValheimHelper
                     p.y = h;
                     Object.Instantiate(beech, p, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
                 }
-            // 양옆 3m는 ±31°까지만 — 회차 722 B13b 첫 나무가 줄에서 66° 비껴 넘어져 연쇄 0번(일꾼이 옆에서 침) → 첫 나무 둘레 5m ±55°·±80°에도(집에서 14m보다 멀어 첫 목표는 그대로)
+            // 양옆 3m는 ±31°까지만 — 회차 722 B13b 첫 나무가 줄에서 66° 비껴 넘어져 연쇄 0번(일꾼이 옆에서 침) → 첫 나무 둘레 ±55°·±80°에도(집에서 14m보다 멀어 첫 목표는 그대로)
             foreach (float a in new[] { -80f, -55f, 55f, 80f })
             {
-                Vector3 p = row[0] + Quaternion.Euler(0f, a, 0f) * dir * 5f;
+                Vector3 p = row[0] + Quaternion.Euler(0f, a, 0f) * dir * 7f; // 5m는 비껴 넘어진 통나무가 천천히 기대 서 안 쓰러뜨림(회차 729: 39° 비껴 19° 기울어 멈춤) — 7m로 속도 붙여
                 ZoneSystem.instance.GetGroundHeight(p, out float h);
                 p.y = h;
                 Object.Instantiate(beech, p, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
             }
-            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~39m 5m 간격(+양옆 4·첫 나무 둘레 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
+            TestRunner.Log($"  줄: 방향 {dir:F1} 나무 {row.Count}그루 14~39m 5m 간격(+양옆 4·첫 나무 둘레 7m 4), 높이 차 {bestSpread:0.0}m, 치운 것 {cleared}");
             yield return new WaitForSeconds(2f);
 
             // 2) 나무 1 — 첫 나무가 바깥으로 넘어져 연쇄
             TestKit.ClearBaseStock(w, "Wood");
             TestKit.PutInChest(w.Chest, "AxeFlint", 1);
+            // 라그나를 줄 안쪽 8m에 세움: 앞 시험 뒤 서 있던 자리에 따라 첫 나무 둘레 곁나무를 먼저 쳐 옆으로 넘어져 연쇄 0번(회차 728 묶음, 단독은 2/2 PASS)
+            Vector3 stand = home + dir * 8f;
+            if (ZoneSystem.instance.GetGroundHeight(stand, out float sh)) stand.y = sh;
+            w.Ragnar.TeleportTo(stand, Quaternion.LookRotation(dir), false);
+            yield return new WaitForSeconds(1f);
             int tp0 = Teleports(), chain0 = GatherJob.ChainFelled;
             GatherJob.SkippedLogs.Clear();
             GatherTest.Say($"!{w.Ragnar.NpcName} 나무 1", null);

@@ -24,6 +24,24 @@ namespace ValheimHelper
         }
 
         /// <summary>
+        /// 시험 자리 고르기 한 곳(사용자 11-16 "시험부터 똑바로" ②): p가 월드 장소(폐허·집터·시작 제단 등) 둘레 안이면 그 이름·거리, 아니면 null.
+        /// ZoneSystem.GetLocationList는 안 불러온 땅도 위치를 안다(월드 생성 때 정함). 둘레 = 외곽 반지름 + margin(기본 40m),
+        /// 시작 제단은 + 100m(보스석이 제단 둘레에 흩어져 있어 먼 광맥 귀환이 BossStone에 막힘 — E120).
+        /// </summary>
+        public static string LocationNear(Vector3 p, float margin = 40f)
+        {
+            if (ZoneSystem.instance == null) return null;
+            foreach (ZoneSystem.LocationInstance li in ZoneSystem.instance.GetLocationList())
+            {
+                if (li.m_location == null) continue;
+                float d = Utils.DistanceXZ(li.m_position, p);
+                float clear = li.m_location.m_exteriorRadius + (li.m_location.m_prefabName == "StartTemple" ? 100f : margin);
+                if (d < clear) return $"{li.m_location.m_prefabName} {d:0}m(둘레 {clear:0}m)";
+            }
+            return null;
+        }
+
+        /// <summary>
         /// 자동 시험 묶음 첫 시험 전에 한 번(TestRunner): 시험 캐릭터가 월드 시작 제단(건축 금지)에서 시작하면 제단 밖 마른 초원 평지로 옮긴다.
         /// 회차 72: 새 시험 캐릭터(회차 67)가 제단에서 시작해 거점이 보스석 사이에 놓이고(coppertest 귀환이 BossStone에 막힘) 구덩이가 안 파짐(pittest).
         /// 옮겼으면 true(텔레포트가 끝날 때까지 기다린다).
@@ -31,10 +49,11 @@ namespace ValheimHelper
         public static bool LeaveNoBuild(Player player)
         {
             Vector3 from = player.transform.position;
-            if (!NearNoBuild(from, 45f)) return false;
+            if (!NearNoBuild(from, 45f)) return false; // 제단에서 시작할 때만(다른 월드·집 시험의 첫 자리는 그대로) — 옮길 자리는 장소 둘레 밖(LocationNear)
             WorldGenerator wg = WorldGenerator.instance;
             float wl = ZoneSystem.instance.m_waterLevel;
-            for (float r = 60f; r <= 400f; r += 20f)
+            foreach (float margin in new[] { 40f, 15f, -1f }) // 장소 둘레 여유를 줄여 가며(회차 728: 40m만으론 600m 안에 자리 없음), -1 = 예전 기준(건축 금지만)
+            for (float r = 60f; r <= 600f; r += 20f)
                 for (int d = 0; d < 16; d++)
                 {
                     float a = d * Mathf.PI / 8f;
@@ -49,12 +68,12 @@ namespace ValheimHelper
                         float hk = wg.GetHeight(p.x + Mathf.Cos(b) * 15f, p.z + Mathf.Sin(b) * 15f);
                         ok = hk > wl + 3f && Mathf.Abs(hk - h) < 2f;
                     }
-                    if (!ok || NearNoBuild(p, 45f)) continue;
+                    if (!ok || NearNoBuild(p, 45f) || (margin >= 0f && LocationNear(p, margin) != null)) continue;
                     player.TeleportTo(new Vector3(p.x, h + 1f, p.z), player.transform.rotation, true);
-                    Plugin.Log.LogInfo($"시험 캐릭터가 건축 금지 구역(시작 제단 등) 옆 → {r:0}m 떨어진 초원 평지로 옮김");
+                    Plugin.Log.LogInfo($"시험 캐릭터가 건축 금지 구역(시작 제단 등) 옆 → {r:0}m 떨어진 초원 평지로 옮김(장소 여유 {margin:0}m)");
                     return true;
                 }
-            Plugin.Log.LogInfo("건축 금지 구역 밖 평지를 400m 안에서 못 찾음 → 제자리에서 시험");
+            Plugin.Log.LogInfo("건축 금지·장소 둘레 밖 평지를 600m 안에서 못 찾음 → 제자리에서 시험");
             return false;
         }
 
@@ -142,7 +161,9 @@ namespace ValheimHelper
         /// from에서 100m~10km(월드 가장자리 10km 안만)를 바깥으로 돌며 가운데가 그 바이옴이고 15m 둘레가 평평한(3m 안) 자리 중, 가운데·둘레 가장 낮은 곳이 물보다 1m 넘는 첫 자리
         /// — 없으면 0.5m 넘는 것 중 가장 높은 자리(회차 138: 시험 월드 늪은 안쪽 표본 8829곳 중 가장 높아도 물 위 3.4m, 평평한 곳은 0m 이하). 생성 높이라 안 불러온 곳도 본다.
         /// </summary>
-        internal static Vector3? FindBiomeSpot(Vector3 from, Heightmap.Biome biome)
+        internal static Vector3? FindBiomeSpot(Vector3 from, Heightmap.Biome biome) => FindBiomeSpot(from, biome, true) ?? FindBiomeSpot(from, biome, false); // 장소 둘레 밖 먼저, 없으면 예전 기준
+
+        static Vector3? FindBiomeSpot(Vector3 from, Heightmap.Biome biome, bool awayFromLocations)
         {
             WorldGenerator wg = WorldGenerator.instance;
             float wl = ZoneSystem.instance.m_waterLevel;
@@ -174,13 +195,13 @@ namespace ValheimHelper
                     }
                     if (!ok || (RunShore && (!wet || h - wl < 1f))) continue; // 물가는 15m 안에 물이 있고 자리 자체는 물 위 1m 넘는 마른 땅
                     maxLow = Mathf.Max(maxLow, low);
-                    if (low <= bestLow || NearNoBuild(p, 45f)) continue;
+                    if (low <= bestLow || NearNoBuild(p, 45f) || (awayFromLocations && LocationNear(p) != null)) continue;
                     best = new Vector3(p.x, h, p.z);
                     bestLow = low;
                     if (low >= 1f) { r = float.MaxValue; break; } // 충분히 마른 첫 자리면 그만 찾음
                 }
             }
-            Plugin.Log.LogInfo($"{biome} 자리 찾기: 그 바이옴 표본 {seen}곳(가운데 최고 {maxH:0.0}m·평평한 곳 최저의 최고 {maxLow:0.0}m), 고른 자리 물 위 최저 {(best == null ? "-" : bestLow.ToString("0.0"))}m");
+            Plugin.Log.LogInfo($"{biome} 자리 찾기{(awayFromLocations ? "" : "(장소 둘레 무시)")}: 그 바이옴 표본 {seen}곳(가운데 최고 {maxH:0.0}m·평평한 곳 최저의 최고 {maxLow:0.0}m), 고른 자리 물 위 최저 {(best == null ? "-" : bestLow.ToString("0.0"))}m");
             return best;
         }
 

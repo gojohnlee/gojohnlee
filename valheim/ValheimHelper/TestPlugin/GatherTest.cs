@@ -135,6 +135,7 @@ namespace ValheimHelper
             // 3) 10개
             // 광맥(구리 등)은 시험 월드 근처에 없을 수 있어 거점 12m 앞에 놓는다. 지난 시험의 광맥·구덩이는 먼저 치운다.
             Vector3 depositPos = home + rot * new Vector3(0f, 0f, 12f);
+            Vector3? spareVein = null; // 위험 알림 도망 칸이 갈 다른 광맥(구리만)
             if (spawnDeposit)
             {
                 // 건축물 4m 안의 바위는 일꾼이 안 고른다(Buildings) → 지난 시험들이 남긴 상자·깃발에서 떨어진 곳에 놓는다
@@ -169,6 +170,22 @@ namespace ValheimHelper
                     if (Buildings.Near(p, 5f)) continue;
                     Object.Instantiate(dep, Ground(p), rot);
                     placed++;
+                }
+                // 위험 알림 도망 칸(다)은 그 광맥 구역을 피해 다른 광맥으로 간다 — 자연 광맥에 맡기면 자리에 따라 210m(시작 제단 옆, 회차 728 새 시험 자리)라 360초 안에 못 채움.
+                // 옆 구역 40~90m에 하나 더 놓는다(첫 광맥 구역과 다른 구역, 건축물·물 밖).
+                if (item == "CopperOre" && !worn)
+                {
+                    var firstZone = ZoneSystem.GetZone(depositPos);
+                    for (float r = 40f; r <= 90f && spareVein == null; r += 10f)
+                        for (int a = 0; a < 8 && spareVein == null; a++)
+                        {
+                            Vector3 p = Ground(home + Quaternion.Euler(0f, a * 45f, 0f) * (rot * Vector3.back) * r);
+                            if (ZoneSystem.GetZone(p) == firstZone || Buildings.Near(p, 8f) || p.y < ZoneSystem.instance.m_waterLevel + 1f) continue;
+                            TestTerrain.Reset(p, 10f);
+                            Object.Instantiate(dep, p, rot);
+                            spareVein = p;
+                        }
+                    TestRunner.Log(spareVein == null ? "  다른 광맥 못 놓음(옆 구역 40~90m 자리 없음)" : $"  다른 광맥 놓음 집에서 {Utils.DistanceXZ(spareVein.Value, home):0}m 구역 {ZoneSystem.GetZone(spareVein.Value)}");
                 }
                 TestRunner.Log($"광맥 놓음 {dep.name} {placed}개 (지난 구덩이 꼭짓점 {undone}개 되돌림), 첫 광맥 집에서 {Utils.DistanceXZ(depositPos, home):0.0}m 높이차 {depositPos.y - home.y:0.0}m, 상자 {eqPos}·{resPos}, 집 {home}");
                 yield return new WaitForSeconds(1f);
