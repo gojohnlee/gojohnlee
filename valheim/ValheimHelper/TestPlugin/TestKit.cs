@@ -214,6 +214,7 @@ namespace ValheimHelper
             public float DebugValue;
             public string DebugEnv;
             public bool DebugWind; public float DebugWindAngle, DebugWindIntensity;
+            public bool Tutorials;
             public Vector3 Home;
             public WorkerNpc Ragnar, Floki;
             public Container Chest;
@@ -292,6 +293,15 @@ namespace ValheimHelper
             // 바람도 약하게 고정: 맑음이어도 바람이 0.8 넘으면 화로가 젖는다(E014 회차 127 — 맑음 바람 0.79). 바람은 5초에 걸쳐 바뀜
             w.DebugWind = w.Env.m_debugWind; w.DebugWindAngle = w.Env.m_debugWindAngle; w.DebugWindIntensity = w.Env.m_debugWindIntensity;
             w.Env.SetDebugWind(0f, 0.3f);
+            // 튜토리얼 까마귀(Hugin) 끔: 새 시험 캐릭터마다 플레이어 카메라 앞 10~15m 땅(Raven.FindSpawnPoint)에 앉아 그대로 머묾 — 몸 충돌체(character 층)는 navmesh에 없어
+            // 길든 멧돼지가 그 길(울타리 우리 모서리)에 끼어 110초 못 움직임(E128 회차 748: 일꾼도 같은 자리에서 3초 멈춤). Spawn은 m_tutorialsEnabled가 꺼지면 튜토리얼 글로 안 나옴, 앉은 것은 Awake 자리(높이 10만)로.
+            w.Tutorials = Raven.m_tutorialsEnabled; Raven.m_tutorialsEnabled = false;
+            foreach (var rv in Object.FindObjectsByType<Raven>(FindObjectsSortMode.None))
+            {
+                if (rv.transform.position.y > 50000f) continue;
+                Plugin.Log.LogInfo($"시험: 까마귀 {rv.name} 치움 — 자리 {rv.transform.position:F1}·플레이어와 {Utils.DistanceXZ(rv.transform.position, w.Player.transform.position):0.0}m");
+                rv.transform.position = new Vector3(0f, 100000f, 0f);
+            }
             w.OnHeard = (n, t) => w.Heard.Add(n + ": " + t);
             ChatNet.Heard += w.OnHeard;
             w.OnBubbled = (n, t) => w.Bubbles.Add(n + ": " + t);
@@ -940,6 +950,7 @@ namespace ValheimHelper
                 w.Env.m_debugTimeOfDay = w.DebugTime;
                 w.Env.m_debugTime = w.DebugValue;
                 w.Env.m_debugEnv = w.DebugEnv ?? "";
+                Raven.m_tutorialsEnabled = w.Tutorials;
                 w.Env.m_debugWind = w.DebugWind; w.Env.m_debugWindAngle = w.DebugWindAngle; w.Env.m_debugWindIntensity = w.DebugWindIntensity;
             }
             if (w.Knowledge0 != null)

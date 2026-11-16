@@ -454,8 +454,9 @@ namespace ValheimHelper
             bool inside = Mathf.Abs(Vector3.Dot(sp, fwd)) < Half && Mathf.Abs(Vector3.Dot(sp, side.normalized)) < Half;
             var szdo = stray.GetComponent<ZNetView>().GetZDO();
             Vector3 spp = szdo.GetVec3(ZDOVars.s_patrolPoint, Vector3.zero) - pc;
+            bool patrolIn = Mathf.Abs(Vector3.Dot(spp, fwd)) < Half && Mathf.Abs(Vector3.Dot(spp, side.normalized)) < Half; // 우리는 6m 네모 — 둥근 3m로 보면 우리 가축 순찰점(=데려온 것 순찰점)이 벽 곁일 때 안인데도 FAIL(E128 회차 748: 안 0.7·옆 -1.9 → 3.0m)
             checks.Add($"문 지나 울타리 안에 풀어 둠 ({TestKit.Waited:0}초, 문 지남 {DoorWay.Entered - entered0}, 가운데와 {Utils.DistanceXZ(stray.transform.position, pc):0.0}m, 순찰점 가운데와 {new Vector2(spp.x, spp.z).magnitude:0.0}m, 따라감 {stray.GetComponent<MonsterAI>().GetFollowTarget() != null})",
-                inside && DoorWay.Entered > entered0 && szdo.GetBool(ZDOVars.s_patrol) && new Vector2(spp.x, spp.z).magnitude < Half && stray.GetComponent<MonsterAI>().GetFollowTarget() == null);
+                inside && DoorWay.Entered > entered0 && szdo.GetBool(ZDOVars.s_patrol) && patrolIn && stray.GetComponent<MonsterAI>().GetFollowTarget() == null);
             yield return TestKit.WaitFor(() => gateZdo.GetInt(ZDOVars.s_state) == 0, 60f);
             checks.Add($"데려온 뒤 나와서 울타리 문 닫음 ({TestKit.Waited:0}초)", gateZdo.GetInt(ZDOVars.s_state) == 0);
 

@@ -83,6 +83,8 @@ namespace ValheimHelper
 
         /// <summary>두 점 사이를 건축물이 가리나(울타리 우리 데려오기: 짐승이 벽 안쪽인지, 회차 743).</summary>
         public static bool Fenced(Vector3 a, Vector3 b) => Physics.Linecast(a + Vector3.up * 0.6f, b + Vector3.up * 0.6f, Mask);
+        /// <summary>그 점(0.6m 위)에서 그 방향 건축물까지 거리, 없으면 max(울타리 우리 안 깊이 — 문 반대쪽 벽, E128).</summary>
+        public static float Free(Vector3 from, Vector3 dir, float max) => Physics.Raycast(from + Vector3.up * 0.6f, dir, out RaycastHit hit, max, Mask) ? hit.distance : max;
 
         static bool Ray(Vector3 from, Vector3 to, Component target)
         {
