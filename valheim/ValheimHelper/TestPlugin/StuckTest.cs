@@ -85,6 +85,7 @@ namespace ValheimHelper
             Speeds(w.Ragnar, saved, true);
             hold(w.Ragnar);
             float hp0 = w.Ragnar.GetHealth();
+            NpcPatches.NoTreeHurt.LastHurt.Clear();
             int rescues0 = GatherJob.Rescues, hops0 = GatherJob.Hops;
             float d0 = Utils.DistanceXZ(w.Ragnar.transform.position, w.Home);
             checks.Add($"거점에서 떨어져 발이 묶임 ({d0:0}m)", d0 > 30f);
@@ -130,7 +131,7 @@ namespace ValheimHelper
             if (!rescued) yield break;
             checks.Add($"거점에 있음 ({d1:0.0}m)", d1 < 5f);
             // 음식이 떨어지면 최대 체력이 줄어 그만큼 줄 수 있다(회차 72: 71 → 69, 최대도 69) → 최대보다 낮아졌을 때만 다친 것
-            checks.Add($"체력 그대로 ({hp0:0} → {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0})", Mathf.Abs(w.Ragnar.GetHealth() - hp0) < 1f || w.Ragnar.GetHealth() >= w.Ragnar.GetMaxHealth() - 0.5f);
+            checks.Add($"체력 그대로 ({hp0:0} → {w.Ragnar.GetHealth():0}/{w.Ragnar.GetMaxHealth():0}, 마지막 피해 {(NpcPatches.NoTreeHurt.LastHurt.TryGetValue(w.Ragnar.NpcName, out var hurt) ? hurt : "없음")})", Mathf.Abs(w.Ragnar.GetHealth() - hp0) < 1f || w.Ragnar.GetHealth() >= w.Ragnar.GetMaxHealth() - 0.5f);
             checks.Add("막힘 대사를 함", w.Heard.Exists(h => TestKit.SaidKey(h, w.Ragnar.Personality, "stuck", "rescue")));
             yield return new WaitForSeconds(3f);
             checks.Add($"일을 이어 감 ({ai.Current}/{ai.Job?.StepName})", ai.Job is GatherJob);

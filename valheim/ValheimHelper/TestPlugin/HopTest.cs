@@ -110,7 +110,13 @@ namespace ValheimHelper
             float toDest = Utils.DistanceXZ(p, GatherJob.LastHopDest);
             checks.Add($"자리를 옮김 ({Utils.DistanceXZ(before, p):0.0}m, 목표까지 {toDest:0.0}m)", Utils.DistanceXZ(before, p) > 1f || toDest < 3.6f);
             bool ground = ZoneSystem.instance.GetSolidHeight(p, out float h);
-            checks.Add($"단단한 땅 위 (높이 {p.y:0.0}/땅 {h:0.0}, 물 {Floating.GetLiquidLevel(p):0.0})", ground && Mathf.Abs(p.y - h) < 1.5f && Floating.GetLiquidLevel(p) < h + 0.1f);
+            // GetSolidHeight는 위에서 내려쏘아 바위 처마·덮개 밑이면 그 위를 땅으로 봄(회차 719 E118: 높이 71.4/땅 84.7) → 발밑 광선·몸 박힘으로도 봄
+            int solid = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+            bool feet = Physics.Raycast(p + Vector3.up * 1.2f, Vector3.down, out RaycastHit fh, 3f, solid);
+            bool stuckIn = Physics.CheckSphere(p + Vector3.up * 1f, 0.25f, LayerMask.GetMask("Default", "static_solid", "Default_small", "piece"));
+            string above = Physics.Raycast(p + Vector3.up * 2f, Vector3.up, out RaycastHit ah, 20f, solid) ? $"{ah.collider.name} {ah.point.y - p.y:0.0}m 위" : "없음";
+            bool onSolid = (ground && Mathf.Abs(p.y - h) < 1.5f) || (feet && Mathf.Abs(p.y - fh.point.y) < 1.5f && !stuckIn);
+            checks.Add($"단단한 땅 위 (높이 {p.y:0.0}/땅 {h:0.0}, 발밑 {(feet ? fh.point.y.ToString("0.0") : "없음")}, 박힘 {stuckIn}, 위 {above}, 물 {Floating.GetLiquidLevel(p):0.0})", onSolid && Floating.GetLiquidLevel(p) < p.y + 0.1f);
             checks.Add("깃발 강제 복귀 아님", GatherJob.Rescues == rescues0);
 
             // 발은 계속 묶여 있다(옮긴 자리에서 닿으면 그냥 벤다): 90초 동안 같은 목적지가 2번 넘게 막히지 않음 = 같은 곳으로 걷기·순간이동 되풀이 없음.

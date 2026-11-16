@@ -50,9 +50,18 @@ namespace ValheimHelper
             /// <summary>시험 기록: 막은 나무 피해 수.</summary>
             public static int Spared;
 
+            /// <summary>시험 기록: 일꾼마다 마지막으로 받은 나무 밖 피해(종류·양·공격자) — 원인 모를 체력 감소(E118 stucktest) FAIL 문구에.</summary>
+            public static readonly Dictionary<string, string> LastHurt = new Dictionary<string, string>();
+
             static bool Prefix(Character __instance, HitData hit)
             {
-                if (!(__instance is WorkerNpc w) || hit == null || hit.m_hitType != HitData.HitType.Tree) return true;
+                if (!(__instance is WorkerNpc w) || hit == null) return true;
+                if (hit.m_hitType != HitData.HitType.Tree)
+                {
+                    Character by = hit.GetAttacker();
+                    LastHurt[w.NpcName] = $"{hit.m_hitType} {hit.GetTotalDamage():0} {(by != null ? by.m_name : "-")}";
+                    return true;
+                }
                 Spared++;
                 Plugin.Log.LogInfo($"나무 피해 막음 {w.NpcName}: {hit.GetTotalDamage():0}");
                 return false;
