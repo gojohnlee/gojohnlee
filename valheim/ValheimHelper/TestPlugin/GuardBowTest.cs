@@ -56,10 +56,12 @@ namespace ValheimHelper
             for (float s = 0f; s < 30f && still < 1f; s += Time.deltaTime) { still = guard.GetVelocity().magnitude < 0.3f && !guard.Ai.Guard.Engaged ? still + Time.deltaTime : 0f; yield return null; }
             int before = Guard.Shots;
             // 경계 자리에서 12m 앞이 벽·나무에 가리면 호위병이 다가가 근접으로 잡는다(옳은 동작) — 눈에서 트인 방향을 고름(회차 719: 6m까지 다가가 FAIL)
-            Vector3 eye = guard.GetEyePoint(), spot = GatherTest.Ground(guard.transform.position + f * 12f);
-            for (int i = 0; i < 8 && Physics.Linecast(eye, spot + Vector3.up, GatherJob.ShotMask); i++)
+            // 볼트는 눈보다 낮은 공격 뼈에서 나가 둔덕에 가릴 수 있음(회차 775: 눈은 트였는데 "볼트 자리에서 가림(Terrain 7.7m)" → 6m 근접) — 허리 높이·적 몸 낮은 곳도 봄
+            Vector3 eye = guard.GetEyePoint(), waist = guard.transform.position + Vector3.up * 1f, spot = GatherTest.Ground(guard.transform.position + f * 12f);
+            System.Func<Vector3, bool> hid = p => Physics.Linecast(eye, p + Vector3.up, GatherJob.ShotMask) || Physics.Linecast(waist, p + Vector3.up * 0.5f, GatherJob.ShotMask);
+            for (int i = 0; i < 8 && hid(spot); i++)
                 spot = GatherTest.Ground(guard.transform.position + Quaternion.Euler(0f, 45f * (i + 1), 0f) * f * 12f);
-            Plugin.Log.LogInfo($"guardbow 적 자리 {spot} 가림 {Physics.Linecast(eye, spot + Vector3.up, GatherJob.ShotMask)}");
+            Plugin.Log.LogInfo($"guardbow 적 자리 {spot} 가림 {hid(spot)}");
             Character foe = FulingTest.Spawn(ZNetScene.instance.GetPrefab("Greyling"), spot, made);
             foe.GetBaseAI().enabled = false; // 그 자리에 서 있음(EscortTest와 같음)
             closest[0] = float.MaxValue;

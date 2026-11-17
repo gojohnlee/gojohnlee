@@ -56,7 +56,11 @@ namespace ValheimHelper
             {
                 Loot l = m_loots[i];
                 l.Age += dt;
-                if (l.Age > LootLimit || Utils.DistanceXZ(l.At, me) > LootLeave || OthersHunt(l.At)) { m_loots.RemoveAt(i); continue; }
+                if (l.Age > LootLimit || Utils.DistanceXZ(l.At, me) > LootLeave || OthersHunt(l.At))
+                {
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 떨굼 그만(E133): {(l.Age > LootLimit ? "25초" : OthersHunt(l.At) ? "동료 사냥" : "40m 밖")}, 자리에서 {Utils.DistanceXZ(l.At, me):0.0}m");
+                    m_loots.RemoveAt(i); continue;
+                }
                 ItemDrop best = null;
                 float bestD = float.MaxValue;
                 foreach (var zdo in Senses.Nearby(l.At, LootRange))
