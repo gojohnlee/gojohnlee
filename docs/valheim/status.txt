@@ -1,7 +1,7 @@
-갱신: 2026-11-17 10:12  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 773 진행 중
+갱신: 2026-11-17 10:31  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 773, 계정: 2번, 한도: 1번 11-17 12:42까지
 할 일: 요청 복잡한 집에서 걷기·충돌 시험(11-17 07:57): 가) 다른 월드 백업(worldsChilsungCider_backup_20230305·worlds_local5665553 등)을 vh_housefind로 …
-마지막 시험: 11-17 10:11 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+마지막 시험: 11-17 10:30 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE 2층 집 계단 발치 길 끊김을 틈 넘기로 고침(otherhouse 2층·기본 13/13, newerahouse 16/16 PASS)
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
