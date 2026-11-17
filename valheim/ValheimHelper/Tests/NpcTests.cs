@@ -27,6 +27,18 @@ public class SpeechTests
     }
 
     [Fact]
+    public void ByIsAlwaysFollowedByDang()
+    {
+        // 회차 794: {by}는 WorkerNpc가 "멧돼지한테 " 또는 ""로 채움 → "{by} 때문에"는 "멧돼지한테  때문에"로 깨짐. "{by}당…"만 씀
+        var f = typeof(Speech).GetField("Lines", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        foreach (var set in (Dictionary<string, string[]>[])f.GetValue(null))
+            foreach (var kv in set)
+                foreach (var line in kv.Value)
+                    for (int i = line.IndexOf("{by"); i >= 0; i = line.IndexOf("{by", i + 1))
+                        Assert.True(line.Substring(i).StartsWith("{by}당"), kv.Key + ": " + line);
+    }
+
+    [Fact]
     public void NeverRepeatsLastLine()
     {
         var s = new Speech(new Random(1));
