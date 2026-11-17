@@ -1,8 +1,7 @@
-갱신: 2026-11-17 10:31  (무인 루프, scripts/vh-loop.ps1)
-지금: 회차 774 진행 중
+갱신: 2026-11-17 11:06  (무인 루프, scripts/vh-loop.ps1)
+지금: 다음 회차 준비
 회차: 774, 계정: 2번, 한도: 1번 11-17 12:42까지
-할 일: 요청 복잡한 집에서 걷기·충돌 시험(11-17 07:57): 가) 다른 월드 백업(worldsChilsungCider_backup_20230305·worlds_local5665553 등)을 vh_housefind로 …
-마지막 시험: 11-17 10:30 요약: 1/1 PASS
-Claude가 한 일: (진행 중)
+할 일: 요청 쉬는 일꾼 없게(11-13 00:25): 쉬게 되면 ① 동료 일 돕기 [늦게 끼기 끝, 회차 482 — 커밋 f670434 · 시험 vh_chorestest 21/21 PASS — JoinGather·TeamJ…
+마지막 시험: 11-17 11:05 요약: 1/1 PASS
+Claude가 한 일: LOOP: DONE 메인 집 시험 38/38·마무리 시험 10/11(pittest 재현 안 됨 E132)·finaltest 35/35 → valheim-stable fbd5a8c4
 요청은 이 폴더 UserRequest.txt에 쓴다(답은 history.md 맨 위, 돌고 있는 회차가 있어도 15분마다 확인). 멈추려면 loop-stop.txt를 만든다(내용 아무거나).
-플레이용 빌드: fbd5a8c4 11-17 (전체 회귀 722 뒤 바뀐 영역 묶음 PASS·vh_finaltest 35/35)
