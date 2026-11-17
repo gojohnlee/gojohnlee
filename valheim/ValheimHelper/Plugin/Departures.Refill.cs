@@ -56,6 +56,7 @@ namespace ValheimHelper
             if (s_refillTimer > 0f) return;
             s_refillTimer = (float)RefillBook.CheckEvery;
             if (WorkerNpc.All.Count == 0) return;
+            ObservePre();
             // 쉬는 일꾼 모두 차례로(사용자 11-09): 같은 물건은 RefillBusy가 막으니 각자 다른 것을 맡는다
             // 호위병 먼저(사용자 11-14 "비욘도 쉴 때 거점 안 집안일"): 밭·꿀·먹이를 호위병이 맡으면 일꾼은 채집·보충에 남는다
             var order = new List<WorkerNpc>(WorkerNpc.All);
@@ -86,7 +87,7 @@ namespace ValheimHelper
                     }
                     if (StartRefillMake(npc)) continue;
                 }
-                if (!npc.Ai.Resting && ChoresOn && Features.IdleChores && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc) && !IdleHoney(npc) && !IdleFeed(npc) && !IdleCull(npc) && !IdleEgg(npc)) IdleTame(npc);
+                if (!npc.Ai.Resting && ChoresOn && Features.IdleChores && !IdleFood(npc) && !IdleFish(npc) && !Repay(npc) && !IdleFarm(npc) && !IdleHoney(npc) && !IdleFeed(npc) && !IdleCull(npc) && !IdleEgg(npc) && !IdleTame(npc)) PreGather(npc); // 미리 채집은 맨 끝(사용자 11-18)
             }
         }
 

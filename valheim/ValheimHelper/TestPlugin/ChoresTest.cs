@@ -17,7 +17,7 @@ namespace ValheimHelper
     /// </summary>
     static class ChoresTest
     {
-        public static void Register() => TestRunner.Register("vh_chorestest", "같이 캐기·바로 보충·쉴 때 먹거리·밭일·꿀 시험", () => TestKit.Flat(Run()), 1300f);
+        public static void Register() => TestRunner.Register("vh_chorestest", "같이 캐기·바로 보충·쉴 때 먹거리·밭일·꿀 시험", () => TestKit.Flat(Run()), 1600f);
 
         static readonly string[] Foods = { "Raspberry", "Blueberries", "Mushroom", "MushroomYellow", "Cloudberry", "Honey", "CookedMeat" };
 
@@ -36,6 +36,7 @@ namespace ValheimHelper
             finally
             {
                 Departures.TestIdleChores = false;
+                Departures.TestPreGather = false;
                 OnlyFood(null, false);
                 foreach (var g in made) if (g != null) ZNetScene.instance.Destroy(g);
                 Brain.Refill.Off();
@@ -138,6 +139,25 @@ namespace ValheimHelper
             yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 180f);
             yield return Farm(w, checks);
             yield return Honey(w, checks, made);
+            yield return Pre(w, checks);
+        }
+
+        /// <summary>7) 미리 채집(사용자 11-18): 상자에서 나무를 꺼내 쓰면(합이 줄면) 쉬던 일꾼이 25개까지 채우러 감.</summary>
+        static IEnumerator Pre(TestKit.World w, GatherTest.Checks checks)
+        {
+            yield return TestKit.WaitFor(() => Idle(w.Ragnar) && Idle(w.Floki), 180f);
+            if (Count(w, "Wood") < 10) w.Chest.GetInventory().AddItem(ZNetScene.instance.GetPrefab("Wood"), 20);
+            int had = Count(w, "Wood");
+            Departures.TestPreGather = true;
+            Departures.TestRefillNow(); // 기준
+            TestKit.ClearBaseStock(w, "Wood");
+            yield return new WaitForSeconds(0.5f);
+            Departures.TestRefillNow(); // 줄어든 것 봄 → 맨 끝 미리 채집
+            System.Func<WorkerNpc, bool> going = n => n.Ai.Job is GatherJob g && g.Item == "Wood" && g.FromRefill && !g.Repay && g.Target == PreGatherBook.Target;
+            yield return TestKit.WaitFor(() => going(w.Ragnar) || going(w.Floki), 10f);
+            checks.Add($"상자 나무 {had}개 꺼내 씀 → 쉬던 일꾼이 {PreGatherBook.Target}개 미리 채집하러 감 ({TestKit.Waited:0.0}초)", TestKit.Ok);
+            yield return TestKit.WaitFor(() => Count(w, "Wood") >= PreGatherBook.Low && Idle(w.Ragnar) && Idle(w.Floki), 300f);
+            checks.Add($"미리 채집 끝 (나무 {Count(w, "Wood")}, {TestKit.Waited:0}초)", TestKit.Ok);
         }
 
         /// <summary>6) 쉴 때 꿀: 거점 안 벌통 꿀 4 → 쉬던 일꾼이 거둬 상자에 넣음.</summary>
