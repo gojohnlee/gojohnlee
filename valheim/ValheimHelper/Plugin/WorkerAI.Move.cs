@@ -643,7 +643,7 @@ namespace ValheimHelper
 
 
         Vector3 m_trapAnchor;
-        float m_trapStill, m_trapCheck;
+        float m_trapStill, m_trapCheck, m_trapDiagAt;
         /// <summary>시험용: 갇혀서(도망 중 구덩이·물 찬 구덩이) 깃발로 순간이동한 횟수.</summary>
         public static int TrapRescues;
 
@@ -657,6 +657,7 @@ namespace ValheimHelper
             bool swimming = m_character.IsSwimming();
             // 도망·헤엄 중인 시간만 센다(⑬ 사), 회차 211 vh_coppertest: 서서 캐던 시간까지 세어 도망 시작 1~2초 만에 깃발로 옮겨짐)
             if ((!fleeing && !swimming) || Utils.DistanceXZ(pos, m_trapAnchor) > (float)Climb.TrapRadius) { m_trapAnchor = pos; m_trapStill = 0f; return false; }
+            if (fleeing && m_trapStill > 2f && Time.time - m_trapDiagAt > 2f) { m_trapDiagAt = Time.time; Diag.Log($"DIAG {((WorkerNpc)m_character).NpcName}: 도망 갇힘 시계 {m_trapStill:0.0}초, 공격 중 {m_character.InAttack()}, 구덩이 {Climb.IsPit(Rise8(pos, Flat(m_moveTarget - pos).sqrMagnitude < 0.01f ? Flat(transform.forward) : Flat(m_moveTarget - pos)))}, 둘레 {string.Join(" ", System.Array.ConvertAll(Rise8(pos, Flat(transform.forward)), r => r.ToString("0.0")))}"); }
             if (m_character.InAttack()) return false; // 휘두르는 동안은 못 움직이니 안 셈(시계 멈춤 — 회차 754 vh_coppertest: 캐는 중 도망 시작에 곡괭이 휘두름까지 세어 3초 만에 깃발로)
             m_trapStill += dt;
             if (m_trapStill < Mathf.Min((float)Climb.FleeTrapSeconds, (float)Climb.SwimTrapSeconds)) return false;
