@@ -19,6 +19,8 @@ namespace ValheimHelper
         const int NX = 6, NZ = 5;
         const float C = 2f, Y0 = 0f, H = 2f;   // 1층 바닥 윗면 = 고른 땅(회차 771: 0.2m 띄우니 땅에 안 닿아 받침 0 → 다시 불러올 때 다 무너짐), 층 높이 = 벽 한 장
         static Vector3 P;
+        /// <summary>이번 게임에서 지은 집 가운데 — vh_otherhouse VH_HOUSE_AT=built(같은 판에서 짓고 바로 걷기, 회차 773: 다시 불러온 옛 집은 조각 70만 남음).</summary>
+        internal static Vector3? Built;
         static int made, missing;
         static readonly List<Transform> snaps = new List<Transform>();
         static readonly Dictionary<string, string> probe = new Dictionary<string, string>();
@@ -95,6 +97,7 @@ namespace ValheimHelper
                 if (p.GetComponent<Container>()) chests++;
                 if (p.GetComponent<Door>()) doors++;
             }
+            Built = mid;
             TestRunner.Log($"20초 뒤 조각 {alive}/{made}·침대 {beds}·상자 {chests}·문 {doors} — 집 자리 VH_HOUSE_AT=\"{mid.x:0},{mid.z:0}\"");
             checks.Add($"집이 무너지지 않고 섬 ({alive}/{made}, 침대 {beds}, 상자 {chests}, 문 {doors})", missing == 0 && alive >= made - 2 && beds >= 2 && doors >= 4);
             ZNet.instance.Save(false);

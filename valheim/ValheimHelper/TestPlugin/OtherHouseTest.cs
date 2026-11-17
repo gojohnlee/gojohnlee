@@ -22,6 +22,7 @@ namespace ValheimHelper
         {
             string s = System.Environment.GetEnvironmentVariable("VH_HOUSE_AT");
             if (string.IsNullOrEmpty(s)) return new Vector3(-4867f, 0f, -1157f);
+            if (s == "built") return HouseBuild.Built ?? new Vector3(-4867f, 0f, -1157f);
             var a = s.Split(',');
             return new Vector3(float.Parse(a[0], CultureInfo.InvariantCulture), 0f, float.Parse(a[1], CultureInfo.InvariantCulture));
         }
@@ -155,6 +156,7 @@ namespace ValheimHelper
                 if (reach.Count >= 3) break;
                 yield return new WaitForSeconds(3f);
             }
+            spots.RemoveAll(c => c == null);   // 회차 773: 길 재는 사이 사라진 살림(지난 판 상자 등)을 읽으면 NRE
             // 진단(회차 771): 길 안 난 살림마다 일꾼 길(물 피함)의 부분 길 끝 — 어디서 끊기는지
             foreach (var s in spots)
                 if (s != lo && !reach.Contains(s))

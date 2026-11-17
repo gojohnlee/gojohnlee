@@ -48,6 +48,15 @@ namespace ValheimHelper
                 m_stepAt = Time.time + 2f; m_stepTo = to; m_step = to; m_stepRest.Clear(); m_stepWait = false;
                 if (Pathfinding.instance != null && Pathfinding.instance.GetPath(pos, to, s_stepPath, m_pathAgentType))
                 {
+                    // 계단 발치 끊김(codemap 회차 771 navmesh 끊김 ②): 부분 길이 다른 층 목표 바로 밑·위(수평 1.5m 안, 높이 1m 넘게)에서 끝나면 — 닫힌 문 앞에서 끊긴 길은 아님 — 계단 둘레에서 목표까지 끝까지 길 나는 점과
+                    // 지금 자리에서 끝까지 길 나는 점이 0.9m·높이 0.5m 안으로 붙은 쌍을 찾아 그 틈만 곧장 걷는다(회차 773 vh_otherhouse 지은 2층 집: 2층 목표 밑에 90초 섬)
+                    bool gapNear = false; Vector3 gapUp = Vector3.zero;
+                    Vector3 pend = s_stepPath[s_stepPath.Count - 1];
+                    if (Utils.DistanceXZ(pend, to) < 1.5f && Mathf.Abs(pend.y - to.y) > 1f && StairGap(pos, to, out Vector3 gapDown, out gapUp))
+                    {
+                        gapNear = Utils.DistanceXZ(pos, gapDown) < 0.9f;
+                        if (!gapNear) Pathfinding.instance.GetPath(pos, gapDown, s_stepPath, m_pathAgentType);
+                    }
                     float len = 0f; for (int i = 1; i < s_stepPath.Count; i++) len += Vector3.Distance(s_stepPath[i - 1], s_stepPath[i]);
                     float direct = Vector3.Distance(pos, to);
                     m_stepPicked = $"길 {len:0.0}m/직선 {direct:0.0}m 모퉁이 {s_stepPath.Count}:{PathText(s_stepPath, 5)}";
@@ -62,6 +71,7 @@ namespace ValheimHelper
                     m_stepSince = Time.time - 3f; // 한 번 길을 받아 떠났으면 이 목표로는 다시 서지 않음 — 걷다 모퉁이에서 새로 받은 남은 길(29m/직선 10m)도 터무니없다고 쳐 계단 위에서 0.5초 섰음(회차 417)
                     for (int i = 1; i < s_stepPath.Count; i++)
                         if (Utils.DistanceXZ(s_stepPath[i], pos) > StepReach) { m_step = s_stepPath[i]; for (int j = i + 1; j < s_stepPath.Count; j++) m_stepRest.Add(s_stepPath[j]); break; }
+                    if (gapNear) { m_step = gapUp; m_stepRest.Clear(); m_stepRest.Add(to); m_stepPicked += $" · 계단 틈 → {gapUp:F1}"; }
                 }
             }
             Vector3 next = to; // 꺾임은 0.5m 넘는 다음 점으로 — 2층 바닥 끝 점들이 0.1m 간격이라 바로 뒤 점(0.14m)으론 꺾임을 못 보고 7.5m/s로 1m 지나쳤음(회차 420 내림)
@@ -101,6 +111,45 @@ namespace ValheimHelper
             for (int i = 0; i < p.Count && i < n; i++) sb.Append(' ').Append(p[i].ToString("F1"));
             if (p.Count > n) sb.Append(" … ").Append(p[p.Count - 1].ToString("F1"));
             return sb.ToString();
+        }
+        Vector3 m_gapFor, m_gapDown, m_gapUp; float m_gapAt = -9f; bool m_gapOk;
+        static readonly Collider[] s_gapCols = new Collider[96];
+        static readonly List<Vector3> s_gapPath = new List<Vector3>();
+        /// <summary>계단 틈(FloorStep): 목표 12m 안 계단 조각 둘레(0.75m 넓힘)를 0.25m 간격으로 윗면 높이를 재(계단 충돌체, 없으면 계단 밑 0.6m 위에서 바닥)
+        /// 목표까지 끝까지 길 나는 점(up)과 지금 자리에서 끝까지 길 나는 점(down) 중 0.9m·높이 0.5m 안 쌍, 지금 자리에서 가장 가까운 down. 같은 목표는 3초 기억.</summary>
+        bool StairGap(Vector3 pos, Vector3 to, out Vector3 down, out Vector3 up)
+        {
+            if (Time.time - m_gapAt > 3f || Vector3.Distance(m_gapFor, to) > 0.5f)
+            {
+                m_gapAt = Time.time; m_gapFor = to; m_gapOk = false;
+                var pf = Pathfinding.instance; var ups = new List<Vector3>(); var downs = new List<Vector3>(); var seen = new HashSet<Piece>();
+                int mask = LayerMask.GetMask("piece"), n = Physics.OverlapSphereNonAlloc(to, 12f, s_gapCols, mask);
+                bool Ends(Vector3 a, Vector3 q, bool atStart) { Vector3 e = atStart ? s_gapPath[0] : s_gapPath[s_gapPath.Count - 1]; return Utils.DistanceXZ(e, q) < 0.3f && Mathf.Abs(e.y - q.y) < 0.4f; }
+                for (int i = 0; i < n; i++)
+                {
+                    Piece p = s_gapCols[i].GetComponentInParent<Piece>();
+                    if (p == null || !seen.Add(p) || Utils.GetPrefabName(p.gameObject).IndexOf("stair", System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    var cols = p.GetComponentsInChildren<Collider>(); Bounds b = new Bounds(p.transform.position, Vector3.zero);
+                    foreach (var c in cols) if (!c.isTrigger) b.Encapsulate(c.bounds);
+                    for (float x = b.min.x - 0.75f; x <= b.max.x + 0.75f; x += 0.25f)
+                        for (float z = b.min.z - 0.75f; z <= b.max.z + 0.75f; z += 0.25f)
+                        {
+                            float top = float.MinValue;
+                            foreach (var c in cols) if (!c.isTrigger && c.Raycast(new Ray(new Vector3(x, b.max.y + 1f, z), Vector3.down), out RaycastHit h, b.size.y + 2f)) top = Mathf.Max(top, h.point.y);
+                            if (top == float.MinValue && Physics.Raycast(new Vector3(x, b.min.y + 0.6f, z), Vector3.down, out RaycastHit fl, 1.5f, mask)) top = fl.point.y;
+                            if (top == float.MinValue) continue;
+                            Vector3 q = new Vector3(x, top, z);
+                            if (pf.GetPath(q, to, s_gapPath, m_pathAgentType, requireFullPath: true) && Ends(q, q, true)) ups.Add(q);
+                            else if (pf.GetPath(pos, q, s_gapPath, m_pathAgentType, requireFullPath: true) && Ends(q, q, false)) downs.Add(q);
+                        }
+                }
+                float best = float.MaxValue;
+                foreach (var d in downs)
+                    foreach (var u in ups)
+                        if (Utils.DistanceXZ(d, u) < 0.9f && u.y - d.y < 0.5f && u.y - d.y > -0.5f && Vector3.Distance(pos, d) < best) { best = Vector3.Distance(pos, d); m_gapDown = d; m_gapUp = u; m_gapOk = true; }
+            }
+            down = m_gapDown; up = m_gapUp;
+            return m_gapOk;
         }
         string m_stepPicked = "길 없음", m_moveDiag = "";
         const float StepReach = 1.1f;
