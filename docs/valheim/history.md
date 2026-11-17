@@ -8,6 +8,19 @@
 
 ## 회차 기록
 
+### 회차 798 · 11-18 · 플로키 대사 다듬기 7
+
+**요약**
+
+- [11-18] 플로키 대사 다듬기 7: 출발·같이 가기·기다림·묘지·위시본·요청 13키 26줄(회차 798 — 커밋 bbb99b5a · 시험 vh_bantertest 15/15 PASS)
+
+**자세히**
+
+- 밋밋한 줄을 키마다 2줄씩 플로키 말투(킥킥·징조·신 이름·위험에 들뜸)로 바꿈: depart.busy·together·waitGuard, preyWaitGuard, outOfScope, noCrypt, cryptsEmpty, needFinder, cryptOpen, ask.alternative·escort·diedThere·condition.
+- 예: "{partner}! 까마귀 두 마리가 날았어. 둘이 가라는 징조야!", "배? 배라면 내 꿈이지! 근데 그건 아직 못 구해."
+- depart.gearRequest는 원래 2줄뿐이고 이미 플로키 말투라 그대로. 다음은 ask.gear부터.
+- Core 833/833, vh_bantertest 15/15 PASS. speech-count "늘릴 것" 없음.
+
 ### 회차 797 · 11-18 · 플로키 대사 다듬기 6
 
 **요약**
