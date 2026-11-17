@@ -10,9 +10,9 @@ namespace ValheimHelper
     /// </summary>
     public sealed partial class Guard
     {
-        const float LootRange = 8f, LootLimit = 25f, LootLeave = 40f;
+        const float LootRange = 8f, LootLimit = 25f, LootWait = 60f, LootLeave = 40f; // LootLimit은 떨굼이 처음 보인 때부터(E133: 죽은 때부터 세니 몸이 늦게 사라지면 줍다 끊김)
 
-        sealed class Loot { public Vector3 At; public HashSet<string> Names; public float Age; }
+        sealed class Loot { public Vector3 At; public HashSet<string> Names; public float Age, SeenAt = -1f; }
 
         readonly List<Loot> m_loots = new List<Loot>();
         HashSet<string> m_targetDrops;
@@ -56,9 +56,10 @@ namespace ValheimHelper
             {
                 Loot l = m_loots[i];
                 l.Age += dt;
-                if (l.Age > LootLimit || Utils.DistanceXZ(l.At, me) > LootLeave || OthersHunt(l.At))
+                bool late = l.Age > (l.SeenAt < 0f ? LootWait : l.SeenAt + LootLimit);
+                if (late || Utils.DistanceXZ(l.At, me) > LootLeave || OthersHunt(l.At))
                 {
-                    Plugin.Log.LogInfo($"{m_npc.NpcName} 떨굼 그만(E133): {(l.Age > LootLimit ? "25초" : OthersHunt(l.At) ? "동료 사냥" : "40m 밖")}, 자리에서 {Utils.DistanceXZ(l.At, me):0.0}m");
+                    Plugin.Log.LogInfo($"{m_npc.NpcName} 떨굼 그만(E133): {(late ? (l.SeenAt < 0f ? "60초 안 보임" : "보인 뒤 25초") : OthersHunt(l.At) ? "동료 사냥" : "40m 밖")}, 자리에서 {Utils.DistanceXZ(l.At, me):0.0}m");
                     m_loots.RemoveAt(i); continue;
                 }
                 ItemDrop best = null;
@@ -72,6 +73,7 @@ namespace ValheimHelper
                     float d = Vector3.Distance(drop.transform.position, me);
                     if (d < bestD) { bestD = d; best = drop; }
                 }
+                if (best != null && l.SeenAt < 0f) l.SeenAt = l.Age;
                 if (best == null) continue; // 아직 몸이 안 사라졌거나 다 주움 — 일은 계속
                 if (bestD <= 1.8f)
                 {

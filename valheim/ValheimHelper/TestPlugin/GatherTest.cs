@@ -363,6 +363,8 @@ namespace ValheimHelper
                 TestRunner.Log($"광맥 둘레 가장 깊은 곳 {Deepest(depositPos, 4f):0.0}m, 1호 위치 집에서 {(claude ? Utils.DistanceXZ(claude.Home, p) : -1):0}m, {(claude ? claude.MoveDebug : "")}");
                 // 남은 광맥도 치운다: 다음 시험(crypttest 110m 앞)의 길을 막는다(회차 90: 남은 Rock4_cell 사이에서 지하묘지 가기 막힘)
                 int gone = RemoveDeposits(depositPos, DepositFor(item));
+                // 다른 광맥도: 남으면 다음 vh_escorttest가 거점 40m 구리를 보고 호위병 없이 감(회차 776 FAIL 9/18)
+                if (spareVein != null) { gone += RemoveDeposits(spareVein.Value, DepositFor(item)); TestTerrain.Reset(spareVein.Value, 10f); }
                 int back = TestTerrain.Reset(depositPos, 10f); // 다음 시험을 위해 구덩이 되돌림
                 TestRunner.Log($"구덩이 되돌림: 꼭짓점 {back}개");
                 TestRunner.Log($"남은 광맥 조각 {gone}개 지움");

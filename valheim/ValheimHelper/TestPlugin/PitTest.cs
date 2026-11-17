@@ -111,6 +111,17 @@ namespace ValheimHelper
                         rim = spot.y;
                         rims[i] = rim;
                         dug[i] = true;
+                        // 앞 시험이 벤 나무 그루터기가 구덩이 안에 남으면 그 위에 서서 경사로를 못 깎음(회차 776 구덩이 7 FAIL, 발밑 stubbe)
+                        int stubs = 0;
+                        foreach (var zdo in Senses.Nearby(spot, 5f))
+                        {
+                            GameObject pf = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
+                            if (pf == null || pf.name.IndexOf("stub", System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+                            ZNetView v = ZNetScene.instance.FindInstance(zdo);
+                            if (v != null) { v.ClaimOwnership(); ZNetScene.instance.Destroy(v.gameObject); } else ZDOMan.instance.DestroyZDO(zdo);
+                            stubs++;
+                        }
+                        if (stubs > 0) TestRunner.Log($"구덩이 {i + 1} 자리 그루터기 {stubs}개 치움");
                         int n = 0;
                         var offsets = Narrow[i] ? new[] { Vector3.zero }
                             : new[] { Vector3.zero, Vector3.right * 1.2f, Vector3.left * 1.2f, Vector3.forward * 1.2f, Vector3.back * 1.2f };
