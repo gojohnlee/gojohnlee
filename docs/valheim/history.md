@@ -8,6 +8,18 @@
 
 ## 회차 기록
 
+### 회차 786 · 11-18 · 라그나 말끝 섞기(명령 답·탐험·채우기)
+
+**요약**
+
+- [11-18] 라그나 대사 다듬기 5: 명령 답·탐험·채우기 등 10개 상황에서 늘 "~지"로 끝나던 말을 섞고(~할게·~자·물음), 호기심·신 반쯤 의심하는 말 몇 줄(회차 786 — 커밋 ba656779 · 시험 vh_bantertest 15/15·vh_exploretest 16/16 PASS)
+
+**자세히**
+
+- 바꾼 키: exploreStart·nightBack·keepSet·fillOnce·depart.lowSkill·cryptOpen·escort.noMate·answer.morning·answer.go·answer.timeout — 키마다 15줄 중 5~8줄 끝맺음을 바꿈(약 70줄).
+- 예: "지하묘지군. 누가 여기 묻혔을까? 이름은 남았을까?", "혼자 가는 길이군. 신들이 같이 가 주려나? 글쎄.", "답을 기다렸는데. 침묵도 대답이긴 하지."
+- 아직 "~지"가 절반 넘는 키가 약 50개 남음(stuck·graveRetry·depart.warn·idle* 등) — 다음 회차에 이어 감.
+
 ### 회차 785 · 11-18 · 라그나 대사 다듬기 4: 플로키와 나누는 잡담
 
 **요약**
