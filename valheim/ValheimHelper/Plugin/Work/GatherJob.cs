@@ -223,6 +223,7 @@ namespace ValheimHelper
             m_step = s;
             m_stepTime = 0f;
             m_returnQuick = 0;
+            if (s != Step.Collect) m_remoteGrab = false;
             // 이전 단계의 걷기 방향이 남으면 계속 걸어간다(0.3.2: 돌을 줍고 한참 갔다가 돌아옴).
             m_ai.StopMoving();
             m_bestDist = float.MaxValue;

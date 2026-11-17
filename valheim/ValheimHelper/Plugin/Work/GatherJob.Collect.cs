@@ -24,6 +24,12 @@ namespace ValheimHelper
                 return true;
             }
             ItemDrop drop = NearestDrop(m_targetPos);
+            if (m_remoteGrab)
+            {
+                // E113: 설 자리 없는 던전 안 — 걸어가지 않고 그 자리 떨굼을 바로 줍는다(소유권 대기면 다음 프레임에 다시, 30초 한도는 아래 그대로)
+                if (drop != null && m_stepTime <= 30f) { m_npc.PickDrop(drop); m_ai.StopMoving(); return true; }
+                m_remoteGrab = false;
+            }
             if (m_hunt && m_loot != null)
             {
                 // 사냥감의 떨굼은 쓰러진 몸(Ragdoll)이 사라질 때 그 몸 자리에 나온다 → 몸 자리로 가서 기다린다(활로 잡으면 멀다, LootWatch)

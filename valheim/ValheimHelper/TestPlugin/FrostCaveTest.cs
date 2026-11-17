@@ -48,6 +48,7 @@ namespace ValheimHelper
             try { yield return Body(w, checks, before, spot); }
             finally
             {
+                GatherJob.TestNoStandOnce = false;
                 CryptTest.Cleanup(before, spot[0]);
                 TestKit.Restore(w);
             }
@@ -146,6 +147,8 @@ namespace ValheimHelper
             yield return new WaitForSeconds(1.5f);
             int stockBefore = GatherTest.CountBase(w.Home, s_kind.Item);
             int hopsBefore = GatherJob.InteriorHops, exitHopsBefore = GatherJob.ExitHops, gateHopsBefore = GatherJob.GateHops;
+            int grabsBefore = GatherJob.RemoteGrabs;
+            GatherJob.TestNoStandOnce = s_kind == Mine && !s_foe; // E113(사용자 11-17): 첫 이동 생략은 설 자리 없다고 쳐서 멀리서 바로 얻기를 봄
             GatherTest.Say($"!{w.Ragnar.NpcName} {s_kind.ItemKo} 3", null);
             bool wasInside = false;
             float t = 0f, inAt = -1f, outAt = -1f;
@@ -198,6 +201,8 @@ namespace ValheimHelper
                 checks.Add($"다시 시키면 이 광산 위험을 알고 판단 ({(again == null ? "판단 없음" : again.Action + " " + again.Key)})", aware);
             }
             else checks.Add($"{s_kind.ItemKo}이 거점 상자에 들어옴 ({got}/{want}개 — 이 {s_kind.Label}에 있는 만큼, {t:0}초)", got >= want);
+            if (s_kind == Mine && !s_foe) checks.Add($"설 자리 없는 검은 핵을 멀리서 바로 얻음 ({GatherJob.RemoteGrabs - grabsBefore}번, 스위치 남음 {GatherJob.TestNoStandOnce})", GatherJob.RemoteGrabs > grabsBefore || GatherJob.TestNoStandOnce);
+            GatherJob.TestNoStandOnce = false;
             yield return new WaitForSeconds(3f);
             checks.Add("일꾼이 안에 남지 않음", !w.Ragnar.InInterior());
         }

@@ -776,6 +776,12 @@ namespace ValheimHelper
         ZDOID m_inHopFor = ZDOID.None;
         float m_inHopWait;
         readonly HashSet<ZDOID> m_inHopped = new HashSet<ZDOID>();
+        /// <summary>설 자리 없는 던전 안 줍는 것을 멀리서 얻었다(E113): 이번 Collect는 걸어가지 않고 그 자리 떨굼을 바로 줍는다.</summary>
+        bool m_remoteGrab;
+        /// <summary>시험용: 설 자리 없어 멀리서 바로 얻은 횟수(E113).</summary>
+        public static int RemoteGrabs;
+        /// <summary>시험용: 다음 던전 안 이동 생략 한 번은 설 자리 없다고 친다(E113 멀리서 바로 얻기 시험).</summary>
+        public static bool TestNoStandOnce;
 
         /// <summary>
         /// 던전 안 이동 생략(⑬ 바-2e, decisions "멀리선 이동 생략"·"⑬ 안개땅 절벽"): 던전 안 칸 길이 끊긴 대상(광산 먼 방 — 계단·낭떠러지 경계)은
@@ -799,9 +805,23 @@ namespace ValheimHelper
             if (m_inHopWait > 0f) return true;
             m_inHopped.Add(m_targetId);
             m_inHopFor = ZDOID.None;
-            Vector3? spot = InteriorNav.StandNear(m_targetPos, m_reach);
+            Vector3? spot = TestNoStandOnce ? null : InteriorNav.StandNear(m_targetPos, m_reach);
+            TestNoStandOnce = false;
             if (spot == null)
             {
+                // 사용자 11-17(E113): 둘레에 플레이어가 없으니(위 NoPlayerAround) 줍는 것은 그 자리에서 바로 얻는다 — 떨굼은 Collect가 멀리서 주움, 짐·상자 흐름은 평소대로
+                ZDO tz = ZDOMan.instance.GetZDO(m_targetId);
+                ZNetView tv = tz != null ? ZNetScene.instance.FindInstance(tz) : null;
+                Pickable pick = m_targetInfo != null && m_targetInfo.Pickable && tv != null && tv.IsValid() ? tv.GetComponent<Pickable>() : null;
+                if (pick != null && pick.CanBePicked())
+                {
+                    pick.Interact(m_npc, false, false);
+                    RemoteGrabs++;
+                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 옆에 설 자리 없음, 둘레에 플레이어 없음 → 그 자리에서 바로 얻음({Vector3.Distance(me, m_targetPos):0}m)");
+                    Go(Step.Collect);
+                    m_remoteGrab = true;
+                    return true;
+                }
                 Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo?.Prefab} 옆에 설 자리 없음 → 건너뜀");
                 Plugin.Log.LogInfo($"DIAG 설 자리 없음(E113) 목표 {m_targetPos:F1} 닿을 거리 {m_reach:0.0} 둘레:{InteriorNav.Map(m_targetPos, 4)}");
                 Skip();
