@@ -459,7 +459,11 @@ namespace ValheimHelper
                     PathSpoil("막힘");
                     Vector3 fwd = Flat(point - pos).normalized;
                     if (m_pitSince <= 0f && Climb.IsPit(Rise8(pos, fwd))) MarkPit(pos);
-                    if (m_stuckJumps < 2 && m_detourCount == 0 && TryJump()) { m_stuckJumps++; JumpWhy = $"막힘 1.5초 {Utils.DistanceXZ(m_samplePos, pos):0.00}m"; } // 이미 비켜 가 봤으면 점프는 건너뜀
+                    // 집 안(지붕 아래)·같은 층 목표는 비켜 가기 먼저 — 두 번 비켜 가도 막히면 한 번씩 뛰어 봄(사용자 11-18: 밖은 뛰기 두 번 → 비켜 가기, 집 안 4.5초 멈칫).
+                    // 목표가 1m 넘게 위면(계단 오름) 뛰기 먼저 그대로 — 계단 발치에서 옆으로 비켜 가 아래층에서 2층 상자를 꺼내던 것(회차 782 housetest)
+                    bool roofed = point.y - pos.y < 1f && DoorWay.Roofed(pos);
+                    bool jumpTurn = roofed ? m_stuckJumps < 1 && m_detourCount >= 2 : m_stuckJumps < 2 && m_detourCount == 0; // 밖: 이미 비켜 가 봤으면 점프는 건너뜀
+                    if (jumpTurn && TryJump()) { m_stuckJumps++; JumpWhy = $"막힘 1.5초 {Utils.DistanceXZ(m_samplePos, pos):0.00}m"; }
                     else if (!StartCarve(pos, fwd))
                     {
                         m_stuckJumps = 0;

@@ -457,7 +457,7 @@ namespace ValheimHelper
             if (why != m_skipWhy) { m_skipWhy = why; Diag.Log($"DIAG {npc.NpcName} 안에서 나가기 안 함: {why} {detail}"); }
             return false;
         }
-        static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);
+        internal static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);
         /// <summary>두 점 사이를 건축물이 가리나(그 문 자신은 뺌 — 열린 문짝).</summary>
         static bool Hidden(Vector3 from, Vector3 to, Door d)
         {
