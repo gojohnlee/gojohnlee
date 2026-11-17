@@ -185,7 +185,7 @@ namespace ValheimHelper
             d0.m_dropPrefab = go;
             int max = Mathf.Max(1, d0.m_shared.m_maxStackSize);
             for (int left = amount; left > 0; left -= max)
-                ItemDrop.DropItem(d0, Mathf.Min(left, max), at, Quaternion.identity);
+                Guard.DropKept(d0, Mathf.Min(left, max), at);
         }
 
         /// <summary>결과를 상자에 넣는다. 못 넣은 개수를 돌려준다(0 = 다 넣음).</summary>

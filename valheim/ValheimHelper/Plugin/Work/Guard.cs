@@ -128,7 +128,7 @@ namespace ValheimHelper
                 case State.Flee: return UpdateFlee(dt);
                 case State.Come: return UpdateCome(dt);
             }
-            return UpdateLoot(dt);
+            return UpdateLoot(dt) || UpdateStray(dt);
         }
 
         // ---- 판단 ----

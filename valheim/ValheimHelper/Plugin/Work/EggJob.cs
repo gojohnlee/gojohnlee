@@ -195,7 +195,7 @@ namespace ValheimHelper
             ItemDrop.ItemData it = EggIn(mine);
             if (it != null)
             {
-                ItemDrop.DropItem(it, 1, m_spot, Quaternion.identity);
+                Guard.DropKept(it, 1, m_spot);
                 mine.RemoveItem(it, 1);
                 m_taken = false;
                 Placed++;

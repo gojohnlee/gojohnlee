@@ -271,6 +271,7 @@ namespace ValheimHelper
         public static int MateBrings;
 
         Guard m_guard;
+        internal ItemDrop StrayTarget => m_guard?.StrayTarget;
         /// <summary>위험 감지·싸움(구상서 8장). 시험·!상태용.</summary>
         public Guard Guard => m_guard;
         /// <summary>이번 프레임 싸움·물러나기·도망·미드 중(잡담은 쉼).</summary>

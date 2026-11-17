@@ -252,7 +252,7 @@ namespace ValheimHelper
                 away.y = 0f;
                 away = away.sqrMagnitude > 0.01f ? away.normalized : Vector3.forward;
                 Vector3 drop = at + away * 1.5f + Vector3.up * 0.5f;
-                ItemDrop.DropItem(it, 1, drop, Quaternion.identity);
+                Guard.DropKept(it, 1, drop);
                 mine.RemoveItem(it, 1);
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 길들이기: {m_animal.m_name}에게 {m_taken} 떨굼 {drop}");
                 m_taken = null;

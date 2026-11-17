@@ -207,7 +207,7 @@ namespace ValheimHelper
             if (it != null)
             {
                 Vector3 drop = Vector3.Lerp(me, at, 0.6f) + Vector3.up * 0.5f;
-                ItemDrop.DropItem(it, 1, drop, Quaternion.identity);
+                Guard.DropKept(it, 1, drop);
                 mine.RemoveItem(it, 1);
                 Fed++;
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 우리 먹이: {f.Animal.m_name}에게 {f.Taken} 떨굼 {drop}");

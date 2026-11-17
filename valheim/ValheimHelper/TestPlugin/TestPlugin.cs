@@ -52,6 +52,7 @@ namespace ValheimHelper
             Step("vh_bantertest", BanterTest.Register);
             Step("vh_stocktest", StockTest.Register);
             Step("vh_tidytest", TidyTest.Register);
+            Step("vh_straytest", StrayTest.Register);
             Step("vh_tidywalktest", TidyWalkTest.Register);
             Step("vh_mychesttest", MyChestTest.Register);
             Step("vh_sharetest", ShareTest.Register);
