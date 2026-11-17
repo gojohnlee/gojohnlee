@@ -160,6 +160,21 @@ public class WalkTraceTests
     }
 
     [Fact]
+    public void SlowSample_RunningIsNotTeleport()
+    {
+        // 표본이 0.43초 늦게 찍히면 달리기 7m/s로 3.02m — 순간이동 아님(회차 772 vh_otherhouse)
+        var l = new List<WalkTrace.Sample>
+        {
+            S(0f, 0f, 0f, 20f, 7f, seen: true),
+            S(0.25f, 1.8f, 0f, 18.2f, 7f, seen: true),
+            S(0.68f, 4.82f, 0f, 15.2f, 7f, seen: true),
+            S(0.93f, 6.6f, 0f, 13.4f, 7f, seen: true),
+        };
+        var r = WalkTrace.Analyze(l);
+        Assert.Equal(0, r.TeleSeen + r.TeleUnseen);
+    }
+
+    [Fact]
     public void Line_RoundTrips()
     {
         var a = S(1.25f, -3959.5f, -5829.25f, 4.5f, job: "craft smelt", door: 2, seen: true);

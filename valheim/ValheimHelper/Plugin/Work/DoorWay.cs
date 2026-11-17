@@ -17,7 +17,7 @@ namespace ValheimHelper
         Phase m_phase;
         Door m_door;
         Vector3 m_out, m_in, m_mouth; bool m_hall, m_lined; Vector3 m_hallN; float m_hallEnd; float m_lineCheck; // m_mouth: 문 앞이 복도면 복도 입구(들어갈 때 거기부터 곧장, E059)
-        float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN;
+        float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN; string m_skipWhy;
         int m_swing, m_orig; // m_swing 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064). m_orig = 그때 남이 열어 둔 문이면 원래 s_state
         float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; int m_sides; bool m_pathed; // m_sides: 비킨 횟수, 2번 비켜도 못 가까워지면 m_pathed = 길찾기로(E083 회차 474: 반대쪽이 막혀 같은 쪽 비킴 5번) // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for, m_goal; bool m_hasGoal; float m_clearT = -1f; // m_goal: 들어갈 대상 자리, m_clearT: 안쪽 1.3m 닿은 때(문짝 곁이면 더 걸음, E077)
@@ -109,7 +109,7 @@ namespace ValheimHelper
                 m_out = mid + n * Step;
                 m_in = mid - n * Step;
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f; m_goal = target.transform.position; m_hasGoal = true;
-                m_phase = Phase.ToDoor; m_t = 0f; m_diagNext = 0f; m_lineCheck = 0f;
+                m_phase = Phase.ToDoor; m_t = 0f; m_skipWhy = null; m_diagNext = 0f; m_lineCheck = 0f;
                 m_best = float.MaxValue; m_stall = 0f; m_near = false;
                 m_hall = Mouth(mid, n, out m_mouth); m_lined = false; m_hallN = n; m_hallEnd = Vector3.Dot(m_mouth - mid, n) - 0.8f;
                 if (m_hall) m_limit = PhaseLimit + (Utils.DistanceXZ(me, m_mouth) + Utils.DistanceXZ(m_mouth, m_out)) / 1.5f;
@@ -148,11 +148,12 @@ namespace ValheimHelper
             {
                 if (Time.time < m_check) return false;
                 m_check = Time.time + 0.5f;
-                if (Utils.DistanceXZ(me, point) < 3f || !Roofed(me) || Roofed(point)) return false;
+                if (Utils.DistanceXZ(me, point) < 3f || Roofed(point)) return false;
+                if (!Roofed(me)) return Physics.Raycast(me + Vector3.up * 1.8f, Vector3.up, 20f, Mask) ? Skip(npc, "지붕 6m보다 높음", $"{me:F1}") : false; // 진단(회차 772)
                 Vector3 from = me + Vector3.up * 1.2f, to = point + Vector3.up * 1.2f;
                 if (!Physics.Raycast(from, to - from, Vector3.Distance(from, to), Mask)) return false;
                 Door d = Nearest(me, ExitSearch, point);
-                if (d != null && d == m_outDoor && Time.time - m_outT < 60f && (Vector3.Dot(me - Middle(d), m_outN) > 0f || Hidden(from, Middle(d) - m_outN * Step + Vector3.up * 0.2f, d))) return false; // 회차 348: 방금 이 문으로 나와 아직 문 바깥 — 처마·옆 건물에 지붕·벽 판정이 "안"으로 나와도 안 돌아감
+                if (d != null && d == m_outDoor && Time.time - m_outT < 60f && (Vector3.Dot(me - Middle(d), m_outN) > 0f || Hidden(from, Middle(d) - m_outN * Step + Vector3.up * 0.2f, d) && !Walled(me, m_outN))) return Skip(npc, "방금 나온 문", $"{d.name}({Time.time - m_outT:0}초 전, 안쪽 {Vector3.Dot(me - Middle(d), m_outN):0.0}m)"); // 회차 772: 사방 벽(3/4)이면 집 안 — 안쪽 7.5m에서 문이 가려 보인다고 닫힌 바깥문에 15초 박힘(vh_otherhouse). 회차 348: 방금 이 문으로 나와 아직 문 바깥 — 처마·옆 건물에 지붕·벽 판정이 "안"으로 나와도 안 돌아감
                 ZNetView dv = d != null ? d.GetComponent<ZNetView>() : null;
                 if (dv == null || !dv.IsValid()) return false; // 열린 문도 곧장 지나감 — 연 뒤 navmesh가 늦게 바뀌어 바닐라 길은 벽에 박힘(회차 315 시험)
                 m_door = d;
@@ -178,7 +179,7 @@ namespace ValheimHelper
                     }
                 }
                 m_limit = PhaseLimit + Utils.DistanceXZ(me, m_out) / 1.5f;
-                m_phase = Phase.ToDoor; m_t = 0f;
+                m_phase = Phase.ToDoor; m_t = 0f; m_skipWhy = null;
                 m_best = float.MaxValue; m_stall = m_side = 0f; m_sideDir = Vector3.zero; m_near = false; m_sides = 0; m_pathed = false;
                 // 회차 477: 문 앞 곧은 길이 처음부터 막혔으면(집 상자 둘) 1초 막힘·비킴 없이 길찾기로
                 Vector3 to0 = m_out - me; to0.y = 0f;
@@ -450,6 +451,12 @@ namespace ValheimHelper
             return false;
         }
 
+        /// <summary>나가기를 안 하는 까닭을 바뀔 때만 한 줄(진단, 회차 772 vh_otherhouse 닫힌 바깥문 앞 15초).</summary>
+        bool Skip(WorkerNpc npc, string why, string detail)
+        {
+            if (why != m_skipWhy) { m_skipWhy = why; Diag.Log($"DIAG {npc.NpcName} 안에서 나가기 안 함: {why} {detail}"); }
+            return false;
+        }
         static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);
         /// <summary>두 점 사이를 건축물이 가리나(그 문 자신은 뺌 — 열린 문짝).</summary>
         static bool Hidden(Vector3 from, Vector3 to, Door d)

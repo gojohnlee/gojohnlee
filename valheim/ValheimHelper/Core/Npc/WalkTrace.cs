@@ -10,7 +10,7 @@ namespace ValheimHelper.Core.Npc
     /// </summary>
     public static class WalkTrace
     {
-        public const float StandSpeed = 0.3f, RunSpeed = 2.5f, WallNear = 0.3f, TeleportStep = 3f,
+        public const float StandSpeed = 0.3f, RunSpeed = 2.5f, WallNear = 0.3f, TeleportStep = 3f, TeleportSpeed = 12f,
             StuckSecs = 1f, Touch = 0.1f, BumpFrom = 1f, BumpTurn = 60f, WallRunSecs = 1f, AwayMin = 0.5f, TurnStep = 0.1f, DoorPauseMax = 0.4f, MinLeg = 2f, Arrive = 1f, FloorRise = 1.3f;
 
         /// <summary>한 줄. Goal = 남은 길 길이(m, 목표 없으면 음수), Wall = 가장 가까운 벽(m, 모르면 음수), Body = 가장 가까운 다른 일꾼·플레이어와 몸 사이(m, 없으면 음수), Door 0 없음·1 열린 문 곁·2 닫힌 문 곁.</summary>
@@ -135,7 +135,8 @@ namespace ValheimHelper.Core.Npc
                 {
                     var b = s[i - 1];
                     float step = Flat(a, b);
-                    if (step > TeleportStep)
+                    // 표본 사이가 늦으면(0.43초) 달리기 7m/s로도 3m 넘음(회차 772 vh_otherhouse) — 빠르기도 달리기로 못 낼 만큼일 때만
+                    if (step > TeleportStep && step > TeleportSpeed * (a.T - b.T))
                     {
                         tele = true;
                         if (a.Seen || b.Seen) r.TeleSeen++; else r.TeleUnseen++;
