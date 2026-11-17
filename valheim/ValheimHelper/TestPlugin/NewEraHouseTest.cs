@@ -114,6 +114,14 @@ namespace ValheimHelper
             string[] names = { "상자→화덕", "화덕→침대(오름)", "침대→상자(내림)", "상자→침대(오름)", "침대→화덕(내림)" }; // ValueTuple은 게임 mono에 없음
             Component[] tos = { fire, bed, chest, bed, fire };
             // 두 바퀴(길 기억 ④-3, 사용자 11-15): 1바퀴 = 길 기억 전, 2바퀴 = 기억한 길을 따름. 바퀴 사이엔 화덕→상자로 걸어 돌아감(재지 않음)
+            // E131(회차 775): VH_RESET=0이라 지난 판들의 길 기억(200개 넘게)이 .vh-memory에 쌓여 1바퀴부터 옛 길을 따름 → 집 둘레 길을 비우고 시작
+            int forgot = 0;
+            foreach (Component c in new Component[] { fire, bed })
+            {
+                Vector3 p = c.transform.position;
+                forgot += Brain.Paths.ForgetNear(new ValheimHelper.Core.Work.PathMemory.P(p.x, p.y, p.z), 40f);
+            }
+            TestRunner.Log($"지난 판 길 기억 지움 {forgot}개(남음 {Brain.Paths.Count})");
             var ai = w.Ragnar.Ai;
             var lapT = new float[2];
             int reached = 0, jumps = 0;
