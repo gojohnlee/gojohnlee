@@ -8,6 +8,17 @@
 
 ## 회차 기록
 
+### 회차 774 · 11-17 · 마무리 시험 끝, 플레이용 빌드 옮김
+
+**요약**
+
+- [11-17] 마무리 확인 끝 — 남은 시험 11개 중 10개 통과, 구덩이 시험 1번 실패는 다시 두 번 돌려 재현 안 돼 관찰 중(E132), 최종 실전 시험 35/35 통과 → 플레이용 빌드(valheim-stable) 새로 옮김(회차 774 — 커밋 fbd5a8c4 · 시험 stuck·hop·far·death·prep·fight·raid·guardbow·copper·escort PASS·pittest 단독·stuck;pit 17/17·finaltest 35/35 PASS)
+
+**자세히**
+
+- E132 vh_pittest(묶음 두 번째): 도망 중 5.3m 구덩이 가운데 20초, "갇힘 → 깃발" 줄 없이 비켜 가기만. 단독·stuck;pit 두 판 PASS(3초에 구조). RescueIfTrapped에 갇힘 시계 진단 줄(커밋 fbd5a8c4).
+- vh_finaltest 35/35 PASS 2403초. 태그 valheim-stable → fbd5a8c4.
+
 ### 회차 774 · 11-17 · 메인 집 걷기 다시 확인
 
 **요약**
@@ -79,6 +90,10 @@
 - 할 만함. loop-plan 13줄과 루프 안내의 ALLDONE 줄에 "끝에 vh_finaltest 한 판"을 더함.
 - 지금 상태: 바뀐 영역 묶음 1차 12개 중 newerahouse 빼고 PASS(droptest·notooltest·chorestest는 다시 돌려 PASS, notooltest는 시험 재료 두 벌로 고침). 남은 묶음(걷기·싸움·사망 등)과 newerahouse 뒤 finaltest.
 - 순서: 위 "복잡한 집" 요청이 먼저 들어와 있지만 본 모드를 바꾸면 묶음을 또 돌려야 하니, 태그 확인은 집 요청 뒤에 몰아서 함.
+
+**끝** · 11-17 11:05 회차 774
+
+- 묶음 나머지 PASS(pittest 한 판 FAIL은 E132 관찰 중 — 재현 안 됨, 태그 안 막음) → fbd5a8c4 dist로 vh_finaltest 35/35 PASS(2403초, 로그 오류 0) → valheim-stable = fbd5a8c4.
 
 ### 요청 · 11-17 07:57 · 복잡한 집에서 걷기·충돌 시험
 
