@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ValheimHelper
 {
     /// <summary>
-    /// 지나가며 떨어진 물건 줍기(사용자 11-18): 쉼(Idle)·집 가기(Home) 중 둘레 StrayRange 안 땅 물건을 잠깐 들러 줍는다(가방에 — 상자엔 다음 Unload).
+    /// 지나가며 떨어진 물건 줍기(사용자 11-18): 쉼(Idle)·집 가기(Home)·채집 구역 가기·돌아오기 중 둘레 StrayRange 안 땅 물건을 잠깐 들러 줍는다(가방에 — 상자엔 다음 Unload).
     /// 몬스터·저절로 생긴 것만: 플레이어가 한 번이라도 든 물건은 ItemData.m_pickedUp(ZDO에 저장), 플레이어가 버린 것은 m_autoPickup false(OnPlayerDrop),
     /// 일꾼이 일부러 놓은 것(먹이·알·넘친 결과)은 ZDO KeepKey — 셋 다 안 줍는다(게임 사실: codemap). 알(EggGrow)·헤엄치는 물고기(Fish)·건축물도 뺌.
     /// 한 물건에 StrayLimit초 못 주우면 그 물건은 다시 안 고른다.
@@ -12,7 +12,9 @@ namespace ValheimHelper
     public sealed partial class Guard
     {
         public const string KeepKey = "vh_keep";
-        const float StrayRange = 6f, StrayLimit = 6f, StrayEvery = 2f, StrayNearPlayer = 4f;
+        const float StrayRange = 6f, StrayLimit = 6f, StrayEvery = 1f, StrayNearWork = 15f;
+        /// <summary>플레이어 곁 이 거리 안 물건은 플레이어 몫(시험이 0으로 — 시험 플레이어가 거점에 서 있음).</summary>
+        internal static float StrayNearPlayer = 4f;
 
         /// <summary>시험용: 시험 중엔 꺼짐(시험이 놓은 땅 물건을 가져가지 않게) — 켜는 시험만 true.</summary>
         public static bool TestStray;
@@ -41,7 +43,7 @@ namespace ValheimHelper
         bool UpdateStray(float dt)
         {
             if (TestHook.Running && !TestStray) return false;
-            if (m_npc.IsGuard || m_npc.IsDead() || (m_ai.Current != WorkerAI.Mode.Idle && m_ai.Current != WorkerAI.Mode.Home)) { m_stray = null; return false; }
+            if (m_npc.IsGuard || m_npc.IsDead() || !StrayTime()) { m_stray = null; return false; }
             if (m_stray == null || !m_stray.TryGetComponent(out ZNetView sv) || !sv.IsValid())
             {
                 m_stray = null;
@@ -74,6 +76,10 @@ namespace ValheimHelper
             return true;
         }
 
+        /// <summary>쉼·집 가기, 또는 채집의 구역 가기·돌아오기(그 밖 일 중엔 일이 떨굼을 직접 주우니 안 끼어듦).</summary>
+        bool StrayTime() => m_ai.Current == WorkerAI.Mode.Idle || m_ai.Current == WorkerAI.Mode.Home
+            || (m_ai.Current == WorkerAI.Mode.Work && m_ai.Job is GatherJob g && g.Traveling);
+
         ItemDrop FindStray()
         {
             Vector3 me = m_npc.transform.position;
@@ -90,11 +96,16 @@ namespace ValheimHelper
             return best;
         }
 
-        /// <summary>다른 일꾼이 이미 주우러 가는 물건.</summary>
+        /// <summary>다른 일꾼이 이미 주우러 가는 물건, 또는 일하는(길 가는 중 아닌) 동료 곁 물건 — 그 일의 떨굼(회차 783: 쉬던 플로키가 라그나가 벤 나무를 주워 감).</summary>
         bool OtherStray(ItemDrop d)
         {
             foreach (var o in WorkerNpc.All)
-                if (o != m_npc && o.Ai != null && o.Ai.StrayTarget == d) return true;
+            {
+                if (o == m_npc || o.Ai == null) continue;
+                if (o.Ai.StrayTarget == d) return true;
+                if (o.Ai.Current == WorkerAI.Mode.Work && !(o.Ai.Job is GatherJob g && g.Traveling)
+                    && Vector3.Distance(o.transform.position, d.transform.position) < StrayNearWork) return true;
+            }
             return false;
         }
 

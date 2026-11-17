@@ -26,6 +26,7 @@ namespace ValheimHelper
             finally
             {
                 Guard.TestStray = false;
+                Guard.StrayNearPlayer = 4f;
                 foreach (var d in made) if (d != null && d.TryGetComponent(out ZNetView v) && v.IsValid()) ZNetScene.instance.Destroy(d.gameObject);
                 TestKit.Restore(w);
             }
@@ -54,7 +55,9 @@ namespace ValheimHelper
             away = away.sqrMagnitude < 0.01f ? Vector3.forward : away.normalized;
             Vector3 side = Vector3.Cross(Vector3.up, away);
             Inventory inv = r.GetInventory();
-            int had(string name) => inv.CountItems(ObjectDB.instance.GetItemPrefab(name).GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
+            WorkerNpc fl = w.Floki;
+            string nm(string prefab) => ObjectDB.instance.GetItemPrefab(prefab).GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            int had(string name) => inv.CountItems(nm(name)) + (fl != null ? fl.GetInventory().CountItems(nm(name)) : 0); // 가까운 쪽이 주움(둘 다 셈)
             int resin0 = had("Resin"), feather0 = had("Feathers"), leather0 = had("LeatherScraps");
 
             ItemDrop fresh = Drop("Resin", 3, me + away * 3.5f, made);
@@ -71,7 +74,26 @@ namespace ValheimHelper
             checks.Add($"플레이어가 든 적 있는 깃털 안 주움 ({had("Feathers") - feather0})", had("Feathers") == feather0 && held != null && held.GetComponent<ZNetView>().IsValid());
             checks.Add($"일꾼이 놓은 가죽 조각 안 주움 ({had("LeatherScraps") - leather0})", had("LeatherScraps") == leather0 && kept != null && kept.GetComponent<ZNetView>().IsValid());
             checks.Add($"주운 뒤 다시 쉼 ({r.Ai.Current})", r.Ai.Current == WorkerAI.Mode.Idle);
-            inv.RemoveItem(ObjectDB.instance.GetItemPrefab("Resin").GetComponent<ItemDrop>().m_itemData.m_shared.m_name, had("Resin") - resin0);
+            inv.RemoveItem(nm("Resin"), inv.CountItems(nm("Resin"))); fl?.GetInventory().RemoveItem(nm("Resin"), fl.GetInventory().CountItems(nm("Resin")));
+
+            // 2) 채집 일의 구역 가기·돌아오기 중: 가는 길 앞 3m 새 물건을 들러 줍고 일은 이어 감
+            resin0 = had("Resin");
+            int flWood0 = fl != null ? fl.GetInventory().CountItems(nm("Wood")) : 0;
+            Guard.StrayNearPlayer = 0f; // 길이 시험 플레이어 곁을 지날 수 있음
+            inv.AddItem(ObjectDB.instance.GetItemPrefab("AxeFlint"), 1);
+            GatherTest.Say($"!{Workers.Name1} 나무 10", null);
+            t = 0f;
+            while (t < 120f && !(r.Ai.Job is GatherJob gj && gj.Traveling && r.GetVelocity().magnitude > 1f)) { t += 0.5f; yield return new WaitForSeconds(0.5f); }
+            bool going = r.Ai.Job is GatherJob g0 && g0.Traveling;
+            checks.Add($"채집 길 나섬 ({t:0.0}초)", going);
+            if (!going) yield break;
+            Vector3 v = r.GetVelocity(); v.y = 0f;
+            ItemDrop onWay = Drop("Resin", 2, r.transform.position + v.normalized * 3f, made);
+            float t2 = 0f;
+            while (t2 < 15f && had("Resin") < resin0 + 2) { t2 += 0.5f; yield return new WaitForSeconds(0.5f); }
+            checks.Add($"길 위 새 물건(송진 2) 주움 ({had("Resin") - resin0}, {t2:0.0}초)", had("Resin") >= resin0 + 2);
+            yield return new WaitForSeconds(2f);
+            checks.Add($"주운 뒤 채집 이어 감 ({r.Ai.Current}, {r.Ai.Job?.GetType().Name})", r.Ai.Current == WorkerAI.Mode.Work && r.Ai.Job is GatherJob);
         }
     }
 }

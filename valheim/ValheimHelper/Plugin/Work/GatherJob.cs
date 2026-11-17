@@ -70,6 +70,8 @@ namespace ValheimHelper
         readonly WorkerAI m_ai;
 
         Step m_step = Step.Unload;
+        /// <summary>구역 가기·돌아오기 중(지나가며 줍기 Guard.Stray가 이때만 일 중에 들름).</summary>
+        internal bool Traveling => m_step == Step.GoZone || m_step == Step.Return;
         Prep m_prep;
         Unload m_unload;
         float m_stepTime;

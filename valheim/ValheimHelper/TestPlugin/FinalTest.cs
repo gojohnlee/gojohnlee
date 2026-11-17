@@ -81,6 +81,7 @@ namespace ValheimHelper
             //    판정은 둘로 나눔: "알아들음"(해석된 명령이 기대와 같나, Commands.Ran) · "해냄"(거점 상자 개수 등). 구리 광석·생고기는 다른 일이 써서 줄 수 있어 넣은 수·가장 많았던 수로.
             // 실전처럼 쉬는 일꾼 판단을 켬(사용자 11-14 "왜 여전히 한 놈만 일하지"). 시작 검사 뒤에 켬(FishTest와 같은 까닭), End에서 끔.
             Departures.TestIdleChores = true;
+            Guard.TestStray = true; // 실전처럼 지나가며 줍기도
             s_ran.Clear();
             Commands.Ran += OnRan;
             WorkerNpc.TestPicked = Busy.Picked;
@@ -448,6 +449,7 @@ namespace ValheimHelper
             Commands.Ran -= OnRan;
             WorkerNpc.TestPicked = null;
             Departures.TestIdleChores = false;
+            Guard.TestStray = false;
             player.SetGodMode(god);
             TestRunner.Log("--- NPC 대사 ---");
             foreach (var h in heard) TestRunner.Log(h);
