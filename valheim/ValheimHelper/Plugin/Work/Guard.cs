@@ -444,6 +444,20 @@ namespace ValheimHelper
                 Taken(scale, armor, m_npc.BlockStats(), views.Count), false) == Verdict.Fight;
         }
 
+        /// <summary>그 자리에서 가장 가까운 적(SafeAt과 같은 고르기, SenseRange 안)까지 거리. 없으면 float.MaxValue. 도망 중 구덩이 가장자리 고르기용(사용자 11-17).</summary>
+        public float NearestFoeDist(Vector3 at)
+        {
+            float best = float.MaxValue;
+            foreach (Character c in Character.GetAllCharacters())
+            {
+                if (c == null || c == m_npc || c.IsDead() || c.IsPlayer() || c is WorkerNpc || c.IsTamed()) continue;
+                if (c.GetFaction() == Character.Faction.AnimalsVeg || c.GetBaseAI() is AnimalAI || !BaseAI.IsEnemy(m_npc, c)) continue;
+                float d = Vector3.Distance(c.transform.position, at);
+                if (d <= SenseRange && d < best) best = d;
+            }
+            return best;
+        }
+
         /// <summary>나·동행을 노리거나, 경계 중이거나, 가까이 왔거나, 방금 나를 때렸다.</summary>
         bool Aggressive(Character c)
         {

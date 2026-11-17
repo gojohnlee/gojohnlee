@@ -559,6 +559,8 @@ namespace ValheimHelper
         static double[] Rise8(Vector3 pos, Vector3 toward)
         {
             var rise = new double[8];
+            toward = Flat(toward).normalized; // E132(회차 779): 도망 쪽은 목표까지 그대로(40m) 넘겨 60~180m 밖 땅을 재 구덩이를 못 봄
+            if (toward.sqrMagnitude < 0.01f) toward = Vector3.forward;
             for (int i = 0; i < 8; i++)
             {
                 Vector3 dir = Quaternion.Euler(0f, 45f * i, 0f) * toward;
@@ -646,9 +648,12 @@ namespace ValheimHelper
         float m_trapStill, m_trapCheck, m_trapDiagAt;
         /// <summary>시험용: 갇혀서(도망 중 구덩이·물 찬 구덩이) 깃발로 순간이동한 횟수.</summary>
         public static int TrapRescues;
+        /// <summary>시험용: 도망 중 구덩이에서 가장자리 위로 옮긴 횟수(사용자 11-17).</summary>
+        public static int FleeEdgeRescues;
+        float m_fleeEdgeAt;
 
         /// <summary>
-        /// 갇힘 구조(사용자 결정 2026-10-22, Core Climb.TrapRescue): 도망 중 구덩이에 갇혀 6초, 또는 헤엄만 치며 20초 동안 3m 안을 못 벗어나면
+        /// 갇힘 구조(사용자 결정 2026-10-22, Core Climb.TrapRescue): 도망 중 구덩이에 갇혀 3초(→ 적에게서 먼 가장자리 위로 옮기고 계속 도망, 자리 없거나 30초 안 두 번째면 깃발 — 사용자 11-17), 또는 헤엄만 치며 10초 동안 3m 안을 못 벗어나면
         /// 깃발로 순간이동한다(체력·짐·장비 그대로, 도망은 그만둠). 그냥 걷다 빠진 구덩이는 점프·경사로 깎기가 맡는다. true면 옮겼다.
         /// </summary>
         bool RescueIfTrapped(float dt, Vector3 pos)
@@ -670,7 +675,34 @@ namespace ValheimHelper
             string why = Climb.TrapRescue(fleeing, pit, swimming, m_trapStill);
             if (why == null) return false;
             var npc = (WorkerNpc)m_character;
-            Plugin.Log.LogInfo($"{npc.NpcName}: {(why == "water" ? "물 찬 구덩이에서 헤엄만 함" : "도망 중 구덩이에 갇힘")} {m_trapStill:0}초 → 깃발로 순간이동");
+            string edgeWhy = "";
+            if (why == "fleePit")
+            {
+                // 사용자 11-17: 도망 구덩이도 적에게서 먼 가장자리 위로 옮기고 계속 도망, 자리 없거나 30초 안 두 번째면 깃발
+                double since = m_fleeEdgeAt > 0f ? Time.time - m_fleeEdgeAt : double.MaxValue;
+                Vector3 spot = default; int tried = 0;
+                bool has = since >= Climb.FleeEdgeAgainSeconds && FindEdge(pos, toward, true, out spot, out edgeWhy, out tried);
+                if (Climb.FleePitAction(since, has) == "edge")
+                {
+                    m_carving = false;
+                    StopMoving();
+                    if (npc.TeleportTo(spot + Vector3.up * 0.2f, transform.rotation, false))
+                    {
+                        Plugin.Log.LogInfo($"{npc.NpcName}: 도망 중 구덩이에 갇힘 {m_trapStill:0}초 → 적에게서 먼 가장자리 위로 {Utils.DistanceXZ(pos, spot):0.0}m 옮김(적 {m_guard.NearestFoeDist(pos):0.0} → {m_guard.NearestFoeDist(spot):0.0}m, 후보 {tried}번째), 계속 도망");
+                        m_fleeEdgeAt = Time.time;
+                        AfterPitRescue(spot);
+                        m_trapAnchor = spot;
+                        m_trapStill = 0f;
+                        FleeEdgeRescues++;
+                        npc.Say("rescue");
+                        return true;
+                    }
+                    edgeWhy = "옮기기 실패";
+                }
+                else if (since < Climb.FleeEdgeAgainSeconds) edgeWhy = $"{since:0}초 전 가장자리 구조";
+                edgeWhy = $"(가장자리 안 됨: {edgeWhy})";
+            }
+            Plugin.Log.LogInfo($"{npc.NpcName}: {(why == "water" ? "물 찬 구덩이에서 헤엄만 함" : "도망 중 구덩이에 갇힘")} {m_trapStill:0}초 → 깃발로 순간이동{edgeWhy}");
             m_guard?.CancelFlee();
             m_carving = false;
             StopMoving();
@@ -704,13 +736,13 @@ namespace ValheimHelper
         /// <summary>
         /// 구덩이 탈출 안전장치(사용자 결정 2026-10-23, E018): 걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 5초(Climb.PitEscapeSeconds) 안에 못 나오면
         /// 가장 가까운 가장자리 위(Climb.EdgeSpots — 단단한 지형·물 아님·몸 자리 빔·위험 판단 통과)로 옮긴다. 플레이어 근처라도. 짐·체력·일은 그대로.
-        /// 자리가 없으면 깃발로. 도망 구덩이(6초 → 깃발)는 RescueIfTrapped가 먼저 맡는다. true면 옮겼다.
+        /// 자리가 없으면 깃발로. 도망 구덩이는 RescueIfTrapped가 먼저 맡는다(3초, 적에게서 먼 가장자리). true면 옮겼다.
         /// </summary>
         bool EdgeRescueIfLong(float dt, Vector3 pos)
         {
             if (m_pitSince <= 0f) return false;
             if (TestNoEdgeRescue) { m_pitSince = 0f; return false; } // 꺼 둔 동안 시간을 쌓지 않는다(켜자마자 옮기지 않게)
-            if (m_guard != null && m_guard.Fleeing) return false; // 도망 구덩이는 RescueIfTrapped(6초 → 깃발)가 맡는다 — 5초(10-31)라 먼저 옮기지 않게
+            if (m_guard != null && m_guard.Fleeing) return false; // 도망 구덩이는 RescueIfTrapped가 3초에 먼저 맡는다(적에게서 먼 가장자리 → 안 되면 깃발, 사용자 11-17)
             if (Time.time - m_pitSeen > 5f || Utils.DistanceXZ(pos, m_pitPos) > (float)Climb.PitLeftRadius) { m_pitSince = 0f; return false; }
             m_pitSeen = Time.time;
             if (Time.time - m_pitSince < (float)Climb.PitEscapeSeconds || m_character.IsSwimming()) return false;
@@ -723,6 +755,37 @@ namespace ValheimHelper
             if (!Climb.IsPit(Rise8(pos, toward))) { m_pitSince = 0f; return false; } // 나왔다(경사로 위)
             var npc = (WorkerNpc)m_character;
             float stuck = Time.time - m_pitSince;
+            if (FindEdge(pos, toward, false, out Vector3 p, out string last, out int tried))
+            {
+                m_carving = false;
+                StopMoving();
+                if (npc.TeleportTo(p + Vector3.up * 0.2f, transform.rotation, false))
+                {
+                    Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴 → 가장자리 위로 {Utils.DistanceXZ(pos, p):0.0}m 옮김(위 {p.y - pos.y:0.0}m, 후보 {tried}번째)");
+                    AfterPitRescue(p);
+                    PitEdgeRescues++;
+                    npc.Say("rescue");
+                    return true;
+                }
+                last = "옮기기 실패";
+            }
+            Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴, 가장자리 자리 없음(후보 {tried}개, 마지막: {last}) → 깃발로 순간이동");
+            m_carving = false;
+            StopMoving();
+            npc.TeleportTo(npc.Home, transform.rotation, false);
+            AfterPitRescue(npc.Home);
+            npc.Say("stuck");
+            return true;
+        }
+
+        /// <summary>
+        /// 구덩이 가장자리 위 자리 찾기(Climb.EdgeSpots — 단단한 지형·물 아님·몸 자리 빔). flee면(도망 중, 사용자 11-17) 위험 판단(SafeAt)은 적이 곁에 있어 늘 막히므로
+        /// 대신 지금보다 적에게서 먼 자리만, 그중 가장 먼 곳. 아니면 SafeAt 통과한 첫(가까운) 자리. last = 못 찾은 마지막 이유, tried = 본 후보 수.
+        /// </summary>
+        bool FindEdge(Vector3 pos, Vector3 toward, bool flee, out Vector3 spot, out string last, out int tried)
+        {
+            spot = default; last = "후보 없음"; tried = 0;
+            toward.Normalize();
             var rise = new double[8][];
             for (int i = 0; i < 8; i++)
             {
@@ -732,8 +795,8 @@ namespace ValheimHelper
                     rise[i][k] = ZoneSystem.instance.GetGroundHeight(pos + dir * ((k + 1) * (float)Climb.EdgeStep), out float h) ? h - pos.y : double.NaN;
             }
             if (s_edgeMask == 0) s_edgeMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece");
-            string last = "후보 없음";
-            int tried = 0;
+            float now = flee && m_guard != null ? m_guard.NearestFoeDist(pos) : 0f, best = -1f;
+            bool found = false;
             foreach (var e in Climb.EdgeSpots(rise))
             {
                 tried++;
@@ -747,23 +810,18 @@ namespace ValheimHelper
                 if (Climb.IsPit(Rise8(p, dir))) { last = "아직 구덩이 안"; continue; }
                 if (h < ZoneSystem.instance.m_waterLevel + 0.3f || Floating.GetLiquidLevel(p) > h + 0.1f) { last = "물"; continue; }
                 if (Physics.CheckCapsule(p + Vector3.up * 0.6f, p + Vector3.up * 1.6f, 0.45f, s_edgeMask, QueryTriggerInteraction.Ignore)) { last = "몸 자리 막힘"; continue; }
-                if (m_guard != null && !m_guard.SafeAt(p)) { last = "위험"; continue; }
-                m_carving = false;
-                StopMoving();
-                if (!npc.TeleportTo(p + Vector3.up * 0.2f, transform.rotation, false)) { last = "옮기기 실패"; continue; }
-                Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴 → 가장자리 위로 {Utils.DistanceXZ(pos, p):0.0}m 옮김(위 {h - pos.y:0.0}m, 후보 {tried}번째)");
-                AfterPitRescue(p);
-                PitEdgeRescues++;
-                npc.Say("rescue");
-                return true;
+                if (!flee)
+                {
+                    if (m_guard != null && !m_guard.SafeAt(p)) { last = "위험"; continue; }
+                    spot = p;
+                    return true;
+                }
+                float foe = m_guard != null ? m_guard.NearestFoeDist(p) : float.MaxValue;
+                if (now == float.MaxValue) { spot = p; return true; } // 곁에 적 없음(시험 TestFlee 등) — 가까운·도망 쪽 첫 자리
+                if (foe <= now) { last = $"적 쪽({foe:0.0}m ≤ 지금 {now:0.0}m)"; continue; }
+                if (foe > best) { best = foe; spot = p; found = true; }
             }
-            Plugin.Log.LogInfo($"{npc.NpcName}: 구덩이에서 {stuck:0}초 못 나옴, 가장자리 자리 없음(후보 {tried}개, 마지막: {last}) → 깃발로 순간이동");
-            m_carving = false;
-            StopMoving();
-            npc.TeleportTo(npc.Home, transform.rotation, false);
-            AfterPitRescue(npc.Home);
-            npc.Say("stuck");
-            return true;
+            return found;
         }
 
         void AfterPitRescue(Vector3 at)

@@ -112,16 +112,29 @@ namespace ValheimHelper
                         rims[i] = rim;
                         dug[i] = true;
                         // 앞 시험이 벤 나무 그루터기가 구덩이 안에 남으면 그 위에 서서 경사로를 못 깎음(회차 776 구덩이 7 FAIL, 발밑 stubbe)
+                        // 곁의 광석 바위(MineRock5)도 곡괭이가 땅 대신 그걸 때려 못 깎음(회차 779 구덩이 7 FAIL, hit mine rock) → 8m 안 치움
                         int stubs = 0;
-                        foreach (var zdo in Senses.Nearby(spot, 5f))
+                        foreach (var zdo in Senses.Nearby(spot, 8f))
                         {
                             GameObject pf = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
-                            if (pf == null || pf.name.IndexOf("stub", System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+                            if (pf == null) continue;
+                            bool stub = pf.name.IndexOf("stub", System.StringComparison.OrdinalIgnoreCase) >= 0 && Utils.DistanceXZ(zdo.GetPosition(), spot) <= 5f;
+                            if (!stub && pf.GetComponent<MineRock5>() == null && pf.GetComponent<MineRock>() == null) continue;
                             ZNetView v = ZNetScene.instance.FindInstance(zdo);
                             if (v != null) { v.ClaimOwnership(); ZNetScene.instance.Destroy(v.gameObject); } else ZDOMan.instance.DestroyZDO(zdo);
                             stubs++;
                         }
-                        if (stubs > 0) TestRunner.Log($"구덩이 {i + 1} 자리 그루터기 {stubs}개 치움");
+                        // 큰 바위(Rock_3 MineRock5)는 중심이 8m 밖이라 위에서 안 잡힘(회차 780 구덩이 7 FAIL, 닿음 Rock_3 MineRock5) → 콜라이더로 6m 안
+                        foreach (var rc in Physics.OverlapSphere(spot, 6f, ~0, QueryTriggerInteraction.Ignore))
+                        {
+                            Component rock = rc.GetComponentInParent<MineRock5>();
+                            if (rock == null) rock = rc.GetComponentInParent<MineRock>();
+                            ZNetView v = rock != null ? rock.GetComponent<ZNetView>() : null;
+                            if (v == null || !v.IsValid()) continue;
+                            v.ClaimOwnership(); ZNetScene.instance.Destroy(v.gameObject);
+                            stubs++;
+                        }
+                        if (stubs > 0) TestRunner.Log($"구덩이 {i + 1} 자리 그루터기·광석 바위 {stubs}개 치움");
                         int n = 0;
                         var offsets = Narrow[i] ? new[] { Vector3.zero }
                             : new[] { Vector3.zero, Vector3.right * 1.2f, Vector3.left * 1.2f, Vector3.forward * 1.2f, Vector3.back * 1.2f };
@@ -275,7 +288,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 도망 중 구덩이(사용자 결정 2026-10-22): 위 구덩이와 겹치지 않는 자리(거점 20m)에 좁고 깊은(4m) 구덩이를 따로 파고 바닥에 넣은 뒤,
-        /// 점프·깎기를 끈 채 도망을 시키면 3초(Climb.FleeTrapSeconds)쯤 못 벗어난 뒤 깃발로 순간이동하는지(짐 그대로, 도망 그만둠). 끝나면 그 자리 지형을 되돌린다.
+        /// 점프·깎기를 끈 채 도망을 시키면 3초(Climb.FleeTrapSeconds)쯤 뒤 가장자리 위로 올라와 계속 도망하는지, 30초 안에 다시 넣으면 깃발로 가는지(짐 그대로, 사용자 11-17). 끝나면 그 자리 지형을 되돌린다.
         /// (넓은 구덩이는 비탈이라 걸어 나옴 — 회차 60 첫 시도.) 걷기(일)로는 이 구조가 안 붙는 것은 위 구덩이 칸들이 본다.
         /// </summary>
         static IEnumerator FleeTrap(GatherTest.Checks checks, WorkerNpc claude, Vector3 home, Quaternion rot, GameObject dig)
@@ -315,30 +328,52 @@ namespace ValheimHelper
                 WorkerAI.TestNoJump = WorkerAI.TestNoCarve = true;
                 claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
                 yield return new WaitForSeconds(1.5f);
-                int bag0 = claude.GetInventory().GetAllItems().Count, r0 = WorkerAI.TrapRescues;
-                claude.Ai.Guard.TestFlee(spot + rot * Vector3.forward * 40f);
-                float t = 0f, logAt = 0f;
+                int bag0 = claude.GetInventory().GetAllItems().Count, r0 = WorkerAI.TrapRescues, e0 = WorkerAI.FleeEdgeRescues;
                 float rim = spot.y;
                 bool walkedOut = false;
-                while (t < 20f && WorkerAI.TrapRescues == r0)
+                float t = 0f;
+                // 사용자 11-17: 첫 번째는 가장자리 위로 올라와 계속 도망, 30초 안 두 번째는 깃발로
+                for (int round = 0; round < 2 && !walkedOut; round++)
                 {
-                    Vector3 q = claude.transform.position;
-                    float qd = Utils.DistanceXZ(q, spot);
-                    if (qd > 5f && q.y > rim - 0.5f) { walkedOut = true; break; } // E022: 벽이 완만해 걸어 나옴
-                    if (t >= logAt) { logAt += 2f; Vector3 p = claude.transform.position; TestRunner.Log($"  도망 구덩이 {t:0}초: 가운데에서 {Utils.DistanceXZ(p, spot):0.0}m, 둘레보다 {p.y - rim:0.0}m, 경계 {claude.Ai.Guard.StateName}"); }
-                    t += Time.deltaTime;
-                    yield return null;
+                    if (round == 1)
+                    {
+                        claude.TeleportTo(new Vector3(spot.x, TestTerrain.Height(spot) + 0.3f, spot.z), rot, false);
+                        yield return new WaitForSeconds(1.5f);
+                    }
+                    int rr = WorkerAI.TrapRescues, er = WorkerAI.FleeEdgeRescues;
+                    claude.Ai.Guard.TestFlee(spot + rot * Vector3.forward * 40f);
+                    t = 0f;
+                    float logAt = 0f;
+                    while (t < 20f && WorkerAI.TrapRescues == rr && WorkerAI.FleeEdgeRescues == er)
+                    {
+                        Vector3 q = claude.transform.position;
+                        float qd = Utils.DistanceXZ(q, spot);
+                        if (qd > 5f && q.y > rim - 0.5f) { walkedOut = true; break; } // E022: 벽이 완만해 걸어 나옴
+                        if (t >= logAt) { logAt += 2f; Vector3 p = claude.transform.position; TestRunner.Log($"  도망 구덩이 {round + 1}번째 {t:0}초: 가운데에서 {Utils.DistanceXZ(p, spot):0.0}m, 둘레보다 {p.y - rim:0.0}m, 경계 {claude.Ai.Guard.StateName}"); }
+                        t += Time.deltaTime;
+                        yield return null;
+                    }
+                    if (walkedOut) break;
+                    Vector3 at = claude.transform.position;
+                    float toHome = Utils.DistanceXZ(at, claude.Home);
+                    if (round == 0)
+                    {
+                        checks.Add($"도망 중 구덩이({depth:0.0}m)에 갇힘 → 가장자리로 올라옴 ({t:0.0}초, 가운데에서 {Utils.DistanceXZ(at, spot):0.0}m, 둘레보다 {at.y - rim:0.0}m)",
+                            WorkerAI.FleeEdgeRescues > er && WorkerAI.TrapRescues == rr && at.y > rim - 1f);
+                        checks.Add($"가장자리 뒤 계속 도망·짐 그대로 (경계 {claude.Ai.Guard.StateName}, 짐 {claude.GetInventory().GetAllItems().Count}/{bag0})",
+                            claude.Ai.Guard.Fleeing && claude.GetInventory().GetAllItems().Count == bag0);
+                    }
+                    else
+                    {
+                        checks.Add($"30초 안 두 번째 도망 구덩이 → 깃발로 순간이동 ({t:0.0}초, 깃발과 {toHome:0.0}m)", WorkerAI.TrapRescues > rr && WorkerAI.FleeEdgeRescues == er && toHome < 6f);
+                        checks.Add($"깃발로 가면 도망은 그만두고 짐 그대로 (경계 {claude.Ai.Guard.StateName}, 짐 {claude.GetInventory().GetAllItems().Count}/{bag0})",
+                            !claude.Ai.Guard.Fleeing && claude.GetInventory().GetAllItems().Count == bag0);
+                    }
                 }
                 WorkerAI.TestNoJump = WorkerAI.TestNoCarve = WorkerAI.TestNoEdgeRescue = false;
-                float toHome = Utils.DistanceXZ(claude.transform.position, claude.Home);
-                if (walkedOut && WorkerAI.TrapRescues == r0)
+                if (walkedOut)
                     TestRunner.Log($"환경: 도망 구덩이({depth:0.0}m) 벽이 완만해 {t:0.0}초에 걸어 나옴(E022) — 칸 안 셈");
-                else
-                {
-                    checks.Add($"도망 중 구덩이({depth:0.0}m)에 갇힘 → 깃발로 순간이동 ({t:0.0}초, 깃발과 {toHome:0.0}m)", WorkerAI.TrapRescues > r0 && toHome < 6f);
-                    checks.Add($"도망은 그만두고 짐 그대로 (경계 {claude.Ai.Guard.StateName}, 짐 {claude.GetInventory().GetAllItems().Count}/{bag0})",
-                        !claude.Ai.Guard.Fleeing && claude.GetInventory().GetAllItems().Count == bag0);
-                }
+                claude.Ai.Guard.CancelFlee();
                 yield return new WaitForSeconds(1f);
                 yield return EdgeRescue(checks, claude, home, rot, spot, depth);
             }

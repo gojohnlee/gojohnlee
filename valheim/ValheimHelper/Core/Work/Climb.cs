@@ -53,6 +53,15 @@ namespace ValheimHelper.Core.Work
             return null;
         }
 
+        /// <summary>도망 중 구덩이에서 가장자리로 옮긴 뒤 이만큼(초) 안에 또 갇히면 그때는 깃발로(사용자 11-17).</summary>
+        public const double FleeEdgeAgainSeconds = 30;
+
+        /// <summary>
+        /// 도망 중 구덩이에 갇혔을 때(사용자 11-17, 10-22 "→ 깃발"을 바꿈): "edge" = 적에게서 먼 가장자리 위로 옮기고 계속 도망,
+        /// "flag" = 가장자리 자리가 없거나 지난 가장자리 구조가 FleeEdgeAgainSeconds 안이면 깃발로. sinceEdge = 지난 가장자리 구조 뒤 지난 초(없으면 아주 큰 값).
+        /// </summary>
+        public static string FleePitAction(double sinceEdge, bool hasEdge) => hasEdge && sinceEdge >= FleeEdgeAgainSeconds ? "edge" : "flag";
+
         /// <summary>걷다 빠진 구덩이에서 점프·경사로 깎기를 해도 이만큼(초) 못 나오면 가장 가까운 가장자리 위로 옮긴다(사용자 결정 2026-10-23, E018 · 30 → 15초 10-26, → 5초 사용자 10-31).</summary>
         public const double PitEscapeSeconds = 5;
         /// <summary>구덩이 기록 자리에서 이만큼(m) 넘게 벗어나면 나온 것으로 본다.</summary>

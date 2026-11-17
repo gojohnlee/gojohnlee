@@ -55,6 +55,15 @@ public class ClimbTests
         Assert.Null(Climb.TrapRescue(false, false, true, Climb.SwimTrapSeconds - 1));
     }
 
+    [Fact]
+    public void FleePitGoesToEdgeUnlessRepeatedOrNoSpot()
+    {
+        Assert.Equal("edge", Climb.FleePitAction(double.MaxValue, true));
+        Assert.Equal("edge", Climb.FleePitAction(Climb.FleeEdgeAgainSeconds, true));
+        Assert.Equal("flag", Climb.FleePitAction(Climb.FleeEdgeAgainSeconds - 1, true));
+        Assert.Equal("flag", Climb.FleePitAction(double.MaxValue, false));
+    }
+
     static double[] Ring(params double[] h) => h;
 
     [Fact]
