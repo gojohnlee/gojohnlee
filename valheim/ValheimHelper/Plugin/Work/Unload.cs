@@ -216,7 +216,7 @@ namespace ValheimHelper
 
         /// <summary>navmesh 위 가장 가까운 점(GetPath와 같은 필터 m_build.agentTypeID·m_areaMask). 바닐라 Pathfinding.FindValidPoint는 agentTypeID에
         /// (int)AgentType(열거 값)을 넣어 다른 질의와 다른 navmesh를 봄 → 못 씀(11-12 디컴파일).</summary>
-        static bool Sample(Pathfinding pf, Pathfinding.AgentType agent, Vector3 p, float r, out Vector3 at)
+        internal static bool Sample(Pathfinding pf, Pathfinding.AgentType agent, Vector3 p, float r, out Vector3 at)
         {
             if (!s_filters.TryGetValue(agent, out var f))
             {

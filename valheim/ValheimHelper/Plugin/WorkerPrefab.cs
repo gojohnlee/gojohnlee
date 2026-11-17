@@ -21,6 +21,9 @@ namespace ValheimHelper
         /// <summary>플레이어 묘비 프리팹(Player.m_tombstone). NPC가 죽으면 이걸 놓는다(구상서 9장).</summary>
         public static GameObject Tombstone { get; private set; }
 
+        /// <summary>플레이어 몸 크기(복제한 Player 프리팹의 localScale). 일꾼은 이 크기로 둔다(WorkerNpc.Awake).</summary>
+        public static Vector3 BodyScale => s_prefab != null ? s_prefab.transform.localScale : Vector3.one;
+
         /// <summary>복제본에서 지운 부품 이름과 남은 부품 이름 (시험 보고용).</summary>
         public static readonly List<string> Removed = new List<string>();
         public static readonly List<string> Kept = new List<string>();

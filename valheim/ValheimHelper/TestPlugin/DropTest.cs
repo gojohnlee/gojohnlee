@@ -126,7 +126,8 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(3f);
                 // GetPath는 첫 요청 때 타일을 굽기 시작해 처음엔 실패(계단 길 1000으로 고름·끄면 판에서 그냥 걸어 떨어짐, 회차 735 첫 실행) → 계단 길이 날 때까지 묻고 기다림
                 float stairLen = -1f;
-                yield return TestKit.WaitFor(() => (stairLen = ai.FullPathLength(start, goal)) >= 0f, 20f);
+                // 앞 시험이 같은 자리 타일을 판 짓기 전에 구워 뒀으면 바닐라 Buildtiles가 다시 굽기(찔린 뒤 5초)까지 옛 땅 길(5m)을 줌(회차 744·769·772 housetest 뒤 FAIL, 단독 PASS) → 계단 길이 날 때까지
+                yield return TestKit.WaitFor(() => (stairLen = ai.FullPathLength(start, goal)) > Tiles * 2f, 20f);
                 if (leg == 0) stairT = stairLen / Mathf.Max(w.Ragnar.m_runSpeed, 0.5f);
                 if (leg == 0) checks.Add($"판 위→아래 목표 계단 길 남 ({stairLen:0.0}m, {TestKit.Waited:0.0}초)", stairLen > Tiles * 2f);
                 int drop0 = ai.DropsTaken, quit0 = ai.DropsQuit;

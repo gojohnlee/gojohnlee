@@ -66,6 +66,9 @@ namespace ValheimHelper
         protected override void Awake()
         {
             base.Awake();
+            // 바닐라 Character.Awake는 플레이어 아닌 몸을 월드 설정 "적 속도·크기"(Game.m_enemySpeedSize)·새 게임+(m_worldLevel)만큼 키운다(1.0.21 디컴파일).
+            // 일꾼은 플레이어 몸이어야 플레이어가 지나는 곳을 지난다 — 1.1배면 캡슐 높이 2.04m로 벽 한 장(2m) 층의 천장 밑 1.87m에 끼여 천장 조각 이음매를 못 넘었음(회차 771 vh_otherhouse).
+            transform.localScale = WorkerPrefab.BodyScale;
             Ai = GetComponent<WorkerAI>();
             if (m_nview.IsValid() && m_nview.GetZDO().GetInt(KeyRole) == GuardRole) Guards.Add(this); else All.Add(this);
             if (m_nview.IsValid()) Workers.Know(m_nview.GetZDO().m_uid);
@@ -649,6 +652,38 @@ namespace ValheimHelper
         /// <summary>시험 기록용: 걸으려는데(이동 입력 0.5 넘게) 거의 안 움직임(0.3m/s 밑) — 최종 실전 시험 부딪힘 칸.</summary>
         public bool PushingStill { get { Vector3 v = GetVelocity(); v.y = 0f; return m_moveDir.magnitude > 0.5f && v.magnitude < 0.3f; } }
 
+        /// <summary>진단(회차 771 vh_otherhouse: 길은 있는데 벽 곁에서 25초 섬): 몸 캡슐 크기, 몸과 겹치거나 3cm 안에 닿은 충돌체(밀어내는 쪽·깊이), 가는 쪽 0.6m 캡슐 쏘기에 처음 맞는 것.</summary>
+        public string ContactDebug
+        {
+            get
+            {
+                var cap = GetComponent<CapsuleCollider>();
+                if (cap == null) return "캡슐 없음";
+                Transform t = cap.transform;
+                int mask = 0;
+                for (int l = 0; l < 32; l++) if (!Physics.GetIgnoreLayerCollision(cap.gameObject.layer, l)) mask |= 1 << l;
+                float r = cap.radius * Mathf.Max(t.lossyScale.x, t.lossyScale.z), h = Mathf.Max(cap.height * t.lossyScale.y, 2f * r);
+                Vector3 c = t.TransformPoint(cap.center), a = c + Vector3.up * (h / 2f - r), b = c - Vector3.up * (h / 2f - r), p = transform.position;
+                var sb = new System.Text.StringBuilder($"캡슐 r{r:0.00} 밑{b.y - r - p.y:+0.00;-0.00} 위{a.y + r - p.y:+0.00;-0.00}");
+                int n = 0;
+                foreach (var col in Physics.OverlapCapsule(a, b, r + 0.03f, mask, QueryTriggerInteraction.Ignore))
+                {
+                    if (col == cap || col.transform.root == transform.root) continue;
+                    string nm = $"{col.name}/{col.transform.root.name}";
+                    if (Physics.ComputePenetration(cap, t.position, t.rotation, col, col.transform.position, col.transform.rotation, out Vector3 d, out float dist))
+                        sb.Append($" 겹침 {nm}({d.x:+0.00;-0.00},{d.y:+0.00;-0.00},{d.z:+0.00;-0.00})×{dist:0.000}");
+                    else sb.Append($" 닿음 {nm}");
+                    if (++n >= 6) break;
+                }
+                Vector3 md = m_moveDir; md.y = 0f;
+                if (md.sqrMagnitude > 0.01f)
+                    sb.Append(Physics.CapsuleCast(a, b, r * 0.98f, md.normalized, out RaycastHit hit, 0.6f, mask, QueryTriggerInteraction.Ignore)
+                        ? $" · 앞 {hit.collider.name}/{hit.collider.transform.root.name} {hit.distance:0.00}m 점({hit.point.x - p.x:+0.00;-0.00},{hit.point.y - p.y:+0.00;-0.00},{hit.point.z - p.z:+0.00;-0.00}) 법선({hit.normal.x:+0.00;-0.00},{hit.normal.y:+0.00;-0.00},{hit.normal.z:+0.00;-0.00})"
+                        : " · 앞 0.6m 빔");
+                return sb.ToString();
+            }
+        }
+
         /// <summary>시험 기록용: 이동 입력 크기, 달리기 입력, 실제 속도 값.</summary>
         public string MoveDebug
         {
@@ -662,7 +697,7 @@ namespace ValheimHelper
                 v.y = 0f;
                 return $"입력 {m_moveDir.magnitude:0.00}, 달리기 입력 {m_run}, 수영 {IsSwimming()}, 땅닿음 {IsOnGround()}, 속도 {v.magnitude:0.0}, " +
                        $"발밑 {(under != null ? $"{under.name}({LayerMask.LayerToName(under.gameObject.layer)}, 위 {under.transform.root.name})" : "없음")}, " +
-                       $"높이 {p.y:0.0}/땅 {(hit ? ground.ToString("0.0") : "없음")}/원래땅 {gen:0.0}/물 {GetLiquidLevel():0.0}, 구역 {ZoneSystem.instance.IsZoneLoaded(p)}";
+                       $"높이 {p.y:0.0}/땅 {(hit ? ground.ToString("0.0") : "없음")}/원래땅 {gen:0.0}/물 {GetLiquidLevel():0.0}, 구역 {ZoneSystem.instance.IsZoneLoaded(p)}, {ContactDebug}";
             }
         }
 

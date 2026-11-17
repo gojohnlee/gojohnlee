@@ -256,6 +256,37 @@ namespace ValheimHelper
         /// <summary>지금 이 목표로 길 토막을 따라가는 중(m_path 끝이 토막 점 — 남은 길 = 토막까지 길 + 토막~목표).</summary>
         public bool OnLegTo(Vector3 goal) => m_leg.Active && Utils.DistanceXZ(goal, m_moveTarget) <= 2f;
 
+        // 몸이 navmesh 밖(겹문 현관처럼 좁게 막힌 곳 — navmesh 굽기가 작은 영역을 지움)이면 Pathfinding.GetPath가 출발점을 SamplePosition(1.5m)으로
+        // 벽 너머 다른 방 navmesh에 붙여 길 첫 점이 벽 너머가 됨 → 바닐라 MoveTo가 그 점으로 벽에 대고 걸어 12초 넘게 섰음(회차 771 vh_otherhouse 현관, 바깥문 열림 -1).
+        // 첫 점이 발·가슴 높이 둘 다 단단한 것에 가리고 목표 1m 앞까지 곧은 줄(목표 상자 자체는 빼고, 12m까지 — 4m면 막다른 창고 안쪽으로 곧장 갔음)이 트였으면 목표 쪽으로 곧장 — navmesh에 올라서면 첫 점이 보여 바로 길로 돌아감.
+        // 같은 목표 길은 바닐라 FindPath가 5초 들고 있으니 1초에 한 번 새로 구하게 함.
+        float m_hiddenForgetAt;
+        Vector3 m_hiddenLogged = NoGoal;
+        static int s_wallMask;
+        static int WallMask => s_wallMask != 0 ? s_wallMask : (s_wallMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "vehicle"));
+        static bool RayBlocked(Vector3 from, Vector3 to, float len, bool both) // both: 발·가슴 둘 다 막힘(벽), 아니면 하나라도(상자 같은 낮은 것도)
+        {
+            Vector3 dir = Flat(to - from);
+            if (dir.sqrMagnitude < 0.0001f) return false;
+            dir.Normalize();
+            bool low = Physics.Raycast(from + Vector3.up * 0.5f, dir, len, WallMask, QueryTriggerInteraction.Ignore);
+            if (low != both) return low; // both인데 발이 트임 → false, 하나라도인데 발이 막힘 → true
+            return Physics.Raycast(from + Vector3.up * 1.2f, dir, len, WallMask, QueryTriggerInteraction.Ignore);
+        }
+        bool PathStartHidden(Vector3 pos, Vector3 point, float d)
+        {
+            var path = PathOf(this);
+            if (path == null || path.Count == 0) return false;
+            Vector3 next = path[0];
+            float dn = Utils.DistanceXZ(next, pos);
+            if (dn < 0.3f || !RayBlocked(pos, next, dn, true) || RayBlocked(pos, point, Mathf.Min(d - 1f, 12f), false)) return false;
+            // 몸이 navmesh 위면 아님 — 몸 가운데 광선은 길 줄(붙인 출발점)과 어긋나 벽 끝·나무에 걸리기도 함(회차 771 첫 판: 벽 트임 곁·바깥 나무에서 곧장 걸어 충돌이 늘었음)
+            if (Pathfinding.instance == null || ChestHop.Sample(Pathfinding.instance, m_pathAgentType, pos, 0.6f, out _)) return false;
+            if (Time.time - m_hiddenForgetAt > 1f) { m_hiddenForgetAt = Time.time; ForgetPath(); }
+            if (Utils.DistanceXZ(m_hiddenLogged, point) > 2f) { m_hiddenLogged = point; Diag.Log($"DIAG {((WorkerNpc)m_character).NpcName}: 길 첫 점 {next:F1}이 벽 너머(나 {pos:F1}, 몸이 navmesh 밖) → 목표 {point:F1} 쪽 곧장"); }
+            return true;
+        }
+
         bool MoveToOrLeg(float dt, Vector3 pos, Vector3 point, float dist, bool run, bool inside)
         {
             if (inside) { m_leg.Reset(); return MoveTo(dt, point, dist, run); }
@@ -342,6 +373,7 @@ namespace ValheimHelper
                         bool done = MoveToOrLeg(dt, pos, point, dist, run, inside); m_moveDiag = $"MoveTo {(done ? "도착" : "가는 중")}({point:F1} 거리 {dist:0.0} 뛰기 {run}{(m_leg.Active ? $", 토막 {m_legPoint:F0}" : "")})";
                         m_moveToDone = done && d > dist + 1f; // 바닐라는 "도착"인데 아직 멂 = 길 없음 또는 부분 길 끝
                         if (done || !FoundPath()) MoveTowards(Flat(point - pos), run);
+                        else if (!inside && PathStartHidden(pos, point, d)) { MoveTowards(Flat(point - pos), run); m_moveDiag = "곧장(길 첫 점이 벽 너머 — 몸이 navmesh 밖)"; }
                     }
                 }
             }

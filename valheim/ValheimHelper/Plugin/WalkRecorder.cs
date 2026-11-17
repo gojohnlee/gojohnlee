@@ -194,6 +194,7 @@ namespace ValheimHelper
                 sb.Append(' ').Append(Utils.GetPrefabName(piece != null ? piece.gameObject : col.gameObject)).Append(concave ? "~" : "").Append($"({d.x:+0.00},{d.y:+0.00},{d.z:+0.00})");
                 if (++n >= 8) break;
             }
+            sb.Append(" · ").Append(m_npc.ContactDebug);
             return sb.ToString();
         }
 
