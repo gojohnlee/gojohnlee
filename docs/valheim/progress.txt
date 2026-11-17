@@ -1,5 +1,5 @@
 발헤임 일꾼 NPC — 진행 상황 (세션이 끊겨도 여기서 이어간다)
-지금: 회차 778 — [끝, 회차 778 — 커밋 446d63ba · 시험 vh_newerahouse 17/17·vh_pathfollow 8/8·vh_pathforget 7/7 PASS — 요청 길 기억 누적 끝]
+지금: 회차 778 — [끝, 회차 778 — 커밋 446d63ba · 시험 vh_newerahouse 17/17·vh_pathfollow 8/8·vh_pathforget 7/7·housetest 38/38·vh_finaltest 35/35 PASS — 요청 길 기억 누적 끝, E127 닫음, valheim-stable 446d63ba]
 지금: 회차 777 — [끝, 회차 777 — 커밋 f6324527 · 시험 묶음 11/11·vh_finaltest 35/35 PASS — E132 멈춤, valheim-stable f6324527]
 지금: 회차 776 — [끝, 회차 776 — 커밋 f6324527 · 시험 묶음 11/11·fight 18/18·raid 14/14·guardbow 8/8 ×2·hunt 21/21 PASS — E133 닫음, E134·E135 고침]
 "지금"(최근 3개)·"다음"(남은 일만, 순서대로)만 둔다. 끝난 일은 history.md. 규칙: 조각을 끝내면 "[끝, 회차 N — 커밋 · 시험]" 한 줄로, ★ 조각이 전부 [끝]이면 다음 회차가 덩어리째 지움.
