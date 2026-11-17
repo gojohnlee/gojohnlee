@@ -23,7 +23,12 @@ namespace ValheimHelper.Core.Work
             public P(float x, float y, float z) { X = x; Y = y; Z = z; }
         }
 
-        sealed class Route { internal P[] Points; internal double Used; }
+        sealed class Route { internal P[] Points; internal double Used; internal int Uses; internal float Length; }
+
+        // 요청 11-17(길 기억 쌓임): 기억한 길만 따르면 더 나은 길을 영영 못 찾음 → 가끔 Find가 null(바닐라로 다시 걸어 봄), Remember는 더 짧은 길만 받음.
+        // 수상한 길(길/직선이 같은 층 SameFloorRatio·다른 층 CrossFloorRatio 넘음)은 하나 걸러, 나머지는 ExploreEvery번째마다.
+        public const float SameFloorRatio = 1.3f, CrossFloorRatio = 2f, KeepSlack = 1.05f;
+        public const int ExploreEvery = 8;
 
         readonly struct K : IEquatable<K>
         {
@@ -46,21 +51,46 @@ namespace ValheimHelper.Core.Work
         static K Key(P a, P b) =>
             new K(G(a.X, Cell), G(a.Y, Floor), G(a.Z, Cell), G(b.X, Cell), G(b.Y, Floor), G(b.Z, Cell));
 
-        /// <summary>닿은 길 기억(점 2개 미만은 안 함). 같은 칸 쌍이면 새 길로 바꾼다.</summary>
-        public void Remember(P from, P to, IList<P> points, double now)
+        /// <summary>닿은 길 기억(점 2개 미만은 안 함). 같은 칸 쌍이면 새 길이 옛 길보다 KeepSlack배 넘게 길지 않을 때만 바꾼다(force면 늘). 받았으면 true.
+        /// 방금 걸어 본 길이라 다음 Find는 따른다(Uses 1). 불러온 길은 Uses 0 — 수상하면 첫 Find에 다시 걸어 봄.</summary>
+        public bool Remember(P from, P to, IList<P> points, double now, bool force = false) => Put(from, to, points, now, force, 1);
+
+        bool Put(P from, P to, IList<P> points, double now, bool force, int uses)
         {
-            if (points == null || points.Count < 2) return;
+            if (points == null || points.Count < 2) return false;
             var key = Key(from, to);
+            float len = Len(points);
+            if (!force && m_routes.TryGetValue(key, out var old) && len > old.Length * KeepSlack) { old.Used = now; return false; }
             if (!m_routes.ContainsKey(key) && m_routes.Count >= m_max) Evict();
-            m_routes[key] = new Route { Points = points.ToArray(), Used = now };
+            m_routes[key] = new Route { Points = points.ToArray(), Used = now, Uses = uses, Length = len };
+            return true;
         }
 
-        /// <summary>같은 출발·도착 칸의 기억한 길(없으면 null). 쓰면 시각을 새로 해 덜 지워지게.</summary>
-        public P[] Find(P from, P to, double now)
+        /// <summary>같은 출발·도착 칸의 기억한 길(없거나 다시 걸어 볼 차례면 null — 그때 explore true). 쓰면 시각을 새로 해 덜 지워지게.</summary>
+        public P[] Find(P from, P to, double now) => Find(from, to, now, out _);
+
+        public P[] Find(P from, P to, double now, out bool explore)
         {
+            explore = false;
             if (!m_routes.TryGetValue(Key(from, to), out var r)) return null;
             r.Used = now;
-            return r.Points;
+            r.Uses++;
+            explore = Suspicious(r) ? r.Uses % 2 == 1 : r.Uses % ExploreEvery == 0;
+            return explore ? null : r.Points;
+        }
+
+        /// <summary>시험·진단용: 셈 없이 기억한 길 길이(없으면 -1).</summary>
+        public float LengthOf(P from, P to) => m_routes.TryGetValue(Key(from, to), out var r) ? r.Length : -1f;
+
+        static float Len(IList<P> p) { float s = 0; for (int i = 1; i < p.Count; i++) s += Dist(p[i - 1], p[i]); return s; }
+        static float Dist(P a, P b) { float dx = a.X - b.X, dy = a.Y - b.Y, dz = a.Z - b.Z; return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz); }
+
+        /// <summary>길/직선이 기준을 넘는 수상한 길. 다른 층(높이 Floor*1.3 넘게 차이)은 계단을 돌아 늘 기니 CrossFloorRatio.</summary>
+        static bool Suspicious(Route r)
+        {
+            P a = r.Points[0], b = r.Points[r.Points.Length - 1];
+            float straight = Math.Max(0.5f, Dist(a, b));
+            return r.Length > straight * (Math.Abs(a.Y - b.Y) > Floor * 1.3f ? CrossFloorRatio : SameFloorRatio);
         }
 
         /// <summary>기억한 길로 갔는데 막힘 — 그 길을 지운다.</summary>
@@ -129,7 +159,7 @@ namespace ValheimHelper.Core.Work
                     pts.Add(p);
                 }
                 if (!ok || pts.Count < 2) continue;
-                Remember(from, to, pts, used);
+                Put(from, to, pts, used, false, 0);
                 n++;
             }
             return n;

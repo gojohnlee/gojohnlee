@@ -78,14 +78,14 @@ namespace ValheimHelper
                 Vector3 a = npc.transform.position;
                 double now = ZNet.instance.GetTimeSeconds();
                 var pts = (PathMemory.P[])route.Clone(); pts[0] = P(a);
-                Brain.Paths.Remember(P(a), P(b), pts, now);
+                Brain.Paths.Remember(P(a), P(b), pts, now, force: true); // 앞 판이 걸은 더 짧은 길이 있어도 심음(요청 11-17 더 짧은 길만 받음)
                 int f0 = ai.PathsFollowed, d0 = ai.PathsDropped, s0 = ai.PathsSpoiled;
                 bool hit = false;
                 var walk = new ExploreTest.WalkJob(ai, b) { Stay = true }; // 멈춘 뒤 제자리에 — 일이 끝나면 다음 판 순간이동 뒤 2초에 4.6m 걸어가 a가 a0에서 벗어나 기억 칸이 어긋났음(회차 697)
                 keep(walk);
                 ai.ForgetMoveTarget(); // 앞 판 목표가 같은 b라 새 목표로 안 쳐 따라 걷기가 안 시작됨(회차 696 맞음 판)
                 ai.StartJob(walk);
-                TestRunner.Log($"판 {round}: 기억 찾음 {Brain.Paths.Find(P(a), P(b), now) != null}, a→b {Utils.DistanceXZ(a, b):0.0}m, a0→a {Utils.DistanceXZ(a0, a):0.0}m, 일 {ai.Job?.Label}");
+                TestRunner.Log($"판 {round}: 기억 찾음 {Brain.Paths.LengthOf(P(a), P(b)) >= 0f}, a→b {Utils.DistanceXZ(a, b):0.0}m, a0→a {Utils.DistanceXZ(a0, a):0.0}m, 일 {ai.Job?.Label}");
                 float bend = float.MaxValue, t0 = Time.time;
                 bool on = false;
                 yield return TestKit.WaitFor(() =>
@@ -107,7 +107,7 @@ namespace ValheimHelper
                 else if (hurt)
                 {
                     yield return new WaitForSeconds(1f);
-                    bool kept = Brain.Paths.Find(P(a), P(b), ZNet.instance.GetTimeSeconds()) != null;
+                    bool kept = Brain.Paths.LengthOf(P(a), P(b)) >= 0f; // Find는 쓴 수를 세어 다시 걸어 볼 차례를 바꿈
                     checks.Add($"걷다 맞으면 기억 길 지우고 새로 안 넣음 (맞음 {hit}, 남음 {kept}, 기억 안 함 {ai.PathsSpoiled - s0}, {why})", hit && ai.PathsDropped - d0 == 1 && !kept);
                 }
                 else

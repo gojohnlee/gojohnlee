@@ -32,15 +32,17 @@ namespace ValheimHelper
             var pts = m_trail.Finish(P(pos));
             if (pts == null && m_trail.SpoilReason != null) { PathsSpoiled++; Diag.Log($"길 기억 안 함({m_trail.SpoilReason}): ({from.X:0.0},{from.Y:0.0},{from.Z:0.0})→{target:F1}"); }
             if (pts == null || !NearHome(target)) return;
-            Brain.Paths.Remember(from, P(target), pts, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time);
+            float old = Brain.Paths.LengthOf(from, P(target));
+            if (!Brain.Paths.Remember(from, P(target), pts, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time)) { Diag.Log($"길 기억 그대로(옛 길 {old:0.0}m가 더 짧음): ({from.X:0.0},{from.Y:0.0},{from.Z:0.0})→{target:F1}"); return; }
             PathsRemembered++;
-            Diag.Log($"길 기억: ({from.X:0.0},{from.Y:0.0},{from.Z:0.0})→{target:F1} 점 {pts.Length}, 모두 {Brain.Paths.Count}");
+            if (old >= 0f) PathsReplaced++;
+            Diag.Log($"길 기억{(old >= 0f ? $" 바꿈(옛 {old:0.0}m)" : "")}: ({from.X:0.0},{from.Y:0.0},{from.Z:0.0})→{target:F1} 점 {pts.Length}, 모두 {Brain.Paths.Count}");
         }
 
         // ---- 기억한 길 따라 걷기(③ 마지막 조각): 같은 출발·목표 칸이면 걸어 닿았던 점을 차례로 따라간다. 막히면 그 길을 지우고 바닐라로 ----
         PathMemory.P[] m_memPath; int m_memIdx; PathMemory.P m_memFrom, m_memTo;
         /// <summary>시험용: 기억한 길로 걷기 시작한 수, 막혀 지운 수.</summary>
-        internal int PathsFollowed, PathsDropped;
+        internal int PathsFollowed, PathsDropped, PathsExplored, PathsReplaced;
         /// <summary>시험용: 기억한 길 따라 걷는 중.</summary>
         internal bool OnMemPath => m_memPath != null;
         /// <summary>시험용: 다음 MoveToPoint를 새 목표로 치게(같은 목표로 다시 걸리면 따라 걷기·자취가 새로 안 시작됨).</summary>
@@ -53,7 +55,8 @@ namespace ValheimHelper
             m_memPath = null;
             if (!NearHome(pos) || !NearHome(target)) return;
             var from = P(pos); var to = P(target);
-            var pts = Brain.Paths.Find(from, to, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time);
+            var pts = Brain.Paths.Find(from, to, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time, out bool explore);
+            if (explore) { PathsExplored++; Diag.Log($"길 기억 다시 걸어 봄(옛 {Brain.Paths.LengthOf(from, to):0.0}m): 바닐라 → 더 짧으면 바꿈"); return; }
             if (pts == null || pts.Length < 2) return;
             // 닫힌 문·새 벽(손님이 놓은 조각은 서버가 못 봄): 점 사이를 허리 높이(0.8m)로 건축물 층에 쏴 막히면 지우고 바닐라
             for (int i = 1; i < pts.Length; i++)

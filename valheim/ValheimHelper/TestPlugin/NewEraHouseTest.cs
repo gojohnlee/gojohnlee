@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ValheimHelper
@@ -123,11 +124,11 @@ namespace ValheimHelper
             }
             TestRunner.Log($"지난 판 길 기억 지움 {forgot}개(남음 {Brain.Paths.Count})");
             var ai = w.Ragnar.Ai;
-            var lapT = new float[2];
+            var lapT = new float[3];
             int reached = 0, jumps = 0;
-            for (int round = 0; round < 2; round++)
+            for (int round = 0; round < 3; round++)
             {
-                int got = 0, noProg = 0, bumps = 0, rem0 = ai.PathsRemembered, fol0 = ai.PathsFollowed, drop0 = ai.PathsDropped, spoil0 = ai.PathsSpoiled;
+                int got = 0, noProg = 0, bumps = 0, exp0 = ai.PathsExplored, rep0 = ai.PathsReplaced, rem0 = ai.PathsRemembered, fol0 = ai.PathsFollowed, drop0 = ai.PathsDropped, spoil0 = ai.PathsSpoiled;
                 float worst = 0f;
                 for (int i = 0; i < names.Length; i++)
                 {
@@ -149,11 +150,11 @@ namespace ValheimHelper
                     TestRunner.Log($"집 걸음({round + 1}바퀴 {names[i]}): {rep}");
                     string where = $"{took:0.0}초, 남은 거리 {Utils.DistanceXZ(w.Ragnar.transform.position, goal):0.0}m·높이 차 {w.Ragnar.transform.position.y - goal.y:0.0}m, 발밑 {Under(w.Ragnar.transform.position)}";
                     if (round == 0) checks.Add($"{i + 1}) {names[i]} 닿음 ({where})", ok);
-                    else if (!ok) TestRunner.Log($"못 닿음 2바퀴 {names[i]}: {where}");
+                    else if (!ok) TestRunner.Log($"못 닿음 {round + 1}바퀴 {names[i]}: {where}");
                     if (ok) got++;
                     yield return new WaitForSeconds(1f);
                 }
-                TestRunner.Log($"{round + 1}바퀴: {lapT[round]:0.0}초·진척 없음 {noProg}·충돌 {bumps}·길/직선 최악 {worst:0.00} · 길 기억 {ai.PathsRemembered - rem0}·따름 {ai.PathsFollowed - fol0}·지움 {ai.PathsDropped - drop0}·안 함 {ai.PathsSpoiled - spoil0}");
+                TestRunner.Log($"{round + 1}바퀴: {lapT[round]:0.0}초·진척 없음 {noProg}·충돌 {bumps}·길/직선 최악 {worst:0.00} · 길 기억 {ai.PathsRemembered - rem0}·따름 {ai.PathsFollowed - fol0}·지움 {ai.PathsDropped - drop0}·안 함 {ai.PathsSpoiled - spoil0}·다시 걸어 봄 {ai.PathsExplored - exp0}·바꿈 {ai.PathsReplaced - rep0}");
                 if (round == 0)
                 {
                     reached = got;
@@ -163,11 +164,24 @@ namespace ValheimHelper
                     yield return TestKit.WaitFor(() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, back) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - back.y) < 1.3f, 60f);
                     link.Halt = true;
                     yield return new WaitForSeconds(1f);
+                    // 요청 11-17(길 기억 쌓임 E131): 지우지 않고도 낫게 — 1바퀴가 기억한 집 길을 왔다 갔다 세 겹(같은 끝, 길이 3배) 옛 길로 바꿔 불러옴(저장 파일에 쌓인 나쁜 길처럼)
+                    int bad = CorruptHouseRoutes(fire.transform.position, bed.transform.position);
+                    TestRunner.Log($"쌓인 나쁜 길 심음 {bad}개(모두 {Brain.Paths.Count})");
+                }
+                else if (round == 1)
+                {
+                    checks.Add($"2바퀴: 쌓인 나쁜 길을 따르지 않고 다시 걸어 바꿈 (다시 걸어 봄 {ai.PathsExplored - exp0}·바꿈 {ai.PathsReplaced - rep0}·따름 {ai.PathsFollowed - fol0}, {lapT[1]:0.0}초)", ai.PathsExplored - exp0 >= 3 && ai.PathsReplaced - rep0 >= 3 && lapT[1] <= lapT[0] * 1.25f + 3f);
+                    Vector3 back = chest.transform.position;
+                    var link = new ExploreTest.WalkJob(ai, back, true) { Stay = true };
+                    ai.StartJob(link);
+                    yield return TestKit.WaitFor(() => w.Ragnar != null && Utils.DistanceXZ(w.Ragnar.transform.position, back) < 2.8f && Mathf.Abs(w.Ragnar.transform.position.y - back.y) < 1.3f, 60f);
+                    link.Halt = true;
+                    yield return new WaitForSeconds(1f);
                 }
                 else
                 {
-                    checks.Add($"2바퀴 다 닿음 ({got}/{names.Length}, {lapT[1]:0.0}초, 따름 {ai.PathsFollowed - fol0})", got == names.Length);
-                    checks.Add($"2바퀴(기억 뒤)가 1바퀴보다 안 느림 ({lapT[0]:0.0} → {lapT[1]:0.0}초)", lapT[1] <= lapT[0] * 1.25f + 3f);
+                    checks.Add($"3바퀴 다 닿음 ({got}/{names.Length}, {lapT[2]:0.0}초, 따름 {ai.PathsFollowed - fol0})", got == names.Length);
+                    checks.Add($"3바퀴(바꾼 기억 따름)가 1바퀴보다 안 느림 ({lapT[0]:0.0} → {lapT[2]:0.0}초)", lapT[2] <= lapT[0] * 1.25f + 3f);
                 }
             }
             checks.Add($"뛰어내리기 지름길 (착지 {ai.DropsTaken}, 고른 뒤 그만 {ai.DropsQuit})", ai.DropsQuit == 0); // ★ 다: 내림 다리에서 계단보다 1초 넘게 빠른 끝이 있으면 뜀
@@ -198,5 +212,25 @@ namespace ValheimHelper
             ? $"{(hit.collider.GetComponentInParent<Piece>() is Piece pc ? Utils.GetPrefabName(pc.gameObject) : hit.collider.name)} {hit.point.y:0.0}" : "없음";
 
         static int Teleports() => WorkerAI.StuckTeleports + WorkerAI.TrapRescues + WorkerAI.PitEdgeRescues;
+
+        /// <summary>화덕·침대 40m 안 길(첫 점 기준)을 점 목록 앞→뒤→앞 세 겹으로 바꿔 Save→Load(불러온 길 = 쓴 수 0). 심은 수.</summary>
+        static int CorruptHouseRoutes(Vector3 fire, Vector3 bed)
+        {
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            var lines = new List<string>();
+            foreach (var line in Brain.Paths.Save().Split('\n'))
+            {
+                var parts = line.Split(';');
+                if (parts.Length != 4) continue;
+                var pts = parts[3].Split(' ');
+                var c = pts[0].Split(',');
+                var p0 = new Vector3(float.Parse(c[0], ci), float.Parse(c[1], ci), float.Parse(c[2], ci));
+                if (Utils.DistanceXZ(p0, fire) > 40f && Utils.DistanceXZ(p0, bed) > 40f) continue;
+                var back = pts.Reverse().Skip(1);
+                lines.Add($"{parts[0]};{parts[1]};{parts[2]};{string.Join(" ", pts.Concat(back).Concat(pts.Skip(1)).ToArray())}");
+            }
+            foreach (var at in new[] { fire, bed }) Brain.Paths.ForgetNear(new ValheimHelper.Core.Work.PathMemory.P(at.x, at.y, at.z), 40f);
+            return Brain.Paths.Load(string.Join("\n", lines.ToArray()));
+        }
     }
 }
