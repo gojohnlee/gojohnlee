@@ -83,9 +83,11 @@ namespace ValheimHelper
             yield return new WaitForSeconds(2f);
             bool alone = Gathering(w.Ragnar, "Wood") && ((GatherJob)w.Ragnar.Ai.Job).Team == null && TargetOf(w.Floki) == 5;
             checks.Add($"라그나만 나무 40, 플로키는 제 일(목표 {TargetOf(w.Floki)})", alone);
-            yield return TestKit.WaitFor(() => TargetOf(w.Floki) == 40 || !Gathering(w.Ragnar, "Wood"), 240f);
+            bool small = false; // 라그나가 한 번에 많이 들어(연쇄 쓰러짐) 플로키가 쉴 때 남은 몫이 작으면 안 끼는 게 맞음(TeamJoin.Worth, 회차 804)
+            yield return TestKit.WaitFor(() => { if (Idle(w.Floki) && w.Ragnar.Ai.Job is GatherJob rg && !TeamJoin.Worth(rg.Remaining() - rg.Carried(), rg.Target, 1)) small = true; return TargetOf(w.Floki) == 40 || !Gathering(w.Ragnar, "Wood") || small; }, 240f);
             bool joined = Gathering(w.Floki, "Wood") && Gathering(w.Ragnar, "Wood") && ((GatherJob)w.Floki.Ai.Job).Team != null && ((GatherJob)w.Floki.Ai.Job).Team == ((GatherJob)w.Ragnar.Ai.Job).Team;
-            checks.Add($"플로키가 제 일 끝내고 라그나 팀에 낌 ({TestKit.Waited:0}초)", joined);
+            if (small && !joined) checks.Add($"플로키 쉴 때 라그나 남은 몫 작아 안 낌 — 맞음 ({TestKit.Waited:0}초)", true);
+            else checks.Add($"플로키가 제 일 끝내고 라그나 팀에 낌 ({TestKit.Waited:0}초)", joined);
             yield return TestKit.WaitFor(() => Count(w, "Wood") >= wood0 + 40 && Idle(w.Ragnar) && Idle(w.Floki), 300f);
             checks.Add($"합쳐 40개 넘게 들어오고 둘 다 복귀 (나무 {Count(w, "Wood") - wood0}, {TestKit.Waited:0}초)", TestKit.Ok);
 

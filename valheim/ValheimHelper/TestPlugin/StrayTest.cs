@@ -83,8 +83,9 @@ namespace ValheimHelper
             inv.AddItem(ObjectDB.instance.GetItemPrefab("AxeFlint"), 1);
             GatherTest.Say($"!{Workers.Name1} 나무 10", null);
             t = 0f;
-            while (t < 120f && !(r.Ai.Job is GatherJob gj && gj.Traveling && r.GetVelocity().magnitude > 1f)) { t += 0.5f; yield return new WaitForSeconds(0.5f); }
+            while (t < 300f && (t < 2f || r.Ai.Job is GatherJob) && !(r.Ai.Job is GatherJob gj && gj.Traveling && r.GetVelocity().magnitude > 1f)) { t += 0.5f; yield return new WaitForSeconds(0.5f); }
             bool going = r.Ai.Job is GatherJob g0 && g0.Traveling;
+            bool back = going && HarmonyLib.AccessTools.Field(typeof(GatherJob), "m_step").GetValue(r.Ai.Job).ToString() == "Return"; // 거점 곁 나무로 다 채우고 돌아가는 길일 수 있음(회차 804)
             checks.Add($"채집 길 나섬 ({t:0.0}초)", going);
             if (!going) yield break;
             Vector3 v = r.GetVelocity(); v.y = 0f;
@@ -93,7 +94,8 @@ namespace ValheimHelper
             while (t2 < 15f && had("Resin") < resin0 + 2) { t2 += 0.5f; yield return new WaitForSeconds(0.5f); }
             checks.Add($"길 위 새 물건(송진 2) 주움 ({had("Resin") - resin0}, {t2:0.0}초)", had("Resin") >= resin0 + 2);
             yield return new WaitForSeconds(2f);
-            checks.Add($"주운 뒤 채집 이어 감 ({r.Ai.Current}, {r.Ai.Job?.GetType().Name})", r.Ai.Current == WorkerAI.Mode.Work && r.Ai.Job is GatherJob);
+            if (back) checks.Add($"주운 뒤 집으로 가 채집 마침 ({r.Ai.Current}, {r.Ai.Job?.GetType().Name}, 나무 {inv.CountItems(nm("Wood"))})", r.Ai.Job is GatherJob || inv.CountItems(nm("Wood")) == 0);
+            else checks.Add($"주운 뒤 채집 이어 감 ({r.Ai.Current}, {r.Ai.Job?.GetType().Name})", r.Ai.Current == WorkerAI.Mode.Work && r.Ai.Job is GatherJob);
         }
     }
 }
