@@ -30,6 +30,7 @@ namespace ValheimHelper
             {
                 GatherJob.TestIgnorePlayers = false;
                 GatherJob.TestFakePlayer = null;
+                StuckWatch.TestSeen = null;
                 TestKit.Restore(w);
             }
             TestKit.End(w, checks);
@@ -144,8 +145,15 @@ namespace ValheimHelper
             w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, w.Player.transform.rotation, false);
             yield return new WaitForSeconds(0.5f);
             if (!(ai.Job is GatherJob gj)) { checks.Add("일이 남아 있음", false); yield break; }
+            // 바) 보는 중/안 보는 중 강제(사용자 11-18 "64m를 보는지로"): 120m 밖이어도 보이면 생략 안 함 → 안 보게 되면 생략 시작
+            StuckWatch.TestSeen = p => true;
             gj.TestReturn();
+            yield return new WaitForSeconds(4f);
+            checks.Add($"보는 중이면 멀어도 생략 안 함 ({GatherJob.FarSkips - skips1}번)", GatherJob.FarSkips == skips1);
+            w.Ragnar.TeleportTo(spot + Vector3.up * 0.3f, w.Player.transform.rotation, false); // 보는 중에 걸어온 만큼 되돌림(길 100m 넘게 칸)
+            StuckWatch.TestSeen = p => false;
             yield return TestKit.WaitFor(() => GatherJob.FarSkips > skips1, 30f);
+            StuckWatch.TestSeen = null; // 생략 중 그만두기·내림은 아래 칸이 옛 거리(TestFakePlayer)로 봄
             checks.Add($"멀리서 귀환 → 이동 생략 시작 ({ai.Job?.StepName}, 길 {GatherJob.FarLastLength:0}m, 기다림 {GatherJob.FarLastSeconds:0.0}초)", TestKit.Ok);
             if (!TestKit.Ok) yield break;
             float start = Time.time;

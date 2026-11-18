@@ -1,0 +1,194 @@
+# vh_skiptest FAIL 발췌 — 2026-11-18 12:50 회차 811 (diag 칸 + 그 시험 동안 모드 로그 줄)
+
+## diag
+=== vh_skiptest 2026-11-18 12:50:25 게임 1.0.21 Unity 6000.0.75f1 모드 0.3.8+74e973b* (2026-11-18 12:49) 배속 3 ===
+플러그인: ChestName 1.1.2, Display BepInEx Info In-Game 2.0.2, Valheim Helper 0.3.8, Valheim Helper Test 0.3.8
+지난 시험 상자 4개 치움
+시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+시작 정리: 거점 60m 안 생물 2마리 치움
+자리 점검: 장소 Dolmen02 29m(반지름 8), 장소 ShipSetting01 47m(반지름 24), 장소 WoodHouse1 48m(반지름 8), 장소 Dolmen02 57m(반지름 8), 장소 Runestone_Meadows 81m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+OK   깃발·NPC·상자
+  0° 232m: 직선 52m 건넘 → 직선(길 못 찾음)(54.1ms)
+  15° 684m: 직선 68m 건넘 → 직선(길 못 찾음)(32.1ms)
+  75° 1260m: 직선 712m 건넘 → 직선(길 못 찾음)(64.4ms)
+  90° 1280m: 직선 728m 건넘 → 직선(길 못 찾음)(35.3ms)
+물 건너는 두 점 105°: 직선 324m, 길 392m, 거친 길 42점, 찾기 21.7ms
+OK   밝혀진 목적지 → 물 피한 거친 길 (거친 길 42점, 깊은 물 지점 0개)
+OK   돌아가는 길이 직선보다 김 (392/324m)
+OK   길 찾기 100ms 안 (21.7ms)
+> !라그나 나무 30
+OK   일 시작함
+OK   플레이어 곁에선 생략 안 함 (0번)
+OK   보는 중이면 멀어도 생략 안 함 (0번)
+OK   멀리서 귀환 → 이동 생략 시작 (Return, 길 93m, 기다림 13.3초)
+FAIL 기다림 = 길 ÷ 달리기 속도 (93m ÷ 7.0 = 13.3초)
+  상태(FAIL 순간): [7s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+    라그나 (-178.4,87.5,239.6) Work 선 까닭 멀리선 이동 생략 속도 5.1 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(298.7m) 기다림 False 걷기 False 뒤 0 새로 -42.2초 뒤 · 길 없음 · m_path 33: (-180.4, 86.5, 237.2) (-181.6, 86.5, 230.7) (-182.8, 86.1, 226.1) … (-221.0, 78.2, 163.9) 길 True · MoveTo 가는 중((-221.0, 78.1, 163.9) 거리 2.5 뛰기 True)
+    플로키 (-219.6,78.2,166.5) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.5m) 기다림 False 걷기 False 뒤 0 새로 -42.2초 뒤 · 길 없음 · m_path 0: 길 False · 
+OK   다 기다린 뒤 옮겨짐 (끝 1, 그만둠 0, 13.4초)
+OK   기다리는 동안 걷지 않음 (출발점에서 최대 0.4m)
+OK   기다린 시간 ≥ 예상의 95% (13.4/13.3초)
+OK   기다리는 동안 밝힌 지도 위치 7번 (2초마다 + 끝)
+OK   지도 아이콘이 생략 중 지도상 위치에 (아이콘–지도 위치 9.6m, 아이콘–몸 31m, 받음 7번, 일꾼 아이콘 2개)
+OK   목적지 20m 안에 내림 (거점까지 11.3m, 출발점에서 75m)
+OK   단단한 땅 위 (높이 80.1/땅 80.0)
+OK   짐 그대로 (30 → 30)
+OK   체력 그대로 (71.0 → 70.7)
+OK   마저 걸어 상자에 넣음 (짐 0, 합 30 → 30)
+> !라그나 나무 30
+OK   다가옴 칸: 이동 생략 시작
+OK   지도 위치에 다가오면 그 근처에 내림 (내림 1, 그만둠 0, 끝 0, 몸–플레이어 83m)
+OK   내린 자리 = 그때 지도 위치 근처 (3.0m, 출발점에서 63m)
+OK   다가옴 칸: 단단한 땅 위 (높이 83.2/땅 83.0)
+OK   다가옴 칸: 짐·체력 그대로 (짐 30 → 30, 체력 71 → 70)
+OK   내린 자리부터 걸어 상자에 넣음 (다시 생략 0번, 합 30 → 30)
+OK   대사에 자리표시자 안 남음
+끝 상태: [47s] 라그나 hp70/70 2m Idle 짐4 대기0 | 플로키 hp70/70 1m Idle 짐4 대기0 | 상자 30 | 생물 0
+멈춤 0번 · 일부러 선 것 2번, 합 23초, 가장 긴 13초(멀리선 이동 생략 GatherJob/Return) [많은 것: 멀리선 이동 생략 GatherJob/Return 23초] (선 표본 109, 가장 오래 13.1초) · 헛휘두름 0번 · 기다림 합 멀리선 이동 생략 24초
+--- 상태 흐름(3초마다, 최근 16개) ---
+[0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[3s] 라그나 hp71/71 106m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[6s] 라그나 hp71/71 89m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[9s] 라그나 hp71/71 85m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[12s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[15s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[18s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[21s] 라그나 hp71/71 11m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[24s] 라그나 hp71/71 3m GatherJob/Deposit 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[27s] 라그나 hp71/71 120m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[30s] 라그나 hp71/71 120m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[33s] 라그나 hp70/70 120m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[36s] 라그나 hp70/70 52m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[39s] 라그나 hp70/70 40m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[42s] 라그나 hp70/70 20m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[45s] 라그나 hp70/70 5m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+--- NPC 대사 ---
+라그나: 낯선 땅이군. 먼저 물길과 숲을 보지. 그다음 일을 정하자.
+플로키: 까마귀가 앞서 왔군. 내가 늦었어.
+라그나: 플로키, 비 오는 날엔 생각하기 좋지 않나?
+라그나: 처음엔 다 느린 법이야. 다녀올게.
+플로키: 빗소리 좋다. 나무들이 목마르다 했거든.
+라그나: 나무 30개. 땀 좀 흘렸지만 나쁘지 않았어.
+라그나: 아직 손이 느려. 다녀올게.
+플로키: 라그나, 나무를 그렇게 많이? 혼자 다 했어?
+라그나: 손이 익었지.
+라그나: 나무 30개, 상자에 넣었어. 오가는 길도 눈에 담아 뒀지.
+판정: FAIL (25/26)
+시간: 53초
+프레임: 평균 230 FPS (실시간 18초)
+
+## 모드 로그 (113줄)
+[Info   :Valheim Helper] === vh_skiptest 시작
+[Info   :Valheim Helper] 시험: 까마귀 Hugin 치움 — 자리 (-228.7, 79.3, 176.9)·플레이어와 19.9m
+[Info   :Valheim Helper] 지난 시험 상자 4개 치움
+[Info   :Valheim Helper] 시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+[Info   :Valheim Helper] 거점 이동 (-218.49, 77.94, 164.32), 새 NPC 2명
+[Info   :Valheim Helper] <라그나> 낯선 땅이군. 먼저 물길과 숲을 보지. 그다음 일을 정하자.
+[Info   :Valheim Helper] <플로키> 까마귀가 앞서 왔군. 내가 늦었어.
+[Info   :Valheim Helper] <라그나> (말풍선) 플로키, 비 오는 날엔 생각하기 좋지 않나?
+[Info   :Valheim Helper] 시작 정리: 거점 60m 안 생물 2마리 치움
+[Info   :Valheim Helper] 자리 점검: 장소 Dolmen02 29m(반지름 8), 장소 ShipSetting01 47m(반지름 24), 장소 WoodHouse1 48m(반지름 8), 장소 Dolmen02 57m(반지름 8), 장소 Runestone_Meadows 81m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+[Info   :Valheim Helper] 시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] OK   깃발·NPC·상자
+[Info   :Valheim Helper]   0° 232m: 직선 52m 건넘 → 직선(길 못 찾음)(54.1ms)
+[Info   :Valheim Helper]   15° 684m: 직선 68m 건넘 → 직선(길 못 찾음)(32.1ms)
+[Info   :Valheim Helper]   75° 1260m: 직선 712m 건넘 → 직선(길 못 찾음)(64.4ms)
+[Info   :Valheim Helper]   90° 1280m: 직선 728m 건넘 → 직선(길 못 찾음)(35.3ms)
+[Info   :Valheim Helper] 물 건너는 두 점 105°: 직선 324m, 길 392m, 거친 길 42점, 찾기 21.7ms
+[Info   :Valheim Helper] OK   밝혀진 목적지 → 물 피한 거친 길 (거친 길 42점, 깊은 물 지점 0개)
+[Info   :Valheim Helper] OK   돌아가는 길이 직선보다 김 (392/324m)
+[Info   :Valheim Helper] OK   길 찾기 100ms 안 (21.7ms)
+[Info   :Valheim Helper] > !라그나 나무 30
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 30: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 처음엔 다 느린 법이야. 다녀올게.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] <플로키> (말풍선) 빗소리 좋다. 나무들이 목마르다 했거든.
+[Info   :Valheim Helper] OK   일 시작함
+[Info   :Valheim Helper] OK   플레이어 곁에선 생략 안 함 (0번)
+[Info   :Valheim Helper] 라그나 작업 Wood: Approach → Return
+[Info   :Valheim Helper] OK   보는 중이면 멀어도 생략 안 함 (0번)
+[Info   :Valheim Helper] 라그나 작업 Wood: 멀리선 이동 생략 93m(거친 길 10점, 직선 87m) → 13초 기다림(달리기 7.0)
+[Info   :Valheim Helper] OK   멀리서 귀환 → 이동 생략 시작 (Return, 길 93m, 기다림 13.3초)
+[Info   :Valheim Helper] FAIL 기다림 = 길 ÷ 달리기 속도 (93m ÷ 7.0 = 13.3초)
+[Info   :Valheim Helper]   상태(FAIL 순간): [7s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper]     라그나 (-178.4,87.5,239.6) Work 선 까닭 멀리선 이동 생략 속도 5.1 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(298.7m) 기다림 False 걷기 False 뒤 0 새로 -42.2초 뒤 · 길 없음 · m_path 33: (-180.4, 86.5, 237.2) (-181.6, 86.5, 230.7) (-182.8, 86.1, 226.1) … (-221.0, 78.2, 163.9) 길 True · MoveTo 가는 중((-221.0, 78.1, 163.9) 거리 2.5 뛰기 True)
+[Info   :Valheim Helper]     플로키 (-219.6,78.2,166.5) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.5m) 기다림 False 걷기 False 뒤 0 새로 -42.2초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper] 라그나 작업 Wood: 멀리선 이동 생략 끝(13초 + 옮기기 0.2초, 목적지 12m) → 마저 걷기
+[Info   :Valheim Helper] OK   다 기다린 뒤 옮겨짐 (끝 1, 그만둠 0, 13.4초)
+[Info   :Valheim Helper] OK   기다리는 동안 걷지 않음 (출발점에서 최대 0.4m)
+[Info   :Valheim Helper] OK   기다린 시간 ≥ 예상의 95% (13.4/13.3초)
+[Info   :Valheim Helper] OK   기다리는 동안 밝힌 지도 위치 7번 (2초마다 + 끝)
+[Info   :Valheim Helper] OK   지도 아이콘이 생략 중 지도상 위치에 (아이콘–지도 위치 9.6m, 아이콘–몸 31m, 받음 7번, 일꾼 아이콘 2개)
+[Info   :Valheim Helper] OK   목적지 20m 안에 내림 (거점까지 11.3m, 출발점에서 75m)
+[Info   :Valheim Helper] OK   단단한 땅 위 (높이 80.1/땅 80.0)
+[Info   :Valheim Helper] OK   짐 그대로 (30 → 30)
+[Info   :Valheim Helper] OK   체력 그대로 (71.0 → 70.7)
+[Info   :Valheim Helper] 멈춤 13.3초: 라그나 멀리선 이동 생략 GatherJob/Return (일부러) / 입력 0.94, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.7, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 79.9/땅 80.0/원래땅 80.0/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 Terrain/_Zone(Clone)(-0.09,+1.00,+0.00)×0.024 · 앞 0.6m 빔
+[Info   :Valheim Helper] 라그나 작업 Wood: Return → Deposit
+[Info   :Valheim Helper] 라그나: Wood 30개 넣음 (30/30) 상자 (-217.1, 78.7, 167.0) 집에서 5m
+[Info   :Valheim Helper] <라그나> 나무 30개. 땀 좀 흘렸지만 나쁘지 않았어.
+[Info   :Valheim Helper] OK   마저 걸어 상자에 넣음 (짐 0, 합 30 → 30)
+[Info   :Valheim Helper] > !라그나 나무 30
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 30: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 아직 손이 느려. 다녀올게.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Return
+[Info   :Valheim Helper] 라그나 작업 Wood: 멀리선 이동 생략 130m(거친 길 14점, 직선 122m) → 19초 기다림(달리기 7.0)
+[Info   :Valheim Helper] OK   다가옴 칸: 이동 생략 시작
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 나무를 그렇게 많이? 혼자 다 했어?
+[Info   :Valheim Helper] <라그나> (말풍선) 손이 익었지.
+[Info   :Valheim Helper] 라그나 작업 Wood: 멀리선 이동 생략 중 플레이어가 지도 위치에 다가옴(10/19초) → 길 0m 앞 자리에 내림(62.6m → 목표에서 3.0m (후보 1번째)) → 걷기
+[Info   :Valheim Helper] OK   지도 위치에 다가오면 그 근처에 내림 (내림 1, 그만둠 0, 끝 0, 몸–플레이어 83m)
+[Info   :Valheim Helper] OK   내린 자리 = 그때 지도 위치 근처 (3.0m, 출발점에서 63m)
+[Info   :Valheim Helper] OK   다가옴 칸: 단단한 땅 위 (높이 83.2/땅 83.0)
+[Info   :Valheim Helper] OK   다가옴 칸: 짐·체력 그대로 (짐 30 → 30, 체력 71 → 70)
+[Info   :Valheim Helper] 멈춤 10.1초: 라그나 멀리선 이동 생략 GatherJob/Return (일부러) / 입력 0.20, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 1.3, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 83.0/땅 83.0/원래땅 83.0/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 Terrain/_Zone(Clone)
+[Info   :Valheim Helper] 라그나 작업 Wood: Return → Deposit
+[Info   :Valheim Helper] 라그나: Wood 30개 넣음 (30/30) 상자 (-217.1, 78.7, 167.0) 집에서 5m
+[Info   :Valheim Helper] <라그나> 나무 30개, 상자에 넣었어. 오가는 길도 눈에 담아 뒀지.
+[Info   :Valheim Helper] OK   내린 자리부터 걸어 상자에 넣음 (다시 생략 0번, 합 30 → 30)
+[Info   :Valheim Helper] OK   대사에 자리표시자 안 남음
+[Info   :Valheim Helper] 끝 상태: [47s] 라그나 hp70/70 2m Idle 짐4 대기0 | 플로키 hp70/70 1m Idle 짐4 대기0 | 상자 30 | 생물 0
+[Info   :Valheim Helper] 멈춤 0번 · 일부러 선 것 2번, 합 23초, 가장 긴 13초(멀리선 이동 생략 GatherJob/Return) [많은 것: 멀리선 이동 생략 GatherJob/Return 23초] (선 표본 109, 가장 오래 13.1초) · 헛휘두름 0번 · 기다림 합 멀리선 이동 생략 24초
+[Info   :Valheim Helper] --- 상태 흐름(3초마다, 최근 16개) ---
+[Info   :Valheim Helper] [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [3s] 라그나 hp71/71 106m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [6s] 라그나 hp71/71 89m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [9s] 라그나 hp71/71 85m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [12s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [15s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [18s] 라그나 hp71/71 86m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [21s] 라그나 hp71/71 11m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [24s] 라그나 hp71/71 3m GatherJob/Deposit 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [27s] 라그나 hp71/71 120m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [30s] 라그나 hp71/71 120m GatherJob/Return 짐34 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [33s] 라그나 hp70/70 120m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [36s] 라그나 hp70/70 52m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [39s] 라그나 hp70/70 40m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [42s] 라그나 hp70/70 20m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [45s] 라그나 hp70/70 5m GatherJob/Return 짐34 대기0 | 플로키 hp70/70 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] --- NPC 대사 ---
+[Info   :Valheim Helper] 라그나: 낯선 땅이군. 먼저 물길과 숲을 보지. 그다음 일을 정하자.
+[Info   :Valheim Helper] 플로키: 까마귀가 앞서 왔군. 내가 늦었어.
+[Info   :Valheim Helper] 라그나: 플로키, 비 오는 날엔 생각하기 좋지 않나?
+[Info   :Valheim Helper] 라그나: 처음엔 다 느린 법이야. 다녀올게.
+[Info   :Valheim Helper] 플로키: 빗소리 좋다. 나무들이 목마르다 했거든.
+[Info   :Valheim Helper] 라그나: 나무 30개. 땀 좀 흘렸지만 나쁘지 않았어.
+[Info   :Valheim Helper] 라그나: 아직 손이 느려. 다녀올게.
+[Info   :Valheim Helper] 플로키: 라그나, 나무를 그렇게 많이? 혼자 다 했어?
+[Info   :Valheim Helper] 라그나: 손이 익었지.
+[Info   :Valheim Helper] 라그나: 나무 30개, 상자에 넣었어. 오가는 길도 눈에 담아 뒀지.
+[Info   :Valheim Helper] 판정: FAIL (25/26)
+[Info   :Valheim Helper] E072 저장 전: 상태 NotSaving, 끝 없음, 바뀐 조각 16/0, 저장 번호 184
+[Info   :Valheim Helper] 일꾼 기억 파일 저장: te4st41.vh-memory 1880바이트, 지식 15구역(1871자), 장소 0자, 적 0자, 길 0개(0자)
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75045 구역 136458에서 뺌
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75046 구역 134917에서 뺌
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75047 구역 134916에서 뺌
