@@ -132,6 +132,39 @@ namespace ValheimHelper
             checks.Add($"쉬던 호위병이 우리 먹이 주러 감 ({guard.Ai.Current}/{guard.Ai.Job?.GetType().Name ?? "-"}, 순찰 {ai.Patrolling})", TestKit.Ok);
             yield return TestKit.WaitFor(() => pig == null || !ptm.IsHungry(), 60f);
             checks.Add($"우리 멧돼지가 먹이를 먹음 ({TestKit.Waited:0}초)", pig != null && !ptm.IsHungry());
+
+            // 6) 쉬는 호위병 굽기(decisions 221줄, 회차 814): 상자 날고기 2 + 거점 화로·조리대 → 호위병이 구움(밖 재료면 안 감). 일꾼은 쉼(HoldChores)이라 안 낌
+            yield return TestKit.WaitFor(() => guard.Ai.Current == WorkerAI.Mode.Idle && !ai.Patrolling, 60f);
+            GameObject pit = ZNetScene.instance.GetPrefab("fire_pit"), stand = ZNetScene.instance.GetPrefab("piece_cookingstation");
+            string burnt = stand.GetComponent<CookingStation>().m_overCookedItem.name;
+            TestKit.ClearBaseStock(w, "RawMeat", "CookedMeat", "Wood", burnt);
+            TestKit.PutInChest(w.Chest, "RawMeat", 2);
+            TestKit.PutInChest(w.Chest, "Wood", 5);
+            Vector3 cookAt = GatherTest.Ground(w.Home - Vector3.Cross(Vector3.up, f) * 6f);
+            made.Add(Object.Instantiate(pit, cookAt, Quaternion.identity));
+            made.Add(Object.Instantiate(stand, cookAt, Quaternion.identity));
+            yield return new WaitForSeconds(2f);
+            w.Ragnar.Ai.HoldChores();
+            w.Floki?.Ai.HoldChores();
+            Departures.TestIdleChores = true;
+            for (int i = 0; i < 30 && !(guard.Ai.Job is PlanJob); i++) // 후보 87개를 한 차례에 계획 4개씩 — 안 되는 것은 10분 쉬니 차례마다 아래로 내려가 날고기에 닿음
+            {
+                Departures.TestRefillNow();
+                yield return TestKit.WaitFor(() => guard.Ai.Job is PlanJob, 1f);
+            }
+            Departures.TestIdleChores = false;
+            checks.Add($"쉬던 호위병이 상자 날고기로 굽기 시작 ({guard.Ai.Current}/{guard.Ai.Job?.GetType().Name ?? "-"}, 라그나 {w.Ragnar.Ai.Job?.GetType().Name ?? "-"})", guard.Ai.Job is PlanJob);
+            checks.Add("호위병 굽기는 동행 요청이면 놓는 집안일(GuardFree)", Departures.GuardFree(guard));
+            string cooked = ObjectDB.instance.GetItemPrefab("CookedMeat").GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            yield return TestKit.WaitFor(() => CookedNow(w, cooked, guard) >= 2, 240f);
+            checks.Add($"호위병이 고기 2개 구움 (상자+가방 {CookedNow(w, cooked, guard)}, {TestKit.Waited:0}초)", CookedNow(w, cooked, guard) >= 2);
+        }
+
+        static int CookedNow(TestKit.World w, string name, WorkerNpc guard)
+        {
+            int n = guard.GetInventory().CountItems(name);
+            foreach (var c in Chests.NearBase(w.Home)) n += GatherTest.Count(c, "CookedMeat");
+            return n;
         }
     }
 }

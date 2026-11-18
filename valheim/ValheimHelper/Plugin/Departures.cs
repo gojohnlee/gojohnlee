@@ -240,7 +240,7 @@ namespace ValheimHelper
             && (g.Ai.Current == WorkerAI.Mode.Idle || g.Ai.Current == WorkerAI.Mode.Home || g.Ai.Current == WorkerAI.Mode.Work && (g.Ai.Job is GuardReadyJob || GuardChore(g.Ai.Job)));
 
         /// <summary>호위병이 쉴 때 하는 거점 안 집안일(11-14) — 동행 요청이 오면 놓는다(GuardFree가 쉬는 것으로 봄).</summary>
-        internal static bool GuardChore(IWorkerJob j) => j is HoneyJob || j is LivestockJob || j is FarmJob;
+        internal static bool GuardChore(IWorkerJob j) => j is HoneyJob || j is LivestockJob || j is FarmJob || j is PlanJob p && p.FromIdle;
 
         /// <summary>대기열 "호위병이 쉴 때"(ReadyWhen.GuardIdle).</summary>
         internal static bool GuardIdle() => GuardFree(GuardOf());

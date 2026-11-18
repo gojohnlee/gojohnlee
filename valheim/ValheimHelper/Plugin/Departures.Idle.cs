@@ -66,7 +66,7 @@ namespace ValheimHelper
         /// 쉬는 일꾼: 거점 음식 상자에 먹을 것이 IdleFoodBelow 밑이면 FoodRank 위에서부터 되는 첫 음식을 구한다(묻지 않음).
         /// 채집 음식(베리·버섯)은 출발 판단 Go면 IdleFoodAmount개, 만드는 음식은 TryCook. 안 되면 그 물건은 10분 쉼. 시작했으면 true.
         /// </summary>
-        internal static bool IdleFood(WorkerNpc npc)
+        internal static bool IdleFood(WorkerNpc npc, bool guard = false)
         {
             int have = BaseFood(npc.Home);
             if (have >= IdleFoodBelow) return false;
@@ -74,13 +74,15 @@ namespace ValheimHelper
             foreach (string item in FoodRank())
             {
                 if (RefillSkipped(item) || NightSkipped(item) || RefillBusy(item) || FarmOnly(item)) continue;
+                if (guard && s_guardSkipUntil.TryGetValue(item, out float gs) && Time.time < gs) continue;
                 if (ResourceCatalog.WaysFor(item).Count == 0)
                 {
                     if (EnvMan.IsNight() || plans >= IdlePlansPerCheck) continue;
                     plans++;
-                    if (TryCook(npc, item, have)) return true;
+                    if (TryCook(npc, item, have, guard)) return true;
                     continue;
                 }
+                if (guard) continue; // 호위병은 채집하러 안 나감(decisions 221줄 — 거점 안 집안일만)
                 HashSet<ToolKind> ways = GatherJob.WaysFor(npc, item);
                 if (ways.Count == 0 || ways.Contains(ToolKind.Hunt)) { s_refillSkipUntil[item] = Time.time + 600f; continue; }
                 var cmd = new ChatCommand { Kind = CommandKind.Item, Item = item, Amount = IdleFoodAmount };
@@ -102,7 +104,10 @@ namespace ValheimHelper
         /// 만드는 음식 하나: 제작 계획이 끝까지 되고(설비·재료 나는 곳 앎, 밭 재료 없음) IdleCookMaxSeconds 안이며(6개가 길면·사냥이 혼자 약하면 3·2·1개 — 상자 재료만큼),
         /// 사냥·채집 단계마다 출발 판단이 Go이고 혼자 약했던 사냥감이 아닐 때만. 안 되면 10분 쉼, 계획이 실패로 끝나도 10분 쉼(PlanJob.FromIdle).
         /// </summary>
-        static bool TryCook(WorkerNpc npc, string item, int have)
+        /// <summary>호위병 쉴 때 만들기에서 안 된 음식(10분) — 일꾼 쪽 쉼과 따로: 호위병이 밖 재료라 못 해도 일꾼은 함.</summary>
+        static readonly Dictionary<string, float> s_guardSkipUntil = new Dictionary<string, float>();
+
+        static bool TryCook(WorkerNpc npc, string item, int have, bool guard = false)
         {
             Plan plan = null;
             int amount = 0;
@@ -118,6 +123,7 @@ namespace ValheimHelper
                     {
                         if (st.Kind == StepKind.Farm) { why = "밭 재료"; break; }
                         if (st.Kind != StepKind.Gather && st.Kind != StepKind.Hunt) continue;
+                        if (guard) { why = "밖 재료(호위병)"; break; } // 상자 재료만으로 되는 것만 — 수를 줄여 다시 봄
                         DepartureResult j = JudgeStep(npc, st.Item, st.Amount);
                         if (j == null || j.Action != DepartAction.Go) { why = $"{st.Item} 판단 {(j != null ? j.Action.ToString() : "방법 없음")}"; break; }
                         if (GatherJob.WaysFor(npc, st.Item).Contains(ToolKind.Hunt) && HuntWeak(npc, st.Item)) { why = $"{st.Item} 혼자 약함"; break; }
@@ -125,7 +131,7 @@ namespace ValheimHelper
                 if (why == null || why == "단계 없음" || why == "설비·출처 없음" || why == "밭 재료") break;
             }
             Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 만들기 {item} {amount}(상자 음식 {have}): 단계 {plan.Steps.Count}, {plan.Seconds:0}초 → {why ?? "감"}");
-            if (why != null) { s_refillSkipUntil[item] = Time.time + 600f; return false; }
+            if (why != null) { if (guard) s_guardSkipUntil[item] = Time.time + 600f; else s_refillSkipUntil[item] = Time.time + 600f; return false; }
             string label = GatherJob.ItemLabel(item);
             npc.Ai.StartJob(new PlanJob(npc, plan, label) { FromIdle = true, Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = item, Amount = amount } });
             npc.Say("idleCook", new Dictionary<string, string> { ["item"] = label, ["n"] = amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString() });

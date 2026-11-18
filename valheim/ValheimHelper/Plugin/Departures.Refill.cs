@@ -70,7 +70,7 @@ namespace ValheimHelper
                 {
                     // 거점(125m) 안 집안일만: 밭(거두기·심기)·꿀·먹이. 순찰 중엔 안 함(순찰 먼저), 채집·먼 길·보충은 안 함.
                     // 동행 요청이 오면 GuardFree가 집안일 중도 쉬는 것으로 보아 GoWithGuard의 Follow가 바로 놓게 한다.
-                    if (!npc.Ai.Resting && !npc.Ai.Patrolling && ChoresOn && Features.IdleChores && !IdleFarm(npc, BaseArea.Radius) && !IdleHoney(npc)) IdleFeed(npc);
+                    if (!npc.Ai.Resting && !npc.Ai.Patrolling && ChoresOn && Features.IdleChores && !IdleFarm(npc, BaseArea.Radius) && !IdleHoney(npc) && !IdleFeed(npc)) IdleFood(npc, true); // 굽기·요리는 상자 재료만(회차 814)
                     continue;
                 }
                 if (JoinRisky(npc) != null) continue; // 쉬는 일꾼 없게 ① 동료가 위험한 데 혼자 가면 같이(사용자 11-13)
@@ -171,7 +171,7 @@ namespace ValheimHelper
         /// <summary>그 물건을 이미 누가 채우거나 만드는 중이면(두 일꾼이 같은 걸 겹쳐 만들어 재료를 두 번 쓰지 않게).</summary>
         internal static bool RefillBusy(string item)
         {
-            foreach (var n in WorkerNpc.All)
+            foreach (var n in WorkerNpc.All.Concat(WorkerNpc.Guards)) // 호위병이 굽는 음식도(회차 814)
             {
                 IWorkerJob j = n.Ai.Job;
                 if (j is GatherJob g && g.Item == item) return true;
