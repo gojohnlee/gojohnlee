@@ -8,3 +8,9 @@
 - 구분선 아래만 요청으로 읽는다.
 ======================================================================
 
+문서 감사 2차로 더 나온 어긋남(11-18, 사용자 — '문서 감사로 나온 결정–코드 어긋남' ★에 조각으로 이어 붙임)
+- 차) 출발 전 '맞는 인원' 셈에서 호위병이 빠짐(버그, 호위병 집안일과 같은 원인): Departures.Judge.cs:106이 WorkerNpc.All에서 IsGuard를 찾음 → 호위병 한 방이 안 들어가 셋이면 되는 곳도 장비 요청으로 멈춤. Guards를 넣고 시험.
+- 카) 자동 보충 만들기(Departures.Refill.cs:266 PlanJob)가 실패·막힘으로 끝나도 RefillJobFailed(10분 쉼)가 안 불림(PlanJob.cs:260-263은 FromIdle만) → 11-07 '무한 반복 막기'가 빠짐. 자동 보충 양보 조각과 같이 FromRefill 깃발로 나눔.
+- 타) 곧 밤 판단(Core/Npc/Departure.cs:227 nightSoon)이 덜 위험한 곳으로 바꾼 뒤 다시 안 셈 → 바꾼 곳 거리로 다시.
+- 파) vh_droptest·vh_straytest가 어느 B 묶음에도 없어 전체 회귀에서 빠짐 → 맞는 묶음에 넣고 PC run.ps1도 확인.
+- 하) E132: 회차 807 원래 묶음 pittest 19/19 PASS — decisions 92줄 닫기 기준(원인 찾아 고침)을 채웠으면 Errors-resolved로 옮김.
