@@ -99,7 +99,7 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 만드는 음식 하나: 제작 계획이 끝까지 되고(설비·재료 나는 곳 앎, 밭 재료 없음) IdleCookMaxSeconds 안이며(6개가 길면 3개),
+        /// 만드는 음식 하나: 제작 계획이 끝까지 되고(설비·재료 나는 곳 앎, 밭 재료 없음) IdleCookMaxSeconds 안이며(6개가 길면·사냥이 혼자 약하면 3·2·1개 — 상자 재료만큼),
         /// 사냥·채집 단계마다 출발 판단이 Go이고 혼자 약했던 사냥감이 아닐 때만. 안 되면 10분 쉼, 계획이 실패로 끝나도 10분 쉼(PlanJob.FromIdle).
         /// </summary>
         static bool TryCook(WorkerNpc npc, string item, int have)
@@ -107,22 +107,23 @@ namespace ValheimHelper
             Plan plan = null;
             int amount = 0;
             string why = null;
-            foreach (int n in new[] { IdleCookAmount, IdleCookAmount / 2 })
+            // 6 → 3 → 2 → 1: 사냥이 혼자 약해도 상자에 모아 둔 재료만큼은 굽는다(회차 805 vh_chorestest: 멧돼지 무리로 날고기 2/6에서 사냥 실패 → 하나도 안 구움)
+            foreach (int n in new[] { IdleCookAmount, IdleCookAmount / 2, 2, 1 })
             {
                 amount = n;
                 plan = PlanFor(npc, new List<Ingredient> { new Ingredient(item, n) });
                 why = plan.Steps.Count == 0 ? "단계 없음" : plan.Partial ? "설비·출처 없음" : plan.TooLong || plan.Seconds > IdleCookMaxSeconds ? $"너무 김 {plan.Seconds:0}초" : null;
-                if (why == null || !why.StartsWith("너무 김")) break;
+                if (why == null)
+                    foreach (var st in plan.Steps)
+                    {
+                        if (st.Kind == StepKind.Farm) { why = "밭 재료"; break; }
+                        if (st.Kind != StepKind.Gather && st.Kind != StepKind.Hunt) continue;
+                        DepartureResult j = JudgeStep(npc, st.Item, st.Amount);
+                        if (j == null || j.Action != DepartAction.Go) { why = $"{st.Item} 판단 {(j != null ? j.Action.ToString() : "방법 없음")}"; break; }
+                        if (GatherJob.WaysFor(npc, st.Item).Contains(ToolKind.Hunt) && HuntWeak(npc, st.Item)) { why = $"{st.Item} 혼자 약함"; break; }
+                    }
+                if (why == null || why == "단계 없음" || why == "설비·출처 없음" || why == "밭 재료") break;
             }
-            if (why == null)
-                foreach (var st in plan.Steps)
-                {
-                    if (st.Kind == StepKind.Farm) { why = "밭 재료"; break; }
-                    if (st.Kind != StepKind.Gather && st.Kind != StepKind.Hunt) continue;
-                    DepartureResult j = JudgeStep(npc, st.Item, st.Amount);
-                    if (j == null || j.Action != DepartAction.Go) { why = $"{st.Item} 판단 {(j != null ? j.Action.ToString() : "방법 없음")}"; break; }
-                    if (GatherJob.WaysFor(npc, st.Item).Contains(ToolKind.Hunt) && HuntWeak(npc, st.Item)) { why = $"{st.Item} 혼자 약함"; break; }
-                }
             Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 만들기 {item} {amount}(상자 음식 {have}): 단계 {plan.Steps.Count}, {plan.Seconds:0}초 → {why ?? "감"}");
             if (why != null) { s_refillSkipUntil[item] = Time.time + 600f; return false; }
             string label = GatherJob.ItemLabel(item);

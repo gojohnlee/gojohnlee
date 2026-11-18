@@ -18,6 +18,7 @@ namespace ValheimHelper
         float m_now;
         PlanStep m_step;
         GatherJob m_gather;
+        bool m_gotSome; // 실패한 채집·사냥 단계라도 상자에 넣은 게 있음(쉴 때 요리: 10분 쉬지 않고 모은 만큼 다시 계획)
         CraftStep m_craft;
         MachineStep m_machine;
         /// <summary>Wait만 남았을 때 끼워 넣는 짧은 자동 보충(저장하지 않음 — 보충은 기준치에서 다시 정해진다).</summary>
@@ -156,6 +157,7 @@ namespace ValheimHelper
             else
             {
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 계획 단계 {m_step.Id} {m_step.Kind} {m_step.Item} 실패");
+                if (m_gather != null && m_gather.Delivered > 0) m_gotSome = true;
                 m_runner.Fail(m_step.Id);
             }
             m_step = null; m_gather = null; m_craft = null; m_machine = null;
@@ -255,7 +257,9 @@ namespace ValheimHelper
         {
             Plugin.Log.LogInfo($"{m_npc.NpcName} 계획 끝: 완료 {m_runner.Count(StepState.Done)}, 실패 {m_runner.Count(StepState.Failed)}, 막힘 {m_runner.Count(StepState.Blocked)}");
             // 설비만 없던 계획(StationsOnly): 할 수 있는 단계를 다 했으면 "재료는 모았는데 ○○이 없어"(구상서 6-1, 10-26)
-            if (FromIdle && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
+            if (FromIdle && Goal != null && m_gotSome && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 쉴 때 {Goal.Item}: 재료 일부만 모음 → 쉬지 않고 모은 만큼 다시 계획"); // 회차 805
+            else if (FromIdle && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
                 Departures.RefillJobFailed(m_npc, Goal.Item, "idlePlan");
             else if (FromIdle) Departures.AddDebt(m_npc, m_runner.Plan.UsedStock); // 상자에서 쓴 재료는 다시 캐 둠(사용자 11-09)
             else if (Goal != null && Goal.Kind == WorkKind.Make && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) == 0)

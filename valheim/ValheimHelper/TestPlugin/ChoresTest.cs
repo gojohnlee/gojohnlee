@@ -47,6 +47,7 @@ namespace ValheimHelper
 
         static int Count(TestKit.World w, string prefab) => GatherTest.CountBase(w.Home, prefab);
         static int HoneyAll(TestKit.World w) => Count(w, "Honey") + w.Ragnar.GetInventory().CountItems("$item_honey") + w.Floki.GetInventory().CountItems("$item_honey");
+        static int HoneyEaten(TestKit.World w) { int n = 0; foreach (var npc in new[] { w.Ragnar, w.Floki }) foreach (string s in npc.Meals.Names) if (s == "Honey" || s == "$item_honey") n++; return n; }
         static bool Idle(WorkerNpc n) => n.Ai.Job == null && n.Ai.Current == WorkerAI.Mode.Idle;
         static bool Gathering(WorkerNpc n, string item) => n.Ai.Job is GatherJob g && g.Item == item;
         static int TargetOf(WorkerNpc n) => n.Ai.Job is GatherJob g ? g.Target : 0;
@@ -174,7 +175,7 @@ namespace ValheimHelper
             made.Add(hive);
             yield return null;
             hive.GetComponent<ZNetView>().GetZDO().Set(ZDOVars.s_level, 4);
-            int before = HoneyAll(w);
+            int before = HoneyAll(w), ate0 = HoneyEaten(w); // 배고프면 거둔 꿀을 바로 먹음(회차 805 — 먹은 것도 셈)
             Departures.TestHoneyNow();
             float t0 = Time.time;
             yield return TestKit.WaitFor(() => w.Ragnar.Ai.Job is HoneyJob || w.Floki.Ai.Job is HoneyJob, 70f);
@@ -182,8 +183,8 @@ namespace ValheimHelper
             if (!TestKit.Ok) yield break;
             yield return TestKit.WaitFor(() => !(w.Ragnar.Ai.Job is HoneyJob) && !(w.Floki.Ai.Job is HoneyJob), 120f);
             checks.Add($"꿀 거두기 끝 ({TestKit.Waited:0}초)", TestKit.Ok);
-            checks.Add($"벌통 비고 꿀 4개가 상자·짐에 들어옴(음식 들고 감 몫은 짐에) (벌통 {HoneyJob.Level(hive.GetComponent<Beehive>())}, 꿀 {before} → {HoneyAll(w)})",
-                HoneyJob.Level(hive.GetComponent<Beehive>()) == 0 && HoneyAll(w) >= before + 4);
+            checks.Add($"벌통 비고 꿀 4개가 상자·짐에 들어옴(음식 들고 감 몫은 짐에) (벌통 {HoneyJob.Level(hive.GetComponent<Beehive>())}, 꿀 {before} → {HoneyAll(w)}, 먹음 {HoneyEaten(w) - ate0})",
+                HoneyJob.Level(hive.GetComponent<Beehive>()) == 0 && HoneyAll(w) + HoneyEaten(w) - ate0 >= before + 4);
         }
 
         static IEnumerator Farm(TestKit.World w, GatherTest.Checks checks)
