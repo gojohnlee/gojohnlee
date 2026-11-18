@@ -31,6 +31,7 @@ namespace ValheimHelper
             {
                 running = false;
                 GatherJob.TestIgnorePlayers = GatherJob.TestNoFarStuck = false;
+                StuckWatch.TestSeen = null;
                 if (held != null) Speeds(held, saved, false);
                 TestKit.Restore(w);
             }
@@ -251,6 +252,8 @@ namespace ValheimHelper
             g.LoadStuck("1000|1000|2;1001|1000|2;1002|1000|2");
             Speeds(w.Ragnar, saved, true);
             hold(w.Ragnar);
+            // 근처 = 보는 중(사용자 11-18 "64m를 보는지로" — 40m 앞이어도 나무에 가리면 안 보는 중이라 순간이동함) → 보는 중으로 강제
+            StuckWatch.TestSeen = p => true;
             int unreach0 = GatherJob.Unreachable, rescues0 = GatherJob.Rescues, hops0 = GatherJob.Hops;
             int heard0 = w.Heard.Count;
             int total = Wood(w.Ragnar) + GatherTest.CountBase(w.Home, "Wood");
@@ -262,6 +265,7 @@ namespace ValheimHelper
             }, 150f);
             checks.Add($"뺀 곳 4곳째에 그만둠 (대안 없음 {GatherJob.Unreachable - unreach0}번)", GatherJob.Unreachable > unreach0);
             checks.Add($"근처라 목표 쪽 순간이동 안 함 ({GatherJob.Hops - hops0}번)", GatherJob.Hops == hops0);
+            StuckWatch.TestSeen = null; // 뒤 칸(귀환·사냥)은 원래 판정(회차 809: 남겨 두면 사냥이 보는 중이라 근처 건너뛰기)
             if (GatherJob.Unreachable == unreach0) yield break;
             checks.Add($"든 나무를 넣으러 감 ({ai.Job?.StepName})", ai.Job is GatherJob gr && gr.StepName == "Return");
 

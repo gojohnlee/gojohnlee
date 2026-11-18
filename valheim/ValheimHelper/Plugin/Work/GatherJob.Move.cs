@@ -173,10 +173,10 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 멀리선 이동 생략(사용자 결정 2026-10-23, Core FarSkip): 일꾼·목적지 모두 플레이어 64m 밖이고 FarSkip.MinDistance m 넘으면
+        /// 멀리선 이동 생략(사용자 결정 2026-10-23, Core FarSkip): 일꾼·목적지 모두 안 보이고(사용자 11-18 "64m를 보는지로" — 일꾼 HopBlocked, 목적지 Watched) FarSkip.MinDistance m 넘으면
         /// 걷지 않고 길 길이 ÷ m_runSpeed초 서서 기다리며 2초마다 지도상 위치를 밝히고(Scout.Reveal), 다 기다리면 불러와진 구역 안에서
         /// HopStep m씩 목적지 쪽으로 옮긴다(LandNear: 단단한 땅·물 아님·위험 판단 통과). 목적지 ArriveNear m 안이면 마저 걷는다.
-        /// 길은 FarRoute(밝혀진 목적지는 물 피한 거친 길). 플레이어가 몸 64m 안에 오면 그만두고 그 자리부터, 지도 위치 64m 안에 오면 그 근처에 내려(FarDrop) 걷는다.
+        /// 길은 FarRoute(밝혀진 목적지는 물 피한 거친 길). 몸이 보이면 그만두고 그 자리부터, 지도 위치가 보이면 그 근처에 내려(FarDrop) 걷는다.
         /// true = 이번 프레임은 생략이 맡음(걷지 않음).
         /// </summary>
         bool FarWalk(float dt, Vector3 dest)
@@ -190,7 +190,7 @@ namespace ValheimHelper
                 if (m_farCheck > 0f) return false;
                 m_farCheck = 2f;
                 float d = Utils.DistanceXZ(me, dest);
-                if (!FarSkip.Worth(d) || m_hunt || HopBlocked() != null || !FarFromPlayers(dest)) return false; // 사냥은 생략 안 함(사용자 결정 2026-10-23 그대로)
+                if (!FarSkip.Worth(d) || m_hunt || HopBlocked() != null || Watched(dest)) return false; // 사냥은 생략 안 함(사용자 결정 2026-10-23 그대로)
                 ZNetView nv = m_npc.GetComponent<ZNetView>();
                 if (nv == null || !nv.IsOwner()) return false;
                 // 바다 건너는 포탈로만(사용자 결정 2026-10-23): 포탈 입구를 못 가 걸음으로 넘어온 바다 건너 목적지를 생략으로 건너뛰지 않는다(E121 — 1244m 직선 기다림)
@@ -213,8 +213,8 @@ namespace ValheimHelper
                 {
                     RoughPath.P mp = m_far.MapPos;
                     var map = new Vector3((float)mp.X, me.y, (float)mp.Z);
-                    if (!FarFromPlayers(me)) return FarCancel("플레이어가 몸에 다가옴");
-                    if (!FarFromPlayers(map)) return FarDrop(dest);
+                    if (Watched(me)) return FarCancel("플레이어가 몸에 다가옴");
+                    if (Watched(map)) return FarDrop(dest);
                     Scout.Reveal(map);
                     FarLastMap = map;
                     FarReveals++;
@@ -262,7 +262,7 @@ namespace ValheimHelper
         public static Vector3 FarLastMap;
 
         /// <summary>
-        /// 생략 중 플레이어가 지도상 위치 64m 안에 옴(사용자 결정 2026-10-23 [고침]): 몸을 그 근처 안전한 땅(LandNear, 플레이어 곁 허용)에
+        /// 생략 중 지도상 위치가 보임(사용자 결정 2026-10-23 [고침]): 몸을 그 근처 안전한 땅(LandNear, 플레이어 곁 허용)에
         /// 내려 거기서부터 걷는다. [기본안] 없으면 길 앞쪽으로 10m씩 6곳. 다 안 되면 그 자리부터 걷기(FarCancel).
         /// </summary>
         bool FarDrop(Vector3 dest)
