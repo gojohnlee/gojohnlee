@@ -80,9 +80,9 @@ namespace ValheimHelper
                     return true;
                 }
                 LogStuck("다가가기", m_targetPos);
-                // 멀리(모든 플레이어 64m 밖) 목표 몇 m 앞에서 막혔다: 그 자리에서 직접 피해로 캔다(E012, 사용자 결정 2026-10-23 "오류 정리 꼼수").
+                // 일꾼·목표가 안 보이고(회차 811 — 전엔 64m) 목표 몇 m 앞에서 막혔다: 그 자리에서 직접 피해로 캔다(E012, 사용자 결정 2026-10-23 "오류 정리 꼼수").
                 if (!TestNoFarStuck && m_targetInfo != null && !m_targetInfo.Pickable && m_targetInfo.Tool != ToolKind.None
-                    && InteriorNav.Reached(m_npc.transform.position, m_targetPos, FarStuckRange) && FarFromPlayers(m_npc.transform.position)
+                    && InteriorNav.Reached(m_npc.transform.position, m_targetPos, FarStuckRange) && !Watched(m_npc.transform.position) && !Watched(m_targetPos)
                     && ZNetScene.instance.FindInstance(zdo) != null)
                 {
                     FarStuckHits++;
@@ -259,8 +259,8 @@ namespace ValheimHelper
 
         const float SeenGrace = 2f;
 
-        /// <summary>내릴 자리 p가 누구 눈에 보이나(SeenLately와 같은 시험 규칙).</summary>
-        static bool Watched(Vector3 p) => TestIgnorePlayers && StuckWatch.TestSeen == null ? !FarFromPlayers(p) : StuckWatch.Seen(p);
+        /// <summary>자리 p가 누구 눈에 보이나(SeenLately와 같은 시험 규칙) — 내릴 자리·멀리서 막힌 채집·묻힌 광맥·멀리선 싸움·동행 옮기기(사용자 11-18 "64m를 보는지로").</summary>
+        internal static bool Watched(Vector3 p) => TestIgnorePlayers && StuckWatch.TestSeen == null ? !FarFromPlayers(p) : StuckWatch.Seen(p);
 
         /// <summary>가장 가까운 플레이어(호스트 + 접속한 사람들의 기준 위치)에서 StuckHop.NearPlayer m 밖인가.</summary>
         internal static bool FarFromPlayers(Vector3 p)
@@ -672,9 +672,9 @@ namespace ValheimHelper
                 return false;
             }
             m_aimCol = buried;
-            // 멀리(모든 플레이어 64m 밖)면 땅은 안 파고 휘두를 때마다 그 조각에 직접 피해(E021 라). 구덩이가 안 생겨 되메우기·탈출이 필요 없다.
+            // 일꾼·조각이 안 보이면(회차 811 — 전엔 64m) 땅은 안 파고 휘두를 때마다 그 조각에 직접 피해(E021 라). 구덩이가 안 생겨 되메우기·탈출이 필요 없다.
             // 생긴 광석은 땅 위로 튀어나온다(ItemDrop.TerrainCheck) → 보통 줍기. 가슴 높이로 휘둘러 땅을 안 친다.
-            if (m_farDig == null) m_farDig = FarFromPlayers(m_npc.transform.position);
+            if (m_farDig == null) m_farDig = !Watched(m_npc.transform.position) && !Watched(buried.bounds.center);
             if (m_farDig == true)
             {
                 if (!m_saidDig) { m_saidDig = true; Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 땅속 {Item} — 플레이어 멀리라 안 파고 바로 침(깊이 {depth:0.0}m)"); }

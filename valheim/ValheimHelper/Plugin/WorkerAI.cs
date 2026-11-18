@@ -247,14 +247,14 @@ namespace ValheimHelper
         }
 
         /// <summary>
-        /// 동행이 끊기지 않게(사용자 10-26 검토): 포탈·던전 문처럼 나만 건너갔거나(Gone 넘게 벌어짐), 둘 다 아무 플레이어에게서 64m 밖이거나
+        /// 동행이 끊기지 않게(사용자 10-26 검토): 포탈·던전 문처럼 나만 건너갔거나(Gone 넘게 벌어짐), 둘 다 안 보이거나(회차 811 — 전엔 64m)
         /// (멀리선 이동 생략으로 나만 건너뜀), 출발 뒤 15초 넘게 못 따라오면(막힘) 동행자를 내 곁으로 옮긴다. 막힘이고 플레이어가 보면 구조 말.
         /// 출발 전(Waiting)엔 보이는 곳이면 걸어오게 둔다. 옮겼으면 true. 시험용 횟수 MateBrings.
         /// </summary>
         bool BringMate(WorkerNpc npc, WorkerNpc mate, float d)
         {
             bool jumped = d > Escort.Gone;
-            bool unseen = GatherJob.FarFromPlayers(transform.position) && GatherJob.FarFromPlayers(mate.transform.position);
+            bool unseen = !GatherJob.Watched(transform.position) && !GatherJob.Watched(mate.transform.position);
             bool stuck = m_escort.Now == Escort.Phase.Paused && m_escort.PausedFor > (float)StuckHop.NearStuckSeconds;
             if (!jumped && !unseen && !stuck) return false;
             Vector3 me = transform.position, at = me - Flat(transform.forward).normalized * 1.5f + Vector3.up * 0.3f;

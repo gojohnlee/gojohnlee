@@ -603,10 +603,10 @@ namespace ValheimHelper
             float d = Utils.DistanceXZ(tp, m_npc.transform.position) - m_target.GetRadius();
             m_fightIdle += dt;
             if (m_npc.HitBy(m_target, 1f)) m_fightIdle = 0f;
-            // 멀리선 싸움 단순화(사용자 결정 2026-10-23 "멀리선 단순하게"): 모든 플레이어 64m 밖이면 휘두름 대신 한 번 칠 시간마다 직접 피해
+            // 멀리선 싸움 단순화(사용자 결정 2026-10-23 "멀리선 단순하게"): 일꾼·적이 안 보이면(회차 811 — 전엔 64m) 휘두름 대신 한 번 칠 시간마다 직접 피해
             // (비행·높은 곳 적 포함 — 수평 거리만 본다). 도망 판단은 그대로, 근처에선 아래 바닐라 휘두름(3번 빗나가면 직접 피해).
             m_farCheck -= dt;
-            if (m_farCheck <= 0f) { m_farCheck = 1f; m_far = GatherJob.FarFromPlayers(m_npc.transform.position); }
+            if (m_farCheck <= 0f) { m_farCheck = 1f; m_far = !GatherJob.Watched(m_npc.transform.position) && !GatherJob.Watched(m_target.transform.position); }
             if (m_far && d <= FarHitRange)
             {
                 m_farHitTimer += dt;
@@ -679,7 +679,7 @@ namespace ValheimHelper
         bool Shoot(float dt)
         {
             m_farCheck -= dt;
-            if (m_farCheck <= 0f) { m_farCheck = 1f; m_far = GatherJob.FarFromPlayers(m_npc.transform.position); }
+            if (m_farCheck <= 0f) { m_farCheck = 1f; m_far = !GatherJob.Watched(m_npc.transform.position) && !GatherJob.Watched(m_target.transform.position); }
             float d = Utils.DistanceXZ(m_target.transform.position, m_npc.transform.position) - m_target.GetRadius();
             ItemDrop.ItemData best = m_npc.FightingRanged();
             if (m_far || d <= ShootMin || d > Archery.ShootRange || best == null) { m_meleeWhy = m_far ? "플레이어 멂" : d <= ShootMin ? "가까움" : best == null ? "무기·탄 없음" : "멂"; m_npc.StopDraw(); return false; }
