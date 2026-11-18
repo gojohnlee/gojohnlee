@@ -144,7 +144,7 @@ namespace ValheimHelper
                     float took = Time.time - legT;
                     lapT[round] += took;
                     walk.Halt = true;
-                    var rep = rec.Stop($"newerahouse {round + 1}-{i + 1} {names[i]}", round > 0 || i > 0);
+                    var rep = rec.Stop($"newerahouse {round + 1}-{i + 1} {names[i]}", round > 0 || i > 0, "behavior-house-newera.txt"); // E136: 뒤 otherhouse가 덮지 않게
                     jumps += rep.TeleSeen + rep.TeleUnseen;
                     noProg += rep.NoProgress; bumps += rep.Bumps; worst = Mathf.Max(worst, rep.WorstRatio);
                     TestRunner.Log($"집 걸음({round + 1}바퀴 {names[i]}): {rep}");

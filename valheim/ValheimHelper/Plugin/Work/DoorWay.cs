@@ -17,7 +17,7 @@ namespace ValheimHelper
         Phase m_phase;
         Door m_door;
         Vector3 m_out, m_in, m_mouth; bool m_hall, m_lined; Vector3 m_hallN; float m_hallEnd; float m_lineCheck; // m_mouth: 문 앞이 복도면 복도 입구(들어갈 때 거기부터 곧장, E059)
-        float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN; string m_skipWhy;
+        float m_t, m_limit, m_check, m_swingNext, m_diagNext, m_outT; Door m_outDoor; Vector3 m_outN; string m_skipWhy; float m_skipT;
         int m_swing, m_orig; // m_swing 1 = 문짝이 내 쪽으로 열려 있어 닫았음 → 반대로 다시 엶(E064). m_orig = 그때 남이 열어 둔 문이면 원래 s_state
         float m_best, m_stall, m_side; Vector3 m_sideDir; bool m_near; int m_sides; bool m_pathed; // m_sides: 비킨 횟수, 2번 비켜도 못 가까워지면 m_pathed = 길찾기로(E083 회차 474: 반대쪽이 막혀 같은 쪽 비킴 5번) // 나갈 때 문 앞 가는 길이 설비에 막히면 옆으로 비킴, 1.6m 안에서 막히면 거기서 엶(E061)
         Vector3 m_for, m_goal; bool m_hasGoal; float m_clearT = -1f; // m_goal: 들어갈 대상 자리, m_clearT: 안쪽 1.3m 닿은 때(문짝 곁이면 더 걸음, E077)
