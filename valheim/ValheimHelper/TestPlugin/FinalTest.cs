@@ -57,26 +57,34 @@ namespace ValheimHelper
             checks.Add($"일꾼 2 + 호위병 1 = 3명 ({WorkerNpc.All.Count} + {(WorkerNpc.TheGuard != null ? 1 : 0)})", WorkerNpc.All.Count == 2 && WorkerNpc.TheGuard != null);
             // 남은 명령(밭·굽기·가축·사냥)의 재료는 시작 때 한 번만 거점 상자에 넣는다(decisions 71 — 명령 중엔 상자 채우기 없음)
             StockStart(home);
-            // 밭·가축·정리 명령 자리(시작 때 한 번 — 회차 661): 밭은 집 왼쪽 12m 반경 3(FarmTest 집 모드와 같은 자리), 가축은 오른쪽 8m(E140)에 "가축" 상자+산딸기+길들인 배고픈 멧돼지
+            // 밭·가축·정리 명령 자리(시작 때 한 번 — 회차 661): 밭은 집 왼쪽 12m 반경 3(FarmTest 집 모드와 같은 자리), 가축은 집 2층 상자(E140)에 "가축" 상자+산딸기+길들인 배고픈 멧돼지
             Vector3 right = Vector3.Cross(Vector3.up, player.transform.forward).normalized;
             Vector3 fieldAt = GatherTest.Ground(home - right * 12f);
             var field = new FarmField(fieldAt.x, fieldAt.z, 3);
             FarmTest.Clean(field);
-            Vector3 penAt = GatherTest.Ground(home + right * 8f); // E140: 12m+4m는 시험 집 절벽 밖일 수 있어 몬스터에 죽음(사용자 11-19) → 우리 8m·멧돼지 6m
-            player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), penAt, player.transform.rotation, doAttack: false);
-            Container pen = GatherTest.ChestAt(penAt);
+            // E140(사용자 11-19): 집 밖 우리는 절벽 밖이라 몬스터에 멧돼지가 죽음 → 집 2층 상자를 우리로(2층 없으면 예전처럼 밖 8m)
+            Container pen = UpstairsChest(site, out Vector3 pigAt);
+            Vector3 penAt;
+            if (pen != null) penAt = pen.transform.position;
+            else
+            {
+                penAt = GatherTest.Ground(home + right * 8f);
+                player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), penAt, player.transform.rotation, doAttack: false);
+                pen = GatherTest.ChestAt(penAt);
+                pigAt = GatherTest.Ground(penAt - right * 2f);
+            }
+            TestRunner.Log($"DIAG 우리 자리: {(pen != null && pen.transform.position.y > home.y + 2f ? "집 2층" : "집 밖")} {penAt}"); // E140
             Tameable pig = null;
             if (pen != null)
             {
                 pen.GetComponent<ZNetView>().GetZDO().Set("ChestName", "가축");
                 TestKit.PutInChest(pen, "Raspberry", 5);
-                var g = Object.Instantiate(ZNetScene.instance.GetPrefab("Boar"), GatherTest.Ground(penAt - right * 2f) + Vector3.up * 0.3f, Quaternion.identity);
+                var g = Object.Instantiate(ZNetScene.instance.GetPrefab("Boar"), pigAt + Vector3.up * 0.3f, Quaternion.identity);
                 g.GetComponent<MonsterAI>().MakeTame();
                 g.GetComponent<MonsterAI>().SetPatrolPoint(); // 우리에 세워 둠(LivestockTest와 같이) — 안 그러면 떠돌다 10m 밖으로(회차 663 FAIL)
                 pig = g.GetComponent<Tameable>();
             }
             yield return new WaitForSeconds(1f);
-            if (pig != null) TestRunner.Log($"DIAG 멧돼지 시작: 집에서 {Vector3.Distance(pig.transform.position, home):0}m, 높이차 {pig.transform.position.y - home.y:0.0}m"); // E140
             checks.Add($"가축 상자·길들인 배고픈 멧돼지 놓음", pen != null && pig != null && pig.IsHungry());
 
             TestRunner.Log($"DIAG 시작 거점 상자: Wood {GatherTest.CountBase(home, "Wood")}, Stone {GatherTest.CountBase(home, "Stone")}, CopperOre {GatherTest.CountBase(home, "CopperOre")}, Copper {GatherTest.CountBase(home, "Copper")}, RawMeat {GatherTest.CountBase(home, "RawMeat")}");
@@ -151,6 +159,27 @@ namespace ValheimHelper
         }
 
         /// <summary>시작 때 한 번: 밭(경작기·당근 씨앗), 굽기(생고기), 가축(당근 먹이)에 쓸 재료를 거점 상자에 넣는다. 첫 상자가 꽉 차면 다음 상자(회차 657 — 생고기 못 넣음).</summary>
+        /// <summary>E140: 집 2층(가장 높은 침대 층) 상자 중 침대에 가까운 것, 멧돼지 자리 = 상자와 침대 사이(같은 방 바닥). 없으면 null.</summary>
+        static Container UpstairsChest(HouseBase.Site site, out Vector3 pigAt)
+        {
+            pigAt = Vector3.zero;
+            Bed bed = null;
+            foreach (var b in Object.FindObjectsByType<Bed>(FindObjectsSortMode.None))
+                if (Utils.DistanceXZ(b.transform.position, site.Center) <= HouseCopy.Radius && (bed == null || b.transform.position.y > bed.transform.position.y)) bed = b;
+            if (bed == null) return null;
+            Container best = null;
+            foreach (var c in Object.FindObjectsByType<Container>(FindObjectsSortMode.None))
+            {
+                if (c == site.Chest1 || c == site.Chest2 || c.GetComponent<Piece>() == null || Utils.DistanceXZ(c.transform.position, site.Center) > HouseCopy.Radius) continue;
+                if (Mathf.Abs(c.transform.position.y - bed.transform.position.y) > 1.5f) continue;
+                if (best == null || Vector3.Distance(c.transform.position, bed.transform.position) < Vector3.Distance(best.transform.position, bed.transform.position)) best = c;
+            }
+            if (best == null) return null;
+            pigAt = Vector3.Lerp(best.transform.position, bed.transform.position, 0.5f);
+            pigAt.y = best.transform.position.y;
+            return best;
+        }
+
         static void StockStart(Vector3 home)
         {
             var boxes = new List<Container>(Chests.NearBase(home));
