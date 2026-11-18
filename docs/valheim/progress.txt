@@ -13,7 +13,7 @@
   다) [끝, 회차 808 — 커밋 3275dd28 · 시험 vh_stucktest 16/16·hunttest 21/21·bowtest 13/13·woodtest 14/14 PASS — 사냥 막힘도 보이면 NearSkip, 안 보면 목표 쪽](강제 보는 중/안 보는 중 시험은 바)에)
   라) 멀리선 이동 생략 [끝, 회차 809 — 커밋 774bcb19 · 시험 vh_skiptest 25/25·vh_hoptest 23/23 PASS — 일꾼 HopBlocked·목적지·지도 위치 Watched] · 던전 안 이동 생략 [끝, 회차 810 — 커밋 913ebae1 · 시험 vh_minetest 12/12·vh_minefoetest 16/16·vh_frostcavetest 11/11·vh_crypttest 단독 24/24 PASS — NoPlayerAround = 안 보임(입구·나가는 문·Guard 도망 문도); 묶음 minetest;crypttest 23/24는 E138 시험 잔여물]
   마) 묻힌 광맥·멀리선 싸움 단순화·호위병 곁으로·멀리서 막힌 채집 [끝, 회차 811 — 커밋 eb6ac268 · 시험 vh_escorttest 18/18·vh_fighttest 18/18·vh_hoptest 23/23·vh_coppertest 14/14 PASS — GatherJob.Watched 일꾼·상대 둘 다 안 보임] · 쉴 때 상자 정리 바로 [끝, 회차 811 — 커밋 739a7b09 · 시험 vh_tidywalktest 13/13·vh_mychesttest 19/19·vh_tidytest 16/16 PASS — Tidy.Unseen 집·옮길 상자 모두 안 보임] · 4절 먼 곳 끼임 분류 [끝, 회차 811 — 문서만: decisions 95줄·Errors.txt 4줄]
-  바) 시험: 보는 중/안 보는 중 강제로 둘 다(막힘·사냥·이동 생략) → vh_finaltest
+  바) 시험: 보는 중/안 보는 중 강제로 둘 다 — 이동 생략 [끝, 회차 811 — 커밋 1f64c239 · 시험 vh_skiptest 26/26 PASS — 보는 중이면 120m 밖도 생략 안 함·안 보면 시작] · 막힘(stucktest·hoptest는 보는 중만 — 안 보는 중 목표 쪽 순간이동 칸)·사냥(hunttest 보는 중 NearSkip/안 보는 중 목표 쪽) 남음 → vh_finaltest
 ★ 문서 감사 결정–코드 어긋남 고치기(사용자 11-18 12:04 — 64m 다음, 결정 줄 [미구현 11-18]을 코드대로 맞춘 뒤 표시 지움)
   가) 호위병 쉴 때 집안일 안 돎(버그): TickRefill(Departures.Refill.cs:62)에 Guards 넣고 굽기·요리·미드·포션도, 동행 요청이면 바로 놓기, 시험 칸
   나) 자동 보충 만들기(PlanJob.cs:85 Yields)가 새 명령에 양보, 자동 보충 음식 몫(FoodHold)·실패 10분 쉼 나눔
