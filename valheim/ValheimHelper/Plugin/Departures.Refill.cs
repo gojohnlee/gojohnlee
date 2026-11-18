@@ -264,7 +264,7 @@ namespace ValheimHelper
                 }
                 if (plan.Steps.Count == 0 || plan.Partial || plan.TooLong || farm) { s_refillSkipUntil[due.Item] = Time.time + 600f; continue; }
                 string label = GatherJob.ItemLabel(due.Item);
-                npc.Ai.StartJob(new PlanJob(npc, plan, label) { Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = due.Item, Amount = due.Amount } });
+                npc.Ai.StartJob(new PlanJob(npc, plan, label) { FromRefill = true, Goal = new WorkItem { Kind = WorkKind.Make, Label = label, Item = due.Item, Amount = due.Amount } });
                 npc.Say("refillMake", new Dictionary<string, string> { ["item"] = label, ["n"] = due.Amount.ToString(), ["minutes"] = Departure.Minutes5(plan.Seconds).ToString() });
                 return true;
             }

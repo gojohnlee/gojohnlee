@@ -52,6 +52,7 @@ namespace ValheimHelper
 
         /// <summary>쉴 때 고기(Departures.IdleMeat)로 시작: 실패·막힌 단계가 있으면 그 물건은 10분 쉼(같은 실패를 되풀이하지 않게). 저장 안 함.</summary>
         public bool FromIdle;
+        public bool FromRefill; // 자동 보충(!계속채워)이 만든 계획: 새 명령에 양보, 실패·막힘이면 그 물건 10분 쉼(회차 816). 음식 몫은 그대로 붙음
 
         /// <summary>설비(조리대·제련소 등)에 이미 올렸고 아직 다 꺼내지 않음 — 쉴 때 만들기라도 명령에 양보하지 않고 끝까지 함(사용자 11-09 "올린 건 다 끝날 때까지").</summary>
         public bool Committed
@@ -83,7 +84,7 @@ namespace ValheimHelper
         internal string InnerStep => (m_gather ?? m_filler)?.StepName; // 걸음 기록(WalkRecorder)이 구간을 나눔
         public string Label => m_goal;
         internal bool Uses(string station) => m_runner.Plan.Steps.Exists(s => s.Station == station);
-        public bool Yields => FromIdle && !Committed; // 밭일·설비에 올린 요리는 끝내고 감(사용자 11-09)
+        public bool Yields => (FromIdle || FromRefill) && !Committed; // 밭일·설비에 올린 요리는 끝내고 감(사용자 11-09)
         public WorkItem Save() => Goal != null ? ToWork() : null; // 계획 단계·상태·진행까지(재시작 뒤 이어 감)
         public string StateLine() => "제작 " + m_goal + " " + m_runner.Count(StepState.Done) + "/" + m_runner.Plan.Steps.Count + "단계"
             + (m_step != null && m_gather != null ? " · " + m_gather.StateLine() : "");
@@ -262,6 +263,8 @@ namespace ValheimHelper
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 쉴 때 {Goal.Item}: 재료 일부만 모음 → 쉬지 않고 모은 만큼 다시 계획"); // 회차 805
             else if (FromIdle && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
                 Departures.RefillJobFailed(m_npc, Goal.Item, "idlePlan");
+            else if (FromRefill && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
+                Departures.RefillJobFailed(m_npc, Goal.Item, "refillPlan"); // 회차 816: 자동 보충 만들기 실패도 10분 쉼
             else if (FromIdle) Departures.AddDebt(m_npc, m_runner.Plan.UsedStock); // 상자에서 쓴 재료는 다시 캐 둠(사용자 11-09)
             else if (Goal != null && Goal.Kind == WorkKind.Make && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) == 0)
                 HoldFood(Goal.Item, Goal.Amount);
