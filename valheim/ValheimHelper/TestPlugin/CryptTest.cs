@@ -134,7 +134,28 @@ namespace ValheimHelper
             foreach (var r in StaticsAround(at).ToList())
                 if (!s_statics.Contains(r)) { Object.Destroy(r); m++; }
             s_statics.Clear();
-            TestRunner.Log($"정리: 세운 지하묘지 물체 {n}개·ZNetView 없는 조각 {m}개 지움");
+            int c = ClearDungeonCreatures(at);
+            TestRunner.Log($"정리: 세운 지하묘지 물체 {n}개·ZNetView 없는 조각 {m}개·던전 높이 생물 {c}마리 지움");
+        }
+
+        /// <summary>던전 높이(y 4000 위)·XZ 100m 안의 생물(일꾼·플레이어·길들인 것 빼고)을 지운다. 앞 시험의 던전 생물이 남아
+        /// 다음 시험이 같은 자리에 세운 던전에 섞였다(E138 회차 810 minetest→crypttest: 새끼 추적자가 지하묘지 안에서 일꾼을 쫓아냄).
+        /// Cleanup 끝과 세우기 전에 부름.</summary>
+        internal static int ClearDungeonCreatures(Vector3 at)
+        {
+            if (at == Vector3.zero) return 0;
+            int n = 0;
+            foreach (var ch in Character.GetAllCharacters().ToList())
+            {
+                if (ch == null || ch.IsPlayer() || ch.IsTamed() || ch.GetComponent<WorkerNpc>() != null) continue;
+                Vector3 p = ch.transform.position;
+                if (p.y < 4000f || Utils.DistanceXZ(p, at) > 100f) continue;
+                TestRunner.Log($"정리: 던전 높이 남은 생물 {ch.m_name} ({p.x:0},{p.y:0},{p.z:0})");
+                var nv = ch.GetComponent<ZNetView>();
+                if (nv != null && nv.GetZDO() != null) ZDOMan.instance.DestroyZDO(nv.GetZDO()); else Object.Destroy(ch.gameObject);
+                n++;
+            }
+            return n;
         }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, HashSet<ZDOID> before, Vector3[] spot, KeyState keys)
@@ -169,6 +190,7 @@ namespace ValheimHelper
                 }
                 pos = GatherTest.Ground(w.Home + rot * Quaternion.Euler(0f, angles[i], 0f) * new Vector3(0f, 0f, 110f));
                 spot[0] = pos;
+                ClearDungeonCreatures(pos);
                 foreach (var z in Around(pos)) before.Add(z.m_uid);
                 NoteStatics(pos);
                 bool spawned = ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);
