@@ -27,7 +27,6 @@ namespace ValheimHelper
             TestHook.Log = TestRunner.Log;
             TestHook.First = () => Minimized.Update(); // 먼저: 다른 오류가 나도 창은 내려 둔다
             TestHook.Last = () => TestRunner.UpdateAutoRun();
-            TestHook.E072 = line => File.AppendAllText(Path.Combine(Plugin.Dir, "e072-save.txt"), DateTime.Now.ToString("HH:mm:ss ") + line + "\n"); // 다음 실행(restart2)이 읽음
             Diag.Sink = line => Plugin.Log.LogInfo(line);
             Step("진단 패치", () => new Harmony(Guid).PatchAll());
             Step("vh_despawn", () => new Terminal.ConsoleCommand("vh_despawn", "[Valheim Helper] 일꾼 NPC를 모두 없앤다", args => { if (TestRunner.TestWorldOnly(args.Context)) args.Context.AddString($"NPC {Workers.DespawnAll()}명 없앰"); }));

@@ -58,8 +58,7 @@ namespace ValheimHelper
         [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.PrepareSave))]
         static class SaveMemory
         {
-            static readonly FieldInfo s_endSave = AccessTools.Field(typeof(ZDOMan), "m_endSave"), s_state = AccessTools.Field(typeof(ZDOMan), "m_currentSaveState"),
-                s_dirty = AccessTools.Field(typeof(ZDOMan), "m_dirtyChunks");
+            static readonly FieldInfo s_endSave = AccessTools.Field(typeof(ZDOMan), "m_endSave");
             static readonly MethodInfo s_updateSaveState = AccessTools.Method(typeof(ZDOMan), "UpdateSaveState");
 
             static void Prefix()
@@ -68,12 +67,7 @@ namespace ValheimHelper
                 // 이번 저장이 첫째 표만 보고 바뀐 조각을 안 씀. 게임이 다음 프레임에 할 합치기를 지금 함(SaveWorld가 앞 저장 스레드를 기다린 뒤라 안전).
                 try
                 {
-                    var dirty = s_dirty?.GetValue(ZDOMan.instance) as HashSet<ZoneSystem.ChunkIndex>[];
-                    object end = s_endSave?.GetValue(ZDOMan.instance);
-                    string line = $"E072 저장 전: 상태 {s_state?.GetValue(ZDOMan.instance)}, 끝 {end ?? "없음"}, 바뀐 조각 {dirty?[0].Count}/{dirty?[1].Count}, 저장 번호 {SaveSystem.GetSaveNumber()}";
-                    Plugin.Log.LogInfo(line);
-                    TestHook.E072?.Invoke(line);
-                    if (end != null) s_updateSaveState?.Invoke(ZDOMan.instance, null);
+                    if (s_endSave?.GetValue(ZDOMan.instance) != null) s_updateSaveState?.Invoke(ZDOMan.instance, null);
                 }
                 catch (System.Exception e) { Plugin.Log.LogWarning("E072 저장 전 확인 못 함: " + e.Message); }
                 if (s_k != null && s_for != ZDOMan.instance) Plugin.Log.LogInfo("일꾼 기억 저장 건너뜀: ZDOMan 바뀜");

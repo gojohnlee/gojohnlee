@@ -12,6 +12,5 @@ namespace ValheimHelper
         internal static bool AutoSession;  // autotest.txt로 켠 시험 실행
         internal static Action<string> Log;   // 시험 diag 줄
         internal static Action First, Last;   // Plugin.Update 맨 앞·맨 뒤
-        internal static Action<string> E072;  // E072 저장 전 줄(e072-save.txt)
     }
 }
