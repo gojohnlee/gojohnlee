@@ -256,7 +256,7 @@ namespace ValheimHelper
         bool Finish()
         {
             Plugin.Log.LogInfo($"{m_npc.NpcName} 계획 끝: 완료 {m_runner.Count(StepState.Done)}, 실패 {m_runner.Count(StepState.Failed)}, 막힘 {m_runner.Count(StepState.Blocked)}");
-            // 설비만 없던 계획(StationsOnly): 할 수 있는 단계를 다 했으면 "재료는 모았는데 ○○이 없어"(구상서 6-1, 10-26)
+            // 쉴 때 계획(FromIdle): 일부 실패라도 모은 게 있으면 쉬지 않고 다시 계획(회차 805), 모은 것 없이 실패·막힘이면 10분 쉼, 다 되면 쓴 재료를 갚기 몫으로. 명령·자동 보충 계획이 다 되면 만든 음식 몫(HoldFood)
             if (FromIdle && Goal != null && m_gotSome && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
                 Plugin.Log.LogInfo($"{m_npc.NpcName} 쉴 때 {Goal.Item}: 재료 일부만 모음 → 쉬지 않고 모은 만큼 다시 계획"); // 회차 805
             else if (FromIdle && Goal != null && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) > 0)
@@ -264,6 +264,7 @@ namespace ValheimHelper
             else if (FromIdle) Departures.AddDebt(m_npc, m_runner.Plan.UsedStock); // 상자에서 쓴 재료는 다시 캐 둠(사용자 11-09)
             else if (Goal != null && Goal.Kind == WorkKind.Make && m_runner.Count(StepState.Failed) + m_runner.Count(StepState.Blocked) == 0)
                 HoldFood(Goal.Item, Goal.Amount);
+            // 설비만 없던 계획(StationsOnly): 할 수 있는 단계를 다 했으면 "재료는 모았는데 ○○이 없어"(구상서 6-1, 10-26)
             var missing = m_runner.Plan.MissingStations;
             if (missing.Count > 0 && m_runner.Finished)
                 m_npc.Say("craft.missingDone", new Dictionary<string, string> { ["item"] = m_goal, ["station"] = Recipes.StationName(missing[0]) });

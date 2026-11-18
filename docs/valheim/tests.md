@@ -63,7 +63,7 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 | deepfoetest | 딥노스 적 싸움 시험 | B10b | 713~715 |
 | deepnorthtest | 딥노스 자료 시험 | B10 | 713~715 |
 | departtest | 출발 전 판단·질문·대기열·저장 시험 | B3 | 713~715 |
-| droptest | 뛰어내리기 지름길 — 4m 판에서 계단 대신 뛰어내림 | 묶음 없음 | history grep |
+| droptest | 뛰어내리기 지름길 — 4m 판에서 계단 대신 뛰어내림 | 묶음 없음 | 회차 769(맨 앞에 6/6 — 앞 시험 판이 남으면 FAIL) |
 | entrailstest | 창자 20개 사냥·다침 회복 시험 | B13 | 713~715 |
 | escorttest | 호위병 동행 시험 | B7 | 713~715 |
 | exploretest | 새 땅 탐험 시험 | B2 | 713~715 |
@@ -142,7 +142,7 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 | squitotest | 데스킷 싸움 시험 | B8a | 713~715 |
 | stocktest | 상자 재료로 바로 제작 시험 | B8d | 713~715 |
 | stonetest | 돌 채집 시험 | B1 | 713~715 |
-| straytest | 지나가며 떨어진 물건 줍기 | 묶음 없음 | history grep |
+| straytest | 지나가며 떨어진 물건 줍기 | 묶음 없음 | 회차 784(11/11) |
 | stucktest | 깃발 강제 복귀 시험 | B5 | 713~715 |
 | tartest | 타르 줍기·타르 웅덩이 피하기 시험 | B8a | 713~715 |
 | teamtest | 같이 싸움 시험 | B4 | 713~715 |

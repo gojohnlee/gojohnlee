@@ -73,7 +73,7 @@ namespace ValheimHelper
             bool slow = Stuck(dt, m_targetPos) || m_stepTime > (m_npc.InInterior() ? 40f : 20f);
             if (slow || QuickStuck(dt, m_targetPos, m_reach))
             {
-                // 빠른 막힘(1초)은 귀환처럼 3번에 1번만 막힘 기록에 셈 — 한 번에 기록하면 비켜 가기 전에 목표 쪽으로 옮김(E120 notooltest 꼴). 그 사이엔 길만 새로
+                // 빠른 막힘(1초)은 귀환처럼 ReturnQuickPer(5)번에 1번만 막힘 기록에 셈(회차 807 E137: 3 → 5) — 한 번에 기록하면 비켜 가기 전에 목표 쪽으로 옮김(E120 notooltest 꼴). 그 사이엔 길만 새로
                 if (!slow && ++m_returnQuick % ReturnQuickPer != 0)
                 {
                     Plugin.Log.LogInfo($"{m_npc.NpcName} 작업 {Item}: 다가가기 빠른 막힘 {m_returnQuick}번 → 길 다시 {m_ai.BlockerAhead(m_targetPos)}");
@@ -298,7 +298,7 @@ namespace ValheimHelper
         public static Vector3 LastNearSkipFrom;
 
         /// <summary>
-        /// 근처 막힘 건너뛰기(사용자 결정 2026-10-23): 플레이어 64m 안에서 30초 넘게 못 가면(비켜 가기·점프·경사로는 걷기가 이미 해 봄)
+        /// 근처 막힘 건너뛰기(사용자 결정 2026-10-23, 5초는 10-31): 플레이어 64m 안에서 StuckHop.NearStuckSeconds(5초) 넘게 진척 없으면(GatherJob.Stuck — HopBlocked가 NearWhy면 5초에 막힘)(비켜 가기·점프·경사로는 걷기가 이미 해 봄)
         /// 막힌 곳 너머 몇 m(StuckHop.NearCandidates — 목표 쪽, 단단한 땅·물 아님·몸 자리 빔·위험 판단 통과)로 옮기고 "rescue" 말. 짐·체력·일은 그대로.
         /// </summary>
         bool NearSkip(Vector3 dest, out string why)
