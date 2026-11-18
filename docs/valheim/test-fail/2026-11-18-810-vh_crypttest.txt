@@ -1,0 +1,569 @@
+# vh_crypttest FAIL 발췌 — 2026-11-18 12:38 회차 810 (diag 칸 + 그 시험 동안 모드 로그 줄)
+
+## diag
+=== vh_crypttest 2026-11-18 12:35:21 게임 1.0.21 Unity 6000.0.75f1 모드 0.3.8+ec52de7* (2026-11-18 12:34) 배속 3 ===
+플러그인: ChestName 1.1.2, Display BepInEx Info In-Game 2.0.2, Valheim Helper 0.3.8, Valheim Helper Test 0.3.8
+지난 시험 상자 1개 치움
+시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+자리 점검: 장소 Dolmen02 29m(반지름 8), 장소 ShipSetting01 47m(반지름 24), 장소 WoodHouse1 48m(반지름 8), 장소 Dolmen02 57m(반지름 8), 장소 Runestone_Meadows 81m(반지름 8), 장소 ShipSetting01 102m(반지름 24), 장소 Mistlands_DvergrTownEntrance2 105m(반지름 32)
+시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+OK   깃발·NPC
+Crypt 위치 이름: Crypt2(BlackForest), SunkenCrypt1(Swamp), SunkenCrypt2(Swamp), SunkenCrypt3(Swamp), SunkenCrypt4(Swamp), Crypt3(BlackForest), Crypt4(BlackForest), HalfBurried_ForestCrypt(BlackForest)
+OK   늪 지하묘지 위치 이름 있음 (SunkenCrypt4)
+OK   지하묘지 세움(TestSpawnLocation, 깃발에서 110m)
+OK   Dungeons.All이 찾음 (SunkenCrypt4 4m)
+OK   입구 열쇠 문 찾음 (sunken_crypt_gate), 처음엔 닫힘
+OK   안에 남은 고철 더미를 셈 (31개)
+OK   문 열쇠 물건 (CryptKey)
+OK   열쇠를 떨구는 보스 월드 키 찾음 (defeated_gdking, 시험 전 주움 False·월드 키 False)
+OK   열쇠 없으면 닫힌 지하묘지는 안 고름
+지하묘지 목록: SunkenCrypt4 108m 닫힘 더미 31
+OK   열쇠 없고 문 닫힌 묘지뿐이면 철은 출발 전에 거절 (depart.noCrypt, 기대 depart.noCrypt)
+OK   플레이어가 열쇠를 주웠으면 닫힌 곳도 고름(열 수 있음)
+OK   보스가 잡혔으면(월드 키) 닫힌 곳도 고름 (0.0초)
+OK   열쇠를 얻었으면 철은 거절 안 함 (depart.lowSkill)
+OK   입구 Teleport 찾음 (2m)
+입구 (-315.54, 38.35, 212.09) → 안 (-316.41, 5037.85, 210.00)
+OK   일꾼이 안으로 들어감 (y 5038, 0.0초)
+OK   안에서 떨어지지 않음 (y 5037, 도착점과 0.8m)
+안의 고철 물체: mudpile2 [Pickaxe 단계 0, 체력 1, 부서지면 mudpile2_frac] ×16, dvergrprops_pickaxe [Pickaxe 단계 0, 체력 1, 부서지면 -] ×15
+안의 ZNetView 물체 721개: CreepProp_hanging01 ×29, Spawner_Tick_stared (1) ×14, dvergrprops_lantern ×13, Spawner_Tick_stared ×12, CreepProp_hanging01 (1) ×11, CreepProp_egg_hanging01 ×11, CreepProp_egg_hanging01 (1) ×9, Pickable_RoyalJelly ×9, CreepProp_egg_hanging01 (2) ×7, Pickable_Mushroom_yellow (7) ×7, dvergrtown_wood_pole (6) ×7, Pickable_Mushroom_yellow (6) ×7, SeekerEgg (5) ×6, CreepProp_wall01 ×6, SeekerEgg (8) ×6, blackmarble_altar_crystal ×6, SeekerEgg (1) ×6, dvergrtown_wood_support ×5, dvergrtown_wood_pole (8) ×5, CastleKit_groundtorch_green (1) ×5, mudpile2 (1) ×5, Spawner_Seeker_respawn_240 ×5, dvergrprops_pickaxe (3) ×5, Pickable_Mushroom_yellow (8) ×5, blackmarble_creep_slope_inverted_1x1x2 (14) ×4
+OK   안에 고철 나오는 물체 있음 (31개)
+  안의 물 26개
+  물 WaterVolume 33m: 상자 높이 -2.3~-1.3 크기 5.2x5.2, 수면 -1.30, 바람 False·forceDepth 0.5 / 가운데 바닥 +0.1m 설 수 있음, 물 깊이 점 -15036.38·몸 -15036.38(기준 1.00)
+  물 WaterVolume 14m: 상자 높이 -2.3~-1.3 크기 14.1x12.0, 수면 -1.30, 바람 False·forceDepth 0.5 / 가운데 바닥 -0.9m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00)
+  물 WaterVolume 32m: 상자 높이 -14.6~-13.6 크기 8.0x16.0, 수면 -13.58, 바람 False·forceDepth 0.5 / 가운데 바닥 -0.3m 설 수 있음, 물 깊이 점 -15023.73·몸 -15023.73(기준 1.00)
+  물 WaterVolume 36m: 상자 높이 -2.3~-1.3 크기 5.2x5.2, 수면 -1.30, 바람 False·forceDepth 0.5 / 가운데 바닥 +0.1m 설 수 있음, 물 깊이 점 -15036.38·몸 -15036.38(기준 1.00)
+  물 WaterVolume 11m: 상자 높이 -2.3~-1.3 크기 15.7x15.7, 수면 -1.30, 바람 False·forceDepth 0.5 / 가운데 바닥 없음(더미 위 Spawner_DraugrPile)
+  물 WaterVolume 38m: 상자 높이 -2.3~-1.3 크기 12.0x14.1, 수면 -1.30, 바람 False·forceDepth 0.5 / 가운데 바닥 -0.9m 몸 자리 default/dvergrrock_curvedrock<GameObject, 물 깊이 점 0.40·몸 0.40(기준 1.00)
+  물 WaterVolume 22m: 상자 높이 -14.6~-13.6 크기 16.0x16.0, 수면 -13.58, 바람 False·forceDepth 0.5 / 가운데 바닥 -0.6m 몸 자리 더미 dvergrtown_arch, 물 깊이 점 0.15·몸 0.15(기준 1.00)
+  물 WaterVolume 15m: 상자 높이 -2.3~-1.3 크기 12.0x14.1, 수면 -1.30, 바람 False·forceDepth 0.5 / 가운데 바닥 -0.9m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00)
+  더미 8m 높이 -8.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 7.3m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -3.6m 설 수 있음, 물 깊이 점 -15033.46·몸 -15033.46(기준 1.00), 가장 가까운 칸 (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] 바닥 없음, 더미 지나면 목표까지 7.3m (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] 바닥 없음
+  더미 11m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 4.1m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,+4) -1.7m: [+1,+0] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,+1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 4.1m (-6,+4) -1.7m: [+1,+0] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,+1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 16m 높이 -1.4 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 10.7m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 10.7m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 16m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 9.9m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 몸 자리 stone_low, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,+2) -1.7m: [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown}, 더미 지나면 목표까지 9.9m (-6,+2) -1.7m: [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown}
+  더미 16m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 9.1m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 +0.9m 몸 자리 stone_low, 물 깊이 점 -15038.03·몸 -15038.03(기준 1.00), 가장 가까운 칸 (-6,+4) -1.7m: [+1,+0] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,+1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 9.1m (-6,+4) -1.7m: [+1,+0] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,+1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 18m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 16.7m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 몸 자리 collider/dvergrtown_wall_large<GameObject, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-1,-1) -0.7m: [+1,+0] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 15.8m (-2,-2) -0.2m: [+1,+0] -0.5m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.3m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.6m 몸 자리 stone_low 위 막힘·단 됨 {stone_low=DG_SunkenCrypt; stone=DG_SunkenCrypt}
+  더미 18m 높이 -1.4 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 16.7m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-1,-1) -0.7m: [+1,+0] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 15.8m (-2,-2) -0.2m: [+1,+0] -0.5m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.3m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.6m 몸 자리 stone_low 위 막힘·단 됨 {stone_low=DG_SunkenCrypt; stone=DG_SunkenCrypt}
+  더미 18m 높이 -1.2 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 12.9m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 몸 자리 더미 mudpile2, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 12.9m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 22m 높이 -9.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 21.3m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -2.7m 설 수 있음, 물 깊이 점 -15034.37·몸 -15034.37(기준 1.00), 가장 가까운 칸 (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] 바닥 없음, 더미 지나면 목표까지 21.3m (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] 바닥 없음
+  더미 22m 높이 -8.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 21.3m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -3.6m 설 수 있음, 물 깊이 점 -15033.46·몸 -15033.46(기준 1.00), 가장 가까운 칸 (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] 바닥 없음, 더미 지나면 목표까지 21.3m (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] 바닥 없음
+  더미 24m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 18.4m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 18.4m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 25m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 18.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.7m 몸 자리 더미 mudpile2, 물 깊이 점 -15036.35·몸 -15036.35(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 18.6m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 25m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 19.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 19.6m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 27m 높이 -1.5 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 22.3m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 22.3m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 29m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 22.8m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.5m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.58·몸 -15036.58(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 22.8m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 29m 높이 +0.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 22.9m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.6m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.47·몸 -15036.47(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 22.9m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 29m 높이 +0.2 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 23.1m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 stone, 물 깊이 점 -15036.70·몸 -15036.70(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 23.1m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 29m 높이 -0.2 닿을 2.0m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 23.1m(닿을 거리 2.0), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 stone, 물 깊이 점 -15036.64·몸 -15036.64(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 23.1m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 31m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 24.8m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 24.8m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 31m 높이 -0.2 닿을 2.0m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 24.9m(닿을 거리 2.0), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 24.9m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 31m 높이 -1.6 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 25.0m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 25.0m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 32m 높이 +0.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 25.4m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.6m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.47·몸 -15036.47(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 25.4m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 32m 높이 -1.2 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 25.9m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 25.9m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 34m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 27.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 27.6m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 37m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 35.8m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.5m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.58·몸 -15036.58(기준 1.00), 가장 가까운 칸 (-1,-1) -0.7m: [+1,+0] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 35.1m (-2,-2) -0.2m: [+1,+0] -0.5m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.3m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.6m 몸 자리 stone_low 위 막힘·단 됨 {stone_low=DG_SunkenCrypt; stone=DG_SunkenCrypt}
+  더미 38m 높이 +0.2 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 37.2m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.70·몸 -15036.70(기준 1.00), 가장 가까운 칸 (-1,-1) -0.7m: [+1,+0] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 36.5m (-2,-2) -0.2m: [+1,+0] -0.5m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [-1,+0] +0.3m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+0,-1] +0.6m 몸 자리 stone_low 위 막힘·단 됨 {stone_low=DG_SunkenCrypt; stone=DG_SunkenCrypt}
+  더미 39m 높이 +0.2 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 33.7m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.70·몸 -15036.70(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 33.7m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 40m 높이 -0.2 닿을 2.0m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 34.3m(닿을 거리 2.0), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.64·몸 -15036.64(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 34.3m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 40m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 34.5m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.5m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.58·몸 -15036.58(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 34.5m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 40m 높이 -1.4 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 34.1m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 34.1m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  더미 42m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 36.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 +0.2m 몸 자리 더미 mudpile2, 물 깊이 점 -15037.29·몸 -15037.29(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}, 더미 지나면 목표까지 36.6m (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject 위 막힘·단 안 됨 {default/dvergrrock_curvedrock<GameObject=DG_DvergrTown; stone=DG_SunkenCrypt} [-1,+0] +0.0m 몸 자리 collider/dvergrtown_wall_large<GameObject 위 막힘·단 됨 {collider/dvergrtown_wall_large<GameObject=DG_DvergrTown} [+0,-1] +0.0m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt}
+  도착 자리에서 길 있는 더미 0개(예전 규칙 0개), 일꾼 m_swimDepth 1.50(몸 캡슐 높이 1.85·반지름 0.49), 깊은 물 기준 1.00m
+  도착 자리 둘레 지도(±14칸, 위 +z):
+                                                             
+                                                             
+m#mm                            c1                           
+mmm##                              11                        
+m##mm#                           ccbcc                       
+mmommo            oo            c cccc            ii         
+#mmm### o o=# o  ooooooo#oooo   cccccce h vgv v  ggfggggvggfg
+#oo########oooooooooooooooooo   cabbacaaeeeeefifefeffffffeeef
+oommmm#######oooooooooooooooo   ccccc bcc00effgfefeeeeeeeeeee
+oooo#mm#######ooooooooooooooo   ccccc accab22fffeeeeeeeedddde
+oomommm#.#.#####ooooooooooooo   cc c   ccccccccgfeeedeeeddddd
+m#mmmm##....#.###oooooooooooo   cccc  bcccccaaacceeeeedeeddde
+m#ommo##....#..##ooooo==ooooo    cccccacccccaaaaffeefeeeffeef
+m####o##......##oooooo=oo=ooo   cccccccccccaaaahfeffffffegfff
+m#######...#..@. oooooo==mmmm   cccccccccccaaa0v fgffgfgg    
+#o######.##m..# ooooooo ooooo   dccacccccbbaaa0 ffffegv fffff
+o##oo###.###m## oooooom  oooo   cccaaccccb000aa feeeegi  eeee
+o##o=#########  oooooo   =ooo   ccaaccacca111a  geeefg   edee
+##oooo######m#o  ooooo   oooo   ccaabcbccc2120a  ffefh   edee
+##oooo##o#oo##o  ooooo  #oooo   caaabcbcbb11110  fefgv  veeee
+#ooooo###o=##oo  ooooo  ooooo   0aabccacc21111a  gfegv  eeeee
+#oooom###ommmo   =oo    oo=oo   caabb ccb2aca2   vgf    eeffe
+##oommm#######         oooooo   aaaa   c1aacc1         eeeeee
+#mooomm########        oooooo   aabba  ca0acc1c        eeeeee
+mommmm##o##########    oooooo   abc  cc1aac2c2cc12b    feeeee
+##mmmm##############   oooooo   ab    2baa21cccc0a1c   feeeed
+#mmommm#########oo###oooooooo   cc c  baac020ccccccccccfeeeee
+ommomm####mmm##oooo####oooooo   cc c  2aab0a0ccccccccccfeeeee
+ommmmm######o##ooooo###oooooo   cc cc acccccbccccccccb0feeeee
+OK   나가는 Teleport 찾음 (2m)
+OK   밖으로 나옴 (입구와 1.0m, 0.0초)
+> !라그나 철 3
+  [포탈 목록에 남은 ZDO] 1:75046 구역 134917에서 뺌
+철 일: 480초(들어감 27초·나옴 42초), 상자에 고철 0개, 단계 GoZone
+OK   일꾼이 열쇠 문을 직접 엶 (상태 -1)
+OK   일꾼이 지하묘지 안으로 들어감
+FAIL 고철이 거점 상자에 들어옴 (0개, 480초)
+  상태(FAIL 순간): [494s] 라그나 hp62/62 355m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+    라그나 (133.0,52.4,125.7) Work 선 까닭 멀리선 이동 생략 속도 4.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(183.0m) 기다림 False 걷기 False 뒤 0 새로 -609.5초 뒤 · 길 없음 · m_path 1: (169.5, 53.2, 114.7) 길 True · MoveTo 가는 중((169.5, 53.2, 114.7) 거리 1.0 뛰기 True)
+    플로키 (-220.0,77.8,165.0) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.0m) 기다림 False 걷기 False 뒤 0 새로 -609.5초 뒤 · 길 없음 · m_path 0: 길 False · 
+OK   일꾼이 안에 남지 않음
+남은 고철 더미: 처음 31개 → 캔 뒤 30개(부서진 더미 조각이 남으면 그대로일 수 있음)
+정리: 세운 지하묘지 물체 106개·ZNetView 없는 조각 0개 지움
+OK   대사에 자리표시자 안 남음
+끝 상태: [497s] 라그나 hp62/62 0m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+멈춤 0번 · 일부러 선 것 19번, 합 372초, 가장 긴 39초(멀리선 이동 생략 GatherJob/GoZone) [많은 것: 멀리선 이동 생략 GatherJob/GoZone 372초] (선 표본 1516, 가장 오래 39.1초) · 헛휘두름 2번 · 기다림 합 던전 안 이동 생략 5초, 떨어짐 기다림 2초, 멀리선 이동 생략 390초
+--- 상태 흐름(3초마다, 최근 40개) ---
+[379s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[382s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[385s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[388s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[391s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[394s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[397s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[400s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[403s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[406s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[409s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[412s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[415s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[418s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[421s] 라그나 hp63/63 310m GatherJob/GoZone 짐6 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[424s] 라그나 hp63/63 308m GatherJob/GoZone 짐6 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[427s] 라그나 hp63/63 307m GatherJob/GoZone 짐6 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[430s] 라그나 hp63/63 301m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[433s] 라그나 hp63/63 281m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[436s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[439s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[442s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[445s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[448s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[451s] 라그나 hp63/63 337m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[454s] 라그나 hp63/63 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[457s] 라그나 hp63/63 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[460s] 라그나 hp63/63 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[463s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[466s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[469s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[472s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[476s] 라그나 hp62/62 412m GatherJob/Search 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[479s] 라그나 hp62/62 410m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[482s] 라그나 hp62/62 401m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[485s] 라그나 hp62/62 399m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[488s] 라그나 hp62/62 391m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[491s] 라그나 hp62/62 375m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[494s] 라그나 hp62/62 357m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[497s] 라그나 hp62/62 341m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+끝 정리: 생물 1·땅의 물건 0·통나무 0 치움
+--- NPC 대사 ---
+라그나: 오딘이 날 보냈다면 이유가 있겠지. 하지만 내 길은 내가 고른다.
+플로키: 숲이 낯설어. 손으로 만져 봐야겠군.
+라그나: 처음엔 다 느린 법이야. 다녀올게.
+플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+라그나: 지하묘지라... 어둡겠군. 들어가자.
+라그나: 새끼 추적자와 정면으로 붙는 건 바보짓이지. 물러난다.
+라그나: 살아서 돌아와야 다음 수가 있지. 새끼 추적자를 피해!
+라그나: 늪은 아직 못 봤어. 고철을 찾으려면 거기부터 가 봐야겠군.
+라그나: 멧돼지가 오는군. 먼저 움직이게 둬.
+플로키: ...조용하다. 너무 조용하면 로키가 뭘 꾸미는 거야.
+플로키: 히히, 이 나무는 결이 예쁘다. 너 배가 될래?
+플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+라그나: 멧돼지, 넌 뭘 믿고 덤비지?
+라그나: 멧돼지가 왔군. 재밌어지겠어.
+판정: FAIL (23/24)
+시간: 503초
+프레임: 평균 219 FPS (실시간 168초)
+
+## 모드 로그 (388줄)
+[Info   :Valheim Helper] === vh_crypttest 시작
+[Info   :Valheim Helper] 시험: 까마귀 Hugin 치움 — 자리 (-229.7, 79.1, 175.8)·플레이어와 19.9m
+[Info   :Valheim Helper] 지난 시험 상자 1개 치움
+[Info   :Valheim Helper] 시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+[Info   :Valheim Helper] 거점 이동 (-218.49, 77.95, 164.26), 새 NPC 2명
+[Info   :Valheim Helper] <라그나> 오딘이 날 보냈다면 이유가 있겠지. 하지만 내 길은 내가 고른다.
+[Info   :Valheim Helper] <플로키> 숲이 낯설어. 손으로 만져 봐야겠군.
+[Info   :Valheim Helper] 자리 점검: 장소 Dolmen02 29m(반지름 8), 장소 ShipSetting01 47m(반지름 24), 장소 WoodHouse1 48m(반지름 8), 장소 Dolmen02 57m(반지름 8), 장소 Runestone_Meadows 81m(반지름 8), 장소 ShipSetting01 102m(반지름 24), 장소 Mistlands_DvergrTownEntrance2 105m(반지름 32)
+[Info   :Valheim Helper] 시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] OK   깃발·NPC
+[Info   :Valheim Helper] Crypt 위치 이름: Crypt2(BlackForest), SunkenCrypt1(Swamp), SunkenCrypt2(Swamp), SunkenCrypt3(Swamp), SunkenCrypt4(Swamp), Crypt3(BlackForest), Crypt4(BlackForest), HalfBurried_ForestCrypt(BlackForest)
+[Info   :Valheim Helper] OK   늪 지하묘지 위치 이름 있음 (SunkenCrypt4)
+[Info   :Valheim Helper] OK   지하묘지 세움(TestSpawnLocation, 깃발에서 110m)
+[Info   :Valheim Helper] OK   Dungeons.All이 찾음 (SunkenCrypt4 4m)
+[Info   :Valheim Helper] OK   입구 열쇠 문 찾음 (sunken_crypt_gate), 처음엔 닫힘
+[Info   :Valheim Helper] OK   안에 남은 고철 더미를 셈 (31개)
+[Info   :Valheim Helper] OK   문 열쇠 물건 (CryptKey)
+[Info   :Valheim Helper] OK   열쇠를 떨구는 보스 월드 키 찾음 (defeated_gdking, 시험 전 주움 False·월드 키 False)
+[Info   :Valheim Helper] OK   열쇠 없으면 닫힌 지하묘지는 안 고름
+[Info   :Valheim Helper] 지하묘지 목록: SunkenCrypt4 108m 닫힘 더미 31
+[Info   :Valheim Helper] OK   열쇠 없고 문 닫힌 묘지뿐이면 철은 출발 전에 거절 (depart.noCrypt, 기대 depart.noCrypt)
+[Info   :Valheim Helper] OK   플레이어가 열쇠를 주웠으면 닫힌 곳도 고름(열 수 있음)
+[Info   :Valheim Helper] OK   보스가 잡혔으면(월드 키) 닫힌 곳도 고름 (0.0초)
+[Info   :Valheim Helper] OK   열쇠를 얻었으면 철은 거절 안 함 (depart.lowSkill)
+[Info   :Valheim Helper] OK   입구 Teleport 찾음 (2m)
+[Info   :Valheim Helper] 입구 (-315.54, 38.35, 212.09) → 안 (-316.41, 5037.85, 210.00)
+[Info   :Valheim Helper] OK   일꾼이 안으로 들어감 (y 5038, 0.0초)
+[Info   :Valheim Helper] OK   안에서 떨어지지 않음 (y 5037, 도착점과 0.8m)
+[Info   :Valheim Helper] 안의 고철 물체: mudpile2 [Pickaxe 단계 0, 체력 1, 부서지면 mudpile2_frac] ×16, dvergrprops_pickaxe [Pickaxe 단계 0, 체력 1, 부서지면 -] ×15
+[Info   :Valheim Helper] 안의 ZNetView 물체 721개: CreepProp_hanging01 ×29, Spawner_Tick_stared (1) ×14, dvergrprops_lantern ×13, Spawner_Tick_stared ×12, CreepProp_hanging01 (1) ×11, CreepProp_egg_hanging01 ×11, CreepProp_egg_hanging01 (1) ×9, Pickable_RoyalJelly ×9, CreepProp_egg_hanging01 (2) ×7, Pickable_Mushroom_yellow (7) ×7, dvergrtown_wood_pole (6) ×7, Pickable_Mushroom_yellow (6) ×7, SeekerEgg...
+[Info   :Valheim Helper] OK   안에 고철 나오는 물체 있음 (31개)
+[Info   :Valheim Helper]   안의 물 26개
+[Info   :Valheim Helper]   더미 8m 높이 -8.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 7.3m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -3.6m 설 수 있음, 물 깊이 점 -15033.46·몸 -15033.46(기준 1.00), 가장 가까운 칸 (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0.8m...
+[Info   :Valheim Helper]   더미 11m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 4.1m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,+4) -1.7m: [+1,+0] +0.0m 몸 자리 stone 위 막힘·단 됨 {s...
+[Info   :Valheim Helper]   더미 16m 높이 -1.4 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 10.7m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 16m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 9.9m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 몸 자리 stone_low, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,+2) -1.7m: [-1,+0] +0.0m 몸 자리 collider/...
+[Info   :Valheim Helper]   더미 16m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 9.1m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 +0.9m 몸 자리 stone_low, 물 깊이 점 -15038.03·몸 -15038.03(기준 1.00), 가장 가까운 칸 (-6,+4) -1.7m: [+1,+0] +0.0m 몸 자리...
+[Info   :Valheim Helper]   더미 18m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 16.7m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 몸 자리 collider/dvergrtown_wall_large<GameObject, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-1,-1) -0...
+[Info   :Valheim Helper]   더미 18m 높이 -1.4 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 16.7m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-1,-1) -0.7m: [+1,+0] +0.8m 몸 자리 stone 위 막힘·단 됨 {stone=DG_SunkenCrypt} [+...
+[Info   :Valheim Helper]   더미 18m 높이 -1.2 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 12.9m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 몸 자리 더미 mudpile2, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 defaul...
+[Info   :Valheim Helper]   더미 22m 높이 -9.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 21.3m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -2.7m 설 수 있음, 물 깊이 점 -15034.37·몸 -15034.37(기준 1.00), 가장 가까운 칸 (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0....
+[Info   :Valheim Helper]   더미 22m 높이 -8.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 21.3m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -3.6m 설 수 있음, 물 깊이 점 -15033.46·몸 -15033.46(기준 1.00), 가장 가까운 칸 (+1,+0) -5.1m: [+1,+0] 바닥 없음 [+0,+1] +0....
+[Info   :Valheim Helper]   더미 24m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 18.4m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrro...
+[Info   :Valheim Helper]   더미 25m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 18.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.7m 몸 자리 더미 mudpile2, 물 깊이 점 -15036.35·몸 -15036.35(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸...
+[Info   :Valheim Helper]   더미 25m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 19.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -1.7m 설 수 있음, 물 깊이 점 0.40·몸 0.40(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrro...
+[Info   :Valheim Helper]   더미 27m 높이 -1.5 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 22.3m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 29m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 22.8m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.5m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.58·몸 -15036.58(기준 1.00), 가장 가까운 칸 (-6,-...
+[Info   :Valheim Helper]   더미 29m 높이 +0.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 22.9m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.6m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.47·몸 -15036.47(기준 1.00), 가장 가까운 칸 (-6,-...
+[Info   :Valheim Helper]   더미 29m 높이 +0.2 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 23.1m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 stone, 물 깊이 점 -15036.70·몸 -15036.70(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 de...
+[Info   :Valheim Helper]   더미 29m 높이 -0.2 닿을 2.0m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 23.1m(닿을 거리 2.0), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 stone, 물 깊이 점 -15036.64·몸 -15036.64(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 de...
+[Info   :Valheim Helper]   더미 31m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 24.8m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 31m 높이 -0.2 닿을 2.0m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 24.9m(닿을 거리 2.0), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 31m 높이 -1.6 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 25.0m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 32m 높이 +0.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 25.4m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.6m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.47·몸 -15036.47(기준 1.00), 가장 가까운 칸 (-6,-...
+[Info   :Valheim Helper]   더미 32m 높이 -1.2 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 25.9m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 34m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 27.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 37m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 35.8m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.5m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.58·몸 -15036.58(기준 1.00), 가장 가까운 칸 (-1,-...
+[Info   :Valheim Helper]   더미 38m 높이 +0.2 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 37.2m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.70·몸 -15036.70(기준 1.00), 가장 가까운 칸 (-1,-...
+[Info   :Valheim Helper]   더미 39m 높이 +0.2 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 33.7m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.70·몸 -15036.70(기준 1.00), 가장 가까운 칸 (-6,-...
+[Info   :Valheim Helper]   더미 40m 높이 -0.2 닿을 2.0m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 34.3m(닿을 거리 2.0), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.4m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.64·몸 -15036.64(기준 1.00), 가장 가까운 칸 (-6,-...
+[Info   :Valheim Helper]   더미 40m 높이 -1.3 닿을 1.9m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 34.5m(닿을 거리 1.9), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 -0.5m 몸 자리 Cube/GameObject<dvergr_room_endcap03, 물 깊이 점 -15036.58·몸 -15036.58(기준 1.00), 가장 가까운 칸 (-6,-...
+[Info   :Valheim Helper]   더미 40m 높이 -1.4 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 34.1m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 없음(더미 위 mudpile2), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸 자리 default/dvergrrock_curvedrock<GameObject...
+[Info   :Valheim Helper]   더미 42m 높이 -1.3 닿을 3.2m: 길 없음 길 없음(칸 70개 봄) / 예전 규칙(시작 높이로만 잼) 없음 / 닿는 칸 30개, 목표에 가장 가까이 36.6m(닿을 거리 3.2), 경계 [몸 자리 stone ×22, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 바닥 없음 ×2, 몸 자리 더미 root07 ×2, 몸 자리 dirtfloor ×1], 더미를 지나가도 길 없음(칸 74개 봄), 목표 칸 바닥 +0.2m 몸 자리 더미 mudpile2, 물 깊이 점 -15037.29·몸 -15037.29(기준 1.00), 가장 가까운 칸 (-6,-2) -1.7m: [+1,+0] +0.7m 몸...
+[Info   :Valheim Helper]   도착 자리에서 길 있는 더미 0개(예전 규칙 0개), 일꾼 m_swimDepth 1.50(몸 캡슐 높이 1.85·반지름 0.49), 깊은 물 기준 1.00m
+[Info   :Valheim Helper]   도착 자리 둘레 지도(±14칸, 위 +z):
+[Info   :Valheim Helper] OK   나가는 Teleport 찾음 (2m)
+[Info   :Valheim Helper] OK   밖으로 나옴 (입구와 1.0m, 0.0초)
+[Info   :Valheim Helper] > !라그나 철 3
+[Info   :Valheim Helper] 라그나 출발 전 판단 IronScrap 3: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 처음엔 다 느린 법이야. 다녀올게.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-218.5, 78.0, 164.3)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 지하묘지 SunkenCrypt4로(108m, 닫힘 → 연다, 더미 31)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoCrypt
+[Info   :Valheim Helper] <플로키> (말풍선) 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 지하묘지 열쇠 문 엶 1번째
+[Info   :Valheim Helper] <라그나> 지하묘지라... 어둡겠군. 들어가자.
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 지하묘지 문 열림(27초)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 지하묘지 들어감(y 5038)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoCrypt → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → Approach
+[Info   :Valheim Helper] 라그나: 묘지 안 길 못 찾음 — 길 없음(칸 67개 봄), 목표까지 7.9m
+[Info   :Valheim Helper] DIAG 묘지 안 길 없음: 닿는 칸 29개, 목표에 가장 가까이 7.9m(닿을 거리 1.9), 경계 [몸 자리 stone ×17, 몸 자리 collider/dvergrtown_wall_large<GameObject ×7, 몸 자리 New ×6, 몸 자리 SunkenKit_int_floor_2x2 ×3, 몸 자리 stone_low ×3, 몸 자리 더미 root07 ×2], 더미를 지나가도 길 없음(칸 68개 봄), 목표 칸 바닥 -4.1m 설 수 있음, 물 깊이 점 -15033.46·몸 -15033.46(기준 1.00), 가장 가까운 칸 (+0,+0) +0.0m: [+1,+0] -5.7m 벽 Cube/ExteriorGateway<Interior [+0,+1] -0...
+[Info   :Valheim Helper] 라그나: dvergrprops_pickaxe까지 던전 안 길 없음(12m) → 이동 생략 2초 기다림
+[Info   :Valheim Helper] 라그나: 던전 안 이동 생략 → dvergrprops_pickaxe 옆 1.4m(높이차 1.0)
+[Info   :Valheim Helper] 라그나: dvergrprops_pickaxe 캐기 시작(뿌리 (-310.3,5028.8,204.9)까지 1.4m, 높이차 -0.9)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Approach → Work
+[Info   :Valheim Helper] 라그나: 공격 판정이 안 닿아 직접 피해 9 (dvergrprops_pickaxe pickaxe, 맞은 점까지 0.7m, 방향 (0.3,0.6,-0.8))
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Work → Collect
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Collect → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → Approach
+[Info   :Valheim Helper] 라그나: 묘지 안 길 못 찾음 — 길 없음(칸 167개 봄), 목표까지 14.4m
+[Info   :Valheim Helper] DIAG 묘지 안 길 없음: 닿는 칸 78개, 목표에 가장 가까이 13.9m(닿을 거리 3.2), 경계 [몸 자리 default/dvergrrock_curvedrock<GameObject ×52, 몸 자리 더미 dvergrtown_wood_support ×16, 몸 자리 Cube/GameObject<dvergr_stone_endcap02 ×4, 몸 자리 default (1)/CreepProp_pillarhalf01<pillar ×4, 더미 위 SeekerEgg ×4, 바닥 없음 ×3], 더미를 지나가도 길 없음(칸 1008개 봄), 목표 칸 바닥 +0.6m 몸 자리 더미 dvergrtown_wood_wall02, 물 깊이 점 -15028.35·몸 -15028.35...
+[Info   :Valheim Helper] 라그나: mudpile2까지 던전 안 길 없음(17m) → 이동 생략 2초 기다림
+[Info   :Valheim Helper] 라그나: 던전 안 이동 생략 → mudpile2 옆 2.8m(높이차 0.4)
+[Info   :Valheim Helper] 라그나: mudpile2 캐기 시작(뿌리 (-316.4,5035.8,192.4)까지 2.9m, 높이차 -0.2)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Approach → Work
+[Info   :Valheim Helper] 적 속성 피해 SeekerBrood: 없음
+[Info   :Valheim Helper] 라그나 물러남 1번째: 새끼 추적자 등 1, 비율 1.99 (내 한 방 9.2, 갑옷 4, 배율 1.00, 체력 70/70, 적 [SeekerBrood 40/30.0→28.0 1m 짐작]) → 
+[Info   :Valheim Helper] <라그나> 새끼 추적자와 정면으로 붙는 건 바보짓이지. 물러난다.
+[Info   :Valheim Helper] 라그나: 묘지 안 길 못 찾음 — 길 없음(칸 147개 봄), 목표까지 19.6m
+[Info   :Valheim Helper] DIAG 묘지 안 길 없음: 닿는 칸 77개, 목표에 가장 가까이 18.0m(닿을 거리 2.0), 경계 [몸 자리 stone ×15, 몸 자리 더미 mudpile2 ×11, 몸 자리 collider/dvergrtown_gate_stair<room ×10, 몸 자리 default (1)/CreepProp_pillarhalf01<pillar ×10, 몸 자리 SunkenKit_int_floor_2x2 ×4, 더미 위 mudpile2 ×4], 더미를 지나가도 길 없음(칸 322개 봄), 목표 칸 바닥 없음(바닥 없음), 가장 가까운 칸 (-2,+2) +1.0m: [+1,+0] -0.8m 몸 자리 SunkenKit_int_floor_2x2 (4) 위 빔·단 안 됨 {Su...
+[Info   :Valheim Helper] 라그나 쫓겨 다시 물러남 1번째 → 
+[Info   :Valheim Helper] 라그나 쫓겨 다시 물러남 2번째 → 
+[Info   :Valheim Helper] 라그나 도망: 새끼 추적자 등 1, 잃을 체력 비율 1.99 (내 한 방 9.2, 갑옷 4, 배율 1.00, 체력 70/70, 적 [SeekerBrood 40/30.0→28.0 3m 짐작]) → 
+[Info   :Valheim Helper] <라그나> 살아서 돌아와야 다음 수가 있지. 새끼 추적자를 피해!
+[Info   :Valheim Helper] 적 배움: SeekerBrood 체력 20, 한 방 60
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Work → Return
+[Info   :Valheim Helper] 라그나 도망: 나가는 문까지 던전 안 길 없음(18m) → 이동 생략 3초 기다림
+[Info   :Valheim Helper] 라그나 도망: 던전 나가는 문 씀(이동 생략)
+[Info   :Valheim Helper] DIAG 라그나: 도망 갇힘 시계 2.0초, 공격 중 False, 구덩이 False, 둘레 3.0 3.1 -0.3 -2.7 -3.5 -2.2 0.3 2.3
+[Info   :Valheim Helper] 라그나 도망 끝: 도착
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Return → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-258.2, 80.9, 221.1)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 아는 곳에 없음 → 새 땅 탐험(바이옴 늪·안개땅, 지도에 없음, 첫 경계 -3,4 초원)
+[Info   :Valheim Helper] <라그나> 늪은 아직 못 봤어. 고철을 찾으려면 거기부터 가 봐야겠군.
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -3,4로(75m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 75m(직선(안 밝혀짐), 직선 75m) → 11초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 장소 기억 -5,3: Fled, 무리 [SeekerBrood×1★0]
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(11초 + 옮기기 0.1초, 목적지 18m) → 마저 걷기
+[Info   :Valheim Helper] 멈춤 10.9초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.92, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 1.7, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 82.2/땅 82.1/원래땅 82.1/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 Terrain/_Zone(Clone) · 앞 Terrain/_Zone(Clone) 0.07m 점(+0.21,+0.06,-0.14) 법선(-0.31,+0.89,+0.35)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-206.8, 82.2, 248.3)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -3,4에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -2,3로(97m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 97m(직선(안 밝혀짐), 직선 97m) → 14초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 멈춤 14.2초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 79.1/땅 78.9/원래땅 78.9/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(14초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-134.6, 78.2, 197.3)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -2,3에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -3,1로(145m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 145m(직선(안 밝혀짐), 직선 145m) → 21초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 적 속성 피해 Boar: 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(21초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-186.8, 65.5, 75.9)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -3,1에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -2,0로(96m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 멈춤 21.1초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 False, 속도 1.5, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 65.4/땅 65.4/원래땅 65.4/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 Terrain/_Zone(Clone)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 96m(직선(안 밝혀짐), 직선 96m) → 14초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(14초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] <라그나> 멧돼지가 오는군. 먼저 움직이게 둬.
+[Info   :Valheim Helper] 멈춤 14.2초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.21, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.4, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 68.7/땅 68.7/원래땅 68.7/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 Terrain/_Zone(Clone) · 앞 0.6m 빔
+[Info   :Valheim Helper] 적 배움: Boar 체력 10, 한 방 10
+[Info   :Valheim Helper] 라그나: $enemy_boar에 멀리서(플레이어 64m 밖) 직접 피해 24
+[Info   :Valheim Helper] DIAG 싸움 라그나→$enemy_boar: 거리 5.8/2.2 휘두름 1 적 체력 1/10 공격 중 False 봄 True 높이차 0.3 물 False 쉼 1 막음 0 적 내 것 True
+[Info   :Valheim Helper] 라그나: $enemy_boar에 멀리서(플레이어 64m 밖) 직접 피해 18
+[Info   :Valheim Helper] 라그나 떨굼 기다림: (-125.0,17.9) 3종
+[Info   :Valheim Helper] 라그나 장소 기억 -2,0: Won, 무리 [Boar×1★0]
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-129.6, 68.8, 16.7)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -2,0에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 0,1로(138m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 138m(직선(안 밝혀짐), 직선 138m) → 20초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 잡은 몬스터 떨굼 주움 $item_boar_meat x1
+[Info   :Valheim Helper] 라그나 잡은 몬스터 떨굼 주움 $item_leatherscraps x1
+[Info   :Valheim Helper] <플로키> (말풍선) ...조용하다. 너무 조용하면 로키가 뭘 꾸미는 거야.
+[Info   :Valheim Helper] 라그나 떨굼 그만(E133): 40m 밖, 자리에서 67.0m
+[Info   :Valheim Helper] 멈춤 15.7초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 2.3, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 72.4/땅 72.3/원래땅 72.3/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(20초 + 옮기기 0.2초, 목적지 10m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-7.4, 72.3, 56.9)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 0,1에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 1,2로(101m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 101m(직선(안 밝혀짐), 직선 101m) → 14초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(14초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 멈춤 14.7초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.99, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.8, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 64.4/땅 64.3/원래땅 64.3/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 · 앞 0.6m 빔
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (54.7, 64.4, 120.3)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 1,2에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 0,4로(146m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 146m(직선(안 밝혀짐), 직선 146m) → 21초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(21초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 멈춤 21.0초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.20, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.4, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 89.8/땅 89.7/원래땅 89.7/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 · 앞 0.6m 빔
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (3.9, 88.4, 248.1)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 0,4에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 2,4로(124m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 124m(직선(안 밝혀짐), 직선 124m) → 18초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(18초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 멈춤 18.2초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 53.9/땅 53.9/원래땅 53.9/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 Terrain/_Zone(Clone)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (115.0, 53.9, 255.2)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 2,4에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 3,5로(101m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 101m(직선(안 밝혀짐), 직선 101m) → 14초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(14초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 멈춤 14.6초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.71, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 1.6, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 48.0/땅 47.9/원래땅 47.9/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 · 앞 Lod0/Beech1(Clone) 0.39m 점(+0.75,+0.40,-0.20) 법선(-0.76,+0.19,+0.62)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (183.8, 47.5, 312.8)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 3,5에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 1,6로(139m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 139m(직선(안 밝혀짐), 직선 139m) → 20초 기다림(달리기 7.0)
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75046 구역 134917에서 뺌
+[Info   :Valheim Helper]   [포탈 목록에 남은 ZDO] 1:75046 구역 134917에서 뺌
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(20초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 멈춤 20.3초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.42, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 2.2, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 53.7/땅 53.7/원래땅 53.5/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 Terrain/_Zone(Clone) · 앞 Terrain/_Zone(Clone) 0.08m 점(-0.07,+0.02,+0.13) 법선(+0.13,+0.99,-0.10)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (72.5, 53.9, 379.6)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 1,6에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -1,6로(137m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 136m(직선(안 밝혀짐), 직선 136m) → 19초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 멈춤 19.7초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 0.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 57.1/땅 56.9/원래땅 56.9/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(19초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-52.1, 82.6, 383.7)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -1,6에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -5,5로(275m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 275m(직선(안 밝혀짐), 직선 275m) → 39초 기다림(달리기 7.0)
+[Info   :Valheim Helper] <플로키> (말풍선) 히히, 이 나무는 결이 예쁘다. 너 배가 될래?
+[Info   :Valheim Helper] 멈춤 39.5초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 56.9/땅 56.7/원래땅 56.7/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(39초 + 옮기기 0.3초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-308.5, 52.0, 321.9)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -5,5에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -6,4로(100m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 100m(직선(안 밝혀짐), 직선 100m) → 14초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(14초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 멈춤 14.6초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.85, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 1.9, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 49.0/땅 48.9/원래땅 48.9/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 Terrain/_Zone(Clone) · 앞 Terrain/_Zone(Clone) 0.02m 점(-0.26,+0.08,-0.05) 법선(+0.51,+0.86,+0.09)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-375.1, 50.2, 262.4)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -6,4에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -5,1로(206m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 206m(직선(안 밝혀짐), 직선 206m) → 29초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(29초 + 옮기기 0.3초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 멈춤 29.6초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.24, 달리기 입력 True, 수영 False, 땅닿음 False, 속도 0.1, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 53.0/땅 52.8/원래땅 52.8/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 model/Bush01(Clone) · 앞 model/Bush01(Clone) 0.01m 점(-0.17,+0.49,-0.46) 법선(+0.34,+0.00,+0.94)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-323.4, 52.9, 76.5)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -5,1에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -4,-1로(156m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 156m(직선(안 밝혀짐), 직선 156m) → 22초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 멈춤 22.9초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 40.8/땅 40.6/원래땅 40.6/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(22초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-260.9, 41.0, -54.6)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -4,-1에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -2,-2로(152m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 152m(직선(안 밝혀짐), 직선 152m) → 22초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(22초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 멈춤 22.1초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 False, 속도 2.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 85.1/땅 85.1/원래땅 85.1/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 Terrain/_Zone(Clone)(+0.33,+0.93,+0.17)×0.000
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-139.6, 85.1, -122.5)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -2,-2에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 0,-1로(151m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 151m(직선(안 밝혀짐), 직선 151m) → 22초 기다림(달리기 7.0)
+[Info   :Valheim Helper] <플로키> (말풍선) 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] 멈춤 21.8초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 0.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 79.7/땅 79.5/원래땅 79.5/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(22초 + 옮기기 0.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] <라그나> 멧돼지, 넌 뭘 믿고 덤비지?
+[Info   :Valheim Helper] DIAG 싸움 라그나→$enemy_boar: 거리 5.4/2.2 휘두름 0 적 체력 10/10 공격 중 False 봄 True 높이차 1.5 물 False 쉼 4 막음 0 적 내 것 True
+[Info   :Valheim Helper] 라그나: $enemy_boar에 멀리서(플레이어 64m 밖) 직접 피해 24
+[Info   :Valheim Helper] 라그나: $enemy_boar에 멀리서(플레이어 64m 밖) 직접 피해 22
+[Info   :Valheim Helper] 라그나 떨굼 기다림: (-18.8,-62.9) 3종
+[Info   :Valheim Helper] 라그나 장소 기억 0,-1: Won, 무리 [Boar×1★0]
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-16.6, 80.9, -67.2)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 0,-1에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 2,0로(159m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 159m(직선(안 밝혀짐), 직선 159m) → 23초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 잡은 몬스터 떨굼 주움 $item_leatherscraps x1
+[Info   :Valheim Helper] 라그나 잡은 몬스터 떨굼 주움 $item_boar_meat x1
+[Info   :Valheim Helper] 적 속성 피해 Greyling: 없음
+[Info   :Valheim Helper] 라그나 떨굼 그만(E133): 40m 밖, 자리에서 53.4m
+[Info   :Valheim Helper] 멈춤 15.4초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 True, 수영 False, 땅닿음 False, 속도 0.1, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 79.4/땅 79.4/원래땅 79.3/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 Terrain/_Zone(Clone)(-0.33,+0.94,-0.05)×0.002
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(23초 + 옮기기 1.2초, 목적지 13m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (119.1, 81.8, -1.4)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 2,0에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 3,2로(149m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 149m(직선(안 밝혀짐), 직선 149m) → 21초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 멈춤 21.5초: 라그나 멀리선 이동 생략 GatherJob/GoZone (일부러) / 입력 0.00, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 0.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 55.4/땅 55.2/원래땅 55.9/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 끝(21초 + 옮기기 0.2초, 목적지 10m) → 마저 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (190.4, 55.6, 119.3)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 3,2에 와서 봤는데 쓸 게 없음 / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 4,0로(136m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 136m(직선(안 밝혀짐), 직선 136m) → 19초 기다림(달리기 7.0)
+[Info   :Valheim Helper] <라그나> 멧돼지가 왔군. 재밌어지겠어.
+[Info   :Valheim Helper] DIAG 싸움 라그나→$enemy_boar: 거리 9.7/2.2 휘두름 0 적 체력 10/10 공격 중 False 봄 True 높이차 -0.8 물 False 쉼 2 막음 0 적 내 것 True
+[Info   :Valheim Helper] 라그나: $enemy_boar에 멀리서(플레이어 64m 밖) 직접 피해 21
+[Info   :Valheim Helper] 라그나: $enemy_boar에 멀리서(플레이어 64m 밖) 직접 피해 16
+[Info   :Valheim Helper] 라그나 떨굼 기다림: (171.5,114.4) 3종
+[Info   :Valheim Helper] 라그나 장소 기억 3,2: Won, 무리 [Boar×1★0]
+[Info   :Valheim Helper] 라그나 잡은 몬스터 떨굼 주움 $item_boar_meat x1
+[Info   :Valheim Helper] 라그나 잡은 몬스터 떨굼 주움 $item_leatherscraps x1
+[Info   :Valheim Helper] 라그나 떨굼 그만(E133): 40m 밖, 자리에서 40.1m
+[Info   :Valheim Helper] 철 일: 480초(들어감 27초·나옴 42초), 상자에 고철 0개, 단계 GoZone
+[Info   :Valheim Helper] OK   일꾼이 열쇠 문을 직접 엶 (상태 -1)
+[Info   :Valheim Helper] OK   일꾼이 지하묘지 안으로 들어감
+[Info   :Valheim Helper] FAIL 고철이 거점 상자에 들어옴 (0개, 480초)
+[Info   :Valheim Helper]   상태(FAIL 순간): [494s] 라그나 hp62/62 355m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper]     라그나 (133.0,52.4,125.7) Work 선 까닭 멀리선 이동 생략 속도 4.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(183.0m) 기다림 False 걷기 False 뒤 0 새로 -609.5초 뒤 · 길 없음 · m_path 1: (169.5, 53.2, 114.7) 길 True · MoveTo 가는 중((169.5, 53.2, 114.7) 거리 1.0 뛰기 True)
+[Info   :Valheim Helper]     플로키 (-220.0,77.8,165.0) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.0m) 기다림 False 걷기 False 뒤 0 새로 -609.5초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper] OK   일꾼이 안에 남지 않음
+[Info   :Valheim Helper] 남은 고철 더미: 처음 31개 → 캔 뒤 30개(부서진 더미 조각이 남으면 그대로일 수 있음)
+[Info   :Valheim Helper] 정리: 세운 지하묘지 물체 106개·ZNetView 없는 조각 0개 지움
+[Info   :Valheim Helper] OK   대사에 자리표시자 안 남음
+[Info   :Valheim Helper] 끝 상태: [497s] 라그나 hp62/62 0m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] 멈춤 0번 · 일부러 선 것 19번, 합 372초, 가장 긴 39초(멀리선 이동 생략 GatherJob/GoZone) [많은 것: 멀리선 이동 생략 GatherJob/GoZone 372초] (선 표본 1516, 가장 오래 39.1초) · 헛휘두름 2번 · 기다림 합 던전 안 이동 생략 5초, 떨어짐 기다림 2초, 멀리선 이동 생략 390초
+[Info   :Valheim Helper] --- 상태 흐름(3초마다, 최근 40개) ---
+[Info   :Valheim Helper] [379s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [382s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [385s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [388s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [391s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [394s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [397s] 라그나 hp64/64 226m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [400s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [403s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [406s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [409s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [412s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [415s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [418s] 라그나 hp64/64 297m GatherJob/GoZone 짐6 대기0 | 플로키 hp64/64 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [421s] 라그나 hp63/63 310m GatherJob/GoZone 짐6 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [424s] 라그나 hp63/63 308m GatherJob/GoZone 짐6 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [427s] 라그나 hp63/63 307m GatherJob/GoZone 짐6 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [430s] 라그나 hp63/63 301m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [433s] 라그나 hp63/63 281m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [436s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [439s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [442s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [445s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [448s] 라그나 hp63/63 264m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [451s] 라그나 hp63/63 337m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [454s] 라그나 hp63/63 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [457s] 라그나 hp63/63 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [460s] 라그나 hp63/63 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp63/63 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [463s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [466s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [469s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [472s] 라그나 hp62/62 376m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [476s] 라그나 hp62/62 412m GatherJob/Search 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [479s] 라그나 hp62/62 410m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [482s] 라그나 hp62/62 401m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [485s] 라그나 hp62/62 399m GatherJob/GoZone 짐8 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [488s] 라그나 hp62/62 391m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [491s] 라그나 hp62/62 375m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [494s] 라그나 hp62/62 357m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] [497s] 라그나 hp62/62 341m GatherJob/GoZone 짐10 대기0 | 플로키 hp62/62 2m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] 끝 정리: 생물 1·땅의 물건 0·통나무 0 치움
+[Info   :Valheim Helper] --- NPC 대사 ---
+[Info   :Valheim Helper] 라그나: 오딘이 날 보냈다면 이유가 있겠지. 하지만 내 길은 내가 고른다.
+[Info   :Valheim Helper] 플로키: 숲이 낯설어. 손으로 만져 봐야겠군.
+[Info   :Valheim Helper] 라그나: 처음엔 다 느린 법이야. 다녀올게.
+[Info   :Valheim Helper] 플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] 라그나: 지하묘지라... 어둡겠군. 들어가자.
+[Info   :Valheim Helper] 라그나: 새끼 추적자와 정면으로 붙는 건 바보짓이지. 물러난다.
+[Info   :Valheim Helper] 라그나: 살아서 돌아와야 다음 수가 있지. 새끼 추적자를 피해!
+[Info   :Valheim Helper] 라그나: 늪은 아직 못 봤어. 고철을 찾으려면 거기부터 가 봐야겠군.
+[Info   :Valheim Helper] 라그나: 멧돼지가 오는군. 먼저 움직이게 둬.
+[Info   :Valheim Helper] 플로키: ...조용하다. 너무 조용하면 로키가 뭘 꾸미는 거야.
+[Info   :Valheim Helper] 플로키: 히히, 이 나무는 결이 예쁘다. 너 배가 될래?
+[Info   :Valheim Helper] 플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] 라그나: 멧돼지, 넌 뭘 믿고 덤비지?
+[Info   :Valheim Helper] 라그나: 멧돼지가 왔군. 재밌어지겠어.
+[Info   :Valheim Helper] 판정: FAIL (23/24)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 멀리선 이동 생략 그만둠(플레이어가 몸에 다가옴, 14/19초) → 그 자리부터 걷기
+[Info   :Valheim Helper] 라그나 작업 IronScrap: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-216.1, 77.9, 162.6)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 IronScrap: 구역 -1,3로(155m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 IronScrap: Search → GoZone
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75045 구역 136458에서 뺌
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75047 구역 134916에서 뺌
