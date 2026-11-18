@@ -22,7 +22,13 @@ namespace ValheimHelper
             else m_trail.Stop();
         }
 
-        void TrailStep(Vector3 pos) { if (m_trail.Active) m_trail.Step(P(pos)); }
+        void TrailStep(Vector3 pos)
+        {
+            if (m_trail.Active) m_trail.Step(P(pos));
+            if (m_exploreDiag && StuckWatch.PathEndsNear(this, m_exploreGoal, 1.5f)) { m_exploreDiag = false; Diag.Log("DIAG 다시 걸어 봄 바닐라 길: " + StuckWatch.PathSummary(this, pos, m_exploreGoal)); }
+        }
+        // E136 조사(회차 823): 다시 걸어 볼 때 바닐라가 받은 길(m_path)을 한 번 — 다른 층으로 내려갔다 오르는 길인지
+        bool m_exploreDiag; Vector3 m_exploreGoal;
 
         /// <summary>닿음: 자취는 지금 자리에서 끝나고, 열쇠는 출발 자리 → 목표(다음에 같은 목표를 받을 때 찾게).</summary>
         void TrailDone(Vector3 pos, Vector3 target)
@@ -53,10 +59,11 @@ namespace ValheimHelper
         void MemPathStart(Vector3 pos, Vector3 target)
         {
             m_memPath = null;
+            if (m_exploreDiag) { m_exploreDiag = false; Diag.Log($"DIAG 다시 걸어 봄: 목표 {m_exploreGoal:F1}까지 바닐라 길 안 받음(층 걷기·중간 점), 지금 높이 {pos.y:0.0}"); }
             if (!NearHome(pos) || !NearHome(target)) return;
             var from = P(pos); var to = P(target);
             var pts = Brain.Paths.Find(from, to, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time, out bool explore);
-            if (explore) { PathsExplored++; Diag.Log($"길 기억 다시 걸어 봄(옛 {Brain.Paths.LengthOf(from, to):0.0}m): 바닐라 → 더 짧으면 바꿈"); return; }
+            if (explore) { PathsExplored++; m_exploreDiag = true; m_exploreGoal = target;Diag.Log($"길 기억 다시 걸어 봄(옛 {Brain.Paths.LengthOf(from, to):0.0}m): 바닐라 → 더 짧으면 바꿈"); return; }
             if (pts == null || pts.Length < 2) return;
             // 닫힌 문·새 벽(손님이 놓은 조각은 서버가 못 봄): 점 사이를 허리 높이(0.8m)로 건축물 층에 쏴 막히면 지우고 바닐라
             for (int i = 1; i < pts.Length; i++)

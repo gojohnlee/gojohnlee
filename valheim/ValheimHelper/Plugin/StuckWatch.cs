@@ -24,6 +24,16 @@ namespace ValheimHelper
             return sum + Utils.DistanceXZ(path[path.Count - 1], goal);
         }
 
+        /// <summary>진단용(E136): m_path 점 수·길이·직선·가장 낮은/높은 점 높이(출발 높이 기준).</summary>
+        public static string PathSummary(BaseAI ai, Vector3 from, Vector3 goal)
+        {
+            var path = ai != null ? PathOf(ai) : null;
+            int n = path != null ? path.Count : 0;
+            float lo = from.y, hi = from.y; Vector3 low = from;
+            for (int i = 0; i < n; i++) { if (path[i].y < lo) { lo = path[i].y; low = path[i]; } if (path[i].y > hi) hi = path[i].y; }
+            return $"점 {n}·길 {PathLeft(ai, from, goal):0.0}m·직선 {Utils.DistanceXZ(from, goal):0.0}m·높이 출발 {from.y:0.0}→목표 {goal.y:0.0}, 가장 낮음 {lo:0.0}({low.x:0},{low.z:0})·가장 높음 {hi:0.0}";
+        }
+
         /// <summary>m_path가 이 목표로 받은 길인가(끝이 목표 within m 안) — 목표를 바꾼 첫 틱엔 앞 목표 길이 남아 있음.</summary>
         public static bool PathEndsNear(BaseAI ai, Vector3 goal, float within)
         {
