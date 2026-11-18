@@ -183,12 +183,14 @@ namespace ValheimHelper
             m_preyWalkAt = Time.time;
             if (Time.time - m_preyWalkFrom < QuickStartGrace || PreyVelocity().magnitude > PreyStill) { m_clock.Reset(); return false; }
             if (!QuickStuck(dt, m_preyPos, reach)) return false;
-            // 짐승마다 한 번은 목표 쪽 순간이동(채집과 같은 안전 조건 — 사용자 11-13 ④), 그래도 막히면 건너뜀
-            if (m_preyHopped != m_prey && HopBlocked() == null && HopToward(m_preyPos, out string why))
+            // 짐승마다 한 번은 순간이동(채집과 같은 안전 조건 — 사용자 11-13 ④): 안 보면 목표 쪽, 보면 막힌 곳 너머 근처(NearSkip, 사용자 11-18), 그래도 막히면 건너뜀
+            string block = m_preyHopped != m_prey ? HopBlocked() : "이 짐승은 이미 옮김";
+            string why = null;
+            if ((block == null && HopToward(m_preyPos, out why)) || (block == NearWhy && NearSkip(m_preyPos, out why)))
             {
                 m_preyHopped = m_prey;
                 HuntHops++;
-                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 다가가다 막혀 목표 쪽 순간이동 {why}");
+                Plugin.Log.LogInfo($"{m_npc.NpcName} 사냥 {Item}: 다가가다 막혀 {(block == NearWhy ? "근처 막힘 건너뛰기" : "목표 쪽 순간이동")} {why}");
                 m_clock.Reset();
                 m_bestDist = float.MaxValue;
                 m_progressTimer = 0f;

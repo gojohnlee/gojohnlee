@@ -244,9 +244,23 @@ namespace ValheimHelper
         string HopBlocked()
         {
             if (m_npc.InInterior()) return "지하묘지·실내"; // 묘지 가기(GoCrypt)는 자기 막힘 처리라 여기 안 옴
-            if (!FarFromPlayers(m_npc.transform.position)) return NearWhy;
+            if (SeenLately()) return NearWhy;
             return null;
         }
+
+        /// <summary>순간이동이 보일 수 있나(사용자 11-18 "64m를 보는지로"): 지금 보이거나 안 보이게 된 지 SeenGrace초 안. 64m 판정을 끈 시험(TestIgnorePlayers)은 옛 거리 판정.</summary>
+        bool SeenLately()
+        {
+            if (TestIgnorePlayers && StuckWatch.TestSeen == null) return !FarFromPlayers(m_npc.transform.position);
+            m_seenCheck = 0f;
+            WatchSeen(0f);
+            return m_seenAt >= 0f && Time.time - m_seenAt < SeenGrace;
+        }
+
+        const float SeenGrace = 2f;
+
+        /// <summary>내릴 자리 p가 누구 눈에 보이나(SeenLately와 같은 시험 규칙).</summary>
+        static bool Watched(Vector3 p) => TestIgnorePlayers && StuckWatch.TestSeen == null ? !FarFromPlayers(p) : StuckWatch.Seen(p);
 
         /// <summary>가장 가까운 플레이어(호스트 + 접속한 사람들의 기준 위치)에서 StuckHop.NearPlayer m 밖인가.</summary>
         internal static bool FarFromPlayers(Vector3 p)
@@ -366,7 +380,7 @@ namespace ValheimHelper
                 tried++;
                 var p = new Vector3((float)c.X, dest.y, (float)c.Z);
                 if (!ZoneSystem.instance.IsZoneLoaded(p)) { last = "구역 안 불러와짐"; continue; }
-                if (!nearPlayerOk && !FarFromPlayers(p)) { last = "플레이어 근처"; continue; }
+                if (!nearPlayerOk && Watched(p)) { last = "보이는 자리"; continue; }
                 float h;
                 Vector3 normal;
                 if (floorY.HasValue)
