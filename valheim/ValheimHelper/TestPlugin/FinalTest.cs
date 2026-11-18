@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using HarmonyLib;
 using UnityEngine;
 using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Work;
@@ -15,6 +16,7 @@ namespace ValheimHelper
         public static void Register() => TestRunner.Register("vh_finaltest", "최종 실전 시험: 이름 없는 실제 말투 명령 한꺼번에(알아들음·해냄 따로, 되돌림 한 번)", Run, 4500f); // 안 기다림 4200초보다 길게(E103: 3600에 끊겨 남은 칸을 못 적음)
 
         static bool s_autoGo;
+        static readonly AccessTools.FieldRef<Character, HitData> PigLastHit = AccessTools.FieldRefAccess<Character, HitData>("m_lastHit"); // E140: 멧돼지 죽은 까닭(WorkerNpc가 쓰는 protected 필드)
 
         static IEnumerator Run()
         {
@@ -113,6 +115,7 @@ namespace ValheimHelper
             float t = 0f;
             int nights = 0; bool wasNight = EnvMan.IsNight();
             float pigSeen = -1f; Vector3 pigAt = Vector3.zero; bool pigOut = false, pigGone = false; // E140: 멧돼지 사라진 때·자리
+            string pigHit = "없음"; // E140: 마지막으로 멧돼지를 친 것(죽은 까닭)
             while (t < 4200f && orders.Exists(o => o.Done < 0f)) // 밤이 끼면 더 걸림(3000 → 4200초)
             {
                 yield return new WaitForSeconds(5f);
@@ -126,8 +129,8 @@ namespace ValheimHelper
                 Match(orders);
                 foreach (var o in orders) o.Poll(home, t);
                 Busy.Sample(t);
-                if (pig != null) { pigSeen = t; pigAt = pig.transform.position; if (!pigOut && LivestockJob.InPen(pig.GetComponent<Character>(), penAt) == false) { pigOut = true; TestRunner.Log($"DIAG 멧돼지 우리 밖 {t:F0}초: 우리에서 {Vector3.Distance(pigAt, penAt):0}m, 체력 {pig.GetComponent<Character>().GetHealth():0}, 길듦 {pig.GetComponent<Character>().IsTamed()}"); } }
-                else if (pigSeen >= 0f && !pigGone) { pigGone = true; TestRunner.Log($"DIAG 멧돼지 없어짐 {t:F0}초(마지막 {pigSeen:F0}초 {pigAt}, 우리에서 {Vector3.Distance(pigAt, penAt):0}m)"); } // E140
+                if (pig != null) { pigSeen = t; pigAt = pig.transform.position; { HitData h = PigLastHit(pig.GetComponent<Character>()); if (h != null) { Character k = h.GetAttacker(); pigHit = $"{(k != null ? Utils.GetPrefabName(k.gameObject) : "?")}·{h.m_hitType}·체력 {pig.GetComponent<Character>().GetHealth():0}"; } } if (!pigOut && LivestockJob.InPen(pig.GetComponent<Character>(), penAt) == false) { pigOut = true; TestRunner.Log($"DIAG 멧돼지 우리 밖 {t:F0}초: 우리에서 {Vector3.Distance(pigAt, penAt):0}m, 체력 {pig.GetComponent<Character>().GetHealth():0}, 길듦 {pig.GetComponent<Character>().IsTamed()}, 마지막 맞음 {pigHit}"); } }
+                else if (pigSeen >= 0f && !pigGone) { pigGone = true; TestRunner.Log($"DIAG 멧돼지 없어짐 {t:F0}초(마지막 {pigSeen:F0}초 {pigAt}, 우리에서 {Vector3.Distance(pigAt, penAt):0}m, 마지막 맞음 {pigHit})"); } // E140
             }
             Commands.Ran -= OnRan;
             WorkerNpc.TestPicked = null;
