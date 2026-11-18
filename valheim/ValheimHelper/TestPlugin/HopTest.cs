@@ -84,8 +84,10 @@ namespace ValheimHelper
             hold(w.Ragnar);
             float hp0 = w.Ragnar.GetHealth();
             int carried0 = Carried(w.Ragnar);
-            int hops0 = GatherJob.Hops, rescues0 = GatherJob.Rescues;
+            int hops0 = GatherJob.Hops, rescues0 = GatherJob.Rescues, near0 = GatherJob.NearSkips;
             Vector3 before = w.Ragnar.transform.position;
+            // 諛? ??蹂대뒗 以?媛뺤젣(?ъ슜??11-18 "64m瑜?蹂대뒗吏濡?): ??蹂대㈃ 紐⑺몴 履??쒓컙?대룞(蹂대뒗 以?洹쇱쿂 嫄대꼫?곌린??vh_stucktest)
+            StuckWatch.TestSeen = p => false;
 
             // 묶인 채로도 닿는 나무는 베어 줍는다 → 짐·체력은 순간이동 직전 프레임 값과 바로 뒤 값을 비교한다(회차 92 첫 시험: 묶은 뒤 4 → 9는 줍기 몫)
             int carriedBefore = carried0;
@@ -98,6 +100,8 @@ namespace ValheimHelper
                 return false;
             }, 150f);
             bool hopped = GatherJob.Hops > hops0;
+            StuckWatch.TestSeen = null; // ??移?臾띠씤 梨?90珥댟룸?由?紐⑺몴 ??? ??嫄곕━ ?먯젙
+            checks.Add($"??蹂대뒗 以묒씠??洹쇱쿂 嫄대꼫?곌린 ?꾨떂 ({GatherJob.NearSkips - near0}踰?", GatherJob.NearSkips == near0);
             int carriedAfter = Carried(w.Ragnar);
             float hpAfter = w.Ragnar.GetHealth();
             checks.Add($"막히자 목표 쪽으로 순간이동 ({GatherJob.Hops - hops0}번)", hopped);
@@ -206,12 +210,15 @@ namespace ValheimHelper
                 checks.Add($"사냥 시작 ({TestKit.Waited:0}초)", TestKit.Ok);
                 if (!TestKit.Ok) yield break;
                 Speeds(w.Ragnar, saved, true);
-                int hops0 = GatherJob.HuntHops;
+                int hops0 = GatherJob.HuntHops, near0 = GatherJob.NearSkips;
+                StuckWatch.TestSeen = p => false; // 諛? ??蹂대뒗 以?媛뺤젣: 紐⑺몴 履?蹂대뒗 以?NearSkip? vh_hunttest媛 ?뚮젅?댁뼱 怨곸뿉??
                 float d0 = Utils.DistanceXZ(w.Ragnar.transform.position, boar.transform.position);
                 yield return TestKit.WaitFor(() => GatherJob.HuntHops > hops0, 60f);
                 yield return new WaitForSeconds(1f);
                 float d1 = Utils.DistanceXZ(w.Ragnar.transform.position, boar.transform.position);
                 checks.Add($"사냥 다가가다 막혀 목표 쪽 순간이동 ({GatherJob.HuntHops - hops0}번, 멧돼지까지 {d0:0.0} → {d1:0.0}m)", TestKit.Ok && d1 < 6f);
+                StuckWatch.TestSeen = null;
+                checks.Add($"??蹂대뒗 以묒씠???щ깷??洹쇱쿂 嫄대꼫?곌린 ?꾨떂 ({GatherJob.NearSkips - near0}踰?", GatherJob.NearSkips == near0);
                 Speeds(w.Ragnar, saved, false);
                 GatherJob.TestIgnorePlayers = false;
                 yield return TestKit.WaitFor(() => boar == null || boar.IsDead(), 60f);
