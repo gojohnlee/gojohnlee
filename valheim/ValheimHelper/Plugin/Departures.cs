@@ -135,7 +135,7 @@ namespace ValheimHelper
             {
                 // 남은 곳이 다 위험: 호위병을 데려간다(사용자 결정 2026-10-26), 호위병이 없거나 바쁘면 쉬는 동료 일꾼(사용자 11-13)
                 npc.Ai.Risky = true;
-                WorkerNpc partner = GoWithGuard(npc) ?? GoWithMate(npc);
+                WorkerNpc partner = GoWithNeed(npc, r.Place?.Team ?? -1);
                 args["partner"] = partner != null ? partner.NpcName : "";
                 if (partner == null) r.Key = "depart.danger";
             }
@@ -272,6 +272,30 @@ namespace ValheimHelper
             npc.Ai.EscortAlso(mate.NpcName);
             Plugin.Log.LogInfo($"{npc.NpcName}: 동료 {mate.NpcName}도 같이 감(셋, {Vector3.Distance(mate.transform.position, npc.transform.position):0}m)");
             return g;
+        }
+
+        /// <summary>
+        /// 위험한 곳에 같이 갈 동행을 붙인다(GoTogether): 맞는 인원(PlaceOption.Team)이 3이면 호위병 + 쉬는 동료 일꾼 셋이(GoWithTeam, decisions 6절),
+        /// 아니면 호위병. 호위병을 못 붙이면 쉬는 동료(GoWithMate). 붙인 첫 동행, 없으면 null.
+        /// </summary>
+        internal static WorkerNpc GoWithNeed(WorkerNpc npc, int team)
+        {
+            WorkerNpc g = team == 3 ? GoWithTeam(npc, IdleMate(npc)) : GoWithGuard(npc);
+            return g ?? GoWithMate(npc);
+        }
+
+        /// <summary>셋째로 데려갈 쉬는 동료 일꾼(호위병 아님, MateJoinRange 안, 가장 가까운). 없으면 null.</summary>
+        internal static WorkerNpc IdleMate(WorkerNpc npc)
+        {
+            WorkerNpc best = null;
+            float bestD = MateJoinRange;
+            foreach (var w in WorkerNpc.All)
+            {
+                if (w == null || w == npc || w.IsDead() || w.IsGuard || !GuardFree(w) || w.InInterior()) continue;
+                float d = Vector3.Distance(w.transform.position, npc.transform.position);
+                if (d <= bestD) { best = w; bestD = d; }
+            }
+            return best;
         }
 
         /// <summary>동료가 위험한 데 혼자 갈 때 같이 갈 수 있는 거리(m) — 더 멀면 따라가는 쪽이 혼자 위험한 길을 걷고 앞장선 쪽도 오래 기다린다.</summary>

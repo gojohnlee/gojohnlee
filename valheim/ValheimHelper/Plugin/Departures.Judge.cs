@@ -102,9 +102,10 @@ namespace ValheimHelper
                 if (alone.Known && alone.TopFoe != null)
                 {
                     var helpers = new List<float>();
-                    foreach (bool isGuard in new[] { true, false })
-                        foreach (WorkerNpc w in WorkerNpc.All)
-                            if (w != null && w != npc && !w.IsDead() && w.IsGuard == isGuard) helpers.Add(Guard.HitOf(w));
+                    WorkerNpc g0 = GuardOf(); // 호위병은 WorkerNpc.Guards에만 있다(All엔 없음 — 11-18 감사)
+                    if (g0 != null && g0 != npc && !g0.IsDead()) helpers.Add(Guard.HitOf(g0));
+                    foreach (WorkerNpc w in WorkerNpc.All)
+                        if (w != null && w != npc && !w.IsDead() && !w.IsGuard) helpers.Add(Guard.HitOf(w));
                     o.Team = Core.Npc.TeamPlan.Needed(extra =>
                     {
                         PlaceRisk pr = book.Risk(m.Zone, now, hitAt(health, nightSpawns, extra), resolve);

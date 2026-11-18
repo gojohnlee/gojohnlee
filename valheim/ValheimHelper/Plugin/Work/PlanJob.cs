@@ -32,6 +32,7 @@ namespace ValheimHelper
         /// 호위병이 바쁘면 그 단계는 거점에서 기다렸다가(m_waitGuard, 3초마다 다시 판단) 같이 출발(사용자 10-26).
         /// </summary>
         bool m_withGuard, m_waitGuard;
+        int m_team = -1; // 채집 단계 갈 곳의 맞는 인원(3이면 호위병+동료 셋이 — Departures.GoWithNeed)
         float m_guardCheckAt;
 
         public PlanJob(WorkerNpc npc, Plan plan, string goalLabel) : this(npc, new PlanRunner(plan), goalLabel) { }
@@ -193,6 +194,7 @@ namespace ValheimHelper
                         m_gather = new GatherJob(m_npc, s.Item, s.Amount, ways) { InPlan = true };
                         if (j != null) foreach (var o in j.Avoid) m_gather.AvoidZone(o.Zone);
                         m_withGuard = j != null && j.Action == DepartAction.GoTogether;
+                        m_team = j?.Place?.Team ?? -1;
                         break;
                     case StepKind.Craft:
                         m_craft = new CraftStep(m_npc, s);
@@ -208,7 +210,7 @@ namespace ValheimHelper
                 }
                 m_step = s;
                 m_runner.Begin(s.Id, m_now);
-                if (m_withGuard && Departures.GoWithGuard(m_npc) == null) m_withGuard = false;
+                if (m_withGuard && (m_team == 3 ? Departures.GoWithTeam(m_npc, Departures.IdleMate(m_npc)) : Departures.GoWithGuard(m_npc)) == null) m_withGuard = false;
                 return true;
             }
         }

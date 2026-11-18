@@ -155,6 +155,21 @@ namespace ValheimHelper
             gd = Vector3.Distance(guard.transform.position, npc.transform.position);
             TestRunner.Log($"호위병 곁({gd:0}m): {g?.LastVerdict} 비율 {g?.LastRatio:0.00} ({withD})");
             checks.Add($"호위병 곁에선 그 힘까지 셈 (내 한 방 {withHit:0.0} > 혼자 {Guard.HitOf(npc):0.0}, 호위병 {gd:0}m)", gd > Guard.AllyRange || withHit > Guard.HitOf(npc) + 1f);
+
+            // 6) 맞는 인원 3(셋이면 되는 곳): 호위병 + 쉬는 동료 일꾼까지 같이 출발(Departures.GoWithNeed, decisions 6절)
+            TestKit.Strict = false;
+            CleanUp();
+            yield return StopAll(w);
+            w.Floki.TeleportTo(GatherTest.Ground(w.Home + back * 6f) + Vector3.up * 0.3f, w.Floki.transform.rotation, false);
+            yield return new WaitForSeconds(1.5f);
+            GatherTest.Say($"!{npc.NpcName} 나무 5", null);
+            yield return TestKit.WaitFor(() => ai.Current == WorkerAI.Mode.Work && ai.Job != null && ai.EscortName == null, 10f);
+            WorkerNpc first = Departures.GoWithNeed(npc, 3);
+            yield return new WaitForSeconds(1f);
+            checks.Add($"셋이면: 호위병·동료 일꾼 같이 ({first?.NpcName ?? "없음"}, 동행 {ai.EscortName ?? "-"}·{ai.Escort2Name ?? "-"}, 플로키 {w.Floki.Ai.Current}·따라감 {w.Floki.Ai.FollowTarget == npc.GetZDOID()})",
+                first == guard && Together(npc, guard) && ai.Escort2Name == w.Floki.NpcName
+                && w.Floki.Ai.Current == WorkerAI.Mode.Follow && w.Floki.Ai.FollowTarget == npc.GetZDOID());
+            yield return StopAll(w);
         }
 
         /// <summary>Guard.LastDetail의 "내 한 방 N".</summary>
