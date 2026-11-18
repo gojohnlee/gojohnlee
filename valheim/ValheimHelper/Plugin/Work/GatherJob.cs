@@ -585,7 +585,7 @@ namespace ValheimHelper
 
         /// <summary>귀환·다가가기 중 빠른 막힘 횟수(ReturnQuickPer번마다 한 번만 막힘 한도·기록에 셈, E120). 단계가 바뀌면 0.</summary>
         int m_returnQuick;
-        const int ReturnQuickPer = 3;
+        const int ReturnQuickPer = 5;
 
         bool UpdateReturn(float dt)
         {
@@ -604,8 +604,9 @@ namespace ValheimHelper
             bool slow = Stuck(dt, PortalOr(home));
             if (slow || QuickStuck(dt, PortalOr(home), 2.5f))
             {
-                // 빠른 막힘(1초)은 3번에 1번만 한도에 셈 — 5초 막힘용 한도(HomeWalkTries 2번)를 그대로 쓰면 큰 돌에 2~3초 붙어도
+                // 빠른 막힘(1초)은 5번에 1번만 한도에 셈 — 5초 막힘용 한도(HomeWalkTries 2번)를 그대로 쓰면 큰 돌에 2~3초 붙어도
                 // 비켜 가기 전에 깃발로 옮김(E120 회차 722 vh_coppertest: 88m 귀환 첫 걸음 BossStone에 빠른 막힘 2번 → 순간이동). 그 사이엔 길만 새로
+                // 3번(6초)도 짧음: 걷기는 1.5·3초 뛰고 4.5초에 비켜 가기 1번(1.2초)·6초에 2번(2.4초)이라 큰 광맥 조각을 돌기 전에 옮김(E137 회차 807 coppertest) → 5번(10초)
                 if (!slow && ++m_returnQuick % ReturnQuickPer != 0)
                 {
                     Plugin.Log.LogInfo($"{m_npc.NpcName}: 귀환 빠른 막힘 {m_returnQuick}번(집에서 {Utils.DistanceXZ(home, m_npc.transform.position):0.0}m) → 길 다시 {m_ai.BlockerAhead(home)}");
