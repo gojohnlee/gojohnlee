@@ -130,4 +130,16 @@ public class PathMemoryTests
         m.Remember(a, b, new List<P> { a, new P(2, 0, 0), new P(2, 3, 4), b }, 1);
         for (int i = 0; i < 6; i++) Assert.NotNull(m.Find(a, b, 2));
     }
+
+    [Fact]
+    public void ExploreWorse_GivesUpOnlyWhenMuchLonger()
+    {
+        Assert.True(PathMemory.ExploreWorse(31f, 20f));    // 1.5배 넘음 → 옛 길 따름
+        Assert.False(PathMemory.ExploreWorse(29f, 20f));   // 조금 긴 건 걸어 봄
+        Assert.False(PathMemory.ExploreWorse(100f, -1f));  // 옛 길 없음
+        var m = new PathMemory();
+        m.Remember(new P(0, 0, 0), new P(10, 0, 0), Line(0, 10), 1);
+        for (int i = 0; i < 9; i++) Assert.NotNull(m.Peek(new P(0, 0, 0), new P(10, 0, 0)));   // 셈 없음 — 다시 걸어 볼 차례가 안 옴
+        Assert.Null(m.Peek(new P(0, 0, 0), new P(20, 0, 0)));
+    }
 }

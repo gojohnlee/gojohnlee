@@ -268,7 +268,7 @@ namespace ValheimHelper
             var doorList = new List<Door>();
             foreach (var d in Object.FindObjectsByType<Door>(FindObjectsSortMode.None))
                 if (d != null && d.m_keyItem == null && Utils.DistanceXZ(d.transform.position, center) < Radius && !doorList.Contains(d)) doorList.Add(d);
-            int tries = 0, outs = 0, gave0 = DoorWay.GaveUps; float midOff = 0f; Vector3 shutMid = Vector3.zero;
+            int tries = 0, outs = 0, gave0 = DoorWay.GaveUpsOf(w.Ragnar.NpcName); float midOff = 0f; Vector3 shutMid = Vector3.zero;
             int mask = LayerMask.GetMask("piece");
             bool Roof(Vector3 p) => Physics.Raycast(p + Vector3.up * 1.8f, Vector3.up, 20f, mask);
             // 바깥문 고르기는 문 상태를 바꾸기 전에 한 번에(회차 771: 앞 문을 열어 둔 채 다음 문을 고르면 판마다 달라짐)
@@ -350,7 +350,7 @@ namespace ValheimHelper
             if (doorList.Count == 0) TestRunner.Log("문 없는 집(트인 작업장) — 문 나가기 칸 건너뜀");
             else checks.Add($"바깥문 안쪽에서 15초 안에 나감 ({outs}/{tries})", tries > 0 && outs == tries);
             if (doorList.Count > 0) checks.Add($"열린 문에서 잰 문틀 가운데가 닫힌 문 때와 같음 (최대 {midOff:0.00}m, E108)", tries > 0 && midOff < 0.3f);
-            checks.Add($"문 나가기 중 문 길 포기 없음 ({DoorWay.GaveUps - gave0}번, E108)", DoorWay.GaveUps == gave0);
+            checks.Add($"문 나가기 중 문 길 포기 없음 ({DoorWay.GaveUpsOf(w.Ragnar.NpcName) - gave0}번, E108)", DoorWay.GaveUpsOf(w.Ragnar.NpcName) == gave0);
         }
 
         sealed class DoorTry { public Door D; public Vector3 Mid, N, Inside, Goal; }   // ValueTuple은 시험 DLL에서 못 씀

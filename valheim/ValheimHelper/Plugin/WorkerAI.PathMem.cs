@@ -25,8 +25,23 @@ namespace ValheimHelper
         void TrailStep(Vector3 pos)
         {
             if (m_trail.Active) m_trail.Step(P(pos));
-            if (m_exploreDiag && StuckWatch.PathEndsNear(this, m_exploreGoal, 1.5f)) { m_exploreDiag = false; Diag.Log("DIAG 다시 걸어 봄 바닐라 길: " + StuckWatch.PathSummary(this, pos, m_exploreGoal)); }
+            if (m_exploreDiag && StuckWatch.PathEndsNear(this, m_exploreGoal, 1.5f)) { m_exploreDiag = false; Diag.Log("DIAG 다시 걸어 봄 바닐라 길: " + StuckWatch.PathSummary(this, pos, m_exploreGoal)); ExploreGiveUp(pos); }
         }
+        // E136(회차 826): 바닐라 길이 옛 길보다 1.5배 넘게 길면(1층으로 내려갔다 오름 등) 다시 걸어 보기를 그만두고 옛 길을 따른다
+        PathMemory.P m_exploreFrom;
+        void ExploreGiveUp(Vector3 pos)
+        {
+            var to = P(m_exploreGoal);
+            float old = Brain.Paths.LengthOf(m_exploreFrom, to), len = StuckWatch.PathLeft(this, pos, m_exploreGoal);
+            if (!PathMemory.ExploreWorse(len, old)) return;
+            var pts = Brain.Paths.Peek(m_exploreFrom, to);
+            if (pts == null || pts.Length < 2) return;
+            m_memPath = pts; m_memIdx = 1; m_memFrom = m_exploreFrom; m_memTo = to;
+            PathsFollowed++; PathsExploreGaveUp++;
+            Diag.Log($"길 기억 다시 걸어 봄 그만(바닐라 {len:0.0}m > 옛 {old:0.0}m×{PathMemory.GiveUpRatio}): 옛 길 따름");
+        }
+        /// <summary>시험용: 다시 걸어 보다 바닐라 길이 너무 길어 옛 길로 돌아간 수.</summary>
+        internal int PathsExploreGaveUp;
         // E136 조사(회차 823): 다시 걸어 볼 때 바닐라가 받은 길(m_path)을 한 번 — 다른 층으로 내려갔다 오르는 길인지
         bool m_exploreDiag; Vector3 m_exploreGoal;
 
@@ -63,7 +78,7 @@ namespace ValheimHelper
             if (!NearHome(pos) || !NearHome(target)) return;
             var from = P(pos); var to = P(target);
             var pts = Brain.Paths.Find(from, to, ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : Time.time, out bool explore);
-            if (explore) { PathsExplored++; m_exploreDiag = true; m_exploreGoal = target;Diag.Log($"길 기억 다시 걸어 봄(옛 {Brain.Paths.LengthOf(from, to):0.0}m): 바닐라 → 더 짧으면 바꿈"); return; }
+            if (explore) { PathsExplored++; m_exploreDiag = true; m_exploreGoal = target; m_exploreFrom = from;Diag.Log($"길 기억 다시 걸어 봄(옛 {Brain.Paths.LengthOf(from, to):0.0}m): 바닐라 → 더 짧으면 바꿈"); return; }
             if (pts == null || pts.Length < 2) return;
             // 닫힌 문·새 벽(손님이 놓은 조각은 서버가 못 봄): 점 사이를 허리 높이(0.8m)로 건축물 층에 쏴 막히면 지우고 바닐라
             for (int i = 1; i < pts.Length; i++)

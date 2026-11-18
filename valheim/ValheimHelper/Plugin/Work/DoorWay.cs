@@ -23,6 +23,9 @@ namespace ValheimHelper
         Vector3 m_for, m_goal; bool m_hasGoal; float m_clearT = -1f; // m_goal: 들어갈 대상 자리, m_clearT: 안쪽 1.3m 닿은 때(문짝 곁이면 더 걸음, E077)
         bool m_walking, m_exiting; // Walk 안의 MoveToPoint가 Exit를 다시 부름
         public static int Opened, Entered, Exited, Closed, GaveUps;
+        /// <summary>시험용: 일꾼 이름별 문 길 포기 수(회차 826 — 4500m 밖 다른 일꾼 포기를 집 시험이 셌음).</summary>
+        public static readonly System.Collections.Generic.Dictionary<string, int> GaveUpsBy = new System.Collections.Generic.Dictionary<string, int>();
+        public static int GaveUpsOf(string npc) => npc != null && GaveUpsBy.TryGetValue(npc, out int c) ? c : 0;
 
         /// <summary>일꾼이 연 문(회차 313): 그 일꾼이 지붕 밖으로 나와 문에서 3m 넘게(지붕 아래여도 15m 넘게) 멀어지고 문틀에 아무도 없으면 닫는다. 플레이어가 연 문은 안 건드림.</summary>
         sealed class OpenedDoor { public Door Door; public WorkerNpc By; public Vector3 Mid; public float Sent = -99f; public int Reopen, Away; public bool Shut, Inside, Pen; public Vector3 Out; } // Reopen: 남이 열어 둔 문(s_state) — 지난 뒤 닫지 않고 그 쪽으로 되돌려 엶
@@ -496,6 +499,7 @@ namespace ValheimHelper
         void GiveUp(WorkerNpc npc, string what, string why)
         {
             m_phase = Phase.GaveUp; GaveUps++;
+            if (npc != null) GaveUpsBy[npc.NpcName ?? ""] = GaveUpsOf(npc.NpcName) + 1;
             if (m_door != null) npc?.Ai?.PathSpoil("문 못 엶");
             if (m_door != null)
             {

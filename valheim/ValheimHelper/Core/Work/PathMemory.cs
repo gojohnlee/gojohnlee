@@ -82,6 +82,13 @@ namespace ValheimHelper.Core.Work
         /// <summary>시험·진단용: 셈 없이 기억한 길 길이(없으면 -1).</summary>
         public float LengthOf(P from, P to) => m_routes.TryGetValue(Key(from, to), out var r) ? r.Length : -1f;
 
+        /// <summary>셈 없이 기억한 길 점(없으면 null) — 다시 걸어 보다 그만둘 때(ExploreWorse) 따를 길.</summary>
+        public P[] Peek(P from, P to) => m_routes.TryGetValue(Key(from, to), out var r) ? r.Points : null;
+
+        /// <summary>E136(회차 826): 다시 걸어 볼 때 바닐라가 준 길이 옛 길보다 GiveUpRatio배 넘게 길면 그만두고 옛 길을 따른다(다른 층으로 내려갔다 오르는 길 등).</summary>
+        public const float GiveUpRatio = 1.5f;
+        public static bool ExploreWorse(float vanillaLen, float oldLen) => oldLen > 0f && vanillaLen > oldLen * GiveUpRatio;
+
         static float Len(IList<P> p) { float s = 0; for (int i = 1; i < p.Count; i++) s += Dist(p[i - 1], p[i]); return s; }
         static float Dist(P a, P b) { float dx = a.X - b.X, dy = a.Y - b.Y, dz = a.Z - b.Z; return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz); }
 
