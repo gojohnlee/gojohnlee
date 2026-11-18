@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Npc;
@@ -43,7 +44,7 @@ namespace ValheimHelper
             {
                 s_idlePoll = 5f;
                 bool fresh = false;
-                foreach (var n in WorkerNpc.All)
+                foreach (var n in WorkerNpc.All.Concat(WorkerNpc.Guards)) // 호위병도(회차 813: Guards는 All에 없어 쉴 때 집안일이 한 번도 안 돌았음)
                 {
                     if (!FreeForChores(n)) { s_idleSeen.Remove(n); continue; }
                     // 위험한 데 혼자 가는 동료는 5초마다 봄 — 60초 틱만 보면 1분 안에 끝나는 일엔 못 붙음(회차 690 chorestest FAIL)
@@ -55,11 +56,11 @@ namespace ValheimHelper
             }
             if (s_refillTimer > 0f) return;
             s_refillTimer = (float)RefillBook.CheckEvery;
-            if (WorkerNpc.All.Count == 0) return;
+            if (WorkerNpc.All.Count == 0 && WorkerNpc.Guards.Count == 0) return;
             ObservePre();
             // 쉬는 일꾼 모두 차례로(사용자 11-09): 같은 물건은 RefillBusy가 막으니 각자 다른 것을 맡는다
             // 호위병 먼저(사용자 11-14 "비욘도 쉴 때 거점 안 집안일"): 밭·꿀·먹이를 호위병이 맡으면 일꾼은 채집·보충에 남는다
-            var order = new List<WorkerNpc>(WorkerNpc.All);
+            var order = new List<WorkerNpc>(WorkerNpc.All.Concat(WorkerNpc.Guards));
             order.Sort((x, y) => (y != null && y.IsGuard).CompareTo(x != null && x.IsGuard));
             foreach (var npc in order)
             {
@@ -280,7 +281,7 @@ namespace ValheimHelper
             FarmField field = crop != null ? FieldFor(crop) : null;
             bool taken = false;
             if (field != null)
-                foreach (var n in WorkerNpc.All)
+                foreach (var n in WorkerNpc.All.Concat(WorkerNpc.Guards)) // 호위병 밭일도 셈(회차 813)
                     if (n.Ai.Job is FarmJob fj && fj.Field.Contains(field.X, field.Z)) taken = true;
             if (taken) return false; // 누가 그 밭일 중: 쉬게 하지 않고 다음 확인 때 다시 셈
             int coming = field != null ? FarmJob.Coming(field, item) : 0, ripe = field != null ? FarmJob.Ripe(field).Count : 0;

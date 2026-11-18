@@ -108,6 +108,30 @@ namespace ValheimHelper
             yield return new WaitForSeconds(4f);
             checks.Add($"60초 안 다시 지나가면 안 함 (경례 {WorkerAI.Salutes - salutes}번)", WorkerAI.Salutes - salutes == 1);
             w.Player.TeleportTo(back, w.Player.transform.rotation, false);
+
+            // 5) 쉬는 호위병도 거점 안 집안일(decisions 221줄, 회차 813: Guards가 TickRefill에 빠져 한 번도 안 돌았음) — 호위병이 먼저 고름
+            yield return TestKit.WaitFor(() => ai.Current == WorkerAI.Mode.Idle && !ai.Patrolling, 30f);
+            Vector3 penAt = GatherTest.Ground(w.Home + f * 8f);
+            w.Player.PlacePiece(ZNetScene.instance.GetPrefab("piece_chest_wood").GetComponent<Piece>(), penAt, w.Player.transform.rotation, doAttack: false);
+            Container pen = GatherTest.ChestAt(penAt);
+            checks.Add("가축 상자 지음", pen != null);
+            if (pen == null) yield break;
+            made.Add(pen.gameObject);
+            pen.GetComponent<ZNetView>().GetZDO().Set("ChestName", "가축");
+            TestKit.PutInChest(pen, "Raspberry", 5);
+            var pig = LivestockTest.Spawn("Boar", penAt + Vector3.Cross(Vector3.up, f) * 4f, made);
+            var ptm = pig.GetComponent<Tameable>();
+            pig.GetComponent<MonsterAI>().MakeTame();
+            yield return new WaitForSeconds(1f);
+            checks.Add("우리 멧돼지 길들고 배고픔", pig.IsTamed() && ptm.IsHungry());
+            Departures.TestFeedNow();
+            Departures.TestIdleChores = true; // 시험 중엔 쉴 때 집안일이 꺼져 있음(ChoresOn)
+            Departures.TestRefillNow();
+            yield return TestKit.WaitFor(() => guard.Ai.Job is LivestockJob, 10f);
+            Departures.TestIdleChores = false;
+            checks.Add($"쉬던 호위병이 우리 먹이 주러 감 ({guard.Ai.Current}/{guard.Ai.Job?.GetType().Name ?? "-"}, 순찰 {ai.Patrolling})", TestKit.Ok);
+            yield return TestKit.WaitFor(() => pig == null || !ptm.IsHungry(), 60f);
+            checks.Add($"우리 멧돼지가 먹이를 먹음 ({TestKit.Waited:0}초)", pig != null && !ptm.IsHungry());
         }
     }
 }

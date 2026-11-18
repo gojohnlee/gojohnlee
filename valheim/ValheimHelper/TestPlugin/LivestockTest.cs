@@ -85,7 +85,7 @@ namespace ValheimHelper
             return $"자리 {c.transform.position:0.0} 속도 {c.GetVelocity().magnitude:0.0} 경보 {ai.IsAlerted()} 주인 {c.IsOwner()} 길듦 {c.IsTamed()} 따라감 {(ai.GetFollowTarget() != null)} 표적 {(ai.GetTargetCreature() != null ? ai.GetTargetCreature().m_name : "-")} 산딸기 {(near < 0f ? "없음" : near.ToString("0.0") + "m")} 땅닿음 {c.IsOnGround()} 몬스터금지곁 {EffectArea.IsPointCloseToNoMonsterArea(c.transform.position)?.name ?? "-"} FPS {1f / Time.smoothDeltaTime:0}";
         }
 
-        static Character Spawn(string prefab, Vector3 at, List<GameObject> made)
+        internal static Character Spawn(string prefab, Vector3 at, List<GameObject> made)
         {
             var g = Object.Instantiate(ZNetScene.instance.GetPrefab(prefab), GatherTest.Ground(at) + Vector3.up * 0.3f, Quaternion.identity);
             made.Add(g);
