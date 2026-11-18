@@ -1,0 +1,219 @@
+# vh_posttest FAIL 발췌 — 2026-11-18 23:51 회차 813 (diag 칸 + 그 시험 동안 모드 로그 줄)
+
+## diag
+=== vh_posttest 2026-11-18 23:48:10 게임 1.0.21 Unity 6000.0.75f1 모드 0.3.8+e5872fe* (2026-11-18 23:47) 배속 3 ===
+플러그인: ChestName 1.1.2, Display BepInEx Info In-Game 2.0.2, Valheim Helper 0.3.8, Valheim Helper Test 0.3.8
+지난 시험 상자 5개 치움
+시작 땅: 거점 60m 안 물건 3 (GreydwarfEye 3, FineWood 6, SurtlingCore 1)·쓰러진 몸 0·통나무 0·옛 묘비 0 → 치우고 시작
+시작 정리: 거점 60m 안 생물 2마리 치움
+자리 점검: 장소 Dolmen02 33m(반지름 8), 장소 WoodHouse1 44m(반지름 8), 장소 ShipSetting01 49m(반지름 24), 장소 Dolmen02 55m(반지름 8), 장소 Runestone_Meadows 83m(반지름 8), 장소 ShipSetting01 98m(반지름 24)
+시작 상태: [0s] 라그나 hp71/71 3m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+OK   깃발·일꾼 둘·상자
+OK   호위병 생김 (비욘, 0초)
+OK   방문 말고 바깥문 바깥 옆에 섬 (방문까지 5.5m, 5.6초, 문에서 2.4m·바깥쪽 1.0m, 호위병 자리까지 1.5m)
+OK   문 옆에선 안 감 (그레일링까지 33m, 싸움 False)
+OK   순찰 점 고름 (점 8 [0:120 1:120 2:100 3:120 4:120 5:120 6:120 7:120] 버림 [])
+OK   순찰하며 몬스터 처리 (84.6초)
+OK   순찰 끝나고 문 옆으로 (74.2초, 순찰 1번, 한 바퀴 137초·점 8·못 닿음 0·싸움 1, 자리까지 1.5m)
+OK   옆을 지나가면 경례 (손 흔들기, 2.0초, 나를 보는 각 5°)
+OK   60초 안 다시 지나가면 안 함 (경례 1번)
+OK   가축 상자 지음
+OK   우리 멧돼지 길들고 배고픔
+FAIL 쉬던 호위병이 우리 먹이 주러 감 (Idle/-, 순찰 False)
+  상태(FAIL 순간): [190s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+    라그나 (-216.4,78.9,167.6) Idle 속도 0.0 · 피해 없음 · 문 3.3m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(273.7m) 기다림 False 걷기 False 뒤 0 새로 -227.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+    플로키 (-211.3,80.0,177.9) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(276.2m) 기다림 False 걷기 False 뒤 0 새로 -227.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+    비욘 (-212.1,79.8,175.8) Idle 속도 0.0 · 피해 없음 · 문 3.4m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.4m) 기다림 False 걷기 False 뒤 0 새로 -227.0초 뒤 · 길 없음 · m_path 1: (-213.1, 79.9, 175.5) 길 True · MoveTo 가는 중((-213.1, 79.9, 175.5) 거리 1.0 뛰기 False)
+FAIL 우리 멧돼지가 먹이를 먹음 (60초)
+  상태(FAIL 순간): [250s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+    라그나 (-216.4,78.8,167.3) Idle 속도 0.0 · 피해 없음 · 문 3.5m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(273.5m) 기다림 False 걷기 False 뒤 0 새로 -287.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+    플로키 (-211.4,80.0,177.8) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(276.2m) 기다림 False 걷기 False 뒤 0 새로 -287.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+    비욘 (-212.0,79.8,175.9) Idle 속도 0.0 · 피해 없음 · 문 3.5m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.5m) 기다림 False 걷기 False 뒤 0 새로 -287.0초 뒤 · 길 없음 · m_path 1: (-213.1, 79.9, 175.5) 길 True · MoveTo 가는 중((-213.1, 79.9, 175.5) 거리 1.0 뛰기 False)
+> !멈춰
+OK   대사에 자리표시자 안 남음
+끝 상태: [251s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 9m Idle 짐4 대기0 | 상자 0 | 생물 1
+멈춤 0번 · 일부러 선 것 0번 (선 표본 0, 가장 오래 0.0초) · 헛휘두름 0번 · 기다림 합 없음
+--- 상태 흐름(3초마다, 최근 40개) ---
+[132s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 122m (-94,150) 순찰 점 7 남음 87m | 상자 0 | 생물 0
+[135s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 116m (-99,169) 순찰 점 7 남음 68m | 상자 0 | 생물 0
+[138s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 110m (-107,186) 순찰 점 7 남음 49m | 상자 0 | 생물 0
+[141s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 106m (-112,190) 순찰 점 7 남음 44m | 상자 0 | 생물 0
+[144s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 112m (-112,210) 순찰 점 7 남음 24m | 상자 0 | 생물 0
+[147s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 117m (-117,230) 순찰 점 7 남음 4m | 상자 0 | 생물 0
+[150s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 103m (-129,223) 문 옆 97m | 상자 0 | 생물 2
+[153s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 85m (-145,215) 문 옆 79m | 상자 0 | 생물 2
+[156s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 69m (-161,209) 문 옆 62m | 상자 0 | 생물 2
+[159s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 51m (-177,200) 문 옆 44m | 상자 0 | 생물 2
+[162s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 42m (-184,195) 문 옆 34m | 상자 0 | 생물 2
+[165s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 22m (-201,183) 문 옆 15m | 상자 0 | 생물 2
+[168s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 12m (-208,176) 문 옆 5m | 상자 0 | 생물 2
+[171s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[175s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[178s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[181s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[184s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[187s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[190s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[193s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[196s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[199s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[202s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[205s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[208s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[211s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[214s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[217s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[220s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[223s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[226s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[229s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[232s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[235s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[238s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[241s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[244s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[247s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[250s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+끝 정리: 생물 1·땅의 물건 0·통나무 0 치움
+--- NPC 대사 ---
+라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+플로키: 이 땅은 무엇을 숨겼을까. 파헤쳐 보지.
+플로키: 라그나, 하늘이 운다. 누가 신들을 섭섭하게 했지?
+비욘: 왔다. 어디로 가든 같이 간다.
+라그나: 곧 그치겠군.
+비욘: 배가 고픈데... 상자에 먹을 게 없군. 일단 가지.
+플로키: 라그나! 거점 근처에서 본 돌! 그거 갖고 싶어 손이 근질근질해!
+비욘: 어린 회색 난쟁이는 내가 맡는다. 물러나 있어.
+라그나: 다음에 갈 때 수레를 끌고 갈까?
+플로키: vhtest, 배 만들면 태워 줄게! 노는 네가 젓고, 히히.
+라그나: 우리가 있잖아, vhtest.
+라그나: 알았어. 솔직히 좀 쉬고 싶었지.
+플로키: 여기서 끝인가. 도구부터 거두겠어.
+판정: FAIL (12/14)
+시간: 258초
+프레임: 평균 192 FPS (실시간 86초)
+
+## 모드 로그 (123줄)
+[Info   :Valheim Helper] === vh_posttest 시작
+[Info   :Valheim Helper] 시험: 까마귀 Hugin 치움 — 자리 (-218.8, 80.9, 181.5)·플레이어와 19.4m
+[Info   :Valheim Helper] 지난 시험 상자 5개 치움
+[Info   :Valheim Helper] 시작 땅: 거점 60m 안 물건 3 (GreydwarfEye 3, FineWood 6, SurtlingCore 1)·쓰러진 몸 0·통나무 0·옛 묘비 0 → 치우고 시작
+[Info   :Valheim Helper] 거점 이동 (-215.03, 78.39, 166.49), 새 NPC 2명
+[Info   :Valheim Helper] <라그나> 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+[Info   :Valheim Helper] <플로키> 이 땅은 무엇을 숨겼을까. 파헤쳐 보지.
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 하늘이 운다. 누가 신들을 섭섭하게 했지?
+[Info   :Valheim Helper] 시작 정리: 거점 60m 안 생물 2마리 치움
+[Info   :Valheim Helper] 자리 점검: 장소 Dolmen02 33m(반지름 8), 장소 WoodHouse1 44m(반지름 8), 장소 ShipSetting01 49m(반지름 24), 장소 Dolmen02 55m(반지름 8), 장소 Runestone_Meadows 83m(반지름 8), 장소 ShipSetting01 98m(반지름 24)
+[Info   :Valheim Helper] 시작 상태: [0s] 라그나 hp71/71 3m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] OK   깃발·일꾼 둘·상자
+[Info   :Valheim Helper] <비욘> 왔다. 어디로 가든 같이 간다.
+[Info   :Valheim Helper] OK   호위병 생김 (비욘, 0초)
+[Info   :Valheim Helper] 비욘: 경계 자리 = 문 옆 (-213.1, 79.9, 175.5)(거점에서 11.7m, 못 닿은 문 0)
+[Info   :Valheim Helper] 비욘: 순찰 점 고름 — 점 8 [0:120 1:120 2:100 3:120 4:120 5:120 6:120 7:120] 버림 []
+[Info   :Valheim Helper] <라그나> (말풍선) 곧 그치겠군.
+[Info   :Valheim Helper] <비욘> 배가 고픈데... 상자에 먹을 게 없군. 일단 가지.
+[Info   :Valheim Helper] OK   방문 말고 바깥문 바깥 옆에 섬 (방문까지 5.5m, 5.6초, 문에서 2.4m·바깥쪽 1.0m, 호위병 자리까지 1.5m)
+[Info   :Valheim Helper] 적 속성 피해 Greyling: 없음
+[Info   :Valheim Helper] OK   문 옆에선 안 감 (그레일링까지 33m, 싸움 False)
+[Info   :Valheim Helper] OK   순찰 점 고름 (점 8 [0:120 1:120 2:100 3:120 4:120 5:120 6:120 7:120] 버림 [])
+[Info   :Valheim Helper] 시험 그레일링 자리 (-233.21, 74.45, 53.92) (물 위 44.5m)
+[Info   :Valheim Helper] 비욘: 거점 둘레 순찰 시작(점 8)
+[Info   :Valheim Helper] 길 기억: (-215.0,78.7,164.0)→(-213.1, 79.9, 175.5) 점 22, 모두 1
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나! 거점 근처에서 본 돌! 그거 갖고 싶어 손이 근질근질해!
+[Info   :Valheim Helper] <비욘> 어린 회색 난쟁이는 내가 맡는다. 물러나 있어.
+[Info   :Valheim Helper] <라그나> (말풍선) 다음에 갈 때 수레를 끌고 갈까?
+[Info   :Valheim Helper] 적 배움: Greyling 체력 20, 한 방 5
+[Info   :Valheim Helper] 비욘: $enemy_greyling에 멀리서(플레이어 64m 밖) 직접 피해 7
+[Info   :Valheim Helper] 비욘: $enemy_greyling에 멀리서(플레이어 64m 밖) 직접 피해 7
+[Info   :Valheim Helper] OK   순찰하며 몬스터 처리 (84.6초)
+[Info   :Valheim Helper] 비욘 떨굼 기다림: (-232.0,52.7) 1종
+[Info   :Valheim Helper] 비욘 장소 기억 -4,1: Won, 무리 [Greyling×1★0]
+[Info   :Valheim Helper] 비욘 떨굼 그만(E133): 40m 밖, 자리에서 40.1m
+[Info   :Valheim Helper] 비욘: 순찰 끝(한 바퀴 137초·점 8·못 닿음 0·싸움 1) → 문 옆으로 — (-117.0, 76.8, 232.1)에서 111m, 길 없음, 곧은 줄 걸어감 True
+[Info   :Valheim Helper] OK   순찰 끝나고 문 옆으로 (74.2초, 순찰 1번, 한 바퀴 137초·점 8·못 닿음 0·싸움 1, 자리까지 1.5m)
+[Info   :Valheim Helper] 비욘: vhtest에게 경례(손 흔들기)
+[Info   :Valheim Helper] OK   옆을 지나가면 경례 (손 흔들기, 2.0초, 나를 보는 각 5°)
+[Info   :Valheim Helper] OK   60초 안 다시 지나가면 안 함 (경례 1번)
+[Info   :Valheim Helper] 길 기억 지움(놓기): (-215.2, 80.1, 174.5) 곁 1개, 남은 0
+[Info   :Valheim Helper] OK   가축 상자 지음
+[Info   :Valheim Helper] OK   우리 멧돼지 길들고 배고픔
+[Info   :Valheim Helper] FAIL 쉬던 호위병이 우리 먹이 주러 감 (Idle/-, 순찰 False)
+[Info   :Valheim Helper]   상태(FAIL 순간): [190s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper]     라그나 (-216.4,78.9,167.6) Idle 속도 0.0 · 피해 없음 · 문 3.3m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(273.7m) 기다림 False 걷기 False 뒤 0 새로 -227.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper]     플로키 (-211.3,80.0,177.9) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(276.2m) 기다림 False 걷기 False 뒤 0 새로 -227.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper]     비욘 (-212.1,79.8,175.8) Idle 속도 0.0 · 피해 없음 · 문 3.4m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.4m) 기다림 False 걷기 False 뒤 0 새로 -227.0초 뒤 · 길 없음 · m_path 1: (-213.1, 79.9, 175.5) 길 True · MoveTo 가는 중((-213.1, 79.9, 175.5) 거리 1.0 뛰기 False)
+[Info   :Valheim Helper] <플로키> (말풍선) vhtest, 배 만들면 태워 줄게! 노는 네가 젓고, 히히.
+[Info   :Valheim Helper] <라그나> (말풍선) 우리가 있잖아, vhtest.
+[Info   :Valheim Helper] 비욘: 순찰 점 고름 — 점 8 [0:120 1:120 2:100 3:120 4:120 5:120 6:120 7:120] 버림 []
+[Info   :Valheim Helper] 비욘: vhtest에게 경례(손 흔들기)
+[Info   :Valheim Helper] FAIL 우리 멧돼지가 먹이를 먹음 (60초)
+[Info   :Valheim Helper]   상태(FAIL 순간): [250s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper]     라그나 (-216.4,78.8,167.3) Idle 속도 0.0 · 피해 없음 · 문 3.5m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(273.5m) 기다림 False 걷기 False 뒤 0 새로 -287.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper]     플로키 (-211.4,80.0,177.8) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(276.2m) 기다림 False 걷기 False 뒤 0 새로 -287.0초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper]     비욘 (-212.0,79.8,175.9) Idle 속도 0.0 · 피해 없음 · 문 3.5m s_state 0 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(275.5m) 기다림 False 걷기 False 뒤 0 새로 -287.0초 뒤 · 길 없음 · m_path 1: (-213.1, 79.9, 175.5) 길 True · MoveTo 가는 중((-213.1, 79.9, 175.5) 거리 1.0 뛰기 False)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 알았어. 솔직히 좀 쉬고 싶었지.
+[Info   :Valheim Helper] <플로키> 여기서 끝인가. 도구부터 거두겠어.
+[Info   :Valheim Helper] <라그나> 다녀왔어. 불이 아직 살아 있군.
+[Info   :Valheim Helper] OK   대사에 자리표시자 안 남음
+[Info   :Valheim Helper] 끝 상태: [251s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 9m Idle 짐4 대기0 | 상자 0 | 생물 1
+[Info   :Valheim Helper] 멈춤 0번 · 일부러 선 것 0번 (선 표본 0, 가장 오래 0.0초) · 헛휘두름 0번 · 기다림 합 없음
+[Info   :Valheim Helper] --- 상태 흐름(3초마다, 최근 40개) ---
+[Info   :Valheim Helper] [132s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 122m (-94,150) 순찰 점 7 남음 87m | 상자 0 | 생물 0
+[Info   :Valheim Helper] [135s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 116m (-99,169) 순찰 점 7 남음 68m | 상자 0 | 생물 0
+[Info   :Valheim Helper] [138s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 110m (-107,186) 순찰 점 7 남음 49m | 상자 0 | 생물 0
+[Info   :Valheim Helper] [141s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 106m (-112,190) 순찰 점 7 남음 44m | 상자 0 | 생물 0
+[Info   :Valheim Helper] [144s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 112m (-112,210) 순찰 점 7 남음 24m | 상자 0 | 생물 0
+[Info   :Valheim Helper] [147s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 117m (-117,230) 순찰 점 7 남음 4m | 상자 0 | 생물 0
+[Info   :Valheim Helper] [150s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 103m (-129,223) 문 옆 97m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [153s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 85m (-145,215) 문 옆 79m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [156s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 69m (-161,209) 문 옆 62m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [159s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 51m (-177,200) 문 옆 44m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [162s] 라그나 hp69/69 2m Idle 짐4 대기0 | 플로키 hp69/69 12m Idle 짐4 대기0 | 비욘 hp25/25 42m (-184,195) 문 옆 34m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [165s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 22m (-201,183) 문 옆 15m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [168s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 12m (-208,176) 문 옆 5m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [171s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [175s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [178s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [181s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [184s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [187s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [190s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [193s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [196s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [199s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [202s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [205s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [208s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [211s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [214s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [217s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [220s] 라그나 hp68/68 2m Idle 짐4 대기0 | 플로키 hp68/68 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] [223s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [226s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [229s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [232s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [235s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [238s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [241s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [244s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [247s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 3
+[Info   :Valheim Helper] [250s] 라그나 hp67/67 2m Idle 짐4 대기0 | 플로키 hp67/67 12m Idle 짐4 대기0 | 비욘 hp25/25 10m (-212,176) 문 옆 1m | 상자 0 | 생물 2
+[Info   :Valheim Helper] 끝 정리: 생물 1·땅의 물건 0·통나무 0 치움
+[Info   :Valheim Helper] --- NPC 대사 ---
+[Info   :Valheim Helper] 라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+[Info   :Valheim Helper] 플로키: 이 땅은 무엇을 숨겼을까. 파헤쳐 보지.
+[Info   :Valheim Helper] 플로키: 라그나, 하늘이 운다. 누가 신들을 섭섭하게 했지?
+[Info   :Valheim Helper] 비욘: 왔다. 어디로 가든 같이 간다.
+[Info   :Valheim Helper] 라그나: 곧 그치겠군.
+[Info   :Valheim Helper] 비욘: 배가 고픈데... 상자에 먹을 게 없군. 일단 가지.
+[Info   :Valheim Helper] 플로키: 라그나! 거점 근처에서 본 돌! 그거 갖고 싶어 손이 근질근질해!
+[Info   :Valheim Helper] 비욘: 어린 회색 난쟁이는 내가 맡는다. 물러나 있어.
+[Info   :Valheim Helper] 라그나: 다음에 갈 때 수레를 끌고 갈까?
+[Info   :Valheim Helper] 플로키: vhtest, 배 만들면 태워 줄게! 노는 네가 젓고, 히히.
+[Info   :Valheim Helper] 라그나: 우리가 있잖아, vhtest.
+[Info   :Valheim Helper] 라그나: 알았어. 솔직히 좀 쉬고 싶었지.
+[Info   :Valheim Helper] 플로키: 여기서 끝인가. 도구부터 거두겠어.
+[Info   :Valheim Helper] 판정: FAIL (12/14)
+[Info   :Valheim Helper] <플로키> 돌아왔어! 뭐 먹을 거 있어?
+[Info   :Valheim Helper] 시험 캐릭터를 첫 시험 자리로 되돌림: 16.5m·0° 어긋남
