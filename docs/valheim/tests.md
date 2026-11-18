@@ -1,6 +1,6 @@
 # 시험 목록 (회차 716 · 11-16 정리)
 
-게임 시험 111개(TestRunner.Register 기준). 회귀 묶음은 `C:\vh\stable-dll\run.ps1 -Dll <dll> -Batches <아래 줄>`로 돌린다. -Dll 옆에 같은 커밋의 ValheimHelperTest.dll도 둔다(없으면 옛 시험 DLL이 섞임 — 회차 721: 커밋마다 `C:\vh\stable-dll\<해시>\`에 dist 둘).
+게임 시험 115개(TestRunner.Register 기준, 11-18 — droptest·straytest·housebuild·hangtest는 표에 11-18 더함). 회귀 묶음은 `C:\vh\stable-dll\run.ps1 -Dll <dll> -Batches <아래 줄>`로 돌린다. -Dll 옆에 같은 커밋의 ValheimHelperTest.dll도 둔다(없으면 옛 시험 DLL이 섞임 — 회차 721: 커밋마다 `C:\vh\stable-dll\<해시>\`에 dist 둘).
 "마지막 PASS"는 history에서 찾은 회차 — 회귀 묶음 시험은 회차 713~715 전체 회귀에서 통과(묶음 단위 기록), 회차 716에 새로 넣은 7개(plainsfarm·pathforget·pathfollow·newerahouse·restartcraft 셋+2)는 716 PASS.
 
 ## 회귀 묶음 (run.ps1 줄 = 이름|바이옴|약식|시험|VH_RESET|집|월드)
@@ -63,13 +63,14 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 | deepfoetest | 딥노스 적 싸움 시험 | B10b | 713~715 |
 | deepnorthtest | 딥노스 자료 시험 | B10 | 713~715 |
 | departtest | 출발 전 판단·질문·대기열·저장 시험 | B3 | 713~715 |
+| droptest | 뛰어내리기 지름길 — 4m 판에서 계단 대신 뛰어내림 | 묶음 없음 | history grep |
 | entrailstest | 창자 20개 사냥·다침 회복 시험 | B13 | 713~715 |
 | escorttest | 호위병 동행 시험 | B7 | 713~715 |
 | exploretest | 새 땅 탐험 시험 | B2 | 713~715 |
 | farmtest | 밭 심기 시험 | B7 | 713~715 |
 | fartest | 먼 구역 유지 시험 | B3 | 713~715 |
 | fighttest | 위험 감지·싸움 시험 | B2 | 713~715 |
-| finaltest | 최종 실전 시험: 이름 없는 실제 말투 명령 한꺼번에(알아들음·해냄 따로, 되돌림 한 번) | 회귀 밖 | 704 |
+| finaltest | 최종 실전 시험: 이름 없는 실제 말투 명령 한꺼번에(알아들음·해냄 따로, 되돌림 한 번) | 회귀 밖 | 806 |
 | fishtest | 쉴 때 낚시 시험 | B11b | 713~715 |
 | flagtest | 거점 깃발 시험 | B1 | 713~715 |
 | frostcavetest | 서리 동굴 내용 확인 시험 | B10b | 713~715 |
@@ -81,9 +82,11 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 | guestrestart1 | 멀티 재시작 1: 손님이 일 시킴·하는 중 기록 | B12 | 713~715 |
 | guestrestart2 | 멀티 재시작 2: 서버 다시 켠 뒤 일 이어 함(VH_RESET=0) | B12 | 713~715 |
 | guesttest | 사람끼리 동시 열기 손님 쪽 시험 | B8d | 713~715 |
+| hangtest | 멈춤 감시 확인(일부러 8분 조용히) | 회귀 밖 | 726 |
 | helpjointest | 지원 요청 Next 소비처 시험 | B13 | 713~715 |
 | helptest | 도와줘요 시험 | B4 | 713~715 |
 | hoptest | 막힘 복구: 목표 쪽 순간이동 시험 | B5 | 713~715 |
+| housebuild | 복사본 월드에 복잡한 2층 시험 집 짓기 | 회귀 밖 | history grep |
 | houseexport | TheNewEra 복사본 집 조각을 파일로(시험 기본 월드로 옮기기 1단계) | 회귀 밖 | 454 |
 | housefind | 월드의 기지(침대·문·작업대 무리)를 찾아 구조 요약 | 회귀 밖 | 700 |
 | houseground | 기본 시험 월드 집 밑 땅을 원래 높이로 다시 고르고 저장(회차 458: 북·남쪽 바닥이 땅에서 떠 무너짐) | 회귀 밖 | 기록 없음 |
@@ -139,6 +142,7 @@ R||0|vh_restart1;vh_restartcraft_load;vh_restartcraft_part;vh_restartcraft_carry
 | squitotest | 데스킷 싸움 시험 | B8a | 713~715 |
 | stocktest | 상자 재료로 바로 제작 시험 | B8d | 713~715 |
 | stonetest | 돌 채집 시험 | B1 | 713~715 |
+| straytest | 지나가며 떨어진 물건 줍기 | 묶음 없음 | history grep |
 | stucktest | 깃발 강제 복귀 시험 | B5 | 713~715 |
 | tartest | 타르 줍기·타르 웅덩이 피하기 시험 | B8a | 713~715 |
 | teamtest | 같이 싸움 시험 | B4 | 713~715 |
