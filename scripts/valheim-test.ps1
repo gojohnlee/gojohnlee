@@ -343,6 +343,37 @@ if ($env:VH_JOIN) {   # 멀티 시험: 서버 쪽 모드 로그의 오류도(손
     } else { $report += "(서버 LogOutput.log 없음: $slog)" }
 }
 if ($cpuLine) { $report += $cpuLine }
+# FAIL 칸 발췌를 저장소 docs/valheim/test-fail/<날짜-회차-시험>.txt로(요청 11-18 — 클라우드에서도 원인을 읽게, 발췌만·게임 파일 아님). 올리기는 루프 커밋이
+if ((Test-Path $diag) -and $fails.Count -gt 0) {
+    $repo = $null
+    foreach ($start in @($env:VH_DLL, (Get-Location).Path)) {
+        $d = if ($start) { Split-Path $start -Parent } else { $null }
+        while ($d -and -not (Test-Path (Join-Path $d 'docs\valheim'))) { $d = Split-Path $d -Parent }
+        if ($d) { $repo = $d; break }
+    }
+    if ($repo) {
+        $failDir = Join-Path $repo 'docs\valheim\test-fail'
+        New-Item -ItemType Directory -Force $failDir | Out-Null
+        $round = (Select-String -Path (Join-Path $repo 'docs\valheim\status.txt') -Pattern '^회차: (\d+)' -Encoding UTF8 | Select-Object -First 1).Matches.Groups[1].Value
+        $logAll = if (Test-Path $log) { @(Get-Content $log -Encoding UTF8) } else { @() }
+        foreach ($fn in @($fails | ForEach-Object { if ($_ -match '^\s*\[([^\]]+)\]') { $Matches[1] } } | Select-Object -Unique)) {
+            $out = @("# $fn FAIL 발췌 — $(Get-Date -Format 'yyyy-MM-dd HH:mm') 회차 $round (diag 칸 + 그 시험 동안 모드 로그 줄)", '', '## diag')
+            $in = $false
+            foreach ($l in $lines) { if ($l.StartsWith('=== ')) { $in = $l.StartsWith("=== $fn ") }; if ($in) { $out += $l } }
+            $s0 = -1; $s1 = $logAll.Count
+            for ($i = 0; $i -lt $logAll.Count; $i++) {
+                if ($logAll[$i] -match "=== $([regex]::Escape($fn)) 시작") { $s0 = $i }
+                elseif ($s0 -ge 0 -and $logAll[$i] -match '=== vh_\w+ 시작') { $s1 = $i; break }
+            }
+            $modLines = if ($s0 -ge 0) { @($logAll[$s0..($s1 - 1)] | Where-Object { $_ -match '^\[\w+\s*:Valheim Helper' } | ForEach-Object { if ($_.Length -gt 400) { $_.Substring(0, 400) + '...' } else { $_ } }) } else { @() }
+            $out += ''; $out += "## 모드 로그 ($($modLines.Count)줄$(if ($modLines.Count -gt 1500) { ', 끝 1500줄만' }))"
+            $out += @($modLines | Select-Object -Last 1500)
+            $file = Join-Path $failDir ("{0}-{1}-{2}.txt" -f (Get-Date -Format 'yyyy-MM-dd'), $round, $fn)
+            [IO.File]::WriteAllLines($file, [string[]]$out, (New-Object Text.UTF8Encoding $false))
+            $report += "FAIL 발췌: $file"
+        }
+    }
+}
 $report += "자세히(FAIL일 때만): $diag 에서 '=== 시험이름' 부분, 오류는 $log"
 if ($fatalLine) { $report += "FAIL 모드 치명 오류로 바로 끔(끝까지 기다리지 않음): $fatalLine — 고쳐서 다시 시험" }
 if ($stallLine) {
