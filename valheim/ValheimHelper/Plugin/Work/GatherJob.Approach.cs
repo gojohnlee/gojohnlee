@@ -799,7 +799,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// 던전 안 이동 생략(⑬ 바-2e, decisions "멀리선 이동 생략"·"⑬ 안개땅 절벽"): 던전 안 칸 길이 끊긴 대상(광산 먼 방 — 계단·낭떠러지 경계)은
-        /// 일꾼·대상 둘레 64m(3차원 — 던전은 바깥보다 수천 m 위)에 플레이어가 없으면 직선 거리 ÷ 달리기 속도(15초까지) 서서 기다렸다가
+        /// 일꾼·대상이 아무 눈에도 안 보이면(NoPlayerAround — 회차 810 전엔 3차원 64m) 직선 거리 ÷ 달리기 속도(15초까지) 서서 기다렸다가
         /// 대상 옆 설 자리(InteriorNav.StandNear)로 옮긴다. 대상마다 한 번(옮긴 뒤에도 못 닿으면 원래 막힘 처리). 기다리는 사이 길이 생기면 그만둔다.
         /// </summary>
         bool InteriorHop(float dt)
@@ -823,7 +823,7 @@ namespace ValheimHelper
             TestNoStandOnce = false;
             if (spot == null)
             {
-                // 사용자 11-17(E113): 둘레에 플레이어가 없으니(위 NoPlayerAround) 줍는 것은 그 자리에서 바로 얻는다 — 떨굼은 Collect가 멀리서 주움, 짐·상자 흐름은 평소대로
+                // 사용자 11-17(E113): 아무도 안 보니(위 NoPlayerAround) 줍는 것은 그 자리에서 바로 얻는다 — 떨굼은 Collect가 멀리서 주움, 짐·상자 흐름은 평소대로
                 ZDO tz = ZDOMan.instance.GetZDO(m_targetId);
                 ZNetView tv = tz != null ? ZNetScene.instance.FindInstance(tz) : null;
                 Pickable pick = m_targetInfo != null && m_targetInfo.Pickable && tv != null && tv.IsValid() ? tv.GetComponent<Pickable>() : null;
@@ -831,7 +831,7 @@ namespace ValheimHelper
                 {
                     pick.Interact(m_npc, false, false);
                     RemoteGrabs++;
-                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 옆에 설 자리 없음, 둘레에 플레이어 없음 → 그 자리에서 바로 얻음({Vector3.Distance(me, m_targetPos):0}m)");
+                    Plugin.Log.LogInfo($"{m_npc.NpcName}: {m_targetInfo.Prefab} 옆에 설 자리 없음, 아무도 안 봄 → 그 자리에서 바로 얻음({Vector3.Distance(me, m_targetPos):0}m)");
                     Go(Step.Collect);
                     m_remoteGrab = true;
                     return true;
@@ -853,17 +853,8 @@ namespace ValheimHelper
             return true;
         }
 
-        /// <summary>p 둘레 StuckHop.NearPlayer m(3차원) 안에 플레이어(호스트·손님 기준 위치)가 없는가. 시험이 플레이어를 무시하면 FarFromPlayers.</summary>
-        internal static bool NoPlayerAround(Vector3 p)
-        {
-            if (TestIgnorePlayers) return FarFromPlayers(p);
-            float near = (float)StuckHop.NearPlayer;
-            if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, p) <= near) return false;
-            if (ZNet.instance != null)
-                foreach (var peer in ZNet.instance.GetPeers())
-                    if (peer != null && peer.m_refPos != Vector3.zero && Vector3.Distance(peer.m_refPos, p) <= near) return false;
-            return true;
-        }
+        /// <summary>던전 안 이동 생략·입구·나가는 문 바로 쓰기에서 p가 아무 눈에도 안 보이나(사용자 11-18 "64m를 보는지로", 회차 810 — 전엔 3차원 64m). 64m 판정을 끈 시험은 옛 거리(Watched와 같은 규칙).</summary>
+        internal static bool NoPlayerAround(Vector3 p) => !Watched(p);
 
         void Skip([System.Runtime.CompilerServices.CallerLineNumber] int line = 0)
         {

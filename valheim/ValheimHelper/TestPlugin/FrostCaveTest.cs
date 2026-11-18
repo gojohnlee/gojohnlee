@@ -74,6 +74,7 @@ namespace ValheimHelper
             Vector3 pos = GatherTest.Ground(w.Home + w.Player.transform.rotation * new Vector3(0f, 0f, 110f));
             spot[0] = pos;
             foreach (var z in CryptTest.Around(pos)) before.Add(z.m_uid);
+            CryptTest.NoteStatics(pos);
             bool spawned = ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);
             checks.Add($"{s_kind.Label} 세움(TestSpawnLocation, 깃발에서 {Utils.DistanceXZ(pos, w.Home):0}m)", spawned);
             if (!spawned) yield break;

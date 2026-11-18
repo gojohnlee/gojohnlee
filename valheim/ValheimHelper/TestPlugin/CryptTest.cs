@@ -96,6 +96,26 @@ namespace ValheimHelper
             return list;
         }
 
+        /// <summary>시험 전에 있던 ZNetView 없는 물체(뿌리 GameObject). 세운 위치의 ZNetView 없는 조각(절벽 등)은 ZDO를 지워도 남아
+        /// 다음 시험이 같은 자리에 세운 던전 문을 막았다(회차 810 minetest→crypttest: cliff_mistlands2가 지하묘지 문 앞 8.5m에 남음).</summary>
+        static readonly HashSet<GameObject> s_statics = new HashSet<GameObject>();
+
+        static IEnumerable<GameObject> StaticsAround(Vector3 at)
+        {
+            var seen = new HashSet<GameObject>();
+            foreach (var p in new[] { at, at + Vector3.up * 5000f })
+                foreach (var c in Physics.OverlapSphere(p, 70f))
+                {
+                    if (c == null) continue;
+                    GameObject r = c.transform.root.gameObject;
+                    if (!seen.Add(r) || r.GetComponentInChildren<ZNetView>() != null || r.GetComponent<Heightmap>() != null || r.GetComponentInParent<Character>() != null) continue;
+                    yield return r;
+                }
+        }
+
+        /// <summary>세우기 전에 부름: 그 자리의 ZNetView 없는 물체를 기억(Cleanup이 그 밖의 것만 지움).</summary>
+        internal static void NoteStatics(Vector3 at) { foreach (var r in StaticsAround(at)) s_statics.Add(r); }
+
         /// <summary>세운 지하묘지·동굴(시험 전에 없던 ZDO 중 70m 안 또는 던전 안 높이, 일꾼·플레이어 빼고)을 지운다.
         /// 던전 안 방은 70m 밖까지 퍼져 남으면 다음 시험이 같은 자리에 세운 던전과 겹쳤다(회차 168 frostcave→crypt 묶음 FAIL).</summary>
         internal static void Cleanup(HashSet<ZDOID> before, Vector3 at)
@@ -110,7 +130,11 @@ namespace ValheimHelper
                 ZDOMan.instance.DestroyZDO(z);
                 n++;
             }
-            TestRunner.Log($"정리: 세운 지하묘지 물체 {n}개 지움");
+            int m = 0;
+            foreach (var r in StaticsAround(at).ToList())
+                if (!s_statics.Contains(r)) { Object.Destroy(r); m++; }
+            s_statics.Clear();
+            TestRunner.Log($"정리: 세운 지하묘지 물체 {n}개·ZNetView 없는 조각 {m}개 지움");
         }
 
         static IEnumerator Body(TestKit.World w, GatherTest.Checks checks, HashSet<ZDOID> before, Vector3[] spot, KeyState keys)
@@ -146,6 +170,7 @@ namespace ValheimHelper
                 pos = GatherTest.Ground(w.Home + rot * Quaternion.Euler(0f, angles[i], 0f) * new Vector3(0f, 0f, 110f));
                 spot[0] = pos;
                 foreach (var z in Around(pos)) before.Add(z.m_uid);
+                NoteStatics(pos);
                 bool spawned = ZoneSystem.instance.TestSpawnLocation(name, pos, disableSave: true);
                 if (!spawned) { checks.Add("지하묘지 세움(TestSpawnLocation)", false); yield break; }
                 yield return new WaitForSeconds(4f);
