@@ -69,16 +69,14 @@ public class StuckClockTests
     }
 
     [Fact]
-    public void TwoHopsSpendTarget()
+    public void ResetAfterHopRestartsClock()
     {
         var c = new StuckClock(); double t = 0;
         c.Tick(t, 0, 10, false, false);
         Assert.True(Run(c, ref t, 1.2, 10));
-        c.NoteHop(); Assert.False(c.HopsSpent);
-        c.Tick(t, 0, 4, false, false);
+        c.Reset(); Assert.Equal(0, c.NoGain);
+        Assert.False(c.Tick(t, 0.05, 4, false, false)); // 순간이동 뒤 남은 길 4m = 새 기준
         Assert.True(Run(c, ref t, 1.2, 4));
-        c.NoteHop(); Assert.True(c.HopsSpent);
-        c.Reset(); Assert.False(c.HopsSpent);
     }
 
     [Fact]
