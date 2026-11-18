@@ -343,7 +343,9 @@ function Backup-Wip {
 
 # 할 일: progress "다음" 아래 첫 안 끝난 "★" 덩어리와 그 안의 첫 안 끝난 조각("  가) …"·"  2) …").
 # [끝]·[보류]로 시작하는 덩어리·조각, 조각이 다 끝난 덩어리는 건너뛴다. 조각이 없는 덩어리는 이름만.
-# ★가 없으면 "구현 단계" 표의 첫 [ ]·[~] 단계.
+# 조각·요청 줄 끝남 = 첫 ')' 뒤 글에서 첫 '[' 표시가 [끝·[보류이고 [구현 완료·[미구현이 없음(이름에 ':' 있어도 — 회차 822).
+# 순서: ★ 덩어리 → 없으면 "요청 이름(날짜): …" 줄 → 없으면 "구현 단계" 표의 첫 [ ]·[~] 단계.
+function Test-Done($t) { $t -match '^[^\[]*\[(끝|보류)' -and $t -notmatch '\[(구현 완료|미구현)' }
 function Get-Todo($path) {
     $p = @(Get-Content $path -Encoding UTF8)
     $i = 0
@@ -356,7 +358,7 @@ function Get-Todo($path) {
         for ($j = $i + 1; $j -lt $p.Count -and $p[$j] -match '^\s+\S'; $j++) {
             if ($p[$j] -notmatch '^\s+[^\s\[\]()]{1,4}\)\s*(.*)$') { continue }
             $items++
-            if ($Matches[1] -match '^\[(끝|보류)') { continue }
+            if (Test-Done $Matches[1]) { continue }
             $sub = $p[$j].Trim(); break
         }
         if ($items -and -not $sub) { continue }   # 조각이 다 끝난 덩어리(다음 회차가 지움)
@@ -368,7 +370,7 @@ function Get-Todo($path) {
     # ★가 없으면 "요청 이름: …" 줄 중 이름 바로 뒤가 [끝]·[보류]가 아닌 첫 줄(11-11)
     for ($i = 0; $i -lt $p.Count -and $p[$i] -notmatch '^다음'; $i++) { }
     for ($i++; $i -lt $p.Count -and $p[$i] -notmatch '^보류:'; $i++) {
-        if ($p[$i] -notmatch '^요청 ' -or $p[$i] -match '^요청 [^:\[]*\[(끝|보류)') { continue }
+        if ($p[$i] -notmatch '^요청 ' -or (Test-Done ($p[$i] -replace '^요청 [^)\[]*\)\s*:?', ''))) { continue }
         $todo = $p[$i].Trim()
         if ($todo.Length -gt 120) { $todo = $todo.Substring(0, 120) + '…' }
         return $todo
