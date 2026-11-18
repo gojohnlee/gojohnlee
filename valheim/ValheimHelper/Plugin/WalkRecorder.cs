@@ -12,7 +12,7 @@ namespace ValheimHelper
     /// </summary>
     sealed class WalkRecorder
     {
-        public const float Step = 0.25f, SeeNear = 20f, SeeFar = 64f;
+        public const float Step = 0.25f;
         static readonly HarmonyLib.AccessTools.FieldRef<BaseAI, List<Vector3>> PathOf = HarmonyLib.AccessTools.FieldRefAccess<BaseAI, List<Vector3>>("m_path");
 
         readonly WorkerNpc m_npc;
@@ -265,18 +265,7 @@ namespace ValheimHelper
             return 0;
         }
 
-        // 보는지: 20m 안이면 봄, 64m 안이면 카메라 시야 안 + 카메라에서 몸까지 막힘 없음.
-        static bool Seen(Vector3 p)
-        {
-            var cam = Utils.GetMainCamera();
-            if (cam == null) return false;
-            Vector3 body = p + Vector3.up;
-            float dist = Vector3.Distance(cam.transform.position, body);
-            if (dist <= SeeNear) return true;
-            if (dist > SeeFar) return false;
-            Vector3 v = cam.WorldToViewportPoint(body);
-            if (v.z <= 0f || v.x < 0f || v.x > 1f || v.y < 0f || v.y > 1f) return false;
-            return !Physics.Linecast(cam.transform.position, body, LayerMask.GetMask("Default", "static_solid", "piece", "terrain"));
-        }
+        // 보는지: 막힘 판정과 같은 StuckWatch.Seen(카메라·원격 플레이어, 20m 안 봄·100m 밖 안 봄).
+        static bool Seen(Vector3 p) => StuckWatch.Seen(p);
     }
 }
