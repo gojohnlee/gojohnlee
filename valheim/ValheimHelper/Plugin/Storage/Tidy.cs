@@ -8,7 +8,7 @@ namespace ValheimHelper
     /// <summary>
     /// 일꾼 상자 정리(상자 기능 ②, 사용자 결정 2026-10-23): 거점 125m 안 상자에서 같은 물건을 가장 많이 든 상자로 모은다
     /// (그 물건 역할의 이름표 상자가 있으면 그쪽 — Unload와 같은 ChestNames.Select). 개인·보물 상자와 누가 연 상자는 안 건드린다.
-    /// 가-1 Instant: 상자끼리 한 프레임 안에 옮긴다(두 상자 모두 TryEdit) — 아침 정산·플레이어 64m 밖일 때. 불러와진 상자만.
+    /// 가-1 Instant: 상자끼리 한 프레임 안에 옮긴다(두 상자 모두 TryEdit) — 아침 정산·집·상자가 안 보일 때(Unseen). 불러와진 상자만.
     /// 가-2 Tick: 거점에서 쉬는 일꾼이 플레이어 근처면 걸어서(TidyJob), 멀면 Instant.
     /// </summary>
     public static class Tidy
@@ -68,6 +68,15 @@ namespace ValheimHelper
                     if (i != t && counts[i] > 0) moves.Add(new Move { From = sorted[i], To = sorted[t], Name = name });
             }
             return moves;
+        }
+
+        /// <summary>바로 옮겨도 되나(사용자 11-18 "64m를 보는지로", 회차 811): 집·옮길 상자들(From·To)이 모두 누구 눈에도 안 보임.</summary>
+        internal static bool Unseen(Vector3 home, List<Move> plan)
+        {
+            if (GatherJob.Watched(home)) return false;
+            foreach (var m in plan)
+                if ((m.From != null && GatherJob.Watched(m.From.transform.position)) || (m.To != null && GatherJob.Watched(m.To.transform.position))) return false;
+            return true;
         }
 
         /// <summary>바로 정리. 옮긴 물건 수. 꽉 찬 상자는 다른 물건이 빠져야 자리가 나니(회차 463 집 상자 23개) 옮길 것이 없을 때까지 최대 5번.</summary>
@@ -148,7 +157,7 @@ namespace ValheimHelper
 
         /// <summary>
         /// CheckEvery초마다(호스트만): 거점 30m 안에서 쉬는(Idle·대기열 없음·질문 없음·묘비 없음·싸움 아님) 일꾼 하나가 정리한다.
-        /// 플레이어가 모두 64m 밖이면 Instant, 아니면 걸어서(TidyJob). 다른 일꾼이 이미 정리 중이면 안 함.
+        /// 집·옮길 상자들이 안 보이면(Unseen, 회차 811 — 전엔 64m) Instant, 아니면 걸어서(TidyJob). 다른 일꾼이 이미 정리 중이면 안 함.
         /// </summary>
         public static void Tick(float dt)
         {
@@ -168,7 +177,7 @@ namespace ValheimHelper
             if (npc == null) return;
             List<Move> plan = Plan(npc.Home);
             if (plan.Count == 0) return;
-            if (GatherJob.FarFromPlayers(npc.Home))
+            if (Unseen(npc.Home, plan))
             {
                 int moved = Instant(npc.Home);
                 Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 상자 정리(플레이어 멀어 바로): {moved}개");

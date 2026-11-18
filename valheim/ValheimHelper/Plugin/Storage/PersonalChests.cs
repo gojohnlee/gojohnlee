@@ -10,7 +10,7 @@ namespace ValheimHelper
     /// 내 개인 상자 준비(상자 기능 ③, 사용자 결정 2026-10-23): "!준비 미드 5"(한 번) · "!채워 개인 미드 5"(유지) · "!준비 끔 [물건]".
     /// 내 개인 상자 = 이름에 개인·보물(ChestTags.Private) + 내가 지은 상자(Piece 만든 이 = 내 플레이어 ID), 일꾼 거점 125m 안·불러와진 것.
     /// 일꾼은 개인 상자에 넣기만 한다. 꺼내는 곳은 개인 아닌 거점 상자(열린 것 빼고). 쉬는 일꾼이 CheckEvery초마다(명령 직후엔 바로) —
-    /// 플레이어가 모두 64m 밖이면 걷지 않고 바로, 아니면 TidyJob 걸음(꺼내 들고 → 개인 상자에 넣기, 그만두면 든 것 되돌림).
+    /// 집·상자가 안 보이면(Tidy.Unseen) 걷지 않고 바로, 아니면 TidyJob 걸음(꺼내 들고 → 개인 상자에 넣기, 그만두면 든 것 되돌림).
     /// 나-1: 거점 상자에 있는 것을 옮김. 나-2: 거점 상자에도 모자란 몫은 자동 보충이 채집·제작으로 구해 거점 상자에 넣고(Shortages),
     /// 다음 확인 때 옮김. 구할 수 없거나 출발 판단이 막으면(10분 쉼) 한 번 준비는 "모자라" 말하고 지움, 유지는 기다림.
     /// </summary>
@@ -192,7 +192,7 @@ namespace ValheimHelper
             }
             List<Tidy.Move> plan = Plan(home);
             if (plan.Count == 0) return;
-            if (GatherJob.FarFromPlayers(home))
+            if (Tidy.Unseen(home, plan))
             {
                 int moved = 0;
                 foreach (var m in plan) moved += MoveNow(m);
