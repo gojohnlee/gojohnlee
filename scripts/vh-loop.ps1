@@ -275,12 +275,12 @@ function Log($m) { $l = "$(Get-Date -Format 'MM-dd HH:mm:ss') $m"; [IO.File]::Ap
 function G { & git -C $Repo @args 2>&1 | ForEach-Object { "$_" } }
 
 function Load-State {
-    $s = @{ round = 0; acct = 0; until = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''; conts = 0
+    $s = @{ round = 0; acct = 0; until = @('', ''); why = @('', ''); lastFail = ''; noProg = 0; errs = 0; reqSeen = ''; replyFails = 0; game = ''; conts = 0
             tokenDay = '' }
     if (Test-Path $StateFile) {
         try { $j = Get-Content $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($k in @($s.Keys)) { if ($null -ne $j.$k) { $s[$k] = $j.$k } } } catch { }
     }
-    $s.until = @($s.until); $s.noProg = 0; $s.lastFail = ''; $s.errs = 0   # 다시 켜면 멈춤 셈은 새로
+    $s.until = @($s.until); $s.why = @($s.why); $s.noProg = 0; $s.lastFail = ''; $s.errs = 0   # 다시 켜면 멈춤 셈은 새로
     $s
 }
 # 게임 업데이트 감지: assembly_valheim.dll 파일 버전 + 해시 앞 12자. 지난 회차 것($st.game)과 다르면 그 회차에 VH_GAME_UPDATE로 알린다.
@@ -382,7 +382,7 @@ function Write-Status($now, $last) {
     $script:StatusNow = $now   # Wait-Until이 여기에 절전 상태를 덧붙인다
     $todo = Get-Todo (Join-Path $Repo 'docs\valheim\progress.txt')
     $test = if (Test-Path $Diag) { "$((Get-Item $Diag).LastWriteTime.ToString('MM-dd HH:mm')) $(Get-Content $Diag -Encoding UTF8 -TotalCount 1)" } else { '(없음)' }
-    $lim = @(0, 1 | ForEach-Object { if ($st.until[$_] -and [datetime]$st.until[$_] -gt (Get-Date)) { "$($Accounts[$_].Name) $(([datetime]$st.until[$_]).ToString('MM-dd HH:mm'))까지" } })
+    $lim = @(0, 1 | ForEach-Object { if ($st.until[$_] -and [datetime]$st.until[$_] -gt (Get-Date)) { "$($Accounts[$_].Name) $(if ($st.why[$_]) { $st.why[$_] + ' ' })$(([datetime]$st.until[$_]).ToString('MM-dd HH:mm'))까지" } })   # 사용자 11-18: 한도와 오류 쉼을 가려 보임
     # 시험 미룸(valheim-test.ps1이 모르는 게임 = 직접 플레이를 보고 남김, 6시간 안 것만)
     $df = Join-Path $env:TEMP 'valheim-test-deferred.txt'
     $testNote = if ((Test-Path $df) -and ((Get-Date) - (Get-Item $df).LastWriteTime).TotalHours -lt 6) { "시험 미룸: 직접 켠 게임이 있어 끄지 않음($(Get-Content $df -Encoding UTF8 -TotalCount 1))" }
@@ -761,7 +761,7 @@ while ($true) {
     $free = @(0, 1 | Where-Object { -not $st.until[$_] -or [datetime]$st.until[$_] -le (Get-Date) })
     if ($free.Count -eq 0) {
         $t = @(0, 1 | ForEach-Object { [datetime]$st.until[$_] } | Sort-Object)[0]
-        Write-Status "한도 대기: 두 계정 모두 한도(또는 오류로 쉼), $($t.ToString('MM-dd HH:mm'))에 다시" '-'
+        Write-Status "대기: 두 계정 모두 한도 또는 오류 쉼(아래 '한도:' 줄에 계정별 까닭), $($t.ToString('MM-dd HH:mm'))에 다시" '-'
         Save-State; Wait-Until $t; continue
     }
     # 먼저 쓸 계정(사용자 11-13: 리셋이 가까운 계정을 먼저 다 씀): %USERPROFILE%\vh-loop\prefer-account.txt 첫 줄 "1번"/"2번".
@@ -798,7 +798,7 @@ while ($true) {
     if (-not $last) {
         $lim = Limit-Until (($lines | Select-Object -Last 5) -join "`n")
         if ($lim) {
-            $st.until[$st.acct] = $lim.ToString('o'); $st.round--
+            $st.until[$st.acct] = $lim.ToString('o'); $st.why[$st.acct] = '한도'; $st.round--
             Log "$($acct.Name) 계정 한도 → $($lim.ToString('MM-dd HH:mm'))"; Save-State; continue
         }
         $last = "LOOP: ERROR 마지막 줄 없음(종료 코드 $($r.Code)): $(($lines | Select-Object -Last 1))"
@@ -807,7 +807,7 @@ while ($true) {
             # 금방 끝난 오류(네트워크·서버·로그인 등)는 진척 셈에 안 넣는다. 그 계정만 5·10·20·40·60분 쉬게 해서 다른 계정이 비었으면 그걸로 잇는다.
             $st.errs++
             $rest = [math]::Min(60, 5 * [math]::Pow(2, $st.errs - 1))
-            $st.until[$st.acct] = (Get-Date).AddMinutes($rest).ToString('o'); $st.round--
+            $st.until[$st.acct] = (Get-Date).AddMinutes($rest).ToString('o'); $st.why[$st.acct] = '오류 쉼: ' + $(if ($last.Length -gt 90) { $last.Substring(0, 90) } else { $last }); $st.round--
             Log "$last → $($acct.Name) 계정 ${rest}분 쉼"; Save-State; continue
         }
     }
