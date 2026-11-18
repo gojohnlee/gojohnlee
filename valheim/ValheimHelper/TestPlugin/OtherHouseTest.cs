@@ -146,12 +146,12 @@ namespace ValheimHelper
             var path = new List<Vector3>();
             var reach = new List<Component>();
             // 회차 700: 같은 집에서 6/10 → 1/10(전부 길 안 남)이 번갈아 나옴 — 옮긴 직후(2초)엔 일꾼이 아직 땅에 안 닿았거나 길 그물이 안 만들어짐. 3번까지 다시 잼
-            for (int attempt = 1; attempt <= 3; attempt++)
+            for (int attempt = 1; attempt <= 6; attempt++) // 회차 825: 3번째(8초)도 1/11 — 지난 판 상자 치운 뒤 그물 다시 만들기가 더 걸림
             {
                 reach.Clear();
                 foreach (var s in spots)
                     if (s == lo || Pathfinding.instance.GetPath(w.Ragnar.transform.position, s.transform.position, path, Pathfinding.AgentType.Humanoid, requireFullPath: true)) reach.Add(s);
-                    else if (attempt == 3) TestRunner.Log($"길 안 남(뺌): {Name(s)}");
+                    else if (attempt == 6) TestRunner.Log($"길 안 남(뺌): {Name(s)}");
                 TestRunner.Log($"길 재기 {attempt}번째: {reach.Count}/{spots.Count} (라그나 {w.Ragnar.transform.position:F1}, 땅 {w.Ragnar.IsOnGround()})");
                 if (reach.Count >= 3) break;
                 yield return new WaitForSeconds(3f);

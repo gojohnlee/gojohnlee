@@ -112,6 +112,8 @@ namespace ValheimHelper
             w.Ragnar.TeleportTo(start, w.Ragnar.transform.rotation, false);
             yield return new WaitForSeconds(2f);
             int tele0 = Teleports();
+            Vector3 chestSpot = Near(chest); // 상자 앞 1.2m — 시작 자리(VH_NEWERA_START가 없으면 일꾼이 거기 내려선 바닥 높이)
+            if (string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("VH_NEWERA_START")) && Utils.DistanceXZ(w.Ragnar.transform.position, chestSpot) < 1f) chestSpot = w.Ragnar.transform.position;
             string[] names = { "상자→화덕", "화덕→침대(오름)", "침대→상자(내림)", "상자→침대(오름)", "침대→화덕(내림)" }; // ValueTuple은 게임 mono에 없음
             Component[] tos = { fire, bed, chest, bed, fire };
             // 두 바퀴(길 기억 ④-3, 사용자 11-15): 1바퀴 = 길 기억 전, 2바퀴 = 기억한 길을 따름. 바퀴 사이엔 화덕→상자로 걸어 돌아감(재지 않음)
@@ -125,6 +127,9 @@ namespace ValheimHelper
             TestRunner.Log($"지난 판 길 기억 지움 {forgot}개(남음 {Brain.Paths.Count})");
             var ai = w.Ragnar.Ai;
             var lapT = new float[3];
+            var legT3 = new float[3, names.Length]; var fought = new bool[3, names.Length]; // 회차 825: 싸움·도망이 낀 다리는 바퀴 시간 비교에서 양쪽 다 뺌(도망 걸음 길/직선 12.2로 58초)
+            float Fair(int r, int of) { float s = 0f; for (int k = 0; k < names.Length; k++) if (!fought[0, k] && !fought[r, k]) s += legT3[of, k]; return s; }
+            string FairNote(int r) { int n = 0; for (int k = 0; k < names.Length; k++) if (fought[0, k] || fought[r, k]) n++; return n > 0 ? $" — 싸움 낀 다리 {n}개 뺌" : ""; }
             int reached = 0, jumps = 0;
             for (int round = 0; round < 3; round++)
             {
@@ -132,7 +137,7 @@ namespace ValheimHelper
                 float worst = 0f;
                 for (int i = 0; i < names.Length; i++)
                 {
-                    Vector3 goal = tos[i].transform.position;
+                    Vector3 goal = tos[i] == chest ? chestSpot : tos[i].transform.position; // 회차 825: 상자 자리 그대로면 상자 바로 위 계단(1.3~1.4m 위)에 서서 닿음 기준 1.3m를 오락가락(3바퀴 90초 FAIL) → 상자 앞 바닥
                     ClearWild(); // 회색 난쟁이가 와 일꾼이 경계로 8초 섬·hp 깎임(회차 405·414) — 걸음만 재려고 다리마다 야생 생물 치움, 길든 짐승은 남김
                     var walk = new ExploreTest.WalkJob(ai, goal, true) { Stay = true }; // 다리 사이에 서 있음(일이 끝나 깃발로 걸어가면 문 나가기·되돌기가 섞임)
                     var rec = WalkRecorder.Start(w.Ragnar, cols);
@@ -143,6 +148,7 @@ namespace ValheimHelper
                     bool ok = At();
                     float took = Time.time - legT;
                     lapT[round] += took;
+                    legT3[round, i] = took; fought[round, i] = TestKit.Paused >= 0.5f;
                     walk.Halt = true;
                     var rep = rec.Stop($"newerahouse {round + 1}-{i + 1} {names[i]}", round > 0 || i > 0, "behavior-house-newera.txt"); // E136: 뒤 otherhouse가 덮지 않게
                     jumps += rep.TeleSeen + rep.TeleUnseen;
@@ -170,7 +176,7 @@ namespace ValheimHelper
                 }
                 else if (round == 1)
                 {
-                    checks.Add($"2바퀴: 쌓인 나쁜 길을 따르지 않고 다시 걸어 바꿈 (다시 걸어 봄 {ai.PathsExplored - exp0}·바꿈 {ai.PathsReplaced - rep0}·따름 {ai.PathsFollowed - fol0}, {lapT[1]:0.0}초)", ai.PathsExplored - exp0 >= 3 && ai.PathsReplaced - rep0 >= 3 && lapT[1] <= lapT[0] * 1.25f + 3f);
+                    checks.Add($"2바퀴: 쌓인 나쁜 길을 따르지 않고 다시 걸어 바꿈 (다시 걸어 봄 {ai.PathsExplored - exp0}·바꿈 {ai.PathsReplaced - rep0}·따름 {ai.PathsFollowed - fol0}, {lapT[1]:0.0}초{FairNote(1)})", ai.PathsExplored - exp0 >= 3 && ai.PathsReplaced - rep0 >= 3 && Fair(1, 1) <= Fair(1, 0) * 1.25f + 3f);
                     Vector3 back = chest.transform.position;
                     var link = new ExploreTest.WalkJob(ai, back, true) { Stay = true };
                     ai.StartJob(link);
@@ -181,7 +187,7 @@ namespace ValheimHelper
                 else
                 {
                     checks.Add($"3바퀴 다 닿음 ({got}/{names.Length}, {lapT[2]:0.0}초, 따름 {ai.PathsFollowed - fol0})", got == names.Length);
-                    checks.Add($"3바퀴(바꾼 기억 따름)가 1바퀴보다 안 느림 ({lapT[0]:0.0} → {lapT[2]:0.0}초)", lapT[2] <= lapT[0] * 1.25f + 3f);
+                    checks.Add($"3바퀴(바꾼 기억 따름)가 1바퀴보다 안 느림 ({Fair(2, 0):0.0} → {Fair(2, 2):0.0}초{FairNote(2)})", Fair(2, 2) <= Fair(2, 0) * 1.25f + 3f);
                 }
             }
             checks.Add($"뛰어내리기 지름길 (착지 {ai.DropsTaken}, 고른 뒤 그만 {ai.DropsQuit})", ai.DropsQuit == 0); // ★ 다: 내림 다리에서 계단보다 1초 넘게 빠른 끝이 있으면 뜀

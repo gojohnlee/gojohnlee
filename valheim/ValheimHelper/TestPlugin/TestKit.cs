@@ -236,6 +236,8 @@ namespace ValheimHelper
         /// <summary>WaitFor 결과(코루틴이라 out을 못 씀).</summary>
         public static bool Ok;
         public static float Waited;
+        /// <summary>WaitFor가 싸움·도망으로 멈춘 초(회차 825 E136: newerahouse 3바퀴 한 다리에 생물 — 걸음 시간 비교에서 그 다리 뺌).</summary>
+        public static float Paused;
 
         /// <summary>
         /// 생물을 일부러 부르거나 세는 시험(사냥·싸움 등)이면 true — Setup(World.CountsCreatures)·OldClear(strict)가 정하고 시험 끝(OldEnd)에 끔.
@@ -261,6 +263,7 @@ namespace ValheimHelper
                 else Waited += Time.deltaTime;
                 Ok = cond();
             }
+            Paused = paused;
             if (paused >= 0.5f) TestRunner.Log($"싸움·도망으로 시험 시간 {paused:0}초 멈춤");
         }
 

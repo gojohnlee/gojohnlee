@@ -158,7 +158,7 @@ namespace ValheimHelper
                 if (dv == null || !dv.IsValid()) return false; // 열린 문도 곧장 지나감 — 연 뒤 navmesh가 늦게 바뀌어 바닐라 길은 벽에 박힘(회차 315 시험)
                 m_door = d;
                 Vector3 n = d.transform.forward; n.y = 0f; n.Normalize();
-                if (!Walled(me, n)) { m_check = Time.time + 1f; return false; } // 회차 348: 막 나온 집 옆 처마 밑(지붕 True)을 안으로 읽어 문으로 되돌아감 → 사방 벽까지 봄
+                if (!Walled(me, n)) { m_check = Time.time + 1f; return Skip(npc, "사방 벽 아님", $"{me:F1} 문 {d.name} {Middle(d):F1}"); } // 회차 348: 막 나온 집 옆 처마 밑(지붕 True)을 안으로 읽어 문으로 되돌아감 → 사방 벽까지 봄
                 Vector3 mid = Middle(d), a = mid + n * Step, b = mid - n * Step;
                 bool ra = Roofed(a), rb = Roofed(b);
                 bool aIn = ra != rb ? ra : Utils.DistanceXZ(me, a) < Utils.DistanceXZ(me, b); // 지붕 아래 쪽이 안, 모호하면 가까운 쪽
@@ -454,7 +454,7 @@ namespace ValheimHelper
         /// <summary>나가기를 안 하는 까닭을 바뀔 때만 한 줄(진단, 회차 772 vh_otherhouse 닫힌 바깥문 앞 15초).</summary>
         bool Skip(WorkerNpc npc, string why, string detail)
         {
-            if (why != m_skipWhy) { m_skipWhy = why; Diag.Log($"DIAG {npc.NpcName} 안에서 나가기 안 함: {why} {detail}"); }
+            if (why != m_skipWhy || Time.time - m_skipT > 10f) { m_skipWhy = why; m_skipT = Time.time; Diag.Log($"DIAG {npc.NpcName} 안에서 나가기 안 함: {why} {detail}"); }
             return false;
         }
         internal static bool Roofed(Vector3 at) => Physics.Raycast(at + Vector3.up * 1.8f, Vector3.up, 6f, Mask);
