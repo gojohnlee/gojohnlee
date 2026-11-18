@@ -120,6 +120,8 @@ namespace ValheimHelper
             checks.Add("구조 대사를 함", w.Heard.Exists(h => TestKit.SaidKey(h, w.Ragnar.Personality, "rescue")));
 
             float waited = skipAt;
+            // 보는 중 강제(회차 813: 실제 카메라로는 '안 봄'이라 목표 쪽 순간이동이 맞는 동작인데 옛 '플레이어 근처' 칸이 FAIL) — 안 보는 중은 vh_hoptest
+            StuckWatch.TestSeen = p => true;
             for (; waited < 300f && GatherJob.Rescues == rescues0; waited += 10f)
             {
                 yield return TestKit.WaitFor(() => GatherJob.Rescues > rescues0, 10f);
@@ -129,8 +131,9 @@ namespace ValheimHelper
             float d1 = Utils.DistanceXZ(w.Ragnar.transform.position, w.Home);
             Speeds(w.Ragnar, saved, false);
             hold(null);
+            StuckWatch.TestSeen = null;
             checks.Add($"깃발로 강제 복귀함 ({waited:0}초 안)", rescued);
-            checks.Add($"플레이어 근처라 목표 쪽 순간이동 안 함 ({GatherJob.Hops - hops0}번)", GatherJob.Hops == hops0);
+            checks.Add($"보는 중이라 목표 쪽 순간이동 안 함 ({GatherJob.Hops - hops0}번)", GatherJob.Hops == hops0);
             if (!rescued) yield break;
             checks.Add($"거점에 있음 ({d1:0.0}m)", d1 < 5f);
             // 적 피해(EnemyHit)는 뺌: 묶인 동안 둘레 생물을 1초마다 치워도 그 사이 한 대 맞을 수 있다(E118 회차 722: EnemyHit 10) — 이 칸은 순간이동이 체력을 깎지 않는지

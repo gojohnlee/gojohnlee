@@ -449,6 +449,7 @@ namespace ValheimHelper
             {
                 m_ledgeTimer = 0.25f;
                 if (m_slowTime >= 0.5f && LedgeAhead(pos, m_character.GetMoveDir()) && TryJump()) JumpWhy = $"턱 {m_ledgeHit}";
+                if (m_slowTime >= 1f && PeerYield(pos, point)) return false;
             }
             m_sampleTimer += dt;
             if (m_sampleTimer >= 1.5f)
@@ -482,6 +483,38 @@ namespace ValheimHelper
                 m_sampleTimer = 0f;
                 m_samplePos = pos;
             }
+            return false;
+        }
+
+        /// <summary>시험용: 일꾼끼리 양보한 수.</summary>
+        public static int PeerYields;
+
+        /// <summary>
+        /// 일꾼끼리 맞닿아 섬(E139 — 2층 상자 앞에서 둘 다 상자 쪽으로 밀며 15초 넘게 섰음, 목표 1m 안이라 위 비켜 가기가 안 켜짐):
+        /// 앞 1.2m(진행 방향 ±60°)에 다른 일꾼·호위병이 있고 1초 넘게 느리면, 그쪽이 서 있거나(걷기 입력 없음) 내 id가 더 크면 내가 뒤옆으로 1.5초 비킨다.
+        /// 둘 다 걷는 중이면 한쪽만 비켜서 같이 같은 쪽으로 도는 일이 없다.
+        /// </summary>
+        bool PeerYield(Vector3 pos, Vector3 point)
+        {
+            Vector3 fwd = Flat(point - pos).normalized;
+            if (fwd.sqrMagnitude < 0.01f) return false;
+            var me = (WorkerNpc)m_character;
+            foreach (var list in new[] { WorkerNpc.All, WorkerNpc.Guards })
+                foreach (var o in list)
+                {
+                    if (o == null || o == me) continue;
+                    Vector3 to = o.transform.position - pos;
+                    if (Mathf.Abs(to.y) > 1.5f || Flat(to).magnitude > 1.2f || Vector3.Dot(Flat(to).normalized, fwd) < 0.5f) continue;
+                    bool idle = o.GetMoveDir().sqrMagnitude < 0.01f;
+                    if (!idle && me.GetInstanceID() < o.GetInstanceID()) continue;
+                    Vector3 side = Vector3.Cross(Vector3.up, Flat(to).normalized);
+                    m_detourDir = (side - Flat(to).normalized * 0.7f).normalized;
+                    m_detourTime = 1.5f;
+                    m_slowTime = 0f;
+                    PeerYields++;
+                    Diag.Log($"DIAG 일꾼끼리 비킴: {me.NpcName} → {o.NpcName}({(idle ? "서 있음" : "걷는 중")}) 앞 {Flat(to).magnitude:0.0}m, 목표까지 {Utils.DistanceXZ(point, pos):0.0}m");
+                    return true;
+                }
             return false;
         }
 
