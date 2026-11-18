@@ -112,6 +112,7 @@ namespace ValheimHelper
             orders.RemoveAll(o => o == null);
             float t = 0f;
             int nights = 0; bool wasNight = EnvMan.IsNight();
+            float pigSeen = -1f; Vector3 pigAt = Vector3.zero; bool pigOut = false, pigGone = false; // E140: 멧돼지 사라진 때·자리
             while (t < 4200f && orders.Exists(o => o.Done < 0f)) // 밤이 끼면 더 걸림(3000 → 4200초)
             {
                 yield return new WaitForSeconds(5f);
@@ -125,6 +126,8 @@ namespace ValheimHelper
                 Match(orders);
                 foreach (var o in orders) o.Poll(home, t);
                 Busy.Sample(t);
+                if (pig != null) { pigSeen = t; pigAt = pig.transform.position; if (!pigOut && LivestockJob.InPen(pig.GetComponent<Character>(), penAt) == false) { pigOut = true; TestRunner.Log($"DIAG 멧돼지 우리 밖 {t:F0}초: 우리에서 {Vector3.Distance(pigAt, penAt):0}m, 체력 {pig.GetComponent<Character>().GetHealth():0}, 길듦 {pig.GetComponent<Character>().IsTamed()}"); } }
+                else if (pigSeen >= 0f && !pigGone) { pigGone = true; TestRunner.Log($"DIAG 멧돼지 없어짐 {t:F0}초(마지막 {pigSeen:F0}초 {pigAt}, 우리에서 {Vector3.Distance(pigAt, penAt):0}m)"); } // E140
             }
             Commands.Ran -= OnRan;
             WorkerNpc.TestPicked = null;

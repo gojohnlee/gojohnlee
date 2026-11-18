@@ -147,4 +147,17 @@ public class ClaudeReplyTests
         Assert.Equal(true, a[3]);
         Assert.Null(a[4]);
     }
+
+    [Fact] // 회차 820 finaltest: 답 뒤에 "Wait — …바꾼다" 하고 고친 JSON을 또 붙임 → 마지막 것
+    public void TwoObjectsTakesLast()
+    {
+        var r = P("{\"chatter\":false,\"reply\":\"갑니다 {곧}\",\"tasks\":[{\"kind\":\"item\",\"npc\":\"Claude\",\"item\":\"Wood\",\"amount\":6}]}\n\nWait — 첫 NPC는 Alarak이므로 바꾼다.\n\n{\"chatter\":false,\"reply\":\"내가 가지\",\"tasks\":[{\"kind\":\"item\",\"npc\":\"Alarak\",\"item\":\"Wood\",\"amount\":6}]}");
+        Assert.False(r.Invalid);
+        Assert.Equal("내가 가지", r.Reply);
+        Assert.Equal("Alarak", Assert.Single(r.Tasks).Command.Target);
+    }
+
+    [Fact]
+    public void ProseAroundSingleObject() =>
+        Assert.Equal("응", P("답: {\"reply\":\"응\",\"tasks\":[]} 끝").Reply);
 }

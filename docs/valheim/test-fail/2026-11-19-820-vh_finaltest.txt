@@ -1,0 +1,1777 @@
+# vh_finaltest FAIL 발췌 — 2026-11-19 02:30 회차 820 (diag 칸 + 그 시험 동안 모드 로그 줄)
+
+## diag
+=== vh_finaltest 2026-11-19 01:20:08 게임 1.0.21 Unity 6000.0.75f1 모드 0.3.8+4bca8ca* (2026-11-19 01:19) ===
+플러그인: ChestName 1.1.2, Display BepInEx Info In-Game 2.0.2, Valheim Helper 0.3.8, Valheim Helper Test 0.3.8
+  [포탈 목록에 남은 ZDO] 1:75046 구역 134917에서 뺌
+1층 상자 중 빈칸 4 미만 13개 뺌
+두 상자 비움(물건 23칸), 집 안 땅 물건 1, 시계 맞춤 23
+시험 기본 집 (자리 250,433): 조각 1144, 1층 상자 9개 중 piece_chest_blackmetal (250.2, 45.0, 435.2)·piece_chest_blackmetal (250.2, 43.9, 435.2), 깃발 쪽 빈 땅 (257.3, 43.9, 450.6)
+OK   시험 기본 집 씀 ()
+시작 정리: 거점 60m 안 생물 1마리 치움
+시작 땅: 거점 60m 안 물건 1 (Honey 2)·쓰러진 몸 0·통나무 0·옛 묘비 0 → 치우고 시작
+[2s] 집 조각 사라짐 → 1 (새로 Honey (-24,0)@0 틈0.00), 플레이어 (7, 0, 18), 일꾼 (11, 2, 23)
+OK   깃발에 일꾼 2명 나타남 (2명)
+OK   일꾼 2 + 호위병 1 = 3명 (2 + 1)
+OK   가축 상자·길들인 배고픈 멧돼지 놓음
+DIAG 시작 거점 상자: Wood 1037, Stone 374, CopperOre 0, Copper 14, RawMeat 4
+DIAG 시작 시각: 밤 (하루 0.92)
+> 여기 밭 좀 만들어 줘, 반경 3
+> 나무 10개 좀 해 와
+> 돌 10개 캐 와
+> 구리 10개
+DIAG 해석: 라그나 ← Item CopperOre 10
+> 활 3개 만들어 줘
+> 구리주괴 10
+DIAG 해석: 플로키 ← Item Copper 10
+OK   세트 1번 저장
+> 세트 1번 하나 만들어 줘
+> 고기 4개 구워 줘
+> 멧돼지 잡아서 생고기 6개 가져와
+> 상자 정리 좀 해 줘
+DIAG 해석: 라그나 ← Farm #3
+DIAG 해석: 라그나 ← Item Wood 10
+DIAG 해석: 라그나 ← Item Stone 10
+DIAG 해석: 플로키 ← Item Bow 3
+DIAG 해석: 플로키 ← SetMake 1 #1
+DIAG 해석: 플로키 ← Item CookedMeat 4
+DIAG 해석: 플로키 ← Tidy
+> 급해, 나무 5개 먼저 해 와
+DIAG 급한 명령: 플로키 하던 일 구리, 대기열 3
+DIAG 해석: 플로키 ← Item Wood 5
+DIAG 대기열 두고 다른 일: 플로키 125초 나무 5 (대기열 4, 첫 칸 '구리')
+DIAG 급한 명령 뒤 하던 일 다시 이음: 플로키 '구리' 230초
+DIAG 낮 시작 365초
+DIAG 정리 남은 것 38 (플로키 TidyJob)
+DIAG 정리 남은 것 37 (플로키 TidyJob)
+DIAG 정리 남은 것 36 (플로키 TidyJob)
+DIAG 정리 남은 것 35 (플로키 TidyJob)
+DIAG 정리 남은 것 34 (플로키 TidyJob)
+DIAG 정리 남은 것 33 (플로키 TidyJob)
+DIAG 정리 남은 것 32 (플로키 TidyJob)
+DIAG 정리 남은 것 31 (플로키 TidyJob)
+DIAG 정리 남은 것 30 (플로키 TidyJob)
+DIAG 정리 남은 것 29 (플로키 TidyJob)
+DIAG 정리 남은 것 28 (플로키 TidyJob)
+DIAG 정리 남은 것 27 (플로키 TidyJob)
+DIAG 정리 남은 것 26 (플로키 TidyJob)
+DIAG 정리 남은 것 25 (플로키 TidyJob)
+DIAG 정리 남은 것 23 (플로키 TidyJob)
+DIAG 정리 남은 것 22 (플로키 TidyJob)
+DIAG 정리 남은 것 21 (플로키 TidyJob)
+DIAG 정리 남은 것 20 (플로키 TidyJob)
+DIAG 정리 남은 것 19 (플로키 TidyJob)
+DIAG 정리 남은 것 18 (플로키 일 없음)
+DIAG 정리 남은 것 17 (플로키 TidyJob)
+DIAG 정리 남은 것 16 (플로키 TidyJob)
+DIAG 정리 남은 것 15 (플로키 TidyJob)
+DIAG 정리 남은 것 14 (플로키 TidyJob)
+DIAG 정리 남은 것 13 (플로키 TidyJob)
+DIAG 정리 남은 것 12 (플로키 TidyJob)
+DIAG 정리 남은 것 11 (플로키 TidyJob)
+DIAG 정리 남은 것 10 (플로키 TidyJob)
+DIAG 정리 남은 것 8 (플로키 TidyJob)
+DIAG 정리 남은 것 7 (플로키 TidyJob)
+DIAG 정리 남은 것 6 (플로키 TidyJob)
+DIAG 정리 남은 것 5 (플로키 TidyJob)
+DIAG 정리 남은 것 3 (플로키 TidyJob)
+DIAG 정리 남은 것 2 (플로키 TidyJob)
+DIAG 정리 남은 것 1 (플로키 TidyJob)
+DIAG 정리 남은 것 0 (플로키 TidyJob)
+DIAG 밤 시작 1620초 (1번째)
+DIAG 낮 시작 2165초
+DIAG 밤 시작 3420초 (2번째)
+DIAG 낮 시작 3965초
+OK   일꾼 플로키 일함 (표본 295/840, 쉼 64%)
+OK   일꾼 라그나 일함 (표본 207/840, 쉼 75%)
+DIAG 일 비율 플로키: PlanJob 54, GatherJob 21, 쉼 545, TidyJob 220
+DIAG 일 비율 라그나: GatherJob 152, FarmJob 22, 쉼 633, TameJob 27, HoneyJob 6
+DIAG 일 비율 비욘: 동행 라그나 68, 쉼 630, GuardReadyJob 97, HoneyJob 20, FarmJob 9, PlanJob 9, 싸움 7
+DIAG 위험한 일 동행: 라그나 GatherJob 5초 동행 비욘 (0초 만)
+OK   위험한 일에 동행 붙음(호위병 부름): 동행 1번, 호위병 바빠 기다림 0번, 호위병 쉬는데 안 옴 0번
+OK   급한 명령 먼저: 플로키 2초 만에 시작, 하던 '구리' 대기열 맨 앞
+OK   대기열 순서대로 꺼냄: 꺼냄 6번, 건너뜀 0번
+OK   일꾼끼리 서로 막힘 없음: 부딪힘 0번, 15초 넘게 막힘 0번
+OK   남의 물건 가져감 되풀이 없음: 0번, 가장 많이 빼앗긴 - 0번
+DIAG 빈틈 | 일꾼 | 동작 | 횟수 | 평균(초) | 최악(초) | 합(초) |
+DIAG 빈틈 |---|---|---|---|---|---|
+DIAG 빈틈 | 플로키 | 쉼(Idle) | 15 | 177.8 | 1315.3 | 2668 |
+DIAG 빈틈 | 라그나 | 쉼(Idle) | 10 | 316.3 | 1270.0 | 3163 |
+DIAG 빈틈 | 플로키 | Plan.Wait | 2 | 99.7 | 107.3 | 199 |
+DIAG 빈틈 | 라그나 | Gather.먼길생략 | 1 | 77.3 | 77.3 | 77 |
+DIAG 빈틈 | 플로키 | Plan.Load | 7 | 4.4 | 26.3 | 31 |
+DIAG 빈틈 | 플로키 | Tidy.TidyToFrom | 76 | 0.7 | 8.6 | 55 |
+DIAG 빈틈 | 라그나 | Gather.GoZone | 7 | 1.5 | 7.2 | 11 |
+DIAG 빈틈 | 플로키 | Tidy.TidyToTarget | 78 | 0.9 | 5.7 | 67 |
+DIAG 빈틈 | 라그나 | Gather.Return | 7 | 1.1 | 5.5 | 8 |
+DIAG 빈틈 | 라그나 | Gather.Deposit | 43 | 0.6 | 4.4 | 28 |
+DIAG 빈틈 | 플로키 | Gather.Prep | 8 | 0.9 | 2.9 | 7 |
+DIAG 빈틈 | 플로키 | 쉼(Home) | 26 | 0.6 | 2.8 | 16 |
+DIAG 빈틈 | 라그나 | Farm.FarmGo | 5 | 0.9 | 2.6 | 5 |
+DIAG 빈틈 | 플로키 | Tidy.TidyStore | 21 | 0.8 | 2.3 | 17 |
+DIAG 빈틈 | 라그나 | Gather.Unload | 12 | 0.9 | 1.8 | 11 |
+DIAG 빈틈 | 라그나 | Gather.Collect | 12 | 0.6 | 1.4 | 7 |
+DIAG 빈틈 | 라그나 | 싸움 | 2 | 0.9 | 1.4 | 2 |
+DIAG 빈틈 | 라그나 | Honey.HoneyHive | 2 | 1.3 | 1.3 | 3 |
+DIAG 빈틈 | 플로키 | Gather.Collect | 3 | 0.8 | 1.0 | 2 |
+OK   알아들음 '여기 밭 좀 만들어 줘, 반경 3' → 라그나 Farm #3
+OK   해냄 '여기 밭 좀 만들어 줘, 반경 3' (라그나) → 당근 새싹 14/4 (475초)
+OK   알아들음 '나무 10개 좀 해 와' → 라그나 Item Wood 10
+OK   해냄 '나무 10개 좀 해 와' (라그나) → Wood 13/10 (230초)
+OK   알아들음 '돌 10개 캐 와' → 라그나 Item Stone 10
+OK   해냄 '돌 10개 캐 와' (라그나) → Stone 22/10 (875초)
+OK   알아들음 '구리 10개' → 라그나 Item CopperOre 10
+OK   해냄 '구리 10개' (라그나) → CopperOre 10/10 (345초)
+OK   알아들음 '활 3개 만들어 줘' → 플로키 Item Bow 3
+OK   해냄 '활 3개 만들어 줘' (플로키) → Bow 3/3 (345초)
+OK   알아들음 '구리주괴 10' → 플로키 Item Copper 10
+OK   해냄 '구리주괴 10' (플로키) → Copper 10/10 (335초)
+OK   알아들음 '세트 1번 하나 만들어 줘' → 플로키 SetMake 1 #1
+OK   해냄 '세트 1번 하나 만들어 줘' (플로키) → 활·곤봉 1/1 (345초)
+OK   알아들음 '고기 4개 구워 줘' → 플로키 Item CookedMeat 4
+OK   해냄 '고기 4개 구워 줘' (플로키) → CookedMeat 4/4 (380초)
+FAIL 알아들음 '멧돼지 잡아서 생고기 6개 가져와' → 해석 없음
+FAIL 해냄 '멧돼지 잡아서 생고기 6개 가져와' (누구도 안 맡음) → RawMeat 0/6 (4200초)
+FAIL 해냄 '(명령 없음 — 쉬는 일꾼이 알아서 가축 먹이, 11-14 !가축 없앰)' (누구도 안 맡음) → 멧돼지 먹음 0/1 (4200초)
+OK   알아들음 '상자 정리 좀 해 줘' → 플로키 Tidy
+OK   해냄 '상자 정리 좀 해 줘' (플로키) → 옮길 것 39 → 0 1/1 (1550초)
+OK   알아들음 '급해, 나무 5개 먼저 해 와' → 플로키 Item Wood 5
+OK   해냄 '급해, 나무 5개 먼저 해 와' (플로키) → Wood 13/5 (230초)
+--- NPC 대사 ---
+플로키: 까마귀가 앞서 왔군. 내가 늦었어.
+라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+비욘: 명령만 해. 적이 오면 내가 먼저 맞는다.
+플로키: 흠... 어떻게 하지?
+라그나: 혼자 가면 무모한 길이군. 비욘, 같이 가지.
+플로키: 구리 10개에 필요한 구리부터 챙기겠어. 10분쯤.
+라그나: 오면 바로 가자. 짐은 다 챙겼어.
+플로키: 반경 3짜리 밭이군. 작지만 실속 있게 일구지. 바로 시작할게.
+라그나: 밭 자리로 적었어. 3m야.
+라그나: 구리 광석 10부터. 그다음은 네 일이야.
+플로키: 잠시 기다려. 머릿속으로 궁리하는 중이야.
+플로키: 히히, 나무 10개 해 올게! 나무는 내가 제일 좋아하는 거라니까~
+라그나: 구리 광석 10이 먼저야. 끝나면 갈게.
+플로키: 나무의 결처럼 일이 한쪽으로만 흐르진 않아.
+플로키: 돌 10개군. 캐 오지. 가까운 데서 실리 있게 모아 올게.
+라그나: 구리 광석 10 끝나는 대로 가지.
+플로키: 흠흠, 오딘이라면 어떻게 할까?
+플로키: 활 3개 만들어 달라는 거지? 히히, 재료 모아서 작업대에서 뚝딱 만들어 줄게!
+플로키: 조잡한 활 3개. 부족한 건 조잡한 활야. 5분쯤 필요해.
+플로키: 까마귀한테 물어볼게. 쉿, 대답하는 중이야.
+플로키: 히히, 1번 세트 하나 만들어 올게! 재료 모아서 뚝딱 해낼 테니까 기대해~
+플로키: 세트 1번 1! 좋아, 세트 1번부터 구해 올게. 5분쯤!
+플로키: 흐음... 흠! 아냐, 잠깐... 거의 왔어!
+플로키: 히히, 고기 4개 구워 올게! 지글지글 맛있게 구워서 가져올 테니까 기대해~
+플로키: 요리한 멧돼지 고기를 구하러 간다! 요리한 멧돼지 고기 4은 5분쯤 뒤에!
+플로키: 흠흠, 오딘이라면...
+라그나: 알아듣고 싶은데 모르겠군. "명령어"를 봐 줘.
+플로키: 음... 신들이 뭐라고 하는지 들어 볼게.
+플로키: 히히, 상자 정리하라고? 알겠어! 거점 상자들 종류별로 착착 정리해 놓을게~
+플로키: 하던 거 끝나면 바로 할게!
+플로키: 음음... 생각 중!
+플로키: 히히, 급하다고? 알겠어! 나무 5개 먼저 휙 베어 올게, 나무는 내가 제일 좋아하는 거니까~
+플로키: 좋아! 이게 더 급해 보이네.
+플로키: 서툴러서 오래 걸려! 기다려 줘.
+플로키: 좋아, 어린 회색 난쟁이. 어느 쪽 신이 널 보냈는지 알아보자.
+플로키: 나무 13개를 가져왔다. 그곳은 다음에도 기억하겠어.
+플로키: 조잡한 활 3개를 만들려면 조잡한 활부터 구해야 해. 5분쯤 걸려.
+플로키: 세트 1번 없이는 시작 못 해. 세트 1번 1개에 5분쯤 들겠어.
+플로키: 머릿속에 다 그려졌어! 요리한 멧돼지 고기 모으고 요리한 멧돼지 고기 4개. 5분이면 돼, 킥킥.
+라그나: 구리 광석 10개, 상자에 넣었어. 오가는 길도 눈에 담아 뒀지.
+라그나: 당근 19, 심으러 가지. 땅이 기다리고 있어.
+라그나: 0개 심었지. 서두르지 말고 기다리자. 밭에 빈자리가 없어 19개는 못 심었어.
+플로키: 히히, 이 나무는 결이 예쁘다. 너 배가 될래?
+플로키: 정리 정리!
+비욘: 벌들이 일했으니 나도 일하지. 꿀 거두러 간다.
+비욘: 벌통에서 꿀 36개 땄어.
+라그나: 처음엔 다 느린 법이야. 다녀올게.
+비욘: 쉴 바엔 밭일이지.
+비욘: 밭에 당근 19 심으러 갈게.
+비욘: 다 심었어. 19개.
+비욘: 익은 건 따고, 빈 통은 채운다.
+라그나: 멧돼지. 놈이 허점을 보일 때 치지.
+플로키: ...조용하다. 너무 조용하면 로키가 뭘 꾸미는 거야.
+라그나: 나무 48개, 하나도 안 빠졌어. 자, 다음은 뭘 하지?
+라그나: 아직 손이 서툴러서 좀 걸려. 다녀오지.
+플로키: 라그나, 나무 48개라. 손이 바빴겠군.
+라그나: 별것 아니야.
+플로키: vhtest, 나무 벨 땐 고맙다고 해. 안 그러면 나무가 삐쳐!
+라그나: 돌 22개. 다음엔 더 짧은 길로 가 보지.
+플로키: 라그나, 돌을 그렇게 많이? 혼자 다 했어?
+라그나: 다음엔 더 가져올게.
+라그나: 길들일 짐승이 보이는군. 먹이 놓고 올게.
+라그나: vhtest, 저 너머를 보려면 먼저 여기서 살아남아야지.
+라그나: 먹이 놓고 왔어. 몇 번 더 주면 되겠군.
+라그나: 먹이로 마음을 사 보지. 사람이랑 다를 게 없어.
+라그나: ...이 땅을 처음 밟은 자는 누구였을까.
+비욘: 밭을 둘러보고 오자. 농사는 쉬면 안 돼.
+라그나: 먹이를 먹었군. 곧 길들겠어.
+라그나: 들짐승을 먹이로 길들여 보지.
+비욘: 당근 19 심으러 가지. 날씨가 좋군.
+비욘: 씨 6개, 땅에 맡겼어. 밭에 빈자리가 없어 13개는 못 심었어.
+비욘: 미드 통을 챙긴다. 문은 비우지 않는다.
+라그나: 저 짐승, 사람을 믿게 할 수 있을까? 해 볼까.
+라그나: ...저 너머엔 무엇이 있을까.
+라그나: 먹이는 먹는데 아직 경계하는군. 시간이 필요해.
+라그나: 다들 신의 뜻이라지. 정말 그럴까.
+라그나: 길은 보이는데, 아직 갈 때가 아니야.
+라그나: 오딘도 모든 답을 알지는 못했겠지.
+라그나: 먹이 주고 멀리서 지켜볼게.
+플로키: 라그나, 당근의 잎이 바람을 잘 받더군.
+라그나: 거두는 날엔 같이 하자고.
+라그나: 창고가 비면 거점 근처부터 떠올리면 돼. 깃털이 있으니.
+플로키: ...그건 그냥 두는 게 나을지도. 이유는 몰라, 느낌이야.
+플로키: 라그나, 우리 처음 만났을 때 기억나? 넌 나 미친놈 취급했지! 킥킥.
+라그나: 좋은 분이셨군. 맞는 말이야.
+비욘: 방패 뒤에 있어. 넥이 먼저 오게 둬.
+라그나: 넥을 이기는 건 힘보다 거리야.
+플로키: 킥킥, 그 녀석 아직도 발할라 문 앞에서 투덜대고 있을걸.
+비욘: 어린 회색 난쟁이다. 비켜.
+라그나: 플로키, 신을 믿으면서도 신에게 거스를 수 있다고 생각하나?
+플로키: 토르는 시끄럽고 오딘은 조용해. 난 조용한 쪽이 더 무서워.
+비욘: 꿀 좀 따 올게.
+비욘: 꿀 8개. 한 번 쏘였지만 이 정도면 남는 장사지.
+플로키: 검은 숲에서 본 길은 지도보다 복잡했어.
+라그나: 가 보면 알겠지. 서두르진 말고.
+플로키: 라그나, 우리 집 기둥 봤어? 내가 결 맞춰 세운 거야! 히히.
+라그나: 그래, 여기가 우리 땅이야.
+라그나: 울타리 한쪽이 기울었더군. 누가 기댔나?
+플로키: 라그나, 내가 더 많이 했어! 세어 봐! 히히.
+플로키: 라그나, 시인의 미드 얘기 알지? 마시면 말이 술술... 킥킥, 난 원래 술술이야.
+라그나: 네가 그렇게 말하니 더 마시고 싶군.
+라그나: 새 땅을 먼저 밟는 건 어떤 기분일까?
+플로키: ...바다는 아무도 안 봐줘. 그래서 좋아.
+라그나: 벌들은 쉬지도 않는군. 꿀 좀 나눠 받으러 가 볼까.
+플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+라그나: 벌통에서 꿀 4개 땄어.
+라그나: vhtest, 신들이 정말 우릴 지켜볼까? 넌 어떻게 생각하지?
+플로키: vhtest, 너도 신들을 믿어? 믿어야 해!
+비욘: 멧돼지는 내가 맡는다. 물러나 있어.
+플로키: 라그나, 도구한테도 이름 붙여 줘. 그래야 말을 들어, 킥킥.
+라그나: 내가 고쳐 두지.
+라그나: vhtest, 너라면 저 너머에 뭐가 있을 것 같나?
+플로키: vhtest, 그거 재밌다! 히히.
+라그나: 소시지 한 줄이면 하루는 버티지.
+플로키: 먹자! 먹자! 다 먹자!
+플로키: 라그나, 밤엔 숲이 수군거려. 킥킥, 우리 얘기 하나 봐.
+라그나: 고향 하늘도 저랬지.
+라그나: 넥을 쓰러뜨리고 나니 길이 편해졌어.
+플로키: 도끼보다 먼저 눈을 써야 해.
+플로키: 검은 숲의 냄새를 기억해. 길을 잃으면 도움이 돼.
+라그나: 그 땅의 적부터 알아 둬야 해.
+플로키: vhtest, 저 별자리 보여? 내가 이름 붙였어. 플로키 별!
+라그나: 나도 같은 생각이야.
+플로키: vhtest! 밤이야, 불 옆으로 와! 이야기해 줄게, 무서운 걸로! 킥킥.
+라그나: 플로키가 오늘은 쓸 만한 말을 하는군.
+비욘: 발효기를 본다. 금방 온다.
+라그나: 좋은 미드는 좋은 친구 같지.
+플로키: ...너무 마시면 손이 떨려. 끌질은 내일 하자.
+라그나: vhtest, 집으로 돌아왔군. 이제 다음 길을 생각해 보자.
+플로키: vhtest, 라그나는 늘 그렇게 말해. 킥킥, 듣지 마.
+판정: FAIL (32/35)
+멈춤 6번, 합 282초, 가장 긴 166초(FarmJob/FarmStore) [많은 것: FarmJob/FarmStore 166초, TidyJob/TidyStore 82초, TidyJob/TidyToTarget 17초] · 일부러 선 것 10번, 합 356초, 가장 긴 108초(만들기 차례 기다림 PlanJob/Wait) [많은 것: 만들기 차례 기다림 PlanJob/Wait 201초, 멀리선 이동 생략 GatherJob/GoZone 77초, 설비 앞 일 PlanJob/Load 27초] (선 표본 5890, 가장 오래 165.8초) · 헛휘두름 31번 · 기다림 합 문 바꿔 여는 중 4초, 문 열리길 기다림 121초, 만들기 차례 기다림 200초, 문간 사람 비키길 기다림 14초, 멀리선 이동 생략 77초, 떨어짐 기다림 27초, 설비 앞 일 27초
+끝 정리: 생물 1·땅의 물건 8·통나무 0 치움
+시간: 4225초
+프레임: 평균 233 FPS (실시간 4225초)
+
+## 모드 로그 (2618줄, 끝 1500줄만)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(0.5m)으로 나감 (나 (259.3, 43.9, 441.3)·벽 4/4·방금 나온 문 False·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 플로키 나가기 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 라그나 문 지나 안으로 (4.3초, 더 걸음 0.0초·문 충돌체 1.16m, 나 (256.9, 43.9, 441.7)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 7.2m)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(4.2m)으로
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (253.9, 43.9, 440.3)·문 앞 (258.3, 43.9, 443.4)(5.4m)·복도 입구 (259.3, 43.9, 444.3) 트임 False·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (1.9초, 지붕 True, 나 (258.2, 43.9, 440.5)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 일꾼끼리 비킴: 플로키 → 라그나(서 있음) 앞 0.8m, 목표까지 13.4m
+[Info   :Valheim Helper] DIAG 일꾼끼리 비킴: 플로키 → 라그나(서 있음) 앞 1.0m, 목표까지 13.5m
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(0.5m)으로 나감 (나 (259.3, 43.9, 441.3)·벽 4/4·방금 나온 문 True·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] 멈춤 5.6초: 라그나 문간 사람 비키길 기다림 GatherJob/Deposit (일부러) / 입력 0.00, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 2.8, 발밑 stone_floor_2x2(Clone)(piece, 위 stone_floor_2x2(Clone)), 높이 43.9/땅 43.4/원래땅 44.5/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 stone_floor_2x2(Clone)/stone_floor_2x2(Clone)(+0.00,+1.00,+0.00)×0.000 겹침 door_collider/darkwood_gate(Clone)(-0.73,+0.00,-0.68)×0.080
+[Info   :Valheim Helper] DIAG 플로키 나가기 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 라그나 문 지나 안으로 (6.0초, 더 걸음 0.0초·문 충돌체 0.99m, 나 (256.9, 43.9, 441.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 7.3m)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(4.1m)으로
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (253.9, 43.9, 440.3)·문 앞 (258.3, 43.9, 443.4)(5.4m)·복도 입구 (259.3, 43.9, 444.3) 트임 False·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (1.9초, 지붕 True, 나 (258.2, 43.9, 440.4)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 라그나 문 지나 안으로 (1.9초, 더 걸음 0.0초·문 충돌체 1.08m, 나 (256.9, 43.9, 441.7)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 7.2m)
+[Info   :Valheim Helper] 라그나: 넣기 막힘(53초, 남은 6.5m, 집에서 17.3m) 앞 발 없음 / 가슴 없음, 땅 0.5m, 앞 1m 땅 -0.5m, 둘레 [blackmarble_2x2x2(Clone):Box 루트 blackmarble_2x2x2(Clone) 1.9m 높이 0.0~2.0 크기 2.8x2.8][collider:Box 루트 darkwood_gate(Clone) 1.7m 높이 0.0~4.0 크기 0.5x0.5][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.9m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.0m 높이 -1.0...
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.5m)으로
+[Info   :Valheim Helper] 길 기억 안 함(순간이동): (256.9,43.9,441.7)→(253.3, 45.0, 435.4)
+[Info   :Valheim Helper] 뛰어내리기 고름: (252.2, 46.1, 434.3) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 35.0m
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (252.2, 46.1, 434.3)·문 앞 (259.8, 43.9, 442.0)(10.8m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.3, 45.9, 437.0), 2.0초
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 플로키 !정리 이어서: 옮길 것 19 → 17, 지난번 옮김 0, 건너뜀 3
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (254.7,43.9,437.4)→(261.0, 45.1, 455.5)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.0, 43.9, 439.6)·문 앞 (259.8, 43.9, 442.0)(3.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 정리 남은 것 17 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 라그나 문 지나 안으로 (1.8초, 더 걸음 0.0초·문 충돌체 0.97m, 나 (258.2, 43.9, 440.4)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (252.2,46.1,434.3)→(259.8, 43.9, 442.0)
+[Info   :Valheim Helper] 라그나: 넣기 막힘(59초, 남은 7.0m, 집에서 16.2m) 앞 발 없음 / 가슴 없음, 땅 0.5m, 앞 1m 땅 -0.5m, 둘레 [blackmarble_2x2x2(Clone):Box 루트 blackmarble_2x2x2(Clone) 2.2m 높이 0.0~2.0 크기 2.8x2.8][collider:Box 루트 darkwood_gate(Clone) 0.9m 높이 0.0~4.0 크기 0.5x0.5][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.1m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 0.9m 높이 -1.0...
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.4m)으로
+[Info   :Valheim Helper] 길 기억 안 함(순간이동): (258.2,43.9,440.4)→(253.3, 45.0, 435.4)
+[Info   :Valheim Helper] 뛰어내리기 고름: (252.2, 46.2, 434.4) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 35.1m
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (252.2, 46.2, 434.4)·문 앞 (259.8, 43.9, 442.0)(10.7m)·복도 없음·길 True·속도 0.4
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.2, 45.9, 437.0), 2.0초
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.1, 43.9, 439.7)·문 앞 (259.8, 43.9, 442.0)(3.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] 길 기억 안 함(막힘): (260.6,44.7,453.7)→(253.3, 45.0, 435.4)
+[Info   :Valheim Helper] 길 기억 막힘(놓을 때 21/23): 지움 → 바닐라
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.4, 46.4, 433.9) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 32.2m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.4, 46.4, 433.9)·문 앞 (259.8, 43.9, 442.0)(11.6m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] DIAG 라그나 문 지나 안으로 (1.8초, 더 걸음 0.0초·문 충돌체 0.97m, 나 (258.2, 43.9, 440.4)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] 길 기억: (252.2,46.2,434.4)→(259.8, 43.9, 442.0) 점 24, 모두 75
+[Info   :Valheim Helper] 라그나: 넣기 막힘(66초, 남은 7.0m, 집에서 16.2m) 앞 발 없음 / 가슴 없음, 땅 0.5m, 앞 1m 땅 -0.5m, 둘레 [blackmarble_2x2x2(Clone):Box 루트 blackmarble_2x2x2(Clone) 2.2m 높이 0.0~2.0 크기 2.8x2.8][collider:Box 루트 darkwood_gate(Clone) 0.9m 높이 0.0~4.0 크기 0.5x0.5][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.1m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 0.9m 높이 -1.0...
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.4m)으로
+[Info   :Valheim Helper] 길 기억 안 함(순간이동): (258.2,43.9,440.4)→(253.3, 45.0, 435.4)
+[Info   :Valheim Helper] 뛰어내리기 고름: (252.2, 46.2, 434.4) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 35.1m
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (252.2, 46.2, 434.4)·문 앞 (259.8, 43.9, 442.0)(10.7m)·복도 없음·길 True·속도 0.4
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.3, 45.9, 437.0), 1.7초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.9, 43.9, 440.5)·문 앞 (259.8, 43.9, 442.0)(2.4m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (254.2, 46.0, 436.9)·문 앞 (259.8, 43.9, 442.0)(7.5m)·복도 없음·길 True·속도 2.8
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.4, 45.9, 437.2), 3.2초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (2.0초, 더 걸음 0.0초·문 충돌체 1.35m, 나 (257.8, 43.9, 440.5)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 6.8m)
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (251.4,46.4,433.9)→(259.8, 43.9, 442.0)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (259.0, 43.9, 441.4)·문 앞 (259.8, 43.9, 442.0)(0.9m)·복도 없음·길 True·속도 2.8
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 라그나 문 지나 안으로 (1.8초, 더 걸음 0.0초·문 충돌체 0.97m, 나 (258.2, 43.9, 440.4)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 14.0m): (252.2,46.2,434.4)→(259.8, 43.9, 442.0) 점 24, 모두 75
+[Info   :Valheim Helper] 라그나: 넣기 막힘(75초, 남은 7.0m, 집에서 16.3m) 앞 발 없음 / 가슴 없음, 땅 0.5m, 앞 1m 땅 -0.5m, 둘레 [blackmarble_2x2x2(Clone):Box 루트 blackmarble_2x2x2(Clone) 2.2m 높이 0.0~2.0 크기 2.8x2.8][collider:Box 루트 darkwood_gate(Clone) 0.9m 높이 0.0~4.0 크기 0.5x0.5][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.1m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 0.9m 높이 -1.0...
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.3m)으로
+[Info   :Valheim Helper] 길 기억 안 함(순간이동): (258.2,43.9,440.4)→(253.3, 45.0, 435.4)
+[Info   :Valheim Helper] 뛰어내리기 고름: (252.3, 46.1, 434.4) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 35.1m
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (252.3, 46.1, 434.4)·문 앞 (259.8, 43.9, 442.0)(10.6m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] DIAG 정리 남은 것 16 (플로키 TidyJob)
+[Info   :Valheim Helper] 플로키 상자 정리: Entrails 3개 옮김, 50개 남음(자리 없음 → 짐 정리로)
+[Info   :Valheim Helper] DIAG 플로키 상자 (253.3, 45.0, 435.4): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] 길 기억 안 함(막힘): (257.9,43.9,440.4)→(240.1, 43.9, 434.3)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (252.5, 46.2, 434.6)·문 앞 (259.8, 43.9, 442.0)(10.3m)·복도 없음·길 True·속도 0.1
+[Info   :Valheim Helper] 뛰어내리기 그만(끝까지 못 감) — 바닐라 길
+[Info   :Valheim Helper] 길 기억: (260.7,43.9,432.9)→(237.8, 43.3, 445.4) 점 54, 모두 76
+[Info   :Valheim Helper] DIAG 비켜 가기 2번째: 쪽 -1 2.4초, 목표까지 10.3m, 앞 앞 발 없음 / 가슴 없음, 땅 2.8m, 앞 1m 땅 -2.8m, 둘레 [collider:Box 루트 wood_floor(Clone) 1.9m 높이 0.6~0.8 크기 2.8x2.8][collider:Box 루트 wood_floor(Clone) 1.1m 높이 0.6~0.8 크기 2.8x2.8][collider:Box 루트 wood_stair(Clone) 1.1m 높이 -0.3~0.7 크기 2.8x2.8][collider (1):Box 루트 wood_stair(Clone) 1.1m 높이 0.5~0.7 크기 1.5x1.5][collider:메시(볼록) 루트 piece_chest_blackmet...
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (252.2, 46.2, 435.0)·문 앞 (259.8, 43.9, 442.0)(10.3m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] 길 기억: (241.4,43.9,436.2)→(253.3, 45.0, 435.4) 점 24, 모두 77
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.5, 46.4, 434.0) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 34.3m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.5, 46.4, 434.0)·문 앞 (259.8, 43.9, 442.0)(11.5m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] 멈춤 7.8초: 라그나 GatherJob/Deposit / 입력 1.00, 달리기 입력 True, 수영 False, 땅닿음 True, 속도 6.9, 발밑 collider(piece, 위 wood_stair(Clone)), 높이 47.0/땅 43.4/원래땅 43.5/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 · 앞 0.6m 빔
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.3, 45.9, 437.0), 2.1초
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (250.1, 46.9, 436.6)·문 앞 (259.8, 43.9, 442.0)(11.1m)·복도 없음·길 True·속도 4.6
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.6, 43.9, 439.3)·문 앞 (259.8, 43.9, 442.0)(4.1m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.1, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.2m)·복도 입구 (259.3, 43.9, 444.3) 트임 False·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 앞으로 12.1초: 나 (249.4, 43.9, 428.8)·문 앞 (259.8, 43.9, 442.0)(16.7m)·복도 없음·길 True·속도 3.0
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.8, 43.9, 441.9)·문 앞 (258.3, 43.9, 443.4)(2.1m)·복도 입구 (259.3, 43.9, 444.3) 트임 True·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (1.8초, 더 걸음 0.0초·문 충돌체 0.97m, 나 (258.2, 43.9, 440.4)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] DIAG Unload 넣음 100개 → 상자 1:64210 집에서 21.5m
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx33 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] 길 기억: (251.5,46.4,434.0)→(259.8, 43.9, 442.0) 점 24, 모두 78
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (1.9초, 더 걸음 0.0초·문 충돌체 1.06m, 나 (256.8, 43.9, 441.7)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.2m)
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 65, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] DIAG 라그나 piece_chest_blackmetal(Clone) 문 길 포기: ToDoor 15초, 문 앞까지 5.9m·안쪽까지 3.4m, 문틀 옆으로 -1.05m·문 옆으로 -1.05m, 안쪽으로 [], 문 s_state 1·속도 3.90·앞 166°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 라그나: 넣기 막힘(90초, 남은 3.5m, 집에서 19.7m) 앞 발 collider(piece, 2.6m, 위 piece_chest_blackmetal(Clone)) / 가슴 collider(piece, 2.8m, 위 piece_chest_blackmetal(Clone)), 땅 0.6m, 앞 1m 땅 -0.6m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.1m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.2m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트...
+[Info   :Valheim Helper] 길 기억 안 함(순간이동): (256.4,43.9,437.1)→(253.3, 45.0, 435.4)
+[Info   :Valheim Helper] 라그나: Stone 22개 넣음 (22/10) 상자 (253.3, 45.0, 435.4) 집에서 22m
+[Info   :Valheim Helper] <라그나> 돌 22개. 다음엔 더 짧은 길로 가 보지.
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Entrailsx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (14.0초) 짐 [AxeJotunBanex1, ShieldBlackmetalx1, HelmetPaddedx1, ArmorPaddedCuirassx1, ArmorPaddedGreavesx1, CapeFeatherx1, Demisterx1, BowDraugrFangx1, MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, BarleyWinex2, ArrowFlintx25, ArrowFrostx6, ArrowPoisonx9, PickaxeIronx1, Woodx50, Woodx50, Woodx33, Entrailsx50] 지킴 16 skip 4
+[Info   :Valheim Helper] 플로키 상자 정리 끝: 3개, 1번, 37초
+[Info   :Valheim Helper] 길 기억: (258.2,43.9,440.3)→(240.1, 43.9, 434.3) 점 30, 모두 79
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 돌을 그렇게 많이? 혼자 다 했어?
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(7.3m) 대신 바닐라 길 — 문 거쳐 47m·곧장 32m (나 (241.2, 43.9, 436.1)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] 비욘 먹음: RoyalJelly → 최대 체력 68, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 13.5m): (256.7,43.9,441.7)→(246.9, 43.9, 450.3) 점 25, 모두 79
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(0.7m)으로 나감 (나 (256.8, 43.9, 442.0)·벽 3/4·방금 나온 문 False·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] <라그나> (말풍선) 다음엔 더 가져올게.
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(5.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (240.3, 43.9, 437.7)·문 앞 (235.3, 43.9, 442.0)(6.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 라그나 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 라그나 안에서 문 darkwood_gate(Clone)(열림 True)(9.8m)으로 나감 (나 (247.7, 43.9, 440.8)·벽 3/4·방금 나온 문 True·목표 (258.2, 45.1, 456.7))
+[Info   :Valheim Helper] DIAG 플로키 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state -1)
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (2.5초, 지붕 True, 나 (258.0, 43.9, 443.2)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (237.4, 43.9, 441.3)·문 앞 (235.3, 43.9, 442.0)(2.2m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 라그나 나가기 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 라그나 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state -1)
+[Info   :Valheim Helper] DIAG 라그나 문 지나 밖으로 (2.7초, 지붕 True, 나 (257.9, 43.9, 443.1)·목표 (258.2, 45.1, 456.7))
+[Info   :Valheim Helper] DIAG 라그나 안에서 나가기 안 함: 방금 나온 문 darkwood_gate(Clone)(0초 전, 안쪽 1.0m)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.57m, 나 (236.7, 43.9, 440.4)·문틀 (236.2, 43.9, 441.1)·문 (236.2, 43.9, 441.1)·바깥 (235.3, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.08m·문 옆으로 0.08m, 안쪽으로 [collider/piece_stonecutter(Clone) 0.0m], 문 s_state 1·속도 0.42·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음: MushroomJotunPuffs, MushroomYellow → 최대 체력 75, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (240.3,43.9,437.7)→(235.3, 43.9, 442.0)
+[Info   :Valheim Helper] 플로키 !정리 이어서: 옮길 것 17 → 16, 지난번 옮김 3, 건너뜀 4
+[Info   :Valheim Helper] 길 기억: (241.3,43.9,436.2)→(261.0, 45.1, 455.5) 점 51, 모두 80
+[Info   :Valheim Helper] 라그나 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 $enemy_boar
+[Info   :Valheim Helper] <라그나> 길들일 짐승이 보이는군. 먹이 놓고 올게.
+[Info   :Valheim Helper] 라그나 길들이기: Fetch → Approach (먹음 0)
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (256.0,43.9,441.1)→(258.2, 45.1, 456.7)
+[Info   :Valheim Helper] 길 기억: (260.9,44.7,453.7)→(241.9, 43.9, 432.5) 점 50, 모두 81
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] 길 기억: (243.7,43.9,433.7)→(253.3, 45.0, 435.4) 점 19, 모두 82
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.5, 46.4, 434.0) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 34.3m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.5, 46.4, 434.0)·문 앞 (259.8, 43.9, 442.0)(11.5m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.4, 46.0, 437.2), 1.7초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.7, 43.9, 440.4)·문 앞 (259.8, 43.9, 442.0)(2.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (1.8초, 더 걸음 0.0초·문 충돌체 0.97m, 나 (258.2, 43.9, 440.4)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] 플로키 상자 정리: Barley 0개 옮김, 50개 남음(자리 없음 → 짐 정리로)
+[Info   :Valheim Helper] DIAG 플로키 상자 (253.3, 45.0, 435.4): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] 길 기억 바꿈(옛 14.3m): (251.5,46.4,434.0)→(259.8, 43.9, 442.0) 점 23, 모두 82
+[Info   :Valheim Helper] 라그나 길들이기: $enemy_boar에게 Raspberry 떨굼 (331.48, 35.97, 464.36)
+[Info   :Valheim Helper] 라그나 길들이기: Approach → Home (먹음 0)
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] <라그나> (말풍선) vhtest, 저 너머를 보려면 먼저 여기서 살아남아야지.
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 라그나 길들이기 확인: $enemy_boar 먹음, 남은 시간 1734초, 길듦 False
+[Info   :Valheim Helper] <라그나> 먹이 놓고 왔어. 몇 번 더 주면 되겠군.
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 $enemy_boar
+[Info   :Valheim Helper] <라그나> 먹이로 마음을 사 보지. 사람이랑 다를 게 없어.
+[Info   :Valheim Helper] 라그나 길들이기: Fetch → Approach (먹음 0)
+[Info   :Valheim Helper] 라그나 길들이기: $enemy_boar에게 Raspberry 떨굼 (189.76, 51.10, 454.23)
+[Info   :Valheim Helper] 라그나 길들이기: Approach → Home (먹음 0)
+[Info   :Valheim Helper] DIAG Unload 시간 초과 90.0
+[Info   :Valheim Helper] 플로키 상자 정리 끝: 0개, 1번, 108초
+[Info   :Valheim Helper] 멈춤 82.2초: 플로키 TidyJob/TidyStore / 입력 0.14, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 0.5, 발밑 collider(piece, 위 wood_floor(Clone)), 높이 47.0/땅 43.4/원래땅 43.5/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 collider/wood_floor(Clone)(+0.00,+1.00,+0.00)×0.000 · 앞 0.6m 빔
+[Info   :Valheim Helper] 뛰어내리기 고름: (253.2, 47.0, 435.5) → (261.0, 45.1, 455.5), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 52.7m
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(8.1m)으로 나감 (나 (253.2, 47.0, 435.5)·벽 3/4·방금 나온 문 True·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state -1)
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (2.6초, 지붕 True, 나 (258.0, 43.9, 443.2)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] 뛰어내리기 착지: (258.0, 43.9, 443.2), 4.9초
+[Info   :Valheim Helper] 비욘 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 플로키 !정리 이어서: 옮길 것 16 → 17, 지난번 옮김 0, 건너뜀 5 (못 줄임 1)
+[Info   :Valheim Helper] 길 기억: (253.2,47.0,435.5)→(261.0, 45.1, 455.5) 점 40, 모두 83
+[Info   :Valheim Helper] 길 기억: (260.9,44.7,453.8)→(240.1, 43.9, 434.3) 점 53, 모두 84
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] 길 기억 바꿈(옛 13.7m): (241.5,43.9,436.3)→(253.3, 45.0, 435.4) 점 25, 모두 84
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.5, 46.4, 433.9) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 34.2m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.5, 46.4, 433.9)·문 앞 (259.8, 43.9, 442.0)(11.6m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] 뛰어내리기 그만(내딛어도 안 떨어짐) — 바닐라 길
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (254.0, 46.1, 436.8)·문 앞 (259.8, 43.9, 442.0)(7.7m)·복도 없음·길 True·속도 1.3
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (257.0, 43.9, 434.9)·문 앞 (259.8, 43.9, 442.0)(7.6m)·복도 없음·길 True·속도 4.4
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (255.5, 43.9, 438.3)·문 앞 (259.8, 43.9, 442.0)(5.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (1.9초, 더 걸음 0.0초·문 충돌체 0.97m, 나 (258.2, 43.9, 440.4)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] 플로키 상자 정리: Bloodbag 1개 옮김
+[Info   :Valheim Helper] 길 기억 안 함(막힘): (251.5,46.4,433.9)→(259.8, 43.9, 442.0)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.1m)으로
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.0, 46.5, 434.8) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 32.6m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.0, 46.5, 434.8)·문 앞 (259.8, 43.9, 442.0)(11.4m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.6, 45.9, 437.7), 1.7초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.9, 43.9, 440.7)·문 앞 (259.8, 43.9, 442.0)(2.2m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] <라그나> (말풍선) ...이 땅을 처음 밟은 자는 누구였을까.
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (1.9초, 더 걸음 0.0초·문 충돌체 0.97m, 나 (258.2, 43.9, 440.4)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] 길 기억: (251.0,46.5,434.8)→(259.8, 43.9, 442.0) 점 23, 모두 85
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(0.9m)으로 나감 (나 (258.2, 43.9, 440.4)·벽 4/4·방금 나온 문 False·목표 (261.3, 43.9, 421.4))
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 정리 남은 것 15 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 나가기 문 길 포기: Through 8초, 문 앞까지 1.8m·안쪽까지 0.8m, 문틀 옆으로 0.05m·문 옆으로 0.06m, 안쪽으로 [blackmarble_2x2x2(Clone)/blackmarble_2x2x2(Clone) 0.0m], 문 s_state 1·속도 0.00·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 멈춤 12.6초: 플로키 문 열리길 기다림 TidyJob/TidyToFrom (일부러) / 입력 0.95, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 3.7, 발밑 stone_floor_2x2(Clone)(piece, 위 stone_floor_2x2(Clone)), 높이 43.9/땅 43.4/원래땅 44.3/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 stone_floor_2x2(Clone)/stone_floor_2x2(Clone)(+0.00,+1.00,+0.00)×0.000 · 앞 0.6m 빔
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(0.1m)으로
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (258.2,43.9,440.4)→(261.3, 43.9, 421.4)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (258.9, 43.9, 421.2)·문 앞 (257.9, 43.9, 422.2)(1.4m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.2초, 더 걸음 0.0초·문 충돌체 0.54m, 나 (259.6, 43.9, 420.7)·문틀 (258.9, 43.9, 421.3)·문 (258.8, 43.9, 421.3)·바깥 (257.9, 43.9, 422.2)·piece_chest_blackmetal(Clone)까지 1.9m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.08m·문 옆으로 -0.09m, 안쪽으로 [], 문 s_state -1·속도 3.41·앞 7°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: BlackMetalScrap 27개 옮김
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (258.9,43.9,421.2)→(257.9, 43.9, 422.2)
+[Info   :Valheim Helper] 비욘 쉴 때 밭 (248,459): 다 자람 0, 빈자리 6, 씨앗 계획 True → 감
+[Info   :Valheim Helper] <비욘> 밭을 둘러보고 오자. 농사는 쉬면 안 돼.
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 라그나 길들이기 확인: $enemy_boar 먹음, 남은 시간 1728초, 길듦 False
+[Info   :Valheim Helper] <라그나> 먹이를 먹었군. 곧 길들겠어.
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 $enemy_boar
+[Info   :Valheim Helper] <라그나> 들짐승을 먹이로 길들여 보지.
+[Info   :Valheim Helper] 라그나 길들이기: Fetch → Approach (먹음 0)
+[Info   :Valheim Helper] <비욘> 당근 19 심으러 가지. 날씨가 좋군.
+[Info   :Valheim Helper] 비욘 밭: Fetch → Go (심음 0/19)
+[Info   :Valheim Helper] 길 기억: (236.7,43.9,440.4)→(237.8, 43.3, 445.4) 점 10, 모두 86
+[Info   :Valheim Helper] 비욘 밭 도착: 다 자란 것 0
+[Info   :Valheim Helper] 비욘 밭: Go → Harvest (심음 0/19)
+[Info   :Valheim Helper] 비욘 밭: Harvest → Plant (심음 0/19)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.5m)으로
+[Info   :Valheim Helper] 길 기억: (259.7,43.9,420.6)→(251.0, 45.0, 436.0) 점 36, 모두 87
+[Info   :Valheim Helper] 뛰어내리기 고름: (249.6, 45.8, 434.0) → (259.3, 43.9, 444.3), 끝 (252.0, 47.0, 438.0) 높이 3.1m, 계단 길 36.8m
+[Info   :Valheim Helper] 뛰어내리기 착지: (249.6, 45.8, 434.0), 0.0초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (249.6, 45.8, 434.0)·문 앞 (258.3, 43.9, 443.4)(12.8m)·복도 입구 (259.3, 43.9, 444.3) 트임 False·길 True·속도 3.9
+[Info   :Valheim Helper] <비욘> 씨 6개, 땅에 맡겼어. 밭에 빈자리가 없어 13개는 못 심었어.
+[Info   :Valheim Helper] 비욘 밭: Plant → Home (심음 6/19)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (243.1, 43.9, 430.3)·문 앞 (258.3, 43.9, 443.4)(20.1m)·복도 입구 (259.3, 43.9, 444.3) 트임 False·길 True·속도 0.5
+[Info   :Valheim Helper] 비욘 밭: Home → Store (심음 6/19)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (251.4, 43.9, 430.8)·문 앞 (258.3, 43.9, 443.4)(14.4m)·복도 입구 (259.3, 43.9, 444.3) 트임 False·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 안에서 나가기 안 함: 지붕 6m보다 높음 (253.6, 43.9, 432.2)
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 1:65130 집에서 9.2m
+[Info   :Valheim Helper] DIAG 비욘 상자 (252.4, 45.0, 434.6): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] 길 기억: (255.8,44.4,453.5)→(255.1, 43.9, 443.2) 점 24, 모두 88
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (256.9, 43.9, 438.0)·문 앞 (258.3, 43.9, 443.4)(5.6m)·복도 입구 (259.3, 43.9, 444.3) 트임 True·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (1.9초, 더 걸음 0.0초·문 충돌체 1.06m, 나 (256.9, 43.9, 441.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 8.2m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.13m·문 옆으로 -0.12m, 안쪽으로 [], 문 s_state -1·속도 2.95·앞 40°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.1m)으로
+[Info   :Valheim Helper] 길 기억: (257.3,43.9,442.4)→(252.4, 45.0, 434.6) 점 42, 모두 89
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.0, 46.0, 434.3) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 37.7m
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.0, 46.0, 434.3)·문 앞 (259.8, 43.9, 442.0)(12.4m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] 적 속성 피해 Neck: 없음
+[Info   :Valheim Helper] 라그나 길들이기: $enemy_boar에게 Raspberry 떨굼 (352.11, 32.34, 460.26)
+[Info   :Valheim Helper] 라그나 길들이기: Approach → Home (먹음 0)
+[Info   :Valheim Helper] DIAG 정리 남은 것 14 (플로키 TidyJob)
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.4, 45.9, 437.2), 1.9초
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.4, 43.9, 439.9)·문 앞 (259.8, 43.9, 442.0)(3.1m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.0m)으로
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.0, 46.5, 434.8) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 33.5m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.0, 46.5, 434.8)·문 앞 (259.8, 43.9, 442.0)(11.3m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.6, 45.8, 437.7), 1.7초
+[Info   :Valheim Helper] DIAG 플로키: 길 첫 점 (259.2, 43.9, 441.5)이 벽 너머(나 (254.6, 45.8, 437.7), 몸이 navmesh 밖) → 목표 (259.8, 43.9, 442.0) 쪽 곧장
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (1.9초, 더 걸음 0.0초·문 충돌체 0.96m, 나 (258.2, 43.9, 440.5)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 8.3m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.04m·문 옆으로 0.04m, 안쪽으로 [], 문 s_state 1·속도 2.52·앞 37°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG Unload 넣음 13개 → 상자 1:64209 집에서 18.2m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (17.3초) 짐 [Bowx1, SpearCarapacex1, ShieldSilverx1, HelmetDrakex1, ArmorWolfChestx1, ArmorWolfLegsx1, Demisterx1, MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, ArrowPoisonx20, Honeyx3] 지킴 12 skip 0
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (250.0,46.0,434.3)→(259.8, 43.9, 442.0)
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(2.4m)으로 나감 (나 (258.2, 43.9, 440.2)·벽 4/4·방금 나온 문 True·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (258.1, 43.9, 440.7)·문 앞 (259.8, 43.9, 442.0)(2.1m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (3.0초, 지붕 True, 나 (258.0, 43.9, 443.2)·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] DIAG 비욘 안에서 나가기 안 함: 방금 나온 문 darkwood_gate(Clone)(0초 전, 안쪽 1.1m)
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (1.6초, 더 걸음 0.0초·문 충돌체 0.96m, 나 (258.2, 43.9, 440.5)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.1m)
+[Info   :Valheim Helper] 플로키 상자 정리: Stone 50개 옮김, 50개 남음(자리 없음 → 짐 정리로)
+[Info   :Valheim Helper] DIAG 플로키 상자 (253.3, 45.0, 435.4): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] 길 기억 바꿈(옛 13.8m): (251.0,46.5,434.8)→(259.8, 43.9, 442.0) 점 23, 모두 89
+[Info   :Valheim Helper] 비욘: 순찰 점 고름 — 점 8 [0:120 1:120 2:120 3:120 4:120 5:120 6:120 7:120] 버림 []
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.30): (258.2,43.9,440.2)→(257.8, 44.1, 452.0)
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 비욘 쉴 때 발효기: Load MeadBaseHealthMajor 1 ((245, 44, 449))
+[Info   :Valheim Helper] <비욘> 미드 통을 챙긴다. 문은 비우지 않는다.
+[Info   :Valheim Helper] DIAG 비욘 fermenter(Clone) 앞 벽 → 문 darkwood_gate(Clone)(14.6m)으로
+[Info   :Valheim Helper] DIAG 비욘 fermenter(Clone) 문 앞으로 0.1초: 나 (246.7, 43.6, 453.9)·문 앞 (236.7, 43.9, 443.4)(14.5m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] DIAG 비욘 fermenter(Clone) 문 앞으로 3.1초: 나 (238.3, 43.3, 445.6)·문 앞 (236.7, 43.9, 443.4)(2.8m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] 길 기억: (258.2,43.9,440.4)→(253.3, 45.0, 435.4) 점 44, 모두 90
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.2, 46.4, 434.2) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 36.2m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.2, 46.4, 434.2)·문 앞 (259.8, 43.9, 442.0)(11.5m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.4, 46.0, 437.2), 2.1초
+[Info   :Valheim Helper] DIAG 비욘 fermenter(Clone) 문 앞으로 6.1초: 나 (234.5, 43.2, 443.8)·문 앞 (236.7, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 4.1
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.2, 43.9, 440.2)·문 앞 (259.8, 43.9, 442.0)(4.0m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 fermenter(Clone) 문 앞 1.6m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 비욘 fermenter(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 1.5m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.2초, 더 걸음 0.4초·문 충돌체 0.90m, 나 (239.4, 43.9, 440.8)·문틀 (237.6, 43.9, 442.5)·문 (237.6, 43.9, 442.5)·바깥 (236.7, 43.9, 443.4)·fermenter(Clone)까지 9.8m)
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (2.5초, 더 걸음 0.4초·문 충돌체 0.93m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 5.5m)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx33 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Barleyx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Stonex50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] 비욘 발효기 넣기 MeadBaseHealthMajor 1
+[Info   :Valheim Helper] 비욘 계획 끝: 완료 1, 실패 0, 막힘 0
+[Info   :Valheim Helper] 길 기억: (239.4,43.9,440.8)→(245.2, 43.9, 448.8) 점 16, 모두 91
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(8.6m)으로 나감 (나 (248.9, 43.9, 443.5)·벽 3/4·방금 나온 문 True·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] DIAG Unload 넣음 50개 → 상자 1:64340 집에서 29.7m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (18.6초) 짐 [AxeJotunBanex1, ShieldBlackmetalx1, HelmetPaddedx1, ArmorPaddedCuirassx1, ArmorPaddedGreavesx1, CapeFeatherx1, Demisterx1, BowDraugrFangx1, MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, BarleyWinex2, ArrowFlintx25, ArrowFrostx6, ArrowPoisonx9, PickaxeIronx1, Woodx50, Woodx50, Woodx33, Barleyx50, Stonex50] 지킴 16 skip 5
+[Info   :Valheim Helper] 플로키 상자 정리 끝: 78개, 3번, 109초
+[Info   :Valheim Helper] 길 기억: (257.0,43.9,439.2)→(240.1, 43.9, 434.3) 점 28, 모두 92
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(7.3m) 대신 바닐라 길 — 문 거쳐 47m·곧장 32m (나 (241.2, 43.9, 436.2)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] 길 기억 막힘(5/51): 지움 → 바닐라
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 False)(1.4m)으로 나감 (나 (256.3, 43.9, 441.7)·벽 3/4·방금 나온 문 True·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.4초, 지붕 True, 나 (258.1, 43.9, 443.1)·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] DIAG 플로키 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state -1)
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (1.4초, 지붕 True, 나 (258.1, 43.9, 443.1)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 플로키 나오며 닫은 문 darkwood_gate(Clone) 반대로 다시 엶(s_state 1)
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (256.1,43.9,441.1)→(257.8, 44.1, 452.0)
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 $enemy_boar
+[Info   :Valheim Helper] <라그나> 저 짐승, 사람을 믿게 할 수 있을까? 해 볼까.
+[Info   :Valheim Helper] 플로키 !정리 이어서: 옮길 것 16 → 13, 지난번 옮김 78, 건너뜀 6
+[Info   :Valheim Helper] 라그나 길들이기: Fetch → Approach (먹음 0)
+[Info   :Valheim Helper] 길 기억 안 함(막힘): (241.2,43.9,436.2)→(261.0, 45.1, 455.5)
+[Info   :Valheim Helper] DIAG 정리 남은 것 13 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 안에서 나가기 안 함: 방금 나온 문 darkwood_gate(Clone)(9초 전, 안쪽 2.4m)
+[Info   :Valheim Helper] DIAG 플로키 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(2.0m)으로 나감 (나 (258.4, 43.9, 442.9)·벽 3/4·방금 나온 문 False·목표 (247.3, 41.3, 381.8))
+[Info   :Valheim Helper] DIAG 플로키 나가기 문 길 포기: ToDoor 9초, 문 앞까지 0.8m·안쪽까지 1.8m, 문틀 옆으로 -0.10m·문 옆으로 -0.11m, 안쪽으로 [], 문 s_state -1·속도 0.00·앞 173°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 멈춤 9.1초: 플로키 TidyJob/TidyToFrom / 입력 0.96, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 3.7, 발밑 stone_floor_2x2(Clone)(piece, 위 stone_floor_2x2(Clone)), 높이 43.9/땅 43.4/원래땅 44.6/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 stone_floor_2x2(Clone)/stone_floor_2x2(Clone)(+0.00,+1.00,+0.00)×0.000 · 앞 0.6m 빔
+[Info   :Valheim Helper] 라그나 길들이기: $enemy_boar에게 Raspberry 떨굼 (350.92, 33.29, 471.40)
+[Info   :Valheim Helper] 라그나 길들이기: Approach → Home (먹음 0)
+[Info   :Valheim Helper] <라그나> (말풍선) ...저 너머엔 무엇이 있을까.
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 정리 남은 것 12 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.4m)으로
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (248.8, 43.9, 436.7)·문 앞 (258.3, 43.9, 443.4)(11.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.3초, 더 걸음 0.4초·문 충돌체 0.87m, 나 (255.7, 43.9, 440.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 6.6m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.06m·문 옆으로 0.07m, 안쪽으로 [], 문 s_state 1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: Coins 28개 옮김
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(1.2m)으로 나감 (나 (256.8, 43.9, 441.5)·벽 3/4·방금 나온 문 True·목표 (267.1, 39.8, 495.5))
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (1.7초, 지붕 True, 나 (258.3, 43.9, 442.9)·목표 (267.1, 39.8, 495.5))
+[Info   :Valheim Helper] DIAG 플로키 안에서 나가기 안 함: 방금 나온 문 darkwood_gate(Clone)(0초 전, 안쪽 1.1m)
+[Info   :Valheim Helper] DIAG 정리 남은 것 11 (플로키 TidyJob)
+[Info   :Valheim Helper] 비욘: 거점 둘레 순찰 시작(점 8)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 26.2m): (258.4,44.0,450.3)→(237.8, 43.3, 445.4) 점 44, 모두 91
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 라그나 길들이기 확인: $enemy_boar 먹음, 남은 시간 1746초, 길듦 False
+[Info   :Valheim Helper] <라그나> 먹이는 먹는데 아직 경계하는군. 시간이 필요해.
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(7.4m)으로
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.2, 43.9, 438.6)·문 앞 (258.3, 43.9, 443.4)(8.7m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.3초, 더 걸음 0.4초·문 충돌체 0.94m, 나 (255.6, 43.9, 440.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 6.5m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.06m·문 옆으로 0.07m, 안쪽으로 [], 문 s_state 1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: Amber 1개 옮김
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(7.6m)으로
+[Info   :Valheim Helper] 길 기억: (255.5,43.9,440.7)→(251.0, 45.0, 436.0) 점 10, 모두 92
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.0, 43.9, 438.4)·문 앞 (258.3, 43.9, 443.4)(8.9m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.3초, 더 걸음 0.4초·문 충돌체 0.92m, 나 (255.7, 43.9, 440.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 6.7m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.04m·문 옆으로 0.04m, 안쪽으로 [], 문 s_state 1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG 정리 남은 것 10 (플로키 TidyJob)
+[Info   :Valheim Helper] 플로키 상자 정리: HareMeat 6개 옮김
+[Info   :Valheim Helper] 길 기억: (255.6,43.9,440.7)→(241.9, 43.9, 432.5) 점 25, 모두 93
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(12.7m)으로
+[Info   :Valheim Helper] 길 기억: (243.7,43.9,433.8)→(251.6, 45.0, 433.8) 점 14, 모두 94
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.1, 45.2, 431.8)·문 앞 (259.8, 43.9, 442.0)(14.0m)·복도 없음·길 True·속도 3.4
+[Info   :Valheim Helper] DIAG 정리 남은 것 8 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (250.0, 43.9, 429.3)·문 앞 (259.8, 43.9, 442.0)(16.0m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 49.2m·높이 1.4, 자리 (228.6, 42.4, 401.7), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 13, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 없음 / 가슴 없음, 땅 0.0m, 앞 1m 땅 0.0m, 둘레 [Terrain:메시 루트 _Zone(Clone) 32.6m 높이 -5.3~6.7 크기 64.0x64.0]
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (249.6, 43.9, 429.0)·문 앞 (259.8, 43.9, 442.0)(16.5m)·복도 없음·길 True·속도 3.1
+[Info   :Valheim Helper] 길 기억: (237.7,43.0,418.4)→(238.7, 43.4, 420.3) 점 6, 모두 95
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (256.4, 43.9, 434.6)·문 앞 (259.8, 43.9, 442.0)(8.1m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] 길 기억: (239.2,43.7,421.5)→(245.0, 43.9, 431.9) 점 22, 모두 96
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 12.1초: 나 (259.2, 43.9, 441.4)·문 앞 (259.8, 43.9, 442.0)(0.8m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.4m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (249.0, 43.9, 438.4)·문 앞 (258.3, 43.9, 443.4)(10.6m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.2초, 더 걸음 0.4초·문 충돌체 0.91m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.9m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.05m·문 옆으로 -0.06m, 안쪽으로 [], 문 s_state -1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG 정리 남은 것 7 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(7.6m)으로
+[Info   :Valheim Helper] 길 기억: (257.1,43.9,439.2)→(251.0, 45.0, 436.0) 점 13, 모두 97
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.0, 43.9, 438.4)·문 앞 (258.3, 43.9, 443.4)(8.9m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.2초, 더 걸음 0.0초·문 충돌체 0.58m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [], 문 s_state 1·속도 3.64·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 66, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (249.0,43.9,438.4)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 길 기억 막힘(5/29): 지움 → 바닐라
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (254.9, 43.9, 440.6)·문 앞 (258.3, 43.9, 443.4)(4.4m)·복도 없음·길 True·속도 1.3
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 69, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(막힘): (256.7,43.9,441.8)→(240.1, 43.9, 434.3)
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.5, 43.9, 436.3)·벽 3/4·방금 나온 문 False·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.3초, 더 걸음 0.4초·문 충돌체 0.90m, 나 (255.7, 43.9, 440.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 6.7m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.05m·문 옆으로 0.06m, 안쪽으로 [], 문 s_state 1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: Blackwood 22개 옮김
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 길 막힘(4.0m, 나 (240.2, 43.9, 438.0)·문 앞 (238.6, 43.9, 441.6)·막은 것 없음) → 옆으로 비킴 (0.9, 0.0, 0.4)
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.4m)으로
+[Info   :Valheim Helper] 길 기억: (255.6,43.9,440.7)→(252.4, 45.0, 434.6) 점 36, 모두 97
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.4, 45.8, 433.3) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 35.6m
+[Info   :Valheim Helper] 뛰어내리기 착지: (250.4, 45.8, 433.3), 0.0초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.4, 45.8, 433.3)·문 앞 (259.8, 43.9, 442.0)(12.7m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.2초, 지붕 True, 나 (237.0, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (243.7, 43.9, 430.5)·문 앞 (259.8, 43.9, 442.0)(19.8m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (248.4, 43.9, 428.9)·문 앞 (259.8, 43.9, 442.0)(17.3m)·복도 없음·길 True·속도 2.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (256.4, 43.9, 432.7)·문 앞 (259.8, 43.9, 442.0)(9.9m)·복도 없음·길 True·속도 3.4
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 12.1초: 나 (259.2, 43.9, 441.4)·문 앞 (259.8, 43.9, 442.0)(0.8m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.2초, 더 걸음 0.4초·문 충돌체 0.91m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 6.7m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.05m·문 옆으로 -0.06m, 안쪽으로 [], 문 s_state -1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] <라그나> (말풍선) 다들 신의 뜻이라지. 정말 그럴까.
+[Info   :Valheim Helper] DIAG 정리 남은 것 6 (플로키 TidyJob)
+[Info   :Valheim Helper] 플로키 상자 정리: Thistle 0개 옮김, 45개 남음(자리 없음 → 짐 정리로)
+[Info   :Valheim Helper] DIAG 플로키 상자 (253.3, 45.0, 435.4): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.5m): (257.1,43.9,439.2)→(240.1, 43.9, 434.3) 점 29, 모두 97
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.4m)으로
+[Info   :Valheim Helper] 길 기억 바꿈(옛 13.8m): (241.4,43.9,436.2)→(253.3, 45.0, 435.4) 점 25, 모두 97
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.4, 46.3, 433.8) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 36.5m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.4, 46.3, 433.8)·문 앞 (259.8, 43.9, 442.0)(11.7m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.6, 45.9, 437.9), 1.7초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.8, 43.9, 440.6)·문 앞 (259.8, 43.9, 442.0)(2.4m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.5초, 더 걸음 0.4초·문 충돌체 0.90m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 5.5m)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx33 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Barleyx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Stonex50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Thistlex45 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (15.2초) 짐 [AxeJotunBanex1, ShieldBlackmetalx1, HelmetPaddedx1, ArmorPaddedCuirassx1, ArmorPaddedGreavesx1, CapeFeatherx1, Demisterx1, BowDraugrFangx1, MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, BarleyWinex2, ArrowFlintx25, ArrowFrostx6, ArrowPoisonx9, PickaxeIronx1, Woodx50, Woodx50, Woodx33, Barleyx50, Stonex50, Thistlex45] 지킴 16 skip 6
+[Info   :Valheim Helper] 플로키 상자 정리 끝: 57개, 5번, 186초
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.3m): (257.1,43.9,439.2)→(240.1, 43.9, 434.3) 점 29, 모두 97
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(7.3m) 대신 바닐라 길 — 문 거쳐 47m·곧장 31m (나 (241.3, 43.9, 436.2)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(1.4m)으로 나감 (나 (256.5, 43.9, 441.4)·벽 3/4·방금 나온 문 True·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (1.8초, 지붕 True, 나 (258.3, 43.9, 442.9)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 플로키 !정리 이어서: 옮길 것 13 → 6, 지난번 옮김 57, 건너뜀 7
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (241.3,43.9,436.2)→(261.0, 45.1, 455.5)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.39): (241.5,43.9,436.3)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] 길 기억 바꿈(옛 30.1m): (260.6,44.7,453.8)→(240.1, 43.9, 434.3) 점 53, 모두 97
+[Info   :Valheim Helper] DIAG 정리 남은 것 5 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.9, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.5m)으로
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (241.4,43.9,436.3)→(252.4, 45.0, 434.6)
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.5, 45.8, 433.2) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 33.5m
+[Info   :Valheim Helper] 뛰어내리기 착지: (250.5, 45.8, 433.2), 0.0초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.5, 45.8, 433.2)·문 앞 (259.8, 43.9, 442.0)(12.8m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (2.9초, 더 걸음 0.0초·문 충돌체 0.52m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.10m·문 옆으로 0.11m, 안쪽으로 [], 문 s_state 1·속도 3.34·앞 7°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 67, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (243.1, 43.9, 430.3)·문 앞 (259.8, 43.9, 442.0)(20.4m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] 비욘 먹음: RoyalJelly → 최대 체력 70, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.35): (256.6,43.9,441.8)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (252.0, 43.9, 431.7)·문 앞 (259.8, 43.9, 442.0)(12.8m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(5.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (240.3, 43.9, 437.6)·문 앞 (235.3, 43.9, 442.0)(6.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (256.6, 43.9, 438.1)·문 앞 (259.8, 43.9, 442.0)(5.0m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (237.7, 43.9, 441.8)·문 앞 (235.3, 43.9, 442.0)(2.5m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (2.8초, 더 걸음 0.0초·문 충돌체 0.57m, 나 (236.7, 43.9, 440.4)·문틀 (236.2, 43.9, 441.1)·문 (236.2, 43.9, 441.1)·바깥 (235.3, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [collider/piece_stonecutter(Clone) 0.0m], 문 s_state 1·속도 0.00·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음: MushroomJotunPuffs → 최대 체력 75, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (240.3,43.9,437.6)→(235.3, 43.9, 442.0)
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(2.2m)으로 나감 (나 (236.7, 43.9, 440.4)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 길 기억 다시 걸어 봄(옛 4.9m): 바닐라 → 더 짧으면 바꿈
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.5초, 더 걸음 0.4초·문 충돌체 0.88m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 6.7m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.06m·문 옆으로 -0.07m, 안쪽으로 [], 문 s_state -1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: Dandelion 3개 옮김
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.1, 43.9, 443.2)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(12.0m)으로
+[Info   :Valheim Helper] 뛰어내리기 고름: (249.2, 45.6, 434.0) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 34.3m
+[Info   :Valheim Helper] 뛰어내리기 착지: (249.2, 45.6, 434.0), 0.0초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (249.2, 45.6, 434.0)·문 앞 (259.8, 43.9, 442.0)(13.2m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (243.1, 43.9, 430.3)·문 앞 (259.8, 43.9, 442.0)(20.4m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (251.8, 43.9, 431.5)·문 앞 (259.8, 43.9, 442.0)(13.2m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (256.4, 43.9, 437.7)·문 앞 (259.8, 43.9, 442.0)(5.4m)·복도 없음·길 True·속도 3.1
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.5초, 더 걸음 0.4초·문 충돌체 0.90m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.8m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.05m·문 옆으로 -0.06m, 안쪽으로 [], 문 s_state -1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.0m)으로
+[Info   :Valheim Helper] 길 기억: (257.1,43.9,439.2)→(252.4, 45.0, 434.6) 점 40, 모두 98
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.1, 46.1, 434.4) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 34.2m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.1, 46.1, 434.4)·문 앞 (259.8, 43.9, 442.0)(12.3m)·복도 없음·길 True·속도 4.1
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (254.0, 46.1, 436.9)·문 앞 (259.8, 43.9, 442.0)(7.7m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] 뛰어내리기 그만(내딛어도 안 떨어짐) — 바닐라 길
+[Info   :Valheim Helper] DIAG 비켜 가기 2번째: 쪽 -1 2.4초, 목표까지 7.7m, 앞 앞 발 없음 / 가슴 없음, 땅 2.7m, 앞 1m 땅 -2.7m, 둘레 [collider:Box 루트 wood_pole_log_4(Clone) 0.8m 높이 1.8~5.8 크기 0.6x0.6][Collider:Box 루트 piece_dvergr_lantern(Clone) 0.8m 높이 0.3~0.9 크기 0.1x0.1][Collider:Box 루트 piece_dvergr_lantern(Clone) 0.8m 높이 -0.3~0.3 크기 0.4x0.4][Collider:Box 루트 piece_dvergr_lantern(Clone) 0.8m 높이 0.1~0.9 크기 0.6x0.6][Collider:...
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (254.0, 46.0, 436.8)·문 앞 (259.8, 43.9, 442.0)(7.7m)·복도 없음·길 True·속도 0.2
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (254.0, 46.0, 436.8)·문 앞 (259.8, 43.9, 442.0)(7.7m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] 멈춤 8.6초: 플로키 TidyJob/TidyToTarget / 입력 0.74, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 2.9, 발밑 collider(piece, 위 wood_floor(Clone)), 높이 47.0/땅 43.4/원래땅 43.5/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 collider/wood_floor(Clone)(+0.00,+1.00,+0.00)×0.000 · 앞 0.6m 빔
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 12.1초: 나 (248.6, 44.6, 431.7)·문 앞 (259.8, 43.9, 442.0)(15.2m)·복도 없음·길 True·속도 4.1
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 15.1초: 나 (245.6, 43.9, 428.3)·문 앞 (259.8, 43.9, 442.0)(19.7m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: ToDoor 16초, 문 앞까지 16.6m·안쪽까지 14.0m, 문틀 옆으로 -1.78m·문 옆으로 -1.79m, 안쪽으로 [topcollider/wood_wall_roof(Clone) 1.1m, collider/wood_wall_roof(Clone) 1.5m, topcollider/wood_wall_roof(Clone) 1.8m], 문 s_state -1·속도 3.52·앞 176°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: GiantBloodSack 44개 옮김
+[Info   :Valheim Helper] 길 기억: (249.4,43.9,429.1)→(241.9, 43.9, 432.5) 점 13, 모두 99
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.5m)으로
+[Info   :Valheim Helper] 길 기억: (244.2,43.9,432.9)→(252.4, 45.0, 434.6) 점 14, 모두 100
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.4, 45.8, 433.2) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 33.5m
+[Info   :Valheim Helper] 뛰어내리기 착지: (250.4, 45.8, 433.2), 0.0초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.4, 45.8, 433.2)·문 앞 (259.8, 43.9, 442.0)(12.8m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (243.1, 43.9, 430.3)·문 앞 (259.8, 43.9, 442.0)(20.4m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (252.0, 43.9, 431.7)·문 앞 (259.8, 43.9, 442.0)(12.8m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (256.6, 43.9, 438.1)·문 앞 (259.8, 43.9, 442.0)(5.0m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.2초, 더 걸음 0.4초·문 충돌체 0.90m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 6.7m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.05m·문 옆으로 -0.06m, 안쪽으로 [], 문 s_state -1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: GiantBloodSack 28개 옮김
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.0m)으로
+[Info   :Valheim Helper] 길 기억 바꿈(옛 22.6m): (257.1,43.9,439.2)→(252.4, 45.0, 434.6) 점 40, 모두 100
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.2, 46.1, 434.3) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 34.2m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.2, 46.1, 434.3)·문 앞 (259.8, 43.9, 442.0)(12.3m)·복도 없음·길 True·속도 1.7
+[Info   :Valheim Helper] <라그나> (말풍선) 길은 보이는데, 아직 갈 때가 아니야.
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (254.0, 46.1, 436.9)·문 앞 (259.8, 43.9, 442.0)(7.7m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] 뛰어내리기 그만(내딛어도 안 떨어짐) — 바닐라 길
+[Info   :Valheim Helper] DIAG 비켜 가기 2번째: 쪽 -1 2.4초, 목표까지 7.7m, 앞 앞 발 없음 / 가슴 없음, 땅 2.7m, 앞 1m 땅 -2.7m, 둘레 [collider:Box 루트 wood_pole_log_4(Clone) 0.8m 높이 1.8~5.8 크기 0.6x0.6][Collider:Box 루트 piece_dvergr_lantern(Clone) 0.8m 높이 0.3~0.9 크기 0.1x0.1][Collider:Box 루트 piece_dvergr_lantern(Clone) 0.8m 높이 -0.3~0.3 크기 0.4x0.4][Collider:Box 루트 piece_dvergr_lantern(Clone) 0.8m 높이 0.1~0.9 크기 0.6x0.6][Collider:...
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (254.0, 46.0, 436.8)·문 앞 (259.8, 43.9, 442.0)(7.7m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (254.0, 46.0, 436.8)·문 앞 (259.8, 43.9, 442.0)(7.7m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] 멈춤 8.6초: 플로키 TidyJob/TidyToTarget / 입력 0.67, 달리기 입력 False, 수영 False, 땅닿음 True, 속도 2.8, 발밑 collider(piece, 위 wood_floor(Clone)), 높이 47.0/땅 43.4/원래땅 43.5/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 닿음 collider/wood_floor(Clone) · 앞 0.6m 빔
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 12.1초: 나 (248.2, 44.4, 431.6)·문 앞 (259.8, 43.9, 442.0)(15.5m)·복도 없음·길 True·속도 4.1
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 15.1초: 나 (245.8, 43.9, 428.3)·문 앞 (259.8, 43.9, 442.0)(19.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: ToDoor 16초, 문 앞까지 16.3m·안쪽까지 13.8m, 문틀 옆으로 -1.80m·문 옆으로 -1.81m, 안쪽으로 [topcollider/wood_wall_roof(Clone) 1.2m, wood_wall_half(Clone)/wood_wall_half(Clone) 1.8m, collider/wood_wall_roof(Clone) 1.6m, topcollider/wood_wall_roof(Clone) 1.6m], 문 s_state -1·속도 3.84·앞 180°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: TrollHide 16개 옮김
+[Info   :Valheim Helper] 라그나 들고 간 음식 먹음: RoyalJelly → 최대 체력 59
+[Info   :Valheim Helper] 플로키 상자 정리: MushroomJotunPuffs 42개 옮김
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(8.9m)으로
+[Info   :Valheim Helper] 길 기억: (249.7,43.9,429.3)→(240.1, 43.9, 434.3) 점 21, 모두 101
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (239.4, 43.9, 432.7)·문 앞 (235.3, 43.9, 442.0)(10.1m)·복도 없음·길 True·속도 3.0
+[Info   :Valheim Helper] DIAG 정리 남은 것 3 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (241.1, 43.9, 437.4)·문 앞 (235.3, 43.9, 442.0)(7.4m)·복도 없음·길 True·속도 2.7
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (236.3, 43.9, 441.6)·문 앞 (235.3, 43.9, 442.0)(1.1m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (2.8초, 더 걸음 0.0초·문 충돌체 0.60m, 나 (236.8, 43.9, 440.4)·문틀 (236.2, 43.9, 441.1)·문 (236.2, 43.9, 441.1)·바깥 (235.3, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 5.9m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.04m·문 옆으로 0.05m, 안쪽으로 [collider/piece_stonecutter(Clone) 0.0m], 문 s_state 1·속도 0.09·앞 3°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: OnionSoup 8개 옮김
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (239.4,43.9,432.7)→(235.3, 43.9, 442.0)
+[Info   :Valheim Helper] DIAG 정리 남은 것 2 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 Tidy 손 거리: 3.2초 못 다가감, 상자까지 3.7m / 앞 발 collider(piece, 2.4m, 위 piece_chest_blackmetal(Clone)) / 가슴 없음, 땅 0.5m, 앞 1m 땅 -0.5m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.9m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 0.8m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.3m 높이 -1.0~0.0 크기 ...
+[Info   :Valheim Helper] 플로키 상자 정리: MushroomJotunPuffs 3개 옮김
+[Info   :Valheim Helper] DIAG 플로키 Tidy 손 거리: 3.3초 못 다가감, 상자까지 3.6m / 앞 발 collider(piece, 2.3m, 위 piece_chest_blackmetal(Clone)) / 가슴 없음, 땅 0.5m, 앞 1m 땅 -0.5m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.9m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 0.7m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.3m 높이 -1.0~0.0 크기 ...
+[Info   :Valheim Helper] 플로키 상자 정리: Cloudberry 0개 옮김, 44개 남음(자리 없음 → 짐 정리로)
+[Info   :Valheim Helper] DIAG 플로키 상자 (253.3, 45.0, 435.4): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] DIAG 정리 남은 것 1 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (241.6,43.9,435.8)→(253.3, 45.0, 435.4)
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.4, 46.4, 433.9) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 34.6m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.4, 46.4, 433.9)·문 앞 (259.8, 43.9, 442.0)(11.6m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.3, 45.9, 437.0), 1.7초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (258.0, 43.9, 440.4)·문 앞 (259.8, 43.9, 442.0)(2.4m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.2초, 더 걸음 0.4초·문 충돌체 0.92m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 5.5m)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx33 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Barleyx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Stonex50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 넣음 45개 → 상자 1:64340 집에서 29.7m
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Cloudberryx44 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (15.9초) 짐 [AxeJotunBanex1, ShieldBlackmetalx1, HelmetPaddedx1, ArmorPaddedCuirassx1, ArmorPaddedGreavesx1, CapeFeatherx1, Demisterx1, BowDraugrFangx1, MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, BarleyWinex2, ArrowFlintx25, ArrowFrostx6, ArrowPoisonx9, PickaxeIronx1, Woodx50, Woodx50, Woodx33, Barleyx50, Stonex50, Cloudberryx44] 지킴 17 skip...
+[Info   :Valheim Helper] 플로키 상자 정리 끝: 144개, 8번, 155초
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.7m): (257.1,43.9,439.2)→(240.1, 43.9, 434.3) 점 31, 모두 101
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(7.2m) 대신 바닐라 길 — 문 거쳐 47m·곧장 32m (나 (240.5, 43.9, 435.9)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] 플로키 들고 간 음식 먹음: Cloudberry → 최대 체력 38
+[Info   :Valheim Helper] 라그나 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 플로키 !정리 이어서: 옮길 것 6 → 1, 지난번 옮김 144, 건너뜀 8
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.37): (241.1,43.9,436.1)→(261.0, 45.1, 455.5)
+[Info   :Valheim Helper] 길 기억: (260.5,44.7,453.8)→(239.2, 43.9, 435.1) 점 51, 모두 102
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.6m)으로
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (242.8, 43.9, 434.0)·문 앞 (238.1, 43.9, 423.2)(11.8m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (240.7, 43.9, 424.1)·문 앞 (238.1, 43.9, 423.2)(2.7m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (1.8초, 더 걸음 0.0초·문 충돌체 1.16m, 나 (239.9, 43.9, 424.6)·문틀 (239.0, 43.9, 424.1)·문 (239.0, 43.9, 424.1)·바깥 (238.1, 43.9, 423.2)·piece_chest_blackmetal(Clone)까지 7.6m)
+[Info   :Valheim Helper] 플로키 상자 정리: BarleyFlour 110개 옮김
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.62): (242.8,43.9,434.0)→(238.1, 43.9, 423.2)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.4m)으로
+[Info   :Valheim Helper] 길 기억: (239.9,43.9,424.7)→(251.9, 45.0, 436.9) 점 30, 모두 103
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.1, 46.3, 435.2) → (258.3, 43.9, 443.4), 끝 (252.0, 47.0, 438.0) 높이 3.1m, 계단 길 36.7m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.1, 46.3, 435.2)·문 앞 (258.3, 43.9, 443.4)(11.7m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] 뛰어내리기 착지: (251.6, 45.7, 439.4), 1.4초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (255.7, 43.9, 440.9)·문 앞 (258.3, 43.9, 443.4)(3.6m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.3초, 더 걸음 0.4초·문 충돌체 0.91m, 나 (255.7, 43.9, 440.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 5.5m)
+[Info   :Valheim Helper] 플로키 상자 정리: BugMeat 60개 옮김
+[Info   :Valheim Helper] 길 기억: (255.6,43.9,440.7)→(239.2, 43.9, 435.1) 점 27, 모두 104
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.4m)으로
+[Info   :Valheim Helper] 길 기억: (241.3,43.9,436.2)→(251.0, 45.0, 436.0) 점 22, 모두 105
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.0, 45.8, 433.8) → (258.3, 43.9, 443.4), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 35.0m
+[Info   :Valheim Helper] 뛰어내리기 착지: (250.0, 45.8, 433.8), 0.0초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.0, 45.8, 433.8)·문 앞 (258.3, 43.9, 443.4)(12.7m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (243.1, 43.9, 430.3)·문 앞 (258.3, 43.9, 443.4)(20.2m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (251.2, 43.9, 430.7)·문 앞 (258.3, 43.9, 443.4)(14.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (257.2, 43.9, 436.8)·문 앞 (258.3, 43.9, 443.4)(6.7m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.2초, 더 걸음 0.4초·문 충돌체 0.88m, 나 (255.7, 43.9, 440.8)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 6.7m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.06m·문 옆으로 0.07m, 안쪽으로 [], 문 s_state 1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 플로키 상자 정리: BugMeat 60개 옮김, 3개 남음(자리 없음 → 짐 정리로)
+[Info   :Valheim Helper] DIAG 플로키 상자 (253.3, 45.0, 435.4): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] 길 기억 바꿈(옛 15.1m): (255.6,43.9,440.8)→(239.2, 43.9, 435.1) 점 27, 모두 105
+[Info   :Valheim Helper] DIAG 정리 남은 것 0 (플로키 TidyJob)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.4m)으로
+[Info   :Valheim Helper] 길 기억 바꿈(옛 13.9m): (241.4,43.9,436.2)→(253.3, 45.0, 435.4) 점 25, 모두 105
+[Info   :Valheim Helper] 뛰어내리기 고름: (251.4, 46.3, 433.8) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 36.5m
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (251.4, 46.3, 433.8)·문 앞 (259.8, 43.9, 442.0)(11.7m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] <라그나> (말풍선) 오딘도 모든 답을 알지는 못했겠지.
+[Info   :Valheim Helper] 뛰어내리기 착지: (254.3, 46.0, 437.0), 1.7초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (258.0, 43.9, 440.4)·문 앞 (259.8, 43.9, 442.0)(2.4m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 $enemy_boar
+[Info   :Valheim Helper] <라그나> 먹이 주고 멀리서 지켜볼게.
+[Info   :Valheim Helper] 라그나 길들이기: Fetch → Approach (먹음 0)
+[Info   :Valheim Helper] 라그나 들고 간 음식 먹음: Raspberry → 최대 체력 61
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.5초, 더 걸음 0.4초·문 충돌체 0.92m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 5.5m)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Woodx33 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Barleyx50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Stonex50 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG Unload 못 넣고 건너뜀 Cloudberryx43 (편집 됨, 상자 빈칸 0)
+[Info   :Valheim Helper] DIAG 플로키 상자 (252.4, 45.0, 434.6): navmesh 자리가 2.0m 위 → 같은 층 접근점 없음, 후보 0
+[Info   :Valheim Helper] 길 기억: (257.1,43.9,439.2)→(239.2, 43.9, 435.1) 점 28, 모두 106
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(11.5m)으로
+[Info   :Valheim Helper] 길 기억: (241.3,43.9,436.2)→(252.4, 45.0, 434.6) 점 22, 모두 107
+[Info   :Valheim Helper] 뛰어내리기 고름: (250.5, 45.8, 433.2) → (259.8, 43.9, 442.0), 끝 (254.0, 47.0, 436.0) 높이 3.1m, 계단 길 33.5m
+[Info   :Valheim Helper] 뛰어내리기 착지: (250.5, 45.8, 433.2), 0.0초
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.5, 45.8, 433.2)·문 앞 (259.8, 43.9, 442.0)(12.8m)·복도 없음·길 True·속도 4.0
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (243.1, 43.9, 430.3)·문 앞 (259.8, 43.9, 442.0)(20.4m)·복도 없음·길 True·속도 0.0
+[Info   :Valheim Helper] 라그나 길들이기: Approach → Home (먹음 0)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 6.1초: 나 (251.6, 43.9, 431.0)·문 앞 (259.8, 43.9, 442.0)(13.7m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞으로 9.1초: 나 (256.4, 43.9, 437.3)·문 앞 (259.8, 43.9, 442.0)(5.8m)·복도 없음·길 True·속도 2.9
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 안으로 (3.2초, 더 걸음 0.4초·문 충돌체 0.90m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 6.7m)
+[Info   :Valheim Helper] DIAG 플로키 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.05m·문 옆으로 -0.06m, 안쪽으로 [], 문 s_state -1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG Unload 넣음 3개 → 상자 1:64209 집에서 22.6m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (33.3초) 짐 [AxeJotunBanex1, ShieldBlackmetalx1, HelmetPaddedx1, ArmorPaddedCuirassx1, ArmorPaddedGreavesx1, CapeFeatherx1, Demisterx1, BowDraugrFangx1, MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, BarleyWinex2, ArrowFlintx25, ArrowFrostx6, ArrowPoisonx9, PickaxeIronx1, Woodx50, Woodx50, Woodx33, Barleyx50, Stonex50, Cloudberryx43] 지킴 17 skip...
+[Info   :Valheim Helper] 플로키 상자 정리 끝: 230개, 3번, 86초
+[Info   :Valheim Helper] DIAG 플로키 안에서 문 darkwood_gate(Clone)(열림 True)(0.8m)으로 나감 (나 (256.8, 43.9, 442.0)·벽 3/4·방금 나온 문 True·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] DIAG 플로키 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 플로키 문 지나 밖으로 (1.4초, 지붕 True, 나 (258.3, 43.9, 443.1)·목표 (261.0, 45.1, 455.5))
+[Info   :Valheim Helper] 플로키 !정리 이어서: 옮길 것 1 → 0, 지난번 옮김 230, 건너뜀 9 — 그만
+[Info   :Valheim Helper] 플로키 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.57): (238.0,43.9,441.4)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.3, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.9, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (2.9초, 더 걸음 0.0초·문 충돌체 0.61m, 나 (256.8, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.04m·문 옆으로 0.05m, 안쪽으로 [], 문 s_state 1·속도 3.73·앞 3°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 69, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.3,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 71, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억: (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 27, 모두 108
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.2m)으로 나감 (나 (241.3, 43.9, 436.3)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 비욘 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.5초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 밤 시작 1620초 (1번째)
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 당근의 잎이 바람을 잘 받더군.
+[Info   :Valheim Helper] <라그나> (말풍선) 거두는 날엔 같이 하자고.
+[Info   :Valheim Helper] E072 저장 전: 상태 NotSaving, 끝 없음, 바뀐 조각 18/0, 저장 번호 184
+[Info   :Valheim Helper] 일꾼 기억 파일 저장: te4st41.vh-memory 65883바이트, 지식 53구역(6125자), 장소 114자, 적 24자, 길 108개(59609자)
+[Info   :Valheim Helper] <라그나> (말풍선) 창고가 비면 거점 근처부터 떠올리면 돼. 깃털이 있으니.
+[Info   :Valheim Helper] <플로키> (말풍선) ...그건 그냥 두는 게 나을지도. 이유는 몰라, 느낌이야.
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.41): (239.1,43.9,441.2)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 12.6m·높이 0.0, 자리 (242.7, 43.9, 441.2), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 7, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 collider(piece, 0.9m, 위 hearth(Clone)) / 가슴 없음, 땅 0.6m, 앞 1m 땅 -0.6m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 2.0m 높이 -1.0~0.0 크기 2.8x2.8][stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.4m 높이 -1.0~0.0 크기 2.8x2.8]...
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.2m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.0, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.1m)·복도 없음·길 True·속도 3.5
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (2.9초, 더 걸음 0.0초·문 충돌체 0.58m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [], 문 s_state 1·속도 3.64·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 64, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: RoyalJelly → 최대 체력 68, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.35): (256.7,43.9,441.8)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(5.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (240.2, 43.9, 437.6)·문 앞 (235.3, 43.9, 442.0)(6.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (237.7, 43.9, 441.8)·문 앞 (235.3, 43.9, 442.0)(2.5m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.57m, 나 (236.7, 43.9, 440.4)·문틀 (236.2, 43.9, 441.1)·문 (236.2, 43.9, 441.1)·바깥 (235.3, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [collider/piece_stonecutter(Clone) 0.0m], 문 s_state 1·속도 0.00·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음: Blueberries → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (240.2,43.9,437.6)→(235.3, 43.9, 442.0)
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(2.2m)으로 나감 (나 (236.7, 43.9, 440.4)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 길 기억 다시 걸어 봄(옛 4.9m): 바닐라 → 더 짧으면 바꿈
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (3.0초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.57): (238.0,43.9,441.4)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.3, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.9, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (2.9초, 더 걸음 0.0초·문 충돌체 0.61m, 나 (256.8, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.04m·문 옆으로 0.05m, 안쪽으로 [], 문 s_state 1·속도 3.73·앞 3°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 55, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.3,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 57, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.3m): (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 28, 모두 108
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.4, 43.9, 436.3)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 우리 처음 만났을 때 기억나? 넌 나 미친놈 취급했지! 킥킥.
+[Info   :Valheim Helper] <라그나> (말풍선) 좋은 분이셨군. 맞는 말이야.
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.6초, 지붕 True, 나 (237.1, 43.9, 443.2)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 비욘: 거점 둘레 순찰 시작(점 8)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.36): (238.5,43.9,440.9)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] <비욘> 방패 뒤에 있어. 넥이 먼저 오게 둬.
+[Info   :Valheim Helper] DIAG 비욘 원거리 있는데 근접: 플레이어 멂 거리 13.0m
+[Info   :Valheim Helper] 적 배움: Neck 체력 5, 한 방 6
+[Info   :Valheim Helper] 비욘: $enemy_neck에 멀리서(플레이어 64m 밖) 직접 피해 50
+[Info   :Valheim Helper] 비욘 떨굼 기다림: (336.5,370.5) 2종
+[Info   :Valheim Helper] DIAG 비욘 원거리 있는데 근접: 플레이어 멂 거리 9.4m
+[Info   :Valheim Helper] DIAG 싸움 비욘→$enemy_neck: 거리 8.5/1.9 휘두름 0 적 체력 5/5 공격 중 False 봄 False 높이차 -2.0 물 False 쉼 0 막음 0 적 내 것 True
+[Info   :Valheim Helper] 비욘: $enemy_neck에 멀리서(플레이어 64m 밖) 직접 피해 52
+[Info   :Valheim Helper] DIAG 비욘 원거리 있는데 근접: 플레이어 멂 거리 20.4m
+[Info   :Valheim Helper] DIAG 싸움 비욘→$enemy_neck: 거리 5.5/1.9 휘두름 0 적 체력 5/5 공격 중 False 봄 True 높이차 2.4 물 False 쉼 3 막음 0 적 내 것 True
+[Info   :Valheim Helper] 비욘: $enemy_neck에 멀리서(플레이어 64m 밖) 직접 피해 53
+[Info   :Valheim Helper] 비욘 떨굼 기다림: (318.0,383.4) 2종
+[Info   :Valheim Helper] 비욘 장소 기억 5,6: Won, 무리 [Neck×2★0]
+[Info   :Valheim Helper] 비욘 잡은 몬스터 떨굼 주움 $item_necktail x1
+[Info   :Valheim Helper] DIAG 비욘 원거리 있는데 근접: 플레이어 멂 거리 14.0m
+[Info   :Valheim Helper] DIAG 싸움 비욘→$enemy_neck: 거리 11.0/1.9 휘두름 0 적 체력 5/5 공격 중 False 봄 True 높이차 1.5 물 False 쉼 4 막음 0 적 내 것 True
+[Info   :Valheim Helper] 비욘 막음: $enemy_neck 5.8 → 0.1
+[Info   :Valheim Helper] 비욘: $enemy_neck에 멀리서(플레이어 64m 밖) 직접 피해 63
+[Info   :Valheim Helper] 비욘 떨굼 기다림: (360.0,406.4) 2종
+[Info   :Valheim Helper] 비욘 장소 기억 5,6: Won, 무리 [Neck×1★0]
+[Info   :Valheim Helper] 비욘 떨굼 그만(E133): 40m 밖, 자리에서 46.9m
+[Info   :Valheim Helper] 비욘 떨굼 그만(E133): 40m 밖, 자리에서 43.7m
+[Info   :Valheim Helper] DIAG 비욘 원거리 있는데 근접: 플레이어 멂 거리 12.9m
+[Info   :Valheim Helper] 비욘: $enemy_neck에 멀리서(플레이어 64m 밖) 직접 피해 64
+[Info   :Valheim Helper] 비욘 떨굼 기다림: (366.4,393.9) 2종
+[Info   :Valheim Helper] 비욘 장소 기억 6,6: Won, 무리 [Neck×1★0]
+[Info   :Valheim Helper] 비욘 잡은 몬스터 떨굼 주움 $item_necktail x1
+[Info   :Valheim Helper] 비욘 잡은 몬스터 떨굼 주움 $item_necktail x1
+[Info   :Valheim Helper] <라그나> (말풍선) 넥을 이기는 건 힘보다 거리야.
+[Info   :Valheim Helper] <플로키> (말풍선) 킥킥, 그 녀석 아직도 발할라 문 앞에서 투덜대고 있을걸.
+[Info   :Valheim Helper] 비욘 떨굼 그만(E133): 40m 밖, 자리에서 40.1m
+[Info   :Valheim Helper] 비욘 떨굼 그만(E133): 40m 밖, 자리에서 40.3m
+[Info   :Valheim Helper] 비욘: 순찰 끝(한 바퀴 161초·점 8·못 닿음 0·싸움 4) → 문 옆으로 — (152.6, 51.9, 507.6)에서 105m, 길 없음, 곧은 줄 걸어감 True
+[Info   :Valheim Helper] 비욘: 순찰 점 고름 — 점 8 [0:120 1:120 2:120 3:120 4:120 5:120 6:120 7:120] 버림 []
+[Info   :Valheim Helper] <비욘> 어린 회색 난쟁이다. 비켜.
+[Info   :Valheim Helper] DIAG 비욘 원거리 있는데 근접: 플레이어 멂 거리 24.1m
+[Info   :Valheim Helper] DIAG 싸움 비욘→$enemy_greyling: 거리 22.8/1.9 휘두름 0 적 체력 20/20 공격 중 False 봄 False 높이차 -7.0 물 False 쉼 0 막음 1 적 내 것 True
+[Info   :Valheim Helper] 비욘: $enemy_greyling에 멀리서(플레이어 64m 밖) 직접 피해 63
+[Info   :Valheim Helper] 비욘 떨굼 기다림: (197.4,482.2) 1종
+[Info   :Valheim Helper] 비욘 장소 기억 3,8: Won, 무리 [Greyling×1★0]
+[Info   :Valheim Helper] 비욘 잡은 몬스터 떨굼 주움 $item_resin x1
+[Info   :Valheim Helper] DIAG 낮 시작 2165초
+[Info   :Valheim Helper] 비욘 떨굼 그만(E133): 40m 밖, 자리에서 40.1m
+[Info   :Valheim Helper] 비욘 쉴 때 밭 (248,459): 다 자람 0, 빈자리 0, 씨앗 계획 True → 볼 것 없음
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 비욘 쉴 때 발효기: 할 것 없음
+[Info   :Valheim Helper] 라그나 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 플로키 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] <라그나> (말풍선) 플로키, 신을 믿으면서도 신에게 거스를 수 있다고 생각하나?
+[Info   :Valheim Helper] <플로키> (말풍선) 토르는 시끄럽고 오딘은 조용해. 난 조용한 쪽이 더 무서워.
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.2m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.0, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.1m)·복도 없음·길 True·속도 3.5
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.58m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [], 문 s_state 1·속도 3.64·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 52, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 길 기억 막힘(6/28): 지움 → 바닐라
+[Info   :Valheim Helper] 비욘 먹음: Blueberries → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(막힘): (256.7,43.9,441.8)→(240.1, 43.9, 434.3)
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.5, 43.9, 436.2)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 비욘 쉴 때 벌통: 꿀 찬 것 4
+[Info   :Valheim Helper] <비욘> 꿀 좀 따 올게.
+[Info   :Valheim Helper] DIAG 비욘 나가기 접음: 목표 바뀜 (231.3, 43.4, 448.2) (1.5초)
+[Info   :Valheim Helper] 비욘 벌통 꿀 2 거둠 (231.27, 43.38, 448.21)
+[Info   :Valheim Helper] 길 기억 지움(부서짐): (230.9, 44.7, 448.3) 곁 2개, 남은 105
+[Info   :Valheim Helper] 길 기억: (240.2,43.9,438.0)→(231.3, 43.4, 448.2) 점 24, 모두 106
+[Info   :Valheim Helper] 비욘 벌통 꿀 2 거둠 (228.45, 43.73, 450.88)
+[Info   :Valheim Helper] 길 기억: (231.5,43.4,446.5)→(228.4, 43.7, 450.9) 점 8, 모두 107
+[Info   :Valheim Helper] 비욘 벌통 꿀 2 거둠 (225.53, 43.62, 447.85)
+[Info   :Valheim Helper] 길 기억 지움(부서짐): (225.4, 44.5, 448.6) 곁 1개, 남은 106
+[Info   :Valheim Helper] 비욘 벌통 꿀 2 거둠 (225.41, 43.52, 444.46)
+[Info   :Valheim Helper] 비욘 꿀: Hive → Home (꿀 8)
+[Info   :Valheim Helper] 비욘 꿀: Home → Store (꿀 8)
+[Info   :Valheim Helper] 길 기억: (225.7,43.6,446.3)→(257.8, 44.1, 452.0) 점 54, 모두 107
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(7.2m)으로
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.39): (255.7,44.4,453.2)→(241.1, 43.9, 433.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (241.2, 43.9, 431.0)·문 앞 (238.1, 43.9, 423.2)(8.4m)·복도 없음·길 True·속도 3.4
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (238.7, 43.9, 423.6)·문 앞 (238.1, 43.9, 423.2)(0.7m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (1.9초, 더 걸음 0.0초·문 충돌체 1.07m, 나 (239.8, 43.9, 424.7)·문틀 (239.0, 43.9, 424.1)·문 (239.0, 43.9, 424.1)·바깥 (238.1, 43.9, 423.2)·piece_chest_blackmetal(Clone)까지 8.8m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.13m·문 옆으로 0.12m, 안쪽으로 [], 문 s_state 1·속도 3.04·앞 39°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG Unload 넣음 8개 → 상자 1:64345 집에서 25.0m
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (241.2,43.9,431.0)→(238.1, 43.9, 423.2)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(4.7m)으로
+[Info   :Valheim Helper] 길 기억: (239.8,43.9,424.8)→(255.1, 43.9, 443.2) 점 43, 모두 108
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (252.7, 43.9, 442.7)·문 앞 (258.3, 43.9, 443.4)(5.7m)·복도 없음·길 True·속도 3.1
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (255.2, 43.9, 440.5)·문 앞 (258.3, 43.9, 443.4)(4.3m)·복도 없음·길 True·속도 2.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.59m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.06m·문 옆으로 0.07m, 안쪽으로 [], 문 s_state 1·속도 3.67·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG Unload 넣음 3개 → 상자 1:65130 집에서 9.2m
+[Info   :Valheim Helper] 길 기억 안 함(되돌아감): (252.7,43.9,442.7)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 1:64165 집에서 16.1m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (27.8초) 짐 [Bowx1, SpearCarapacex1, ShieldSilverx1, HelmetDrakex1, ArmorWolfChestx1, ArmorWolfLegsx1, Demisterx1, MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, ArrowPoisonx20, Honeyx3] 지킴 12 skip 0
+[Info   :Valheim Helper] <비욘> 꿀 8개. 한 번 쏘였지만 이 정도면 남는 장사지.
+[Info   :Valheim Helper] 길 기억 그대로(옛 길 4.3m가 더 짧음): (256.6,43.9,441.8)→(252.1, 43.9, 437.0)
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(0.7m)으로 나감 (나 (256.8, 43.9, 442.0)·벽 3/4·방금 나온 문 False·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (1.6초, 지붕 True, 나 (258.4, 43.9, 442.9)·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] 길 기억: (253.4,43.9,438.3)→(257.8, 44.1, 452.0) 점 29, 모두 109
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] <플로키> (말풍선) 검은 숲에서 본 길은 지도보다 복잡했어.
+[Info   :Valheim Helper] <라그나> (말풍선) 가 보면 알겠지. 서두르진 말고.
+[Info   :Valheim Helper] 라그나 들고 간 음식 먹음: RoyalJelly → 최대 체력 40
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.32): (257.9,43.9,450.1)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (249.9, 43.9, 437.3)·문 앞 (258.3, 43.9, 443.4)(10.5m)·복도 없음·길 True·속도 3.0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.2초, 더 걸음 0.0초·문 충돌체 0.51m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.11m·문 옆으로 0.12m, 안쪽으로 [], 문 s_state 1·속도 3.50·앞 7°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 51, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (249.9,43.9,437.3)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: RoyalJelly → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.36): (256.7,43.9,441.9)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(5.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (240.3, 43.9, 437.6)·문 앞 (235.3, 43.9, 442.0)(6.6m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (239.8, 43.9, 439.2)·문 앞 (235.3, 43.9, 442.0)(5.3m)·복도 없음·길 True·속도 2.8
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 플로키 들고 간 음식 먹음: Cloudberry → 최대 체력 38
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.59m, 나 (236.8, 43.9, 440.4)·문틀 (236.2, 43.9, 441.1)·문 (236.2, 43.9, 441.1)·바깥 (235.3, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.05m·문 옆으로 0.06m, 안쪽으로 [collider/piece_stonecutter(Clone) 0.0m], 문 s_state 1·속도 0.00·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 57, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(막힘): (240.3,43.9,437.6)→(235.3, 43.9, 442.0)
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(2.2m)으로 나감 (나 (236.7, 43.9, 440.4)·벽 3/4·방금 나온 문 False·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 길 기억 다시 걸어 봄(옛 4.9m): 바닐라 → 더 짧으면 바꿈
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.9초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 우리 집 기둥 봤어? 내가 결 맞춰 세운 거야! 히히.
+[Info   :Valheim Helper] <라그나> (말풍선) 그래, 여기가 우리 땅이야.
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] <라그나> (말풍선) 울타리 한쪽이 기울었더군. 누가 기댔나?
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 내가 더 많이 했어! 세어 봐! 히히.
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.50): (238.0,43.9,441.4)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 13.1m·높이 0.0, 자리 (242.3, 43.9, 440.7), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 6, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 collider(piece, 0.9m, 위 hearth(Clone)) / 가슴 없음, 땅 0.6m, 앞 1m 땅 -0.6m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 0.5m 높이 -1.0~0.0 크기 2.8x2.8][collider:Box 루트 hearth(Clone) 2.2m 높이 0.0~0.6 크기 4.9x4.9][stone_floor_2x2(Clone):...
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.2m)·복도 없음·길 True·속도 3.4
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.9, 43.9, 441.7)·문 앞 (258.3, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.57m, 나 (256.8, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [], 문 s_state 1·속도 3.64·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: Blueberries → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억: (256.7,43.9,441.9)→(240.1, 43.9, 434.3) 점 28, 모두 110
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.3, 43.9, 436.2)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 시인의 미드 얘기 알지? 마시면 말이 술술... 킥킥, 난 원래 술술이야.
+[Info   :Valheim Helper] <라그나> (말풍선) 네가 그렇게 말하니 더 마시고 싶군.
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.46): (239.1,43.9,441.2)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 8.4m·높이 0.0, 자리 (246.8, 43.9, 443.5), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 2, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 없음 / 가슴 없음, 땅 0.9m, 앞 1m 땅 -0.9m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.9m 높이 -1.0~0.0 크기 2.8x2.8][collider:Box 루트 wood_pole_log_4(Clone) 1.3m 높이 0.0~4.0 크기 0.6x0.6][New:Box 루트 piece_walltorch(Clone) 0.9m 높이 1.7~2.7 크...
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.3, 43.9, 443.4)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.0, 43.9, 441.1)·문 앞 (258.3, 43.9, 443.4)(3.3m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.2초, 더 걸음 0.0초·문 충돌체 0.51m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.11m·문 옆으로 0.12m, 안쪽으로 [], 문 s_state 1·속도 3.50·앞 7°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 53, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.3,43.9,443.4)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 55, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.4m): (256.7,43.9,441.9)→(240.1, 43.9, 434.3) 점 28, 모두 110
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.4, 43.9, 436.2)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] <라그나> (말풍선) 새 땅을 먼저 밟는 건 어떤 기분일까?
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] <플로키> (말풍선) ...바다는 아무도 안 봐줘. 그래서 좋아.
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.37): (238.5,43.9,440.9)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 라그나 쉴 때 밭 (248,459): 다 자람 0, 빈자리 0, 씨앗 계획 True → 볼 것 없음
+[Info   :Valheim Helper] 라그나 쉴 때 벌통: 꿀 찬 것 2
+[Info   :Valheim Helper] <라그나> 벌들은 쉬지도 않는군. 꿀 좀 나눠 받으러 가 볼까.
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 내려가기 점 훑기: (258, 45, 457) 둘레 40m, 새 13개(모두 46), 48ms
+[Info   :Valheim Helper] 뛰어내리기 고름: (260.0, 45.0, 457.0) → (227.9, 43.2, 436.0), 끝 (250.0, 45.2, 452.9) 높이 1.6m, 계단 길 59.6m
+[Info   :Valheim Helper] 뛰어내리기 착지: (255.8, 44.1, 457.3), 1.7초
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 8.5m·높이 0.0, 자리 (246.6, 43.9, 443.5), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 2, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 없음 / 가슴 없음, 땅 0.9m, 앞 1m 땅 -0.9m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.9m 높이 -1.0~0.0 크기 2.8x2.8][collider:Box 루트 wood_pole_log_4(Clone) 1.4m 높이 0.0~4.0 크기 0.6x0.6][New:Box 루트 piece_walltorch(Clone) 1.0m 높이 1.7~2.7 크...
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.4)·문 앞 (258.3, 43.9, 443.4)(11.2m)·복도 없음·길 True·속도 3.5
+[Info   :Valheim Helper] 라그나 벌통 꿀 2 거둠 (225.63, 43.30, 438.73)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.0, 43.9, 441.1)·문 앞 (258.3, 43.9, 443.4)(3.3m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] 라그나 들고 간 음식 먹음: Honey → 최대 체력 45
+[Info   :Valheim Helper] 길 기억: (239.2,43.2,447.9)→(225.6, 43.3, 438.7) 점 27, 모두 111
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 라그나 벌통 꿀 2 거둠 (227.91, 43.16, 436.00)
+[Info   :Valheim Helper] 라그나 꿀: Hive → Home (꿀 4)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.2초, 더 걸음 0.0초·문 충돌체 0.51m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.11m·문 옆으로 0.12m, 안쪽으로 [], 문 s_state 1·속도 3.50·앞 7°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 53, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.4)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] <플로키> (말풍선) 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] 비욘 먹음: RoyalJelly → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.36): (256.7,43.9,441.9)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 비욘 쉴 때 발효기: 할 것 없음
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (244.1, 43.9, 445.8)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 라그나 꿀: Home → Store (꿀 4)
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.0, 43.9, 443.2)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 1:65129 집에서 12.9m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (7.7초) 짐 [MeadHealthMajorx3, MeadPoisonResistx2, MeadFrostResistx2, BarleyWinex2, ShieldBlackmetalx1, CapeFeatherx1, Wishbonex1, BowDraugrFangx1, KnifeButcherx1, HelmetPaddedx1, ArmorPaddedCuirassx1, ArmorPaddedGreavesx1, ArrowWoodx30, ArrowFlintx10, PickaxeIronx1, AxeIronx1, Honeyx3] 지킴 17 skip 0
+[Info   :Valheim Helper] <라그나> 벌통에서 꿀 4개 땄어.
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 2.74): (255.8,44.0,457.6)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] 비욘 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 플로키 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.55): (239.1,43.9,441.7)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.3, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.9, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.59m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.06m·문 옆으로 0.07m, 안쪽으로 [], 문 s_state 1·속도 3.66·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 55, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.3,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: Blueberries → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.4m): (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 28, 모두 111
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.3, 43.9, 436.2)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <라그나> (말풍선) vhtest, 신들이 정말 우릴 지켜볼까? 넌 어떻게 생각하지?
+[Info   :Valheim Helper] <플로키> (말풍선) vhtest, 너도 신들을 믿어? 믿어야 해!
+[Info   :Valheim Helper] 비욘: 거점 둘레 순찰 시작(점 8)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.37): (238.5,43.9,440.9)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] <비욘> 멧돼지는 내가 맡는다. 물러나 있어.
+[Info   :Valheim Helper] DIAG 비욘 원거리 있는데 근접: 플레이어 멂 거리 14.4m
+[Info   :Valheim Helper] DIAG 싸움 비욘→$enemy_boar: 거리 11.2/1.9 휘두름 0 적 체력 10/10 공격 중 False 봄 False 높이차 1.1 물 False 쉼 2 막음 1 적 내 것 True
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 비욘 막음: $enemy_boar 8.7 → 0.3
+[Info   :Valheim Helper] 비욘: $enemy_boar에 멀리서(플레이어 64m 밖) 직접 피해 38
+[Info   :Valheim Helper] 비욘 떨굼 기다림: (359.9,468.2) 3종
+[Info   :Valheim Helper] 비욘 장소 기억 6,7: Won, 무리 [Boar×1★0]
+[Info   :Valheim Helper] 비욘 잡은 몬스터 떨굼 주움 $item_leatherscraps x1
+[Info   :Valheim Helper] 비욘 잡은 몬스터 떨굼 주움 $item_boar_meat x1
+[Info   :Valheim Helper] 비욘 떨굼 그만(E133): 40m 밖, 자리에서 40.2m
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 61.2m·높이 1.5, 자리 (312.5, 42.4, 464.4), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 36, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 Terrain(terrain, 1.1m, 위 _Zone(Clone)) / 가슴 없음, 땅 0.0m, 앞 1m 땅 0.4m, 둘레 [Terrain:메시 루트 _Zone(Clone) 18.1m 높이 -10.6~3.7 크기 64.0x64.0]
+[Info   :Valheim Helper] 길 기억: (293.7,44.5,460.1)→(290.2, 45.1, 459.1) 점 8, 모두 112
+[Info   :Valheim Helper] 길 기억: (289.2,45.3,459.0)→(285.2, 45.2, 458.3) 점 6, 모두 113
+[Info   :Valheim Helper] 길 기억: (285.9,45.4,458.4)→(276.7, 45.4, 458.0) 점 13, 모두 114
+[Info   :Valheim Helper] 길 기억: (277.7,44.5,458.1)→(274.0, 44.9, 458.0) 점 9, 모두 115
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.31): (272.5,44.4,458.0)→(267.1, 44.6, 452.6)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(6.6m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (261.9, 43.8, 447.4)·문 앞 (258.3, 43.9, 443.4)(5.3m)·복도 없음·길 True·속도 4.1
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (2.9초, 더 걸음 0.0초·문 충돌체 0.50m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.12m·문 옆으로 0.13m, 안쪽으로 [], 문 s_state 1·속도 3.49·앞 7°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 도구한테도 이름 붙여 줘. 그래야 말을 들어, 킥킥.
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.5m): (256.7,43.9,441.9)→(240.1, 43.9, 434.3) 점 28, 모두 115
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.4, 43.9, 436.3)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <라그나> (말풍선) 내가 고쳐 두지.
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] <라그나> (말풍선) vhtest, 너라면 저 너머에 뭐가 있을 것 같나?
+[Info   :Valheim Helper] <플로키> (말풍선) vhtest, 그거 재밌다! 히히.
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.37): (238.6,43.9,440.9)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] 플로키 들고 간 음식 먹음: Cloudberry → 최대 체력 38
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 8.4m·높이 0.0, 자리 (246.8, 43.9, 443.5), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 2, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 없음 / 가슴 없음, 땅 0.9m, 앞 1m 땅 -0.9m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 1.9m 높이 -1.0~0.0 크기 2.8x2.8][collider:Box 루트 wood_pole_log_4(Clone) 1.3m 높이 0.0~4.0 크기 0.6x0.6][New:Box 루트 piece_walltorch(Clone) 0.9m 높이 1.7~2.7 크...
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.3, 43.9, 443.4)·문 앞 (258.3, 43.9, 443.4)(11.0m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.0, 43.9, 441.1)·문 앞 (258.3, 43.9, 443.4)(3.3m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.61m, 나 (256.8, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.05m·문 옆으로 0.06m, 안쪽으로 [], 문 s_state 1·속도 3.70·앞 3°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 52, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.3,43.9,443.4)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: Blueberries → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.5m): (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 28, 모두 115
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.2m)으로 나감 (나 (241.4, 43.9, 436.3)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <라그나> (말풍선) 소시지 한 줄이면 하루는 버티지.
+[Info   :Valheim Helper] <플로키> (말풍선) 먹자! 먹자! 다 먹자!
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.37): (238.6,43.9,440.9)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.9, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 3.7
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.59m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.06m·문 옆으로 0.07m, 안쪽으로 [], 문 s_state 1·속도 3.66·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 53, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: RoyalJelly → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.35): (256.7,43.9,441.8)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (244.1, 43.9, 445.8)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.7초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 밤 시작 3420초 (2번째)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.49): (239.1,43.9,441.7)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.0m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (255.1, 43.8, 451.1)·문 앞 (258.3, 43.9, 443.4)(8.4m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (2.9초, 더 걸음 0.0초·문 충돌체 0.51m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.0m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.11m·문 옆으로 0.12m, 안쪽으로 [], 문 s_state 1·속도 3.51·앞 7°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 55, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (255.1,43.8,451.1)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 57, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.5m): (256.6,43.9,441.8)→(240.1, 43.9, 434.3) 점 29, 모두 115
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.4, 43.9, 436.3)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 길 막힘(4.0m, 나 (240.2, 43.9, 437.9)·문 앞 (238.6, 43.9, 441.6)·막은 것 없음) → 옆으로 비킴 (0.9, 0.0, 0.4)
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 밤엔 숲이 수군거려. 킥킥, 우리 얘기 하나 봐.
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] <라그나> (말풍선) 고향 하늘도 저랬지.
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.7초, 지붕 True, 나 (237.1, 43.9, 443.2)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] E072 저장 전: 상태 NotSaving, 끝 없음, 바뀐 조각 5/0, 저장 번호 185
+[Info   :Valheim Helper] 일꾼 기억 파일 저장: te4st41.vh-memory 70495바이트, 지식 65구역(7370자), 장소 338자, 적 33자, 길 115개(62742자)
+[Info   :Valheim Helper] <라그나> (말풍선) 넥을 쓰러뜨리고 나니 길이 편해졌어.
+[Info   :Valheim Helper] <플로키> (말풍선) 도끼보다 먼저 눈을 써야 해.
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.40): (241.4,43.9,436.3)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.2m)·복도 없음·길 True·속도 3.5
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.0, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.1m)·복도 없음·길 True·속도 3.5
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.61m, 나 (256.8, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.05m·문 옆으로 0.06m, 안쪽으로 [], 문 s_state 1·속도 3.70·앞 3°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: Blueberries → 최대 체력 55, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.5m): (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 29, 모두 115
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (241.5, 43.9, 436.3)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 길 막힘(4.0m, 나 (240.2, 43.9, 438.0)·문 앞 (238.6, 43.9, 441.6)·막은 것 없음) → 옆으로 비킴 (0.9, 0.0, 0.4)
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.7초, 지붕 True, 나 (237.1, 43.9, 443.2)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <플로키> (말풍선) 검은 숲의 냄새를 기억해. 길을 잃으면 도움이 돼.
+[Info   :Valheim Helper] <라그나> (말풍선) 그 땅의 적부터 알아 둬야 해.
+[Info   :Valheim Helper] 라그나 들고 간 음식 먹음: Honey → 최대 체력 33
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.40): (241.5,43.9,436.3)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 13.1m·높이 0.0, 자리 (242.3, 43.9, 440.7), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 6, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 collider(piece, 0.9m, 위 hearth(Clone)) / 가슴 없음, 땅 0.6m, 앞 1m 땅 -0.6m, 둘레 [stone_floor_2x2(Clone):Box 루트 stone_floor_2x2(Clone) 0.5m 높이 -1.0~0.0 크기 2.8x2.8][collider:Box 루트 hearth(Clone) 2.2m 높이 0.0~0.6 크기 4.9x4.9][stone_floor_2x2(Clone):...
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.3m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.2, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.5
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (256.9, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.2m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.57m, 나 (256.8, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [], 문 s_state 1·속도 3.64·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 53, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.2,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 55, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.6m): (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 29, 모두 115
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.0m)으로 나감 (나 (240.7, 43.9, 436.2)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <플로키> (말풍선) vhtest, 저 별자리 보여? 내가 이름 붙였어. 플로키 별!
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] <라그나> (말풍선) 나도 같은 생각이야.
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.1, 43.9, 443.1)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 비욘: 거점 둘레 순찰 시작(점 8)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.39): (238.5,43.9,441.0)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 33.7m·높이 -0.6, 자리 (221.6, 44.5, 446.2), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 23, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 없음 / 가슴 없음, 땅 0.6m, 앞 1m 땅 -1.0m, 둘레 [Terrain:메시 루트 _Zone(Clone) 29.6m 높이 -4.2~13.8 크기 64.0x64.0][base_model:메시 루트 Rock_3(Clone) 2.0m 높이 -2.2~2.4 크기 5.3x4.9]
+[Info   :Valheim Helper] 길 기억: (220.6,44.7,446.4)→(222.9, 43.8, 446.1) 점 6, 모두 116
+[Info   :Valheim Helper] 길 기억: (225.2,43.9,445.7)→(230.0, 43.5, 445.1) 점 10, 모두 117
+[Info   :Valheim Helper] 길 기억: (230.9,43.4,444.9)→(233.2, 43.6, 444.3) 점 6, 모두 118
+[Info   :Valheim Helper] 길 기억: (239.1,43.9,441.7)→(243.0, 43.9, 442.6) 점 8, 모두 119
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.1m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.3, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.0m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.2, 43.9, 442.1)·문 앞 (258.3, 43.9, 443.4)(1.8m)·복도 없음·길 True·속도 3.8
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.58m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.07m, 안쪽으로 [], 문 s_state 1·속도 3.65·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 53, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.3,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: RoyalJelly → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.35): (256.7,43.9,441.8)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.3m)으로 나감 (나 (244.1, 43.9, 445.8)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.8초, 지붕 True, 나 (237.0, 43.9, 443.2)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <플로키> (말풍선) vhtest! 밤이야, 불 옆으로 와! 이야기해 줄게, 무서운 걸로! 킥킥.
+[Info   :Valheim Helper] <라그나> (말풍선) 플로키가 오늘은 쓸 만한 말을 하는군.
+[Info   :Valheim Helper] DIAG 낮 시작 3965초
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.55): (239.1,43.9,441.7)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 라그나 쉴 때 밭 (248,459): 다 자람 0, 빈자리 0, 씨앗 계획 True → 볼 것 없음
+[Info   :Valheim Helper] 라그나 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 플로키 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] DIAG 비욘 Prep 걷기 10초: 상자까지 8.0m·높이 0.0, 자리 (247.1, 43.9, 443.5), 목표 (255.1, 43.9, 443.2), 길 완전(모퉁이 2, 끝이 목표에서 1.4m·높이 0.1), 문길 False, 앞 발 없음 / 가슴 없음, 땅 0.9m, 앞 1m 땅 -0.9m, 둘레 [collider:Box 루트 wood_pole_log_4(Clone) 1.1m 높이 0.0~4.0 크기 0.6x0.6][New:Box 루트 piece_walltorch(Clone) 0.7m 높이 1.7~2.7 크기 0.5x0.5][collider:Box 루트 piece_throne01(Clone) 1.7m 높이 0.2~2.5 크기 1.0x1.0][stone...
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(10.2m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (247.3, 43.9, 443.5)·문 앞 (258.3, 43.9, 443.4)(11.1m)·복도 없음·길 True·속도 3.6
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (257.0, 43.9, 441.8)·문 앞 (258.3, 43.9, 443.4)(2.1m)·복도 없음·길 True·속도 3.4
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.2초, 더 걸음 0.0초·문 충돌체 0.58m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [], 문 s_state 1·속도 3.64·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (247.3,43.9,443.5)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: Blueberries → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 16.9m): (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 29, 모두 119
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.1m)으로 나감 (나 (240.9, 43.9, 436.2)·벽 3/4·방금 나온 문 True·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 비욘 쉴 때 벌통: 꿀 찬 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 비욘 쉴 때 발효기: Unload MeadHealthMajor 6 ((245, 44, 449))
+[Info   :Valheim Helper] <비욘> 발효기를 본다. 금방 온다.
+[Info   :Valheim Helper] DIAG 비욘 나가기 접음: 목표 바뀜 (242.7, 43.9, 446.3) (2.3초)
+[Info   :Valheim Helper] <라그나> (말풍선) 좋은 미드는 좋은 친구 같지.
+[Info   :Valheim Helper] DIAG 발효기 줍기: 떨어진 것 6, 첫째 거리 1.7m, CanPickup False, 주인 True, 짐 빈칸 18
+[Info   :Valheim Helper] 길 기억 지움(부서짐): (243.7, 43.9, 444.9) 곁 6개, 남은 113
+[Info   :Valheim Helper] 비욘 발효기 꺼냄 MeadHealthMajor: 짐에 9
+[Info   :Valheim Helper] 길 기억: (240.6,43.9,438.7)→(242.7, 43.9, 446.3) 점 11, 모두 114
+[Info   :Valheim Helper] <플로키> (말풍선) ...너무 마시면 손이 떨려. 끌질은 내일 하자.
+[Info   :Valheim Helper] DIAG Unload 넣음 10개 → 상자 1:65129 집에서 11.0m
+[Info   :Valheim Helper] DIAG 비욘 상자 (251.6, 43.9, 433.9): navmesh 자리가 2.6m 위 → 같은 층 접근점 (252.7, 43.9, 432.7)(1.6m), 후보 3
+[Info   :Valheim Helper] 길 기억: (242.9,43.9,444.1)→(246.9, 43.9, 450.3) 점 10, 모두 115
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(9.1m)으로
+[Info   :Valheim Helper] 길 기억: (246.3,43.9,448.1)→(252.7, 43.9, 432.7) 점 32, 모두 116
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (254.0, 43.9, 433.4)·문 앞 (259.8, 43.9, 442.0)(10.3m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 3.1초: 나 (258.5, 43.9, 440.8)·문 앞 (259.8, 43.9, 442.0)(1.7m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞 0.8m에서 막힘 → 거기서 엶
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state -1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.5초, 더 걸음 0.4초·문 충돌체 0.91m, 나 (257.2, 43.9, 439.3)·문틀 (258.9, 43.9, 441.1)·문 (258.8, 43.9, 441.1)·바깥 (259.8, 43.9, 442.0)·piece_chest_blackmetal(Clone)까지 7.8m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 -0.07m·문 옆으로 -0.08m, 안쪽으로 [], 문 s_state -1·속도 3.90·앞 0°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 1:64166 집에서 19.1m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (14.0초) 짐 [Bowx1, SpearCarapacex1, ShieldSilverx1, HelmetDrakex1, ArmorWolfChestx1, ArmorWolfLegsx1, Demisterx1, MeadPoisonResistx2, MeadFrostResistx2, ArrowPoisonx20, Honeyx3] 지킴 11 skip 0
+[Info   :Valheim Helper] 비욘 꺼낸 것 정리 끝: 짐에 남은 MeadHealthMajor 0
+[Info   :Valheim Helper] 비욘 계획 끝: 완료 1, 실패 0, 막힘 0
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(1.9m)으로 나감 (나 (257.0, 43.9, 440.6)·벽 4/4·방금 나온 문 False·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (1.8초, 지붕 True, 나 (258.3, 43.9, 443.1)·목표 (257.8, 44.1, 452.0))
+[Info   :Valheim Helper] 길 기억: (256.8,43.9,438.9)→(257.8, 44.1, 452.0) 점 22, 모두 117
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.32): (257.9,43.9,450.1)→(237.8, 43.3, 445.4)
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] 비욘 장비 챙김: $item_mead_hp_major x3, 방어력 60
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 2.16): (238.2,43.3,446.4)→(246.9, 43.9, 450.3)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 앞 벽 → 문 darkwood_gate(Clone)(7.4m)으로
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 앞으로 0.1초: 나 (250.1, 43.9, 443.4)·문 앞 (258.3, 43.9, 443.4)(8.2m)·복도 없음·길 True·속도 3.9
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 문 지나 안으로 (3.1초, 더 걸음 0.0초·문 충돌체 0.58m, 나 (256.7, 43.9, 441.9)·문틀 (257.4, 43.9, 442.5)·문 (257.4, 43.9, 442.5)·바깥 (258.3, 43.9, 443.4)·piece_chest_blackmetal(Clone)까지 2.1m)
+[Info   :Valheim Helper] DIAG 비욘 piece_chest_blackmetal(Clone) 문 길 포기: 안에서도 가림, 문틀 옆으로 0.07m·문 옆으로 0.08m, 안쪽으로 [], 문 s_state 1·속도 3.64·앞 4°·문 열리길 기다림 → 그 자리에서
+[Info   :Valheim Helper] 비욘 먹음:  → 최대 체력 54, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 안 함(문 못 엶): (250.1,43.9,443.4)→(258.3, 43.9, 443.4)
+[Info   :Valheim Helper] 비욘 먹음: MushroomYellow → 최대 체력 56, 들고 감:  (음식 3개)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 17.0m): (256.7,43.9,441.8)→(240.1, 43.9, 434.3) 점 30, 모두 117
+[Info   :Valheim Helper] DIAG 비욘 나가기 문 앞 곧은 길 막힘 → 처음부터 길찾기
+[Info   :Valheim Helper] DIAG 비욘 안에서 문 darkwood_gate(Clone)(열림 True)(7.2m)으로 나감 (나 (241.2, 43.9, 436.3)·벽 3/4·방금 나온 문 False·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] DIAG 비욘 나가기 문짝이 내 쪽으로 열림(s_state 1) → 닫고 반대로 다시 엶
+[Info   :Valheim Helper] DIAG 비욘 나와서 문 darkwood_gate(Clone) 바로 닫음(문짝이 내 쪽 s_state 1)
+[Info   :Valheim Helper] DIAG 비욘 문 지나 밖으로 (2.7초, 지붕 True, 나 (237.1, 43.9, 443.2)·목표 (237.8, 43.3, 445.4))
+[Info   :Valheim Helper] <라그나> (말풍선) vhtest, 집으로 돌아왔군. 이제 다음 길을 생각해 보자.
+[Info   :Valheim Helper] <플로키> (말풍선) vhtest, 라그나는 늘 그렇게 말해. 킥킥, 듣지 마.
+[Info   :Valheim Helper] 우리 먹이(집 (257.85, 44.11, 451.95)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 우리 먹이(집 (258.18, 45.14, 456.68)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (258.18, 45.14, 456.68)): 가축 상자 1, 야생 4, 고름 없음
+[Info   :Valheim Helper] 우리 먹이(집 (260.95, 45.08, 455.54)): 가축 상자 1, 길들인 것 0, 배고픔 0, 먹일 것 0
+[Info   :Valheim Helper] 길들이기(집 (260.95, 45.08, 455.54)): 가축 상자 1, 야생 3, 고름 없음
+[Info   :Valheim Helper] 플로키 들고 간 음식 먹음: Cloudberry → 최대 체력 38
+[Info   :Valheim Helper] OK   일꾼 플로키 일함 (표본 295/840, 쉼 64%)
+[Info   :Valheim Helper] OK   일꾼 라그나 일함 (표본 207/840, 쉼 75%)
+[Info   :Valheim Helper] DIAG 일 비율 플로키: PlanJob 54, GatherJob 21, 쉼 545, TidyJob 220
+[Info   :Valheim Helper] DIAG 일 비율 라그나: GatherJob 152, FarmJob 22, 쉼 633, TameJob 27, HoneyJob 6
+[Info   :Valheim Helper] DIAG 일 비율 비욘: 동행 라그나 68, 쉼 630, GuardReadyJob 97, HoneyJob 20, FarmJob 9, PlanJob 9, 싸움 7
+[Info   :Valheim Helper] DIAG 위험한 일 동행: 라그나 GatherJob 5초 동행 비욘 (0초 만)
+[Info   :Valheim Helper] OK   위험한 일에 동행 붙음(호위병 부름): 동행 1번, 호위병 바빠 기다림 0번, 호위병 쉬는데 안 옴 0번
+[Info   :Valheim Helper] OK   급한 명령 먼저: 플로키 2초 만에 시작, 하던 '구리' 대기열 맨 앞
+[Info   :Valheim Helper] OK   대기열 순서대로 꺼냄: 꺼냄 6번, 건너뜀 0번
+[Info   :Valheim Helper] OK   일꾼끼리 서로 막힘 없음: 부딪힘 0번, 15초 넘게 막힘 0번
+[Info   :Valheim Helper] OK   남의 물건 가져감 되풀이 없음: 0번, 가장 많이 빼앗긴 - 0번
+[Info   :Valheim Helper] DIAG 빈틈 | 일꾼 | 동작 | 횟수 | 평균(초) | 최악(초) | 합(초) |
+[Info   :Valheim Helper] DIAG 빈틈 |---|---|---|---|---|---|
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | 쉼(Idle) | 15 | 177.8 | 1315.3 | 2668 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | 쉼(Idle) | 10 | 316.3 | 1270.0 | 3163 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | Plan.Wait | 2 | 99.7 | 107.3 | 199 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Gather.먼길생략 | 1 | 77.3 | 77.3 | 77 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | Plan.Load | 7 | 4.4 | 26.3 | 31 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | Tidy.TidyToFrom | 76 | 0.7 | 8.6 | 55 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Gather.GoZone | 7 | 1.5 | 7.2 | 11 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | Tidy.TidyToTarget | 78 | 0.9 | 5.7 | 67 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Gather.Return | 7 | 1.1 | 5.5 | 8 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Gather.Deposit | 43 | 0.6 | 4.4 | 28 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | Gather.Prep | 8 | 0.9 | 2.9 | 7 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | 쉼(Home) | 26 | 0.6 | 2.8 | 16 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Farm.FarmGo | 5 | 0.9 | 2.6 | 5 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | Tidy.TidyStore | 21 | 0.8 | 2.3 | 17 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Gather.Unload | 12 | 0.9 | 1.8 | 11 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Gather.Collect | 12 | 0.6 | 1.4 | 7 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | 싸움 | 2 | 0.9 | 1.4 | 2 |
+[Info   :Valheim Helper] DIAG 빈틈 | 라그나 | Honey.HoneyHive | 2 | 1.3 | 1.3 | 3 |
+[Info   :Valheim Helper] DIAG 빈틈 | 플로키 | Gather.Collect | 3 | 0.8 | 1.0 | 2 |
+[Info   :Valheim Helper] OK   알아들음 '여기 밭 좀 만들어 줘, 반경 3' → 라그나 Farm #3
+[Info   :Valheim Helper] OK   해냄 '여기 밭 좀 만들어 줘, 반경 3' (라그나) → 당근 새싹 14/4 (475초)
+[Info   :Valheim Helper] OK   알아들음 '나무 10개 좀 해 와' → 라그나 Item Wood 10
+[Info   :Valheim Helper] OK   해냄 '나무 10개 좀 해 와' (라그나) → Wood 13/10 (230초)
+[Info   :Valheim Helper] OK   알아들음 '돌 10개 캐 와' → 라그나 Item Stone 10
+[Info   :Valheim Helper] OK   해냄 '돌 10개 캐 와' (라그나) → Stone 22/10 (875초)
+[Info   :Valheim Helper] OK   알아들음 '구리 10개' → 라그나 Item CopperOre 10
+[Info   :Valheim Helper] OK   해냄 '구리 10개' (라그나) → CopperOre 10/10 (345초)
+[Info   :Valheim Helper] OK   알아들음 '활 3개 만들어 줘' → 플로키 Item Bow 3
+[Info   :Valheim Helper] OK   해냄 '활 3개 만들어 줘' (플로키) → Bow 3/3 (345초)
+[Info   :Valheim Helper] OK   알아들음 '구리주괴 10' → 플로키 Item Copper 10
+[Info   :Valheim Helper] OK   해냄 '구리주괴 10' (플로키) → Copper 10/10 (335초)
+[Info   :Valheim Helper] OK   알아들음 '세트 1번 하나 만들어 줘' → 플로키 SetMake 1 #1
+[Info   :Valheim Helper] OK   해냄 '세트 1번 하나 만들어 줘' (플로키) → 활·곤봉 1/1 (345초)
+[Info   :Valheim Helper] OK   알아들음 '고기 4개 구워 줘' → 플로키 Item CookedMeat 4
+[Info   :Valheim Helper] OK   해냄 '고기 4개 구워 줘' (플로키) → CookedMeat 4/4 (380초)
+[Info   :Valheim Helper] FAIL 알아들음 '멧돼지 잡아서 생고기 6개 가져와' → 해석 없음
+[Info   :Valheim Helper] FAIL 해냄 '멧돼지 잡아서 생고기 6개 가져와' (누구도 안 맡음) → RawMeat 0/6 (4200초)
+[Info   :Valheim Helper] FAIL 해냄 '(명령 없음 — 쉬는 일꾼이 알아서 가축 먹이, 11-14 !가축 없앰)' (누구도 안 맡음) → 멧돼지 먹음 0/1 (4200초)
+[Info   :Valheim Helper] OK   알아들음 '상자 정리 좀 해 줘' → 플로키 Tidy
+[Info   :Valheim Helper] OK   해냄 '상자 정리 좀 해 줘' (플로키) → 옮길 것 39 → 0 1/1 (1550초)
+[Info   :Valheim Helper] OK   알아들음 '급해, 나무 5개 먼저 해 와' → 플로키 Item Wood 5
+[Info   :Valheim Helper] OK   해냄 '급해, 나무 5개 먼저 해 와' (플로키) → Wood 13/5 (230초)
+[Info   :Valheim Helper] --- NPC 대사 ---
+[Info   :Valheim Helper] 플로키: 까마귀가 앞서 왔군. 내가 늦었어.
+[Info   :Valheim Helper] 라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+[Info   :Valheim Helper] 비욘: 명령만 해. 적이 오면 내가 먼저 맞는다.
+[Info   :Valheim Helper] 플로키: 흠... 어떻게 하지?
+[Info   :Valheim Helper] 라그나: 혼자 가면 무모한 길이군. 비욘, 같이 가지.
+[Info   :Valheim Helper] 플로키: 구리 10개에 필요한 구리부터 챙기겠어. 10분쯤.
+[Info   :Valheim Helper] 라그나: 오면 바로 가자. 짐은 다 챙겼어.
+[Info   :Valheim Helper] 플로키: 반경 3짜리 밭이군. 작지만 실속 있게 일구지. 바로 시작할게.
+[Info   :Valheim Helper] 라그나: 밭 자리로 적었어. 3m야.
+[Info   :Valheim Helper] 라그나: 구리 광석 10부터. 그다음은 네 일이야.
+[Info   :Valheim Helper] 플로키: 잠시 기다려. 머릿속으로 궁리하는 중이야.
+[Info   :Valheim Helper] 플로키: 히히, 나무 10개 해 올게! 나무는 내가 제일 좋아하는 거라니까~
+[Info   :Valheim Helper] 라그나: 구리 광석 10이 먼저야. 끝나면 갈게.
+[Info   :Valheim Helper] 플로키: 나무의 결처럼 일이 한쪽으로만 흐르진 않아.
+[Info   :Valheim Helper] 플로키: 돌 10개군. 캐 오지. 가까운 데서 실리 있게 모아 올게.
+[Info   :Valheim Helper] 라그나: 구리 광석 10 끝나는 대로 가지.
+[Info   :Valheim Helper] 플로키: 흠흠, 오딘이라면 어떻게 할까?
+[Info   :Valheim Helper] 플로키: 활 3개 만들어 달라는 거지? 히히, 재료 모아서 작업대에서 뚝딱 만들어 줄게!
+[Info   :Valheim Helper] 플로키: 조잡한 활 3개. 부족한 건 조잡한 활야. 5분쯤 필요해.
+[Info   :Valheim Helper] 플로키: 까마귀한테 물어볼게. 쉿, 대답하는 중이야.
+[Info   :Valheim Helper] 플로키: 히히, 1번 세트 하나 만들어 올게! 재료 모아서 뚝딱 해낼 테니까 기대해~
+[Info   :Valheim Helper] 플로키: 세트 1번 1! 좋아, 세트 1번부터 구해 올게. 5분쯤!
+[Info   :Valheim Helper] 플로키: 흐음... 흠! 아냐, 잠깐... 거의 왔어!
+[Info   :Valheim Helper] 플로키: 히히, 고기 4개 구워 올게! 지글지글 맛있게 구워서 가져올 테니까 기대해~
+[Info   :Valheim Helper] 플로키: 요리한 멧돼지 고기를 구하러 간다! 요리한 멧돼지 고기 4은 5분쯤 뒤에!
+[Info   :Valheim Helper] 플로키: 흠흠, 오딘이라면...
+[Info   :Valheim Helper] 라그나: 알아듣고 싶은데 모르겠군. "명령어"를 봐 줘.
+[Info   :Valheim Helper] 플로키: 음... 신들이 뭐라고 하는지 들어 볼게.
+[Info   :Valheim Helper] 플로키: 히히, 상자 정리하라고? 알겠어! 거점 상자들 종류별로 착착 정리해 놓을게~
+[Info   :Valheim Helper] 플로키: 하던 거 끝나면 바로 할게!
+[Info   :Valheim Helper] 플로키: 음음... 생각 중!
+[Info   :Valheim Helper] 플로키: 히히, 급하다고? 알겠어! 나무 5개 먼저 휙 베어 올게, 나무는 내가 제일 좋아하는 거니까~
+[Info   :Valheim Helper] 플로키: 좋아! 이게 더 급해 보이네.
+[Info   :Valheim Helper] 플로키: 서툴러서 오래 걸려! 기다려 줘.
+[Info   :Valheim Helper] 플로키: 좋아, 어린 회색 난쟁이. 어느 쪽 신이 널 보냈는지 알아보자.
+[Info   :Valheim Helper] 플로키: 나무 13개를 가져왔다. 그곳은 다음에도 기억하겠어.
+[Info   :Valheim Helper] 플로키: 조잡한 활 3개를 만들려면 조잡한 활부터 구해야 해. 5분쯤 걸려.
+[Info   :Valheim Helper] 플로키: 세트 1번 없이는 시작 못 해. 세트 1번 1개에 5분쯤 들겠어.
+[Info   :Valheim Helper] 플로키: 머릿속에 다 그려졌어! 요리한 멧돼지 고기 모으고 요리한 멧돼지 고기 4개. 5분이면 돼, 킥킥.
+[Info   :Valheim Helper] 라그나: 구리 광석 10개, 상자에 넣었어. 오가는 길도 눈에 담아 뒀지.
+[Info   :Valheim Helper] 라그나: 당근 19, 심으러 가지. 땅이 기다리고 있어.
+[Info   :Valheim Helper] 라그나: 0개 심었지. 서두르지 말고 기다리자. 밭에 빈자리가 없어 19개는 못 심었어.
+[Info   :Valheim Helper] 플로키: 히히, 이 나무는 결이 예쁘다. 너 배가 될래?
+[Info   :Valheim Helper] 플로키: 정리 정리!
+[Info   :Valheim Helper] 비욘: 벌들이 일했으니 나도 일하지. 꿀 거두러 간다.
+[Info   :Valheim Helper] 비욘: 벌통에서 꿀 36개 땄어.
+[Info   :Valheim Helper] 라그나: 처음엔 다 느린 법이야. 다녀올게.
+[Info   :Valheim Helper] 비욘: 쉴 바엔 밭일이지.
+[Info   :Valheim Helper] 비욘: 밭에 당근 19 심으러 갈게.
+[Info   :Valheim Helper] 비욘: 다 심었어. 19개.
+[Info   :Valheim Helper] 비욘: 익은 건 따고, 빈 통은 채운다.
+[Info   :Valheim Helper] 라그나: 멧돼지. 놈이 허점을 보일 때 치지.
+[Info   :Valheim Helper] 플로키: ...조용하다. 너무 조용하면 로키가 뭘 꾸미는 거야.
+[Info   :Valheim Helper] 라그나: 나무 48개, 하나도 안 빠졌어. 자, 다음은 뭘 하지?
+[Info   :Valheim Helper] 라그나: 아직 손이 서툴러서 좀 걸려. 다녀오지.
+[Info   :Valheim Helper] 플로키: 라그나, 나무 48개라. 손이 바빴겠군.
+[Info   :Valheim Helper] 라그나: 별것 아니야.
+[Info   :Valheim Helper] 플로키: vhtest, 나무 벨 땐 고맙다고 해. 안 그러면 나무가 삐쳐!
+[Info   :Valheim Helper] 라그나: 돌 22개. 다음엔 더 짧은 길로 가 보지.
+[Info   :Valheim Helper] 플로키: 라그나, 돌을 그렇게 많이? 혼자 다 했어?
+[Info   :Valheim Helper] 라그나: 다음엔 더 가져올게.
+[Info   :Valheim Helper] 라그나: 길들일 짐승이 보이는군. 먹이 놓고 올게.
+[Info   :Valheim Helper] 라그나: vhtest, 저 너머를 보려면 먼저 여기서 살아남아야지.
+[Info   :Valheim Helper] 라그나: 먹이 놓고 왔어. 몇 번 더 주면 되겠군.
+[Info   :Valheim Helper] 라그나: 먹이로 마음을 사 보지. 사람이랑 다를 게 없어.
+[Info   :Valheim Helper] 라그나: ...이 땅을 처음 밟은 자는 누구였을까.
+[Info   :Valheim Helper] 비욘: 밭을 둘러보고 오자. 농사는 쉬면 안 돼.
+[Info   :Valheim Helper] 라그나: 먹이를 먹었군. 곧 길들겠어.
+[Info   :Valheim Helper] 라그나: 들짐승을 먹이로 길들여 보지.
+[Info   :Valheim Helper] 비욘: 당근 19 심으러 가지. 날씨가 좋군.
+[Info   :Valheim Helper] 비욘: 씨 6개, 땅에 맡겼어. 밭에 빈자리가 없어 13개는 못 심었어.
+[Info   :Valheim Helper] 비욘: 미드 통을 챙긴다. 문은 비우지 않는다.
+[Info   :Valheim Helper] 라그나: 저 짐승, 사람을 믿게 할 수 있을까? 해 볼까.
+[Info   :Valheim Helper] 라그나: ...저 너머엔 무엇이 있을까.
+[Info   :Valheim Helper] 라그나: 먹이는 먹는데 아직 경계하는군. 시간이 필요해.
+[Info   :Valheim Helper] 라그나: 다들 신의 뜻이라지. 정말 그럴까.
+[Info   :Valheim Helper] 라그나: 길은 보이는데, 아직 갈 때가 아니야.
+[Info   :Valheim Helper] 라그나: 오딘도 모든 답을 알지는 못했겠지.
+[Info   :Valheim Helper] 라그나: 먹이 주고 멀리서 지켜볼게.
+[Info   :Valheim Helper] 플로키: 라그나, 당근의 잎이 바람을 잘 받더군.
+[Info   :Valheim Helper] 라그나: 거두는 날엔 같이 하자고.
+[Info   :Valheim Helper] 라그나: 창고가 비면 거점 근처부터 떠올리면 돼. 깃털이 있으니.
+[Info   :Valheim Helper] 플로키: ...그건 그냥 두는 게 나을지도. 이유는 몰라, 느낌이야.
+[Info   :Valheim Helper] 플로키: 라그나, 우리 처음 만났을 때 기억나? 넌 나 미친놈 취급했지! 킥킥.
+[Info   :Valheim Helper] 라그나: 좋은 분이셨군. 맞는 말이야.
+[Info   :Valheim Helper] 비욘: 방패 뒤에 있어. 넥이 먼저 오게 둬.
+[Info   :Valheim Helper] 라그나: 넥을 이기는 건 힘보다 거리야.
+[Info   :Valheim Helper] 플로키: 킥킥, 그 녀석 아직도 발할라 문 앞에서 투덜대고 있을걸.
+[Info   :Valheim Helper] 비욘: 어린 회색 난쟁이다. 비켜.
+[Info   :Valheim Helper] 라그나: 플로키, 신을 믿으면서도 신에게 거스를 수 있다고 생각하나?
+[Info   :Valheim Helper] 플로키: 토르는 시끄럽고 오딘은 조용해. 난 조용한 쪽이 더 무서워.
+[Info   :Valheim Helper] 비욘: 꿀 좀 따 올게.
+[Info   :Valheim Helper] 비욘: 꿀 8개. 한 번 쏘였지만 이 정도면 남는 장사지.
+[Info   :Valheim Helper] 플로키: 검은 숲에서 본 길은 지도보다 복잡했어.
+[Info   :Valheim Helper] 라그나: 가 보면 알겠지. 서두르진 말고.
+[Info   :Valheim Helper] 플로키: 라그나, 우리 집 기둥 봤어? 내가 결 맞춰 세운 거야! 히히.
+[Info   :Valheim Helper] 라그나: 그래, 여기가 우리 땅이야.
+[Info   :Valheim Helper] 라그나: 울타리 한쪽이 기울었더군. 누가 기댔나?
+[Info   :Valheim Helper] 플로키: 라그나, 내가 더 많이 했어! 세어 봐! 히히.
+[Info   :Valheim Helper] 플로키: 라그나, 시인의 미드 얘기 알지? 마시면 말이 술술... 킥킥, 난 원래 술술이야.
+[Info   :Valheim Helper] 라그나: 네가 그렇게 말하니 더 마시고 싶군.
+[Info   :Valheim Helper] 라그나: 새 땅을 먼저 밟는 건 어떤 기분일까?
+[Info   :Valheim Helper] 플로키: ...바다는 아무도 안 봐줘. 그래서 좋아.
+[Info   :Valheim Helper] 라그나: 벌들은 쉬지도 않는군. 꿀 좀 나눠 받으러 가 볼까.
+[Info   :Valheim Helper] 플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] 라그나: 벌통에서 꿀 4개 땄어.
+[Info   :Valheim Helper] 라그나: vhtest, 신들이 정말 우릴 지켜볼까? 넌 어떻게 생각하지?
+[Info   :Valheim Helper] 플로키: vhtest, 너도 신들을 믿어? 믿어야 해!
+[Info   :Valheim Helper] 비욘: 멧돼지는 내가 맡는다. 물러나 있어.
+[Info   :Valheim Helper] 플로키: 라그나, 도구한테도 이름 붙여 줘. 그래야 말을 들어, 킥킥.
+[Info   :Valheim Helper] 라그나: 내가 고쳐 두지.
+[Info   :Valheim Helper] 라그나: vhtest, 너라면 저 너머에 뭐가 있을 것 같나?
+[Info   :Valheim Helper] 플로키: vhtest, 그거 재밌다! 히히.
+[Info   :Valheim Helper] 라그나: 소시지 한 줄이면 하루는 버티지.
+[Info   :Valheim Helper] 플로키: 먹자! 먹자! 다 먹자!
+[Info   :Valheim Helper] 플로키: 라그나, 밤엔 숲이 수군거려. 킥킥, 우리 얘기 하나 봐.
+[Info   :Valheim Helper] 라그나: 고향 하늘도 저랬지.
+[Info   :Valheim Helper] 라그나: 넥을 쓰러뜨리고 나니 길이 편해졌어.
+[Info   :Valheim Helper] 플로키: 도끼보다 먼저 눈을 써야 해.
+[Info   :Valheim Helper] 플로키: 검은 숲의 냄새를 기억해. 길을 잃으면 도움이 돼.
+[Info   :Valheim Helper] 라그나: 그 땅의 적부터 알아 둬야 해.
+[Info   :Valheim Helper] 플로키: vhtest, 저 별자리 보여? 내가 이름 붙였어. 플로키 별!
+[Info   :Valheim Helper] 라그나: 나도 같은 생각이야.
+[Info   :Valheim Helper] 플로키: vhtest! 밤이야, 불 옆으로 와! 이야기해 줄게, 무서운 걸로! 킥킥.
+[Info   :Valheim Helper] 라그나: 플로키가 오늘은 쓸 만한 말을 하는군.
+[Info   :Valheim Helper] 비욘: 발효기를 본다. 금방 온다.
+[Info   :Valheim Helper] 라그나: 좋은 미드는 좋은 친구 같지.
+[Info   :Valheim Helper] 플로키: ...너무 마시면 손이 떨려. 끌질은 내일 하자.
+[Info   :Valheim Helper] 라그나: vhtest, 집으로 돌아왔군. 이제 다음 길을 생각해 보자.
+[Info   :Valheim Helper] 플로키: vhtest, 라그나는 늘 그렇게 말해. 킥킥, 듣지 마.
+[Info   :Valheim Helper] 판정: FAIL (32/35)
+[Info   :Valheim Helper] 멈춤 6번, 합 282초, 가장 긴 166초(FarmJob/FarmStore) [많은 것: FarmJob/FarmStore 166초, TidyJob/TidyStore 82초, TidyJob/TidyToTarget 17초] · 일부러 선 것 10번, 합 356초, 가장 긴 108초(만들기 차례 기다림 PlanJob/Wait) [많은 것: 만들기 차례 기다림 PlanJob/Wait 201초, 멀리선 이동 생략 GatherJob/GoZone 77초, 설비 앞 일 PlanJob/Load 27초] (선 표본 5890, 가장 오래 165.8초) · 헛휘두름 31번 · 기다림 합 문 바꿔 여는 중 4초, 문 열리길 기다림 121초, 만들기 차례 기다림 200초, 문간 사람 비...
+[Info   :Valheim Helper] 끝 정리: 생물 1·땅의 물건 8·통나무 0 치움
+[Info   :Valheim Helper] E072 저장 전: 상태 NotSaving, 끝 없음, 바뀐 조각 5/0, 저장 번호 186
+[Info   :Valheim Helper] 일꾼 기억 파일 저장: te4st41.vh-memory 70410바이트, 지식 65구역(7367자), 장소 338자, 적 33자, 길 117개(62660자)
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75045 구역 136458에서 뺌
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75047 구역 134916에서 뺌

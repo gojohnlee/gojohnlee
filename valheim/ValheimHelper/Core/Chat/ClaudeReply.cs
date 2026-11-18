@@ -91,10 +91,20 @@ namespace ValheimHelper.Core.Chat
             return r;
         }
 
-        /// <summary>앞뒤 설명이 붙어 와도 첫 { 부터 짝이 맞는 } 까지.</summary>
+        /// <summary>답에서 JSON 덩어리를 뽑는다. 맨 위 {…}가 여럿이면(회차 820: 답 뒤에 "Wait — …바꾼다" 하고 고친 JSON을 또 붙임) 마지막 것.</summary>
         static string ExtractObject(string s)
         {
             if (s == null) throw new FormatException();
+            int depth = 0, open = -1; bool inStr = false, esc = false; string last = null;
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (inStr) { if (esc) esc = false; else if (c == '\\') esc = true; else if (c == '"') inStr = false; continue; }
+                if (c == '"' && depth > 0) inStr = true;
+                else if (c == '{') { if (depth++ == 0) open = i; }
+                else if (c == '}' && depth > 0 && --depth == 0) last = s.Substring(open, i - open + 1);
+            }
+            if (last != null) return last;
             int start = s.IndexOf('{'), end = s.LastIndexOf('}');
             if (start < 0 || end <= start) throw new FormatException();
             return s.Substring(start, end - start + 1);
