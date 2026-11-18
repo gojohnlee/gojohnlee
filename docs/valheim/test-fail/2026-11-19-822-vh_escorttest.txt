@@ -1,0 +1,283 @@
+# vh_escorttest FAIL 발췌 — 2026-11-19 03:31 회차 822 (diag 칸 + 그 시험 동안 모드 로그 줄)
+
+## diag
+=== vh_escorttest 2026-11-19 03:31:29 게임 1.0.21 Unity 6000.0.75f1 모드 0.3.8+2e5265d* (2026-11-19 03:30) 배속 3 ===
+플러그인: ChestName 1.1.2, Display BepInEx Info In-Game 2.0.2, Valheim Helper 0.3.8, Valheim Helper Test 0.3.8
+지난 시험 상자 1개 치움
+시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+자리 점검: 장소 Dolmen02 27m(반지름 8), 장소 WoodHouse1 49m(반지름 8), 장소 Dolmen02 51m(반지름 8), 장소 ShipSetting01 52m(반지름 24), 장소 Runestone_Meadows 76m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+OK   깃발·일꾼 둘·상자
+OK   호위병 생김 (비욘, 0초)
+OK   호위병이 떨어짐 (56m)
+OK   판단: 묻지 않고 호위병과 (GoTogether, 위험 0.35 Caution, 죽음 1.00 → 남은 곳이 다 위험 → 호위병과 같이)
+> !라그나 구리 10
+OK   질문 없이 일 + 호위병 동행 (Work, 비욘, Waiting, 호위병 Follow)
+OK   호위병이 멀리 있는 동안 출발 안 함 (0.0m 움직임, 호위병 28m, Waiting)
+OK   호위병이 곁에 오면 앞장섬 (2.9초, Leading)
+OK   멀리 건너가도 호위병을 곁으로 옮김 (0.0초, 옮김 1번, 호위병 0m, 동행 비욘)
+> !멈춰
+OK   멈추면 호위병도 쉼 (Home)
+> !플로키 구리 10
+OK   플로키가 호위병을 데려감 (비욘)
+> !라그나 구리 10
+OK   호위병이 바쁘면 거점에서 기다림 (Home, 대기열 1, 호위병 기다림 True)
+> !플로키 멈춰
+OK   호위병이 쉬게 되면 같이 출발 (0.5초, Work, 비욘)
+> !멈춰
+> !라그나 나무 5
+OK   안전한 나무는 혼자 (동행 없음)
+> !라그나 같이 가자
+OK   일하는 중 "!같이 가자" → 같은 일 + 호위병 동행 (Work, 비욘, 같은 일 True, 호위병 전 Home·-·대기열 0·쉼 True, 호위병 후 Follow·따라감 True)
+OK   !상태에 동행 이름 (벌목 나무 0/5 (비욘 동행))
+OK   적 프리팹 있음
+호위병 곁(3m): Flee 비율 2.02 (내 한 방 13.7, 갑옷 4, 배율 1.00, 체력 71/71, 적 [Greydwarf_Elite 150/15.0→13.0 13m])
+OK   호위병 곁에선 그 힘까지 셈 (내 한 방 13.7 > 혼자 9.2, 호위병 3m)
+> !멈춰
+싸움·도망으로 시험 시간 9초 멈춤
+> !라그나 나무 5
+FAIL 셋이면: 호위병·동료 일꾼 같이 (없음, 동행 비욘·-, 플로키 Idle·따라감 False)
+  상태(FAIL 순간): [41s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+    라그나 (-226.3,79.5,187.4) Work 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(293.8m) 기다림 False 걷기 False 뒤 0 새로 -107.7초 뒤 · 길 없음 · m_path 1: (-225.5, 79.9, 185.2) 길 True · MoveTo 가는 중((-226.2, 79.9, 184.6) 거리 3.2 뛰기 False)
+    플로키 (-221.7,77.5,159.4) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(273.1m) 기다림 False 걷기 False 뒤 0 새로 -107.7초 뒤 · 길 없음 · m_path 3: (-216.9, 76.9, 156.9) (-217.2, 76.9, 157.0) (-217.7, 76.8, 156.9) 길 True · MoveTo 가는 중((-217.7, 76.7, 156.9) 거리 1.5 뛰기 False)
+    비욘 (-226.7,79.2,189.8) Follow 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(295.7m) 기다림 False 걷기 False 뒤 0 새로 -107.7초 뒤 · 길 없음 · m_path 12: (-244.4, 82.0, 195.4) (-240.1, 82.6, 193.0) (-239.9, 82.6, 193.0) … (-215.3, 77.9, 161.0) 길 True · MoveTo 가는 중((-215.3, 77.9, 161.0) 거리 1.5 뛰기 True)
+> !멈춰
+> !멈춰
+OK   대사에 자리표시자 안 남음
+끝 상태: [43s] 라그나 hp70/70 21m Idle 짐4 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+멈춤 1번, 합 7초, 가장 긴 7초(GatherJob/Unload) [많은 것: GatherJob/Unload 7초] · 일부러 선 것 0번 (선 표본 35, 가장 오래 6.9초) · 헛휘두름 4번 · 기다림 합 없음
+--- 상태 흐름(3초마다, 최근 14개) ---
+[0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[3s] 라그나 hp71/71 2m GatherJob/Unload 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 비욘 hp25/25 44m (-259,167) Follow | 상자 0 | 생물 0
+[6s] 라그나 hp71/71 2m GatherJob/Unload 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 비욘 hp25/25 23m (-238,163) Follow | 상자 0 | 생물 0
+[9s] 라그나 hp71/71 259m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 비욘 hp25/25 260m (42,122) Home | 상자 0 | 생물 0
+[12s] 라그나 hp71/71 3m Idle 짐4 대기1 | 플로키 hp71/71 3m GatherJob/GoZone 짐4 대기0 | 비욘 hp25/25 4m (-218,156) Follow | 상자 0 | 생물 0
+[15s] 라그나 hp71/71 3m GatherJob/Approach 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 3m (-216,156) Follow | 상자 0 | 생물 0
+[18s] 라그나 hp71/71 6m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 5m (-217,163) 싸움 | 상자 0 | 생물 0
+[21s] 라그나 hp71/71 23m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 24m (-231,177) 싸움 | 상자 0 | 생물 0
+[24s] 라그나 hp71/71 43m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 41m (-242,190) 싸움 | 상자 0 | 생물 0
+[27s] 라그나 hp71/71 49m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 53m (-249,199) 싸움 | 상자 0 | 생물 0
+[30s] 라그나 hp71/71 32m GatherJob/Approach 짐4 대기0 | 플로키 hp71/71 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[33s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[36s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[39s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+--- NPC 대사 ---
+라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+플로키: 바다 냄새가 약해. 그래도 배는 만들 수 있겠어.
+비욘: 방패는 들었다. 길만 보여 줘.
+라그나: 혼자 가면 무모한 길이군. 비욘, 같이 가지.
+라그나: 여기야. 보이면 와.
+라그나: 알았어. 솔직히 좀 쉬고 싶었지.
+플로키: 남은 건 다음에 하지. 지금 돌아가겠어.
+플로키: 돌아왔다. 저 나무로 배의 뼈대를 그려 볼까?
+플로키: 혼자 가기엔 위험이 크군. 비욘, 나와 가자.
+라그나: 서두를 일 아니야. 비욘이랑 같이 가지.
+플로키: 흐음, 흠, 기다리는 동안 이 돌에 룬이나 새길까?
+플로키: 멈춰? 에이... 알았어, 집에 갈게.
+라그나: 비욘, 내가 길을 고르지. 네가 적을 살펴.
+라그나: 멈추지. 바다도 쉬는 날이 있으니까.
+플로키: 일은 멈췄어. 도끼날을 손봐야겠군.
+라그나: 집에 오니 좋군. 농사짓던 때가 생각나.
+플로키: 돌아왔어. 도끼를 내려놓지.
+라그나: 솜씨가 아직이라... 천천히 해 올게.
+라그나: 혼자보단 낫지. 비욘, 가자.
+라그나: 회색 난쟁이 투사가 끈질기군. 도와줘, 둘이면 금방이야.
+비욘: 회색 난쟁이 투사가 민다. 옆을 맡아!
+라그나: 좋아, 오늘은 여기까지. 깃발 앞에서 쉬지.
+플로키: 멈추래! 신들도 쉬라는 거겠지. 킥킥, 간다.
+플로키: 집이다아! 불씨도 날 반기네, 히히.
+라그나: 비욘, 함께 가지. 한 명은 길을, 한 명은 등을 보자.
+라그나: 천천히 와도 돼. 해는 아직 높아.
+라그나: 알았어. 필요하면 다시 불러.
+플로키: 좋아. 오늘은 여기까지 하지.
+라그나: 알았어. 연장 정리하고 쉬지.
+플로키: 에에? 손이 근질근질한데! 알았어, 알았어.
+판정: FAIL (18/19)
+시간: 48초
+프레임: 평균 216 FPS (실시간 16초)
+
+## 모드 로그 (184줄)
+[Info   :Valheim Helper] === vh_escorttest 시작
+[Info   :Valheim Helper] 시험: 까마귀 Hugin 치움 — 자리 (-212.9, 76.8, 147.2)·플레이어와 15.4m
+[Info   :Valheim Helper] 지난 시험 상자 1개 치움
+[Info   :Valheim Helper] 시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+[Info   :Valheim Helper] 거점 이동 (-215.80, 77.34, 158.57), 새 NPC 2명
+[Info   :Valheim Helper] <라그나> 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+[Info   :Valheim Helper] <플로키> 바다 냄새가 약해. 그래도 배는 만들 수 있겠어.
+[Info   :Valheim Helper] 자리 점검: 장소 Dolmen02 27m(반지름 8), 장소 WoodHouse1 49m(반지름 8), 장소 Dolmen02 51m(반지름 8), 장소 ShipSetting01 52m(반지름 24), 장소 Runestone_Meadows 76m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+[Info   :Valheim Helper] 시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] OK   깃발·일꾼 둘·상자
+[Info   :Valheim Helper] <비욘> 방패는 들었다. 길만 보여 줘.
+[Info   :Valheim Helper] OK   호위병 생김 (비욘, 0초)
+[Info   :Valheim Helper] 비욘: 경계 자리 = 문 옆 (-173.3, 79.6, 192.3)(거점에서 52.3m, 못 닿은 문 0)
+[Info   :Valheim Helper] 비욘: 순찰 점 고름 — 점 8 [0:120 1:120 2:80 3:80 4:120 5:120 6:120 7:120] 버림 []
+[Info   :Valheim Helper] OK   호위병이 떨어짐 (56m)
+[Info   :Valheim Helper] OK   판단: 묻지 않고 호위병과 (GoTogether, 위험 0.35 Caution, 죽음 1.00 → 남은 곳이 다 위험 → 호위병과 같이)
+[Info   :Valheim Helper] > !라그나 구리 10
+[Info   :Valheim Helper] 라그나 출발 전 판단 CopperOre 10: GoTogether None (위험 0.35 Caution, 죽음 1.00 → 남은 곳이 다 위험 → 호위병과 같이)
+[Info   :Valheim Helper] 라그나: 호위병 비욘과 같이 감(56m)
+[Info   :Valheim Helper] <라그나> 혼자 가면 무모한 길이군. 비욘, 같이 가지.
+[Info   :Valheim Helper] <라그나> 여기야. 보이면 와.
+[Info   :Valheim Helper] OK   질문 없이 일 + 호위병 동행 (Work, 비욘, Waiting, 호위병 Follow)
+[Info   :Valheim Helper] OK   호위병이 멀리 있는 동안 출발 안 함 (0.0m 움직임, 호위병 28m, Waiting)
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Unload → Prep
+[Info   :Valheim Helper] OK   호위병이 곁에 오면 앞장섬 (2.9초, Leading)
+[Info   :Valheim Helper] 라그나: 동행 비욘을 곁으로 옮김(266m, 건너감)
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Prep → Tool
+[Info   :Valheim Helper] OK   멀리 건너가도 호위병을 곁으로 옮김 (0.0초, 옮김 1번, 호위병 0m, 동행 비욘)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 알았어. 솔직히 좀 쉬고 싶었지.
+[Info   :Valheim Helper] <플로키> 남은 건 다음에 하지. 지금 돌아가겠어.
+[Info   :Valheim Helper] <플로키> 돌아왔다. 저 나무로 배의 뼈대를 그려 볼까?
+[Info   :Valheim Helper] 멈춤 7.2초: 라그나 GatherJob/Unload / 입력 1.24, 달리기 입력 True, 수영 False, 땅닿음 False, 속도 2.0, 발밑 Terrain(terrain, 위 _Zone(Clone)), 높이 77.1/땅 65.7/원래땅 65.7/물 -10000.0, 구역 True, 캡슐 r0.49 밑+0.00 위+1.85 겹침 VH_Worker(Clone)/VH_Worker(Clone)(-0.93,+0.00,+0.37)×0.469 · 앞 0.6m 빔
+[Info   :Valheim Helper] OK   멈추면 호위병도 쉼 (Home)
+[Info   :Valheim Helper] DIAG 라그나: 길 첫 점 (32.0, 66.2, 125.2)이 벽 너머(나 (-219.0, 78.0, 159.5), 몸이 navmesh 밖) → 목표 (-214.8, 77.2, 156.3) 쪽 곧장
+[Info   :Valheim Helper] > !플로키 구리 10
+[Info   :Valheim Helper] 플로키 출발 전 판단 CopperOre 10: GoTogether None (위험 0.35 Caution, 죽음 1.00 → 남은 곳이 다 위험 → 호위병과 같이)
+[Info   :Valheim Helper] 플로키: 호위병 비욘과 같이 감(245m)
+[Info   :Valheim Helper] <플로키> 혼자 가기엔 위험이 크군. 비욘, 나와 가자.
+[Info   :Valheim Helper] OK   플로키가 호위병을 데려감 (비욘)
+[Info   :Valheim Helper] > !라그나 구리 10
+[Info   :Valheim Helper] 라그나 출발 전 판단 CopperOre 10: WaitGuard None (위험 0.35 Caution, 죽음 1.00 → 남은 곳이 다 위험·호위병 바쁨 → 기다렸다 같이)
+[Info   :Valheim Helper] <라그나> 서두를 일 아니야. 비욘이랑 같이 가지.
+[Info   :Valheim Helper] 플로키: 동행 비욘을 곁으로 옮김(245m, 건너감)
+[Info   :Valheim Helper] <플로키> 흐음, 흠, 기다리는 동안 이 돌에 룬이나 새길까?
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 플로키 작업 CopperOre: Unload → Prep
+[Info   :Valheim Helper] 플로키 작업 CopperOre: Prep → Tool
+[Info   :Valheim Helper] 플로키 작업 CopperOre: Tool → Search
+[Info   :Valheim Helper] 플로키 작업 CopperOre: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-217.7, 76.7, 157.0)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 플로키 작업 CopperOre: 구역 0,2로(220m, 탐험 False)
+[Info   :Valheim Helper] 플로키 작업 CopperOre: Search → GoZone
+[Info   :Valheim Helper] OK   호위병이 바쁘면 거점에서 기다림 (Home, 대기열 1, 호위병 기다림 True)
+[Info   :Valheim Helper] > !플로키 멈춰
+[Info   :Valheim Helper] <플로키> 멈춰? 에이... 알았어, 집에 갈게.
+[Info   :Valheim Helper] 라그나 출발 전 판단 CopperOre 10: GoTogether None (위험 0.35 Caution, 죽음 1.00 → 남은 곳이 다 위험 → 호위병과 같이)
+[Info   :Valheim Helper] 라그나: 호위병 비욘과 같이 감(4m)
+[Info   :Valheim Helper] <라그나> 비욘, 내가 길을 고르지. 네가 적을 살펴.
+[Info   :Valheim Helper] OK   호위병이 쉬게 되면 같이 출발 (0.5초, Work, 비욘)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 멈추지. 바다도 쉬는 날이 있으니까.
+[Info   :Valheim Helper] <플로키> 일은 멈췄어. 도끼날을 손봐야겠군.
+[Info   :Valheim Helper] <라그나> 집에 오니 좋군. 농사짓던 때가 생각나.
+[Info   :Valheim Helper] <플로키> 돌아왔어. 도끼를 내려놓지.
+[Info   :Valheim Helper] > !라그나 나무 5
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 5: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 솜씨가 아직이라... 천천히 해 올게.
+[Info   :Valheim Helper] OK   안전한 나무는 혼자 (동행 없음)
+[Info   :Valheim Helper] > !라그나 같이 가자
+[Info   :Valheim Helper] 라그나: 호위병 비욘과 같이 감(3m)
+[Info   :Valheim Helper] <라그나> 혼자보단 낫지. 비욘, 가자.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] OK   일하는 중 "!같이 가자" → 같은 일 + 호위병 동행 (Work, 비욘, 같은 일 True, 호위병 전 Home·-·대기열 0·쉼 True, 호위병 후 Follow·따라감 True)
+[Info   :Valheim Helper] OK   !상태에 동행 이름 (벌목 나무 0/5 (비욘 동행))
+[Info   :Valheim Helper] OK   적 프리팹 있음
+[Info   :Valheim Helper] 적 배움: Greydwarf_Elite 체력 150, 한 방 30
+[Info   :Valheim Helper] 적 속성 피해 Greydwarf_Elite: 없음
+[Info   :Valheim Helper] 라그나 곁 동료 셈에서 뺌: 플로키 Back, 비욘 Flee (그쪽 판단으론 같이 안 싸움)
+[Info   :Valheim Helper] 라그나 도망: 회색 난쟁이 투사 등 1, 잃을 체력 비율 2.02 (내 한 방 13.7, 갑옷 4, 배율 1.00, 체력 71/71, 적 [Greydwarf_Elite 150/15.0→13.0 13m]) → Away, 거점 3m → 58m
+[Info   :Valheim Helper] <라그나> 회색 난쟁이 투사가 끈질기군. 도와줘, 둘이면 금방이야.
+[Info   :Valheim Helper] 라그나 작업 Wood: 위험 → 구역 -3,2 피함, 목표 Beech1(위험에서 10m, 집에서 6m) 버림
+[Info   :Valheim Helper] 라그나 작업 Wood: Approach → Search
+[Info   :Valheim Helper] 비욘 곁 동료 셈에서 뺌: 플로키 Back (그쪽 판단으론 같이 안 싸움)
+[Info   :Valheim Helper] 비욘 도망: 회색 난쟁이 투사 등 1, 잃을 체력 비율 13.80 (내 한 방 6.8, 갑옷 0, 배율 1.00, 체력 25/25, 적 [Greydwarf_Elite 150/15.0→15.0 15m]) → Away, 거점 5m → 56m
+[Info   :Valheim Helper] <비욘> 회색 난쟁이 투사가 민다. 옆을 맡아!
+[Info   :Valheim Helper] 호위병 곁(3m): Flee 비율 2.02 (내 한 방 13.7, 갑옷 4, 배율 1.00, 체력 71/71, 적 [Greydwarf_Elite 150/15.0→13.0 13m])
+[Info   :Valheim Helper] OK   호위병 곁에선 그 힘까지 셈 (내 한 방 13.7 > 혼자 9.2, 호위병 3m)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 좋아, 오늘은 여기까지. 깃발 앞에서 쉬지.
+[Info   :Valheim Helper] <플로키> 멈추래! 신들도 쉬라는 거겠지. 킥킥, 간다.
+[Info   :Valheim Helper] <플로키> 집이다아! 불씨도 날 반기네, 히히.
+[Info   :Valheim Helper] 라그나 도망 끝: 도착
+[Info   :Valheim Helper] 라그나 장소 기억 -3,2: Fled, 무리 [Greydwarf_Elite×1★0]
+[Info   :Valheim Helper] 비욘 도망 끝: 도착
+[Info   :Valheim Helper] 싸움·도망으로 시험 시간 9초 멈춤
+[Info   :Valheim Helper] 비욘 장소 기억 -3,2: Fled, 무리 [Greydwarf_Elite×1★0]
+[Info   :Valheim Helper] > !라그나 나무 5
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 5: GoTogether None (위험 3.13 Impossible, 죽음 0.00 → 남은 곳이 다 위험 → 호위병과 같이)
+[Info   :Valheim Helper] 라그나: 호위병 비욘과 같이 감(22m)
+[Info   :Valheim Helper] <라그나> 비욘, 함께 가지. 한 명은 길을, 한 명은 등을 보자.
+[Info   :Valheim Helper] 라그나: 동행 비욘을 곁으로 옮김(22m, 안 보는 곳)
+[Info   :Valheim Helper] <라그나> 천천히 와도 돼. 해는 아직 높아.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] 라그나: Beech1 캐기 시작(뿌리 (-226.2,79.9,184.6)까지 3.5m, 높이차 -0.5)
+[Info   :Valheim Helper] 라그나 작업 Wood: Approach → Work
+[Info   :Valheim Helper] 라그나: 공격 판정이 안 닿아 직접 피해 11 (Beech1 Lod0, 맞은 점까지 3.2m, 방향 (0.0,0.0,-1.0))
+[Info   :Valheim Helper] 라그나: 공격 판정이 안 닿아 직접 피해 12 (Beech1 Lod0, 맞은 점까지 2.9m, 방향 (0.0,0.0,-1.0))
+[Info   :Valheim Helper] 라그나: 공격 판정이 안 닿아 직접 피해 15 (Beech1 Lod0, 맞은 점까지 2.9m, 방향 (0.0,0.0,-1.0))
+[Info   :Valheim Helper] FAIL 셋이면: 호위병·동료 일꾼 같이 (없음, 동행 비욘·-, 플로키 Idle·따라감 False)
+[Info   :Valheim Helper]   상태(FAIL 순간): [41s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper]     라그나 (-226.3,79.5,187.4) Work 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(293.8m) 기다림 False 걷기 False 뒤 0 새로 -107.7초 뒤 · 길 없음 · m_path 1: (-225.5, 79.9, 185.2) 길 True · MoveTo 가는 중((-226.2, 79.9, 184.6) 거리 3.2 뛰기 False)
+[Info   :Valheim Helper]     플로키 (-221.7,77.5,159.4) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(273.1m) 기다림 False 걷기 False 뒤 0 새로 -107.7초 뒤 · 길 없음 · m_path 3: (-216.9, 76.9, 156.9) (-217.2, 76.9, 157.0) (-217.7, 76.8, 156.9) 길 True · MoveTo 가는 중((-217.7, 76.7, 156.9) 거리 1.5 뛰기 False)
+[Info   :Valheim Helper]     비욘 (-226.7,79.2,189.8) Follow 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(295.7m) 기다림 False 걷기 False 뒤 0 새로 -107.7초 뒤 · 길 없음 · m_path 12: (-244.4, 82.0, 195.4) (-240.1, 82.6, 193.0) (-239.9, 82.6, 193.0) … (-215.3, 77.9, 161.0) 길 True · MoveTo 가는 중((-215.3, 77.9, 161.0) 거리 1.5 뛰기 True)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 알았어. 필요하면 다시 불러.
+[Info   :Valheim Helper] <플로키> 좋아. 오늘은 여기까지 하지.
+[Info   :Valheim Helper] 내려가기 점 훑기: (-215, 77, 156) 둘레 40m, 새 0개(모두 0), 6ms
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 알았어. 연장 정리하고 쉬지.
+[Info   :Valheim Helper] <플로키> 에에? 손이 근질근질한데! 알았어, 알았어.
+[Info   :Valheim Helper] <플로키> 나무 냄새가 익숙해졌어.
+[Info   :Valheim Helper] OK   대사에 자리표시자 안 남음
+[Info   :Valheim Helper] 끝 상태: [43s] 라그나 hp70/70 21m Idle 짐4 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] 멈춤 1번, 합 7초, 가장 긴 7초(GatherJob/Unload) [많은 것: GatherJob/Unload 7초] · 일부러 선 것 0번 (선 표본 35, 가장 오래 6.9초) · 헛휘두름 4번 · 기다림 합 없음
+[Info   :Valheim Helper] --- 상태 흐름(3초마다, 최근 14개) ---
+[Info   :Valheim Helper] [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [3s] 라그나 hp71/71 2m GatherJob/Unload 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 비욘 hp25/25 44m (-259,167) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] [6s] 라그나 hp71/71 2m GatherJob/Unload 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 비욘 hp25/25 23m (-238,163) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] [9s] 라그나 hp71/71 259m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 비욘 hp25/25 260m (42,122) Home | 상자 0 | 생물 0
+[Info   :Valheim Helper] [12s] 라그나 hp71/71 3m Idle 짐4 대기1 | 플로키 hp71/71 3m GatherJob/GoZone 짐4 대기0 | 비욘 hp25/25 4m (-218,156) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] [15s] 라그나 hp71/71 3m GatherJob/Approach 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 3m (-216,156) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] [18s] 라그나 hp71/71 6m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 5m (-217,163) 싸움 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [21s] 라그나 hp71/71 23m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 24m (-231,177) 싸움 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [24s] 라그나 hp71/71 43m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 41m (-242,190) 싸움 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [27s] 라그나 hp71/71 49m Idle 짐4 대기0 | 플로키 hp71/71 2m Idle 짐4 대기0 | 비욘 hp25/25 53m (-249,199) 싸움 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [30s] 라그나 hp71/71 32m GatherJob/Approach 짐4 대기0 | 플로키 hp71/71 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] [33s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] [36s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] [39s] 라그나 hp70/70 31m GatherJob/Work 짐4 대기0 | 플로키 hp70/70 6m Idle 짐4 대기0 | 비욘 hp25/25 33m (-227,190) Follow | 상자 0 | 생물 0
+[Info   :Valheim Helper] --- NPC 대사 ---
+[Info   :Valheim Helper] 라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+[Info   :Valheim Helper] 플로키: 바다 냄새가 약해. 그래도 배는 만들 수 있겠어.
+[Info   :Valheim Helper] 비욘: 방패는 들었다. 길만 보여 줘.
+[Info   :Valheim Helper] 라그나: 혼자 가면 무모한 길이군. 비욘, 같이 가지.
+[Info   :Valheim Helper] 라그나: 여기야. 보이면 와.
+[Info   :Valheim Helper] 라그나: 알았어. 솔직히 좀 쉬고 싶었지.
+[Info   :Valheim Helper] 플로키: 남은 건 다음에 하지. 지금 돌아가겠어.
+[Info   :Valheim Helper] 플로키: 돌아왔다. 저 나무로 배의 뼈대를 그려 볼까?
+[Info   :Valheim Helper] 플로키: 혼자 가기엔 위험이 크군. 비욘, 나와 가자.
+[Info   :Valheim Helper] 라그나: 서두를 일 아니야. 비욘이랑 같이 가지.
+[Info   :Valheim Helper] 플로키: 흐음, 흠, 기다리는 동안 이 돌에 룬이나 새길까?
+[Info   :Valheim Helper] 플로키: 멈춰? 에이... 알았어, 집에 갈게.
+[Info   :Valheim Helper] 라그나: 비욘, 내가 길을 고르지. 네가 적을 살펴.
+[Info   :Valheim Helper] 라그나: 멈추지. 바다도 쉬는 날이 있으니까.
+[Info   :Valheim Helper] 플로키: 일은 멈췄어. 도끼날을 손봐야겠군.
+[Info   :Valheim Helper] 라그나: 집에 오니 좋군. 농사짓던 때가 생각나.
+[Info   :Valheim Helper] 플로키: 돌아왔어. 도끼를 내려놓지.
+[Info   :Valheim Helper] 라그나: 솜씨가 아직이라... 천천히 해 올게.
+[Info   :Valheim Helper] 라그나: 혼자보단 낫지. 비욘, 가자.
+[Info   :Valheim Helper] 라그나: 회색 난쟁이 투사가 끈질기군. 도와줘, 둘이면 금방이야.
+[Info   :Valheim Helper] 비욘: 회색 난쟁이 투사가 민다. 옆을 맡아!
+[Info   :Valheim Helper] 라그나: 좋아, 오늘은 여기까지. 깃발 앞에서 쉬지.
+[Info   :Valheim Helper] 플로키: 멈추래! 신들도 쉬라는 거겠지. 킥킥, 간다.
+[Info   :Valheim Helper] 플로키: 집이다아! 불씨도 날 반기네, 히히.
+[Info   :Valheim Helper] 라그나: 비욘, 함께 가지. 한 명은 길을, 한 명은 등을 보자.
+[Info   :Valheim Helper] 라그나: 천천히 와도 돼. 해는 아직 높아.
+[Info   :Valheim Helper] 라그나: 알았어. 필요하면 다시 불러.
+[Info   :Valheim Helper] 플로키: 좋아. 오늘은 여기까지 하지.
+[Info   :Valheim Helper] 라그나: 알았어. 연장 정리하고 쉬지.
+[Info   :Valheim Helper] 플로키: 에에? 손이 근질근질한데! 알았어, 알았어.
+[Info   :Valheim Helper] 판정: FAIL (18/19)
+[Info   :Valheim Helper] 일꾼 기억 파일 저장: te4st41.vh-memory 6020바이트, 지식 55구역(5989자), 장소 0자, 적 22자, 길 0개(0자)
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75045 구역 136458에서 뺌
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75046 구역 134917에서 뺌
+[Info   :Valheim Helper] [포탈 목록에 남은 ZDO] 1:75047 구역 134916에서 뺌

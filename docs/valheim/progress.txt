@@ -15,7 +15,7 @@
   마) '보는지' 하나로: WalkRecorder.Seen → StuckWatch.Seen [끝, 회차 819 — 커밋 819ae295 · 시험 vh_housetest PASS 38/38·vh_hoptest PASS 25/25·dotnet test 833/833]
   바) vh_finaltest를 RealSpeed(1배)에 [끝, 회차 820 — 커밋 1d1b2130 · 시험 vh_finaltest 1배 FAIL 32/35(4225초: Claude 답 JSON 둘 → 형식 오류, 고침·vh_claudetest 6/6·Core 835 / E140 멧돼지 사라짐 diag 넣음)] · [끝, 회차 821 — 커밋 de960686 · 시험 vh_finaltest 1배 PASS 35/35(2770초) → valheim-stable 옮김]
   사) E072 닫힘 → e072-save.txt 쓰기·읽기 지움(TestPlugin.cs:30, RestartTest.cs:103·126-142) → vh_restart1→restart2 [끝, 회차 821 — 커밋 607ce921 · 시험 vh_restart1 7/7→vh_restart2 17/17 PASS — 저장 전 진단 줄·훅도 지움, 고침(UpdateSaveState)은 그대로]
-  아) vh-loop.ps1 Get-Todo: 조각 이름에 ':' 있으면 끝·보류 못 알아봄 → 첫 ')' 뒤 첫 '[' 표시로(Test-Done), 주석에 요청 줄 단계 [끝, 회차 822 — 커밋 HASH · 시험 Get-Todo 가짜 progress·실제 progress PASS]
+  아) vh-loop.ps1 Get-Todo: 조각 이름에 ':' 있으면 끝·보류 못 알아봄 → 첫 ')' 뒤 첫 '[' 표시로(Test-Done), 주석에 요청 줄 단계 [끝, 회차 822 — 커밋 2e5265d4 · 시험 Get-Todo 가짜 progress·실제 progress PASS]
   자) 잡담 짝 라그나–비요른·플로키–비요른: 회차 785(11-18) 보류가 나중 결정 → decisions 15절을 코드대로 [끝, 회차 822 — 문서만: decisions 354줄]
   차) 밤사이 정산 나) '밤새 일한 셈'은 설비만(지금 코드) — 문서 고쳐 둠[끝]
   카) 출발 전 '맞는 인원' 셈에 호위병 빠짐(버그, 사용자 11-18 2차): Departures.Judge.cs:106 WorkerNpc.All→Guards 넣고 시험 [끝, 회차 817 — 커밋 dcb8e989, 다)와 같이 · 시험 vh_departtest 17/17·Core 833]

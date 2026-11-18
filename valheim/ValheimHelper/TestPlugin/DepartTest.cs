@@ -88,7 +88,7 @@ namespace ValheimHelper
                 Log("죽은 곳", Departures.JudgeFor(w.Ragnar, copper));
                 yield return Say($"!{n1} 구리 10", 1f);
                 checks.Add($"죽은 곳 → 묻지 않고 출발(같이·경고) ({w.Ragnar.Ai.Current}, 말 \"{LastSaid(w, n1)}\")",
-                    Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work && (LastSaid(w, n1).Contains("위험") || LastSaid(w, n1).Contains("같이")));
+                    Departures.AskedAt(w.Ragnar) < 0 && w.Ragnar.Ai.Current == WorkerAI.Mode.Work && (LastSaid(w, n1).Contains("위험") || LastSaid(w, n1).Contains("험한") || LastSaid(w, n1).Contains("같이")));
                 yield return Stop();
 
                 // 4) 빠듯한 곳(Tight, 예전 체력 미드 조건 질문) → 묻지 않고 경고하고 출발. 미드 하나면 주의가 되는 곳이라 아래 늪 칸에도 쓴다

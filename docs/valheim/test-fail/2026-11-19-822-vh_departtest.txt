@@ -1,0 +1,362 @@
+# vh_departtest FAIL 발췌 — 2026-11-19 03:29 회차 822 (diag 칸 + 그 시험 동안 모드 로그 줄)
+
+## diag
+=== vh_departtest 2026-11-19 03:28:39 게임 1.0.21 Unity 6000.0.75f1 모드 0.3.8+eaf4ad5 (2026-11-19 02:35) 배속 3 ===
+플러그인: ChestName 1.1.2, Display BepInEx Info In-Game 2.0.2, Valheim Helper 0.3.8, Valheim Helper Test 0.3.8
+지난 시험 상자 4개 치움
+시작 땅: 거점 60m 안 물건 3 (GreydwarfEye 3, FineWood 6, SurtlingCore 1)·쓰러진 몸 0·통나무 0·옛 묘비 0 → 치우고 시작
+시작 정리: 거점 60m 안 생물 2마리 치움
+자리 점검: 장소 Dolmen02 27m(반지름 8), 장소 WoodHouse1 49m(반지름 8), 장소 Dolmen02 51m(반지름 8), 장소 ShipSetting01 52m(반지름 24), 장소 Runestone_Meadows 76m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+OK   깃발·NPC 2명·상자
+거점 상자 1개에서 지난 시험의 나무·구리 0개 비움
+> !라그나 나무 10
+OK   재고 있어도 묻지 않고 10개 캐러 감 (Work, 목표 10)
+> !멈춰
+곧 밤: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음) 곳 0,2 217m, 재고 0, 127초, 하루 0.740
+> !라그나 구리 10
+OK   곧 밤이어도 묻지 않고 출발 (Work, 질문 안 물음)
+> !멈춰
+죽은 곳: Go None (위험 0.35 Caution, 죽음 1.00 → 위험해도 감) 곳 0,2 217m, 재고 0, 127초, 하루 0.500
+> !라그나 구리 10
+FAIL 죽은 곳 → 묻지 않고 출발(같이·경고) (Work, 말 "라그나: 구리 광석 10개. 험한 길이지만 웃으면서 돌아올게.")
+  상태(FAIL 순간): [6s] 라그나 hp71/71 6m GatherJob/GoZone 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+    라그나 (-212.6,77.4,154.1) Work 속도 6.2 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(262.5m) 기다림 False 걷기 False 뒤 0 새로 -41.2초 뒤 · 길 없음 · m_path 16: (-211.1, 77.3, 152.7) (-210.4, 77.1, 151.1) (-209.4, 76.0, 148.8) … (-176.0, 77.4, 128.0) 길 True · MoveTo 가는 중((0.0, 67.7, 128.0) 거리 6.0 뛰기 True)
+    플로키 (-217.7,76.7,157.0) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(268.4m) 기다림 False 걷기 False 뒤 0 새로 -41.2초 뒤 · 길 없음 · m_path 0: 길 False · 
+> !멈춰
+조건 아님: Greydwarf 1마리 +  0마리 — Go None | 위험 0.35 Caution, 죽음 0.00 → 주의 | 미드 짐 0
+조건 아님: Greydwarf 1마리 + Greyling 1마리 — Go None | 위험 0.60 Caution, 죽음 0.00 → 주의 | 미드 짐 0
+위험 상황: Greydwarf 1마리 + Greyling 2마리 — 위험 0.88 Tight, 죽음 0.00 → 위험해도 감
+OK   위험 조건 상황 만들기
+> !라그나 구리 10
+OK   빠듯한 곳 → 묻지 않고 경고하고 출발 (Work, 말 "라그나: 위험이 하나뿐일 리 없지. 눈 크게 뜨고 다녀오겠어.")
+> !멈춰
+늪 판단: None  — 위험 0.88 Tight, 죽음 0.00 → 저항 미드 없음
+> !라그나 구리 10
+OK   늪·독 저항 미드 없음 → 묻지 않고 투덜대며 출발 (0.0초, 투덜 True)
+> !멈춰
+> !라그나 나무 30
+OK   나무 30 출발 (Work)
+> !라그나 나무 5
+OK   급하지 않음 → 대기열 (1칸, 하던 일 나무 30)
+> !라그나 빨리 나무 7
+OK   급함 → 끼어듦 (2칸: 나무 30, 나무 5, 지금 나무 7)
+저장: 라그나 [Gather:Wood:7:R:Always Gather:Wood:30:R:Always Gather:Wood:5::Always Make:CopperBar:2:R:Always]
+OK   NPC 다시 생김 (0.0초)
+불러옴: 라그나 [Gather:Wood:7:R:Always Gather:Wood:30:R:Always Gather:Wood:5::Always Make:CopperBar:2:R:Always] (Work)
+OK   하던 일·대기열 그대로
+> !멈춰
+> !라그나 나무 30
+OK   질문 조건 채워짐: 하던 일 그대로·질문의 일은 대기열 뒤 (0.0초, 1칸: 돌 5, 지금 나무 30)
+> 그래도 가
+OK   질문 대답: 하던 일은 대기열 맨 앞 (2칸: 나무 30, 돌 5, 지금 돌 5)
+> !멈춰
+밝혀진 곳 후보(거점에서 2~3구역): 40구역
+OK   끔: 먼 밝혀진 구역은 모름
+OK   켬: 밝혀진 구역을 앎 (3/40구역, 자원 있는 곳 3, 0.3초)
+> !멈춰
+OK   대사에 자리표시자 안 남음
+끝 상태: [23s] 라그나 hp71/71 4m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+멈춤 0번 · 일부러 선 것 0번 (선 표본 24, 가장 오래 1.1초) · 헛휘두름 0번 · 기다림 합 없음
+--- 상태 흐름(3초마다, 최근 8개) ---
+[0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[3s] 라그나 hp71/71 4m GatherJob/GoZone 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[6s] 라그나 hp71/71 7m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[9s] 라그나 hp71/71 8m GatherJob/GoZone 짐5 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[12s] 라그나 hp71/71 9m GatherJob/Work 짐5 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[15s] 라그나 hp71/71 8m GatherJob/Work 짐5 대기3 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[18s] 라그나 hp71/71 7m GatherJob/Work 짐5 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[21s] 라그나 hp71/71 4m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+--- NPC 대사 ---
+라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+플로키: 오, 오오! 저 나무 좀 봐! 저건 용골감이야!
+플로키: 라그나, 비다! 머리 감자!
+라그나: 서툰 손이지만 성실하게 하지.
+라그나: 그래, 무리해서 좋을 건 없지.
+플로키: 손을 멈췄어. 다른 명령이 있으면 불러.
+라그나: 곧 그치겠군.
+라그나: 솜씨가 아직이라 오래 걸릴 거야. 갈게.
+플로키: 돌아왔어. 도끼를 내려놓지.
+라그나: 그래. 쉬는 것도 일이야.
+플로키: 알았어. 불러 주면 쌩 하고 갈게!
+플로키: 집이다아! 불씨도 날 반기네, 히히.
+라그나: ...왔어. 오늘은 좀 길었군.
+라그나: 구리 광석 10개. 험한 길이지만 웃으면서 돌아올게.
+라그나: 그만하라면 그만하지. 깃발 앞에 있겠어.
+플로키: 좋아. 오늘은 여기까지 하지.
+플로키: 오딘도 쉬는 날이 있다면 불 옆에 앉으시겠지.
+라그나: 위험이 하나뿐일 리 없지. 눈 크게 뜨고 다녀오겠어.
+라그나: 알았어. 연장 정리하고 쉬지.
+플로키: 하던 일을 접고 집으로 간다.
+플로키: 돌아올 곳이 있으니 먼 길도 갈 만하지.
+라그나: 독 저항 미드도 없이라... 짧게 끝내고 오자.
+라그나: 좋아. 집 앞에서 기다리지.
+플로키: 멈춰? 에이... 알았어, 집에 갈게.
+플로키: 오늘 본 숲은 내일 다시 생각해 보겠어.
+라그나: 솜씨가 아직이라... 천천히 해 올게.
+라그나: 나무 30이 먼저야. 끝나면 갈게.
+라그나: 알았어. 손에 든 건 놓을게. 이게 급하다며?
+라그나: 서툴러도 하다 보면 늘겠지. 가지.
+플로키: 그래 그래, 집에 간다!
+라그나: 멈추지. 할 일은 내일도 있으니까.
+플로키: 집 냄새 좋다. 신들도 쉬는 날이 있겠지?
+라그나: 아직 손이 서툴러서 좀 걸려. 다녀오지.
+라그나: 알았어, 간다.
+플로키: 일은 멈췄어. 도끼날을 손봐야겠군.
+라그나: 멈추라면 멈추지. 집에 있을게.
+플로키: 돌아왔어. 부르면 달려갈게!
+라그나: 돌아왔어. 짐부터 내려놓지.
+판정: FAIL (16/17)
+시간: 30초
+프레임: 평균 209 FPS (실시간 10초)
+
+## 모드 로그 (249줄)
+[Info   :Valheim Helper] === vh_departtest 시작
+[Info   :Valheim Helper] 시험: 까마귀 Hugin 치움 — 자리 (-225.4, 78.3, 148.9)·플레이어와 17.2m
+[Info   :Valheim Helper] 지난 시험 상자 4개 치움
+[Info   :Valheim Helper] 시작 땅: 거점 60m 안 물건 3 (GreydwarfEye 3, FineWood 6, SurtlingCore 1)·쓰러진 몸 0·통나무 0·옛 묘비 0 → 치우고 시작
+[Info   :Valheim Helper] 거점 이동 (-215.80, 77.35, 158.59), 새 NPC 2명
+[Info   :Valheim Helper] <라그나> 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+[Info   :Valheim Helper] <플로키> 오, 오오! 저 나무 좀 봐! 저건 용골감이야!
+[Info   :Valheim Helper] <플로키> (말풍선) 라그나, 비다! 머리 감자!
+[Info   :Valheim Helper] 시작 정리: 거점 60m 안 생물 2마리 치움
+[Info   :Valheim Helper] 자리 점검: 장소 Dolmen02 27m(반지름 8), 장소 WoodHouse1 49m(반지름 8), 장소 Dolmen02 51m(반지름 8), 장소 ShipSetting01 52m(반지름 24), 장소 Runestone_Meadows 76m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+[Info   :Valheim Helper] 시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] OK   깃발·NPC 2명·상자
+[Info   :Valheim Helper] 거점 상자 1개에서 지난 시험의 나무·구리 0개 비움
+[Info   :Valheim Helper] > !라그나 나무 10
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 10: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 서툰 손이지만 성실하게 하지.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] OK   재고 있어도 묻지 않고 10개 캐러 감 (Work, 목표 10)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 그래, 무리해서 좋을 건 없지.
+[Info   :Valheim Helper] <플로키> 손을 멈췄어. 다른 명령이 있으면 불러.
+[Info   :Valheim Helper] <라그나> (말풍선) 곧 그치겠군.
+[Info   :Valheim Helper] 곧 밤: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음) 곳 0,2 217m, 재고 0, 127초, 하루 0.740
+[Info   :Valheim Helper] > !라그나 구리 10
+[Info   :Valheim Helper] 라그나 출발 전 판단 CopperOre 10: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 솜씨가 아직이라 오래 걸릴 거야. 갈게.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Unload → Prep
+[Info   :Valheim Helper] <플로키> 돌아왔어. 도끼를 내려놓지.
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-214.9, 77.4, 154.5)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 구역 0,2로(217m, 탐험 False)
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Search → GoZone
+[Info   :Valheim Helper] OK   곧 밤이어도 묻지 않고 출발 (Work, 질문 안 물음)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 그래. 쉬는 것도 일이야.
+[Info   :Valheim Helper] <플로키> 알았어. 불러 주면 쌩 하고 갈게!
+[Info   :Valheim Helper] <플로키> 집이다아! 불씨도 날 반기네, 히히.
+[Info   :Valheim Helper] <라그나> ...왔어. 오늘은 좀 길었군.
+[Info   :Valheim Helper] 죽은 곳: Go None (위험 0.35 Caution, 죽음 1.00 → 위험해도 감) 곳 0,2 217m, 재고 0, 127초, 하루 0.500
+[Info   :Valheim Helper] > !라그나 구리 10
+[Info   :Valheim Helper] 라그나 출발 전 판단 CopperOre 10: Go None (위험 0.35 Caution, 죽음 1.00 → 위험해도 감)
+[Info   :Valheim Helper] <라그나> 구리 광석 10개. 험한 길이지만 웃으면서 돌아올게.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-212.9, 77.4, 155.9)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 구역 0,2로(215m, 탐험 False)
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Search → GoZone
+[Info   :Valheim Helper] FAIL 죽은 곳 → 묻지 않고 출발(같이·경고) (Work, 말 "라그나: 구리 광석 10개. 험한 길이지만 웃으면서 돌아올게.")
+[Info   :Valheim Helper]   상태(FAIL 순간): [6s] 라그나 hp71/71 6m GatherJob/GoZone 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper]     라그나 (-212.6,77.4,154.1) Work 속도 6.2 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(262.5m) 기다림 False 걷기 False 뒤 0 새로 -41.2초 뒤 · 길 없음 · m_path 16: (-211.1, 77.3, 152.7) (-210.4, 77.1, 151.1) (-209.4, 76.0, 148.8) … (-176.0, 77.4, 128.0) 길 True · MoveTo 가는 중((0.0, 67.7, 128.0) 거리 6.0 뛰기 True)
+[Info   :Valheim Helper]     플로키 (-217.7,76.7,157.0) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(268.4m) 기다림 False 걷기 False 뒤 0 새로 -41.2초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 그만하라면 그만하지. 깃발 앞에 있겠어.
+[Info   :Valheim Helper] <플로키> 좋아. 오늘은 여기까지 하지.
+[Info   :Valheim Helper] <플로키> 오딘도 쉬는 날이 있다면 불 옆에 앉으시겠지.
+[Info   :Valheim Helper] 조건 아님: Greydwarf 1마리 +  0마리 — Go None | 위험 0.35 Caution, 죽음 0.00 → 주의 | 미드 짐 0
+[Info   :Valheim Helper] 조건 아님: Greydwarf 1마리 + Greyling 1마리 — Go None | 위험 0.60 Caution, 죽음 0.00 → 주의 | 미드 짐 0
+[Info   :Valheim Helper] 위험 상황: Greydwarf 1마리 + Greyling 2마리 — 위험 0.88 Tight, 죽음 0.00 → 위험해도 감
+[Info   :Valheim Helper] OK   위험 조건 상황 만들기
+[Info   :Valheim Helper] > !라그나 구리 10
+[Info   :Valheim Helper] 라그나 출발 전 판단 CopperOre 10: Go None (위험 0.88 Tight, 죽음 0.00 → 위험해도 감)
+[Info   :Valheim Helper] <라그나> 위험이 하나뿐일 리 없지. 눈 크게 뜨고 다녀오겠어.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-211.9, 77.3, 154.0)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 구역 0,2로(213m, 탐험 False)
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Search → GoZone
+[Info   :Valheim Helper] OK   빠듯한 곳 → 묻지 않고 경고하고 출발 (Work, 말 "라그나: 위험이 하나뿐일 리 없지. 눈 크게 뜨고 다녀오겠어.")
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 알았어. 연장 정리하고 쉬지.
+[Info   :Valheim Helper] <플로키> 하던 일을 접고 집으로 간다.
+[Info   :Valheim Helper] <플로키> 돌아올 곳이 있으니 먼 길도 갈 만하지.
+[Info   :Valheim Helper] 생성 표: 적 77종 바이옴 읽음
+[Info   :Valheim Helper] 늪 판단: None  — 위험 0.88 Tight, 죽음 0.00 → 저항 미드 없음
+[Info   :Valheim Helper] > !라그나 구리 10
+[Info   :Valheim Helper] 라그나 출발 전 판단 CopperOre 10: Go None (위험 0.88 Tight, 죽음 0.00 → 저항 미드 없음)
+[Info   :Valheim Helper] <라그나> 독 저항 미드도 없이라... 짧게 끝내고 오자.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1, MeadHealthMinorx1] 지킴 5 skip 0
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-211.3, 77.1, 152.1)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 CopperOre: 구역 0,2로(213m, 탐험 False)
+[Info   :Valheim Helper] 라그나 작업 CopperOre: Search → GoZone
+[Info   :Valheim Helper] OK   늪·독 저항 미드 없음 → 묻지 않고 투덜대며 출발 (0.0초, 투덜 True)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 좋아. 집 앞에서 기다리지.
+[Info   :Valheim Helper] <플로키> 멈춰? 에이... 알았어, 집에 갈게.
+[Info   :Valheim Helper] <플로키> 오늘 본 숲은 내일 다시 생각해 보겠어.
+[Info   :Valheim Helper] > !라그나 나무 30
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 30: Go None (스킬 낮음)
+[Info   :Valheim Helper] <라그나> 솜씨가 아직이라... 천천히 해 올게.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1, MeadHealthMinorx1] 지킴 5 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] 라그나: Beech1 캐기 시작(뿌리 (-214.0,77.2,150.6)까지 3.4m, 높이차 0.2)
+[Info   :Valheim Helper] 라그나 작업 Wood: Approach → Work
+[Info   :Valheim Helper] OK   나무 30 출발 (Work)
+[Info   :Valheim Helper] > !라그나 나무 5
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 5: Queue None (하던 일 → 대기열)
+[Info   :Valheim Helper] <라그나> 나무 30이 먼저야. 끝나면 갈게.
+[Info   :Valheim Helper] OK   급하지 않음 → 대기열 (1칸, 하던 일 나무 30)
+[Info   :Valheim Helper] > !라그나 빨리 나무 7
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 7: Go None (급함 → 끼어듦; 위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 알았어. 손에 든 건 놓을게. 이게 급하다며?
+[Info   :Valheim Helper] <라그나> 서툴러도 하다 보면 늘겠지. 가지.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1, MeadHealthMinorx1] 지킴 5 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] 라그나: Beech1 캐기 시작(뿌리 (-214.0,77.2,150.6)까지 3.4m, 높이차 0.2)
+[Info   :Valheim Helper] 라그나 작업 Wood: Approach → Work
+[Info   :Valheim Helper] OK   급함 → 끼어듦 (2칸: 나무 30, 나무 5, 지금 나무 7)
+[Info   :Valheim Helper] 저장: 라그나 [Gather:Wood:7:R:Always Gather:Wood:30:R:Always Gather:Wood:5::Always Make:CopperBar:2:R:Always]
+[Info   :Valheim Helper] OK   NPC 다시 생김 (0.0초)
+[Info   :Valheim Helper] 라그나 작업 상태 불러옴: 대기열 4칸, 질문 대기 없음
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1, MeadHealthMinorx1] 지킴 5 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] 라그나: Beech1 캐기 시작(뿌리 (-214.0,77.2,150.6)까지 3.4m, 높이차 0.2)
+[Info   :Valheim Helper] 라그나 작업 Wood: Approach → Work
+[Info   :Valheim Helper] 불러옴: 라그나 [Gather:Wood:7:R:Always Gather:Wood:30:R:Always Gather:Wood:5::Always Make:CopperBar:2:R:Always] (Work)
+[Info   :Valheim Helper] OK   하던 일·대기열 그대로
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <플로키> 그래 그래, 집에 간다!
+[Info   :Valheim Helper] <라그나> 멈추지. 할 일은 내일도 있으니까.
+[Info   :Valheim Helper] <플로키> 집 냄새 좋다. 신들도 쉬는 날이 있겠지?
+[Info   :Valheim Helper] > !라그나 나무 30
+[Info   :Valheim Helper] 라그나 출발 전 판단 Wood 30: Go None (위험 0.00 None, 죽음 0.00 → 스킬 낮음)
+[Info   :Valheim Helper] <라그나> 아직 손이 서툴러서 좀 걸려. 다녀오지.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1, MeadHealthMinorx1] 지킴 5 skip 0
+[Info   :Valheim Helper] 라그나 작업 Wood: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Wood: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Wood: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Wood: Search → Approach
+[Info   :Valheim Helper] 라그나: Beech1 캐기 시작(뿌리 (-214.0,77.2,150.6)까지 3.0m, 높이차 0.2)
+[Info   :Valheim Helper] 라그나 작업 Wood: Approach → Work
+[Info   :Valheim Helper] 라그나 질문 조건 채워짐: 하던 일 나무 30이 있어 Stone 5은 대기열 뒤(E112)
+[Info   :Valheim Helper] OK   질문 조건 채워짐: 하던 일 그대로·질문의 일은 대기열 뒤 (0.0초, 1칸: 돌 5, 지금 나무 30)
+[Info   :Valheim Helper] > 그래도 가
+[Info   :Valheim Helper] 라그나 대답 GoAnyway → GoAlone (질문 Night)
+[Info   :Valheim Helper] 라그나 질문 대답: 하던 일 나무 30은 대기열 맨 앞(E112)
+[Info   :Valheim Helper] <라그나> 알았어, 간다.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1, MeadHealthMinorx2] 지킴 5 skip 0
+[Info   :Valheim Helper] 라그나 작업 Stone: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 Stone: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 Stone: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Stone: Search → Approach
+[Info   :Valheim Helper] 라그나: Rock_4 캐기 시작(뿌리 (-211.4,77.1,151.2)까지 1.9m, 높이차 0.3)
+[Info   :Valheim Helper] 라그나 작업 Stone: Approach → Work
+[Info   :Valheim Helper] 라그나 작업 Stone: Work → Tool
+[Info   :Valheim Helper] 라그나 작업 Stone: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Stone: Search → Approach
+[Info   :Valheim Helper] 라그나: Rock_4 캐기 시작(뿌리 (-211.4,77.1,151.2)까지 1.9m, 높이차 0.3)
+[Info   :Valheim Helper] 라그나 작업 Stone: Approach → Work
+[Info   :Valheim Helper] 라그나 작업 Stone: Work → Tool
+[Info   :Valheim Helper] 라그나 작업 Stone: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Stone: Search → Approach
+[Info   :Valheim Helper] 라그나: Rock_4 캐기 시작(뿌리 (-211.4,77.1,151.2)까지 1.9m, 높이차 0.3)
+[Info   :Valheim Helper] 라그나 작업 Stone: Approach → Work
+[Info   :Valheim Helper] 라그나 작업 Stone: Work → Tool
+[Info   :Valheim Helper] 라그나 작업 Stone: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Stone: Search → Approach
+[Info   :Valheim Helper] 라그나: Rock_4 캐기 시작(뿌리 (-211.4,77.1,151.2)까지 1.9m, 높이차 0.3)
+[Info   :Valheim Helper] 라그나 작업 Stone: Approach → Work
+[Info   :Valheim Helper] 라그나 작업 Stone: Work → Tool
+[Info   :Valheim Helper] 라그나 작업 Stone: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 Stone: Search → Approach
+[Info   :Valheim Helper] OK   질문 대답: 하던 일은 대기열 맨 앞 (2칸: 나무 30, 돌 5, 지금 돌 5)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <플로키> 일은 멈췄어. 도끼날을 손봐야겠군.
+[Info   :Valheim Helper] <라그나> 멈추라면 멈추지. 집에 있을게.
+[Info   :Valheim Helper] <플로키> 돌아왔어. 부르면 달려갈게!
+[Info   :Valheim Helper] 밝혀진 곳 후보(거점에서 2~3구역): 40구역
+[Info   :Valheim Helper] <라그나> 돌아왔어. 짐부터 내려놓지.
+[Info   :Valheim Helper] OK   끔: 먼 밝혀진 구역은 모름
+[Info   :Valheim Helper] OK   켬: 밝혀진 구역을 앎 (3/40구역, 자원 있는 곳 3, 0.3초)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <플로키> 멈추라고? 그럼 노래나 부를래.
+[Info   :Valheim Helper] <라그나> 알았어. 집에 가 있을게.
+[Info   :Valheim Helper] <플로키> 집이다! 발 좀 뻗자.
+[Info   :Valheim Helper] <라그나> 다녀왔어. 저 너머엔 아직 볼 게 많던데.
+[Info   :Valheim Helper] OK   대사에 자리표시자 안 남음
+[Info   :Valheim Helper] 끝 상태: [23s] 라그나 hp71/71 4m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] 멈춤 0번 · 일부러 선 것 0번 (선 표본 24, 가장 오래 1.1초) · 헛휘두름 0번 · 기다림 합 없음
+[Info   :Valheim Helper] --- 상태 흐름(3초마다, 최근 8개) ---
+[Info   :Valheim Helper] [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [3s] 라그나 hp71/71 4m GatherJob/GoZone 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [6s] 라그나 hp71/71 7m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [9s] 라그나 hp71/71 8m GatherJob/GoZone 짐5 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [12s] 라그나 hp71/71 9m GatherJob/Work 짐5 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [15s] 라그나 hp71/71 8m GatherJob/Work 짐5 대기3 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [18s] 라그나 hp71/71 7m GatherJob/Work 짐5 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [21s] 라그나 hp71/71 4m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] --- NPC 대사 ---
+[Info   :Valheim Helper] 라그나: 이곳에선 누가 힘을 쥐고 있지? 없다고? 오래 가진 못하겠군.
+[Info   :Valheim Helper] 플로키: 오, 오오! 저 나무 좀 봐! 저건 용골감이야!
+[Info   :Valheim Helper] 플로키: 라그나, 비다! 머리 감자!
+[Info   :Valheim Helper] 라그나: 서툰 손이지만 성실하게 하지.
+[Info   :Valheim Helper] 라그나: 그래, 무리해서 좋을 건 없지.
+[Info   :Valheim Helper] 플로키: 손을 멈췄어. 다른 명령이 있으면 불러.
+[Info   :Valheim Helper] 라그나: 곧 그치겠군.
+[Info   :Valheim Helper] 라그나: 솜씨가 아직이라 오래 걸릴 거야. 갈게.
+[Info   :Valheim Helper] 플로키: 돌아왔어. 도끼를 내려놓지.
+[Info   :Valheim Helper] 라그나: 그래. 쉬는 것도 일이야.
+[Info   :Valheim Helper] 플로키: 알았어. 불러 주면 쌩 하고 갈게!
+[Info   :Valheim Helper] 플로키: 집이다아! 불씨도 날 반기네, 히히.
+[Info   :Valheim Helper] 라그나: ...왔어. 오늘은 좀 길었군.
+[Info   :Valheim Helper] 라그나: 구리 광석 10개. 험한 길이지만 웃으면서 돌아올게.
+[Info   :Valheim Helper] 라그나: 그만하라면 그만하지. 깃발 앞에 있겠어.
+[Info   :Valheim Helper] 플로키: 좋아. 오늘은 여기까지 하지.
+[Info   :Valheim Helper] 플로키: 오딘도 쉬는 날이 있다면 불 옆에 앉으시겠지.
+[Info   :Valheim Helper] 라그나: 위험이 하나뿐일 리 없지. 눈 크게 뜨고 다녀오겠어.
+[Info   :Valheim Helper] 라그나: 알았어. 연장 정리하고 쉬지.
+[Info   :Valheim Helper] 플로키: 하던 일을 접고 집으로 간다.
+[Info   :Valheim Helper] 플로키: 돌아올 곳이 있으니 먼 길도 갈 만하지.
+[Info   :Valheim Helper] 라그나: 독 저항 미드도 없이라... 짧게 끝내고 오자.
+[Info   :Valheim Helper] 라그나: 좋아. 집 앞에서 기다리지.
+[Info   :Valheim Helper] 플로키: 멈춰? 에이... 알았어, 집에 갈게.
+[Info   :Valheim Helper] 플로키: 오늘 본 숲은 내일 다시 생각해 보겠어.
+[Info   :Valheim Helper] 라그나: 솜씨가 아직이라... 천천히 해 올게.
+[Info   :Valheim Helper] 라그나: 나무 30이 먼저야. 끝나면 갈게.
+[Info   :Valheim Helper] 라그나: 알았어. 손에 든 건 놓을게. 이게 급하다며?
+[Info   :Valheim Helper] 라그나: 서툴러도 하다 보면 늘겠지. 가지.
+[Info   :Valheim Helper] 플로키: 그래 그래, 집에 간다!
+[Info   :Valheim Helper] 라그나: 멈추지. 할 일은 내일도 있으니까.
+[Info   :Valheim Helper] 플로키: 집 냄새 좋다. 신들도 쉬는 날이 있겠지?
+[Info   :Valheim Helper] 라그나: 아직 손이 서툴러서 좀 걸려. 다녀오지.
+[Info   :Valheim Helper] 라그나: 알았어, 간다.
+[Info   :Valheim Helper] 플로키: 일은 멈췄어. 도끼날을 손봐야겠군.
+[Info   :Valheim Helper] 라그나: 멈추라면 멈추지. 집에 있을게.
+[Info   :Valheim Helper] 플로키: 돌아왔어. 부르면 달려갈게!
+[Info   :Valheim Helper] 라그나: 돌아왔어. 짐부터 내려놓지.
+[Info   :Valheim Helper] 판정: FAIL (16/17)

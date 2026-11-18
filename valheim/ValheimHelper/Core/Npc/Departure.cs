@@ -224,7 +224,6 @@ namespace ValheimHelper.Core.Npc
             r.Place = t;
             r.Seconds = Estimate(i, t);
             r.Args["minutes"] = Minutes5(r.Seconds).ToString();
-            bool nightSoon = t != null && t.Distance > NightNearHome && i.SecondsToNight < r.Seconds;
             r.Args["stock"] = i.Stock.ToString();
 
             // 3) 질문 하나(밤·재고만). 위험은 묻거나 거절하지 않는다(사용자 결정 2026-10-25):
@@ -283,6 +282,7 @@ namespace ValheimHelper.Core.Npc
                 else return Go(r, DepartAction.Go, "depart.danger", "위험해도 감");
 
                 // 4) 출발 + 덧붙이는 말 하나
+                bool nightSoon = t.Distance > NightNearHome && i.SecondsToNight < r.Seconds; // 덜 위험한 곳으로 바꾼 뒤 그곳 거리·시간으로(회차 822)
                 if (nightSoon && i.Guard != null) // 도착할 때쯤 밤(사용자 11-14 "호위병 데려가면 되는 거 아닌가"): 호위병과 같이, 바쁘면 기다렸다 같이
                 {
                     r.Args["partner"] = i.Guard;

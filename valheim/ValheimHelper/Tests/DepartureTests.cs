@@ -329,6 +329,19 @@ public class DepartureTests
     }
 
     [Fact]
+    public void NightSoonUsesSwappedPlace() // 회차 822: 덜 위험한 곳으로 바꾼 뒤 곧 밤을 그곳 거리로 다시 셈
+    {
+        var i = In(P(3000, 1.3f, x: 1), P(50, 0.1f, x: 2)); i.SecondsToNight = 60; i.Guard = "비욘";
+        var r = Departure.Judge(i);
+        Assert.Equal(2, r.Place.Zone.X);
+        Assert.Equal(DepartAction.Go, r.Action); // 거점 근처로 바꿨으니 혼자
+        i = In(P(50, 1.3f, x: 1), P(3000, 0.1f, x: 2)); i.SecondsToNight = 60; i.Guard = "비욘";
+        r = Departure.Judge(i);
+        Assert.Equal(2, r.Place.Zone.X);
+        Assert.Equal(DepartAction.GoTogether, r.Action); // 먼 곳으로 바꿨으니 곧 밤 → 호위병과
+    }
+
+    [Fact]
     public void DangerousNightAndStockDoNotAsk()
     {
         var i = In(P(300, 1.3f)); i.Stock = 500; i.SecondsToNight = 0;

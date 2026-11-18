@@ -162,6 +162,7 @@ namespace ValheimHelper
             yield return StopAll(w);
             w.Floki.TeleportTo(GatherTest.Ground(w.Home + back * 6f) + Vector3.up * 0.3f, w.Floki.transform.rotation, false);
             yield return new WaitForSeconds(1.5f);
+            Brain.ReplaceForTest("", ""); // 앞 칸 싸움·도망이 멈춘 뒤 남긴 장소 기억(회차 822: 숲 Impossible)이 "나무 5"를 호위병과 보내 혼자 출발을 막음
             GatherTest.Say($"!{npc.NpcName} 나무 5", null);
             yield return TestKit.WaitFor(() => ai.Current == WorkerAI.Mode.Work && ai.Job != null && ai.EscortName == null, 10f);
             WorkerNpc first = Departures.GoWithNeed(npc, 3);
