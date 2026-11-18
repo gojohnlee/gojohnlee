@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using ValheimHelper.Core.Chat;
 using ValheimHelper.Core.Npc;
@@ -236,6 +237,68 @@ namespace ValheimHelper
         static readonly Chore s_tame = new Chore(IdleFeedEvery, "idleTame", j => j is TameJob);
         static readonly Chore s_egg = new Chore(IdleFeedEvery, "idleEgg", j => j is EggJob);
         static readonly Chore s_fish = new Chore(IdleFarmEvery, "idleFish", j => j is FishJob);
+
+        static readonly Chore s_brew = new Chore(IdleFarmEvery, "idleBrew", j => j is PlanJob p && p.FromIdle && p.Uses("fermenter"));
+        internal static void TestBrewNow() => s_brew.Next.Clear();
+
+        /// <summary>
+        /// 쉬는 호위병(낮, decisions 221줄 미드·포션): 거점 안 발효기가 다 익었으면 따서 상자에(Unload), 비었고 지붕이 있으며 상자에 바탕이 있으면 바탕 1개 넣기(Load —
+        /// 방금 딴 것과 같은 바탕 먼저, MorningSettle.Fermenters와 같은 규칙). 바탕을 새로 만들지는 않음(가마솥 제작은 명령·자동 보충 몫). 다른 일꾼 계획이 발효기를 쓰면 안 낌. 10분 간격. 시작했으면 true.
+        /// </summary>
+        internal static bool IdleBrew(WorkerNpc npc)
+        {
+            if (!Due(npc, s_brew, out string key)) return false;
+            foreach (var n in WorkerNpc.All.Concat(WorkerNpc.Guards)) if (n.Ai.Job is PlanJob pj && pj.Uses("fermenter")) return false;
+            Stamp(s_brew, key);
+            Plan plan = BrewPlan(npc.Home, out string what);
+            Plugin.Log.LogInfo($"{npc.NpcName} 쉴 때 발효기: {what}");
+            if (plan == null) return false;
+            npc.Ai.StartJob(new PlanJob(npc, plan, GatherJob.ItemLabel(plan.Steps[plan.Steps.Count - 1].Item)) { FromIdle = true });
+            npc.Say(s_brew.Say, new Dictionary<string, string>());
+            return true;
+        }
+
+        /// <summary>발효기 하나에 할 일: 다 익은 것 꺼내기(+같은 바탕 다시 넣기) 또는 빈 통 채우기. 없으면 null과 까닭.</summary>
+        static Plan BrewPlan(Vector3 home, out string what)
+        {
+            what = "할 것 없음";
+            var seen = new HashSet<Fermenter>();
+            foreach (Collider col in Physics.OverlapSphere(home, Recipes.BaseRange, Recipes.MachineMask))
+            {
+                Fermenter f = col.GetComponentInParent<Fermenter>();
+                if (f == null || !seen.Add(f) || !f.TryGetComponent(out ZNetView nv) || !nv.IsValid()) continue;
+                string station = Utils.GetPrefabName(f.gameObject);
+                ZDO z = nv.GetZDO();
+                int content = z.GetInt(ZDOVars.s_content);
+                var plan = new Plan();
+                string last = null;
+                if (content != 0)
+                {
+                    long start = z.GetLong(ZDOVars.s_startTime, 0L);
+                    Fermenter.ItemConversion conv = f.m_conversion.Find(c => c.m_from != null && c.m_to != null && c.m_from.gameObject.name.GetStableHashCode() == content);
+                    if (conv == null || start == 0L || (ZNet.instance.GetTime() - new System.DateTime(start)).TotalSeconds <= f.m_fermentationDuration) continue; // 익는 중·모름
+                    plan.Steps.Add(new PlanStep { Id = 0, Kind = StepKind.Unload, Station = station, Item = Utils.GetPrefabName(conv.m_to.gameObject), Amount = conv.m_producedItems });
+                    last = Utils.GetPrefabName(conv.m_from.gameObject);
+                }
+                if (!MachineStep.Exposed(f))
+                {
+                    string from = last != null && CraftStep.Have(home, last) > 0 ? last : null;
+                    if (from == null)
+                        foreach (var c in f.m_conversion)
+                            if (c.m_from != null && CraftStep.Have(home, Utils.GetPrefabName(c.m_from.gameObject)) > 0) { from = Utils.GetPrefabName(c.m_from.gameObject); break; }
+                    if (from != null)
+                    {
+                        var load = new PlanStep { Id = plan.Steps.Count, Kind = StepKind.Load, Station = station, Item = from, Amount = 1 };
+                        if (plan.Steps.Count > 0) load.After.Add(0);
+                        plan.Steps.Add(load);
+                    }
+                }
+                if (plan.Steps.Count == 0) continue;
+                what = string.Join(" → ", plan.Steps.ConvertAll(s => $"{s.Kind} {s.Item} {s.Amount}")) + $" ({f.transform.position:F0})";
+                return plan;
+            }
+            return null;
+        }
 
         internal static void TestHoneyNow() => s_honey.Next.Clear();
         internal static void TestFeedNow() => s_feed.Next.Clear();

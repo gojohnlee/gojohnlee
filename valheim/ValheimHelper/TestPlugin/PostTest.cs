@@ -158,6 +158,36 @@ namespace ValheimHelper
             string cooked = ObjectDB.instance.GetItemPrefab("CookedMeat").GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
             yield return TestKit.WaitFor(() => CookedNow(w, cooked, guard) >= 2, 240f);
             checks.Add($"호위병이 고기 2개 구움 (상자+가방 {CookedNow(w, cooked, guard)}, {TestKit.Waited:0}초)", CookedNow(w, cooked, guard) >= 2);
+
+            // 7) 쉬는 호위병 발효기(decisions 221줄 미드·포션, 회차 815): 다 익은 독 저항 미드 바탕 + 상자 바탕 1 → 따서 상자에, 같은 바탕 다시 넣음
+            yield return TestKit.WaitFor(() => guard.Ai.Current == WorkerAI.Mode.Idle && !ai.Patrolling, 120f);
+            const string meadBase = "MeadBasePoisonResist", mead = "MeadPoisonResist";
+            TestKit.ClearBaseStock(w, meadBase, mead);
+            MachineStep.TestIgnoreRoof = true;
+            GameObject ferm = Object.Instantiate(ZNetScene.instance.GetPrefab("fermenter"), GatherTest.Ground(w.Home + Vector3.Cross(Vector3.up, f) * 6f), Quaternion.identity);
+            made.Add(ferm);
+            Fermenter fer = ferm.GetComponent<Fermenter>();
+            ZNetView fnv = ferm.GetComponent<ZNetView>();
+            yield return new WaitForSeconds(0.5f);
+            fnv.InvokeRPC("RPC_AddItem", meadBase.GetStableHashCode(), false);
+            yield return new WaitForSeconds(0.5f);
+            fnv.GetZDO().Set(ZDOVars.s_startTime, ZNet.instance.GetTime().AddSeconds(-fer.m_fermentationDuration - 10).Ticks);
+            TestKit.PutInChest(w.Chest, meadBase, 1);
+            Departures.TestBrewNow();
+            Departures.TestIdleChores = true;
+            for (int i = 0; i < 30 && !(guard.Ai.Job is PlanJob pj0 && pj0.Uses("fermenter")); i++)
+            {
+                Departures.TestRefillNow();
+                yield return TestKit.WaitFor(() => guard.Ai.Job is PlanJob pj1 && pj1.Uses("fermenter"), 1f);
+            }
+            Departures.TestIdleChores = false;
+            checks.Add($"쉬던 호위병이 발효기 보러 감 ({guard.Ai.Current}/{guard.Ai.Job?.GetType().Name ?? "-"})", guard.Ai.Job is PlanJob pj2 && pj2.Uses("fermenter"));
+            checks.Add("호위병 발효기 일도 동행 요청이면 놓는 집안일(GuardFree)", Departures.GuardFree(guard));
+            int want = fer.m_conversion.Find(c => c.m_from != null && c.m_from.gameObject.name == meadBase)?.m_producedItems ?? 1;
+            yield return TestKit.WaitFor(() => GatherTest.CountBase(w.Home, mead) >= want && fnv.GetZDO().GetInt(ZDOVars.s_content) == meadBase.GetStableHashCode(), 180f);
+            checks.Add($"호위병이 미드를 따 상자에 넣고 바탕을 다시 넣음 (상자 미드 {GatherTest.CountBase(w.Home, mead)}/{want}, 통 다시 참 {fnv.GetZDO().GetInt(ZDOVars.s_content) == meadBase.GetStableHashCode()}, {TestKit.Waited:0}초)",
+                GatherTest.CountBase(w.Home, mead) >= want && fnv.GetZDO().GetInt(ZDOVars.s_content) == meadBase.GetStableHashCode());
+            MachineStep.TestIgnoreRoof = false;
         }
 
         static int CookedNow(TestKit.World w, string name, WorkerNpc guard)
