@@ -86,7 +86,7 @@ namespace ValheimHelper
                 yield return new WaitForSeconds(1f);
                 int heard1 = w.Heard.Count;
                 w.Ragnar.Ai.StartJob(new FarmJob(w.Ragnar, field, plan));
-                yield return TestKit.WaitFor(() => SaidMake(heard1), 10f);
+                yield return TestKit.WaitFor(() => queue.Exists(x => x.Work?.Kind == WorkKind.Farm), 10f); // 말은 여러 꼴(회차 822: "경작기부터"·"쇠스랑" — "만들" 없음)이라 대기열로 봄
                 qs = string.Join(",", queue.ConvertAll(x => x.Label));
                 checks.Add($"{cr.m_craftingStation.m_name} 세우면 경작기 제작·밭일 다시 걸기 ({TestKit.Waited:0}초, 대기열 {qs})",
                     TestKit.Ok && queue.Exists(x => x.Work?.Kind == WorkKind.Farm));

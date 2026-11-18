@@ -1,0 +1,361 @@
+# vh_farmtest FAIL 발췌 — 2026-11-19 03:38 회차 822 (diag 칸 + 그 시험 동안 모드 로그 줄)
+
+## diag
+=== vh_farmtest 2026-11-19 03:34:39 게임 1.0.21 Unity 6000.0.75f1 모드 0.3.8+2e5265d* (2026-11-19 03:32) 배속 3 ===
+플러그인: ChestName 1.1.2, Display BepInEx Info In-Game 2.0.2, Valheim Helper 0.3.8, Valheim Helper Test 0.3.8
+지난 시험 상자 1개 치움
+시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+자리 점검: 장소 Dolmen02 27m(반지름 8), 장소 WoodHouse1 49m(반지름 8), 장소 Dolmen02 51m(반지름 8), 장소 ShipSetting01 52m(반지름 24), 장소 Runestone_Meadows 76m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+OK   깃발·NPC·상자
+DIAG 갈기 cultivate_v2, 작물 14: sapling_turnip(TurnipSeeds→Turnip×1, r0.5, 4000~5000s) sapling_seedturnip(Turnip→TurnipSeeds×3, r0.5, 4000~5000s) sapling_onion(OnionSeeds→Onion×1, r0.5, 4000~5000s) sapling_seedonion(Onion→OnionSeeds×3, r0.5, 4000~5000s) sapling_carrot(CarrotSeeds→Carrot×1, r0.5, 4000~5000s) sapling_seedcarrot(Carrot→CarrotSeeds×3, r0.5, 4000~5000s) sapling_barley(Barley→Barley×2, r0.5, 4000~5000s) sapling_flax(Flax→Flax×2, r0.5, 4000~5000s) sapling_jotunpuffs(MushroomJotunPuffs→MushroomJotunPuffs×1, r0.5, 4000~5000s) sapling_magecap(MushroomMagecap→MushroomMagecap×1, r0.8, 4000~5000s) sapling_oat(OatSeeds→OatSeeds×3, r0.5, 4000~5000s) sapling_poteitr(PoteitrSeeds→Poteitr×3, r0.5, 4000~5000s) sapling_Kale(KaleSeeds→Kale×3, r0.5, 4000~5000s) sapling_seedkale(KaleSeeds→KaleSeeds×3, r0.5, 4000~5000s) / ZNetScene에 갈기 조각 False
+OK   작물 목록·갈기 조각 (14, cultivate_v2)
+OK   계획: 씨앗 6 → 당근 새싹 4 (씨앗 없으면 0, 바이옴 1)
+OK   경작기 없으면 거절 (0초, 새싹 0, 씨앗 상자 6)
+OK   제작대 없음 → 안 검 (대기열 , 만들 말 False)
+FAIL $piece_forge 세우면 경작기 제작·밭일 다시 걸기 (10초, 대기열 밭일)
+  상태(FAIL 순간): [11s] 라그나 hp71/71 63m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+    라그나 (-206.6,68.6,96.5) Work 속도 7.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(228.0m) 기다림 False 걷기 False 뒤 0 새로 -76.6초 뒤 · 길 없음 · m_path 10: (-206.5, 68.6, 95.3) (-205.4, 69.0, 90.1) (-202.9, 69.0, 85.1) … (-192.0, 70.7, 64.0) 길 True · MoveTo 가는 중((-192.0, 70.5, 64.0) 거리 6.0 뛰기 True)
+    플로키 (-217.7,76.7,157.0) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(268.4m) 기다림 False 걷기 False 뒤 0 새로 -76.6초 뒤 · 길 없음 · m_path 0: 길 False · 
+OK   새싹 4개 심음 (14초, 4, FarmPlant)
+OK   일 끝남·돌아옴 (3초, 거점까지 2m)
+OK   밭에 새싹 4개 (4)
+OK   씨앗 보존 (남은 2 + 심은 4 = 6)
+OK   씨앗·경작기 상자에 (씨앗 상자 2, 경작기 상자 1·짐 0)
+DIAG 새싹 (-205.89, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+DIAG 새싹 (-204.99, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+DIAG 새싹 (-203.19, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+DIAG 새싹 (-204.09, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+OK   다 자람 (1초, 당근 4/4, 남은 새싹 상태 Healthy,Healthy,Healthy,Healthy)
+OK   거두기 끝남·돌아옴 (13초, 거둠 4/4, FarmStore, 거점까지 2m)
+OK   거둔 당근 상자에 (4/4, 짐 0, 땅 0, 남은 것 0)
+OK   !밭 → 밭일 시작, 같은 밭은 한 명만 (FarmFetch, 플로키 없음)
+OK   밭일 저장 칸 (Farm r3 (-204.1,156.0))
+OK   !밭 심기 (11초, 당근 6·당근 씨앗 4, 남은 씨앗 0·당근 0, 경작기 상자 1)
+OK   저장 칸에서 밭일 다시 시작·끝 (True, 5초, 짐 경작기 0)
+OK   !당근 3 → 밭일 (FarmJob, 들에서 나는 곳 [Pickable_Carrot(None)])
+OK   !당근 3 심기 (8초, 당근 3, 남은 씨앗 0, 경작기 상자 1)
+OK   !당근수프 1 → 재료 당근 밭일 (FarmJob, 출처 Farm)
+OK   !당근수프 심기 (9초, 당근 3, 남은 씨앗 0)
+OK   !채워 당근 → 한 명만 밭일 (, FarmJob)
+OK   !채워 당근 심기 (11초, 당근 5, 남은 씨앗 0)
+OK   자라는 중이면 다시 안 심음 (, )
+OK   밭 없으면 !당근은 밭일·채집 안 함 (없음)
+OK   밭일 그만: 챙긴 경작기·씨앗은 짐에 (0초, 경작기 1, 씨앗 4, 일 )
+OK   다음 채집의 짐 정리가 경작기·씨앗을 상자에 (3초, 상자 경작기 1·씨앗 4, 짐 경작기 0)
+> !멈춰
+OK   대사에 자리표시자 안 남음
+끝 상태: [117s] 라그나 hp69/69 1m Idle 짐4 대기0 | 플로키 hp69/69 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+멈춤 0번 · 일부러 선 것 0번 (선 표본 148, 가장 오래 4.0초) · 헛휘두름 0번 · 기다림 합 멀리선 이동 생략 2초
+--- 상태 흐름(3초마다, 최근 39개) ---
+[0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[3s] 라그나 hp71/71 10m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[6s] 라그나 hp71/71 30m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[9s] 라그나 hp71/71 50m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[12s] 라그나 hp71/71 65m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[15s] 라그나 hp71/71 76m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[18s] 라그나 hp71/71 86m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[21s] 라그나 hp71/71 85m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[24s] 라그나 hp71/71 70m FarmJob/FarmGo 짐9 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[27s] 라그나 hp71/71 53m FarmJob/FarmGo 짐9 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[30s] 라그나 hp71/71 36m FarmJob/FarmGo 짐9 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[33s] 라그나 hp70/70 20m FarmJob/FarmGo 짐9 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[36s] 라그나 hp70/70 11m FarmJob/FarmHome 짐5 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[39s] 라그나 hp70/70 2m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[42s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[45s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[48s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[51s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[54s] 라그나 hp70/70 8m FarmJob/FarmGo 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[57s] 라그나 hp70/70 10m FarmJob/FarmHarvest 짐5 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[60s] 라그나 hp70/70 12m FarmJob/FarmHarvest 짐7 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[63s] 라그나 hp70/70 5m FarmJob/FarmHome 짐8 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[66s] 라그나 hp70/70 1m FarmJob/FarmGo 짐15 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[69s] 라그나 hp70/70 10m FarmJob/FarmPlant 짐15 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[72s] 라그나 hp70/70 12m FarmJob/FarmPlant 짐6 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[75s] 라그나 hp70/70 1m FarmJob/FarmStore 짐5 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[78s] 라그나 hp70/70 7m FarmJob/FarmGo 짐4 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 1 | 생물 0
+[81s] 라그나 hp70/70 3m FarmJob/FarmGo 짐8 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[84s] 라그나 hp70/70 10m FarmJob/FarmPlant 짐8 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[87s] 라그나 hp70/70 7m FarmJob/FarmHome 짐5 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[90s] 라그나 hp70/70 1m FarmJob/FarmGo 짐8 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[93s] 라그나 hp70/70 10m FarmJob/FarmPlant 짐8 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[96s] 라그나 hp70/70 7m FarmJob/FarmHome 짐5 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[99s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 2m FarmJob/FarmGo 짐7 대기0 | 상자 0 | 생물 0
+[102s] 라그나 hp69/69 6m Idle 짐4 대기0 | 플로키 hp69/69 5m FarmJob/FarmGo 짐7 대기0 | 상자 0 | 생물 0
+[105s] 라그나 hp69/69 10m Idle 짐4 대기0 | 플로키 hp69/69 10m FarmJob/FarmPlant 짐7 대기0 | 상자 0 | 생물 0
+[108s] 라그나 hp69/69 13m Idle 짐4 대기0 | 플로키 hp69/69 13m FarmJob/FarmHome 짐5 대기0 | 상자 0 | 생물 0
+[111s] 라그나 hp69/69 13m Idle 짐4 대기0 | 플로키 hp69/69 2m Idle 짐4 대기0 | 상자 3 | 생물 0
+[114s] 라그나 hp69/69 6m GatherJob/Unload 짐9 대기0 | 플로키 hp69/69 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+--- NPC 대사 ---
+라그나: 낯선 땅이군. 먼저 물길과 숲을 보지. 그다음 일을 정하자.
+플로키: 나무 냄새가 다르군. 이 땅의 배는 어떤 소리를 낼까?
+라그나: 경작기 없인 씨도 못 뿌려.
+라그나: 맨손으로 땅을 갈 순 없지. 경작기부터.
+라그나: 쇠스랑. 재료는 65분쯤이면 모아. 제련소가 없는 게 문제야.
+라그나: 원목... 검은 숲에 있을 텐데, 그 땅은 아직 못 봤군. 찾아보지.
+라그나: 밭에 당근 4 심으러 가지. 씨 뿌리는 건 내 오랜 일이야.
+라그나: 4개 심었어. 물만 잘 들면 되지.
+라그나: 당근 4 거둬 왔어. 다시 심어야겠군.
+플로키: 라그나의 밭엔 손대지 않겠어.
+라그나: 당근 6, 당근 씨앗 4 심으러 가지. 아버지께 배운 대로.
+라그나: 10개 심었지. 서두르지 말고 기다리자.
+라그나: 당근이 모자라. 심어서 85분쯤 기다리자.
+라그나: 괭이 들고 가지. 당근 3 심을 거야.
+플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+라그나: 3개 심고 왔어. 이제 땅이 할 일이지.
+라그나: 당근이 없군. 밭에 심어 두지. 85분쯤 뒤에 다시 시켜 줘.
+라그나: 밭에 당근 3 심으러 갈게.
+라그나: 끝났어. 3개 심었지.
+플로키: 당근은 심어서 채울게! 85분쯤 걸려.
+플로키: 당근 2를 심어 두지. 자라는 건 신들의 몫이야.
+플로키: 씨앗 2개가 제자리를 찾았어
+라그나: 당근, 밭이 있어야 해. 밭 자리에 서서 밭 10 해 줘.
+라그나: 당근 4, 땅에 묻으러 가지.
+판정: FAIL (28/29)
+시간: 123초
+프레임: 평균 227 FPS (실시간 41초)
+
+## 모드 로그 (242줄)
+[Info   :Valheim Helper] === vh_farmtest 시작
+[Info   :Valheim Helper] 시험: 까마귀 Hugin 치움 — 자리 (-224.4, 76.8, 150.6)·플레이어와 15.2m
+[Info   :Valheim Helper] 지난 시험 상자 1개 치움
+[Info   :Valheim Helper] 시작 땅: 거점 60m 안 물건 0·쓰러진 몸 0·통나무 0·옛 묘비 0
+[Info   :Valheim Helper] 거점 이동 (-215.80, 77.34, 158.57), 새 NPC 2명
+[Info   :Valheim Helper] <라그나> 낯선 땅이군. 먼저 물길과 숲을 보지. 그다음 일을 정하자.
+[Info   :Valheim Helper] <플로키> 나무 냄새가 다르군. 이 땅의 배는 어떤 소리를 낼까?
+[Info   :Valheim Helper] 자리 점검: 장소 Dolmen02 27m(반지름 8), 장소 WoodHouse1 49m(반지름 8), 장소 Dolmen02 51m(반지름 8), 장소 ShipSetting01 52m(반지름 24), 장소 Runestone_Meadows 76m(반지름 8), 장소 ShipSetting01 102m(반지름 24)
+[Info   :Valheim Helper] 시작 상태: [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] OK   깃발·NPC·상자
+[Info   :Valheim Helper] DIAG 갈기 cultivate_v2, 작물 14: sapling_turnip(TurnipSeeds→Turnip×1, r0.5, 4000~5000s) sapling_seedturnip(Turnip→TurnipSeeds×3, r0.5, 4000~5000s) sapling_onion(OnionSeeds→Onion×1, r0.5, 4000~5000s) sapling_seedonion(Onion→OnionSeeds×3, r0.5, 4000~5000s) sapling_carrot(CarrotSeeds→Carrot×1, r0.5, 4000~5000s) sapling_seedcarrot(Carrot→CarrotSeeds×3, r0.5, 4000~5000s) sapling_ba...
+[Info   :Valheim Helper] OK   작물 목록·갈기 조각 (14, cultivate_v2)
+[Info   :Valheim Helper] OK   계획: 씨앗 6 → 당근 새싹 4 (씨앗 없으면 0, 바이옴 1)
+[Info   :Valheim Helper] <라그나> 경작기 없인 씨도 못 뿌려.
+[Info   :Valheim Helper] OK   경작기 없으면 거절 (0초, 새싹 0, 씨앗 상자 6)
+[Info   :Valheim Helper] OK   제작대 없음 → 안 검 (대기열 , 만들 말 False)
+[Info   :Valheim Helper] 라그나 경작기 없음(밭일): Cultivator 1 제작을 대기열에 건다
+[Info   :Valheim Helper] <라그나> 맨손으로 땅을 갈 순 없지. 경작기부터.
+[Info   :Valheim Helper] 라그나 저장된 계획 없음 — 쇠스랑 다시 세움
+[Info   :Valheim Helper] 라그나 제작 계획 Cultivator 1(목표 1개): 단계 6, 3818초, 모을 것 [RoundLog 5, CopperOre 10, Coal 30, TinOre 5], 없는 설비 [smelter], 범위 밖 [], 모름 []
+[Info   :Valheim Helper] <라그나> 쇠스랑. 재료는 65분쯤이면 모아. 제련소가 없는 게 문제야.
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] 라그나 작업 RoundLog: Unload → Prep
+[Info   :Valheim Helper] 라그나 작업 RoundLog: Prep → Tool
+[Info   :Valheim Helper] 라그나 작업 RoundLog: Tool → Search
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-214.8, 77.2, 156.3)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 아는 곳에 없음 → 새 땅 탐험(바이옴 검은 숲, 지도에 없음, 첫 경계 -3,1 초원)
+[Info   :Valheim Helper] <라그나> 원목... 검은 숲에 있을 텐데, 그 땅은 아직 못 봤군. 찾아보지.
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 구역 -3,1로(95m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 RoundLog: Search → GoZone
+[Info   :Valheim Helper] FAIL $piece_forge 세우면 경작기 제작·밭일 다시 걸기 (10초, 대기열 밭일)
+[Info   :Valheim Helper]   상태(FAIL 순간): [11s] 라그나 hp71/71 63m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper]     라그나 (-206.6,68.6,96.5) Work 속도 7.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(228.0m) 기다림 False 걷기 False 뒤 0 새로 -76.6초 뒤 · 길 없음 · m_path 10: (-206.5, 68.6, 95.3) (-205.4, 69.0, 90.1) (-202.9, 69.0, 85.1) … (-192.0, 70.7, 64.0) 길 True · MoveTo 가는 중((-192.0, 70.5, 64.0) 거리 6.0 뛰기 True)
+[Info   :Valheim Helper]     플로키 (-217.7,76.7,157.0) Idle 속도 0.0 · 피해 없음 · 문 4m 밖 · FloorStep(안 씀) 모퉁이 (0.0, 0.0, 0.0)(268.4m) 기다림 False 걷기 False 뒤 0 새로 -76.6초 뒤 · 길 없음 · m_path 0: 길 False · 
+[Info   :Valheim Helper] 라그나 작업 RoundLog: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-206.7, 68.6, 95.0)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 구역 -2,1로(85m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 RoundLog: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 멀리선 이동 생략 85m(직선(안 밝혀짐), 직선 85m) → 12초 기다림(달리기 7.0)
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 멀리선 이동 생략 중 플레이어가 지도 위치에 다가옴(2/12초) → 길 0m 앞 자리에 내림(11.0m → 목표에서 3.0m (후보 1번째)) → 걷기
+[Info   :Valheim Helper] 라그나 작업 RoundLog: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-171.9, 64.7, 85.8)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 구역 -2,2로(61m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 RoundLog: Search → GoZone
+[Info   :Valheim Helper] 라그나 작업 RoundLog: GoZone → Search
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 바닥 길 켬, 못 고름(바닥 위 False, 자리 (-163.7, 70.2, 92.4)) / 목록에 있는 대상 없음
+[Info   :Valheim Helper] 라그나 작업 RoundLog: 구역 -4,0로(131m, 탐험 True)
+[Info   :Valheim Helper] 라그나 작업 RoundLog: Search → GoZone
+[Info   :Valheim Helper] <라그나> 밭에 당근 4 심으러 가지. 씨 뿌리는 건 내 오랜 일이야.
+[Info   :Valheim Helper] 라그나 밭: Fetch → Go (심음 0/4)
+[Info   :Valheim Helper] 라그나 밭 도착: 자리 25곳, 간격 0.90m
+[Info   :Valheim Helper] 라그나 밭: Go → Plant (심음 0/4)
+[Info   :Valheim Helper] OK   새싹 4개 심음 (14초, 4, FarmPlant)
+[Info   :Valheim Helper] <라그나> 4개 심었어. 물만 잘 들면 되지.
+[Info   :Valheim Helper] 라그나 밭: Plant → Home (심음 4/4)
+[Info   :Valheim Helper] 라그나 밭: Home → Store (심음 4/4)
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 -1257371337:77862 집에서 4.9m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (1.6초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] OK   일 끝남·돌아옴 (3초, 거점까지 2m)
+[Info   :Valheim Helper] OK   밭에 새싹 4개 (4)
+[Info   :Valheim Helper] OK   씨앗 보존 (남은 2 + 심은 4 = 6)
+[Info   :Valheim Helper] OK   씨앗·경작기 상자에 (씨앗 상자 2, 경작기 상자 1·짐 0)
+[Info   :Valheim Helper] 길 기억: (-212.5,77.3,154.8)→(-218.7, 77.3, 159.2) 점 11, 모두 1
+[Info   :Valheim Helper] DIAG 새싹 (-205.89, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+[Info   :Valheim Helper] DIAG 새싹 (-204.99, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+[Info   :Valheim Helper] DIAG 새싹 (-203.19, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+[Info   :Valheim Helper] DIAG 새싹 (-204.09, 76.52, 154.15) 상태 Healthy, 갈림 True, 바이옴 Meadows, 못 자라면 지움 True
+[Info   :Valheim Helper] OK   다 자람 (1초, 당근 4/4, 남은 새싹 상태 Healthy,Healthy,Healthy,Healthy)
+[Info   :Valheim Helper] 라그나 밭: Fetch → Go (심음 0/0)
+[Info   :Valheim Helper] 라그나 밭 도착: 다 자란 것 4
+[Info   :Valheim Helper] 라그나 밭: Go → Harvest (심음 0/0)
+[Info   :Valheim Helper] 길 기억: (-206.2,76.6,157.7)→(-205.9, 76.5, 154.2) 점 7, 모두 2
+[Info   :Valheim Helper] 길 기억 지움(부서짐): (-203.0, 76.5, 154.1) 곁 1개, 남은 1
+[Info   :Valheim Helper] 라그나 거둠 4곳: 당근 4
+[Info   :Valheim Helper] <라그나> 당근 4 거둬 왔어. 다시 심어야겠군.
+[Info   :Valheim Helper] 라그나 밭: Harvest → Home (심음 0/0)
+[Info   :Valheim Helper] 라그나 밭: Home → Store (심음 0/0)
+[Info   :Valheim Helper] DIAG Unload 넣음 4개 → 상자 -1257371337:77862 집에서 4.9m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (1.5초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] OK   거두기 끝남·돌아옴 (13초, 거둠 4/4, FarmStore, 거점까지 2m)
+[Info   :Valheim Helper] OK   거둔 당근 상자에 (4/4, 짐 0, 땅 0, 남은 것 0)
+[Info   :Valheim Helper] <플로키> 라그나의 밭엔 손대지 않겠어.
+[Info   :Valheim Helper] OK   !밭 → 밭일 시작, 같은 밭은 한 명만 (FarmFetch, 플로키 없음)
+[Info   :Valheim Helper] OK   밭일 저장 칸 (Farm r3 (-204.1,156.0))
+[Info   :Valheim Helper] <라그나> 당근 6, 당근 씨앗 4 심으러 가지. 아버지께 배운 대로.
+[Info   :Valheim Helper] 라그나 밭: Fetch → Go (심음 0/10)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 5.4m): (-212.6,77.3,154.8)→(-218.7, 77.3, 159.2) 점 10, 모두 1
+[Info   :Valheim Helper] 라그나 밭 도착: 다 자란 것 0
+[Info   :Valheim Helper] 라그나 밭: Go → Harvest (심음 0/10)
+[Info   :Valheim Helper] 라그나 밭: Harvest → Plant (심음 0/10)
+[Info   :Valheim Helper] 길 기억: (-206.2,76.6,157.7)→(-205.9, 76.5, 154.2) 점 8, 모두 2
+[Info   :Valheim Helper] <라그나> 10개 심었지. 서두르지 말고 기다리자.
+[Info   :Valheim Helper] 라그나 밭: Plant → Home (심음 10/10)
+[Info   :Valheim Helper] 라그나 밭: Home → Store (심음 10/10)
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 -1257371337:77862 집에서 4.9m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (1.4초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] OK   !밭 심기 (11초, 당근 6·당근 씨앗 4, 남은 씨앗 0·당근 0, 경작기 상자 1)
+[Info   :Valheim Helper] 라그나 밭: Fetch → Go (심음 0/0)
+[Info   :Valheim Helper] 길 기억: (-212.5,77.5,157.5)→(-218.7, 77.3, 159.2) 점 9, 모두 3
+[Info   :Valheim Helper] 라그나 밭 도착: 다 자란 것 0
+[Info   :Valheim Helper] 라그나 밭: Go → Harvest (심음 0/0)
+[Info   :Valheim Helper] 라그나 밭: Harvest → Home (심음 0/0)
+[Info   :Valheim Helper] 라그나 밭: Home → Store (심음 0/0)
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.1초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] OK   저장 칸에서 밭일 다시 시작·끝 (True, 5초, 짐 경작기 0)
+[Info   :Valheim Helper] 라그나 농사로 Carrot 3: 밭 (-204,156) 심기 [sapling_carrot 3], 모자람 0
+[Info   :Valheim Helper] <라그나> 당근이 모자라. 심어서 85분쯤 기다리자.
+[Info   :Valheim Helper] OK   !당근 3 → 밭일 (FarmJob, 들에서 나는 곳 [Pickable_Carrot(None)])
+[Info   :Valheim Helper] <라그나> 괭이 들고 가지. 당근 3 심을 거야.
+[Info   :Valheim Helper] 라그나 밭: Fetch → Go (심음 0/3)
+[Info   :Valheim Helper] 길 기억: (-206.2,76.6,157.7)→(-214.8, 77.2, 156.3) 점 13, 모두 4
+[Info   :Valheim Helper] 라그나 밭 도착: 다 자란 것 0
+[Info   :Valheim Helper] 라그나 밭: Go → Harvest (심음 0/3)
+[Info   :Valheim Helper] 라그나 밭: Harvest → Plant (심음 0/3)
+[Info   :Valheim Helper] <플로키> (말풍선) 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] <라그나> 3개 심고 왔어. 이제 땅이 할 일이지.
+[Info   :Valheim Helper] 라그나 밭: Plant → Home (심음 3/3)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 3.6m): (-206.2,76.6,157.8)→(-205.9, 76.5, 154.2) 점 8, 모두 4
+[Info   :Valheim Helper] 라그나 밭: Home → Store (심음 3/3)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.36): (-205.5,76.5,154.3)→(-214.8, 77.2, 156.3)
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 -1257371337:77862 집에서 4.9m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (1.4초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] OK   !당근 3 심기 (8초, 당근 3, 남은 씨앗 0, 경작기 상자 1)
+[Info   :Valheim Helper] 라그나 제작 계획 CarrotSoup 1(목표 1개): 단계 2, 45초, 모을 것 [Mushroom 1, Carrot 3], 없는 설비 [$piece_cauldron:1], 범위 밖 [], 모름 []
+[Info   :Valheim Helper] 라그나 제작 당근 수프: 재료 Carrot 3은 농사 → 밭일
+[Info   :Valheim Helper] 라그나 농사로 Carrot 3: 밭 (-204,156) 심기 [sapling_carrot 3], 모자람 0
+[Info   :Valheim Helper] <라그나> 당근이 없군. 밭에 심어 두지. 85분쯤 뒤에 다시 시켜 줘.
+[Info   :Valheim Helper] OK   !당근수프 1 → 재료 당근 밭일 (FarmJob, 출처 Farm)
+[Info   :Valheim Helper] <라그나> 밭에 당근 3 심으러 갈게.
+[Info   :Valheim Helper] 라그나 밭: Fetch → Go (심음 0/3)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 5.5m): (-212.7,77.3,154.9)→(-218.7, 77.3, 159.2) 점 10, 모두 4
+[Info   :Valheim Helper] 라그나 밭 도착: 다 자란 것 0
+[Info   :Valheim Helper] 라그나 밭: Go → Harvest (심음 0/3)
+[Info   :Valheim Helper] 라그나 밭: Harvest → Plant (심음 0/3)
+[Info   :Valheim Helper] <라그나> 끝났어. 3개 심었지.
+[Info   :Valheim Helper] 라그나 밭: Plant → Home (심음 3/3)
+[Info   :Valheim Helper] 길 기억 바꿈(옛 3.7m): (-206.3,76.6,157.8)→(-205.9, 76.5, 154.2) 점 8, 모두 4
+[Info   :Valheim Helper] 라그나 밭: Home → Store (심음 3/3)
+[Info   :Valheim Helper] 길 기억 안 함(길/직선 1.39): (-205.5,76.5,154.4)→(-214.8, 77.2, 156.3)
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 -1257371337:77862 집에서 4.9m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (1.4초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] OK   !당근수프 심기 (9초, 당근 3, 남은 씨앗 0)
+[Info   :Valheim Helper] 플로키 자동 보충 밭 Carrot 5: 밭 (-204,156), 맡음 False, 자라는 중 3, 다 자람 0, 심기 1 → 감
+[Info   :Valheim Helper] <플로키> 당근은 심어서 채울게! 85분쯤 걸려.
+[Info   :Valheim Helper] 길 기억 바꿈(옛 5.6m): (-212.7,77.3,154.9)→(-218.7, 77.3, 159.2) 점 10, 모두 4
+[Info   :Valheim Helper] <플로키> 당근 2를 심어 두지. 자라는 건 신들의 몫이야.
+[Info   :Valheim Helper] 플로키 밭: Fetch → Go (심음 0/2)
+[Info   :Valheim Helper] OK   !채워 당근 → 한 명만 밭일 (, FarmJob)
+[Info   :Valheim Helper] 플로키 밭 도착: 다 자란 것 0
+[Info   :Valheim Helper] 플로키 밭: Go → Harvest (심음 0/2)
+[Info   :Valheim Helper] 플로키 밭: Harvest → Plant (심음 0/2)
+[Info   :Valheim Helper] <플로키> 씨앗 2개가 제자리를 찾았어
+[Info   :Valheim Helper] 플로키 밭: Plant → Home (심음 2/2)
+[Info   :Valheim Helper] 길 기억: (-206.4,76.6,157.7)→(-203.2, 76.5, 154.2) 점 9, 모두 5
+[Info   :Valheim Helper] 플로키 밭: Home → Store (심음 2/2)
+[Info   :Valheim Helper] DIAG Unload 넣음 1개 → 상자 -1257371337:77862 집에서 2.5m
+[Info   :Valheim Helper] DIAG Unload 다 넣음/없음 (0.8초) 짐 [AxeFlintx1, PickaxeAntlerx1, ArmorLeatherChestx1, ArmorLeatherLegsx1] 지킴 4 skip 0
+[Info   :Valheim Helper] OK   !채워 당근 심기 (11초, 당근 5, 남은 씨앗 0)
+[Info   :Valheim Helper] 라그나 자동 보충 밭 Carrot 5: 밭 (-204,156), 맡음 False, 자라는 중 5, 다 자람 0, 심기 0 → 쉼
+[Info   :Valheim Helper] OK   자라는 중이면 다시 안 심음 (, )
+[Info   :Valheim Helper] <라그나> 당근, 밭이 있어야 해. 밭 자리에 서서 밭 10 해 줘.
+[Info   :Valheim Helper] OK   밭 없으면 !당근은 밭일·채집 안 함 (없음)
+[Info   :Valheim Helper] <라그나> 당근 4, 땅에 묻으러 가지.
+[Info   :Valheim Helper] 라그나 밭: Fetch → Go (심음 0/4)
+[Info   :Valheim Helper] OK   밭일 그만: 챙긴 경작기·씨앗은 짐에 (0초, 경작기 1, 씨앗 4, 일 )
+[Info   :Valheim Helper] DIAG Unload 넣음 5개 → 상자 -1257371337:77862 집에서 4.9m
+[Info   :Valheim Helper] OK   다음 채집의 짐 정리가 경작기·씨앗을 상자에 (3초, 상자 경작기 1·씨앗 4, 짐 경작기 0)
+[Info   :Valheim Helper] > !멈춰
+[Info   :Valheim Helper] <라그나> 그만하라면 그만하지. 깃발 앞에 있겠어.
+[Info   :Valheim Helper] <플로키> 손을 멈췄어. 다른 명령이 있으면 불러.
+[Info   :Valheim Helper] 길 기억: (-204.8,76.5,154.1)→(-218.7, 77.3, 159.2) 점 24, 모두 6
+[Info   :Valheim Helper] <플로키> 집 냄새 좋다. 신들도 쉬는 날이 있겠지?
+[Info   :Valheim Helper] <라그나> 집이군. 불 앞에 앉으니 좋아.
+[Info   :Valheim Helper] OK   대사에 자리표시자 안 남음
+[Info   :Valheim Helper] 끝 상태: [117s] 라그나 hp69/69 1m Idle 짐4 대기0 | 플로키 hp69/69 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] 멈춤 0번 · 일부러 선 것 0번 (선 표본 148, 가장 오래 4.0초) · 헛휘두름 0번 · 기다림 합 멀리선 이동 생략 2초
+[Info   :Valheim Helper] --- 상태 흐름(3초마다, 최근 39개) ---
+[Info   :Valheim Helper] [0s] 라그나 hp71/71 2m Idle 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [3s] 라그나 hp71/71 10m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper] [6s] 라그나 hp71/71 30m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper] [9s] 라그나 hp71/71 50m PlanJob/Gather 짐4 대기1 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper] [12s] 라그나 hp71/71 65m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper] [15s] 라그나 hp71/71 76m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper] [18s] 라그나 hp71/71 86m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper] [21s] 라그나 hp71/71 85m PlanJob/Gather 짐4 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 6 | 생물 0
+[Info   :Valheim Helper] [24s] 라그나 hp71/71 70m FarmJob/FarmGo 짐9 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[Info   :Valheim Helper] [27s] 라그나 hp71/71 53m FarmJob/FarmGo 짐9 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[Info   :Valheim Helper] [30s] 라그나 hp71/71 36m FarmJob/FarmGo 짐9 대기0 | 플로키 hp71/71 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[Info   :Valheim Helper] [33s] 라그나 hp70/70 20m FarmJob/FarmGo 짐9 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[Info   :Valheim Helper] [36s] 라그나 hp70/70 11m FarmJob/FarmHome 짐5 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 2 | 생물 0
+[Info   :Valheim Helper] [39s] 라그나 hp70/70 2m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [42s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [45s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [48s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [51s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [54s] 라그나 hp70/70 8m FarmJob/FarmGo 짐4 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [57s] 라그나 hp70/70 10m FarmJob/FarmHarvest 짐5 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [60s] 라그나 hp70/70 12m FarmJob/FarmHarvest 짐7 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [63s] 라그나 hp70/70 5m FarmJob/FarmHome 짐8 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [66s] 라그나 hp70/70 1m FarmJob/FarmGo 짐15 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [69s] 라그나 hp70/70 10m FarmJob/FarmPlant 짐15 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [72s] 라그나 hp70/70 12m FarmJob/FarmPlant 짐6 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [75s] 라그나 hp70/70 1m FarmJob/FarmStore 짐5 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [78s] 라그나 hp70/70 7m FarmJob/FarmGo 짐4 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 1 | 생물 0
+[Info   :Valheim Helper] [81s] 라그나 hp70/70 3m FarmJob/FarmGo 짐8 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [84s] 라그나 hp70/70 10m FarmJob/FarmPlant 짐8 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [87s] 라그나 hp70/70 7m FarmJob/FarmHome 짐5 대기0 | 플로키 hp70/70 3m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [90s] 라그나 hp70/70 1m FarmJob/FarmGo 짐8 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [93s] 라그나 hp70/70 10m FarmJob/FarmPlant 짐8 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [96s] 라그나 hp70/70 7m FarmJob/FarmHome 짐5 대기0 | 플로키 hp70/70 4m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [99s] 라그나 hp70/70 1m Idle 짐4 대기0 | 플로키 hp70/70 2m FarmJob/FarmGo 짐7 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [102s] 라그나 hp69/69 6m Idle 짐4 대기0 | 플로키 hp69/69 5m FarmJob/FarmGo 짐7 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [105s] 라그나 hp69/69 10m Idle 짐4 대기0 | 플로키 hp69/69 10m FarmJob/FarmPlant 짐7 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [108s] 라그나 hp69/69 13m Idle 짐4 대기0 | 플로키 hp69/69 13m FarmJob/FarmHome 짐5 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] [111s] 라그나 hp69/69 13m Idle 짐4 대기0 | 플로키 hp69/69 2m Idle 짐4 대기0 | 상자 3 | 생물 0
+[Info   :Valheim Helper] [114s] 라그나 hp69/69 6m GatherJob/Unload 짐9 대기0 | 플로키 hp69/69 2m Idle 짐4 대기0 | 상자 0 | 생물 0
+[Info   :Valheim Helper] --- NPC 대사 ---
+[Info   :Valheim Helper] 라그나: 낯선 땅이군. 먼저 물길과 숲을 보지. 그다음 일을 정하자.
+[Info   :Valheim Helper] 플로키: 나무 냄새가 다르군. 이 땅의 배는 어떤 소리를 낼까?
+[Info   :Valheim Helper] 라그나: 경작기 없인 씨도 못 뿌려.
+[Info   :Valheim Helper] 라그나: 맨손으로 땅을 갈 순 없지. 경작기부터.
+[Info   :Valheim Helper] 라그나: 쇠스랑. 재료는 65분쯤이면 모아. 제련소가 없는 게 문제야.
+[Info   :Valheim Helper] 라그나: 원목... 검은 숲에 있을 텐데, 그 땅은 아직 못 봤군. 찾아보지.
+[Info   :Valheim Helper] 라그나: 밭에 당근 4 심으러 가지. 씨 뿌리는 건 내 오랜 일이야.
+[Info   :Valheim Helper] 라그나: 4개 심었어. 물만 잘 들면 되지.
+[Info   :Valheim Helper] 라그나: 당근 4 거둬 왔어. 다시 심어야겠군.
+[Info   :Valheim Helper] 플로키: 라그나의 밭엔 손대지 않겠어.
+[Info   :Valheim Helper] 라그나: 당근 6, 당근 씨앗 4 심으러 가지. 아버지께 배운 대로.
+[Info   :Valheim Helper] 라그나: 10개 심었지. 서두르지 말고 기다리자.
+[Info   :Valheim Helper] 라그나: 당근이 모자라. 심어서 85분쯤 기다리자.
+[Info   :Valheim Helper] 라그나: 괭이 들고 가지. 당근 3 심을 거야.
+[Info   :Valheim Helper] 플로키: 오딘! 저 봐요, 나 일 잘하죠? 킥킥.
+[Info   :Valheim Helper] 라그나: 3개 심고 왔어. 이제 땅이 할 일이지.
+[Info   :Valheim Helper] 라그나: 당근이 없군. 밭에 심어 두지. 85분쯤 뒤에 다시 시켜 줘.
+[Info   :Valheim Helper] 라그나: 밭에 당근 3 심으러 갈게.
+[Info   :Valheim Helper] 라그나: 끝났어. 3개 심었지.
+[Info   :Valheim Helper] 플로키: 당근은 심어서 채울게! 85분쯤 걸려.
+[Info   :Valheim Helper] 플로키: 당근 2를 심어 두지. 자라는 건 신들의 몫이야.
+[Info   :Valheim Helper] 플로키: 씨앗 2개가 제자리를 찾았어
+[Info   :Valheim Helper] 라그나: 당근, 밭이 있어야 해. 밭 자리에 서서 밭 10 해 줘.
+[Info   :Valheim Helper] 라그나: 당근 4, 땅에 묻으러 가지.
+[Info   :Valheim Helper] 판정: FAIL (28/29)
