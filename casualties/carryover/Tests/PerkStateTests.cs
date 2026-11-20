@@ -36,22 +36,22 @@ public class PerkStateTests
     [Fact]
     public void Buy_CostsRise_AndCap()
     {
-        var s = new PerkState { Points = 20 };
+        var s = new PerkState { Points = 8 };
         int b = Idx("subspace");
-        Assert.True(s.Buy(b)); Assert.Equal(16, s.Points);
-        Assert.True(s.Buy(b)); Assert.Equal(10, s.Points);
-        Assert.True(s.Buy(b)); Assert.Equal(2, s.Points);
-        Assert.False(s.Buy(b));                       // 4단계 값 8 > 남은 2
-        Assert.Equal(8, s.NextCost(b)); Assert.Equal(2, s.Points);
+        Assert.True(s.Buy(b)); Assert.Equal(6, s.Points);
+        Assert.True(s.Buy(b)); Assert.Equal(4, s.Points);
+        Assert.True(s.Buy(b)); Assert.Equal(1, s.Points);
+        Assert.False(s.Buy(b));                       // 4단계 값 3 > 남은 1
+        Assert.Equal(3, s.NextCost(b)); Assert.Equal(1, s.Points);
         Assert.Equal(3, s.SubspaceSlots);
     }
 
     [Fact]
     public void Buy_NotEnoughPoints_KeepsPoints()
     {
-        var s = new PerkState { Points = 2 };
+        var s = new PerkState { Points = 1 };
         Assert.False(s.Buy(Idx("xp")));
-        Assert.Equal(2, s.Points);
+        Assert.Equal(1, s.Points);
         Assert.Equal(0, s.Level("xp"));
     }
 
@@ -66,7 +66,7 @@ public class PerkStateTests
     {
         var s = new PerkState { Points = 999 };
         for (int i = 0; i < PerkState.Perks.Length; i++) while (s.Buy(i)) { }
-        Assert.Equal(999 - 136, s.Points);            // 전부 136점
+        Assert.Equal(999 - 70, s.Points);             // 전부 70점
         Assert.Equal(10, s.SubspaceSlots);
         Assert.Equal(1.75f, s.LockpickMult, 3);
         Assert.Equal(3, s.CraftIntBonus);
