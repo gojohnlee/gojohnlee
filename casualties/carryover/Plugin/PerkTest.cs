@@ -23,7 +23,28 @@ namespace CasualtiesCarryover
         private bool shot, started, ok = true;
         private int added = -1;
         private GameObject[] traps;
-        private bool trapsMoved;
+        private bool trapsMoved, pixStarted;
+        private string pixResult;
+
+        private System.Collections.IEnumerator CountMarkPixels()
+        {
+            yield return new WaitForEndOfFrame();
+            var tex = ScreenCapture.CaptureScreenshotAsTexture();
+            var boxes = RunHud.Drawn.ToArray();
+            int red = 0, total = 0;
+            foreach (var r in boxes)
+                for (int x = (int)r.xMin; x < (int)r.xMax; x++)
+                    for (int y = (int)r.yMin; y < (int)r.yMax; y++)
+                    {
+                        int ty = tex.height - 1 - y;
+                        if (x < 0 || ty < 0 || x >= tex.width || ty >= tex.height) continue;
+                        total++;
+                        var c = tex.GetPixel(x, ty);
+                        if (c.r > 0.7f && c.g < 0.35f && c.b < 0.35f) red++;
+                    }
+            Destroy(tex);
+            pixResult = (boxes.Length > 0 && total > 0 && red * 2 >= total ? "ok " : "bad ") + $"{boxes.Length} boxes, {red}/{total} red, screen {Screen.width}x{Screen.height}";
+        }
 
         private void Awake()
         {
@@ -92,16 +113,24 @@ namespace CasualtiesCarryover
                     {
                         Vector2 bp0 = body.transform.position;
                         var dxs = new[] { 3f, 8f, 30f };
-                        for (int i = 0; i < traps.Length; i++) if (traps[i] != null)
+                        for (int i = 0; i < traps.Length; i++)
                         {
+                            // 지형 따라 게임이 덫을 지우기도 한다(11-21 시험: 3·8이 gone) → 지워지면 다시 만든다
+                            if (traps[i] == null) traps[i] = Utils.Create("beartrap", bp0 + new Vector2(dxs[i], 0.5f), 0f);
                             traps[i].transform.position = bp0 + new Vector2(dxs[i], 0.5f);
                             var rb = traps[i].GetComponent<Rigidbody2D>(); if (rb != null) { rb.velocity = Vector2.zero; rb.simulated = false; }
                         }
                     }
                     if (Since < 1.2f) return;
+                    // 표시가 실제 화면 픽셀로 그려졌는지: 프레임 끝에 화면을 찍어 표시 칸 안의 빨간 픽셀을 센다
+                    if (!pixStarted) { pixStarted = true; StartCoroutine(CountMarkPixels()); }
+                    if (pixResult == null) return;
+                    // 덫이 지워졌다 다시 만들어지면 다음 탐색(0.5초)까지 표시가 늦다 → 4초까지 기다린다
+                    if ((!pixResult.StartsWith("ok") || !traps.Take(2).All(g => g != null && RunHud.Sensed.Contains(g.transform))) && Since < 4f) { pixStarted = false; pixResult = null; return; }
+                    Check("trap mark drawn on screen (red pixels in mark boxes)", pixResult.StartsWith("ok"), pixResult);
                     CheckPanel();
                     Vector2 bp = body.transform.position;
-                    Note("traps now at " + string.Join(",", traps.Select(g => g == null ? "gone" : ((Vector2)g.transform.position - bp).ToString("0.0"))) + $", HUD sensed {RunHud.Sensed.Count}");
+                    Note("traps now at " + string.Join(",", traps.Select(g => g == null ? "gone" : ((Vector2)g.transform.position - bp).ToString("0.0"))) + $", HUD sensed {RunHud.Sensed.Count}, ticks {RunHud.Ticks} scans {RunHud.Scans} r {RunHud.LastRadius} direct {RunHud.Scan(body, Plugin.Perks.TrapRadius).Count} perkR {Plugin.Perks.TrapRadius} t {Time.unscaledTime:0.0}");
                     bool[] seenEach = traps.Select(g => g != null && RunHud.Sensed.Contains(g.transform)).ToArray();
                     Check("trap HUD marks (level 3: 3·8 marked, 30 not)", seenEach[0] && seenEach[1] && !seenEach[2], string.Join(",", seenEach));
                     foreach (var g in traps) if (g != null) Destroy(g);
@@ -180,7 +209,8 @@ namespace CasualtiesCarryover
         {
             // 게임 가방 창으로 끌어다 넣는 것과 같은 길(Container.LoadItem → CanHoldItem)로 넣는다
             var results = new List<bool>();
-            for (int n = 0; n < 4; n++)
+            int cap = Subspace.Capacity;
+            for (int n = 0; n <= cap; n++)
             {
                 var it = Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>();
                 bool put = Subspace.Put(body, it);
@@ -190,17 +220,17 @@ namespace CasualtiesCarryover
             var inv = body.GetAllItemsThorough();
             bool weightless = !inv.Any(i => i == Subspace.Bag.GetComponent<Item>() || Subspace.Items.Contains(i));
             bool notWorn = !body.GetAllWearables().Contains(Subspace.Bag.GetComponent<Item>());
-            Check("subspace bag holds 3, 4th refused, not in inventory/wear slots (no weight)",
-                string.Join(",", results) == "True,True,True,False" && weightless && notWorn, $"{string.Join(",", results)}, weightless {weightless}, not worn {notWorn}");
+            Check($"subspace bag holds {cap}, next refused, not in inventory/wear slots (no weight)",
+                cap == 10 && results.Take(cap).All(b => b) && !results[cap] && weightless && notWorn, $"{string.Join(",", results)}, weightless {weightless}, not worn {notWorn}");
 
             Subspace.SaveToFile();
             foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
             int restored = Subspace.RestoreFromFile(body);
-            Check("subspace save→restore (save & exit / continue)", restored == 3 && Subspace.Items.All(i => i.id == "bandage"), $"{restored} restored");
+            Check("subspace save→restore (save & exit / continue)", restored == Subspace.Capacity && Subspace.Items.All(i => i.id == "bandage"), $"{restored} restored");
 
             var first = Subspace.Items[0];
             Subspace.Bag.UnloadItem(first, body);   // 가방 창에서 꺼낼 때 게임이 쓰는 함수
-            Check("take out (Container.UnloadItem)", Subspace.Items.Count == 2 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
+            Check("take out (Container.UnloadItem)", Subspace.Items.Count == Subspace.Capacity - 1 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
             Destroy(first.gameObject);
 
             Subspace.Toggle(body);                  // V: 게임 가방 창 열기 — 다음 단계에서 열려 있는지 본다

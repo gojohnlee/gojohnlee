@@ -15,13 +15,13 @@ namespace Carryover.Core
 
     /// <summary>
     /// 영구 퍽: 한 번 산 단계는 모든 회차에 계속 적용. 포인트는 셈하는 회차가 끝날 때(죽음·엔딩) 성과로 받고, 캐릭터 선택 화면에서 쓴다. 안 쓴 포인트는 남는다.
-    /// 값 맞추기: 전부 사는 데 68점, 한 회차 최대 6점(보통 2~4점) → 전부 사려면 대략 17~30회차.
+    /// 값 맞추기: 전부 사는 데 136점(아공간 10단계 86점), 한 회차 최대 6점(보통 2~4점) → 전부 사려면 대략 35~60회차.
     /// </summary>
     public sealed class PerkState
     {
         public static readonly PerkDef[] Perks =
         {
-            new PerkDef("subspace", "아공간", "무게 없는 칸 +1 (그 회차 안에서만, 죽으면 안의 물건도 사라짐)", 4, 6, 8),
+            new PerkDef("subspace", "아공간", "무게 없는 칸 +1 (그 회차 안에서만, 죽으면 안의 물건도 사라짐)", 4, 6, 8, 8, 9, 9, 10, 10, 11, 11),
             new PerkDef("lockpick", "자물쇠 달인", "자물쇠 따기 허용 각도 +25%", 2, 3, 5),
             new PerkDef("crafting", "숙련 제작", "제작할 때 지능 +1로 침 (실패·품질 저하 줄어듦)", 2, 4, 6),
             new PerkDef("traps", "함정 감지", "가까운 함정 표시 (반경 6 → 10 → 15)", 3, 4, 6),
@@ -53,7 +53,7 @@ namespace Carryover.Core
         }
 
         // ---- 효과 ----
-        public int SubspaceSlots => Level("subspace");                  // 1→2→3칸
+        public int SubspaceSlots => Level("subspace");                  // 1~10칸
         public float LockpickMult => 1f + 0.25f * Level("lockpick");    // 3단계 ×1.75
         public int CraftIntBonus => Level("crafting");                  // 3단계 지능 +3
         public float TrapRadius => TrapRadii[Level("traps")];

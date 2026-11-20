@@ -41,8 +41,8 @@ public class PerkStateTests
         Assert.True(s.Buy(b)); Assert.Equal(16, s.Points);
         Assert.True(s.Buy(b)); Assert.Equal(10, s.Points);
         Assert.True(s.Buy(b)); Assert.Equal(2, s.Points);
-        Assert.False(s.Buy(b));                       // 상한 3
-        Assert.Equal(-1, s.NextCost(b));
+        Assert.False(s.Buy(b));                       // 4단계 값 8 > 남은 2
+        Assert.Equal(8, s.NextCost(b)); Assert.Equal(2, s.Points);
         Assert.Equal(3, s.SubspaceSlots);
     }
 
@@ -66,8 +66,8 @@ public class PerkStateTests
     {
         var s = new PerkState { Points = 999 };
         for (int i = 0; i < PerkState.Perks.Length; i++) while (s.Buy(i)) { }
-        Assert.Equal(999 - 68, s.Points);             // 전부 68점
-        Assert.Equal(3, s.SubspaceSlots);
+        Assert.Equal(999 - 136, s.Points);            // 전부 136점
+        Assert.Equal(10, s.SubspaceSlots);
         Assert.Equal(1.75f, s.LockpickMult, 3);
         Assert.Equal(3, s.CraftIntBonus);
         Assert.Equal(15f, s.TrapRadius);
@@ -101,7 +101,7 @@ public class PerkStateTests
 
         var bad = PerkState.Parse("points=-3\nperk.subspace=99\nperk.bleed=2\nperk.xp=x");   // 옛 퍽 이름은 무시
         Assert.Equal(0, bad.Points);
-        Assert.Equal(3, bad.Level("subspace"));
+        Assert.Equal(10, bad.Level("subspace"));
         Assert.Equal(0, bad.Level("xp"));
     }
 }
