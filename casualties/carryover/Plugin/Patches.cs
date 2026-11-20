@@ -33,7 +33,7 @@ namespace CasualtiesCarryover
                 {
                     Plugin.State.OnLoadedRun(Levels(sk));
                     Plugin.Log.LogInfo($"loaded run: start stays {Plugin.Fmt(Plugin.State.Start)}");
-                    Subspace.Items.Clear();
+                    Subspace.Bag = null;   // 이전 씬의 가방은 씬과 함께 사라졌다
                     Subspace.RestoreFromFile(body);
                 }
                 else
@@ -52,6 +52,7 @@ namespace CasualtiesCarryover
                     Plugin.Perks.OnNewRun();
                     Plugin.SavePerks();
                     Subspace.Clear();
+                    Subspace.EnsureBag(body);
                 }
                 Plugin.SaveState();
                 SelfTest.OnRunStarted(Levels(sk));

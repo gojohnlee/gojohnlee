@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Carryover.Core;
@@ -98,6 +99,7 @@ namespace CasualtiesCarryover
                         }
                     }
                     if (Since < 1.2f) return;
+                    CheckPanel();
                     Vector2 bp = body.transform.position;
                     Note("traps now at " + string.Join(",", traps.Select(g => g == null ? "gone" : ((Vector2)g.transform.position - bp).ToString("0.0"))) + $", HUD sensed {RunHud.Sensed.Count}");
                     bool[] seenEach = traps.Select(g => g != null && RunHud.Sensed.Contains(g.transform)).ToArray();
@@ -176,38 +178,41 @@ namespace CasualtiesCarryover
 
         private void TestSubspace(Body body)
         {
-            int Hand()
-            {
-                for (int i = 0; i < body.slots.Length; i++) if (body.slots[i].isHand && !body.HoldingItem(i)) return i;
-                return -1;
-            }
-            for (int i = 0; i < body.slots.Length; i++) if (body.slots[i].isHand && body.HoldingItem(i)) { Note("drop from hand: " + body.GetItem(i).id); body.DropItem(i); }
-            Note("hands: " + string.Join(",", Enumerable.Range(0, body.slots.Length).Where(i => body.slots[i].isHand).Select(i => $"{i} canPickUp {body.slots[i].canPickUp}")));
-            string last = null;
+            // 게임 가방 창으로 끌어다 넣는 것과 같은 길(Container.LoadItem → CanHoldItem)로 넣는다
+            var results = new List<bool>();
             for (int n = 0; n < 4; n++)
             {
                 var it = Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>();
-                int h = Hand();
-                if (h < 0) { Check("free hand", false, "none"); return; }
-                body.PickUpItem(it, h, force: true);
-                last = Subspace.StoreFromHands(body);
-                Note("store " + n + ": " + last);
-                if (n == 3 && body.HoldingItem(it)) { body.DropItem(it); Destroy(it.gameObject); }
+                bool put = Subspace.Put(body, it);
+                results.Add(put);
+                if (!put) Destroy(it.gameObject);
             }
-            bool full = last != null && last.Contains("가득");
-            bool weightless = !body.GetAllItemsThorough().Any(i => Subspace.Items.Contains(i));
-            Check("subspace holds 3, 4th refused, not in inventory (no weight)", Subspace.Items.Count == 3 && full && weightless, $"{Subspace.Items.Count} stored, full msg {full}, weightless {weightless}");
+            var inv = body.GetAllItemsThorough();
+            bool weightless = !inv.Any(i => i == Subspace.Bag.GetComponent<Item>() || Subspace.Items.Contains(i));
+            bool notWorn = !body.GetAllWearables().Contains(Subspace.Bag.GetComponent<Item>());
+            Check("subspace bag holds 3, 4th refused, not in inventory/wear slots (no weight)",
+                string.Join(",", results) == "True,True,True,False" && weightless && notWorn, $"{string.Join(",", results)}, weightless {weightless}, not worn {notWorn}");
 
             Subspace.SaveToFile();
-            foreach (var it in Subspace.Items) Destroy(it.gameObject);
-            Subspace.Items.Clear();
+            foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
             int restored = Subspace.RestoreFromFile(body);
-            Check("subspace save→restore (save & exit / continue)", restored == 3 && Subspace.Items.All(i => i.id == "bandage" && !i.gameObject.activeSelf), $"{restored} restored");
+            Check("subspace save→restore (save & exit / continue)", restored == 3 && Subspace.Items.All(i => i.id == "bandage"), $"{restored} restored");
 
-            var msg = Subspace.TakeOut(body);
-            bool inHand = body.GetAllItemsThorough().Any(i => i != null && i.id == "bandage");
-            Check("take out to hand", Subspace.Items.Count == 2 && inHand, msg);
-            Subspace.StoreFromHands(body);
+            var first = Subspace.Items[0];
+            Subspace.Bag.UnloadItem(first, body);   // 가방 창에서 꺼낼 때 게임이 쓰는 함수
+            Check("take out (Container.UnloadItem)", Subspace.Items.Count == 2 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
+            Destroy(first.gameObject);
+
+            Subspace.Toggle(body);                  // V: 게임 가방 창 열기 — 다음 단계에서 열려 있는지 본다
+        }
+
+        private void CheckPanel()
+        {
+            var pc = PlayerCamera.main;
+            bool open = pc.currentContainer == Subspace.Bag && pc.containerMenu.activeSelf;
+            Check("V opens game bag panel with subspace bag", open, $"current {(pc.currentContainer == null ? "none" : pc.currentContainer.name)}, menu {pc.containerMenu.activeSelf}");
+            var path = Environment.GetEnvironmentVariable("CU_CARRYOVER_SHOT");
+            if (!string.IsNullOrEmpty(path)) ScreenCapture.CaptureScreenshot(path.Replace(".png", "-bag.png"));
         }
 
         private void Finish(string error)
