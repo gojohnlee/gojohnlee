@@ -123,6 +123,6 @@
   - 패치 위치: `WorldGeneration.Start`(회차 시작), `PlayerCamera.EndSequence`(죽음·엔딩), `PreRunScript.UpdateCharacterText`(선택 화면 표시)
   - 퍽 패치: `LockpingMinigame` 생성자(자물쇠), `RecipeResult.SpawnResult`(제작), `Skills.AddExp`(경험치), `SaveSystem.SaveGame`(아공간 저장). 아공간은 `Subspace.cs`, 함정 표시는 `RunHud.cs`, 퍽 창은 `PerkMenu.cs`
 - 게임 안 자동 시험: `carryover/test.ps1`(두 회차), `test.ps1 -Mode perk`(퍽 5개를 실제 게임 코드로 확인)
-  - 시험은 조용히 돕니다: 작은 창을 바로 최소화하고 소리를 끕니다.
+  - 시험은 화면에 아무것도 보이지 않게 돕니다: 숨은 Windows 데스크톱에서 320x180 창 모드로 띄우고 소리를 끕니다.
   - 상태 파일은 시험용을 따로 씁니다.
-  - 게임 설정 레지스트리는 시험 뒤 원래대로 되돌립니다.
+  - 시험 동안만 바꾼 게임 설정(`settings.json`의 전체 화면·해상도)과 레지스트리(화면 기록·사망 횟수 등)는 시험 뒤 원래대로 되돌립니다.

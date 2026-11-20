@@ -80,7 +80,14 @@ namespace CasualtiesCarryover
                     break;
                 case 3:
                     // 시험용 덫은 스스로 아래(땅)로 옮겨 가므로, 확인 전까지 매 프레임 몸 옆에 붙잡아 둔다: 3·8은 표시, 30은 반경(15) 밖
-                    if (!trapsMoved) { trapsMoved = true; phaseT = Time.realtimeSinceStartup; }
+                    if (!trapsMoved)
+                    {
+                        // 앞에서 만든 덫은 회차 시작 직후 월드 정리로 지워질 수 있어 여기서 새로 만든다
+                        trapsMoved = true; phaseT = Time.realtimeSinceStartup;
+                        foreach (var g in traps) if (g != null) Destroy(g);
+                        traps = new GameObject[3];
+                        for (int i = 0; i < 3; i++) traps[i] = Utils.Create("beartrap", body.transform.position, 0f);
+                    }
                     {
                         Vector2 bp0 = body.transform.position;
                         var dxs = new[] { 3f, 8f, 30f };
