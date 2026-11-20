@@ -11,9 +11,12 @@ $regBak = Join-Path $work 'prefs.reg'
 reg export 'HKCU\Software\Orsoniks\CasualtiesUnknown' $regBak /y | Out-Null
 
 Add-Type -Namespace CU -Name Win -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(System.IntPtr h, int cmd); [DllImport("user32.dll")] public static extern bool IsIconic(System.IntPtr h);'
-$env:CU_CARRYOVER_TEST = $Mode   # "1" 두 회차 시험, "lang" 언어 목록 확인
+$env:CU_CARRYOVER_TEST = $Mode   # "1" 두 회차 시험, "perk" 퍽 효과 시험, "lang" 언어 목록 확인
 $env:CU_CARRYOVER_STATE = Join-Path $work 'state.txt'
 $env:CU_CARRYOVER_RESULT = $result
+$env:CU_CARRYOVER_PERKS = Join-Path $work 'perks.txt'
+$env:CU_CARRYOVER_SHOT = Join-Path $work 'perkmenu.png'
+$env:CU_CARRYOVER_SUBSPACE = Join-Path $work 'subspace.json'
 try {
     $p = Start-Process (Join-Path $game 'CasualtiesUnknown.exe') -ArgumentList '-screen-fullscreen 0 -screen-width 640 -screen-height 360' -WorkingDirectory $game -PassThru
     $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -24,7 +27,7 @@ try {
     }
     if (-not $p.HasExited) { $p.Kill(); 'TIMEOUT (game killed)' }
 } finally {
-    Remove-Item Env:CU_CARRYOVER_TEST, Env:CU_CARRYOVER_STATE, Env:CU_CARRYOVER_RESULT -ErrorAction SilentlyContinue
+    Remove-Item Env:CU_CARRYOVER_TEST, Env:CU_CARRYOVER_STATE, Env:CU_CARRYOVER_RESULT, Env:CU_CARRYOVER_PERKS, Env:CU_CARRYOVER_SHOT, Env:CU_CARRYOVER_SUBSPACE -ErrorAction SilentlyContinue
     Start-Sleep 2
     $ErrorActionPreference = 'Continue'; cmd /c "reg import `"$regBak`" >nul 2>nul"
 }

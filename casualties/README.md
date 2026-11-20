@@ -56,6 +56,47 @@
 - 이어하기(저장 불러오기)는 같은 회차로 이어서 셉니다.
 - 게임 세이브는 건드리지 않습니다. 상태는 `BepInEx\config\casualties.carryover.txt` 파일 하나에만 둡니다.
 
+
+## 영구 퍽
+
+죽거나 엔딩을 보면 그 회차 성과에 따라 **퍽 포인트**를 받습니다. 메뉴(캐릭터 선택 화면) 오른쪽 위 **「영구 퍽」** 버튼에서 포인트로 퍽을 삽니다.
+
+- 한 번 산 퍽은 **이후 모든 회차에 계속** 적용됩니다.
+- 안 쓴 포인트는 남겨 둡니다.
+- 능력치 이어받기(위 규칙)는 그대로이며, 퍽과 따로 움직입니다.
+
+**포인트 받는 법** (한 회차 최대 6점)
+
+- 버틴 시간 15분마다 1점
+- 그 회차에 새로 얻은 능력치(힘+회복력+지능) 3마다 1점
+- 도달한 층 2마다 1점
+- 3분 안에 끝난 회차는 0점입니다. 바로 죽어서 포인트를 모을 수 없게 했습니다.
+- 튜토리얼은 포인트를 주지 않습니다.
+
+**퍽 목록** (단계별 값, 전부 사려면 68점이고 보통 17~30회차가 걸립니다)
+
+| 퍽 | 단계마다 | 상한 | 값 |
+|---|---|---|---|
+| 아공간 | 무게 없는 칸 +1 | 3칸 | 4 → 6 → 8 |
+| 자물쇠 달인 | 자물쇠 따기 허용 각도 +25% | 3단계 (×1.75) | 2 → 3 → 5 |
+| 숙련 제작 | 제작할 때 지능 +1로 침 | 3단계 (+3) | 2 → 4 → 6 |
+| 함정 감지 | 가까운 함정 위에 빨간 ⚠ 표시 | 반경 6 → 10 → 15 | 3 → 4 → 6 |
+| 경험치 증가 | 경험치 획득 +10% | 3단계 (+30%) | 3 → 5 → 7 |
+
+- **아공간 쓰는 법**
+  - `V`: 손에 든 물건(주로 쓰는 손 먼저)을 넣습니다.
+  - `Shift+V`: 마지막에 넣은 물건을 빈 손으로 꺼냅니다.
+  - 왼쪽 위에 칸 목록이 보입니다.
+  - 안에 든 물건은 무게에 들어가지 않고, 층을 옮겨도 남습니다.
+  - 저장하고 나간 뒤 이어하기를 해도 그대로 남습니다.
+  - 죽거나 엔딩을 보거나 새 회차를 시작하면 안의 물건도 함께 사라집니다.
+  - 가방은 넣을 수 없습니다.
+- **자물쇠 달인:** 미니게임에서 성공으로 치는 각도 차이가 넓어집니다.
+- **숙련 제작:** 게임은 지능이 레시피 요구치보다 낮으면 50% 확률로 제작에 실패하거나, 품질(상태·양)이 20~90%로 떨어집니다. 요구치보다 3 낮으면 손을 다치기도 합니다. 이 퍽은 그 비교에서 지능을 단계만큼 높게 칩니다. 요구치를 넘긴 뒤로는 게임 자체에 더 오르는 품질이 없습니다.
+- **함정 감지가 표시하는 함정:** 덫, 선풍기, 지뢰, 총 지뢰, 가시 찌르개, 철조망, 동굴 진드기
+- 퍽 기록은 `BepInExnfigsualties.perks.txt`에 따로 저장합니다. 아공간에 든 물건은 저장하고 나갈 때 `casualties.subspace.json`에 적어 둡니다.
+- 처음부터 다시 하려면 이 파일을 지웁니다.
+
 ## 설치
 
 1. BepInEx 5(Windows x64, 5.4.21 이상)를 [공식 릴리스](https://github.com/BepInEx/BepInEx/releases)에서 받습니다.
@@ -67,20 +108,21 @@
 
 ## 되돌리기
 
-- **이 모드만 끄기:** `BepInEx\plugins\CasualtiesCarryover.dll`을 지웁니다. 보너스 기록까지 지우려면 `BepInEx\config\casualties.carryover.txt`도 지웁니다.
+- **이 모드만 끄기:** `BepInEx\plugins\CasualtiesCarryover.dll`을 지웁니다. 보너스와 퍽 기록까지 지우려면 `BepInEx\config\`의 `casualties.carryover.txt`, `casualties.perks.txt`, `casualties.subspace.json`도 지웁니다.
 - **모드 전체를 지우고 원래 게임으로:** 게임 폴더에서 `BepInEx` 폴더, `winhttp.dll`, `doorstop_config.ini`를 지웁니다.
   - 세이브와 설정은 원래 것 그대로입니다.
   - Steam 파일 무결성 검사로는 이 파일들이 지워지지 않으니 직접 지워야 합니다.
 
 ## 만드는 법 (고칠 사람용)
 
-- 계산 로직: `carryover/Core/CarryoverState.cs`
+- 계산 로직: `carryover/Core/CarryoverState.cs`(능력치), `PerkState.cs`(퍽·포인트)
   - 게임과 분리되어 있습니다.
   - 테스트: `cd carryover/Tests; dotnet test`
 - 플러그인: `carryover/Plugin`
   - 빌드: `dotnet build -c Release`. 설치된 게임의 `Managed` DLL을 참조합니다.
   - 패치 위치: `WorldGeneration.Start`(회차 시작), `PlayerCamera.EndSequence`(죽음·엔딩), `PreRunScript.UpdateCharacterText`(선택 화면 표시)
-- 게임 안 자동 시험: `carryover/test.ps1`
+  - 퍽 패치: `LockpingMinigame` 생성자(자물쇠), `RecipeResult.SpawnResult`(제작), `Skills.AddExp`(경험치), `SaveSystem.SaveGame`(아공간 저장). 아공간은 `Subspace.cs`, 함정 표시는 `RunHud.cs`, 퍽 창은 `PerkMenu.cs`
+- 게임 안 자동 시험: `carryover/test.ps1`(두 회차), `test.ps1 -Mode perk`(퍽 5개를 실제 게임 코드로 확인)
   - 시험은 조용히 돕니다: 작은 창을 바로 최소화하고 소리를 끕니다.
   - 상태 파일은 시험용을 따로 씁니다.
   - 게임 설정 레지스트리는 시험 뒤 원래대로 되돌립니다.

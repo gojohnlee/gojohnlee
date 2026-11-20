@@ -26,12 +26,15 @@ namespace CasualtiesCarryover
                 if (WorldGeneration.runSettings == null)
                 {
                     Plugin.State.OnUncountedRun();
+                    Subspace.Clear();
                     Plugin.Log.LogInfo("tutorial run: not counted");
                 }
                 else if (SaveSystem.loadedRun)
                 {
                     Plugin.State.OnLoadedRun(Levels(sk));
                     Plugin.Log.LogInfo($"loaded run: start stays {Plugin.Fmt(Plugin.State.Start)}");
+                    Subspace.Items.Clear();
+                    Subspace.RestoreFromFile(body);
                 }
                 else
                 {
@@ -46,9 +49,13 @@ namespace CasualtiesCarryover
                     {
                         try { PlayerCamera.main.DoAlert(BonusText(bonus)); } catch (Exception e) { Plugin.Log.LogWarning("alert: " + e.Message); }
                     }
+                    Plugin.Perks.OnNewRun();
+                    Plugin.SavePerks();
+                    Subspace.Clear();
                 }
                 Plugin.SaveState();
                 SelfTest.OnRunStarted(Levels(sk));
+                PerkTest.OnRunStarted();
             }
             catch (Exception e) { Plugin.Log.LogError("run start: " + e); }
         }
@@ -59,12 +66,19 @@ namespace CasualtiesCarryover
         {
             try
             {
+                Subspace.Clear();   // 죽음·엔딩: 아공간 물건도 사라짐
                 var sk = __instance.body != null ? __instance.body.skills : null;
                 if (sk == null) return;
                 var gain = Plugin.State.OnRunEnd(Levels(sk));
                 if (gain == null) { Plugin.Log.LogInfo($"run end (type {type}): not counted"); return; }
                 Plugin.SaveState();
                 Plugin.Log.LogInfo($"run end (type {type}): start {Plugin.Fmt(Plugin.State.Start)} end {Plugin.Fmt(Levels(sk))} gain {Plugin.Fmt(gain)} -> next bonus");
+                float secs = WorldGeneration.TotalRunTime();
+                int depth = WorldGeneration.world != null ? WorldGeneration.world.biomeDepth : 0;
+                int added = Plugin.Perks.OnRunEnd(secs, gain[0] + gain[1] + gain[2], depth);
+                Plugin.SavePerks();
+                Plugin.Log.LogInfo($"perk points: run {secs:0}s depth {depth} -> +{added} (total {Plugin.Perks.Points})");
+                PerkTest.OnRunEnded(added);
                 SelfTest.OnRunEnded(gain);
             }
             catch (Exception e) { Plugin.Log.LogError("run end: " + e); }

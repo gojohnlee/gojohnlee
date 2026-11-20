@@ -27,6 +27,7 @@ namespace CasualtiesCarryover
             Application.runInBackground = true;
             startTime = Time.realtimeSinceStartup;
             Plugin.State = new Carryover.Core.CarryoverState();   // 시험은 빈 상태에서
+            Plugin.Perks = new Carryover.Core.PerkState(); Plugin.SavePerks();
             Plugin.SaveState();
             Note("selftest begin");
         }
