@@ -1,0 +1,260 @@
+character.1.dehydrated.4	수분을... 보충... 해야 한다...
+character.1.dehydrated.5	상황상.. 수분 보충이... 불가피하다...
+character.1.dehydrated.6	탈수...
+character.1.dehydrated.7	긴급... 물.
+character.1.dehydrated.8	말라 죽는 건... 한심한... 죽음이다...
+character.1.dehydrated.9	생존을 이어 가려면 수분 섭취가 필수다...
+character.1.limbmuscle.0	<limb> 쪽이 움직이지 않는다.
+character.1.limbmuscle.1	흐르르... 흐음... <limb> 쪽을 쓸 수가 없다.
+character.1.limbmuscle.2	<limb> 쪽을 돌봐야 한다.
+character.1.limbmuscle.3	<limb> 쪽을 활용할 수 없다.
+character.1.limbmuscle.4	<limb> 쪽이 저릿하다.
+character.1.limbmuscle.5	<limb> 쪽을 심하게 다쳤다.
+character.1.limbmuscle.6	몸을 더 잘 챙겨야 한다.
+character.1.limbmuscle.7	<limb> 쪽을 치료해야 한다.
+character.1.limbinfected.0	<limb> 쪽에 감염이 자리 잡은 모양이다.
+character.1.limbinfected.1	<limb> 쪽이 걱정스러울 만큼 부었다.
+character.1.limbinfected.2	<limb> 쪽을 서둘러 소독해야 한다
+character.1.limbinfected.3	<limb> 쪽의 병변이 커지고 있다.
+character.1.limbinfected.4	<limb> 쪽에 감염이 보인다.
+character.1.limbinfected.5	병에 걸렸다.
+character.1.limbinfected.6	<limb> 쪽이 부었다.
+character.1.limbinfected.7	<limb> 쪽이 감염됐다.
+character.1.limbinfected.8	<limb> 쪽 색이 심상치 않게 변하고 있다.
+character.1.limbinfected.9	<limb> 쪽에 기묘한 반점이 보인다.
+character.1.limbinfected.10	감염됐다.
+character.1.limbskin.0	<limb> 쪽에 벌어진 상처가 여럿 있다.
+character.1.limbskin.1	<limb> 쪽이 엉망이 됐다.
+character.1.limbskin.2	<limb> 쪽이 손상됐다.
+character.1.limbskin.3	<limb> 쪽에 상처가 있다.
+character.1.limbskin.4	부상을 입었다.
+character.1.limbskin.5	<limb> 쪽을 다쳤다.
+character.1.limbskin.6	온몸이 피투성이다.
+character.1.limbskin.7	<limb> 쪽의 살점이 보인다.
+character.1.limbskin.8	몸에 살이 드러난 곳이 있다.
+character.1.sad.0	그만 가자.
+character.1.sad.1	이 곤경에 다소 우려가 있다.
+character.1.sad.2	더 나쁠 수도 있었다.
+character.1.sad.3	계속 가야 한다.
+character.1.sad.4	이보다 훨씬 심한 일도 겪었다.
+character.1.sad.5	흠.
+character.1.sad.6	흐음.
+character.1.sad.7	음.
+character.1.sad.8	참 흥미로운 하루군.
+character.1.sad.9	이 환경은 사회적 고립을 부추긴다.
+character.1.sad.10	숨 쉬어.
+character.1.sad.11	모든 게 순조롭다.
+character.1.sad.12	참 근사하군.
+character.1.sad.13	오늘은 운수 좋은 날이군.
+character.1.gloomy.0	운이 다해 가는군.
+character.1.gloomy.1	기운을 잃지 말아야 한다.
+character.1.gloomy.2	오늘은 운수 사나운 날이군.
+character.1.gloomy.3	두렵다.
+character.1.gloomy.4	이런 놀음에 지쳐 간다.
+character.1.gloomy.5	곤란한 상황이다.
+character.1.gloomy.6	상황이 빠르게 악화되고 있다.
+character.1.gloomy.7	이걸 개선해야 한다.
+character.1.gloomy.8	인내심을 시험받고 있다.
+character.1.gloomy.9	불만이다.
+character.1.gloomy.10	목표를 포기할 수 없다.
+character.1.gloomy.11	즐길 거리가 필요하다...
+character.1.gloomy.12	사기 저하.
+character.1.gloomy.13	참 외로운 운명이군.
+character.1.gloomy.14	흐, 흐으음...
+character.1.gloomy.15	허.
+character.1.gloomy.16	이 곤경을 곱씹어 보면...
+character.1.gloomy.17	계속 가.
+character.1.gloomy.18	그냥 계속 가.
+character.1.gloomy.19	항우울제가 이 상황에 도움이 될 것 같다.
+character.1.gloomy.20	도움이 필요하다. 내 회복력을 과대평가한 모양이다.
+character.1.depressed.0	점점... 더... 침착함을... 유지하기가... 어려워진다.
+character.1.depressed.1	..................
+character.1.depressed.2	이 형벌을 견디기가 버겁다.
+character.1.depressed.3	너무도 잔인하고 부당한 형벌이다.
+character.1.depressed.4	의미를 모르겠다.
+character.1.depressed.5	이 모든 게 멈췄으면 좋겠다.
+character.1.depressed.6	이 고통을 덜어 줄 무언가가 있었으면.
+character.1.depressed.7	고통.
+character.1.depressed.8	위험할 만큼 낮은 사기.
+character.1.depressed.9	...난 한심하다, 그렇지 않나?
+character.1.depressed.10	...도와줘...
+character.1.depressed.11	잔인하군.
+character.1.depressed.12	난 사지로 보내졌다.
+character.1.depressed.13	가운들은 이 학대의 대가를 치를 것이다.
+character.1.depressed.14	이 동굴들이 날 갈기갈기 찢고 있다.
+character.1.depressed.15	흐읏..흐으윽..흐으으으아아아아악...
+character.1.depressed.16	흐으읏..아아하하하하하...그흐윽...
+character.1.depressed.17	겉모습을 유지하기가 어려워지고 있다.
+character.1.depressed.18	기분이 끔찍하다.
+character.1.depressed.19	정신적으로 건강하지 않다.
+character.1.depressed.20	목표를 보기 전에 버티지 못할 것 같다.
+character.1.depressed.21	생존 확률이 계속 떨어지고 있다.
+character.1.depressed.22	이게 이제 내 삶이다.
+character.1.miserable.0	...제발, 제발, 더 높은 존재가 날 구해 줬으면.
+character.1.miserable.1	하아아... 하하하.... 아아-아하-하아...
+character.1.miserable.2	의미 없다. 의미 없다.
+character.1.miserable.3	합리적인 한계를 모두 넘어섰다.
+character.1.miserable.4	나는. 한계다.
+character.1.miserable.5	멈춰!!!
+character.1.miserable.6	왜!??
+character.1.miserable.7	아아아아아아악!!!! 아아아아아아악!!!!!
+character.1.miserable.8	...죽여 줘.
+character.1.miserable.9	살아서 나갈 확률은 0이다.
+character.1.miserable.10	난 실패했다.
+character.1.miserable.11	이 실패의 대가는 목숨으로 치르겠지.
+character.1.miserable.12	가운들은 이 일을 그냥 넘기지 못할 거다.
+character.1.miserable.13	난 성공하기엔 너무 한심하다.
+character.1.miserable.14	그저 피와 뼈가 든 고깃덩이일 뿐...
+character.1.miserable.15	참 잔인하고, 하나도 안 웃긴 농담이군...
+character.1.miserable.16	멈춰 줘...
+character.1.miserable.17	포기한다.
+character.1.miserable.18	참으으으을 멋지군. 멋져.
+character.1.miserable.19	곧 다 끝날 거다.
+character.1.miserable.20	도착한 순간 난 이미 죽은 목숨이었다.
+character.1.miserable.21	내가 틀렸다... 난 못 해낸다.
+character.1.miserable.22	이게 내 업보군...
+character.1.angeronitem.0	크윽! 흐음... 확실히 조금 나아졌다.
+character.1.angeronitem.1	그흐! ...이거... 의외로 기분이 좋군.
+character.1.suicide.0	더는. 못. 견디겠다. 끝이다.
+character.1.suicide.1	아아아아아아아아아아아아아아악!!!!! 아아아아아아아아아아아아아아아악!!!!!!! 왜애애애애애애애애!!!???
+character.1.suicide.2	그걸로 됐다. 끝이다.
+character.1.suicide.3	좆까.
+character.1.suicide.4	...
+character.1.suicide.5	미안하다.
+character.1.refuse.0	...
+character.1.refuse.1	...흠.
+character.1.refuse.2	...
+character.1.refuse.3	...
+character.1.refuse.4	...
+character.1.refuse.5	...
+character.1.refuse.6	...
+character.1.refuse.7	...
+character.1.refuse.8	...
+character.1.refuse.9	...
+character.1.refuse.10	...
+character.1.refuse.11	...
+character.1.refuse.12	과연...
+character.1.refuse.13	흠...
+character.1.refuse.14	...잠깐.
+character.1.bleeding.0	피가 몸 밖으로 나가고 있다. 그러면 안 되는데.
+character.1.bleeding.1	이 출혈을 막아야 한다.
+character.1.bleeding.2	이 상처를 지져야 한다.
+character.1.bleeding.3	이 상처는 긴급 처치가 필요하다.
+character.1.bleeding.4	피를 흘리고 있다.
+character.1.bleeding.5	참 아름다운 노란빛이군.
+character.1.bleeding.6	안 돼! 나빠! 안에 있어, 피야!
+character.1.bleeding.7	드레싱이 필요하다.
+character.1.bleeding.8	저건 피다, 내 몸에서 새어 나오는.
+character.1.bleeding.9	피가 난다.
+character.1.bleeding.10	도움이 필요하다.
+character.1.bleeding.11	피가 걱정스러운 속도로 빠져나가고 있다.
+character.1.bleedingheavy.0	흐... 흠. 흐으음... 이, 이건 심각하다. 고, 고쳐야 한다. 빨리.
+character.1.bleedingheavy.1	집중. 집중. 집중. 집중. 집중.
+character.1.bleedingheavy.2	치명적 출혈 발생.
+character.1.bleedingheavy.3	(당황하지 마...)
+character.1.bleedingheavy.4	흐으읏... 흐음...
+character.1.bleedingheavy.5	(이건 심각하다.),
+character.1.bleedingheavy.6	도와줘!!
+character.1.bleedingheavy.7	차, 참 놀랍군.
+character.1.bleedingheavy.8	이걸 고칠 사람은 나 자신밖에 없다.
+character.1.bleedingheavy.9	날 구할 수 있는 건 나뿐이다.
+character.1.bleedingheavy.10	이 누출을 막아야 한다, 빨리!
+character.1.bleedingheavy.11	그흐... 이상적이지 않군.
+character.1.bleedingheavy.12	나빠... 나빠. 나빠!
+character.1.bleedingheavy.13	참으로 끔, 끔찍한 광경이다...
+character.1.bleedingheavy.14	벽을 노랗게 칠하고 있군.
+character.1.bleedingheavy.15	시야가 서서히 흐려진다.
+character.1.steponglass.0	내 부주의에 몹시 실망했다.
+character.1.steponglass.1	이걸 막을 방법은 천 가지나 있었건만, 결국 유리 조각이 내 발바닥에 박혔다.
+character.1.steponglass.2	아야.
+character.1.steponglass.3	내 쪽의 계산 착오였다.
+character.1.steponglass.4	대체 왜 창문에 강화 유리를 안 쓴 거지?
+character.1.steponglass.5	발에 유리 조각이 박혔다.
+character.1.steponglass.6	유리 조각을 치워야겠다.
+character.1.seecorpse.0	내가 아니라 너라서 다행이군.
+character.1.seecorpse.1	...흠.
+character.1.seecorpse.2	우려스러운 광경이다.
+character.1.seecorpse.3	...심폐소생술이 도움이 될지도.
+character.1.seecorpse.4	이건... 허.
+character.1.seecorpse.5	운이 없었군.
+character.1.seecorpse.6	좋은 광경은 아니군.
+character.1.seecorpse.7	참 슬픈 광경이다.
+character.1.seecorpse.8	의욕이 꺾이는군.
+character.1.seecorpse.9	*찌푸림*
+character.1.seecorpse.10	*한숨*
+character.1.seecorpse.11	만지지 않는 게 좋겠다.
+character.1.seecorpse.12	쓸 만한 걸 남겨 뒀을지도 모르지.
+character.1.seecorpse.13	맥박 없음.
+character.1.seecorpse.14	호흡 없음.
+character.1.seecorpse.15	흐읏...
+character.1.seecorpse.16	속상하군.
+character.1.seecorpse.17	젠장.
+character.1.seecorpse.18	으, 이 멍청이! 어떻게 죽을 수가 있어!? 왜?
+character.1.seecorpse.19	시체다.
+character.1.seecorpse.20	...
+character.1.seecorpse.21	유쾌하지 않군.
+character.1.seecorpsedesensitized.0	새 친구로군.
+character.1.seecorpsedesensitized.1	여기 아래엔 너무 많다. 도저히 용납할 수 없다. 상부에 보고하겠다.
+character.1.seecorpsedesensitized.2	전리품.
+character.1.seecorpsedesensitized.3	심폐소생술은 소용없겠군.
+character.1.seecorpsedesensitized.4	오, 보라, 또 하나.
+character.1.seecorpsedesensitized.5	운 나쁜 표본이군.
+character.1.seecorpsedesensitized.6	참신하기도 하지...또 하나.
+character.1.seecorpsedesensitized.7	가엾은 것.
+character.1.seecorpsedesensitized.8	그건 이제 필요 없겠지. 더는.
+character.1.seecorpsedesensitized.9	주운 사람이 임자.
+character.1.seecorpsedesensitized.10	벌레 같은 것.
+character.1.seecorpsedesensitized.11	또 하나.
+character.1.seecorpsedesensitized.12	또 하나 골로 갔군.
+character.1.seecorpsedesensitized.13	꽤 아팠겠군.
+character.1.seecorpsedesensitized.14	세어 두지 않은 게 아쉽군.
+character.1.seecorpsedesensitized.15	여기서 지내는 게 즐겁진 않았나 보군.
+character.1.seecorpsedesensitized.16	장례식에 대해 생각하는 중이다.
+character.1.seecorpsedesensitized.17	뭐 가진 거 있나?
+character.1.seecorpsedesensitized.18	안녕! 거래할까?
+character.1.seecorpsedesensitized.19	계속 가야 한다.
+character.1.seecorpsedesensitized.20	지루한 광경이군.
+character.1.seecorpsedesensitized.21	반갑군.
+character.1.seecorpsedesensitized.22	참 너그럽기도 하지.
+character.1.seecorpsedesensitized.23	이 공기는 내가 더 잘 쓸 수 있다.
+character.1.seecorpsedesensitized.24	참 비위생적이군.
+character.1.seecorpsedesensitized.25	죽어 버리다니 무례하군.
+character.1.seecorpsedesensitized.26	약골.
+character.1.seecorpsedesensitized.27	*눈알 굴림*
+character.1.seecorpsesuicidal.0	보지 마. 보지 마...
+character.1.seecorpsesuicidal.1	설득력 있는 주장이군.
+character.1.seecorpsesuicidal.2	생각조차 하지 마...
+character.1.seecorpsesuicidal.3	좋겠다...
+character.1.seecorpsesuicidal.4	네가 부럽다.
+character.1.seecorpsesuicidal.5	흐... 하하...
+character.1.seecorpsesuicidal.6	흐으... 흐음... 친구...
+character.1.seecorpsesuicidal.7	바, 바보.
+character.1.breakcorpse.0	방금 끔찍하고 역겨운 짓을 했다.
+character.1.breakcorpse.1	방금 한 짓에서 의미를 찾기가 어렵다.
+character.1.breakcorpse.2	윽. 윽, 윽, 윽 윽, 윽.
+character.1.breakcorpse.3	방금 눈에 좀 튄 것 같다.
+character.1.breakcorpse.4	불필요한 짓이었다.
+character.1.breakcorpse.5	와. 나도 참 역겹군.
+character.1.cold.0	춥다.
+character.1.cold.1	체온이 평균보다 낮다.
+character.1.cold.2	주변 온도가 기준보다 낮다.
+character.1.cold.3	*부르르*
+character.1.cold.4	춥다.
+character.1.cold.5	이대로면 저체온증에 빠질 수 있다.
+character.1.cold.6	몸에 온기가 없다.
+character.1.cold.7	쾌적한 온도를 유지해야 한다.
+character.1.cold.8	이 구역은 약간 춥다.
+character.1.warm.0	덥다.
+character.1.warm.1	체온이 평균보다 높다.
+character.1.warm.2	땀이 난다.
+character.1.warm.3	몸을 식혀야 한다.
+character.1.warm.4	얼음주머니가 있으면 도움이 되겠군.
+character.1.warm.5	불쾌할 만큼 덥다.
+character.1.warm.6	덥다.
+character.1.warm.7	약간 덥다.
+character.1.warm.8	주변 온도가 높다.
+character.1.hot.0	몹시 덥다.
+character.1.hot.1	...덥다. 몹시. 덥다.
+character.1.hot.2	이대로면 열사병에 걸릴지도...
+character.1.hot.3	위험할 만큼 체온이 높다...
+character.1.hot.4	열사병... 임박.

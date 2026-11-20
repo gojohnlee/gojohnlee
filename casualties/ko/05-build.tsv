@@ -1,0 +1,200 @@
+buildings.laserdronedsc	잡다한 물건이 들어 있다.
+buildings.laserdrone2	냉동 드론
+buildings.laserdronedsc2	유난히 화가 난 기계 덩어리.
+buildings.piston	낡은 기계
+buildings.pistondsc	원통 모양의 무슨 장치.
+buildings.corpse	???
+buildings.corpseseen	시체
+buildings.glassshards	유리 조각
+buildings.sandvine	모래덩굴
+buildings.sandvinedsc	길고 튼튼한 덩굴. 타고 오를 수 있지만 너무 가늘면 어려울 수 있다.
+buildings.vein	핏줄덩굴
+buildings.veindsc	이건... 식물인가? 타고 오를 수 있다.
+buildings.ladder	사다리
+buildings.ladderdsc	오르내릴 때 쓰는 세로로 이어진 발판. 쓰는 법은 아마 알 것이다.
+buildings.shadecrawler	그늘기어
+buildings.wallbiter	모래추적자
+buildings.wallbiterdsc	털이 북슬북슬한 다리 여섯 개 달린 큰 짐승. 날카로운 이빨 같은 게 삐져나와 있다. 정신없이 이리저리 움직인다.
+buildings.thornbackyoung	가시등
+buildings.thornbackyoungdsc	털이 보송하고 몹시 공격적인 어린 가시등. 땅속을 파고 다니며 근처에서 움직이는 건 뭐든 찢어발기기를 즐기는 것 같다.
+buildings.thornbackelder	늙은 가시등
+buildings.thornbackelderdsc	<color="red">도망쳐!
+buildings.cavetick	동굴진드기
+buildings.overgrowntick	거대 진드기
+buildings.overgrowntickdsc	먹이와 자랄 공간이 지나치게 많았던 동굴진드기. 공격성은 여전하다.
+buildings.DigestionCrystal	소화 수정
+buildings.DigestionCrystaldsc	생김새도 느낌도 묘하다.
+buildings.dropcapsule	투하 캡슐
+buildings.dropcapsuledsc	인공적인 온기가 흘러나온다.
+buildings.lavalamp	용암 램프
+buildings.lavalampdsc	따뜻한 빛을 내뿜고, 만지면 덴다. 너무 오래 곁에 머물지 않는 게 좋겠다.
+buildings.coldpuff	냉기솜
+buildings.coldpuffdsc	보랏빛 촉수가 땅 위에 띄워 놓은 묘한 흰 공. 어째선지 아주 차갑다.
+buildings.coldpuffdsc2	포자를 퍼뜨리는 방식이 참 별나다.
+buildings.spicevine	매운덩굴
+buildings.spicevinedsc	짧고 튼튼한 식물. 엄청나게 바싹 말라 있다. 타고 오를 수 있다.
+buildings.lifepodbuttonheat	난방 스위치
+buildings.lifepodbuttonheatdsc	싸구려처럼 보이는 빨간 버튼. 구명 포드의 난방기와 냉방기를 켜고 끈다. 지금은 <>(으)로 되어 있다.
+buildings.lifepodbuttonshower	샤워 스위치
+buildings.lifepodbuttonshowerdsc	싸구려처럼 보이는 빨간 버튼. 구명 포드의 세정·소독 가스 샤워를 작동시킨다.
+buildings.EmissiveCrystal	발광 수정
+buildings.EmissiveCrystaldsc	꽤 밝은 빛이 흘러나온다.
+buildings.foodbox	식량 상자
+buildings.foodboxdsc	음식이 들어 있다.
+buildings.geotree	지오나무
+buildings.geotreedsc	말랑하다! 묘하게 기하학적인 잎사귀 같은 게 달려 있다.
+buildings.glowplant	발광초
+buildings.glowplantdsc	스스로 빛을 내는 초록 식물. 환경에 별로 개의치 않는 것 같다.
+buildings.mushlight	버섯등
+buildings.mushlightdsc	스스로 빛을 내는 무슨 식물.
+buildings.jumppad	낡은 기계
+buildings.jumppaddsc	압력판이 달려 있다.
+buildings.landmine	지뢰
+buildings.landminedsc	가만히 있어도 무섭다.
+buildings.leadbush	납덤불
+buildings.leadbushdsc	무거운 금속 조각이 자라나 있다. 식물처럼 보이지만 사실 동물이다!
+buildings.lifepodchest	구명 포드 보관함
+buildings.lifepodchestdsc	기본 생존 장비가 들어 있을 것 같다.
+buildings.LifePodLight	조명
+buildings.LifePodLightdsc	전구가 달려 있다. 떼어 갈 수 있을 것 같다.
+buildings.medcrate	의료 상자
+buildings.medcratedsc	의료품이 들어 있다.
+buildings.techball	테크볼
+buildings.techballdsc	고장 난 것 같은데..? 열어 볼 수 있다.
+buildings.rechargingstation	충전소
+buildings.rechargingstationdsc	배터리를 충전하는 장치. 크기와 상관없이 받고, 전력은 무한한 것 같다. 사용하면 주 손의 배터리를 넣고, 배터리를 다시 몸으로 끌어오면 꺼낸다.\n\n기다리는 동안 분위기를 달래 줄 음악 플레이어가 있는 것 같다... 아이러니하게도 배터리가 없다.
+buildings.hydreed	하이드리드
+buildings.hydreeddsc	팔이 여러 개 달렸고 끝마다 방울 같은 열매가 맺혀 있다. 촉촉해 보인다...
+buildings.OxygenCrystal	산소 수정
+buildings.OxygenCrystaldsc	천천히 보글거리는 것 같다...
+buildings.reinforceddoor	강화 문
+buildings.reinforceddoordsc	뭔가로 열 수 있을 것 같다...
+buildings.ReliefCrystal	완화 수정
+buildings.ReliefCrystaldsc	날카롭고 불그스름하다.
+buildings.crystalmini	수정
+buildings.crystalminidsc	스스로 빛나는 아주 작은 수정.
+buildings.crystalsmall	수정
+buildings.crystalsmalldsc	스스로 빛나는 작은 수정.
+buildings.crystalmedium	수정
+buildings.crystalmediumdsc	스스로 빛나는 수정.
+buildings.crystalbig	수정
+buildings.crystalbigdsc	스스로 빛나는 큰 수정.
+buildings.crystalmassive	수정
+buildings.crystalmassivedsc	우뚝 솟은, 스스로 빛나는 수정.
+buildings.corecrystal	수정
+buildings.corecrystaldsc	스스로 빛나는 수정. 안에 뭔가 있다...
+buildings.crystalenemy	현현체
+buildings.crystalenemydsc	네 한정된 물리적 이해를 아득히 넘어선 무언가가 드러낸 악의.
+buildings.crystalirradiated	방사성
+buildings.crystalfragile	깨지기 쉬움
+buildings.crystalgravity	중력 왜곡
+buildings.crystalelectric	전기
+buildings.crystalburning	불타는
+buildings.crystaltemperature	열
+buildings.crystalseptic	오염
+buildings.crystalunstable	불안정
+buildings.crystalmimic	살아 움직임
+buildings.crystalteleport	위치 불안정
+buildings.crystaldripping	녹아내림
+buildings.crystalkinetic	운동
+buildings.crystalemp	전자기
+buildings.crystalblinding	눈부심
+buildings.crystalmetamorphic	변성
+buildings.crystalhealing	치유
+buildings.crystalshy	의태
+buildings.crystalproperty	속성:
+buildings.crystalproperties	속성:
+buildings.sandrose	모래장미
+buildings.sandrosedsc	묘하게 아름다운 식물. 길쭉한 큰 덩어리 몇 개가 자라 있다.
+buildings.scrapeater	고철 먹보
+buildings.scrapeaterdsc	"고철을 넣으면 열림"이라는 딱지가 붙어 있고, 옆의 작은 화면에 <color=#ffffff>"<>%"가 표시되어 있다.
+buildings.shuttledoor	셔틀 문
+buildings.shuttledoordsc	바깥 것은 바깥에, 안의 것은 안에 두는 큰 쇳덩이.
+buildings.shuttleelevator	셔틀 승강기
+buildings.shuttleelevatordsc	이걸 타고 앉아 있던 시간이 네 평생에서 걱정스러울 만큼 큰 비율을 차지한다.
+buildings.SoothingCrystal	진정 수정
+buildings.SoothingCrystaldsc	별로 눈에 띄지 않는다.
+buildings.spikestabber	낡은 기계
+buildings.spikestabberdsc	무서워 보인다. 끌 수 있을 것 같은데...
+buildings.spikestabberdscused	이제는 무해해 보인다.
+buildings.stoneplant	돌풀
+buildings.stoneplantdsc	돌 같은 단단한 덩어리에 말랑한 초록 방울이 붙어 있다.
+buildings.fan	낡은 기계
+buildings.fandsc	날개가 날카로워 보이지만 허술하다.
+buildings.fandsc2	이젠 그렇게 무섭지 않다.
+buildings.TurbulentCrystal	격동 수정
+buildings.TurbulentCrystaldsc	살짝 떨리고 있다.
+buildings.turret	포탑
+buildings.turretdsc	열 감지기 같은 게 달려 있다.
+buildings.ceilingturret	천장 포탑
+buildings.ceilingturretdsc	열·움직임 감지기가 달려 있는 것 같다. 몰래 지나갈 수 있을까?
+buildings.grate	철창
+buildings.stalagmite	석순
+buildings.stalagmitedsc	다행히 끝이 뭉툭하다.
+buildings.stalagmitedark	석순
+buildings.stalagmitedarkdsc	다행히 끝이 뭉툭하다.
+buildings.icestalagmite	얼음 석순
+buildings.icestalagmitedsc	다행히 끝이 뭉툭하다.
+buildings.stalactite	종유석
+buildings.stalactitedsc	천장에 느슨하게 붙어 있는 것 같다.
+buildings.icestalactite	고드름
+buildings.icestalactitedsc	천장에 느슨하게 붙어 있는 것 같다.
+buildings.stalactitedscdropped	실제로, 이제 천장에 붙어 있지 않다.
+buildings.drybush	마른 덤불
+buildings.drybushdsc	왠지 죽은 것 같다는 의심이 든다.
+buildings.crimsonbush	진홍 덤불
+buildings.crimsonbushdsc	자유가 코앞일지도 모르는데, 덤불 감상이나 하고 있다.
+buildings.crimsontree	진홍나무
+buildings.crimsontreedsc	나무다. 근데 빨갛다. 더 걱정할 일이 있지 않나?
+buildings.pussack	고름 주머니
+buildings.pussackdsc	살아 있는 게 분명하다. 역겹다. 그래도 쓸모는 있을지도?
+buildings.brownshroom	갈색버섯
+buildings.brownshroomdsc	실제로 갈색이라는 것 말고는 더 할 말이 없다.
+buildings.spentfuel	사용 후 연료
+buildings.spentfueldsc	묘하게 무시무시한 에너지가 흘러나온다.
+buildings.radbarrel	드럼통
+buildings.radbarreldsc	오래돼 보인다.
+buildings.soundcannon	음파포
+buildings.soundcannondsc	충전하는 소리가 들리면 귀를 막는 게 좋겠다.
+buildings.trader	생존자
+buildings.traderdsc	또 한 명의 불운한 희생자. 적어도 아직 숨은 쉬고 있다.
+buildings.traderdscdead	이제 숨을 쉬지 않는다. 네 덕분에.
+buildings.bananaplant	바나나풀
+buildings.bananaplantdsc	짧고 넓적한 식물. 물컹한 노란 윗부분 때문에 흔히 "바나나풀"이라 부른다. 밟으면 아주 미끄럽다.
+buildings.geyser	간헐천
+buildings.geyserdsc	물을 뿜어 대는 불안정한 간헐천. 다행히 아무리 뜨거워도 미지근한 정도다.
+buildings.lavageyser	간헐천
+buildings.lavageyserdsc	마그마를 뿜어 대는 불안정한 간헐천. 전에 본 간헐천들보다 훨씬 나빠 보인다.
+buildings.oilpipe	폐수관
+buildings.oilpipedsc	검은 타르가 쏟아지는 녹슨 관. 안은 들여다보고 싶지 않다... 시간이 지나면 이 일대가 잠길 것이다.
+buildings.pop	톡풀
+buildings.popdsc	칙칙한 보라색의 긴 식물. 끝에 반투명한 큰 알뿌리가 자란다.
+buildings.mushroomdropper	낙하버섯
+buildings.mushroomdropperdsc	갓을 떨어뜨려 불운한 행인에게 포자를 퍼뜨리는 버섯.
+buildings.mushroomdropperpayload	낙하버섯 갓
+buildings.mushroomdropperpayloaddsc	떨어져서 아프게 하는 부분이다.
+buildings.mushroomrope	버섯 밧줄
+buildings.mushroomropedsc	길쭉한 버섯 줄기. 꽤 쉽게 타고 오를 수 있을 것 같다.
+buildings.sidestabber	옆찌르기
+buildings.sidestabberdsc	버섯과 융합한 묘한 동물. 지나가는 먹잇감에게 큰 가시를 쏜다.
+buildings.skullcrusher	두개골 분쇄기
+buildings.skullcrusherdsc	머리가 좀 아플 수도 있다.
+buildings.gunmine	총지뢰
+buildings.gunminedsc	흔히 "발가락 따개"라고 부른다.
+buildings.sawblade	톱날
+buildings.sawbladedsc	끔찍한 기억이 떠오른다.
+buildings.LoreNote	쪽지
+buildings.LoreNotedsc	다른 생존자가 남기고 간 것.
+buildings.ceilingrye	천장 호밀
+buildings.ceilingryedsc	끝에 길쭉한 주머니가 매달린 묘하게 가는 풀. 곡식 같은 게 차 있는 것 같다.
+buildings.grabberplant	촉수풀
+buildings.grabberplantdsc	끝으로 주변을 더듬고 있는 것 같다.
+buildings.grabbershroom	붙잡이버섯
+buildings.grabbershroomdsc	버섯이 어떻게 이런 짓을 하는지 도무지 모르겠다.
+buildings.scientist	직원
+buildings.scientistdsc	흰 가운 중 하나.
+buildings.guard	직원
+buildings.guarddsc	파란 제복 중 하나.
+buildings.terminal	단말기
+buildings.terminaldsc	오래된 컴퓨터 단말기.
+buildings.macrofleshrebuilder	대형 살점 재건기

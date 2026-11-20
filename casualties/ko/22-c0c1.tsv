@@ -1,0 +1,240 @@
+character.0.braindamaged.25	코브감 바르문치 페르스베크 시아 나로드!
+character.0.braindamaged.26	언제부터 모든 게 이런 냄새가 났지..?
+character.0.braindamaged.27	맛이 이상해. 너무 이상해... 나 아픈가..?
+character.0.braindamaged.28	그흐... 흐-흐...
+character.0.braindamaged.29	방금 뭐였어!?
+character.0.braindamaged.30	나... 나 헛것 보는 건가..?
+character.0.lastmoments.0	죽기... 싫어... 죽기 싫어...
+character.0.lastmoments.1	제발... 제발... 누가 좀... 살려 줘...
+character.0.lastmoments.2	죽기 싫어... 제발... 제발...
+character.0.lastmoments.3	이렇게... 이렇게는 싫어... 제발... 도와줘...
+character.0.lastmoments.4	도, 도와줘... 누가... 주, 죽기 싫어...
+character.0.lastmoments.5	싫어... 이 세상을 떠나기 싫어...
+character.0.lastmoments.6	살려 줘... 살려 줘... 사, 살려 줘... 제발...
+character.0.lastmoments.7	이게... 이게... 흐... 이렇게... 이렇게 끝나는 거야...
+character.0.lastmoments.8	내가... 해 온 모든 게... 겨, 겨우 이걸 위해서... 살려 줘...
+character.0.lastmoments.9	안 돼.. 안 돼.... 아, 안 돼... 제발... 제발... 나... 주, 죽기 싫어... 도와줘...
+character.0.lastmoments.10	흐으... 그흐.... 도와줘... 제발... 아무나...
+character.0.lastmoments.11	흐읏... 이, 이렇게는 싫어... 제발... 제, 제발... 살려 줘...
+character.0.lastmoments.12	제발... 싫어... 죽기 싫어... 살려 줘... 누구든... 뭐든... 아, 아직 주, 준비가 안 됐어...
+character.0.lastmoments.13	고, 곧... 끝나..?
+character.0.lastmoments.14	멈춰... 멈춰... 멈춰... 제발... 머, 멈춰... 이, 이렇게는 싫어... 살려 줘...
+character.0.lastmoments.15	씨발... 씨발... 도와줘... 죽기... 시, 싫어... 흐, 흐..
+character.0.magicheal.0	...어. 몸이... 나아졌어..?
+character.0.magicheal.1	아아..! ...어. 이거... 이거 좋은데. 마음에 들어.
+character.0.selfdestruct.0	...으으음... ...이 삐 소리는 뭐지...?
+character.0.selfdestruct.1	...어. 어. 어?! 어! 안 돼. 안 돼 안 돼 안 돼. 잠깐. 왜? 내가 뭘 했는데!?
+character.0.selfdestruct.2	...아, 아... 알았어... 그, 그럼... 자, 잘 있어...
+character.0.wwmr.0	좋아... 왔어... 드디어 여기까지 내려왔어. 해 보자. 목표는 이 근처 어딘가에 있을 거야.
+character.0.wwmr.1	목표가... 이 안 어딘가에... 있을 거야... 이제 장난은 끝이야. 가자.
+character.0.wwmr.2	해냈어... 해낸 건가..? 흐음... 이 근처 어딘가에 있을 텐데... 얼른 끝내자.
+character.0.cargo1.0	이... 이게... 그건... 가..?
+character.0.cargo2.0	저건... 배터리가 아니... 뭐... 뭐, 뭘... 하는 거지..?
+character.0.cargoimpale.0	으아아아악! 이게 뭐야!? 왜?
+character.0.cargoimpale2.0	흐, 흠... 그게... 나... 이걸로... 힘이 생긴 것 같기도..? 몸이... 가, 가벼워.
+character.0.cargoimpale3.0	나... 지, 진짜 해냈어... 음... 그럼... 너무 자만하진 말자... 저 포드로 돌아갈 수 있을 것 같아. 지상으로 올라가자.
+character.0.wwmrwrongway.0	이 길이 아닌 것 같아... 그 이상한 파동이 오는 쪽으로 가야 해...
+character.0.endlessloop0.0	...뭐-뭐...뭐야..? 뭐? 왜? 방금... 내가 왜 여기로 돌아왔지..? 흐읏... 방금 무슨 일이...
+character.0.endlessloop1.0	...생각한 대로 안 풀리네...더 뭘 할 수 있을지 모르겠어... 뭐. 으. 삼세판이라잖아..?
+character.0.endlessloop2.0	으아아아아악!! 대체 뭘 하라는 거야!? 망할... 그 심장 따위 엿이나 먹으라 그래... 그르르...어차피 살려면 내려가야 해. 개판이네 진짜.
+character.0.endlessloop3.0	뭐! 여기서 못 나가는 거지, 그치... 이젠 좀 익숙해지는 것 같아.
+character.0.endlessloopdefault.0	아, 돌고 돌고 또 도는구나...
+character.0.endpodexamine.0	하, 화물... 부터...
+character.0.ascententer.0	이게 끝까지 내려온 것 같네... 이제 위로 가는 수밖에. 가자.
+character.0.labenter.0	(일단은 따르자... 거역하면 죽을 거야. 기회가 올지도 몰라...)
+character.0.labresponse.0	(...저것들이랑 말을 섞을까 보냐. 그...일을 겪고 나서.)
+character.0.labthink1.0	(지금이야... 만약... 만약 총이라도 있었다면...)
+character.0.labthink2.0	(저 녀석을... 죽일 수 있어. 천장의 저것도 쏘고... 저 창살로 빠져나가면. 탈출..?)
+character.0.labthink2chip.0	(할 수... 아니. 못 해. 칩으로 날 죽일 거야. 젠장.)
+character.0.labshoot.0	크아아아아아악!! 엿이나 먹어!!! 너희 개수작 더는 안 참아!!!
+character.0.labcommentcalm.0	흐윽... 그르르... 대가를 치를 거야...
+character.0.labcommentcalm.1	이 대가를 치를 거야...
+character.0.labcommentcalm.2	대가를...치러라...
+character.0.labcommentcalm.3	지긋지긋해. 이. 개. 같은. 거!
+character.0.labcommentcalm.4	지옥에나 가. 지옥에나 가. 전부 다...
+character.0.labcommentcalm.5	끝이야.
+character.0.labcommentcalm.6	개새끼들. 개새끼들. 개새끼들. 병신들.
+character.0.labcommentcalm.7	없어져도 아무도 신경 안 쓸 거야.
+character.0.labcommentcalm.8	(아무것도 날 못 막아.)
+character.0.labcommentcalm.9	자업자득이다, 이 개새끼들아...
+character.0.labcommentcombat.0	엿이나 먹어!! 엿이나 먹어!!!! 전부 다 엿이나 먹어!!!!
+character.0.labcommentcombat.1	네 눈에서 생기가 빠져나가는 걸 지켜볼 거야!!!
+character.0.labcommentcombat.2	지옥에나 가!!!
+character.0.labcommentcombat.3	이 개 같은 짓 더는 안 해!!
+character.0.labcommentcombat.4	이딴 놀음은 끝이야!!
+character.0.labcommentcombat.5	그르르아아아악!!
+character.0.labcommentcombat.6	네가 뭔데 이 씨발!?
+character.0.labcommentcombat.7	아무도 너희를 기억 안 할 거야!!
+character.0.labcommentcombat.8	너희가 한 짓의 대가를 전부 치르게 해 주마!!
+character.0.labcommentcombat.9	나 혼자 죽진 않아!!
+character.0.labcommentcombat.10	이 가운 입은 개새끼들아!!
+character.0.labcommentcombat.11	지옥에나 가!!!!
+character.0.vomitresponse.0	으으음... 괜찮아..?
+character.0.vomitbloodresponse.0	으악! 너 방금... 아... 저기, 너 방금... 피 토한 거 알지?
+character.0.hungryresponse.0	밖에 먹을 거 많잖아...
+character.0.hungryresponse.1	음, 뭐랑 바꾸면 먹을 거 줄 수 있는데..?
+character.0.thirstyresponse.0	밖에서 물 좀 찾을 수 있을걸...
+character.0.thirstyresponse.1	물 없이는 사흘밖에 못 버틴다던데, 하하...
+character.0.sadresponse.0	저기, 괜찮아... 아직 살아서 팔팔하잖아...
+character.0.depressedresponse.0	...진정해, 제발... 괜찮을 거야...
+character.0.selfharmresponse.0	...왜, 왜... 그런 짓을...
+character.0.braindamagedresponse.0	...상태가... 별로 안 좋아 보이는데.
+character.0.braindamagedresponse.1	...뭐?
+character.0.hotresponse.0	그럼 난방을 줄여.
+character.0.coldresponse.0	여기 히터 있잖아...
+character.0.bleedingresponse.0	그... 심해 보이긴 하는데... 그래도, 난... 네가 고칠 수 있을 거라 믿어...
+character.0.bleedingresponse.1	지, 진정해. 괜찮을 거야.
+character.0.painresponse.0	괜찮아..? 어디가 아파?
+character.0.painresponse.1	뭐 밟았어?
+character.0.dirtyresponse.0	...여기 샤워기 있잖아. 아니면... 그냥 밖에 있는 웅덩이에서 헤엄쳐...
+character.0.encumberedresponse.0	짐 좀 나한테 맡겨 두는 것도 나쁘지 않을걸.
+character.0.encumberedresponse.1	네 물건 잘 보관해 줄게!
+character.0.dyingresponse.0	젠장... 어... 심폐소생술은 안 배웠는데...
+character.0.dyingresponse.1	나... 어... 무사하길 바라...
+character.1.seeGravel.0	도착한 모양이군.
+character.1.seeGravel.1	새로운 땅.
+character.1.seeGravel.2	도착 예정: 0시간 0분, 그리고 지금.. 0초.
+character.1.seeGravel.3	참신하군. 그럼 출발해 볼까.
+character.1.seeGravel.4	훈련 때 상상한 것과 크게 다르지 않다.
+character.1.seeGravel.5	이성을 유지해야 한다.
+character.1.seeGravel.6	기묘하군.
+character.1.seeGravel.7	적어도 흥미롭긴 하다.
+character.1.seeGravel.8	분위기 전환이군.
+character.1.seeGravel.9	여긴 어두운 모양이군.
+character.1.seeGravel.10	새로운 환경. 흥미롭군.
+character.1.eatGood.0	괜찮군.
+character.1.eatGood.1	이 정도면 적당하다.
+character.1.eatGood.2	좋아.
+character.1.eatGood.3	풍미가 그럭저럭 마음에 든다.
+character.1.eatGood.4	가끔 사치를 부려도 나쁘지 않지.
+character.1.eatGood.5	입가심으로 제격이군.
+character.1.eatGood.6	이걸로 충분하다.
+character.1.eatMediocre.0	불만족스럽다.
+character.1.eatMediocre.1	정말 이게 최선인가?
+character.1.eatMediocre.2	페인트 마르는 걸 구경하는 것만큼 흥미진진하군.
+character.1.eatMediocre.3	지루하군..
+character.1.eatMediocre.4	열량 보충으로는 충분하다.
+character.1.eatMediocre.5	딱히 감흥은 없다.
+character.1.eatMediocre.6	신체 기능 유지에 필요하다.
+character.1.eatMediocre.7	그냥... 괜찮다.
+character.1.eatMediocre.8	먹을 만하다.
+character.1.eatMediocre.9	몸이 버텨 준다면야...
+character.1.eatMediocre.10	적어도 버틸 힘은 되겠지.
+character.1.eatBad.0	끔찍한 맛이다. 다시는 안 먹는다.
+character.1.eatBad.1	윽.
+character.1.eatBad.2	역겹군.
+character.1.eatBad.3	끔찍하다.
+character.1.eatBad.4	굶는 것보다 아주 조금 나을 뿐이다.
+character.1.eatBad.5	입맛이 싹 사라졌다.
+character.1.eatBad.6	...어쩔 수 없다면.
+character.1.eatBad.7	내 미뢰가 저걸 반기지 않았다.
+character.1.eatBad.8	최선의 요리 선택은 아니었군.
+character.1.eatBad.9	이걸 먹으면 탈이 날 거다.
+character.1.refuseEat.0	그런 생각에는 응하지 않겠다.
+character.1.refuseEat.1	해충이나 먹을 것이다. 사양한다.
+character.1.refuseEat.2	차라리 굶겠다.
+character.1.refuseEat.3	거부한다.
+character.1.refuseEat.4	이것보다 맛있어 보이는 돌도 봤다.
+character.1.refuseEat.5	차라리 내 침에 질식하겠다.
+character.1.refuseEat.6	이건 이해조차 안 된다.
+character.1.refuseEat.7	먹을 수 없는 물건이다.
+character.1.tired.0	휴식 시간이 빠르게 다가온다.
+character.1.tired.1	잠깐 자 두면 정신이 맑아지겠지.
+character.1.tired.2	몸이 휴식을 요구한다.
+character.1.tired.3	기운이 바닥나고 있다.
+character.1.tired.4	효율을 위해선 잠깐 쉬는 게 최적이다.
+character.1.tired.5	지쳐 가는군. 쉴 시간이다.
+character.1.tired.6	휴식이 도움이 될 거다.
+character.1.tired.7	피곤한 상태로는 제 역할을 못 한다. 쉬어야겠다.
+character.1.tired.8	적당한 휴식 장소가 필요하다.
+character.1.tired.9	곧 의식이 바닥날 거다.
+character.1.tired.10	쉴 곳이 필요하다.
+character.1.tired.11	쉴 수 있는 은신처를 찾는 게 중요하다.
+character.1.verytired.0	곧... 쓰러질 것 같다... 피로로...
+character.1.verytired.1	안전한 곳을... 찾아서... 쓰러지자..
+character.1.verytired.2	의식이... 흐려진다..
+character.1.verytired.3	잠깐... 누워야겠다...
+character.1.verytired.4	잠... 지금...
+character.1.verytired.5	기운이... 바닥났다..
+character.1.verytired.6	정신이 아득하다...
+character.1.verytired.7	더는... 못 가겠다... 잠...
+character.1.verytired.8	균형을 잃고 있다...
+character.1.verytired.9	쓰러질 것 같다...
+character.1.confused.0	머리가 어지럽다.
+character.1.confused.1	눈의 초점이 잘 안 맞는다...
+character.1.confused.2	이런 혼란은 질색이다.
+character.1.confused.3	쓸데없는 방향 감각 상실.
+character.1.confused.4	집중해야 한다...
+character.1.confused.5	머릿속이 잡음으로 가득하다.
+character.1.confused.6	생각이 똑바로 안 된다.
+character.1.confused.7	머리가 제대로 돌아가지 않는다.
+character.1.confused.8	뭐..?
+character.1.wakeup.0	깨어났다.
+character.1.wakeup.1	안녕, 세상.
+character.1.wakeup.2	일어난다.
+character.1.wakeup.3	또다시.
+character.1.wakeup.4	이번엔 뭐지.
+character.1.wakeup.5	좋은 아침.
+character.1.wakeup.6	가동 개시.
+character.1.wakeup.7	정신이 말짱하다.
+character.1.wakeup.8	머릿속 안개가 걷힌다.
+character.1.wakeup.9	휴식을 마쳤다.
+character.1.sick.0	몸이 안 좋다.
+character.1.sick.1	위장이 소란스럽다.
+character.1.sick.2	상태가 좋지 않다.
+character.1.sick.3	몸이 거부 반응을 보이는 것 같다.
+character.1.sick.4	위장 속에서 뭔가 잘못됐다.
+character.1.sick.5	아무래도 탈이 난 모양이다.
+character.1.sick.6	몸이 독소와 싸우고 있는 것 같다.
+character.1.verysick.0	위 내용물을... 곧... 배출한다...
+character.1.verysick.1	너무 메스꺼워서... 움직일 수가 없다.
+character.1.verysick.2	몸이... 날 배신하는군...
+character.1.verysick.3	독소를.. 배출해야 한다...
+character.1.verysick.4	위장이... 날 거스르고 있다...
+character.1.verysick.5	게워... 내야겠다...
+character.1.verysick.6	온다...
+character.1.vomit.0	그흐... *콜록* ...그냥 넘어가자.
+character.1.vomit.1	방금까지 저녁이었던 것이 이제 발밑에 놓여 있다.
+character.1.vomit.2	으웩... 영양분 낭비로군.
+character.1.vomit.3	아직도... 토사물 맛이 난다..
+character.1.vomit.4	윽...
+character.1.vomit.5	불만족스럽다.
+character.1.vomit.6	영양소 낭비다.
+character.1.vomitblood.0	그흐... 저, 저건 내출혈의 징후다.
+character.1.vomitblood.1	커헉... 피. 출혈. 내부.
+character.1.vomitblood.2	으윽... 치료가.. 필요하다.
+character.1.vomitblood.3	토사물에서... *콜록* ...쇠 맛이 난다.
+character.1.vomitblood.4	피, 피를... 게워 낸 것 같다..
+character.1.vomitblood.5	이상적이지 않군.
+character.1.vomitblood.6	그흑... 기저 질환의 징후다.
+character.1.full.0	완전히 배가 부르다.
+character.1.full.1	당분간 더 먹을 필요는 없다.
+character.1.full.2	이걸로 한동안 버틸 수 있겠다.
+character.1.full.3	열량 섭취는 충분하다.
+character.1.full.4	적당히 먹었다.
+character.1.full.5	권장 열량을 한참 넘었군.
+character.1.hungry.0	영양 공급이 필요하다.
+character.1.hungry.1	배가 고프다.
+character.1.hungry.2	먹을 것이 필요한 모양이다.
+character.1.hungry.3	군침이 돈다.
+character.1.hungry.4	영양소가 필요하다.
+character.1.hungry.5	에너지를 섭취해야 한다.
+character.1.hungry.6	식량 필요.
+character.1.starving.0	당장 영양 공급이 필요하다...
+character.1.starving.1	타는 듯이 고통스러운 허기다.
+character.1.starving.2	집중하려면 음식이 필요하다...
+character.1.starving.3	위장이... 울고 있다...
+character.1.starving.4	아사 임박.
+character.1.starving.5	영양...필요...
+character.1.starving.6	생존에 음식은 필수다.
+character.1.thirsty.0	수분 보충이 필요하다.
+character.1.thirsty.1	물을 마셔야겠다.
+character.1.thirsty.2	수분 보충이 최적이겠군.
+character.1.thirsty.3	목이 유난히 마르다. 결론: 수분 부족.
+character.1.thirsty.4	그날 마실 물을 미리 준비해 두는 게 현명하겠다.
+character.1.thirsty.5	물이 필요하다.
+character.1.thirsty.6	물 필요.
+character.1.dehydrated.0	심각한 탈수 상태다.
+character.1.dehydrated.1	몸속이 위험할 만큼 말라 가고 있다.
+character.1.dehydrated.2	물을 아껴 마실 때가 아닌데...
+character.1.dehydrated.3	몸의 수분이... 바닥난 것 같다.

@@ -1,0 +1,170 @@
+name	한국어
+description	Claude가 번역한 비공식 한국어 번역입니다. 원작 개발자(Orsoniks)·배급사의 공식 번역이 아니며, 게임 업데이트 뒤에는 일부 문장이 영어로 남거나 맞지 않을 수 있습니다.
+main.bandage	드레싱
+main.bandagedsc	붕대가 딸린 드레싱 한 롤. 출혈을 늦추고 골절을 고정하며 피부 회복을 돕는다. 근육 상태에는 효과가 없다.
+main.rippeddressing	찢은 천 조각
+main.rippeddressingdsc	옷을 찢어 만든 작은 천 더미. 출혈 상처에 임시 붕대로 쓸 수 있다.
+main.rag	낡은 넝마
+main.ragdsc	해지고 구겨진 넝마. 쓸 만한 임시 드레싱이 된다. 인벤토리에서 사용하면 몸을 닦아 말린다.
+main.analgesicgauze	의료용 거즈
+main.analgesicgauzedsc	진통제가 스며든 면 거즈. 출혈을 꽤 늦추고 부상 통증을 줄여 준다.
+main.alginate	알지네이트 드레싱
+main.alginatedsc	임상용 세균이 바이오필름을 만들 때처럼 분비한 탄수화물로 만든 드레싱. 출혈을 늦추고, 피부 회복을 크게 돕고, 감염을 막는다.
+main.sterilizedbandage	멸균 드레싱
+main.sterilizedbandagedsc	붕대가 딸린 드레싱 한 롤. 출혈을 늦추고 골절을 고정하며 피부 회복을 돕는다. 감염을 막는다. 근육 상태에는 효과가 없다.
+main.plasticbandage	플라스틱 드레싱
+main.plasticbandagedsc	특수 합성한 질긴 소재 한 롤. 상처를 효율적으로 덮고 골절을 고정한다. 근육 상태에는 효과가 없다.
+main.adhesivebandage	반창고
+main.adhesivebandagedsc	작은 상처를 치료하는 소형 의료용 드레싱 한 팩. 출혈을 줄인다.
+main.musharm	감싸덩굴
+main.musharmdsc	먹을 수 없는 식물 부위. 한 번 쓰는 임시 붕대로 쓸 만하다. 제작할 때 잎사귀 재료로도 쓸 수 있다.
+main.paincream	진통 크림 병
+main.paincreamdsc	진통 크림을 담는 100ml짜리 작은 병. 1회 사용량은 10ml.
+main.morphine	모르핀 주사기
+main.morphinedsc	정맥에 약물을 주입하는 100ml 주사기. 과다 투여 경고선은 88ml.
+main.makeshiftlrd	임시 국소소생장치
+main.makeshiftlrddsc	임시로 만든 국소 소생 장치(L.R.D.). 테이프로 이어 붙인 것 같다. 사용한 팔다리와 바로 맞닿은 부위의 근육 상태를 높이고 소독한다. 가슴에 쓰면 내출혈이 조금 줄어든다. 작동하려면 LRD 혈청이 25mL 이상 필요하다.
+main.lrd	국소소생장치
+main.lrddsc	일반 외상을 쉽고 효과적으로 치료하도록 만든 국소 소생 장치(L.R.D.). 사용한 부위와 바로 맞닿은 부위의 상태를 높이고, 출혈을 늦추고, 진통제를 투여하고, 소독한다. 가슴에 쓰면 내출혈이 크게 줄어든다. 작동하려면 LRD 혈청이 25mL 이상 필요하다.
+main.opium	아편 주사기
+main.opiumdsc	정맥에 약물을 주입하는 100ml 주사기. 과다 투여 경고선은 200ml.
+main.heroin	헤로인 주사기
+main.heroindsc	정맥에 약물을 주입하는 150ml 주사기. 눈금도 용량 안내도 없다.
+main.naloxone	날록손 주사기
+main.naloxonedsc	정맥에 약물을 주입하는 100ml 주사기. 상표는 "N" 글자 말고는 알아볼 수 없다.
+main.naltrexone	날트렉손 병
+main.naltrexonedsc	100ml 알약 병. 1회 복용량은 20ml.
+main.sodiumnitroprusside	니트로프루시드나트륨 병
+main.sodiumnitroprussidedsc	니트로프루시드나트륨이 든 100ml 병. 정맥으로만 듣는 약이라 따로 주사기에 채워서 써야 한다.
+main.vasopressin	바소프레신 병
+main.vasopressindsc	바소프레신이 든 100ml 병. 정맥으로만 듣는 약이라 따로 주사기에 채워서 써야 한다.
+main.amiodarone	아미오다론 병
+main.amiodaronedsc	아미오다론이 든 100ml 병. 정맥으로만 듣는 약이라 따로 주사기에 채워서 써야 한다.
+main.fentanyl	펜타닐 주사기
+main.fentanyldsc	정맥에 약물을 주입하는 100ml 주사기. 진통용으로 희석한 펜타닐이 들어 있다. 과다 투여 경고선은 20ml.
+main.painkillers	진통제 병
+main.painkillersdsc	100ml 알약 병. 1회 복용량은 10ml.
+main.braingrow	브레인그로 병
+main.braingrowdsc	100ml 알약 병. 1회 복용량은 20ml.
+main.autopump	자동 펌프
+main.autopumpdsc	착용하면 단순한 기계 장치와 내장 배터리로 심장 대신 피를 뿜어 혈압을 살 수 있는 수준으로 유지한다. 닥친 재앙을 수습할 시간을 벌어 줄지도 모른다.
+main.aed	자동 제세동기
+main.aeddsc	생명을 위협하는 부정맥을 진단하고 전기 충격으로 치료하는 전자 장치. 상체에 사용한다. 수동 제세동기와 달리 훈련이 필요 없지만, 작동이 느리고 전력을 더 쓴다.
+main.manualdefibrillator	수동 제세동기
+main.manualdefibrillatordsc	위험한 심장 리듬을 안정시키는 전자 장치. 상체에 사용한다. 수동식이라 제대로 쓰려면 요령이 필요하다. 자동 제세동기보다 빠르고 전력을 덜 쓰지만, 성공이 보장되지 않는다. 지능이 높을수록 다루기 쉽다.
+main.minifleshrebuilder	소형 살점 재건기
+main.minifleshrebuilderdsc	살점 샘플로 외상을 치료하는 실험용 의료 장치. 노란 살점 세 조각을 채우면 잃어버린 얼굴 부위를 재건할 수 있다. 그럭저럭 쓸 만한 조명도 된다!
+main.antidepressants	항우울제 병
+main.antidepressantsdsc	항우울제가 든 140ml 알약 병. 1회 복용량은 20ml.
+main.antibiotics	항생제 병
+main.antibioticsdsc	항생제 알약이 든 100ml 병. 1회 복용량은 20ml.
+main.antiserum	항혈청 주사기
+main.antiserumdsc	끝에 자동 주사기가 달린 100ml 주사기. 1회 투여량은 50ml.
+main.antirad	방사능 해독제 병
+main.antiraddsc	멋진 방사능 표시가 붙은 100ml 알약 병. 1회 복용량은 20ml.
+main.sleepingpills	수면제 포장
+main.sleepingpillsdsc	알약 25ml어치가 든 블리스터 포장. 1회 복용량은 5ml. 상표가 지워져 있다.
+main.rosepod	장미 꼬투리
+main.rosepoddsc	모래장미의 일부. 상하지 않는다. 열 수 있다.
+main.roselight	장미 불빛
+main.roselightdsc	모래장미에서 나온, 멀리까지 비추는 밝은 노란 빛. 금방 사그라들지만 낭떠러지가 얼마나 깊은지 볼 때 쓸모 있다. 팔다리에 쓰면 숨은 감염도 드러난다.
+main.splint	부목
+main.splintdsc	골절 치료용 튼튼한 판자. 골절과 탈구 회복을 돕는다. 멀쩡한 팔다리에 대도 고정되어 버려 능력이 떨어진다.
+main.bloodbag	혈액 팩
+main.bloodbagdsc	끝에 자동 주사기가 달린 0.75L 비닐 팩. 사용하면 375mL를 주입한다. 인벤토리에서 사용하면 자기 피를 뽑는다.
+main.bloodsac	피주머니
+main.bloodsacdsc	피가 든 작은 살덩이 주머니. 네 피와 크게 달라 보이지 않는다. 먹거나 제작에 쓸 수 있다.
+main.venomgland	독샘
+main.venomglanddsc	혈액독을 만들고 저장하는 작은 침샘. 가공하면 해독제 같은 걸 만들 수 있을 것 같다.
+main.saline	수액 팩
+main.salinedsc	끝에 바늘이 달린 0.75L 팩. 정맥으로 수액을 주입한다.
+main.ringersolution	작은 수액 팩
+main.ringersolutiondsc	끝에 바늘이 달린 0.7L 팩. 정맥으로 수액을 주입한다.
+main.bloodbaghuman	붉은 혈액 팩
+main.bloodbaghumandsc	끝에 자동 주사기가 달린 0.75L 비닐 팩. 사용하면 375mL를 주입한다. 인벤토리에서 사용하면 자기 피를 뽑는다. 붉은 얼룩이 묻어 있다.
+main.trashbag	쓰레기봉투
+main.trashbagdsc	검은 비닐봉투.
+main.flammablepowder	인화성 가루
+main.flammablepowderdsc	분필 같은, 불이 아주 잘 붙는 가루. 폭발물을 만들 때 쓸모 있다.
+main.foliagebag	잎사귀 가방
+main.foliagebagdsc	잎사귀를 엮어 만든 아주 허술한 가방.
+main.slingbag	슬링백
+main.slingbagdsc	보강재를 덧대 등에 멜 수 있게 만든 잎사귀 가방.
+main.plasticbag	비닐봉지
+main.plasticbagdsc	얇은 파란 비닐봉지.
+main.gravbag	중력 가방
+main.gravbagdsc	안에 든 물건의 무게를 줄이려고 음의 중력을 만들어 내는 극히 실험적인 용기. 배터리가 바닥날 즈음엔 폭발하는 경향이 있다.
+main.legpouch	허벅지 파우치
+main.legpouchdsc	허벅지에 두르는 끈이 달린 가죽 파우치. 주머니의 주머니인 셈!
+main.liquidpouch	액체 파우치
+main.liquidpouchdsc	액체를 담는 말랑한 파우치. 배에 두르는 끈이 있다. 병으로 채우거나 병에 옮겨 담을 수 있다.
+main.materialpouch	재료 파우치
+main.materialpouchdsc	허벅지에 다는 크고 튼튼한 파우치. 제작 재료를 담는 작은 주머니가 많다. 짐 부담을 크게 줄여 주지만 재료만 넣을 수 있다.
+main.purse	핸드백
+main.pursedsc	개인 물품을 넣고 다니는 중간 크기 손가방. 꽤 멋지다!
+main.pouch	파우치
+main.pouchdsc	합성 섬유를 짜서 만든 작은 초록 가방. 손잡이가 없다.
+main.brokenbag	찢어진 가방
+main.brokenbagdsc	심하게 낡은 오래된 책가방. 끈이 찢어져 멜 수 없다.
+main.box	골판지 상자
+main.boxdsc	중간 크기 골판지 상자.
+main.toolbox	공구함
+main.toolboxdsc	공구를 담는 크고 무거운 강철 상자.
+main.medkit	구급상자
+main.medkitdsc	여러 약품을 효율적으로 담는 작은 상자.
+main.scaffoldingpack	비계 팩
+main.scaffoldingpackdsc	쉽게 설치하도록 초압축한 비계 상자. 100번 쓸 수 있다.
+main.disinfectant	소독제 병
+main.disinfectantdsc	분무 꼭지가 달린 0.2L 플라스틱 병. 한 번에 10ml씩 뿌린다.
+main.spraybottle	분무기
+main.spraybottledsc	분무 꼭지가 달린 0.2L 병. 한 번에 10ml씩 뿌린다. 소독제를 제대로 쓰기에 좋다.
+main.syringe	주사기
+main.syringedsc	정맥에 약물을 주입하는 100ml 주사기. 손으로 만든 것이다.
+main.scrapmetal	고철
+main.scrapmetaldsc	부서진 기계에서 나온 강철 조각들. 상태가 25% 이상이면 설치할 수 있다. 생존자 사이에서 흔히 화폐로 쓰이고, 제작 재료로도 쓴다.
+main.climbingrope	등반용 로프
+main.climbingropedsc	양 끝에 고정 고리가 달린 길고 튼튼한 로프. 깊은 낭떠러지에 걸고 타고 내려갈 수 있다. 두 번 쓸 수 있다.
+main.circuitboard	회로 기판
+main.circuitboarddsc	한때 작동하던 기계에서 뜯어낸 회로 조각. 아직도 가끔 불꽃이 튄다. 제작에 쓴다.
+main.bloodcrystalshard	혈액 수정 조각
+main.bloodcrystalsharddsc	닿는 것마다 피가 스며든다. 몸에 지니고 있으면 혈액량이 정상 수준까지 천천히 늘어난다.
+main.soothingcrystalshard	진정 수정 조각
+main.soothingcrystalsharddsc	마음을 가라앉히는 기운이 감돈다. 몸에 지니고 있으면 행복도가 천천히 오른다.
+main.reliefcrystalshard	완화 수정 조각
+main.reliefcrystalsharddsc	쥐고 있으면 살짝 감각이 무뎌진다... 몸에 지니고 있으면 통증이 줄어든다.
+main.turbulentcrystalshard	격동 수정 조각
+main.turbulentcrystalsharddsc	에너지로 진동한다. 몸에 지니고 있으면 점프 높이가 늘어난다.
+main.oxygencrystalshard	산소 수정 조각
+main.oxygencrystalsharddsc	천천히 보글거리며 주변에 산소를 내뿜는다... 몸에 지니고 있으면 기력 회복이 빨라진다.
+main.emissivecrystalshard	발광 수정 조각
+main.emissivecrystalsharddsc	한동안 밝게 빛난다. 빛이 남아 있는 동안 조명으로 쓸 만하다.
+main.digestioncrystalshard	소화 수정 조각
+main.digestioncrystalsharddsc	몸에서 무언가를 빼내 가는 느낌이다... 몸에 지니고 있으면 메스꺼움이 줄어든다.
+main.geofruit	지오열매
+main.geofruitdsc	평범하지만 맛있는 열매. 지오나무에서 자란다. 열량은 낮고, 갈증을 조금 풀어 주며, 빨리 상한다.
+main.stonefruitclosed	붙어 있는 돌열매
+main.stonefruitcloseddsc	식물의 단단한 회색 부분에 붙어 있는 단단한 초록 열매. 먼저 이빨로 떼어 내야 한다.
+main.stonefruitopen	돌열매
+main.stonefruitopendsc	맛은 밋밋하고 지방은 적당한 단단한 초록 열매. 아주 퍽퍽해서 먹고 나면 목이 마를 것이다.
+main.banana	바나나
+main.bananadsc	맛있는 노란 과일. 다른 행성에서 온 것 같다. 방사능이 약간 있다.
+main.burger	버거
+main.burgerdsc	크고 맛있는 간식. 배도 마음도 든든해진다!
+main.pancake	팬케이크
+main.pancakedsc	뜨거운 판에 구운 달콤한 반죽을 겹겹이 쌓고 시럽을 뿌렸다. 털에 묻을지도. 맛있다!
+main.pizzaslice	피자 조각
+main.pizzaslicedsc	구운 피자 한 조각. 아주 맛있고, 배부르고, 살찐다!
+main.bucketofchicken	치킨 버킷
+main.bucketofchickendsc	닭다리가 잔뜩 든 버킷. 아주 배부르다. 유통기한이 엄청나게 길다.
+main.bucketofnochicken	치킨 없는 버킷
+main.bucketofnochickendsc	빈 치킨 버킷.
+main.steak	스테이크
+main.steakdsc	잘 손질해 알맞게 익힌 큼직한 고기. 배부르고, 살찌고, 맛있다!
+main.cookies	쿠키 상자
+main.cookiesdsc	작게 구운 달콤한 과자 한 팩. 맛있지만 건강엔 별로다.
+main.chips	감자칩
+main.chipsdsc	얇게 썰어 구운 감자 한 팩. 맛있지만 건강엔 별로다.
+main.cereal	시리얼
+main.cerealdsc	흔한 시리얼 한 상자. 그냥 먹기엔 별 재미없지만, 배는 차고 역겹지도 않다. 갈증이 약간 늘어난다.
+main.bowlofcereal	시리얼 한 그릇
+main.bowlofcerealdsc	액체 0.5L를 담을 수 있는 잎사귀 그릇. 어째선지 시리얼 없이는 만들 수가 없다.

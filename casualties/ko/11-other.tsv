@@ -1,0 +1,180 @@
+other.gamesetbark	짖기
+other.gamesetconsole	디버그 콘솔 열기/닫기
+other.gamesetpause	일시 정지
+other.gamesetmarksmanrack	(명사수 전용) 슬라이드 당기기
+other.gamesetmarksmanunload	(명사수 전용) 탄창 빼기
+other.copy	클립보드로 복사
+other.paste	클립보드에서 붙여넣기
+other.descend	내려가기
+other.unarmed	없음
+other.container	용기
+other.containermaxweight	용량
+other.containermaxweightperitem	물건당 최대 무게
+other.conditionloss	%/분 손상
+other.decayonlyif	조건:
+other.decayonlyworn	착용 중
+other.decayonlymoving	이동 중
+other.decayonlyhasitems	물건이 들어 있을 때
+other.decaysin	<> 뒤 상함
+other.longtime	아주 오랜 시간
+other.hours	시간
+other.minutes	분
+other.seconds	초
+other.containerencumberance	짐 부담 감소
+other.weight	무게
+other.carrying	운반량
+other.itemusable	사용 위치:
+other.itemusablewound	건강 창
+other.itemusablehand	손
+other.itemusableinventory	인벤토리
+other.itemonlyinhands	손에만 들 수 있다
+other.itemwearable	착용 부위:
+other.itemwearableprotection	방어:
+other.itemwearableisolation	보온:
+other.itemvalue	거래 가치:
+other.itemqualities	속성:
+other.you	나
+other.damagereduction	피해 감소:
+other.bodyinsulation	몸 보온:
+other.youdescription	<sprite index=20>인벤토리
+other.wet	젖음
+other.missionhurry	서둘러라
+other.bandageMinigameGuide	클릭한 채 드레싱을 팔다리 둘레로 끌어 감는다.
+other.syringeMinigameGuide	주사기를 아래로 밀어 주입한다. 투여량을 꼭 확인하라.
+other.lockpickMinigameGuide	아치 위 아무 곳이나 클릭해 자물쇠를 따 본다.\n정답 위치에 가까울수록 더 많이 돌아간다.\n발톱이 부러지지 않게 조심하라.
+other.lifepodMinigameGuide	코드를 맞춰 연다.
+other.shrapnelMinigameGuide	파편을 천천히 뽑아라. 너무 빠르면 아프다.\n핀셋을 쓰면 속도 제한이 없다.
+other.dislocationMinigameGuide	뼈를 쳐서 제자리에 넣어라.\n렌치를 쓰면 훨씬 덜 아프다.
+other.dislocationMinigameGuideAlt	보철을 쳐서 제자리에 넣어라.
+other.amputationMinigameGuide	팔다리를 톱질해 절단한다.
+other.aedMinigameGuide	화면에 표시되는 안내를 따른다.
+other.manualDefibMinigameGuide	심장이 세동 주기의 어디쯤인지에 비례해 충전량을 맞추고, 충전한 뒤, 충격을 준다. 필요하면 반복한다.\n권장 추정치(POW.EST)는 지능이 높을수록 정확해진다.
+other.handCrankMinigameGuide	손잡이를 잡고 돌려 충전한다.
+other.prosthesisMinigameGuide	표시된 재료 조각으로 보철을 보강한다.
+other.aedstate0	패드를 지정된 위치에 붙이십시오.
+other.aedstate1	맥박 분석 중
+other.aedstate2	충격이 필요합니다.\n버튼을 눌러 충격을 주십시오.
+other.aedstate3	충전 중
+other.aedstate4	충격을 주었습니다.\n환자에게 심폐소생술을 시작하십시오.
+other.aedstate5	충격이 필요하지 않습니다.\n환자에게 심폐소생술을 시작하십시오.
+other.minigameExitGuide	우클릭/ESC로 나가기
+other.saveexit	저장하고 나가기
+other.saveexitdsc	진행 상황을 저장하고 쉰다.\n다음 층이 시작될 때 탐사를 이어 한다.
+other.savecontinue	계속하기
+other.savecontinuedsc	계속 간다.\n탐사는 층을 넘어갈 때만 저장하고 이어 할 수 있다. 층 중간에 죽거나 나가면 진행 상황이 지워진다.
+other.carryingtip	짐 부담
+other.tradergivebuttontip	상인에게 줄 물건을 여기로 끌어 놓는다
+other.drainliquid	액체 비우기
+other.dragheretouse	여기로 끌어 놓아 사용
+other.dragheretowear	여기로 끌어 놓아 착용
+other.inventory	인벤토리
+other.toomuchpain	너무 아프다!
+other.toomuchpaindsc	너무 아파서 이 팔다리에 손을 댈 수 없다
+other.fixdislocation	탈구 맞추기
+other.fixdislocationdsc	손으로 탈구를 맞춰 본다
+other.removesplint	부목 떼기
+other.removesplintdsc	팔다리에서 부목을 뗀다
+other.removetourniquet	지혈대 풀기
+other.removeshrapnel	파편 뽑기
+other.removeshrapneldsc	손으로 파편을 뽑아 본다
+other.unloadcontainer	용기
+other.watchbleedout	과다 출혈까지:
+other.watchinfected	감염:
+other.watchlimbheal	 회복 시간:
+other.watchweight	체중
+other.watchweightlost	감소
+other.watchweightgained	증가
+other.watchruntime	진행 시간:
+other.watchtemperature	기온:
+other.watchfibrillation	세동:
+other.mp3play	재생 중:
+other.rechargingstationcheer	기다리시는 동안 엄선된 음악을 즐겨 주십시오
+other.discretionwarning	이 게임에는 폭력, 자해, 온갖 비참한 장면이 담겨 있습니다\n\n일부 장면은 빛에 민감한 분께 영향을 줄 수 있습니다\n\n<color="grey">왼쪽 클릭으로 계속
+other.healthpaneltip	건강 창 (R)
+other.craftrepair	수리:
+other.crafttipname	제작 (C)
+other.crafttipdsc	제작 메뉴를 열고 닫는다\n\n물건을 여기로 끌어 놓으면 그 물건을 쓰는 제작법을 보여 준다
+other.craftsearchrecipes	제작법 검색...
+other.craftingredients	재료
+other.craftingredientsdsc	즐겨찾기(<>)한 물건은 제작에 쓰이지 않는다
+other.craftinfo	정보
+other.craftnotmadebefore	<sprite index=25>아직 만들어 본 적 없다.
+other.craftnotmadebeforetip	새 제작법으로 만들면 지능 경험치를 얻고 기분이 조금 좋아진다.
+other.craftanyitem	다음 속성을 가진 물건
+other.craftanytool	다음 속성을 가진 도구
+other.craftexample	, 예: <color=#AAAAAA><><color=#666666>
+other.craftanyliquid	다음 속성을 가진 액체
+other.craftitemquality	- (<1>) <2> 속성
+other.craftliquidquality	- (<1>) <2> 속성
+other.craftcondition	- 상태 ><>%
+other.craftml	- <>mL
+other.craftinfocondition	상태:
+other.craftinfovolume	용량:
+other.craftinfoamount	수량:
+other.craftinfoint	필요 지능: <1> (<2>)
+other.craftminorfail	50% 확률로 가벼운 실패
+other.craftmajorfail	50% 확률로 큰 실패
+other.craftcriticalfail	50% 확률로 치명적 실패
+other.craftcreate	만들기
+other.craftclearfilter	필터 지우기
+other.craftbacktotop	맨 위로
+other.craftpin	제작법 고정
+other.craftpindsc	이 제작법을 고정해 화면 옆에 재료 목록을 늘 띄운다.
+other.craftingcategoryall	전체
+other.craftingcategorymaterials	재료
+other.craftingcategorytools	도구
+other.craftingcategorymedicine	의약품
+other.craftingcategoryutilities	도구류
+other.craftingcategoryfood	음식
+other.cqfoliage	잎사귀
+other.cqnails	못
+other.cqwater	물
+other.cqhammering	망치질
+other.cqcutting	자르기
+other.cqrippable	찢을 수 있음
+other.cqdisinfectant	소독제
+other.cqblood	혈액
+other.cqopiate	아편류
+other.cqdressing	드레싱
+other.cqproduce	채집물
+other.cqmeat	고기
+other.cqfirestarter	불쏘시개
+other.cqheatsource	열원
+other.cqflammable	인화성
+other.cqflour	가루
+other.cqfat	지방
+other.cqcondiment	양념
+other.handswitchtip	주 손 바꾸기
+other.handswitchdsc	주 손을 오른손/왼손으로 바꾼다\n주 팔이 부러졌을 때 다른 팔로 파려면 이걸 쓴다\n왼팔은 오른팔보다 조금 약하다
+other.handswitchwarning	<color="orange">경고\n</color>왼손은 손재주가 떨어진다
+other.speed1	보통
+other.speed2	빠름
+other.speed3	아주 빠름
+other.workout	운동하기
+other.workoutdsc	시간과 기운을 조금 써서 근력·강인함 경험치를 얻는다. 시간 때우기에 좋지만, 크게 다쳤다면 아프다.
+other.pushups	팔굽혀펴기
+other.pushupsdsc	근력 경험치를 얻는다. 조금 힘들어서 금방 지친다.
+other.squats	스쿼트
+other.squatsdsc	강인함 경험치를 얻는다. 몸에 큰 부담은 없지만 경험치가 조금 느리게 오른다.
+other.plank	플랭크
+other.plankdsc	강인함과 근력 경험치를 모두 얻지만 절반씩이다. 스쿼트보다 힘들고 팔굽혀펴기보다는 덜 힘들다.
+other.shifttoexpand	Shift를 누르고 있으면 펼침
+other.napinfo	잠자기 (<>)
+other.napinfo2	수면의 질은 자는 바닥에 따라 정해진다\n아프거나 속이 안 좋거나 피곤하지 않으면 잘 수 없다
+other.sleepquality3	<color="green">좋음</color>
+other.sleepquality2	<color="grey">괜찮음</color>
+other.sleepquality1	<color="orange">그저 그럼</color>
+other.sleepquality0	<color="red">나쁨</color>
+other.togglehealthmode	상처/방어구 보기 전환
+other.selecttrainingcourse	훈련 과정을 고른다.
+other.start	시작
+other.quit	끝내기
+other.back	뒤로
+other.basicscourse	기초 훈련
+other.firstaidcourse	응급처치 과정
+other.craftingcourse	제작 과정
+other.movementcourse	이동 과정
+other.firstaidcourseunlock	두 번째 층에 도달하면 열림
+other.craftingcourseunlock	세 번째 층에 도달하면 열림
+other.movementcourseunlock	세 번째 층에 도달하면 열림
+other.tutorialspecieslock	실험체 종족으로만 들어갈 수 있다

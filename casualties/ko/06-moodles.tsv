@@ -1,0 +1,200 @@
+buildings.macrofleshrebuilderdsc	정교한 수술 장치 같다. 쓰는 법은 알아낼 수 있을 것 같다.
+moodles.braindamage4	혼수상태
+moodles.braindamage3	심각한 신경 기능 악화
+moodles.braindamage2	신경 손상
+moodles.braindamage1	인지 장애
+moodles.stroke	뇌졸중
+moodles.cantbreathe	호흡 정지
+moodles.thoraxdestroyed	폐부전
+moodles.pulmonaryembolism	폐색전증
+moodles.oxygen1	경도 저산소혈증
+moodles.oxygen2	저산소혈증
+moodles.oxygen3	중증 저산소혈증
+moodles.oxygen4	위중 저산소혈증
+moodles.fibrillation1	부정맥
+moodles.fibrillation2	심실빈맥
+moodles.fibrillation3	심실세동
+moodles.palpitations	두근거림
+moodles.cardiacarrest	심정지
+moodles.hypoventilation1	경도 저환기
+moodles.hypoventilation2	저환기
+moodles.hypotension1	경도 저혈압
+moodles.hypotension2	저혈압
+moodles.hypotension3	중증 저혈압
+moodles.hypotension4	순환 허탈
+moodles.hypertension1	경도 고혈압
+moodles.hypertension2	고혈압
+moodles.hypertension3	중증 고혈압
+moodles.hypertension4	고혈압 위기
+moodles.venom1	경도 중독
+moodles.venom2	중독
+moodles.venom3	중증 중독
+moodles.venom4	중독 위기
+moodles.pain1	불편함
+moodles.pain2	통증
+moodles.pain3	심한 통증
+moodles.pain4	극심한 고통
+moodles.shock	쇼크
+moodles.overdose1	아편 기운
+moodles.overdose2	약 기운
+moodles.overdose3	심한 약 기운
+moodles.overdose4	아편 과다 투여
+moodles.withdrawal1	아편 갈망
+moodles.withdrawal2	금단 증상
+moodles.withdrawal3	심한 금단 증상
+moodles.withdrawal4	금단으로 죽어 감
+moodles.stimulated	각성
+moodles.drugoverdose	약물 과다 투여
+moodles.bleeding1	가벼운 출혈
+moodles.bleeding2	출혈
+moodles.bleeding3	심한 출혈
+moodles.bleeding4	대량 출혈
+moodles.internalBleed	내출혈
+moodles.exertion1	약간 지침
+moodles.exertion2	지침
+moodles.exertion3	몹시 지침
+moodles.exertion4	완전히 탈진
+moodles.brokenbone	골절
+moodles.dislocation	관절 탈구
+moodles.brokenneck	목뼈 골절
+moodles.brokenribs	갈비뼈 골절
+moodles.dislocatedjaw	턱 탈구
+moodles.dislocatedspine	척추 탈구
+moodles.infected1	감염
+moodles.infected2	아픈 감염
+moodles.infected3	심한 감염
+moodles.infected4	생명을 위협하는 감염
+moodles.sepsis1	패혈증
+moodles.sepsis2	중증 패혈증
+moodles.sepsis3	패혈성 쇼크
+moodles.concussion	뇌진탕
+moodles.unconscious	의식 없음
+moodles.incapacitated	행동 불능
+moodles.asleep	수면 중
+moodles.confused1	혼란
+moodles.confused2	심한 혼란
+moodles.confused3	실신 직전
+moodles.tired1	나른함
+moodles.tired2	피곤함
+moodles.tired3	몹시 피곤함
+moodles.tired4	비몽사몽
+moodles.hunger1	출출함
+moodles.hunger2	배고픔
+moodles.hunger3	몹시 배고픔
+moodles.hunger4	굶주림
+moodles.hunger5	배부름
+moodles.hunger6	포만
+moodles.thirst1	목마름
+moodles.thirst2	탈수
+moodles.thirst3	바싹 마름
+moodles.thirst4	극심한 탈수
+moodles.overhydrated1	갈증 해소
+moodles.overhydrated2	수분 과다
+moodles.overhydrated3	수분 중독
+moodles.sick1	속이 거북함
+moodles.sick2	메스꺼움
+moodles.sick3	구토감
+moodles.sick4	심한 구토감
+moodles.hot1	따뜻함
+moodles.hot2	더움
+moodles.hot3	고체온증
+moodles.hot4	열사병
+moodles.cold1	쌀쌀함
+moodles.cold2	추움
+moodles.cold3	저체온증
+moodles.cold4	얼어 죽어 감
+moodles.wet1	축축함
+moodles.wet2	젖음
+moodles.wet3	흠뻑 젖음
+moodles.wet4	물에 절음
+moodles.underweight1	저체중
+moodles.underweight2	마름
+moodles.underweight3	영양실조
+moodles.underweight4	앙상함
+moodles.overweight1	통통함
+moodles.overweight2	과체중
+moodles.overweight3	뚱뚱함
+moodles.overweight4	비만
+moodles.depression1	기분 저하
+moodles.depression2	우울함
+moodles.depression3	우울증
+moodles.depression4	비참함
+moodles.trauma1	불안
+moodles.trauma2	겁먹음
+moodles.trauma3	트라우마
+moodles.trauma4	전쟁 신경증
+moodles.happy1	만족
+moodles.happy2	신남
+moodles.happy3	행복
+moodles.happy4	더없이 기쁨
+moodles.impairedspeech	언어 장애
+moodles.deaf2	청력 저하
+moodles.deaf3	청력 손실
+moodles.deaf4	심한 청력 손실
+moodles.encumbered1	무거운 짐
+moodles.encumbered2	짐 과다
+moodles.encumbered3	심한 짐 과다
+moodles.encumbered4	거동 곤란
+moodles.irradiated1	불편함
+moodles.irradiated2	방사선 병
+moodles.irradiated3	심한 방사선 병
+moodles.irradiated4	체르노빌 지망생
+moodles.barotrauma1	고압
+moodles.barotrauma2	매우 높은 압력
+moodles.barotrauma3	압력 손상
+moodles.barotrauma4	위중 압력 손상
+moodles.energized	활력
+moodles.hemothorax	혈흉
+moodles.hollow	공허
+moodles.badsleep	선잠
+moodles.laststand	최후의 버팀
+moodles.dirty1	더러움
+moodles.dirty2	몹시 더러움
+moodles.adrenaline	아드레날린
+moodles.tachycardia	빈맥
+moodles.bradycardia	서맥
+moodles.rnrs	급속 신경 재생 증후군
+moodles.rippedjaw	얼굴 훼손
+moodles.rippedeye	한쪽 실명
+moodles.rippedeyes	실명
+moodles.lowimmunity	면역 저하
+moodles.highimmunity	면역 강화
+moodles.amputation	절단됨
+moodles.clawdamage1	무뎌진 발톱
+moodles.clawdamage2	부러진 발톱
+moodles.keratinbooster	재생 촉진
+moodles.impendingdoom	임박한 파멸감
+moodles.horrified	공포에 질림
+moodles.focused	집중
+moodles.cargo	화물 박힘
+moodles.prosthesis	보철 팔다리
+moodles.loosescrews	나사 풀림
+moodles.bentprosthesis	휜 보철
+moodles.materialloss	심각한 재료 손실
+moodles.braindamage4dsc	...
+moodles.braindamage3dsc	현실이  ..  말이   안   된다
+moodles.braindamage2dsc	지적으로 생각하고 스스로를 돌보는 능력이 떨어졌다. 심각한 뇌 손상이 있다.
+moodles.braindamage1dsc	뇌 손상으로 정신 기능이 떨어졌다. 뭔가 이상한 느낌이다...
+moodles.strokedsc	심한 고혈압 탓일 가능성이 큰 뇌출혈. 이미 진행된 단계라, 브레인그로나 응고 촉진제가 없으면 살 가망이 없다.
+moodles.cantbreathedsc	질식 중! 곧 의식을 잃고 죽는다.
+moodles.thoraxdestroyeddsc	가슴 근육 상태가 위험할 만큼 낮아 폐가 너무 손상되어 제 기능을 못 한다.
+moodles.pulmonaryembolismdsc	큰 혈전이 떨어져 나가 폐동맥을 막아 가슴이 빠르게 손상되고 있다. 혈액 점도를 낮춰라.
+moodles.oxygen1dsc	산소포화도 90% 미만. 숨은 질환의 징후일 수 있다.
+moodles.oxygen2dsc	산소포화도 75% 미만. 뇌에 산소가 서서히 모자라고 있다. 숨은 질환이 있다는 뜻이다.
+moodles.oxygen3dsc	산소포화도 60% 미만. 대부분의 조직에 산소가 모자라 부정맥이 생긴다. 죽을 수도 있다.
+moodles.oxygen4dsc	산소포화도 45% 미만. 몸 어딘가가 끔찍하게, 끔찍하게 잘못됐다.
+moodles.fibrillation1dsc	몸에 가해진 심한 부담으로 생긴 비정상적인 심장 리듬. 원인을 해결하지 않으면 악화될 수 있다. 제세동으로 치료할 수 있다.
+moodles.fibrillation2dsc	심한 불규칙 심박으로 피를 제대로 뿜지 못한다. 치료하지 않으면 치명적인 심실세동으로 진행된다. 제세동으로 치료할 수 있다.
+moodles.fibrillation3dsc	생명을 위협하는 혼란스러운 심장 리듬. 일이 끔찍하게 잘못됐다.
+moodles.palpitationsdsc	심장이 가슴을 뚫고 나올 듯 쿵쾅거린다. 그냥 불안한 걸까, 아니면 뭔가 끔찍하게 잘못된 걸까?
+moodles.cardiacarrestdsc	무수축. 제세동이나 에피네프린으로 살릴 가능성이 낮다. 곧 뇌 저산소증과 죽음이 뒤따른다.
+moodles.hypoventilation1dsc	호흡수가 줄었다.
+moodles.hypoventilation2dsc	호흡수가 크게 줄어 혈중 산소 농도가 서서히 떨어지고 있다.
+moodles.hypotension1dsc	혈압이 조금 낮다.
+moodles.hypotension2dsc	혈압이 꽤 낮다. 얼굴이 창백하고 피부가 축축하다. 활력 징후를 확인하라.
+moodles.hypotension3dsc	혈압이 심하게 낮아 곧 기절할 것 같다. 세동이 시작될 수 있으니 활력 징후를 확인하라.
+moodles.hypotension4dsc	치명적으로 낮은 혈압. 장기로 피가 가지 않는다. 곧 뇌 저산소증과 죽음이 닥친다.
+moodles.hypertension1dsc	혈압이 조금 높다.
+moodles.hypertension2dsc	혈압이 꽤 높다. 머리가 아프고 어지럽다. 활력 징후를 확인하라.
+moodles.hypertension3dsc	혈압이 위험하게 높아 곧 심각한 건강 문제가 생긴다. 몸 상태가 끔찍하다. 활력 징후를 확인하라.
+moodles.hypertension4dsc	생명을 위협하는 혈압. 뇌졸중 위험이 있다. 서둘러 활력 징후를 확인하고 뇌졸중 증상을 살펴라.

@@ -1,0 +1,180 @@
+other.runsetstaminaregen	기력 회복
+other.runsetstaminaregendsc	쓴 기력이 회복되는 속도
+other.runsetattackdamage	공격 피해
+other.runsetattackdamagedsc	휘두를 때 주는 피해량
+other.runsetinsulationmultiplier	보온 배율
+other.runsetinsulationmultiplierdsc	주변 온도로부터 얼마나 보호받는지
+other.runsetstrokes	뇌졸중 켜기
+other.runsetstrokesdsc	고혈압 위기 때 뇌졸중이 올 수 있는지 정한다
+other.runsetbraindamagefx	뇌 손상 효과
+other.runsetbraindamagefxdsc	뇌 손상으로 주기적인 발작이 오는지 정한다
+other.runsetcrushdepth	압궤 심도 피해
+other.runsetcrushdepthdsc	압궤 심도 아래에서 결국 피해를 입기 시작하는지 정한다
+other.runsetinfinitelaststand	무한 최후의 버팀
+other.runsetinfinitelaststanddsc	한 탐사에서 최후의 버팀 판정을 여러 번 받을 수 있는지 정한다
+other.runsetmoodnormalizationrate	기분 정상화 속도
+other.runsetmoodnormalizationratedsc	기분이 0으로 돌아가는 속도. 높을수록 슬픔이나 기쁨이 오래가지 않는다.
+other.runsetforcesleep	강제 수면
+other.runsetforcesleepdsc	기운이 0이 되면 플레이어가 강제로 의식을 잃는지
+other.runsetlowmoodevents	저기분 사건
+other.runsetlowmoodeventsdsc	기분이 위험할 만큼 낮을 때 플레이어가 특별한 행동을 하는지
+other.runsetliquidpushing	액체 밀림
+other.runsetliquidpushingdsc	흐르는 액체가 플레이어와 물체를 밀어내는지 정한다
+other.runsetdisfigurement	신체 훼손 켜기
+other.runsetdisfigurementdsc	캐릭터가 얼굴 부위를 영구히 잃을 수 있는지 정한다
+other.runsetsleepcyclespeed	수면 주기 속도
+other.runsetsleepcyclespeeddsc	깨어 있을 때 기운이 줄고 잘 때 회복되는 속도
+other.runsetencumbrancecap	짐 부담 한도
+other.runsetencumbrancecapdsc	짐 과다가 되기 전까지 들 수 있는 양
+other.runsetnosleeprestrictions	수면 제한 없음
+other.runsetnosleeprestrictionsdsc	피곤하지 않거나 아프거나 속이 안 좋아도 언제든 잘 수 있는지
+other.runsettraderchance	상인 등장 확률
+other.runsettraderchancedsc	구명 포드에 상인이 나타나는 빈도
+other.runsettraderitemamount	상인 물건 양
+other.runsettraderitemamountdsc	상인이 대체로 가지고 나오는 물건 수의 배율
+other.runsettraderrepoffset	상인 평판 보정
+other.runsettraderrepoffsetdsc	상인을 만날 때 더하거나 빼는 추가 평판
+other.runsetitemdecayrate	물건 부패 속도
+other.runsetitemdecayratedsc	음식, 가방, 조명 등이 낡고 상하는 속도
+other.runsetlayermodifierchance	층 특성 확률
+other.runsetlayermodifierchancedsc	층마다 층 특성이 붙을 확률
+other.runsettimebetweenearthquakes	지진 간격
+other.runsettimebetweenearthquakesdsc	지진이 일어나기까지 걸리는 평균 시간
+other.runsettemperatureoffset	주변 온도 보정
+other.runsettemperatureoffsetdsc	환경이 평균적으로 얼마나 더 따뜻하거나 추운지
+other.runsetallowlayerendmovement	층 끝에서 이동 허용
+other.runsetallowlayerendmovementdsc	켜면 층 바닥에 닿았을 때도 자유롭게 움직일 수 있다. 바닥에 쌓인 전리품을 다 주울 수 있으면 균형이 깨지므로 꺼 두는 걸 권장한다.
+other.runsetlockpickprecision	자물쇠 따기 관대함
+other.runsetlockpickprecisiondsc	자물쇠 따기 미니게임의 정밀 각도 범위
+other.runsetambientlight	주변광
+other.runsetambientlightdsc	직접 비추는 조명이 없는 곳을 얼마나 밝힐지
+other.runsetambientlightnone	칠흑
+other.runsetambientlightenough	보일 만큼
+other.runsetambientlightbright	밝음
+other.runsetoreamount	광석 양
+other.runsetoreamountdsc	각 층에 구리·티탄철석이 얼마나 생길지
+other.runsetminigamehandshake	미니게임 손떨림
+other.runsetminigamehandshakedsc	통증이 있을 때 미니게임에서 손이 얼마나 떨리는지
+other.runsetpermanentaddiction	영구 중독
+other.runsetpermanentaddictiondsc	어쩌다 보니 연구소에 있을 때 아편류에 중독됐다. 아무리 끊으려 해도 사라지지 않는다. 계속 아편류를 찾지 않으면 죽는다.
+other.runsetmindwiped	기억 소거됨
+other.runsetmindwipeddsc	...
+other.runsetzeroskills	능력 0
+other.runsetzeroskillsdsc	평생 구석에 앉아 배급 식량만 먹었을 뿐, <i>진짜로</i> 한 일이 없다. 근력·강인함·지능 0으로 시작한다.
+other.runsetblind	실명
+other.runsetblinddsc	끔찍한 실험 탓에 영영 눈이 멀었다. 지팡이는 안 준다.
+other.runsetamputee	사지 절단
+other.runsetamputeedsc	끔찍한 실험 탓에 손발이 하나도 없다. 그래도 끝내주는 나무 팔다리는 있다!
+other.runsetimmortalsnail	불멸의 달팽이
+other.runsetimmortalsnaildsc	알 수 없는 힘이 너에게 특별한 관심을 보이며, 네가 깨어 있을 때마다 천천히 다가온다. 닿게 두지 마라.
+other.rundivrunwide	진행 설정
+other.rundivlayer	세계 설정
+other.rundivplayer	플레이어 설정
+other.rundivtrader	상인 설정
+other.rundivother	기타
+other.rundivchallenges	도전 과제
+other.tutorialwarning	<size=150%>가기 전에...\n\n<size=100%>아직 기초 과정을 마치지 않았다.\n정말 아무것도 모른 채 들어갈 텐가?\n\n\n\n죽음은 거의 확실하다.
+other.tutorialwarningyes	기초 훈련 받기
+other.tutorialwarningno	나도 알 건 안다!
+other.pausereturn	돌아가기
+other.pausegiveup	포기하기
+other.pausegiveup2	정말인가?
+other.pausegiveup3	정말로, 확실한가?
+other.pausegiveup4	그렇게까지 죽고 싶은가?
+other.pausegiveup5	두개골 내 폭발 장치 작동
+other.pausegiveup5dsc	네 뇌가 곧 주변 사방과 하나가 된다.
+other.pausegiveupdsc	이 목숨을 포기한다
+other.pauseexit	나가기
+other.pausesettings	설정
+other.pausesettingsdsc	게임이 너무 시끄러우니까
+other.resettodefault	기본값으로
+other.tabvideo	화면
+other.tabaudio	소리
+other.tabgame	게임플레이
+other.tabinput	조작
+other.tablanguage	언어
+other.gamesetreswidth	해상도 너비
+other.gamesetreswidthdsc	원하는 가로 해상도. 운영체제가 제한할 수 있다.
+other.gamesetresheight	해상도 높이
+other.gamesetresheightdsc	원하는 세로 해상도. 운영체제가 제한할 수 있다.
+other.gamesetfullscreen	전체 화면
+other.gamesetfullscreendsc	창 모드와 테두리 없는 창 전환
+other.gamesetvsync	수직 동기화
+other.gamesetvsyncdsc	화면 찢김을 줄이는 대신 입력 지연이 생기는 수직 동기화를 켜고 끈다. 켜면 최대 프레임 설정보다 우선한다
+other.gamesetframerate	최대 프레임
+other.gamesetframeratedsc	0보다 크면 게임이 돌아갈 수 있는 최대 속도를 정한다. 0은 무제한. 수직 동기화가 켜져 있으면 무시된다
+other.gamesetpixelate	픽셀 렌더링
+other.gamesetpixelatedsc	축소 렌더링과 원래 해상도 렌더링을 전환한다. 픽셀 렌더링을 끄면 게임이 의도한 그림체가 일부 사라진다.
+other.gamesetdarkerbackground	어두운 배경
+other.gamesetdarkerbackgrounddsc	동굴 배경 벽을 어둡게 해 대비를 높인다
+other.gamesetfastcamera	단순 카메라
+other.gamesetfastcameradsc	카메라를 늘 플레이어에게 고정한다
+other.gamesetbloom	블룸
+other.gamesetbloomdsc	밝은 것이 더 보기 좋아진다. 렌즈 얼룩에도 영향을 준다
+other.gamesetfilmgrain	필름 그레인
+other.gamesetfilmgraindsc	노이즈 필터를 얼마나 보이게 할지
+other.gamesetbrightness	밝기
+other.gamesetbrightnessdsc	완전한 검정이 아닌 색조를 얼마나 더 밝게 할지
+other.gamesetlineofsightcount	시야 해상도
+other.gamesetlineofsightcountdsc	시야 셰이더가 쓰일 때 얼마나 세밀할지. 높을수록 성능이 떨어진다
+other.gamesetscreenshake	화면 흔들림
+other.gamesetscreenshakedsc	세게 떨어지거나 폭발할 때 화면을 얼마나 흔들지
+other.gamesetcensorpain	고통 표현 줄이기
+other.gamesetcensorpaindsc	아파서 내는 신음을 끄고 일부 대사를 순화한다.\n참고: 계속 플레이하는 데 꼭 필요한 게 아니면 권하지 않는다
+other.gamesetcensormood	기분 표현 줄이기
+other.gamesetcensormooddsc	저기분 사건과 일부 대사를 순화한다.\n참고: 계속 플레이하는 데 꼭 필요한 게 아니면 권하지 않는다
+other.gamesetalwaysexpand	물건 설명 늘 펼치기
+other.gamesetalwaysexpanddsc	켜면 펼치기 키를 누르지 않아도 물건에 마우스를 올리면 늘 자세한 설명이 보인다
+other.gamesetshowhiddenmoodles	숨은 상태 늘 표시
+other.gamesetshowhiddenmoodlesdsc	켜면 덜 중요한 상태 표시도 마우스를 올리지 않아도 늘 보인다
+other.gamesetitemfloating	물건 떠오름
+other.gamesetitemfloatingdsc	켜면 주운 물건이 잠깐 공중에 떠오른다
+other.gamesetclearerrecipes	제작법 목록 색 대비
+other.gamesetclearerrecipesdsc	켜면 제작법 목록에 더 뚜렷한 색을 써서 만들 수 있는 것과 없는 것을 구분한다
+other.gamesetinventoryuseleniency	인벤토리 사용 대기
+other.gamesetinventoryuseleniencydsc	인벤토리를 연 뒤 물건을 쓸 수 있을 때까지 기다리는 시간. 낮을수록 더 빨리 쓸 수 있다
+other.gamesetautocolorfavourite	즐겨찾기 자동 색칠
+other.gamesetautocolorfavouritedsc	켜면 데모처럼 즐겨찾기한 물건이 자동으로 노랗게 칠해진다.
+other.gamesetskipintro	인트로 건너뛰기
+other.gamesetskipintrodsc	인트로 글을 너무 많이 봤으니까...
+other.gamesetrpc	디스코드 상태 표시
+other.gamesetrpcdsc	프로필에 이 게임을 하는 중이라고 보여 주는 디스코드 Rich Presence를 켜고 끈다
+other.gamesethidemenuprogression	메뉴 진행 표시 숨기기
+other.gamesethidemenuprogressiondsc	켜면 특정 엔딩을 볼 때마다 메인 메뉴에 나타나는 특별한 장식을 끈다. 다른 사람에게 스포일러가 되지 않게 하고 싶을 때 쓴다
+other.gamesetunits	단위
+other.gamesetunitsdsc	거리·온도·무게를 표시할 단위
+other.gamesetunitsmetric	미터법
+other.gamesetunitsimperial	야드파운드법
+other.gamesetunitsburger	치즈버거
+other.gamesetmastervolume	전체 음량
+other.gamesetmusicvolume	음악 음량
+other.gamesetdronevolume	배경음 음량
+other.gamesetdronevolumedsc	고통·탈진·낙반 같은 상황별 배경음의 음량.
+other.gamesettrackinterval	음악 간격
+other.gamesettrackintervaldsc	곡과 곡 사이에 기다리는 시간(초)
+other.gamesetsadnessdistortion	슬픔 음악 왜곡
+other.gamesetsadnessdistortiondsc	기분이 떨어질수록 음악을 점점 일그러뜨릴지
+other.gamesetautojump	자동 점프
+other.gamesetautojumpdsc	켜면 버튼을 누르고 있는 동안 캐릭터가 계속 점프하려 한다. 예전 점프 방식과 비슷하다
+other.gamesettogglelabels	이름표 전환식
+other.gamesettogglelabelsdsc	켜면 키를 누르고 있지 않아도 누를 때마다 물건 이름표가 켜지고 꺼진다
+other.gamesetjump	점프
+other.gamesetleft	왼쪽으로 이동
+other.gamesetright	오른쪽으로 이동
+other.gamesetdown	웅크리기
+other.gamesetup	위로 이동
+other.gamesetattack	휘두르기
+other.gamesetiteminteract	물건 사용/취소
+other.gamesetthrow	던지기
+other.gamesetswitchhands	손 바꾸기
+other.gamesetragdoll	몸 늘어뜨리기
+other.gamesetwoundview	건강 창
+other.gamesetcraft	제작 메뉴
+other.gamesetfavourite	물건 즐겨찾기
+other.gamesetcustomizeitem	물건 꾸미기
+other.gamesettoggleinventory	인벤토리 열기/닫기
+other.gamesetspeed1	보통 속도
+other.gamesetspeed2	빠른 속도
+other.gamesetspeed3	아주 빠른 속도
+other.gamesetexpanddesc	물건 설명 펼치기
+other.gamesetaltview	물건 이름표 보기

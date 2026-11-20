@@ -1,0 +1,260 @@
+character.1.hot.5	이런 더위에선 집중하기 어렵다.
+character.1.hot.6	위험할 만큼 덥다...
+character.1.hot.7	땀만으로는 감당이 안 된다...
+character.1.hot.8	어지러운 더위다.
+character.1.hot.9	땀이 비 오듯 한다.
+character.1.exerted.0	쉬고 싶다.
+character.1.exerted.1	건강한 운동이군.
+character.1.exerted.2	난 육체노동에 맞지 않는다.
+character.1.exerted.3	지치는군.
+character.1.exerted.4	그만해야겠다.
+character.1.exerted.5	쉬는 편이 낫겠다.
+character.1.exerted.6	참 고된 육체노동이군.
+character.1.exerted.7	무리했다.
+character.1.exerted.8	집중.
+character.1.exhausted.0	녹초다...
+character.1.exhausted.1	헉... 헉... 후우...
+character.1.exhausted.2	휴식이... 필요하다...
+character.1.exhausted.3	완전히... 기진맥진이다...
+character.1.exhausted.4	숨을... 쉬어야 한다...
+character.1.exhausted.5	바닥났다...
+character.1.exhausted.6	숨 쉬기가... 힘들다...
+character.1.exhausted.7	*콜록* *콜록*
+character.1.exhausted.8	근육이... 버티질... 못한다...
+character.1.exhausted.9	집중...
+character.1.freezing.0	위험한 저체온 상태다.
+character.1.freezing.1	빨리 몸을 데워야 한다.
+character.1.freezing.2	피가 얼어붙는다.
+character.1.freezing.3	열원이 필요하다...
+character.1.freezing.4	몸이 떨린다.
+character.1.freezing.5	당장 따뜻한 곳으로 가야 한다.
+character.1.freezing.6	얼어 죽겠다.
+character.1.freezing.7	너무 춥다. 아프다.
+character.1.freezing.8	감각이 마비되는 추위다...
+character.1.freezing.9	손발 끝에 감각이 없다.
+character.1.emaciated.0	몸이 위험할 만큼 쇠약하다.
+character.1.emaciated.1	심부전 위험이 있다. 체중을 늘려야 한다.
+character.1.emaciated.2	극심한 영양실조 상태다.
+character.1.emaciated.3	식단을 조정해야 한다.
+character.1.obese.0	단식해야겠다.
+character.1.obese.1	...몸이 부었다.
+character.1.obese.2	치명적이 되기 전에 체중을 줄여야 한다.
+character.1.obese.3	몸집이 문제가 되고 있다.
+character.1.obese.4	몸이 무겁다.
+character.1.opiated.0	아편계 물질에 취해 있다.
+character.1.opiated.1	음...으으으음...알딸딸하다.
+character.1.opiated.2	이거... 음. 좋군.
+character.1.opiated.3	만족스럽다...
+character.1.opiated.4	찌릿찌릿한 감각이다.
+character.1.opiated.5	집중하기 어렵지만, 즐겁다.
+character.1.opiated.6	마음에 든다.
+character.1.opiated.7	체내에 진정제 성분이 있다.
+character.1.opiated.8	폐가 무겁다.
+character.1.opiatedsad.0	기분 좋은, 덧없는 느낌...
+character.1.opiatedsad.1	...드디어 긴장이 풀린다.
+character.1.opiatedsad.2	몸이 가볍다...
+character.1.opiatedsad.3	훨씬 낫군.
+character.1.opiatewithdrawal.0	아, 아편이 한 번 더 필요하다, 당장.
+character.1.opiatewithdrawal.1	그, 금단 증상을 겪, 겪고 있다.
+character.1.opiatewithdrawal.2	소, 손이 떨, 떨린다.
+character.1.opiatewithdrawal.3	그, 금단 증, 증상.
+character.1.opiatewithdrawal.4	아, 아편류가 더 필요하다.
+character.1.opiatewithdrawal.5	떨린다.
+character.1.cantBreathe.0	*콜록* *켁*
+character.1.cantBreathe.1	흐읏... 크윽... 도, 도와... 수, 숨이...
+character.1.cantBreathe.2	*헉*
+character.1.cantBreathe.3	기, 기절... 할... 것...
+character.1.cantBreathe.4	숨을... *콜록* *커헉*
+character.1.cantBreathe.5	도와- 켁! 콜록!
+character.1.cantBreathe.6	지, 질식... *콜록*
+character.1.cantBreathe.7	숨을 쉴 수 없다.
+character.1.pain.0	아프다.
+character.1.pain.1	아야.
+character.1.pain.2	<limb> 쪽에서 통증 신호가 온다.
+character.1.pain.3	통증.
+character.1.pain.4	<limb> 쪽 주변이 불편하다.
+character.1.pain.5	<limb> 쪽이 아프다.
+character.1.pain.6	기분 나쁜 느낌이다.
+character.1.pain.7	<limb> 쪽이 욱신거린다.
+character.1.pain.8	통증 신호 감지.
+character.1.pain.9	이런.
+character.1.pain.10	깨갱...
+character.1.pain.11	*한숨*
+character.1.pain.12	<limb> 쪽에 불쾌한 감각.
+character.1.hitgroundhard.0	아웃!
+character.1.hitgroundhard.1	윽!
+character.1.hitgroundhard.2	흐읏!
+character.1.hitgroundhard.3	...!
+character.1.hitgroundhard.4	크흑!
+character.1.hitgroundhard.5	이런.
+character.1.bigpain.0	크으으윽...
+character.1.bigpain.1	.....크윽....
+character.1.bigpain.2	...고, 고토-옹...
+character.1.bigpain.3	크...흐읏...그흐...
+character.1.bigpain.4	흐..음...흐..도, 도와-줘..!
+character.1.bigpain.5	그르르...
+character.1.bigpain.6	그만해!!
+character.1.bigpain.7	멈춰라!
+character.1.bigpain.8	씨발!!
+character.1.bigpain.9	크으으으윽... 으으윽...
+character.1.bigpain.10	흐윽.... 그르르르...
+character.1.bigpain.11	아아그르르... 크으으윽... 그르...
+character.1.bigpain.12	그르르르으으...
+character.1.bigpain.13	크으으아아아악!
+character.1.bigpain.14	크흑... 흑...
+character.1.bigpain.15	크으으윽...!!!
+character.1.fallscream.0	..!
+character.1.fallscream.1	흐읍!
+character.1.fallscream.2	아악!
+character.1.fallscream.3	워.
+character.1.fallscream.4	허.
+character.1.fallscream.5	이건 좋을 리 없군.
+character.1.hitbycreature.0	빌어먹을 짐승!!
+character.1.hitbycreature.1	아악! 너!
+character.1.hitbycreature.2	크흑! 그만둬라!
+character.1.hitbycreature.3	*헉*
+character.1.hitbycreature.4	흐읏! 어림없다!
+character.1.hitbycreature.5	이 망할...!
+character.1.hitbycreature.6	성가시군!
+character.1.wet.0	털의 수분 함량이 높다.
+character.1.wet.1	축축한 건 나로군.
+character.1.wet.2	젖었다.
+character.1.wet.3	온몸이 불쾌하다.
+character.1.wet.4	털이 젖었다.
+character.1.wet.5	몸에 수분이 고였다.
+character.1.wet.6	체표면에 수분이 맺혔다.
+character.1.wet.7	흠뻑 젖었다
+character.1.wet.8	내 체표면에서 이 액체 좀 치워 줘.
+character.1.wet.9	온몸이 액체투성이다.
+character.1.dirty.0	합병증을 피하려면 몸을 씻어야 한다.
+character.1.dirty.1	지저분하다. 이런 내 모습은 보기 싫다.
+character.1.dirty.2	윽. 더럽다. 이런 꼴로 남 앞에 서면 안 된다.
+character.1.dirty.3	이 흙을 털어 내야겠다.
+character.1.dirty.4	최적이 아닌 위생 상태.
+character.1.dirty.5	오물투성이가 된 모양이다.
+character.1.dirty.6	샤워를 하고 싶다.
+character.1.dirty.7	목욕을 하는 게 이상적이겠군.
+character.1.dirty.8	이게 위생적일 리 없다.
+character.1.dirty.9	털이 흙투성이다.
+character.1.encumbered.0	내 체력의 한계가 드러나는군.
+character.1.encumbered.1	등산이라도 가나? 왜 이렇게 많이 들고 있지?
+character.1.encumbered.2	이 물건들이 목표 달성에 쓸모 있겠지만... 무겁다.
+character.1.encumbered.3	짐이 몹시 무겁다.
+character.1.encumbered.4	이렇게 많이 들고 다니면 안 된다.
+character.1.encumbered.5	많이 들고 있다.
+character.1.encumbered.6	꽤 무거운 짐이군.
+character.1.encumbered.7	척추가 반기지 않는다.
+character.1.encumbered.8	약간 과적인 모양이다.
+character.1.watchlike.0	실험체들처럼 귓가에서 웅웅거린다. 꽤 매력적이군.
+character.1.drillend.0	목표에 점점 가까이 내려간다.
+character.1.drillend.1	방금 그걸로 청력이 약간 손상됐을지도.
+character.1.drillend.2	이제 조심해야 한다. 새로운 미지의 구역이다.
+character.1.drillend.3	좋은 이동 수단이군.
+character.1.loud.0	크윽! 흐음... 이런 소음에 거듭 노출되는 건 피해야겠다...
+character.1.loud.1	아아아아악!!!  ...이런 사소한 일에 비명을 지르지 말았어야 했다.
+character.1.loud.2	!.......
+character.1.loud.3	...내 귀.
+character.1.murderregret.0	....흐..하... 하하... 하... 하하하... 아하하하.... 하아... 흐, 흐..아...
+character.1.murderregret.1	난 구제 불능의 괴물이다. 부끄럽다.
+character.1.murderregret.2	나는... 미안하다.
+character.1.murderregret.3	그럴... 생각은 없었다...
+character.1.tradeemeet.0	반갑군.
+character.1.tradeemeet.1	안녕.
+character.1.tradeemeet.2	워.
+character.1.tradeemeet.3	만나서 반갑다.
+character.1.tradeemeet.4	거기 안녕.
+character.1.tradeemeet.5	인사드리지.
+character.1.swingresponse.0	그만. 해!
+character.1.swingresponse.1	멈춰!
+character.1.swingresponse.2	천치!
+character.1.swingresponse.3	미개한 놈!
+character.1.swingresponse.4	저항하지 마!
+character.1.swingresponse.5	그냥 죽어라!
+character.1.swingresponse.6	포기해!
+character.1.braindamaged.0	...뭔가 잘못됐다.
+character.1.braindamaged.1	쇠... 맛. 이는 곧... 흠...
+character.1.braindamaged.2	악순 시 미 비 지 오토켄트 시에키브 시 헤포크 케미크.
+character.1.braindamaged.3	스테인드글라스 창에는 노랑, 주황, 빨강 조각이 있었다.
+character.1.braindamaged.4	무가 태양을 본다.
+character.1.braindamaged.5	휘발유가 기관총으로 파인애플을 쏜다.
+character.1.braindamaged.6	터널 끝의 빛은 나무들 때문에 세상이 뒤흔들린다.
+character.1.braindamaged.7	두개골에 뭔가 이상이 있다.
+character.1.braindamaged.8	입에서 쇠 맛이 난다
+character.1.braindamaged.9	머리가 이상하다.
+character.1.braindamaged.10	난 고장 났다.
+character.1.braindamaged.11	조가 누구지...?
+character.1.lastmoments.0	흐읏... 흐으으음... 좋지... 않다...
+character.1.lastmoments.1	나...흐흐...
+character.1.lastmoments.2	이건... 최, 최적이 아니다...
+character.1.lastmoments.3	집중해!
+character.1.lastmoments.4	흐으... 이상적이지... 않다...
+character.1.lastmoments.5	죽고... 싶지 않다...
+character.1.lastmoments.6	도움이... 필요해... 제발...
+character.1.lastmoments.7	이렇게....흐... 이렇게는 싫다...
+character.1.lastmoments.8	살려 줘.
+character.1.lastmoments.9	흐, 흐... 흐으... 흐읏... 그흐...
+character.1.lastmoments.10	계, 계속... 살, 살고... 싶다...
+character.1.lastmoments.11	아직 주, 준비가 안 됐다.
+character.1.magicheal.0	흣!!!....허. 음. 해로운 건 아니었던 것 같군.
+character.1.magicheal.1	방금... 뭐였지?
+character.1.magicheal.2	흥미롭군.
+character.1.selfdestruct.0	아, 아, 왜, 뭐, 왜!? 멈춰! 난 이런 꼴 당할 이유가 없다! 이 가운 입은 병신들아!
+character.1.selfdestruct.1	안녕, 삐 소리. 이게 무슨 뜻일까?
+character.1.wwmr.0	모두 계획대로다. 목표가 손 닿는 곳에 있는 모양이다. 집중해야 한다.
+character.1.cargo1.0	...이상하군.
+character.1.cargo2.0	마침내, 내가... 흐, 흐... 뭐..?
+character.1.cargoimpale.0	이, 이건... 내... 예, 예상 목록에... 없었다...
+character.1.cargoimpale2.0	그흐... 이, 이게... 정말... 안에 박혔다... 그런데... 후련하군...
+character.1.cargoimpale3.0	흐. 집중. 좋다. 이것도 계획의 일부였다고 보는 게 논리적이다. 이 드릴 포드에 타고 위로 올라가겠다.
+character.1.wwmrwrongway.0	길을 잘못 든 것 같다. 파동의 근원 쪽으로 가야 한다.
+character.1.endlessloop0.0	...흠. 흐음... 흐으으음... 흐으으음... 조, 좋다. 내가... 예, 예상한. 것과. 다, 다르다. 뭔가 잘못한 게 틀림없다. 도, 돌아가서 다시 시도하겠다.
+character.1.endlessloop1.0	계획대로 되지 않는군. 젠장! 가운들은 대체 나더러 뭘 하라는 거였지!? 시간과 기력 낭비다.
+character.1.endlessloop2.0	...참 우, 우울한 결과군. 이 임무는 실패할 운명이다.
+character.1.endlessloop3.0	도무지 내 이해를 넘어선다. 인내심 훈련이 따로 없군. 답답하다. 정말, 정말 지독하게 답답하다. 늘 손에 닿을 듯 말 듯.
+character.1.endlessloopdefault.0	......*한숨*
+character.1.endpodexamine.0	전원이 꺼져 있다. 적당히 애쓰면 가동할 수 있겠군.
+character.1.ascententer.0	포드가 작동을 멈췄다. 이제 걸어서 올라갈 때다. 남은 거리는 얼마 안 된다.
+character.1.labenter.0	(가운들에게 강한 원한을 느낀다... 하지만 지금은 움직일 수 없다. 냉정을 유지해야 한다.)
+character.1.labresponse.0	(...허. 저건 그들의 계획에 없던 건가?)
+character.1.labthink1.0	(지금이다. 그들은 예상하지 못할 거다.)
+character.1.labthink2.0	(가운을 쏜다. 포탑을 쏜다. 창살로 빠져나간다. 쉽진 않겠지만, 이 괴물들에게 순순히 따를 순 없다.)
+character.1.labthink2chip.0	(쏜다......아니. 이 칩 때문에 그들을 거역할 수 없다. 난 실패했다. 그들에겐, 성공이겠지.)
+character.1.labshoot.0	지옥에나 가라!!! 너희가 한 짓의 대가를 치르게 해 주마!!!
+character.1.labcommentcalm.0	대가를...치를 거다...
+character.1.labcommentcalm.1	놀음은 끝이다.
+character.1.labcommentcalm.2	관련된 놈들 전부 지옥에나 가라...
+character.1.labcommentcalm.3	..그르르...
+character.1.labcommentcalm.4	(내 자유를 되찾겠다.)
+character.1.labcommentcalm.5	다들 당해도 싸다.
+character.1.labcommentcalm.6	(무섭다.)
+character.1.labcommentcalm.7	그흐...병신들...
+character.1.labcommentcalm.8	(사라져도 아무도 그리워하지 않을 거다.)
+character.1.labcommentcombat.0	크르르아아악! 죽어라!
+character.1.labcommentcombat.1	너희 전부 지옥에나 가라!!!
+character.1.labcommentcombat.2	너도 나랑 같이 끝장이다!!
+character.1.labcommentcombat.3	너무 오래 잘도 빠져나갔지!!
+character.1.labcommentcombat.4	지원 불러 봐!! 어디 불러 보라고!!
+character.1.labcommentcombat.5	씨발 다 씹어 먹어 주마!!
+character.1.labcommentcombat.6	죽어라!!
+character.1.labcommentcombat.7	살려 달라고 소리쳐 봐!!! 어서!!
+character.1.labcommentcombat.8	날 막을 수 있을 것 같나!?
+character.1.labcommentcombat.9	네 차례다!!
+character.1.tradermeetnormal.0	반갑군.
+character.1.tradermeetnormal.1	안녕.
+character.1.tradermeetnormal.2	만나서 반갑다.
+character.1.tradermeetnormal.3	아! 거기 안녕!
+character.1.tradermeetnormal.4	어서 오게, 동료 여행자.
+character.1.tradermeetnormal.5	인사드리지.
+character.1.tradermeetnormal.6	어서 오게.
+character.1.tradermeetnormal.7	만나서 반갑네!
+character.1.tradermeetnormal.8	별일 없길 바라네.
+character.1.tradermeetgood.0	다른 생존자를 보게 되어 영광이군.
+character.1.tradermeetgood.1	오! 안녕! 잘 지냈나, 친구?
+character.1.tradermeetgood.2	반갑네, 자네. 잘 지내나?
+character.1.tradermeetgood.3	아! 반갑군. 아주 쌩쌩해 보이는데!
+character.1.tradermeetgood.4	아, 자네 같은 이를 보니 참 기쁘군!
+character.1.tradermeetbad.0	...별로 인상적이지 않군.
+character.1.tradermeetbad.1	으윽. 안녕...
+character.1.tradermeetbad.2	...당혹스럽군. 안녕.
+character.1.tradermeetbad.3	...안녕.
+character.1.tradermeetbad.4	안녕. 날 만지지 말아 주게.

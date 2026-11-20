@@ -1,0 +1,160 @@
+main.makeshifthelmet	임시 헬멧
+main.makeshifthelmetdsc	로프와 꿰맨 사체로 만든 조잡한 헬멧. 머리를 어느 정도 보호한다.
+main.dogfood	개 사료
+main.dogfooddsc	개과인 너에겐 꽤 당기는 음식이다.
+main.hardcandy	사탕
+main.hardcandydsc	작고 딱딱한 사탕 한 봉지. 맛있지만 배는 안 찬다.
+main.fleshchunk	큰 살덩이
+main.fleshchunkdsc	지방이 아주 많은 거대한 살덩이. 뭔가 큰 것에게서 나온 게 틀림없다. 아주 배부르고 살찐다.
+main.candybar	캔디바
+main.candybardsc	맛 좋은 캔디바. 오래가지만 배는 별로 안 찬다. 너무 많이 먹으면 속이 메스꺼울 수 있다.
+main.chocolatebar	초콜릿바
+main.chocolatebardsc	포장 없는 초콜릿 한 개. 맛있지만 소화를 잘 못 시킨다.
+main.waterbottle	물병
+main.waterbottledsc	0.5L 플라스틱 병. 깨끗한 물이 들어 있다.
+main.milk	우유갑
+main.milkdsc	액체 1리터를 담을 수 있는 종이갑.
+main.chocolatemilk	초코우유 병
+main.chocolatemilkdsc	액체를 1리터까지 담는 큰 플라스틱 병.
+main.ketchup	케첩 병
+main.ketchupdsc	0.3L 식탁용 양념 병.
+main.waterjug	물통
+main.waterjugdsc	3L짜리 큰 물통.
+main.bleach	표백제 병
+main.bleachdsc	표백제를 담는 1.5L 플라스틱 병.
+main.energydrink	에너지 드링크 캔
+main.energydrinkdsc	화려한 무늬가 그려진 0.25L 음료 캔.
+main.coffee	커피 컵
+main.coffeedsc	액체 0.25L를 담는 종이컵.
+main.soup	수프 그릇
+main.soupdsc	액체 0.3L를 담는 뚜껑 달린 작은 그릇.
+main.sodabottle	탄산음료 병
+main.sodabottledsc	1리터 플라스틱 병.
+main.applejuice	사과주스 팩
+main.applejuicedsc	액체 0.8L를 담는 종이팩. 왠지... 자연스러운 느낌이다.
+main.lemonade	레모네이드 병
+main.lemonadedsc	액체 0.75L를 담는 유리병. 의외로 튼튼하다.
+main.icetea	아이스티 병
+main.iceteadsc	0.5L 병. 주황빛이 감돈다.
+main.sodacan	탄산음료 캔
+main.sodacandsc	0.25L 음료 캔.
+main.alcohol	술병
+main.alcoholdsc	액체 0.4L를 담는 유리병.
+main.exposedcore	드러난 핵
+main.exposedcoredsc	한때 움직이던 무언가의 잠든 잔해. 먹으면 그 에너지를 영양분과 수분으로 흡수할 수 있다. <color="red">먹지 않으면 언젠가 무언가로 변한다...
+main.foliage	잎사귀
+main.foliagedsc	흔한 외계 식물. 간신히 먹을 수는 있지만 맛이 형편없다. 속이 메스꺼울 수 있다. 빨리 상한다. 제작에 자주 쓴다.
+main.redfoliage	붉은 잎사귀
+main.redfoliagedsc	지금 이런 걸 신경 쓸 때가 아니다. 그래도 꽤 예쁘긴 하다!
+main.foliagemeal	잎사귀 요리
+main.foliagemealdsc	바삭한 잎사귀에 간단한 속을 채운 꽤 괜찮은 요리. 오래 못 가고 지방도 없지만 아주 배부르다.
+main.dryfoliage	마른 잎사귀
+main.dryfoliagedsc	말리고 나니 조금은 먹을 만해 보인다. 속이 약간 메스꺼울 수 있다.
+main.glowplantfruit	발광초 열매
+main.glowplantfruitdsc	스스로 빛을 내며 먹을 수 없다. 꽤 위험한 독소가 들어 있고, 감염을 막는다. 즙이 화학 반응을 촉진해 제작에 쓸모 있다.
+main.flashlight	손전등
+main.flashlightdsc	앞쪽 넓은 범위를 밝히지만 배터리가 서서히 닳는다. 사용하면 모드를 바꾼다.
+main.emergencylight	비상등
+main.emergencylightdsc	한 번 쓰고 버리는 작은 비상용 손전등. 다 닳기 전에 새 조명을 찾아 두는 게 좋겠다. 사용하면 켜고 끈다.
+main.lantern	랜턴
+main.lanterndsc	나무와 유리로 만든 단순한 랜턴. 안에 밝은 노란 수정이 들어 있다.
+main.lightbulb	전구
+main.lightbulbdsc	필라멘트를 달궈 빛을 내는 전등. 배터리로 켜지는 것 같다. 입에 넣지 마라.
+main.nutrientbar	영양 바
+main.nutrientbardsc	순수한 영양분과 열량을 굳혀 만든 먹을 수 있는 막대. 맛은 밋밋하고 상하지 않는다.
+main.primitivediggingtool	금속 굴착 도구
+main.primitivediggingtooldsc	막대기에 날카롭고 묵직한 쇳조각을 단 것. 발톱보다는 잘 판다.
+main.makeshiftdiggingtool	임시 굴착 도구
+main.makeshiftdiggingtooldsc	바위를 파려고 쇳조각을 대충 엮어 묶은 것. 조금 허술하다.
+main.makeshiftheadlamp	임시 헤드램프
+main.makeshiftheadlampdsc	발광초 열매를 이마에 묶은 것뿐이다. 그리 편하진 않지만 인벤토리 자리를 아낄 수 있다.
+main.shovel	금속 삽
+main.shoveldsc	흙 같은 무른 재료를 효율적으로 퍼내도록 만든 도구. 평생 본 적은 없지만, 쓰는 데 대단한 기술이 필요하진 않다.
+main.woodshovel	나무 삽
+main.woodshoveldsc	흙 같은 무른 재료를 효율적으로 퍼내도록 만든 도구. 잘 부러지지만 가벼운 재료로 만들었다.
+main.pitchfork	금속 쇠스랑
+main.pitchforkdsc	건초, 짚, 거름, 낙엽 같은 무른 것을 떠 옮기는 농기구. 강철로 만들었다.
+main.woodpitchfork	나무 쇠스랑
+main.woodpitchforkdsc	건초, 짚, 거름, 낙엽 같은 무른 것을 떠 옮기는 농기구. 나무로 만들었다.
+main.minilaserdrill	소형 레이저 드릴
+main.minilaserdrilldsc	작은 가정용 레이저 드릴. 파는 성능은 그저 그렇지만 기력을 쓰지 않는다.
+main.heavydrill	중장비 드릴
+main.heavydrilldsc	크고 무거운 기계식 손 드릴. 아주 효율적이지만 사거리가 짧다.
+main.pickaxe	곡괭이
+main.pickaxedsc	바위를 파도록 만든 도구. 지형을 아주 잘 깎지만 느리다.
+main.titaniumpickaxe	티타늄 곡괭이
+main.titaniumpickaxedsc	단조 티타늄으로 정교하게 만든 도구. 아주 튼튼하고 지형을 잘 깎지만, 싸움에는 별로다.
+main.titaniummultitool	티타늄 멀티툴
+main.titaniummultitooldsc	작지만 아주 단단하고 튼튼한 제작용 도구. 머리엔 묵직한 망치가, 손잡이엔 작지만 면도날처럼 날카로운 칼날이 숨어 있다. 땅을 파거나 싸우는 데는 쓸모없지만, 온갖 제작법에 거의 영원히 쓸 수 있고 가볍다.\n\n<color="red">건강 창에서 팔다리를 절단하는 데 쓸 수 있다.
+main.titaniummachete	티타늄 마체테
+main.titaniummachetedsc	싸움에 아주 쓸 만하고 튼튼한 도구. 가볍고 휘두르기 쉬우면서도 면도날처럼 날카롭고 파괴적이다. 날을 열처리해 오래도록 날카롭다. 자기방어에 훌륭하고, 최후의 수단으로 땅을 팔 수도 있다.\n\n<color="red">건강 창에서 팔다리를 절단하는 데 쓸 수 있다.
+main.sledgehammer	대형 해머
+main.sledgehammerdsc	긴 자루에 크고 납작한 쇠머리를 단 도구. 이런 건 대개 강물에 던져진다고 들었다.
+main.woodpickaxe	나무 곡괭이
+main.woodpickaxedsc	유난히 실망스러운 재료로 만든 곡괭이. 지형을 잘 깎지만 느리고 잘 부러진다.
+main.wooddiggingtool	나무 굴착 도구
+main.wooddiggingtooldsc	막대기에 뾰족하게 깎은 나무를 단 것. 발톱보다 간신히 나은 수준이다.
+main.machete	마체테
+main.machetedsc	크고 넓은 쇠칼날. 근접전에 쓸 만하다. 쥐고 있으면 마음이 불편하다.\n\n<color="red">건강 창에서 팔다리를 절단하는 데 쓸 수 있다.
+main.crudecleaver	조잡한 식칼
+main.crudecleaverdsc	손잡이에 칼날을 못으로 박아 얼기설기 만든 쇠 식칼. 제작에 쓸 만하다. 쥐고 있으면 마음이 불편하다.\n\n<color="red">건강 창에서 팔다리를 절단하는 데 쓸 수 있다.
+main.sickle	금속 낫
+main.sickledsc	굽은 날이 달린 쇠 도구. 작물을 거두거나 풀을 베는 데 쓴다.\n\n<color="red">건강 창에서 팔다리를 절단하는 데 쓸 수 있다.
+main.woodsickle	나무 낫
+main.woodsickledsc	굽은 날이 달린 나무 도구. 작물을 거두거나 풀을 베는 데 쓴다.
+main.rake	갈퀴
+main.rakedsc	흙을 고르는 등 여러 일에 쓴다. 농부가 된 기분이다!
+main.claws	발톱 세트
+main.clawsdsc	장난감처럼 보이지만 무섭도록 튼튼하고 날카롭다. 들고 있으면 멋있어 보일 것 같다.\n\n<color="red">건강 창에서 팔다리를 절단하는 데 쓸 수 있다.
+main.trowel	모종삽
+main.troweldsc	나무와 쇠로 만든 원시적인 원예 도구. 아마 발톱으로 파는 것보다는 낫다.
+main.woodtrowel	나무 모종삽
+main.woodtroweldsc	나무로 만든 원시적인 원예 도구. 아마 발톱으로 파는 것보다는 낫겠지...?
+main.experimentflesh	노란 살점
+main.experimentfleshdsc	동족에게서 뜯어낸 살점. 배는 차지만 속이 뒤집힌다.
+main.rope	로프
+main.ropedsc	잎사귀 몇 가닥을 엮어 만든 로프. 제작에 쓴다.
+main.animalflesh	동물 고기
+main.animalfleshdsc	이 행성 토종 동물의 사체에서 뜯어낸 고기. 네 살과 아주 비슷하지만, 속이 조금 메스꺼울 뿐 그럭저럭 먹을 만하다.
+main.internalorgans	내장
+main.internalorgansdsc	빠져나온 내장을 단단히 뭉친 덩어리. 주황색 눈알이 삐져나와 있다. 너와 덩치가 비슷한 생물에게서 나온 것 같다. 배는 차지만 끔찍하게 역겹고 속이 뒤집힌다.
+main.blobflesh	방울살
+main.blobfleshdsc	묘하게 끈적한 살점. 배부르고 맛있다! 속이 살짝 메스꺼울 수 있다.
+main.cactusflesh	선인장 과육
+main.cactusfleshdsc	달고 수분이 많고 가시투성이다. 맛있고 목도 축여 주지만 먹으면 아프다.
+main.neuralbooster	신경 강화제
+main.neuralboosterdsc	뇌의 구조와 기능을 바꾸는 첨단 약물 혼합제. 기동력이 영구히 조금 오른다. 두 번 이상은 안 쓰는 게 좋겠다.
+main.watch	전자시계
+main.watchdsc	때때로 쓸모 있는 정보(출혈 시간, 숨은 감염, 체중 변화 등)를 알려 준다. 사용하면 진행 시간과 기온을 보여 준다. 주머니 속 친구가 있으니 든든하다!
+main.tutorialradio	훈련용 무전기
+main.tutorialradiodsc	훈련 때 보통 하나씩 받는 물건. 메시지가 실시간인지 녹음인지는 모르겠다. 누를 수 있는 버튼이 있다.
+main.mp3player	MP3 플레이어
+main.mp3playerdsc	놀랍게도 아직 작동하는 것 같다. 작은 저장 장치에 음악 몇 곡이 들어 있다. 심심풀이로 아무 곡이나 틀 수 있다.
+main.mushpear	마비베리
+main.mushpeardsc	물을 걸러 나눠 주는 하이드리드의 한 부분. 무게를 빨아들이는 묘한 성질이 있고 맛이 고약하다. 먹으면 체중이 준다. 미량의 아편 성분이 있는 것 같다.
+main.mushtail	잠꼬리
+main.mushtaildsc	하이드리드의 꼬리 끝. 먹으면 곧바로 한동안 기절시키는 화학 물질이 들어 있고, 깨어나면 눈에 띄게 기분이 좋아진다. 묘하다. 영양가는 없다.
+main.aquapple	물사과
+main.aquappledsc	물이 많은 방울 모양 열매. 보기에도 만지기에도 좀 징그럽지만 수분이 많다. 아주 빨리 상한다.
+main.droppings	배설물
+main.droppingsdsc	똥이다.
+main.smallpack	작은 배낭
+main.smallpackdsc	작은 가죽 배낭.
+main.duffelbag	더플백
+main.duffelbagdsc	천으로 만든 꽤 큼직한 가방.
+main.bigpack	배낭
+main.bigpackdsc	중간 크기 배낭.
+main.bikehelmet	자전거 헬멧
+main.bikehelmetdsc	머리에 가해지는 충격을 줄이는 헬멧. 추락할 때 머리 부상을 줄여 준다.
+main.riothelmet	진압용 헬멧
+main.riothelmetdsc	머리 외상을 크게 줄여 주는 고급 헬멧.
+main.holidayhat	축제 모자
+main.holidayhatdsc	사람들이 무슨 특별한 날에 쓴다고 들었는데, 무슨 날인지는 잘 모르겠다. 그래도 하나 챙겨 보내 줬다니 다행이다.
+main.headlamp	헤드램프
+main.headlampdsc	이마에 묶어 쓰는 작은 손전등. 시간이 지나면 배터리가 닳는다.
+main.dustmask	방진 마스크
+main.dustmaskdsc	입을 가리는 조금 튼튼한 마스크. 머리를 약간 보호한다.
+main.scarf	목도리
+main.scarfdsc	붉고 따뜻하고 보송한 긴 목도리. 추위를 조금 막아 준다. 왠지 용병이 된 기분이다...
+main.mercscarf	M.E.R.C. 목도리
+main.mercscarfdsc	안에 심은 칩으로 착용자에게 엄청난 힘을 준다. 특별한 동력원이 필요하고, 충전에도 한참 걸린다... 이걸 지닌 채, 살아서 이 동굴을 빠져나가야 한다.

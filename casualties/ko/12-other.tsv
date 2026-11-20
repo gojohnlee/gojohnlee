@@ -1,0 +1,170 @@
+other.sandbox	샌드박스
+other.escapecourse	경보: 경미한 이탈
+other.escapecourse1	탈출을 시도하는 것으로 보입니다. 보안 요원이 도와드리는 동안 침착하게 기다려 주십시오.
+other.escapecourse2	협조해 주셔서 감사합니다.
+other.tutorial	튜토리얼
+other.mp3audio	기기에 저장된 오디오 파일
+other.categorymedical	의료
+other.categorydrug	약물
+other.categorycontainer	용기
+other.categoryfood	음식
+other.categorywater	음료
+other.categorytool	도구
+other.categoryutility	유틸리티
+other.hpspecies	종족
+other.hpbrainhealth	뇌 상태
+other.hpconsciousness	의식
+other.hppain	전체 통증
+other.hppaindsc	모든 부위 중 가장 큰 통증
+other.hpbloodvolume	혈액량
+other.hpbloodvolumedsc	몸속 전체 혈액량. 절반쯤 잃으면 쓰러진다.
+other.hpbleedspeed	전체 출혈 속도
+other.hpoxygenamount	산소포화도
+other.hpoxygenamountdsc	혈중 산소 농도. 80% 아래로 내려가면 서서히 합병증이 생긴다.
+other.hpimmunity	면역력
+other.hpimmunitydsc	몸이 감염과 싸우는 능력.\n면역력이 낮으면 소독해도 감염이 진행된다.
+other.hptemperature	심부 체온
+other.hptemperaturedsc	저체온증은 약 28도, 고체온증은 42도에서 치명적이 된다.
+other.hpsickness	메스꺼움
+other.hphappiness	기분
+other.hphunger	배고픔
+other.hpthirst	갈증
+other.hpweight	체중
+other.hpstamina	기력
+other.hpstaminadsc	신체 피로도
+other.hprr	호흡수
+other.hpenergy	기운
+other.hpenergydsc	얼마나 졸린지\n기운이 35% 아래면 잘 수 있다
+other.hpheartrate	심박수
+other.hpheartratedsc	심장이 뛰는 속도. 이 숫자가 0이 되지 않게 하라.
+other.hppressure	혈압
+other.hppressuredsc	수축기·이완기 혈압. 120/80 근처를 유지해야 한다.
+other.hpecg	심전도
+other.hpecgdsc	심장 리듬을 간단히 보여 준다.\n심박보다 사인파처럼 보이기 시작하면 걱정해야 한다.
+other.hpradiation	방사선 병
+other.hpselectedlimb	선택한 부위
+other.hpskinhealth	피부 상태
+other.hpmusclehealth	근육 상태
+other.hpskinhealthdsc	감염과 출혈을 막는 방벽.\n\n10 아래면 훨씬 느리게 낫는다
+other.hpmusclehealthdsc	팔다리의 활력과 힘.\n\n10 아래면 훨씬 느리게 낫는다
+other.hplimbinjury	부상 회복까지
+other.hpinfection	부위 감염
+other.hplimbpain	부위 통증
+other.hplimbbleed	부위 출혈
+other.hplimbforce	부위 힘
+other.hplimbforcedsc	팔다리가 움직이고 힘을 쓰는 전체 능력
+other.hpopiate	아편류 양
+other.hpvenom	독 양
+other.settings	설정
+other.credits	제작진
+other.layer	층
+other.toggleheatmode	난방 모드 전환
+other.activateshower	샤워 작동
+other.heaterhot	난방
+other.heatercold	냉방
+other.heateroff	꺼짐
+other.tutorialresetscene	장면 초기화
+other.magazinerounds	발
+other.gunrack	슬라이드 당기기
+other.gunmagazine	탄창 빼기
+other.gunsafety	안전장치 전환
+other.alertitemblocked	벽에 막혀 있다!
+other.alertitemfar	너무 멀다!
+other.alertpickupwearable	착용품은 손에 들 수 없다 (착용하거나 넣어 둘까?)
+other.alertalreadywearing	<1>을(를) <2> 위에 겹쳐 입을 수 없다!
+other.alertcontainerstacking	용기 안에는 빈 용기만 넣을 수 있다!
+other.alertcontainerstackingalt	이 용기는 다른 용기 안에 들어 있어서 쓸 수 없다!
+other.alerttoounhappy	비참한 기분일 땐 아편류가 아닌 약은 쓸 수 없다!
+other.alertlimbmissing	<1>이(가) 없어서 <2>을(를) 쓸 수 없다!
+other.alertsellcontainer	팔기 전에 용기를 비워라!
+other.alertprosthesisbody	보철은 가슴·배에 사용해 잃은 팔·다리를 대신한다.
+other.alertprosthesisarm	완전히 잘려 나간 팔이 없다! 남은 그루터기를 먼저 제거해 봐라.
+other.alertprosthesisleg	완전히 잘려 나간 다리가 없다! 남은 그루터기를 먼저 제거해 봐라.
+other.alertprosthesisfail	보철을 다는 데 실패했다 (지능 <> 미만이면 실패할 수 있다).
+other.alertnanotechsuccess	<color="green">새 제작법을 떠올렸다...
+other.alertnanotechfail	<color="red">무슨 말인지 알아볼 수 없다...\n다음에 다시 해 볼까?
+other.alertnanotechrepeat	이미 읽었다. 스캐너를 지니고 신호를 잘 살펴라.
+other.nanotechdepth	이 깊이에서 나노 기술 신호 감지!
+other.nanotechdepthinitialleft	이 지역 왼쪽, <> 지점에서 나노 기술 신호 감지.
+other.nanotechdepthinitialright	이 지역 오른쪽, <> 지점에서 나노 기술 신호 감지.
+other.insertsample	샘플 넣기
+other.tradeinteract	거래
+other.read	읽기
+other.repairmetalalloy	드릴 수리 키트로 고치기
+other.useterminal	콘솔 열기
+other.insertscrap	고철 넣기
+other.open	열기
+other.insertbattery	주 손의 배터리 넣기
+other.lockpick	자물쇠 따기
+other.dosurgery	스스로 수술하기
+other.finaltravel	안전띠 매고 출발
+other.lookcloser	자세히 보기
+other.examine	살펴보기
+other.learnedrecipe	r1 제작법을 배웠다.\n<color="green">지능 경험치 25 획득.
+other.epdalearn	<color="green">지능 경험치 35 획득.
+other.hasbattery	배터리 있음 (<>)\n<sprite index=17 tint=1>도구를 써서 빼기
+other.nobattery	배터리 없음 (최대 <>)
+other.unknownobject	뭔가...
+other.unknownmedical	무슨 약 같은데...
+other.unknowndrug	무슨 약물 같은데...
+other.unknownfood	무슨 음식 같은데...
+other.unknownwater	무슨 병 같은데...
+other.unknownutility	무슨 장치 같은데...
+other.unknowncontainer	무슨 가방 같은데...
+other.unknowntool	무슨 도구 같은데...
+other.unknownobjectdsc	이게 뭔지, 뭘 하는 건지 잘 모르겠다.
+other.unknownobjectwarning	머리가 둔해서 이게 뭔지 모르겠다. (지능 <> 필요)
+other.small	소형
+other.medium	중형
+other.large	대형
+other.crystaleffect1	가까이서 살펴볼 수 있다. 뭔가 이상하다
+other.crystaleffect2	가까이서 살펴볼 수 있다. 몇 가지 이상한 점이 보인다.
+other.crystaleffect3	가까이서 살펴볼 수 있다. 에너지가 흘러나오는 느낌이다. 주변에 이상한 점이 여럿 보인다.
+other.crystaleffect4	가까이서 살펴볼 수 있다. 강한 에너지가 흘러나온다. 주변 공간이 일그러지는 것 같다.
+other.crystaleffectmany	가까이서 살펴볼 수 있다. 뭔가 끔찍하게 잘못됐다. 가까이 가지 않는 게 좋겠다... 아니면, 가 봐야 할까?
+other.lockprecision	자물쇠 정밀도:
+other.degree	도
+other.degrees	도
+other.wantstrade	거래하고 싶어 함:
+other.indifferent	관심 없음:
+other.wantskeep	갖고 있고 싶어 함:
+other.wantstradetip	값이 싸고 평판이 더 오른다
+other.indifferenttip	보통 값, 보통 평판
+other.wantskeeptip	값이 비싸고 평판이 오르지 않는다
+other.costs	<sprite index=9>가격
+other.weighs	<sprite index=0>무게
+other.purchase	구매
+other.trade	상인에게 주기
+other.reputationtip	평판
+other.reputationtipdsc	물건 값과 생존자가 너를 대하는 태도에 영향을 준다. 네 전반적인 상태와 생존자와의 교류에 따라 달라진다.
+other.valuegiventip	준 가치
+other.valuegiventipdsc	생존자가 너에게 진 빚. 물건을 거래할 때 쓰는 화폐다.\n\n가치는 최대 60까지만 쌓을 수 있고, 그 뒤로는 생존자가 물건을 더 받지 않는다.
+other.traderpurchase	물건 사기
+other.tradingblocked	방금 샀다
+other.theirinventory	상대 인벤토리
+other.yourinventory	내 인벤토리
+other.haggle	흥정
+other.haggledsc	값을 깎아 보려 한다. 잘못하면 상인이 기분 상할 수 있다.\n성공하면 지능 경험치를 얻는다.
+other.haggledune	다정한 깨물기
+other.haggledunedsc	평판과 가치를 얻는 대신 상인이 손발 중 한 곳을 조금 깨물어 먹게 해 준다. 심하게 다치지 않도록 아마 조심할 것이다.
+other.hug	포옹
+other.hugdsc	안아 준다. 너를 아직 못 믿는다면 겁먹을 수도 있다.
+other.threaten	협박
+other.threatendsc	협박해서 물건을 한두 개 공짜로 얻는다. 크게 역효과가 날 수 있다.
+other.rest	쉬기
+other.restdsc	상인과 함께 낮잠을 자 신뢰를 쌓고 더 편히 잔다. 일반 수면 조건이 적용된다.
+other.tradermove	비켜 달라기
+other.tradermovedsc	상인이 중요한 걸 가로막고 있다면 정중히 비켜 달라고 부탁한다.
+other.exit	나가기
+other.free	<color="orange">공짜!
+other.endscreenstatus	MSN-화물 상태 보고서
+other.endscreenunresolved	미해결
+other.endscreenresolved	회수 완료
+other.endscreenescape	회의에서 추가 보고
+other.endscreenfailure	치명적 실패
+other.endscreencasualties	사상자:
+other.endscreenunknown	불명
+other.endscreenmerc	불명 - 잠재적 문제
+other.endscreenphysical	신체 상태:
+other.endscreendeceased	사망
+other.endscreenexamination	생존, 검사 중

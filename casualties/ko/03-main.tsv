@@ -1,0 +1,170 @@
+main.regenerationchip	REL-초재생 촉진 칩
+main.regenerationchipdsc	신진대사가 빨라지는 대신 착용자의 부상 재생 능력을 크게 높이는 첨단 체내 칩. 한참 뒤에야 쓸 수 있다.
+main.capacitorchip	Micro-SINGLEBTR 1CHRG 축전기
+main.capacitorchipdsc	막대한 에너지를 짧은 시간에 저장하고 방출하는 첨단 나노 배터리. 한참 뒤에야 쓸 수 있다.
+main.swapchip	0.2.9-정신 이동 칩
+main.swapchipdsc	숙주와 연결되어, 죽은 직후 의식을 칩으로 옮겼다가 새 그릇으로 재빨리 옮길 수 있게 해 주는 수수께끼의 체내 칩. 한참 뒤에야 쓸 수 있다.
+main.rejuvenationchip	0.0.7-긴급 재생 칩
+main.rejuvenationchipdsc	정신 이동 칩을 조잡하게 개량한 것. 장치에 저장된 기본 DNA와 죽은 숙주의 남은 생체 물질로 숙주를 갓 만든 조잡한 그릇에 다시 빚어낸다. 한참 뒤에야 쓸 수 있다.
+main.aichip	MINI-AI 칩
+main.aichipdsc	간단한 AI가 숙주와 대화하며 몇몇 일을 돕게 해 주는 비교적 단순한 체내 칩. 한참 뒤에야 쓸 수 있다.
+main.kineticchip	운동 전달 칩
+main.kineticchipdsc	두 지점 주위에 작은 시공간 왜곡을 일으켜, 숙주와 물체를 원하는 방향으로 염력처럼 밀어내는 실험용 칩. 한참 뒤에야 쓸 수 있다.
+main.blueprint	설계도
+main.blueprintdsc	어떤 물건의 제작법이 적혀 있다. 전자 칩 같은 게 붙어 있다... 사용하면 제작법을 배우고 지능 경험치를 얻는다.
+main.safetyglasses	보안경
+main.safetyglassesdsc	튼튼한 플라스틱 안경. 머리를 약간 보호한다.
+main.autozoomgoggles	자동 확대 고글
+main.autozoomgogglesdsc	시야를 확대해 더 멀리 볼 수 있게 해 주는 고글.
+main.blindfold	안대
+main.blindfolddsc	눈을 가리는 검은 천. 약간 보호해 주지만 캐릭터가 눈을 감게 된다.
+main.balaclava	발라클라바
+main.balaclavadsc	머리를 감싸는 두툼하게 덧댄 천. 약간 보호해 주고 보온도 꽤 된다.
+main.earmuffs	귀마개
+main.earmuffsdsc	금속 머리띠로 이은 요즘식 귀 쿠션. 큰 소리를 막아 주고 어째선지 보온도 조금 된다. <i>엄청나게</i> 큰 소리에는 별 소용이 없다.
+main.latexgloves	라텍스 장갑
+main.latexglovesdsc	평범한 라텍스 장갑. 추위를 아주 조금 막아 준다.
+main.tacticalgloves	전술 장갑
+main.tacticalglovesdsc	첨단 합성 소재 장갑. 손을 외상에서 효과적으로 지켜 준다.
+main.fannypack	힙색
+main.fannypackdsc	배에 두르는 작은 가방.
+main.bandolier	탄띠
+main.bandolierdsc	어깨에 두르는, 탄약을 넣는 주머니 달린 띠. 총탄을 담을 수 있다.
+main.bellyarmor	복부 갑옷
+main.bellyarmordsc	배에 묶어 차는 큰 쇳덩이. 방어력이 뛰어나고 보온도 조금 된다.
+main.belt	벨트
+main.beltdsc	배에 두르는 가죽 벨트. 도구만 찰 수 있다.
+main.traumarig	외상 처치 조끼
+main.traumarigdsc	여러 도구, 무기, 의료 장비를 담는 첨단 합성 보호 파우치. 몸통도 지켜 준다!
+main.popcorn	팝콘
+main.popcorndsc	옥수수 알을 데워 튀겨 낸 것이 한가득 든 통. 꽤 신기한 발상이라고 생각한다. 맛있다. 오래 보관할 수 있다.
+main.nopopcorn	팝콘 없음
+main.nopopcorndsc	빈 종이 통. 뭔가 담아 둘 수 있다.
+main.spacedrain	공간 배수기
+main.spacedraindsc	첨단 순간이동 기술로, 사용하면 몸에서 액체를 빼낸다. 사라진 물질이 어디로 가는지는 아무도 모른다... 네가 신경 쓸 일은 아니지만. 자동으로 충전된다.
+main.hoodie	후드티
+main.hoodiedsc	몸을 따뜻하게 해 주는, 아주 큼직한 검은 후드티. 작은 주머니가 있다.
+main.metabolismchip	대사 칩
+main.metabolismchipdsc	신진대사를 조금 높여 팔다리가 훨씬 빨리 재생되지만, 그만큼 배가 더 고파진다.
+main.heatfernsponge	열고사리 해면
+main.heatfernspongedsc	뜯겨 나와 쪼그라든 열고사리의 포자 주머니. 팔다리에 쓰면 감염을 막고, 먹으면 영양이 된다. 포자가 면역계에 영향을 줄 수 있다.
+main.jetpack	제트팩
+main.jetpackdsc	배낭처럼 메고 분사로 공중을 나는 장치. 연료가 한정되어 있고 젖으면 성능이 떨어진다. [위]를 누르고 있으면 쓴다. 물건을 넣는 작은 주머니도 있다.
+main.dynamite	다이너마이트
+main.dynamitedsc	니트로글리세린, 흡착제, 안정제로 만든 폭약. 지형에 구멍을 뚫기에 좋다. 귀에는 별로 안 좋다.
+main.climbingclaws	등반용 갈고리 장갑
+main.climbingclawsdsc	벽에 잘 박히도록 만든, 손에 끼우는 강철 갈고리 한 쌍. 같은 벽에서 벽점프를 끝없이 할 수 있다.
+main.plasmacutter	플라즈마 절단기
+main.plasmacutterdsc	플라즈마를 한 방향으로 뿜어내는 장치. 금속 블록을 아주 잘 자른다. 건강 창에서 상처를 지지는 데 쓸 수 있다.
+main.grapplinghook	갈고리총
+main.grapplinghookdsc	로프 달린 갈고리를 쏘는 금속 장치. 사용 설명서가 없다.
+main.ceftriaxone	세프트리악손 주사기
+main.ceftriaxonedsc	정맥에 약물을 주입하는 100ml 주사기. 옆에 약을 뽑아 쓸 작은 병이 딸려 있다.
+main.woundglue	상처 접착제
+main.woundgluedsc	보통 상처 접착제가 든 80ml 튜브. 한 번에 20ml씩 바른다.
+main.boneweldingtool	뼈 용접기
+main.boneweldingtooldsc	골절 부위를 용접해 붙여 회복을 크게 앞당기는 극히 실험적인 장치. 그 과정에서 팔다리가 조금 다치니 드레싱을 준비해 두는 게 좋다.
+main.paprikash	파프리카시
+main.paprikashdsc	간 생선, 쌀, 토마토 페이스트, 식용유로 만들고 양파, 소금, 향신료로 간한 페이스트. 보기에도 냄새도 꽤 먹음직스럽다.
+main.carcass	굳은 사체
+main.carcassdsc	꽤 큰 곤충의 단단하게 으스러진 잔해. 제작에 쓴다.
+main.largecarcass	큰 사체
+main.largecarcassdsc	곤충 사체 두 개를 이어 반원통 모양으로 만든 것. 제작에 쓴다.
+main.carcasssplint	사체 부목
+main.carcasssplintdsc	사체 여러 개를 이어 만든 단단하고 긴 통. 골절 치료용 임시 부목으로 쓸 만하다.
+main.terrainscanner	지형 스캐너
+main.terrainscannerdsc	발아래 지형을 저화질 지도로 보여 준다. 지형은 초록색, 단단한 건물은 빨간색으로 표시된다. 조금 부정확할 수 있다. 24미터 아래까지 본다.
+main.nanotechscanner	나노 기술 스캐너
+main.nanotechscannerdsc	여러 체내 칩의 고유한 기술 신호를 감지해 대략적인 위치를 보여 주는 장치. 옆면에 칩 정보가 적혀 있으니 사용해서 읽어 보자. <color="red">주 인벤토리에 있을 때만 작동한다.</color>
+main.geigercounter	가이거 계수기
+main.geigercounterdsc	가이거-뮐러 관으로 전리 방사선을 감지하고 측정하는 전자 기기. 사용하면 켜고 끈다.
+main.handcrank	수동 크랭크 충전기
+main.handcrankdsc	손잡이를 돌려 다 쓴 배터리를 충전하는 장치. 배터리를 꽂고 마구 돌리자!
+main.sleepingbag	침낭
+main.sleepingbagdsc	들어가 자는 보온 덮개. 사용하면 안에서 자며, 수면의 질이 한 단계 오르고(최대 '좋음') 밤새 보온이 된다. 일반 수면 제한은 그대로 적용된다.
+main.liquidcentrifuge	액체 원심분리기
+main.liquidcentrifugedsc	혼합물을 기본 성분으로 (비효율적으로) 나누는 휴대용 원심분리기. 과정이 꽤 복잡해서 전체 액체의 약 3분의 1을 잃는다. 60초마다 충전된다.
+main.epda	E-PDA
+main.epdadsc	전자식 개인 정보 단말기. 너를 붙잡아 온 자들이 실수로 구명 포드에 두고 간 것 같다. 배터리를 넣으면 그들의 기록을 읽고 새 지식을 얻을 수 있을 것이다.
+main.bloodcoagulant	응고 촉진제 주사기
+main.bloodcoagulantdsc	끝에 자동 주사기가 달린 100ml 주사기. 1회 투여량은 약 34mL.
+main.combatpen	전투용 주사펜
+main.combatpendsc	내용물을 즉시 몸에 주입하는 100ml 주사펜. 부상자를 빠르게 안정시키고 전투를 돕는 혼합 약물이 들어 있다.
+main.streptokinase	스트렙토키나제 주사기
+main.streptokinasedsc	끝에 자동 주사기가 달린 100ml 주사기. 1회 투여량은 약 34mL.
+main.chestdrain	흉관
+main.chestdraindsc	흉강에서 액체를 빼낸다. 혈흉을 줄이며, 시간이 지나면 다시 쓸 수 있다. 가슴에만 쓸 수 있다.
+main.tweezers	핀셋
+main.tweezersdsc	평범한 금속 핀셋. 팔다리에 박힌 파편을 깔끔하고 아프지 않게 뽑아낸다.
+main.lockpickingkit	자물쇠 따개 세트
+main.lockpickingkitdsc	온갖 자물쇠를 효율적으로 여는 작은 공구 모음. 자물쇠를 딸 때 인벤토리 어디에든 있으면 쓴다. 지능 10 이상 필요, 지능이 높을수록 효과가 좋다.
+main.icepack	얼음주머니
+main.icepackdsc	자가 냉각 젤이 든 차가운 주머니. 근육 회복을 앞당기고 통증을 줄이며 몸을 조금 식힌다. 시간이 지나면 저절로 다시 차가워진다.
+main.cryogeniccore	극저온 코어
+main.cryogeniccoredsc	주변 온도를 조절하는 첨단 장치. 용암에 던지거나 체온이 충분히 오르면 작동해, 주변 마그마를 모두 굳히고 몸을 크게 식힌다. 한 번만 쓸 수 있다.
+main.armwarmers	팔토시
+main.armwarmersdsc	파란 팔토시 한 쌍. 추위를 조금 막아 준다.
+main.carapace	흉갑
+main.carapacedsc	가슴을 지키는 튼튼한 강철 흉갑. 왠지 왕족이 된 기분이다.
+main.limbwraps	팔다리 붕대
+main.limbwrapsdsc	거즈로 만든 손발 감싸개. 팔과 발을 조금 보호해 주고 전사가 된 기분이 든다.
+main.kneepads	무릎 보호대
+main.kneepadsdsc	무릎을 보호하고 충격을 흡수하는 플라스틱 보호대.
+main.plushie	봉제 인형
+main.plushiedsc	꾹 누르면 삑삑 소리가 난다. 우울할 때 화풀이하기 좋을지도...
+main.tornshirt	찢어진 셔츠
+main.tornshirtdsc	낡고 찢어진 파란 셔츠. 약간 보호해 주고 보온도 조금 된다.
+main.rangefinder	거리 측정기
+main.rangefinderdsc	멀리 있는 물체까지의 거리를 재는 장치. 사용하면 가리키는 곳까지의 거리를 알려 준다.
+main.mindwipe	기억 소거제
+main.mindwipedsc	60ml 알약 병. 기억 소거는 고통스러운 과정이라, 넘어가는 순간을 조금이나마 덜어 주도록 같은 양의 모르핀이 섞여 있다.
+main.scubadivinggear	고급 스쿠버 장비
+main.scubadivinggeardsc	물속에서 끝없이 숨 쉬고 기력을 회복할 수 있고, 액체 속에서 빨리 움직이며, 물 밖으로 나오면 금방 마른다. 튜브는 개조해서 달았다.
+main.filterstraw	정수 빨대
+main.filterstrawdsc	주 손에 들고 있으면 지하수를 안전하게 마실 수 있고 다른 액체가 몸에 주는 해도 줄여 준다. 병으로 마실 때도 효과가 있다.
+main.wrench	렌치
+main.wrenchdsc	물체를 돌릴 때 손잡이와 지렛대 힘을 주는 도구. 탈구된 팔다리를 맨손보다 효과적으로 맞출 수 있다. 망치 대용으로도 쓸 만하다.
+main.makeshiftwrench	임시 렌치
+main.makeshiftwrenchdsc	볼트를 돌리기보다는 두들겨 박는 데 더 어울릴 조잡한 도구. 탈구에는 도움이 안 되지만 제작에 쓸모 있다.
+main.bruisekit	타박상 키트
+main.bruisekitdsc	근육 회복을 돕는 약물과 의약품 모음. 근육·피부 상태를 높이고 탈구에 아주 효과적이다. 출혈에는 효과가 없다.
+main.medicalsuture	의료용 봉합사
+main.medicalsuturedsc	상처를 꿰매 붙인다. 대부분의 출혈을 즉시 멈추고 피부 상태를 높인다.
+main.tourniquet	지혈대
+main.tourniquetdsc	감으면 팔다리의 혈액 순환을 끊어 그 부위의 출혈을 모두 멈춘다(상처가 낫지는 않는다). 통증을 일으키고 산소 공급을 끊으므로 얼마 뒤엔 풀어야 한다. 다시 쓸 수 있다.
+main.browncap	갈색갓버섯
+main.browncapdsc	정확히 무슨 버섯인지 모르겠다. 상처를 낫게 할지, 그 자리에서 너를 죽일지 알 수 없다.
+main.sneakers	운동화
+main.sneakersdsc	흰 운동화 한 켤레. 네 발에 맞게 만든 물건이 전혀 아니다. 어떻게든 발을 욱여넣는다면 유리 조각을 막아 준다.
+main.tacticalboots	전술 부츠
+main.tacticalbootsdsc	여러 외상에서 발을 효과적으로 지키도록 만든 묵직한 합성 소재 부츠.
+main.frigiantfruit	서리열매
+main.frigiantfruitdsc	아주 차갑고 단단한 유리 같은 열매. 맛있지만 몸을 많이 식히는 경향이 있다. 얼어붙을 듯한 추위에서는 먹지 않는 게 좋다.
+main.helluce	헬루스
+main.hellucedsc	유난히 매운 마른 보라색 약초. 메스꺼움에 좋고, 청력 손실을 조금 돕고, 내출혈을 줄여 줄 수도 있다. 먹으면 체온이 크게 오른다.
+main.spicevineleaf	매운잎
+main.spicevineleafdsc	밝은 잎이 잔뜩 달린 마른 줄기. 맵지만 먹을 수 있다. 팔다리에 소독제로 쓸 수 있다. 제작할 때 잎사귀 재료로 쓸 수 있다.
+main.bulbskin	톡껍질
+main.bulbskindsc	두꺼운 노란 막 한 조각. 갈증을 풀어 주지만 뇌 기능에 살짝 영향을 줄 수 있다. 임시 붕대와 진통제로도 쓸 수 있다.
+main.popfruit	톡열매
+main.popfruitdsc	묘하게 네모나고 반짝이는 열매. 맛있고 허기와 갈증을 채워 준다. 방사선 병을 조금 낫게 하거나 악화시키기도 한다. 빠르게 땅에 부딪히면 큰 소리가 나서 낭떠러지 높이를 가늠하기 좋다.
+main.antisepticmush	소독 반죽
+main.antisepticmushdsc	열매와 잎사귀를 으깨 섞은, 감염 치료에 효과적인 반죽. 한 번 쓸 수 있다.
+main.striderpelt	설원보행자 가죽
+main.striderpeltdsc	설원보행자에게서 벗겨 낸 두껍고 보송한 큰 흰 가죽. 추위를 상당히 막아 준다.
+main.funguschunk	버섯 덩어리
+main.funguschunkdsc	뜯어낸 버섯 조각. 음식으로는 그럭저럭 괜찮지만 부작용은 잘 모르겠다.
+main.clottingmush	응고 반죽
+main.clottingmushdsc	응고를 촉진하는 습포제가 든 작은 병. 상하지 않으려면 특별한 용기에 담아야 한다. 그 자체로는 별 쓸모가 없지만 더 정제할 수 있을 것 같다...
+main.bunchunk	뭉치버섯
+main.bunchunkdsc	응고를 촉진하는 성질이 있는 버섯 조각. 그 자체로는 별 쓸모가 없지만 더 정제할 수 있을 것 같다...
+main.smallbattery	소형 배터리
+main.smallbatterydsc	여러 전자 기기에 끼울 수 있는 작은 배터리. 중형 배터리의 절반을 저장한다.
+main.mediumbattery	중형 배터리
+main.mediumbatterydsc	여러 전자 기기에 끼울 수 있는 흔한 배터리. 소형의 두 배, 대형의 3분의 1을 저장한다.
+main.largebattery	대형 배터리
+main.largebatterydsc	일부 전자 기기에 끼울 수 있는 큰 산업용 배터리. 중형 배터리의 세 배를 저장한다.
+main.pistol	권총
+main.pistoldsc	기본적인 반자동 권총. 9mm탄을 넣은 소형 탄창을 쓴다. 젖었거나 상태가 나쁘면 걸릴 수 있다. 주 손에 들면 쓸 수 있고 조작법이 보인다.
+main.rifle	소총
+main.rifledsc	개머리판 없는 자동 소총. 5.56탄을 넣은 소총 탄창을 쓴다. 젖었거나 상태가 나쁘면 걸릴 수 있다. 주 손에 들면 쓸 수 있고 조작법이 보인다.

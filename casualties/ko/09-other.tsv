@@ -1,0 +1,180 @@
+other.procoagulant	응고 촉진제
+other.procoagulantdsc	혈액 응고를 촉진하는 화학 물질. 내출혈을 포함해 온몸의 출혈을 늦춘다. 너무 많이 쓰면 합병증이 생긴다.
+other.epinephrine	에피네프린
+other.epinephrinedsc	순수한 아드레날린. 한동안 통증을 줄이고, 심장이 멈췄을 때 낮은 확률로 다시 뛰게 한다. 40ml를 넘기면 세동이 생긴다.
+other.oxyline	옥시라인
+other.oxylinedsc	주사하면 혈액에 빠르게 산소를 다시 채우고, 세동을 안정시키며, 헤모글로빈 생성을 촉진하는 합성 시약. 위산과 섞이면 폭발하는 경향이 있다.
+other.antidepressants	항우울제
+other.antidepressantsdsc	강력한 항우울제 알약. 한동안 모든 감정이 무뎌지고 행복도가 서서히 오른다. 부작용이 있을 수 있다.
+other.antirad	방사능 해독제
+other.antiraddsc	복용하면 방사선 병의 증상을 직접 줄이는 실험 약물. 중증이면 더 많이 먹어야 한다.
+other.braingrow	브레인그로
+other.braingrowdsc	뇌 재생을 촉진하는 먹는 특수 약물. 뇌 상태를 높이지만 심각한 부작용이 자주 따른다.
+other.mindwipe	기억 소거제
+other.mindwipedsc	뇌의 기억과 지난 트라우마 대부분을 완전히 지워, 기본 지식과 생존 본능만 남은 감정 없는 텅 빈 그릇으로 만드는 특수 합성 약물. 제 기능을 못 할 만큼 망가졌거나 자살 위험이 있는 피험체에게 최후의 수단으로 흔히 쓴다. 중등도~중증 뇌 손상을 고치기도 한다. 대대적인 재활 없이는 효과가 영구적이다. 최후의 수단으로만 써라.
+other.streptokinase	스트렙토키나제
+other.streptokinasedsc	혈액 희석제. 혈액 점도를 크게 낮추고 혈전을 녹인다.
+other.sodiumnitroprusside	니트로프루시드나트륨
+other.sodiumnitroprussidedsc	혈압을 낮추는 약. 고혈압 위기를 피하는 데 쓸모 있다. 정맥으로만 듣는다. 분당 10ml.
+other.vasopressin	바소프레신
+other.vasopressindsc	혈압을 높이는 호르몬. 치명적인 저혈압을 피하는 데 쓸모 있다. 정맥으로 넣으면 더 잘 듣는다. 분당 10ml.
+other.amiodarone	아미오다론
+other.amiodaronedsc	세동을 치료하고 예방하는 항부정맥제. 대부분의 부정맥을 서서히 가라앉히지만 가벼운 체내 손상을 일으킨다. 정맥으로만 듣는다. 분당 20ml.
+other.chocolatemilk	초코우유
+other.chocolatemilkdsc	우유에 코코아 고형분을 섞어 맛을 낸 우유. 아주 달고 맛있지만 네 종족에겐 독이다. 행복도가 오르니, 조심해서 마셔라.
+other.icedtea	아이스티
+other.icedteadsc	차갑고 달콤한 디카페인 차. 맛있다!
+other.soup	수프
+other.soupdsc	뭔지 모를 수프. 그래도 맛있고 배부르다.
+other.cereal	시리얼 우유
+other.cerealdsc	세상 최고의 발명품, 우유에 시리얼. 아주 맛있고 배부르다.
+other.coffee	커피
+other.coffeedsc	볶은 커피콩으로 우린 음료. 맛있고 기운이 나지만, 카페인 때문에 꽤 독하다.
+other.biochem	생화학액
+other.biochemdsc	화학 반응을 크게 촉진하고, 몇몇 재료를 이어 붙이거나 녹이기까지 하는 첨단 화합물. 제작에 아주 흔히 쓴다.
+other.groundwater	지하수
+other.groundwaterdsc	거르지 않은 지하수. 대체로 마셔도 괜찮지만 속이 조금 메스껍다.
+other.water	물
+other.waterdsc	거르지 않은 지하수. 대체로 마셔도 괜찮지만 속이 조금 메스껍다.
+other.dirtywater	더러운 물
+other.dirtywaterdsc	적어도 이제 몸에 묻어 있진 않다. 마시면 안 된다.
+other.lumalgae	발광조류
+other.lumalgaedsc	스스로 빛나는 조류가 빽빽하게 자란 물. 아주 잘 뜬다. 먹을 수 없다.
+other.redsludge	붉은 찌꺼기
+other.redsludgedsc	정말 역겹다. 살덩이를 갈아 놓은 반죽 같다. 냄새가 지독하다.
+other.magma	마그마
+other.magmadsc	녹은 바위. 모든 감각이 피하라고 비명을 지른다. 시간이 지나면 서서히 식을 것이다.
+other.oil	기름
+other.oildsc	걸쭉하고 검은 타르. 헤치고 나아가기 힘들다. 먹을 수 없다.
+other.sap	수액
+other.sapdsc	정글 나무에서 나오는 걸쭉하고 맛있는 수액. 아주 달다.
+other.fat	지방
+other.fatdsc	살에서 얻은 액체 동물성 지방. 먹을 수는 있지만 그리 유쾌하진 않다. 비누로 가공할 수 있다.
+other.soap	비누
+other.soapdsc	동물성 지방으로 만든 비누. 건강 창에서 몸의 때를 씻고 상처를 조금 소독하는 데 쓸 수 있다.
+other.producejuice	채집물 즙
+other.producejuicedsc	열매, 채소, 그 밖에 찾을 수 있던 온갖 것을 으깨 물에 섞은 것. 맛이... 독특하다.
+other.refinedjuice	정제한 즙
+other.refinedjuicedsc	푹 끓이고 더 잘 섞어 으깬 채집물 즙. 아주 맛있고 영양가 있다!
+other.liquiddescription	웅크리고 가만히 있으면 마신다
+other.Head	머리
+other.UpTorso	가슴
+other.DownTorso	배
+other.UpArmF	오른쪽 위팔
+other.DownArmF	오른쪽 아래팔
+other.HandF	오른손
+other.UpArmB	왼쪽 위팔
+other.DownArmB	왼쪽 아래팔
+other.HandB	왼손
+other.ThighF	오른쪽 허벅지
+other.CrusF	오른쪽 정강이
+other.FootF	오른발
+other.ThighB	왼쪽 허벅지
+other.CrusB	왼쪽 정강이
+other.FootB	왼발
+other.HeadShort	머리
+other.UpTorsoShort	가슴
+other.DownTorsoShort	배
+other.UpArmFShort	팔
+other.DownArmFShort	팔
+other.HandFShort	손
+other.UpArmBShort	팔
+other.DownArmBShort	팔
+other.HandBShort	손
+other.ThighFShort	다리
+other.CrusFShort	다리
+other.FootFShort	발
+other.ThighBShort	다리
+other.CrusBShort	다리
+other.FootBShort	발
+other.experiment	실험체
+other.experimenttraderdsc	키가 작고 개와 쥐와 사람을 섞은 듯한 기묘한 생물. 뒤통수에 부드러운 가시 같은 돌기가 3개 솟아 있고, 머리는 설치류 모양이다. 조금 어색하긴 해도 거래에서 딱히 별난 점은 없다. 그리 친해지지 않아도 포옹을 허락해 준다.
+other.milky	밀키
+other.milkytraderdsc	유난히 작고 털이 북슬한 흰 생물. 주둥이가 아주 납작하고 머리에 짧고 흰 뿔이 나 있다. 등에 지느러미 한 쌍이 있는 걸 보면 어느 정도 물에서 사는 것 같다. 꽤 똑똑하고 약간 거만해 보이며, 보잘것없는 체격을 메우려고 무기 하나쯤은 지니고 있을 것이다. 스킨십을 그리 좋아하지 않아서 포옹하려면 더 큰 신뢰가 필요할 것이다.
+other.dune	듄
+other.dunetraderdsc	키 크고 덩치 크고 위압적이며, 머리 대신 근육이 들어찬 생물. 온몸에 묘한 지느러미가 흩어져 있고, 머리 옆에 가시 6개가 솟아 있으며, 크고 날카로운 이빨이 빽빽한 무시무시하게 큰 입이 있다. 몸통에 아가미가 있는 것 같다. 대놓고 공격적이진 않지만 대체로 배고픔에만 움직이므로, 네가 건네는 자잘한 물건엔 별 관심이 없을 것이다. 환심을 사려면 더 나은 방법을 생각해야 한다.
+other.dunespecialtraderdsc	먹이.
+other.Shelly	셸리
+other.clicktocontinue	클릭하면 계속...\nESC로 건너뛰기
+other.clicktocontinuealt	클릭하면 계속...
+other.favourite	즐겨찾기
+other.favouriteditem	즐겨찾기한 물건은 제작에 쓰이지 않는다
+other.customizeitem	물건 꾸미기
+other.mainhand	주 손
+other.secondaryhand	보조 손
+other.mouth	입
+other.upperback	등 위쪽
+other.middleback	등 가운데
+other.lowerback	등 아래쪽
+other.startrun	시작
+other.startrundsc	저 아래 동굴로 내려간다
+other.next	다음
+other.nextdsc	종족 선택으로 넘어간다
+other.savecontinuemenu	탐사 이어 하기
+other.savecontinuemenudsc	저장해 둔 탐사를 이어 한다.
+other.char0name	[SAW-01] "실험체"
+other.char0desc	[계통] "개과"\n[호출_반응] "네, 네? 저요? 제 차례인가요..?"\n[성공_예측] "0.00374%"\n[비고] "흥미 없음"
+other.char0quirks	[개과] - 테오브로민이 소화가 잘 안 된다.\n[생체발광_시야] - 비상시엔 네 몸이 곧 조명이다.
+other.char1name	[SAW-03] "밀키"
+other.char1desc	[계통] "개과"\n[호출_반응] "따르겠습니다."\n[성공_예측] "0.0103%"\n[비고] "좀 거만함"
+other.char1quirks	[기면증] - 수면 주기가 훨씬 짧지만, 딱딱한 곳에서 자도 나쁜 영향을 받지 않는다.\n[체구] - 아주 작다!\n[적응한_눈] - 더 잘 보이고 조명이 더 멀리 비친다.\n[반초식] - 고기를 먹으면 속이 조금 메스껍고 영양도 덜 얻는다.\n[비실이] - 근력·강인함 경험치가 절반이 된다.\n[명사수] - 탄약 상자로 산탄총을 바로 장전할 수 있고, 단축키로 총기를 다루며 남은 탄수를 볼 수 있다.\n[강한_가면] - 정신이 쉽게 무너지지 않는다. 정말 필요할 때가 아니면 정을 주는 타입이 아니다.\n[개과] - 테오브로민이 소화가 잘 안 된다.
+other.char2name	[SAW-12] "듄"
+other.char2desc	[계통] "곤충형"\n[호출_반응] "흐르르... 듄- 갈 시간..?"\n[성공_예측] "0.001%"\n[비고] "으웩! 침 흘려!"
+other.char2quirks	[수생] - 물속에서 숨 쉴 수 있고 물속에서 자는 걸 좋아한다.\n[털없음] - 털이 없어 주변 온도에 취약하다. 훨씬 빨리 마른다. 지하수 같은 액체가 체온을 안정시킨다.\n[식인] - 날고기를 먹고 시체를 처리해도 아무 탈이 없다. 식중독에 대체로 면역이다.\n[육식] - 열매를 먹으면 바로 토해 낸다.\n[근육뇌] - 생각 같은 건 <i>안</i> 한다. 지능 경험치가 절반이 된다.\n[무감정] - 기분 변화가 3분의 1 줄어든다. 포옹도 흥정도 못 한다. 사람을 죽이는 게 별일로 느껴지지 않는다.\n[키틴질] - 키틴질 껍질 덕에 물리적 외상에 강하다.
+other.characterunlock	[접근_거부]
+other.characterunlockdsc	이전 캐릭터로 탐사를 끝까지 마치면 열린다
+other.presetnormal	혹독함
+other.presetnormaldsc	실수의 대가가 크다. 지식과 상황 판단이 큰 보상을 준다. 시간이 생명이다.
+other.presetrelaxed	느긋함
+other.presetrelaxeddsc	더 느리고 너그러운 하강. 실수의 대가는 여전히 크지만 피하기는 쉽다. 탐험하고 주변을 살필 시간이 더 많다.
+other.presetparadise	낙원
+other.presetparadisedsc	이 동굴은 누가 뭐래도 연구소보다 낫다. 실수의 대가가 훨씬 적고, 전리품과 친근한 얼굴이 넘쳐난다. 위험도 시간 압박도 거의 없다.
+other.presetdesolate	황량함
+other.presetdesolatedsc	어둠 속에 홀로. 찾을 것은 거의 없고 위험은 어디에나 있다. 생존자는 드물지만, 만나는 이들은 나눌 것이 많다. 죽음은 거의 확실하다.
+other.presetunchipped	칩 없음
+other.presetunchippeddsc	칩이 없어 다른 이들을 묶는 인위적인 시간 제한에서는 벗어나지만, 스스로를 진단하기가 어려워진다. 결국엔 그만한 가치가 있을까?
+other.presetendless	끝없음
+other.presetendlessdsc	탈출은 없다. 이건 사형 선고다. 눈앞에서 위험이 불어나는 가운데, 어디까지 갈 수 있을까?
+other.runsettings	탐사 설정
+other.runsettingsdsc	아래 프리셋에서 플레이 방식을 고른다. 오른쪽 사용자 설정 창에서 세부 조정할 수 있다.
+other.customsettings	사용자 설정
+other.customsettingsdsc	탐사 세부 설정 조정
+other.runsetunchipped	칩 없음
+other.runsetunchippeddsc	건강 창을 끄므로, 어떤 증상이 있는지 알아내려면 더 애써야 한다. 시야 제한이 켜진다.
+other.runsetendless	끝없음
+other.runsetendlessdsc	켜면 일정 지점 이후 층이 반복되어 죽을 때까지 탐사가 끝나지 않는다. 이 방식으로는 게임을 깰 수 없다.
+other.runsetbaselootdensity	전리품 밀도
+other.runsetbaselootdensitydsc	각 층에 나오는 전리품의 양. 투하 캡슐, 구명 포드, 상자 등에 영향을 준다
+other.runsetlootmultiplier	거리별 전리품 배율
+other.runsetlootmultiplierdsc	층을 하나 지날 때마다 전리품 밀도에 이 값을 곱한다\n\n예를 들어 0.5x로 하면, 한 층 내려갈 때마다 전리품이 절반이 된다
+other.runsetbasetrapdensity	함정 밀도
+other.runsetbasetrapdensitydsc	각 층에 나오는 함정의 양. 기계 함정, 적, 그 밖의 위험에 영향을 준다.
+other.runsettrapincrease	거리별 함정 증가
+other.runsettrapincreasedsc	층을 하나 지날 때마다 함정 밀도에 이 값을 더한다\n\n예를 들어 0.5x로 하면, 함정 양이 1x -> 1.5x -> 2x 식으로 늘어난다
+other.runsettimelimit	층 시간 제한
+other.runsettimelimitdsc	각 층에 벌칙 없이 머물 수 있는 시간(분)
+other.runsetstartingsupplies	시작 보급품
+other.runsetstartingsuppliesdsc	시작할 때 가진 물건
+other.runsetstartingsuppliesnone	없음
+other.runsetstartingsupplieslight	손전등
+other.runsetstartingsuppliesfull	풀세트
+other.runsetenemystrength	적 강도
+other.runsetenemystrengthdsc	적대 동물이 주는 피해 배율
+other.runsetxpgain	경험치 획득
+other.runsetxpgaindsc	능력 경험치 획득 배율
+other.runsetmetabolismrate	신진대사 속도
+other.runsetmetabolismratedsc	배고픔·갈증·메스꺼움·체중이 줄어드는 속도.
+other.runsethealingrate	회복 속도
+other.runsethealingratedsc	부상이 낫는 속도. 근육·피부 재생, 혈액 응고, 혈액 재생, 골절, 탈구, 뇌 손상에 영향을 준다
+other.runsetfracturepain	골절 통증 정도
+other.runsetfracturepaindsc	탈구·골절된 팔다리를 쓸 때 얼마나 아픈지
+other.runsetbleedrate	출혈 속도
+other.runsetbleedratedsc	출혈 상처로 혈액량이 얼마나 빨리 줄어드는지
+other.runsetinfectionspeed	감염 속도
+other.runsetinfectionspeeddsc	감염이 진행·감소하는 속도와 죽음에 이르는 속도. 소독제 지속 시간에도 영향을 준다
+other.runsetinfectionchance	감염 확률
+other.runsetinfectionchancedsc	상처가 감염될 가능성
+other.runsetfibrillationrate	세동 진행 속도
+other.runsetfibrillationratedsc	심장 세동이 진행되는 속도. 높을수록 빨리 죽는다
+other.runsetbonuslimbarmor	추가 팔다리 방어력
+other.runsetbonuslimbarmordsc	팔다리가 타고나는 추가 피해 저항. 1이면 받는 피해가 모두 절반이 된다

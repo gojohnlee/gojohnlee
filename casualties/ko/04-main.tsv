@@ -1,0 +1,160 @@
+main.shotgun	펌프 산탄총
+main.shotgundsc	내장 탄창이 달린 개머리판 없는 펌프식 산탄총. 12게이지 산탄을 총에 직접 넣는다. 젖었거나 상태가 나쁘면 걸릴 수 있다. 주 손에 들면 쓸 수 있고 조작법이 보인다.
+main.9mmround	9mm탄
+main.9mmrounddsc	작은 권총탄. 소형 탄창에 넣거나, 노리쇠가 열려 있으면 약실에 바로 넣을 수 있다.
+main.556round	5.56탄
+main.556rounddsc	소총탄. 소총 탄창에 넣거나, 노리쇠가 열려 있으면 약실에 바로 넣을 수 있다.
+main.12gauge	12게이지 산탄
+main.12gaugedsc	12게이지 벅샷 산탄. 산탄총에 넣거나, 노리쇠가 열려 있으면 약실에 바로 넣을 수 있다.
+main.boxof12gauge	12게이지 산탄 상자
+main.boxof12gaugedsc	12게이지 산탄을 16발까지 담는 상자. 사용하면 총에 넣을 산탄을 한 발 꺼낸다.
+main.smallmagazine	소형 탄창
+main.smallmagazinedsc	9mm탄을 넣는 범용 권총 탄창.
+main.riflemagazine	소총 탄창
+main.riflemagazinedsc	5.56탄을 넣는 범용 소총 탄창.
+main.magazinebase	탄창 몸체
+main.magazinebasedsc	안에 스프링이 든 특수한 모양의 용기. 탄창과 총기 제작에 쓴다.
+main.makeshiftrifle	임시 소총
+main.makeshiftrifledsc	관과 총기 부품 쪼가리를 이어 붙여 급조한 볼트액션 총. 9mm탄을 넣은 소형 탄창을 쓴다. 젖었거나 상태가 나쁘면 걸릴 수 있다. 주 손에 들면 쓸 수 있고 조작법이 보인다.
+main.casing	탄피
+main.casingdsc	빈 탄피. 그 자체로는 별 쓸모가 없지만 제작에 쓸 수 있다.
+main.scrapcube	고철 블록
+main.scrapcubedsc	고철을 녹여 만든 단단한 블록. 그리 튼튼하진 않지만 제작엔 쓸 만하다.
+main.scrappanel	고철 판
+main.scrappaneldsc	고철로 만든 얇은 판. 그리 튼튼하진 않지만 제작엔 쓸 만하다.
+main.scraptube	고철 관
+main.scraptubedsc	고철로 만든 속 빈 관. 그리 튼튼하진 않지만 제작엔 쓸 만하다. 엉성한 망치 대용으로 쓸 수 있다.
+main.woodscraps	나무 조각
+main.woodscrapsdsc	부서진 나무 부스러기. 제작 재료로 만들 수 있을 것 같다.
+main.woodcube	나무 블록
+main.woodcubedsc	나무를 녹여 붙여 만든 단단한 블록. 아주 약하지만 가볍다.
+main.woodpanel	나무 판
+main.woodpaneldsc	나무로 만든 얇은 판. 아주 약하지만 가볍다.
+main.canvas	캔버스 천
+main.canvasdsc	식물 섬유로 만든 얇고 유연한 천. 가볍고, 이런 것치고는 꽤 튼튼하다.
+main.nails	못
+main.nailsdsc	조잡하게 만든 못 한 무더기. 제작 몇 번은 충분하겠다. 박으려면 망치가 필요할 것이다.
+main.string	끈
+main.stringdsc	식물 섬유를 손질해 만든, 보기보다 질긴 가는 끈. 더 정교한 제작법에 쓴다.
+main.stick	막대기
+main.stickdsc	짧은 나무 막대기. 아주 약하지만 가볍다. 무기로 쓰기엔 너무 작다. 엉성한 망치 대용으로 쓸 수 있다.
+main.ilmenitechunk	티탄철석 덩어리
+main.ilmenitechunkdsc	티타늄과 철의 산화 광물. 비용이 들지만 튼튼한 티타늄 합금으로 가공할 수 있다.
+main.titaniumslab	티타늄 판석
+main.titaniumslabdsc	튼튼한 티타늄 합금으로 만든 직사각형 판. 고급 제작에 쓸 수 있다.
+main.titaniumrod	티타늄 막대
+main.titaniumroddsc	튼튼한 티타늄 합금으로 만든 단단한 막대. 고급 제작에 쓰고, 망치 대용으로도 쓸 수 있다.
+main.titaniumsheet	티타늄 박판
+main.titaniumsheetdsc	튼튼한 티타늄 합금으로 만든 얇지만 단단한 판. 고급 제작에 쓸 수 있다.
+main.rawcopper	구리 원석
+main.rawcopperdsc	심하게 산화된 구리 덩어리. 정제하면 전자 기기에 쓸 수 있다.
+main.processedcopper	가공 구리
+main.processedcopperdsc	생화학 처리를 거친 구리 덩어리. 잘 휘고 전기가 잘 통해 전자 기기용 전선으로 만들 수 있다.
+main.plasticchunk	플라스틱 덩어리
+main.plasticchunkdsc	억지로 뜯겨 나온 티가 나는 유연한 플라스틱 덩어리. 제작, 주로 전자 기기에 쓴다.
+main.flexiglass	플렉시글라스
+main.flexiglassdsc	플라스틱을 화학 처리해 만든 얇고 유연한 투명 판. 제작에 쓴다.
+main.bundleofwires	전선 뭉치
+main.bundleofwiresdsc	피복을 두른 전선을 가지런히 묶은 뭉치. 전자 기기 제작에 쓴다.
+main.flimsyknife	허술한 칼
+main.flimsyknifedsc	작고 무디고 잘 부러지는 칼. 간단한 제작에 쓸 수 있다. 싸움에는 거의 쓸모없다.\n\n<color="red">건강 창에서 팔다리를 절단하는 데 쓸 수 있다.
+main.craftingbottle	임시 병
+main.craftingbottledsc	급조한 물 용기. 다시 채울 수 없고 곧 사라진다. 사라지기 전에 내용물을 옮겨 담자.
+main.nondescriptcan	정체불명 통조림
+main.nondescriptcandsc	상표 없는 밋밋한 통조림. 안에 든 건... 뭔지 모르겠다. 보기에도 냄새도 딱히 뭐 같지 않다. 좋을 수도, 아닐 수도.
+main.canteen	수통
+main.canteendsc	플라스틱 조각을 붙이고 로프로 묶어 만든 작고 단순한 액체 병. 300mL를 담는다.
+main.lcdscreen	LCD 화면
+main.lcdscreendsc	단순한 전자 디스플레이. 제작에 쓴다.
+main.autoinjector	자동 주사기
+main.autoinjectordsc	발명 당시엔 의학의 경이였던 작은 장치. 스스로 정맥이나 동맥을 찾아 정해진 양을 주입한다. 의약품 제작에 쓴다.
+main.keratinbooster	케라틴 강화제
+main.keratinboosterdsc	손발톱 관리 보충제라고 적힌 100mL 병. 한 번에 50mL씩 마신다.
+main.drillrepairkit	드릴 수리 키트
+main.drillrepairkitdsc	드릴 포드를 고치는 예비 부품 꾸러미. 이걸로 포드를 다시 작동하게 만들 수 있다.
+main.campfire	모닥불
+main.campfiredsc	타오르는 모닥불. 따뜻하고 아늑해서 곁에 있으면 몸이 데워진다. 여러 요리법에서 열원으로 쓴다.
+main.firestarter	불쏘시개 도구
+main.firestarterdsc	나무 막대를 빠르게 돌려 고정된 나무 홈과 마찰시켜 불을 붙이는 장치. 쉽게 말해, 막대기 빙빙, 불이 활활. 다 타 버리기 전까지 3번 쓸 수 있다.
+main.charcoal	숯
+main.charcoaldsc	작고 가벼운 숯 조각. 제작에서 불붙는 재료로 쓸 수 있다.
+main.ryebulb	호밀 알뿌리
+main.ryebulbdsc	곡식이 든 얇은 주머니. 망치 같은 도구가 있으면 빻아서 가루로 만들 수 있다.
+main.ryeflour	호밀 가루
+main.ryeflourdsc	주로 빵을 구울 때 쓰는 가루. 다루려면 물과 열원이 필요할 것이다.
+main.bread	빵
+main.breaddsc	밀가루와 물로 만든 빵 한 덩이. 먹을 수 있는 것 중 가장 단순하지만 역겹지 않고 오래간다.
+main.cake	케이크
+main.cakedsc	위에 글레이즈를 바른 달콤한 구움 과자. 크고 배부르고 아주 맛있지만, 당분이 많아 너무 많이 먹으면 속이 좀 메스껍다.
+main.pemmican	페미컨
+main.pemmicandsc	지방, 말린 고기, 말린 과일을 섞은 것. 오래가고 열량이 아주 높다. 맛은 밋밋하다.
+main.torch	횃불
+main.torchdsc	극히 원시적인 조명. 길은 꽤 잘 밝히지만 액체에 닿으면 꺼진다. 불씨가 있으면 다시 붙일 수 있다.
+main.lighter	라이터
+main.lighterdsc	흔한 뚜껑식 라이터. 모닥불 붙이기 등 여러 제작법에서 불씨로 쓸 수 있다. 정말 오래 쓸 수 있다.
+main.present	선물 상자
+main.presentdsc	장식된 종이 상자. 뭔가 들어 있는 것 같다. 사용하면 풀어 본다.
+main.woodsandals	나무 샌들
+main.woodsandalsdsc	나무 판을 로프로 발에 묶은 것. 전혀 편하지 않지만 날카로운 잔해는 막아 준다... 운이 좋으면 한 번 넘게!
+main.minibarrel	소형 드럼통
+main.minibarreldsc	액체를 담는 작은 산업용 드럼통. 엄청나게 무겁고 쓰기 불편하다.
+main.peglimb	나무 의족·의수
+main.peglimbdsc	잃은 손발을 대신하는 임시 나무 보철. 정상 팔다리보다 효율이 떨어지고 잘 부러진다. 나무로 고친다. 가슴·배에 사용해 단다. 제대로 달려면 지능 7이 필요하다.
+main.steelprosthesis	강철 보철
+main.steelprosthesisdsc	잃은 손발을 대신하는 금속 보철. 대부분 정상 팔다리와 같다. 고철로 고친다. 가슴·배에 사용해 단다. 제대로 달려면 지능 10이 필요하다.
+main.peo	P.E.O. 보철
+main.peodsc	강화 작동 보철(Prosthetic Enhanced Operation). 거의 모든 면에서 정상 팔다리보다 낫다. 티타늄으로 고친다. 가슴·배에 사용해 단다. 제대로 달려면 지능 14가 필요하다.
+buildings.animalcorpse	동물 사체
+buildings.fungalibungali	버섯 오두막
+buildings.fungalibungalidsc	초록빛 버섯이 조그맣게 모여 난 곳. 운이 좋으면 갓 하나를 딸 수 있을지도.
+buildings.mushroomplatform	버섯 발판
+buildings.mushroomplatformdsc	올라설 수 있는 튼튼한 버섯 조각.
+buildings.bouncecap	통통버섯
+buildings.bouncecapdsc	우와아아아!
+buildings.climbingropeextended	등반용 로프
+buildings.climbingropeextendeddsc	길게 늘어뜨린 튼튼한 로프. 근처에서 [위]를 누르고 있으면 오르기 시작한다.
+buildings.glowshroom	발광버섯
+buildings.glowshroomdsc	방사능이 약간 있고 눈부시게 밝다.
+buildings.mushroomtree	버섯나무
+buildings.mushroomtreedsc	스스로 빛을 내는 것 같다.
+buildings.drillpod	드릴 포드
+buildings.drillpoddsc	단단한 땅속으로 사람을 먼 거리 실어 나르는 데 쓴다. 지금은 작동하지 않지만, 수리 키트를 가져오면 고칠 수 있다. 2층 아래로 건너뛸 수 있다.
+buildings.highpowereddrillpod	고출력 드릴 포드
+buildings.highpowereddrillpoddsc	단단한 땅속으로 사람을 먼 거리 실어 나르는 최신형 포드. 작동시키려면 강력한 동력원이 필요하다...
+buildings.highpowereddrillpoddsc2	단단한 땅속으로 사람을 먼 거리 실어 나르는 최신형 포드. 이곳에 작별을 고할 때다.
+buildings.drillpoddscfixed	단단한 땅속으로 사람을 먼 거리 실어 나르는 데 쓴다.\n\n안에서 웅크리면 2층 아래로 건너뛴다. 방음재가 닳아서 청력을 조금 잃을 수 있다.
+buildings.highpowereddrillpodbroken	부서진 포드
+buildings.highpowereddrillpodbrokendsc	안전 작동 범위를 한참 넘겨 몰아붙였다. 오는 길에 실수로 뭔가를 들이받기도 한 것 같다.
+buildings.drillpodbroken	부서진 드릴 포드
+buildings.drillpodbrokendsc	고칠 수 없을 만큼 망가졌다.
+buildings.frigiant	서리초
+buildings.frigiantdsc	얼음 같은 유리질 식물. 둥근 알뿌리가 매달려 있다.
+buildings.snowstrider	설원보행자
+buildings.snowstriderdsc	이 동굴의 추운 지역에서 먹이를 사냥하는 크고 털이 북슬북슬한 생물. 두꺼운 가죽 덕에 따뜻하다.
+buildings.spaceheater	이온 난방기
+buildings.spaceheaterdsc	주변을 강하게 데우는 장치. 너무 가까이 오래 있으면 가벼운 방사선 병에 걸릴 수 있다.
+buildings.heatfern	열고사리
+buildings.heatferndsc	주변 공기를 데워 포자를 퍼뜨리는 푹신하고 가시 돋친 고사리. 추위를 막아 주지만 포자를 너무 오래 들이마시면 면역계가 망가질 수 있다.
+buildings.lifepodheater	구명 포드 난방기
+buildings.lifepodheaterdsc	안을 따뜻하고 아늑하게 유지한다.
+buildings.tutorialcraftingbutton	초기화 버튼
+buildings.tutorialcraftingbuttondsc	뭔가 망쳐서 처음부터 다시 해야 할 때 누르자.
+buildings.barbedwirefence	가시 울타리
+buildings.barbedwirefencedsc	뾰족한 데는 만지지 마라.
+buildings.beartrap	낡은 기계
+buildings.beartrapdsc	가시 이빨이 달린 턱 두 짝.
+buildings.bioterminal	생체 단말기
+buildings.bioterminaldsc	아래에 판이 달린 컴퓨터 단말기. "계속하려면 인간 DNA 샘플을 넣으십시오..."라고 적혀 있다.
+buildings.lifepodshower	구명 포드 샤워기
+buildings.lifepodshowerdsc	소독용 세정 거품을 한 번 뿌려 준다.
+buildings.lifepodpump	구명 포드 펌프
+buildings.lifepodpumpdsc	쏟아진 액체를 밖으로 퍼낸다.
+buildings.BloodCrystal	혈액 수정
+buildings.BloodCrystaldsc	노란 액체로 촉촉하게 젖어 있고, 주변 모든 것에 그 액체를 흘려보낸다.
+buildings.cactus	선인장
+buildings.cactusdsc	저 위에선 이게 초록색이어야 한다고 배웠다. 가시투성이라는 말만큼은 거짓이 아니었다.
+buildings.coil	코일
+buildings.coildsc	전기가 통하는 건 뭐든 순식간에 튀겨 버린다.
+buildings.containercrate	화물 상자
+buildings.containercratedsc	잡다한 물건이 들어 있다.
+buildings.laserdrone	화물 상자
