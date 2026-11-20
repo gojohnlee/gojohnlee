@@ -4,6 +4,7 @@
 게임에 원래 있는 언어 선택 기능을 그대로 쓰므로 모드 로더가 필요 없습니다.
 
 > 공식 번역이 아닙니다. 게임 버전 **1.0.2** 기준입니다.
+> 커뮤니티 한국어 번역(개발사 저장소 [scavgame-locale](https://github.com/Orsoniks/scavgame-locale/blob/main/release/ko-KR.json), 파일 이름 `ko-KR.json`)이 따로 있습니다. 둘을 함께 넣어도 되고, 메뉴에서 이 패치는 **한국어 (Claude 번역)** 으로 보입니다.
 
 ## 설치
 
@@ -13,7 +14,7 @@
 3. 열린 폴더에서 `CasualtiesUnknown_Data` → `Lang` 폴더로 들어갑니다.
    (`EN.json`, `zh-CN.json`이 있는 곳)
 4. 받은 `ko.json`을 그 `Lang` 폴더에 넣습니다.
-5. 게임을 켜고 **설정 → Language(언어)** 에서 **한국어**를 고릅니다.
+5. 게임을 켜고 **설정 → Language(언어)** 에서 **한국어 (Claude 번역)** 을 고릅니다.
 
 ## 되돌리기 (영어로)
 

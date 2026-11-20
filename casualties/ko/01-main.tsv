@@ -1,4 +1,4 @@
-name	한국어
+name	한국어 (Claude 번역)
 description	Claude가 번역한 비공식 한국어 번역입니다. 원작 개발자(Orsoniks)·배급사의 공식 번역이 아니며, 게임 업데이트 뒤에는 일부 문장이 영어로 남거나 맞지 않을 수 있습니다.
 main.bandage	드레싱
 main.bandagedsc	붕대가 딸린 드레싱 한 롤. 출혈을 늦추고 골절을 고정하며 피부 회복을 돕는다. 근육 상태에는 효과가 없다.
