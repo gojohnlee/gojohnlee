@@ -28,7 +28,7 @@ namespace Carryover.Core
             new PerkDef("xp", "경험치 증가", "경험치 획득 +10%", 2, 3, 4),
             new PerkDef("mining", "광부", "벽·바위를 칠 때 피해 +25%", 1, 2, 3),
             new PerkDef("fall", "튼튼한 다리", "떨어지거나 부딪힐 때 받는 충격 -20%", 2, 3, 4),
-            new PerkDef("temp", "온도 적응력", "바깥 온도에 체온이 끌려가는 속도 -20%", 2, 3, 4),
+            new PerkDef("temp", "온도 적응력", "체온이 정상에서 멀어지는 속도 -20% (회복은 그대로)", 2, 3, 4),
         };
 
         public const float MinRunSeconds = 180f;   // 3분 안에 끝난 회차는 0점(바로 죽어 모으기 막기)
@@ -64,6 +64,8 @@ namespace Carryover.Core
         public float MiningMult => 1f + 0.25f * Level("mining");        // 3단계 ×1.75
         public float ImpactMult => 1f - 0.20f * Level("fall");          // 3단계 ×0.4
         public float TempDriftMult => 1f - 0.20f * Level("temp");       // 3단계 ×0.4 (단열 ×2.5)
+        /// <summary>온도 적응력은 체온이 37℃에서 멀어지는 쪽(위험 쪽)으로 끌려갈 때만 늦춘다. 37℃ 쪽으로 돌아오는 회복(운동 뒤 식기·불 쬐기)은 그대로(사용자 11-21).</summary>
+        public static bool DriftAwayFromNormal(float body, float ambient) => ambient != body && (ambient - body) * (body - 37f) >= 0f;
 
         // ---- 포인트 ----
         /// <summary>회차 성과 → 포인트: 10분마다 1 + 새로 얻은 능력치 3마다 1 + 도달한 층 2마다 1 (상한 없음, 사용자 11-21). 3분 안에 끝나면 0.</summary>

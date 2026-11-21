@@ -107,4 +107,15 @@ public class PerkStateTests
         Assert.Equal(10, bad.Level("subspace"));
         Assert.Equal(0, bad.Level("xp"));
     }
+
+    [Fact]
+    public void TempPerk_OnlySlowsDriftAwayFrom37()
+    {
+        Assert.True(PerkState.DriftAwayFromNormal(36f, 0f));    // 추운 곳에서 더 식음
+        Assert.True(PerkState.DriftAwayFromNormal(38f, 45f));   // 더운 곳에서 더 더워짐
+        Assert.True(PerkState.DriftAwayFromNormal(37f, 10f));
+        Assert.False(PerkState.DriftAwayFromNormal(39f, 20f));  // 운동 뒤 식기(회복)
+        Assert.False(PerkState.DriftAwayFromNormal(33f, 50f));  // 불 쬐기(회복)
+        Assert.False(PerkState.DriftAwayFromNormal(30f, 30f));
+    }
 }

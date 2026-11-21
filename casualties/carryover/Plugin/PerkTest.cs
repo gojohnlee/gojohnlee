@@ -239,10 +239,19 @@ namespace CasualtiesCarryover
 
         private void TestTemp(Body body)
         {
-            // 체온이 바깥 온도로 끌려가는 속도 = baseTemperatureLerpRate / GetTotalInsulation → 3단계면 단열 2.5배(속도 0.4배)
-            float on = body.GetTotalInsulation(), off = 0f;
-            WithPerks(new PerkState(), () => off = body.GetTotalInsulation());
-            Check("temperature drift x0.4 (insulation x2.5)", off > 0f && Mathf.Abs(off / on - 0.4f) < 0.01f, $"insulation {on:0.00} vs {off:0.00}");
+            // 37℃에서 멀어지는 쪽(추운 곳에서 식기)만 3단계 단열 2.5배(속도 0.4배), 돌아오는 쪽(더운 몸이 식기)은 그대로
+            var w = WorldGeneration.world; float oldT = body.temperature, oldA = w.ambientTemperature;
+            float Ratio(float t, float a)
+            {
+                body.temperature = t; w.ambientTemperature = a;
+                float on = body.GetTotalInsulation(), off = 0f;
+                WithPerks(new PerkState(), () => off = body.GetTotalInsulation());
+                return off / on;
+            }
+            float away = Ratio(36f, 0f), back = Ratio(39f, 20f);
+            body.temperature = oldT; w.ambientTemperature = oldA;
+            Check("temperature drift away from 37 x0.4", Mathf.Abs(away - 0.4f) < 0.01f, $"ratio {away:0.00}");
+            Check("temperature recovery toward 37 unchanged", Mathf.Abs(back - 1f) < 0.01f, $"ratio {back:0.00}");
         }
 
         private void TestSoundCannon(Body body)

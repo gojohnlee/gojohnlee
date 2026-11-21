@@ -48,13 +48,14 @@ namespace CasualtiesCarryover
         }
 
         // - 온도 적응력: Body.HandleBodyTemperature가 1초마다 temperature = Lerp(체온, 바깥 온도, baseTemperatureLerpRate / GetTotalInsulation()).
-        //   GetTotalInsulation을 쓰는 곳은 여기와 상태창 단열 % 표시뿐 → 플레이어 몸이면 단열을 1/배율로 높여 끌려가는 속도를 줄인다(상태창 단열 %도 같이 오름).
+        //   GetTotalInsulation을 쓰는 곳은 여기와 상태창 단열 % 표시뿐 → 플레이어 몸이 37℃에서 멀어지는 쪽으로 끌려갈 때만 단열을 1/배율로 높인다(돌아오는 회복은 그대로).
         [HarmonyPatch(typeof(Body), nameof(Body.GetTotalInsulation))]
         [HarmonyPostfix]
         private static void InsulationPostfix(Body __instance, ref float __result)
         {
             float m = Plugin.Perks?.TempDriftMult ?? 1f;
-            if (m < 1f && m > 0f && PlayerCamera.main != null && __instance == PlayerCamera.main.body) __result /= m;
+            if (m < 1f && m > 0f && PlayerCamera.main != null && __instance == PlayerCamera.main.body && WorldGeneration.world != null
+                && Carryover.Core.PerkState.DriftAwayFromNormal(__instance.temperature, WorldGeneration.world.ambientTemperature)) __result /= m;
         }
     }
 }
