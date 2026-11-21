@@ -21,5 +21,30 @@ namespace CasualtiesCarryover
         [HarmonyPatch(typeof(Skills), nameof(Skills.AddExp))]
         [HarmonyPrefix]
         private static void AddExpPrefix(ref float xp) => xp *= Plugin.Perks?.XpMult ?? 1f;
+
+        // - 광부: 플레이어가 치는 길은 Body.Attack → (사람·물건을 못 맞히면) WorldGeneration.DamageBlock(점, atk.structuralDamage × …).
+        //   Attack 안에서만 표시를 켜고, 그동안 DamageBlock(Vector2Int …) 피해에 배율을 곱한다(Vector2 판도 이 함수를 부름). 다른 것(드릴·폭발·몸 충돌)은 그대로.
+        [System.ThreadStatic] internal static bool inPlayerAttack;
+
+        [HarmonyPatch(typeof(Body), nameof(Body.Attack))]
+        [HarmonyPrefix]
+        private static void AttackPrefix(Body __instance) => inPlayerAttack = PlayerCamera.main != null && __instance == PlayerCamera.main.body;
+
+        [HarmonyPatch(typeof(Body), nameof(Body.Attack))]
+        [HarmonyFinalizer]
+        private static void AttackFinalizer() => inPlayerAttack = false;
+
+        [HarmonyPatch(typeof(WorldGeneration), nameof(WorldGeneration.DamageBlock), new[] { typeof(UnityEngine.Vector2Int), typeof(float), typeof(bool), typeof(bool), typeof(bool) })]
+        [HarmonyPrefix]
+        private static void DamageBlockPrefix(ref float dmg) { if (inPlayerAttack) dmg *= Plugin.Perks?.MiningMult ?? 1f; }
+
+        // - 튼튼한 다리: 떨어지거나 부딪힐 때 Limb.OnCollisionEnter2D → Limb.ImpactDamage(force, dir). 근육·피부·뼈·머리 피해와 탈구·골절 문턱이 모두 force로 정해진다
+        //   → 플레이어 몸의 팔다리면 force에 배율을 곱한다.
+        [HarmonyPatch(typeof(Limb), nameof(Limb.ImpactDamage))]
+        [HarmonyPrefix]
+        private static void ImpactPrefix(Limb __instance, ref float force)
+        {
+            if (PlayerCamera.main != null && __instance.body == PlayerCamera.main.body) force *= Plugin.Perks?.ImpactMult ?? 1f;
+        }
     }
 }

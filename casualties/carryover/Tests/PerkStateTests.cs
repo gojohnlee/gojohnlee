@@ -58,7 +58,7 @@ public class PerkStateTests
     [Fact]
     public void FiveConfirmedPerks_Only()
     {
-        Assert.Equal(new[] { "subspace", "lockpick", "crafting", "traps", "xp" }, System.Array.ConvertAll(PerkState.Perks, p => p.Id));
+        Assert.Equal(new[] { "subspace", "lockpick", "crafting", "traps", "xp", "mining", "fall" }, System.Array.ConvertAll(PerkState.Perks, p => p.Id));
     }
 
     [Fact]
@@ -66,7 +66,9 @@ public class PerkStateTests
     {
         var s = new PerkState { Points = 999 };
         for (int i = 0; i < PerkState.Perks.Length; i++) while (s.Buy(i)) { }
-        Assert.Equal(999 - 70, s.Points);             // 전부 70점
+        Assert.Equal(999 - 85, s.Points);             // 전부 85점
+        Assert.Equal(1.75f, s.MiningMult, 3);
+        Assert.Equal(0.4f, s.ImpactMult, 3);
         Assert.Equal(10, s.SubspaceSlots);
         Assert.Equal(1.75f, s.LockpickMult, 3);
         Assert.Equal(3, s.CraftIntBonus);

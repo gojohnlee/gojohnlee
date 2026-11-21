@@ -97,7 +97,7 @@ namespace CasualtiesCarryover
                     break;
                 case 2:
                     if (Since < 4f) return;
-                    TestXp(body); TestLockpick(); TestCraft(body); TestTrapsScan(body); TestSubspace(body);
+                    TestXp(body); TestLockpick(); TestCraft(body); TestTrapsScan(body); TestMining(body); TestImpact(body); TestSubspace(body);
                     Next(3);
                     break;
                 case 3:
@@ -203,6 +203,36 @@ namespace CasualtiesCarryover
                 counts[lv] = traps.Count(g => g != null && found.Contains(g.transform));
             }
             Check("trap scan by level (0,1,2,3 → 0,1,2,3 of ours at 3·8·13)", counts.SequenceEqual(new[] { 0, 1, 2, 3 }), string.Join(",", counts));
+        }
+
+        private void TestMining(Body body)
+        {
+            // 몸 아래 단단한 칸을 찾아 아주 작은 피해(0.01)를 준다: 플레이어 공격 중이면 ×1.75, 아니면 그대로
+            var w = WorldGeneration.world;
+            var bp = w.WorldToBlockPos(body.transform.position);
+            Vector2Int pos = bp; bool found = false;
+            for (int dy = 1; dy < 30 && !found; dy++) { pos = bp + new Vector2Int(0, -dy); found = w.GetBlock(pos) > 0; }
+            if (!found) { Check("mining x1.75 (player attack only)", false, "no block below"); return; }
+            float Dmg() { var d = w.GetBlockDamage(pos); return d == null ? 0f : d.damage; }
+            float a0 = Dmg();
+            PerkPatches.inPlayerAttack = true; w.DamageBlock(pos, 0.01f, false); PerkPatches.inPlayerAttack = false;
+            float a1 = Dmg();
+            w.DamageBlock(pos, 0.01f, false);
+            float a2 = Dmg();
+            float on = (a1 - a0) / 0.01f, off = (a2 - a1) / 0.01f;
+            Check("mining x1.75 (player attack only)", Mathf.Abs(on - 1.75f) < 0.01f && Mathf.Abs(off - 1f) < 0.01f, $"attack {on:0.00}, other {off:0.00}");
+        }
+
+        private void TestImpact(Body body)
+        {
+            // 근육 피해 = force × 0.33 / 방어(게임 그대로) → 퍽 3단계면 0.4배
+            var limb = body.limbs.First(l => !l.isHead && !l.isVital);   // 머리·몸통은 뇌·내출혈 피해가 있어 팔다리로
+            float F = body.jumpSpeed * 3f;   // 퍽으로 0.4배여도 문턱(jumpSpeed)을 넘는 크기
+            float keepBl = limb.bleedAmount; float keepM = limb.muscleHealth, keepS = limb.skinHealth, keepB = body.brainHealth, keepC = body.consciousness;
+            float Drop(PerkState p) { float d = 0; WithPerks(p, () => { limb.muscleHealth = 100f; limb.ImpactDamage(F, Vector2.down); d = 100f - limb.muscleHealth; }); return d; }
+            float on = Drop(Plugin.Perks), off = Drop(new PerkState());
+            limb.muscleHealth = keepM; limb.skinHealth = keepS; body.brainHealth = keepB; body.consciousness = keepC; limb.pain = 0f; limb.bleedAmount = keepBl;
+            Check("impact x0.4 (fall perk 3)", off > 0f && Mathf.Abs(on / off - 0.4f) < 0.01f, $"muscle drop {on:0.00} vs {off:0.00}");
         }
 
         private void TestSubspace(Body body)

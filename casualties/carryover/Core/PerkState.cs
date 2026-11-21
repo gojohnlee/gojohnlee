@@ -15,7 +15,7 @@ namespace Carryover.Core
 
     /// <summary>
     /// 영구 퍽: 한 번 산 단계는 모든 회차에 계속 적용. 포인트는 셈하는 회차가 끝날 때(죽음·엔딩) 성과로 받고, 캐릭터 선택 화면에서 쓴다. 안 쓴 포인트는 남는다.
-    /// 값 맞추기: 전부 사는 데 70점(아공간 10단계 40점), 한 회차 최대 6점(보통 2~4점) → 전부 사려면 대략 12~25회차.
+    /// 값 맞추기: 전부 사는 데 85점(아공간 10단계 40점), 한 회차 최대 6점(보통 2~4점) → 전부 사려면 대략 15~30회차.
     /// </summary>
     public sealed class PerkState
     {
@@ -26,6 +26,8 @@ namespace Carryover.Core
             new PerkDef("crafting", "숙련 제작", "제작할 때 지능 +1로 침 (실패·품질 저하 줄어듦)", 1, 2, 3),
             new PerkDef("traps", "함정 감지", "가까운 함정 표시 (반경 6 → 10 → 15)", 2, 3, 4),
             new PerkDef("xp", "경험치 증가", "경험치 획득 +10%", 2, 3, 4),
+            new PerkDef("mining", "광부", "벽·바위를 칠 때 피해 +25%", 1, 2, 3),
+            new PerkDef("fall", "튼튼한 다리", "떨어지거나 부딪힐 때 받는 충격 -20%", 2, 3, 4),
         };
 
         public const int MaxPointsPerRun = 6;
@@ -59,6 +61,8 @@ namespace Carryover.Core
         public float TrapRadius => TrapRadii[Level("traps")];
         public static readonly float[] TrapRadii = { 0f, 6f, 10f, 15f };
         public float XpMult => 1f + 0.10f * Level("xp");                // 3단계 ×1.3
+        public float MiningMult => 1f + 0.25f * Level("mining");        // 3단계 ×1.75
+        public float ImpactMult => 1f - 0.20f * Level("fall");          // 3단계 ×0.4
 
         // ---- 포인트 ----
         /// <summary>회차 성과 → 포인트: 15분마다 1 + 새로 얻은 능력치 3마다 1 + 도달한 층 2마다 1, 최대 6. 3분 안에 끝나면 0.</summary>
