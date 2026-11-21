@@ -9,14 +9,14 @@ public class PerkStateTests
     public void Award_Rules()
     {
         Assert.Equal(0, PerkState.Award(179f, 30, 10));    // 3분 안: 0
-        Assert.Equal(0, PerkState.Award(600f, 2, 1));      // 10분, 능력치 2, 1층
+        Assert.Equal(0, PerkState.Award(599f, 2, 1));      // 10분 안, 능력치 2, 1층
         Assert.Equal(6, PerkState.Award(7200f, 30, 10));   // 상한 6
     }
 
     [Fact]
     public void Award_Example()
     {
-        Assert.Equal(4, PerkState.Award(1800f, 3, 2));
+        Assert.Equal(5, PerkState.Award(1800f, 3, 2));   // 30분 3 + 능력치 1 + 층 1
     }
 
     [Fact]
@@ -24,13 +24,13 @@ public class PerkStateTests
     {
         var s = new PerkState();
         s.OnNewRun();
-        Assert.Equal(2, s.OnRunEnd(1800f, 0, 0));
-        Assert.Equal(1, s.OnRunEnd(2700f, 0, 0));   // 되살아나 더 버팀
-        Assert.Equal(0, s.OnRunEnd(2700f, 0, 0));
-        Assert.Equal(3, s.Points);
+        Assert.Equal(3, s.OnRunEnd(1800f, 0, 0));
+        Assert.Equal(1, s.OnRunEnd(2400f, 0, 0));   // 되살아나 더 버팀
+        Assert.Equal(0, s.OnRunEnd(2400f, 0, 0));
+        Assert.Equal(4, s.Points);
         s.OnNewRun();
-        Assert.Equal(2, s.OnRunEnd(1800f, 0, 0));    // 새 회차는 다시 받음
-        Assert.Equal(5, s.Points);
+        Assert.Equal(3, s.OnRunEnd(1800f, 0, 0));    // 새 회차는 다시 받음
+        Assert.Equal(7, s.Points);
     }
 
     [Fact]

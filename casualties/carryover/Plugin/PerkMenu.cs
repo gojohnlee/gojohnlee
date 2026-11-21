@@ -78,7 +78,7 @@ namespace CasualtiesCarryover
                     GUILayout.EndHorizontal();
                     GUILayout.Space(4);
                 }
-                GUILayout.Label("포인트는 죽거나 엔딩을 볼 때 받습니다: 15분 버틸 때마다 1, 새로 얻은 능력치 3마다 1, 도달한 층 2마다 1 (한 회차 최대 6, 3분 안에 끝나면 0).", small);
+                GUILayout.Label("포인트는 죽거나 엔딩을 볼 때 받습니다: 10분 버틸 때마다 1, 새로 얻은 능력치 3마다 1, 도달한 층 2마다 1 (한 회차 최대 6, 3분 안에 끝나면 0).", small);
                 GUILayout.EndArea();
             }
             GUI.matrix = m;

@@ -67,11 +67,11 @@ namespace Carryover.Core
         public float TempDriftMult => 1f - 0.20f * Level("temp");       // 3단계 ×0.4 (단열 ×2.5)
 
         // ---- 포인트 ----
-        /// <summary>회차 성과 → 포인트: 15분마다 1 + 새로 얻은 능력치 3마다 1 + 도달한 층 2마다 1, 최대 6. 3분 안에 끝나면 0.</summary>
+        /// <summary>회차 성과 → 포인트: 10분마다 1 + 새로 얻은 능력치 3마다 1 + 도달한 층 2마다 1, 최대 6. 3분 안에 끝나면 0.</summary>
         public static int Award(float runSeconds, int gainedLevels, int depthReached)
         {
             if (runSeconds < MinRunSeconds) return 0;
-            int p = (int)(runSeconds / 900f) + Math.Max(0, gainedLevels) / 3 + Math.Max(0, depthReached) / 2;
+            int p = (int)(runSeconds / 600f) + Math.Max(0, gainedLevels) / 3 + Math.Max(0, depthReached) / 2;
             return Math.Min(MaxPointsPerRun, p);
         }
 
