@@ -97,7 +97,7 @@ namespace CasualtiesCarryover
                     break;
                 case 2:
                     if (Since < 4f) return;
-                    TestXp(body); TestLockpick(); TestCraft(body); TestTrapsScan(body); TestMining(body); TestImpact(body); TestSubspace(body);
+                    TestXp(body); TestLockpick(); TestCraft(body); TestTrapsScan(body); TestMining(body); TestImpact(body); TestTemp(body); TestSoundCannon(body); TestSubspace(body);
                     Next(3);
                     break;
                 case 3:
@@ -233,6 +233,30 @@ namespace CasualtiesCarryover
             float on = Drop(Plugin.Perks), off = Drop(new PerkState());
             limb.muscleHealth = keepM; limb.skinHealth = keepS; body.brainHealth = keepB; body.consciousness = keepC; limb.pain = 0f; limb.bleedAmount = keepBl;
             Check("impact x0.4 (fall perk 3)", off > 0f && Mathf.Abs(on / off - 0.4f) < 0.01f, $"muscle drop {on:0.00} vs {off:0.00}");
+        }
+
+        private void TestTemp(Body body)
+        {
+            // 체온이 바깥 온도로 끌려가는 속도 = baseTemperatureLerpRate / GetTotalInsulation → 3단계면 단열 2.5배(속도 0.4배)
+            float on = body.GetTotalInsulation(), off = 0f;
+            WithPerks(new PerkState(), () => off = body.GetTotalInsulation());
+            Check("temperature drift x0.4 (insulation x2.5)", off > 0f && Mathf.Abs(off / on - 0.4f) < 0.01f, $"insulation {on:0.00} vs {off:0.00}");
+        }
+
+        private void TestSoundCannon(Body body)
+        {
+            // 음파 대포(황무지)·포탑·천장 포탑도 함정 감지에 잡히는지: 몸 옆에 만들어 탐색하고 바로 지운다(쏘기 전에)
+            foreach (var id in new[] { "turret", "ceilingturret" })
+            {
+                var t = (GameObject)Instantiate(Resources.Load(id), body.transform.position + new Vector3(-4f, 1f), Quaternion.identity);
+                bool s = RunHud.Scan(body, Plugin.Perks.TrapRadius).Contains(t.transform);
+                DestroyImmediate(t);
+                Check(id + " sensed by trap perk", s, $"seen {s}");
+            }
+            var go = (GameObject)Instantiate(Resources.Load("soundcannon"), body.transform.position + new Vector3(4f, 1f), Quaternion.identity);
+            bool seen = RunHud.Scan(body, Plugin.Perks.TrapRadius).Contains(go.transform);
+            DestroyImmediate(go);
+            Check("sound cannon sensed by trap perk", seen, $"seen {seen}");
         }
 
         private void TestSubspace(Body body)

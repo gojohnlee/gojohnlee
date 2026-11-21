@@ -6,14 +6,14 @@ namespace CasualtiesCarryover
 {
     /// <summary>
     /// 회차 중 화면: 함정 감지 표시(가까운 함정 위에 빨간 네모 "!"와 "함정" 글자, 왼쪽 위에 "근처 함정 N개")와 아공간(V로 게임 가방 창을 열어 끌어다 넣고 뺌, 왼쪽 위에 목록).
-    /// 함정 종류(디컴파일로 확인한 클래스): BearTrap(덫)·FanTrap(선풍기)·MineScript(지뢰)·GunmineScript(총 지뢰)·SpikeStabberScript(가시 찌르개)·BarbedFence(철조망)·CaveTicks(동굴 진드기).
+    /// 함정 종류(디컴파일로 확인한 클래스): BearTrap(덫)·FanTrap(선풍기)·MineScript(지뢰)·GunmineScript(총 지뢰)·SpikeStabberScript(가시 찌르개)·BarbedFence(철조망)·CaveTicks(동굴 진드기)·SoundCannon(음파 대포)·TurretScript(포탑)·CeilingTurret(천장 포탑).
     /// </summary>
     internal class RunHud : MonoBehaviour
     {
         internal static readonly Type[] TrapTypes =
         {
             typeof(BearTrap), typeof(FanTrap), typeof(MineScript), typeof(GunmineScript),
-            typeof(SpikeStabberScript), typeof(BarbedFence), typeof(CaveTicks),
+            typeof(SpikeStabberScript), typeof(BarbedFence), typeof(CaveTicks), typeof(SoundCannon), typeof(TurretScript), typeof(CeilingTurret),
         };
 
         internal static readonly List<Transform> Sensed = new List<Transform>();
