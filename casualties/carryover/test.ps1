@@ -43,6 +43,7 @@ $env:CU_CARRYOVER_RESULT = $result
 $env:CU_CARRYOVER_PERKS = Join-Path $work 'perks.txt'
 $env:CU_CARRYOVER_SHOT = Join-Path $work 'perkmenu.png'
 $env:CU_CARRYOVER_SUBSPACE = Join-Path $work 'subspace.json'
+Remove-Item $env:CU_CARRYOVER_SUBSPACE -ErrorAction SilentlyContinue   # 지난 시험 아공간 물건이 새 회차로 넘어오지 않게
 Add-Type -Namespace CU -Name HiddenDesk -MemberDefinition @'
 [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern System.IntPtr CreateDesktop(string name, System.IntPtr dev, System.IntPtr mode, int flags, uint access, System.IntPtr sa);
 [DllImport("user32.dll")] public static extern bool CloseDesktop(System.IntPtr h);

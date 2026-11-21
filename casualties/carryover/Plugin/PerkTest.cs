@@ -134,12 +134,14 @@ namespace CasualtiesCarryover
                     bool[] seenEach = traps.Select(g => g != null && RunHud.Sensed.Contains(g.transform)).ToArray();
                     Check("trap HUD marks (level 3: 3·8 marked, 30 not)", seenEach[0] && seenEach[1] && !seenEach[2], string.Join(",", seenEach));
                     foreach (var g in traps) if (g != null) Destroy(g);
+                    Subspace.Put(body, Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>());   // 죽을 때 아공간에 붕대 1개
                     Note("kill"); body.brainHealth = 0f; Next(4);
                     break;
                 case 4:
                     if (added >= 0 && Since > 2f)
                     {
-                        Check("subspace emptied on death", Subspace.Items.Count == 0 && !File.Exists(Subspace.FilePath), $"{Subspace.Items.Count} items, file {File.Exists(Subspace.FilePath)}");
+                        string kept = File.Exists(Subspace.FilePath) ? File.ReadAllText(Subspace.FilePath) : "";
+                        Check("subspace kept after death (saved for next run)", Subspace.Bag == null && kept.Contains("bandage"), $"bag {(Subspace.Bag == null ? "gone" : "still")}, file {kept.Length} chars");
                         Check("short run +0 points", added == 0 && Plugin.Perks.Points == 5, $"+{added}, total {Plugin.Perks.Points}");
                         Finish(null);
                     }

@@ -78,7 +78,7 @@ namespace CasualtiesCarryover
                     if (pre == null || Since < 3f) return;
                     var txt = pre.charSelectStats != null ? pre.charSelectStats.text : "(none)";
                     Note("menu stats text: " + txt.Replace("\n", " | "));
-                    sawPending = txt.Contains("(+");
+                    sawPending = base1 != null && txt.Contains($"[STR] {base1[0] + 3} (+3)") && txt.Contains($"[INT] {base1[2] + 3} (+3)");   // 능력치 유지: 3회차도 +3 그대로
                     Finish(null);
                     break;
             }
@@ -136,7 +136,7 @@ namespace CasualtiesCarryover
                 && start2[0] == base1[0] + 3 && start2[1] == base1[1] + 3 && start2[2] == base1[2] + 3
                 && gain2[0] == 0 && gain2[1] == 0 && gain2[2] == 0
                 && Plugin.State.Pending[0] + Plugin.State.Pending[1] + Plugin.State.Pending[2] == 0
-                && !sawPending;
+                && sawPending;
             var r = new StringBuilder();
             r.Append(ok ? "PASS\n" : "FAIL " + (error ?? "") + "\n");
             r.Append($"run1 start {F(start1)} gain {F(gain1)}\nrun2 start {F(start2)} gain {F(gain2)}\nnext bonus {Plugin.Fmt(Plugin.State.Pending)}\n");

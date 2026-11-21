@@ -20,16 +20,16 @@ public class CarryoverStateTests
         Assert.Equal(new[] { 3, 3, 3 }, s.OnRunEnd(new[] { 12, 11, 10 }));
         Assert.Equal(new[] { 12, 11, 10 }, s.OnNewRun(Base));                // 2회차: +3 +3 +3
         Assert.Equal(new[] { 0, 0, 0 }, s.OnRunEnd(new[] { 12, 11, 10 }));  // 바로 죽음: 물려받은 건 얻은 양 아님
-        Assert.Equal(new[] { 9, 8, 7 }, s.OnNewRun(Base));                   // 3회차: +0
+        Assert.Equal(new[] { 12, 11, 10 }, s.OnNewRun(Base));                // 3회차: 능력치 유지(사용자 11-21), 얻은 양은 0
     }
 
     [Fact]
-    public void NotCumulative_OnlyLastRunGain()
+    public void KeepsAllStats_FromLastRun()
     {
         var s = new CarryoverState();
         s.OnNewRun(Base); s.OnRunEnd(new[] { 12, 11, 10 });   // +3 +3 +3
         s.OnNewRun(Base); s.OnRunEnd(new[] { 13, 11, 10 });   // 12→13: +1 0 0
-        Assert.Equal(new[] { 10, 8, 7 }, s.OnNewRun(Base));
+        Assert.Equal(new[] { 13, 11, 10 }, s.OnNewRun(Base));   // 지난 회차 끝 능력치 그대로
     }
 
     [Fact]
@@ -97,5 +97,20 @@ public class CarryoverStateTests
         Assert.Equal(new[] { 0, 0, 0 }, bad.Start);
         Assert.True(bad.RunActive);
         Assert.False(CarryoverState.Parse(null).RunActive);
+    }
+
+    [Fact]
+    public void Keep_HigherBaseWins_RaiseLoaded_AndRoundTrip()
+    {
+        var s = new CarryoverState();
+        s.OnNewRun(Base); s.OnRunEnd(new[] { 15, 15, 15 });
+        Assert.Equal(new[] { 16, 15, 15 }, s.OnNewRun(new[] { 16, 8, 7 }));   // 기본값이 더 크면 기본값
+        Assert.Equal(new[] { 1, 7, 8 }, s.BonusOver(new[] { 14, 8, 7 }));
+        var t = CarryoverState.Parse(s.Serialize());
+        Assert.Equal(new[] { 15, 15, 15 }, t.Kept);
+        t.Start = new[] { 10, 8, 9 };
+        Assert.Equal(new[] { 15, 15, 15 }, t.RaiseToKept(new[] { 10, 8, 9 }));  // 유지 전에 시작한 회차를 올림
+        Assert.Equal(new[] { 15, 15, 15 }, t.Start);                             // 올린 만큼 시작 값도 → 얻은 양 0
+        Assert.Equal(new[] { 0, 0, 0 }, t.OnRunEnd(new[] { 15, 15, 15 }));
     }
 }

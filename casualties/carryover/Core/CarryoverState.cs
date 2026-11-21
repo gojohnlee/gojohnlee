@@ -18,6 +18,9 @@ namespace Carryover.Core
         /// <summary>다음 새 회차에 줄 보너스(= 마지막으로 끝난 회차에서 얻은 양).</summary>
         public int[] Pending = new int[StatCount];
 
+        /// <summary>마지막으로 끝난 회차의 끝 능력치. 다음 회차는 적어도 이 값으로 시작한다(사용자 11-21: 능력치 유지). 0이면 옛 파일 → Pending 방식.</summary>
+        public int[] Kept = new int[StatCount];
+
         /// <summary>셈하는 회차가 진행 중인가(튜토리얼은 아님).</summary>
         public bool RunActive;
 
@@ -28,7 +31,7 @@ namespace Carryover.Core
             Check(baseLevels);
             var levels = new int[StatCount];
             for (int i = 0; i < StatCount; i++)
-                levels[i] = Math.Max(0, baseLevels[i] + Pending[i]);
+                levels[i] = Math.Max(0, HasKept ? Math.Max(baseLevels[i], Kept[i]) : baseLevels[i] + Pending[i]);
             Array.Copy(levels, Start, StatCount);
             RunActive = true;
             return levels;
@@ -54,9 +57,30 @@ namespace Carryover.Core
             if (!RunActive) return null;
             var gain = Gain(Start, endLevels);
             Array.Copy(gain, Pending, StatCount);
+            Array.Copy(endLevels, Kept, StatCount);
             return gain;
         }
 
+
+        public bool HasKept => Kept[0] + Kept[1] + Kept[2] > 0;
+
+        /// <summary>다음 새 회차에 기본값 위로 더해질 양(캐릭터 선택 화면 표시용).</summary>
+        public int[] BonusOver(int[] baseLevels)
+        {
+            var b = new int[StatCount];
+            for (int i = 0; i < StatCount; i++) b[i] = HasKept ? Math.Max(0, Kept[i] - baseLevels[i]) : Pending[i];
+            return b;
+        }
+
+        /// <summary>이어 하는 회차가 유지 값보다 낮으면 올린다(유지 규칙 전에 시작한 회차). 올린 값은 시작 값에도 반영해 포인트 셈이 늘지 않게.</summary>
+        public int[] RaiseToKept(int[] levels)
+        {
+            Check(levels);
+            var r = (int[])levels.Clone();
+            if (!HasKept) return r;
+            for (int i = 0; i < StatCount; i++) if (r[i] < Kept[i]) { Start[i] += Kept[i] - r[i]; r[i] = Kept[i]; }
+            return r;
+        }
         public static int[] Gain(int[] start, int[] end)
         {
             Check(start); Check(end);
@@ -73,6 +97,7 @@ namespace Carryover.Core
             sb.Append("runActive=").Append(RunActive ? "1" : "0").Append('\n');
             sb.Append("start=").Append(Join(Start)).Append('\n');
             sb.Append("pending=").Append(Join(Pending)).Append('\n');
+            sb.Append("kept=").Append(Join(Kept)).Append('\n');
             return sb.ToString();
         }
 
@@ -92,6 +117,7 @@ namespace Carryover.Core
                     case "runActive": s.RunActive = val == "1"; break;
                     case "start": TrySplit(val, s.Start); break;
                     case "pending": TrySplit(val, s.Pending); break;
+                    case "kept": TrySplit(val, s.Kept); break;
                 }
             }
             return s;

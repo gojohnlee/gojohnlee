@@ -91,6 +91,22 @@ namespace CasualtiesCarryover
             return it.transform.parent == Bag.transform;
         }
 
+        /// <summary>회차가 끝남(죽음·엔딩): 안의 물건을 파일에 적고 가방만 없앤다 → 다음 회차 시작 때 되살린다(사용자 11-21: 아공간 유지).</summary>
+        internal static void EndRun()
+        {
+            try { if (Bag != null) SaveToFile(); } catch (Exception e) { Plugin.Log.LogError("subspace keep: " + e); }
+            DropBag();
+        }
+
+        /// <summary>가방만 없앤다(파일은 그대로).</summary>
+        internal static void DropBag()
+        {
+            var pc = PlayerCamera.main;
+            if (pc != null && Bag != null && pc.currentContainer == Bag) pc.CloseContainer();
+            if (Bag != null) UnityEngine.Object.Destroy(Bag.gameObject);
+            Bag = null;
+        }
+
         /// <summary>회차가 끝남(죽음·엔딩)·새 회차·튜토리얼: 가방과 안의 물건을 없애고 저장 파일도 지운다.</summary>
         internal static void Clear()
         {
@@ -140,6 +156,7 @@ namespace CasualtiesCarryover
 
         internal static void SaveToFile()
         {
+            if (Bag == null) return;   // 가방이 없을 때(죽은 뒤 등) 저장이 유지 파일을 지우지 않게
             var items = Items;
             if (items.Count == 0) { try { if (File.Exists(FilePath)) File.Delete(FilePath); } catch { } return; }
             var arr = new JArray();

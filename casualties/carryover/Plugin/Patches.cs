@@ -26,12 +26,14 @@ namespace CasualtiesCarryover
                 if (WorldGeneration.runSettings == null)
                 {
                     Plugin.State.OnUncountedRun();
-                    Subspace.Clear();
+                    Subspace.DropBag();
                     Plugin.Log.LogInfo("tutorial run: not counted");
                 }
                 else if (SaveSystem.loadedRun)
                 {
                     Plugin.State.OnLoadedRun(Levels(sk));
+                    var up = Plugin.State.RaiseToKept(Levels(sk));   // 유지 규칙 전에 시작한 회차도 지난 끝 능력치까지
+                    if (up[0] != sk.STR || up[1] != sk.RES || up[2] != sk.INT) { sk.STR = up[0]; sk.RES = up[1]; sk.INT = up[2]; sk.UpdateExpBoundaries(); sk.expSTR = sk.minSTR; sk.expRES = sk.minRES; sk.expINT = sk.minINT; Plugin.Log.LogInfo($"loaded run raised to kept {Plugin.Fmt(up)}"); }
                     Plugin.Log.LogInfo($"loaded run: start stays {Plugin.Fmt(Plugin.State.Start)}");
                     Subspace.Bag = null;   // 이전 씬의 가방은 씬과 함께 사라졌다
                     Subspace.RestoreFromFile(body);
@@ -39,7 +41,7 @@ namespace CasualtiesCarryover
                 else
                 {
                     var before = Levels(sk);
-                    var bonus = (int[])Plugin.State.Pending.Clone();
+                    var bonus = Plugin.State.BonusOver(Levels(sk));
                     var lv = Plugin.State.OnNewRun(before);
                     sk.STR = lv[0]; sk.RES = lv[1]; sk.INT = lv[2];
                     sk.UpdateExpBoundaries();
@@ -51,8 +53,9 @@ namespace CasualtiesCarryover
                     }
                     Plugin.Perks.OnNewRun();
                     Plugin.SavePerks();
-                    Subspace.Clear();
+                    Subspace.DropBag();
                     Subspace.EnsureBag(body);
+                    Subspace.RestoreFromFile(body);   // 지난 회차 아공간 물건
                 }
                 Plugin.SaveState();
                 SelfTest.OnRunStarted(Levels(sk));
@@ -67,7 +70,7 @@ namespace CasualtiesCarryover
         {
             try
             {
-                Subspace.Clear();   // 죽음·엔딩: 아공간 물건도 사라짐
+                Subspace.EndRun();   // 죽음·엔딩: 아공간 물건은 다음 회차로
                 var sk = __instance.body != null ? __instance.body.skills : null;
                 if (sk == null) return;
                 var gain = Plugin.State.OnRunEnd(Levels(sk));
@@ -91,9 +94,9 @@ namespace CasualtiesCarryover
         {
             try
             {
-                var p = Plugin.State.Pending;
-                if (__instance.charSelectStats == null || p[0] + p[1] + p[2] == 0) return;
                 var b = Skills.BaseSkills(PreRunScript.characterSelected);
+                var p = Plugin.State.BonusOver(new[] { b[0], b[1], b[2] });
+                if (__instance.charSelectStats == null || p[0] + p[1] + p[2] == 0) return;
                 string[] n = { "STR", "RES", "INT" };
                 var t = "";
                 for (int i = 0; i < 3; i++) t += $"[{n[i]}] {b[i] + p[i]}" + (p[i] > 0 ? $" (+{p[i]})" : "") + "\n";
