@@ -210,6 +210,7 @@ namespace CasualtiesCarryover
             // 게임 가방 창으로 끌어다 넣는 것과 같은 길(Container.LoadItem → CanHoldItem)로 넣는다
             var results = new List<bool>();
             int cap = Subspace.Capacity;
+            float enc0 = body.GetTotalEncumberance();
             for (int n = 0; n <= cap; n++)
             {
                 var it = Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>();
@@ -217,8 +218,7 @@ namespace CasualtiesCarryover
                 results.Add(put);
                 if (!put) Destroy(it.gameObject);
             }
-            var inv = body.GetAllItemsThorough();
-            bool weightless = !inv.Any(i => i == Subspace.Bag.GetComponent<Item>() || Subspace.Items.Contains(i));
+            bool weightless = Mathf.Abs(body.GetTotalEncumberance() - enc0) < 0.001f;
             bool notWorn = !body.GetAllWearables().Contains(Subspace.Bag.GetComponent<Item>());
             Check($"subspace bag holds {cap}, next refused, not in inventory/wear slots (no weight)",
                 cap == 10 && results.Take(cap).All(b => b) && !results[cap] && weightless && notWorn, $"{string.Join(",", results)}, weightless {weightless}, not worn {notWorn}");
@@ -233,7 +233,19 @@ namespace CasualtiesCarryover
             Check("take out (Container.UnloadItem)", Subspace.Items.Count == Subspace.Capacity - 1 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
             Destroy(first.gameObject);
 
-            Subspace.Toggle(body);                  // V: 게임 가방 창 열기 — 다음 단계에서 열려 있는지 본다
+            // 아공간 물건도 가진 물건으로: 자물쇠 키트(FindByIdThorough)·제작 재료와 액체 결과 담기(GetAllItemsThorough)
+            foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
+            var kit = Utils.Create("lockpickingkit", body.transform.position, 0f).GetComponent<Item>();
+            bool kitIn = Subspace.Put(body, kit);
+            bool kitFound = body.FindByIdThorough("lockpickingkit", out var foundKit) && foundKit == kit;
+            var all = body.GetAllItemsThorough();
+            bool bagNotListed = !all.Contains(Subspace.Bag.GetComponent<Item>());
+            Check("subspace items count as carried (lockpick kit found, crafting list has them, bag itself not)",
+                kitIn && kitFound && all.Contains(kit) && bagNotListed && Mathf.Abs(body.GetTotalEncumberance() - enc0) < 0.001f,
+                $"put {kitIn}, found {kitFound}, listed {all.Contains(kit)}, bag not listed {bagNotListed}");
+            DestroyImmediate(kit.gameObject);
+
+            Subspace.Toggle(body);                 // V: 게임 가방 창 열기 — 다음 단계에서 열려 있는지 본다
         }
 
         private void CheckPanel()

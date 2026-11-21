@@ -113,6 +113,20 @@ namespace CasualtiesCarryover
             }
         }
 
+        /// <summary>
+        /// 아공간 물건도 "가진 물건"으로 친다(사용자 11-21: 아공간 물통에 제작 액체가 안 들어감, 아공간 자물쇠 키트를 못 씀).
+        /// 게임 근거: 제작 재료(GetItemsForRecipe)·액체 결과 담기(RecipeResult.SpawnResult)·자물쇠 키트(FindByIdThorough)·FindByTagThorough가
+        /// 모두 Body.GetAllItemsThorough를 쓴다. 무게(GetTotalEncumberance)는 손·착용 칸만 세므로 이 패치와 상관없이 0 그대로.
+        /// 가방 자체는 넣지 않는다(재료로 써 없어지면 안 됨).
+        /// </summary>
+        [HarmonyPatch(typeof(Body), nameof(Body.GetAllItemsThorough))]
+        [HarmonyPostfix]
+        private static void ThoroughPostfix(Body __instance, List<Item> __result)
+        {
+            if (Bag == null || __result == null || PlayerCamera.main == null || __instance != PlayerCamera.main.body) return;
+            foreach (var it in Items) if (it != null && !__result.Contains(it)) __result.Add(it);
+        }
+
         // ---- 저장하고 나가기 / 이어하기 ----
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
