@@ -10,7 +10,7 @@ public class PerkStateTests
     {
         Assert.Equal(0, PerkState.Award(179f, 30, 10));    // 3분 안: 0
         Assert.Equal(0, PerkState.Award(599f, 2, 1));      // 10분 안, 능력치 2, 1층
-        Assert.Equal(6, PerkState.Award(7200f, 30, 10));   // 상한 6
+        Assert.Equal(27, PerkState.Award(7200f, 30, 10));  // 상한 없음: 시간 12 + 능력치 10 + 층 5
     }
 
     [Fact]

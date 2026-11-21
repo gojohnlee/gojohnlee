@@ -31,7 +31,6 @@ namespace Carryover.Core
             new PerkDef("temp", "온도 적응력", "바깥 온도에 체온이 끌려가는 속도 -20%", 2, 3, 4),
         };
 
-        public const int MaxPointsPerRun = 6;
         public const float MinRunSeconds = 180f;   // 3분 안에 끝난 회차는 0점(바로 죽어 모으기 막기)
 
         public int Points;
@@ -67,12 +66,12 @@ namespace Carryover.Core
         public float TempDriftMult => 1f - 0.20f * Level("temp");       // 3단계 ×0.4 (단열 ×2.5)
 
         // ---- 포인트 ----
-        /// <summary>회차 성과 → 포인트: 10분마다 1 + 새로 얻은 능력치 3마다 1 + 도달한 층 2마다 1, 최대 6. 3분 안에 끝나면 0.</summary>
+        /// <summary>회차 성과 → 포인트: 10분마다 1 + 새로 얻은 능력치 3마다 1 + 도달한 층 2마다 1 (상한 없음, 사용자 11-21). 3분 안에 끝나면 0.</summary>
         public static int Award(float runSeconds, int gainedLevels, int depthReached)
         {
             if (runSeconds < MinRunSeconds) return 0;
             int p = (int)(runSeconds / 600f) + Math.Max(0, gainedLevels) / 3 + Math.Max(0, depthReached) / 2;
-            return Math.Min(MaxPointsPerRun, p);
+            return p;
         }
 
         /// <summary>새 회차 시작: 이번 회차 지급 기록을 비운다.</summary>
