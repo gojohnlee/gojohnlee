@@ -127,6 +127,14 @@ namespace CasualtiesCarryover
             foreach (var it in Items) if (it != null && !__result.Contains(it)) __result.Add(it);
         }
 
+        /// <summary>
+        /// 아공간 안은 시간이 멈춘다(사용자 11-21: 로프·잎·음식 유통기한). 게임 Item.Update → HandleDecay가 매 프레임
+        /// condition -= rotSpeed × decayMultiplier × (젖음 6배) × globalDecayRate × dt (배터리 물건은 충전량을 깎음) → 아공간 가방 바로 안 물건이면 건너뛴다.
+        /// </summary>
+        [HarmonyPatch(typeof(Item), nameof(Item.HandleDecay))]
+        [HarmonyPrefix]
+        private static bool DecayPrefix(Item __instance) => Bag == null || __instance.transform.parent != Bag.transform;
+
         // ---- 저장하고 나가기 / 이어하기 ----
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 

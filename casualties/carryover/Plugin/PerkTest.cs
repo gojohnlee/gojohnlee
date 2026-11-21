@@ -211,7 +211,9 @@ namespace CasualtiesCarryover
             var w = WorldGeneration.world;
             var bp = w.WorldToBlockPos(body.transform.position);
             Vector2Int pos = bp; bool found = false;
-            for (int dy = 1; dy < 30 && !found; dy++) { pos = bp + new Vector2Int(0, -dy); found = w.GetBlock(pos) > 0; }
+            for (int r = 1; r < 30 && !found; r++)   // 가까운 단단한 칸(아래 먼저, 없으면 둘레) — 세계가 무작위라 바로 아래가 빌 수 있음
+                for (int dx = -r; dx <= r && !found; dx++)
+                    foreach (var dy in new[] { -r, r }) if (!found) { pos = bp + new Vector2Int(dx, dy); found = w.GetBlock(pos) > 0; }
             if (!found) { Check("mining x1.75 (player attack only)", false, "no block below"); return; }
             float Dmg() { var d = w.GetBlockDamage(pos); return d == null ? 0f : d.damage; }
             float a0 = Dmg();
@@ -259,6 +261,33 @@ namespace CasualtiesCarryover
             Check("sound cannon sensed by trap perk", seen, $"seen {seen}");
         }
 
+        /// <summary>물속에서: 아공간 병은 물을 안 받고, 밖에 둔 병은 받는다(게임 WaterContainerItem.Update는 가방 안 병을 건너뜀).</summary>
+        private System.Collections.IEnumerator BottleInWater(Body body)
+        {
+            Note("bottle coroutine running");
+            var inBag = Utils.Create("waterbottle", body.transform.position, 0f).GetComponent<WaterContainerItem>();
+            var outside = Utils.Create("waterbottle", body.transform.position, 0f).GetComponent<WaterContainerItem>();
+            inBag.DrainAll(); outside.DrainAll();
+            bool put = Subspace.Put(body, inBag.GetComponent<Item>());
+            float s0 = inBag.SpaceLeft, o0 = outside.SpaceLeft;
+            for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime)
+            {
+                Vector2 p = body.transform.position;
+                outside.transform.position = p;
+                var orb = outside.GetComponent<Item>().rb; if (orb != null) { orb.simulated = false; orb.velocity = Vector2.zero; }
+                // 몸 자리에 물을 두고 바로 게임의 병 Update(자동 채우기)를 부른다 — 물 시뮬이 물을 옮기기 전에
+                var upd = HarmonyLib.AccessTools.Method(typeof(WaterContainerItem), "Update");
+                FluidManager.main.SetLiquid(p, 1); upd.Invoke(outside, null);
+                FluidManager.main.SetLiquid(p, 1); upd.Invoke(inBag, null);
+                yield return null;
+            }
+            FluidManager.main.SetLiquid((Vector2)body.transform.position, 0);
+            bool bagDry = Mathf.Approximately(inBag.SpaceLeft, s0), outFilled = outside.SpaceLeft < o0;
+            Check("subspace bottle ignores water around (outside bottle fills)", put && bagDry && outFilled,
+                $"put {put}, bag space {s0:0}->{inBag.SpaceLeft:0}, outside space {o0:0}->{outside.SpaceLeft:0}");
+            Destroy(inBag.gameObject); Destroy(outside.gameObject); Note("bottle test end");
+        }
+
         private void TestSubspace(Body body)
         {
             // 게임 가방 창으로 끌어다 넣는 것과 같은 길(Container.LoadItem → CanHoldItem)로 넣는다
@@ -299,6 +328,17 @@ namespace CasualtiesCarryover
                 $"put {kitIn}, found {kitFound}, listed {all.Contains(kit)}, bag not listed {bagNotListed}");
             DestroyImmediate(kit.gameObject);
 
+            // 아공간 안은 썩지 않음: 같은 잎을 안·밖에 두고 HandleDecay를 여러 번 부른다
+            var leafIn = Utils.Create("foliage", body.transform.position, 0f).GetComponent<Item>();
+            var leafOut = Utils.Create("foliage", body.transform.position + Vector3.up, 0f).GetComponent<Item>();
+            bool leafPut = Subspace.Put(body, leafIn);
+            float li0 = leafIn.condition, lo0 = leafOut.condition;
+            for (int k = 0; k < 3000; k++) { leafIn.HandleDecay(); leafOut.HandleDecay(); }
+            Check("no decay inside subspace (outside leaf decays)", leafPut && leafIn.condition == li0 && leafOut.condition < lo0,
+                $"put {leafPut}, inside {li0:0.0000}->{leafIn.condition:0.0000}, outside {lo0:0.0000}->{leafOut.condition:0.0000}");
+            DestroyImmediate(leafIn.gameObject); DestroyImmediate(leafOut.gameObject);
+
+            StartCoroutine(BottleInWater(body));
             Subspace.Toggle(body);                 // V: 게임 가방 창 열기 — 다음 단계에서 열려 있는지 본다
         }
 
