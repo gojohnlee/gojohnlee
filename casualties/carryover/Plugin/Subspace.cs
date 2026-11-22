@@ -126,8 +126,10 @@ namespace CasualtiesCarryover
             if (item.GetComponent<Container>() != null) { __result = false; return; }
             var items = Items;
             if (items.Contains(item)) return;
-            int same = items.Count(i => i.id == item.id), kinds = items.Select(i => i.id).Distinct().Count();
-            if (!Carryover.Core.PerkState.SubspaceAccepts(kinds, same, Capacity)) __result = false;
+            string key = StackKey(item);
+            var groups = Groups(true);
+            int same = groups.Where(g => StackKey(g[0]) == key).Select(g => g.Count).FirstOrDefault();
+            if (!Carryover.Core.PerkState.SubspaceAccepts(groups.Count, same, Capacity)) __result = false;
         }
 
         /// <summary>
@@ -143,13 +145,13 @@ namespace CasualtiesCarryover
             {
                 __instance.ClearContainer();
                 int num = 0;
-                foreach (var g in Items.GroupBy(i => i.id))
+                foreach (var g in Groups(true))
                 {
                     var go = UnityEngine.Object.Instantiate(Resources.Load("ContainerItem"), __instance.contPopulate.transform) as GameObject;
                     go.GetComponent<RectTransform>().anchoredPosition = new Vector2(34.5f + (num % 3) * 66f, -34.5f - (num / 3) * 66f);
                     var b = go.GetComponent<InvButton>();
                     b.refItem = g.First(); b.UpdateRefs(); b.UpdateGraphic();
-                    int n = g.Count();
+                    int n = g.Count;
                     if (n > 1 && __instance.containerText != null)
                     {
                         var t = UnityEngine.Object.Instantiate(__instance.containerText.gameObject, go.transform).GetComponent<TMPro.TextMeshProUGUI>();
@@ -196,6 +198,30 @@ namespace CasualtiesCarryover
         // ---- 저장하고 나가기 / 이어하기 ----
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
+        /// <summary>
+        /// 같은 칸에 쌓을지 정하는 열쇠: id + 상태 %(반올림) + 게임 저장 대상(Saveable) 부품 값. 이름이 같아도 내용물이 다르면(소형 배럴·병의 액체, 배터리 등) 따로 칸(사용자 11-22).
+        /// </summary>
+        internal static string StackKey(Item it) => it.id + "|" + Mathf.RoundToInt(it.condition * 100f) + "|" + CompsJson(it);
+
+        internal static string CompsJson(Item it)
+        {
+            var comps = new Dictionary<Type, Component>();
+            foreach (var c in it.gameObject.GetComponents<Component>())
+                if (c != null && Attribute.GetCustomAttributes(c.GetType()).Any(a => a is Saveable)) comps[c.GetType()] = c;
+            return JsonConvert.SerializeObject(comps, Formatting.None, Settings);
+        }
+
+        private static List<List<Item>> groupCache; private static float groupTime; private static int groupCount = -1;
+        /// <summary>칸별 묶음(넣은 순서). 화면 표시는 0.5초 캐시, 넣기·가방 창은 fresh=true.</summary>
+        internal static List<List<Item>> Groups(bool fresh = false)
+        {
+            var items = Items;
+            if (!fresh && groupCache != null && groupCount == items.Count && Time.unscaledTime < groupTime) return groupCache;
+            groupCache = items.GroupBy(StackKey).Select(g => g.ToList()).ToList();
+            groupCount = items.Count; groupTime = Time.unscaledTime + 0.5f;
+            return groupCache;
+        }
+
         internal static void SaveToFile()
         {
             if (Bag == null) return;   // 가방이 없을 때(죽은 뒤 등) 저장이 유지 파일을 지우지 않게
@@ -204,14 +230,11 @@ namespace CasualtiesCarryover
             var arr = new JArray();
             foreach (var it in items)
             {
-                var comps = new Dictionary<Type, Component>();
-                foreach (var c in it.gameObject.GetComponents<Component>())
-                    if (c != null && Attribute.GetCustomAttributes(c.GetType()).Any(a => a is Saveable)) comps[c.GetType()] = c;
                 arr.Add(new JObject
                 {
                     ["id"] = it.id, ["condition"] = it.condition, ["favourited"] = it.favourited,
                     ["label"] = it.label, ["swatch"] = it.colorSwatch,
-                    ["components"] = JObject.Parse(JsonConvert.SerializeObject(comps, Formatting.None, Settings)),
+                    ["components"] = JObject.Parse(CompsJson(it)),
                 });
             }
             File.WriteAllText(FilePath, arr.ToString(Formatting.None));

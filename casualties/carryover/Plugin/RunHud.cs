@@ -96,9 +96,9 @@ namespace CasualtiesCarryover
             int cap = Subspace.Capacity;
             if (cap > 0)
             {
-                var groups = Subspace.Items.Where(i => i != null).GroupBy(i => i.id).ToList();
+                var groups = Subspace.Groups();
                 var s = $"아공간 {groups.Count}/{cap}칸  (V: 아공간 가방 열기)";
-                foreach (var g in groups) s += "\n · " + Subspace.Name(g.First()) + (g.Count() > 1 ? $" ×{g.Count()}" : "");
+                foreach (var g in groups) s += "\n · " + Subspace.Name(g[0]) + (g.Count > 1 ? $" ×{g.Count}" : "");
                 GUI.Label(new Rect(14, 120, 420, 24 + 20 * groups.Count), s, hud);
             }
         }

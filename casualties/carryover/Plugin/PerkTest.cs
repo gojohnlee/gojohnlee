@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -330,6 +330,22 @@ namespace CasualtiesCarryover
                 var labels = pc.containerUnloadButtons.Select(g => g.GetComponentsInChildren<TMPro.TextMeshProUGUI>().FirstOrDefault(t => t.name == "CarryoverStackCount")).Where(t => t != null).Select(t => t.text).ToList();
                 Check("bag window groups same items (3 buttons, ×51)", pc.containerUnloadButtons.Count == 3 && labels.Contains("×51"), $"{pc.containerUnloadButtons.Count} buttons, labels {string.Join(",", labels)}, info {pc.containerText.text}");
                 pc.CloseContainer();
+
+                // 이름이 같아도 내용물이 다르면 따로 칸(사용자 11-22: 소형 드럼통): 물 든 것, 연료 든 것, 빈 것 2개 → 3칸(빈 것 2개는 한 칸)
+                small.Levels[PerkState.IndexOf("subspace")] = 6;
+                var barrels = new List<Item>();
+                foreach (var liq in new[] { "water", "blood", null, null })
+                {
+                    var w = Utils.Create("minibarrel", body.transform.position, 0f).GetComponent<WaterContainerItem>();
+                    w.DrainAll(); if (liq != null) w.AddLiquid(liq, 100f);
+                    barrels.Add(w.GetComponent<Item>());
+                }
+                bool allIn = barrels.All(i => Subspace.Put(body, i));
+                var bg = Subspace.Groups(true).Where(g => g[0].id == "minibarrel").Select(g => g.Count).ToList();
+                Check("same-name containers with different contents stay apart (minibarrel water / blood / 2 empty)", allIn && bg.Count == 3 && bg.Contains(2),
+                    $"put {allIn}, groups {string.Join(",", bg)}");
+                foreach (var i in barrels) DestroyImmediate(i.gameObject);
+                small.Levels[PerkState.IndexOf("subspace")] = 3;
 
                 Subspace.SaveToFile();
                 foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
