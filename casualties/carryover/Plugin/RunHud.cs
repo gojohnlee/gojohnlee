@@ -96,12 +96,12 @@ namespace CasualtiesCarryover
             int cap = Subspace.Capacity;
             if (cap > 0)
             {
-                var items = Subspace.Items;
+                var groups = Subspace.Groups();
                 float w = Subspace.Bag != null ? Subspace.Bag.GetHoldingWeight() : 0f;
                 var s = $"아공간 {w:0.##}/{Subspace.MaxWeight:0.##}u  (V: 아공간 가방 열기)";
-                int lines = Mathf.Min(items.Count, 8);
-                for (int i = 0; i < lines; i++) s += "\n · " + Subspace.Name(items[i]);
-                if (items.Count > lines) { s += $"\n · 외 {items.Count - lines}개"; lines++; }
+                int lines = Mathf.Min(groups.Count, 8);
+                for (int i = 0; i < lines; i++) s += "\n · " + Subspace.Name(groups[i][0]) + (groups[i].Count > 1 ? $" x{groups[i].Count}" : "");
+                if (groups.Count > lines) { s += $"\n · 외 {groups.Count - lines}묶음"; lines++; }
                 GUI.Label(new Rect(14, 120, 420, 24 + 20 * lines), s, hud);
             }
         }

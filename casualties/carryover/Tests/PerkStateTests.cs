@@ -70,7 +70,7 @@ public class PerkStateTests
         Assert.Equal(0.4f, s.TempDriftMult, 3);
         Assert.Equal(1.75f, s.MiningMult, 3);
         Assert.Equal(0.4f, s.ImpactMult, 3);
-        Assert.Equal(20, s.SubspaceSlots); Assert.Equal(600f, s.SubspaceMaxWeight);
+        Assert.Equal(20, s.SubspaceSlots); Assert.Equal(400f, s.SubspaceMaxWeight);
         Assert.Equal(1.75f, s.LockpickMult, 3);
         Assert.Equal(3, s.CraftIntBonus);
         Assert.Equal(15f, s.TrapRadius);

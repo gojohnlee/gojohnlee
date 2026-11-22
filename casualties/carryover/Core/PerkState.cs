@@ -21,7 +21,7 @@ namespace Carryover.Core
     {
         public static readonly PerkDef[] Perks =
         {
-            new PerkDef("subspace", "아공간", "무게 없는 가방 용량 +30u (몸 무게에 안 더해짐, 다음 회차로 이어짐)", 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9),
+            new PerkDef("subspace", "아공간", "무게 없는 가방 용량 +20u (같은 물건은 한 묶음, 몸 무게에 안 더해짐, 다음 회차로 이어짐)", 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9),
             new PerkDef("lockpick", "자물쇠 달인", "자물쇠 따기 허용 각도 +25%", 1, 2, 3),
             new PerkDef("crafting", "숙련 제작", "제작할 때 지능 +1로 침 (실패·품질 저하 줄어듦)", 1, 2, 3),
             new PerkDef("traps", "함정 감지", "가까운 함정 표시 (반경 6 → 10 → 15)", 2, 3, 4),
@@ -56,7 +56,7 @@ namespace Carryover.Core
 
         // ---- 효과 ----
         public int SubspaceSlots => Level("subspace");                  // 퍽 단계 1~20
-        public float SubspaceMaxWeight => 30f * Level("subspace");     // 1단계 30u … 20단계 600u (사용자 11-22: 칸 수 대신 무게)
+        public float SubspaceMaxWeight => 20f * Level("subspace");     // 1단계 20u … 20단계 400u (사용자 11-22: 칸 수 대신 무게)
         public float LockpickMult => 1f + 0.25f * Level("lockpick");    // 3단계 ×1.75
         public int CraftIntBonus => Level("crafting");                  // 3단계 지능 +3
         public float TrapRadius => TrapRadii[Level("traps")];

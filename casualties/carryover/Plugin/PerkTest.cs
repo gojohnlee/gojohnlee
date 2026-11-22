@@ -302,7 +302,7 @@ namespace CasualtiesCarryover
         private void TestSubspace(Body body)
         {
             // 게임 가방 창으로 끌어다 넣는 것과 같은 길(Container.LoadItem → CanHoldItem)로 넣는다
-            // 무게 제한(1단계 30u마다): 3단계로 줄여 90u. 붕대를 넣다가 무게가 넘치면 거절·한국어 알림, 몸 무게는 그대로, 겹치기 없음(가방 창 단추 = 물건 수)
+            // 무게 제한(1단계 20u마다): 3단계로 줄여 60u. 붕대를 넣다가 무게가 넘치면 거절·한국어 알림, 몸 무게는 그대로, 가방 창은 같은 물건을 단추 하나로
             float enc0 = body.GetTotalEncumberance();
             var keep = Plugin.Perks; var small = new PerkState(); small.Levels[PerkState.IndexOf("subspace")] = 3; Plugin.Perks = small;
             try
@@ -316,20 +316,21 @@ namespace CasualtiesCarryover
                     if (Subspace.Put(body, it)) putN++; else { refused = it; }
                 }
                 float held = Subspace.Bag.GetHoldingWeight();
-                bool overflow = refused != null && held + refused.totalWeight > 90f + 0.001f && held <= 90f + 0.001f && putN == Mathf.FloorToInt(90.001f / refused.totalWeight);
+                bool overflow = refused != null && held + refused.totalWeight > 60f + 0.001f && held <= 60f + 0.001f && putN == Mathf.FloorToInt(60.001f / refused.totalWeight);
                 bool alerted = Subspace.LastAlert != null && Subspace.LastAlert.StartsWith("아공간 무게 초과");
                 if (refused != null) DestroyImmediate(refused.gameObject);
                 bool weightless = Mathf.Abs(body.GetTotalEncumberance() - enc0) < 0.001f;
                 bool notWorn = !body.GetAllWearables().Contains(Subspace.Bag.GetComponent<Item>());
-                Check("subspace weight limit 90u at level 3 (refused when over, Korean alert), no body weight",
-                    putN > 0 && overflow && alerted && weightless && notWorn && Mathf.Abs(Subspace.Bag.maxWeight - 90f) < 0.01f,
+                Check("subspace weight limit 60u at level 3 (refused when over, Korean alert), no body weight",
+                    putN > 0 && overflow && alerted && weightless && notWorn && Mathf.Abs(Subspace.Bag.maxWeight - 60f) < 0.01f,
                     $"{putN} bandages {held:0.##}u, refused {overflow}, alert '{Subspace.LastAlert}', weightless {weightless}, not worn {notWorn}");
 
                 var pc = PlayerCamera.main;
                 pc.OpenContainer(Subspace.Bag);
                 string info = pc.containerText.text;
-                Check("bag window: one button per item (no stacking), top text current/max weight", pc.containerUnloadButtons.Count == putN && info == $"{held:0.##}/90u",
-                    $"{pc.containerUnloadButtons.Count} buttons, info '{info}'");
+                var labels = pc.containerUnloadButtons.Select(g => g.GetComponentsInChildren<TMPro.TextMeshProUGUI>().FirstOrDefault(t => t.name == "CarryoverStackCount")).Where(t => t != null).Select(t => t.text).ToList();
+                Check("bag window: same items one button (x count), top text current/max weight", pc.containerUnloadButtons.Count == 1 && labels.Contains("x" + putN) && info == $"{held:0.##}/60u",
+                    $"{pc.containerUnloadButtons.Count} buttons, labels {string.Join(",", labels)}, info '{info}'");
                 pc.CloseContainer();
                 // 알림 글자가 게임 글꼴(대체 글꼴 포함)에 다 있는지: 없으면 네모(□)로 보인다(사용자 스크린샷 'ㅁㅁㅁ')
                 uint[] miss = null;
@@ -345,6 +346,20 @@ namespace CasualtiesCarryover
                 Subspace.Bag.UnloadItem(first, body);   // 가방 창에서 꺼낼 때 게임이 쓰는 함수
                 Check("take out one (Container.UnloadItem)", Subspace.Items.Count == putN - 1 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
                 Destroy(first.gameObject);
+
+                // 액체류만 내용물로 구별(사용자 11-22): 물 든 병, 피 든 병, 빈 병 2개 → 묶음 3개(빈 병 2개는 한 묶음)
+                small.Levels[PerkState.IndexOf("subspace")] = 20; Subspace.Hide(body);
+                var bottles = new List<Item>();
+                foreach (var liq in new[] { "water", "blood", null, null })
+                {
+                    var w = Utils.Create("waterbottle", body.transform.position, 0f).GetComponent<WaterContainerItem>();
+                    w.DrainAll(); if (liq != null) w.AddLiquid(liq, 100f);
+                    bottles.Add(w.GetComponent<Item>());
+                }
+                bool allIn = bottles.All(i => Subspace.Put(body, i));
+                var bg = Subspace.Groups(true).Where(g => g[0].id == "waterbottle").Select(g => g.Count).ToList();
+                Check("liquid containers grouped by contents only (water / blood / 2 empty)", allIn && bg.Count == 3 && bg.Contains(2), $"put {allIn}, groups {string.Join(",", bg)}");
+                foreach (var i in bottles) DestroyImmediate(i.gameObject);
             }
             finally { Plugin.Perks = keep; Subspace.Hide(body); }
 

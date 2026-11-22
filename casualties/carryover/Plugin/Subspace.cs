@@ -26,7 +26,7 @@ namespace CasualtiesCarryover
         internal static string FilePath;
 
         internal static int Capacity => Plugin.Perks?.SubspaceSlots ?? 0;   // 퍽 단계(0이면 아공간 없음)
-        internal static float MaxWeight => Plugin.Perks?.SubspaceMaxWeight ?? 0f;   // 1단계 30u, 2단계 60u …
+        internal static float MaxWeight => Plugin.Perks?.SubspaceMaxWeight ?? 0f;   // 1단계 20u, 2단계 40u …
         private const float Eps = 0.001f;
 
         internal static List<Item> Items
@@ -121,7 +121,7 @@ namespace CasualtiesCarryover
         }
 
         /// <summary>
-        /// 아공간 가방: 무게로 제한(퍽 1단계마다 30u, 사용자 11-22 — 겹치기는 뺌, 물건 하나가 한 칸). 가방은 안 받는다.
+        /// 아공간 가방: 무게로 제한(퍽 1단계마다 20u, 사용자 11-22). 가방은 안 받는다.
         /// 게임 Container.CanHoldItem: item.totalWeight ≤ maxWeightPerItem && GetHoldingWeight() + totalWeight ≤ maxWeight → maxWeight만 맞추면 게임이 거른다.
         /// 가방 창 위 글자도 게임 UpdateContainerInfoText의 "{들어 있는 무게:0.##}/{maxWeight:0.##}u" 그대로(게임 무게 단위 u).
         /// 몸 무게(GetTotalEncumberance)는 손·착용 칸만 세므로 아공간 무게는 몸에 안 더해진다.
@@ -146,6 +146,59 @@ namespace CasualtiesCarryover
             try { PlayerCamera.main?.DoAlert(LastAlert); } catch (Exception e) { Plugin.Log.LogWarning("subspace alert: " + e.Message); }
         }
         internal static string LastAlert;
+
+        /// <summary>
+        /// 가방 창 묶음(사용자 11-22: 물건이 많아 누르기 힘듦 → 같은 물건은 단추 하나, 액체류만 내용물로 구별). 무게 제한은 그대로이고 겹치기는 보이는 것만:
+        /// 물건은 여전히 하나씩 들어 있고, 단추를 끌면 게임대로 그중 하나가 나온다.
+        /// 게임 PlayerCamera.RepopulateContainer는 물건마다 단추(3열, 66px) → 아공간이면 묶어서 다시 만들고 오른쪽 아래에 "x개수"(게임 containerText 복제, ×는 글꼴에 없어 x).
+        /// </summary>
+        internal static string StackKey(Item it)
+        {
+            if (!it.TryGetComponent<WaterContainerItem>(out var w) || w.stack == null || w.stack.Count == 0) return it.id;
+            return it.id + "|" + string.Join(",", w.stack.Where(l => l.amount >= 0.5f).OrderBy(l => l.liquidId).Select(l => l.liquidId + ":" + Mathf.RoundToInt(l.amount)));
+        }
+
+        private static List<List<Item>> groupCache; private static float groupTime; private static int groupCount = -1;
+        /// <summary>묶음(넣은 순서). 화면 표시는 0.5초 캐시, 가방 창은 fresh=true.</summary>
+        internal static List<List<Item>> Groups(bool fresh = false)
+        {
+            var items = Items;
+            if (!fresh && groupCache != null && groupCount == items.Count && Time.unscaledTime < groupTime) return groupCache;
+            groupCache = items.GroupBy(StackKey).Select(g => g.ToList()).ToList();
+            groupCount = items.Count; groupTime = Time.unscaledTime + 0.5f;
+            return groupCache;
+        }
+
+        [HarmonyPatch(typeof(PlayerCamera), nameof(PlayerCamera.RepopulateContainer))]
+        [HarmonyPostfix]
+        private static void RepopulatePostfix(PlayerCamera __instance)
+        {
+            if (Bag == null || __instance.currentContainer != Bag) return;
+            try
+            {
+                __instance.ClearContainer();
+                int num = 0;
+                foreach (var g in Groups(true))
+                {
+                    var go = UnityEngine.Object.Instantiate(Resources.Load("ContainerItem"), __instance.contPopulate.transform) as GameObject;
+                    go.GetComponent<RectTransform>().anchoredPosition = new Vector2(34.5f + (num % 3) * 66f, -34.5f - (num / 3) * 66f);
+                    var b = go.GetComponent<InvButton>();
+                    b.refItem = g[0]; b.UpdateRefs(); b.UpdateGraphic();
+                    if (g.Count > 1 && __instance.containerText != null)
+                    {
+                        var t = UnityEngine.Object.Instantiate(__instance.containerText.gameObject, go.transform).GetComponent<TMPro.TextMeshProUGUI>();
+                        var rt = t.rectTransform;
+                        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0f);
+                        rt.anchoredPosition = new Vector2(-3f, 2f); rt.sizeDelta = new Vector2(60f, 20f);
+                        t.alignment = TMPro.TextAlignmentOptions.BottomRight; t.fontSize = 16f; t.enableAutoSizing = false; t.raycastTarget = false;
+                        t.text = "x" + g.Count; t.name = "CarryoverStackCount";
+                    }
+                    __instance.containerUnloadButtons.Add(go);
+                    num++;
+                }
+            }
+            catch (Exception e) { Plugin.Log.LogError("subspace panel: " + e); }
+        }
 
         /// <summary>
         /// 아공간 물건도 "가진 물건"으로 친다(사용자 11-21: 아공간 물통에 제작 액체가 안 들어감, 아공간 자물쇠 키트를 못 씀).
