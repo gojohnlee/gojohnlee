@@ -25,7 +25,9 @@ namespace CasualtiesCarryover
         internal static Container Bag;
         internal static string FilePath;
 
-        internal static int Capacity => Plugin.Perks?.SubspaceSlots ?? 0;
+        internal static int Capacity => Plugin.Perks?.SubspaceSlots ?? 0;   // 퍽 단계(0이면 아공간 없음)
+        internal static float MaxWeight => Plugin.Perks?.SubspaceMaxWeight ?? 0f;   // 1단계 30u, 2단계 60u …
+        private const float Eps = 0.001f;
 
         internal static List<Item> Items
         {
@@ -52,7 +54,7 @@ namespace CasualtiesCarryover
             var item = go.GetComponent<Item>();
             item.label = "아공간";
             Bag = go.GetComponent<Container>();
-            Bag.maxWeight = 1e9f; Bag.maxWeightPerItem = 1e9f; Bag.encumberanceMult = 0f;
+            Bag.maxWeight = Bag.maxWeightPerItem = MaxWeight + Eps; Bag.encumberanceMult = 0f;
             Bag.tagRestriction = new string[0]; Bag.itemsVisible = false;
             Hide(body);
             Plugin.Log.LogInfo("subspace bag created");
@@ -64,6 +66,7 @@ namespace CasualtiesCarryover
         {
             if (Bag == null) return;
             if (body != null) Bag.transform.position = body.transform.position;
+            Bag.maxWeight = Bag.maxWeightPerItem = MaxWeight + Eps;   // 0.001: 소수 더하기 오차로 딱 맞는 무게(예 89.1+0.9=90)가 막히지 않게
             var item = Bag.GetComponent<Item>();
             if (item != null && item.rb != null) { item.rb.simulated = false; item.rb.velocity = Vector2.zero; }
             var sr = Bag.GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = false;
@@ -117,58 +120,32 @@ namespace CasualtiesCarryover
             try { if (FilePath != null && File.Exists(FilePath)) File.Delete(FilePath); } catch (Exception e) { Plugin.Log.LogWarning("subspace file delete: " + e.Message); }
         }
 
-        /// <summary>아공간 가방: 칸 = 물건 종류(퍽 단계만큼), 한 칸에 같은 물건 999개까지. 가방은 안 받는다. 다른 가방은 게임 그대로.</summary>
+        /// <summary>
+        /// 아공간 가방: 무게로 제한(퍽 1단계마다 30u, 사용자 11-22 — 겹치기는 뺌, 물건 하나가 한 칸). 가방은 안 받는다.
+        /// 게임 Container.CanHoldItem: item.totalWeight ≤ maxWeightPerItem && GetHoldingWeight() + totalWeight ≤ maxWeight → maxWeight만 맞추면 게임이 거른다.
+        /// 가방 창 위 글자도 게임 UpdateContainerInfoText의 "{들어 있는 무게:0.##}/{maxWeight:0.##}u" 그대로(게임 무게 단위 u).
+        /// 몸 무게(GetTotalEncumberance)는 손·착용 칸만 세므로 아공간 무게는 몸에 안 더해진다.
+        /// </summary>
         [HarmonyPatch(typeof(Container), nameof(Container.CanHoldItem))]
         [HarmonyPostfix]
         private static void CanHoldPostfix(Container __instance, Item item, ref bool __result)
         {
             if (__instance != Bag || Bag == null) return;
-            if (item.GetComponent<Container>() != null) { __result = false; return; }
-            var items = Items;
-            if (items.Contains(item)) return;
-            string key = StackKey(item);
-            var groups = Groups(true);
-            int same = groups.Where(g => StackKey(g[0]) == key).Select(g => g.Count).FirstOrDefault();
-            if (!Carryover.Core.PerkState.SubspaceAccepts(groups.Count, same, Capacity)) __result = false;
+            if (item.GetComponent<Container>() != null) __result = false;
         }
 
-        /// <summary>
-        /// 가방 창: 게임 PlayerCamera.RepopulateContainer는 물건 하나마다 단추 하나(3열, 66px 간격, 36개 넘으면 줄임). 아공간이면 같은 물건을 단추 하나로 묶고
-        /// 오른쪽 아래에 "×N"(게임 containerText를 복제해 같은 글꼴). 단추를 끌어 꺼내면 게임대로 그 물건 하나만 나온다.
-        /// </summary>
-        [HarmonyPatch(typeof(PlayerCamera), nameof(PlayerCamera.RepopulateContainer))]
-        [HarmonyPostfix]
-        private static void RepopulatePostfix(PlayerCamera __instance)
+        /// <summary>넣기(끌어다 놓기·Put)가 무게 때문에 막히면 한국어 알림. 게임 LoadItem은 CanHoldItem이 거짓이면 아무 말 없이 넘어간다.</summary>
+        [HarmonyPatch(typeof(Container), nameof(Container.LoadItem))]
+        [HarmonyPrefix]
+        private static void LoadPrefix(Container __instance, Item item)
         {
-            if (Bag == null || __instance.currentContainer != Bag) return;
-            try
-            {
-                __instance.ClearContainer();
-                int num = 0;
-                foreach (var g in Groups(true))
-                {
-                    var go = UnityEngine.Object.Instantiate(Resources.Load("ContainerItem"), __instance.contPopulate.transform) as GameObject;
-                    go.GetComponent<RectTransform>().anchoredPosition = new Vector2(34.5f + (num % 3) * 66f, -34.5f - (num / 3) * 66f);
-                    var b = go.GetComponent<InvButton>();
-                    b.refItem = g.First(); b.UpdateRefs(); b.UpdateGraphic();
-                    int n = g.Count;
-                    if (n > 1 && __instance.containerText != null)
-                    {
-                        var t = UnityEngine.Object.Instantiate(__instance.containerText.gameObject, go.transform).GetComponent<TMPro.TextMeshProUGUI>();
-                        var rt = t.rectTransform;
-                        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0f);
-                        rt.anchoredPosition = new Vector2(-3f, 2f); rt.sizeDelta = new Vector2(60f, 20f);
-                        t.alignment = TMPro.TextAlignmentOptions.BottomRight; t.fontSize = 16f; t.enableAutoSizing = false; t.raycastTarget = false;
-                        t.text = "×" + n; t.name = "CarryoverStackCount";
-                    }
-                    __instance.containerUnloadButtons.Add(go);
-                    num++;
-                }
-                if (__instance.containerText != null) __instance.containerText.text = $"{num}/{Capacity}칸";
-                if (__instance.containerFill != null) __instance.containerFill.fillAmount = Capacity > 0 ? (float)num / Capacity : 0f;
-            }
-            catch (Exception e) { Plugin.Log.LogError("subspace panel: " + e); }
+            if (Bag == null || __instance != Bag || item == null || item.transform.parent == Bag.transform || item.GetComponent<Container>() != null) return;
+            float left = MaxWeight + Eps - Bag.GetHoldingWeight();
+            if (item.totalWeight <= left) return;
+            LastAlert = $"아공간 무게 초과: {Subspace.Name(item)} {item.totalWeight:0.##}u, 남은 용량 {Mathf.Max(0f, left):0.##}u (최대 {MaxWeight:0.##}u)";
+            try { PlayerCamera.main?.DoAlert(LastAlert); } catch (Exception e) { Plugin.Log.LogWarning("subspace alert: " + e.Message); }
         }
+        internal static string LastAlert;
 
         /// <summary>
         /// 아공간 물건도 "가진 물건"으로 친다(사용자 11-21: 아공간 물통에 제작 액체가 안 들어감, 아공간 자물쇠 키트를 못 씀).
@@ -198,11 +175,6 @@ namespace CasualtiesCarryover
         // ---- 저장하고 나가기 / 이어하기 ----
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
-        /// <summary>
-        /// 같은 칸에 쌓을지 정하는 열쇠: id + 상태 %(반올림) + 게임 저장 대상(Saveable) 부품 값. 이름이 같아도 내용물이 다르면(소형 배럴·병의 액체, 배터리 등) 따로 칸(사용자 11-22).
-        /// </summary>
-        internal static string StackKey(Item it) => it.id + "|" + Mathf.RoundToInt(it.condition * 100f) + "|" + CompsJson(it);
-
         internal static string CompsJson(Item it)
         {
             var comps = new Dictionary<Type, Component>();
@@ -211,16 +183,6 @@ namespace CasualtiesCarryover
             return JsonConvert.SerializeObject(comps, Formatting.None, Settings);
         }
 
-        private static List<List<Item>> groupCache; private static float groupTime; private static int groupCount = -1;
-        /// <summary>칸별 묶음(넣은 순서). 화면 표시는 0.5초 캐시, 넣기·가방 창은 fresh=true.</summary>
-        internal static List<List<Item>> Groups(bool fresh = false)
-        {
-            var items = Items;
-            if (!fresh && groupCache != null && groupCount == items.Count && Time.unscaledTime < groupTime) return groupCache;
-            groupCache = items.GroupBy(StackKey).Select(g => g.ToList()).ToList();
-            groupCount = items.Count; groupTime = Time.unscaledTime + 0.5f;
-            return groupCache;
-        }
 
         internal static void SaveToFile()
         {

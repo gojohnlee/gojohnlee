@@ -70,7 +70,7 @@ public class PerkStateTests
         Assert.Equal(0.4f, s.TempDriftMult, 3);
         Assert.Equal(1.75f, s.MiningMult, 3);
         Assert.Equal(0.4f, s.ImpactMult, 3);
-        Assert.Equal(20, s.SubspaceSlots);
+        Assert.Equal(20, s.SubspaceSlots); Assert.Equal(600f, s.SubspaceMaxWeight);
         Assert.Equal(1.75f, s.LockpickMult, 3);
         Assert.Equal(3, s.CraftIntBonus);
         Assert.Equal(15f, s.TrapRadius);
@@ -117,14 +117,5 @@ public class PerkStateTests
         Assert.False(PerkState.DriftAwayFromNormal(39f, 20f));  // 운동 뒤 식기(회복)
         Assert.False(PerkState.DriftAwayFromNormal(33f, 50f));  // 불 쬐기(회복)
         Assert.False(PerkState.DriftAwayFromNormal(30f, 30f));
-    }
-
-    [Fact]
-    public void Subspace_StacksSameItemTo999_NewKindNeedsSlot()
-    {
-        Assert.True(PerkState.SubspaceAccepts(3, 0, 4));     // 새 종류, 칸 남음
-        Assert.False(PerkState.SubspaceAccepts(4, 0, 4));    // 새 종류, 칸 꽉 참
-        Assert.True(PerkState.SubspaceAccepts(4, 998, 4));   // 같은 물건은 칸이 꽉 차도 999까지
-        Assert.False(PerkState.SubspaceAccepts(4, 999, 4));
     }
 }

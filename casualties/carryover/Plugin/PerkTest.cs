@@ -302,62 +302,51 @@ namespace CasualtiesCarryover
         private void TestSubspace(Body body)
         {
             // 게임 가방 창으로 끌어다 넣는 것과 같은 길(Container.LoadItem → CanHoldItem)로 넣는다
-            // 칸 = 물건 종류: 3단계로 줄여 3종류까지, 4번째 종류는 거절, 같은 물건(붕대)은 칸이 꽉 차도 더 쌓인다
+            // 무게 제한(1단계 30u마다): 3단계로 줄여 90u. 붕대를 넣다가 무게가 넘치면 거절·한국어 알림, 몸 무게는 그대로, 겹치기 없음(가방 창 단추 = 물건 수)
             float enc0 = body.GetTotalEncumberance();
             var keep = Plugin.Perks; var small = new PerkState(); small.Levels[PerkState.IndexOf("subspace")] = 3; Plugin.Perks = small;
             try
             {
-                var kindPut = new List<bool>();
-                foreach (var id in new[] { "bandage", "foliage", "rope", "climbingrope" })
-                {
-                    var it = Utils.Create(id, body.transform.position, 0f).GetComponent<Item>();
-                    bool put = Subspace.Put(body, it); kindPut.Add(put);
-                    if (!put) DestroyImmediate(it.gameObject);
-                }
-                int stacked = 0;
-                for (int n = 0; n < 50; n++)
+                Subspace.Hide(body);   // maxWeight를 지금 퍽 단계로
+                Subspace.LastAlert = null;
+                int putN = 0; Item refused = null;
+                for (int n = 0; n < 2000 && refused == null; n++)
                 {
                     var it = Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>();
-                    if (Subspace.Put(body, it)) stacked++; else DestroyImmediate(it.gameObject);
+                    if (Subspace.Put(body, it)) putN++; else { refused = it; }
                 }
+                float held = Subspace.Bag.GetHoldingWeight();
+                bool overflow = refused != null && held + refused.totalWeight > 90f + 0.001f && held <= 90f + 0.001f && putN == Mathf.FloorToInt(90.001f / refused.totalWeight);
+                bool alerted = Subspace.LastAlert != null && Subspace.LastAlert.StartsWith("아공간 무게 초과");
+                if (refused != null) DestroyImmediate(refused.gameObject);
                 bool weightless = Mathf.Abs(body.GetTotalEncumberance() - enc0) < 0.001f;
                 bool notWorn = !body.GetAllWearables().Contains(Subspace.Bag.GetComponent<Item>());
-                Check("subspace 3 kinds, 4th kind refused, same item stacks (+50 bandages), no weight",
-                    kindPut[0] && kindPut[1] && kindPut[2] && !kindPut[3] && stacked == 50 && weightless && notWorn, $"{string.Join(",", kindPut)}, stacked {stacked}, weightless {weightless}, not worn {notWorn}");
+                Check("subspace weight limit 90u at level 3 (refused when over, Korean alert), no body weight",
+                    putN > 0 && overflow && alerted && weightless && notWorn && Mathf.Abs(Subspace.Bag.maxWeight - 90f) < 0.01f,
+                    $"{putN} bandages {held:0.##}u, refused {overflow}, alert '{Subspace.LastAlert}', weightless {weightless}, not worn {notWorn}");
 
                 var pc = PlayerCamera.main;
                 pc.OpenContainer(Subspace.Bag);
-                var labels = pc.containerUnloadButtons.Select(g => g.GetComponentsInChildren<TMPro.TextMeshProUGUI>().FirstOrDefault(t => t.name == "CarryoverStackCount")).Where(t => t != null).Select(t => t.text).ToList();
-                Check("bag window groups same items (3 buttons, ×51)", pc.containerUnloadButtons.Count == 3 && labels.Contains("×51"), $"{pc.containerUnloadButtons.Count} buttons, labels {string.Join(",", labels)}, info {pc.containerText.text}");
+                string info = pc.containerText.text;
+                Check("bag window: one button per item (no stacking), top text current/max weight", pc.containerUnloadButtons.Count == putN && info == $"{held:0.##}/90u",
+                    $"{pc.containerUnloadButtons.Count} buttons, info '{info}'");
                 pc.CloseContainer();
-
-                // 이름이 같아도 내용물이 다르면 따로 칸(사용자 11-22: 소형 드럼통): 물 든 것, 연료 든 것, 빈 것 2개 → 3칸(빈 것 2개는 한 칸)
-                small.Levels[PerkState.IndexOf("subspace")] = 6;
-                var barrels = new List<Item>();
-                foreach (var liq in new[] { "water", "blood", null, null })
-                {
-                    var w = Utils.Create("minibarrel", body.transform.position, 0f).GetComponent<WaterContainerItem>();
-                    w.DrainAll(); if (liq != null) w.AddLiquid(liq, 100f);
-                    barrels.Add(w.GetComponent<Item>());
-                }
-                bool allIn = barrels.All(i => Subspace.Put(body, i));
-                var bg = Subspace.Groups(true).Where(g => g[0].id == "minibarrel").Select(g => g.Count).ToList();
-                Check("same-name containers with different contents stay apart (minibarrel water / blood / 2 empty)", allIn && bg.Count == 3 && bg.Contains(2),
-                    $"put {allIn}, groups {string.Join(",", bg)}");
-                foreach (var i in barrels) DestroyImmediate(i.gameObject);
-                small.Levels[PerkState.IndexOf("subspace")] = 3;
+                // 알림 글자가 게임 글꼴(대체 글꼴 포함)에 다 있는지: 없으면 네모(□)로 보인다(사용자 스크린샷 'ㅁㅁㅁ')
+                uint[] miss = null;
+                bool glyphs = pc.alertText != null && pc.alertText.font != null && pc.alertText.font.HasCharacters(Subspace.LastAlert ?? "", out miss, true, true);
+                Check("Korean alert text has all glyphs in game font", glyphs, $"font {pc.alertText?.font?.name}, missing {(miss == null ? "" : string.Join(" ", miss.Select(u => ((char)u).ToString())))}, shown '{pc.alertText?.text}'");
 
                 Subspace.SaveToFile();
                 foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
                 int restored = Subspace.RestoreFromFile(body);
-                Check("subspace save→restore (save & exit / continue)", restored == 53 && Subspace.Items.Count(i => i.id == "bandage") == 51, $"{restored} restored");
+                Check("subspace save→restore (save & exit / continue)", restored == putN, $"{restored} of {putN} restored");
 
                 var first = Subspace.Items[0];
                 Subspace.Bag.UnloadItem(first, body);   // 가방 창에서 꺼낼 때 게임이 쓰는 함수
-                Check("take out one (Container.UnloadItem)", Subspace.Items.Count == 52 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
+                Check("take out one (Container.UnloadItem)", Subspace.Items.Count == putN - 1 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
                 Destroy(first.gameObject);
             }
-            finally { Plugin.Perks = keep; }
+            finally { Plugin.Perks = keep; Subspace.Hide(body); }
 
             // 아공간 물건도 가진 물건으로: 자물쇠 키트(FindByIdThorough)·제작 재료와 액체 결과 담기(GetAllItemsThorough)
             foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
