@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace CasualtiesCarryover
@@ -95,9 +96,10 @@ namespace CasualtiesCarryover
             int cap = Subspace.Capacity;
             if (cap > 0)
             {
-                var s = $"아공간 {Subspace.Items.Count}/{cap}  (V: 아공간 가방 열기)";
-                foreach (var it in Subspace.Items) if (it != null) s += "\n · " + Subspace.Name(it);
-                GUI.Label(new Rect(14, 120, 420, 24 + 20 * cap), s, hud);
+                var groups = Subspace.Items.Where(i => i != null).GroupBy(i => i.id).ToList();
+                var s = $"아공간 {groups.Count}/{cap}칸  (V: 아공간 가방 열기)";
+                foreach (var g in groups) s += "\n · " + Subspace.Name(g.First()) + (g.Count() > 1 ? $" ×{g.Count()}" : "");
+                GUI.Label(new Rect(14, 120, 420, 24 + 20 * groups.Count), s, hud);
             }
         }
     }

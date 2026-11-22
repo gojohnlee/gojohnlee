@@ -302,30 +302,46 @@ namespace CasualtiesCarryover
         private void TestSubspace(Body body)
         {
             // 게임 가방 창으로 끌어다 넣는 것과 같은 길(Container.LoadItem → CanHoldItem)로 넣는다
-            var results = new List<bool>();
-            int cap = Subspace.Capacity;
+            // 칸 = 물건 종류: 3단계로 줄여 3종류까지, 4번째 종류는 거절, 같은 물건(붕대)은 칸이 꽉 차도 더 쌓인다
             float enc0 = body.GetTotalEncumberance();
-            for (int n = 0; n <= cap; n++)
+            var keep = Plugin.Perks; var small = new PerkState(); small.Levels[PerkState.IndexOf("subspace")] = 3; Plugin.Perks = small;
+            try
             {
-                var it = Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>();
-                bool put = Subspace.Put(body, it);
-                results.Add(put);
-                if (!put) Destroy(it.gameObject);
+                var kindPut = new List<bool>();
+                foreach (var id in new[] { "bandage", "foliage", "rope", "climbingrope" })
+                {
+                    var it = Utils.Create(id, body.transform.position, 0f).GetComponent<Item>();
+                    bool put = Subspace.Put(body, it); kindPut.Add(put);
+                    if (!put) DestroyImmediate(it.gameObject);
+                }
+                int stacked = 0;
+                for (int n = 0; n < 50; n++)
+                {
+                    var it = Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>();
+                    if (Subspace.Put(body, it)) stacked++; else DestroyImmediate(it.gameObject);
+                }
+                bool weightless = Mathf.Abs(body.GetTotalEncumberance() - enc0) < 0.001f;
+                bool notWorn = !body.GetAllWearables().Contains(Subspace.Bag.GetComponent<Item>());
+                Check("subspace 3 kinds, 4th kind refused, same item stacks (+50 bandages), no weight",
+                    kindPut[0] && kindPut[1] && kindPut[2] && !kindPut[3] && stacked == 50 && weightless && notWorn, $"{string.Join(",", kindPut)}, stacked {stacked}, weightless {weightless}, not worn {notWorn}");
+
+                var pc = PlayerCamera.main;
+                pc.OpenContainer(Subspace.Bag);
+                var labels = pc.containerUnloadButtons.Select(g => g.GetComponentsInChildren<TMPro.TextMeshProUGUI>().FirstOrDefault(t => t.name == "CarryoverStackCount")).Where(t => t != null).Select(t => t.text).ToList();
+                Check("bag window groups same items (3 buttons, ×51)", pc.containerUnloadButtons.Count == 3 && labels.Contains("×51"), $"{pc.containerUnloadButtons.Count} buttons, labels {string.Join(",", labels)}, info {pc.containerText.text}");
+                pc.CloseContainer();
+
+                Subspace.SaveToFile();
+                foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
+                int restored = Subspace.RestoreFromFile(body);
+                Check("subspace save→restore (save & exit / continue)", restored == 53 && Subspace.Items.Count(i => i.id == "bandage") == 51, $"{restored} restored");
+
+                var first = Subspace.Items[0];
+                Subspace.Bag.UnloadItem(first, body);   // 가방 창에서 꺼낼 때 게임이 쓰는 함수
+                Check("take out one (Container.UnloadItem)", Subspace.Items.Count == 52 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
+                Destroy(first.gameObject);
             }
-            bool weightless = Mathf.Abs(body.GetTotalEncumberance() - enc0) < 0.001f;
-            bool notWorn = !body.GetAllWearables().Contains(Subspace.Bag.GetComponent<Item>());
-            Check($"subspace bag holds {cap}, next refused, not in inventory/wear slots (no weight)",
-                cap == 10 && results.Take(cap).All(b => b) && !results[cap] && weightless && notWorn, $"{string.Join(",", results)}, weightless {weightless}, not worn {notWorn}");
-
-            Subspace.SaveToFile();
-            foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);
-            int restored = Subspace.RestoreFromFile(body);
-            Check("subspace save→restore (save & exit / continue)", restored == Subspace.Capacity && Subspace.Items.All(i => i.id == "bandage"), $"{restored} restored");
-
-            var first = Subspace.Items[0];
-            Subspace.Bag.UnloadItem(first, body);   // 가방 창에서 꺼낼 때 게임이 쓰는 함수
-            Check("take out (Container.UnloadItem)", Subspace.Items.Count == Subspace.Capacity - 1 && first.transform.parent != Subspace.Bag.transform, $"{Subspace.Items.Count} left");
-            Destroy(first.gameObject);
+            finally { Plugin.Perks = keep; }
 
             // 아공간 물건도 가진 물건으로: 자물쇠 키트(FindByIdThorough)·제작 재료와 액체 결과 담기(GetAllItemsThorough)
             foreach (var it in Subspace.Items) DestroyImmediate(it.gameObject);

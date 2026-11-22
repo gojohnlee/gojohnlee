@@ -52,7 +52,7 @@ namespace CasualtiesCarryover
             var item = go.GetComponent<Item>();
             item.label = "아공간";
             Bag = go.GetComponent<Container>();
-            Bag.maxWeight = 9999f; Bag.maxWeightPerItem = 9999f; Bag.encumberanceMult = 0f;
+            Bag.maxWeight = 1e9f; Bag.maxWeightPerItem = 1e9f; Bag.encumberanceMult = 0f;
             Bag.tagRestriction = new string[0]; Bag.itemsVisible = false;
             Hide(body);
             Plugin.Log.LogInfo("subspace bag created");
@@ -117,16 +117,55 @@ namespace CasualtiesCarryover
             try { if (FilePath != null && File.Exists(FilePath)) File.Delete(FilePath); } catch (Exception e) { Plugin.Log.LogWarning("subspace file delete: " + e.Message); }
         }
 
-        /// <summary>아공간 가방은 퍽 단계만큼만, 가방은 안 받는다. 다른 가방은 게임 그대로.</summary>
+        /// <summary>아공간 가방: 칸 = 물건 종류(퍽 단계만큼), 한 칸에 같은 물건 999개까지. 가방은 안 받는다. 다른 가방은 게임 그대로.</summary>
         [HarmonyPatch(typeof(Container), nameof(Container.CanHoldItem))]
         [HarmonyPostfix]
         private static void CanHoldPostfix(Container __instance, Item item, ref bool __result)
         {
             if (__instance != Bag || Bag == null) return;
-            if (item.GetComponent<Container>() != null || __instance.GetActualItemCount() >= Capacity)
+            if (item.GetComponent<Container>() != null) { __result = false; return; }
+            var items = Items;
+            if (items.Contains(item)) return;
+            int same = items.Count(i => i.id == item.id), kinds = items.Select(i => i.id).Distinct().Count();
+            if (!Carryover.Core.PerkState.SubspaceAccepts(kinds, same, Capacity)) __result = false;
+        }
+
+        /// <summary>
+        /// 가방 창: 게임 PlayerCamera.RepopulateContainer는 물건 하나마다 단추 하나(3열, 66px 간격, 36개 넘으면 줄임). 아공간이면 같은 물건을 단추 하나로 묶고
+        /// 오른쪽 아래에 "×N"(게임 containerText를 복제해 같은 글꼴). 단추를 끌어 꺼내면 게임대로 그 물건 하나만 나온다.
+        /// </summary>
+        [HarmonyPatch(typeof(PlayerCamera), nameof(PlayerCamera.RepopulateContainer))]
+        [HarmonyPostfix]
+        private static void RepopulatePostfix(PlayerCamera __instance)
+        {
+            if (Bag == null || __instance.currentContainer != Bag) return;
+            try
             {
-                __result = false;
+                __instance.ClearContainer();
+                int num = 0;
+                foreach (var g in Items.GroupBy(i => i.id))
+                {
+                    var go = UnityEngine.Object.Instantiate(Resources.Load("ContainerItem"), __instance.contPopulate.transform) as GameObject;
+                    go.GetComponent<RectTransform>().anchoredPosition = new Vector2(34.5f + (num % 3) * 66f, -34.5f - (num / 3) * 66f);
+                    var b = go.GetComponent<InvButton>();
+                    b.refItem = g.First(); b.UpdateRefs(); b.UpdateGraphic();
+                    int n = g.Count();
+                    if (n > 1 && __instance.containerText != null)
+                    {
+                        var t = UnityEngine.Object.Instantiate(__instance.containerText.gameObject, go.transform).GetComponent<TMPro.TextMeshProUGUI>();
+                        var rt = t.rectTransform;
+                        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0f);
+                        rt.anchoredPosition = new Vector2(-3f, 2f); rt.sizeDelta = new Vector2(60f, 20f);
+                        t.alignment = TMPro.TextAlignmentOptions.BottomRight; t.fontSize = 16f; t.enableAutoSizing = false; t.raycastTarget = false;
+                        t.text = "×" + n; t.name = "CarryoverStackCount";
+                    }
+                    __instance.containerUnloadButtons.Add(go);
+                    num++;
+                }
+                if (__instance.containerText != null) __instance.containerText.text = $"{num}/{Capacity}칸";
+                if (__instance.containerFill != null) __instance.containerFill.fillAmount = Capacity > 0 ? (float)num / Capacity : 0f;
             }
+            catch (Exception e) { Plugin.Log.LogError("subspace panel: " + e); }
         }
 
         /// <summary>

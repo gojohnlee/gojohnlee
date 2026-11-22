@@ -66,11 +66,11 @@ public class PerkStateTests
     {
         var s = new PerkState { Points = 999 };
         for (int i = 0; i < PerkState.Perks.Length; i++) while (s.Buy(i)) { }
-        Assert.Equal(999 - 94, s.Points);             // 전부 94점
+        Assert.Equal(999 - 169, s.Points);            // 전부 169점
         Assert.Equal(0.4f, s.TempDriftMult, 3);
         Assert.Equal(1.75f, s.MiningMult, 3);
         Assert.Equal(0.4f, s.ImpactMult, 3);
-        Assert.Equal(10, s.SubspaceSlots);
+        Assert.Equal(20, s.SubspaceSlots);
         Assert.Equal(1.75f, s.LockpickMult, 3);
         Assert.Equal(3, s.CraftIntBonus);
         Assert.Equal(15f, s.TrapRadius);
@@ -104,7 +104,7 @@ public class PerkStateTests
 
         var bad = PerkState.Parse("points=-3\nperk.subspace=99\nperk.bleed=2\nperk.xp=x");   // 옛 퍽 이름은 무시
         Assert.Equal(0, bad.Points);
-        Assert.Equal(10, bad.Level("subspace"));
+        Assert.Equal(20, bad.Level("subspace"));
         Assert.Equal(0, bad.Level("xp"));
     }
 
@@ -117,5 +117,14 @@ public class PerkStateTests
         Assert.False(PerkState.DriftAwayFromNormal(39f, 20f));  // 운동 뒤 식기(회복)
         Assert.False(PerkState.DriftAwayFromNormal(33f, 50f));  // 불 쬐기(회복)
         Assert.False(PerkState.DriftAwayFromNormal(30f, 30f));
+    }
+
+    [Fact]
+    public void Subspace_StacksSameItemTo999_NewKindNeedsSlot()
+    {
+        Assert.True(PerkState.SubspaceAccepts(3, 0, 4));     // 새 종류, 칸 남음
+        Assert.False(PerkState.SubspaceAccepts(4, 0, 4));    // 새 종류, 칸 꽉 참
+        Assert.True(PerkState.SubspaceAccepts(4, 998, 4));   // 같은 물건은 칸이 꽉 차도 999까지
+        Assert.False(PerkState.SubspaceAccepts(4, 999, 4));
     }
 }
