@@ -348,7 +348,7 @@ namespace CasualtiesCarryover
             Check("no decay inside subspace (outside leaf decays)", leafPut && leafIn.condition == li0 && leafOut.condition < lo0,
                 $"put {leafPut}, inside {li0:0.0000}->{leafIn.condition:0.0000}, outside {lo0:0.0000}->{leafOut.condition:0.0000}");
             DestroyImmediate(leafIn.gameObject); DestroyImmediate(leafOut.gameObject);
-            foreach (var nid in new[] { "foliage", "rope" })
+            foreach (var nid in new[] { "foliage", "rope", "climbingrope" })
             {
                 var x = Utils.Create(nid, body.transform.position + Vector3.up, 0f).GetComponent<Item>();
                 float c0 = x.condition; for (int k = 0; k < 3000; k++) x.HandleDecay();

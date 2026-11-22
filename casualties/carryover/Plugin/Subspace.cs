@@ -144,7 +144,7 @@ namespace CasualtiesCarryover
         }
 
         /// <summary>어디에 있든 썩지 않는 물건(사용자 11-22: 나뭇잎·로프 유통기한 무한). id는 게임 Lang/ko.json으로 확인.</summary>
-        internal static readonly HashSet<string> NoDecayIds = new HashSet<string> { "foliage", "redfoliage", "dryfoliage", "rope" };
+        internal static readonly HashSet<string> NoDecayIds = new HashSet<string> { "foliage", "redfoliage", "dryfoliage", "rope", "climbingrope" };
 
         /// <summary>
         /// 아공간 안은 시간이 멈춘다(사용자 11-21: 로프·잎·음식 유통기한). 게임 Item.Update → HandleDecay가 매 프레임
