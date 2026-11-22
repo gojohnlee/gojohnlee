@@ -359,6 +359,15 @@ namespace CasualtiesCarryover
                 bool allIn = bottles.All(i => Subspace.Put(body, i));
                 var bg = Subspace.Groups(true).Where(g => g[0].id == "waterbottle").Select(g => g.Count).ToList();
                 Check("liquid containers grouped by contents only (water / blood / 2 empty)", allIn && bg.Count == 3 && bg.Contains(2), $"put {allIn}, groups {string.Join(",", bg)}");
+                // 위로 고정·휠 넘기기(사용자 11-22)
+                var firstBefore = Subspace.Groups(true)[0][0].id;
+                bool pinOn = Subspace.TogglePin("waterbottle");
+                var firstPinned = Subspace.Groups(true)[0][0].id;
+                bool pinOff = !Subspace.TogglePin("waterbottle");
+                var firstAfter = Subspace.Groups(true)[0][0].id;
+                bool clamp = Subspace.ClampRow(99, 40) == 2 && Subspace.ClampRow(-1, 40) == 0 && Subspace.ClampRow(3, 30) == 0;
+                Check("pin moves item to top, unpin restores; scroll rows clamp", pinOn && pinOff && firstPinned == "waterbottle" && firstAfter == firstBefore && clamp,
+                    $"before {firstBefore}, pinned {firstPinned}, after {firstAfter}, clamp {clamp}");
                 foreach (var i in bottles) DestroyImmediate(i.gameObject);
 
                 // 고철 자동 합치기: 5% + 4% → 9% 하나, 60% + 60% → 100% + 20%

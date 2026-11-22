@@ -54,6 +54,12 @@ namespace CasualtiesCarryover
             {
                 Subspace.Toggle(body);
             }
+            if (Subspace.Bag != null)
+            {
+                float wheel = Input.mouseScrollDelta.y;
+                if (wheel != 0f) Subspace.Scroll(wheel > 0f ? -1 : 1);
+                if (Input.GetMouseButtonDown(2)) { var it = Subspace.Hovered(); if (it != null) Subspace.TogglePin(it.id); }
+            }
         }
 
         private void OnGUI()
@@ -102,6 +108,12 @@ namespace CasualtiesCarryover
                 int lines = Mathf.Min(groups.Count, 8);
                 for (int i = 0; i < lines; i++) s += "\n · " + Subspace.Name(groups[i][0]) + (groups[i].Count > 1 ? $" x{groups[i].Count}" : "");
                 if (groups.Count > lines) { s += $"\n · 외 {groups.Count - lines}묶음"; lines++; }
+                if (PlayerCamera.main != null && PlayerCamera.main.currentContainer == Subspace.Bag)
+                {
+                    int rows = Subspace.TotalRows(groups.Count);
+                    s += "\n 가방 창: 휠 클릭 = 위로 고정/해제" + (rows > Subspace.Rows ? $", 휠 = 넘기기 ({Subspace.ScrollRow + 1}-{Subspace.ScrollRow + Subspace.Rows}/{rows}줄)" : "");
+                    lines++;
+                }
                 GUI.Label(new Rect(14, 120, 420, 24 + 20 * lines), s, hud);
             }
         }

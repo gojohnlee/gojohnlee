@@ -80,6 +80,7 @@ namespace CasualtiesCarryover
             if (EnsureBag(body) == null || pc == null) return null;
             if (pc.currentContainer == Bag) { pc.CloseContainer(); return null; }
             pc.radialOpen = true;
+            ScrollRow = 0;
             pc.OpenContainer(Bag);
             return null;
         }
@@ -193,7 +194,9 @@ namespace CasualtiesCarryover
         {
             var items = Items;
             if (!fresh && groupCache != null && groupCount == items.Count && Time.unscaledTime < groupTime) return groupCache;
-            groupCache = items.GroupBy(StackKey).Select(g => g.ToList()).ToList();
+            var pins = Pins();
+            groupCache = items.GroupBy(StackKey).Select(g => g.ToList())
+                .OrderBy(g => { int i = pins.IndexOf(g[0].id); return i < 0 ? int.MaxValue : i; }).ToList();   // 고정한 것 먼저(고정 순서), 나머지는 넣은 순서
             groupCount = items.Count; groupTime = Time.unscaledTime + 0.5f;
             return groupCache;
         }
@@ -206,8 +209,10 @@ namespace CasualtiesCarryover
             try
             {
                 __instance.ClearContainer();
+                var all = Groups(true);
+                ScrollRow = ClampRow(ScrollRow, all.Count);
                 int num = 0;
-                foreach (var g in Groups(true))
+                foreach (var g in all.Skip(ScrollRow * 3).Take(Rows * 3))
                 {
                     var go = UnityEngine.Object.Instantiate(Resources.Load("ContainerItem"), __instance.contPopulate.transform) as GameObject;
                     go.GetComponent<RectTransform>().anchoredPosition = new Vector2(34.5f + (num % 3) * 66f, -34.5f - (num / 3) * 66f);
@@ -227,6 +232,60 @@ namespace CasualtiesCarryover
                 }
             }
             catch (Exception e) { Plugin.Log.LogError("subspace panel: " + e); }
+        }
+
+        /// <summary>가방 창에 한 번에 보이는 줄 수(게임 창은 12줄, 3칸씩). 넘치면 마우스 휠로 한 줄씩 넘긴다(사용자 11-22: 밑에 것이 안 보임).</summary>
+        internal const int Rows = 12;
+        internal static int ScrollRow;
+        internal static int TotalRows(int groups) => (groups + 2) / 3;
+        internal static int ClampRow(int row, int groups) => Math.Max(0, Math.Min(row, TotalRows(groups) - Rows));
+
+        internal static void Scroll(int delta)
+        {
+            var pc = PlayerCamera.main;
+            if (Bag == null || pc == null || pc.currentContainer != Bag) return;
+            int row = ClampRow(ScrollRow + delta, Groups().Count);
+            if (row == ScrollRow) return;
+            ScrollRow = row;
+            pc.RepopulateContainer();
+        }
+
+        // 위로 고정(사용자 11-22: 자주 쓰는 소모품을 위로). 가방 창에서 물건 위에 마우스를 두고 휠 클릭 → 고정/해제. 물건 id 단위, 회차가 바뀌어도 남는다.
+        private static List<string> pinCache;
+        internal static string PinPath => FilePath == null ? null : Path.ChangeExtension(FilePath, ".pins.txt");
+        internal static List<string> Pins()
+        {
+            if (pinCache != null) return pinCache;
+            pinCache = new List<string>();
+            try { if (PinPath != null && File.Exists(PinPath)) pinCache.AddRange(File.ReadAllLines(PinPath).Select(l => l.Trim()).Where(l => l.Length > 0).Distinct()); }
+            catch (Exception e) { Plugin.Log.LogWarning("subspace pins read: " + e.Message); }
+            return pinCache;
+        }
+
+        /// <summary>고정/해제하고 창을 다시 그린다. 고정이면 true.</summary>
+        internal static bool TogglePin(string id)
+        {
+            var pins = Pins();
+            bool pinned = !pins.Remove(id);
+            if (pinned) pins.Add(id);
+            try { if (PinPath != null) File.WriteAllLines(PinPath, pins); } catch (Exception e) { Plugin.Log.LogWarning("subspace pins save: " + e.Message); }
+            groupCache = null;
+            var pc = PlayerCamera.main;
+            if (pc != null && Bag != null && pc.currentContainer == Bag) pc.RepopulateContainer();
+            return pinned;
+        }
+
+        /// <summary>가방 창에서 마우스가 올라간 물건(게임 InvButton.hovered).</summary>
+        internal static Item Hovered()
+        {
+            var pc = PlayerCamera.main;
+            if (pc == null || Bag == null || pc.currentContainer != Bag) return null;
+            foreach (var go in pc.containerUnloadButtons)
+            {
+                var b = go != null ? go.GetComponent<InvButton>() : null;
+                if (b != null && b.hovered && b.refItem != null) return b.refItem;
+            }
+            return null;
         }
 
         /// <summary>
