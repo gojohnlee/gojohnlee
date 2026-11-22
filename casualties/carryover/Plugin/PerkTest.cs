@@ -360,6 +360,17 @@ namespace CasualtiesCarryover
                 var bg = Subspace.Groups(true).Where(g => g[0].id == "waterbottle").Select(g => g.Count).ToList();
                 Check("liquid containers grouped by contents only (water / blood / 2 empty)", allIn && bg.Count == 3 && bg.Contains(2), $"put {allIn}, groups {string.Join(",", bg)}");
                 foreach (var i in bottles) DestroyImmediate(i.gameObject);
+
+                // 고철 자동 합치기: 5% + 4% → 9% 하나, 60% + 60% → 100% + 20%
+                Item Scrap(float c) { var x = Utils.Create("scrapmetal", body.transform.position, 0f).GetComponent<Item>(); x.condition = c; return x; }
+                Subspace.Put(body, Scrap(0.05f)); Subspace.Put(body, Scrap(0.04f));
+                var sc1 = Subspace.Items.Where(i => i.id == "scrapmetal").Select(i => i.condition).ToList();
+                Subspace.Put(body, Scrap(0.6f)); Subspace.Put(body, Scrap(0.6f));
+                var sc2 = Subspace.Items.Where(i => i.id == "scrapmetal").Select(i => i.condition).OrderByDescending(c => c).ToList();
+                Check("scrap auto-merges in subspace (5%+4% -> 9%; then +60%+60% -> 100% + 29%)",
+                    sc1.Count == 1 && Mathf.Abs(sc1[0] - 0.09f) < 0.001f && sc2.Count == 2 && Mathf.Abs(sc2[0] - 1f) < 0.001f && Mathf.Abs(sc2[1] - 0.29f) < 0.001f,
+                    $"after 5+4: {string.Join(",", sc1.Select(c => (c * 100).ToString("0")))}%, after +60+60: {string.Join(",", sc2.Select(c => (c * 100).ToString("0")))}%");
+                foreach (var i in Subspace.Items.Where(i => i.id == "scrapmetal").ToList()) DestroyImmediate(i.gameObject);
             }
             finally { Plugin.Perks = keep; Subspace.Hide(body); }
 

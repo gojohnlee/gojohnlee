@@ -148,6 +148,35 @@ namespace CasualtiesCarryover
         internal static string LastAlert;
 
         /// <summary>
+        /// 넣을 때 같은 물건끼리 자동으로 합친다(사용자 11-22: 고철 5% + 4% → 9% 하나). 게임 Body.CombineItems와 같은 셈:
+        /// 받는 쪽 condition += min(1 - 받는 쪽, 넣는 쪽), 넣는 쪽은 그만큼 줄고 0이 되면 없앤다. 게임이 합치기를 허용하는 물건(Stats.combineable)만,
+        /// 액체 그릇·탄약·총은 게임도 따로 다루므로 뺀다. 받는 쪽은 많이 찬 것부터 → 100%에 가까운 것이 먼저 채워진다.
+        /// </summary>
+        [HarmonyPatch(typeof(Container), nameof(Container.LoadItem))]
+        [HarmonyPostfix]
+        private static void LoadPostfix(Container __instance, Item item)
+        {
+            if (Bag == null || __instance != Bag || item == null || item.transform.parent != Bag.transform) return;
+            try { MergeInto(item); } catch (Exception e) { Plugin.Log.LogWarning("subspace merge: " + e.Message); }
+        }
+
+        internal static void MergeInto(Item it)
+        {
+            if (it.Stats == null || !it.Stats.combineable || it.GetComponent<WaterContainerItem>() || it.GetComponent<AmmoScript>() || it.GetComponent<GunScript>()) return;
+            foreach (var o in Items.Where(o => o != it && o.id == it.id && o.condition > 0f && o.condition < 1f).OrderByDescending(o => o.condition))
+            {
+                float m = Mathf.Min(1f - o.condition, it.condition);
+                o.condition += m; it.condition -= m;
+                if (it.condition <= 0.0001f)
+                {
+                    it.gameObject.SetActive(false); it.transform.SetParent(holder, false);   // 가방 밖으로 빼고(목록에서 빠짐) 지운다
+                    UnityEngine.Object.Destroy(it.gameObject);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
         /// 가방 창 묶음(사용자 11-22: 물건이 많아 누르기 힘듦 → 같은 물건은 단추 하나, 액체류만 내용물로 구별). 무게 제한은 그대로이고 겹치기는 보이는 것만:
         /// 물건은 여전히 하나씩 들어 있고, 단추를 끌면 게임대로 그중 하나가 나온다.
         /// 게임 PlayerCamera.RepopulateContainer는 물건마다 단추(3열, 66px) → 아공간이면 묶어서 다시 만들고 오른쪽 아래에 "x개수"(게임 containerText 복제, ×는 글꼴에 없어 x).
