@@ -143,13 +143,16 @@ namespace CasualtiesCarryover
             foreach (var it in Items) if (it != null && !__result.Contains(it)) __result.Add(it);
         }
 
+        /// <summary>어디에 있든 썩지 않는 물건(사용자 11-22: 나뭇잎·로프 유통기한 무한). id는 게임 Lang/ko.json으로 확인.</summary>
+        internal static readonly HashSet<string> NoDecayIds = new HashSet<string> { "foliage", "redfoliage", "dryfoliage", "rope" };
+
         /// <summary>
         /// 아공간 안은 시간이 멈춘다(사용자 11-21: 로프·잎·음식 유통기한). 게임 Item.Update → HandleDecay가 매 프레임
         /// condition -= rotSpeed × decayMultiplier × (젖음 6배) × globalDecayRate × dt (배터리 물건은 충전량을 깎음) → 아공간 가방 바로 안 물건이면 건너뛴다.
         /// </summary>
         [HarmonyPatch(typeof(Item), nameof(Item.HandleDecay))]
         [HarmonyPrefix]
-        private static bool DecayPrefix(Item __instance) => Bag == null || __instance.transform.parent != Bag.transform;
+        private static bool DecayPrefix(Item __instance) => !NoDecayIds.Contains(__instance.id) && (Bag == null || __instance.transform.parent != Bag.transform);
 
         // ---- 저장하고 나가기 / 이어하기 ----
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };

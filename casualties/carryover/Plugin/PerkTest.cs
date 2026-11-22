@@ -340,14 +340,21 @@ namespace CasualtiesCarryover
             DestroyImmediate(kit.gameObject);
 
             // 아공간 안은 썩지 않음: 같은 잎을 안·밖에 두고 HandleDecay를 여러 번 부른다
-            var leafIn = Utils.Create("foliage", body.transform.position, 0f).GetComponent<Item>();
-            var leafOut = Utils.Create("foliage", body.transform.position + Vector3.up, 0f).GetComponent<Item>();
+            var leafIn = Utils.Create("foliagemeal", body.transform.position, 0f).GetComponent<Item>();   // 잎·로프는 어디서나 안 썩으니 잎사귀 요리로
+            var leafOut = Utils.Create("foliagemeal", body.transform.position + Vector3.up, 0f).GetComponent<Item>();
             bool leafPut = Subspace.Put(body, leafIn);
             float li0 = leafIn.condition, lo0 = leafOut.condition;
             for (int k = 0; k < 3000; k++) { leafIn.HandleDecay(); leafOut.HandleDecay(); }
             Check("no decay inside subspace (outside leaf decays)", leafPut && leafIn.condition == li0 && leafOut.condition < lo0,
                 $"put {leafPut}, inside {li0:0.0000}->{leafIn.condition:0.0000}, outside {lo0:0.0000}->{leafOut.condition:0.0000}");
             DestroyImmediate(leafIn.gameObject); DestroyImmediate(leafOut.gameObject);
+            foreach (var nid in new[] { "foliage", "rope" })
+            {
+                var x = Utils.Create(nid, body.transform.position + Vector3.up, 0f).GetComponent<Item>();
+                float c0 = x.condition; for (int k = 0; k < 3000; k++) x.HandleDecay();
+                Check(nid + " never decays (outside subspace)", x.condition == c0, $"{c0:0.0000}->{x.condition:0.0000}");
+                DestroyImmediate(x.gameObject);
+            }
 
             StartCoroutine(BottleInWater(body));
             Subspace.Toggle(body);                 // V: 게임 가방 창 열기 — 다음 단계에서 열려 있는지 본다
