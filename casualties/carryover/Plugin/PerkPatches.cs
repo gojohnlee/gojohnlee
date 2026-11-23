@@ -32,12 +32,27 @@ namespace CasualtiesCarryover
 
         [HarmonyPatch(typeof(Body), nameof(Body.Attack))]
         [HarmonyFinalizer]
-        private static void AttackFinalizer() => inPlayerAttack = false;
+        private static void AttackFinalizer() { inPlayerAttack = false; numberPending = false; }
         internal static int BoostedHits;   // 시험용: 배율이 붙은 DamageBlock 수
 
         [HarmonyPatch(typeof(WorldGeneration), nameof(WorldGeneration.DamageBlock), new[] { typeof(UnityEngine.Vector2Int), typeof(float), typeof(bool), typeof(bool), typeof(bool) })]
         [HarmonyPrefix]
-        private static void DamageBlockPrefix(ref float dmg) { if (inPlayerAttack) { dmg *= Plugin.Perks?.MiningMult ?? 1f; BoostedHits++; } }
+        private static void DamageBlockPrefix(ref float dmg) { if (inPlayerAttack) { dmg *= Plugin.Perks?.MiningMult ?? 1f; BoostedHits++; numberPending = true; } }
+
+        // 화면 숫자: Body.Attack은 DamageBlock 바로 뒤에 CreateDamageNumber((int)(structuralDamage × 힘 배율))를 따로 부른다 → 퍽 배율이 빠진 숫자가 뜸(사용자 11-23: 드릴 10씩).
+        //   방금 배율을 붙인 블록 피해 다음의 숫자 하나에만 같은 배율을 곱한다(동물 피해 숫자는 그대로).
+        [System.ThreadStatic] private static bool numberPending;
+        internal static int LastNumber, LastNumberRaw;
+        [HarmonyPatch(typeof(WorldGeneration), nameof(WorldGeneration.CreateDamageNumber))]
+        [HarmonyPrefix]
+        private static void DamageNumberPrefix(ref int num)
+        {
+            if (!numberPending || !inPlayerAttack) { numberPending = false; return; }
+            numberPending = false;
+            LastNumberRaw = num;
+            num = (int)(num * (Plugin.Perks?.MiningMult ?? 1f));
+            LastNumber = num;
+        }
 
         // - 튼튼한 다리: 떨어지거나 부딪힐 때 Limb.OnCollisionEnter2D → Limb.ImpactDamage(force, dir). 근육·피부·뼈·머리 피해와 탈구·골절 문턱이 모두 force로 정해진다
         //   → 플레이어 몸의 팔다리면 force에 배율을 곱한다.

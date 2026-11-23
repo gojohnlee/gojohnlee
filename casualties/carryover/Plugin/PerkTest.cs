@@ -228,15 +228,15 @@ namespace CasualtiesCarryover
             // 도구로 캘 때도(사용자 11-23): 곡괭이 쓰기(GlobalItems["pickaxe"].useAction → Body.Attack)로 가까운 단단한 칸을 치면 배율이 붙는다
             var from = body.limbs[1].transform.position; var fb = w.WorldToBlockPos(from); float best = 99f;
             for (int dx = -4; dx <= 4; dx++) for (int dy = -4; dy <= 4; dy++)
-            { var q = fb + new Vector2Int(dx, dy); float dd = Vector2.Distance(from, w.BlockToWorldPos(q)); if (w.GetBlock(q) > 0 && dd < best) { best = dd; pos = q; } }
-            float d0 = Dmg(); int b0 = PerkPatches.BoostedHits;
+            { var q = fb + new Vector2Int(dx, dy); float dd = Vector2.Distance(from, w.BlockToWorldPos(q)); if (w.GetBlock(q) > 0 && dd >= 1.2f && dd < best) { best = dd; pos = q; } }
+            float d0 = Dmg(); int b0 = PerkPatches.BoostedHits; PerkPatches.LastNumber = 0;
             var pick = Utils.Create("pickaxe", body.transform.position, 0f).GetComponent<Item>();
             body.targetLookPos = w.BlockToWorldPos(pos);
             body.attackCooldown = 0f;
             Item.GlobalItems["pickaxe"].useAction(body, pick);
             float d1 = Dmg(); bool ran = body.attackCooldown > 0f;
             DestroyImmediate(pick.gameObject);
-            Check("mining perk applies to tools too (pickaxe swing goes through boosted path)", PerkPatches.BoostedHits > b0, $"swung {ran}, conscious {body.conscious}, boosted hits {PerkPatches.BoostedHits - b0}, block damage {d0:0.#} -> {d1:0.#}, block {pos} dist {best:0.0}");
+            Check("mining perk applies to tools too (pickaxe swing boosted, damage number shows boosted value)", PerkPatches.BoostedHits > b0 && PerkPatches.LastNumberRaw > 0 && PerkPatches.LastNumber == (int)(PerkPatches.LastNumberRaw * 1.75f), $"number {PerkPatches.LastNumberRaw} -> {PerkPatches.LastNumber}, swung {ran}, conscious {body.conscious}, boosted hits {PerkPatches.BoostedHits - b0}, block damage {d0:0.#} -> {d1:0.#}, block {pos} dist {best:0.0}");
         }
 
         private void TestImpact(Body body)
