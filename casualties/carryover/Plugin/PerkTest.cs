@@ -225,6 +225,18 @@ namespace CasualtiesCarryover
             float a2 = Dmg();
             float on = (a1 - a0) / 0.01f, off = (a2 - a1) / 0.01f;
             Check("mining x1.75 (player attack only)", Mathf.Abs(on - 1.75f) < 0.01f && Mathf.Abs(off - 1f) < 0.01f, $"attack {on:0.00}, other {off:0.00}");
+            // 도구로 캘 때도(사용자 11-23): 곡괭이 쓰기(GlobalItems["pickaxe"].useAction → Body.Attack)로 가까운 단단한 칸을 치면 배율이 붙는다
+            var from = body.limbs[1].transform.position; var fb = w.WorldToBlockPos(from); float best = 99f;
+            for (int dx = -4; dx <= 4; dx++) for (int dy = -4; dy <= 4; dy++)
+            { var q = fb + new Vector2Int(dx, dy); float dd = Vector2.Distance(from, w.BlockToWorldPos(q)); if (w.GetBlock(q) > 0 && dd < best) { best = dd; pos = q; } }
+            float d0 = Dmg(); int b0 = PerkPatches.BoostedHits;
+            var pick = Utils.Create("pickaxe", body.transform.position, 0f).GetComponent<Item>();
+            body.targetLookPos = w.BlockToWorldPos(pos);
+            body.attackCooldown = 0f;
+            Item.GlobalItems["pickaxe"].useAction(body, pick);
+            float d1 = Dmg(); bool ran = body.attackCooldown > 0f;
+            DestroyImmediate(pick.gameObject);
+            Check("mining perk applies to tools too (pickaxe swing goes through boosted path)", PerkPatches.BoostedHits > b0, $"swung {ran}, conscious {body.conscious}, boosted hits {PerkPatches.BoostedHits - b0}, block damage {d0:0.#} -> {d1:0.#}, block {pos} dist {best:0.0}");
         }
 
         private void TestImpact(Body body)
@@ -361,13 +373,42 @@ namespace CasualtiesCarryover
                 Check("liquid containers grouped by contents only (water / blood / 2 empty)", allIn && bg.Count == 3 && bg.Contains(2), $"put {allIn}, groups {string.Join(",", bg)}");
                 // 위로 고정·휠 넘기기(사용자 11-22)
                 var firstBefore = Subspace.Groups(true)[0][0].id;
-                bool pinOn = Subspace.TogglePin("waterbottle");
+                bool pinOn = Subspace.MoveBefore("waterbottle", firstBefore) || firstBefore == "waterbottle";
                 var firstPinned = Subspace.Groups(true)[0][0].id;
-                bool pinOff = !Subspace.TogglePin("waterbottle");
+                bool pinOff = firstBefore == "waterbottle";
+                if (!pinOff)
+                {
+                    var pcx = PlayerCamera.main;
+                    if (pcx.currentContainer != Subspace.Bag) Subspace.Toggle(body);
+                    pcx.RepopulateContainer();
+                    var btn = pcx.containerUnloadButtons.FirstOrDefault(g => g.GetComponent<InvButton>().refItem.id == "waterbottle");
+                    pcx.dragItem = Subspace.Groups(true).First(g => g[0].id == firstBefore)[0];
+                    var hit = new UnityEngine.EventSystems.RaycastResult { gameObject = btn };
+                    pinOff = btn != null && (bool)HarmonyLib.AccessTools.Method(typeof(PlayerCamera), "TryPerformInventoryAction").Invoke(pcx, new object[] { hit, new List<UnityEngine.EventSystems.RaycastResult> { hit } })
+                        && pcx.dragItem.transform.parent == Subspace.Bag.transform;
+                    pcx.dragItem = null;
+                }
                 var firstAfter = Subspace.Groups(true)[0][0].id;
                 bool clamp = Subspace.ClampRow(99, 40) == 2 && Subspace.ClampRow(-1, 40) == 0 && Subspace.ClampRow(3, 30) == 0;
-                Check("pin moves item to top, unpin restores; scroll rows clamp", pinOn && pinOff && firstPinned == "waterbottle" && firstAfter == firstBefore && clamp,
+                Check("drag-reorder moves item before target, and back; scroll rows clamp", pinOn && pinOff && firstPinned == "waterbottle" && firstAfter == firstBefore && clamp,
                     $"before {firstBefore}, pinned {firstPinned}, after {firstAfter}, clamp {clamp}");
+                {   // 바깥 물건을 가방 창 빈 곳·아래쪽에 놓아도 들어감(사용자 11-23)
+                    var pcd = PlayerCamera.main;
+                    if (pcd.currentContainer != Subspace.Bag) Subspace.Toggle(body);
+                    pcd.RepopulateContainer();
+                    var pr = pcd.contPopulate.transform.parent as RectTransform;
+                    var cv = pr.GetComponentInParent<Canvas>();
+                    var cc = cv == null || cv.renderMode == RenderMode.ScreenSpaceOverlay ? null : cv.worldCamera;
+                    Vector2 mid = RectTransformUtility.WorldToScreenPoint(cc, pr.TransformPoint(pr.rect.center));
+                    var nb = Utils.Create("bandage", body.transform.position, 0f).GetComponent<Item>();
+                    pcd.dragItem = nb;
+                    bool outside = !Subspace.TryDropInto(pcd, new Vector2(-50f, -50f));
+                    bool inside = Subspace.TryDropInto(pcd, mid);
+                    pcd.dragItem = null;
+                    Check("drop from outside onto bag window (any spot) goes in; off-window does not", outside && inside && nb.transform.parent == Subspace.Bag.transform, $"outside {outside}, inside {inside}, mid {mid}");
+                    if (nb != null) DestroyImmediate(nb.gameObject);
+                    if (pcd.currentContainer == Subspace.Bag) pcd.CloseContainer();   // 뒤 시험(V로 열기)이 닫힌 상태에서 시작하게
+                }
                 foreach (var i in bottles) DestroyImmediate(i.gameObject);
 
                 // 고철 자동 합치기: 5% + 4% → 9% 하나, 60% + 60% → 100% + 20%

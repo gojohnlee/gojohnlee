@@ -33,10 +33,11 @@ namespace CasualtiesCarryover
         [HarmonyPatch(typeof(Body), nameof(Body.Attack))]
         [HarmonyFinalizer]
         private static void AttackFinalizer() => inPlayerAttack = false;
+        internal static int BoostedHits;   // 시험용: 배율이 붙은 DamageBlock 수
 
         [HarmonyPatch(typeof(WorldGeneration), nameof(WorldGeneration.DamageBlock), new[] { typeof(UnityEngine.Vector2Int), typeof(float), typeof(bool), typeof(bool), typeof(bool) })]
         [HarmonyPrefix]
-        private static void DamageBlockPrefix(ref float dmg) { if (inPlayerAttack) dmg *= Plugin.Perks?.MiningMult ?? 1f; }
+        private static void DamageBlockPrefix(ref float dmg) { if (inPlayerAttack) { dmg *= Plugin.Perks?.MiningMult ?? 1f; BoostedHits++; } }
 
         // - 튼튼한 다리: 떨어지거나 부딪힐 때 Limb.OnCollisionEnter2D → Limb.ImpactDamage(force, dir). 근육·피부·뼈·머리 피해와 탈구·골절 문턱이 모두 force로 정해진다
         //   → 플레이어 몸의 팔다리면 force에 배율을 곱한다.

@@ -6,6 +6,7 @@ using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace CasualtiesCarryover
 {
@@ -194,9 +195,9 @@ namespace CasualtiesCarryover
         {
             var items = Items;
             if (!fresh && groupCache != null && groupCount == items.Count && Time.unscaledTime < groupTime) return groupCache;
-            var pins = Pins();
+            var order = Order();
             groupCache = items.GroupBy(StackKey).Select(g => g.ToList())
-                .OrderBy(g => { int i = pins.IndexOf(g[0].id); return i < 0 ? int.MaxValue : i; }).ToList();   // 고정한 것 먼저(고정 순서), 나머지는 넣은 순서
+                .OrderBy(g => { int i = order.IndexOf(g[0].id); return i < 0 ? int.MaxValue : i; }).ToList();   // 사용자가 정한 순서 먼저, 나머지는 넣은 순서
             groupCount = items.Count; groupTime = Time.unscaledTime + 0.5f;
             return groupCache;
         }
@@ -240,52 +241,104 @@ namespace CasualtiesCarryover
         internal static int TotalRows(int groups) => (groups + 2) / 3;
         internal static int ClampRow(int row, int groups) => Math.Max(0, Math.Min(row, TotalRows(groups) - Rows));
 
+        /// <summary>휠 한 칸 = 한 줄. 물건을 끄는 중에는 창을 다시 그리지 않는다(끄는 중 창이 바뀌면 놓는 곳이 어긋남).</summary>
         internal static void Scroll(int delta)
         {
             var pc = PlayerCamera.main;
-            if (Bag == null || pc == null || pc.currentContainer != Bag) return;
+            if (Bag == null || pc == null || pc.currentContainer != Bag || pc.dragItem != null) return;
             int row = ClampRow(ScrollRow + delta, Groups().Count);
             if (row == ScrollRow) return;
             ScrollRow = row;
             pc.RepopulateContainer();
         }
 
-        // 위로 고정(사용자 11-22: 자주 쓰는 소모품을 위로). 가방 창에서 물건 위에 마우스를 두고 휠 클릭 → 고정/해제. 물건 id 단위, 회차가 바뀌어도 남는다.
-        private static List<string> pinCache;
-        internal static string PinPath => FilePath == null ? null : Path.ChangeExtension(FilePath, ".pins.txt");
-        internal static List<string> Pins()
+        // 순서 바꾸기(사용자 11-23: 휠 클릭 말고 끌어서). 가방 창에서 물건을 끌어 다른 물건 위에 놓으면 그 앞으로 간다. 물건 id 단위, 회차가 바뀌어도 남는다.
+        // 11-22에 휠 클릭 "위로 고정"을 넣었다가 끄는 중 휠 클릭하면 물건이 밖으로 떨어져 뺐다.
+        private static List<string> orderCache;
+        internal static string OrderPath => FilePath == null ? null : Path.ChangeExtension(FilePath, ".order.txt");
+        internal static List<string> Order()
         {
-            if (pinCache != null) return pinCache;
-            pinCache = new List<string>();
-            try { if (PinPath != null && File.Exists(PinPath)) pinCache.AddRange(File.ReadAllLines(PinPath).Select(l => l.Trim()).Where(l => l.Length > 0).Distinct()); }
-            catch (Exception e) { Plugin.Log.LogWarning("subspace pins read: " + e.Message); }
-            return pinCache;
+            if (orderCache != null) return orderCache;
+            orderCache = new List<string>();
+            try { if (OrderPath != null && File.Exists(OrderPath)) orderCache.AddRange(File.ReadAllLines(OrderPath).Select(l => l.Trim()).Where(l => l.Length > 0).Distinct()); }
+            catch (Exception e) { Plugin.Log.LogWarning("subspace order read: " + e.Message); }
+            return orderCache;
         }
 
-        /// <summary>고정/해제하고 창을 다시 그린다. 고정이면 true.</summary>
-        internal static bool TogglePin(string id)
+        /// <summary>id 묶음을 target 묶음 바로 앞으로 옮긴다(지금 보이는 순서를 기준으로 적어 둔다).</summary>
+        internal static bool MoveBefore(string id, string target)
         {
-            var pins = Pins();
-            bool pinned = !pins.Remove(id);
-            if (pinned) pins.Add(id);
-            try { if (PinPath != null) File.WriteAllLines(PinPath, pins); } catch (Exception e) { Plugin.Log.LogWarning("subspace pins save: " + e.Message); }
+            if (id == null || target == null || id == target) return false;
+            var ids = Groups(true).Select(g => g[0].id).Distinct().ToList();
+            if (!ids.Contains(id) || !ids.Contains(target)) return false;
+            ids.Remove(id);
+            ids.Insert(ids.IndexOf(target), id);
+            var order = Order();
+            foreach (var old in order) if (!ids.Contains(old)) ids.Add(old);   // 지금 없는 물건의 자리도 기억
+            order.Clear(); order.AddRange(ids);
+            try { if (OrderPath != null) File.WriteAllLines(OrderPath, order); } catch (Exception e) { Plugin.Log.LogWarning("subspace order save: " + e.Message); }
             groupCache = null;
-            var pc = PlayerCamera.main;
-            if (pc != null && Bag != null && pc.currentContainer == Bag) pc.RepopulateContainer();
-            return pinned;
+            return true;
         }
 
-        /// <summary>가방 창에서 마우스가 올라간 물건(게임 InvButton.hovered).</summary>
-        internal static Item Hovered()
+        /// <summary>가방 창 안에서 끌어 다른 종류 물건 위에 놓기 → 순서만 바꾼다. 같은 종류(합치기 등)·가방 밖에서 끌어온 것은 게임 그대로.
+        /// 게임 근거: 놓을 때 HandleDragging → TryPerformUIActions → TryPerformInventoryAction(hit, casts), true면 RepopulateContainer.</summary>
+        [HarmonyPatch(typeof(PlayerCamera), "TryPerformInventoryAction")]
+        [HarmonyPrefix]
+        private static bool ReorderPrefix(PlayerCamera __instance, RaycastResult hit, ref bool __result)
         {
-            var pc = PlayerCamera.main;
-            if (pc == null || Bag == null || pc.currentContainer != Bag) return null;
-            foreach (var go in pc.containerUnloadButtons)
+            try
             {
-                var b = go != null ? go.GetComponent<InvButton>() : null;
-                if (b != null && b.hovered && b.refItem != null) return b.refItem;
+                if (Bag == null || __instance.currentContainer != Bag || __instance.dragItem == null || __instance.dragItem.transform.parent != Bag.transform || hit.gameObject == null) return true;
+                if (!__instance.containerUnloadButtons.Contains(hit.gameObject)) return true;
+                var target = hit.gameObject.GetComponent<InvButton>()?.refItem;
+                if (target == null || target.id == __instance.dragItem.id) return true;
+                MoveBefore(__instance.dragItem.id, target.id);
+                __result = true;
+                return false;
             }
-            return null;
+            catch (Exception e) { Plugin.Log.LogError("subspace reorder: " + e); return true; }
+        }
+
+        /// <summary>바깥 물건을 가방 창 어디에 놓아도(빈 곳·물건 칸 위·창 아래쪽) 아공간에 넣는다(사용자 11-23: 물건이 많아 창이 차니 놓아도 안 들어가고 물건 칸 위에 놓아야만 들어감).
+        /// 게임은 놓은 자리에 ContainerBack 배경이 맞아야 넣는데, 칸이 꽉 차면 배경이 가려진다. 게임이 아무것도 못 했을 때(TryPerformUIActions false)만 끼어든다.</summary>
+        [HarmonyPatch(typeof(PlayerCamera), "TryPerformUIActions")]
+        [HarmonyPostfix]
+        private static void DropPostfix(PlayerCamera __instance, ref bool __result)
+        {
+            if (__result) return;
+            try { if (TryDropInto(__instance, Input.mousePosition)) __result = true; }
+            catch (Exception e) { Plugin.Log.LogError("subspace drop: " + e); }
+        }
+
+        /// <summary>screen 자리가 아공간 가방 창 안이면 끌던 물건을 넣는다. 넣었으면 true(무게 초과면 알림만 뜨고 false).</summary>
+        internal static bool TryDropInto(PlayerCamera pc, Vector2 screen)
+        {
+            var it = pc.dragItem;
+            if (Bag == null || pc.currentContainer != Bag || it == null || it.transform.parent == Bag.transform || it.GetComponent<Container>() != null) return false;
+            if (!OverPanel(pc, screen)) return false;
+            if (pc.body != null && it.Stats.wearable && (UnityEngine.Object)pc.body.GetWearable(it.id) == it) return false;   // 입은 옷은 게임 그대로
+            if (it.transform.parent != null && it.transform.parent.TryGetComponent<Container>(out var from)) from.UnloadItem(it);
+            var body = pc.body;
+            if (body != null && body.HoldingItem(it)) body.DropItem(it);
+            it.transform.position = Bag.transform.position;
+            Bag.LoadItem(it);
+            return it.transform.parent == Bag.transform;
+        }
+
+        internal static bool OverPanel(PlayerCamera pc, Vector2 screen)
+        {
+            var rects = new List<RectTransform>();
+            var pop = pc.contPopulate != null ? pc.contPopulate.GetComponent<RectTransform>() : null;
+            if (pop != null) { rects.Add(pop); if (pop.parent is RectTransform par) rects.Add(par); }
+            foreach (var go in pc.containerUnloadButtons) if (go != null && go.TryGetComponent<RectTransform>(out var r)) rects.Add(r);
+            foreach (var r in rects)
+            {
+                var canvas = r.GetComponentInParent<Canvas>();
+                var cam = canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+                if (RectTransformUtility.RectangleContainsScreenPoint(r, screen, cam)) return true;
+            }
+            return false;
         }
 
         /// <summary>
