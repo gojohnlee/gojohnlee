@@ -46,10 +46,12 @@ def judge(x):
     if x['sales']!='월세' or x['dep']>2000: return '조건밖'
     if x['d']>3000: return '3km밖'
     if any(b in x['type'] for b in bad): return '용도'
-    if re.search(r'전입\s*(신고)?\s*(불가|안\s*됩|안\s*됨|x|X|×|안돼|안 돼)',x['txt']): return '전입불가'
+    if re.search(r'전입\s*(신고)?\s*[은이는가]?\s*(불가|안\s*됩|안\s*됨|x|X|×|안\s*돼)',x['txt']): return '전입불가'
     if x['fl']<3: return '저층'
     if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): return '노후'
-    if x['tot']>64: return '예산'
+    if x['tot']>70: return '예산'
+    if x['py']<6: return '6평 미만'
+    if x['ev'] is False and not re.search('엘리베이터|엘레베이터|엘베|승강기',x['txt'] or ''): return '엘리베이터 없음'
     return 'OK'
 for x in recs: x['res']=judge(x)
 json.dump(recs,open(f'{day}/recs.json','w'),ensure_ascii=False)
