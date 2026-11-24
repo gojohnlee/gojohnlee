@@ -37,11 +37,17 @@ ok.sort(key=lambda x:(-x['score'],x['tot']))
 allids={x['id'] for x in R}
 new=[x for x in ok if x['id'] not in prev['ok']]
 gone=[(i,v) for i,v in prev['ok'].items() if i not in allids]
-out=[f"## 오늘 순위 (보증금 2천 이하, 월 실부담 64만 이하, 아크로 3km)\n","| 순위 | 매물 | 크기 | 조건 | 월 실부담 | 주의 | 링크 |","|---|---|---|---|---|---|---|"]
+out=[f"## 오늘 순위 (보증금 2천 이하, 월 실부담 64만 이하, 아크로 3km)\n","| 순위(전날 대비) | 매물 | 크기 | 조건 | 월 실부담 | 주의 | 링크 |","|---|---|---|---|---|---|---|"]
+def arrow(x,n):
+    p=prev['ok'].get(x['id'])
+    if not p: return '🆕'
+    if not p.get('rank'): return ''
+    d=p['rank']-n
+    return '–' if d==0 else (f'▲{d}' if d>0 else f'▼{-d}')
 for n,x in enumerate(ok[:15],1):
-    nm=f"{'🆕 ' if x in new else ''}{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
-    out.append(f"| {n} | {nm} | {x['py']}평 | {x['dep']}/{x['rent']}+관리 {x['mc']} | 약 {x['tot']}만 | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
+    nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
+    out.append(f"| {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']}/{x['rent']}+관리 {x['mc']} | 약 {x['tot']}만 | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")
 for i,v in gone: out.append(f"  - 사라짐: {v['name']} ({v['price']})")
 print('\n'.join(out))
-json.dump({'ok':{x['id']:{'name':f"{x['addr']} {x['fl']}층",'price':f"{x['dep']}/{x['rent']}",'link':x['link']} for x in ok}},open(prevp,'w'),ensure_ascii=False,indent=0)
+json.dump({'ok':{x['id']:{'name':f"{x['addr']} {x['fl']}층",'price':f"{x['dep']}/{x['rent']}",'link':x['link'],'rank':n} for n,x in enumerate(ok,1)}},open(prevp,'w'),ensure_ascii=False,indent=0)
