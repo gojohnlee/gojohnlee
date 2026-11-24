@@ -13,8 +13,6 @@ def extra(x):
     if '옥탑' in t: return '옥탑방'
     if re.search(r'재래시장|시장\s*(인접|바로|앞|옆)',t): return '재래시장 인접'
     if x['af'] and x['fl']>x['af']: return '층 정보 모순'
-    r=RV.get(akey(x))
-    if r and r['v']=='bad': return '나쁜 후기: '+r['why']   # 사용자 11-24: 리뷰 기준 극 우선
     return None
 seen=set();ok=[]
 for x in sorted(R,key=lambda x:x['src']!='직방'):
@@ -29,28 +27,23 @@ for x in sorted(R,key=lambda x:x['src']!='직방'):
 EVA={akey(y) for y in R if y['ev'] is True and has_jibun(y)}
 for x in ok:
     if x['ev'] is not True and has_jibun(x) and akey(x) in EVA: x['ev']=True   # 같은 건물 다른 매물에 엘리베이터 있음
-todo=sorted({akey(x) for x in ok if has_jibun(x) and akey(x) not in RV})
-if todo and os.environ.get('NO_REVIEW')!='1':
-    ap=f'{day}/rv_addrs.txt';op=f'{day}/rv_daangn.json'
-    open(ap,'w').write('\n'.join('경기도 '+a for a in todo))
-    try:
-        subprocess.run(['node',f'{here}/daangn.js',ap,op],timeout=1200,capture_output=True)
-        got=json.load(open(op))
-        for a,lst in got.items():
-            if lst is None: continue
-            k=re.sub(r'^경기도\s*','',a);t=' / '.join(lst)
-            RV[k]={'v':'none'} if not lst else ({'v':'bad','auto':1,'why':'당근(자동): '+t[:80]} if re.search(BADW,t) else {'v':'good','auto':1,'why':'당근(자동): '+t[:80]})
-            RV[k].update(src='당근',date=str(datetime.date.today()))
-        json.dump(RV,open(RVp,'w'),ensure_ascii=False,indent=1)
-        nok=[]
-        for x in ok:
-            r=RV.get(akey(x))
-            if r and r['v']=='bad': x['res']='나쁜 후기: '+r['why']
-            else: nok.append(x)
-        ok=nok
-    except Exception as e: print('후기 조회 실패:',e)
+DG={}
+try: DG=json.load(open(f'{here}/data/daangn_buildings.json'))   # daangn_region.py 결과(당근 후기 전체, 건물별 자동 판정)
+except Exception: pass
+def rvget(x):
+    k=akey(x);m=RV.get(k)
+    if m and m['v'] in ('good','bad'): return m          # 사람이 확인한 판정 우선
+    d=DG.get(k)
+    if d: return {'v':d['v'],'auto':1,'why':'당근(자동) '+str(d['n'])+'개 중 나쁨 '+str(d['bad'])+': '+' / '.join(r['txt'][:60].replace('\n',' ') for r in d['reviews'][:2])}
+    return m
+nok=[]
+for x in ok:
+    r=rvget(x)
+    if r and r['v']=='bad': x['res']='나쁜 후기: '+r['why']
+    else: nok.append(x)
+ok=nok
 def rv(x):
-    r=RV.get(akey(x))
+    r=rvget(x)
     return 'O' if r and r['v']=='good' else 'X' if r else '?'
 def score(x):
     t=x['txt'] or '';s=0
@@ -68,7 +61,7 @@ def score(x):
     s-=1 if x['py']<5.5 else 0
     return s
 for x in ok:
-    x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+([('좋은 후기: ' if RV[akey(x)]['v']=='good' else '')+RV[akey(x)].get('why','')] if RV.get(akey(x),{}).get('v')=='good' else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
+    x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+(['좋은 후기: '+rvget(x).get('why','')] if rv(x)=='O' else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
 ok.sort(key=lambda x:(rv(x)!='O',-x['score'],x['tot']))   # 좋은 후기 있는 곳이 맨 위
 allids={x['id'] for x in R}
 def next_weekday_9():
@@ -105,6 +98,22 @@ def arrow(x,n):
 for n,x in enumerate(ok[:15],1):
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
     out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
+near=[]
+seen2=set()
+for x in R:
+    if x in ok or not re.match(r'예산|6평 미만|용도',x['res'] or '') or x['tot']>85 or not has_jibun(x): continue
+    r=rvget(x)
+    if not (r and r['v']=='good'): continue
+    k2=(akey(x),x['fl'],x['rent'])
+    if k2 in seen2: continue
+    seen2.add(k2);near.append(x)
+if near:
+    out.append("\n## 좋은 후기 건물인데 조건 일부 초과 (월 실부담 85만 이하)\n")
+    out.append(out[2]);out.append(out[3])
+    for n,x in enumerate(sorted(near,key=lambda x:x['tot']),1):
+        x['flags']=['조건 초과: '+x['res'],'좋은 후기: '+rvget(x).get('why','')]
+        nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
+        out.append(f"| O {n} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | - | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags'])} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")
 for i,v in gone: out.append(f"  - 사라짐: {v['name']} ({v['price']})")
 print('\n'.join(out))

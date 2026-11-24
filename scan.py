@@ -1,6 +1,7 @@
 # 사용: python3 -I scan.py raw/<날짜>
 # 직방·다방에서 아크로 3km 안 월세(보증금≤2000, 월세≤68) 목록을 받고, 상세는 data/cache.json에 없는 것·7일 지난 것·가격 바뀐 것만 새로 받는다.
 import json,urllib.request,urllib.error,urllib.parse,math,os,sys,time,datetime
+RMAX=int(os.environ.get("RENT_MAX","68"))   # 기본 68, 넓혀 볼 때 RENT_MAX=85
 here=os.path.dirname(os.path.abspath(__file__));day=sys.argv[1]
 os.makedirs(f'{day}/zb',exist_ok=True);os.makedirs(f'{day}/db',exist_ok=True)
 T=(37.39228,126.95653);TODAY=datetime.date.today();REFRESH=7;DROP=14
@@ -27,7 +28,7 @@ n_new=0
 HZ={'User-Agent':'Mozilla/5.0'};m=urllib.parse.quote("월세");ids={}
 for kind in['onerooms','officetels','villas']:
   for g in ['wydk8','wydk9','wydkb','wydkc']:
-    u=f"https://apis.zigbang.com/house/property/v1/items/{kind}?geohash={g}&depositMin=0&depositMax=2000&rentMin=0&rentMax=68&salesTypes[0]={m}&domain=zigbang&checkAnyItemWithoutFilter=true"
+    u=f"https://apis.zigbang.com/house/property/v1/items/{kind}?geohash={g}&depositMin=0&depositMax=2000&rentMin=0&rentMax={RMAX}&salesTypes[0]={m}&domain=zigbang&checkAnyItemWithoutFilter=true"
     try: d=get(u,HZ)
     except Exception as e: print('ZERR',kind,g,e);continue
     for it in d.get('items',[]):
@@ -43,7 +44,7 @@ for i in ids:
     json.dump(cache[k]['data'],open(f'{day}/zb/{i}.json','w'),ensure_ascii=False)
 HD={'User-Agent':'Mozilla/5.0','D-Api-Version':'5.0.0','D-Call-Type':'web','csrf':'token','Referer':'https://www.dabangapp.com/'}
 bbox={"sw":{"lat":37.365,"lng":126.922},"ne":{"lat":37.420,"lng":126.991}}
-f={"sellingTypeList":["MONTHLY_RENT"],"depositRange":{"min":0,"max":2000},"priceRange":{"min":0,"max":68},"isIncludeMaintenance":False,"pyeongRange":{"min":0,"max":999999},"useApprovalDateRange":{"min":0,"max":999999},"roomFloorList":["GROUND_FIRST","GROUND_SECOND_OVER","SEMI_BASEMENT","ROOFTOP"],"roomTypeList":["ONE_ROOM","TWO_ROOM"],"dealTypeList":["AGENT"],"canParking":False,"isShortLease":False,"hasElevator":False,"hasPano":False,"isDivision":False,"isDuplex":False}
+f={"sellingTypeList":["MONTHLY_RENT"],"depositRange":{"min":0,"max":2000},"priceRange":{"min":0,"max":RMAX},"isIncludeMaintenance":False,"pyeongRange":{"min":0,"max":999999},"useApprovalDateRange":{"min":0,"max":999999},"roomFloorList":["GROUND_FIRST","GROUND_SECOND_OVER","SEMI_BASEMENT","ROOFTOP"],"roomTypeList":["ONE_ROOM","TWO_ROOM"],"dealTypeList":["AGENT"],"canParking":False,"isShortLease":False,"hasElevator":False,"hasPano":False,"isDivision":False,"isDuplex":False}
 L=[]
 for page in range(1,30):
     u="https://www.dabangapp.com/api/v5/room-list/category/one-two/bbox?"+urllib.parse.urlencode({"bbox":json.dumps(bbox),"filters":json.dumps(f),"page":page,"useMap":"naver","zoom":14})

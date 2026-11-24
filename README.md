@@ -64,7 +64,11 @@ Start-ScheduledTask 'House naver scan'
 
 ## 후기 우선 규칙 (사용자 2026-11-24: 모든 것은 리뷰 기준을 극 우선)
 - reviews.json = 주소별 판정. bad(소음·벌레·곰팡이·누수·경매·보증금 문제) → 제외, good → 순위 맨 위, none → 찾아봤지만 없음.
-- report.py가 reviews.json에 없는 지번 주소를 daangn.js로 당근부동산에서 자동 조회(나쁜 단어 있으면 bad, 아니면 good, 자동 판정은 auto=1 → 매일 작업이 내용 읽고 확인).
+- 당근: daangn_region.py가 안양 동안·만안, 의왕, 군포의 '살아본 후기' 전부(약 1만 건, 3분)를 받아 data/daangn_buildings.json에 건물(지번)별 good/bad 자동 판정. report.py는 reviews.json(사람 판정) → 없으면 당근 자동 판정 순으로 씀.
+  - 주소별 조회(livedReviewsByAddress)는 쓰지 않음: 11-24 970-6·971-1 후기를 0건으로 잘못 돌려줌(건물명 붙은 주소와 안 맞음).
+  - 자동 판정은 단어 기준이라 틀릴 수 있음 → 상위권에 든 건물은 원문을 읽고 reviews.json에 사람 판정으로 고정.
+- report.py는 '좋은 후기 건물인데 조건 일부 초과(예산·6평 미만·용도, 월 85만 이하)' 표를 따로 붙임(사용자 11-24: 후기 좋은 건물을 먼저 찾고 매물을 맞춰 본다).
+- 매일 실행은 RENT_MAX=85로 받아야 초과 표가 채워짐.
 - 집품은 클라우드 접속 차단 → 매일 작업이 새로 상위 10위에 든 주소를 WebSearch(allowed_domains zippoom.com)로 찾아 reviews.json에 손으로 기록.
 - 지번 비공개(다방·일부 직방)는 '?'. 직방·다방 같은 방(층·가격 같고 80m 안)은 하나로 합침.
 
