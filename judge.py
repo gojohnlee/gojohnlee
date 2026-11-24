@@ -51,7 +51,6 @@ def judge(x):
     if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): return '노후'
     if x['tot']>70: return '예산'
     if x['py']<6: return '6평 미만'
-    if re.search(r'내손동\s*(739|755)',x['addr'] or ''): return '소음 후기(내손동 739·755 일대)'
     if '대로변' in (x['txt'] or ''): return '소음(대로변)'
     if x['ev'] is False and not re.search('엘리베이터|엘레베이터|엘베|승강기',x['txt'] or ''): return '엘리베이터 없음'
     return 'OK'
