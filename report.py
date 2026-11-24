@@ -39,7 +39,7 @@ ok.sort(key=lambda x:(-x['score'],x['tot']))
 allids={x['id'] for x in R}
 new=[x for x in ok if x['id'] not in prev['ok']]
 gone=[(i,v) for i,v in prev['ok'].items() if i not in allids]
-out=[f"## 오늘 순위 (보증금 2천 이하, 월 실부담 64만 이하, 아크로 3km)\n","| 순위(전날 대비) | 매물 | 크기 | 조건 | 월 실부담 | 회사까지(도보/달리기) | 입주 | 주의 | 링크 |","|---|---|---|---|---|---|---|---|---|"]
+out=[f"## 오늘 순위 (보증금 2천 이하, 월 실부담 64만 이하, 아크로 3km)\n","| 순위(전날 대비) | 매물 | 평수 | 보증금 | 월 실부담(월세+관리비+전기·가스 추정) | 회사까지(직선/도보/달리기) | 입주 | 주의 | 링크 |","|---|---|---|---|---|---|---|---|---|"]
 def arrow(x,n):
     p=prev['ok'].get(x['id'])
     if not p: return '🆕'
@@ -48,7 +48,7 @@ def arrow(x,n):
     return '–' if d==0 else (f'▲{d}' if d>0 else f'▼{-d}')
 for n,x in enumerate(ok[:15],1):
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
-    out.append(f"| {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']}/{x['rent']}+관리 {x['mc']} | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분/{round(x['d']*1.3/167)}분) | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
+    out.append(f"| {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분/{round(x['d']*1.3/167)}분) | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")
 for i,v in gone: out.append(f"  - 사라짐: {v['name']} ({v['price']})")
 print('\n'.join(out))
