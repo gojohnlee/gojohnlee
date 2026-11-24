@@ -4,6 +4,10 @@ day=sys.argv[1];here=os.path.dirname(os.path.abspath(__file__))
 R=json.load(open(f'{day}/recs.json'));BL=json.load(open(f'{here}/blacklist.json'))
 RVp=f'{here}/reviews.json';RV=json.load(open(RVp))
 BADW=r'벌레|바퀴|소음|시끄|방음|층간|들려|들림|경매|빌라왕|곰팡|누수|결로|보증금.{0,6}(안|못|늦)'
+def movein(x):
+    return re.sub(r'\s*이후 입주 가능|입주 가능|입주', '', x.get('movein') or '?').replace('2026.', '').strip() or '?'
+
+
 def akey(x): return re.sub(r'^경기도\s*','',x['addr'] or '').strip()
 def has_jibun(x): return bool(re.search(r'\d+(-\d+)?$',akey(x)))
 prevp=f'{here}/data/latest.json';prev=json.load(open(prevp)) if os.path.exists(prevp) else {'ok':{}}
@@ -104,7 +108,7 @@ def arrow(x,n):
     return '–' if d==0 else (f'▲{d}' if d>0 else f'▼{-d}')
 for n,x in enumerate(ok[:15],1):
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
-    out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
+    out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {movein(x)} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
 near=[]
 seen2=set()
 for x in R:
@@ -120,7 +124,7 @@ if near:
     for n,x in enumerate(sorted(near,key=lambda x:x['tot']),1):
         x['flags']=['조건 초과: '+x['res'],'좋은 후기: '+rvget(x).get('why','')]
         nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
-        out.append(f"| O {n} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | - | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags'])} | [{x['src']}]({x['link']}) |")
+        out.append(f"| O {n} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | - | {movein(x)} | {', '.join(x['flags'])} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")
 for i,v in gone: out.append(f"  - 사라짐: {v['name']} ({v['price']})")
 print('\n'.join(out))
