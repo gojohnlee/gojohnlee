@@ -16,7 +16,7 @@ for f in glob.glob(f'{day}/zb/*.json'):
     L=it['location'];txt=(it.get('title') or '')+' '+(it.get('description') or '')
     recs.append(dict(src='직방',id=str(it['itemId']),link=f"https://sp.zigbang.com/share/{'officetel' if it.get('serviceType')=='오피스텔' else 'oneroom'}/{it['itemId']}",dep=p['deposit'],rent=p['rent'],mc=mc.get('amount') or 0,util=sum({'전기':3,'가스':3,'수도':1}.get(x,0) for x in ex),
       type=it.get('residenceType') or '',af=flo(str(it['floor']['allFloors'])),fl=flo(str(it['floor']['floor']),flo(str(it['floor']['allFloors']))),yr=yrof(it.get('approveDate')),area=(it.get('area') or {}).get('전용면적M2') or 0,
-      ev=bool(it.get('elevator')),hh=0,addr=it.get('jibunAddress') or (it.get('addressOrigin') or {}).get('localText'),d=dist(T,(L['lat'],L['lng'])),txt=txt,title=it.get('title'),sales=it.get('salesType')))
+      ev=bool(it.get('elevator')),hh=0,addr=it.get('jibunAddress') or (it.get('addressOrigin') or {}).get('localText'),d=dist(T,(L['lat'],L['lng'])),txt=txt,title=it.get('title'),sales=it.get('salesType'),movein=it.get('moveinDate') or ''))
 for f in glob.glob(f'{day}/db/*.json'):
     r=json.load(open(f))['room'];mm=re.match(r'(\d+)/(\d+)',(r.get('price_title') or '').replace(',',''))
     if not mm: continue
@@ -25,7 +25,7 @@ for f in glob.glob(f'{day}/db/*.json'):
     fs=str(r.get('building_floor_str'))
     recs.append(dict(src='다방',id=str(r['seq']),link=r.get('shorten_url'),dep=int(mm.group(1)),rent=int(mm.group(2)),mc=float(mc[0]) if mc else 0,util=6,
       type=','.join(r.get('building_use_types_str') or []) if isinstance(r.get('building_use_types_str'),list) else str(r.get('building_use_types_str')),af=flo(fs),fl=flo(r.get('room_floor_str'),flo(fs)),yr=yrof(r.get('building_approval_date_str')),area=r.get('room_size') or 0,
-      ev=r.get('elevator_str')=='있음',hh=int(hh[0]) if hh else 0,addr=r.get('full_jibun_address_str'),d=dist(T,(lat,lng)),txt=(r.get('title') or '')+' '+(r.get('memo') or ''),title=r.get('title'),sales='월세'))
+      ev=r.get('elevator_str')=='있음',hh=int(hh[0]) if hh else 0,addr=r.get('full_jibun_address_str'),d=dist(T,(lat,lng)),txt=(r.get('title') or '')+' '+(r.get('memo') or ''),title=r.get('title'),sales='월세',movein=r.get('moving_date') or ''))
 np=os.path.join(os.path.dirname(os.path.abspath(__file__)),'data','naver','latest.json')
 if os.path.exists(np):
     N=json.load(open(np,encoding='utf-8-sig'))

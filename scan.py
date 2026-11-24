@@ -6,7 +6,7 @@ os.makedirs(f'{day}/zb',exist_ok=True);os.makedirs(f'{day}/db',exist_ok=True)
 T=(37.39228,126.95653);TODAY=datetime.date.today();REFRESH=7;DROP=14
 cp=f'{here}/data/cache.json';cache=json.load(open(cp)) if os.path.exists(cp) else {}
 ZK=['itemId','price','manageCost','location','title','description','serviceType','residenceType','floor','approveDate','area','elevator','jibunAddress','addressOrigin','salesType','roomDirection','options','parkingCountText','moveinDate']
-DK=['seq','id','shorten_url','price_title','maintenance_cost_str','location','building_use_types_str','room_floor_str','building_floor_str','building_approval_date_str','room_size','elevator_str','household_num_str','full_jibun_address_str','title','memo','direction_str','room_options']
+DK=['seq','id','shorten_url','price_title','maintenance_cost_str','location','building_use_types_str','room_floor_str','building_floor_str','building_approval_date_str','room_size','elevator_str','household_num_str','full_jibun_address_str','title','memo','direction_str','room_options','moving_date']
 def dist(a,c):
     R=6371000;p1,p2=math.radians(a[0]),math.radians(c[0]);dl=math.radians(c[1]-a[1]);dp=p2-p1
     return round(2*R*math.asin(math.sqrt(math.sin(dp/2)**2+math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2)))
@@ -21,6 +21,7 @@ def fresh(key,price=None):
     c=cache.get(key)
     if not c: return False
     if price is not None and c.get('price')!=price: return False
+    if key[0]=='d' and 'moving_date' not in c['data'].get('room',{}): return False   # 입주일 필드 추가 전 캐시
     return (TODAY-datetime.date.fromisoformat(c['fetched'])).days<REFRESH
 n_new=0
 HZ={'User-Agent':'Mozilla/5.0'};m=urllib.parse.quote("월세");ids={}
