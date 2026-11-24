@@ -37,9 +37,32 @@ for x in ok:
     x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
 ok.sort(key=lambda x:(-x['score'],x['tot']))
 allids={x['id'] for x in R}
+import subprocess,datetime,calendar
+def next_weekday_9():
+    d=datetime.date.today()+datetime.timedelta(days=1)
+    while d.weekday()>=5: d+=datetime.timedelta(days=1)
+    return calendar.timegm(datetime.datetime(d.year,d.month,d.day,9,0).timetuple())
+TR={}
+top=[x for x in ok[:15] if x.get('lat')]
+if top and os.environ.get('NO_TRANSIT')!='1':
+    pp=f'{day}/pts.json';op=f'{day}/transit.json'
+    json.dump([[x['id'],x['lat'],x['lng']] for x in top],open(pp,'w'))
+    try:
+        subprocess.run(['node',f'{here}/transit.js',pp,'37.39228,126.95653',str(next_weekday_9()),op],timeout=900,capture_output=True)
+        TR=json.load(open(op))
+    except Exception as e: print('대중교통 조회 실패:',e)
+def transit(x):
+    t=TR.get(x['id'])
+    if not t: return '-'
+    if 'err' in t: return '조회 실패'
+    m=re.search(r'(\d+시간\s*)?\d+분',t['t']);rides=[k for k in t['modes'] if k not in ('대중교통','도보','다음')]
+    parts=[s.strip() for s in t['t'].split('|')];veh=re.sub(r'\s+',' ',parts[3]).strip() if len(parts)>3 else ''
+    kind=rides[0] if rides else ''
+    return f"{m.group(0) if m else '?'}, 환승 {max(len(rides)-1,0)}회 ({kind} {veh})"
+
 new=[x for x in ok if x['id'] not in prev['ok']]
 gone=[(i,v) for i,v in prev['ok'].items() if i not in allids]
-out=[f"## 오늘 순위 (보증금 2천 이하, 월 실부담 64만 이하, 아크로 3km)\n","| 순위(전날 대비) | 매물 | 평수 | 보증금 | 월 실부담(월세+관리비+전기·가스 추정) | 회사까지(직선/도보/달리기) | 입주 | 주의 | 링크 |","|---|---|---|---|---|---|---|---|---|"]
+out=[f"## 오늘 순위 (보증금 2천 이하, 월 실부담 64만 이하, 아크로 3km)\n","| 순위(전날 대비) | 매물 | 평수 | 보증금 | 월 실부담(월세+관리비+전기·가스 추정) | 회사까지(직선/도보/달리기) | 대중교통(평일 9시 도착, 시간·환승) | 입주 | 주의 | 링크 |","|---|---|---|---|---|---|---|---|---|---|"]
 def arrow(x,n):
     p=prev['ok'].get(x['id'])
     if not p: return '🆕'
@@ -48,7 +71,7 @@ def arrow(x,n):
     return '–' if d==0 else (f'▲{d}' if d>0 else f'▼{-d}')
 for n,x in enumerate(ok[:15],1):
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
-    out.append(f"| {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분/{round(x['d']*1.3/167)}분) | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
+    out.append(f"| {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분/{round(x['d']*1.3/167)}분) | {transit(x)} | {re.sub(r'\s*이후 입주 가능|입주 가능|입주','',x.get('movein') or '?').replace('2026.','').strip() or '?'} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")
 for i,v in gone: out.append(f"  - 사라짐: {v['name']} ({v['price']})")
 print('\n'.join(out))

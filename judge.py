@@ -16,7 +16,7 @@ for f in glob.glob(f'{day}/zb/*.json'):
     L=it['location'];txt=(it.get('title') or '')+' '+(it.get('description') or '')
     recs.append(dict(src='직방',id=str(it['itemId']),link=f"https://sp.zigbang.com/share/{'officetel' if it.get('serviceType')=='오피스텔' else 'oneroom'}/{it['itemId']}",dep=p['deposit'],rent=p['rent'],mc=mc.get('amount') or 0,util=sum({'전기':3,'가스':3,'수도':1}.get(x,0) for x in ex),
       type=it.get('residenceType') or '',af=flo(str(it['floor']['allFloors'])),fl=flo(str(it['floor']['floor']),flo(str(it['floor']['allFloors']))),yr=yrof(it.get('approveDate')),area=(it.get('area') or {}).get('전용면적M2') or 0,
-      ev=bool(it.get('elevator')),hh=0,addr=it.get('jibunAddress') or (it.get('addressOrigin') or {}).get('localText'),d=dist(T,(L['lat'],L['lng'])),txt=txt,title=it.get('title'),sales=it.get('salesType'),movein=it.get('moveinDate') or ''))
+      ev=bool(it.get('elevator')),hh=0,addr=it.get('jibunAddress') or (it.get('addressOrigin') or {}).get('localText'),d=dist(T,(L['lat'],L['lng'])),lat=L['lat'],lng=L['lng'],txt=txt,title=it.get('title'),sales=it.get('salesType'),movein=it.get('moveinDate') or ''))
 for f in glob.glob(f'{day}/db/*.json'):
     r=json.load(open(f))['room'];mm=re.match(r'(\d+)/(\d+)',(r.get('price_title') or '').replace(',',''))
     if not mm: continue
@@ -25,7 +25,7 @@ for f in glob.glob(f'{day}/db/*.json'):
     fs=str(r.get('building_floor_str'))
     recs.append(dict(src='다방',id=str(r['seq']),link=r.get('shorten_url'),dep=int(mm.group(1)),rent=int(mm.group(2)),mc=float(mc[0]) if mc else 0,util=6,
       type=','.join(r.get('building_use_types_str') or []) if isinstance(r.get('building_use_types_str'),list) else str(r.get('building_use_types_str')),af=flo(fs),fl=flo(r.get('room_floor_str'),flo(fs)),yr=yrof(r.get('building_approval_date_str')),area=r.get('room_size') or 0,
-      ev=r.get('elevator_str')=='있음',hh=int(hh[0]) if hh else 0,addr=r.get('full_jibun_address_str'),d=dist(T,(lat,lng)),txt=(r.get('title') or '')+' '+(r.get('memo') or ''),title=r.get('title'),sales='월세',movein=r.get('moving_date') or ''))
+      ev=r.get('elevator_str')=='있음',hh=int(hh[0]) if hh else 0,addr=r.get('full_jibun_address_str'),d=dist(T,(lat,lng)),lat=lat,lng=lng,txt=(r.get('title') or '')+' '+(r.get('memo') or ''),title=r.get('title'),sales='월세',movein=r.get('moving_date') or ''))
 np=os.path.join(os.path.dirname(os.path.abspath(__file__)),'data','naver','latest.json')
 if os.path.exists(np):
     N=json.load(open(np,encoding='utf-8-sig'))
@@ -39,7 +39,7 @@ if os.path.exists(np):
             af=flo(f2);txt=' '.join([str(a.get('atclNm') or ''),str(a.get('atclFetrDesc') or ''),' '.join(a.get('tagList') or [])])
             recs.append(dict(src='네이버',id='n'+str(a['atclNo']),link=f"https://m.land.naver.com/article/info/{a['atclNo']}",dep=int(a.get('prc') or 0),rent=int(a.get('rentPrc') or 0),mc=8,util=6,
               type=str(a.get('rletTpNm') or ''),fl=flo(f1,af) if f1[:1]!='B' else 0,af=af,yr=0,area=float(a.get('spc2') or 0),ev=None,hh=0,addr=str(a.get('bildNm') or a.get('atclNm') or ''),
-              d=dist(T,(float(a['lat']),float(a['lng']))),txt=txt,title=a.get('atclNm'),sales='월세' if a.get('tradTpCd')=='B2' else '기타',note='관리비·연식·엘리베이터 미확인'))
+              d=dist(T,(float(a['lat']),float(a['lng']))),lat=float(a['lat']),lng=float(a['lng']),txt=txt,title=a.get('atclNm'),sales='월세' if a.get('tradTpCd')=='B2' else '기타',note='관리비·연식·엘리베이터 미확인'))
         except Exception as e: print('naver skip',a.get('atclNo'),e)
 def judge(x):
     x['tot']=round(x['rent']+x['mc']+x['util']);x['py']=round(x['area']/3.3058,1)
