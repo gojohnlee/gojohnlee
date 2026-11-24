@@ -101,7 +101,7 @@ for n,x in enumerate(ok[:15],1):
 near=[]
 seen2=set()
 for x in R:
-    if x in ok or not re.match(r'예산|6평 미만|용도',x['res'] or '') or x['tot']>85 or not has_jibun(x): continue
+    if x in ok or not (re.match(r'예산',x['res'] or '') or (re.match(r'용도',x['res'] or '') and '생활숙박' in x['type'])) or x['tot']>85 or not has_jibun(x): continue   # 사용자 11-24: 다중생활·근린 등은 보고에서 아예 빼라
     r=rvget(x)
     if not (r and r['v']=='good'): continue
     k2=(akey(x),x['fl'],x['rent'])
