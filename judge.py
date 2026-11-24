@@ -46,7 +46,7 @@ def judge(x):
     if x['sales']!='월세' or x['dep']>2000: return '조건밖'
     if x['d']>3000: return '3km밖'
     if any(b in x['type'] for b in bad): return '용도'
-    if re.search(r'전입.{0,4}(불가|안됩|안 됩)',x['txt']): return '전입불가'
+    if re.search(r'전입\s*(신고)?\s*(불가|안\s*됩|안\s*됨|x|X|×|안돼|안 돼)',x['txt']): return '전입불가'
     if x['fl']<3: return '저층'
     if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): return '노후'
     if x['tot']>64: return '예산'
