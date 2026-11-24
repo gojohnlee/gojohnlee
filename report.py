@@ -36,10 +36,17 @@ def rvget(x):
     d=DG.get(k)
     if d: return {'v':d['v'],'auto':1,'why':'당근(자동) '+str(d['n'])+'개 중 나쁨 '+str(d['bad'])+': '+' / '.join(r['txt'][:60].replace('\n',' ') for r in d['reviews'][:2])}
     return m
+import math
+BADPTS=[(y['lat'],y['lng'],akey(y)) for y in R if y.get('lat') and has_jibun(y) and (rvget(y) or {}).get('v')=='bad']
+def near_bad(x):   # 지번 비공개 매물: 60m 안에 나쁜 후기 건물이 있으면 같은 건물이거나 같은 골목으로 본다
+    if has_jibun(x) or not x.get('lat'): return None
+    for la,ln,k in BADPTS:
+        if math.hypot((x['lat']-la)*111000,(x['lng']-ln)*88000)<60: return k
 nok=[]
 for x in ok:
-    r=rvget(x)
-    if r and r['v']=='bad': x['res']='나쁜 후기: '+r['why']
+    r=rvget(x);nb=near_bad(x)
+    if nb: x['res']='나쁜 후기 건물 60m 안: '+nb
+    elif r and r['v']=='bad': x['res']='나쁜 후기: '+r['why']
     else: nok.append(x)
 ok=nok
 def rv(x):

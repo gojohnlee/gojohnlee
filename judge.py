@@ -45,7 +45,12 @@ def judge(x):
     x['tot']=round(x['rent']+x['mc']+x['util']);x['py']=round(x['area']/3.3058,1)
     if x['sales']!='월세' or x['dep']>2000: return '조건밖'
     if x['d']>3000: return '3km밖'
-    if any(b in x['type'] for b in bad): return '용도'
+    if any(b in x['type'] for b in bad):
+        # 사용자 11-24: 근린생활·다중생활이라도 전입 가능이면 후보에 넣는다(주의 칸에 '서류상 집 아님' 표시)
+        if re.search(r'근린|다중생활|상가',x['type']):   # 전입 불가가 적힌 건 아래 전입불가 규칙이 거른다
+            ok_=re.search(r'전입\s*(신고)?\s*(가능|ok|OK|O\b|됩니다|돼요)',x['txt'] or '')
+            x['note']=((x.get('note')+', ') if x.get('note') else '')+('서류상 집 아님(전입 가능 표기)' if ok_ else '서류상 집 아님(전입 가능한지 중개사에게 확인)')
+        else: return '용도'
     if re.search(r'전입\s*(신고)?\s*[은이는가]?\s*(불가|안\s*됩|안\s*됨|x|X|×|안\s*돼)',x['txt']): return '전입불가'
     if x['fl']<3: return '저층'
     if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): return '노후'
