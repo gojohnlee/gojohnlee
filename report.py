@@ -21,7 +21,7 @@ for x in sorted(R,key=lambda x:x['src']!='직방'):
 def score(x):
     t=x['txt'] or '';s=0
     s+=3 if x['fl']>=6 else 1
-    s+=1 if x['ev'] else 0
+    s+=1 if x['ev'] is True else 0
     s+=2 if ('오피스텔' in x['type'] or x['hh']>=30 or re.search(r'경비|관리실|관리사무소',t)) else 0
     s+=2 if x['yr']>=2016 else 1 if x['yr']>=2008 else 0
     s+=2 if x['py']>=7 else 1 if x['py']>=6 else 0
@@ -32,7 +32,7 @@ def score(x):
     s-=1 if x['py']<5.5 else 0
     return s
 for x in ok:
-    x['score']=score(x);x['flags']=[f for f,c in [('꼭대기층',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',not x['ev'])] if c]
+    x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+[f for f,c in [('꼭대기층',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
 ok.sort(key=lambda x:(-x['score'],x['tot']))
 allids={x['id'] for x in R}
 new=[x for x in ok if x['id'] not in prev['ok']]

@@ -8,8 +8,22 @@ git fetch origin house && git worktree add /tmp/house origin/house && cd /tmp/ho
 D=raw/$(date +%m%d); python3 -I scan.py $D && python3 -I judge.py $D && python3 -I report.py $D
 ```
 - 네트워크 허용 필요: `apis.zigbang.com`, `sp.zigbang.com`, `www.dabangapp.com` (기본 환경에 등록돼 있음).
-- `report.py`가 `data/latest.json`(직전 후보)과 비교해 🆕 새 매물·사라진 매물을 표시하고 latest.json을 갱신한다. 끝나면 latest.json(필요하면 blacklist.json)을 커밋해 `house` 브랜치에 푸시.
+- `report.py`가 `data/latest.json`(직전 후보)과 비교해 🆕 새 매물·사라진 매물을 표시하고 latest.json을 갱신한다. 끝나면 `data/`와 `blacklist.json` 변경을 커밋해 `house` 브랜치에 푸시(먼저 `git pull --rebase origin house` — PC도 이 브랜치에 푸시함).
+- 상세 캐시 `data/cache.json`: 상세는 처음 볼 때·7일 지났을 때·다방 가격이 바뀌었을 때만 새로 받는다(하루 상세 요청 약 300 → 수십). 14일 안 보인 매물은 지운다.
 - 스크립트 순위는 1차 거름이다. 상위 매물의 설명을 읽고 장난질·모순을 사람 눈으로 다시 판정한 뒤 보고한다.
+
+## 네이버부동산 (PC에서만)
+네이버는 클라우드 서버 IP의 접속을 끊는다(2026-11-24 확인). 차단을 위장·우회하지 않고, 사용자 PC의 평소 인터넷으로 개인 규모(한 지역, 목록 최대 15쪽, 요청 간격 3초, 로그인 없음)만 받는다.
+- `naver-scan.ps1`: PC에서 목록을 받아 `data/naver/latest.json`으로 저장·푸시. `judge.py`가 2일 이내 것이면 합친다(관리비 8만 가정, 연식·엘리베이터 미확인 표시).
+- 응답 형식은 클라우드에서 시험하지 못했다(가짜 데이터로 합치기만 시험). 첫 PC 실행의 status·count로 확인할 것.
+- PC 설치(PowerShell에 붙여넣기, 1회):
+```powershell
+git clone -b house https://github.com/gojohnlee/gojohnlee.git $HOME\house-search
+$a = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File $HOME\house-search\naver-scan.ps1"
+Register-ScheduledTask -TaskName 'House naver scan' -Action $a -Trigger (New-ScheduledTaskTrigger -Daily -At 6:30) -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries) -Force
+Start-ScheduledTask 'House naver scan'
+```
+  지우기: `Unregister-ScheduledTask 'House naver scan' -Confirm:$false`
 
 ## 사용자 조건 (2026-11-24 기준)
 - 위치: 평촌아크로타워(관양동, 범계역 590m) 기준 3km 이내. 뛰어서 다님.

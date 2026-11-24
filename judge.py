@@ -1,4 +1,4 @@
-import json,glob,re,math,sys,os
+import json,glob,re,math,sys,os,datetime
 day=sys.argv[1];T=(37.39228,126.95653)
 def dist(a,c):
     R=6371000;p1,p2=math.radians(a[0]),math.radians(c[0]);dl=math.radians(c[1]-a[1]);dp=p2-p1
@@ -26,6 +26,21 @@ for f in glob.glob(f'{day}/db/*.json'):
     recs.append(dict(src='다방',id=str(r['seq']),link=r.get('shorten_url'),dep=int(mm.group(1)),rent=int(mm.group(2)),mc=float(mc[0]) if mc else 0,util=6,
       type=','.join(r.get('building_use_types_str') or []) if isinstance(r.get('building_use_types_str'),list) else str(r.get('building_use_types_str')),af=flo(fs),fl=flo(r.get('room_floor_str'),flo(fs)),yr=yrof(r.get('building_approval_date_str')),area=r.get('room_size') or 0,
       ev=r.get('elevator_str')=='있음',hh=int(hh[0]) if hh else 0,addr=r.get('full_jibun_address_str'),d=dist(T,(lat,lng)),txt=(r.get('title') or '')+' '+(r.get('memo') or ''),title=r.get('title'),sales='월세'))
+np=os.path.join(os.path.dirname(os.path.abspath(__file__)),'data','naver','latest.json')
+if os.path.exists(np):
+    N=json.load(open(np,encoding='utf-8-sig'))
+    age=(datetime.datetime.now()-datetime.datetime.fromisoformat(str(N.get('fetched'))[:19])).days
+    items=N.get('items') or []
+    if isinstance(items,dict): items=[items]
+    print('naver',N.get('status'),len(items),'건,',age,'일 전 수집')
+    for a in (items if age<=2 else []):
+        try:
+            fs=str(a.get('flrInfo') or '');f1,f2=(fs.split('/')+['',''])[:2]
+            af=flo(f2);txt=' '.join([str(a.get('atclNm') or ''),str(a.get('atclFetrDesc') or ''),' '.join(a.get('tagList') or [])])
+            recs.append(dict(src='네이버',id='n'+str(a['atclNo']),link=f"https://m.land.naver.com/article/info/{a['atclNo']}",dep=int(a.get('prc') or 0),rent=int(a.get('rentPrc') or 0),mc=8,util=6,
+              type=str(a.get('rletTpNm') or ''),fl=flo(f1,af) if f1[:1]!='B' else 0,af=af,yr=0,area=float(a.get('spc2') or 0),ev=None,hh=0,addr=str(a.get('bildNm') or a.get('atclNm') or ''),
+              d=dist(T,(float(a['lat']),float(a['lng']))),txt=txt,title=a.get('atclNm'),sales='월세' if a.get('tradTpCd')=='B2' else '기타',note='관리비·연식·엘리베이터 미확인'))
+        except Exception as e: print('naver skip',a.get('atclNo'),e)
 def judge(x):
     x['tot']=round(x['rent']+x['mc']+x['util']);x['py']=round(x['area']/3.3058,1)
     if x['sales']!='월세' or x['dep']>2000: return '조건밖'
