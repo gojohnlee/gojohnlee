@@ -33,6 +33,7 @@ namespace CasualtiesCarryover
             Subspace.FilePath = Env("CU_CARRYOVER_SUBSPACE") ?? Path.Combine(Paths.ConfigPath, "casualties.subspace.json");
             State = Load(StatePath, CarryoverState.Parse) ?? new CarryoverState();
             Perks = Load(PerksPath, PerkState.Parse) ?? new PerkState();
+            if (Perks.Refunded > 0) { Log.LogInfo($"removed perks refunded {Perks.Refunded} points"); SavePerks(); }   // 뺀 퍽 포인트는 한 번만
             var h = new Harmony(Guid);
             h.PatchAll(typeof(Patches));
             h.PatchAll(typeof(PerkPatches));

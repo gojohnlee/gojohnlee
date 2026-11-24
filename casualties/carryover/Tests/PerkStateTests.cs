@@ -50,15 +50,15 @@ public class PerkStateTests
     public void Buy_NotEnoughPoints_KeepsPoints()
     {
         var s = new PerkState { Points = 1 };
-        Assert.False(s.Buy(Idx("xp")));
+        Assert.False(s.Buy(Idx("traps")));
         Assert.Equal(1, s.Points);
-        Assert.Equal(0, s.Level("xp"));
+        Assert.Equal(0, s.Level("traps"));
     }
 
     [Fact]
     public void FiveConfirmedPerks_Only()
     {
-        Assert.Equal(new[] { "subspace", "lockpick", "crafting", "traps", "xp", "mining", "fall", "temp" }, System.Array.ConvertAll(PerkState.Perks, p => p.Id));
+        Assert.Equal(new[] { "subspace", "lockpick", "traps", "mining", "fall", "temp" }, System.Array.ConvertAll(PerkState.Perks, p => p.Id));
     }
 
     [Fact]
@@ -66,15 +66,13 @@ public class PerkStateTests
     {
         var s = new PerkState { Points = 999 };
         for (int i = 0; i < PerkState.Perks.Length; i++) while (s.Buy(i)) { }
-        Assert.Equal(999 - 169, s.Points);            // 전부 169점
-        Assert.Equal(0.4f, s.TempDriftMult, 3);
-        Assert.Equal(1.75f, s.MiningMult, 3);
-        Assert.Equal(0.4f, s.ImpactMult, 3);
+        Assert.Equal(999 - 199, s.Points);            // 전부 199점
+        Assert.Equal(0.2f, s.TempDriftMult, 3);
+        Assert.Equal(2.5f, s.MiningMult, 3);
+        Assert.Equal(0.2f, s.ImpactMult, 3);
         Assert.Equal(20, s.SubspaceSlots); Assert.Equal(400f, s.SubspaceMaxWeight);
-        Assert.Equal(1.75f, s.LockpickMult, 3);
-        Assert.Equal(3, s.CraftIntBonus);
-        Assert.Equal(15f, s.TrapRadius);
-        Assert.Equal(1.3f, s.XpMult, 3);
+        Assert.Equal(2.25f, s.LockpickMult, 3);
+        Assert.Equal(25f, s.TrapRadius);
     }
 
     [Fact]
@@ -91,7 +89,7 @@ public class PerkStateTests
     public void NoPerks_NoEffect()
     {
         var s = new PerkState();
-        Assert.Equal(0, s.SubspaceSlots); Assert.Equal(1f, s.LockpickMult); Assert.Equal(0, s.CraftIntBonus); Assert.Equal(1f, s.XpMult);
+        Assert.Equal(0, s.SubspaceSlots); Assert.Equal(1f, s.LockpickMult);
     }
 
     [Fact]
@@ -105,7 +103,16 @@ public class PerkStateTests
         var bad = PerkState.Parse("points=-3\nperk.subspace=99\nperk.bleed=2\nperk.xp=x");   // 옛 퍽 이름은 무시
         Assert.Equal(0, bad.Points);
         Assert.Equal(20, bad.Level("subspace"));
-        Assert.Equal(0, bad.Level("xp"));
+        Assert.Equal(0, bad.Refunded);   // perk.xp=x는 숫자가 아니라 무시
+    }
+
+    [Fact]
+    public void RemovedPerks_RefundSpentPoints()
+    {
+        var s = PerkState.Parse("points=3\nperk.crafting=2\nperk.xp=3\nperk.mining=1");   // 숙련 제작 1+2, 경험치 2+3+4 → 12점 돌려줌
+        Assert.Equal(12, s.Refunded); Assert.Equal(15, s.Points); Assert.Equal(1, s.Level("mining"));
+        var again = PerkState.Parse(s.Serialize());
+        Assert.Equal(0, again.Refunded); Assert.Equal(15, again.Points);
     }
 
     [Fact]

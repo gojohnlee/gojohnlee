@@ -97,7 +97,7 @@ namespace CasualtiesCarryover
                     break;
                 case 2:
                     if (Since < 4f) return;
-                    TestXp(body); TestLockpick(); TestCraft(body); TestTrapsScan(body); TestMining(body); TestImpact(body); TestTemp(body); TestSoundCannon(body); TestSubspace(body);
+                    TestLockpick(); TestTrapsScan(body); TestMining(body); TestImpact(body); TestTemp(body); TestSoundCannon(body); TestSubspace(body);
                     Next(3);
                     break;
                 case 3:
@@ -151,44 +151,11 @@ namespace CasualtiesCarryover
 
         private void WithPerks(PerkState p, Action a) { var keep = Plugin.Perks; Plugin.Perks = p; try { a(); } finally { Plugin.Perks = keep; } }
 
-        private void TestXp(Body body)
-        {
-            var sk = body.skills; float before = sk.expRES;
-            sk.AddExp(1, 10f);
-            float r = (sk.expRES - before) / (10f * Skills.xpGainMult * sk.RESGainMult);
-            Check("xp x1.3", Math.Abs(r - 1.3f) < 0.01f, r.ToString("0.000"));
-        }
-
         private void TestLockpick()
         {
             float on = new LockpingMinigame(null, 1f).anglePrecision, off = 0f;
             WithPerks(new PerkState(), () => off = new LockpingMinigame(null, 1f).anglePrecision);
-            Check("lockpick precision x1.75", Math.Abs(on - 1.75f) < 0.001f && Math.Abs(off - 1f) < 0.001f, $"on {on:0.000} off {off:0.000}");
-        }
-
-        private void TestCraft(Body body)
-        {
-            var r = Recipes.recipes.FirstOrDefault(x => x.result != null && !x.result.isLiquid && x.INT >= 3 && Resources.Load(x.result.id) != null);
-            if (r == null) { Check("craft recipe found", false, "none"); return; }
-            var sk = body.skills; int keepInt = sk.INT;
-            sk.INT = r.INT - 2;   // 요구 지능보다 2 낮음: 원래는 50%로 실패
-            // Item.allItems는 Start에서 채워지므로 같은 프레임엔 FindObjectsOfType로 센다
-            Item[] Now() => FindObjectsOfType<Item>().Where(i => i.id == r.result.id).ToArray();
-            int Count() => Now().Length;
-            var existing = Now();
-            int c0 = Count();
-            for (int i = 0; i < 10; i++) r.result.SpawnResult(r.INT);
-            int withPerk = Count() - c0;
-            var madeOn = Now().Except(existing).ToArray();
-            bool fullQuality = madeOn.All(i => Math.Abs(i.condition - r.result.resultCondition) < 0.001f);
-            int c1 = Count();
-            WithPerks(new PerkState(), () => { for (int i = 0; i < 10; i++) r.result.SpawnResult(r.INT); });
-            int without = Count() - c1;
-            sk.INT = keepInt;
-            var made = Now().Except(existing).ToArray();
-            foreach (var it in made) Destroy(it.gameObject);
-            Check($"craft '{r.result.id}' (INT {r.INT}, mine {r.INT - 2})", withPerk == 10 * r.result.amount && without < withPerk && fullQuality,
-                $"with perk {withPerk}/{10 * r.result.amount} (full quality {fullQuality}), without {without}");
+            Check("lockpick precision x2.25", Math.Abs(on - 2.25f) < 0.001f && Math.Abs(off - 1f) < 0.001f, $"on {on:0.000} off {off:0.000}");
         }
 
         private void TestTrapsScan(Body body)
@@ -216,7 +183,7 @@ namespace CasualtiesCarryover
             for (int r = 1; r < 30 && !found; r++)   // 가까운 단단한 칸(아래 먼저, 없으면 둘레) — 세계가 무작위라 바로 아래가 빌 수 있음
                 for (int dx = -r; dx <= r && !found; dx++)
                     foreach (var dy in new[] { -r, r }) if (!found) { pos = bp + new Vector2Int(dx, dy); found = w.GetBlock(pos) > 0; }
-            if (!found) { Check("mining x1.75 (player attack only)", false, "no block below"); return; }
+            if (!found) { Check("mining x2.5 (player attack only)", false, "no block below"); return; }
             float Dmg() { var d = w.GetBlockDamage(pos); return d == null ? 0f : d.damage; }
             float a0 = Dmg();
             PerkPatches.inPlayerAttack = true; w.DamageBlock(pos, 0.01f, false); PerkPatches.inPlayerAttack = false;
@@ -224,7 +191,7 @@ namespace CasualtiesCarryover
             w.DamageBlock(pos, 0.01f, false);
             float a2 = Dmg();
             float on = (a1 - a0) / 0.01f, off = (a2 - a1) / 0.01f;
-            Check("mining x1.75 (player attack only)", Mathf.Abs(on - 1.75f) < 0.01f && Mathf.Abs(off - 1f) < 0.01f, $"attack {on:0.00}, other {off:0.00}");
+            Check("mining x2.5 (player attack only)", Mathf.Abs(on - 2.5f) < 0.01f && Mathf.Abs(off - 1f) < 0.01f, $"attack {on:0.00}, other {off:0.00}");
             // 도구로 캘 때도(사용자 11-23): 곡괭이 쓰기(GlobalItems["pickaxe"].useAction → Body.Attack)로 가까운 단단한 칸을 치면 배율이 붙는다
             var from = body.limbs[1].transform.position; var fb = w.WorldToBlockPos(from); float best = 99f;
             for (int dx = -4; dx <= 4; dx++) for (int dy = -4; dy <= 4; dy++)
@@ -236,19 +203,19 @@ namespace CasualtiesCarryover
             Item.GlobalItems["pickaxe"].useAction(body, pick);
             float d1 = Dmg(); bool ran = body.attackCooldown > 0f;
             DestroyImmediate(pick.gameObject);
-            Check("mining perk applies to tools too (pickaxe swing boosted, damage number shows boosted value)", PerkPatches.BoostedHits > b0 && PerkPatches.LastNumberRaw > 0 && PerkPatches.LastNumber == (int)(PerkPatches.LastNumberRaw * 1.75f), $"number {PerkPatches.LastNumberRaw} -> {PerkPatches.LastNumber}, swung {ran}, conscious {body.conscious}, boosted hits {PerkPatches.BoostedHits - b0}, block damage {d0:0.#} -> {d1:0.#}, block {pos} dist {best:0.0}");
+            Check("mining perk applies to tools too (pickaxe swing boosted, damage number shows boosted value)", PerkPatches.BoostedHits > b0 && PerkPatches.LastNumberRaw > 0 && PerkPatches.LastNumber == (int)(PerkPatches.LastNumberRaw * 2.5f), $"number {PerkPatches.LastNumberRaw} -> {PerkPatches.LastNumber}, swung {ran}, conscious {body.conscious}, boosted hits {PerkPatches.BoostedHits - b0}, block damage {d0:0.#} -> {d1:0.#}, block {pos} dist {best:0.0}");
         }
 
         private void TestImpact(Body body)
         {
             // 근육 피해 = force × 0.33 / 방어(게임 그대로) → 퍽 3단계면 0.4배
             var limb = body.limbs.First(l => !l.isHead && !l.isVital);   // 머리·몸통은 뇌·내출혈 피해가 있어 팔다리로
-            float F = body.jumpSpeed * 3f;   // 퍽으로 0.4배여도 문턱(jumpSpeed)을 넘는 크기
+            float F = body.jumpSpeed * 6f;   // 퍽으로 0.2배여도 문턱(jumpSpeed)을 넘는 크기
             float keepBl = limb.bleedAmount; float keepM = limb.muscleHealth, keepS = limb.skinHealth, keepB = body.brainHealth, keepC = body.consciousness;
             float Drop(PerkState p) { float d = 0; WithPerks(p, () => { limb.muscleHealth = 100f; limb.ImpactDamage(F, Vector2.down); d = 100f - limb.muscleHealth; }); return d; }
             float on = Drop(Plugin.Perks), off = Drop(new PerkState());
             limb.muscleHealth = keepM; limb.skinHealth = keepS; body.brainHealth = keepB; body.consciousness = keepC; limb.pain = 0f; limb.bleedAmount = keepBl;
-            Check("impact x0.4 (fall perk 3)", off > 0f && Mathf.Abs(on / off - 0.4f) < 0.01f, $"muscle drop {on:0.00} vs {off:0.00}");
+            Check("impact x0.2 (fall perk 4)", off > 0f && Mathf.Abs(on / off - 0.2f) < 0.01f, $"muscle drop {on:0.00} vs {off:0.00}");
         }
 
         private void TestTemp(Body body)
@@ -264,7 +231,7 @@ namespace CasualtiesCarryover
             }
             float away = Ratio(36f, 0f), back = Ratio(39f, 20f);
             body.temperature = oldT; w.ambientTemperature = oldA;
-            Check("temperature drift away from 37 x0.4", Mathf.Abs(away - 0.4f) < 0.01f, $"ratio {away:0.00}");
+            Check("temperature drift away from 37 x0.2", Mathf.Abs(away - 0.2f) < 0.01f, $"ratio {away:0.00}");
             Check("temperature recovery toward 37 unchanged", Mathf.Abs(back - 1f) < 0.01f, $"ratio {back:0.00}");
         }
 
