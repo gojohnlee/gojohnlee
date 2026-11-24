@@ -22,6 +22,7 @@ def score(x):
     t=x['txt'] or '';s=0
     s+=3 if x['fl']>=6 else 1
     s+=1 if x['ev'] is True else 0
+    s-=2 if (x['ev'] is False and not re.search(r'엘리베이터|엘레베이터|엘베|승강기',x['txt'] or '')) else 0   # 사용자: 엘베 없는 건 크다
     s+=2 if ('오피스텔' in x['type'] or x['hh']>=30 or re.search(r'경비|관리실|관리사무소',t)) else 0
     s+=2 if x['yr']>=2016 else 1 if x['yr']>=2008 else 0
     s+=2 if x['py']>=7 else 1 if x['py']>=6 else 0
