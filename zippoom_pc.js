@@ -71,7 +71,8 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
       const ru = `${process.env.BASE || 'https://zippoom.com'}/지역별-부동산/${dp}/${ty}/순위`;
       const info = {};
       try {
-        const resp = await p.goto(ru, { waitUntil: 'networkidle', timeout: 45000 });
+        const resp = await p.goto(ru, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await p.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
         info.status = resp ? resp.status() : 0;
         for (let k = 0; k < 15; k++) {
           await p.mouse.wheel(0, 4000); await p.waitForTimeout(700);
@@ -103,7 +104,8 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
     p.on('response', h);
     const rec = { t: new Date().toISOString() };
     try {
-      const resp = await p.goto(u, { waitUntil: 'networkidle', timeout: 45000 });
+      const resp = await p.goto(u, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await p.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
       rec.status = resp ? resp.status() : 0;
       if (rec.status >= 400) { blocked++; }
       else {
