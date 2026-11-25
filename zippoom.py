@@ -85,7 +85,7 @@ for u, c in cache.items():
             if kw & {'벽간소음', '방음'} or re.search(WALLW, cons): kinds.add('wall')
             if kw & (BADKW - {'층간소음', '벽간소음', '방음'}) or re.search(OTHERW, cons) or not kinds: kinds.add('other')
         txt = f"집품 {r.get('floor') or '?'}층 | 장점: {r.get('prosComment') or '-'} | 단점: {r.get('consComment') or '-'} | 단점 키워드: {r.get('consKeyword') or '-'}"
-        B.setdefault(a, []).append({'bad': bad, 'kinds': sorted(kinds), 'txt': txt[:300], 'floor': r.get('floor'), 'date': str(r.get('createdTs') or '')[:10], 'name': c.get('name')})
+        B.setdefault(a, []).append({'bad': bad, 'kinds': sorted(kinds), 'txt': txt[:3000], 'floor': r.get('floor'), 'date': str(r.get('createdTs') or '')[:10], 'name': c.get('name')})
 res = {k: {'v': 'bad' if any(r['bad'] for r in v) else 'good', 'n': len(v), 'bad': sum(r['bad'] for r in v), 'reviews': v} for k, v in B.items()}
 json.dump(res, open(f'{here}/data/zippoom_buildings.json', 'w'), ensure_ascii=False, indent=0)
 print(f'집품 로그인 {"있음" if TOK else "없음"}, 본문 잘린 후기 {cut}개' + (' ← 로그인이 안 먹음(토큰 만료?)' if TOK and cut else ''))
