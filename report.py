@@ -98,7 +98,6 @@ def verdict(x):
         n=st['n']
         if hit(st['w'],n): return f"옆집·벽 소음 후기 {st['w']}/{n}명",None
         if hit(st['f'],n) and not is_top(x): return f"층간소음 후기 {st['f']}/{n}명",None
-        if st['b']>=2: return f"벌레 후기 {st['b']}/{n}명",None   # 사용자 11-25: 벌레 본 사람 2명 이상이면 제외(970-6 바퀴벌레 2/2)
         if hit(st['o'],n): return f"바깥 소음(차·기차·유흥가) 후기 {st['o']}/{n}명",None   # 사용자 11-24: 소음 없음 필수
         if hit(st['fx'],n): return f"설비(수압·배수·누수·곰팡이·외풍 등) 후기 {st['fx']}/{n}명",None
         parts=[f"후기 {n}개"]+[f"{lab} {st[key]}명" for key,lab in (('w','옆집·벽 소리'),('f','층간소음'),('o','바깥 소음'),('fx','설비'),('b','벌레'),('sv','담배·보증금')) if st[key]]
@@ -194,6 +193,18 @@ def arrow(x,n):
 for n,x in enumerate(ok[:15],1):
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
     out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {movein(x)} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
+# 사용자 11-25: 벌레 후기는 빼지 말고 원문을 보여 달라 → 순위에 든 매물 중 벌레를 쓴 후기의 해당 문장을 붙인다
+BUGS=r'벌레|바퀴|박휘|바선생|모기|개미|돈벌레|그리마'
+bug=[]
+for n,x in enumerate(ok[:15],1):
+    d=DG.get(akey(x)) if has_jibun(x) else None
+    for r in (d or {}).get('reviews',[]):
+        c=r['txt'].split('단점:',1)[1] if '단점:' in r['txt'] else r['txt']
+        c=c.split('단점 키워드:')[0]
+        c=re.sub(r'\s+',' ',c).strip(' |')
+        if re.search(BUGS,c): bug.append(f"- {n}위 {akey(x).split(' ',2)[-1]} · {'집품' if r['txt'].startswith('집품') else '당근'} {(r.get('date') or '')[:7]} 단점: " + c[:500])
+if bug:
+    out.append("\n## 벌레 후기 원문 (순위에 든 매물)\n"); out+=bug
 near=[]
 seen2=set()
 for x in R:
