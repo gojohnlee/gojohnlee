@@ -34,11 +34,19 @@ for x in ok:
 DG={}
 try: DG=json.load(open(f'{here}/data/daangn_buildings.json'))   # daangn_region.py 결과(당근 후기 전체, 건물별 자동 판정)
 except Exception: pass
+# 사용자 11-25: 집품 후기도 쓴다(zippoom.py 결과). 같은 지번이면 당근과 합쳐 하나라도 나쁘면 나쁨.
+try:
+    for k,z in json.load(open(f'{here}/data/zippoom_buildings.json')).items():
+        d=DG.get(k)
+        if d:
+            rv_=d['reviews']+z['reviews'];DG[k]={'v':'bad' if any(r['bad'] for r in rv_) else 'good','n':len(rv_),'bad':sum(r['bad'] for r in rv_),'reviews':rv_}
+        else: DG[k]=z
+except Exception: pass
 def rvget(x):
     k=akey(x);m=RV.get(k)
     if m and m['v'] in ('good','bad'): return m          # 사람이 확인한 판정 우선
     d=DG.get(k)
-    if d: return {'v':d['v'],'auto':1,'reviews':d['reviews'],'why':'당근(자동) '+str(d['n'])+'개 중 나쁨 '+str(d['bad'])+': '+' / '.join(r['txt'][:60].replace('\n',' ') for r in d['reviews'][:2])}
+    if d: return {'v':d['v'],'auto':1,'reviews':d['reviews'],'why':('당근·집품' if any(r['txt'].startswith('집품') for r in d['reviews']) and any(not r['txt'].startswith('집품') for r in d['reviews']) else '집품' if d['reviews'] and d['reviews'][0]['txt'].startswith('집품') else '당근')+'(자동) '+str(d['n'])+'개 중 나쁨 '+str(d['bad'])+': '+' / '.join(r['txt'][:60].replace('\n',' ') for r in d['reviews'][:2])}
     return m
 import math
 BADPTS=[(y['lat'],y['lng'],akey(y)) for y in R if y.get('lat') and has_jibun(y) and (rvget(y) or {}).get('v')=='bad']
