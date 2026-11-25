@@ -178,6 +178,7 @@ def transit(x):
     m=re.search(r'(\d+시간\s*)?\d+분',t['t']);rides=[k for k in t['modes'] if k not in ('대중교통','도보','다음')]
     parts=[s.strip() for s in t['t'].split('|')];veh=re.sub(r'\s+',' ',parts[3]).strip() if len(parts)>3 else ''
     kind=rides[0] if rides else ''
+    veh=re.sub(r'[\ue000-\uf8ff]','',veh).strip()   # 구글 지도 아이콘 글꼴 문자(텔레그램에 '稭'처럼 깨져 보임)
     return f"{m.group(0) if m else '?'}, 환승 {max(len(rides)-1,0)}회 ({kind} {veh})"
 
 new=[x for x in ok if x['id'] not in prev['ok']]
