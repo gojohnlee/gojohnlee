@@ -24,12 +24,14 @@ def get(u):
         return r.read().decode('utf-8', 'replace')
 
 
-try:
-    get('https://zippoom.com/')
-except Exception as e:
-    print('집품 접속 막힘(403 등) — 오늘은 건너뜀:', str(e)[:60]); sys.exit(0)
-sm = get('https://zippoom.com/sitemap/%EB%A6%AC%EB%B7%B0/index.xml')
-urls = [u for u in re.findall(r'<loc>([^<]+)</loc>', sm) if re.search(r'안양|의왕|군포', urllib.parse.unquote(u))]
+urls = []
+if MAX > 0:   # 11-25: 0이면 접속하지 않고 캐시·전문으로만 zippoom_buildings.json을 다시 만든다(집품이 클라우드를 막아도 됨)
+    try:
+        get('https://zippoom.com/')
+    except Exception as e:
+        print('집품 접속 막힘(403 등) — 오늘은 건너뜀:', str(e)[:60]); sys.exit(0)
+    sm = get('https://zippoom.com/sitemap/%EB%A6%AC%EB%B7%B0/index.xml')
+    urls = [u for u in re.findall(r'<loc>([^<]+)</loc>', sm) if re.search(r'안양|의왕|군포', urllib.parse.unquote(u))]
 todo = [u for u in urls if u not in cache or (today - datetime.date.fromisoformat(cache[u]['fetched'])).days >= 7
         or (TOK and not cache[u].get('login') and cache[u].get('reviews'))]   # 로그인 없이 받은 후기 쪽은 로그인 후 다시 받음
 todo.sort(key=lambda u: cache.get(u, {}).get('fetched', ''))   # 안 받은 것·오래된 것부터

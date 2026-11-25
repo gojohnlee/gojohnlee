@@ -47,12 +47,16 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
   try {
     const rt = await (await c.request.get((process.env.BASE || 'https://zippoom.com') + '/robots.txt')).text();
     R.robotsTxt = rt.slice(0, 4000);
-    let star = false; const rules = [];
+    // 무리(User-agent 줄 묶음)별로 읽고, 사용자 요청으로 움직이는 'Claude-User' 무리 규칙을 따른다(없으면 '*'). 집품은 Claude-User에 /지역별-부동산·/리뷰를 허용.
+    const groups = []; let cur = null, lastUA = false;
     for (const line of rt.split(/\r?\n/)) {
       const m = line.match(/^\s*(User-agent|Allow|Disallow)\s*:\s*([^#]*)/i); if (!m) continue;
       const k = m[1].toLowerCase(), v = m[2].trim();
-      if (k === 'user-agent') star = v === '*'; else if (star && v) rules.push({ allow: k === 'allow', path: dec(v).replace(/\*/g, '').replace(/\$$/, '') });
+      if (k === 'user-agent') { if (!lastUA) { cur = { ua: [], rules: [] }; groups.push(cur); } cur.ua.push(v.toLowerCase()); lastUA = true; }
+      else { lastUA = false; if (cur && v) cur.rules.push({ allow: k === 'allow', path: dec(v).replace(/\*/g, '').replace(/\$$/, '') }); }
     }
+    const g = groups.find(x => x.ua.includes('claude-user')) || groups.find(x => x.ua.includes('*')) || { rules: [] };
+    const rules = g.rules; R.robotsGroup = g.ua;
     // 가장 긴 규칙이 이김(같으면 Allow) — 구글 robots 해석과 같음
     const okPath = pth => { let best = null; for (const r of rules) if (pth.startsWith(r.path) && (!best || r.path.length > best.path.length || (r.path.length === best.path.length && r.allow))) best = r; return !best || best.allow; };
     robotsOK = okPath('/지역별-부동산/경기-안양시-동안구-관양동/빌라/순위');
