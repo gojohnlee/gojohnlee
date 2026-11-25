@@ -64,17 +64,60 @@ def floor_only(r):
     if bads: return all(b=={'floor'} for b in bads)
     w=r.get('why') or ''
     return bool(re.search(FLOORW,w)) and not re.search(WALLW,w) and not re.search(OTHERW,w)
+# 사용자 11-25 규칙(③): 후기 전체(당근+집품) 중 옆집·벽 소리를 쓴 사람이 2명 이상이고 20% 이상이면 제외.
+# 층간소음도 같은 기준이되 꼭대기층 매물은 남김. 벌레는 케이스별이라 제외하지 않고 주의 칸에 수만 표시.
+OKW2=r'(?:옆 ?집 ?|옆 ?방 ?)?(벌레|소음|층간소음|방음|곰팡이?|누수|결로|냄새|소리)[^.,/!\n]{0,8}(없|잘 ?되|잘 ?됨|잘돼|안 ?나|못 ?들|한 ?번도|전혀|거의 없)'
+WALL2=r'옆 ?집|옆 ?방|벽간|벽 ?소음|방음|말소리|화장실.{0,10}(소리|들)|다 ?들려|소리가? ?(다|너무|잘) ?들'
+FLOOR2=r'층간|윗집|위층|윗층|발망치|쿵쿵'
+BUG2=r'벌레|바퀴|모기|개미'
+OUT2=r'차 ?소리|차량 ?소음|도로 ?소음|대로변|큰 ?길|오토바이|기차 ?소리|지하철 ?소리|유흥|술집'
+SER2=r'경매|빌라왕|보증금.{0,6}(안|못|늦)|곰팡|누수|담배'
+def stats(k):
+    d=DG.get(k)
+    if not d or not d.get('reviews'): return None
+    n=w=f=b=sv=o=0
+    for r in d['reviews']:
+        t=r['txt'];c=t.split('단점:',1)[1] if '단점:' in t else t
+        kw=t.split('단점 키워드:',1)[1] if '단점 키워드:' in t else ''
+        c=re.sub(OKW2,'',c);n+=1
+        w+=bool(re.search(WALL2,c)) or '벽간소음' in kw
+        f+=bool(re.search(FLOOR2,c)) or '층간소음' in kw
+        b+=bool(re.search(BUG2,c)) or '벌레' in kw
+        sv+=bool(re.search(SER2,c))
+        o+=bool(re.search(OUT2,c))
+    return dict(n=n,w=w,f=f,b=b,sv=sv,o=o)
+def hit(c,n): return c>=2 and c/n>=0.2
+def verdict(x):
+    """(제외 사유 또는 None, 주의 문구 또는 None)"""
+    k=akey(x);st=stats(k) if has_jibun(x) else None
+    if st:
+        n=st['n']
+        if hit(st['w'],n): return f"옆집·벽 소음 후기 {st['w']}/{n}명",None
+        if hit(st['f'],n) and not is_top(x): return f"층간소음 후기 {st['f']}/{n}명",None
+        if hit(st['o'],n): return f"바깥 소음(차·기차·유흥가) 후기 {st['o']}/{n}명",None   # 사용자 11-24: 소음 없음 필수
+        parts=[f"후기 {n}개"]+[f"{lab} {st[key]}명" for key,lab in (('w','옆집·벽 소리'),('f','층간소음'),('o','바깥 소음'),('b','벌레'),('sv','곰팡이·누수·담배·보증금')) if st[key]]
+        if hit(st['f'],n) and is_top(x): parts.append('꼭대기층이라 위층 소음은 없음')
+        return None,', '.join(parts)
+    m=RV.get(k)
+    if m and m.get('v')=='bad': return '나쁜 후기: '+m.get('why',''),None
+    return None,None
+EXCL={akey(y) for y in R if y.get('lat') and has_jibun(y) and verdict(y)[0]}
+BADPTS=[(y['lat'],y['lng'],akey(y)) for y in R if y.get('lat') and akey(y) in EXCL]
 nok=[]
 for x in ok:
-    r=rvget(x);nb=near_bad(x)
+    nb=near_bad(x);why,note=verdict(x)
     if nb: x['res']='나쁜 후기 건물 60m 안: '+nb
-    elif r and r['v']=='bad' and is_top(x) and floor_only(r): x['note']=((x['note']+', ') if x.get('note') else '')+'층간소음 후기 있으나 꼭대기층(위층 없음) — 아래층·옆집 소리는 직접 확인';nok.append(x)
-    elif r and r['v']=='bad': x['res']='나쁜 후기: '+r['why']
-    else: nok.append(x)
+    elif why: x['res']=why
+    else:
+        if note: x['note']=((x['note']+', ') if x.get('note') else '')+note
+        nok.append(x)
 ok=nok
 def rv(x):
-    r=rvget(x)
-    return 'O' if r and r['v']=='good' else 'X' if r else '?'
+    """O=후기 있고 옆집·층간 소음 불만 없음(꼭대기층이면 층간 무시), △=후기 있고 일부 불만, X=찾아봤지만 없음, ?=지번 비공개 등"""
+    st=stats(akey(x)) if has_jibun(x) else None
+    if st: return 'O' if st['w']==0 and (st['f']==0 or is_top(x)) else '△'
+    m=RV.get(akey(x))
+    return 'O' if m and m.get('v')=='good' else 'X' if m else '?'
 def score(x):
     t=x['txt'] or '';s=0
     s+=3 if x['fl']>=6 else 1
@@ -91,7 +134,7 @@ def score(x):
     s-=1 if x['py']<5.5 else 0
     return s
 for x in ok:
-    x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+(['좋은 후기: '+rvget(x).get('why','')] if rv(x)=='O' else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
+    x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
 ok.sort(key=lambda x:(rv(x)!='O',-x['score'],x['tot']))   # 좋은 후기 있는 곳이 맨 위
 allids={x['id'] for x in R}
 def next_weekday_9():
@@ -118,7 +161,7 @@ def transit(x):
 
 new=[x for x in ok if x['id'] not in prev['ok']]
 gone=[(i,v) for i,v in prev['ok'].items() if i not in allids]
-out=[f"후기: O=좋은 후기 있음(맨 위), X=찾아봤지만 없음, ?=지번 비공개 등으로 못 찾음. 나쁜 후기가 있는 곳은 제외.\n",f"## 오늘 순위 (보증금 2천 이하, 월 실부담 70만 이하, 아크로 3km)\n","| 순위(후기 O/X/? · 전날 대비) | 매물 | 평수 | 보증금 | 월 실부담(월세+관리비+전기·가스 추정) | 회사까지(직선/도보) | 대중교통 | 입주 | 주의 | 링크 |","|---|---|---|---|---|---|---|---|---|---|"]
+out=[f"후기: O=후기 있고 옆집·층간 소음 불만 없음(맨 위), △=후기 있고 일부 불만(주의 칸에 수), X=찾아봤지만 없음, ?=지번 비공개 등으로 못 찾음. 옆집·벽, 층간(꼭대기층 제외), 바깥(차·기차·유흥가) 소음을 쓴 사람이 각각 2명 이상·20% 이상이면 제외.\n",f"## 오늘 순위 (보증금 2천 이하, 월 실부담 70만 이하, 아크로 3km)\n","| 순위(후기 O/X/? · 전날 대비) | 매물 | 평수 | 보증금 | 월 실부담(월세+관리비+전기·가스 추정) | 회사까지(직선/도보) | 대중교통 | 입주 | 주의 | 링크 |","|---|---|---|---|---|---|---|---|---|---|"]
 def arrow(x,n):
     p=prev['ok'].get(x['id'])
     if not p: return '🆕'
@@ -132,8 +175,7 @@ near=[]
 seen2=set()
 for x in R:
     if x in ok or not (re.match(r'예산',x['res'] or '') or (re.match(r'용도',x['res'] or '') and '생활숙박' in x['type'])) or x['tot']>85 or not has_jibun(x): continue   # 사용자 11-24: 다중생활·근린 등은 보고에서 아예 빼라
-    r=rvget(x)
-    if not (r and r['v']=='good'): continue
+    if rv(x)!='O' or verdict(x)[0]: continue
     k2=(akey(x),x['fl'],x['rent'])
     if k2 in seen2: continue
     seen2.add(k2);near.append(x)
@@ -141,7 +183,7 @@ if near:
     out.append("\n## 좋은 후기 건물인데 조건 일부 초과 (월 실부담 85만 이하)\n")
     out.append(out[2]);out.append(out[3])
     for n,x in enumerate(sorted(near,key=lambda x:x['tot']),1):
-        x['flags']=['조건 초과: '+x['res'],'좋은 후기: '+rvget(x).get('why','')]
+        x['flags']=['조건 초과: '+x['res']]+([verdict(x)[1]] if verdict(x)[1] else [])+([RV[akey(x)]['why']] if RV.get(akey(x),{}).get('why') and RV[akey(x)].get('v')=='good' else [])
         nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
         out.append(f"| O {n} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | - | {movein(x)} | {', '.join(x['flags'])} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")
