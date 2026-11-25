@@ -9,6 +9,7 @@ D=raw/$(date +%m%d); python3 -I scan.py $D && python3 -I judge.py $D && python3 
 ```
 - 네트워크 허용 필요: `apis.zigbang.com`, `sp.zigbang.com`, `www.dabangapp.com` (기본 환경에 등록돼 있음).
 - `report.py`가 `data/latest.json`(직전 후보)과 비교해 🆕 새 매물·사라진 매물을 표시하고 latest.json을 갱신한다. 끝나면 `data/`와 `blacklist.json` 변경을 커밋해 `house` 브랜치에 푸시(먼저 `git pull --rebase origin house` — PC도 이 브랜치에 푸시함).
+- 사라진 방(11-25): `judge.py` 다음에 `history.py $D`를 돌리면 최근 7일 안에 사라진 방 중 후보와 비슷한 것(700m·±1평·실부담 ±8만, 번호만 바꿔 다시 올린 방은 제외)의 수를 주의 칸에 붙이고, `data/history.json`에 매물별 처음·마지막 본 날을 쌓는다. 보고는 텔레그램(`tg_send.py`, 환경변수 TELEGRAM_BOT_TOKEN·TELEGRAM_CHAT_ID).
 - 상세 캐시 `data/cache.json`: 상세는 처음 볼 때·7일 지났을 때·다방 가격이 바뀌었을 때만 새로 받는다(하루 상세 요청 약 300 → 수십). 14일 안 보인 매물은 지운다.
 - 스크립트 순위는 1차 거름이다. 상위 매물의 설명을 읽고 장난질·모순을 사람 눈으로 다시 판정한 뒤 보고한다.
 
