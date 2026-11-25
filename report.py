@@ -12,6 +12,7 @@ def akey(x): return re.sub(r'^경기도\s*','',x['addr'] or '').strip()
 def has_jibun(x): return bool(re.search(r'\d+(-\d+)?$',akey(x)))
 prevp=f'{here}/data/latest.json';prev=json.load(open(prevp)) if os.path.exists(prevp) else {'ok':{}}
 PROXY={'저층','노후','소음(대로변)'}
+PEN={'안양시 동안구 호계동 970-6':(-100,'바퀴벌레 후기 2/2명')}
 def extra(x):
     t=x['txt'] or ''
     if x['id'] in BL: return '블랙리스트: '+BL[x['id']]
@@ -94,6 +95,7 @@ def hit(c,n): return c/n>=0.2 and (c>=2 or n<=3)   # 후기 3개 이하인 건�
 def verdict(x):
     """(제외 사유 또는 None, 주의 문구 또는 None)"""
     k=akey(x);st=stats(k) if has_jibun(x) else None
+    if has_jibun(x) and k in PEN: return f"사용자 제외: {PEN[k][1]}",None   # 11-25 사용자: 아예 빼라(번호 바꿔 다시 올려도 건물 지번으로 뺌)
     if st:
         n=st['n']
         if hit(st['w'],n): return f"옆집·벽 소음 후기 {st['w']}/{n}명",None
@@ -127,8 +129,7 @@ def rv(x):
     m=RV.get(akey(x))
     if m and m.get('v')=='good': return 'O'
     return 'X' if has_jibun(x) else '?'   # 11-25 고침: 지번이 있는데 어디에도 후기가 없으면 X(전에는 reviews.json에 없으면 ?로 나옴)
-# 사용자가 직접 주는 감점(건물 지번별). 11-25: 970-6 바퀴벌레 후기 2/2명 → -100
-PEN={'안양시 동안구 호계동 970-6':(-100,'바퀴벌레 후기 2/2명')}
+# 사용자가 직접 뺀 건물(지번별). 11-25: 970-6 바퀴벌레 후기 2/2명 → 처음엔 -100, 곧 '아예 빼라'
 def score(x):
     t=x['txt'] or '';s=PEN.get(akey(x),(0,))[0] if has_jibun(x) else 0
     s+=3 if x['fl']>=6 else 1
