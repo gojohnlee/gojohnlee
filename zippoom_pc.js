@@ -67,9 +67,13 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
   if (robotsOK) {
     const dongPaths = [...new Set(TARGETS.map(a => { const w = a.split(' '); w.pop(); return '경기-' + w.join('-'); }))];
     dongPaths.sort((x, y) => (/호계동|관양동|포일동/.test(x) ? 0 : 1) - (/호계동|관양동|포일동/.test(y) ? 0 : 1));
-    for (const dp of dongPaths) for (const ty of ['빌라', '오피스텔']) {
+    const DBG = !!process.env.ZDEBUG;   // 점검: 관양동 빌라 순위 쪽 하나만 열고 구조(링크·데이터 요청)를 기록한 뒤 끝냄
+    for (const dp of (DBG ? dongPaths.filter(x => x.endsWith('관양동')) : dongPaths)) for (const ty of (DBG ? ['빌라'] : ['빌라', '오피스텔'])) {
       const ru = `${process.env.BASE || 'https://zippoom.com'}/지역별-부동산/${dp}/${ty}/순위`;
       const info = {};
+      const xhr = [];
+      const hx = async r => { try { const t = r.request().resourceType(); if (t === 'xhr' || t === 'fetch') { let body = ''; try { body = (await r.text()).slice(0, 1500); } catch (e) {} xhr.push({ url: dec(r.url()).slice(0, 300), status: r.status(), body }); } } catch (e) {} };
+      if (DBG) p.on('response', hx);
       try {
         const resp = await p.goto(ru, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await p.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
@@ -85,9 +89,20 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
         for (const h of hrefs) if (dec(h).includes('/리뷰/')) found.add(h.split('?')[0]);
         for (const m of dec(html).matchAll(/\/리뷰\/[^"'\s<>\\?#]+\/[A-Za-z0-9_-]+/g)) found.add((process.env.BASE || 'https://zippoom.com') + m[0]);
         info.links = found.size;
+        if (DBG) {
+          const dh = dec(html); const at = dh.indexOf('1447');
+          info.title = await p.title(); info.finalUrl = dec(p.url());
+          info.hrefs = [...new Set(hrefs.map(dec))].slice(0, 80);
+          info.near1447 = at >= 0 ? dh.slice(Math.max(0, at - 1500), at + 500) : null;
+          info.text = (await p.evaluate(() => document.body.innerText)).slice(0, 3000);
+          info.clickable = await p.$$eval('[onclick],[role=button],button,li', es => es.slice(0, 40).map(e => (e.tagName + ' ' + (e.className || '') + ' | ' + (e.innerText || '').slice(0, 60)).replace(/\s+/g, ' ')));
+          info.xhr = xhr.slice(0, 60);
+        }
         for (const h of found) if (/안양|의왕|군포/.test(seg(h)) && !cached.has(dec(h)) && !(R.pages[h] && !R.pages[h].err)) extra.push(h);
       } catch (e) { info.err = String(e).replace(/\x1b\[[0-9;]*m/g, '').split('\n')[0].slice(0, 120); }
+      if (DBG) p.off('response', hx);
       R.rank[ru] = info; save();
+      if (DBG) { console.log('점검 끝 — 결과 파일을 올려 주세요.'); await b.close(); return; }
       console.log(`순위 쪽 ${dp.split('-').pop()} ${ty}: ${info.err || ('후기 쪽 ' + (info.links || 0) + '곳')}`);
       await sleep(+process.env.GAP || 10000);
     }
