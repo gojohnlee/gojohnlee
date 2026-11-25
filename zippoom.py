@@ -7,7 +7,7 @@
 import json, os, re, sys, time, datetime, urllib.request, urllib.parse
 
 here = os.path.dirname(os.path.abspath(__file__))
-MAX = int(sys.argv[1]) if len(sys.argv) > 1 else 150
+MAX = int(sys.argv[1]) if len(sys.argv) > 1 else 50   # 11-25: 900쪽 받은 뒤 집품이 서버를 막음 → 하루 50쪽, 5초 간격
 H = {'User-Agent': 'Mozilla/5.0'}
 # 사용자 11-25: 사용자 계정으로 로그인해 후기 전문을 읽는다. 환경변수 ZIPPOOM_AUTH_TOKEN = 브라우저 쿠키 ZIPPOOM_AUTH_TOKEN 값 그대로(저장소·보고에 쓰지 않음).
 TOK = os.environ.get('ZIPPOOM_AUTH_TOKEN', '').strip()
@@ -24,6 +24,10 @@ def get(u):
         return r.read().decode('utf-8', 'replace')
 
 
+try:
+    get('https://zippoom.com/')
+except Exception as e:
+    print('집품 접속 막힘(403 등) — 오늘은 건너뜀:', str(e)[:60]); sys.exit(0)
 sm = get('https://zippoom.com/sitemap/%EB%A6%AC%EB%B7%B0/index.xml')
 urls = [u for u in re.findall(r'<loc>([^<]+)</loc>', sm) if re.search(r'안양|의왕|군포', urllib.parse.unquote(u))]
 todo = [u for u in urls if u not in cache or (today - datetime.date.fromisoformat(cache[u]['fetched'])).days >= 7
@@ -45,7 +49,7 @@ for u in todo[:MAX]:
     except Exception as e:
         print('ZPERR', urllib.parse.unquote(u)[-40:], str(e)[:80])
         cache.setdefault(u, {'fetched': today.isoformat(), 'addr': None, 'reviews': []})
-    time.sleep(2)
+    time.sleep(5)
     if n % 25 == 0:
         json.dump(cache, open(cp, 'w'), ensure_ascii=False, separators=(',', ':'))   # 중간에 끊겨도 받은 만큼 남김
 json.dump(cache, open(cp, 'w'), ensure_ascii=False, separators=(',', ':'))
