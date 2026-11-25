@@ -57,7 +57,7 @@ def card(cells):
     if sym == "?": rv = "후기: 지번 비공개라 못 찾음"
     elif sym == "X": rv = "후기: 없음(당근·집품 모두)"
     else:
-        rv = f"{cnt or '후기'}: " + (", ".join(p.replace("벌레", "벌레 봤다는 사람") for p in probs) if probs else "소음·벌레 불만 없음")
+        rv = (f"{cnt} 중 " if cnt else "후기: ") + (", ".join(p.replace("벌레", "벌레 봤다는 사람") for p in probs) if probs else "소음·벌레 불만 없음")
         if good: rv += " / 좋은 점: " + good[0]
     warns = []
     for x in parts:
