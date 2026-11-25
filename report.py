@@ -38,7 +38,7 @@ def rvget(x):
     k=akey(x);m=RV.get(k)
     if m and m['v'] in ('good','bad'): return m          # 사람이 확인한 판정 우선
     d=DG.get(k)
-    if d: return {'v':d['v'],'auto':1,'why':'당근(자동) '+str(d['n'])+'개 중 나쁨 '+str(d['bad'])+': '+' / '.join(r['txt'][:60].replace('\n',' ') for r in d['reviews'][:2])}
+    if d: return {'v':d['v'],'auto':1,'reviews':d['reviews'],'why':'당근(자동) '+str(d['n'])+'개 중 나쁨 '+str(d['bad'])+': '+' / '.join(r['txt'][:60].replace('\n',' ') for r in d['reviews'][:2])}
     return m
 import math
 BADPTS=[(y['lat'],y['lng'],akey(y)) for y in R if y.get('lat') and has_jibun(y) and (rvget(y) or {}).get('v')=='bad']
@@ -46,10 +46,21 @@ def near_bad(x):   # 지번 비공개 매물: 60m 안에 나쁜 후기 건물이
     if has_jibun(x) or not x.get('lat'): return None
     for la,ln,k in BADPTS:
         if math.hypot((x['lat']-la)*111000,(x['lng']-ln)*88000)<60: return k
+# 사용자 11-25: 위층 소음 후기만 있는 건물은 꼭대기층 매물이면 빼지 않는다(옆집·벽 소음, 벌레 등이 하나라도 있으면 뺀다)
+FLOORW=r'층간|윗집|위층|윗층|위에서|발망치|쿵쿵'
+WALLW=r'옆 ?집|옆 ?방|옆 ?호|벽|방음|말소리|대화 ?소리|통화|TV|티비|다 ?들|소리가? ?(잘|너무|다) ?들|복도|화장실'
+OTHERW=r'벌레|바퀴|경매|빌라왕|곰팡|누수|결로|보증금|쥐|모기|담배|녹물|냄새|시끄|소음 ?심|차 ?소리|도로|기차|지하철|공사|문 ?여닫'
+def is_top(x): return bool(x['af'] and x['fl']==x['af'])
+def floor_only(r):
+    bads=[set(v.get('kinds') or ['other']) for v in (r.get('reviews') or []) if v.get('bad')]
+    if bads: return all(b=={'floor'} for b in bads)
+    w=r.get('why') or ''
+    return bool(re.search(FLOORW,w)) and not re.search(WALLW,w) and not re.search(OTHERW,w)
 nok=[]
 for x in ok:
     r=rvget(x);nb=near_bad(x)
     if nb: x['res']='나쁜 후기 건물 60m 안: '+nb
+    elif r and r['v']=='bad' and is_top(x) and floor_only(r): x['note']=((x['note']+', ') if x.get('note') else '')+'층간소음 후기 있으나 꼭대기층(위층 없음) — 아래층·옆집 소리는 직접 확인';nok.append(x)
     elif r and r['v']=='bad': x['res']='나쁜 후기: '+r['why']
     else: nok.append(x)
 ok=nok

@@ -20,6 +20,9 @@ for rid in [1389,1374,1643,1631]:
         time.sleep(0.5)
     print(rid,n,'pages',round(time.time()-t0),'s',flush=True)
 BADW=r'벌레|바퀴|소음|시끄|방음|층간|들려|들림|경매|빌라왕|곰팡|누수|결로|보증금.{0,6}(안|못|늦)|쥐|모기|담배|녹물|하수구 ?냄새'
+FLOORW=r'층간|윗집|위층|윗층|위에서|발망치|쿵쿵'
+WALLW=r'옆 ?집|옆 ?방|옆 ?호|벽|방음|말소리|대화 ?소리|통화|TV|티비|다 ?들|소리가? ?(잘|너무|다) ?들|복도'
+OTHERW=r'벌레|바퀴|경매|빌라왕|곰팡|누수|결로|보증금.{0,6}(안|못|늦)|쥐|모기|담배|녹물|하수구 ?냄새|시끄|소음|차 ?소리|도로|기차|지하철|공사'
 OKW=r'(벌레|소음|층간소음|방음|곰팡이?|누수|결로|냄새|소리)[^.,/!\n]{0,8}(없|잘 ?되|잘 ?됨|잘돼|안 ?나|못 ?들|한 ?번도|전혀|거의 없)'
 def base(j):
     m=re.match(r'(경기도 \S+(?: \S+구)? \S+동 \d+(?:-\d+)?)',j or '');return m.group(1) if m else None
@@ -32,7 +35,13 @@ for x in out:
     txt=x.get('content') or ''
     chk=re.sub(OKW,'',neg.get('content') or '' if b.get('__typename')=='LivedReviewContentV2' else txt)
     bad=bool(set(neg.get('items',[]))&{'SOUNDPROOFING','FLOOR_NOISE','PEST'}) or bool(re.search(BADW,chk)) or b.get('rating')=='BAD'
-    B[k].append({'bad':bad,'txt':txt[:300],'date':x['createdAt'][:10],'name':(x.get('propComplex') or {}).get('officialName') or x.get('jibunAddress'),'type':t})
+    # 사용자 11-25: 소음 종류를 나눈다. 위층 소음(floor)만 있는 건물은 꼭대기층 매물이면 빼지 않는다. 옆집·벽(wall)은 무조건 뺀다.
+    its=set(neg.get('items',[]));kinds=set()
+    if bad:
+        if 'FLOOR_NOISE' in its or re.search(FLOORW,chk): kinds.add('floor')
+        if 'SOUNDPROOFING' in its or re.search(WALLW,chk) or re.search(WALLW,re.sub(OKW,'',txt)): kinds.add('wall')   # 옆집 소리는 본문 어디에 있어도 뺀다
+        if 'PEST' in its or re.search(OTHERW,chk) or not kinds: kinds.add('other')
+    B[k].append({'bad':bad,'kinds':sorted(kinds),'txt':txt[:300],'date':x['createdAt'][:10],'name':(x.get('propComplex') or {}).get('officialName') or x.get('jibunAddress'),'type':t})
 res={re.sub(r'^경기도 ','',k):{'v':'bad' if any(r['bad'] for r in v) else 'good','n':len(v),'bad':sum(r['bad'] for r in v),'reviews':v} for k,v in B.items()}
 json.dump(res,open(f'{here}/data/daangn_buildings.json','w'),ensure_ascii=False,indent=0)
 print('건물',len(res),'좋음',sum(r['v']=='good' for r in res.values()))
