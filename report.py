@@ -118,7 +118,8 @@ def rv(x):
     if st:   # 사용자 11-25: 후기가 많은 건물이 불리하지 않게 비율로. 각 소음 불만이 10% 미만이면 O
         n=st['n'];return 'O' if st['w']/n<0.1 and st['o']/n<0.1 and (st['f']/n<0.1 or is_top(x)) else '△'
     m=RV.get(akey(x))
-    return 'O' if m and m.get('v')=='good' else 'X' if m else '?'
+    if m and m.get('v')=='good': return 'O'
+    return 'X' if has_jibun(x) else '?'   # 11-25 고침: 지번이 있는데 어디에도 후기가 없으면 X(전에는 reviews.json에 없으면 ?로 나옴)
 def score(x):
     t=x['txt'] or '';s=0
     s+=3 if x['fl']>=6 else 1
@@ -177,6 +178,8 @@ seen2=set()
 for x in R:
     if x in ok or not (re.match(r'예산',x['res'] or '') or (re.match(r'용도',x['res'] or '') and '생활숙박' in x['type'])) or x['tot']>85 or not has_jibun(x): continue   # 사용자 11-24: 다중생활·근린 등은 보고에서 아예 빼라
     if rv(x)!='O' or verdict(x)[0]: continue
+    # 11-25 고침: 예산만 넘고 나머지 조건(6평 이상·대로변 아님·엘베)은 지켜야 함. judge.py는 처음 걸린 사유 하나만 적어서 따로 확인
+    if x['py']<6 or '대로변' in (x['txt'] or '') or (x['ev'] is False and not re.search('엘리베이터|엘레베이터|엘베|승강기',x['txt'] or '')): continue
     k2=(akey(x),x['fl'],x['rent'])
     if k2 in seen2: continue
     seen2.add(k2);near.append(x)
