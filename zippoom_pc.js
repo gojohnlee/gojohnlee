@@ -46,13 +46,17 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
   let robotsOK = true;
   try {
     const rt = await (await c.request.get((process.env.BASE || 'https://zippoom.com') + '/robots.txt')).text();
-    let star = false; const dis = [];
+    R.robotsTxt = rt.slice(0, 4000);
+    let star = false; const rules = [];
     for (const line of rt.split(/\r?\n/)) {
-      const m = line.match(/^\s*(User-agent|Disallow)\s*:\s*(.*)$/i); if (!m) continue;
-      if (/user-agent/i.test(m[1])) star = m[2].trim() === '*'; else if (star && m[2].trim()) dis.push(dec(m[2].trim()));
+      const m = line.match(/^\s*(User-agent|Allow|Disallow)\s*:\s*([^#]*)/i); if (!m) continue;
+      const k = m[1].toLowerCase(), v = m[2].trim();
+      if (k === 'user-agent') star = v === '*'; else if (star && v) rules.push({ allow: k === 'allow', path: dec(v).replace(/\*/g, '').replace(/\$$/, '') });
     }
-    robotsOK = !dis.some(d => '/지역별-부동산/'.startsWith(d) || d.startsWith('/지역별-부동산'));
-    R.robotsDisallow = dis;
+    // 가장 긴 규칙이 이김(같으면 Allow) — 구글 robots 해석과 같음
+    const okPath = pth => { let best = null; for (const r of rules) if (pth.startsWith(r.path) && (!best || r.path.length > best.path.length || (r.path.length === best.path.length && r.allow))) best = r; return !best || best.allow; };
+    robotsOK = okPath('/지역별-부동산/경기-안양시-동안구-관양동/빌라/순위');
+    R.robotsRankAllowed = robotsOK;
   } catch (e) {}
   R.rank = R.rank || {};
   const extra = [];
