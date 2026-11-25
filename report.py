@@ -150,17 +150,27 @@ def next_weekday_9():
     d=datetime.date.today()+datetime.timedelta(days=1)
     while d.weekday()>=5: d+=datetime.timedelta(days=1)
     return calendar.timegm(datetime.datetime(d.year,d.month,d.day,9,0).timetuple())
-TR={}
+# 버스 시간은 건물 위치가 같으면 안 바뀜 → 위치(소수 4자리, 약 10m)별로 data/transit_cache.json에 30일 보관하고 새 위치만 찾는다(11-25: 전에는 매번 15곳을 다시 찾아 몇 분씩 걸림)
+TR={};tcp=f'{here}/data/transit_cache.json'
+TC=json.load(open(tcp)) if os.path.exists(tcp) else {}
+TC={k:v for k,v in TC.items() if (datetime.date.today()-datetime.date.fromisoformat(v['d'])).days<30}
+def tkey(x): return f"{x['lat']:.4f},{x['lng']:.4f}"
 top=[x for x in ok[:15] if x.get('lat')]
-if top and os.environ.get('NO_TRANSIT')!='1':
+need=[x for x in top if tkey(x) not in TC]
+if need and os.environ.get('NO_TRANSIT')!='1':
     pp=f'{day}/pts.json';op=f'{day}/transit.json'
-    json.dump([[x['id'],x['lat'],x['lng']] for x in top],open(pp,'w'))
+    json.dump([[x['id'],x['lat'],x['lng']] for x in need],open(pp,'w'))
     try:
         subprocess.run(['node',f'{here}/transit.js',pp,'37.39228,126.95653',str(next_weekday_9()),op],timeout=900,capture_output=True)
-        TR=json.load(open(op))
+        got=json.load(open(op))
+        for x in need:
+            if x['id'] in got and 'err' not in got[x['id']]: TC[tkey(x)]={'d':datetime.date.today().isoformat(),'r':got[x['id']]}
+            elif x['id'] in got: TR[x['id']]=got[x['id']]   # 조회 실패는 보관하지 않고 다음에 다시 찾음
     except Exception as e: print('대중교통 조회 실패:',e)
-elif os.path.exists(f'{day}/transit.json'):   # NO_TRANSIT=1: 같은 날 첫 실행 결과를 그대로 씀
-    TR=json.load(open(f'{day}/transit.json'))
+    json.dump(TC,open(tcp,'w'),ensure_ascii=False,separators=(',',':'))
+for x in top:
+    if tkey(x) in TC: TR[x['id']]=TC[tkey(x)]['r']
+print(f'대중교통: 상위 {len(top)}곳 중 새로 찾음 {len(need) if os.environ.get("NO_TRANSIT")!="1" else 0}곳')
 def transit(x):
     t=TR.get(x['id'])
     if not t: return '-'

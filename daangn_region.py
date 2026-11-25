@@ -41,7 +41,7 @@ for x in out:
         if 'FLOOR_NOISE' in its or re.search(FLOORW,chk): kinds.add('floor')
         if 'SOUNDPROOFING' in its or re.search(WALLW,chk) or re.search(WALLW,re.sub(OKW,'',txt)): kinds.add('wall')   # 옆집 소리는 본문 어디에 있어도 뺀다
         if 'PEST' in its or re.search(OTHERW,chk) or not kinds: kinds.add('other')
-    B[k].append({'bad':bad,'kinds':sorted(kinds),'txt':txt[:300],'date':x['createdAt'][:10],'name':(x.get('propComplex') or {}).get('officialName') or x.get('jibunAddress'),'type':t})
+    B[k].append({'bad':bad,'kinds':sorted(kinds),'txt':txt[:3000],'date':x['createdAt'][:10],'name':(x.get('propComplex') or {}).get('officialName') or x.get('jibunAddress'),'type':t})
 res={re.sub(r'^경기도 ','',k):{'v':'bad' if any(r['bad'] for r in v) else 'good','n':len(v),'bad':sum(r['bad'] for r in v),'reviews':v} for k,v in B.items()}
 json.dump(res,open(f'{here}/data/daangn_buildings.json','w'),ensure_ascii=False,indent=0)
 print('건물',len(res),'좋음',sum(r['v']=='good' for r in res.values()))
