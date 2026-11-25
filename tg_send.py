@@ -54,6 +54,8 @@ def card(cells):
     probs = [x.replace("명", "명") for x in parts if re.search(r"\d+명$", x)]
     good = [warn.split("좋음:", 1)[1].strip()] if "좋음:" in warn else []
     if good: parts = [x for x in parts if x not in good[0]]
+    pro = next((x for x in parts if x.startswith("장점:")), None)
+    if pro: parts = [x for x in parts if x != pro]
     keep = next((x for x in parts if x.startswith("사용자가 살림:")), None)
     if keep: rv = keep.replace("사용자가 살림: ", "") + " — 사용자가 살린 집"; parts = [x for x in parts if x != keep]; probs = []; cnt = None
     elif sym == "?": rv = "후기: 지번 비공개라 못 찾음"
@@ -69,7 +71,7 @@ def card(cells):
         if "후기 조회 불가" in x or "위층 소음 없음" in x or x == "누수·더위 확인": continue
         warns.append(x)
     url = re.search(r"\((https?://[^)]+)\)", link)
-    out = [l1, l2, l3, rv] + (["⚠ " + ", ".join(dict.fromkeys(warns))] if warns else []) + [url.group(1) if url else link, ""]
+    out = [l1, l2, l3, rv] + (["👍 " + pro] if pro else []) + (["⚠ " + ", ".join(dict.fromkeys(warns))] if warns else []) + [url.group(1) if url else link, ""]
     return out
 def cards(t):
     out = []

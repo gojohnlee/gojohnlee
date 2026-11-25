@@ -1,5 +1,5 @@
 # 사용: python3 -I report.py raw/<날짜>   → 순위·신규·사라짐을 마크다운으로 출력, data/latest.json 갱신
-import json,re,sys,os,subprocess,datetime,calendar
+import json,re,sys,os,subprocess,datetime,calendar,collections
 day=sys.argv[1];here=os.path.dirname(os.path.abspath(__file__))
 R=json.load(open(f'{day}/recs.json'));BL=json.load(open(f'{here}/blacklist.json'))
 RVp=f'{here}/reviews.json';RV=json.load(open(RVp))
@@ -151,8 +151,21 @@ def score(x):
     s+=1 if (x['hh']>=100 or re.search(r'24시',t)) else 0
     s-=1 if x['py']<5.5 else 0
     return s
+# 사용자 11-25: 장점도 보여 달라 → 후기 장점 키워드(많이 나온 순)와 첫 후기 장점 앞부분
+def pros(x):
+    d=DG.get(akey(x)) if has_jibun(x) else None
+    if not d or not d.get('reviews'): return None
+    kw=collections.Counter();first=''
+    for r in d['reviews']:
+        t=r['txt'];pr=t.split('장점:',1)[1].split('단점:')[0] if '장점:' in t else ''
+        pr=re.sub(r'\s+',' ',pr).strip(' |')
+        if not first and pr and pr!='-': first=pr
+        if '장점 키워드:' in t: kw.update(k.strip() for k in t.split('장점 키워드:',1)[1].split('|')[0].split(',') if k.strip() and k.strip()!='없음')
+    ks='·'.join(k for k,_ in kw.most_common(4))
+    one=re.split(r'(?<=[.!?])\s',first)[0][:70].replace(',','·')
+    return '장점: '+' / '.join(v for v in (ks,one) if v)
 for x in ok:
-    x['score']=score(x);x['flags']=([f"감점 {PEN[akey(x)][0]}({PEN[akey(x)][1]})"] if has_jibun(x) and akey(x) in PEN else [])+([x['note']] if x.get('note') else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
+    x['score']=score(x);x['flags']=[p for p in [pros(x)] if p]+([f"감점 {PEN[akey(x)][0]}({PEN[akey(x)][1]})"] if has_jibun(x) and akey(x) in PEN else [])+([x['note']] if x.get('note') else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
 GRP={'O':0,'△':0,'X':1}   # 사용자 11-25: 후기 있는 집·후기 없는 집·지번 비공개(후기 확인 불가)끼리 묶는다
 ok.sort(key=lambda x:(GRP.get(rv(x),2),x['score']<=-50,rv(x)!='O',-x['score'],x['tot']))   # 사용자 감점(-100) 받은 곳은 맨 아래   # 좋은 후기 있는 곳이 맨 위
 allids={x['id'] for x in R}
