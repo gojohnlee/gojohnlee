@@ -128,9 +128,9 @@ def rv(x):
     if m and m.get('v')=='good': return 'O'
     return 'X' if has_jibun(x) else '?'   # 11-25 고침: 지번이 있는데 어디에도 후기가 없으면 X(전에는 reviews.json에 없으면 ?로 나옴)
 # 사용자가 직접 주는 감점(건물 지번별). 11-25: 970-6 바퀴벌레 후기 2/2명 → -100
-PEN={'안양시 동안구 호계동 970-6':-100}
+PEN={'안양시 동안구 호계동 970-6':(-100,'바퀴벌레 후기 2/2명')}
 def score(x):
-    t=x['txt'] or '';s=PEN.get(akey(x),0) if has_jibun(x) else 0
+    t=x['txt'] or '';s=PEN.get(akey(x),(0,))[0] if has_jibun(x) else 0
     s+=3 if x['fl']>=6 else 1
     s+=1 if x['ev'] is True else 0
     s-=2 if (x['ev'] is False and not re.search(r'엘리베이터|엘레베이터|엘베|승강기',x['txt'] or '')) else 0   # 사용자: 엘베 없는 건 크다
@@ -145,8 +145,9 @@ def score(x):
     s-=1 if x['py']<5.5 else 0
     return s
 for x in ok:
-    x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
-ok.sort(key=lambda x:(x['score']<=-50,rv(x)!='O',-x['score'],x['tot']))   # 사용자 감점(-100) 받은 곳은 맨 아래   # 좋은 후기 있는 곳이 맨 위
+    x['score']=score(x);x['flags']=([f"감점 {PEN[akey(x)][0]}({PEN[akey(x)][1]})"] if has_jibun(x) and akey(x) in PEN else [])+([x['note']] if x.get('note') else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
+GRP={'O':0,'△':0,'X':1}   # 사용자 11-25: 후기 있는 집·후기 없는 집·지번 비공개(후기 확인 불가)끼리 묶는다
+ok.sort(key=lambda x:(GRP.get(rv(x),2),x['score']<=-50,rv(x)!='O',-x['score'],x['tot']))   # 사용자 감점(-100) 받은 곳은 맨 아래   # 좋은 후기 있는 곳이 맨 위
 allids={x['id'] for x in R}
 def next_weekday_9():
     d=datetime.date.today()+datetime.timedelta(days=1)
@@ -192,7 +193,11 @@ def arrow(x,n):
     if not p.get('rank'): return ''
     d=p['rank']-n
     return '–' if d==0 else (f'▲{d}' if d>0 else f'▼{-d}')
+H2,H3=out[2],out[3];del out[2:4];lastg=None
+GNAME=['후기 있는 집','후기 없는 집(당근·집품 모두 0개)','지번 비공개라 후기 확인 불가']
 for n,x in enumerate(ok[:15],1):
+    g=GRP.get(rv(x),2)
+    if g!=lastg: out+=[f"\n### {GNAME[g]}\n",H2,H3];lastg=g
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
     out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {movein(x)} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
 near=[]
@@ -207,7 +212,7 @@ for x in R:
     seen2.add(k2);near.append(x)
 if near:
     out.append("\n## 좋은 후기 건물인데 조건 일부 초과 (월 실부담 85만 이하)\n")
-    out.append(out[2]);out.append(out[3])
+    out.append(H2);out.append(H3)
     for n,x in enumerate(sorted(near,key=lambda x:x['tot']),1):
         x['flags']=['조건 초과: '+'·'.join(sorted(set(x.get('fails') or [])-PROXY))]+([verdict(x)[1]] if verdict(x)[1] else [])+([RV[akey(x)]['why']] if RV.get(akey(x),{}).get('why') and RV[akey(x)].get('v')=='good' else [])
         nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
