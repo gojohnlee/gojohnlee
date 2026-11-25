@@ -84,26 +84,24 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
           if (await more.count()) { try { await more.click({ timeout: 3000 }); await p.waitForTimeout(1500); } catch (e) {} }
         }
         const html = await p.content();
-        const hrefs = await p.$$eval('a[href]', as => as.map(a => a.href));
-        const found = new Set();
-        for (const h of hrefs) if (dec(h).includes('/리뷰/')) found.add(h.split('?')[0]);
-        for (const m of dec(html).matchAll(/\/리뷰\/[^"'\s<>\\?#]+\/[A-Za-z0-9_-]+/g)) found.add((process.env.BASE || 'https://zippoom.com') + m[0]);
-        info.links = found.size;
-        if (DBG) {
-          const dh = dec(html); const at = dh.indexOf('1447');
-          info.title = await p.title(); info.finalUrl = dec(p.url());
-          info.hrefs = [...new Set(hrefs.map(dec))].slice(0, 80);
-          info.near1447 = at >= 0 ? dh.slice(Math.max(0, at - 1500), at + 500) : null;
-          info.text = (await p.evaluate(() => document.body.innerText)).slice(0, 3000);
-          info.clickable = await p.$$eval('[onclick],[role=button],button,li', es => es.slice(0, 40).map(e => (e.tagName + ' ' + (e.className || '') + ' | ' + (e.innerText || '').slice(0, 60)).replace(/\s+/g, ' ')));
-          info.xhr = xhr.slice(0, 60);
+        const items = await p.$$eval('a[href]', as => as.map(a => ({ h: a.href, t: (a.innerText || '').replace(/\s+/g, ' ') })));
+        const hrefs = items.map(x => x.h);
+        // 순위 쪽은 건물 쪽(/부동산/<이름>/<번호>)으로 걸려 있음 → 같은 번호의 후기 쪽(/리뷰/<이름>/<번호>)으로 바꾼다(11-25 확인: 관양동 161 둘 다 같은 번호)
+        // 목록 글에 주소가 있으니 대상 지번과 맞는 건물만 연다(전부 열면 수백 쪽)
+        const found = new Set(); info.matched = [];
+        for (const x of items) {
+          const d = dec(x.h).split('?')[0];
+          if (!/\/(리뷰|부동산)\/[^/]+\/[A-Za-z0-9_-]+$/.test(d)) continue;
+          const ru2 = d.replace('/부동산/', '/리뷰/'); found.add(ru2);
+          const t = TARGETS.find(a => { const w = a.split(' '); return new RegExp(w[w.length - 2] + ' ' + w[w.length - 1] + '(?![0-9-])').test(x.t); });
+          if (t) { info.matched.push({ addr: t, url: ru2, text: x.t.slice(0, 80) }); if (!cached.has(ru2) && !(R.pages[encodeURI(ru2)] && !R.pages[encodeURI(ru2)].err)) extra.push(ru2); }
         }
-        for (const h of found) if (/안양|의왕|군포/.test(seg(h)) && !cached.has(dec(h)) && !(R.pages[h] && !R.pages[h].err)) extra.push(h);
+        info.links = found.size;
       } catch (e) { info.err = String(e).replace(/\x1b\[[0-9;]*m/g, '').split('\n')[0].slice(0, 120); }
       if (DBG) p.off('response', hx);
       R.rank[ru] = info; save();
       if (DBG) { console.log('점검 끝 — 결과 파일을 올려 주세요.'); await b.close(); return; }
-      console.log(`순위 쪽 ${dp.split('-').pop()} ${ty}: ${info.err || ('후기 쪽 ' + (info.links || 0) + '곳')}`);
+      console.log(`순위 쪽 ${dp.split('-').pop()} ${ty}: ${info.err || ('건물 ' + (info.links || 0) + '곳, 대상 ' + info.matched.length + '곳')}`);
       await sleep(+process.env.GAP || 10000);
     }
   } else console.log('robots.txt가 순위 쪽을 막아 건너뜀');
