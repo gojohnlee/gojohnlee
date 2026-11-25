@@ -24,8 +24,10 @@ $out = Join-Path ([Environment]::GetFolderPath('Desktop')) '원룸'
 New-Item -ItemType Directory -Force $out | Out-Null
 Write-Host ''
 Write-Host '4/4 집품 토큰을 붙여넣고(마우스 오른쪽 클릭) Enter를 누르세요. 화면에는 * 로 보입니다.'
+if ($env:T) { Write-Host '이 창에 넣어 둔 토큰을 씁니다(다시 묻지 않음).' } else {
 $s = Read-Host -AsSecureString '토큰'
 $env:T = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s))
+}
 $env:OUT = $out
 Write-Host '수집 시작. 창을 닫지 마세요(닫아도 다시 실행하면 이어서 합니다).'
 try { & node "$D\zippoom_pc.js" } finally { Remove-Item Env:T -ErrorAction SilentlyContinue }
