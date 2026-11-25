@@ -79,7 +79,7 @@ SER2=r'경매|빌라왕|보증금.{0,6}(안|못|늦)|담배'
 def stats(k):
     d=DG.get(k)
     if not d or not d.get('reviews'): return None
-    n=w=f=b=sv=o=fx=0
+    n=w=f=b=sv=o=fx=0;ry=set();rn=0
     for r in d['reviews']:
         t=r['txt'];c=t.split('단점:',1)[1] if '단점:' in t else t
         kw=t.split('단점 키워드:',1)[1] if '단점 키워드:' in t else ''
@@ -87,10 +87,12 @@ def stats(k):
         w+=bool(re.search(WALL2,c)) or '벽간소음' in kw
         f+=bool(re.search(FLOOR2,c)) or '층간소음' in kw
         b+=bool(re.search(BUG2,c)) or '벌레' in kw
+        c2=re.sub(r'(바퀴|바선생|박휘)[^.!?\n]{0,12}(없|안 ?나|한 ?번도|못 ?봤|본 ?적 ?없)','',c)
+        if re.search(r'바퀴|바선생|박휘',c2): rn+=1;ry.add((r.get('date') or '')[:4])
         sv+=bool(re.search(SER2,c))
         o+=bool(re.search(OUT2,c))
         fx+=bool(re.search(FIX2,c))
-    return dict(n=n,w=w,f=f,b=b,sv=sv,o=o,fx=fx)
+    return dict(n=n,w=w,f=f,b=b,sv=sv,o=o,fx=fx,rn=rn,ry=sorted(y for y in ry if y))
 def hit(c,n): return c/n>=0.2 and (c>=2 or n<=3)   # 후기 3개 이하인 건물은 1명 불만도 제외(11-25: 불만이 없어야 함)
 def verdict(x):
     """(제외 사유 또는 None, 주의 문구 또는 None)"""
@@ -98,6 +100,7 @@ def verdict(x):
     if has_jibun(x) and k in PEN: return f"사용자 제외: {PEN[k][1]}",None   # 11-25 사용자: 아예 빼라(번호 바꿔 다시 올려도 건물 지번으로 뺌)
     if st:
         n=st['n']
+        if st['rn']>=2 and len(st['ry'])>=2: return f"바퀴벌레 후기 여러 해({'·'.join(st['ry'])}, {st['rn']}/{n}명)",None   # 사용자 11-25: 여러 해에 걸친 바퀴벌레는 소거법으로 뺀다
         if hit(st['w'],n): return f"옆집·벽 소음 후기 {st['w']}/{n}명",None
         if hit(st['f'],n) and not is_top(x): return f"층간소음 후기 {st['f']}/{n}명",None
         if hit(st['o'],n): return f"바깥 소음(차·기차·유흥가) 후기 {st['o']}/{n}명",None   # 사용자 11-24: 소음 없음 필수
