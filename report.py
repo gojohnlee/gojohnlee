@@ -159,6 +159,8 @@ if top and os.environ.get('NO_TRANSIT')!='1':
         subprocess.run(['node',f'{here}/transit.js',pp,'37.39228,126.95653',str(next_weekday_9()),op],timeout=900,capture_output=True)
         TR=json.load(open(op))
     except Exception as e: print('대중교통 조회 실패:',e)
+elif os.path.exists(f'{day}/transit.json'):   # NO_TRANSIT=1: 같은 날 첫 실행 결과를 그대로 씀
+    TR=json.load(open(f'{day}/transit.json'))
 def transit(x):
     t=TR.get(x['id'])
     if not t: return '-'
