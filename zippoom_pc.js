@@ -41,6 +41,52 @@ const dongs = [...new Set(TARGETS.map(a => a.split(' ').slice(-2, -1)[0]))];
   console.log(`사이트맵 지역 쪽 ${R.sitemapRegion}곳, 이번에 열 쪽 ${todo.length}곳 (약 ${Math.ceil(todo.length * 15 / 60)}분)`);
 
   const p = await c.newPage();
+
+  // 11-25: 사이트맵에 빠진 건물이 있음(포일동 671-5) → 동별 순위 쪽(/지역별-부동산/…/순위, 검색엔진에 올라온 공개 쪽)에서 후기 쪽 주소를 더 모은다. robots.txt가 막으면 건너뜀.
+  let robotsOK = true;
+  try {
+    const rt = await (await c.request.get((process.env.BASE || 'https://zippoom.com') + '/robots.txt')).text();
+    let star = false; const dis = [];
+    for (const line of rt.split(/\r?\n/)) {
+      const m = line.match(/^\s*(User-agent|Disallow)\s*:\s*(.*)$/i); if (!m) continue;
+      if (/user-agent/i.test(m[1])) star = m[2].trim() === '*'; else if (star && m[2].trim()) dis.push(dec(m[2].trim()));
+    }
+    robotsOK = !dis.some(d => '/지역별-부동산/'.startsWith(d) || d.startsWith('/지역별-부동산'));
+    R.robotsDisallow = dis;
+  } catch (e) {}
+  R.rank = R.rank || {};
+  const extra = [];
+  if (robotsOK) {
+    const dongPaths = [...new Set(TARGETS.map(a => { const w = a.split(' '); w.pop(); return '경기-' + w.join('-'); }))];
+    dongPaths.sort((x, y) => (/호계동|관양동|포일동/.test(x) ? 0 : 1) - (/호계동|관양동|포일동/.test(y) ? 0 : 1));
+    for (const dp of dongPaths) for (const ty of ['빌라', '오피스텔']) {
+      const ru = `${process.env.BASE || 'https://zippoom.com'}/지역별-부동산/${dp}/${ty}/순위`;
+      const info = {};
+      try {
+        const resp = await p.goto(ru, { waitUntil: 'networkidle', timeout: 45000 });
+        info.status = resp ? resp.status() : 0;
+        for (let k = 0; k < 15; k++) {
+          await p.mouse.wheel(0, 4000); await p.waitForTimeout(700);
+          const more = p.locator('text=/더\\s?보기/').first();
+          if (await more.count()) { try { await more.click({ timeout: 3000 }); await p.waitForTimeout(1500); } catch (e) {} }
+        }
+        const html = await p.content();
+        const hrefs = await p.$$eval('a[href]', as => as.map(a => a.href));
+        const found = new Set();
+        for (const h of hrefs) if (dec(h).includes('/리뷰/')) found.add(h.split('?')[0]);
+        for (const m of dec(html).matchAll(/\/리뷰\/[^"'\s<>\\?#]+\/[A-Za-z0-9_-]+/g)) found.add((process.env.BASE || 'https://zippoom.com') + m[0]);
+        info.links = found.size;
+        for (const h of found) if (/안양|의왕|군포/.test(seg(h)) && !cached.has(dec(h)) && !(R.pages[h] && !R.pages[h].err)) extra.push(h);
+      } catch (e) { info.err = String(e).replace(/\x1b\[[0-9;]*m/g, '').split('\n')[0].slice(0, 120); }
+      R.rank[ru] = info; save();
+      console.log(`순위 쪽 ${dp.split('-').pop()} ${ty}: ${info.err || ('후기 쪽 ' + (info.links || 0) + '곳')}`);
+      await sleep(+process.env.GAP || 10000);
+    }
+  } else console.log('robots.txt가 순위 쪽을 막아 건너뜀');
+  const seen = new Set(todo.map(dec));
+  const add = [...new Set(extra.map(dec))].filter(h => !seen.has(h)).map(h => encodeURI(h));
+  todo = add.concat(todo);
+  console.log(`순위 쪽에서 새 후기 쪽 ${add.length}곳 추가 → 열 쪽 ${todo.length}곳 (약 ${Math.ceil(todo.length * 15 / 60)}분)`);
   let blocked = 0, i = 0;
   for (const u of todo) {
     i++;
