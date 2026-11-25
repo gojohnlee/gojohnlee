@@ -127,8 +127,10 @@ def rv(x):
     m=RV.get(akey(x))
     if m and m.get('v')=='good': return 'O'
     return 'X' if has_jibun(x) else '?'   # 11-25 고침: 지번이 있는데 어디에도 후기가 없으면 X(전에는 reviews.json에 없으면 ?로 나옴)
+# 사용자가 직접 주는 감점(건물 지번별). 11-25: 970-6 바퀴벌레 후기 2/2명 → -100
+PEN={'안양시 동안구 호계동 970-6':-100}
 def score(x):
-    t=x['txt'] or '';s=0
+    t=x['txt'] or '';s=PEN.get(akey(x),0) if has_jibun(x) else 0
     s+=3 if x['fl']>=6 else 1
     s+=1 if x['ev'] is True else 0
     s-=2 if (x['ev'] is False and not re.search(r'엘리베이터|엘레베이터|엘베|승강기',x['txt'] or '')) else 0   # 사용자: 엘베 없는 건 크다
@@ -144,7 +146,7 @@ def score(x):
     return s
 for x in ok:
     x['score']=score(x);x['flags']=([x['note']] if x.get('note') else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
-ok.sort(key=lambda x:(rv(x)!='O',-x['score'],x['tot']))   # 좋은 후기 있는 곳이 맨 위
+ok.sort(key=lambda x:(x['score']<=-50,rv(x)!='O',-x['score'],x['tot']))   # 사용자 감점(-100) 받은 곳은 맨 아래   # 좋은 후기 있는 곳이 맨 위
 allids={x['id'] for x in R}
 def next_weekday_9():
     d=datetime.date.today()+datetime.timedelta(days=1)
@@ -193,18 +195,6 @@ def arrow(x,n):
 for n,x in enumerate(ok[:15],1):
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
     out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {movein(x)} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
-# 사용자 11-25: 벌레 후기는 빼지 말고 원문을 보여 달라 → 순위에 든 매물 중 벌레를 쓴 후기의 해당 문장을 붙인다
-BUGS=r'벌레|바퀴|박휘|바선생|모기|개미|돈벌레|그리마'
-bug=[]
-for n,x in enumerate(ok[:15],1):
-    d=DG.get(akey(x)) if has_jibun(x) else None
-    for r in (d or {}).get('reviews',[]):
-        c=r['txt'].split('단점:',1)[1] if '단점:' in r['txt'] else r['txt']
-        c=c.split('단점 키워드:')[0]
-        c=re.sub(r'\s+',' ',c).strip(' |')
-        if re.search(BUGS,c): bug.append(f"- {n}위 {akey(x).split(' ',2)[-1]} · {'집품' if r['txt'].startswith('집품') else '당근'} {(r.get('date') or '')[:7]} 단점: " + c[:500])
-if bug:
-    out.append("\n## 벌레 후기 원문 (순위에 든 매물)\n"); out+=bug
 near=[]
 seen2=set()
 for x in R:
