@@ -11,16 +11,18 @@ def movein(x):
 def akey(x): return re.sub(r'^경기도\s*','',x['addr'] or '').strip()
 def has_jibun(x): return bool(re.search(r'\d+(-\d+)?$',akey(x)))
 prevp=f'{here}/data/latest.json';prev=json.load(open(prevp)) if os.path.exists(prevp) else {'ok':{}}
+PROXY={'저층','노후','소음(대로변)'}
 def extra(x):
     t=x['txt'] or ''
     if x['id'] in BL: return '블랙리스트: '+BL[x['id']]
-    if '옥탑' in t: return '옥탑방'
-    if re.search(r'재래시장|시장\s*(인접|바로|앞|옆)',t): return '재래시장 인접'
+    # 사용자 11-25: 옥탑·재래시장은 상관없음(후기로 판단) → 거르지 않음
     if x['af'] and x['fl']>x['af']: return '층 정보 모순'
     return None
 seen=set();ok=[]
 for x in sorted(R,key=lambda x:x['src']!='직방'):
-    if x['res']!='OK': continue
+    # 사용자 11-25: 저층(2층)·노후·대로변은 소음·벌레·설비를 짐작하는 대리 지표일 뿐 → 후기가 있으면 후기로 판단(verdict), 없으면 제외
+    if x['res']!='OK' and not (x.get('fails') and set(x['fails'])<=PROXY): continue
+    x['proxy']=[f for f in (x.get('fails') or []) if f in PROXY]
     why=extra(x)
     if why: x['res']=why;continue
     k=(x['addr'],x['fl'],x['dep'],x['rent'])
@@ -71,11 +73,12 @@ WALL2=r'옆 ?집|옆 ?방|벽간|벽 ?소음|방음|말소리|화장실.{0,10}(�
 FLOOR2=r'층간|윗집|위층|윗층|발망치|쿵쿵'
 BUG2=r'벌레|바퀴|모기|개미'
 OUT2=r'차 ?소리|차량 ?소음|도로 ?소음|대로변|큰 ?길|오토바이|기차 ?소리|지하철 ?소리|유흥|술집'
-SER2=r'경매|빌라왕|보증금.{0,6}(안|못|늦)|곰팡|누수|담배'
+FIX2=r'수압|싱크|배수|하수구|녹물|온수|보일러|누수|곰팡|결로|외풍|단열|웃풍|물이 ?(새|샌|안 ?나)|(배수|변기|싱크).{0,6}막|역류'   # 사용자 11-25: 오래된 건물은 설비(수압·싱크대 등)를 본다
+SER2=r'경매|빌라왕|보증금.{0,6}(안|못|늦)|담배'
 def stats(k):
     d=DG.get(k)
     if not d or not d.get('reviews'): return None
-    n=w=f=b=sv=o=0
+    n=w=f=b=sv=o=fx=0
     for r in d['reviews']:
         t=r['txt'];c=t.split('단점:',1)[1] if '단점:' in t else t
         kw=t.split('단점 키워드:',1)[1] if '단점 키워드:' in t else ''
@@ -85,8 +88,9 @@ def stats(k):
         b+=bool(re.search(BUG2,c)) or '벌레' in kw
         sv+=bool(re.search(SER2,c))
         o+=bool(re.search(OUT2,c))
-    return dict(n=n,w=w,f=f,b=b,sv=sv,o=o)
-def hit(c,n): return c>=2 and c/n>=0.2
+        fx+=bool(re.search(FIX2,c))
+    return dict(n=n,w=w,f=f,b=b,sv=sv,o=o,fx=fx)
+def hit(c,n): return c/n>=0.2 and (c>=2 or n<=3)   # 후기 3개 이하인 건물은 1명 불만도 제외(11-25: 불만이 없어야 함)
 def verdict(x):
     """(제외 사유 또는 None, 주의 문구 또는 None)"""
     k=akey(x);st=stats(k) if has_jibun(x) else None
@@ -95,11 +99,14 @@ def verdict(x):
         if hit(st['w'],n): return f"옆집·벽 소음 후기 {st['w']}/{n}명",None
         if hit(st['f'],n) and not is_top(x): return f"층간소음 후기 {st['f']}/{n}명",None
         if hit(st['o'],n): return f"바깥 소음(차·기차·유흥가) 후기 {st['o']}/{n}명",None   # 사용자 11-24: 소음 없음 필수
-        parts=[f"후기 {n}개"]+[f"{lab} {st[key]}명" for key,lab in (('w','옆집·벽 소리'),('f','층간소음'),('o','바깥 소음'),('b','벌레'),('sv','곰팡이·누수·담배·보증금')) if st[key]]
+        if hit(st['fx'],n): return f"설비(수압·배수·누수·곰팡이·외풍 등) 후기 {st['fx']}/{n}명",None
+        parts=[f"후기 {n}개"]+[f"{lab} {st[key]}명" for key,lab in (('w','옆집·벽 소리'),('f','층간소음'),('o','바깥 소음'),('fx','설비'),('b','벌레'),('sv','담배·보증금')) if st[key]]
         if hit(st['f'],n) and is_top(x): parts.append('꼭대기층이라 위층 소음은 없음')
+        if x.get('proxy'): parts.append('·'.join(x['proxy']).replace('저층','2층').replace('소음(대로변)','대로변')+'이지만 후기상 문제 적음')
         return None,', '.join(parts)
     m=RV.get(k)
     if m and m.get('v')=='bad': return '나쁜 후기: '+m.get('why',''),None
+    if x.get('proxy'): return '후기가 없어 확인 불가: '+'·'.join(x['proxy']),None
     return None,None
 EXCL={akey(y) for y in R if y.get('lat') and has_jibun(y) and verdict(y)[0]}
 BADPTS=[(y['lat'],y['lng'],akey(y)) for y in R if y.get('lat') and akey(y) in EXCL]
@@ -116,7 +123,7 @@ def rv(x):
     """O=후기 있고 옆집·층간 소음 불만 없음(꼭대기층이면 층간 무시), △=후기 있고 일부 불만, X=찾아봤지만 없음, ?=지번 비공개 등"""
     st=stats(akey(x)) if has_jibun(x) else None
     if st:   # 사용자 11-25: 후기가 많은 건물이 불리하지 않게 비율로. 각 소음 불만이 10% 미만이면 O
-        n=st['n'];return 'O' if st['w']/n<0.1 and st['o']/n<0.1 and (st['f']/n<0.1 or is_top(x)) else '△'
+        n=st['n'];return 'O' if st['w']/n<0.1 and st['o']/n<0.1 and st['fx']/n<0.1 and (st['f']/n<0.1 or is_top(x)) else '△'
     m=RV.get(akey(x))
     if m and m.get('v')=='good': return 'O'
     return 'X' if has_jibun(x) else '?'   # 11-25 고침: 지번이 있는데 어디에도 후기가 없으면 X(전에는 reviews.json에 없으면 ?로 나옴)
@@ -176,10 +183,10 @@ for n,x in enumerate(ok[:15],1):
 near=[]
 seen2=set()
 for x in R:
-    if x in ok or not (re.match(r'예산',x['res'] or '') or (re.match(r'용도',x['res'] or '') and '생활숙박' in x['type'])) or x['tot']>85 or not has_jibun(x): continue   # 사용자 11-24: 다중생활·근린 등은 보고에서 아예 빼라
+    hard=set(x.get('fails') or [])-PROXY
+    if x in ok or not hard or not (hard<={'예산','용도'} and ('용도' not in hard or '생활숙박' in x['type'])) or x['tot']>85 or not has_jibun(x): continue
+    x['proxy']=[f for f in (x.get('fails') or []) if f in PROXY]   # 사용자 11-24: 다중생활·근린 등은 보고에서 아예 빼라
     if rv(x)!='O' or verdict(x)[0]: continue
-    # 11-25 고침: 예산만 넘고 나머지 조건(6평 이상·대로변 아님·엘베)은 지켜야 함. judge.py는 처음 걸린 사유 하나만 적어서 따로 확인
-    if x['py']<6 or '대로변' in (x['txt'] or '') or (x['ev'] is False and not re.search('엘리베이터|엘레베이터|엘베|승강기',x['txt'] or '')): continue
     k2=(akey(x),x['fl'],x['rent'])
     if k2 in seen2: continue
     seen2.add(k2);near.append(x)
@@ -187,7 +194,7 @@ if near:
     out.append("\n## 좋은 후기 건물인데 조건 일부 초과 (월 실부담 85만 이하)\n")
     out.append(out[2]);out.append(out[3])
     for n,x in enumerate(sorted(near,key=lambda x:x['tot']),1):
-        x['flags']=['조건 초과: '+x['res']]+([verdict(x)[1]] if verdict(x)[1] else [])+([RV[akey(x)]['why']] if RV.get(akey(x),{}).get('why') and RV[akey(x)].get('v')=='good' else [])
+        x['flags']=['조건 초과: '+'·'.join(sorted(set(x.get('fails') or [])-PROXY))]+([verdict(x)[1]] if verdict(x)[1] else [])+([RV[akey(x)]['why']] if RV.get(akey(x),{}).get('why') and RV[akey(x)].get('v')=='good' else [])
         nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
         out.append(f"| O {n} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | - | {movein(x)} | {', '.join(x['flags'])} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")

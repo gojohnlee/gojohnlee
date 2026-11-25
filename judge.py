@@ -42,22 +42,26 @@ if os.path.exists(np):
               d=dist(T,(float(a['lat']),float(a['lng']))),lat=float(a['lat']),lng=float(a['lng']),txt=txt,title=a.get('atclNm'),sales='월세' if a.get('tradTpCd')=='B2' else '기타',note='관리비·연식·엘리베이터 미확인'))
         except Exception as e: print('naver skip',a.get('atclNo'),e)
 def judge(x):
+    """걸린 사유를 전부 x['fails']에 모으고 첫 사유를 돌려준다(사용자 11-25: 저층·노후·대로변은 후기로 판단하는 '대리 지표'라 report.py가 후기와 함께 다시 본다)"""
     x['tot']=round(x['rent']+x['mc']+x['util']);x['py']=round(x['area']/3.3058,1)
-    if x['sales']!='월세' or x['dep']>2000: return '조건밖'
-    if x['d']>3000: return '3km밖'
+    f=[]
+    if x['sales']!='월세' or x['dep']>2000: f.append('조건밖')
+    if x['d']>3000: f.append('3km밖')
     if any(b in x['type'] for b in bad):
         # 사용자 11-24: 근린생활·다중생활이라도 전입 가능이면 후보에 넣는다(주의 칸에 '서류상 집 아님' 표시)
         if re.search(r'근린|다중생활|상가',x['type']):   # 전입 불가가 적힌 건 아래 전입불가 규칙이 거른다
             ok_=re.search(r'전입\s*(신고)?\s*(가능|ok|OK|O\b|됩니다|돼요)',x['txt'] or '')
             x['note']=((x.get('note')+', ') if x.get('note') else '')+('서류상 집 아님(전입 가능 표기)' if ok_ else '서류상 집 아님(전입 가능한지 중개사에게 확인)')
-        else: return '용도'
-    if re.search(r'전입\s*(신고)?\s*[은이는가]?\s*(불가|안\s*됩|안\s*됨|x|X|×|안\s*돼)',x['txt']): return '전입불가'
-    if x['fl']<3: return '저층'
-    if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): return '노후'
-    if x['tot']>70: return '예산'
-    if x['py']<6: return '6평 미만'
-    if '대로변' in (x['txt'] or ''): return '소음(대로변)'
-    if x['ev'] is False and not re.search('엘리베이터|엘레베이터|엘베|승강기',x['txt'] or ''): return '엘리베이터 없음'
-    return 'OK'
+        else: f.append('용도')
+    if re.search(r'전입\s*(신고)?\s*[은이는가]?\s*(불가|안\s*됩|안\s*됨|x|X|×|안\s*돼)',x['txt']): f.append('전입불가')
+    if x['fl']<2: f.append('1층·지하')
+    elif x['fl']<3: f.append('저층')
+    if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): f.append('노후')
+    if x['tot']>70: f.append('예산')
+    if x['py']<6: f.append('6평 미만')
+    if '대로변' in (x['txt'] or ''): f.append('소음(대로변)')
+    if x['ev'] is False and not re.search('엘리베이터|엘레베이터|엘베|승강기',x['txt'] or ''): f.append('엘리베이터 없음')
+    x['fails']=f
+    return f[0] if f else 'OK'
 for x in recs: x['res']=judge(x)
 json.dump(recs,open(f'{day}/recs.json','w'),ensure_ascii=False)
