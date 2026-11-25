@@ -98,6 +98,7 @@ def verdict(x):
         n=st['n']
         if hit(st['w'],n): return f"옆집·벽 소음 후기 {st['w']}/{n}명",None
         if hit(st['f'],n) and not is_top(x): return f"층간소음 후기 {st['f']}/{n}명",None
+        if st['b']>=2: return f"벌레 후기 {st['b']}/{n}명",None   # 사용자 11-25: 벌레 본 사람 2명 이상이면 제외(970-6 바퀴벌레 2/2)
         if hit(st['o'],n): return f"바깥 소음(차·기차·유흥가) 후기 {st['o']}/{n}명",None   # 사용자 11-24: 소음 없음 필수
         if hit(st['fx'],n): return f"설비(수압·배수·누수·곰팡이·외풍 등) 후기 {st['fx']}/{n}명",None
         parts=[f"후기 {n}개"]+[f"{lab} {st[key]}명" for key,lab in (('w','옆집·벽 소리'),('f','층간소음'),('o','바깥 소음'),('fx','설비'),('b','벌레'),('sv','담배·보증금')) if st[key]]

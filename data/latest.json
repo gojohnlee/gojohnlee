@@ -1,28 +1,22 @@
 {
 "ok": {
-"51331357": {
-"name": "안양시 동안구 호계동 970-6 6층",
-"price": "2000/45",
-"link": "https://sp.zigbang.com/share/oneroom/51331357",
-"rank": 1
-},
 "59966085": {
 "name": "경기도 안양시 동안구 호계동 6층",
 "price": "500/40",
 "link": "http://redirect.dabangapp.com/cg/d6wR",
-"rank": 2
+"rank": 1
 },
 "60000460": {
 "name": "경기도 안양시 만안구 안양동 5층",
 "price": "1000/40",
 "link": "http://redirect.dabangapp.com/cg/eLcM",
-"rank": 3
+"rank": 2
 },
 "51313607": {
 "name": "의왕시 포일동 675-2 3층",
 "price": "1000/55",
 "link": "https://sp.zigbang.com/share/oneroom/51313607",
-"rank": 4
+"rank": 3
 }
 }
 }
