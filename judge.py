@@ -5,10 +5,12 @@ def dist(a,c):
     return round(2*R*math.asin(math.sqrt(math.sin(dp/2)**2+math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2)))
 bad=('근린','숙박','교육','업무','공장','고시','기숙','여관','상가','다중생활')
 def yrof(s): return int((re.findall(r'(19\d\d|20\d\d)',str(s))+['0'])[0])
+HIGH1=r'필로티|높은\s*1\s*층|1\.5\s*층|반\s*층\s*(위|올라)|도로보다\s*높|지대가?\s*높|계단\s*(올라|위)|2\s*층\s*(같은|수준|높이)|1\s*층\s*같지\s*않'
 def flo(s,af=0):
-    m=re.match(r'(\d+)',s or '')
-    if m: return int(m.group(1))
     s=s or ''
+    if re.search(r'지하|지층|^B',s): return 0   # 사용자 11-26: 반지하·지하는 뺀다(예전엔 '반지하'가 1층으로 읽혔음)
+    m=re.match(r'(\d+)',s)
+    if m: return int(m.group(1))
     return (max(af-1,1) if '고' in s else max(af//2,1) if '중' in s else 1) if af else (9 if '고' in s else 5 if '중' in s else 0)
 recs=[]
 for f in glob.glob(f'{day}/zb/*.json'):
@@ -54,8 +56,11 @@ def judge(x):
             x['note']=((x.get('note')+', ') if x.get('note') else '')+('서류상 집 아님(전입 가능 표기)' if ok_ else '서류상 집 아님(전입 가능한지 중개사에게 확인)')
         else: f.append('용도')
     if re.search(r'전입\s*(신고)?\s*[은이는가]?\s*(불가|안\s*됩|안\s*됨|x|X|×|안\s*돼)',x['txt']): f.append('전입불가')
-    if x['fl']<2: f.append('1층·지하')
-    elif x['fl']<3: f.append('저층')
+    # 사용자 11-26: 1·2층도 보여 준다. 반지하·지하는 뺀다. 1층은 길보다 높은 1층(0층 개념: 필로티·계단 올라가는 1층)만 — 설명에 적힌 것만 통과
+    if x['fl']<1: f.append('반지하·지하')
+    elif x['fl']==1:
+        if re.search(HIGH1,x['txt'] or ''): x['note']=((x.get('note')+', ') if x.get('note') else '')+'길보다 높은 1층(설명에 적힘)'
+        else: f.append('1층(길보다 높은지 모름)')
     if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): f.append('노후')
     if x['tot']>70: f.append('예산')
     if x['py']<6: f.append('6평 미만')

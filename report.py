@@ -11,7 +11,7 @@ def movein(x):
 def akey(x): return re.sub(r'^경기도\s*','',x['addr'] or '').strip()
 def has_jibun(x): return bool(re.search(r'\d+(-\d+)?$',akey(x)))
 prevp=f'{here}/data/latest.json';prev=json.load(open(prevp)) if os.path.exists(prevp) else {'ok':{}}
-PROXY={'저층','노후','소음(대로변)'}
+PROXY={'노후','소음(대로변)'}   # 11-26: 저층(2층) 규칙 없앰
 PEN={'안양시 동안구 호계동 970-6':(-100,'바퀴벌레 후기 2/2명')}
 # 사용자가 후기를 읽고 살린 건물(후기 기준 제외를 무시). 11-25: 관양동 1447-8 외풍·날벌레 1명은 감수
 KEEP={'안양시 동안구 관양동 1447-8':'후기 1개 중 외풍·날벌레 1명(감수)'}
@@ -110,7 +110,7 @@ def verdict(x):
         if hit(st['fx'],n): return f"설비(수압·배수·누수·곰팡이·외풍 등) 후기 {st['fx']}/{n}명",None
         parts=[f"후기 {n}개"]+[f"{lab} {st[key]}명" for key,lab in (('w','옆집·벽 소리'),('f','층간소음'),('o','바깥 소음'),('fx','설비'),('b','벌레'),('sv','담배·보증금')) if st[key]]
         if hit(st['f'],n) and is_top(x): parts.append('꼭대기층이라 위층 소음은 없음')
-        if x.get('proxy'): parts.append('·'.join(x['proxy']).replace('저층','2층').replace('소음(대로변)','대로변')+'이지만 후기상 문제 적음')
+        if x.get('proxy'): parts.append('·'.join(x['proxy']).replace('소음(대로변)','대로변')+'이지만 후기상 문제 적음')
         return None,', '.join(parts)
     m=RV.get(k)
     if m and m.get('v')=='bad': return '나쁜 후기: '+m.get('why',''),None
