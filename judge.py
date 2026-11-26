@@ -61,7 +61,7 @@ def judge(x):
     elif x['fl']==1:
         if re.search(HIGH1,x['txt'] or ''): x['note']=((x.get('note')+', ') if x.get('note') else '')+'길보다 높은 1층(설명에 적힘)'
         else: f.append('1층(길보다 높은지 모름)')
-    if x['yr'] and x['yr']<2008 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): f.append('노후')
+    if x['yr'] and x['yr']<2000 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): f.append('노후')
     if x['tot']>70: f.append('예산')
     if x['py']<6: f.append('6평 미만')
     if '대로변' in (x['txt'] or ''): f.append('소음(대로변)')
