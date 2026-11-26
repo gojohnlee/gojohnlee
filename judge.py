@@ -63,7 +63,7 @@ def judge(x):
         else: f.append('1층(길보다 높은지 모름)')
     if x['yr'] and x['yr']<2000 and not (x['yr']>=1995 and x['ev'] and ('오피스텔' in x['type'] or x['hh']>=30 or x['af']>=7)): f.append('노후')
     if x['tot']>70: f.append('예산')
-    if x['py']<6: f.append('6평 미만')
+    if x['py']<5.5: f.append('5.5평 미만')   # 사용자 11-26: 정 안 되면 5.5평까지
     if '대로변' in (x['txt'] or ''): f.append('소음(대로변)')
     if x['ev'] is False and not re.search('엘리베이터|엘레베이터|엘베|승강기',x['txt'] or ''): f.append('엘리베이터 없음')
     x['fails']=f
