@@ -18,6 +18,7 @@ KEEP={'안양시 동안구 관양동 1447-8':'후기 1개 중 외풍·날벌레 
 # 사용자 11-26: 후기 좋은 건물이라 조건 일부를 눈감고 넣어 봄(사용자가 직접 확인). 지번: (눈감는 조건, 주의 문구)
 KEEPF={'안양시 동안구 호계동 1110-2':({'엘리베이터 없음'},'옥탑방·엘리베이터 없음(확인용으로 넣음)'),
        '안양시 만안구 안양동 387-9':({'예산'},'예산 초과(확인용으로 넣음)')}
+KEEPTOP={'안양시 동안구 호계동 1110-2'}   # 11-26: 층간소음 후기 있는 건물이라 꼭대기층만 살림
 for _k,(_f,_n) in KEEPF.items(): KEEP.setdefault(_k,_n)
 def extra(x):
     t=x['txt'] or ''
@@ -29,6 +30,7 @@ seen=set();ok=[]
 for x in sorted(R,key=lambda x:x['src']!='직방'):
     # 사용자 11-25: 저층(2층)·노후·대로변은 소음·벌레·설비를 짐작하는 대리 지표일 뿐 → 후기가 있으면 후기로 판단(verdict), 없으면 제외
     kf=KEEPF.get(akey(x)) if has_jibun(x) else None
+    if kf and akey(x) in KEEPTOP and not (x['af'] and x['fl']==x['af']): kf=None
     if kf and x['res']!='OK' and set(x['fails'])-kf[0]<=PROXY: x['res']='OK';x['fails']=[f for f in x['fails'] if f not in kf[0]]
     if x['res']!='OK' and not (x.get('fails') and set(x['fails'])<=PROXY): continue
     x['proxy']=[f for f in (x.get('fails') or []) if f in PROXY]
@@ -107,7 +109,7 @@ def hit(c,n): return c/n>=0.2 and (c>=2 or n<=3)   # 후기 3개 이하인 건�
 def verdict(x):
     """(제외 사유 또는 None, 주의 문구 또는 None)"""
     k=akey(x);st=stats(k) if has_jibun(x) else None
-    if has_jibun(x) and k in KEEP: return None,'사용자가 살림: '+KEEP[k]
+    if has_jibun(x) and k in KEEP and not (k in KEEPTOP and not is_top(x)): return None,'사용자가 살림: '+KEEP[k]
     if has_jibun(x) and k in PEN: return f"사용자 제외: {PEN[k][1]}",None   # 11-25 사용자: 아예 빼라(번호 바꿔 다시 올려도 건물 지번으로 뺌)
     if st:
         n=st['n']
