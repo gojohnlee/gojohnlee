@@ -40,6 +40,10 @@
 - 산본동 259-16(에코하우스): 사용자 휴대폰 캡처 후기 3개(11-26) 넣음 → 유흥가 소음·치안 2/3명으로 제외.
 - 사용자에게 숫자를 줄 땐 이 절과 data/의 기록을 먼저 합쳐 셀 것(11-26: 전날 59곳을 빼먹고 26곳이라 해서 크게 혼남).
 
+## 사용자 PC → GitHub (11-26)
+- Gemini가 바탕화면 `원룸` 폴더에 집품 후기 txt를 넣는다 → 사용자가 그 폴더의 `원룸올리기.bat`을 실행하면 txt가 이 브랜치 `inbox/`로 올라가고, PC의 txt는 `원룸\올림\`으로 옮겨진다.
+- Claude(매일 루틴·새 세션)는 시작할 때 `for f in inbox/*.txt; do python3 -I zippoom_merge.py "$f" && git mv "$f" inbox/done/; done` 로 합친 다음 평소 순서대로 돌린다.
+
 ## 새 세션에서 돌리는 법 (Claude용)
 ```bash
 git fetch origin house && git worktree add /tmp/house origin/house && cd /tmp/house
