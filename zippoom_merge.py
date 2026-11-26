@@ -7,12 +7,16 @@ here = os.path.dirname(os.path.abspath(__file__)); D = f'{here}/data'
 t = open(sys.argv[1], encoding='utf-8').read()
 z = json.load(open(f'{D}/zippoom_buildings.json')); f = json.load(open(f'{D}/zippoom_found.json'))
 done = set(); got = up = same = 0
+# 끝의 [건너뛴 아파트] 목록·합계는 후기가 아니다(11-26 시험 파일: 마지막 건물 후기로 잘못 셈). 건너뛴 곳은 끝난 곳으로 쳐서 다시 묻지 않는다.
+m = re.search(r'^\[건너뛴[^\]]*\]\s*\n((?:- .*\n?)*)', t, flags=re.M)
+skip = {re.sub(r'^경기(도)?\s*', '', x).strip() for x in re.findall(r'\(([^)]+)\)\s*$', m.group(1), flags=re.M)} if m else set()
+t = re.split(r'^\[', t, flags=re.M)[0]
 for b in re.split(r'^### ', t, flags=re.M)[1:]:
     L = b.strip('\n').split('\n'); k = re.sub(r'^경기(도)?\s*', '', L[0]).strip(); got += 1
     name = L[1].split('|')[0].strip() if len(L) > 1 else ''
     R = []
     for l in L:
-        if not l.startswith('- '): continue
+        if not l.startswith('- ') or '|' not in l: continue
         p = [x.strip() for x in l[2:].split('|')]
         dan = re.search(r'단점:\s*(.*?)(\s*\|\s*단점 키워드:|$)', l)
         bad = bool(dan and dan.group(1).strip() not in ('', '-', '없음'))
@@ -26,7 +30,7 @@ for b in re.split(r'^### ', t, flags=re.M)[1:]:
     if R: done.add(k)
 json.dump(z, open(f'{D}/zippoom_buildings.json', 'w'), ensure_ascii=False, indent=0)
 json.dump(f, open(f'{D}/zippoom_found.json', 'w'), ensure_ascii=False, indent=0)
-hp = f'{D}/zippoom_have_full.txt'; have = set(open(hp).read().split('\n')) | done; have.discard('')
+hp = f'{D}/zippoom_have_full.txt'; have = set(open(hp).read().split('\n')) | done | skip; have.discard('')
 open(hp, 'w').write('\n'.join(sorted(have)) + '\n')
 tp = f'{D}/zippoom_todo.txt'; todo = [l for l in open(tp).read().split('\n') if l and l.split('|')[0].strip() not in have]
 open(tp, 'w').write('\n'.join(todo) + '\n')
