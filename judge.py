@@ -43,7 +43,7 @@ if os.path.exists(np):
         except Exception as e: print('naver skip',a.get('atclNo'),e)
 def judge(x):
     """걸린 사유를 전부 x['fails']에 모으고 첫 사유를 돌려준다(사용자 11-25: 저층·노후·대로변은 후기로 판단하는 '대리 지표'라 report.py가 후기와 함께 다시 본다)"""
-    x['tot']=round(x['rent']+x['mc']+x['util']);x['py']=round(x['area']/3.3058,1)
+    x['tot']=round(x['rent']+x['mc']+x['util']);x['py']=round(x['area']/3.3058,1);x['pyd']=int(x['area']/3.3058*10+1e-9)/10  # 사용자 11-26: 보고 표시는 소수 첫째 자리 버림(23㎡=6.96→6.9). 거름·점수는 반올림 그대로(19.8㎡=광고 6평이 5.9로 빠지지 않게)
     f=[]
     if x['sales']!='월세' or x['dep']>2000: f.append('조건밖')
     if x['d']>3000: f.append('3km밖')

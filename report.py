@@ -219,7 +219,7 @@ for n,x in enumerate(ok[:15],1):
     g=GRP.get(rv(x),2)
     if g!=lastg: out+=[f"\n### {GNAME[g]}\n",H2,H3];lastg=g
     nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
-    out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {movein(x)} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
+    out.append(f"| {rv(x)} {n} {arrow(x,n)} | {nm} | {x.get('pyd',x['py']):.1f}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | {transit(x)} | {movein(x)} | {', '.join(x['flags']) or '-'} | [{x['src']}]({x['link']}) |")
 near=[]
 seen2=set()
 for x in R:
@@ -236,7 +236,7 @@ if near:
     for n,x in enumerate(sorted(near,key=lambda x:x['tot']),1):
         x['flags']=['조건 초과: '+'·'.join(sorted(set(x.get('fails') or [])-PROXY))]+([verdict(x)[1]] if verdict(x)[1] else [])+([RV[akey(x)]['why']] if RV.get(akey(x),{}).get('why') and RV[akey(x)].get('v')=='good' else [])
         nm=f"{(x['addr'] or '').replace('경기도 ','')} {x['type'][:8]} {x['af']}층 건물의 {x['fl']}층 ({x['yr'] or '?'}년)"
-        out.append(f"| O {n} | {nm} | {x['py']}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | - | {movein(x)} | {', '.join(x['flags'])} | [{x['src']}]({x['link']}) |")
+        out.append(f"| O {n} | {nm} | {x.get('pyd',x['py']):.1f}평 | {x['dep']:,}만 | 약 {x['tot']}만 | {x['d']/1000:.1f}km ({round(x['d']*1.3/80)}분) | - | {movein(x)} | {', '.join(x['flags'])} | [{x['src']}]({x['link']}) |")
 out.append(f"\n- 새 매물(통과): {len(new)}건 / 어제 후보 중 사라짐: {len(gone)}건")
 for i,v in gone: out.append(f"  - 사라짐: {v['name']} ({v['price']})")
 print('\n'.join(out))
