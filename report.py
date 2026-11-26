@@ -15,6 +15,10 @@ PROXY={'노후','소음(대로변)'}   # 11-26: 저층(2층) 규칙 없앰
 PEN={'안양시 동안구 호계동 970-6':(-100,'바퀴벌레 후기 2/2명')}
 # 사용자가 후기를 읽고 살린 건물(후기 기준 제외를 무시). 11-25: 관양동 1447-8 외풍·날벌레 1명은 감수
 KEEP={'안양시 동안구 관양동 1447-8':'후기 1개 중 외풍·날벌레 1명(감수)'}
+# 사용자 11-26: 후기 좋은 건물이라 조건 일부를 눈감고 넣어 봄(사용자가 직접 확인). 지번: (눈감는 조건, 주의 문구)
+KEEPF={'안양시 동안구 호계동 1110-2':({'엘리베이터 없음'},'옥탑방·엘리베이터 없음(확인용으로 넣음)'),
+       '안양시 만안구 안양동 387-9':({'예산'},'예산 초과(확인용으로 넣음)')}
+for _k,(_f,_n) in KEEPF.items(): KEEP.setdefault(_k,_n)
 def extra(x):
     t=x['txt'] or ''
     if x['id'] in BL: return '블랙리스트: '+BL[x['id']]
@@ -24,6 +28,8 @@ def extra(x):
 seen=set();ok=[]
 for x in sorted(R,key=lambda x:x['src']!='직방'):
     # 사용자 11-25: 저층(2층)·노후·대로변은 소음·벌레·설비를 짐작하는 대리 지표일 뿐 → 후기가 있으면 후기로 판단(verdict), 없으면 제외
+    kf=KEEPF.get(akey(x)) if has_jibun(x) else None
+    if kf and x['res']!='OK' and set(x['fails'])-kf[0]<=PROXY: x['res']='OK';x['fails']=[f for f in x['fails'] if f not in kf[0]]
     if x['res']!='OK' and not (x.get('fails') and set(x['fails'])<=PROXY): continue
     x['proxy']=[f for f in (x.get('fails') or []) if f in PROXY]
     why=extra(x)
@@ -159,13 +165,14 @@ def pros(x):
     if not d or not d.get('reviews'): return None
     kw=collections.Counter();first=''
     for r in d['reviews']:
-        t=r['txt'];pr=t.split('장점:',1)[1].split('단점:')[0] if '장점:' in t else ''
+        t=r['txt'];pr=t.split('장점:',1)[1].split('단점:')[0] if '장점:' in t else ('' if r.get('bad') else t)   # 11-26: 당근 후기는 장점 칸이 없어 좋은 후기 본문을 씀
         pr=re.sub(r'\s+',' ',pr).strip(' |')
         if not first and pr and pr!='-': first=pr
         if '장점 키워드:' in t: kw.update(k.strip() for k in t.split('장점 키워드:',1)[1].split('|')[0].split(',') if k.strip() and k.strip()!='없음')
     ks='·'.join(k for k,_ in kw.most_common(4))
     one=re.split(r'(?<=[.!?])\s',first)[0][:70].replace(',','·')
-    return '장점: '+' / '.join(v for v in (ks,one) if v)
+    v=' / '.join(v for v in (ks,one) if v)
+    return '장점: '+v if v else ''
 for x in ok:
     x['score']=score(x);x['flags']=[p for p in [pros(x)] if p]+([f"감점 {PEN[akey(x)][0]}({PEN[akey(x)][1]})"] if has_jibun(x) and akey(x) in PEN else [])+([x['note']] if x.get('note') else [])+(['지번 비공개라 후기 조회 불가'] if not has_jibun(x) else [])+[f for f,c in [('꼭대기층: 위층 소음 없음, 누수·더위 확인',x['af'] and x['fl']==x['af']),('대로변','대로변' in (x['txt'] or '')),('학교 앞','계원' in (x['txt'] or '')),('엘리베이터 없음',x['ev'] is False)] if c]
 GRP={'O':0,'△':0,'X':1}   # 사용자 11-25: 후기 있는 집·후기 없는 집·지번 비공개(후기 확인 불가)끼리 묶는다
