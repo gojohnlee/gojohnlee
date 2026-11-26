@@ -55,7 +55,7 @@ def judge(x):
             ok_=re.search(r'전입\s*(신고)?\s*(가능|ok|OK|O\b|됩니다|돼요)',x['txt'] or '')
             x['note']=((x.get('note')+', ') if x.get('note') else '')+('서류상 집 아님(전입 가능 표기)' if ok_ else '서류상 집 아님(전입 가능한지 중개사에게 확인)')
         else: f.append('용도')
-    if re.search(r'전입\s*(신고)?\s*[은이는가]?\s*(불가|안\s*됩|안\s*됨|x|X|×|안\s*돼)',x['txt']): f.append('전입불가')
+    if re.search(r'전입\s*신고\s*(나|와|및|랑)\s*\S+\s*(은|는|도)?\s*(불가|안\s*됩|안\s*됨|안\s*돼)',x['txt'] or '') or re.search(r'전입\s*(신고)?\s*[은이는가]?\s*(불가|안\s*됩|안\s*됨|x|X|×|안\s*돼)',x['txt']): f.append('전입불가')
     # 사용자 11-26: 1·2층도 보여 준다. 반지하·지하는 뺀다. 1층은 길보다 높은 1층(0층 개념: 필로티·계단 올라가는 1층)만 — 설명에 적힌 것만 통과
     if x['fl']<1: f.append('반지하·지하')
     elif x['fl']==1:
