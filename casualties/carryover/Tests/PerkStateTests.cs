@@ -58,7 +58,7 @@ public class PerkStateTests
     [Fact]
     public void FiveConfirmedPerks_Only()
     {
-        Assert.Equal(new[] { "subspace", "lockpick", "traps", "mining", "fall", "temp" }, System.Array.ConvertAll(PerkState.Perks, p => p.Id));
+        Assert.Equal(new[] { "subspace", "lockpick", "traps", "mining", "vision", "temp" }, System.Array.ConvertAll(PerkState.Perks, p => p.Id));
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class PerkStateTests
         Assert.Equal(999 - 199, s.Points);            // 전부 199점
         Assert.Equal(0.2f, s.TempDriftMult, 3);
         Assert.Equal(2.5f, s.MiningMult, 3);
-        Assert.Equal(0.2f, s.ImpactMult, 3);
+        Assert.Equal(9f, s.VisionRadius);
         Assert.Equal(20, s.SubspaceSlots); Assert.Equal(400f, s.SubspaceMaxWeight);
         Assert.Equal(2.25f, s.LockpickMult, 3);
         Assert.Equal(25f, s.TrapRadius);
@@ -109,10 +109,10 @@ public class PerkStateTests
     [Fact]
     public void RemovedPerks_RefundSpentPoints()
     {
-        var s = PerkState.Parse("points=3\nperk.crafting=2\nperk.xp=3\nperk.mining=1");   // 숙련 제작 1+2, 경험치 2+3+4 → 12점 돌려줌
-        Assert.Equal(12, s.Refunded); Assert.Equal(15, s.Points); Assert.Equal(1, s.Level("mining"));
+        var s = PerkState.Parse("points=3\nperk.crafting=2\nperk.xp=3\nperk.mining=1\nperk.fall=3");   // 숙련 제작 1+2, 경험치 2+3+4, 튼튼한 다리 2+3+4 → 21점 돌려줌
+        Assert.Equal(21, s.Refunded); Assert.Equal(24, s.Points); Assert.Equal(1, s.Level("mining"));
         var again = PerkState.Parse(s.Serialize());
-        Assert.Equal(0, again.Refunded); Assert.Equal(15, again.Points);
+        Assert.Equal(0, again.Refunded); Assert.Equal(24, again.Points);
     }
 
     [Fact]

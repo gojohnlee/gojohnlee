@@ -43,15 +43,6 @@ namespace CasualtiesCarryover
             LastNumber = num;
         }
 
-        // - 튼튼한 다리: 떨어지거나 부딪힐 때 Limb.OnCollisionEnter2D → Limb.ImpactDamage(force, dir). 근육·피부·뼈·머리 피해와 탈구·골절 문턱이 모두 force로 정해진다
-        //   → 플레이어 몸의 팔다리면 force에 배율을 곱한다.
-        [HarmonyPatch(typeof(Limb), nameof(Limb.ImpactDamage))]
-        [HarmonyPrefix]
-        private static void ImpactPrefix(Limb __instance, ref float force)
-        {
-            if (PlayerCamera.main != null && __instance.body == PlayerCamera.main.body) force *= Plugin.Perks?.ImpactMult ?? 1f;
-        }
-
         // - 온도 적응력: Body.HandleBodyTemperature가 1초마다 temperature = Lerp(체온, 바깥 온도, baseTemperatureLerpRate / GetTotalInsulation()).
         //   GetTotalInsulation을 쓰는 곳은 여기와 상태창 단열 % 표시뿐 → 플레이어 몸이 37℃에서 멀어지는 쪽으로 끌려갈 때만 단열을 1/배율로 높인다(돌아오는 회복은 그대로).
         [HarmonyPatch(typeof(Body), nameof(Body.GetTotalInsulation))]

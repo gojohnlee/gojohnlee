@@ -97,7 +97,7 @@ namespace CasualtiesCarryover
                     break;
                 case 2:
                     if (Since < 4f) return;
-                    TestLockpick(); TestTrapsScan(body); TestMining(body); TestImpact(body); TestTemp(body); TestSoundCannon(body); TestSubspace(body);
+                    TestLockpick(); TestTrapsScan(body); TestMining(body); TestVision(body); TestTemp(body); TestSoundCannon(body); TestSubspace(body);
                     Next(3);
                     break;
                 case 3:
@@ -206,16 +206,53 @@ namespace CasualtiesCarryover
             Check("mining perk applies to tools too (pickaxe swing boosted, damage number shows boosted value)", PerkPatches.BoostedHits > b0 && PerkPatches.LastNumberRaw > 0 && PerkPatches.LastNumber == (int)(PerkPatches.LastNumberRaw * 2.5f), $"number {PerkPatches.LastNumberRaw} -> {PerkPatches.LastNumber}, swung {ran}, conscious {body.conscious}, boosted hits {PerkPatches.BoostedHits - b0}, block damage {d0:0.#} -> {d1:0.#}, block {pos} dist {best:0.0}");
         }
 
-        private void TestImpact(Body body)
+        private void TestVision(Body body)
         {
-            // 근육 피해 = force × 0.33 / 방어(게임 그대로) → 퍽 3단계면 0.4배
-            var limb = body.limbs.First(l => !l.isHead && !l.isVital);   // 머리·몸통은 뇌·내출혈 피해가 있어 팔다리로
-            float F = body.jumpSpeed * 6f;   // 퍽으로 0.2배여도 문턱(jumpSpeed)을 넘는 크기
-            float keepBl = limb.bleedAmount; float keepM = limb.muscleHealth, keepS = limb.skinHealth, keepB = body.brainHealth, keepC = body.consciousness;
-            float Drop(PerkState p) { float d = 0; WithPerks(p, () => { limb.muscleHealth = 100f; limb.ImpactDamage(F, Vector2.down); d = 100f - limb.muscleHealth; }); return d; }
-            float on = Drop(Plugin.Perks), off = Drop(new PerkState());
-            limb.muscleHealth = keepM; limb.skinHealth = keepS; body.brainHealth = keepB; body.consciousness = keepC; limb.pain = 0f; limb.bleedAmount = keepBl;
-            Check("impact x0.2 (fall perk 4)", off > 0f && Mathf.Abs(on / off - 0.2f) < 0.01f, $"muscle drop {on:0.00} vs {off:0.00}");
+            // 시야 적응력 4단계: 머리에 반경 9 원형 조명(그림자 없음, 전역 조명과 같은 층), 퍽 0이면 꺼짐
+            Vision.Tick(body);
+            var l = Vision.Light;
+            bool on = l != null && l.enabled && l.transform.parent == body.limbs[0].transform && Mathf.Abs(l.pointLightOuterRadius - 9f) < 0.01f && l.lightType == UnityEngine.Rendering.Universal.Light2D.LightType.Point && !l.shadowsEnabled;
+            var amb = WorldGeneration.world.ambientLight;
+            var fld = typeof(UnityEngine.Rendering.Universal.Light2D).GetField("m_ApplyToSortingLayers", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var la = fld.GetValue(l) as int[]; var lb = fld.GetValue(amb) as int[];
+            bool layers = la != null && lb != null && la.SequenceEqual(lb);
+            bool off = false;
+            WithPerks(new PerkState(), () => { Vision.Tick(body); off = !Vision.Light.enabled; });
+            Vision.Tick(body);
+            Check("vision perk 4: light radius 9 on head; off without perk", on && off && Vision.Light.enabled,
+                $"on {on}, radius {(l != null ? l.pointLightOuterRadius : -1f)}, layers {la?.Length}/{lb?.Length} same {layers}, off {off}");
+            StartCoroutine(VisionPixels());
+        }
+
+        /// <summary>실제 화면이 밝아지는지: 조명을 끄고 찍은 화면과 켜고 찍은 화면의 가운데(몸 둘레) 밝기를 비교한다.</summary>
+        private static void ShotTo(string name) { var p = Environment.GetEnvironmentVariable("CU_CARRYOVER_SHOT"); if (!string.IsNullOrEmpty(p)) ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(p), name)); }
+
+        private System.Collections.IEnumerator VisionPixels()
+        {
+            float Mean()
+            {
+                var tex = ScreenCapture.CaptureScreenshotAsTexture();
+                float sum = 0f; int n = 0;
+                for (int x = tex.width * 3 / 10; x < tex.width * 7 / 10; x += 2)
+                    for (int y = tex.height * 3 / 10; y < tex.height * 7 / 10; y += 2) { var c = tex.GetPixel(x, y); sum += (c.r + c.g + c.b) / 3f; n++; }
+                Destroy(tex);
+                return n > 0 ? sum / n : 0f;
+            }
+            for (float t = 0f; t < 8f; t += Time.unscaledDeltaTime) yield return null;   // 로딩 글자("자리를 찾는 중…")가 사라진 뒤
+            { var pcv = PlayerCamera.main; if (pcv.currentContainer != null) pcv.CloseContainer(); pcv.radialOpen = false; }
+            for (int i = 0; i < 20; i++) yield return null;
+            Vision.Hold = true;
+            Vision.Light.enabled = false;
+            for (int i = 0; i < 3; i++) yield return null;
+            yield return new WaitForEndOfFrame();
+            float off = Mean(); ShotTo("vision-off.png");
+            Vision.Light.enabled = true;
+            for (int i = 0; i < 3; i++) yield return null;
+            yield return new WaitForEndOfFrame();
+            float on = Mean(); ShotTo("vision-on.png");
+            Vision.Light.enabled = false; for (int i = 0; i < 3; i++) yield return null; yield return new WaitForEndOfFrame(); float off2 = Mean(); Vision.Light.enabled = true;
+            Vision.Hold = false;
+            Check("vision light brightens screen around player", on > off + 0.01f && on > off2 + 0.01f, $"mean brightness off {off:0.000} -> on {on:0.000} -> off {off2:0.000}, ambient {WorldGeneration.world.ambientLight.intensity:0.00}");
         }
 
         private void TestTemp(Body body)

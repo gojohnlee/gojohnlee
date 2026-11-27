@@ -25,15 +25,16 @@ namespace Carryover.Core
             new PerkDef("lockpick", "자물쇠 달인", "자물쇠 따기 허용 각도 +25%", 1, 2, 3, 4, 5),
             new PerkDef("traps", "함정 감지", "가까운 함정 표시 (반경 6 → 10 → 15 → 20 → 25)", 2, 3, 4, 5, 6),
             new PerkDef("mining", "광부", "벽·바위를 칠 때 피해 +25% (맨손·도구)", 1, 2, 3, 4, 5, 6),
-            new PerkDef("fall", "튼튼한 다리", "떨어지거나 부딪힐 때 받는 충격 -20%", 2, 3, 4, 5),
+            new PerkDef("vision", "시야 적응력", "광원 없이 주변이 어렴풋이 보임 (반경 3 → 5 → 7 → 9)", 2, 3, 4, 5),
             new PerkDef("temp", "온도 적응력", "체온이 정상에서 멀어지는 속도 -20% (회복은 그대로)", 2, 3, 4, 5),
         };
 
-        /// <summary>뺀 퍽(사용자 11-24: 숙련 제작·경험치 증가는 의미 없음). 옛 파일에 단계가 있으면 쓴 포인트를 돌려준다(한 번만 — 다시 저장하면 키가 사라짐).</summary>
+        /// <summary>뺀 퍽(사용자 11-24: 숙련 제작·경험치 증가는 의미 없음, 11-28: 튼튼한 다리). 옛 파일에 단계가 있으면 쓴 포인트를 돌려준다(한 번만 — 다시 저장하면 키가 사라짐).</summary>
         public static readonly System.Collections.Generic.Dictionary<string, int[]> RemovedCosts = new System.Collections.Generic.Dictionary<string, int[]>
         {
             { "crafting", new[] { 1, 2, 3 } },
             { "xp", new[] { 2, 3, 4 } },
+            { "fall", new[] { 2, 3, 4, 5 } },   // 튼튼한 다리 → 시야 적응력(사용자 11-28)
         };
 
         /// <summary>Parse 때 뺀 퍽에서 돌려준 포인트(0보다 크면 바로 저장해야 다시 안 돌려줌).</summary>
@@ -70,7 +71,8 @@ namespace Carryover.Core
         public float TrapRadius => TrapRadii[Level("traps")];
         public static readonly float[] TrapRadii = { 0f, 6f, 10f, 15f, 20f, 25f };
         public float MiningMult => 1f + 0.25f * Level("mining");        // 단계마다 +25%
-        public float ImpactMult => 1f - 0.20f * Level("fall");          // 4단계 ×0.2
+        public float VisionRadius => VisionRadii[Level("vision")];
+        public static readonly float[] VisionRadii = { 0f, 3f, 5f, 7f, 9f };   // 블록 1칸 = 1
         public float TempDriftMult => 1f - 0.20f * Level("temp");       // 4단계 ×0.2
         /// <summary>온도 적응력은 체온이 37℃에서 멀어지는 쪽(위험 쪽)으로 끌려갈 때만 늦춘다. 37℃ 쪽으로 돌아오는 회복(운동 뒤 식기·불 쬐기)은 그대로(사용자 11-21).</summary>
         public static bool DriftAwayFromNormal(float body, float ambient) => ambient != body && (ambient - body) * (body - 37f) >= 0f;
