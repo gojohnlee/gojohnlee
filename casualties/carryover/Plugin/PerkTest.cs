@@ -208,19 +208,6 @@ namespace CasualtiesCarryover
 
         private void TestVision(Body body)
         {
-            // 시야 적응력 4단계: 머리에 반경 9 원형 조명(그림자 없음, 전역 조명과 같은 층), 퍽 0이면 꺼짐
-            Vision.Tick(body);
-            var l = Vision.Light;
-            bool on = l != null && l.enabled && l.transform.parent == body.limbs[0].transform && Mathf.Abs(l.pointLightOuterRadius - 9f) < 0.01f && l.lightType == UnityEngine.Rendering.Universal.Light2D.LightType.Point && !l.shadowsEnabled;
-            var amb = WorldGeneration.world.ambientLight;
-            var fld = typeof(UnityEngine.Rendering.Universal.Light2D).GetField("m_ApplyToSortingLayers", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            var la = fld.GetValue(l) as int[]; var lb = fld.GetValue(amb) as int[];
-            bool layers = la != null && lb != null && la.SequenceEqual(lb);
-            bool off = false;
-            WithPerks(new PerkState(), () => { Vision.Tick(body); off = !Vision.Light.enabled; });
-            Vision.Tick(body);
-            Check("vision perk 4: light radius 9 on head; off without perk", on && off && Vision.Light.enabled,
-                $"on {on}, radius {(l != null ? l.pointLightOuterRadius : -1f)}, layers {la?.Length}/{lb?.Length} same {layers}, off {off}");
             {   // 벽 너머: 3단계는 1칸 앞 벽에 막힌 점이 반경 7까지 밀림, 4단계는 시야 가림 자체가 비워짐(칩 모드와 같음), 퍽 없으면 그대로
                 var vm = PlayerCamera.main.LOSHole.GetComponent<VisionMask>();
                 var mesh = vm.GetComponent<MeshFilter>().mesh;
@@ -240,39 +227,8 @@ namespace CasualtiesCarryover
                 ua.Invoke(WorldGeneration.world, null);
                 Check("vision perk 4 ambient light = paradise 'bright' 0.4, none without perk", aOn >= 0.4f - 0.001f && aOff < 0.4f, $"on {aOn:0.00}, off {aOff:0.00}");
             }
-            StartCoroutine(VisionPixels());
         }
 
-        /// <summary>실제 화면이 밝아지는지: 조명을 끄고 찍은 화면과 켜고 찍은 화면의 가운데(몸 둘레) 밝기를 비교한다.</summary>
-        private static void ShotTo(string name) { var p = Environment.GetEnvironmentVariable("CU_CARRYOVER_SHOT"); if (!string.IsNullOrEmpty(p)) ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(p), name)); }
-
-        private System.Collections.IEnumerator VisionPixels()
-        {
-            float Mean()
-            {
-                var tex = ScreenCapture.CaptureScreenshotAsTexture();
-                float sum = 0f; int n = 0;
-                for (int x = tex.width * 3 / 10; x < tex.width * 7 / 10; x += 2)
-                    for (int y = tex.height * 3 / 10; y < tex.height * 7 / 10; y += 2) { var c = tex.GetPixel(x, y); sum += (c.r + c.g + c.b) / 3f; n++; }
-                Destroy(tex);
-                return n > 0 ? sum / n : 0f;
-            }
-            for (float t = 0f; t < 8f; t += Time.unscaledDeltaTime) yield return null;   // 로딩 글자("자리를 찾는 중…")가 사라진 뒤
-            { var pcv = PlayerCamera.main; if (pcv.currentContainer != null) pcv.CloseContainer(); pcv.radialOpen = false; }
-            for (int i = 0; i < 20; i++) yield return null;
-            Vision.Hold = true;
-            Vision.Light.enabled = false;
-            for (int i = 0; i < 3; i++) yield return null;
-            yield return new WaitForEndOfFrame();
-            float off = Mean(); ShotTo("vision-off.png");
-            Vision.Light.enabled = true;
-            for (int i = 0; i < 3; i++) yield return null;
-            yield return new WaitForEndOfFrame();
-            float on = Mean(); ShotTo("vision-on.png");
-            Vision.Light.enabled = false; for (int i = 0; i < 3; i++) yield return null; yield return new WaitForEndOfFrame(); float off2 = Mean(); Vision.Light.enabled = true;
-            Vision.Hold = false;
-            Check("vision head light brightens screen around player", on > off + 0.005f && on > off2 + 0.005f, $"mean brightness off {off:0.000} -> on {on:0.000} -> off {off2:0.000}, ambient {WorldGeneration.world.ambientLight.intensity:0.00}");
-        }
 
         private void TestTemp(Body body)
         {

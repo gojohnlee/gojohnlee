@@ -49,7 +49,6 @@ namespace CasualtiesCarryover
                 Sensed.Clear();
                 Sensed.AddRange(Scan(body, Plugin.Perks.TrapRadius)); Scans++; LastRadius = Plugin.Perks.TrapRadius;
             }
-            Vision.Tick(body);
             if (Subspace.Bag != null) Subspace.Hide(body);
             if (Subspace.Capacity > 0 && body.alive && Input.GetKeyDown(KeyCode.V))
             {
