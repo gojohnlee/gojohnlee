@@ -232,6 +232,13 @@ namespace CasualtiesCarryover
                 float minOff = pts2.Min(q => (q - pp).magnitude);
                 Check("vision sees through walls within radius (LOS points pushed to 9, unchanged without perk)", Mathf.Abs(minOn - 9f) < 0.01f && Mathf.Abs(minOff - 1f) < 0.01f, $"on {minOn:0.00}, off {minOff:0.00}");
             }
+            {   // 전역 밝기: 4단계면 매 프레임 0.7 이상(퍽 없으면 회차 설정값 그대로)
+                var ua = HarmonyLib.AccessTools.Method(typeof(WorldGeneration), "UpdateAmbientLight");
+                ua.Invoke(WorldGeneration.world, null); float aOn = WorldGeneration.world.ambientLight.intensity;
+                float aOff = -1f; WithPerks(new PerkState(), () => { ua.Invoke(WorldGeneration.world, null); aOff = WorldGeneration.world.ambientLight.intensity; });
+                ua.Invoke(WorldGeneration.world, null);
+                Check("vision perk 4 raises ambient light to 0.7 (fullbright), none without perk", aOn >= 0.7f - 0.001f && aOff < 0.7f, $"on {aOn:0.00}, off {aOff:0.00}");
+            }
             StartCoroutine(VisionPixels());
         }
 
@@ -263,7 +270,7 @@ namespace CasualtiesCarryover
             float on = Mean(); ShotTo("vision-on.png");
             Vision.Light.enabled = false; for (int i = 0; i < 3; i++) yield return null; yield return new WaitForEndOfFrame(); float off2 = Mean(); Vision.Light.enabled = true;
             Vision.Hold = false;
-            Check("vision light brightens screen around player", on > off + 0.01f && on > off2 + 0.01f, $"mean brightness off {off:0.000} -> on {on:0.000} -> off {off2:0.000}, ambient {WorldGeneration.world.ambientLight.intensity:0.00}");
+            Check("vision head light brightens screen around player", on > off + 0.005f && on > off2 + 0.005f, $"mean brightness off {off:0.000} -> on {on:0.000} -> off {off2:0.000}, ambient {WorldGeneration.world.ambientLight.intensity:0.00}");
         }
 
         private void TestTemp(Body body)

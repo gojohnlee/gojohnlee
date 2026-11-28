@@ -13,7 +13,7 @@ namespace CasualtiesCarryover
     internal static class Vision
     {
         internal static Light2D Light;
-        internal const float Intensity = 1.3f;   // 11-28 "더 밝게": 랜턴 1.5 가까이
+        internal const float Intensity = 2.5f;   // 11-28 "낙원급으로": 랜턴(1.5)보다 밝게
 
         /// <summary>매 프레임(RunHud.Update). 퍽 단계가 0이거나 죽었으면 끈다.</summary>
         internal static bool Hold;   // 시험: 켜고 끄는 걸 시험이 직접 함
@@ -45,6 +45,19 @@ namespace CasualtiesCarryover
             Light.pointLightOuterRadius = r;
             Light.pointLightInnerRadius = r * 0.3f;
             Light.enabled = true;
+        }
+
+        /// <summary>전역 밝기 바닥(사용자 11-28 "낙원급으로"): WorldGeneration.Update가 매 프레임 UpdateAmbientLight로 ambientLight.intensity를
+        /// 회차 설정값(0·0.12·0.4, 콘솔 fullbright 0.7)으로 다시 정한다 → 그 뒤에 퍽 단계별 바닥(0.15·0.3·0.5·0.7)보다 낮으면 올린다. 4단계 = fullbright.</summary>
+        internal static readonly float[] AmbientFloor = { 0f, 0.15f, 0.3f, 0.5f, 0.7f };
+        [HarmonyLib.HarmonyPatch(typeof(WorldGeneration), "UpdateAmbientLight")]
+        [HarmonyLib.HarmonyPostfix]
+        private static void AmbientPostfix(WorldGeneration __instance)
+        {
+            int lv = Plugin.Perks?.Level("vision") ?? 0;
+            if (lv <= 0 || __instance.ambientLight == null) return;
+            float f = AmbientFloor[Mathf.Min(lv, AmbientFloor.Length - 1)];
+            if (__instance.ambientLight.intensity < f) __instance.ambientLight.intensity = f;
         }
 
         /// <summary>벽 너머 보기(사용자 11-28): 게임 시야 가림은 PlayerCamera.HandleLineOfSight가 몸에서 사방으로 선을 쏴 벽에 막힌 점들로
