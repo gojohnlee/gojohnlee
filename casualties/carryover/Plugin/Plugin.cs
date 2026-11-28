@@ -38,6 +38,7 @@ namespace CasualtiesCarryover
             h.PatchAll(typeof(Patches));
             h.PatchAll(typeof(PerkPatches));
             h.PatchAll(typeof(Subspace));
+            h.PatchAll(typeof(Vision));
             gameObject.AddComponent<PerkMenu>();
             gameObject.AddComponent<RunHud>();
             var test = Env("CU_CARRYOVER_TEST");

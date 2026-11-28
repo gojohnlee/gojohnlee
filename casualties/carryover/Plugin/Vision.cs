@@ -13,7 +13,7 @@ namespace CasualtiesCarryover
     internal static class Vision
     {
         internal static Light2D Light;
-        internal const float Intensity = 0.7f;
+        internal const float Intensity = 1.3f;   // 11-28 "더 밝게": 랜턴 1.5 가까이
 
         /// <summary>매 프레임(RunHud.Update). 퍽 단계가 0이거나 죽었으면 끈다.</summary>
         internal static bool Hold;   // 시험: 켜고 끄는 걸 시험이 직접 함
@@ -45,6 +45,21 @@ namespace CasualtiesCarryover
             Light.pointLightOuterRadius = r;
             Light.pointLightInnerRadius = r * 0.3f;
             Light.enabled = true;
+        }
+
+        /// <summary>벽 너머 보기(사용자 11-28): 게임 시야 가림은 PlayerCamera.HandleLineOfSight가 몸에서 사방으로 선을 쏴 벽에 막힌 점들로
+        /// VisionMask.UpdateMask(몸 위치, 점들)를 부른다(점 바깥은 가림). 퍽 반경 안에서 막힌 점은 반경까지 밀어내 그 안은 벽 너머도 보이게 한다.</summary>
+        [HarmonyLib.HarmonyPatch(typeof(VisionMask), nameof(VisionMask.UpdateMask))]
+        [HarmonyLib.HarmonyPrefix]
+        private static void MaskPrefix(Vector2 playerPos, System.Collections.Generic.List<Vector2> hitPoints)
+        {
+            float r = Plugin.Perks?.VisionRadius ?? 0f;
+            if (r <= 0f || hitPoints == null || PlayerCamera.main == null || !PlayerCamera.main.body.alive) return;
+            for (int i = 0; i < hitPoints.Count; i++)
+            {
+                var d = hitPoints[i] - playerPos;
+                if (d.sqrMagnitude < r * r && d.sqrMagnitude > 0.0001f) hitPoints[i] = playerPos + d.normalized * r;
+            }
         }
 
         /// <summary>게임 랜턴(lantern) 아이템을 잠깐 만들어 그 안의 Light2D 오브젝트만 복제한다(다른 스크립트는 지움).</summary>

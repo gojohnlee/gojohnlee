@@ -221,6 +221,17 @@ namespace CasualtiesCarryover
             Vision.Tick(body);
             Check("vision perk 4: light radius 9 on head; off without perk", on && off && Vision.Light.enabled,
                 $"on {on}, radius {(l != null ? l.pointLightOuterRadius : -1f)}, layers {la?.Length}/{lb?.Length} same {layers}, off {off}");
+            {   // 벽 너머: 몸에서 1칸 거리 벽에 막힌 점을 시야 가림에 넘기면 반경 9까지 밀려난다(퍼크 없으면 그대로)
+                var vm = PlayerCamera.main.LOSHole.GetComponent<VisionMask>();
+                Vector2 pp = body.transform.position;
+                var pts = new List<Vector2>(); for (int k = 0; k < 8; k++) { float a = k * Mathf.PI / 4f; pts.Add(pp + new Vector2(Mathf.Cos(a), Mathf.Sin(a))); }
+                vm.UpdateMask(pp, pts);
+                float minOn = pts.Min(q => (q - pp).magnitude);
+                var pts2 = new List<Vector2>(); for (int k = 0; k < 8; k++) { float a = k * Mathf.PI / 4f; pts2.Add(pp + new Vector2(Mathf.Cos(a), Mathf.Sin(a))); }
+                WithPerks(new PerkState(), () => vm.UpdateMask(pp, pts2));
+                float minOff = pts2.Min(q => (q - pp).magnitude);
+                Check("vision sees through walls within radius (LOS points pushed to 9, unchanged without perk)", Mathf.Abs(minOn - 9f) < 0.01f && Mathf.Abs(minOff - 1f) < 0.01f, $"on {minOn:0.00}, off {minOff:0.00}");
+            }
             StartCoroutine(VisionPixels());
         }
 
