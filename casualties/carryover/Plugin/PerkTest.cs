@@ -233,6 +233,13 @@ namespace CasualtiesCarryover
                 Check("vision LOS: level 3 pushes wall points to 7, level 4 clears mask (chip view), none unchanged", Mathf.Abs(min3 - 7f) < 0.01f && Mathf.Abs(min0 - 1f) < 0.01f && v0 > 0 && v4 == 0,
                     $"lv3 {min3:0.00}, none {min0:0.00} verts {v0}, lv4 verts {v4}");
             }
+            {   // 주변광: 4단계면 낙원 프리셋 "밝음"과 같은 0.4 이상(퍽 없으면 회차 설정값 그대로)
+                var ua = HarmonyLib.AccessTools.Method(typeof(WorldGeneration), "UpdateAmbientLight");
+                ua.Invoke(WorldGeneration.world, null); float aOn = WorldGeneration.world.ambientLight.intensity;
+                float aOff = -1f; WithPerks(new PerkState(), () => { ua.Invoke(WorldGeneration.world, null); aOff = WorldGeneration.world.ambientLight.intensity; });
+                ua.Invoke(WorldGeneration.world, null);
+                Check("vision perk 4 ambient light = paradise 'bright' 0.4, none without perk", aOn >= 0.4f - 0.001f && aOff < 0.4f, $"on {aOn:0.00}, off {aOff:0.00}");
+            }
             StartCoroutine(VisionPixels());
         }
 
