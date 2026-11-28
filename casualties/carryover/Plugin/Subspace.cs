@@ -86,6 +86,33 @@ namespace CasualtiesCarryover
             return null;
         }
 
+        /// <summary>Z: 몸 둘레(반경 SweepRadius) 땅에 놓인 물건을 가까운 것부터 전부 아공간에 넣는다(사용자 11-28). 가방·무게 초과는 건너뛰고 알림 한 번.
+        /// 땅에 놓인 물건 = 부모가 없는 Item(손·착용·다른 가방 안이 아님). 돌려주는 값: (넣은 수, 남긴 수).</summary>
+        internal const float SweepRadius = 5f;
+        internal static (int put, int left) Sweep(Body body)
+        {
+            if (body == null || EnsureBag(body) == null) return (0, 0);
+            Vector2 p = body.transform.position;
+            var near = UnityEngine.Object.FindObjectsOfType<Item>()
+                .Where(it => it != null && it.gameObject.activeInHierarchy && it.transform.parent == null && it.GetComponent<Container>() == null
+                             && ((Vector2)it.transform.position - p).sqrMagnitude <= SweepRadius * SweepRadius)
+                .OrderBy(it => ((Vector2)it.transform.position - p).sqrMagnitude).ToList();
+            int put = 0, left = 0;
+            foreach (var it in near)
+            {
+                if (Bag.GetHoldingWeight() + it.totalWeight > MaxWeight + Eps) { left++; continue; }
+                if (Put(body, it)) put++; else left++;
+            }
+            if (put + left > 0)
+            {
+                LastAlert = left > 0 ? $"아공간에 {put}개 넣음 ({left}개는 무게 초과 등으로 남김)" : $"아공간에 {put}개 넣음";
+                try { PlayerCamera.main?.DoAlert(LastAlert); } catch (Exception e) { Plugin.Log.LogWarning("subspace alert: " + e.Message); }
+                var pc = PlayerCamera.main;
+                if (pc != null && pc.currentContainer == Bag) pc.RepopulateContainer();
+            }
+            return (put, left);
+        }
+
         /// <summary>게임 가방 창과 같은 넣기(시험에서도 씀): 이미 손에 들려 있으면 내려놓고 가방에 넣는다.</summary>
         internal static bool Put(Body body, Item it)
         {

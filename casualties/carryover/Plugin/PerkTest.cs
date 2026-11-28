@@ -386,6 +386,16 @@ namespace CasualtiesCarryover
                     pcd.dragItem = null;
                     Check("drop from outside onto bag window (any spot) goes in; off-window does not", outside && inside && nb.transform.parent == Subspace.Bag.transform, $"outside {outside}, inside {inside}, mid {mid}");
                     if (nb != null) DestroyImmediate(nb.gameObject);
+                    {   // Z: 몸 둘레 5 안 땅의 붕대 3개는 들어가고, 8 떨어진 것은 남는다
+                        Vector2 bp = body.transform.position;
+                        var near3 = Enumerable.Range(0, 3).Select(k => Utils.Create("bandage", bp + new Vector2(k - 1, 0.5f), 0f).GetComponent<Item>()).ToList();
+                        var far = Utils.Create("bandage", bp + new Vector2(8f, 0.5f), 0f).GetComponent<Item>();
+                        var (sp, sl) = Subspace.Sweep(body);
+                        bool nearIn = near3.All(i => i.transform.parent == Subspace.Bag.transform), farOut = far.transform.parent == null;
+                        Check("Z sweeps nearby ground items into subspace (radius 5), far one stays", nearIn && farOut && sp >= 3, $"put {sp}, left {sl}, near in {nearIn}, far out {farOut}, alert '{Subspace.LastAlert}'");
+                        foreach (var i in near3) if (i != null) DestroyImmediate(i.gameObject);
+                        if (far != null) DestroyImmediate(far.gameObject);
+                    }
                     if (pcd.currentContainer == Subspace.Bag) pcd.CloseContainer();   // 뒤 시험(V로 열기)이 닫힌 상태에서 시작하게
                 }
                 foreach (var i in bottles) DestroyImmediate(i.gameObject);
