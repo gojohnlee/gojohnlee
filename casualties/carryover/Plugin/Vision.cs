@@ -47,33 +47,26 @@ namespace CasualtiesCarryover
             Light.enabled = true;
         }
 
-        /// <summary>전역 밝기 바닥(사용자 11-28 "낙원급으로"): WorldGeneration.Update가 매 프레임 UpdateAmbientLight로 ambientLight.intensity를
-        /// 회차 설정값(0·0.12·0.4, 콘솔 fullbright 0.7)으로 다시 정한다 → 그 뒤에 퍽 단계별 바닥(0.15·0.3·0.5·0.7)보다 낮으면 올린다. 4단계 = fullbright.</summary>
-        internal static readonly float[] AmbientFloor = { 0f, 0.15f, 0.3f, 0.5f, 0.7f };
-        [HarmonyLib.HarmonyPatch(typeof(WorldGeneration), "UpdateAmbientLight")]
-        [HarmonyLib.HarmonyPostfix]
-        private static void AmbientPostfix(WorldGeneration __instance)
-        {
-            int lv = Plugin.Perks?.Level("vision") ?? 0;
-            if (lv <= 0 || __instance.ambientLight == null) return;
-            float f = AmbientFloor[Mathf.Min(lv, AmbientFloor.Length - 1)];
-            if (__instance.ambientLight.intensity < f) __instance.ambientLight.intensity = f;
-        }
-
         /// <summary>벽 너머 보기(사용자 11-28): 게임 시야 가림은 PlayerCamera.HandleLineOfSight가 몸에서 사방으로 선을 쏴 벽에 막힌 점들로
-        /// VisionMask.UpdateMask(몸 위치, 점들)를 부른다(점 바깥은 가림). 퍽 반경 안에서 막힌 점은 반경까지 밀어내 그 안은 벽 너머도 보이게 한다.</summary>
+        /// VisionMask.UpdateMask(몸 위치, 점들)를 부른다(점 바깥은 가림). 1~3단계: 퍽 반경 안에서 막힌 점은 반경까지 밀어내 그 안은 벽 너머도 보인다.
+        /// 4단계(최대): 가림을 아예 없앤다 = 칩 있는 모드와 같은 화면(게임 SetUnchipped(false)도 ClearMask만 부름, 사용자 11-28 사진).
+        /// 전역 밝기를 올리던 것(AmbientPostfix)은 11-28에 뺐다(사용자: "기존 밝기 빼고").</summary>
         [HarmonyLib.HarmonyPatch(typeof(VisionMask), nameof(VisionMask.UpdateMask))]
         [HarmonyLib.HarmonyPrefix]
-        private static void MaskPrefix(Vector2 playerPos, System.Collections.Generic.List<Vector2> hitPoints)
+        private static bool MaskPrefix(VisionMask __instance, Vector2 playerPos, System.Collections.Generic.List<Vector2> hitPoints)
         {
+            int lv = Plugin.Perks?.Level("vision") ?? 0;
             float r = Plugin.Perks?.VisionRadius ?? 0f;
-            if (r <= 0f || hitPoints == null || PlayerCamera.main == null || !PlayerCamera.main.body.alive) return;
+            if (lv <= 0 || hitPoints == null || PlayerCamera.main == null || !PlayerCamera.main.body.alive) return true;
+            if (lv >= FullLevel) { __instance.ClearMask(); return false; }
             for (int i = 0; i < hitPoints.Count; i++)
             {
                 var d = hitPoints[i] - playerPos;
                 if (d.sqrMagnitude < r * r && d.sqrMagnitude > 0.0001f) hitPoints[i] = playerPos + d.normalized * r;
             }
+            return true;
         }
+        internal const int FullLevel = 4;
 
         /// <summary>게임 랜턴(lantern) 아이템을 잠깐 만들어 그 안의 Light2D 오브젝트만 복제한다(다른 스크립트는 지움).</summary>
         private static GameObject MakeLightObject()

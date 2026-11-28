@@ -221,23 +221,17 @@ namespace CasualtiesCarryover
             Vision.Tick(body);
             Check("vision perk 4: light radius 9 on head; off without perk", on && off && Vision.Light.enabled,
                 $"on {on}, radius {(l != null ? l.pointLightOuterRadius : -1f)}, layers {la?.Length}/{lb?.Length} same {layers}, off {off}");
-            {   // 벽 너머: 몸에서 1칸 거리 벽에 막힌 점을 시야 가림에 넘기면 반경 9까지 밀려난다(퍼크 없으면 그대로)
+            {   // 벽 너머: 3단계는 1칸 앞 벽에 막힌 점이 반경 7까지 밀림, 4단계는 시야 가림 자체가 비워짐(칩 모드와 같음), 퍽 없으면 그대로
                 var vm = PlayerCamera.main.LOSHole.GetComponent<VisionMask>();
+                var mesh = vm.GetComponent<MeshFilter>().mesh;
                 Vector2 pp = body.transform.position;
-                var pts = new List<Vector2>(); for (int k = 0; k < 8; k++) { float a = k * Mathf.PI / 4f; pts.Add(pp + new Vector2(Mathf.Cos(a), Mathf.Sin(a))); }
-                vm.UpdateMask(pp, pts);
-                float minOn = pts.Min(q => (q - pp).magnitude);
-                var pts2 = new List<Vector2>(); for (int k = 0; k < 8; k++) { float a = k * Mathf.PI / 4f; pts2.Add(pp + new Vector2(Mathf.Cos(a), Mathf.Sin(a))); }
-                WithPerks(new PerkState(), () => vm.UpdateMask(pp, pts2));
-                float minOff = pts2.Min(q => (q - pp).magnitude);
-                Check("vision sees through walls within radius (LOS points pushed to 9, unchanged without perk)", Mathf.Abs(minOn - 9f) < 0.01f && Mathf.Abs(minOff - 1f) < 0.01f, $"on {minOn:0.00}, off {minOff:0.00}");
-            }
-            {   // 전역 밝기: 4단계면 매 프레임 0.7 이상(퍽 없으면 회차 설정값 그대로)
-                var ua = HarmonyLib.AccessTools.Method(typeof(WorldGeneration), "UpdateAmbientLight");
-                ua.Invoke(WorldGeneration.world, null); float aOn = WorldGeneration.world.ambientLight.intensity;
-                float aOff = -1f; WithPerks(new PerkState(), () => { ua.Invoke(WorldGeneration.world, null); aOff = WorldGeneration.world.ambientLight.intensity; });
-                ua.Invoke(WorldGeneration.world, null);
-                Check("vision perk 4 raises ambient light to 0.7 (fullbright), none without perk", aOn >= 0.7f - 0.001f && aOff < 0.7f, $"on {aOn:0.00}, off {aOff:0.00}");
+                List<Vector2> Ring() { var l = new List<Vector2>(); for (int k = 0; k < 8; k++) { float a = k * Mathf.PI / 4f; l.Add(pp + new Vector2(Mathf.Cos(a), Mathf.Sin(a))); } return l; }
+                var lv3 = new PerkState(); lv3.Levels[PerkState.IndexOf("vision")] = 3;
+                var p3 = Ring(); WithPerks(lv3, () => vm.UpdateMask(pp, p3)); float min3 = p3.Min(q => (q - pp).magnitude);
+                var p0 = Ring(); WithPerks(new PerkState(), () => vm.UpdateMask(pp, p0)); float min0 = p0.Min(q => (q - pp).magnitude); int v0 = mesh.vertexCount;
+                var p4 = Ring(); vm.UpdateMask(pp, p4); int v4 = mesh.vertexCount;
+                Check("vision LOS: level 3 pushes wall points to 7, level 4 clears mask (chip view), none unchanged", Mathf.Abs(min3 - 7f) < 0.01f && Mathf.Abs(min0 - 1f) < 0.01f && v0 > 0 && v4 == 0,
+                    $"lv3 {min3:0.00}, none {min0:0.00} verts {v0}, lv4 verts {v4}");
             }
             StartCoroutine(VisionPixels());
         }
