@@ -128,6 +128,13 @@ def verdict(x):
     return None,None
 EXCL={akey(y) for y in R if y.get('lat') and has_jibun(y) and verdict(y)[0]}
 BADPTS=[(y['lat'],y['lng'],akey(y)) for y in R if y.get('lat') and akey(y) in EXCL]
+# 11-28: 나쁜 건물에 오늘 매물이 없어도 좌표를 알면(직방 상세 캐시) 근처 지번 비공개 매물을 거른다(산본동 259-16 매물이 내려가자 옆 매물이 다시 올라온 일)
+try:
+    for _v in json.load(open(f'{here}/data/cache.json')).values():
+        _d=_v.get('data') or {};_a=re.sub(r'^경기(도)?\s*','',_d.get('jibunAddress') or '').strip();_l=_d.get('location') or {}
+        if _a and _l.get('lat') and _a not in EXCL and re.search(r'\d+(-\d+)?$',_a) and _a not in KEEP and verdict({'addr':_a,'af':1,'fl':0})[0]:
+            EXCL.add(_a);BADPTS.append((_l['lat'],_l['lng'],_a))
+except Exception as e: print('나쁜 건물 좌표 불러오기 실패:',e)
 nok=[]
 for x in ok:
     nb=near_bad(x);why,note=verdict(x)
